@@ -7,8 +7,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupportTicketController;
 use Illuminate\Support\Facades\Route;
 
-// Home
-Route::get('/', [HomeController::class, 'index'])->name('home');
+// Home - explicitly define both GET and HEAD methods
+Route::match(['GET', 'HEAD'], '/', [HomeController::class, 'index'])->name('home');
 
 // Products & Services
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
