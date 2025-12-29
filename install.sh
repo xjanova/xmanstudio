@@ -188,21 +188,23 @@ configure_environment() {
         DB_PASSWORD=$(get_password "Database Password")
 
         # Update .env file
-        sed -i "s/DB_CONNECTION=.*/DB_CONNECTION=mysql/" .env
-        sed -i "s/DB_HOST=.*/DB_HOST=$DB_HOST/" .env
-        sed -i "s/DB_PORT=.*/DB_PORT=$DB_PORT/" .env
-        sed -i "s/DB_DATABASE=.*/DB_DATABASE=$DB_DATABASE/" .env
-        sed -i "s/DB_USERNAME=.*/DB_USERNAME=$DB_USERNAME/" .env
-        sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=$DB_PASSWORD/" .env
+        sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=mysql|" .env
+        sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|" .env
+        sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|" .env
+        sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE|" .env
+        sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" .env
+        # Escape special characters in password for sed
+        DB_PASSWORD_ESCAPED=$(printf '%s\n' "$DB_PASSWORD" | sed -e 's/[\/&]/\\&/g')
+        sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD_ESCAPED|" .env
     else
         # SQLite - just use the default
         sed -i "s/DB_CONNECTION=.*/DB_CONNECTION=sqlite/" .env
     fi
 
     # Update other .env values
-    sed -i "s/APP_NAME=.*/APP_NAME=\"$APP_NAME\"/" .env
-    sed -i "s/APP_ENV=.*/APP_ENV=$APP_ENV/" .env
-    sed -i "s/APP_DEBUG=.*/APP_DEBUG=$APP_DEBUG/" .env
+    sed -i "s|APP_NAME=.*|APP_NAME=\"$APP_NAME\"|" .env
+    sed -i "s|APP_ENV=.*|APP_ENV=$APP_ENV|" .env
+    sed -i "s|APP_DEBUG=.*|APP_DEBUG=$APP_DEBUG|" .env
     sed -i "s|APP_URL=.*|APP_URL=$APP_URL|" .env
 
     # Mail configuration (optional)
@@ -218,12 +220,14 @@ configure_environment() {
             MAIL_PASSWORD=$(get_password "Mail Password")
             MAIL_FROM_ADDRESS=$(get_input "From Address" "info@xmanstudio.com")
 
-            sed -i "s/MAIL_MAILER=.*/MAIL_MAILER=$MAIL_MAILER/" .env
-            sed -i "s/MAIL_HOST=.*/MAIL_HOST=$MAIL_HOST/" .env
-            sed -i "s/MAIL_PORT=.*/MAIL_PORT=$MAIL_PORT/" .env
-            sed -i "s/MAIL_USERNAME=.*/MAIL_USERNAME=$MAIL_USERNAME/" .env
-            sed -i "s/MAIL_PASSWORD=.*/MAIL_PASSWORD=$MAIL_PASSWORD/" .env
-            sed -i "s/MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=\"$MAIL_FROM_ADDRESS\"/" .env
+            sed -i "s|MAIL_MAILER=.*|MAIL_MAILER=$MAIL_MAILER|" .env
+            sed -i "s|MAIL_HOST=.*|MAIL_HOST=$MAIL_HOST|" .env
+            sed -i "s|MAIL_PORT=.*|MAIL_PORT=$MAIL_PORT|" .env
+            sed -i "s|MAIL_USERNAME=.*|MAIL_USERNAME=$MAIL_USERNAME|" .env
+            # Escape special characters in mail password
+            MAIL_PASSWORD_ESCAPED=$(printf '%s\n' "$MAIL_PASSWORD" | sed -e 's/[\/&]/\\&/g')
+            sed -i "s|MAIL_PASSWORD=.*|MAIL_PASSWORD=$MAIL_PASSWORD_ESCAPED|" .env
+            sed -i "s|MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"$MAIL_FROM_ADDRESS\"|" .env
         fi
     fi
 
