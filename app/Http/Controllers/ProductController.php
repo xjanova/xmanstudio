@@ -152,7 +152,7 @@ class ProductController extends Controller
         $services = $this->getServicesData();
         $service = collect($services)->firstWhere('slug', $slug);
 
-        if (!$service) {
+        if (! $service) {
             abort(404);
         }
 
