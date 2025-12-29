@@ -175,8 +175,39 @@ run_migrations() {
     read -p "Run database migrations? (Y/n): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-        php artisan migrate --force
-        print_success "Migrations completed"
+        # Try running migrations
+        if php artisan migrate --force 2>&1 | tee /tmp/migration_output.log; then
+            print_success "Migrations completed"
+        else
+            # Check if error is about table already exists
+            if grep -q "already exists" /tmp/migration_output.log; then
+                print_warning "Migration failed: Tables already exist"
+                print_info "Attempting to repair database..."
+
+                # Ask for confirmation to drop and recreate
+                read -p "Drop all tables and recreate? This will delete all data! (y/N): " -n 1 -r
+                echo
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    print_info "Running migrate:fresh to rebuild database..."
+                    if php artisan migrate:fresh --force; then
+                        print_success "Database rebuilt successfully"
+                    else
+                        print_error "Failed to rebuild database"
+                        rm -f /tmp/migration_output.log
+                        return 1
+                    fi
+                else
+                    print_error "Migration repair cancelled"
+                    rm -f /tmp/migration_output.log
+                    return 1
+                fi
+            else
+                print_error "Migration failed with unknown error"
+                rm -f /tmp/migration_output.log
+                return 1
+            fi
+        fi
+        rm -f /tmp/migration_output.log
     else
         print_info "Skipping migrations"
     fi
