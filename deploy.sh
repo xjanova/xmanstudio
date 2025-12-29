@@ -161,7 +161,11 @@ update_dependencies() {
     # NPM
     if command -v npm >/dev/null 2>&1; then
         print_info "Updating Node.js dependencies..."
-        npm ci --production
+        if [ -f package-lock.json ]; then
+            npm ci
+        else
+            npm install
+        fi
         print_success "NPM dependencies updated"
     else
         print_warning "NPM not available, skipping Node.js dependencies"
@@ -175,8 +179,13 @@ run_migrations() {
     read -p "Run database migrations? (Y/n): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-        # Try running migrations
-        if php artisan migrate --force 2>&1 | tee /tmp/migration_output.log; then
+        # Try running migrations and capture output
+        set +e  # Temporarily disable exit on error
+        php artisan migrate --force 2>&1 | tee /tmp/migration_output.log
+        MIGRATION_EXIT_CODE=${PIPESTATUS[0]}
+        set -e  # Re-enable exit on error
+
+        if [ $MIGRATION_EXIT_CODE -eq 0 ]; then
             print_success "Migrations completed"
         else
             # Check if error is about table already exists
@@ -203,6 +212,7 @@ run_migrations() {
                 fi
             else
                 print_error "Migration failed with unknown error"
+                cat /tmp/migration_output.log
                 rm -f /tmp/migration_output.log
                 return 1
             fi
