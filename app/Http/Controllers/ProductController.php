@@ -48,7 +48,7 @@ class ProductController extends Controller
                     'DApp Development',
                     'Cryptocurrency Development',
                     'NFT Platform',
-                    'Blockchain Consulting'
+                    'Blockchain Consulting',
                 ]
             ],
             [
@@ -61,7 +61,7 @@ class ProductController extends Controller
                     'E-commerce Website',
                     'Corporate Website',
                     'Web Application',
-                    'CMS Development'
+                    'CMS Development',
                 ]
             ],
             [
@@ -172,7 +172,7 @@ class ProductController extends Controller
                     'DApp Development',
                     'Cryptocurrency Development',
                     'NFT Platform',
-                    'Blockchain Consulting'
+                    'Blockchain Consulting',
                 ]
             ],
             [
@@ -185,7 +185,7 @@ class ProductController extends Controller
                     'E-commerce Website',
                     'Corporate Website',
                     'Web Application',
-                    'CMS Development'
+                    'CMS Development',
                 ]
             ],
         ];
