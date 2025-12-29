@@ -176,51 +176,58 @@ update_dependencies() {
 run_migrations() {
     print_step "Running Database Migrations"
 
-    read -p "Run database migrations? (Y/n): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-        # Try running migrations and capture output
-        set +e  # Temporarily disable exit on error
-        php artisan migrate --force 2>&1 | tee /tmp/migration_output.log
-        MIGRATION_EXIT_CODE=${PIPESTATUS[0]}
-        set -e  # Re-enable exit on error
+    # Check if there are pending migrations
+    print_info "Checking for pending migrations..."
+    set +e
+    PENDING_MIGRATIONS=$(php artisan migrate:status --pending 2>/dev/null | grep -c "Pending" || echo "0")
+    set -e
 
-        if [ $MIGRATION_EXIT_CODE -eq 0 ]; then
-            print_success "Migrations completed"
-        else
-            # Check if error is about table already exists
-            if grep -q "already exists" /tmp/migration_output.log; then
-                print_warning "Migration failed: Tables already exist"
-                print_info "Attempting to repair database..."
+    if [ "$PENDING_MIGRATIONS" -eq "0" ]; then
+        print_info "No pending migrations, skipping..."
+        return 0
+    fi
 
-                # Ask for confirmation to drop and recreate
-                read -p "Drop all tables and recreate? This will delete all data! (y/N): " -n 1 -r
-                echo
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    print_info "Running migrate:fresh to rebuild database..."
-                    if php artisan migrate:fresh --force; then
-                        print_success "Database rebuilt successfully"
-                    else
-                        print_error "Failed to rebuild database"
-                        rm -f /tmp/migration_output.log
-                        return 1
-                    fi
+    print_warning "Found $PENDING_MIGRATIONS pending migration(s)"
+
+    # Try running migrations and capture output
+    set +e  # Temporarily disable exit on error
+    php artisan migrate --force 2>&1 | tee /tmp/migration_output.log
+    MIGRATION_EXIT_CODE=${PIPESTATUS[0]}
+    set -e  # Re-enable exit on error
+
+    if [ $MIGRATION_EXIT_CODE -eq 0 ]; then
+        print_success "Migrations completed"
+    else
+        # Check if error is about table already exists
+        if grep -q "already exists" /tmp/migration_output.log; then
+            print_warning "Migration failed: Tables already exist"
+            print_info "Attempting to repair database..."
+
+            # Ask for confirmation to drop and recreate
+            read -p "Drop all tables and recreate? This will delete all data! (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                print_info "Running migrate:fresh to rebuild database..."
+                if php artisan migrate:fresh --force; then
+                    print_success "Database rebuilt successfully"
                 else
-                    print_error "Migration repair cancelled"
+                    print_error "Failed to rebuild database"
                     rm -f /tmp/migration_output.log
                     return 1
                 fi
             else
-                print_error "Migration failed with unknown error"
-                cat /tmp/migration_output.log
+                print_error "Migration repair cancelled"
                 rm -f /tmp/migration_output.log
                 return 1
             fi
+        else
+            print_error "Migration failed with unknown error"
+            cat /tmp/migration_output.log
+            rm -f /tmp/migration_output.log
+            return 1
         fi
-        rm -f /tmp/migration_output.log
-    else
-        print_info "Skipping migrations"
     fi
+    rm -f /tmp/migration_output.log
 }
 
 # Build assets
