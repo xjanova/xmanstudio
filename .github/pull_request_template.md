@@ -1,27 +1,8 @@
-## Description
-Brief description of changes.
+## Summary
+<!-- What does this PR do? -->
 
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation update
-
-## Testing
-- [ ] Tests added/updated
-- [ ] All tests pass
-- [ ] Manual testing completed
-
-## Checklist
-- [ ] Code follows project style guidelines
-- [ ] Self-review completed
-- [ ] Comments added for complex logic
-- [ ] Documentation updated
-- [ ] No breaking changes (or documented)
-- [ ] CHANGELOG.md updated
+## Changes
+-
 
 ## Related Issues
-Closes #(issue number)
-
-## Screenshots (if applicable)
-Add screenshots here.
+<!-- Closes #(issue number) if applicable -->
