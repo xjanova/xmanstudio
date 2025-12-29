@@ -1,0 +1,134 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ secrets.APP_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Build production assets
+        run: npm run build
+
+      - name: Create deployment package
+        run: |
+          tar -czf deployment.tar.gz \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='.github' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/cache/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            .
+
+      - name: Deploy via SSH
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: "deployment.tar.gz,deploy.sh"
+          target: "/tmp/xmanstudio-deploy"
+
+      - name: Execute deployment script
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+
+            # Configuration
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            BACKUP_DIR="${DEPLOY_PATH}/backups"
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+            echo "🚀 Starting deployment to ${DEPLOY_PATH}"
+
+            # Create backup
+            echo "📦 Creating backup..."
+            mkdir -p ${BACKUP_DIR}
+            if [ -f ${DEPLOY_PATH}/.env ]; then
+              cp ${DEPLOY_PATH}/.env ${BACKUP_DIR}/env_${TIMESTAMP}
+            fi
+
+            # Extract new version
+            echo "📂 Extracting new version..."
+            cd ${DEPLOY_PATH}
+            tar -xzf /tmp/xmanstudio-deploy/deployment.tar.gz
+
+            # Run deployment script
+            echo "⚙️  Running deployment script..."
+            chmod +x deploy.sh
+            ./deploy.sh ${{ github.ref_name }} --skip-backup
+
+            # Cleanup
+            rm -rf /tmp/xmanstudio-deploy
+
+            echo "✅ Deployment completed successfully!"
+
+      - name: Health check
+        run: |
+          sleep 10
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.APP_URL }})
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Application is healthy (HTTP $HTTP_CODE)"
+          else
+            echo "❌ Application health check failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "## ✅ Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Deployment Failed!" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ secrets.APP_URL }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,163 @@
+name: Release & Versioning
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install semver tool
+        run: npm install -g semver
+
+      - name: Get current version
+        id: get_version
+        run: |
+          if [ -f VERSION ]; then
+            CURRENT_VERSION=$(cat VERSION)
+          else
+            CURRENT_VERSION="0.0.0"
+          fi
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          NEW_VERSION=$(npx semver -i ${{ github.event.inputs.version_bump }} ${{ steps.get_version.outputs.current }})
+          echo "new=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "v$NEW_VERSION" > VERSION
+          echo "New version: v$NEW_VERSION"
+
+      - name: Update CHANGELOG
+        run: |
+          VERSION="v${{ steps.bump_version.outputs.new }}"
+          DATE=$(date +%Y-%m-%d)
+
+          # Create changelog entry
+          cat > CHANGELOG_NEW.md << EOF
+          ## [$VERSION] - $DATE
+
+          ### Added
+          - New features and additions
+
+          ### Changed
+          - Changes to existing functionality
+
+          ### Fixed
+          - Bug fixes
+
+          ### Security
+          - Security improvements
+
+          EOF
+
+          # Prepend to existing changelog or create new
+          if [ -f CHANGELOG.md ]; then
+            cat CHANGELOG.md >> CHANGELOG_NEW.md
+          else
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "All notable changes to XMAN Studio will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+
+          mv CHANGELOG_NEW.md CHANGELOG.md
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION="v${{ steps.bump_version.outputs.new }}"
+          PREV_VERSION="v${{ steps.get_version.outputs.current }}"
+
+          # Get commits since last version
+          if git rev-parse "$PREV_VERSION" >/dev/null 2>&1; then
+            COMMITS=$(git log $PREV_VERSION..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges -10)
+          fi
+
+          # Create release notes
+          cat > RELEASE_NOTES.md << EOF
+          ## What's Changed
+
+          $COMMITS
+
+          ## Installation
+
+          \`\`\`bash
+          git clone https://github.com/${{ github.repository }}.git
+          cd xmanstudio
+          git checkout $VERSION
+          composer install
+          npm install
+          npm run build
+          \`\`\`
+
+          ## Docker Installation
+
+          \`\`\`bash
+          docker pull ghcr.io/${{ github.repository }}:$VERSION
+          \`\`\`
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_VERSION...$VERSION
+          EOF
+
+      - name: Commit version changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add VERSION CHANGELOG.md
+          git commit -m "chore: bump version to v${{ steps.bump_version.outputs.new }}"
+          git tag -a "v${{ steps.bump_version.outputs.new }}" -m "Release v${{ steps.bump_version.outputs.new }}"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.bump_version.outputs.new }}
+          name: Release v${{ steps.bump_version.outputs.new }}
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release Created Successfully! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ steps.bump_version.outputs.new }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Previous Version:** v${{ steps.get_version.outputs.current }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** ${{ github.event.inputs.version_bump }}" >> $GITHUB_STEP_SUMMARY
