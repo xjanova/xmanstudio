@@ -7,8 +7,36 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupportTicketController;
 use Illuminate\Support\Facades\Route;
 
-// Home - explicitly define both GET and HEAD methods
-Route::match(['GET', 'HEAD'], '/', [HomeController::class, 'index'])->name('home');
+// Debug route - check this first on production: /debug-routes
+Route::get('/debug-routes', function () {
+    $allRoutes = collect(Route::getRoutes())->map(function ($route) {
+        return [
+            'uri' => $route->uri(),
+            'methods' => $route->methods(),
+            'name' => $route->getName(),
+            'action' => $route->getActionName(),
+        ];
+    });
+
+    $rootRoutes = $allRoutes->filter(fn($r) => $r['uri'] === '/');
+
+    return response()->json([
+        'php_version' => PHP_VERSION,
+        'laravel_version' => app()->version(),
+        'total_routes' => $allRoutes->count(),
+        'root_route_count' => $rootRoutes->count(),
+        'root_routes' => $rootRoutes->values(),
+        'cached' => app()->routesAreCached(),
+        'cache_file_exists' => file_exists(base_path('bootstrap/cache/routes-v7.php')),
+        'bootstrap_app_exists' => file_exists(base_path('bootstrap/app.php')),
+        'web_routes_exists' => file_exists(base_path('routes/web.php')),
+        'request_method' => request()->method(),
+        'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'unknown',
+    ], 200, [], JSON_PRETTY_PRINT);
+});
+
+// Home route - using simple Route::get()
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Products & Services
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
