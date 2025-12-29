@@ -49,7 +49,7 @@ class ProductController extends Controller
                     'Cryptocurrency Development',
                     'NFT Platform',
                     'Blockchain Consulting',
-                ]
+                ],
             ],
             [
                 'slug' => 'web',
@@ -62,7 +62,7 @@ class ProductController extends Controller
                     'Corporate Website',
                     'Web Application',
                     'CMS Development',
-                ]
+                ],
             ],
             [
                 'slug' => 'mobile',
@@ -74,8 +74,8 @@ class ProductController extends Controller
                     'Android App Development',
                     'Cross-platform with Flutter',
                     'App UI/UX Design',
-                    'App Maintenance & Support'
-                ]
+                    'App Maintenance & Support',
+                ],
             ],
             [
                 'slug' => 'iot',
@@ -87,8 +87,8 @@ class ProductController extends Controller
                     'Sensor Integration',
                     'IoT Platform Development',
                     'Smart Home Solutions',
-                    'Industrial IoT'
-                ]
+                    'Industrial IoT',
+                ],
             ],
             [
                 'slug' => 'network-security',
@@ -100,8 +100,8 @@ class ProductController extends Controller
                     'Firewall Configuration',
                     'Security Audit',
                     'Penetration Testing',
-                    'IT Infrastructure'
-                ]
+                    'IT Infrastructure',
+                ],
             ],
             [
                 'slug' => 'custom-software',
@@ -113,8 +113,8 @@ class ProductController extends Controller
                     'ERP Systems',
                     'CRM Systems',
                     'Inventory Management',
-                    'Custom Solutions'
-                ]
+                    'Custom Solutions',
+                ],
             ],
             [
                 'slug' => 'ai',
@@ -126,8 +126,8 @@ class ProductController extends Controller
                     'AI Advertising Content',
                     'AI Music Generation',
                     'Machine Learning Solutions',
-                    'AI Consulting'
-                ]
+                    'AI Consulting',
+                ],
             ],
             [
                 'slug' => 'flutter',
@@ -139,9 +139,9 @@ class ProductController extends Controller
                     'Android Studio Setup',
                     'Cross-platform Apps',
                     'Flutter Training',
-                    'App Publishing Support'
-                ]
-            ]
+                    'App Publishing Support',
+                ],
+            ],
         ];
 
         return view('services.index', compact('services'));
@@ -173,7 +173,7 @@ class ProductController extends Controller
                     'Cryptocurrency Development',
                     'NFT Platform',
                     'Blockchain Consulting',
-                ]
+                ],
             ],
             [
                 'slug' => 'web',
@@ -186,7 +186,7 @@ class ProductController extends Controller
                     'Corporate Website',
                     'Web Application',
                     'CMS Development',
-                ]
+                ],
             ],
         ];
     }
