@@ -20,7 +20,7 @@ class Product extends Model
         'is_custom',
         'requires_license',
         'stock',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -28,7 +28,7 @@ class Product extends Model
         'is_custom' => 'boolean',
         'requires_license' => 'boolean',
         'is_active' => 'boolean',
-        'price' => 'decimal:2'
+        'price' => 'decimal:2',
     ];
 
     public function category(): BelongsTo
