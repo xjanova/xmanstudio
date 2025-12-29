@@ -1,35 +1,23 @@
-name: Release & Versioning
+name: Release (Major/Minor)
 
 on:
-  # Auto-release when CI passes on main branch
-  workflow_run:
-    workflows: ["CI - Tests & Quality Checks"]
-    types:
-      - completed
-    branches:
-      - main
-
-  # Manual trigger for specific version bumps
+  # Manual trigger for major/minor version bumps only
+  # Patch releases are automatic via CI workflow
   workflow_dispatch:
     inputs:
       version_bump:
         description: 'Version bump type'
         required: true
-        default: 'patch'
+        default: 'minor'
         type: choice
         options:
           - major
           - minor
-          - patch
 
 jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    # Only run if CI succeeded (for workflow_run) or manual trigger
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     permissions:
       contents: write
       pull-requests: write
@@ -63,8 +51,7 @@ jobs:
       - name: Bump version
         id: bump_version
         run: |
-          # Use input version_bump for manual trigger, default to 'patch' for auto-release
-          BUMP_TYPE="${{ github.event.inputs.version_bump || 'patch' }}"
+          BUMP_TYPE="${{ github.event.inputs.version_bump }}"
           NEW_VERSION=$(npx semver -i $BUMP_TYPE ${{ steps.get_version.outputs.current }})
           echo "new=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
