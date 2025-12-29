@@ -7,6 +7,25 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupportTicketController;
 use Illuminate\Support\Facades\Route;
 
+// Debug route - check this first on production: /debug-routes
+Route::get('/debug-routes', function () {
+    $routes = collect(Route::getRoutes())->map(function ($route) {
+        return [
+            'uri' => $route->uri(),
+            'methods' => $route->methods(),
+            'name' => $route->getName(),
+        ];
+    })->filter(fn($r) => $r['uri'] === '/' || $r['uri'] === 'debug-routes');
+
+    return response()->json([
+        'php_version' => PHP_VERSION,
+        'laravel_version' => app()->version(),
+        'routes_for_root' => $routes->values(),
+        'cached' => app()->routesAreCached(),
+        'cache_file_exists' => file_exists(base_path('bootstrap/cache/routes-v7.php')),
+    ]);
+});
+
 // Home - explicitly define both GET and HEAD methods
 Route::match(['GET', 'HEAD'], '/', [HomeController::class, 'index'])->name('home');
 
