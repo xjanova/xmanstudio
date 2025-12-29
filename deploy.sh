@@ -61,8 +61,8 @@ check_environment() {
 
     if grep -q "APP_ENV=production" .env; then
         print_warning "Deploying to PRODUCTION environment"
-        read -p "Are you sure you want to continue? (yes/NO): " confirm
-        if [ "$confirm" != "yes" ]; then
+        read -p "Are you sure you want to continue? (y/N): " confirm
+        if [[ ! "$confirm" =~ ^[Yy](es)?$ ]]; then
             print_info "Deployment cancelled"
             exit 0
         fi
