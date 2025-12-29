@@ -21,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
-      url: ${{ secrets.APP_URL }}
 
     steps:
       - name: Checkout code
