@@ -66,30 +66,39 @@ Value: https://xman4289.com
 
 ### 3. Generate SSH Key for GitHub Actions (Required)
 
-**ทำบนเครื่องของคุณ:**
+**⚠️ คำแนะนำ:** ถ้า `ssh-copy-id` ค้างหรือมีปัญหา ให้ใช้วิธีก๊อปวางแทน
 
+**📖 คู่มือละเอียดแบบก๊อปวาง:** อ่านที่ `.github/SETUP_SSH.md`
+
+**สรุปสั้น ๆ:**
 ```bash
 # 1. สร้าง SSH key
-ssh-keygen -t ed25519 -C "github-actions@xmanstudio" -f ~/.ssh/github-actions-xman
+ssh-keygen -t ed25519 -C "github-actions@xmanstudio" -f ~/.ssh/github-actions-xman -N ""
 
-# 2. กด Enter 3 ครั้ง (ไม่ต้องใส่ passphrase)
+# 2. แสดง PUBLIC key (ไปใส่บน server)
+cat ~/.ssh/github-actions-xman.pub
 
-# 3. Copy public key ไปที่ server
-ssh-copy-id -i ~/.ssh/github-actions-xman.pub admin@xman4289.com
+# 3. SSH เข้า server และเพิ่ม public key
+ssh admin@xman4289.com
+echo "PASTE_PUBLIC_KEY_ตรงนี้" >> ~/.ssh/authorized_keys
+exit
 
-# 4. ทดสอบว่าใช้งานได้
+# 4. ทดสอบ
 ssh -i ~/.ssh/github-actions-xman admin@xman4289.com
+exit
 
-# 5. Copy private key สำหรับ GitHub Secret
+# 5. แสดง PRIVATE key (ไปใส่ใน GitHub Secrets)
 cat ~/.ssh/github-actions-xman
 ```
 
 **จากนั้น:**
-- Copy ทั้งหมด (รวม `-----BEGIN` และ `-----END`)
+- Copy private key ทั้งหมด (รวม `-----BEGIN` และ `-----END`)
 - ไปที่ GitHub Secrets
 - สร้าง secret ชื่อ `SSH_PRIVATE_KEY`
 - Paste ค่าที่ copy มา
 - Save
+
+**ดูขั้นตอนละเอียดทีละขั้น:** `.github/SETUP_SSH.md`
 
 ---
 
