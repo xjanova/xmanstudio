@@ -35,8 +35,8 @@ Route::get('/debug-routes', function () {
     ], 200, [], JSON_PRETTY_PRINT);
 });
 
-// Home route - using simple Route::get()
-Route::get('/', [HomeController::class, 'index'])->name('home');
+// Home route - explicitly support both GET and HEAD methods
+Route::match(['GET', 'HEAD'], '/', [HomeController::class, 'index'])->name('home');
 
 // Products & Services
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
