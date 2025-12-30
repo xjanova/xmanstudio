@@ -18,7 +18,7 @@ Route::get('/debug-routes', function () {
         ];
     });
 
-    $rootRoutes = $allRoutes->filter(fn($r) => $r['uri'] === '/');
+    $rootRoutes = $allRoutes->filter(fn ($r) => $r['uri'] === '/');
 
     return response()->json([
         'php_version' => PHP_VERSION,
