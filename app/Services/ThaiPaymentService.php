@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-
 class ThaiPaymentService
 {
     protected string $promptpayNumber;
+
     protected array $bankAccounts;
 
     public function __construct()
@@ -100,18 +98,18 @@ class ThaiPaymentService
 
         $phone = preg_replace('/[^0-9]/', '', $this->promptpayNumber);
         if (substr($phone, 0, 1) === '0') {
-            $phone = '66' . substr($phone, 1);
+            $phone = '66'.substr($phone, 1);
         }
 
         // Basic payload structure
         $payload = '000201'; // Payload Format Indicator
         $payload .= '010212'; // Point of Initiation Method (Dynamic)
-        $payload .= '29370016A000000677010111' . sprintf('%02d', strlen($phone)) . $phone;
+        $payload .= '29370016A000000677010111'.sprintf('%02d', strlen($phone)).$phone;
         $payload .= '5303764'; // Transaction Currency (THB)
 
         if ($amount > 0) {
             $amountStr = number_format($amount, 2, '.', '');
-            $payload .= '54' . sprintf('%02d', strlen($amountStr)) . $amountStr;
+            $payload .= '54'.sprintf('%02d', strlen($amountStr)).$amountStr;
         }
 
         $payload .= '5802TH'; // Country Code
@@ -152,7 +150,7 @@ class ThaiPaymentService
     protected function generateQRImageUrl(string $payload): string
     {
         // Use public QR code API
-        return 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($payload);
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='.urlencode($payload);
     }
 
     /**
@@ -162,8 +160,9 @@ class ThaiPaymentService
     {
         $phone = preg_replace('/[^0-9]/', '', $phone);
         if (strlen($phone) === 10) {
-            return substr($phone, 0, 3) . '-XXX-' . substr($phone, -4);
+            return substr($phone, 0, 3).'-XXX-'.substr($phone, -4);
         }
+
         return $phone;
     }
 

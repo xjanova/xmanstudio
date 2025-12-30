@@ -28,7 +28,7 @@ return new class extends Migration
                 'active',       // ใช้งานอยู่
                 'expired',      // หมดอายุ
                 'cancelled',    // ยกเลิก
-                'suspended'     // ระงับชั่วคราว
+                'suspended',     // ระงับชั่วคราว
             ])->default('pending');
 
             // Payment Info

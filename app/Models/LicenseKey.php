@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class LicenseKey extends Model
@@ -41,13 +41,19 @@ class LicenseKey extends Model
     ];
 
     const TYPE_DEMO = 'demo';
+
     const TYPE_MONTHLY = 'monthly';
+
     const TYPE_YEARLY = 'yearly';
+
     const TYPE_LIFETIME = 'lifetime';
+
     const TYPE_PRODUCT = 'product';
 
     const STATUS_ACTIVE = 'active';
+
     const STATUS_EXPIRED = 'expired';
+
     const STATUS_REVOKED = 'revoked';
 
     public function product(): BelongsTo
@@ -88,12 +94,13 @@ class LicenseKey extends Model
         if ($this->expires_at === null) {
             return true;
         }
+
         return $this->expires_at->isPast();
     }
 
     public function isValid(): bool
     {
-        return $this->status === self::STATUS_ACTIVE && !$this->isExpired();
+        return $this->status === self::STATUS_ACTIVE && ! $this->isExpired();
     }
 
     public function daysRemaining(): int
@@ -104,6 +111,7 @@ class LicenseKey extends Model
         if ($this->expires_at === null) {
             return 0;
         }
+
         return max(0, (int) now()->diffInDays($this->expires_at, false));
     }
 
@@ -113,12 +121,13 @@ class LicenseKey extends Model
         for ($i = 0; $i < 4; $i++) {
             $segments[] = strtoupper(Str::random(4));
         }
+
         return implode('-', $segments);
     }
 
     public static function generateDemoKey(): string
     {
-        return 'DEMO-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4));
+        return 'DEMO-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
     }
 
     public function activateOnMachine(string $machineId, string $fingerprint): bool

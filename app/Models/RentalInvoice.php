@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class RentalInvoice extends Model
@@ -47,12 +47,17 @@ class RentalInvoice extends Model
     ];
 
     const TYPE_INVOICE = 'invoice';
+
     const TYPE_RECEIPT = 'receipt';
+
     const TYPE_TAX_INVOICE = 'tax_invoice';
 
     const STATUS_DRAFT = 'draft';
+
     const STATUS_SENT = 'sent';
+
     const STATUS_PAID = 'paid';
+
     const STATUS_VOID = 'void';
 
     protected static function boot()
@@ -60,7 +65,7 @@ class RentalInvoice extends Model
         parent::boot();
 
         static::creating(function ($invoice) {
-            if (!$invoice->invoice_number) {
+            if (! $invoice->invoice_number) {
                 $invoice->invoice_number = self::generateNumber($invoice->type);
             }
         });

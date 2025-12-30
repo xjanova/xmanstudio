@@ -50,7 +50,7 @@ return new class extends Migration
                 'license_type',
                 'last_validated_at',
                 'metadata',
-                'deleted_at'
+                'deleted_at',
             ]);
         });
     }

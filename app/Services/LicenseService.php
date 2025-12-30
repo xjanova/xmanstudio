@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use App\Models\LicenseKey;
-use App\Models\Product;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class LicenseService
 {
@@ -58,7 +56,7 @@ class LicenseService
 
         $license = LicenseKey::byKey($licenseKey)->first();
 
-        if (!$license) {
+        if (! $license) {
             return [
                 'success' => false,
                 'error' => 'License key ไม่ถูกต้อง',
@@ -86,7 +84,7 @@ class LicenseService
         }
 
         // Activate on machine
-        if (!$license->activateOnMachine($machineId, $machineFingerprint)) {
+        if (! $license->activateOnMachine($machineId, $machineFingerprint)) {
             return [
                 'success' => false,
                 'error' => 'ไม่สามารถเปิดใช้งาน License ได้',
@@ -124,7 +122,7 @@ class LicenseService
             ->byMachine($machineId)
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return [
                 'success' => false,
                 'is_valid' => false,
@@ -223,7 +221,7 @@ class LicenseService
             ->byMachine($machineId)
             ->first();
 
-        if (!$demo) {
+        if (! $demo) {
             return [
                 'has_used_demo' => false,
                 'can_start_demo' => true,

@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class RentalPayment extends Model
@@ -52,17 +52,27 @@ class RentalPayment extends Model
     protected $hidden = ['gateway_response', 'admin_notes'];
 
     const METHOD_PROMPTPAY = 'promptpay';
+
     const METHOD_BANK_TRANSFER = 'bank_transfer';
+
     const METHOD_CREDIT_CARD = 'credit_card';
+
     const METHOD_TRUEMONEY = 'truemoney';
+
     const METHOD_LINEPAY = 'linepay';
+
     const METHOD_MANUAL = 'manual';
 
     const STATUS_PENDING = 'pending';
+
     const STATUS_PROCESSING = 'processing';
+
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_FAILED = 'failed';
+
     const STATUS_REFUNDED = 'refunded';
+
     const STATUS_CANCELLED = 'cancelled';
 
     protected static function boot()
@@ -70,13 +80,13 @@ class RentalPayment extends Model
         parent::boot();
 
         static::creating(function ($payment) {
-            if (!$payment->uuid) {
+            if (! $payment->uuid) {
                 $payment->uuid = Str::uuid();
             }
-            if (!$payment->payment_reference) {
+            if (! $payment->payment_reference) {
                 $payment->payment_reference = self::generateReference();
             }
-            if (!$payment->net_amount) {
+            if (! $payment->net_amount) {
                 $payment->net_amount = $payment->amount - ($payment->fee ?? 0);
             }
         });

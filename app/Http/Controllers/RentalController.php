@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\RentalPackage;
-use App\Models\UserRental;
 use App\Models\RentalPayment;
+use App\Models\UserRental;
 use App\Services\RentalService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
@@ -36,7 +36,7 @@ class RentalController extends Controller
      */
     public function checkout(RentalPackage $package)
     {
-        if (!$package->is_active) {
+        if (! $package->is_active) {
             return redirect()->route('rental.index')
                 ->with('error', 'แพ็กเกจนี้ไม่พร้อมใช้งาน');
         }
@@ -76,12 +76,12 @@ class RentalController extends Controller
             $request->payment_method
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return back()->with('error', $result['error']);
         }
 
         // If free package, redirect to success
-        if (!$result['requires_payment']) {
+        if (! $result['requires_payment']) {
             return redirect()->route('rental.status')
                 ->with('success', 'เปิดใช้งานแพ็กเกจสำเร็จ');
         }
@@ -203,7 +203,7 @@ class RentalController extends Controller
 
         $result = $this->rentalService->cancelRental($rental, $request->reason);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return back()->with('error', $result['error']);
         }
 
