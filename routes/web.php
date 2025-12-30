@@ -5,6 +5,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\RentalController;
+use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use Illuminate\Support\Facades\Route;
 
 // Debug route - check this first on production: /debug-routes
@@ -65,3 +67,46 @@ Route::get('/support/{ticket}', [SupportTicketController::class, 'show'])->name(
 Route::get('/portfolio', function () {
     return view('portfolio');
 })->name('portfolio');
+
+// ==================== Rental System Routes ====================
+
+// Public rental pages
+Route::get('/rental', [RentalController::class, 'packages'])->name('rental.packages');
+
+// Authenticated rental routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/rental/status', [RentalController::class, 'status'])->name('rental.status');
+    Route::get('/rental/checkout/{package}', [RentalController::class, 'checkout'])->name('rental.checkout');
+    Route::post('/rental/subscribe/{package}', [RentalController::class, 'subscribe'])->name('rental.subscribe');
+    Route::post('/rental/validate-promo', [RentalController::class, 'validatePromo'])->name('rental.validate-promo');
+    Route::get('/rental/payment/{payment}', [RentalController::class, 'payment'])->name('rental.payment');
+    Route::post('/rental/payment/{payment}/confirm', [RentalController::class, 'confirmPayment'])->name('rental.confirm-payment');
+    Route::get('/rental/invoice/{invoice}', [RentalController::class, 'invoice'])->name('rental.invoice');
+});
+
+// ==================== Admin Routes ====================
+
+Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(function () {
+    // Rental Management
+    Route::get('/rentals', [AdminRentalController::class, 'index'])->name('rentals.index');
+    Route::get('/rentals/{rental}', [AdminRentalController::class, 'show'])->name('rentals.show');
+    Route::post('/rentals/{rental}/extend', [AdminRentalController::class, 'extend'])->name('rentals.extend');
+    Route::post('/rentals/{rental}/suspend', [AdminRentalController::class, 'suspend'])->name('rentals.suspend');
+    Route::post('/rentals/{rental}/reactivate', [AdminRentalController::class, 'reactivate'])->name('rentals.reactivate');
+
+    // Payment Management
+    Route::get('/rentals/payments', [AdminRentalController::class, 'payments'])->name('rentals.payments');
+    Route::post('/rentals/payments/{payment}/verify', [AdminRentalController::class, 'verifyPayment'])->name('rentals.payments.verify');
+    Route::post('/rentals/payments/{payment}/reject', [AdminRentalController::class, 'rejectPayment'])->name('rentals.payments.reject');
+
+    // Package Management
+    Route::get('/rentals/packages', [AdminRentalController::class, 'packages'])->name('rentals.packages');
+    Route::get('/rentals/packages/create', [AdminRentalController::class, 'createPackage'])->name('rentals.packages.create');
+    Route::post('/rentals/packages', [AdminRentalController::class, 'storePackage'])->name('rentals.packages.store');
+    Route::get('/rentals/packages/{package}/edit', [AdminRentalController::class, 'editPackage'])->name('rentals.packages.edit');
+    Route::put('/rentals/packages/{package}', [AdminRentalController::class, 'updatePackage'])->name('rentals.packages.update');
+    Route::post('/rentals/packages/{package}/toggle', [AdminRentalController::class, 'togglePackage'])->name('rentals.packages.toggle');
+
+    // Reports
+    Route::get('/rentals/reports', [AdminRentalController::class, 'reports'])->name('rentals.reports');
+});
