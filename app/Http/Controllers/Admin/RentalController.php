@@ -4,12 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\RentalPackage;
-use App\Models\UserRental;
 use App\Models\RentalPayment;
-use App\Models\User;
+use App\Models\UserRental;
 use App\Services\RentalService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class RentalController extends Controller
 {
@@ -80,8 +78,8 @@ class RentalController extends Controller
         $rental->update([
             'expires_at' => $newExpiresAt,
             'status' => UserRental::STATUS_ACTIVE,
-            'notes' => ($rental->notes ? $rental->notes . "\n" : '') .
-                "[" . now()->format('Y-m-d H:i') . "] ขยายเวลา {$request->days} วัน: {$request->reason}",
+            'notes' => ($rental->notes ? $rental->notes."\n" : '').
+                '['.now()->format('Y-m-d H:i')."] ขยายเวลา {$request->days} วัน: {$request->reason}",
         ]);
 
         return back()->with('success', "ขยายเวลาสำเร็จ {$request->days} วัน");
@@ -99,8 +97,8 @@ class RentalController extends Controller
 
         $rental->update([
             'status' => UserRental::STATUS_SUSPENDED,
-            'notes' => ($rental->notes ? $rental->notes . "\n" : '') .
-                "[" . now()->format('Y-m-d H:i') . "] ระงับ: {$request->reason}",
+            'notes' => ($rental->notes ? $rental->notes."\n" : '').
+                '['.now()->format('Y-m-d H:i')."] ระงับ: {$request->reason}",
         ]);
 
         return back()->with('success', 'ระงับการใช้งานสำเร็จ');
@@ -118,8 +116,8 @@ class RentalController extends Controller
 
         $rental->update([
             'status' => UserRental::STATUS_ACTIVE,
-            'notes' => ($rental->notes ? $rental->notes . "\n" : '') .
-                "[" . now()->format('Y-m-d H:i') . "] เปิดใช้งานอีกครั้ง",
+            'notes' => ($rental->notes ? $rental->notes."\n" : '').
+                '['.now()->format('Y-m-d H:i').'] เปิดใช้งานอีกครั้ง',
         ]);
 
         return back()->with('success', 'เปิดใช้งานอีกครั้งสำเร็จ');
@@ -166,7 +164,7 @@ class RentalController extends Controller
             $request->notes
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return back()->with('error', $result['error']);
         }
 
@@ -191,7 +189,7 @@ class RentalController extends Controller
         if ($payment->userRental) {
             $payment->userRental->update([
                 'status' => UserRental::STATUS_CANCELLED,
-                'notes' => 'การชำระเงินถูกปฏิเสธ: ' . $request->reason,
+                'notes' => 'การชำระเงินถูกปฏิเสธ: '.$request->reason,
             ]);
         }
 
@@ -208,7 +206,7 @@ class RentalController extends Controller
     {
         $packages = RentalPackage::withCount([
             'userRentals',
-            'userRentals as active_count' => fn($q) => $q->where('status', 'active'),
+            'userRentals as active_count' => fn ($q) => $q->where('status', 'active'),
         ])->orderBy('sort_order')->get();
 
         return view('admin.rentals.packages', compact('packages'));
@@ -296,9 +294,10 @@ class RentalController extends Controller
      */
     public function togglePackage(RentalPackage $package)
     {
-        $package->update(['is_active' => !$package->is_active]);
+        $package->update(['is_active' => ! $package->is_active]);
 
         $status = $package->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+
         return back()->with('success', "{$status}แพ็กเกจแล้ว");
     }
 
@@ -314,7 +313,7 @@ class RentalController extends Controller
         $endDate = $request->input('end_date', now()->toDateString());
 
         $payments = RentalPayment::where('status', 'completed')
-            ->whereBetween('paid_at', [$startDate, $endDate . ' 23:59:59'])
+            ->whereBetween('paid_at', [$startDate, $endDate.' 23:59:59'])
             ->get();
 
         $stats = [
@@ -324,16 +323,16 @@ class RentalController extends Controller
         ];
 
         // Group by day
-        $chartData = $payments->groupBy(fn($p) => $p->paid_at->format('Y-m-d'))
-            ->map(fn($items, $date) => [
+        $chartData = $payments->groupBy(fn ($p) => $p->paid_at->format('Y-m-d'))
+            ->map(fn ($items, $date) => [
                 'date' => $date,
                 'revenue' => $items->sum('amount'),
                 'count' => $items->count(),
             ])->values();
 
         // By package
-        $byPackage = $payments->groupBy(fn($p) => $p->userRental?->rentalPackage?->name ?? 'ไม่ระบุ')
-            ->map(fn($items, $name) => [
+        $byPackage = $payments->groupBy(fn ($p) => $p->userRental?->rentalPackage?->name ?? 'ไม่ระบุ')
+            ->map(fn ($items, $name) => [
                 'name' => $name,
                 'revenue' => $items->sum('amount'),
                 'count' => $items->count(),

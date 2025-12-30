@@ -31,7 +31,7 @@ return new class extends Migration
                 'credit_card',
                 'truemoney',
                 'linepay',
-                'manual'
+                'manual',
             ])->default('promptpay');
 
             // Status
@@ -41,7 +41,7 @@ return new class extends Migration
                 'completed',
                 'failed',
                 'refunded',
-                'cancelled'
+                'cancelled',
             ])->default('pending');
 
             // Gateway Info

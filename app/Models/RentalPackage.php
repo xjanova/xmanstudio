@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RentalPackage extends Model
 {
@@ -75,6 +75,7 @@ class RentalPackage extends Model
     public function getDisplayNameAttribute(): string
     {
         $locale = app()->getLocale();
+
         return $locale === 'th' && $this->name_th ? $this->name_th : $this->name;
     }
 
@@ -100,7 +101,7 @@ class RentalPackage extends Model
      */
     public function getDiscountPercentageAttribute(): ?int
     {
-        if (!$this->original_price || $this->original_price <= $this->price) {
+        if (! $this->original_price || $this->original_price <= $this->price) {
             return null;
         }
 
@@ -127,7 +128,7 @@ class RentalPackage extends Model
      */
     public function getFormattedPrice(): string
     {
-        return number_format($this->price, 0) . ' ' . $this->currency;
+        return number_format($this->price, 0).' '.$this->currency;
     }
 
     /**

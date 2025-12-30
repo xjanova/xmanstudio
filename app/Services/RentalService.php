@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use App\Models\RentalPackage;
-use App\Models\UserRental;
-use App\Models\RentalPayment;
 use App\Models\PromoCode;
 use App\Models\RentalInvoice;
+use App\Models\RentalPackage;
+use App\Models\RentalPayment;
+use App\Models\User;
+use App\Models\UserRental;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -22,7 +22,7 @@ class RentalService
             ->orderBy('sort_order')
             ->orderBy('price');
 
-        if (!$includeTrial) {
+        if (! $includeTrial) {
             $query->where('price', '>', 0);
         }
 
@@ -107,7 +107,7 @@ class RentalService
         // Check if free trial and user has used trial before
         if ($package->has_trial && $package->price == 0) {
             $hasUsedTrial = $user->rentals()
-                ->whereHas('rentalPackage', fn($q) => $q->where('has_trial', true))
+                ->whereHas('rentalPackage', fn ($q) => $q->where('has_trial', true))
                 ->exists();
 
             if ($hasUsedTrial) {
@@ -158,6 +158,7 @@ class RentalService
             // If free (trial or fully discounted), no payment needed
             if ($finalAmount == 0) {
                 DB::commit();
+
                 return [
                     'success' => true,
                     'rental' => $rental,
@@ -270,7 +271,7 @@ class RentalService
         int $adminId,
         ?string $notes = null
     ): array {
-        if (!in_array($payment->status, [RentalPayment::STATUS_PENDING, RentalPayment::STATUS_PROCESSING])) {
+        if (! in_array($payment->status, [RentalPayment::STATUS_PENDING, RentalPayment::STATUS_PROCESSING])) {
             return [
                 'success' => false,
                 'error' => 'สถานะการชำระเงินไม่ถูกต้อง',
@@ -313,7 +314,7 @@ class RentalService
      */
     public function cancelRental(UserRental $rental, ?string $reason = null): array
     {
-        if (!in_array($rental->status, [UserRental::STATUS_PENDING, UserRental::STATUS_ACTIVE])) {
+        if (! in_array($rental->status, [UserRental::STATUS_PENDING, UserRental::STATUS_ACTIVE])) {
             return [
                 'success' => false,
                 'error' => 'ไม่สามารถยกเลิกการเช่านี้ได้',
@@ -339,6 +340,7 @@ class RentalService
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return [
                 'success' => false,
                 'error' => 'เกิดข้อผิดพลาดในการยกเลิก',
@@ -353,7 +355,7 @@ class RentalService
     {
         $promo = PromoCode::active()->byCode($code)->first();
 
-        if (!$promo) {
+        if (! $promo) {
             return [
                 'valid' => false,
                 'message' => 'ไม่พบโค้ดส่วนลดนี้',
@@ -361,13 +363,13 @@ class RentalService
         }
 
         $validation = $promo->canBeUsedBy($user);
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             return $validation;
         }
 
         // Check package applicability
         if ($packageId && $promo->applicable_packages) {
-            if (!in_array($packageId, $promo->applicable_packages)) {
+            if (! in_array($packageId, $promo->applicable_packages)) {
                 return [
                     'valid' => false,
                     'message' => 'โค้ดนี้ไม่สามารถใช้กับแพ็กเกจนี้ได้',

@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PromoCode extends Model
 {
@@ -111,7 +111,7 @@ class PromoCode extends Model
     {
         // Check package applicability
         if ($this->applicable_packages && $packageId) {
-            if (!in_array($packageId, $this->applicable_packages)) {
+            if (! in_array($packageId, $this->applicable_packages)) {
                 return 0;
             }
         }
@@ -157,6 +157,7 @@ class PromoCode extends Model
         if ($this->discount_type === 'percentage') {
             return "ลด {$this->discount_value}%";
         }
-        return "ลด " . number_format($this->discount_value, 0) . " บาท";
+
+        return 'ลด '.number_format($this->discount_value, 0).' บาท';
     }
 }

@@ -4,10 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserRental extends Model
 {
@@ -45,9 +44,13 @@ class UserRental extends Model
     protected $appends = ['is_active', 'is_expired', 'days_remaining'];
 
     const STATUS_PENDING = 'pending';
+
     const STATUS_ACTIVE = 'active';
+
     const STATUS_EXPIRED = 'expired';
+
     const STATUS_CANCELLED = 'cancelled';
+
     const STATUS_SUSPENDED = 'suspended';
 
     /**
@@ -105,9 +108,10 @@ class UserRental extends Model
      */
     public function getIsActiveAttribute(): bool
     {
-        if (!$this->expires_at) {
+        if (! $this->expires_at) {
             return false;
         }
+
         return $this->status === self::STATUS_ACTIVE
             && $this->expires_at->isFuture();
     }
@@ -117,9 +121,10 @@ class UserRental extends Model
      */
     public function getIsExpiredAttribute(): bool
     {
-        if (!$this->expires_at) {
+        if (! $this->expires_at) {
             return false;
         }
+
         return $this->expires_at->isPast();
     }
 
@@ -128,7 +133,7 @@ class UserRental extends Model
      */
     public function getDaysRemainingAttribute(): int
     {
-        if (!$this->expires_at || $this->is_expired) {
+        if (! $this->expires_at || $this->is_expired) {
             return 0;
         }
 
@@ -159,6 +164,7 @@ class UserRental extends Model
     public function expire(): bool
     {
         $this->update(['status' => self::STATUS_EXPIRED]);
+
         return true;
     }
 
@@ -171,7 +177,7 @@ class UserRental extends Model
             'status' => self::STATUS_CANCELLED,
             'cancelled_at' => now(),
             'auto_renew' => false,
-            'notes' => $reason ? ($this->notes . "\nยกเลิก: " . $reason) : $this->notes,
+            'notes' => $reason ? ($this->notes."\nยกเลิก: ".$reason) : $this->notes,
         ]);
 
         return true;

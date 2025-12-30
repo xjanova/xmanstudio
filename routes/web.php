@@ -1,12 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\RentalController;
-use App\Http\Controllers\Admin\RentalController as AdminRentalController;
+use App\Http\Controllers\SupportTicketController;
 use Illuminate\Support\Facades\Route;
 
 // Debug route - check this first on production: /debug-routes
