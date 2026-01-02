@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\PaymentSettingController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\CartController;
@@ -129,4 +131,23 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::put('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'updateBank'])->name('payment-settings.bank.update');
     Route::post('/payment-settings/bank/{bankAccount}/toggle', [PaymentSettingController::class, 'toggleBank'])->name('payment-settings.bank.toggle');
     Route::delete('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'destroyBank'])->name('payment-settings.bank.destroy');
+
+    // License Management
+    Route::get('/licenses', [AdminLicenseController::class, 'index'])->name('licenses.index');
+    Route::get('/licenses/create', [AdminLicenseController::class, 'create'])->name('licenses.create');
+    Route::post('/licenses', [AdminLicenseController::class, 'store'])->name('licenses.store');
+    Route::get('/licenses/{license}', [AdminLicenseController::class, 'show'])->name('licenses.show');
+    Route::post('/licenses/{license}/revoke', [AdminLicenseController::class, 'revoke'])->name('licenses.revoke');
+    Route::post('/licenses/{license}/reactivate', [AdminLicenseController::class, 'reactivate'])->name('licenses.reactivate');
+    Route::post('/licenses/{license}/reset-machine', [AdminLicenseController::class, 'resetMachine'])->name('licenses.reset-machine');
+    Route::post('/licenses/{license}/extend', [AdminLicenseController::class, 'extend'])->name('licenses.extend');
+
+    // Product Management
+    Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
+    Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
+    Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
+    Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
+    Route::put('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
+    Route::post('/products/{product}/toggle', [AdminProductController::class, 'toggle'])->name('products.toggle');
+    Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('products.destroy');
 });

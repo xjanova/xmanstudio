@@ -102,6 +102,40 @@ class LicenseApiController extends Controller
     }
 
     /**
+     * Deactivate license
+     * POST /api/license/deactivate
+     */
+    public function deactivate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'license_key' => 'required|string',
+            'machine_id' => 'required|string',
+        ]);
+
+        $result = $this->licenseService->deactivate(
+            $request->license_key,
+            $request->machine_id
+        );
+
+        $statusCode = $result['success'] ? 200 : 400;
+
+        return response()->json($result, $statusCode);
+    }
+
+    /**
+     * Get license status
+     * GET /api/license/status/{licenseKey}
+     */
+    public function status(string $licenseKey): JsonResponse
+    {
+        $result = $this->licenseService->getStatus($licenseKey);
+
+        $statusCode = $result['success'] ? 200 : 404;
+
+        return response()->json($result, $statusCode);
+    }
+
+    /**
      * Generate licenses (Admin only)
      * POST /api/license/generate
      */
