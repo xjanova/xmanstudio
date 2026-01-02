@@ -3,7 +3,7 @@
 #########################################################
 # XMAN Studio - Quick Installation Script
 # Fast installation with default settings
-# Perfect for development and testing
+# For DirectAdmin hosting (uses public_html)
 #########################################################
 
 set -e
@@ -14,14 +14,19 @@ CYAN='\033[0;36m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 echo -e "${CYAN}"
 echo "╔══════════════════════════════════════════════╗"
 echo "║  🚀 XMAN Studio - Quick Install 🚀          ║"
-echo "║  Installation time: ~5 minutes              ║"
+echo "║  DirectAdmin Hosting Compatible             ║"
 echo "╚══════════════════════════════════════════════╝"
 echo -e "${NC}\n"
 
 echo -e "${YELLOW}This will install XMAN Studio with default settings.${NC}"
+echo -e "${YELLOW}Install directory: $SCRIPT_DIR${NC}"
 echo -e "${YELLOW}Press Enter to continue or Ctrl+C to cancel...${NC}"
 read
 
@@ -65,13 +70,13 @@ echo -e "${GREEN}✓ Database migrated and seeded${NC}"
 echo -e "\n${CYAN}[7/8] Setting permissions...${NC}"
 chmod -R 775 storage bootstrap/cache
 php artisan storage:link
-echo -e "${GREEN}✓ Permissions set${NC}"
+echo -e "${GREEN}✓ Permissions set (storage linked to public_html/storage)${NC}"
 
 # Step 8: Build assets
 echo -e "\n${CYAN}[8/8] Building frontend assets...${NC}"
 if command -v npm >/dev/null 2>&1; then
     npm run build
-    echo -e "${GREEN}✓ Assets built${NC}"
+    echo -e "${GREEN}✓ Assets built to public_html/build${NC}"
 else
     echo -e "${YELLOW}⚠ NPM not found, skipping asset build${NC}"
 fi
@@ -84,13 +89,16 @@ echo -e "\n${GREEN}╔═══════════════════�
 echo -e "${GREEN}║  ✓ Installation Completed Successfully!     ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}\n"
 
-echo -e "${CYAN}🚀 Quick Start:${NC}"
+echo -e "${CYAN}DirectAdmin Setup:${NC}"
+echo -e "   Document root: ${GREEN}$SCRIPT_DIR/public_html${NC}"
+
+echo -e "\n${CYAN}🚀 Quick Start (for development):${NC}"
 echo -e "   ${GREEN}php artisan serve${NC}"
 echo -e "\n${CYAN}📱 Access your application at:${NC}"
 echo -e "   ${GREEN}http://localhost:8000${NC}\n"
 
 echo -e "${CYAN}📚 Next Steps:${NC}"
-echo -e "   1. Visit your application in a browser"
+echo -e "   1. Set domain document root to public_html"
 echo -e "   2. Customize .env file for your needs"
 echo -e "   3. Read README_XMANSTUDIO.md for documentation\n"
 

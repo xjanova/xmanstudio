@@ -15,9 +15,14 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 echo -e "${CYAN}"
 echo "╔════════════════════════════════════════════╗"
 echo "║   🚀 XMAN Studio - Quick Deploy 🚀        ║"
+echo "║   DirectAdmin Hosting Compatible          ║"
 echo "╚════════════════════════════════════════════╝"
 echo -e "${NC}"
 

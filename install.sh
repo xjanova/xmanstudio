@@ -2,7 +2,8 @@
 
 #########################################################
 # XMAN Studio - Installation Wizard
-# Interactive installation script for first-time setup
+# Interactive installation script for DirectAdmin hosting
+# Installs in the same directory as the script (no subdirectory created)
 #########################################################
 
 set -e
@@ -16,6 +17,10 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 # Logo
 print_logo() {
     echo -e "${CYAN}"
@@ -24,7 +29,7 @@ print_logo() {
     echo "║              🚀 XMAN STUDIO INSTALLER 🚀             ║"
     echo "║                                                       ║"
     echo "║          IT Solutions & Software Development         ║"
-    echo "║                    Version 1.0.0                     ║"
+    echo "║           DirectAdmin Hosting Compatible             ║"
     echo "║                                                       ║"
     echo "╚═══════════════════════════════════════════════════════╝"
     echo -e "${NC}"
@@ -124,6 +129,7 @@ check_requirements() {
     fi
 
     print_success "\nAll required dependencies are installed!"
+    print_info "Installation directory: $SCRIPT_DIR"
 }
 
 # Get user input
@@ -172,16 +178,16 @@ configure_environment() {
     # Application settings
     echo -e "\n${CYAN}Application Settings:${NC}"
     APP_NAME=$(get_input "Application Name" "XMAN Studio")
-    APP_ENV=$(get_input "Environment (local/production)" "local")
-    APP_DEBUG=$(get_input "Debug Mode (true/false)" "true")
-    APP_URL=$(get_input "Application URL" "http://localhost:8000")
+    APP_ENV=$(get_input "Environment (local/production)" "production")
+    APP_DEBUG=$(get_input "Debug Mode (true/false)" "false")
+    APP_URL=$(get_input "Application URL" "https://yourdomain.com")
 
     # Database settings
     echo -e "\n${CYAN}Database Configuration:${NC}"
     DB_CONNECTION=$(get_input "Database Type (mysql/sqlite)" "mysql")
 
     if [ "$DB_CONNECTION" = "mysql" ]; then
-        DB_HOST=$(get_input "Database Host" "127.0.0.1")
+        DB_HOST=$(get_input "Database Host" "localhost")
         DB_PORT=$(get_input "Database Port" "3306")
         DB_DATABASE=$(get_input "Database Name" "xmanstudio")
         DB_USERNAME=$(get_input "Database Username" "root")
@@ -348,10 +354,10 @@ final_setup() {
         print_success "Application optimized"
     fi
 
-    # Create symbolic link for storage
+    # Create symbolic link for storage (public_html/storage -> storage/app/public)
     print_info "Creating storage symbolic link..."
     php artisan storage:link
-    print_success "Storage linked"
+    print_success "Storage linked to public_html/storage"
 }
 
 # Print completion message
@@ -364,25 +370,29 @@ print_completion() {
     echo "╚═══════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 
-    echo -e "\n${CYAN}Next Steps:${NC}"
-    echo -e "${YELLOW}1.${NC} Start the development server:"
-    echo -e "   ${GREEN}php artisan serve${NC}"
-    echo -e "\n${YELLOW}2.${NC} Visit your application:"
+    echo -e "\n${CYAN}DirectAdmin Hosting Setup:${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "The application is installed in: ${GREEN}$SCRIPT_DIR${NC}"
+    echo -e ""
+    echo -e "${PURPLE}Document Root Configuration:${NC}"
+    echo -e "Set your domain's document root to:"
+    echo -e "   ${GREEN}$SCRIPT_DIR/public_html${NC}"
+    echo -e ""
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
+    echo -e "\n${CYAN}Visit your application at:${NC}"
     if grep -q "APP_URL=" .env; then
         APP_URL=$(grep "APP_URL=" .env | cut -d '=' -f2)
         echo -e "   ${GREEN}$APP_URL${NC}"
     else
-        echo -e "   ${GREEN}http://localhost:8000${NC}"
+        echo -e "   ${GREEN}https://yourdomain.com${NC}"
     fi
-
-    echo -e "\n${YELLOW}3.${NC} For production deployment, run:"
-    echo -e "   ${GREEN}./deploy.sh${NC}"
 
     echo -e "\n${CYAN}Useful Commands:${NC}"
     echo -e "  ${GREEN}./clear-cache.sh${NC}      - Clear all caches"
     echo -e "  ${GREEN}./fix-permissions.sh${NC}  - Fix file permissions"
     echo -e "  ${GREEN}./run-migrations.sh${NC}   - Run database migrations"
+    echo -e "  ${GREEN}./deploy.sh${NC}           - Deploy updates"
 
     echo -e "\n${PURPLE}📖 Documentation:${NC} README_XMANSTUDIO.md"
     echo -e "${PURPLE}🆘 Support:${NC} support@xmanstudio.com"
@@ -397,7 +407,9 @@ main() {
     print_logo
 
     echo -e "${YELLOW}This wizard will guide you through the installation process.${NC}"
-    echo -e "${YELLOW}Press Enter to continue or Ctrl+C to cancel...${NC}"
+    echo -e "${YELLOW}Installation will be in the current directory: ${GREEN}$SCRIPT_DIR${NC}"
+    echo -e "${YELLOW}No additional subdirectory will be created.${NC}"
+    echo -e "\n${YELLOW}Press Enter to continue or Ctrl+C to cancel...${NC}"
     read
 
     check_requirements

@@ -7,9 +7,11 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
+            publicDirectory: 'public_html',
         }),
         tailwindcss(),
     ],
+    publicDir: 'public_html',
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

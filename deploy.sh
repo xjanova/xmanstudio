@@ -26,8 +26,13 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 print_header() {
     echo -e "\n${CYAN}╔════════════════════════════════════════════╗${NC}"
     echo -e "${CYAN}║   🚀 XMAN Studio Deployment Script 🚀    ║${NC}"
+    echo -e "${CYAN}║     DirectAdmin Hosting Compatible        ║${NC}"
     echo -e "${CYAN}╚════════════════════════════════════════════╝${NC}\n"
 }
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 print_step() {
     echo -e "\n${BLUE}━━━ $1 ━━━${NC}"
