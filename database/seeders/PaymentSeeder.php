@@ -96,7 +96,7 @@ class PaymentSeeder extends Seeder
 
             foreach ($bankAccounts as $account) {
                 // Only create if account number is provided
-                if (!empty($account['account_number'])) {
+                if (! empty($account['account_number'])) {
                     BankAccount::create($account);
                 }
             }

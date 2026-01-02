@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create admin user if not exists
-        if (!User::where('email', 'admin@xmanstudio.com')->exists()) {
+        if (! User::where('email', 'admin@xmanstudio.com')->exists()) {
             User::create([
                 'name' => 'Admin',
                 'email' => 'admin@xmanstudio.com',
@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // Create super admin if not exists
-        if (!User::where('email', env('SUPER_ADMIN_EMAIL', 'superadmin@xmanstudio.com'))->exists()) {
+        if (! User::where('email', env('SUPER_ADMIN_EMAIL', 'superadmin@xmanstudio.com'))->exists()) {
             User::create([
                 'name' => 'Super Admin',
                 'email' => env('SUPER_ADMIN_EMAIL', 'superadmin@xmanstudio.com'),
