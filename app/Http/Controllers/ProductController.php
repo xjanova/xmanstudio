@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Service;
 
 class ProductController extends Controller
 {
@@ -37,157 +38,23 @@ class ProductController extends Controller
 
     public function services()
     {
-        $services = [
-            [
-                'slug' => 'blockchain',
-                'name' => 'Blockchain Development',
-                'description' => 'พัฒนาโซลูชั่น Blockchain, Smart Contracts, DApp และ Cryptocurrency',
-                'icon' => '🔗',
-                'features' => [
-                    'Smart Contract Development',
-                    'DApp Development',
-                    'Cryptocurrency Development',
-                    'NFT Platform',
-                    'Blockchain Consulting',
-                ],
-            ],
-            [
-                'slug' => 'web',
-                'name' => 'เว็บไซต์สมัยใหม่',
-                'description' => 'ออกแบบและพัฒนาเว็บไซต์ที่ทันสมัย Responsive รองรับทุกอุปกรณ์',
-                'icon' => '🌐',
-                'features' => [
-                    'Responsive Web Design',
-                    'E-commerce Website',
-                    'Corporate Website',
-                    'Web Application',
-                    'CMS Development',
-                ],
-            ],
-            [
-                'slug' => 'mobile',
-                'name' => 'แอพพลิเคชัน',
-                'description' => 'พัฒนาแอพ iOS และ Android ด้วย Flutter',
-                'icon' => '📱',
-                'features' => [
-                    'iOS App Development',
-                    'Android App Development',
-                    'Cross-platform with Flutter',
-                    'App UI/UX Design',
-                    'App Maintenance & Support',
-                ],
-            ],
-            [
-                'slug' => 'iot',
-                'name' => 'IoT Solutions',
-                'description' => 'ออกแบบและพัฒนาระบบ Internet of Things',
-                'icon' => '⚡',
-                'features' => [
-                    'IoT Device Development',
-                    'Sensor Integration',
-                    'IoT Platform Development',
-                    'Smart Home Solutions',
-                    'Industrial IoT',
-                ],
-            ],
-            [
-                'slug' => 'network-security',
-                'name' => 'Network & IT Security',
-                'description' => 'ออกแบบ ติดตั้งระบบ Network และ IT Security',
-                'icon' => '🔒',
-                'features' => [
-                    'Network Design & Setup',
-                    'Firewall Configuration',
-                    'Security Audit',
-                    'Penetration Testing',
-                    'IT Infrastructure',
-                ],
-            ],
-            [
-                'slug' => 'custom-software',
-                'name' => 'Custom Software',
-                'description' => 'เขียนโปรแกรมเฉพาะธุรกิจตามความต้องการ',
-                'icon' => '💻',
-                'features' => [
-                    'Business Software Development',
-                    'ERP Systems',
-                    'CRM Systems',
-                    'Inventory Management',
-                    'Custom Solutions',
-                ],
-            ],
-            [
-                'slug' => 'ai',
-                'name' => 'AI Services',
-                'description' => 'บริการด้าน AI: วีดีโอ สื่อโฆษณา เพลง และอื่นๆ',
-                'icon' => '🤖',
-                'features' => [
-                    'AI Video Generation',
-                    'AI Advertising Content',
-                    'AI Music Generation',
-                    'Machine Learning Solutions',
-                    'AI Consulting',
-                ],
-            ],
-            [
-                'slug' => 'flutter',
-                'name' => 'Flutter & Android Studio',
-                'description' => 'พัฒนาแอพด้วย Flutter บน Android Studio',
-                'icon' => '📲',
-                'features' => [
-                    'Flutter Development',
-                    'Android Studio Setup',
-                    'Cross-platform Apps',
-                    'Flutter Training',
-                    'App Publishing Support',
-                ],
-            ],
-        ];
+        $services = Service::active()->ordered()->get();
 
         return view('services.index', compact('services'));
     }
 
     public function serviceDetail($slug)
     {
-        $services = $this->getServicesData();
-        $service = collect($services)->firstWhere('slug', $slug);
+        $service = Service::where('slug', $slug)
+            ->active()
+            ->firstOrFail();
 
-        if (! $service) {
-            abort(404);
-        }
+        $relatedServices = Service::active()
+            ->where('id', '!=', $service->id)
+            ->ordered()
+            ->take(3)
+            ->get();
 
-        return view('services.show', compact('service'));
-    }
-
-    private function getServicesData()
-    {
-        return [
-            [
-                'slug' => 'blockchain',
-                'name' => 'Blockchain Development',
-                'description' => 'พัฒนาโซลูชั่น Blockchain, Smart Contracts, DApp และ Cryptocurrency',
-                'icon' => '🔗',
-                'features' => [
-                    'Smart Contract Development',
-                    'DApp Development',
-                    'Cryptocurrency Development',
-                    'NFT Platform',
-                    'Blockchain Consulting',
-                ],
-            ],
-            [
-                'slug' => 'web',
-                'name' => 'เว็บไซต์สมัยใหม่',
-                'description' => 'ออกแบบและพัฒนาเว็บไซต์ที่ทันสมัย Responsive รองรับทุกอุปกรณ์',
-                'icon' => '🌐',
-                'features' => [
-                    'Responsive Web Design',
-                    'E-commerce Website',
-                    'Corporate Website',
-                    'Web Application',
-                    'CMS Development',
-                ],
-            ],
-        ];
+        return view('services.show', compact('service', 'relatedServices'));
     }
 }

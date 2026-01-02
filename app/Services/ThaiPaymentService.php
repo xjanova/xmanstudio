@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\BankAccount;
+use App\Models\PaymentSetting;
+
 class ThaiPaymentService
 {
     protected string $promptpayNumber;
@@ -10,8 +13,35 @@ class ThaiPaymentService
 
     public function __construct()
     {
-        $this->promptpayNumber = config('payment.promptpay.number', '0812345678');
-        $this->bankAccounts = config('payment.bank_accounts', []);
+        // Get PromptPay number from database, fallback to config
+        $this->promptpayNumber = PaymentSetting::get('promptpay_number')
+            ?? config('payment.promptpay.number', '0812345678');
+
+        // Get bank accounts from database
+        $this->bankAccounts = $this->loadBankAccounts();
+    }
+
+    /**
+     * Load bank accounts from database
+     */
+    protected function loadBankAccounts(): array
+    {
+        $accounts = BankAccount::active()->ordered()->get();
+
+        if ($accounts->isEmpty()) {
+            // Fallback to config if no accounts in database
+            return config('payment.bank_accounts', []);
+        }
+
+        return $accounts->map(function ($account) {
+            return [
+                'bank' => $account->bank_name,
+                'bank_code' => $account->bank_code,
+                'account_number' => $account->account_number,
+                'account_name' => $account->account_name,
+                'branch' => $account->branch,
+            ];
+        })->toArray();
     }
 
     /**
@@ -19,6 +49,12 @@ class ThaiPaymentService
      */
     public function getSupportedMethods(): array
     {
+        // Get settings from database
+        $promptpayEnabled = PaymentSetting::get('promptpay_enabled', true);
+        $bankTransferEnabled = PaymentSetting::get('bank_transfer_enabled', true);
+        $cardEnabled = PaymentSetting::get('card_payment_enabled')
+            ?? config('payment.card.enabled', false);
+
         return [
             [
                 'id' => 'promptpay',
@@ -26,7 +62,7 @@ class ThaiPaymentService
                 'name_en' => 'PromptPay',
                 'icon' => 'promptpay',
                 'description' => 'สแกน QR Code เพื่อชำระเงิน',
-                'is_active' => true,
+                'is_active' => $promptpayEnabled,
             ],
             [
                 'id' => 'bank_transfer',
@@ -34,7 +70,7 @@ class ThaiPaymentService
                 'name_en' => 'Bank Transfer',
                 'icon' => 'bank',
                 'description' => 'โอนเงินผ่านธนาคาร',
-                'is_active' => true,
+                'is_active' => $bankTransferEnabled,
             ],
             [
                 'id' => 'credit_card',
@@ -42,7 +78,7 @@ class ThaiPaymentService
                 'name_en' => 'Credit/Debit Card',
                 'icon' => 'card',
                 'description' => 'ชำระด้วยบัตรเครดิตหรือเดบิต',
-                'is_active' => config('payment.card.enabled', false),
+                'is_active' => $cardEnabled,
             ],
         ];
     }
@@ -70,22 +106,9 @@ class ThaiPaymentService
      */
     public function getBankTransferInfo(): array
     {
-        return $this->bankAccounts ?: [
-            [
-                'bank' => 'ธนาคารกสิกรไทย',
-                'bank_code' => 'KBANK',
-                'account_number' => 'XXX-X-XXXXX-X',
-                'account_name' => 'XMAN Studio Co., Ltd.',
-                'branch' => 'สาขาสยามพารากอน',
-            ],
-            [
-                'bank' => 'ธนาคารไทยพาณิชย์',
-                'bank_code' => 'SCB',
-                'account_number' => 'XXX-X-XXXXX-X',
-                'account_name' => 'XMAN Studio Co., Ltd.',
-                'branch' => 'สาขาเซ็นทรัลเวิลด์',
-            ],
-        ];
+        // Return bank accounts loaded from database
+        // If no accounts in database, will fallback to config in loadBankAccounts()
+        return $this->bankAccounts;
     }
 
     /**

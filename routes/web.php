@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
+use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
@@ -109,4 +111,22 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
 
     // Reports
     Route::get('/rentals/reports', [AdminRentalController::class, 'reports'])->name('rentals.reports');
+
+    // Service Management
+    Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+    Route::get('/services/create', [ServiceController::class, 'create'])->name('services.create');
+    Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
+    Route::get('/services/{service}/edit', [ServiceController::class, 'edit'])->name('services.edit');
+    Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
+    Route::post('/services/{service}/toggle', [ServiceController::class, 'toggle'])->name('services.toggle');
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+    Route::post('/services/order', [ServiceController::class, 'updateOrder'])->name('services.order');
+
+    // Payment Settings Management
+    Route::get('/payment-settings', [PaymentSettingController::class, 'index'])->name('payment-settings.index');
+    Route::put('/payment-settings', [PaymentSettingController::class, 'update'])->name('payment-settings.update');
+    Route::post('/payment-settings/bank', [PaymentSettingController::class, 'storeBank'])->name('payment-settings.bank.store');
+    Route::put('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'updateBank'])->name('payment-settings.bank.update');
+    Route::post('/payment-settings/bank/{bankAccount}/toggle', [PaymentSettingController::class, 'toggleBank'])->name('payment-settings.bank.toggle');
+    Route::delete('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'destroyBank'])->name('payment-settings.bank.destroy');
 });
