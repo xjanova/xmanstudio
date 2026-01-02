@@ -236,4 +236,107 @@ class LicenseService
             'days_remaining' => $demo->daysRemaining(),
         ];
     }
+
+    /**
+     * Deactivate license from machine
+     */
+    public function deactivate(string $licenseKey, string $machineId): array
+    {
+        $licenseKey = strtoupper(trim($licenseKey));
+
+        $license = LicenseKey::byKey($licenseKey)
+            ->byMachine($machineId)
+            ->first();
+
+        if (! $license) {
+            return [
+                'success' => false,
+                'error' => 'License ไม่ถูกต้องหรือไม่ตรงกับเครื่อง',
+                'code' => 'INVALID',
+            ];
+        }
+
+        // Clear machine info
+        $license->update([
+            'machine_id' => null,
+            'machine_fingerprint' => null,
+            'activations' => max(0, $license->activations - 1),
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'ยกเลิกการเปิดใช้งาน License สำเร็จ',
+            'data' => [
+                'license_key' => $license->license_key,
+                'can_reactivate' => $license->activations < $license->max_activations,
+            ],
+        ];
+    }
+
+    /**
+     * Get license status
+     */
+    public function getStatus(string $licenseKey): array
+    {
+        $licenseKey = strtoupper(trim($licenseKey));
+
+        $license = LicenseKey::byKey($licenseKey)->first();
+
+        if (! $license) {
+            return [
+                'success' => false,
+                'error' => 'License key ไม่ถูกต้อง',
+                'code' => 'NOT_FOUND',
+            ];
+        }
+
+        return [
+            'success' => true,
+            'data' => [
+                'license_key' => $license->license_key,
+                'type' => $license->license_type,
+                'status' => $license->status,
+                'is_valid' => $license->isValid(),
+                'is_expired' => $license->isExpired(),
+                'is_activated' => ! empty($license->machine_id),
+                'activated_at' => $license->activated_at?->toISOString(),
+                'expires_at' => $license->expires_at?->toISOString(),
+                'days_remaining' => $license->daysRemaining(),
+                'activations' => $license->activations,
+                'max_activations' => $license->max_activations,
+            ],
+        ];
+    }
+
+    /**
+     * Revoke license
+     */
+    public function revoke(string $licenseKey, ?string $reason = null): array
+    {
+        $licenseKey = strtoupper(trim($licenseKey));
+
+        $license = LicenseKey::byKey($licenseKey)->first();
+
+        if (! $license) {
+            return [
+                'success' => false,
+                'error' => 'License key ไม่ถูกต้อง',
+                'code' => 'NOT_FOUND',
+            ];
+        }
+
+        $metadata = $license->metadata ?? [];
+        $metadata['revoked_at'] = now()->toISOString();
+        $metadata['revoked_reason'] = $reason;
+
+        $license->update([
+            'status' => LicenseKey::STATUS_REVOKED,
+            'metadata' => $metadata,
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'ยกเลิก License สำเร็จ',
+        ];
+    }
 }
