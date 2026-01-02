@@ -102,10 +102,10 @@ class Service extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        if (!$this->starting_price) {
+        if (! $this->starting_price) {
             return 'ติดต่อสอบถาม';
         }
 
-        return number_format($this->starting_price) . ' บาท/' . $this->price_unit;
+        return number_format($this->starting_price).' บาท/'.$this->price_unit;
     }
 }

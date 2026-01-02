@@ -139,7 +139,7 @@ class PaymentSettingController extends Controller
      */
     public function toggleBank(BankAccount $bankAccount)
     {
-        $bankAccount->update(['is_active' => !$bankAccount->is_active]);
+        $bankAccount->update(['is_active' => ! $bankAccount->is_active]);
 
         $status = $bankAccount->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
 

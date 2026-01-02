@@ -90,7 +90,7 @@ class ServiceController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_th' => 'nullable|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:services,slug,' . $service->id,
+            'slug' => 'nullable|string|max:255|unique:services,slug,'.$service->id,
             'description' => 'required|string',
             'description_th' => 'nullable|string',
             'icon' => 'nullable|string|max:50',
@@ -134,7 +134,7 @@ class ServiceController extends Controller
      */
     public function toggle(Service $service)
     {
-        $service->update(['is_active' => !$service->is_active]);
+        $service->update(['is_active' => ! $service->is_active]);
 
         $status = $service->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
 
