@@ -174,13 +174,21 @@ update_env_var() {
         value="\"$value\""
     fi
 
-    # Use awk to replace the line (much safer than sed for special characters)
-    awk -v key="$key" -v val="$value" '
-        BEGIN { found=0 }
-        $0 ~ "^"key"=" { print key"="val; found=1; next }
-        { print }
-        END { if (!found) print key"="val }
-    ' "$env_file" > "${env_file}.tmp" && mv "${env_file}.tmp" "$env_file"
+    # Create the new line
+    local new_line="${key}=${value}"
+
+    # Check if key exists in file
+    if grep -q "^${key}=" "$env_file" 2>/dev/null; then
+        # Key exists - create temp file without the old line, then add new line
+        grep -v "^${key}=" "$env_file" > "${env_file}.tmp"
+        # Find where to insert (after similar keys or at original position)
+        # For simplicity, just append and sort later or keep at end of section
+        echo "$new_line" >> "${env_file}.tmp"
+        mv "${env_file}.tmp" "$env_file"
+    else
+        # Key doesn't exist - just append
+        echo "$new_line" >> "$env_file"
+    fi
 }
 
 # Configure environment
