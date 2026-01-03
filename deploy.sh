@@ -18,8 +18,6 @@ NC='\033[0m'
 
 # Configuration
 BRANCH=${1:-main}
-SKIP_BACKUP=${2:-false}
-BACKUP_DIR="backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # Functions
@@ -92,48 +90,6 @@ disable_maintenance() {
 
     php artisan up
     print_success "Application is now live"
-}
-
-# Create backup
-create_backup() {
-    if [ "$SKIP_BACKUP" = "true" ]; then
-        print_warning "Skipping backup (--skip-backup flag set)"
-        return
-    fi
-
-    print_step "Creating Backup"
-
-    # Create backup directory
-    mkdir -p "$BACKUP_DIR"
-
-    # Backup database
-    if grep -q "DB_CONNECTION=mysql" .env; then
-        print_info "Backing up MySQL database..."
-        DB_NAME=$(grep DB_DATABASE .env | cut -d'=' -f2)
-        DB_USER=$(grep DB_USERNAME .env | cut -d'=' -f2)
-        DB_PASS=$(grep DB_PASSWORD .env | cut -d'=' -f2)
-        DB_HOST=$(grep DB_HOST .env | cut -d'=' -f2)
-
-        mysqldump -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$BACKUP_DIR/database_$TIMESTAMP.sql"
-        print_success "Database backed up to $BACKUP_DIR/database_$TIMESTAMP.sql"
-    elif grep -q "DB_CONNECTION=sqlite" .env; then
-        print_info "Backing up SQLite database..."
-        if [ -f database/database.sqlite ]; then
-            cp database/database.sqlite "$BACKUP_DIR/database_$TIMESTAMP.sqlite"
-            print_success "Database backed up to $BACKUP_DIR/database_$TIMESTAMP.sqlite"
-        fi
-    fi
-
-    # Backup .env file
-    cp .env "$BACKUP_DIR/env_$TIMESTAMP"
-    print_success "Environment file backed up"
-
-    # Backup storage
-    print_info "Backing up storage..."
-    tar -czf "$BACKUP_DIR/storage_$TIMESTAMP.tar.gz" storage/app/public 2>/dev/null || true
-    print_success "Storage backed up"
-
-    print_success "Backup completed: $BACKUP_DIR/*_$TIMESTAMP.*"
 }
 
 # Pull latest code
@@ -330,35 +286,11 @@ health_check() {
     print_success "Health check completed"
 }
 
-# Rollback function
-rollback() {
-    print_error "\nDeployment failed! Starting rollback..."
-
-    if [ -d "$BACKUP_DIR" ] && [ "$SKIP_BACKUP" != "true" ]; then
-        # Find latest backup
-        LATEST_DB_BACKUP=$(ls -t "$BACKUP_DIR"/database_*.sql 2>/dev/null | head -1)
-
-        if [ -n "$LATEST_DB_BACKUP" ]; then
-            print_info "Restoring database from $LATEST_DB_BACKUP..."
-            DB_NAME=$(grep DB_DATABASE .env | cut -d'=' -f2)
-            DB_USER=$(grep DB_USERNAME .env | cut -d'=' -f2)
-            DB_PASS=$(grep DB_PASSWORD .env | cut -d'=' -f2)
-            DB_HOST=$(grep DB_HOST .env | cut -d'=' -f2)
-
-            mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$LATEST_DB_BACKUP"
-            print_success "Database restored"
-        fi
-
-        # Restore .env if needed
-        LATEST_ENV_BACKUP=$(ls -t "$BACKUP_DIR"/env_* 2>/dev/null | head -1)
-        if [ -n "$LATEST_ENV_BACKUP" ]; then
-            cp "$LATEST_ENV_BACKUP" .env
-            print_success "Environment file restored"
-        fi
-    fi
-
+# Handle deployment failure
+on_error() {
+    print_error "\nDeployment failed!"
     disable_maintenance
-    print_error "Rollback completed. Please check your application."
+    print_error "Please check the error above and try again."
     exit 1
 }
 
@@ -371,11 +303,10 @@ main() {
     echo
 
     # Set trap for errors
-    trap rollback ERR
+    trap on_error ERR
 
     check_environment
     enable_maintenance
-    create_backup
     pull_code
     update_dependencies
     run_migrations
@@ -409,10 +340,6 @@ main() {
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --skip-backup)
-            SKIP_BACKUP=true
-            shift
-            ;;
         --branch=*)
             BRANCH="${1#*=}"
             shift
