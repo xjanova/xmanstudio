@@ -157,6 +157,22 @@ get_password() {
     echo "$password"
 }
 
+# Escape password for .env file (handles all special characters)
+escape_for_env() {
+    local value="$1"
+    # If password contains special characters, wrap in double quotes and escape necessary chars
+    if [[ "$value" =~ [\ \$\"\'\`\\!\#\&\|\;\<\>\(\)\[\]\{\}\*\?\~] ]]; then
+        # Escape backslashes first, then double quotes, then dollar signs
+        value="${value//\\/\\\\}"
+        value="${value//\"/\\\"}"
+        value="${value//\$/\\\$}"
+        value="${value//\`/\\\`}"
+        echo "\"$value\""
+    else
+        echo "$value"
+    fi
+}
+
 # Configure environment
 configure_environment() {
     print_step "Environment Configuration"
@@ -199,9 +215,11 @@ configure_environment() {
         sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|" .env
         sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE|" .env
         sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" .env
-        # Escape special characters in password for sed
-        DB_PASSWORD_ESCAPED=$(printf '%s\n' "$DB_PASSWORD" | sed -e 's/[\/&]/\\&/g')
-        sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD_ESCAPED|" .env
+        # Escape special characters in password for .env file
+        DB_PASSWORD_ENV=$(escape_for_env "$DB_PASSWORD")
+        # Use a different delimiter and escape for sed
+        DB_PASSWORD_SED=$(printf '%s\n' "$DB_PASSWORD_ENV" | sed -e 's/[&/\]/\\&/g')
+        sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD_SED|" .env
     else
         # SQLite - just use the default
         sed -i "s/DB_CONNECTION=.*/DB_CONNECTION=sqlite/" .env
@@ -230,9 +248,10 @@ configure_environment() {
             sed -i "s|MAIL_HOST=.*|MAIL_HOST=$MAIL_HOST|" .env
             sed -i "s|MAIL_PORT=.*|MAIL_PORT=$MAIL_PORT|" .env
             sed -i "s|MAIL_USERNAME=.*|MAIL_USERNAME=$MAIL_USERNAME|" .env
-            # Escape special characters in mail password
-            MAIL_PASSWORD_ESCAPED=$(printf '%s\n' "$MAIL_PASSWORD" | sed -e 's/[\/&]/\\&/g')
-            sed -i "s|MAIL_PASSWORD=.*|MAIL_PASSWORD=$MAIL_PASSWORD_ESCAPED|" .env
+            # Escape special characters in mail password for .env file
+            MAIL_PASSWORD_ENV=$(escape_for_env "$MAIL_PASSWORD")
+            MAIL_PASSWORD_SED=$(printf '%s\n' "$MAIL_PASSWORD_ENV" | sed -e 's/[&/\]/\\&/g')
+            sed -i "s|MAIL_PASSWORD=.*|MAIL_PASSWORD=$MAIL_PASSWORD_SED|" .env
             sed -i "s|MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"$MAIL_FROM_ADDRESS\"|" .env
         fi
     fi
