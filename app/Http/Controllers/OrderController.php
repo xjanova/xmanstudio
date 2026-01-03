@@ -105,9 +105,17 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            // Log the actual error for debugging
+            \Illuminate\Support\Facades\Log::error('Order creation failed', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            // Return generic error message to user (don't expose internal details)
             return redirect()
                 ->back()
-                ->with('error', 'เกิดข้อผิดพลาด: '.$e->getMessage());
+                ->with('error', 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง');
         }
     }
 
