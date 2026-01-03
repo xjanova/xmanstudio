@@ -96,16 +96,20 @@
                                 <a href="/admin/rentals" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Admin Panel</a>
                                 @endif
                                 <a href="/rental/status" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">การเช่าของฉัน</a>
+                                @if(Route::has('logout'))
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">ออกจากระบบ</button>
                                 </form>
+                                @endif
                             </div>
                         </div>
                     @else
+                        @if(Route::has('login'))
                         <a href="{{ route('login') }}" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors">
                             เข้าสู่ระบบ
                         </a>
+                        @endif
                     @endauth
 
                     <!-- Mobile Menu Button -->
@@ -128,7 +132,9 @@
                 <a href="/portfolio" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ผลงาน</a>
                 <a href="/support" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ติดต่อ</a>
                 @guest
-                <a href="{{ route('login') }}" class="block px-3 py-2 text-base font-medium text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">เข้าสู่ระบบ</a>
+                    @if(Route::has('login'))
+                    <a href="{{ route('login') }}" class="block px-3 py-2 text-base font-medium text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">เข้าสู่ระบบ</a>
+                    @endif
                 @endguest
             </div>
         </div>
