@@ -1,8 +1,32 @@
-*.log
-.DS_Store
+# ==========================================================================
+# Environment & Secrets (NEVER commit these!)
+# ==========================================================================
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
+!.env.production.example
+
+# ==========================================================================
+# Dependencies
+# ==========================================================================
+/node_modules
+/vendor
+
+# ==========================================================================
+# Build & Cache
+# ==========================================================================
+/public_html/build
+/public_html/hot
+/public_html/storage
+/bootstrap/cache/*.php
+/storage/*.key
+/storage/pail
+*.log
+
+# ==========================================================================
+# IDE & Editor
+# ==========================================================================
+.DS_Store
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -11,14 +35,35 @@
 /.phpunit.cache
 /.vscode
 /.zed
+Thumbs.db
+
+# ==========================================================================
+# Auth & Credentials
+# ==========================================================================
 /auth.json
-/node_modules
-/public_html/build
-/public_html/hot
-/public_html/storage
-/storage/*.key
-/storage/pail
-/vendor
+*.pem
+*.key
+credentials.json
+service-account.json
+
+# ==========================================================================
+# Local Development
+# ==========================================================================
 Homestead.json
 Homestead.yaml
-Thumbs.db
+docker-compose.override.yml
+.docker/
+
+# ==========================================================================
+# Testing
+# ==========================================================================
+.phpunit.result.cache
+coverage/
+.coverage
+
+# ==========================================================================
+# Database
+# ==========================================================================
+*.sqlite
+*.sqlite-journal
+database/*.sqlite
