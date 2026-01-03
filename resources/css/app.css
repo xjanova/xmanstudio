@@ -5,7 +5,203 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* ==========================================================================
+   Google Fonts - Noto Sans Thai
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Noto Sans Thai', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply antialiased;
+    }
+
+    /* Dark mode transitions */
+    * {
+        @apply transition-colors duration-200;
+    }
+}
+
+/* ==========================================================================
+   Custom Components
+   ========================================================================== */
+@layer components {
+    /* Card with hover effect */
+    .card {
+        @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300;
+    }
+
+    .card-hover {
+        @apply hover:-translate-y-1 hover:shadow-2xl;
+    }
+
+    /* Gradient backgrounds */
+    .bg-gradient-primary {
+        @apply bg-gradient-to-r from-primary-600 to-primary-800;
+    }
+
+    .bg-gradient-dark {
+        @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900;
+    }
+
+    /* Button styles */
+    .btn {
+        @apply inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    }
+
+    .btn-primary {
+        @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600;
+    }
+
+    .btn-secondary {
+        @apply btn bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600;
+    }
+
+    .btn-outline {
+        @apply btn border-2 border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500 dark:border-primary-400 dark:text-primary-400 dark:hover:bg-primary-900/20;
+    }
+
+    .btn-ghost {
+        @apply btn text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800;
+    }
+
+    /* Input styles */
+    .input {
+        @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:focus:ring-primary-400;
+    }
+
+    /* Badge styles */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+
+    .badge-success {
+        @apply badge bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400;
+    }
+
+    .badge-warning {
+        @apply badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
+    }
+
+    .badge-danger {
+        @apply badge bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
+    }
+
+    .badge-info {
+        @apply badge bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
+    }
+
+    /* Skeleton loading */
+    .skeleton {
+        @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+    }
+
+    /* Glass effect */
+    .glass {
+        @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg;
+    }
+}
+
+/* ==========================================================================
+   Toast Notifications
+   ========================================================================== */
+@layer components {
+    .toast-container {
+        @apply fixed top-4 right-4 z-50 flex flex-col gap-2;
+    }
+
+    .toast {
+        @apply flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right;
+    }
+
+    .toast-success {
+        @apply toast bg-green-500 text-white;
+    }
+
+    .toast-error {
+        @apply toast bg-red-500 text-white;
+    }
+
+    .toast-warning {
+        @apply toast bg-yellow-500 text-white;
+    }
+
+    .toast-info {
+        @apply toast bg-blue-500 text-white;
+    }
+}
+
+/* ==========================================================================
+   Dark Mode Specific Styles
+   ========================================================================== */
+@layer utilities {
+    .dark .bg-pattern {
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23374151' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@layer utilities {
+    .animate-delay-100 { animation-delay: 100ms; }
+    .animate-delay-200 { animation-delay: 200ms; }
+    .animate-delay-300 { animation-delay: 300ms; }
+    .animate-delay-400 { animation-delay: 400ms; }
+    .animate-delay-500 { animation-delay: 500ms; }
+
+    /* Hover animations */
+    .hover-lift {
+        @apply transition-transform duration-300 hover:-translate-y-2;
+    }
+
+    .hover-scale {
+        @apply transition-transform duration-300 hover:scale-105;
+    }
+
+    .hover-glow {
+        @apply transition-shadow duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.5)];
+    }
+}
+
+/* ==========================================================================
+   Scrollbar Styles
+   ========================================================================== */
+@layer utilities {
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.gray.400') transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: theme('colors.gray.400');
+        border-radius: 3px;
+    }
+
+    .dark .scrollbar-thin {
+        scrollbar-color: theme('colors.gray.600') transparent;
+    }
+
+    .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: theme('colors.gray.600');
+    }
 }
