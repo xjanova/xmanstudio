@@ -55,7 +55,7 @@ Route::get('/portfolio', function () {
 // ==================== Rental System Routes ====================
 
 // Public rental pages
-Route::get('/rental', [RentalController::class, 'packages'])->name('rental.packages');
+Route::get('/rental', [RentalController::class, 'index'])->name('rental.index');
 
 // Authenticated rental routes
 Route::middleware(['auth'])->group(function () {
