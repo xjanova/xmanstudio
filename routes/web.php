@@ -7,7 +7,17 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\RentalController;
+use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Initial Setup Routes (before any admin exists)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/setup', [SetupController::class, 'index'])->name('setup.index');
+Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -15,8 +25,14 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Home
-Route::get('/', [HomeController::class, 'index'])->name('home');
+// Home (with setup check)
+Route::get('/', function () {
+    if (SetupController::isSetupRequired()) {
+        return redirect()->route('setup.index');
+    }
+
+    return app(HomeController::class)->index();
+})->name('home');
 
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
