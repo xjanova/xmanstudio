@@ -78,7 +78,7 @@ class SupportTicketController extends Controller
             'open' => SupportTicket::open()->count(),
             'in_progress' => SupportTicket::whereIn('status', [
                 SupportTicket::STATUS_IN_PROGRESS,
-                SupportTicket::STATUS_WAITING_REPLY
+                SupportTicket::STATUS_WAITING_REPLY,
             ])->count(),
             'unassigned' => SupportTicket::unassigned()->inProgress()->count(),
             'urgent' => SupportTicket::where('priority', 'urgent')->inProgress()->count(),
@@ -132,7 +132,7 @@ class SupportTicketController extends Controller
         $attachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('ticket-attachments/' . date('Y/m'), 'public');
+                $path = $file->store('ticket-attachments/'.date('Y/m'), 'public');
                 $attachments[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,
@@ -146,12 +146,12 @@ class SupportTicketController extends Controller
         $ticket->addReply(Auth::user(), $validated['message'], $attachments, $isInternal);
 
         // Update ticket status
-        if (!$isInternal && $ticket->status === SupportTicket::STATUS_OPEN) {
+        if (! $isInternal && $ticket->status === SupportTicket::STATUS_OPEN) {
             $ticket->update([
                 'status' => SupportTicket::STATUS_IN_PROGRESS,
                 'responded_at' => now(),
             ]);
-        } elseif (!$isInternal && $ticket->status === SupportTicket::STATUS_WAITING_REPLY) {
+        } elseif (! $isInternal && $ticket->status === SupportTicket::STATUS_WAITING_REPLY) {
             $ticket->update(['status' => SupportTicket::STATUS_IN_PROGRESS]);
         }
 
@@ -161,6 +161,7 @@ class SupportTicketController extends Controller
         }
 
         $message = $isInternal ? 'บันทึก Internal Note เรียบร้อยแล้ว' : 'ส่งข้อความเรียบร้อยแล้ว';
+
         return back()->with('success', $message);
     }
 
@@ -170,14 +171,14 @@ class SupportTicketController extends Controller
     public function updateStatus(Request $request, SupportTicket $ticket)
     {
         $validated = $request->validate([
-            'status' => 'required|string|in:' . implode(',', array_keys(SupportTicket::getStatuses())),
+            'status' => 'required|string|in:'.implode(',', array_keys(SupportTicket::getStatuses())),
         ]);
 
         $ticket->update([
             'status' => $validated['status'],
             'closed_at' => in_array($validated['status'], [
                 SupportTicket::STATUS_RESOLVED,
-                SupportTicket::STATUS_CLOSED
+                SupportTicket::STATUS_CLOSED,
             ]) ? now() : null,
         ]);
 
@@ -190,7 +191,7 @@ class SupportTicketController extends Controller
     public function updatePriority(Request $request, SupportTicket $ticket)
     {
         $validated = $request->validate([
-            'priority' => 'required|string|in:' . implode(',', array_keys(SupportTicket::getPriorities())),
+            'priority' => 'required|string|in:'.implode(',', array_keys(SupportTicket::getPriorities())),
         ]);
 
         $ticket->update(['priority' => $validated['priority']]);
@@ -210,7 +211,7 @@ class SupportTicketController extends Controller
         if ($validated['assigned_to']) {
             $user = User::find($validated['assigned_to']);
             $ticket->assignTo($user);
-            $message = 'มอบหมายให้ ' . $user->name . ' เรียบร้อยแล้ว';
+            $message = 'มอบหมายให้ '.$user->name.' เรียบร้อยแล้ว';
         } else {
             $ticket->update(['assigned_to' => null]);
             $message = 'ยกเลิกการมอบหมายเรียบร้อยแล้ว';
