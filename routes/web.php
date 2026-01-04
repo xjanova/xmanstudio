@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -108,6 +109,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     }
+
+    // Customer Portal
+    Route::prefix('my-account')->name('customer.')->group(function () {
+        Route::get('/', [CustomerPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/licenses', [CustomerPortalController::class, 'licenses'])->name('licenses');
+        Route::get('/licenses/{license}', [CustomerPortalController::class, 'licenseShow'])->name('licenses.show');
+        Route::get('/subscriptions', [CustomerPortalController::class, 'subscriptions'])->name('subscriptions');
+        Route::get('/subscriptions/{rental}', [CustomerPortalController::class, 'subscriptionShow'])->name('subscriptions.show');
+        Route::get('/orders', [CustomerPortalController::class, 'orders'])->name('orders');
+        Route::get('/orders/{order}', [CustomerPortalController::class, 'orderShow'])->name('orders.show');
+        Route::get('/invoices', [CustomerPortalController::class, 'invoices'])->name('invoices');
+        Route::get('/downloads', [CustomerPortalController::class, 'downloads'])->name('downloads');
+    });
 });
 
 require __DIR__.'/auth.php';
