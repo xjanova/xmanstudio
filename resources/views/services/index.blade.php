@@ -72,7 +72,7 @@
                                     <span class="text-lg font-bold text-primary-600">สอบถามราคา</span>
                                 @endif
 
-                                <a href="{{ route('services.detail', $service->slug) }}"
+                                <a href="{{ route('services.show', $service->slug) }}"
                                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
                                     ดูรายละเอียด
                                 </a>
