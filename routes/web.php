@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
+use App\Http\Controllers\Admin\PaymentSettingController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\RentalController as AdminRentalController;
+use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
@@ -65,6 +70,10 @@ Route::view('/about', 'about')->name('about');
 // Portfolio page
 Route::view('/portfolio', 'portfolio')->name('portfolio');
 
+// Legal pages
+Route::view('/terms', 'legal.terms')->name('terms');
+Route::view('/privacy', 'legal.privacy')->name('privacy');
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes
@@ -101,3 +110,58 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    // Dashboard
+    Route::get('/', function () {
+        return redirect()->route('admin.rentals.index');
+    })->name('dashboard');
+
+    // Rental Management
+    Route::get('/rentals', [AdminRentalController::class, 'index'])->name('rentals.index');
+    Route::get('/rentals/payments', [AdminRentalController::class, 'payments'])->name('rentals.payments');
+    Route::get('/rentals/packages', [AdminRentalController::class, 'packages'])->name('rentals.packages');
+    Route::get('/rentals/packages/create', [AdminRentalController::class, 'createPackage'])->name('rentals.packages.create');
+    Route::post('/rentals/packages', [AdminRentalController::class, 'storePackage'])->name('rentals.packages.store');
+    Route::get('/rentals/packages/{package}/edit', [AdminRentalController::class, 'editPackage'])->name('rentals.packages.edit');
+    Route::put('/rentals/packages/{package}', [AdminRentalController::class, 'updatePackage'])->name('rentals.packages.update');
+    Route::delete('/rentals/packages/{package}', [AdminRentalController::class, 'destroyPackage'])->name('rentals.packages.destroy');
+    Route::get('/rentals/reports', [AdminRentalController::class, 'reports'])->name('rentals.reports');
+    Route::get('/rentals/{rental}', [AdminRentalController::class, 'show'])->name('rentals.show');
+    Route::post('/rentals/{rental}/extend', [AdminRentalController::class, 'extend'])->name('rentals.extend');
+    Route::post('/rentals/{rental}/suspend', [AdminRentalController::class, 'suspend'])->name('rentals.suspend');
+    Route::post('/rentals/{rental}/activate', [AdminRentalController::class, 'activate'])->name('rentals.activate');
+    Route::post('/payments/{payment}/approve', [AdminRentalController::class, 'approvePayment'])->name('payments.approve');
+    Route::post('/payments/{payment}/reject', [AdminRentalController::class, 'rejectPayment'])->name('payments.reject');
+
+    // Service Management
+    Route::resource('services', AdminServiceController::class);
+
+    // Product Management
+    Route::resource('products', AdminProductController::class);
+
+    // License Management
+    Route::get('/licenses', [AdminLicenseController::class, 'index'])->name('licenses.index');
+    Route::get('/licenses/create', [AdminLicenseController::class, 'create'])->name('licenses.create');
+    Route::post('/licenses', [AdminLicenseController::class, 'store'])->name('licenses.store');
+    Route::get('/licenses/{license}', [AdminLicenseController::class, 'show'])->name('licenses.show');
+    Route::post('/licenses/{license}/revoke', [AdminLicenseController::class, 'revoke'])->name('licenses.revoke');
+    Route::post('/licenses/{license}/reactivate', [AdminLicenseController::class, 'reactivate'])->name('licenses.reactivate');
+    Route::post('/licenses/{license}/reset-machine', [AdminLicenseController::class, 'resetMachine'])->name('licenses.reset-machine');
+    Route::post('/licenses/{license}/extend', [AdminLicenseController::class, 'extend'])->name('licenses.extend');
+    Route::delete('/licenses/{license}', [AdminLicenseController::class, 'destroy'])->name('licenses.destroy');
+
+    // Payment Settings
+    Route::get('/payment-settings', [PaymentSettingController::class, 'index'])->name('payment-settings.index');
+    Route::put('/payment-settings', [PaymentSettingController::class, 'update'])->name('payment-settings.update');
+    Route::post('/payment-settings/bank', [PaymentSettingController::class, 'storeBank'])->name('payment-settings.bank.store');
+    Route::put('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'updateBank'])->name('payment-settings.bank.update');
+    Route::post('/payment-settings/bank/{bankAccount}/toggle', [PaymentSettingController::class, 'toggleBank'])->name('payment-settings.bank.toggle');
+    Route::delete('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'destroyBank'])->name('payment-settings.bank.destroy');
+});
