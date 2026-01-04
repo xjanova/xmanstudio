@@ -40,6 +40,7 @@ Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear
 Route::get('/support', [QuotationController::class, 'index'])->name('support.index');
 Route::post('/quotation/preview', [QuotationController::class, 'preview'])->name('quotation.preview');
 Route::post('/quotation/pdf', [QuotationController::class, 'generatePdf'])->name('quotation.pdf');
+Route::post('/quotation/submit', [QuotationController::class, 'submitOrder'])->name('quotation.submit');
 Route::get('/quotation/services', [QuotationController::class, 'getServices'])->name('quotation.services');
 
 // About page
