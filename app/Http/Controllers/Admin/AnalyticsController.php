@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\RentalPayment;
 use App\Models\SupportTicket;
@@ -22,7 +21,7 @@ class AnalyticsController extends Controller
     {
         $period = $request->get('period', '30'); // Default 30 days
 
-        $startDate = match($period) {
+        $startDate = match ($period) {
             '7' => now()->subDays(7),
             '30' => now()->subDays(30),
             '90' => now()->subDays(90),
@@ -260,7 +259,7 @@ class AnalyticsController extends Controller
         $openTickets = SupportTicket::where('status', SupportTicket::STATUS_OPEN)->count();
         $inProgress = SupportTicket::whereIn('status', [
             SupportTicket::STATUS_IN_PROGRESS,
-            SupportTicket::STATUS_WAITING_REPLY
+            SupportTicket::STATUS_WAITING_REPLY,
         ])->count();
         $resolved = SupportTicket::where('status', SupportTicket::STATUS_RESOLVED)
             ->where('created_at', '>=', $startDate)
@@ -316,6 +315,7 @@ class AnalyticsController extends Controller
             ->get()
             ->sum(function ($rental) {
                 $months = max(1, $rental->package->duration_months ?? 1);
+
                 return $rental->total_price / $months;
             });
 

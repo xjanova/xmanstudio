@@ -10,22 +10,33 @@ class SupportTicket extends Model
 {
     // Status constants
     public const STATUS_OPEN = 'open';
+
     public const STATUS_IN_PROGRESS = 'in_progress';
+
     public const STATUS_WAITING_REPLY = 'waiting_reply';
+
     public const STATUS_RESOLVED = 'resolved';
+
     public const STATUS_CLOSED = 'closed';
 
     // Priority constants
     public const PRIORITY_LOW = 'low';
+
     public const PRIORITY_MEDIUM = 'medium';
+
     public const PRIORITY_HIGH = 'high';
+
     public const PRIORITY_URGENT = 'urgent';
 
     // Category constants
     public const CATEGORY_GENERAL = 'general';
+
     public const CATEGORY_TECHNICAL = 'technical';
+
     public const CATEGORY_BILLING = 'billing';
+
     public const CATEGORY_LICENSE = 'license';
+
     public const CATEGORY_FEATURE_REQUEST = 'feature_request';
 
     protected $fillable = [
@@ -232,7 +243,7 @@ class SupportTicket extends Model
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_OPEN => 'blue',
             self::STATUS_IN_PROGRESS => 'yellow',
             self::STATUS_WAITING_REPLY => 'orange',
@@ -244,7 +255,7 @@ class SupportTicket extends Model
 
     public function getPriorityColorAttribute(): string
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             self::PRIORITY_LOW => 'gray',
             self::PRIORITY_MEDIUM => 'blue',
             self::PRIORITY_HIGH => 'orange',

@@ -53,6 +53,6 @@ class TicketReply extends Model
 
     public function isFromCustomer(): bool
     {
-        return !$this->isFromStaff();
+        return ! $this->isFromStaff();
     }
 }
