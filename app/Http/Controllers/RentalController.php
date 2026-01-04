@@ -27,7 +27,7 @@ class RentalController extends Controller
         $user = Auth::user();
         $activeRental = $user ? $this->rentalService->getUserActiveRental($user) : null;
 
-        return view('rental.index', compact('packages', 'activeRental'));
+        return view('rental.packages', compact('packages', 'activeRental'));
     }
 
     /**
