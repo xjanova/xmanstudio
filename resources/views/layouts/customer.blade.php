@@ -67,12 +67,12 @@
 
                 <hr class="my-4 border-gray-200">
 
-                <a href="{{ route('support.index') }}"
-                   class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">
+                <a href="{{ route('customer.support.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.support*') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                     </svg>
-                    Support
+                    Support Tickets
                 </a>
 
                 <a href="{{ route('profile.edit') }}"
@@ -182,6 +182,8 @@
                 <a href="{{ route('customer.orders') }}" class="block px-4 py-2 rounded-lg {{ request()->routeIs('customer.orders*') ? 'bg-primary-50 text-primary-700' : 'text-gray-600' }}">Orders</a>
                 <a href="{{ route('customer.invoices') }}" class="block px-4 py-2 rounded-lg {{ request()->routeIs('customer.invoices') ? 'bg-primary-50 text-primary-700' : 'text-gray-600' }}">Invoices</a>
                 <a href="{{ route('customer.downloads') }}" class="block px-4 py-2 rounded-lg {{ request()->routeIs('customer.downloads') ? 'bg-primary-50 text-primary-700' : 'text-gray-600' }}">Downloads</a>
+                <hr class="my-2 border-gray-200">
+                <a href="{{ route('customer.support.index') }}" class="block px-4 py-2 rounded-lg {{ request()->routeIs('customer.support*') ? 'bg-primary-50 text-primary-700' : 'text-gray-600' }}">Support Tickets</a>
             </nav>
         </div>
     </div>

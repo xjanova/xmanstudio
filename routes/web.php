@@ -6,9 +6,12 @@ use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -121,6 +124,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders/{order}', [CustomerPortalController::class, 'orderShow'])->name('orders.show');
         Route::get('/invoices', [CustomerPortalController::class, 'invoices'])->name('invoices');
         Route::get('/downloads', [CustomerPortalController::class, 'downloads'])->name('downloads');
+
+        // Support Tickets
+        Route::get('/support', [SupportTicketController::class, 'index'])->name('support.index');
+        Route::get('/support/create', [SupportTicketController::class, 'create'])->name('support.create');
+        Route::post('/support', [SupportTicketController::class, 'store'])->name('support.store');
+        Route::get('/support/{ticket}', [SupportTicketController::class, 'show'])->name('support.show');
+        Route::post('/support/{ticket}/reply', [SupportTicketController::class, 'reply'])->name('support.reply');
+        Route::post('/support/{ticket}/close', [SupportTicketController::class, 'close'])->name('support.close');
+        Route::post('/support/{ticket}/reopen', [SupportTicketController::class, 'reopen'])->name('support.reopen');
     });
 });
 
@@ -133,10 +145,13 @@ require __DIR__.'/auth.php';
 */
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-    // Dashboard
+    // Dashboard - Redirect to Analytics
     Route::get('/', function () {
-        return redirect()->route('admin.rentals.index');
+        return redirect()->route('admin.analytics.index');
     })->name('dashboard');
+
+    // Analytics Dashboard
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
     // Rental Management
     Route::get('/rentals', [AdminRentalController::class, 'index'])->name('rentals.index');
@@ -187,4 +202,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/line-messaging/send', [LineMessagingController::class, 'send'])->name('line-messaging.send');
     Route::get('/line-messaging/users', [LineMessagingController::class, 'users'])->name('line-messaging.users');
     Route::post('/line-messaging/update-uid', [LineMessagingController::class, 'updateUid'])->name('line-messaging.update-uid');
+
+    // Support Tickets Management
+    Route::get('/support', [AdminSupportTicketController::class, 'index'])->name('support.index');
+    Route::get('/support/{ticket}', [AdminSupportTicketController::class, 'show'])->name('support.show');
+    Route::post('/support/{ticket}/reply', [AdminSupportTicketController::class, 'reply'])->name('support.reply');
+    Route::post('/support/{ticket}/status', [AdminSupportTicketController::class, 'updateStatus'])->name('support.update-status');
+    Route::post('/support/{ticket}/priority', [AdminSupportTicketController::class, 'updatePriority'])->name('support.update-priority');
+    Route::post('/support/{ticket}/assign', [AdminSupportTicketController::class, 'assign'])->name('support.assign');
+    Route::post('/support/bulk', [AdminSupportTicketController::class, 'bulkAction'])->name('support.bulk');
 });
