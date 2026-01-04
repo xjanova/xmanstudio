@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
@@ -144,10 +145,13 @@ require __DIR__.'/auth.php';
 */
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-    // Dashboard
+    // Dashboard - Redirect to Analytics
     Route::get('/', function () {
-        return redirect()->route('admin.rentals.index');
+        return redirect()->route('admin.analytics.index');
     })->name('dashboard');
+
+    // Analytics Dashboard
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
     // Rental Management
     Route::get('/rentals', [AdminRentalController::class, 'index'])->name('rentals.index');
