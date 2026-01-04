@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Line Messaging API (replaces deprecated Line Notify)
+    'line' => [
+        'channel_access_token' => env('LINE_CHANNEL_ACCESS_TOKEN'),
+        'admin_user_id' => env('LINE_ADMIN_USER_ID'),
+    ],
+
 ];

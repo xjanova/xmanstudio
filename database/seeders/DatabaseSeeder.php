@@ -38,10 +38,11 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // Seed services and payment settings
+        // Seed services, payment settings, and admin settings
         $this->call([
             ServiceSeeder::class,
             PaymentSeeder::class,
+            AdminSeeder::class,
         ]);
     }
 }
