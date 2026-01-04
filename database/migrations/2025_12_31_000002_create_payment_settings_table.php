@@ -11,30 +11,34 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payment_settings', function (Blueprint $table) {
-            $table->id();
-            $table->string('key')->unique();
-            $table->string('group')->default('general');
-            $table->text('value')->nullable();
-            $table->string('type')->default('string'); // string, boolean, json, encrypted
-            $table->string('label');
-            $table->text('description')->nullable();
-            $table->boolean('is_encrypted')->default(false);
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('payment_settings')) {
+            Schema::create('payment_settings', function (Blueprint $table) {
+                $table->id();
+                $table->string('key')->unique();
+                $table->string('group')->default('general');
+                $table->text('value')->nullable();
+                $table->string('type')->default('string'); // string, boolean, json, encrypted
+                $table->string('label');
+                $table->text('description')->nullable();
+                $table->boolean('is_encrypted')->default(false);
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('bank_accounts', function (Blueprint $table) {
-            $table->id();
-            $table->string('bank_name');
-            $table->string('bank_code');
-            $table->string('account_number');
-            $table->string('account_name');
-            $table->string('branch')->nullable();
-            $table->string('swift_code')->nullable();
-            $table->integer('order')->default(0);
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('bank_accounts')) {
+            Schema::create('bank_accounts', function (Blueprint $table) {
+                $table->id();
+                $table->string('bank_name');
+                $table->string('bank_code');
+                $table->string('account_number');
+                $table->string('account_name');
+                $table->string('branch')->nullable();
+                $table->string('swift_code')->nullable();
+                $table->integer('order')->default(0);
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
     }
 
     /**
