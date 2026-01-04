@@ -97,17 +97,27 @@ class SmartDatabaseSeeder extends Seeder
             ],
         ];
 
-        foreach ($settings as $setting) {
-            $exists = DB::table('payment_settings')
-                ->where('key', $setting['key'])
-                ->exists();
+        if (! \Schema::hasTable('payment_settings')) {
+            $this->command->warn('  ⚠ Table payment_settings does not exist, skipping...');
 
-            if (! $exists) {
-                DB::table('payment_settings')->insert(array_merge($setting, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]));
-                $this->command->line("    + Added: {$setting['key']}");
+            return;
+        }
+
+        foreach ($settings as $setting) {
+            try {
+                $exists = DB::table('payment_settings')
+                    ->where('key', $setting['key'])
+                    ->exists();
+
+                if (! $exists) {
+                    DB::table('payment_settings')->insert(array_merge($setting, [
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]));
+                    $this->command->line("    + Added: {$setting['key']}");
+                }
+            } catch (\Exception $e) {
+                $this->command->error("    ✗ Failed to add setting {$setting['key']}: {$e->getMessage()}");
             }
         }
     }
@@ -130,16 +140,20 @@ class SmartDatabaseSeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            $exists = DB::table('categories')
-                ->where('slug', $category['slug'])
-                ->exists();
+            try {
+                $exists = DB::table('categories')
+                    ->where('slug', $category['slug'])
+                    ->exists();
 
-            if (! $exists) {
-                DB::table('categories')->insert(array_merge($category, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]));
-                $this->command->line("    + Added category: {$category['name']}");
+                if (! $exists) {
+                    DB::table('categories')->insert(array_merge($category, [
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]));
+                    $this->command->line("    + Added category: {$category['name']}");
+                }
+            } catch (\Exception $e) {
+                $this->command->error("    ✗ Failed to add category {$category['name']}: {$e->getMessage()}");
             }
         }
     }
@@ -161,50 +175,70 @@ class SmartDatabaseSeeder extends Seeder
                 'name_th' => 'พัฒนาเว็บไซต์',
                 'slug' => 'web-development',
                 'description' => 'Custom web application development',
+                'description_th' => 'พัฒนาเว็บแอปพลิเคชันตามความต้องการ',
                 'icon' => 'globe',
-                'base_price' => 30000,
+                'starting_price' => 30000,
+                'price_unit' => 'โปรเจกต์',
                 'is_active' => true,
+                'is_featured' => true,
+                'order' => 1,
             ],
             [
                 'name' => 'Mobile App Development',
                 'name_th' => 'พัฒนาแอปมือถือ',
                 'slug' => 'mobile-app',
                 'description' => 'iOS and Android application development',
+                'description_th' => 'พัฒนาแอปพลิเคชันสำหรับ iOS และ Android',
                 'icon' => 'device-mobile',
-                'base_price' => 50000,
+                'starting_price' => 50000,
+                'price_unit' => 'โปรเจกต์',
                 'is_active' => true,
+                'is_featured' => true,
+                'order' => 2,
             ],
             [
                 'name' => 'UI/UX Design',
                 'name_th' => 'ออกแบบ UI/UX',
                 'slug' => 'ui-ux-design',
                 'description' => 'User interface and experience design',
+                'description_th' => 'ออกแบบส่วนติดต่อผู้ใช้และประสบการณ์การใช้งาน',
                 'icon' => 'color-swatch',
-                'base_price' => 20000,
+                'starting_price' => 20000,
+                'price_unit' => 'โปรเจกต์',
                 'is_active' => true,
+                'is_featured' => false,
+                'order' => 3,
             ],
             [
                 'name' => 'IT Consulting',
                 'name_th' => 'ที่ปรึกษาไอที',
                 'slug' => 'it-consulting',
                 'description' => 'Technology consulting and strategy',
+                'description_th' => 'ที่ปรึกษาด้านเทคโนโลยีและกลยุทธ์',
                 'icon' => 'light-bulb',
-                'base_price' => 15000,
+                'starting_price' => 15000,
+                'price_unit' => 'วัน',
                 'is_active' => true,
+                'is_featured' => false,
+                'order' => 4,
             ],
         ];
 
         foreach ($services as $service) {
-            $exists = DB::table('services')
-                ->where('slug', $service['slug'])
-                ->exists();
+            try {
+                $exists = DB::table('services')
+                    ->where('slug', $service['slug'])
+                    ->exists();
 
-            if (! $exists) {
-                DB::table('services')->insert(array_merge($service, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]));
-                $this->command->line("    + Added service: {$service['name']}");
+                if (! $exists) {
+                    DB::table('services')->insert(array_merge($service, [
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]));
+                    $this->command->line("    + Added service: {$service['name']}");
+                }
+            } catch (\Exception $e) {
+                $this->command->error("    ✗ Failed to add service {$service['name']}: {$e->getMessage()}");
             }
         }
     }
@@ -223,10 +257,12 @@ class SmartDatabaseSeeder extends Seeder
         $packages = [
             [
                 'name' => 'Starter',
-                'slug' => 'starter',
-                'description' => 'แพ็กเกจเริ่มต้นสำหรับธุรกิจขนาดเล็ก',
+                'name_th' => 'แพ็กเกจเริ่มต้น',
+                'description' => 'Starter package for small businesses',
+                'description_th' => 'แพ็กเกจเริ่มต้นสำหรับธุรกิจขนาดเล็ก',
                 'price' => 990,
-                'duration_days' => 30,
+                'duration_type' => 'monthly',
+                'duration_value' => 1,
                 'features' => json_encode([
                     '5 Users',
                     '10GB Storage',
@@ -234,14 +270,18 @@ class SmartDatabaseSeeder extends Seeder
                     'Basic Analytics',
                 ]),
                 'is_active' => true,
+                'is_featured' => false,
                 'is_popular' => false,
+                'sort_order' => 1,
             ],
             [
                 'name' => 'Professional',
-                'slug' => 'professional',
-                'description' => 'แพ็กเกจสำหรับธุรกิจที่กำลังเติบโต',
+                'name_th' => 'แพ็กเกจมืออาชีพ',
+                'description' => 'Package for growing businesses',
+                'description_th' => 'แพ็กเกจสำหรับธุรกิจที่กำลังเติบโต',
                 'price' => 2490,
-                'duration_days' => 30,
+                'duration_type' => 'monthly',
+                'duration_value' => 1,
                 'features' => json_encode([
                     '25 Users',
                     '50GB Storage',
@@ -250,14 +290,18 @@ class SmartDatabaseSeeder extends Seeder
                     'API Access',
                 ]),
                 'is_active' => true,
+                'is_featured' => true,
                 'is_popular' => true,
+                'sort_order' => 2,
             ],
             [
                 'name' => 'Enterprise',
-                'slug' => 'enterprise',
-                'description' => 'แพ็กเกจสำหรับองค์กรขนาดใหญ่',
+                'name_th' => 'แพ็กเกจองค์กร',
+                'description' => 'Package for large organizations',
+                'description_th' => 'แพ็กเกจสำหรับองค์กรขนาดใหญ่',
                 'price' => 9990,
-                'duration_days' => 30,
+                'duration_type' => 'monthly',
+                'duration_value' => 1,
                 'features' => json_encode([
                     'Unlimited Users',
                     '500GB Storage',
@@ -267,21 +311,27 @@ class SmartDatabaseSeeder extends Seeder
                     'Dedicated Account Manager',
                 ]),
                 'is_active' => true,
+                'is_featured' => false,
                 'is_popular' => false,
+                'sort_order' => 3,
             ],
         ];
 
         foreach ($packages as $package) {
             $exists = DB::table('rental_packages')
-                ->where('slug', $package['slug'])
+                ->where('name', $package['name'])
                 ->exists();
 
             if (! $exists) {
-                DB::table('rental_packages')->insert(array_merge($package, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]));
-                $this->command->line("    + Added package: {$package['name']}");
+                try {
+                    DB::table('rental_packages')->insert(array_merge($package, [
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]));
+                    $this->command->line("    + Added package: {$package['name']}");
+                } catch (\Exception $e) {
+                    $this->command->error("    ✗ Failed to add package {$package['name']}: {$e->getMessage()}");
+                }
             }
         }
     }

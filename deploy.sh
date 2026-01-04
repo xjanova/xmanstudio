@@ -6,8 +6,8 @@
 # Features:
 #   - Smart migration handling (skip existing tables)
 #   - Intelligent seeding (skip existing data)
+#   - Detailed error logging and reporting
 #   - Automatic rollback on failure
-#   - Column synchronization support
 #########################################################
 
 set -e
@@ -25,6 +25,37 @@ NC='\033[0m'
 BRANCH=${1:-main}
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="storage/backups"
+LOG_DIR="storage/logs/deploy"
+LOG_FILE="$LOG_DIR/deploy_${TIMESTAMP}.log"
+ERROR_LOG="$LOG_DIR/error_${TIMESTAMP}.log"
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Create log directories
+mkdir -p "$LOG_DIR"
+mkdir -p "$BACKUP_DIR"
+
+# Logging functions
+log() {
+    local message="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+    echo "$message" >> "$LOG_FILE"
+    echo -e "$2$1${NC}"
+}
+
+log_error() {
+    local message="[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $1"
+    echo "$message" >> "$LOG_FILE"
+    echo "$message" >> "$ERROR_LOG"
+    echo -e "${RED}✗ $1${NC}"
+}
+
+log_error_detail() {
+    local message="$1"
+    echo "$message" >> "$ERROR_LOG"
+    echo "$message" >> "$LOG_FILE"
+}
 
 # Functions
 print_header() {
@@ -32,30 +63,83 @@ print_header() {
     echo -e "${CYAN}║   🚀 XMAN Studio Deployment Script 🚀    ║${NC}"
     echo -e "${CYAN}║     Smart Migration & Seeding Support     ║${NC}"
     echo -e "${CYAN}╚════════════════════════════════════════════╝${NC}\n"
+    log "Deployment started" ""
 }
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-
 print_step() {
+    log "STEP: $1" "${BLUE}"
     echo -e "\n${BLUE}━━━ $1 ━━━${NC}"
 }
 
 print_success() {
+    log "SUCCESS: $1" "${GREEN}"
     echo -e "${GREEN}✓ $1${NC}"
 }
 
 print_error() {
-    echo -e "${RED}✗ $1${NC}"
+    log_error "$1"
 }
 
 print_warning() {
+    log "WARNING: $1" "${YELLOW}"
     echo -e "${YELLOW}⚠ $1${NC}"
 }
 
 print_info() {
+    log "INFO: $1" "${PURPLE}"
     echo -e "${PURPLE}ℹ $1${NC}"
+}
+
+# Generate error report
+generate_error_report() {
+    local step="$1"
+    local error_message="$2"
+    local error_output="$3"
+
+    echo "" >> "$ERROR_LOG"
+    echo "═══════════════════════════════════════════════════════════" >> "$ERROR_LOG"
+    echo "ERROR REPORT - $(date '+%Y-%m-%d %H:%M:%S')" >> "$ERROR_LOG"
+    echo "═══════════════════════════════════════════════════════════" >> "$ERROR_LOG"
+    echo "" >> "$ERROR_LOG"
+    echo "Step: $step" >> "$ERROR_LOG"
+    echo "Branch: $BRANCH" >> "$ERROR_LOG"
+    echo "Commit: $(git rev-parse --short HEAD 2>/dev/null || echo 'N/A')" >> "$ERROR_LOG"
+    echo "Environment: $(grep APP_ENV .env 2>/dev/null | cut -d'=' -f2 || echo 'N/A')" >> "$ERROR_LOG"
+    echo "" >> "$ERROR_LOG"
+    echo "Error Message:" >> "$ERROR_LOG"
+    echo "$error_message" >> "$ERROR_LOG"
+    echo "" >> "$ERROR_LOG"
+    echo "Error Output:" >> "$ERROR_LOG"
+    echo "---" >> "$ERROR_LOG"
+    echo "$error_output" >> "$ERROR_LOG"
+    echo "---" >> "$ERROR_LOG"
+    echo "" >> "$ERROR_LOG"
+
+    # System info
+    echo "System Information:" >> "$ERROR_LOG"
+    echo "  PHP Version: $(php -v 2>/dev/null | head -1 || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  Composer: $(composer --version 2>/dev/null | head -1 || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  Node: $(node -v 2>/dev/null || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  NPM: $(npm -v 2>/dev/null || echo 'N/A')" >> "$ERROR_LOG"
+    echo "" >> "$ERROR_LOG"
+
+    # Database info
+    echo "Database Information:" >> "$ERROR_LOG"
+    echo "  Connection: $(grep DB_CONNECTION .env 2>/dev/null | cut -d'=' -f2 || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  Host: $(grep DB_HOST .env 2>/dev/null | cut -d'=' -f2 || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  Database: $(grep DB_DATABASE .env 2>/dev/null | cut -d'=' -f2 || echo 'N/A')" >> "$ERROR_LOG"
+    echo "" >> "$ERROR_LOG"
+
+    # Recent Laravel log
+    if [ -f "storage/logs/laravel.log" ]; then
+        echo "Recent Laravel Logs (last 50 lines):" >> "$ERROR_LOG"
+        echo "---" >> "$ERROR_LOG"
+        tail -50 storage/logs/laravel.log >> "$ERROR_LOG" 2>/dev/null || echo "Could not read Laravel log" >> "$ERROR_LOG"
+        echo "---" >> "$ERROR_LOG"
+    fi
+
+    echo "" >> "$ERROR_LOG"
+    echo "═══════════════════════════════════════════════════════════" >> "$ERROR_LOG"
 }
 
 # Check if in production
@@ -88,8 +172,6 @@ check_environment() {
 backup_database() {
     print_step "Backing Up Database"
 
-    mkdir -p "$BACKUP_DIR"
-
     # Get database type
     DB_CONNECTION=$(grep DB_CONNECTION .env | cut -d'=' -f2)
 
@@ -104,12 +186,17 @@ backup_database() {
 
         if command -v mysqldump >/dev/null 2>&1; then
             print_info "Creating MySQL backup..."
-            mysqldump -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" > "$BACKUP_FILE" 2>/dev/null || true
-            if [ -f "$BACKUP_FILE" ] && [ -s "$BACKUP_FILE" ]; then
+            set +e
+            BACKUP_OUTPUT=$(mysqldump -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>&1)
+            BACKUP_EXIT=$?
+            set -e
+
+            if [ $BACKUP_EXIT -eq 0 ]; then
+                echo "$BACKUP_OUTPUT" > "$BACKUP_FILE"
                 print_success "Database backed up to $BACKUP_FILE"
             else
-                print_warning "Could not create backup, continuing anyway..."
-                rm -f "$BACKUP_FILE"
+                print_warning "Could not create backup: $BACKUP_OUTPUT"
+                log_error_detail "Backup failed: $BACKUP_OUTPUT"
             fi
         else
             print_warning "mysqldump not available, skipping backup"
@@ -120,7 +207,7 @@ backup_database() {
             print_success "SQLite database backed up"
         fi
     else
-        print_warning "Unknown database type, skipping backup"
+        print_warning "Unknown database type ($DB_CONNECTION), skipping backup"
     fi
 }
 
@@ -128,7 +215,7 @@ backup_database() {
 enable_maintenance() {
     print_step "Enabling Maintenance Mode"
 
-    php artisan down --retry=60 || true
+    php artisan down --retry=60 2>&1 || true
     print_success "Application is now in maintenance mode"
 }
 
@@ -136,7 +223,7 @@ enable_maintenance() {
 disable_maintenance() {
     print_step "Disabling Maintenance Mode"
 
-    php artisan up
+    php artisan up 2>&1
     print_success "Application is now live"
 }
 
@@ -146,10 +233,30 @@ pull_code() {
 
     if [ -d .git ]; then
         print_info "Fetching from repository..."
-        git fetch origin
+
+        set +e
+        GIT_OUTPUT=$(git fetch origin 2>&1)
+        GIT_EXIT=$?
+        set -e
+
+        if [ $GIT_EXIT -ne 0 ]; then
+            print_error "Git fetch failed"
+            generate_error_report "pull_code" "Git fetch failed" "$GIT_OUTPUT"
+            return 1
+        fi
 
         print_info "Pulling branch: $BRANCH"
-        git pull origin "$BRANCH"
+
+        set +e
+        GIT_OUTPUT=$(git pull origin "$BRANCH" 2>&1)
+        GIT_EXIT=$?
+        set -e
+
+        if [ $GIT_EXIT -ne 0 ]; then
+            print_error "Git pull failed"
+            generate_error_report "pull_code" "Git pull failed for branch $BRANCH" "$GIT_OUTPUT"
+            return 1
+        fi
 
         CURRENT_COMMIT=$(git rev-parse --short HEAD)
         print_success "Updated to commit: $CURRENT_COMMIT"
@@ -164,18 +271,40 @@ update_dependencies() {
 
     # Composer
     print_info "Updating PHP dependencies..."
-    composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+    set +e
+    COMPOSER_OUTPUT=$(composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev 2>&1)
+    COMPOSER_EXIT=$?
+    set -e
+
+    if [ $COMPOSER_EXIT -ne 0 ]; then
+        print_error "Composer install failed"
+        generate_error_report "update_dependencies" "Composer install failed" "$COMPOSER_OUTPUT"
+        echo "$COMPOSER_OUTPUT"
+        return 1
+    fi
+
     print_success "Composer dependencies updated"
 
     # NPM
     if command -v npm >/dev/null 2>&1; then
         print_info "Updating Node.js dependencies..."
+
+        set +e
         if [ -f package-lock.json ]; then
-            npm ci
+            NPM_OUTPUT=$(npm ci 2>&1)
         else
-            npm install
+            NPM_OUTPUT=$(npm install 2>&1)
         fi
-        print_success "NPM dependencies updated"
+        NPM_EXIT=$?
+        set -e
+
+        if [ $NPM_EXIT -ne 0 ]; then
+            print_warning "NPM install had issues (non-fatal)"
+            log_error_detail "NPM install output: $NPM_OUTPUT"
+        else
+            print_success "NPM dependencies updated"
+        fi
     else
         print_warning "NPM not available, skipping Node.js dependencies"
     fi
@@ -193,8 +322,16 @@ run_migrations() {
 
     set +e
     MIGRATION_STATUS=$(php artisan migrate:status 2>&1)
+    MIGRATION_STATUS_EXIT=$?
     PENDING_COUNT=$(echo "$MIGRATION_STATUS" | grep -c "Pending" || echo "0")
     set -e
+
+    if [ $MIGRATION_STATUS_EXIT -ne 0 ]; then
+        print_error "Could not check migration status"
+        generate_error_report "run_migrations" "migrate:status failed" "$MIGRATION_STATUS"
+        echo "$MIGRATION_STATUS"
+        return 1
+    fi
 
     if [ "$PENDING_COUNT" = "0" ]; then
         print_success "No pending migrations"
@@ -210,6 +347,7 @@ run_migrations() {
     set -e
 
     echo "$MIGRATION_OUTPUT"
+    log_error_detail "Migration output: $MIGRATION_OUTPUT"
 
     if [ $MIGRATION_EXIT -eq 0 ]; then
         print_success "All migrations completed successfully"
@@ -220,36 +358,39 @@ run_migrations() {
     if echo "$MIGRATION_OUTPUT" | grep -q "already exists"; then
         print_warning "Some tables already exist, attempting to sync..."
 
-        # Get the failed migration name
-        FAILED_MIGRATION=$(echo "$MIGRATION_OUTPUT" | grep -oP "Table '\K[^']+")
-        print_info "Table '$FAILED_MIGRATION' already exists"
+        # Extract detailed error info
+        FAILED_TABLE=$(echo "$MIGRATION_OUTPUT" | grep -oP "Table '\K[^']+" | head -1)
+        FAILED_MIGRATION_FILE=$(echo "$MIGRATION_OUTPUT" | grep -oP "\d{4}_\d{2}_\d{2}_\d+_\w+" | head -1)
 
-        # Mark migration as complete without running it
-        print_info "Marking migration as complete..."
+        print_info "Table '$FAILED_TABLE' already exists"
+        print_info "Migration file: $FAILED_MIGRATION_FILE"
 
-        # Find the migration file that's causing issues
+        # Log for debugging
+        generate_error_report "run_migrations" "Table already exists: $FAILED_TABLE" "$MIGRATION_OUTPUT"
+
+        # Show existing tables for debugging
+        print_info "Checking existing tables..."
         set +e
-        php artisan migrate --force --pretend 2>&1 | head -5
+        TABLES=$(php artisan tinker --execute="collect(\DB::select('SHOW TABLES'))->pluck('Tables_in_' . env('DB_DATABASE'))->implode(', ');" 2>/dev/null | tail -1)
         set -e
+        print_info "Existing tables: $TABLES"
+        log_error_detail "Existing tables: $TABLES"
 
-        # Try to continue with remaining migrations
-        print_info "Attempting to continue with remaining migrations..."
-        set +e
-        php artisan migrate --force 2>&1
-        RETRY_EXIT=$?
-        set -e
+        print_error "Migration failed. Please check error log: $ERROR_LOG"
+        echo ""
+        echo "  Suggested fixes:"
+        echo "  1. Check if migration file has Schema::hasTable() check"
+        echo "  2. Run: php artisan migrate:status"
+        echo "  3. If safe, run: php artisan migrate:fresh --force (DELETES ALL DATA!)"
+        echo ""
 
-        if [ $RETRY_EXIT -eq 0 ]; then
-            print_success "Migrations completed after recovery"
-            return 0
-        fi
+        return 1
     fi
 
-    # If still failing, provide options
-    print_error "Migration failed. Options:"
-    echo "  1. Check database manually for conflicts"
-    echo "  2. Run: php artisan migrate:fresh --force (DELETES ALL DATA!)"
-    echo "  3. Fix the migration file and retry"
+    # Unknown error
+    generate_error_report "run_migrations" "Migration failed with unknown error" "$MIGRATION_OUTPUT"
+    print_error "Migration failed with unknown error"
+    print_info "Check error log: $ERROR_LOG"
 
     return 1
 }
@@ -267,17 +408,82 @@ run_smart_seeding() {
     # Run the smart seeder if it exists
     if [ -f "database/seeders/SmartDatabaseSeeder.php" ]; then
         print_info "Running SmartDatabaseSeeder..."
-        php artisan db:seed --class=SmartDatabaseSeeder --force
-        print_success "Smart seeding completed"
+
+        set +e
+        SEED_OUTPUT=$(php artisan db:seed --class=SmartDatabaseSeeder --force 2>&1)
+        SEED_EXIT=$?
+        set -e
+
+        echo "$SEED_OUTPUT"
+
+        if [ $SEED_EXIT -ne 0 ]; then
+            # Analyze the error to provide helpful feedback
+            if echo "$SEED_OUTPUT" | grep -q "Unknown column"; then
+                UNKNOWN_COL=$(echo "$SEED_OUTPUT" | grep -oP "Unknown column '\K[^']+" | head -1)
+                AFFECTED_TABLE=$(echo "$SEED_OUTPUT" | grep -oP "INSERT INTO `\K[^`]+" | head -1)
+
+                print_warning "Column mismatch detected!"
+                print_info "Column '$UNKNOWN_COL' does not exist in table '$AFFECTED_TABLE'"
+
+                generate_error_report "run_smart_seeding" "Column mismatch: $UNKNOWN_COL in $AFFECTED_TABLE" "$SEED_OUTPUT"
+
+                echo ""
+                echo "  Suggested fixes:"
+                echo "  1. Check SmartDatabaseSeeder uses correct column names"
+                echo "  2. Run: php artisan migrate:status"
+                echo "  3. Compare seeder data with migration schema"
+                echo ""
+
+                # Check if individual seeding methods have try-catch
+                if echo "$SEED_OUTPUT" | grep -q "✗ Failed to add"; then
+                    print_info "Some items were skipped due to errors (see above)"
+                    print_warning "Seeding completed with partial errors"
+                    return 0  # Continue deployment, as SmartDatabaseSeeder handles errors gracefully
+                fi
+
+                return 1
+            elif echo "$SEED_OUTPUT" | grep -q "Table .* doesn't exist"; then
+                MISSING_TABLE=$(echo "$SEED_OUTPUT" | grep -oP "Table '.*?\.\K[^']+" | head -1)
+                print_warning "Table '$MISSING_TABLE' does not exist"
+                print_info "SmartDatabaseSeeder should skip this table automatically"
+                generate_error_report "run_smart_seeding" "Missing table: $MISSING_TABLE" "$SEED_OUTPUT"
+                return 1
+            else
+                print_error "Smart seeding failed with unknown error"
+                generate_error_report "run_smart_seeding" "SmartDatabaseSeeder failed" "$SEED_OUTPUT"
+                return 1
+            fi
+        fi
+
+        # Check for partial failures (errors handled gracefully by SmartDatabaseSeeder)
+        if echo "$SEED_OUTPUT" | grep -q "✗ Failed"; then
+            print_warning "Seeding completed with some partial failures (non-fatal)"
+            print_info "Check output above for details"
+        else
+            print_success "Smart seeding completed successfully"
+        fi
     elif [ -f "database/seeders/DatabaseSeeder.php" ]; then
         # Check if we should run seeders (only if tables are empty)
         print_info "Checking if seeding is needed..."
 
+        set +e
         SHOULD_SEED=$(php artisan tinker --execute="echo \App\Models\User::count() == 0 ? 'yes' : 'no';" 2>/dev/null | tail -1)
+        set -e
 
         if [ "$SHOULD_SEED" = "yes" ]; then
             print_info "Running DatabaseSeeder..."
-            php artisan db:seed --force
+
+            set +e
+            SEED_OUTPUT=$(php artisan db:seed --force 2>&1)
+            SEED_EXIT=$?
+            set -e
+
+            if [ $SEED_EXIT -ne 0 ]; then
+                print_error "Seeding failed"
+                generate_error_report "run_smart_seeding" "DatabaseSeeder failed" "$SEED_OUTPUT"
+                return 1
+            fi
+
             print_success "Seeding completed"
         else
             print_info "Data already exists, skipping seeding"
@@ -293,7 +499,19 @@ build_assets() {
 
     if command -v npm >/dev/null 2>&1; then
         print_info "Building production assets..."
-        npm run build
+
+        set +e
+        BUILD_OUTPUT=$(npm run build 2>&1)
+        BUILD_EXIT=$?
+        set -e
+
+        if [ $BUILD_EXIT -ne 0 ]; then
+            print_error "Asset build failed"
+            generate_error_report "build_assets" "npm run build failed" "$BUILD_OUTPUT"
+            echo "$BUILD_OUTPUT"
+            return 1
+        fi
+
         print_success "Assets built successfully"
     else
         print_warning "NPM not available, skipping asset build"
@@ -306,24 +524,32 @@ optimize_application() {
 
     # Clear all caches
     print_info "Clearing caches..."
-    php artisan cache:clear
-    php artisan config:clear
-    php artisan route:clear
-    php artisan view:clear
+    php artisan cache:clear 2>&1
+    php artisan config:clear 2>&1
+    php artisan route:clear 2>&1
+    php artisan view:clear 2>&1
     print_success "Caches cleared"
 
     # Optimize for production
     if grep -q "APP_ENV=production" .env; then
         print_info "Optimizing for production..."
-        php artisan config:cache
-        php artisan route:cache
-        php artisan view:cache
+
+        set +e
+        OPTIMIZE_OUTPUT=$(php artisan config:cache 2>&1)
+        if [ $? -ne 0 ]; then
+            print_warning "config:cache had issues: $OPTIMIZE_OUTPUT"
+        fi
+
+        php artisan route:cache 2>&1 || print_warning "route:cache had issues"
+        php artisan view:cache 2>&1 || print_warning "view:cache had issues"
+        set -e
+
         print_success "Application optimized for production"
     fi
 
     # Optimize composer autoload
     print_info "Optimizing autoloader..."
-    composer dump-autoload --optimize
+    composer dump-autoload --optimize 2>&1
     print_success "Autoloader optimized"
 }
 
@@ -331,7 +557,7 @@ optimize_application() {
 fix_permissions() {
     print_step "Fixing File Permissions"
 
-    chmod -R 775 storage bootstrap/cache
+    chmod -R 775 storage bootstrap/cache 2>&1
     print_success "Permissions fixed"
 }
 
@@ -339,7 +565,7 @@ fix_permissions() {
 restart_queue() {
     print_step "Restarting Queue Workers"
 
-    php artisan queue:restart
+    php artisan queue:restart 2>&1 || print_warning "queue:restart had issues"
     print_success "Queue workers will restart on next job"
 }
 
@@ -362,39 +588,75 @@ post_deployment() {
 health_check() {
     print_step "Running Health Check"
 
+    local HEALTH_ISSUES=0
+
     # Check database connection
     set +e
-    DB_CHECK=$(php artisan tinker --execute="try { \DB::connection()->getPdo(); echo 'ok'; } catch(\Exception \$e) { echo 'fail'; }" 2>/dev/null | tail -1)
+    DB_CHECK=$(php artisan tinker --execute="try { \DB::connection()->getPdo(); echo 'ok'; } catch(\Exception \$e) { echo 'fail: ' . \$e->getMessage(); }" 2>/dev/null | tail -1)
     set -e
 
-    if [ "$DB_CHECK" = "ok" ]; then
+    if [[ "$DB_CHECK" == "ok" ]]; then
         print_success "Database connection is working"
     else
-        print_error "Database connection failed"
+        print_error "Database connection failed: $DB_CHECK"
+        HEALTH_ISSUES=$((HEALTH_ISSUES + 1))
     fi
 
     # Check if application is accessible
     if command -v curl >/dev/null 2>&1; then
         APP_URL=$(grep APP_URL .env | cut -d'=' -f2)
         set +e
-        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL" 2>/dev/null)
+        HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$APP_URL" 2>/dev/null)
         set -e
 
-        if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "302" ]; then
-            print_success "Application is accessible at $APP_URL (HTTP $HTTP_CODE)"
+        if [ "$HTTP_RESPONSE" = "200" ] || [ "$HTTP_RESPONSE" = "302" ]; then
+            print_success "Application is accessible at $APP_URL (HTTP $HTTP_RESPONSE)"
+        elif [ "$HTTP_RESPONSE" = "000" ]; then
+            print_warning "Could not reach $APP_URL (timeout or connection refused)"
         else
-            print_warning "Application returned HTTP $HTTP_CODE"
+            print_warning "Application returned HTTP $HTTP_RESPONSE"
         fi
     fi
 
-    print_success "Health check completed"
+    # Check storage permissions
+    if [ -w "storage/logs" ]; then
+        print_success "Storage is writable"
+    else
+        print_error "Storage is not writable"
+        HEALTH_ISSUES=$((HEALTH_ISSUES + 1))
+    fi
+
+    if [ $HEALTH_ISSUES -gt 0 ]; then
+        print_warning "Health check completed with $HEALTH_ISSUES issue(s)"
+    else
+        print_success "Health check completed - all systems operational"
+    fi
 }
 
 # Handle deployment failure
 on_error() {
-    print_error "\nDeployment failed!"
-    disable_maintenance
-    print_error "Please check the error above and try again."
+    local exit_code=$?
+    print_error "Deployment failed! (Exit code: $exit_code)"
+
+    # Try to bring the app back up
+    php artisan up 2>/dev/null || true
+
+    echo ""
+    echo -e "${RED}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "${RED}                    DEPLOYMENT FAILED                        ${NC}"
+    echo -e "${RED}═══════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${YELLOW}Error logs saved to:${NC}"
+    echo -e "  ${PURPLE}Full log:${NC}  $LOG_FILE"
+    echo -e "  ${PURPLE}Error log:${NC} $ERROR_LOG"
+    echo ""
+    echo -e "${YELLOW}To view error details:${NC}"
+    echo -e "  cat $ERROR_LOG"
+    echo ""
+    echo -e "${YELLOW}To retry deployment:${NC}"
+    echo -e "  ./deploy.sh $BRANCH"
+    echo ""
+
     exit 1
 }
 
@@ -404,6 +666,7 @@ main() {
 
     print_info "Starting deployment at $(date)"
     print_info "Branch: $BRANCH"
+    print_info "Log file: $LOG_FILE"
     echo
 
     # Set trap for errors
@@ -440,6 +703,7 @@ main() {
         echo -e "  ${PURPLE}Commit:${NC} $(git rev-parse --short HEAD)"
     fi
     echo -e "  ${PURPLE}Environment:${NC} $(grep APP_ENV .env | cut -d'=' -f2)"
+    echo -e "  ${PURPLE}Log:${NC} $LOG_FILE"
     echo
 }
 
@@ -456,6 +720,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --seed)
             FORCE_SEED=1
+            shift
+            ;;
+        --verbose|-v)
+            VERBOSE=1
             shift
             ;;
         *)
