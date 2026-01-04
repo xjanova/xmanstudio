@@ -33,10 +33,18 @@ class AdminSeeder extends Seeder
         $settings = [
             [
                 'group' => 'notification',
-                'key' => 'line_notify_token',
+                'key' => 'line_channel_access_token',
                 'value' => '',
                 'type' => 'string',
-                'description' => 'Line Notify Access Token',
+                'description' => 'Line Messaging API Channel Access Token',
+                'is_public' => false,
+            ],
+            [
+                'group' => 'notification',
+                'key' => 'line_admin_user_id',
+                'value' => '',
+                'type' => 'string',
+                'description' => 'Line User ID for receiving notifications',
                 'is_public' => false,
             ],
             [
@@ -106,11 +114,16 @@ class AdminSeeder extends Seeder
 
         $this->command->info('Default settings created.');
         $this->command->newLine();
-        $this->command->info('To configure Line Notify:');
-        $this->command->info('  1. Go to https://notify-bot.line.me/');
-        $this->command->info('  2. Login and create a new token');
-        $this->command->info('  3. Add the token to your .env file:');
-        $this->command->info('     LINE_NOTIFY_TOKEN=your_token_here');
-        $this->command->info('  4. Or update the database setting directly');
+        $this->command->info('To configure Line Messaging API:');
+        $this->command->info('  1. Go to https://developers.line.biz/console/');
+        $this->command->info('  2. Create a Messaging API channel');
+        $this->command->info('  3. Get Channel Access Token (long-lived)');
+        $this->command->info('  4. Add to your .env file:');
+        $this->command->info('     LINE_CHANNEL_ACCESS_TOKEN=your_token_here');
+        $this->command->info('     LINE_ADMIN_USER_ID=your_user_id_here');
+        $this->command->newLine();
+        $this->command->info('To get your User ID:');
+        $this->command->info('  - Add your bot as friend');
+        $this->command->info('  - Use webhook to capture your user ID from events');
     }
 }
