@@ -17,6 +17,8 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'line_uid',
+        'line_display_name',
         'password',
         'role',
         'is_active',
@@ -78,5 +80,15 @@ class User extends Authenticatable
     public function hasActiveRental(): bool
     {
         return $this->activeRental() !== null;
+    }
+
+    public function hasLineUid(): bool
+    {
+        return ! empty($this->line_uid);
+    }
+
+    public function scopeWithLineUid($query)
+    {
+        return $query->whereNotNull('line_uid')->where('line_uid', '!=', '');
     }
 }
