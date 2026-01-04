@@ -235,6 +235,12 @@
                         <li><a href="/products" class="hover:text-white transition-colors">ผลิตภัณฑ์</a></li>
                         <li><a href="/portfolio" class="hover:text-white transition-colors">ผลงาน</a></li>
                     </ul>
+
+                    <h4 class="text-lg font-semibold mb-4 mt-6">กฎหมาย</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="/privacy" class="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a></li>
+                        <li><a href="/terms" class="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</a></li>
+                    </ul>
                 </div>
 
                 <!-- Contact -->
@@ -267,10 +273,14 @@
             <!-- Bottom Bar -->
             <div class="mt-12 pt-8 border-t border-gray-800">
                 <div class="flex flex-col md:flex-row justify-between items-center">
-                    <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} XMAN Studio. All rights reserved.</p>
-                    <div class="flex space-x-6 mt-4 md:mt-0">
-                        <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">นโยบายความเป็นส่วนตัว</a>
-                        <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">ข้อกำหนดการใช้งาน</a>
+                    <div class="text-center md:text-left">
+                        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} {{ config('app.name', 'XMAN Studio') }}. All rights reserved.</p>
+                        <p class="text-gray-500 text-xs mt-1">IT Solutions & Software Development</p>
+                    </div>
+                    <div class="flex flex-wrap justify-center space-x-4 md:space-x-6 mt-4 md:mt-0">
+                        <a href="/privacy" class="text-gray-400 hover:text-white text-sm transition-colors">นโยบายความเป็นส่วนตัว</a>
+                        <a href="/terms" class="text-gray-400 hover:text-white text-sm transition-colors">ข้อกำหนดการใช้งาน</a>
+                        <a href="/support" class="text-gray-400 hover:text-white text-sm transition-colors">ติดต่อเรา</a>
                     </div>
                 </div>
             </div>

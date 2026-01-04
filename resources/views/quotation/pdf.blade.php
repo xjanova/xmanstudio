@@ -6,16 +6,16 @@
     <title>ใบเสนอราคา {{ $quotation['quote_number'] }}</title>
     <style>
         @font-face {
-            font-family: 'THSarabun';
+            font-family: 'Sarabun';
             font-style: normal;
             font-weight: normal;
-            src: url({{ storage_path('fonts/THSarabunNew.ttf') }}) format('truetype');
+            src: url({{ storage_path('fonts/Sarabun-Regular.ttf') }}) format('truetype');
         }
         @font-face {
-            font-family: 'THSarabun';
+            font-family: 'Sarabun';
             font-style: normal;
             font-weight: bold;
-            src: url({{ storage_path('fonts/THSarabunNew Bold.ttf') }}) format('truetype');
+            src: url({{ storage_path('fonts/Sarabun-Bold.ttf') }}) format('truetype');
         }
 
         * {
@@ -25,7 +25,7 @@
         }
 
         body {
-            font-family: 'THSarabun', 'DejaVu Sans', sans-serif;
+            font-family: 'Sarabun', 'DejaVu Sans', sans-serif;
             font-size: 14px;
             line-height: 1.6;
             color: #1f2937;
