@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
+use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
@@ -165,4 +166,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'updateBank'])->name('payment-settings.bank.update');
     Route::post('/payment-settings/bank/{bankAccount}/toggle', [PaymentSettingController::class, 'toggleBank'])->name('payment-settings.bank.toggle');
     Route::delete('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'destroyBank'])->name('payment-settings.bank.destroy');
+
+    // Line Messaging
+    Route::get('/line-messaging', [LineMessagingController::class, 'index'])->name('line-messaging.index');
+    Route::get('/line-messaging/search', [LineMessagingController::class, 'search'])->name('line-messaging.search');
+    Route::post('/line-messaging/send', [LineMessagingController::class, 'send'])->name('line-messaging.send');
+    Route::get('/line-messaging/users', [LineMessagingController::class, 'users'])->name('line-messaging.users');
+    Route::post('/line-messaging/update-uid', [LineMessagingController::class, 'updateUid'])->name('line-messaging.update-uid');
 });
