@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Quotation extends Model
 {
@@ -104,7 +104,7 @@ class Quotation extends Model
 
     public function markAsViewed(): void
     {
-        if (!$this->viewed_at) {
+        if (! $this->viewed_at) {
             $this->update([
                 'status' => 'viewed',
                 'viewed_at' => now(),
