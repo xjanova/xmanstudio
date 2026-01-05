@@ -90,7 +90,7 @@ class AnalyticsController extends Controller
 
         // Active subscriptions
         $activeSubscriptions = UserRental::where('status', 'active')
-            ->where('end_date', '>', now())
+            ->where('expires_at', '>', now())
             ->count();
 
         // Total orders
@@ -285,18 +285,18 @@ class AnalyticsController extends Controller
     private function getRentalStats(Carbon $startDate): array
     {
         $activeRentals = UserRental::where('status', 'active')
-            ->where('end_date', '>', now())
+            ->where('expires_at', '>', now())
             ->count();
 
         $expiringThisWeek = UserRental::where('status', 'active')
-            ->whereBetween('end_date', [now(), now()->addDays(7)])
+            ->whereBetween('expires_at', [now(), now()->addDays(7)])
             ->count();
 
         $renewalRate = 0;
-        $totalExpired = UserRental::where('end_date', '<=', now())
+        $totalExpired = UserRental::where('expires_at', '<=', now())
             ->where('created_at', '>=', $startDate)
             ->count();
-        $renewedCount = UserRental::where('end_date', '<=', now())
+        $renewedCount = UserRental::where('expires_at', '<=', now())
             ->where('created_at', '>=', $startDate)
             ->whereHas('user', function ($q) {
                 $q->whereHas('rentals', function ($q2) {
@@ -310,7 +310,7 @@ class AnalyticsController extends Controller
 
         // Monthly Recurring Revenue (MRR)
         $mrr = UserRental::where('status', 'active')
-            ->where('end_date', '>', now())
+            ->where('expires_at', '>', now())
             ->with('package')
             ->get()
             ->sum(function ($rental) {
