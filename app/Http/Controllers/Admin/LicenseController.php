@@ -86,7 +86,7 @@ class LicenseController extends Controller
             $validated['type'],
             $validated['quantity'],
             $validated['max_activations'],
-            $validated['product_id']
+            $validated['product_id'] ?? null
         );
 
         return redirect()
