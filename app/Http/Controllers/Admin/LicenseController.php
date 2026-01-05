@@ -79,14 +79,14 @@ class LicenseController extends Controller
             'type' => 'required|in:monthly,yearly,lifetime',
             'quantity' => 'required|integer|min:1|max:100',
             'max_activations' => 'required|integer|min:1|max:10',
-            'product_id' => 'nullable|exists:products,id',
+            'product_id' => 'required|exists:products,id',
         ]);
 
         $licenses = $this->licenseService->generateLicenses(
             $validated['type'],
             $validated['quantity'],
             $validated['max_activations'],
-            $validated['product_id'] ?? null
+            $validated['product_id']
         );
 
         return redirect()
