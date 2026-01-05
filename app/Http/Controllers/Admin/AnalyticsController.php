@@ -55,7 +55,7 @@ class AnalyticsController extends Controller
         // Order revenue
         $orderRevenue = Order::where('status', 'completed')
             ->where('created_at', '>=', $startDate)
-            ->sum('total_amount');
+            ->sum('total');
 
         $totalRevenue = $revenue + $orderRevenue;
 
@@ -68,7 +68,7 @@ class AnalyticsController extends Controller
             ->sum('amount');
         $previousOrderRevenue = Order::where('status', 'completed')
             ->whereBetween('created_at', [$previousStart, $startDate])
-            ->sum('total_amount');
+            ->sum('total');
         $previousTotalRevenue = $previousRevenue + $previousOrderRevenue;
 
         $revenueGrowth = $previousTotalRevenue > 0
@@ -141,7 +141,7 @@ class AnalyticsController extends Controller
         // Order revenue
         $orderRevenue = Order::where('status', 'completed')
             ->where('created_at', '>=', $startDate)
-            ->select(DB::raw("DATE_FORMAT(created_at, '{$format}') as period"), DB::raw('SUM(total_amount) as total'))
+            ->select(DB::raw("DATE_FORMAT(created_at, '{$format}') as period"), DB::raw('SUM(total) as total'))
             ->groupBy('period')
             ->pluck('total', 'period')
             ->toArray();
