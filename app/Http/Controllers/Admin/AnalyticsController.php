@@ -193,15 +193,15 @@ class AnalyticsController extends Controller
     {
         // Top rental packages
         $topPackages = UserRental::where('created_at', '>=', $startDate)
-            ->select('package_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(total_price) as revenue'))
-            ->groupBy('package_id')
-            ->with('package')
+            ->select('rental_package_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount_paid) as revenue'))
+            ->groupBy('rental_package_id')
+            ->with('rentalPackage')
             ->orderByDesc('revenue')
             ->limit(5)
             ->get()
             ->map(function ($item) {
                 return [
-                    'name' => $item->package->name ?? 'Unknown Package',
+                    'name' => $item->rentalPackage->name ?? 'Unknown Package',
                     'type' => 'rental',
                     'count' => $item->count,
                     'revenue' => $item->revenue,
@@ -311,12 +311,12 @@ class AnalyticsController extends Controller
         // Monthly Recurring Revenue (MRR)
         $mrr = UserRental::where('status', 'active')
             ->where('expires_at', '>', now())
-            ->with('package')
+            ->with('rentalPackage')
             ->get()
             ->sum(function ($rental) {
-                $months = max(1, $rental->package->duration_months ?? 1);
+                $months = max(1, $rental->rentalPackage->duration_months ?? 1);
 
-                return $rental->total_price / $months;
+                return $rental->amount_paid / $months;
             });
 
         return [
