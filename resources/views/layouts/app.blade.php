@@ -323,30 +323,19 @@
             setTimeout(() => toast.remove(), duration);
         };
 
-        // RGB Fireflies Effect - Pure JavaScript (runs immediately)
+        // Golden Fireflies Effect - Pure JavaScript
         (function() {
             const container = document.getElementById('fireflies-layer');
             if (!container) return;
 
-            const colors = [
-                'firefly-red',
-                'firefly-green',
-                'firefly-blue',
-                'firefly-purple',
-                'firefly-cyan',
-                'firefly-pink',
-                'firefly-yellow',
-                'firefly-orange'
-            ];
-
-            for (let i = 0; i < 50; i++) {
+            // Create 35 small golden fireflies
+            for (let i = 0; i < 35; i++) {
                 const x = Math.random() * 100;
                 const y = Math.random() * 100;
-                const size = 4 + Math.random() * 8;
-                const floatDuration = 6 + Math.random() * 10;
-                const glowDuration = 2 + Math.random() * 3;
-                const delay = Math.random() * 8;
-                const colorClass = colors[Math.floor(Math.random() * colors.length)];
+                const size = 2 + Math.random() * 3; // Small: 2-5px
+                const floatDuration = 8 + Math.random() * 12;
+                const glowDuration = 2 + Math.random() * 4;
+                const delay = Math.random() * 10;
 
                 const wrapper = document.createElement('div');
                 wrapper.className = 'firefly-wrapper';
@@ -359,7 +348,7 @@
                 `;
 
                 const core = document.createElement('div');
-                core.className = 'firefly-core ' + colorClass;
+                core.className = 'firefly-core firefly-gold';
                 core.style.cssText = `
                     width: ${size}px;
                     height: ${size}px;
