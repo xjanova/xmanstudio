@@ -576,12 +576,15 @@ function heroScrollZoom() {
                 'firefly-orange'
             ];
 
-            for (let i = 0; i < 50; i++) {
+            // Generate 60 fireflies with varying sizes
+            for (let i = 0; i < 60; i++) {
                 const x = Math.random() * 100;
                 const y = Math.random() * 100;
-                const size = 2 + Math.random() * 6;
-                const duration = 3 + Math.random() * 7;
-                const delay = Math.random() * 5;
+                // Larger fireflies (4-12px)
+                const size = 4 + Math.random() * 8;
+                const floatDuration = 4 + Math.random() * 8;
+                const glowDuration = 1.5 + Math.random() * 3;
+                const delay = Math.random() * 6;
                 const colorClass = colors[Math.floor(Math.random() * colors.length)];
 
                 this.fireflies.push({
@@ -592,8 +595,8 @@ function heroScrollZoom() {
                         top: ${y}%;
                         width: ${size}px;
                         height: ${size}px;
-                        animation-duration: ${duration}s;
-                        animation-delay: ${delay}s;
+                        animation: firefly-float ${floatDuration}s ease-in-out infinite, firefly-glow ${glowDuration}s ease-in-out infinite alternate;
+                        animation-delay: ${delay}s, ${delay + 0.5}s;
                     `
                 });
             }
