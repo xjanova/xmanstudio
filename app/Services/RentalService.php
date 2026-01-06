@@ -16,7 +16,7 @@ class RentalService
     /**
      * Get available packages for display
      */
-    public function getAvailablePackages(bool $includeTrial = true): array
+    public function getAvailablePackages(bool $includeTrial = true): \Illuminate\Database\Eloquent\Collection
     {
         $query = RentalPackage::active()
             ->orderBy('sort_order')
@@ -26,28 +26,7 @@ class RentalService
             $query->where('price', '>', 0);
         }
 
-        return $query->get()->map(function ($package) {
-            return [
-                'id' => $package->id,
-                'name' => $package->name,
-                'name_th' => $package->name_th,
-                'description' => $package->description,
-                'description_th' => $package->description_th,
-                'duration_type' => $package->duration_type,
-                'duration_value' => $package->duration_value,
-                'duration_text' => $package->duration_text,
-                'price' => $package->price,
-                'original_price' => $package->original_price,
-                'discount_percentage' => $package->discount_percentage,
-                'formatted_price' => $package->getFormattedPrice(),
-                'currency' => $package->currency,
-                'features' => $package->features,
-                'limits' => $package->limits,
-                'is_featured' => $package->is_featured,
-                'is_popular' => $package->is_popular,
-                'has_trial' => $package->has_trial,
-            ];
-        })->toArray();
+        return $query->get();
     }
 
     /**
