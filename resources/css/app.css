@@ -281,14 +281,17 @@
 }
 
 /* ==========================================================================
-   RGB Fireflies Effect
+   RGB Fireflies Effect - Fixed Top Layer
    ========================================================================== */
-.fireflies-container {
-    position: absolute;
-    inset: 0;
+.fireflies-fixed-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
     overflow: visible;
     pointer-events: none;
-    will-change: transform, opacity;
+    z-index: 9999;
 }
 
 .firefly {

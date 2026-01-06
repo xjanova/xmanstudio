@@ -5,6 +5,15 @@
 @section('content')
 <!-- Hero Scroll Zoom Section -->
 <div class="hero-scroll-container" x-data="heroScrollZoom()" x-init="init()">
+    <!-- RGB Fireflies - Fixed Top Layer (Independent from scroll) -->
+    <div class="fireflies-fixed-layer">
+        <template x-for="firefly in fireflies" :key="firefly.id">
+            <div class="firefly"
+                 :style="firefly.style"
+                 :class="firefly.colorClass"></div>
+        </template>
+    </div>
+
     <!-- Fixed Hero Viewport -->
     <div class="hero-viewport">
         <!-- Background Base Layer -->
@@ -38,15 +47,6 @@
         <!-- Gradient Overlays -->
         <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80 z-10"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50 z-10"></div>
-
-        <!-- RGB Fireflies Container -->
-        <div class="fireflies-container z-20" :style="getFirefliesStyle()">
-            <template x-for="firefly in fireflies" :key="firefly.id">
-                <div class="firefly"
-                     :style="firefly.style"
-                     :class="firefly.colorClass"></div>
-            </template>
-        </div>
 
         <!-- Central Content with Zoom Effect -->
         <div class="hero-content z-30" :style="getContentStyle()">
