@@ -5,15 +5,6 @@
 @section('content')
 <!-- Hero Scroll Zoom Section -->
 <div class="hero-scroll-container" x-data="heroScrollZoom()" x-init="init()">
-    <!-- RGB Fireflies - Fixed Top Layer (Independent from scroll) -->
-    <div class="fireflies-fixed-layer">
-        <template x-for="firefly in fireflies" :key="firefly.id">
-            <div class="firefly"
-                 :style="firefly.style"
-                 :class="firefly.colorClass"></div>
-        </template>
-    </div>
-
     <!-- Fixed Hero Viewport -->
     <div class="hero-viewport">
         <!-- Background Base Layer -->
@@ -539,15 +530,10 @@
 function heroScrollZoom() {
     return {
         scrollProgress: 0,
-        fireflies: [],
         sideItems: [0, 1, 2, 3, 4],
         activeSideItem: 0,
-        rafId: null,
 
         init() {
-            // Generate RGB fireflies
-            this.generateFireflies();
-
             // Smooth scroll handler with requestAnimationFrame
             let ticking = false;
             window.addEventListener('scroll', () => {
@@ -562,44 +548,6 @@ function heroScrollZoom() {
 
             // Initial call
             this.handleScroll();
-        },
-
-        generateFireflies() {
-            const colors = [
-                'firefly-red',
-                'firefly-green',
-                'firefly-blue',
-                'firefly-purple',
-                'firefly-cyan',
-                'firefly-pink',
-                'firefly-yellow',
-                'firefly-orange'
-            ];
-
-            // Generate 60 fireflies with varying sizes
-            for (let i = 0; i < 60; i++) {
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                // Larger fireflies (4-12px)
-                const size = 4 + Math.random() * 8;
-                const floatDuration = 4 + Math.random() * 8;
-                const glowDuration = 1.5 + Math.random() * 3;
-                const delay = Math.random() * 6;
-                const colorClass = colors[Math.floor(Math.random() * colors.length)];
-
-                this.fireflies.push({
-                    id: i,
-                    colorClass: colorClass,
-                    style: `
-                        left: ${x}%;
-                        top: ${y}%;
-                        width: ${size}px;
-                        height: ${size}px;
-                        animation: firefly-float ${floatDuration}s ease-in-out infinite, firefly-glow ${glowDuration}s ease-in-out infinite alternate;
-                        animation-delay: ${delay}s, ${delay + 0.5}s;
-                    `
-                });
-            }
         },
 
         handleScroll() {
@@ -645,17 +593,6 @@ function heroScrollZoom() {
 
             return `
                 transform: translateY(${translateY}px);
-                opacity: ${opacity};
-            `;
-        },
-
-        getFirefliesStyle() {
-            // Fireflies zoom out with content
-            const scale = 1 + (this.scrollProgress * 3);
-            const opacity = Math.max(0, 1 - (this.scrollProgress * 1.2));
-
-            return `
-                transform: scale(${scale});
                 opacity: ${opacity};
             `;
         },

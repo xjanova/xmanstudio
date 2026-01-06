@@ -21,6 +21,15 @@
     </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- RGB Fireflies - Fixed Top Layer (Global) -->
+    <div id="fireflies-layer" class="fireflies-fixed-layer" x-data="firefliesEffect()" x-init="init()">
+        <template x-for="firefly in fireflies" :key="firefly.id">
+            <div class="firefly-wrapper" :style="firefly.wrapperStyle">
+                <div class="firefly-core" :class="firefly.colorClass" :style="firefly.coreStyle"></div>
+            </div>
+        </template>
+    </div>
+
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
@@ -319,6 +328,56 @@
             container?.appendChild(toast);
             setTimeout(() => toast.remove(), duration);
         };
+
+        // RGB Fireflies Effect - Global
+        function firefliesEffect() {
+            return {
+                fireflies: [],
+                init() {
+                    this.generateFireflies();
+                },
+                generateFireflies() {
+                    const colors = [
+                        'firefly-red',
+                        'firefly-green',
+                        'firefly-blue',
+                        'firefly-purple',
+                        'firefly-cyan',
+                        'firefly-pink',
+                        'firefly-yellow',
+                        'firefly-orange'
+                    ];
+
+                    for (let i = 0; i < 50; i++) {
+                        const x = Math.random() * 100;
+                        const y = Math.random() * 100;
+                        const size = 4 + Math.random() * 8;
+                        const floatDuration = 6 + Math.random() * 10;
+                        const glowDuration = 2 + Math.random() * 3;
+                        const delay = Math.random() * 8;
+                        const colorClass = colors[Math.floor(Math.random() * colors.length)];
+
+                        this.fireflies.push({
+                            id: i,
+                            colorClass: colorClass,
+                            wrapperStyle: `
+                                position: absolute;
+                                left: ${x}%;
+                                top: ${y}%;
+                                animation: firefly-float ${floatDuration}s ease-in-out infinite;
+                                animation-delay: ${delay}s;
+                            `,
+                            coreStyle: `
+                                width: ${size}px;
+                                height: ${size}px;
+                                animation: firefly-glow ${glowDuration}s ease-in-out infinite alternate;
+                                animation-delay: ${delay + 0.5}s;
+                            `
+                        });
+                    }
+                }
+            }
+        }
     </script>
 
     @stack('scripts')
