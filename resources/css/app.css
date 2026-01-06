@@ -294,11 +294,16 @@
     z-index: 9999;
 }
 
-.firefly {
+/* Wrapper handles position/float animation */
+.firefly-wrapper {
     position: absolute;
+    will-change: transform;
+}
+
+/* Core handles glow animation - no transform conflict */
+.firefly-core {
     border-radius: 50%;
-    animation: firefly-float 5s ease-in-out infinite, firefly-glow 2s ease-in-out infinite alternate;
-    will-change: transform, opacity, box-shadow;
+    will-change: opacity, box-shadow;
 }
 
 /* RGB Firefly Colors - Enhanced Glow */
@@ -391,12 +396,12 @@
 
 @keyframes firefly-glow {
     0% {
-        opacity: 0.4;
-        transform: scale(0.8);
+        opacity: 0.3;
+        filter: brightness(0.7);
     }
     100% {
         opacity: 1;
-        transform: scale(1.2);
+        filter: brightness(1.3);
     }
 }
 
