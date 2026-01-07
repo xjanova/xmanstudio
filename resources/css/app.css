@@ -291,7 +291,7 @@
     height: 100vh;
     overflow: visible;
     pointer-events: none;
-    z-index: 20; /* Above hero (z-1), behind content (z-30) */
+    z-index: 5; /* Just above background, behind all content */
 }
 
 /* Wrapper handles position/float animation */
