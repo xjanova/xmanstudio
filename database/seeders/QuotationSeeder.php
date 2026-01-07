@@ -688,7 +688,31 @@ class QuotationSeeder extends Seeder
                 'name' => 'ERC-20 Token Contract',
                 'name_th' => 'Smart Contract ERC-20 Token',
                 'description' => 'Standard ERC-20 fungible token contract for cryptocurrencies, utility tokens, or reward points.',
-                'description_th' => 'Smart Contract มาตรฐาน ERC-20 สำหรับสร้าง Token รวม: Token ใช้งานบน Ethereum/Polygon/BSC, กำหนดชื่อ/สัญลักษณ์/จำนวน, ฟังก์ชัน Mint/Burn/Transfer, Owner Controls, ตรวจสอบและ Audit โค้ด, Deploy บน Mainnet/Testnet, Documentation และคู่มือการใช้งาน',
+                'description_th' => '🎯 เหมาะสำหรับ: Startup ที่ต้องการออก Token ของตัวเอง, ธุรกิจที่ต้องการ Loyalty Point บน Blockchain, โปรเจค DeFi, องค์กรที่ต้องการ Utility Token
+
+📋 ขั้นตอนการทำงาน:
+1. Requirement: กำหนดชื่อ Token, Symbol, จำนวน Supply
+2. Contract Design: ออกแบบ Tokenomics และ Features ที่ต้องการ
+3. Development: เขียน Smart Contract ตามมาตรฐาน ERC-20
+4. Testing: ทดสอบบน Testnet อย่างละเอียด
+5. Security Review: ตรวจสอบช่องโหว่และ Best Practices
+6. Deployment: Deploy บน Mainnet พร้อม Verify Code
+7. Documentation: ส่งมอบเอกสารและคู่มือครบถ้วน
+
+📦 สิ่งที่ได้รับ:
+• Smart Contract ERC-20 มาตรฐาน
+• รองรับ Ethereum, Polygon, BSC, Arbitrum
+• ฟังก์ชัน: Transfer, Approve, Mint, Burn
+• Owner Controls และ Access Management
+• Source Code พร้อม Comments
+• Verified Contract บน Block Explorer
+• Documentation และคู่มือการใช้งาน
+• Gas Optimized Code
+
+⏱️ ระยะเวลา: 5-7 วันทำการ
+🛡️ รับประกัน: แก้ไข Bug ฟรี 30 วัน + ซัพพอร์ต 3 เดือน
+
+💡 ทำไมคุ้มค่า: การจ้าง Blockchain Developer ทำ Token Contract เริ่มต้น $2,000-5,000 (70,000-175,000 บาท) และอาจมีช่องโหว่ด้านความปลอดภัย บริการนี้ให้ Contract ที่ผ่านการทดสอบและ Review แล้ว ในราคาเพียง 50,000 บาท',
                 'price' => 50000,
                 'order' => 1,
             ],
@@ -697,7 +721,33 @@ class QuotationSeeder extends Seeder
                 'name' => 'ERC-721 NFT Contract',
                 'name_th' => 'Smart Contract NFT ERC-721',
                 'description' => 'ERC-721 NFT contract for unique digital collectibles, art, or membership tokens.',
-                'description_th' => 'Smart Contract มาตรฐาน ERC-721 สำหรับ NFT รวม: NFT แบบ Unique (1 ชิ้นต่อ Token ID), Metadata บน IPFS, ฟังก์ชัน Mint/Transfer/Burn, Royalty สำหรับ Creator, Whitelist และ Public Sale, Gas Optimized, Deploy และ Verify บน Etherscan, เอกสารครบถ้วน',
+                'description_th' => '🎯 เหมาะสำหรับ: ศิลปินที่ต้องการขาย Digital Art, แบรนด์ที่ต้องการ NFT Membership, เกมที่ต้องการ In-game Items, องค์กรที่ต้องการใบรับรองบน Blockchain
+
+📋 ขั้นตอนการทำงาน:
+1. Collection Planning: กำหนด Collection Name, Supply, Pricing Strategy
+2. Art/Metadata Setup: เตรียม Artwork และ Metadata Structure
+3. Smart Contract Development: เขียน Contract ตามมาตรฐาน ERC-721
+4. IPFS Integration: อัพโหลด Metadata และ Assets ไปยัง IPFS
+5. Minting Logic: พัฒนาระบบ Whitelist และ Public Mint
+6. Testing: ทดสอบ Mint, Transfer, Royalty บน Testnet
+7. Deployment: Deploy บน Mainnet พร้อม Verify
+
+📦 สิ่งที่ได้รับ:
+• Smart Contract ERC-721 มาตรฐาน
+• แต่ละ NFT เป็น Unique (1:1)
+• Metadata Storage บน IPFS (Permanent)
+• ระบบ Whitelist + Public Sale
+• Royalty (EIP-2981) รับส่วนแบ่งทุกครั้งที่มีการขายต่อ
+• Reveal/Unrevealed Feature
+• Max Mint Per Wallet
+• Gas Optimized (Batch Mint Support)
+• รองรับ OpenSea, Rarible, LooksRare
+• Source Code + Documentation
+
+⏱️ ระยะเวลา: 7-10 วันทำการ
+🛡️ รับประกัน: แก้ไข Bug ฟรี 30 วัน + ซัพพอร์ต 3 เดือน
+
+💡 ทำไมคุ้มค่า: การจ้างทำ NFT Contract จาก Marketplace ต่างประเทศ เริ่มต้น $3,000-10,000 ยังไม่รวม Audit บริการนี้ให้ Contract พร้อมใช้งาน รองรับ Marketplace หลัก ในราคา 80,000 บาท พร้อมระบบ Royalty ที่จะสร้างรายได้ต่อเนื่อง',
                 'price' => 80000,
                 'order' => 2,
             ],
@@ -706,7 +756,33 @@ class QuotationSeeder extends Seeder
                 'name' => 'ERC-1155 Multi-Token',
                 'name_th' => 'Smart Contract Multi-Token ERC-1155',
                 'description' => 'ERC-1155 multi-token standard supporting both fungible and non-fungible tokens in one contract.',
-                'description_th' => 'Smart Contract มาตรฐาน ERC-1155 รองรับทั้ง Fungible และ NFT รวม: สร้าง Token หลายประเภทใน Contract เดียว, เหมาะสำหรับ Game Items, Batch Transfer ประหยัด Gas, Supply Management, Metadata Flexible, รองรับ Marketplace มาตรฐาน, Deploy Multi-chain, เอกสารและคู่มือ',
+                'description_th' => '🎯 เหมาะสำหรับ: Game Developer ที่ต้องการระบบ Items, แบรนด์ที่ต้องการ NFT + Reward Points, โปรเจคที่ต้องการ Token หลายประเภท, Metaverse Platform
+
+📋 ขั้นตอนการทำงาน:
+1. Token Design: วางแผน Token Types ทั้งหมด (Fungible + Non-fungible)
+2. Supply Planning: กำหนด Supply และ Rarity ของแต่ละ Token
+3. Contract Architecture: ออกแบบโครงสร้าง Contract ที่ยืดหยุ่น
+4. Development: เขียน Smart Contract ตามมาตรฐาน ERC-1155
+5. Metadata System: พัฒนาระบบ Dynamic Metadata
+6. Batch Operations: Implement Batch Mint/Transfer เพื่อประหยัด Gas
+7. Testing & Deployment: ทดสอบและ Deploy บน Mainnet
+
+📦 สิ่งที่ได้รับ:
+• Smart Contract ERC-1155 มาตรฐาน
+• สร้าง Token ได้ไม่จำกัดประเภทใน Contract เดียว
+• รองรับทั้ง Fungible (เหมือนกัน เช่น Gold, Points) และ NFT (Unique Items)
+• Batch Transfer ส่งหลาย Token ในธุรกรรมเดียว (ประหยัด Gas 80%)
+• Dynamic Metadata URI
+• Supply Management (Limited/Unlimited)
+• Burn Mechanism
+• รองรับ OpenSea, Rarible, GameFi Platforms
+• Multi-chain Support (ETH, Polygon, BSC)
+• Source Code + Technical Documentation
+
+⏱️ ระยะเวลา: 10-14 วันทำการ
+🛡️ รับประกัน: แก้ไข Bug ฟรี 30 วัน + ซัพพอร์ต 3 เดือน
+
+💡 ทำไมคุ้มค่า: การพัฒนาระบบ Multi-Token แบบ Custom เริ่มต้น 200,000-500,000 บาท เพราะต้องเขียน Contract หลายตัว ERC-1155 ให้ทุกอย่างใน Contract เดียว ประหยัดทั้งค่าพัฒนาและค่า Gas ในการใช้งานจริง',
                 'price' => 100000,
                 'order' => 3,
             ],
@@ -715,7 +791,34 @@ class QuotationSeeder extends Seeder
                 'name' => 'Staking Contract',
                 'name_th' => 'Smart Contract Staking',
                 'description' => 'Staking contract for token holders to earn rewards. Configurable lock periods and reward rates.',
-                'description_th' => 'Smart Contract สำหรับระบบ Staking รวม: ฝาก Token เพื่อรับ Reward, กำหนดอัตราดอกเบี้ย (APY) ได้, ตั้งระยะเวลา Lock ได้, Compound Interest Option, Emergency Withdraw, Admin Dashboard, รองรับหลาย Pool, Audit Ready Code',
+                'description_th' => '🎯 เหมาะสำหรับ: โปรเจค Crypto ที่ต้องการให้ผู้ถือ Token ได้รับ Reward, DeFi Protocol, NFT Project ที่ต้องการ Staking NFT, แบรนด์ที่ต้องการสร้าง Incentive ให้ผู้ใช้
+
+📋 ขั้นตอนการทำงาน:
+1. Tokenomics Design: ออกแบบอัตรา APY และ Reward Distribution
+2. Pool Structure: กำหนดประเภท Pool (Flexible/Locked)
+3. Contract Development: เขียน Staking Contract พร้อม Security
+4. Reward Calculation: พัฒนาระบบคำนวณ Reward แบบ Real-time
+5. Admin Functions: สร้างฟังก์ชันสำหรับ Admin จัดการ Pool
+6. Testing: ทดสอบทุก Scenario รวมถึง Edge Cases
+7. Deployment: Deploy พร้อม Frontend Interface
+
+📦 สิ่งที่ได้รับ:
+• Smart Contract Staking ที่ปลอดภัย
+• รองรับ ERC-20 Token Staking
+• หลาย Pool (เช่น 30 วัน, 90 วัน, 365 วัน)
+• APY ปรับได้ตามต้องการ (เช่น 12%, 24%, 50%)
+• Compound Interest Option (ทบต้น)
+• Early Withdrawal Penalty (ถอนก่อนกำหนด)
+• Emergency Withdraw (กรณีฉุกเฉิน)
+• Reward Distribution แบบ Per-second
+• Admin Dashboard จัดการ Pool
+• Pause/Unpause Mechanism
+• Source Code + Audit Report
+
+⏱️ ระยะเวลา: 14-21 วันทำการ
+🛡️ รับประกัน: แก้ไข Bug ฟรี 30 วัน + ซัพพอร์ต 6 เดือน + Security Audit
+
+💡 ทำไมคุ้มค่า: ระบบ Staking จาก DeFi Platforms ใหญ่ๆ ใช้งบพัฒนา $50,000-200,000 และต้อง Audit อีก $10,000+ บริการนี้ให้ระบบ Staking พร้อมใช้งาน ผ่าน Security Review ในราคา 120,000 บาท ช่วยสร้าง Utility และดึงดูด Holder ให้ Token ของคุณ',
                 'price' => 120000,
                 'order' => 4,
             ],
@@ -724,7 +827,37 @@ class QuotationSeeder extends Seeder
                 'name' => 'NFT Marketplace',
                 'name_th' => 'ตลาด NFT Marketplace',
                 'description' => 'Complete NFT marketplace platform for buying, selling, and auctioning digital assets.',
-                'description_th' => 'แพลตฟอร์มตลาด NFT ครบวงจร รวม: ซื้อ-ขาย NFT แบบ Fixed Price, ระบบประมูล (Auction), รองรับ ERC-721 และ ERC-1155, Lazy Minting (ประหยัด Gas), Collection Management, Creator Royalties, Search และ Filter, Profile ผู้ใช้, Wallet Connect, Admin Panel, รองรับ Multi-chain',
+                'description_th' => '🎯 เหมาะสำหรับ: แบรนด์/องค์กรที่ต้องการ Marketplace ของตัวเอง, Gallery ที่ต้องการขาย Digital Art, Game Studio ที่ต้องการตลาด In-game Items, Community ที่ต้องการแพลตฟอร์มซื้อขาย NFT
+
+📋 ขั้นตอนการทำงาน:
+1. Platform Design: ออกแบบ UX/UI และ User Journey
+2. Smart Contract Development: พัฒนา Marketplace Contract
+3. Backend Development: สร้างระบบ Indexing, Search, Filter
+4. Frontend Development: พัฒนา Web Interface
+5. Wallet Integration: เชื่อมต่อ MetaMask, WalletConnect
+6. Testing: ทดสอบทุก Flow (List, Buy, Bid, Royalty)
+7. Security Audit: ตรวจสอบความปลอดภัย
+8. Deployment: Deploy และ Launch
+
+📦 สิ่งที่ได้รับ:
+• Smart Contract Marketplace (Audited)
+• เว็บไซต์ NFT Marketplace เต็มรูปแบบ
+• ระบบซื้อขายแบบ Fixed Price
+• ระบบประมูล (Auction) พร้อม Auto-extend
+• Lazy Minting (สร้าง NFT โดยไม่เสีย Gas จนกว่าจะขายได้)
+• Collection Management
+• Creator Royalties (EIP-2981)
+• ระบบ Search, Filter, Sort
+• User Profile และ Portfolio
+• Wallet Connect (MetaMask, WalletConnect, Coinbase)
+• Admin Panel จัดการ Platform
+• Multi-chain Support (ETH, Polygon, BSC)
+• Mobile Responsive Design
+
+⏱️ ระยะเวลา: 45-60 วันทำการ
+🛡️ รับประกัน: ซัพพอร์ต 6 เดือน + Security Audit + Bug Fix ไม่จำกัด
+
+💡 ทำไมคุ้มค่า: การพัฒนา NFT Marketplace จาก Agency ระดับ International เริ่มต้น $100,000-500,000 (3.5-17 ล้านบาท) บริการนี้ให้ Marketplace พร้อมใช้งาน รองรับ Multi-chain ในราคา 350,000 บาท สามารถเริ่มสร้างรายได้จาก Transaction Fee ได้ทันที (ปกติ 2.5% ต่อธุรกรรม)',
                 'price' => 350000,
                 'order' => 5,
             ],
@@ -733,7 +866,38 @@ class QuotationSeeder extends Seeder
                 'name' => 'DEX (Decentralized Exchange)',
                 'name_th' => 'DEX ระบบแลกเปลี่ยนกระจายศูนย์',
                 'description' => 'Decentralized exchange with AMM (Automated Market Maker) for token swaps and liquidity pools.',
-                'description_th' => 'ระบบแลกเปลี่ยน Token แบบกระจายศูนย์ รวม: Swap Token ทันที (AMM Model), สร้าง Liquidity Pool, ระบบ LP Token และ Reward, Price Oracle Integration, Slippage Protection, Multi-hop Routing, Analytics Dashboard, Farm และ Yield Features, Gas Optimized, Security Audit, Multi-chain Support',
+                'description_th' => '🎯 เหมาะสำหรับ: Blockchain Project ที่ต้องการ Exchange ของตัวเอง, DeFi Protocol, Token Issuer ที่ต้องการสภาพคล่อง, Community ที่ต้องการ Trading Platform
+
+📋 ขั้นตอนการทำงาน:
+1. Protocol Design: ออกแบบ AMM Model และ Fee Structure
+2. Core Contract Development: พัฒนา Router, Factory, Pair Contracts
+3. Liquidity Pool System: สร้างระบบ LP Token และ Reward
+4. Price Oracle: เชื่อมต่อ Chainlink หรือ TWAP Oracle
+5. Frontend Development: พัฒนา Swap Interface และ Dashboard
+6. Farm/Yield Features: พัฒนาระบบ Yield Farming
+7. Security Audit: ตรวจสอบโดย Auditor ภายนอก
+8. Deployment & Launch: Deploy และเปิดให้ใช้งาน
+
+📦 สิ่งที่ได้รับ:
+• Smart Contracts DEX ครบชุด (Factory, Router, Pair)
+• AMM Model (Uniswap V2 Style)
+• Swap Token ได้ทันที (Instant Swap)
+• สร้าง Liquidity Pool ได้ไม่จำกัด
+• LP Token + Reward Distribution
+• Multi-hop Routing (เส้นทางที่ดีที่สุดอัตโนมัติ)
+• Slippage Protection
+• Price Oracle Integration (Chainlink/TWAP)
+• Analytics Dashboard (Volume, TVL, APY)
+• Farm/Yield Farming Features
+• Governance Token Ready
+• เว็บไซต์ DEX พร้อมใช้งาน
+• Multi-chain Support (ETH, Polygon, BSC, Arbitrum)
+• White-label (ปรับแบรนด์ได้)
+
+⏱️ ระยะเวลา: 60-90 วันทำการ
+🛡️ รับประกัน: ซัพพอร์ต 1 ปี + Security Audit จาก Third-party + Bug Bounty Program Setup
+
+💡 ทำไมคุ้มค่า: การพัฒนา DEX ระดับ Production เริ่มต้น $200,000-1,000,000 (7-35 ล้านบาท) Uniswap, SushiSwap, PancakeSwap ใช้งบพัฒนาหลายล้านดอลลาร์ บริการนี้ให้ DEX พร้อมใช้งาน Fork จาก Protocol ที่พิสูจน์แล้ว ในราคา 500,000 บาท สามารถเก็บ Trading Fee 0.3% สร้างรายได้ต่อเนื่อง',
                 'price' => 500000,
                 'order' => 6,
             ],
