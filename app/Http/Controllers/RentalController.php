@@ -166,9 +166,13 @@ class RentalController extends Controller
     {
         $user = Auth::user();
         $activeRental = $this->rentalService->getUserActiveRental($user);
-        $history = $this->rentalService->getUserRentalHistory($user);
+        $rentals = $this->rentalService->getUserRentalHistory($user);
+        $payments = $user->rentalPayments()
+            ->with(['userRental.rentalPackage'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
-        return view('rental.status', compact('activeRental', 'history'));
+        return view('rental.status', compact('activeRental', 'rentals', 'payments'));
     }
 
     /**
