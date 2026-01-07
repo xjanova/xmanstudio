@@ -79,8 +79,9 @@
                 <div class="md:w-2/3 p-8">
                     <h2 class="text-lg font-semibold text-gray-900 mb-6">เลือกวิธีชำระเงิน</h2>
 
-                    <form action="{{ route('rental.subscribe', $package) }}" method="POST" id="checkoutForm">
+                    <form action="{{ route('rental.process') }}" method="POST" id="checkoutForm">
                         @csrf
+                        <input type="hidden" name="package_id" value="{{ $package->id }}">
                         <input type="hidden" name="promo_code" id="promoCodeInput">
 
                         <div class="space-y-4">
