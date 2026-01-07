@@ -13,8 +13,8 @@ return new class extends Migration
     {
         // Products table indexes
         Schema::table('products', function (Blueprint $table) {
-            $table->index('slug');
-            $table->index('sku');
+            // Skip slug - already has unique index
+            // Skip sku - already has unique index from previous migration
             $table->index('is_active');
             $table->index(['category_id', 'is_active']);
             $table->index('created_at');
@@ -90,10 +90,14 @@ return new class extends Migration
 
         // Users indexes
         Schema::table('users', function (Blueprint $table) {
-            $table->index('email'); // If not already indexed by unique constraint
+            // Skip email - already has unique index
             $table->index('role');
-            $table->index('is_active');
-            $table->index('line_uid');
+            if (Schema::hasColumn('users', 'is_active')) {
+                $table->index('is_active');
+            }
+            if (Schema::hasColumn('users', 'line_uid')) {
+                $table->index('line_uid');
+            }
         });
 
         // Support tickets indexes (if table exists)
@@ -115,8 +119,7 @@ return new class extends Migration
     {
         // Products
         Schema::table('products', function (Blueprint $table) {
-            $table->dropIndex(['slug']);
-            $table->dropIndex(['sku']);
+            // Skip slug and sku - managed by unique constraints
             $table->dropIndex(['is_active']);
             $table->dropIndex(['category_id', 'is_active']);
             $table->dropIndex(['created_at']);
@@ -192,10 +195,14 @@ return new class extends Migration
 
         // Users
         Schema::table('users', function (Blueprint $table) {
-            $table->dropIndex(['email']);
+            // Skip email - managed by unique constraint
             $table->dropIndex(['role']);
-            $table->dropIndex(['is_active']);
-            $table->dropIndex(['line_uid']);
+            if (Schema::hasColumn('users', 'is_active')) {
+                $table->dropIndex(['is_active']);
+            }
+            if (Schema::hasColumn('users', 'line_uid')) {
+                $table->dropIndex(['line_uid']);
+            }
         });
 
         // Support tickets
