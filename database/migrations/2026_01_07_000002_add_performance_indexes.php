@@ -39,10 +39,7 @@ return new class extends Migration
         Schema::table('license_keys', function (Blueprint $table) {
             // Skip license_key - already has unique index
             // Skip order_id, product_id - foreignIds with automatic indexes
-            $table->index('status');
-            if (Schema::hasColumn('license_keys', 'license_type')) {
-                $table->index('license_type');
-            }
+            // Skip status, license_type - covered by ['license_type', 'status'] composite in enhance_license_keys
             $table->index(['status', 'expires_at']);
             if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
                 $table->index('machine_fingerprint');
@@ -53,9 +50,9 @@ return new class extends Migration
         Schema::table('user_rentals', function (Blueprint $table) {
             // Skip user_id, rental_package_id - foreignIds with automatic indexes
             // Skip ['user_id', 'status'] - already created in create_user_rentals_table migration
+            // Skip expires_at - covered by ['expires_at', 'status'] in create_user_rentals_table
             $table->index('status');
-            $table->index(['status', 'expires_at']);
-            $table->index('expires_at');
+            $table->index(['status', 'expires_at']); // Different from existing ['expires_at', 'status']
         });
 
         // Rental payments indexes
@@ -138,10 +135,7 @@ return new class extends Migration
         Schema::table('license_keys', function (Blueprint $table) {
             // Skip license_key - managed by unique constraint
             // Skip order_id, product_id - managed by foreign keys
-            $table->dropIndex(['status']);
-            if (Schema::hasColumn('license_keys', 'license_type')) {
-                $table->dropIndex(['license_type']);
-            }
+            // Skip status, license_type - managed by enhance_license_keys migration
             $table->dropIndex(['status', 'expires_at']);
             if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
                 $table->dropIndex(['machine_fingerprint']);
@@ -152,9 +146,9 @@ return new class extends Migration
         Schema::table('user_rentals', function (Blueprint $table) {
             // Skip user_id, rental_package_id - managed by foreign keys
             // Skip ['user_id', 'status'] - managed by create_user_rentals_table migration
+            // Skip expires_at - managed by create_user_rentals_table migration
             $table->dropIndex(['status']);
             $table->dropIndex(['status', 'expires_at']);
-            $table->dropIndex(['expires_at']);
         });
 
         // Rental payments
