@@ -52,8 +52,8 @@ return new class extends Migration
         // User rentals indexes
         Schema::table('user_rentals', function (Blueprint $table) {
             // Skip user_id, rental_package_id - foreignIds with automatic indexes
+            // Skip ['user_id', 'status'] - already created in create_user_rentals_table migration
             $table->index('status');
-            $table->index(['user_id', 'status']);
             $table->index(['status', 'expires_at']);
             $table->index('expires_at');
         });
@@ -61,9 +61,9 @@ return new class extends Migration
         // Rental payments indexes
         Schema::table('rental_payments', function (Blueprint $table) {
             // Skip user_id, user_rental_id - foreignIds with automatic indexes
+            // Skip ['user_id', 'status'] - already created in create_rental_payments_table migration
             $table->index('status');
             $table->index('payment_method');
-            $table->index(['user_id', 'status']);
             $table->index('created_at');
         });
 
@@ -151,8 +151,8 @@ return new class extends Migration
         // User rentals
         Schema::table('user_rentals', function (Blueprint $table) {
             // Skip user_id, rental_package_id - managed by foreign keys
+            // Skip ['user_id', 'status'] - managed by create_user_rentals_table migration
             $table->dropIndex(['status']);
-            $table->dropIndex(['user_id', 'status']);
             $table->dropIndex(['status', 'expires_at']);
             $table->dropIndex(['expires_at']);
         });
@@ -160,9 +160,9 @@ return new class extends Migration
         // Rental payments
         Schema::table('rental_payments', function (Blueprint $table) {
             // Skip user_id, user_rental_id - managed by foreign keys
+            // Skip ['user_id', 'status'] - managed by create_rental_payments_table migration
             $table->dropIndex(['status']);
             $table->dropIndex(['payment_method']);
-            $table->dropIndex(['user_id', 'status']);
             $table->dropIndex(['created_at']);
         });
 
