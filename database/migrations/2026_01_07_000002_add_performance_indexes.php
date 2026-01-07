@@ -23,7 +23,7 @@ return new class extends Migration
         // Orders table indexes
         Schema::table('orders', function (Blueprint $table) {
             // Skip order_number - already has unique index
-            $table->index('user_id');
+            // Skip user_id - foreignId creates index automatically
             $table->index('payment_status');
             $table->index('status');
             $table->index('customer_email');
@@ -33,16 +33,12 @@ return new class extends Migration
         });
 
         // Order items indexes
-        Schema::table('order_items', function (Blueprint $table) {
-            $table->index('order_id');
-            $table->index('product_id');
-        });
+        // Skip - order_id and product_id are foreignIds with automatic indexes
 
         // License keys indexes
         Schema::table('license_keys', function (Blueprint $table) {
             // Skip license_key - already has unique index
-            $table->index('order_id');
-            $table->index('product_id');
+            // Skip order_id, product_id - foreignIds with automatic indexes
             $table->index('status');
             if (Schema::hasColumn('license_keys', 'license_type')) {
                 $table->index('license_type');
@@ -55,8 +51,7 @@ return new class extends Migration
 
         // User rentals indexes
         Schema::table('user_rentals', function (Blueprint $table) {
-            $table->index('user_id');
-            $table->index('rental_package_id');
+            // Skip user_id, rental_package_id - foreignIds with automatic indexes
             $table->index('status');
             $table->index(['user_id', 'status']);
             $table->index(['status', 'expires_at']);
@@ -65,8 +60,7 @@ return new class extends Migration
 
         // Rental payments indexes
         Schema::table('rental_payments', function (Blueprint $table) {
-            $table->index('user_id');
-            $table->index('user_rental_id');
+            // Skip user_id, user_rental_id - foreignIds with automatic indexes
             $table->index('status');
             $table->index('payment_method');
             $table->index(['user_id', 'status']);
@@ -75,15 +69,12 @@ return new class extends Migration
 
         // Carts indexes
         Schema::table('carts', function (Blueprint $table) {
-            $table->index('user_id');
+            // Skip user_id - foreignId with automatic index
             $table->index('session_id');
         });
 
         // Cart items indexes
-        Schema::table('cart_items', function (Blueprint $table) {
-            $table->index('cart_id');
-            $table->index('product_id');
-        });
+        // Skip - cart_id and product_id are foreignIds with automatic indexes
 
         // Categories indexes
         Schema::table('categories', function (Blueprint $table) {
@@ -107,7 +98,7 @@ return new class extends Migration
         // Support tickets indexes (if table exists)
         if (Schema::hasTable('support_tickets')) {
             Schema::table('support_tickets', function (Blueprint $table) {
-                $table->index('user_id');
+                // Skip user_id - foreignId with automatic index
                 $table->index('status');
                 $table->index('priority');
                 $table->index(['status', 'priority']);
@@ -132,7 +123,7 @@ return new class extends Migration
         // Orders
         Schema::table('orders', function (Blueprint $table) {
             // Skip order_number - managed by unique constraint
-            $table->dropIndex(['user_id']);
+            // Skip user_id - managed by foreign key
             $table->dropIndex(['payment_status']);
             $table->dropIndex(['status']);
             $table->dropIndex(['customer_email']);
@@ -141,17 +132,12 @@ return new class extends Migration
             $table->dropIndex(['created_at']);
         });
 
-        // Order items
-        Schema::table('order_items', function (Blueprint $table) {
-            $table->dropIndex(['order_id']);
-            $table->dropIndex(['product_id']);
-        });
+        // Order items - no indexes to drop (foreignIds only)
 
         // License keys
         Schema::table('license_keys', function (Blueprint $table) {
             // Skip license_key - managed by unique constraint
-            $table->dropIndex(['order_id']);
-            $table->dropIndex(['product_id']);
+            // Skip order_id, product_id - managed by foreign keys
             $table->dropIndex(['status']);
             if (Schema::hasColumn('license_keys', 'license_type')) {
                 $table->dropIndex(['license_type']);
@@ -164,8 +150,7 @@ return new class extends Migration
 
         // User rentals
         Schema::table('user_rentals', function (Blueprint $table) {
-            $table->dropIndex(['user_id']);
-            $table->dropIndex(['rental_package_id']);
+            // Skip user_id, rental_package_id - managed by foreign keys
             $table->dropIndex(['status']);
             $table->dropIndex(['user_id', 'status']);
             $table->dropIndex(['status', 'expires_at']);
@@ -174,8 +159,7 @@ return new class extends Migration
 
         // Rental payments
         Schema::table('rental_payments', function (Blueprint $table) {
-            $table->dropIndex(['user_id']);
-            $table->dropIndex(['user_rental_id']);
+            // Skip user_id, user_rental_id - managed by foreign keys
             $table->dropIndex(['status']);
             $table->dropIndex(['payment_method']);
             $table->dropIndex(['user_id', 'status']);
@@ -184,15 +168,11 @@ return new class extends Migration
 
         // Carts
         Schema::table('carts', function (Blueprint $table) {
-            $table->dropIndex(['user_id']);
+            // Skip user_id - managed by foreign key
             $table->dropIndex(['session_id']);
         });
 
-        // Cart items
-        Schema::table('cart_items', function (Blueprint $table) {
-            $table->dropIndex(['cart_id']);
-            $table->dropIndex(['product_id']);
-        });
+        // Cart items - no indexes to drop (foreignIds only)
 
         // Categories
         Schema::table('categories', function (Blueprint $table) {
@@ -216,7 +196,7 @@ return new class extends Migration
         // Support tickets
         if (Schema::hasTable('support_tickets')) {
             Schema::table('support_tickets', function (Blueprint $table) {
-                $table->dropIndex(['user_id']);
+                // Skip user_id - managed by foreign key
                 $table->dropIndex(['status']);
                 $table->dropIndex(['priority']);
                 $table->dropIndex(['status', 'priority']);
