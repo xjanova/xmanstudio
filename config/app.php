@@ -107,6 +107,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tax and Business Settings
+    |--------------------------------------------------------------------------
+    |
+    | These settings control business-related configurations such as VAT rate,
+    | currency, and other financial settings used throughout the application.
+    |
+    */
+
+    'vat_rate' => env('APP_VAT_RATE', 0.07), // 7% VAT (Thailand standard)
+    'currency' => env('APP_CURRENCY', 'THB'),
+    'currency_symbol' => env('APP_CURRENCY_SYMBOL', '฿'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Stock Management Settings
+    |--------------------------------------------------------------------------
+    */
+
+    'low_stock_threshold' => env('APP_LOW_STOCK_THRESHOLD', 5),
+    'enable_stock_management' => env('APP_ENABLE_STOCK_MANAGEMENT', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Maintenance Mode Driver
     |--------------------------------------------------------------------------
     |
