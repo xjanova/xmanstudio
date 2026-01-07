@@ -13,17 +13,21 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'short_description',
         'features',
         'price',
         'image',
         'images',
+        'sku',
         'is_custom',
         'requires_license',
         'stock',
+        'low_stock_threshold',
         'is_active',
     ];
 
     protected $casts = [
+        'features' => 'array',
         'images' => 'array',
         'is_custom' => 'boolean',
         'requires_license' => 'boolean',
