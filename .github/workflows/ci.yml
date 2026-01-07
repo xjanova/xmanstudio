@@ -141,7 +141,7 @@ jobs:
 
       - name: Check build output
         run: |
-          if [ ! -f public_html/build/manifest.json ]; then
+          if [ ! -f public/build/manifest.json ]; then
             echo "Build manifest not found!"
             exit 1
           fi

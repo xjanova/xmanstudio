@@ -55,7 +55,7 @@
                             ผลงาน
                         </a>
                         <a href="/support" class="{{ request()->is('support*') ? 'border-primary-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
-                            ติดต่อ
+                            ติดต่อ/สั่งซื้อ
                         </a>
                     </div>
                 </div>
@@ -133,7 +133,7 @@
                 <a href="/products" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ผลิตภัณฑ์</a>
                 <a href="/rental" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">เช่าบริการ</a>
                 <a href="/portfolio" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ผลงาน</a>
-                <a href="/support" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ติดต่อ</a>
+                <a href="/support" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ติดต่อ/สั่งซื้อ</a>
                 @guest
                     @if(Route::has('login'))
                     <a href="{{ route('login') }}" class="block px-3 py-2 text-base font-medium text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">เข้าสู่ระบบ</a>
@@ -233,7 +233,7 @@
                 <div>
                     <h4 class="text-lg font-semibold mb-4">ช่วยเหลือ</h4>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="/support" class="hover:text-white transition-colors">ติดต่อสนับสนุน</a></li>
+                        <li><a href="/support" class="hover:text-white transition-colors">ติดต่อ/สั่งซื้อ</a></li>
                         <li><a href="/rental" class="hover:text-white transition-colors">เช่าบริการ</a></li>
                         <li><a href="/products" class="hover:text-white transition-colors">ผลิตภัณฑ์</a></li>
                         <li><a href="/portfolio" class="hover:text-white transition-colors">ผลงาน</a></li>
