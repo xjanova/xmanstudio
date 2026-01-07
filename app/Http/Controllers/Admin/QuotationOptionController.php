@@ -108,6 +108,7 @@ class QuotationOptionController extends Controller
     public function edit(QuotationOption $option)
     {
         $categories = QuotationCategory::active()->ordered()->get();
+
         return view('admin.quotations.options.edit', compact('option', 'categories'));
     }
 
