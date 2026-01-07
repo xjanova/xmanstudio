@@ -218,9 +218,25 @@ class QuotationController extends Controller
                     'options' => [
                         'gen_image' => ['name' => 'AI Image Generation', 'name_th' => 'สร้างภาพด้วย AI', 'price' => 80000],
                         'gen_video' => ['name' => 'AI Video Generation', 'name_th' => 'สร้างวิดีโอด้วย AI', 'price' => 150000],
-                        'gen_music' => ['name' => 'AI Music Generation', 'name_th' => 'สร้างเพลงด้วย AI', 'price' => 80000],
                         'gen_text' => ['name' => 'AI Content Writing', 'name_th' => 'เขียนเนื้อหาด้วย AI', 'price' => 60000],
                         'gen_avatar' => ['name' => 'AI Avatar/Character', 'name_th' => 'สร้าง Avatar ด้วย AI', 'price' => 100000],
+                    ],
+                ],
+                'music_ai' => [
+                    'name' => 'AI Music Generation',
+                    'name_th' => 'สร้างเพลงด้วย AI',
+                    'icon' => '🎵',
+                    'options' => [
+                        'music_basic' => ['name' => 'AI Background Music', 'name_th' => 'เพลงประกอบ AI (Basic)', 'price' => 50000],
+                        'music_custom' => ['name' => 'Custom AI Music Track', 'name_th' => 'สร้างเพลง AI แบบกำหนดเอง', 'price' => 80000],
+                        'music_album' => ['name' => 'AI Music Album (10 tracks)', 'name_th' => 'อัลบั้มเพลง AI (10 เพลง)', 'price' => 500000],
+                        'music_voice' => ['name' => 'AI Voice Synthesis', 'name_th' => 'สังเคราะห์เสียงร้อง AI', 'price' => 100000],
+                        'music_cover' => ['name' => 'AI Music Cover/Remix', 'name_th' => 'ปรับแต่งเพลงด้วย AI', 'price' => 60000],
+                        'music_genre' => ['name' => 'Multi-Genre AI Music', 'name_th' => 'เพลง AI หลายแนว', 'price' => 90000],
+                        'music_commercial' => ['name' => 'Commercial Music License', 'name_th' => 'ลิขสิทธิ์เพลงเชิงพาณิชย์', 'price' => 150000],
+                        'music_compose' => ['name' => 'AI Music Composition System', 'name_th' => 'ระบบแต่งเพลง AI', 'price' => 300000],
+                        'music_mastering' => ['name' => 'AI Audio Mastering', 'name_th' => 'มาสเตอร์เสียงด้วย AI', 'price' => 40000],
+                        'music_stem' => ['name' => 'AI Stem Separation', 'name_th' => 'แยกแทร็กเพลงด้วย AI', 'price' => 35000],
                     ],
                 ],
                 'ml' => [

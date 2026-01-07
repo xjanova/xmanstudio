@@ -66,7 +66,8 @@
                     <span class="text-primary-400">Blockchain</span> •
                     <span class="text-purple-400">AI</span> •
                     <span class="text-pink-400">Web & Mobile</span> •
-                    <span class="text-cyan-400">IoT</span>
+                    <span class="text-cyan-400">IoT</span> •
+                    <span class="text-red-400">Music AI</span>
                 </p>
 
                 <!-- CTA Buttons -->
