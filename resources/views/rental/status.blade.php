@@ -107,7 +107,7 @@
 
                     <!-- Actions -->
                     <div class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-4">
-                        <a href="{{ route('rental.packages') }}"
+                        <a href="{{ route('rental.index') }}"
                            class="px-6 py-2 rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors">
                             อัพเกรดแพ็กเกจ
                         </a>
@@ -129,7 +129,7 @@
                 </svg>
                 <h2 class="mt-4 text-xl font-semibold text-gray-900">ยังไม่มีแพ็กเกจใช้งาน</h2>
                 <p class="mt-2 text-gray-500">เลือกแพ็กเกจที่เหมาะกับคุณเพื่อเริ่มต้นใช้งาน</p>
-                <a href="{{ route('rental.packages') }}"
+                <a href="{{ route('rental.index') }}"
                    class="mt-6 inline-block px-6 py-3 rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors">
                     ดูแพ็กเกจทั้งหมด
                 </a>
