@@ -65,7 +65,7 @@
                 <div class="mt-8 pt-8 border-t border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">แจ้งชำระเงิน</h3>
 
-                    <form action="{{ route('rental.confirm-payment', $payment) }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('rental.upload-slip', $payment->uuid ?? $payment) }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         <div class="space-y-4">
