@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\QuotationCategoryController;
+use App\Http\Controllers\Admin\QuotationOptionController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
@@ -230,5 +232,30 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         // Settings
         Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');
         Route::post('/settings', [MetalXSettingsController::class, 'update'])->name('settings.update');
+    });
+
+    // Quotation Management
+    Route::prefix('quotations')->name('quotations.')->group(function () {
+        // Categories
+        Route::prefix('categories')->name('categories.')->group(function () {
+            Route::get('/', [QuotationCategoryController::class, 'index'])->name('index');
+            Route::get('/create', [QuotationCategoryController::class, 'create'])->name('create');
+            Route::post('/', [QuotationCategoryController::class, 'store'])->name('store');
+            Route::get('/{category}', [QuotationCategoryController::class, 'show'])->name('show');
+            Route::get('/{category}/edit', [QuotationCategoryController::class, 'edit'])->name('edit');
+            Route::put('/{category}', [QuotationCategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}', [QuotationCategoryController::class, 'destroy'])->name('destroy');
+        });
+
+        // Options
+        Route::prefix('options')->name('options.')->group(function () {
+            Route::get('/', [QuotationOptionController::class, 'index'])->name('index');
+            Route::get('/create', [QuotationOptionController::class, 'create'])->name('create');
+            Route::post('/', [QuotationOptionController::class, 'store'])->name('store');
+            Route::get('/{option}', [QuotationOptionController::class, 'show'])->name('show');
+            Route::get('/{option}/edit', [QuotationOptionController::class, 'edit'])->name('edit');
+            Route::put('/{option}', [QuotationOptionController::class, 'update'])->name('update');
+            Route::delete('/{option}', [QuotationOptionController::class, 'destroy'])->name('destroy');
+        });
     });
 });

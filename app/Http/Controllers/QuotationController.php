@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quotation;
+use App\Models\QuotationCategory;
 use App\Services\LineNotifyService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -491,9 +492,38 @@ class QuotationController extends Controller
      */
     public function index()
     {
+        $categories = QuotationCategory::with('activeOptions')
+            ->active()
+            ->ordered()
+            ->get();
+
+        // Format data for view
+        $formattedCategories = [];
+        foreach ($categories as $category) {
+            $options = [];
+            foreach ($category->activeOptions as $option) {
+                $options[$option->key] = [
+                    'name' => $option->name,
+                    'name_th' => $option->name_th ?? $option->name,
+                    'price' => (float) $option->price,
+                    'description' => $option->description,
+                    'description_th' => $option->description_th,
+                ];
+            }
+
+            $formattedCategories[$category->key] = [
+                'name' => $category->name,
+                'name_th' => $category->name_th ?? $category->name,
+                'icon' => $category->icon,
+                'description' => $category->description,
+                'description_th' => $category->description_th,
+                'options' => $options,
+            ];
+        }
+
         return view('support.index', [
-            'services' => $this->servicePackages,
-            'additionalOptions' => $this->additionalOptions,
+            'services' => $formattedCategories,
+            'additionalOptions' => $this->additionalOptions ?? [],
         ]);
     }
 
@@ -740,9 +770,38 @@ class QuotationController extends Controller
      */
     public function getServices()
     {
+        $categories = QuotationCategory::with('activeOptions')
+            ->active()
+            ->ordered()
+            ->get();
+
+        // Format data for frontend
+        $formattedCategories = [];
+        foreach ($categories as $category) {
+            $options = [];
+            foreach ($category->activeOptions as $option) {
+                $options[$option->key] = [
+                    'name' => $option->name,
+                    'name_th' => $option->name_th ?? $option->name,
+                    'price' => (float) $option->price,
+                    'description' => $option->description,
+                    'description_th' => $option->description_th,
+                ];
+            }
+
+            $formattedCategories[$category->key] = [
+                'name' => $category->name,
+                'name_th' => $category->name_th ?? $category->name,
+                'icon' => $category->icon,
+                'description' => $category->description,
+                'description_th' => $category->description_th,
+                'options' => $options,
+            ];
+        }
+
         return response()->json([
-            'services' => $this->servicePackages,
-            'additional_options' => $this->additionalOptions,
+            'services' => $formattedCategories,
+            'additional_options' => $this->additionalOptions ?? [],
         ]);
     }
 }
