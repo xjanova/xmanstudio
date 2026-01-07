@@ -127,7 +127,7 @@ class ProductController extends Controller
             'category_id' => 'nullable|exists:categories,id',
             'stock' => 'nullable|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
-            'sku' => 'nullable|string|max:100|unique:products,sku,' . $product->id,
+            'sku' => 'nullable|string|max:100|unique:products,sku,'.$product->id,
             'image' => 'nullable|image|max:2048',
             'gallery_images' => 'nullable|array',
             'gallery_images.*' => 'image|max:2048',
@@ -161,7 +161,7 @@ class ProductController extends Controller
                 if (\Storage::disk('public')->exists($imageToRemove)) {
                     \Storage::disk('public')->delete($imageToRemove);
                 }
-                $existingImages = array_filter($existingImages, fn($img) => $img !== $imageToRemove);
+                $existingImages = array_filter($existingImages, fn ($img) => $img !== $imageToRemove);
             }
         }
 
