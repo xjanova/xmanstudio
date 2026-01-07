@@ -19,7 +19,7 @@
                 <div class="text-center mb-8">
                     <h1 class="text-2xl font-bold text-gray-900">ชำระเงิน</h1>
                     <p class="mt-2 text-gray-600">
-                        แพ็กเกจ: <span class="font-semibold">{{ $rental->rentalPackage->display_name }}</span>
+                        แพ็กเกจ: <span class="font-semibold">{{ $payment->userRental->rentalPackage->display_name }}</span>
                     </p>
                     <p class="text-3xl font-bold text-primary-600 mt-4">
                         ฿{{ number_format($payment->amount) }}
@@ -30,21 +30,21 @@
                     <!-- PromptPay QR Code -->
                     <div class="text-center">
                         <div class="inline-block p-4 bg-white border-4 border-primary-500 rounded-xl">
-                            <img src="{{ $qrData['qr_image_url'] ?? '' }}" alt="PromptPay QR Code"
+                            <img src="{{ $paymentInfo['qr_image_url'] ?? '' }}" alt="PromptPay QR Code"
                                  class="w-64 h-64 mx-auto">
                         </div>
                         <p class="mt-4 text-gray-600">
                             สแกน QR Code ด้วยแอปธนาคารของคุณ
                         </p>
                         <p class="text-sm text-gray-500">
-                            พร้อมเพย์: {{ $qrData['promptpay_number'] ?? '-' }}
+                            พร้อมเพย์: {{ $paymentInfo['promptpay_number'] ?? '-' }}
                         </p>
                     </div>
                 @elseif($payment->payment_method === 'bank_transfer')
                     <!-- Bank Transfer Info -->
                     <div class="space-y-4">
                         <h3 class="text-lg font-semibold text-gray-900">บัญชีธนาคาร</h3>
-                        @foreach($bankAccounts ?? [] as $bank)
+                        @foreach($paymentInfo['bank_accounts'] ?? [] as $bank)
                             <div class="p-4 bg-gray-50 rounded-lg">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow">
