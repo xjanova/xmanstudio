@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -41,10 +42,12 @@ return new class extends Migration
             // Skip order_id, product_id - foreignIds with automatic indexes
             // Skip status, license_type - covered by ['license_type', 'status'] composite in enhance_license_keys
             $table->index(['status', 'expires_at']);
-            if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
-                $table->index('machine_fingerprint');
-            }
         });
+
+        // Add machine_fingerprint index with length limit (column is VARCHAR(1024), too long for full index)
+        if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
+            DB::statement('CREATE INDEX license_keys_machine_fingerprint_index ON license_keys (machine_fingerprint(255))');
+        }
 
         // User rentals indexes
         Schema::table('user_rentals', function (Blueprint $table) {
@@ -137,10 +140,12 @@ return new class extends Migration
             // Skip order_id, product_id - managed by foreign keys
             // Skip status, license_type - managed by enhance_license_keys migration
             $table->dropIndex(['status', 'expires_at']);
-            if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
-                $table->dropIndex(['machine_fingerprint']);
-            }
         });
+
+        // Drop machine_fingerprint index
+        if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
+            DB::statement('DROP INDEX license_keys_machine_fingerprint_index ON license_keys');
+        }
 
         // User rentals
         Schema::table('user_rentals', function (Blueprint $table) {
