@@ -8,7 +8,7 @@
         <!-- Breadcrumb -->
         <nav class="mb-8">
             <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                <li><a href="{{ route('rental.packages') }}" class="hover:text-primary-600">แพ็กเกจ</a></li>
+                <li><a href="{{ route('rental.index') }}" class="hover:text-primary-600">แพ็กเกจ</a></li>
                 <li><span>/</span></li>
                 <li class="text-gray-900">ชำระเงิน</li>
             </ol>
