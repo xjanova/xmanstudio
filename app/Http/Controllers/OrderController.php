@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderConfirmationMail;
 use App\Models\Cart;
 use App\Models\LicenseKey;
 use App\Models\Order;
@@ -9,6 +10,7 @@ use App\Models\OrderItem;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class OrderController extends Controller
@@ -62,8 +64,11 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Calculate totals
+            // Calculate totals with VAT
             $subtotal = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
+            $vatRate = config('app.vat_rate', 0.07); // 7% VAT
+            $tax = round($subtotal * $vatRate, 2);
+            $total = $subtotal + $tax;
 
             // Create order
             $order = Order::create([
@@ -73,8 +78,9 @@ class OrderController extends Controller
                 'customer_email' => $request->customer_email,
                 'customer_phone' => $request->customer_phone,
                 'subtotal' => $subtotal,
+                'tax' => $tax,
                 'discount' => 0,
-                'total' => $subtotal,
+                'total' => $total,
                 'payment_method' => $request->payment_method,
                 'payment_status' => 'pending',
                 'status' => 'pending',
@@ -97,6 +103,18 @@ class OrderController extends Controller
             $cart->items()->delete();
 
             DB::commit();
+
+            // Send order confirmation email
+            try {
+                Mail::to($request->customer_email)
+                    ->send(new OrderConfirmationMail($order->load('items.product', 'user')));
+            } catch (\Exception $e) {
+                // Log email error but don't fail the order
+                \Illuminate\Support\Facades\Log::error('Failed to send order confirmation email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return redirect()
                 ->route('orders.show', $order)
