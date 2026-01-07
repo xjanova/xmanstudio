@@ -15,6 +15,7 @@ class PaymentConfirmedMail extends Mailable
     use Queueable, SerializesModels;
 
     public Order $order;
+
     public ?string $invoicePath = null;
 
     /**
@@ -32,7 +33,7 @@ class PaymentConfirmedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'ชำระเงินเรียบร้อย - คำสั่งซื้อ #' . $this->order->order_number,
+            subject: 'ชำระเงินเรียบร้อย - คำสั่งซื้อ #'.$this->order->order_number,
         );
     }
 
@@ -59,7 +60,7 @@ class PaymentConfirmedMail extends Mailable
         if ($this->invoicePath && file_exists($this->invoicePath)) {
             return [
                 Attachment::fromPath($this->invoicePath)
-                    ->as('invoice-' . $this->order->order_number . '.pdf')
+                    ->as('invoice-'.$this->order->order_number.'.pdf')
                     ->withMime('application/pdf'),
             ];
         }
