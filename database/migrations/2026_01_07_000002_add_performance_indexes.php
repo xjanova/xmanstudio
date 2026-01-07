@@ -22,7 +22,7 @@ return new class extends Migration
 
         // Orders table indexes
         Schema::table('orders', function (Blueprint $table) {
-            $table->index('order_number');
+            // Skip order_number - already has unique index
             $table->index('user_id');
             $table->index('payment_status');
             $table->index('status');
@@ -40,13 +40,17 @@ return new class extends Migration
 
         // License keys indexes
         Schema::table('license_keys', function (Blueprint $table) {
-            $table->index('license_key');
+            // Skip license_key - already has unique index
             $table->index('order_id');
             $table->index('product_id');
             $table->index('status');
-            $table->index('license_type');
+            if (Schema::hasColumn('license_keys', 'license_type')) {
+                $table->index('license_type');
+            }
             $table->index(['status', 'expires_at']);
-            $table->index('machine_fingerprint');
+            if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
+                $table->index('machine_fingerprint');
+            }
         });
 
         // User rentals indexes
@@ -83,7 +87,7 @@ return new class extends Migration
 
         // Categories indexes
         Schema::table('categories', function (Blueprint $table) {
-            $table->index('slug');
+            // Skip slug - already has unique index
             $table->index('is_active');
             $table->index('order');
         });
@@ -127,7 +131,7 @@ return new class extends Migration
 
         // Orders
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropIndex(['order_number']);
+            // Skip order_number - managed by unique constraint
             $table->dropIndex(['user_id']);
             $table->dropIndex(['payment_status']);
             $table->dropIndex(['status']);
@@ -145,13 +149,17 @@ return new class extends Migration
 
         // License keys
         Schema::table('license_keys', function (Blueprint $table) {
-            $table->dropIndex(['license_key']);
+            // Skip license_key - managed by unique constraint
             $table->dropIndex(['order_id']);
             $table->dropIndex(['product_id']);
             $table->dropIndex(['status']);
-            $table->dropIndex(['license_type']);
+            if (Schema::hasColumn('license_keys', 'license_type')) {
+                $table->dropIndex(['license_type']);
+            }
             $table->dropIndex(['status', 'expires_at']);
-            $table->dropIndex(['machine_fingerprint']);
+            if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
+                $table->dropIndex(['machine_fingerprint']);
+            }
         });
 
         // User rentals
@@ -188,7 +196,7 @@ return new class extends Migration
 
         // Categories
         Schema::table('categories', function (Blueprint $table) {
-            $table->dropIndex(['slug']);
+            // Skip slug - managed by unique constraint
             $table->dropIndex(['is_active']);
             $table->dropIndex(['order']);
         });
