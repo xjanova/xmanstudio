@@ -3,6 +3,8 @@
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
+use App\Http\Controllers\Admin\MetalXSettingsController;
+use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
@@ -11,6 +13,7 @@ use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketCont
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -74,6 +77,9 @@ Route::view('/about', 'about')->name('about');
 
 // Portfolio page
 Route::view('/portfolio', 'portfolio')->name('portfolio');
+
+// Metal-X Project Music Channel
+Route::get('/metal-x', [MetalXController::class, 'index'])->name('metal-x.index');
 
 // Legal pages
 Route::view('/terms', 'legal.terms')->name('terms');
@@ -211,4 +217,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/support/{ticket}/priority', [AdminSupportTicketController::class, 'updatePriority'])->name('support.update-priority');
     Route::post('/support/{ticket}/assign', [AdminSupportTicketController::class, 'assign'])->name('support.assign');
     Route::post('/support/bulk', [AdminSupportTicketController::class, 'bulkAction'])->name('support.bulk');
+
+    // Metal-X Project Management
+    Route::prefix('metal-x')->name('metal-x.')->group(function () {
+        Route::get('/', [MetalXTeamController::class, 'index'])->name('index');
+        Route::get('/create', [MetalXTeamController::class, 'create'])->name('create');
+        Route::post('/', [MetalXTeamController::class, 'store'])->name('store');
+        Route::get('/{metalX}/edit', [MetalXTeamController::class, 'edit'])->name('edit');
+        Route::put('/{metalX}', [MetalXTeamController::class, 'update'])->name('update');
+        Route::delete('/{metalX}', [MetalXTeamController::class, 'destroy'])->name('destroy');
+
+        // Settings
+        Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');
+        Route::post('/settings', [MetalXSettingsController::class, 'update'])->name('settings.update');
+    });
 });
