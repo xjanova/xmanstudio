@@ -63,9 +63,25 @@
                                 <td class="px-6 py-4">
                                     <div class="font-medium text-gray-900">{{ $item->product->name ?? 'สินค้าถูกลบ' }}</div>
                                     @if($item->custom_requirements)
-                                        <div class="mt-2 text-sm text-gray-600 bg-gray-50 rounded p-3">
-                                            <div class="font-medium text-gray-700 mb-1">รายละเอียดเพิ่มเติม:</div>
-                                            <div class="whitespace-pre-line">{{ $item->custom_requirements }}</div>
+                                        <div class="mt-3 border border-primary-200 rounded-lg overflow-hidden">
+                                            <div class="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2 flex items-center">
+                                                <svg class="w-4 h-4 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                </svg>
+                                                <span class="font-medium text-white text-sm">รายละเอียดที่ต้องการ</span>
+                                            </div>
+                                            <div class="bg-gradient-to-b from-primary-50 to-white p-4">
+                                                <div class="prose prose-sm max-w-none text-gray-700
+                                                    prose-headings:text-gray-900 prose-headings:font-semibold
+                                                    prose-p:my-2 prose-ul:my-2 prose-ol:my-2
+                                                    prose-li:my-0.5
+                                                    prose-strong:text-primary-700
+                                                    prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-primary-600 prose-code:text-xs
+                                                    prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:p-3
+                                                    prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline">
+                                                    {!! nl2br(e($item->custom_requirements)) !!}
+                                                </div>
+                                            </div>
                                         </div>
                                     @endif
                                 </td>
