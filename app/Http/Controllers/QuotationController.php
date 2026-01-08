@@ -830,7 +830,7 @@ class QuotationController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$category) {
+        if (! $category) {
             abort(404, 'Service category not found');
         }
 
@@ -840,7 +840,7 @@ class QuotationController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$option) {
+        if (! $option) {
             abort(404, 'Service not found');
         }
 

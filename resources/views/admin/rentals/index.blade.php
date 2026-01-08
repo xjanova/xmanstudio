@@ -120,8 +120,8 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ $rental->expires_at->format('d/m/Y') }}
-                        @if($rental->status === 'active' && $rental->expires_at->diffInDays(now()) <= 7)
+                        {{ $rental->expires_at ? $rental->expires_at->format('d/m/Y') : '-' }}
+                        @if($rental->status === 'active' && $rental->expires_at && $rental->expires_at->diffInDays(now()) <= 7)
                             <span class="text-red-600">({{ $rental->days_remaining }} วัน)</span>
                         @endif
                     </td>
