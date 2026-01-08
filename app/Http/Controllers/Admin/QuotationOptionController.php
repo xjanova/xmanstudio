@@ -117,7 +117,7 @@ class QuotationOptionController extends Controller
 
         return array_values(array_filter(
             array_map('trim', explode("\n", $text)),
-            fn($item) => !empty($item)
+            fn ($item) => ! empty($item)
         ));
     }
 
