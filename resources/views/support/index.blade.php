@@ -455,13 +455,82 @@ function quotationForm() {
         additionalOptions: @json($additionalOptions),
         currentCategories: {},
 
+        init() {
+            // Load saved selections from localStorage
+            this.loadSavedSelections();
+
+            // Watch for changes and save to localStorage
+            this.$watch('formData.service_type', (newValue, oldValue) => {
+                // If service type changed manually (not during init), clear selections
+                if (oldValue !== undefined && oldValue !== newValue) {
+                    this.formData.service_options = [];
+                }
+                this.saveSelections();
+            });
+            this.$watch('formData.service_options', () => this.saveSelections());
+            this.$watch('formData.additional_options', () => this.saveSelections());
+        },
+
+        saveSelections() {
+            // Save current selections to localStorage
+            const selectionsToSave = {
+                service_type: this.formData.service_type,
+                service_options: this.formData.service_options,
+                additional_options: this.formData.additional_options,
+                timestamp: Date.now()
+            };
+
+            try {
+                localStorage.setItem('quotation_selections', JSON.stringify(selectionsToSave));
+            } catch (error) {
+                console.warn('Failed to save selections to localStorage:', error);
+            }
+        },
+
+        loadSavedSelections() {
+            try {
+                const saved = localStorage.getItem('quotation_selections');
+                if (saved) {
+                    const data = JSON.parse(saved);
+
+                    // Check if saved data is not too old (24 hours)
+                    const hoursSinceLastSave = (Date.now() - data.timestamp) / (1000 * 60 * 60);
+                    if (hoursSinceLastSave < 24) {
+                        this.formData.service_type = data.service_type || '';
+                        this.formData.service_options = data.service_options || [];
+                        this.formData.additional_options = data.additional_options || [];
+
+                        // Update categories if service type was loaded
+                        if (this.formData.service_type) {
+                            this.updateServiceOptions();
+                        }
+                    } else {
+                        // Clear old data
+                        localStorage.removeItem('quotation_selections');
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to load selections from localStorage:', error);
+            }
+        },
+
+        clearSavedSelections() {
+            try {
+                localStorage.removeItem('quotation_selections');
+            } catch (error) {
+                console.warn('Failed to clear selections from localStorage:', error);
+            }
+        },
+
         updateServiceOptions() {
             if (this.formData.service_type && this.services[this.formData.service_type]) {
                 this.currentCategories = this.services[this.formData.service_type].categories;
+                // Don't clear selections if they were loaded from localStorage
+                // Only clear if changing service type manually
             } else {
                 this.currentCategories = {};
+                this.formData.service_options = [];
             }
-            this.formData.service_options = [];
         },
 
         getServiceName() {
@@ -687,6 +756,8 @@ function quotationForm() {
                 budget_range: '',
             };
             this.currentCategories = {};
+            // Clear saved selections from localStorage
+            this.clearSavedSelections();
         },
 
         handleSubmit() {
