@@ -16,7 +16,7 @@ class QuotationSeeder extends Seeder
         $this->command->info('  → Syncing quotation categories and options...');
 
         // AI Music Generation
-        $musicAi = QuotationCategory::firstOrCreate(
+        $musicAi = QuotationCategory::updateOrCreate(
             ['key' => 'music_ai'],
             [
                 'name' => 'AI Music Generation',
@@ -561,7 +561,7 @@ Stem Separation เป็นเทคโนโลยีที่ปฏิวั�
         ];
 
         foreach ($musicOptions as $option) {
-            QuotationOption::firstOrCreate(
+            QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $musicAi->id
@@ -571,7 +571,7 @@ Stem Separation เป็นเทคโนโลยีที่ปฏิวั�
         }
 
         // AI Image Generation
-        $aiImage = QuotationCategory::firstOrCreate(
+        $aiImage = QuotationCategory::updateOrCreate(
             ['key' => 'ai_image'],
             [
                 'name' => 'AI Image Generation',
@@ -806,7 +806,7 @@ AI Content Writing ของเราไม่ใช่แค่การสั�
         ];
 
         foreach ($imageOptions as $option) {
-            QuotationOption::firstOrCreate(
+            QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $aiImage->id
@@ -816,7 +816,7 @@ AI Content Writing ของเราไม่ใช่แค่การสั�
         }
 
         // AI Chatbot
-        $chatbot = QuotationCategory::firstOrCreate(
+        $chatbot = QuotationCategory::updateOrCreate(
             ['key' => 'ai_chatbot'],
             [
                 'name' => 'AI Chatbot',
@@ -1151,7 +1151,7 @@ Custom AI Agent สามารถทำงานได้หลากหลา�
         ];
 
         foreach ($chatbotOptions as $option) {
-            QuotationOption::firstOrCreate(
+            QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $chatbot->id
@@ -1161,7 +1161,7 @@ Custom AI Agent สามารถทำงานได้หลากหลา�
         }
 
         // Blockchain Development
-        $blockchain = QuotationCategory::firstOrCreate(
+        $blockchain = QuotationCategory::updateOrCreate(
             ['key' => 'blockchain'],
             [
                 'name' => 'Blockchain Development',
@@ -1470,7 +1470,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
         ];
 
         foreach ($blockchainOptions as $option) {
-            QuotationOption::firstOrCreate(
+            QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $blockchain->id
@@ -1480,7 +1480,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
         }
 
         // Web Development
-        $web = QuotationCategory::firstOrCreate(
+        $web = QuotationCategory::updateOrCreate(
             ['key' => 'web_development'],
             [
                 'name' => 'Web Development',
@@ -1699,7 +1699,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
         ];
 
         foreach ($webOptions as $option) {
-            QuotationOption::firstOrCreate(
+            QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $web->id
@@ -1709,7 +1709,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
         }
 
         // IoT Solutions
-        $iot = QuotationCategory::firstOrCreate(
+        $iot = QuotationCategory::updateOrCreate(
             ['key' => 'iot'],
             [
                 'name' => 'IoT Solutions',
@@ -1922,7 +1922,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
         ];
 
         foreach ($iotOptions as $option) {
-            QuotationOption::firstOrCreate(
+            QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $iot->id
