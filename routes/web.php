@@ -181,6 +181,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Service Management
     Route::resource('services', AdminServiceController::class);
+    Route::post('/services/{service}/toggle', [AdminServiceController::class, 'toggle'])->name('services.toggle');
 
     // Product Management
     Route::resource('products', AdminProductController::class);
