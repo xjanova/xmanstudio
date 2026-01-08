@@ -169,12 +169,6 @@
                     </div>
                 @endforelse
             </div>
-
-            @if($rentals->hasPages())
-                <div class="p-6 border-t border-gray-200">
-                    {{ $rentals->links() }}
-                </div>
-            @endif
         </div>
 
         <!-- Payment History -->
