@@ -804,4 +804,39 @@ class QuotationController extends Controller
             'additional_options' => $this->additionalOptions ?? [],
         ]);
     }
+
+    /**
+     * Show service detail page
+     */
+    public function serviceDetail($categoryKey, $optionKey)
+    {
+        // Find category
+        $category = QuotationCategory::where('key', $categoryKey)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$category) {
+            abort(404, 'Service category not found');
+        }
+
+        // Find option
+        $option = QuotationOption::where('quotation_category_id', $category->id)
+            ->where('key', $optionKey)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$option) {
+            abort(404, 'Service not found');
+        }
+
+        // Get related services in the same category
+        $relatedServices = QuotationOption::where('quotation_category_id', $category->id)
+            ->where('id', '!=', $option->id)
+            ->where('is_active', true)
+            ->ordered()
+            ->limit(3)
+            ->get();
+
+        return view('services.detail', compact('category', 'option', 'relatedServices'));
+    }
 }

@@ -14,6 +14,12 @@ class QuotationOption extends Model
         'name_th',
         'description',
         'description_th',
+        'features',
+        'features_th',
+        'steps',
+        'steps_th',
+        'long_description',
+        'long_description_th',
         'price',
         'image',
         'order',
@@ -24,6 +30,10 @@ class QuotationOption extends Model
         'price' => 'decimal:2',
         'is_active' => 'boolean',
         'order' => 'integer',
+        'features' => 'array',
+        'features_th' => 'array',
+        'steps' => 'array',
+        'steps_th' => 'array',
     ];
 
     /**

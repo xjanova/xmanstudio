@@ -67,6 +67,12 @@ class QuotationOptionController extends Controller
             'key' => 'required|string|max:255',
             'description' => 'nullable|string',
             'description_th' => 'nullable|string',
+            'long_description' => 'nullable|string',
+            'long_description_th' => 'nullable|string',
+            'features_text' => 'nullable|string',
+            'features_th_text' => 'nullable|string',
+            'steps_text' => 'nullable|string',
+            'steps_th_text' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'order' => 'nullable|integer|min:0',
@@ -77,6 +83,14 @@ class QuotationOptionController extends Controller
         if (empty($validated['key'])) {
             $validated['key'] = Str::slug($validated['name']);
         }
+
+        // Convert text to arrays (one item per line)
+        $validated['features'] = $this->textToArray($validated['features_text'] ?? '');
+        $validated['features_th'] = $this->textToArray($validated['features_th_text'] ?? '');
+        $validated['steps'] = $this->textToArray($validated['steps_text'] ?? '');
+        $validated['steps_th'] = $this->textToArray($validated['steps_th_text'] ?? '');
+
+        unset($validated['features_text'], $validated['features_th_text'], $validated['steps_text'], $validated['steps_th_text']);
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -90,6 +104,21 @@ class QuotationOptionController extends Controller
 
         return redirect()->route('admin.quotations.options.index')
             ->with('success', 'Option created successfully.');
+    }
+
+    /**
+     * Convert textarea text to array (one item per line)
+     */
+    private function textToArray(string $text): array
+    {
+        if (empty(trim($text))) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map('trim', explode("\n", $text)),
+            fn($item) => !empty($item)
+        ));
     }
 
     /**
@@ -124,11 +153,25 @@ class QuotationOptionController extends Controller
             'key' => 'required|string|max:255',
             'description' => 'nullable|string',
             'description_th' => 'nullable|string',
+            'long_description' => 'nullable|string',
+            'long_description_th' => 'nullable|string',
+            'features_text' => 'nullable|string',
+            'features_th_text' => 'nullable|string',
+            'steps_text' => 'nullable|string',
+            'steps_th_text' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ]);
+
+        // Convert text to arrays (one item per line)
+        $validated['features'] = $this->textToArray($validated['features_text'] ?? '');
+        $validated['features_th'] = $this->textToArray($validated['features_th_text'] ?? '');
+        $validated['steps'] = $this->textToArray($validated['steps_text'] ?? '');
+        $validated['steps_th'] = $this->textToArray($validated['steps_th_text'] ?? '');
+
+        unset($validated['features_text'], $validated['features_th_text'], $validated['steps_text'], $validated['steps_th_text']);
 
         // Handle image upload
         if ($request->hasFile('image')) {
