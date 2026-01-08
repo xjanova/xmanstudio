@@ -141,7 +141,28 @@
                         <div class="space-y-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">รายละเอียดโปรเจค</label>
-                                <textarea x-model="formData.project_description" rows="4" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white" placeholder="อธิบายรายละเอียดโปรเจคที่ต้องการ ฟีเจอร์พิเศษ หรือความต้องการเฉพาะ..."></textarea>
+                                <div class="page-builder-wrapper" x-data="{ showBuilder: false }">
+                                    <!-- Simple Mode -->
+                                    <div x-show="!showBuilder">
+                                        <textarea x-model="formData.project_description" rows="4" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white" placeholder="อธิบายรายละเอียดโปรเจคที่ต้องการ ฟีเจอร์พิเศษ หรือความต้องการเฉพาะ..."></textarea>
+                                        <button type="button" @click="showBuilder = true" class="mt-2 text-sm text-primary-600 hover:text-primary-700 flex items-center">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                                            </svg>
+                                            ใช้ Page Builder สร้างเนื้อหาแบบละเอียด
+                                        </button>
+                                    </div>
+                                    <!-- Advanced Mode with Page Builder -->
+                                    <div x-show="showBuilder" x-transition>
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-sm text-gray-500">โหมด Page Builder</span>
+                                            <button type="button" @click="showBuilder = false" class="text-sm text-gray-500 hover:text-gray-700">
+                                                ← กลับไปโหมดปกติ
+                                            </button>
+                                        </div>
+                                        <x-page-builder name="project_description_rich" :value="''" placeholder="ลากบล็อกมาวางเพื่อสร้างรายละเอียดโปรเจค..." />
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="grid md:grid-cols-2 gap-6">
