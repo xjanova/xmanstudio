@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Models\LicenseKey;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 /**
  * Update Controller for Skidrow Killer
@@ -25,7 +24,7 @@ class SkidrowKillerUpdateController extends Controller
     {
         $product = Product::where('slug', $productId)->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product not found',
@@ -36,7 +35,7 @@ class SkidrowKillerUpdateController extends Controller
         // This is an example - adjust based on your actual data structure
         $latestRelease = $this->getLatestRelease($product);
 
-        if (!$latestRelease) {
+        if (! $latestRelease) {
             return response()->json([
                 'update_available' => false,
                 'message' => 'No updates available',
@@ -80,7 +79,7 @@ class SkidrowKillerUpdateController extends Controller
     {
         $licenseKey = $request->header('X-License-Key');
 
-        if (!$licenseKey) {
+        if (! $licenseKey) {
             return response()->json([
                 'success' => false,
                 'message' => 'License key required',
@@ -89,7 +88,7 @@ class SkidrowKillerUpdateController extends Controller
 
         $product = Product::where('slug', $productId)->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product not found',
@@ -100,7 +99,7 @@ class SkidrowKillerUpdateController extends Controller
             ->where('product_id', $product->id)
             ->first();
 
-        if (!$license || !$license->isValid()) {
+        if (! $license || ! $license->isValid()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or expired license',
@@ -110,7 +109,7 @@ class SkidrowKillerUpdateController extends Controller
         // Generate a temporary signed download URL
         $latestRelease = $this->getLatestRelease($product);
 
-        if (!$latestRelease) {
+        if (! $latestRelease) {
             return response()->json([
                 'success' => false,
                 'message' => 'No download available',
@@ -166,9 +165,9 @@ class SkidrowKillerUpdateController extends Controller
         return [
             'version' => '1.0.0',
             'release_notes' => 'Initial release',
-            'direct_download_url' => config('app.url') . '/downloads/' . $product->slug . '/latest',
-            'public_download_url' => config('app.url') . '/products/' . $product->slug,
-            'release_url' => config('app.url') . '/products/' . $product->slug . '/releases/1.0.0',
+            'direct_download_url' => config('app.url').'/downloads/'.$product->slug.'/latest',
+            'public_download_url' => config('app.url').'/products/'.$product->slug,
+            'release_url' => config('app.url').'/products/'.$product->slug.'/releases/1.0.0',
             'published_at' => now()->toISOString(),
             'is_pre_release' => false,
             'requires_license' => false,
