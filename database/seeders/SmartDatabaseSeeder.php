@@ -27,6 +27,7 @@ class SmartDatabaseSeeder extends Seeder
         $this->seedDefaultCategories();
         $this->seedDefaultServices();
         $this->seedRentalPackages();
+        $this->seedQuotationData();
 
         $this->command->info('✅ Smart seeding completed!');
     }
@@ -333,6 +334,26 @@ class SmartDatabaseSeeder extends Seeder
                     $this->command->error("    ✗ Failed to add package {$package['name']}: {$e->getMessage()}");
                 }
             }
+        }
+    }
+
+    /**
+     * Seed quotation categories and options
+     */
+    protected function seedQuotationData(): void
+    {
+        if (! \Schema::hasTable('quotation_categories') || ! \Schema::hasTable('quotation_options')) {
+            $this->command->warn('  ⚠ Quotation tables do not exist, skipping...');
+
+            return;
+        }
+
+        $this->command->info('  → Running QuotationSeeder...');
+
+        try {
+            $this->call(QuotationSeeder::class);
+        } catch (\Exception $e) {
+            $this->command->error("    ✗ Failed to run QuotationSeeder: {$e->getMessage()}");
         }
     }
 }
