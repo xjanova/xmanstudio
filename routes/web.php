@@ -69,6 +69,7 @@ Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear
 
 // Support & Quotation
 Route::get('/support', [QuotationController::class, 'index'])->name('support.index');
+Route::get('/services/{categoryKey}/{optionKey}', [QuotationController::class, 'serviceDetail'])->name('service.detail');
 Route::post('/quotation/preview', [QuotationController::class, 'preview'])->name('quotation.preview');
 Route::post('/quotation/pdf', [QuotationController::class, 'generatePdf'])->name('quotation.pdf');
 Route::post('/quotation/submit', [QuotationController::class, 'submitOrder'])->name('quotation.submit');

@@ -68,18 +68,25 @@
                                     </div>
                                     <div class="grid md:grid-cols-2 gap-3">
                                         <template x-for="(option, optKey) in category.options" :key="optKey">
-                                            <label class="relative cursor-pointer">
-                                                <input type="checkbox" :value="optKey" x-model="formData.service_options" class="peer sr-only">
-                                                <div class="p-4 border-2 rounded-xl transition-all peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 hover:border-gray-300 dark:border-gray-600 hover:shadow-md">
-                                                    <div class="flex justify-between items-start">
-                                                        <div class="flex-1">
-                                                            <div class="font-semibold text-gray-900 dark:text-white text-sm" x-text="option.name_th"></div>
-                                                            <div class="text-xs text-gray-500 mt-1" x-text="option.name"></div>
+                                            <div class="relative">
+                                                <label class="cursor-pointer block">
+                                                    <input type="checkbox" :value="optKey" x-model="formData.service_options" class="peer sr-only">
+                                                    <div class="p-4 border-2 rounded-xl transition-all peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 hover:border-gray-300 dark:border-gray-600 hover:shadow-md">
+                                                        <div class="flex justify-between items-start mb-2">
+                                                            <div class="flex-1">
+                                                                <div class="font-semibold text-gray-900 dark:text-white text-sm" x-text="option.name_th"></div>
+                                                                <div class="text-xs text-gray-500 mt-1" x-text="option.name"></div>
+                                                            </div>
+                                                            <div class="text-primary-600 dark:text-primary-400 font-bold text-sm ml-2 whitespace-nowrap" x-text="formatPrice(option.price) + ' ฿'"></div>
                                                         </div>
-                                                        <div class="text-primary-600 dark:text-primary-400 font-bold text-sm ml-2 whitespace-nowrap" x-text="formatPrice(option.price) + ' ฿'"></div>
                                                     </div>
-                                                </div>
-                                            </label>
+                                                </label>
+                                                <a :href="`/services/${formData.service_type}/${optKey}`"
+                                                   class="absolute bottom-2 right-2 px-3 py-1 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors z-10"
+                                                   @click.stop>
+                                                    ดูรายละเอียด
+                                                </a>
+                                            </div>
                                         </template>
                                     </div>
                                 </div>
