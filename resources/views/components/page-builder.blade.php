@@ -1,7 +1,8 @@
 @props(['name' => 'content', 'value' => '', 'placeholder' => 'ลากบล็อกมาวางที่นี่เพื่อเริ่มสร้างเนื้อหา...'])
 
-<div x-data="pageBuilder(@js($value))"
+<div x-data="pageBuilder(@js($value), @js($name))"
      x-init="init()"
+     :class="{ 'fixed inset-0 z-50 flex flex-col': isFullscreen }"
      class="page-builder border border-gray-300 rounded-xl overflow-hidden bg-white shadow-lg">
 
     <!-- Hidden input to store JSON data -->
@@ -14,8 +15,21 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
             </svg>
             <span class="font-semibold text-sm">Page Builder</span>
+            <span x-show="isFullscreen" class="text-xs text-gray-400 ml-2">(กด ESC เพื่อออก)</span>
         </div>
         <div class="flex items-center space-x-2">
+            <!-- AI Auto-Format Button -->
+            <button type="button" @click="showAiFormatModal = true"
+                    class="px-3 py-1 text-xs rounded bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition flex items-center space-x-1"
+                    title="AI จัดรูปแบบอัตโนมัติ">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                <span>AI จัดรูปแบบ</span>
+            </button>
+
+            <div class="w-px h-4 bg-gray-600 mx-1"></div>
+
             <button type="button" @click="undo()" :disabled="historyIndex <= 0"
                     class="p-1.5 rounded hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition" title="Undo">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,11 +43,39 @@
                 </svg>
             </button>
             <div class="w-px h-4 bg-gray-600 mx-1"></div>
+
+            <!-- Live Preview Toggle -->
+            <button type="button" @click="showLivePreview = !showLivePreview"
+                    class="px-3 py-1 text-xs rounded transition flex items-center space-x-1"
+                    :class="showLivePreview ? 'bg-green-600 text-white' : 'bg-gray-700 hover:bg-gray-600'"
+                    title="แสดงตัวอย่างแบบ Real-time">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                <span x-text="showLivePreview ? 'ซ่อนตัวอย่าง' : 'ดูตัวอย่าง'"></span>
+            </button>
+
             <button type="button" @click="previewMode = !previewMode"
                     class="px-3 py-1 text-xs rounded transition"
                     :class="previewMode ? 'bg-primary-600 text-white' : 'bg-gray-700 hover:bg-gray-600'">
-                <span x-text="previewMode ? 'แก้ไข' : 'ดูตัวอย่าง'"></span>
+                <span x-text="previewMode ? 'แก้ไข' : 'Preview Only'"></span>
             </button>
+
+            <div class="w-px h-4 bg-gray-600 mx-1"></div>
+
+            <!-- Fullscreen Toggle -->
+            <button type="button" @click="toggleFullscreen()"
+                    class="p-1.5 rounded hover:bg-gray-700 transition"
+                    :title="isFullscreen ? 'ออกจากโหมดเต็มหน้าจอ' : 'โหมดเต็มหน้าจอ'">
+                <svg x-show="!isFullscreen" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+                <svg x-show="isFullscreen" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
             <button type="button" @click="clearAll()" class="p-1.5 rounded hover:bg-red-600 transition" title="ล้างทั้งหมด">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -42,9 +84,10 @@
         </div>
     </div>
 
-    <div class="flex" style="min-height: 400px;">
+    <div class="flex" :class="{ 'flex-1': isFullscreen }" :style="isFullscreen ? '' : 'min-height: 400px;'">
         <!-- Blocks Sidebar -->
-        <div class="w-64 bg-gray-50 border-r border-gray-200 p-3 overflow-y-auto" x-show="!previewMode">
+        <div class="w-64 bg-gray-50 border-r border-gray-200 p-3 overflow-y-auto" x-show="!previewMode"
+             :class="{ 'w-56': isFullscreen && showLivePreview }">
             <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">บล็อกพื้นฐาน</div>
 
             <div class="grid grid-cols-2 gap-2 mb-4">
@@ -626,12 +669,150 @@
                 </div>
             </div>
         </div>
+
+        <!-- Live Preview Panel -->
+        <div x-show="showLivePreview && !previewMode"
+             x-transition
+             class="bg-gray-100 border-l border-gray-200 overflow-y-auto"
+             :class="isFullscreen ? 'w-1/3' : 'w-80'">
+            <div class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between sticky top-0 z-10">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">ตัวอย่างแบบ Real-time</span>
+                </div>
+                <button type="button" @click="showLivePreview = false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 min-h-[200px]">
+                    <template x-if="blocks.length === 0">
+                        <div class="text-center text-gray-400 py-8">
+                            <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            <p class="text-sm">ยังไม่มีเนื้อหา</p>
+                        </div>
+                    </template>
+                    <div class="space-y-3" x-html="renderPreview()"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Format Modal -->
+    <div x-show="showAiFormatModal"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50"
+         @click.self="showAiFormatModal = false"
+         @keydown.escape.window="showAiFormatModal = false">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="transform scale-95 opacity-0"
+             x-transition:enter-end="transform scale-100 opacity-100">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        <div>
+                            <h3 class="font-semibold">AI จัดรูปแบบอัตโนมัติ</h3>
+                            <p class="text-xs text-purple-200">วางข้อความแล้ว AI จะจัดรูปแบบให้สวยงามทันที</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showAiFormatModal = false" class="text-white hover:text-purple-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4">
+                <!-- Template Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">เลือกรูปแบบการจัดเรียง</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" @click="aiTemplate = 'features'"
+                                :class="aiTemplate === 'features' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:border-gray-300'"
+                                class="border-2 rounded-lg p-3 text-center transition">
+                            <svg class="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="text-xs font-medium">คุณสมบัติ</span>
+                        </button>
+                        <button type="button" @click="aiTemplate = 'steps'"
+                                :class="aiTemplate === 'steps' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:border-gray-300'"
+                                class="border-2 rounded-lg p-3 text-center transition">
+                            <svg class="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+                            </svg>
+                            <span class="text-xs font-medium">ขั้นตอน</span>
+                        </button>
+                        <button type="button" @click="aiTemplate = 'description'"
+                                :class="aiTemplate === 'description' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:border-gray-300'"
+                                class="border-2 rounded-lg p-3 text-center transition">
+                            <svg class="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h12"/>
+                            </svg>
+                            <span class="text-xs font-medium">รายละเอียด</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Text Input -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">วางข้อความที่ต้องการจัดรูปแบบ</label>
+                    <textarea x-model="aiInputText"
+                              rows="8"
+                              class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-purple-500 focus:border-purple-500"
+                              placeholder="วางข้อความที่นี่...&#10;&#10;ตัวอย่าง:&#10;- ออกแบบเว็บไซต์&#10;- พัฒนาระบบหลังบ้าน&#10;- ติดตั้งและทดสอบ"></textarea>
+                </div>
+
+                <!-- Preview -->
+                <div x-show="aiInputText.trim().length > 0">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ตัวอย่างผลลัพธ์</label>
+                    <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-48 overflow-y-auto">
+                        <div class="space-y-2" x-html="previewAiFormat()"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                <button type="button" @click="showAiFormatModal = false"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                    ยกเลิก
+                </button>
+                <button type="button" @click="applyAiFormat()"
+                        :disabled="aiInputText.trim().length === 0"
+                        class="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>นำไปใช้</span>
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
-function pageBuilder(initialValue) {
+function pageBuilder(initialValue, fieldName) {
     return {
         blocks: [],
         selectedBlock: null,
@@ -642,6 +823,13 @@ function pageBuilder(initialValue) {
         history: [],
         historyIndex: -1,
         maxHistory: 50,
+        // New features
+        isFullscreen: false,
+        showLivePreview: false,
+        showAiFormatModal: false,
+        aiInputText: '',
+        aiTemplate: 'features',
+        fieldName: fieldName || 'content',
 
         availableBlocks: {
             basic: [
@@ -916,6 +1104,248 @@ function pageBuilder(initialValue) {
                 this.historyIndex++;
                 this.blocks = JSON.parse(this.history[this.historyIndex]);
                 this.selectedBlock = null;
+            }
+        },
+
+        // Fullscreen functionality
+        toggleFullscreen() {
+            this.isFullscreen = !this.isFullscreen;
+            if (this.isFullscreen) {
+                document.body.style.overflow = 'hidden';
+                // Add ESC key listener
+                this._escHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        this.isFullscreen = false;
+                        document.body.style.overflow = '';
+                    }
+                };
+                document.addEventListener('keydown', this._escHandler);
+            } else {
+                document.body.style.overflow = '';
+                if (this._escHandler) {
+                    document.removeEventListener('keydown', this._escHandler);
+                }
+            }
+        },
+
+        // Live preview rendering
+        renderPreview() {
+            if (this.blocks.length === 0) return '';
+
+            return this.blocks.map(block => this.renderBlockPreview(block)).join('');
+        },
+
+        renderBlockPreview(block) {
+            const style = block.style || {};
+            let textClasses = [];
+            if (style.bold) textClasses.push('font-bold');
+            if (style.italic) textClasses.push('italic');
+            if (style.underline) textClasses.push('underline');
+            if (style.align) textClasses.push('text-' + style.align);
+
+            let inlineStyle = [];
+            if (style.color) inlineStyle.push('color: ' + style.color);
+            if (style.bgColor && style.bgColor !== '#ffffff') inlineStyle.push('background-color: ' + style.bgColor);
+            if (style.padding) inlineStyle.push('padding: ' + style.padding + 'px');
+            if (style.borderRadius) inlineStyle.push('border-radius: ' + style.borderRadius + 'px');
+
+            const styleAttr = inlineStyle.length ? `style="${inlineStyle.join('; ')}"` : '';
+            const classAttr = textClasses.length ? textClasses.join(' ') : '';
+
+            switch (block.type) {
+                case 'heading':
+                    return `<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2" ${styleAttr}>
+                        <h2 class="text-xl font-bold text-gray-900 ${classAttr}">${this.escapeHtml(block.content || 'หัวข้อ')}</h2>
+                    </div>`;
+                case 'text':
+                    return `<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2" ${styleAttr}>
+                        <p class="whitespace-pre-wrap text-gray-700 text-sm ${classAttr}">${this.escapeHtml(block.content || 'ข้อความ')}</p>
+                    </div>`;
+                case 'list':
+                    const listItems = (block.content || '').split('\n').filter(i => i.trim()).map(item =>
+                        `<li class="text-sm">${this.escapeHtml(item.replace(/^[-•*]\s*/, ''))}</li>`
+                    ).join('');
+                    return `<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2" ${styleAttr}>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700 ${classAttr}">${listItems}</ul>
+                    </div>`;
+                case 'numbered-list':
+                    const numberedItems = (block.content || '').split('\n').filter(i => i.trim()).map(item =>
+                        `<li class="text-sm">${this.escapeHtml(item.replace(/^\d+\.\s*/, ''))}</li>`
+                    ).join('');
+                    return `<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2" ${styleAttr}>
+                        <ol class="list-decimal list-inside space-y-1 text-gray-700 ${classAttr}">${numberedItems}</ol>
+                    </div>`;
+                case 'quote':
+                    return `<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-2">
+                        <div class="p-3 border-l-4 border-primary-500 bg-primary-50" ${styleAttr}>
+                            <blockquote class="italic text-gray-700 text-sm">${this.escapeHtml(block.content || 'ข้อความอ้างอิง')}</blockquote>
+                        </div>
+                    </div>`;
+                case 'alert':
+                    const variant = block.variant || 'info';
+                    const alertColors = {
+                        info: 'bg-blue-50 border-l-4 border-blue-500',
+                        success: 'bg-green-50 border-l-4 border-green-500',
+                        warning: 'bg-yellow-50 border-l-4 border-yellow-500',
+                        error: 'bg-red-50 border-l-4 border-red-500'
+                    };
+                    return `<div class="rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-2">
+                        <div class="p-3 ${alertColors[variant]}">
+                            <p class="text-sm text-gray-700">${this.escapeHtml(block.content || 'ข้อความแจ้งเตือน')}</p>
+                        </div>
+                    </div>`;
+                case 'divider':
+                    return `<div class="py-2 mb-2"><hr class="border-gray-300 ${style.type || 'border-solid'}"></div>`;
+                case 'spacer':
+                    return `<div style="height: ${block.height || 40}px" class="mb-2"></div>`;
+                default:
+                    return '';
+            }
+        },
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        },
+
+        // AI Format functionality
+        previewAiFormat() {
+            const text = this.aiInputText.trim();
+            if (!text) return '';
+
+            const blocks = this.parseTextToBlocks(text, this.aiTemplate);
+            return blocks.map(block => this.renderBlockPreview(block)).join('');
+        },
+
+        parseTextToBlocks(text, template) {
+            const lines = text.split('\n').filter(line => line.trim());
+            const blocks = [];
+
+            if (template === 'features') {
+                // Features template: heading + bullet list
+                blocks.push({
+                    id: this.generateId(),
+                    type: 'heading',
+                    content: '✨ คุณสมบัติเด่น',
+                    style: { color: '#7c3aed' }
+                });
+                blocks.push({
+                    id: this.generateId(),
+                    type: 'list',
+                    content: lines.map(line => line.replace(/^[-•*\d.)\s]+/, '').trim()).join('\n'),
+                    style: {}
+                });
+            } else if (template === 'steps') {
+                // Steps template: heading + numbered list with alert
+                blocks.push({
+                    id: this.generateId(),
+                    type: 'heading',
+                    content: '📋 ขั้นตอนการทำงาน',
+                    style: { color: '#059669' }
+                });
+                blocks.push({
+                    id: this.generateId(),
+                    type: 'numbered-list',
+                    content: lines.map(line => line.replace(/^[-•*\d.)\s]+/, '').trim()).join('\n'),
+                    style: {}
+                });
+                blocks.push({
+                    id: this.generateId(),
+                    type: 'alert',
+                    content: 'เราทำงานอย่างมืออาชีพในทุกขั้นตอน',
+                    variant: 'success',
+                    style: {}
+                });
+            } else if (template === 'description') {
+                // Description template: auto-detect structure
+                let currentParagraph = [];
+
+                lines.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+
+                    // Check if it's a header (short, no punctuation at end)
+                    if (trimmedLine.length < 40 && !trimmedLine.match(/[.,:;!?]$/)) {
+                        // Save any pending paragraph
+                        if (currentParagraph.length > 0) {
+                            blocks.push({
+                                id: this.generateId(),
+                                type: 'text',
+                                content: currentParagraph.join('\n'),
+                                style: {}
+                            });
+                            currentParagraph = [];
+                        }
+
+                        // Add as heading
+                        blocks.push({
+                            id: this.generateId(),
+                            type: 'heading',
+                            content: trimmedLine,
+                            style: {}
+                        });
+                    }
+                    // Check if it's a list item
+                    else if (trimmedLine.match(/^[-•*\d.)]/) ) {
+                        // Save any pending paragraph
+                        if (currentParagraph.length > 0) {
+                            blocks.push({
+                                id: this.generateId(),
+                                type: 'text',
+                                content: currentParagraph.join('\n'),
+                                style: {}
+                            });
+                            currentParagraph = [];
+                        }
+
+                        // Collect consecutive list items
+                        const listItems = [trimmedLine.replace(/^[-•*\d.)\s]+/, '').trim()];
+                        while (index + 1 < lines.length && lines[index + 1].trim().match(/^[-•*\d.)]/)) {
+                            index++;
+                            listItems.push(lines[index].trim().replace(/^[-•*\d.)\s]+/, '').trim());
+                        }
+
+                        blocks.push({
+                            id: this.generateId(),
+                            type: 'list',
+                            content: listItems.join('\n'),
+                            style: {}
+                        });
+                    }
+                    else {
+                        currentParagraph.push(trimmedLine);
+                    }
+                });
+
+                // Save any remaining paragraph
+                if (currentParagraph.length > 0) {
+                    blocks.push({
+                        id: this.generateId(),
+                        type: 'text',
+                        content: currentParagraph.join('\n'),
+                        style: {}
+                    });
+                }
+            }
+
+            return blocks;
+        },
+
+        applyAiFormat() {
+            const text = this.aiInputText.trim();
+            if (!text) return;
+
+            const newBlocks = this.parseTextToBlocks(text, this.aiTemplate);
+            this.blocks = [...this.blocks, ...newBlocks];
+            this.saveHistory();
+
+            // Close modal and reset
+            this.showAiFormatModal = false;
+            this.aiInputText = '';
+
+            // Select the first new block
+            if (newBlocks.length > 0) {
+                this.selectedBlock = newBlocks[0];
             }
         }
     };
