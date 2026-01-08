@@ -3,10 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
-use App\Models\Product;
 use App\Models\LicenseKey;
+use App\Models\Product;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 /**
  * Skidrow Killer Product Seeder for XManStudio
@@ -98,7 +97,7 @@ class SkidrowKillerSeeder extends Seeder
             ],
         ];
 
-        $this->command->info("Pricing structure:");
+        $this->command->info('Pricing structure:');
         foreach ($pricingInfo as $type => $info) {
             $this->command->info("  - {$type}: {$info['price']} {$info['currency']}");
         }
@@ -133,32 +132,32 @@ class SkidrowKillerSeeder extends Seeder
             );
         }
 
-        $this->command->info("Demo license keys created: " . count($demoKeys));
+        $this->command->info('Demo license keys created: '.count($demoKeys));
 
         // ============================================
         // 5. Product Configuration (for API)
         // ============================================
         $this->command->newLine();
-        $this->command->info("=== Product Configuration for Client App ===");
-        $this->command->info("Product ID: skidrow-killer");
-        $this->command->info("API Base URL: https://xmanstudio.com/api/v1");
+        $this->command->info('=== Product Configuration for Client App ===');
+        $this->command->info('Product ID: skidrow-killer');
+        $this->command->info('API Base URL: https://xmanstudio.com/api/v1');
         $this->command->newLine();
-        $this->command->info("API Endpoints:");
-        $this->command->info("  POST /license/activate    - Activate license");
-        $this->command->info("  POST /license/validate    - Validate license");
-        $this->command->info("  POST /license/deactivate  - Deactivate license");
-        $this->command->info("  POST /license/demo        - Start demo/trial");
-        $this->command->info("  GET  /license/demo/check  - Check demo status");
-        $this->command->info("  GET  /updates/{product}/check - Check for updates");
+        $this->command->info('API Endpoints:');
+        $this->command->info('  POST /license/activate    - Activate license');
+        $this->command->info('  POST /license/validate    - Validate license');
+        $this->command->info('  POST /license/deactivate  - Deactivate license');
+        $this->command->info('  POST /license/demo        - Start demo/trial');
+        $this->command->info('  GET  /license/demo/check  - Check demo status');
+        $this->command->info('  GET  /updates/{product}/check - Check for updates');
         $this->command->newLine();
-        $this->command->info("License Types:");
-        $this->command->info("  - demo: 7 days trial");
-        $this->command->info("  - monthly: 30 days");
-        $this->command->info("  - yearly: 365 days");
-        $this->command->info("  - lifetime: Forever");
+        $this->command->info('License Types:');
+        $this->command->info('  - demo: 7 days trial');
+        $this->command->info('  - monthly: 30 days');
+        $this->command->info('  - yearly: 365 days');
+        $this->command->info('  - lifetime: Forever');
         $this->command->newLine();
-        $this->command->info("Max Activations: 3 devices per license");
-        $this->command->info("Offline Grace Period: 1 day (auto-downgrade to trial)");
+        $this->command->info('Max Activations: 3 devices per license');
+        $this->command->info('Offline Grace Period: 1 day (auto-downgrade to trial)');
     }
 
     /**

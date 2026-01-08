@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 /**
  * License Controller for Skidrow Killer
@@ -58,10 +56,10 @@ class SkidrowKillerLicenseController extends Controller
 
         // Find the license
         $license = LicenseKey::where('license_key', strtoupper($validated['license_key']))
-            ->whereHas('product', fn($q) => $q->where('slug', $validated['product_id']))
+            ->whereHas('product', fn ($q) => $q->where('slug', $validated['product_id']))
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid license key',
@@ -135,10 +133,10 @@ class SkidrowKillerLicenseController extends Controller
         ]);
 
         $license = LicenseKey::where('license_key', strtoupper($validated['license_key']))
-            ->whereHas('product', fn($q) => $q->where('slug', $validated['product_id']))
+            ->whereHas('product', fn ($q) => $q->where('slug', $validated['product_id']))
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid license key',
@@ -154,7 +152,7 @@ class SkidrowKillerLicenseController extends Controller
         }
 
         // Check if valid
-        if (!$license->isValid()) {
+        if (! $license->isValid()) {
             return response()->json([
                 'success' => false,
                 'message' => $license->isExpired() ? 'License has expired' : 'License is not valid',
@@ -190,10 +188,10 @@ class SkidrowKillerLicenseController extends Controller
         ]);
 
         $license = LicenseKey::where('license_key', strtoupper($validated['license_key']))
-            ->whereHas('product', fn($q) => $q->where('slug', $validated['product_id']))
+            ->whereHas('product', fn ($q) => $q->where('slug', $validated['product_id']))
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid license key',
@@ -232,7 +230,7 @@ class SkidrowKillerLicenseController extends Controller
     {
         $license = LicenseKey::where('license_key', strtoupper($licenseKey))->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'message' => 'License not found',
@@ -270,7 +268,7 @@ class SkidrowKillerLicenseController extends Controller
         // Find the product
         $product = Product::where('slug', $validated['product_id'])->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product not found',
@@ -347,7 +345,7 @@ class SkidrowKillerLicenseController extends Controller
 
         $product = Product::where('slug', $validated['product_id'])->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product not found',
@@ -359,7 +357,7 @@ class SkidrowKillerLicenseController extends Controller
             ->where('license_type', LicenseKey::TYPE_DEMO)
             ->first();
 
-        if (!$demo) {
+        if (! $demo) {
             return response()->json([
                 'success' => false,
                 'message' => 'No demo found for this machine',
