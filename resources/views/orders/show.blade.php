@@ -71,16 +71,7 @@
                                                 <span class="font-medium text-white text-sm">รายละเอียดที่ต้องการ</span>
                                             </div>
                                             <div class="bg-gradient-to-b from-primary-50 to-white p-4">
-                                                <div class="prose prose-sm max-w-none text-gray-700
-                                                    prose-headings:text-gray-900 prose-headings:font-semibold
-                                                    prose-p:my-2 prose-ul:my-2 prose-ol:my-2
-                                                    prose-li:my-0.5
-                                                    prose-strong:text-primary-700
-                                                    prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-primary-600 prose-code:text-xs
-                                                    prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:p-3
-                                                    prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline">
-                                                    {!! nl2br(e($item->custom_requirements)) !!}
-                                                </div>
+                                                <x-page-builder-render :content="$item->custom_requirements" />
                                             </div>
                                         </div>
                                     @endif
