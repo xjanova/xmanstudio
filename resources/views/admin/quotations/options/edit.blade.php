@@ -101,7 +101,7 @@
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">รายละเอียดเพิ่มเติม</h3>
 
-            <div class="grid grid-cols-1 gap-4">
+            <div class="grid grid-cols-1 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดแบบยาว (EN)</label>
                     <textarea name="long_description" rows="4" placeholder="รายละเอียดเต็มของบริการนี้..."
@@ -112,9 +112,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดแบบยาว (TH)</label>
-                    <textarea name="long_description_th" rows="4" placeholder="รายละเอียดเต็มของบริการนี้..."
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('long_description_th') border-red-500 @enderror">{{ old('long_description_th', $option->long_description_th) }}</textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        รายละเอียดแบบยาว (TH)
+                        <span class="text-xs text-primary-600 ml-2">✨ ใช้ Page Builder สร้างเนื้อหาสวยๆ</span>
+                    </label>
+                    <x-page-builder name="long_description_th" :value="old('long_description_th', $option->long_description_th)" placeholder="ลากบล็อกมาวางเพื่อสร้างรายละเอียดบริการ..." />
                     @error('long_description_th')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
@@ -132,12 +134,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        คุณสมบัติ/Features (TH) <span class="text-sm text-gray-500">- พิมพ์ทีละบรรทัด</span>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        คุณสมบัติ/Features (TH)
+                        <span class="text-xs text-primary-600 ml-2">✨ ใช้ Page Builder สร้างเนื้อหาสวยๆ</span>
                     </label>
-                    <textarea name="features_th_text" rows="5" placeholder="คุณสมบัติ 1&#10;คุณสมบัติ 2&#10;คุณสมบัติ 3"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 font-mono text-sm @error('features_th_text') border-red-500 @enderror">{{ old('features_th_text', is_array($option->features_th) ? implode("\n", $option->features_th) : '') }}</textarea>
-                    @error('features_th_text')
+                    <x-page-builder name="features_th" :value="old('features_th', is_array($option->features_th) ? json_encode($option->features_th) : '')" placeholder="ลากบล็อกมาวางเพื่อสร้างรายการคุณสมบัติ..." />
+                    @error('features_th')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
@@ -154,12 +156,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        ขั้นตอน/Steps (TH) <span class="text-sm text-gray-500">- พิมพ์ทีละบรรทัด</span>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        ขั้นตอน/Steps (TH)
+                        <span class="text-xs text-primary-600 ml-2">✨ ใช้ Page Builder สร้างเนื้อหาสวยๆ</span>
                     </label>
-                    <textarea name="steps_th_text" rows="5" placeholder="ขั้นตอนที่ 1: ...&#10;ขั้นตอนที่ 2: ...&#10;ขั้นตอนที่ 3: ..."
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 font-mono text-sm @error('steps_th_text') border-red-500 @enderror">{{ old('steps_th_text', is_array($option->steps_th) ? implode("\n", $option->steps_th) : '') }}</textarea>
-                    @error('steps_th_text')
+                    <x-page-builder name="steps_th" :value="old('steps_th', is_array($option->steps_th) ? json_encode($option->steps_th) : '')" placeholder="ลากบล็อกมาวางเพื่อสร้างขั้นตอนการทำงาน..." />
+                    @error('steps_th')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
