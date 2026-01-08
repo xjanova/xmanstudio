@@ -96,6 +96,7 @@ class OrderController extends Controller
                     'quantity' => $cartItem->quantity,
                     'price' => $cartItem->price,
                     'total' => $cartItem->price * $cartItem->quantity,
+                    'custom_requirements' => $cartItem->custom_requirements,
                 ]);
             }
 

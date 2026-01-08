@@ -62,6 +62,12 @@
                             <tr>
                                 <td class="px-6 py-4">
                                     <div class="font-medium text-gray-900">{{ $item->product->name ?? 'สินค้าถูกลบ' }}</div>
+                                    @if($item->custom_requirements)
+                                        <div class="mt-2 text-sm text-gray-600 bg-gray-50 rounded p-3">
+                                            <div class="font-medium text-gray-700 mb-1">รายละเอียดเพิ่มเติม:</div>
+                                            <div class="whitespace-pre-line">{{ $item->custom_requirements }}</div>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-gray-500">
                                     {{ number_format($item->price, 2) }} บาท
