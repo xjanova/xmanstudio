@@ -1,9 +1,10 @@
-@props(['name' => 'content', 'value' => '', 'placeholder' => 'ลากบล็อกมาวางที่นี่เพื่อเริ่มสร้างเนื้อหา...'])
+@props(['name' => 'content', 'value' => '', 'placeholder' => 'ลากบล็อกมาวางที่นี่เพื่อเริ่มสร้างเนื้อหา...', 'fullWidth' => false])
 
 <div x-data="pageBuilder(@js($value), @js($name))"
      x-init="init()"
      :class="{ 'fixed inset-0 z-50 flex flex-col': isFullscreen }"
-     class="page-builder border border-gray-300 rounded-xl overflow-hidden bg-white shadow-lg">
+     class="page-builder overflow-hidden bg-white {{ $fullWidth ? '' : 'border border-gray-300 rounded-xl shadow-lg' }}"
+     @if($fullWidth) style="min-height: 500px;" @endif>
 
     <!-- Hidden input to store JSON data -->
     <input type="hidden" name="{{ $name }}" :value="JSON.stringify(blocks)">
