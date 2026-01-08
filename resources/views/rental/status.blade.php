@@ -149,7 +149,7 @@
                             <div>
                                 <h3 class="font-semibold text-gray-900">{{ $rental->rentalPackage->display_name }}</h3>
                                 <p class="text-sm text-gray-500">
-                                    {{ $rental->starts_at->format('d/m/Y') }} - {{ $rental->expires_at->format('d/m/Y') }}
+                                    {{ $rental->starts_at ? $rental->starts_at->format('d/m/Y') : '-' }} - {{ $rental->expires_at ? $rental->expires_at->format('d/m/Y') : '-' }}
                                 </p>
                             </div>
                             <div class="text-right">
@@ -169,12 +169,6 @@
                     </div>
                 @endforelse
             </div>
-
-            @if($rentals->hasPages())
-                <div class="p-6 border-t border-gray-200">
-                    {{ $rentals->links() }}
-                </div>
-            @endif
         </div>
 
         <!-- Payment History -->

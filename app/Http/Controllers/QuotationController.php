@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Quotation;
 use App\Models\QuotationCategory;
+use App\Models\QuotationOption;
 use App\Services\LineNotifyService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -830,7 +831,7 @@ class QuotationController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$category) {
+        if (! $category) {
             abort(404, 'Service category not found');
         }
 
@@ -840,7 +841,7 @@ class QuotationController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$option) {
+        if (! $option) {
             abort(404, 'Service not found');
         }
 

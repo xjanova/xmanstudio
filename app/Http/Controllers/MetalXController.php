@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\MetalXTeamMember;
 use App\Models\Setting;
-use Illuminate\Http\Request;
 
 class MetalXController extends Controller
 {
