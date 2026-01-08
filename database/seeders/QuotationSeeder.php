@@ -564,7 +564,7 @@ Stem Separation เป็นเทคโนโลยีที่ปฏิวั�
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
-                    'quotation_category_id' => $musicAi->id
+                    'quotation_category_id' => $musicAi->id,
                 ],
                 array_merge($option, ['quotation_category_id' => $musicAi->id])
             );
@@ -809,7 +809,7 @@ AI Content Writing ของเราไม่ใช่แค่การสั�
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
-                    'quotation_category_id' => $aiImage->id
+                    'quotation_category_id' => $aiImage->id,
                 ],
                 array_merge($option, ['quotation_category_id' => $aiImage->id])
             );
@@ -1154,7 +1154,7 @@ Custom AI Agent สามารถทำงานได้หลากหลา�
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
-                    'quotation_category_id' => $chatbot->id
+                    'quotation_category_id' => $chatbot->id,
                 ],
                 array_merge($option, ['quotation_category_id' => $chatbot->id])
             );
@@ -1473,7 +1473,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
-                    'quotation_category_id' => $blockchain->id
+                    'quotation_category_id' => $blockchain->id,
                 ],
                 array_merge($option, ['quotation_category_id' => $blockchain->id])
             );
@@ -1702,7 +1702,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
-                    'quotation_category_id' => $web->id
+                    'quotation_category_id' => $web->id,
                 ],
                 array_merge($option, ['quotation_category_id' => $web->id])
             );
@@ -1925,7 +1925,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
-                    'quotation_category_id' => $iot->id
+                    'quotation_category_id' => $iot->id,
                 ],
                 array_merge($option, ['quotation_category_id' => $iot->id])
             );
