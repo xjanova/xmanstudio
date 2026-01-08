@@ -43,26 +43,13 @@ class RentalService
     /**
      * Get user's rental history
      */
-    public function getUserRentalHistory(User $user, int $limit = 10): array
+    public function getUserRentalHistory(User $user, int $limit = 10)
     {
         return $user->rentals()
             ->with('rentalPackage')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
-            ->get()
-            ->map(function ($rental) {
-                return [
-                    'id' => $rental->id,
-                    'package_name' => $rental->rentalPackage->display_name,
-                    'starts_at' => $rental->starts_at?->toIso8601String(),
-                    'expires_at' => $rental->expires_at?->toIso8601String(),
-                    'status' => $rental->status,
-                    'status_label' => $rental->getStatusLabel(),
-                    'amount_paid' => $rental->amount_paid,
-                    'is_active' => $rental->is_active,
-                    'days_remaining' => $rental->days_remaining,
-                ];
-            })->toArray();
+            ->get();
     }
 
     /**
