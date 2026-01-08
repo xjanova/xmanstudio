@@ -499,26 +499,41 @@ class QuotationController extends Controller
 
         // Format data for view
         $formattedCategories = [];
-        foreach ($categories as $category) {
-            $options = [];
-            foreach ($category->activeOptions as $option) {
-                $options[$option->key] = [
-                    'name' => $option->name,
-                    'name_th' => $option->name_th ?? $option->name,
-                    'price' => (float) $option->price,
-                    'description' => $option->description,
-                    'description_th' => $option->description_th,
+
+        // If database has data, use it
+        if ($categories->count() > 0) {
+            foreach ($categories as $category) {
+                $options = [];
+                foreach ($category->activeOptions as $option) {
+                    $options[$option->key] = [
+                        'name' => $option->name,
+                        'name_th' => $option->name_th ?? $option->name,
+                        'price' => (float) $option->price,
+                        'description' => $option->description,
+                        'description_th' => $option->description_th,
+                    ];
+                }
+
+                // Wrap options in a 'categories' structure to match the expected format
+                $formattedCategories[$category->key] = [
+                    'name' => $category->name,
+                    'name_th' => $category->name_th ?? $category->name,
+                    'icon' => $category->icon,
+                    'description' => $category->description,
+                    'description_th' => $category->description_th,
+                    'categories' => [
+                        'main' => [
+                            'name' => $category->name,
+                            'name_th' => $category->name_th ?? $category->name,
+                            'icon' => $category->icon,
+                            'options' => $options,
+                        ],
+                    ],
                 ];
             }
-
-            $formattedCategories[$category->key] = [
-                'name' => $category->name,
-                'name_th' => $category->name_th ?? $category->name,
-                'icon' => $category->icon,
-                'description' => $category->description,
-                'description_th' => $category->description_th,
-                'options' => $options,
-            ];
+        } else {
+            // Fallback to hardcoded data if database is empty
+            $formattedCategories = $this->servicePackages;
         }
 
         return view('support.index', [
