@@ -190,6 +190,46 @@
                         @endforeach
                     </div>
                 </div>
+
+            {{-- Icon Box Block --}}
+            @elseif($block['type'] === 'icon-box')
+                @php
+                    $iconColor = $block['iconColor'] ?? '#7c3aed';
+                    $iconName = $block['icon'] ?? 'star';
+                @endphp
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                             style="background-color: {{ $iconColor }}15; color: {{ $iconColor }}">
+                            @include('components.page-builder-icons', ['icon' => $iconName])
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">{{ $block['content'] ?? 'หัวข้อ' }}</h4>
+                            <p class="text-sm text-gray-600 mt-1">{{ $block['description'] ?? 'รายละเอียด' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+            {{-- Feature Card Block --}}
+            @elseif($block['type'] === 'feature-card')
+                @php
+                    $fIconColor = $block['iconColor'] ?? '#059669';
+                    $fBgColor = $block['style']['bgColor'] ?? '#f0fdf4';
+                    $fIconName = $block['icon'] ?? 'check-circle';
+                @endphp
+                <div class="rounded-lg shadow-sm border border-gray-200 p-4"
+                     style="background-color: {{ $fBgColor }}">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-white shadow-sm"
+                             style="color: {{ $fIconColor }}">
+                            @include('components.page-builder-icons', ['icon' => $fIconName])
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">{{ $block['title'] ?? 'ฟีเจอร์' }}</h4>
+                            <p class="text-sm text-gray-600 mt-1">{{ $block['content'] ?? 'รายละเอียด' }}</p>
+                        </div>
+                    </div>
+                </div>
             @endif
         </div>
     @endforeach
