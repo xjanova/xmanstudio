@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
 use Database\Seeders\Data\AIImagePageBuilderData;
+use Database\Seeders\Data\AppDevelopmentPageBuilderData;
 use Database\Seeders\Data\BlockchainPageBuilderData;
 use Database\Seeders\Data\ChatbotPageBuilderData;
 use Database\Seeders\Data\IoTPageBuilderData;
@@ -1797,6 +1798,227 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
             );
         }
 
+        // App Development
+        $app = QuotationCategory::updateOrCreate(
+            ['key' => 'app_development'],
+            [
+                'name' => 'App Development',
+                'name_th' => 'พัฒนาแอปมือถือ',
+                'icon' => '📱',
+                'description' => 'Professional mobile app development for iOS and Android',
+                'description_th' => 'บริการพัฒนาแอปพลิเคชันมือถือสำหรับ iOS และ Android',
+                'order' => 6,
+                'is_active' => true,
+            ]
+        );
+
+        $appOptions = [
+            [
+                'key' => 'app_ios',
+                'name' => 'iOS App Development',
+                'name_th' => 'พัฒนาแอป iOS',
+                'description' => 'Native iOS app development with Swift',
+                'description_th' => 'พัฒนาแอป iOS แบบ Native ด้วย Swift สำหรับ iPhone และ iPad',
+                'price' => 150000,
+                'order' => 1,
+                'features' => [
+                    'Native iOS development with Swift/SwiftUI',
+                    'UI/UX design following Apple HIG',
+                    'App Store submission and approval',
+                    'Push notifications',
+                    'In-App Purchase integration',
+                    'Analytics integration',
+                    '3 months support',
+                ],
+                'features_th' => [
+                    'พัฒนาแอปแบบ Native ด้วย Swift และ SwiftUI เพื่อ Performance สูงสุดบน iPhone และ iPad',
+                    'ออกแบบ UI/UX ตาม Apple Human Interface Guidelines สวยงามและใช้งานง่าย',
+                    'ดูแลการ Submit แอปขึ้น App Store จนผ่าน Review และเผยแพร่สำเร็จ',
+                    'ระบบ Push Notifications แจ้งเตือนผู้ใช้แบบ Real-time',
+                    'เชื่อมต่อระบบ In-App Purchase สำหรับ Subscriptions และ One-time Purchases',
+                    'ติดตั้ง Firebase Analytics และ Crashlytics เพื่อติดตาม User Behavior',
+                    'Support 3 เดือนหลัง Launch รวม Bug Fixes และ Minor Updates',
+                ],
+                'steps' => [
+                    'Discovery & Planning',
+                    'UI/UX Design',
+                    'Development',
+                    'Testing',
+                    'App Store Launch',
+                ],
+                'steps_th' => [
+                    'ขั้นตอนที่ 1 - Discovery & Planning: วิเคราะห์ความต้องการ User Research กำหนด Features และวาง Technical Architecture',
+                    'ขั้นตอนที่ 2 - UI/UX Design: ออกแบบ Wireframes และ High-fidelity Mockups ตาม Apple Human Interface Guidelines',
+                    'ขั้นตอนที่ 3 - Development: พัฒนา iOS App ด้วย Swift/SwiftUI และ Backend API พร้อมกัน',
+                    'ขั้นตอนที่ 4 - Testing: ทดสอบบน TestFlight, QA Testing และ User Acceptance Testing',
+                    'ขั้นตอนที่ 5 - App Store Launch: Submit App Store, ผ่าน Review และ Launch พร้อม Marketing Support',
+                ],
+                'long_description' => 'Professional iOS app development with Swift',
+                'long_description_th' => 'บริการพัฒนาแอป iOS แบบ Native ด้วย Swift และ SwiftUI สำหรับ iPhone และ iPad คุณภาพระดับ App Store',
+            ],
+            [
+                'key' => 'app_android',
+                'name' => 'Android App Development',
+                'name_th' => 'พัฒนาแอป Android',
+                'description' => 'Native Android app development with Kotlin',
+                'description_th' => 'พัฒนาแอป Android แบบ Native ด้วย Kotlin สำหรับมือถือทุกรุ่น',
+                'price' => 120000,
+                'order' => 2,
+                'features' => [
+                    'Native Android development with Kotlin',
+                    'Material Design 3 UI/UX',
+                    'Play Store submission',
+                    'Firebase integration',
+                    'Google Play Billing',
+                    'Analytics & Crashlytics',
+                    '3 months support',
+                ],
+                'features_th' => [
+                    'พัฒนาแอปแบบ Native ด้วย Kotlin และ Jetpack Compose เพื่อ Modern UI และ Performance',
+                    'ออกแบบ UI/UX ตาม Material Design 3 Guidelines สวยงามและ Consistent',
+                    'ดูแลการ Submit แอปขึ้น Google Play Store จนเผยแพร่สำเร็จ',
+                    'เชื่อมต่อ Firebase Suite รวม Push Notifications, Remote Config และ A/B Testing',
+                    'ระบบ Google Play Billing สำหรับ Subscriptions และ In-App Purchases',
+                    'ติดตั้ง Analytics และ Crashlytics เพื่อติดตาม User Behavior และ Crashes',
+                    'Support 3 เดือนหลัง Launch รวม Bug Fixes และ Minor Updates',
+                ],
+                'steps' => [
+                    'Discovery & Planning',
+                    'UI/UX Design',
+                    'Development',
+                    'Testing',
+                    'Play Store Launch',
+                ],
+                'steps_th' => [
+                    'ขั้นตอนที่ 1 - Discovery & Planning: วิเคราะห์ความต้องการ กำหนด Target Devices และวาง Technical Architecture',
+                    'ขั้นตอนที่ 2 - UI/UX Design: ออกแบบ Wireframes และ Mockups ตาม Material Design Guidelines',
+                    'ขั้นตอนที่ 3 - Development: พัฒนา Android App ด้วย Kotlin และ Backend API พร้อมกัน',
+                    'ขั้นตอนที่ 4 - Testing: ทดสอบบน Devices หลากหลายรุ่น QA Testing และ Beta Testing',
+                    'ขั้นตอนที่ 5 - Play Store Launch: Submit Google Play, ผ่าน Review และ Launch พร้อม ASO',
+                ],
+                'long_description' => 'Professional Android app development with Kotlin',
+                'long_description_th' => 'บริการพัฒนาแอป Android แบบ Native ด้วย Kotlin และ Jetpack Compose เข้าถึงผู้ใช้ Android ทั่วโลก',
+            ],
+            [
+                'key' => 'app_cross',
+                'name' => 'Cross-Platform App (iOS + Android)',
+                'name_th' => 'แอป Cross-Platform (iOS + Android)',
+                'description' => 'Single codebase for both iOS and Android',
+                'description_th' => 'พัฒนาแอปครั้งเดียวใช้ได้ทั้ง iOS และ Android ด้วย Flutter หรือ React Native',
+                'price' => 200000,
+                'order' => 3,
+                'features' => [
+                    'Single codebase for iOS & Android',
+                    'Flutter or React Native',
+                    'Platform-specific UI adaptations',
+                    'Shared backend API',
+                    'Both App Store & Play Store submission',
+                    'Cross-platform analytics',
+                    '6 months support',
+                ],
+                'features_th' => [
+                    'Codebase เดียวใช้ได้ทั้ง iOS และ Android ประหยัดค่าพัฒนา 40-60%',
+                    'เลือกใช้ Flutter (Dart) หรือ React Native (JavaScript) ตามความเหมาะสม',
+                    'UI ที่ปรับตาม Platform Guidelines ทั้ง Apple HIG และ Material Design',
+                    'Backend API เดียวที่รองรับทั้งสองแพลตฟอร์ม',
+                    'ดูแลการ Submit ทั้ง App Store และ Play Store จนเผยแพร่สำเร็จ',
+                    'ติดตาม User Behavior บนทั้งสองแพลตฟอร์มใน Dashboard เดียว',
+                    'Support 6 เดือนหลัง Launch สำหรับทั้งสองแพลตฟอร์ม',
+                ],
+                'steps' => [
+                    'Discovery & Tech Selection',
+                    'UI/UX Design',
+                    'Development',
+                    'Multi-Platform Testing',
+                    'Dual Store Launch',
+                ],
+                'steps_th' => [
+                    'ขั้นตอนที่ 1 - Discovery & Tech Selection: วิเคราะห์ความต้องการ เลือก Framework (Flutter/React Native) ที่เหมาะสม',
+                    'ขั้นตอนที่ 2 - UI/UX Design: ออกแบบ UI ที่ Adaptive ตาม Platform พร้อม Design System',
+                    'ขั้นตอนที่ 3 - Development: พัฒนา Cross-Platform App และ Shared Backend',
+                    'ขั้นตอนที่ 4 - Multi-Platform Testing: ทดสอบบนทั้ง iOS และ Android หลากหลาย Devices',
+                    'ขั้นตอนที่ 5 - Dual Store Launch: Submit App Store และ Play Store พร้อมกัน Launch ทั้งสองแพลตฟอร์ม',
+                ],
+                'long_description' => 'Cross-platform app development for iOS and Android',
+                'long_description_th' => 'บริการพัฒนาแอป Cross-Platform ด้วย Flutter หรือ React Native ได้ทั้ง iOS และ Android ในโค้ดเดียว ประหยัดเวลาและค่าใช้จ่าย',
+            ],
+            [
+                'key' => 'app_enterprise',
+                'name' => 'Enterprise Mobile App',
+                'name_th' => 'แอปสำหรับองค์กร',
+                'description' => 'Custom enterprise mobile solutions',
+                'description_th' => 'แอปมือถือสำหรับใช้งานภายในองค์กร รองรับระบบ ERP, CRM และ Workflow',
+                'price' => 350000,
+                'order' => 4,
+                'features' => [
+                    'Custom enterprise features',
+                    'SSO & Enterprise authentication',
+                    'MDM integration',
+                    'Offline-first architecture',
+                    'Enterprise backend integration',
+                    'Security & compliance',
+                    'Private distribution',
+                    '1 year support',
+                ],
+                'features_th' => [
+                    'ฟังก์ชันที่ออกแบบตามความต้องการเฉพาะขององค์กร',
+                    'รองรับ Single Sign-On (SSO) และ Enterprise Authentication (LDAP, Active Directory)',
+                    'เชื่อมต่อ Mobile Device Management (MDM) สำหรับจัดการอุปกรณ์',
+                    'สถาปัตยกรรม Offline-first ใช้งานได้แม้ไม่มี Internet',
+                    'เชื่อมต่อระบบ Backend ขององค์กร (ERP, CRM, HR Systems)',
+                    'รักษาความปลอดภัยตามมาตรฐาน Enterprise และ Compliance',
+                    'เผยแพร่ภายในองค์กรผ่าน Enterprise Distribution หรือ MDM',
+                    'Support 1 ปีหลัง Launch พร้อม SLA และ Priority Support',
+                ],
+                'steps' => [
+                    'Enterprise Requirements',
+                    'Security Architecture',
+                    'UI/UX Design',
+                    'Development & Integration',
+                    'Security Testing',
+                    'Enterprise Deployment',
+                ],
+                'steps_th' => [
+                    'ขั้นตอนที่ 1 - Enterprise Requirements: วิเคราะห์ความต้องการองค์กร Workflow และ Integration Points',
+                    'ขั้นตอนที่ 2 - Security Architecture: ออกแบบ Security Architecture รองรับ SSO, Encryption และ Compliance',
+                    'ขั้นตอนที่ 3 - UI/UX Design: ออกแบบ UI ที่เหมาะกับการใช้งานในองค์กร',
+                    'ขั้นตอนที่ 4 - Development & Integration: พัฒนาแอปและเชื่อมต่อกับระบบ Backend ขององค์กร',
+                    'ขั้นตอนที่ 5 - Security Testing: ทดสอบความปลอดภัย Penetration Testing และ Compliance Audit',
+                    'ขั้นตอนที่ 6 - Enterprise Deployment: Deploy ผ่าน MDM หรือ Enterprise Distribution พร้อม Training',
+                ],
+                'long_description' => 'Enterprise mobile app with advanced security',
+                'long_description_th' => 'บริการพัฒนาแอปมือถือสำหรับใช้งานภายในองค์กร รองรับ SSO, MDM, Enterprise Backend Integration และมาตรฐานความปลอดภัยระดับ Enterprise',
+            ],
+        ];
+
+        // Merge Page Builder JSON content for app options
+        $appPageBuilderContent = [
+            'app_ios' => AppDevelopmentPageBuilderData::getIOSAppContent(),
+            'app_android' => AppDevelopmentPageBuilderData::getAndroidAppContent(),
+            'app_cross' => AppDevelopmentPageBuilderData::getCrossPlatformContent(),
+        ];
+
+        foreach ($appOptions as $option) {
+            $optionData = $option;
+
+            // Merge Page Builder content if available
+            if (isset($appPageBuilderContent[$option['key']])) {
+                $optionData = array_merge($optionData, $appPageBuilderContent[$option['key']]);
+            } else {
+                // Use default content for other app options
+                $defaultContent = AppDevelopmentPageBuilderData::getDefaultAppContent();
+                $optionData = array_merge($optionData, $defaultContent);
+            }
+
+            QuotationOption::updateOrCreate(
+                [
+                    'key' => $option['key'],
+                    'quotation_category_id' => $app->id,
+                ],
+                array_merge($optionData, ['quotation_category_id' => $app->id])
+            );
+        }
+
         // IoT Solutions
         $iot = QuotationCategory::updateOrCreate(
             ['key' => 'iot'],
@@ -1806,7 +2028,7 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
                 'icon' => '⚡',
                 'description' => 'Internet of Things solutions for smart devices',
                 'description_th' => 'โซลูชัน IoT สำหรับอุปกรณ์อัจฉริยะ',
-                'order' => 6,
+                'order' => 7,
                 'is_active' => true,
             ]
         );
