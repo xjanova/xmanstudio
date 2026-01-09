@@ -71,7 +71,7 @@ class BrandingSettingsController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.branding.index')
-                ->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+                ->with('error', 'เกิดข้อผิดพลาด: '.$e->getMessage());
         }
     }
 
@@ -90,7 +90,7 @@ class BrandingSettingsController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.branding.index')
-                ->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+                ->with('error', 'เกิดข้อผิดพลาด: '.$e->getMessage());
         }
     }
 
@@ -109,7 +109,7 @@ class BrandingSettingsController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.branding.index')
-                ->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+                ->with('error', 'เกิดข้อผิดพลาด: '.$e->getMessage());
         }
     }
 }
