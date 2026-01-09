@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\QuotationCategory;
 use App\Models\Service;
 
 class ProductController extends Controller
@@ -38,9 +39,12 @@ class ProductController extends Controller
 
     public function services()
     {
-        $services = Service::active()->ordered()->get();
+        $categories = QuotationCategory::with('activeOptions')
+            ->active()
+            ->ordered()
+            ->get();
 
-        return view('services.index', compact('services'));
+        return view('services.index', compact('categories'));
     }
 
     public function serviceDetail($slug)
