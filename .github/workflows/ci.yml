@@ -148,78 +148,79 @@ jobs:
           echo "✓ Build completed successfully"
 
   # Auto-release when all checks pass on main branch
-  auto-release:
-    name: Auto Release
-    runs-on: ubuntu-latest
-    needs: [tests, code-quality, build-check]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    permissions:
-      contents: write
+  # Disabled due to branch protection preventing direct pushes
+  # auto-release:
+  #   name: Auto Release
+  #   runs-on: ubuntu-latest
+  #   needs: [tests, code-quality, build-check]
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   permissions:
+  #     contents: write
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v6
+  #       with:
+  #         fetch-depth: 0
+  #         token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check if release needed
-        id: check
-        run: |
-          # Skip if last commit is from bot (version bump)
-          LAST_AUTHOR=$(git log -1 --format='%an')
-          if [[ "$LAST_AUTHOR" == "github-actions[bot]" ]]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "Skipping: last commit from bot"
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
+  #     - name: Check if release needed
+  #       id: check
+  #       run: |
+  #         # Skip if last commit is from bot (version bump)
+  #         LAST_AUTHOR=$(git log -1 --format='%an')
+  #         if [[ "$LAST_AUTHOR" == "github-actions[bot]" ]]; then
+  #           echo "skip=true" >> $GITHUB_OUTPUT
+  #           echo "Skipping: last commit from bot"
+  #         else
+  #           echo "skip=false" >> $GITHUB_OUTPUT
+  #         fi
 
-      - name: Setup Node.js
-        if: steps.check.outputs.skip != 'true'
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20'
+  #     - name: Setup Node.js
+  #       if: steps.check.outputs.skip != 'true'
+  #       uses: actions/setup-node@v6
+  #       with:
+  #         node-version: '20'
 
-      - name: Install semver
-        if: steps.check.outputs.skip != 'true'
-        run: npm install -g semver
+  #     - name: Install semver
+  #       if: steps.check.outputs.skip != 'true'
+  #       run: npm install -g semver
 
-      - name: Bump version and release
-        id: bump
-        if: steps.check.outputs.skip != 'true'
-        run: |
-          # Get current version
-          if [ -f VERSION ]; then
-            CURRENT=$(cat VERSION)
-          else
-            CURRENT="0.0.0"
-          fi
+  #     - name: Bump version and release
+  #       id: bump
+  #       if: steps.check.outputs.skip != 'true'
+  #       run: |
+  #         # Get current version
+  #         if [ -f VERSION ]; then
+  #           CURRENT=$(cat VERSION)
+  #         else
+  #           CURRENT="0.0.0"
+  #         fi
 
-          # Bump patch version
-          NEW=$(npx semver -i patch $CURRENT)
-          echo "$NEW" > VERSION
-          echo "new=$NEW" >> $GITHUB_OUTPUT
+  #         # Bump patch version
+  #         NEW=$(npx semver -i patch $CURRENT)
+  #         echo "$NEW" > VERSION
+  #         echo "new=$NEW" >> $GITHUB_OUTPUT
 
-          # Configure git
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+  #         # Configure git
+  #         git config --local user.email "github-actions[bot]@users.noreply.github.com"
+  #         git config --local user.name "github-actions[bot]"
 
-          # Commit and tag
-          git add VERSION
-          git commit -m "chore: release v$NEW"
-          git tag -a "v$NEW" -m "Release v$NEW"
+  #         # Commit and tag
+  #         git add VERSION
+  #         git commit -m "chore: release v$NEW"
+  #         git tag -a "v$NEW" -m "Release v$NEW"
 
-          # Push
-          git push origin main --follow-tags
+  #         # Push
+  #         git push origin main --follow-tags
 
-          echo "Released v$NEW"
+  #         echo "Released v$NEW"
 
-      - name: Create GitHub Release
-        if: steps.check.outputs.skip != 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.bump.outputs.new }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Create GitHub Release
+  #       if: steps.check.outputs.skip != 'true'
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         tag_name: v${{ steps.bump.outputs.new }}
+  #         generate_release_notes: true
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
