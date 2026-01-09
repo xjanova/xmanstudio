@@ -20,14 +20,15 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
       - name: Check if automated release PR
         id: check-automated
         run: |
-          FILES_CHANGED=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | wc -l)
-          echo "Number of files changed: $FILES_CHANGED"
-
-          # If created by github-actions[bot] and only changes VERSION, it's an automated release
+          # If created by github-actions[bot], it's an automated release
           if [[ "${{ github.event.pull_request.user.login }}" == "github-actions[bot]" ]]; then
             echo "automated=true" >> $GITHUB_OUTPUT
             echo "This is an automated release PR - will merge without waiting for checks"
