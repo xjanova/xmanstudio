@@ -123,11 +123,16 @@
 
     <!-- Features Section -->
     @if($option->features_th || $option->features)
+        @php
+            $features = $option->features_th ?? $option->features ?? [];
+            $features = is_array($features) ? $features : [];
+        @endphp
+        @if(count($features) > 0)
         <div class="py-16">
             <div class="container mx-auto px-4">
                 <h2 class="text-3xl font-bold mb-12 text-center">คุณสมบัติเด่น</h2>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach(($option->features_th ?? $option->features ?? []) as $feature)
+                    @foreach($features as $feature)
                         <div class="flex items-start gap-4 p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-primary-500/50 transition-all group">
                             <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,15 +147,21 @@
                 </div>
             </div>
         </div>
+        @endif
     @endif
 
     <!-- Steps/Process Section -->
     @if($option->steps_th || $option->steps)
+        @php
+            $steps = $option->steps_th ?? $option->steps ?? [];
+            $steps = is_array($steps) ? $steps : [];
+        @endphp
+        @if(count($steps) > 0)
         <div class="py-16 bg-gray-900/50">
             <div class="container mx-auto px-4">
                 <h2 class="text-3xl font-bold mb-12 text-center">ขั้นตอนการทำงาน</h2>
                 <div class="max-w-4xl mx-auto">
-                    @foreach(($option->steps_th ?? $option->steps ?? []) as $index => $step)
+                    @foreach($steps as $index => $step)
                         <div class="flex gap-6 mb-8 last:mb-0">
                             <!-- Step Number -->
                             <div class="flex-shrink-0">
@@ -177,6 +188,7 @@
                 </div>
             </div>
         </div>
+        @endif
     @endif
 
     <!-- Related Services -->
