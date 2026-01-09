@@ -975,11 +975,23 @@ function pageBuilder(initialValue, fieldName) {
             // Parse initial value
             if (initialValue) {
                 try {
+                    let parsedBlocks;
                     if (typeof initialValue === 'string') {
-                        this.blocks = JSON.parse(initialValue);
+                        parsedBlocks = JSON.parse(initialValue);
                     } else {
-                        this.blocks = initialValue;
+                        parsedBlocks = initialValue;
                     }
+                    // Ensure all blocks have IDs
+                    this.blocks = parsedBlocks.map(block => {
+                        if (!block.id) {
+                            block.id = this.generateId();
+                        }
+                        // Ensure style object exists
+                        if (!block.style) {
+                            block.style = {};
+                        }
+                        return block;
+                    });
                 } catch (e) {
                     // If not valid JSON, treat as plain text
                     if (initialValue.trim()) {
