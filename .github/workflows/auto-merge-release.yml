@@ -10,7 +10,7 @@ jobs:
   auto-merge:
     name: Auto-merge release PR
     runs-on: ubuntu-latest
-    if: startsWith(github.head_ref, 'release/') && github.actor == 'github-actions[bot]'
+    if: startsWith(github.head_ref, 'release/')
     permissions:
       contents: write
       pull-requests: write
