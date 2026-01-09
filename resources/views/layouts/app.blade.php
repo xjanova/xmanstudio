@@ -7,6 +7,17 @@
     <title>@yield('title', 'XMAN Studio - IT Solutions & Software Development')</title>
     <meta name="description" content="@yield('meta_description', 'XMAN Studio ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร ทำเว็บไซต์ แอพพลิเคชัน Blockchain IoT Network Security AI และอื่นๆ')">
 
+    <!-- Favicon -->
+    @php
+        $siteFavicon = \App\Models\Setting::getValue('site_favicon');
+    @endphp
+    @if($siteFavicon)
+        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
+        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
+    @else
+        <link rel="icon" type="image/x-icon" href="{{ asset('public_html/favicon.ico') }}">
+    @endif
+
     <!-- Preconnect to Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,8 +45,17 @@
                 <!-- Logo & Desktop Menu -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <a href="/" class="text-2xl font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
-                            XMAN STUDIO
+                        @php
+                            $siteLogo = \App\Models\Setting::getValue('site_logo');
+                        @endphp
+                        <a href="/" class="flex items-center">
+                            @if($siteLogo)
+                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
+                            @else
+                                <span class="text-2xl font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
+                                    XMAN STUDIO
+                                </span>
+                            @endif
                         </a>
                     </div>
                     <div class="hidden md:ml-8 md:flex md:space-x-6">
@@ -195,7 +215,14 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- Company Info -->
                 <div class="lg:col-span-1">
-                    <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">XMAN STUDIO</h3>
+                    @php
+                        $siteLogo = \App\Models\Setting::getValue('site_logo');
+                    @endphp
+                    @if($siteLogo)
+                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-12 w-auto mb-4">
+                    @else
+                        <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">XMAN STUDIO</h3>
+                    @endif
                     <p class="text-gray-400 mb-4">ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ</p>
                     <!-- Social Links -->
                     <div class="flex space-x-4">
