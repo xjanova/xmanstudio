@@ -109,72 +109,98 @@
 
     <!-- Long Description Section -->
     @if($option->long_description_th || $option->long_description)
+        @php
+            $longDesc = $option->long_description_th ?? $option->long_description;
+            $isPageBuilder = is_string($longDesc) && str_starts_with(trim($longDesc), '[');
+        @endphp
         <div class="py-16 bg-gray-900/50">
             <div class="container mx-auto px-4">
                 <h2 class="text-3xl font-bold mb-8">รายละเอียดบริการ</h2>
-                <div class="prose prose-invert prose-lg max-w-none">
-                    <p class="text-gray-300 leading-relaxed whitespace-pre-line">
-                        {{ $option->long_description_th ?? $option->long_description }}
-                    </p>
-                </div>
+                @if($isPageBuilder)
+                    <x-page-builder-render :content="$longDesc" theme="dark" />
+                @else
+                    <div class="prose prose-invert prose-lg max-w-none">
+                        <p class="text-gray-300 leading-relaxed whitespace-pre-line">
+                            {{ $longDesc }}
+                        </p>
+                    </div>
+                @endif
             </div>
         </div>
     @endif
 
     <!-- Features Section -->
     @if($option->features_th || $option->features)
+        @php
+            $features = $option->features_th ?? $option->features;
+            $featuresIsPageBuilder = is_string($features) && str_starts_with(trim($features), '[');
+        @endphp
         <div class="py-16">
             <div class="container mx-auto px-4">
                 <h2 class="text-3xl font-bold mb-12 text-center">คุณสมบัติเด่น</h2>
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach(($option->features_th ?? $option->features ?? []) as $feature)
-                        <div class="flex items-start gap-4 p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-primary-500/50 transition-all group">
-                            <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
+                @if($featuresIsPageBuilder)
+                    <x-page-builder-render :content="$features" theme="dark" />
+                @else
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        @foreach((is_array($features) ? $features : []) as $feature)
+                            <div class="flex items-start gap-4 p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-primary-500/50 transition-all group">
+                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-gray-300">{{ $feature }}</p>
+                                </div>
                             </div>
-                            <div class="flex-1">
-                                <p class="text-gray-300">{{ $feature }}</p>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
     @endif
 
     <!-- Steps/Process Section -->
     @if($option->steps_th || $option->steps)
+        @php
+            $steps = $option->steps_th ?? $option->steps;
+            $stepsIsPageBuilder = is_string($steps) && str_starts_with(trim($steps), '[');
+        @endphp
         <div class="py-16 bg-gray-900/50">
             <div class="container mx-auto px-4">
                 <h2 class="text-3xl font-bold mb-12 text-center">ขั้นตอนการทำงาน</h2>
-                <div class="max-w-4xl mx-auto">
-                    @foreach(($option->steps_th ?? $option->steps ?? []) as $index => $step)
-                        <div class="flex gap-6 mb-8 last:mb-0">
-                            <!-- Step Number -->
-                            <div class="flex-shrink-0">
-                                <div class="w-16 h-16 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-lg">
-                                    {{ $index + 1 }}
+                @if($stepsIsPageBuilder)
+                    <div class="max-w-4xl mx-auto">
+                        <x-page-builder-render :content="$steps" theme="dark" />
+                    </div>
+                @else
+                    <div class="max-w-4xl mx-auto">
+                        @foreach((is_array($steps) ? $steps : []) as $index => $step)
+                            <div class="flex gap-6 mb-8 last:mb-0">
+                                <!-- Step Number -->
+                                <div class="flex-shrink-0">
+                                    <div class="w-16 h-16 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-lg">
+                                        {{ $index + 1 }}
+                                    </div>
+                                </div>
+                                <!-- Step Content -->
+                                <div class="flex-1 pt-3">
+                                    <div class="p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+                                        <p class="text-lg text-gray-300">{{ $step }}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <!-- Step Content -->
-                            <div class="flex-1 pt-3">
-                                <div class="p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-                                    <p class="text-lg text-gray-300">{{ $step }}</p>
+                            @if(!$loop->last)
+                                <div class="flex gap-6 mb-4">
+                                    <div class="flex-shrink-0 w-16 flex justify-center">
+                                        <div class="w-0.5 h-8 bg-gradient-to-b from-primary-600 to-purple-600"></div>
+                                    </div>
+                                    <div class="flex-1"></div>
                                 </div>
-                            </div>
-                        </div>
-                        @if(!$loop->last)
-                            <div class="flex gap-6 mb-4">
-                                <div class="flex-shrink-0 w-16 flex justify-center">
-                                    <div class="w-0.5 h-8 bg-gradient-to-b from-primary-600 to-purple-600"></div>
-                                </div>
-                                <div class="flex-1"></div>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
     @endif
