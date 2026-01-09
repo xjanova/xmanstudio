@@ -132,42 +132,41 @@ jobs:
           **Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_VERSION...$VERSION
           EOF
 
-      - name: Create release branch and PR
+      - name: Commit and push to main
         run: |
           VERSION="v${{ steps.bump_version.outputs.new }}"
-          BRANCH="release/$VERSION"
 
           # Configure git
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
-          # Create and checkout new branch
-          git checkout -b "$BRANCH"
-
           # Commit changes
           git add VERSION CHANGELOG.md
-          git commit -m "chore: bump version to $VERSION"
+          git commit -m "chore: release $VERSION"
 
-          # Push branch
-          git push origin "$BRANCH"
+          # Push directly to main
+          git push origin main
 
-          # Create PR using GitHub CLI
-          gh pr create \
-            --title "chore: release $VERSION (${{ github.event.inputs.version_bump }})" \
-            --body "$(cat RELEASE_NOTES.md)
+          echo "Pushed version $VERSION to main"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          ---
+      - name: Create and push tag
+        run: |
+          VERSION="v${{ steps.bump_version.outputs.new }}"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          This is a **${{ github.event.inputs.version_bump }}** release created manually via workflow dispatch.
-
-          ## Release Notes
-          See above for detailed changes.
-
-          This PR will be auto-merged once all checks pass." \
-            --base main \
-            --head "$BRANCH"
-
-          echo "Created release PR for $VERSION"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump_version.outputs.new }}
+          body_path: RELEASE_NOTES.md
+          draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
