@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
+use Database\Seeders\Data\WebDevelopmentPageBuilderData;
 use Illuminate\Database\Seeder;
 
 class QuotationSeeder extends Seeder
@@ -1698,13 +1699,28 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
             ],
         ];
 
+        // Merge Page Builder JSON content for web options
+        $pageBuilderContent = [
+            'web_landing' => WebDevelopmentPageBuilderData::getLandingPageContent(),
+            'web_corporate' => WebDevelopmentPageBuilderData::getCorporateWebsiteContent(),
+            'web_ecommerce' => WebDevelopmentPageBuilderData::getEcommerceContent(),
+            'web_custom' => WebDevelopmentPageBuilderData::getCustomWebAppContent(),
+        ];
+
         foreach ($webOptions as $option) {
+            $optionData = $option;
+
+            // Merge Page Builder content if available
+            if (isset($pageBuilderContent[$option['key']])) {
+                $optionData = array_merge($optionData, $pageBuilderContent[$option['key']]);
+            }
+
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $web->id,
                 ],
-                array_merge($option, ['quotation_category_id' => $web->id])
+                array_merge($optionData, ['quotation_category_id' => $web->id])
             );
         }
 
