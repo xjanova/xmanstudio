@@ -15,16 +15,27 @@
     @endif
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <!-- Product Image -->
+        <!-- Product Images -->
         <div>
             @if($product->image)
                 <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
-                     class="w-full rounded-xl shadow-lg">
+                     class="w-full rounded-xl shadow-lg mb-4" id="main-image">
             @else
-                <div class="w-full aspect-square bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center">
+                <div class="w-full aspect-square bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center mb-4">
                     <svg class="w-32 h-32 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
+                </div>
+            @endif
+
+            {{-- Screenshots Gallery --}}
+            @if($product->images && count($product->images) > 0)
+                <div class="grid grid-cols-3 gap-3">
+                    @foreach($product->images as $screenshot)
+                        <img src="{{ Storage::url($screenshot) }}" alt="Screenshot"
+                             class="w-full rounded-lg cursor-pointer hover:opacity-80 transition screenshot-thumb"
+                             onclick="document.getElementById('main-image').src='{{ Storage::url($screenshot) }}'">
+                    @endforeach
                 </div>
             @endif
         </div>
@@ -39,6 +50,10 @@
 
             <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ $product->name }}</h1>
 
+            @if($product->short_description)
+                <p class="text-xl text-gray-600 mb-4">{{ $product->short_description }}</p>
+            @endif
+
             @if($product->requires_license)
                 <span class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm mb-4">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +63,7 @@
                 </span>
             @endif
 
-            <p class="text-lg text-gray-600 mb-6">{{ $product->description }}</p>
+            <div class="text-lg text-gray-600 mb-6 prose prose-lg max-w-none">{!! $product->description !!}</div>
 
             <!-- Price -->
             <div class="mb-8">
@@ -87,8 +102,25 @@
                 <div class="border-t pt-8">
                     <h2 class="text-xl font-bold text-gray-900 mb-4">คุณสมบัติ</h2>
                     <ul class="space-y-3">
-                        @foreach(explode("\n", $product->features) as $feature)
-                            @if(trim($feature))
+                        @php
+                            $features = is_array($product->features) ? $product->features : explode("\n", $product->features);
+                        @endphp
+                        @foreach($features as $feature)
+                            @if(is_array($feature))
+                                {{-- Feature is an object with icon, title, description --}}
+                                <li class="flex items-start">
+                                    <svg class="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <div>
+                                        <span class="font-medium text-gray-900">{{ $feature['title'] ?? '' }}</span>
+                                        @if(isset($feature['description']))
+                                            <p class="text-gray-600 text-sm">{{ $feature['description'] }}</p>
+                                        @endif
+                                    </div>
+                                </li>
+                            @elseif(trim($feature))
+                                {{-- Feature is a simple string --}}
                                 <li class="flex items-start">
                                     <svg class="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>

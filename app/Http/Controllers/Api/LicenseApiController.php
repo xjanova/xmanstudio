@@ -71,11 +71,13 @@ class LicenseApiController extends Controller
         $request->validate([
             'machine_id' => 'required|string|max:255',
             'machine_fingerprint' => 'required|string|max:1024',
+            'product_id' => 'nullable|string|max:100',
         ]);
 
         $result = $this->licenseService->startDemo(
             $request->machine_id,
-            $request->machine_fingerprint
+            $request->machine_fingerprint,
+            $request->input('product_id', 'skidrow-killer')
         );
 
         $statusCode = $result['success'] ? 200 : 400;
