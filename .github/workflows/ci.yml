@@ -148,6 +148,7 @@ jobs:
           echo "✓ Build completed successfully"
 
   # Auto-release when all checks pass on main branch
+  # Creates a PR with version bump instead of pushing directly to avoid branch protection issues
   auto-release:
     name: Auto Release
     runs-on: ubuntu-latest
@@ -155,6 +156,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -185,8 +187,8 @@ jobs:
         if: steps.check.outputs.skip != 'true'
         run: npm install -g semver
 
-      - name: Bump version and release
-        id: bump
+      - name: Create release PR
+        id: release
         if: steps.check.outputs.skip != 'true'
         run: |
           # Get current version
@@ -198,28 +200,48 @@ jobs:
 
           # Bump patch version
           NEW=$(npx semver -i patch $CURRENT)
-          echo "$NEW" > VERSION
+          BRANCH="release/v$NEW"
+
           echo "new=$NEW" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
           # Configure git
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
-          # Commit and tag
+          # Create and checkout new branch
+          git checkout -b "$BRANCH"
+
+          # Update version
+          echo "$NEW" > VERSION
           git add VERSION
           git commit -m "chore: release v$NEW"
-          git tag -a "v$NEW" -m "Release v$NEW"
 
-          # Push
-          git push origin main --follow-tags
+          # Push branch
+          git push origin "$BRANCH"
 
-          echo "Released v$NEW"
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "chore: release v$NEW" \
+            --body "Automated release PR created by GitHub Actions.
 
-      - name: Create GitHub Release
+          ## Changes
+          - Bump version from $CURRENT to $NEW
+
+          This PR will be auto-merged once all checks pass." \
+            --base main \
+            --head "$BRANCH"
+
+          echo "Created release PR for v$NEW"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release Draft
         if: steps.check.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.bump.outputs.new }}
+          tag_name: v${{ steps.release.outputs.new }}
           generate_release_notes: true
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
