@@ -4,6 +4,11 @@ namespace Database\Seeders;
 
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
+use Database\Seeders\Data\AIImagePageBuilderData;
+use Database\Seeders\Data\BlockchainPageBuilderData;
+use Database\Seeders\Data\ChatbotPageBuilderData;
+use Database\Seeders\Data\IoTPageBuilderData;
+use Database\Seeders\Data\MusicAIPageBuilderData;
 use Database\Seeders\Data\WebDevelopmentPageBuilderData;
 use Illuminate\Database\Seeder;
 
@@ -561,13 +566,30 @@ Stem Separation เป็นเทคโนโลยีที่ปฏิวั�
             ],
         ];
 
+        // Merge Page Builder JSON content for music options
+        $musicPageBuilderContent = [
+            'music_basic' => MusicAIPageBuilderData::getBackgroundMusicContent(),
+            'music_custom' => MusicAIPageBuilderData::getCustomMusicContent(),
+        ];
+
         foreach ($musicOptions as $option) {
+            $optionData = $option;
+
+            // Merge Page Builder content if available
+            if (isset($musicPageBuilderContent[$option['key']])) {
+                $optionData = array_merge($optionData, $musicPageBuilderContent[$option['key']]);
+            } else {
+                // Use default content for other music options
+                $defaultContent = MusicAIPageBuilderData::getDefaultMusicContent();
+                $optionData = array_merge($optionData, $defaultContent);
+            }
+
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $musicAi->id,
                 ],
-                array_merge($option, ['quotation_category_id' => $musicAi->id])
+                array_merge($optionData, ['quotation_category_id' => $musicAi->id])
             );
         }
 
@@ -806,13 +828,30 @@ AI Content Writing ของเราไม่ใช่แค่การสั�
             ],
         ];
 
+        // Merge Page Builder JSON content for image options
+        $imagePageBuilderContent = [
+            'gen_image' => AIImagePageBuilderData::getArtGenerationContent(),
+            'gen_avatar' => AIImagePageBuilderData::getProductPhotoContent(),
+        ];
+
         foreach ($imageOptions as $option) {
+            $optionData = $option;
+
+            // Merge Page Builder content if available
+            if (isset($imagePageBuilderContent[$option['key']])) {
+                $optionData = array_merge($optionData, $imagePageBuilderContent[$option['key']]);
+            } else {
+                // Use default content for other image options
+                $defaultContent = AIImagePageBuilderData::getDefaultImageContent();
+                $optionData = array_merge($optionData, $defaultContent);
+            }
+
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $aiImage->id,
                 ],
-                array_merge($option, ['quotation_category_id' => $aiImage->id])
+                array_merge($optionData, ['quotation_category_id' => $aiImage->id])
             );
         }
 
@@ -1151,13 +1190,30 @@ Custom AI Agent สามารถทำงานได้หลากหลา�
             ],
         ];
 
+        // Merge Page Builder JSON content for chatbot options
+        $chatbotPageBuilderContent = [
+            'chat_basic' => ChatbotPageBuilderData::getCustomerServiceContent(),
+            'chat_gpt' => ChatbotPageBuilderData::getSalesContent(),
+        ];
+
         foreach ($chatbotOptions as $option) {
+            $optionData = $option;
+
+            // Merge Page Builder content if available
+            if (isset($chatbotPageBuilderContent[$option['key']])) {
+                $optionData = array_merge($optionData, $chatbotPageBuilderContent[$option['key']]);
+            } else {
+                // Use default content for other chatbot options
+                $defaultContent = ChatbotPageBuilderData::getDefaultChatbotContent();
+                $optionData = array_merge($optionData, $defaultContent);
+            }
+
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $chatbot->id,
                 ],
-                array_merge($option, ['quotation_category_id' => $chatbot->id])
+                array_merge($optionData, ['quotation_category_id' => $chatbot->id])
             );
         }
 
@@ -1470,13 +1526,30 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
             ],
         ];
 
+        // Merge Page Builder JSON content for blockchain options
+        $blockchainPageBuilderContent = [
+            'sc_erc20' => BlockchainPageBuilderData::getSmartContractContent(),
+            'nft_marketplace' => BlockchainPageBuilderData::getNFTPlatformContent(),
+        ];
+
         foreach ($blockchainOptions as $option) {
+            $optionData = $option;
+
+            // Merge Page Builder content if available
+            if (isset($blockchainPageBuilderContent[$option['key']])) {
+                $optionData = array_merge($optionData, $blockchainPageBuilderContent[$option['key']]);
+            } else {
+                // Use default content for other blockchain options
+                $defaultContent = BlockchainPageBuilderData::getDefaultBlockchainContent();
+                $optionData = array_merge($optionData, $defaultContent);
+            }
+
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $blockchain->id,
                 ],
-                array_merge($option, ['quotation_category_id' => $blockchain->id])
+                array_merge($optionData, ['quotation_category_id' => $blockchain->id])
             );
         }
 
@@ -1937,13 +2010,30 @@ NFT หรือ Non-Fungible Token คือสินทรัพย์ดิ�
             ],
         ];
 
+        // Merge Page Builder JSON content for IoT options
+        $iotPageBuilderContent = [
+            'home_automation' => IoTPageBuilderData::getSmartHomeContent(),
+            'farm_monitoring' => IoTPageBuilderData::getIndustrialIoTContent(),
+        ];
+
         foreach ($iotOptions as $option) {
+            $optionData = $option;
+
+            // Merge Page Builder content if available
+            if (isset($iotPageBuilderContent[$option['key']])) {
+                $optionData = array_merge($optionData, $iotPageBuilderContent[$option['key']]);
+            } else {
+                // Use default content for other IoT options
+                $defaultContent = IoTPageBuilderData::getDefaultIoTContent();
+                $optionData = array_merge($optionData, $defaultContent);
+            }
+
             QuotationOption::updateOrCreate(
                 [
                     'key' => $option['key'],
                     'quotation_category_id' => $iot->id,
                 ],
-                array_merge($option, ['quotation_category_id' => $iot->id])
+                array_merge($optionData, ['quotation_category_id' => $iot->id])
             );
         }
 
