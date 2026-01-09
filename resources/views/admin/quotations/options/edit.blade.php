@@ -4,11 +4,11 @@
 @section('page-title', 'แก้ไขตัวเลือกบริการ')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
-    <form action="{{ route('admin.quotations.options.update', $option) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-        @csrf
-        @method('PUT')
+<form action="{{ route('admin.quotations.options.update', $option) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+    @csrf
+    @method('PUT')
 
+    <div class="max-w-4xl mx-auto">
         <!-- Basic Information -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">ข้อมูลพื้นฐาน</h3>
@@ -96,12 +96,14 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Detailed Information -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">รายละเอียดเพิ่มเติม</h3>
-
-            <div class="grid grid-cols-1 gap-6">
+    <!-- Detailed Information - Full Width for Page Builder -->
+    <div class="space-y-6">
+        <!-- EN Description (smaller) -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">รายละเอียดเพิ่มเติม</h3>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดแบบยาว (EN)</label>
                     <textarea name="long_description" rows="4" placeholder="รายละเอียดเต็มของบริการนี้..."
@@ -110,18 +112,31 @@
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
+            </div>
+        </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        รายละเอียดแบบยาว (TH)
-                        <span class="text-xs text-primary-600 ml-2">✨ ใช้ Page Builder สร้างเนื้อหาสวยๆ</span>
-                    </label>
-                    <x-page-builder name="long_description_th" :value="old('long_description_th', $option->long_description_th)" placeholder="ลากบล็อกมาวางเพื่อสร้างรายละเอียดบริการ..." />
-                    @error('long_description_th')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                    @enderror
+        <!-- TH Description - Full Width Page Builder -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-3 rounded-t-lg flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                    </svg>
+                    <span class="font-semibold">รายละเอียดแบบยาว (TH)</span>
                 </div>
+                <span class="text-xs bg-white/20 px-2 py-1 rounded">Page Builder</span>
+            </div>
+            <div class="p-0">
+                <x-page-builder name="long_description_th" :value="old('long_description_th', $option->long_description_th)" placeholder="ลากบล็อกมาวางเพื่อสร้างรายละเอียดบริการ..." :fullWidth="true" />
+            </div>
+            @error('long_description_th')
+                <p class="px-6 pb-4 text-sm text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
 
+        <!-- EN Features (smaller) -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow p-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         คุณสมบัติ/Features (EN) <span class="text-sm text-gray-500">- พิมพ์ทีละบรรทัด</span>
@@ -132,18 +147,31 @@
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
+            </div>
+        </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        คุณสมบัติ/Features (TH)
-                        <span class="text-xs text-primary-600 ml-2">✨ ใช้ Page Builder สร้างเนื้อหาสวยๆ</span>
-                    </label>
-                    <x-page-builder name="features_th" :value="old('features_th', is_array($option->features_th) ? json_encode($option->features_th) : '')" placeholder="ลากบล็อกมาวางเพื่อสร้างรายการคุณสมบัติ..." />
-                    @error('features_th')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                    @enderror
+        <!-- TH Features - Full Width Page Builder -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-t-lg flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="font-semibold">คุณสมบัติ/Features (TH)</span>
                 </div>
+                <span class="text-xs bg-white/20 px-2 py-1 rounded">Page Builder</span>
+            </div>
+            <div class="p-0">
+                <x-page-builder name="features_th" :value="old('features_th', is_array($option->features_th) ? json_encode($option->features_th) : '')" placeholder="ลากบล็อกมาวางเพื่อสร้างรายการคุณสมบัติ..." :fullWidth="true" />
+            </div>
+            @error('features_th')
+                <p class="px-6 pb-4 text-sm text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
 
+        <!-- EN Steps (smaller) -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow p-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         ขั้นตอน/Steps (EN) <span class="text-sm text-gray-500">- พิมพ์ทีละบรรทัด</span>
@@ -154,20 +182,30 @@
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        ขั้นตอน/Steps (TH)
-                        <span class="text-xs text-primary-600 ml-2">✨ ใช้ Page Builder สร้างเนื้อหาสวยๆ</span>
-                    </label>
-                    <x-page-builder name="steps_th" :value="old('steps_th', is_array($option->steps_th) ? json_encode($option->steps_th) : '')" placeholder="ลากบล็อกมาวางเพื่อสร้างขั้นตอนการทำงาน..." />
-                    @error('steps_th')
-                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                    @enderror
-                </div>
             </div>
         </div>
 
+        <!-- TH Steps - Full Width Page Builder -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-t-lg flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+                    </svg>
+                    <span class="font-semibold">ขั้นตอน/Steps (TH)</span>
+                </div>
+                <span class="text-xs bg-white/20 px-2 py-1 rounded">Page Builder</span>
+            </div>
+            <div class="p-0">
+                <x-page-builder name="steps_th" :value="old('steps_th', is_array($option->steps_th) ? json_encode($option->steps_th) : '')" placeholder="ลากบล็อกมาวางเพื่อสร้างขั้นตอนการทำงาน..." :fullWidth="true" />
+            </div>
+            @error('steps_th')
+                <p class="px-6 pb-4 text-sm text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
         <!-- Settings -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">การตั้งค่า</h3>
@@ -219,6 +257,6 @@
                 บันทึก
             </button>
         </div>
-    </form>
-</div>
+    </div>
+</form>
 @endsection
