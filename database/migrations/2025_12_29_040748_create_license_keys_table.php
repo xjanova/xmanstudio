@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('license_keys', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('order_id')->nullable()->constrained()->onDelete('set null');
             $table->string('license_key')->unique();
             $table->string('status')->default('active');

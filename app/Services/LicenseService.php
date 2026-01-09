@@ -153,8 +153,11 @@ class LicenseService
     /**
      * Start demo license
      */
-    public function startDemo(string $machineId, string $machineFingerprint): array
+    public function startDemo(string $machineId, string $machineFingerprint, string $productSlug = 'skidrow-killer'): array
     {
+        // Find product by slug
+        $product = \App\Models\Product::where('slug', $productSlug)->first();
+
         // Check if already has demo for this machine
         $existingDemo = LicenseKey::where('license_type', LicenseKey::TYPE_DEMO)
             ->byMachine($machineId)
@@ -185,6 +188,7 @@ class LicenseService
         $demoKey = LicenseKey::generateDemoKey();
 
         $license = LicenseKey::create([
+            'product_id' => $product?->id,
             'license_key' => $demoKey,
             'machine_id' => $machineId,
             'machine_fingerprint' => Hash::make($machineFingerprint),
@@ -197,6 +201,7 @@ class LicenseService
             'metadata' => [
                 'demo_started_at' => now()->toISOString(),
                 'ip' => request()->ip(),
+                'product_slug' => $productSlug,
             ],
         ]);
 
