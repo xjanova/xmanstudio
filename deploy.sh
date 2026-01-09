@@ -154,13 +154,8 @@ check_environment() {
 
     if grep -q "APP_ENV=production" .env; then
         print_warning "Deploying to PRODUCTION environment"
-        if [ -t 0 ]; then
-            read -p "Are you sure you want to continue? (y/N): " confirm
-            if [[ ! "$confirm" =~ ^[Yy](es)?$ ]]; then
-                print_info "Deployment cancelled"
-                exit 0
-            fi
-        fi
+        # Auto-continue without asking (use --dry-run to preview)
+        print_info "Continuing deployment automatically..."
     else
         print_info "Deploying to $(grep APP_ENV .env | cut -d'=' -f2) environment"
     fi
@@ -708,6 +703,7 @@ main() {
 }
 
 # Parse arguments
+DRY_RUN=0
 while [[ $# -gt 0 ]]; do
     case $1 in
         --branch=*)
@@ -726,12 +722,54 @@ while [[ $# -gt 0 ]]; do
             VERBOSE=1
             shift
             ;;
+        --dry-run)
+            DRY_RUN=1
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: ./deploy.sh [branch] [options]"
+            echo ""
+            echo "Options:"
+            echo "  --branch=NAME    Specify branch to deploy (default: main)"
+            echo "  --no-backup      Skip database backup"
+            echo "  --seed           Force run seeders"
+            echo "  --dry-run        Show what would be done without executing"
+            echo "  --verbose, -v    Show verbose output"
+            echo "  --help, -h       Show this help message"
+            echo ""
+            exit 0
+            ;;
         *)
             BRANCH="$1"
             shift
             ;;
     esac
 done
+
+# Dry run mode
+if [ $DRY_RUN -eq 1 ]; then
+    echo -e "${CYAN}╔════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║         DRY RUN MODE - Preview Only        ║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo "Would execute the following steps:"
+    echo "  1. Check environment (.env)"
+    echo "  2. Enable maintenance mode"
+    echo "  3. Pull code from branch: $BRANCH"
+    echo "  4. Update dependencies (composer, npm)"
+    echo "  5. Backup database"
+    echo "  6. Run migrations"
+    echo "  7. Run seeders"
+    echo "  8. Build assets (npm run build)"
+    echo "  9. Optimize application"
+    echo "  10. Fix permissions"
+    echo "  11. Restart queue workers"
+    echo "  12. Disable maintenance mode"
+    echo "  13. Health check"
+    echo ""
+    echo "Run without --dry-run to execute deployment."
+    exit 0
+fi
 
 # Run deployment
 main
