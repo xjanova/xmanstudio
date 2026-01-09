@@ -127,7 +127,14 @@
                 <span class="text-xs bg-white/20 px-2 py-1 rounded">Page Builder</span>
             </div>
             <div class="p-0">
-                <x-page-builder name="long_description_th" :value="old('long_description_th', $option->long_description_th)" placeholder="ลากบล็อกมาวางเพื่อสร้างรายละเอียดบริการ..." :fullWidth="true" />
+                @php
+                    $longDescValue = old('long_description_th', $option->long_description_th);
+                    // If it's an array, encode to JSON
+                    if (is_array($longDescValue)) {
+                        $longDescValue = json_encode($longDescValue, JSON_UNESCAPED_UNICODE);
+                    }
+                @endphp
+                <x-page-builder name="long_description_th" :value="$longDescValue" placeholder="ลากบล็อกมาวางเพื่อสร้างรายละเอียดบริการ..." :fullWidth="true" />
             </div>
             @error('long_description_th')
                 <p class="px-6 pb-4 text-sm text-red-500">{{ $message }}</p>
@@ -162,7 +169,14 @@
                 <span class="text-xs bg-white/20 px-2 py-1 rounded">Page Builder</span>
             </div>
             <div class="p-0">
-                <x-page-builder name="features_th" :value="old('features_th', is_array($option->features_th) ? json_encode($option->features_th) : '')" placeholder="ลากบล็อกมาวางเพื่อสร้างรายการคุณสมบัติ..." :fullWidth="true" />
+                @php
+                    $featuresValue = old('features_th', $option->features_th);
+                    // If it's an array, encode to JSON
+                    if (is_array($featuresValue)) {
+                        $featuresValue = json_encode($featuresValue, JSON_UNESCAPED_UNICODE);
+                    }
+                @endphp
+                <x-page-builder name="features_th" :value="$featuresValue" placeholder="ลากบล็อกมาวางเพื่อสร้างรายการคุณสมบัติ..." :fullWidth="true" />
             </div>
             @error('features_th')
                 <p class="px-6 pb-4 text-sm text-red-500">{{ $message }}</p>
@@ -197,7 +211,14 @@
                 <span class="text-xs bg-white/20 px-2 py-1 rounded">Page Builder</span>
             </div>
             <div class="p-0">
-                <x-page-builder name="steps_th" :value="old('steps_th', is_array($option->steps_th) ? json_encode($option->steps_th) : '')" placeholder="ลากบล็อกมาวางเพื่อสร้างขั้นตอนการทำงาน..." :fullWidth="true" />
+                @php
+                    $stepsValue = old('steps_th', $option->steps_th);
+                    // If it's an array, encode to JSON
+                    if (is_array($stepsValue)) {
+                        $stepsValue = json_encode($stepsValue, JSON_UNESCAPED_UNICODE);
+                    }
+                @endphp
+                <x-page-builder name="steps_th" :value="$stepsValue" placeholder="ลากบล็อกมาวางเพื่อสร้างขั้นตอนการทำงาน..." :fullWidth="true" />
             </div>
             @error('steps_th')
                 <p class="px-6 pb-4 text-sm text-red-500">{{ $message }}</p>
