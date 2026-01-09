@@ -230,9 +230,7 @@ jobs:
 
           This PR will be auto-merged once all checks pass." \
             --base main \
-            --head "$BRANCH" \
-            --label "release" \
-            --label "automated"
+            --head "$BRANCH"
 
           echo "Created release PR for v$NEW"
         env:
