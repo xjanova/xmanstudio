@@ -1,4 +1,4 @@
-@props(['content' => ''])
+@props(['content' => '', 'theme' => 'light'])
 
 @php
     $blocks = [];
@@ -19,6 +19,14 @@
             $blocks = $content;
         }
     }
+
+    // Theme-based classes
+    $isDark = $theme === 'dark';
+    $cardBg = $isDark ? 'bg-white/5 backdrop-blur-sm border-white/10' : 'bg-white border-gray-200';
+    $textColor = $isDark ? 'text-gray-100' : 'text-gray-700';
+    $headingColor = $isDark ? 'text-white' : 'text-gray-900';
+    $mutedColor = $isDark ? 'text-gray-400' : 'text-gray-600';
+    $dividerColor = $isDark ? 'border-gray-700' : 'border-gray-300';
 @endphp
 
 @if(count($blocks) > 0)
@@ -45,41 +53,64 @@
         <div class="block-item" @if($containerStyle) style="{{ $containerStyle }}" @endif>
             {{-- Heading Block --}}
             @if($block['type'] === 'heading')
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
-                    <h2 class="text-2xl font-bold text-gray-900 {{ $textClasses }}">
-                        {{ $block['content'] ?? '' }}
-                    </h2>
-                </div>
+                @php
+                    $level = $block['level'] ?? 'h2';
+                    $headingSize = match($level) {
+                        'h1' => 'text-4xl',
+                        'h2' => 'text-2xl',
+                        'h3' => 'text-xl',
+                        'h4' => 'text-lg',
+                        default => 'text-2xl',
+                    };
+                @endphp
+                <{{ $level }} class="{{ $headingSize }} font-bold {{ $headingColor }} {{ $textClasses }}" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
+                    {{ $block['content'] ?? '' }}
+                </{{ $level }}>
 
             {{-- Text Block --}}
             @elseif($block['type'] === 'text')
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
-                    <p class="whitespace-pre-wrap text-gray-700 {{ $textClasses }}">{{ $block['content'] ?? '' }}</p>
-                </div>
+                <p class="whitespace-pre-wrap {{ $textColor }} leading-relaxed {{ $textClasses }}" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
+                    {{ $block['content'] ?? '' }}
+                </p>
 
-            {{-- List Block --}}
+            {{-- List Block (new format with items array) --}}
             @elseif($block['type'] === 'list')
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
-                    <ul class="list-disc list-inside space-y-1 text-gray-700 {{ $textClasses }}">
-                        @foreach(array_filter(explode("\n", $block['content'] ?? '')) as $item)
-                            <li>{{ preg_replace('/^[-•*]\s*/', '', trim($item)) }}</li>
-                        @endforeach
-                    </ul>
-                </div>
+                @php
+                    $listStyle = $block['style'] ?? 'check';
+                    $items = $block['items'] ?? [];
+                    // Fallback to old format
+                    if (empty($items) && isset($block['content'])) {
+                        $items = array_filter(explode("\n", $block['content']));
+                    }
+                @endphp
+                <ul class="space-y-2 {{ $textColor }}">
+                    @foreach($items as $item)
+                        <li class="flex items-start gap-3">
+                            @if($listStyle === 'check')
+                                <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center mt-0.5">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </span>
+                            @else
+                                <span class="flex-shrink-0 w-2 h-2 rounded-full bg-primary-500 mt-2"></span>
+                            @endif
+                            <span>{{ is_string($item) ? preg_replace('/^[-•*]\s*/', '', trim($item)) : ($item['text'] ?? '') }}</span>
+                        </li>
+                    @endforeach
+                </ul>
 
             {{-- Numbered List Block --}}
             @elseif($block['type'] === 'numbered-list')
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
-                    <ol class="list-decimal list-inside space-y-1 text-gray-700 {{ $textClasses }}">
-                        @foreach(array_filter(explode("\n", $block['content'] ?? '')) as $item)
-                            <li>{{ preg_replace('/^\d+\.\s*/', '', trim($item)) }}</li>
-                        @endforeach
-                    </ol>
-                </div>
+                <ol class="list-decimal list-inside space-y-1 {{ $textColor }} {{ $textClasses }}">
+                    @foreach(array_filter(explode("\n", $block['content'] ?? '')) as $item)
+                        <li>{{ preg_replace('/^\d+\.\s*/', '', trim($item)) }}</li>
+                    @endforeach
+                </ol>
 
             {{-- Code Block --}}
             @elseif($block['type'] === 'code')
-                <div class="rounded-lg overflow-hidden shadow-sm border border-gray-200">
+                <div class="rounded-lg overflow-hidden {{ $isDark ? 'border border-white/10' : 'border border-gray-200 shadow-sm' }}">
                     <div class="bg-gray-800 text-gray-100 px-4 py-2 flex justify-between items-center">
                         <span class="text-xs text-gray-400">{{ $block['language'] ?? 'code' }}</span>
                         <button onclick="navigator.clipboard.writeText(this.closest('.block-item').querySelector('code').textContent)"
@@ -92,33 +123,41 @@
 
             {{-- Quote Block --}}
             @elseif($block['type'] === 'quote')
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="p-4 border-l-4 border-primary-500 bg-primary-50" @if($inlineStyle) style="{{ $inlineStyle }}" @endif>
-                        <blockquote class="italic text-gray-700">
-                            {{ $block['content'] ?? '' }}
-                        </blockquote>
-                    </div>
+                <div class="p-4 border-l-4 border-primary-500 {{ $isDark ? 'bg-primary-500/10' : 'bg-primary-50' }} rounded-r-lg">
+                    <blockquote class="italic {{ $textColor }}">
+                        {{ $block['content'] ?? '' }}
+                    </blockquote>
                 </div>
 
             {{-- Divider Block --}}
             @elseif($block['type'] === 'divider')
-                <div class="py-2">
-                    <hr class="border-gray-300 {{ $style['type'] ?? 'border-solid' }}">
+                <div class="py-4">
+                    <hr class="{{ $dividerColor }} {{ $style['type'] ?? 'border-solid' }}">
                 </div>
 
             {{-- Spacer Block --}}
             @elseif($block['type'] === 'spacer')
-                <div style="height: {{ $block['height'] ?? 40 }}px"></div>
+                @php
+                    $size = $block['size'] ?? 'md';
+                    $height = match($size) {
+                        'sm' => '16px',
+                        'md' => '32px',
+                        'lg' => '48px',
+                        'xl' => '64px',
+                        default => $block['height'] ?? '32px',
+                    };
+                @endphp
+                <div style="height: {{ $height }}"></div>
 
             {{-- Image Block --}}
             @elseif($block['type'] === 'image')
                 @if(!empty($block['src']))
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="rounded-lg overflow-hidden {{ $isDark ? 'border border-white/10' : 'border border-gray-200 shadow-sm' }}">
                         <img src="{{ $block['src'] }}"
                              alt="{{ $block['alt'] ?? 'Image' }}"
-                             class="max-w-full h-auto rounded {{ ($style['align'] ?? '') === 'center' ? 'mx-auto' : (($style['align'] ?? '') === 'right' ? 'ml-auto' : '') }}">
+                             class="max-w-full h-auto {{ ($style['align'] ?? '') === 'center' ? 'mx-auto' : (($style['align'] ?? '') === 'right' ? 'ml-auto' : '') }}">
                         @if(!empty($block['alt']))
-                            <p class="text-sm text-gray-500 text-center mt-2">{{ $block['alt'] }}</p>
+                            <p class="text-sm {{ $mutedColor }} text-center py-2">{{ $block['alt'] }}</p>
                         @endif
                     </div>
                 @endif
@@ -128,46 +167,19 @@
                 @php
                     $variant = $block['variant'] ?? 'info';
                     $alertClasses = match($variant) {
-                        'success' => 'bg-green-50 border-l-4 border-green-500',
-                        'warning' => 'bg-yellow-50 border-l-4 border-yellow-500',
-                        'error' => 'bg-red-50 border-l-4 border-red-500',
-                        default => 'bg-blue-50 border-l-4 border-blue-500',
-                    };
-                    $iconColor = match($variant) {
-                        'success' => 'text-green-500',
-                        'warning' => 'text-yellow-500',
-                        'error' => 'text-red-500',
-                        default => 'text-blue-500',
+                        'success' => $isDark ? 'bg-green-500/10 border-l-4 border-green-500' : 'bg-green-50 border-l-4 border-green-500',
+                        'warning' => $isDark ? 'bg-yellow-500/10 border-l-4 border-yellow-500' : 'bg-yellow-50 border-l-4 border-yellow-500',
+                        'error' => $isDark ? 'bg-red-500/10 border-l-4 border-red-500' : 'bg-red-50 border-l-4 border-red-500',
+                        default => $isDark ? 'bg-blue-500/10 border-l-4 border-blue-500' : 'bg-blue-50 border-l-4 border-blue-500',
                     };
                 @endphp
-                <div class="rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="p-4 flex items-start space-x-3 {{ $alertClasses }}">
-                        <div class="flex-shrink-0 mt-0.5">
-                            @if($variant === 'info')
-                                <svg class="w-5 h-5 {{ $iconColor }}" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                </svg>
-                            @elseif($variant === 'success')
-                                <svg class="w-5 h-5 {{ $iconColor }}" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                            @elseif($variant === 'warning')
-                                <svg class="w-5 h-5 {{ $iconColor }}" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                            @elseif($variant === 'error')
-                                <svg class="w-5 h-5 {{ $iconColor }}" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                                </svg>
-                            @endif
-                        </div>
-                        <p class="text-sm text-gray-700">{{ $block['content'] ?? '' }}</p>
-                    </div>
+                <div class="p-4 rounded-r-lg {{ $alertClasses }}">
+                    <p class="{{ $textColor }}">{{ $block['content'] ?? '' }}</p>
                 </div>
 
             {{-- Button Block --}}
             @elseif($block['type'] === 'button')
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 {{ isset($style['align']) ? 'text-' . $style['align'] : '' }}">
+                <div class="{{ isset($style['align']) ? 'text-' . $style['align'] : '' }}">
                     @php
                         $buttonClasses = ($block['variant'] ?? '') === 'outline'
                             ? 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50'
@@ -179,33 +191,23 @@
                     </a>
                 </div>
 
-            {{-- Columns Block --}}
-            @elseif($block['type'] === 'columns')
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div class="grid gap-4 grid-cols-{{ $block['columns'] ?? 2 }}">
-                        @foreach($block['columnData'] ?? [] as $col)
-                            <div class="p-3 bg-gray-50 rounded">
-                                <p class="text-sm whitespace-pre-wrap text-gray-700">{{ $col['content'] ?? '' }}</p>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
             {{-- Icon Box Block --}}
             @elseif($block['type'] === 'icon-box')
                 @php
                     $iconColor = $block['iconColor'] ?? '#7c3aed';
                     $iconName = $block['icon'] ?? 'star';
                 @endphp
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div class="p-5 rounded-xl border {{ $cardBg }} hover:border-primary-500/50 transition-all">
                     <div class="flex items-start space-x-4">
                         <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
-                             style="background-color: {{ $iconColor }}15; color: {{ $iconColor }}">
+                             style="background-color: {{ $iconColor }}20; color: {{ $iconColor }}">
                             @include('components.page-builder-icons', ['icon' => $iconName])
                         </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-900">{{ $block['content'] ?? 'หัวข้อ' }}</h4>
-                            <p class="text-sm text-gray-600 mt-1">{{ $block['description'] ?? 'รายละเอียด' }}</p>
+                        <div class="flex-1">
+                            <h4 class="font-semibold {{ $headingColor }} text-lg">{{ $block['title'] ?? $block['content'] ?? 'หัวข้อ' }}</h4>
+                            @if(!empty($block['description']))
+                                <p class="{{ $mutedColor }} mt-2 leading-relaxed">{{ $block['description'] }}</p>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -214,21 +216,31 @@
             @elseif($block['type'] === 'feature-card')
                 @php
                     $fIconColor = $block['iconColor'] ?? '#059669';
-                    $fBgColor = $block['style']['bgColor'] ?? '#f0fdf4';
+                    $fBgColor = $block['bgColor'] ?? $block['style']['bgColor'] ?? ($isDark ? 'rgba(16,185,129,0.1)' : '#f0fdf4');
                     $fIconName = $block['icon'] ?? 'check-circle';
                 @endphp
-                <div class="rounded-lg shadow-sm border border-gray-200 p-4"
-                     style="background-color: {{ $fBgColor }}">
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-white shadow-sm"
+                <div class="rounded-xl p-5 border border-transparent hover:border-primary-500/30 transition-all"
+                     style="background-color: {{ $isDark ? $fIconColor . '15' : $fBgColor }}">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center {{ $isDark ? 'bg-white/10' : 'bg-white shadow-sm' }}"
                              style="color: {{ $fIconColor }}">
                             @include('components.page-builder-icons', ['icon' => $fIconName])
                         </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-900">{{ $block['title'] ?? 'ฟีเจอร์' }}</h4>
-                            <p class="text-sm text-gray-600 mt-1">{{ $block['content'] ?? 'รายละเอียด' }}</p>
+                        <div class="flex-1">
+                            <h4 class="font-semibold {{ $headingColor }} text-lg">{{ $block['title'] ?? 'ฟีเจอร์' }}</h4>
+                            <p class="{{ $mutedColor }} mt-2 leading-relaxed">{{ $block['description'] ?? $block['content'] ?? '' }}</p>
                         </div>
                     </div>
+                </div>
+
+            {{-- Columns Block --}}
+            @elseif($block['type'] === 'columns')
+                <div class="grid gap-4 grid-cols-{{ $block['columns'] ?? 2 }}">
+                    @foreach($block['columnData'] ?? [] as $col)
+                        <div class="p-4 rounded-lg {{ $isDark ? 'bg-white/5' : 'bg-gray-50' }}">
+                            <p class="text-sm whitespace-pre-wrap {{ $textColor }}">{{ $col['content'] ?? '' }}</p>
+                        </div>
+                    @endforeach
                 </div>
             @endif
         </div>
