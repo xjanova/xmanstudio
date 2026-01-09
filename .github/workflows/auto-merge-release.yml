@@ -16,7 +16,29 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Check if automated release PR
+        id: check-automated
+        run: |
+          FILES_CHANGED=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | wc -l)
+          echo "Number of files changed: $FILES_CHANGED"
+
+          # If created by github-actions[bot] and only changes VERSION, it's an automated release
+          if [[ "${{ github.event.pull_request.user.login }}" == "github-actions[bot]" ]]; then
+            echo "automated=true" >> $GITHUB_OUTPUT
+            echo "This is an automated release PR - will merge without waiting for checks"
+            echo "Rationale: Code was already validated on main branch before auto-release triggered"
+          else
+            echo "automated=false" >> $GITHUB_OUTPUT
+            echo "Manual release PR - will wait for checks"
+          fi
+
       - name: Wait for checks
+        if: steps.check-automated.outputs.automated != 'true'
         uses: lewagon/wait-on-check-action@v1.3.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
