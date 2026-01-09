@@ -486,6 +486,50 @@ run_smart_seeding() {
     else
         print_info "No seeders found, skipping"
     fi
+
+    # Always run seeders that use updateOrCreate pattern (safe to run multiple times)
+    run_always_seeders
+}
+
+# Seeders that should ALWAYS run on every deployment
+# These seeders use updateOrCreate pattern and are safe to run multiple times
+run_always_seeders() {
+    print_step "Running Always-Run Seeders (updateOrCreate pattern)"
+
+    # List of seeders that should always run
+    # These use updateOrCreate and keep data in sync without duplicating
+    ALWAYS_RUN_SEEDERS=(
+        "QuotationSeeder"
+    )
+
+    for SEEDER in "${ALWAYS_RUN_SEEDERS[@]}"; do
+        SEEDER_FILE="database/seeders/${SEEDER}.php"
+
+        if [ -f "$SEEDER_FILE" ]; then
+            print_info "Running $SEEDER..."
+
+            set +e
+            SEED_OUTPUT=$(php artisan db:seed --class="$SEEDER" --force 2>&1)
+            SEED_EXIT=$?
+            set -e
+
+            if [ $SEED_EXIT -ne 0 ]; then
+                print_warning "$SEEDER failed (non-fatal)"
+                log_error_detail "$SEEDER output: $SEED_OUTPUT"
+
+                # Show error but continue with other seeders
+                if echo "$SEED_OUTPUT" | grep -q "Table .* doesn't exist"; then
+                    print_info "Table not yet created, skipping $SEEDER"
+                else
+                    echo "$SEED_OUTPUT"
+                fi
+            else
+                print_success "$SEEDER completed"
+            fi
+        else
+            print_info "$SEEDER not found, skipping"
+        fi
+    done
 }
 
 # Build assets
@@ -759,13 +803,14 @@ if [ $DRY_RUN -eq 1 ]; then
     echo "  4. Update dependencies (composer, npm)"
     echo "  5. Backup database"
     echo "  6. Run migrations"
-    echo "  7. Run seeders"
-    echo "  8. Build assets (npm run build)"
-    echo "  9. Optimize application"
-    echo "  10. Fix permissions"
-    echo "  11. Restart queue workers"
-    echo "  12. Disable maintenance mode"
-    echo "  13. Health check"
+    echo "  7. Run seeders (SmartDatabaseSeeder if exists)"
+    echo "  8. Run always-run seeders (QuotationSeeder, etc.)"
+    echo "  9. Build assets (npm run build)"
+    echo "  10. Optimize application"
+    echo "  11. Fix permissions"
+    echo "  12. Restart queue workers"
+    echo "  13. Disable maintenance mode"
+    echo "  14. Health check"
     echo ""
     echo "Run without --dry-run to execute deployment."
     exit 0
