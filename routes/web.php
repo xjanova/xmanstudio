@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
@@ -205,6 +206,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'updateBank'])->name('payment-settings.bank.update');
     Route::post('/payment-settings/bank/{bankAccount}/toggle', [PaymentSettingController::class, 'toggleBank'])->name('payment-settings.bank.toggle');
     Route::delete('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'destroyBank'])->name('payment-settings.bank.destroy');
+
+    // Branding Settings (Logo & Favicon)
+    Route::get('/branding', [BrandingSettingsController::class, 'index'])->name('branding.index');
+    Route::post('/branding', [BrandingSettingsController::class, 'update'])->name('branding.update');
+    Route::delete('/branding/logo', [BrandingSettingsController::class, 'deleteLogo'])->name('branding.logo.delete');
+    Route::delete('/branding/favicon', [BrandingSettingsController::class, 'deleteFavicon'])->name('branding.favicon.delete');
 
     // Line Messaging
     Route::get('/line-messaging', [LineMessagingController::class, 'index'])->name('line-messaging.index');

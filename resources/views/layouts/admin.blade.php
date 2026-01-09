@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin') - XMAN Studio Admin</title>
+
+    <!-- Favicon -->
+    @php
+        $siteFavicon = \App\Models\Setting::getValue('site_favicon');
+    @endphp
+    @if($siteFavicon)
+        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
+        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
+    @else
+        <link rel="icon" type="image/x-icon" href="{{ asset('public_html/favicon.ico') }}">
+    @endif
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-100">
@@ -12,7 +24,16 @@
         <!-- Sidebar -->
         <aside class="w-64 bg-gray-900 text-white flex-shrink-0">
             <div class="p-4">
-                <a href="/admin" class="text-xl font-bold">XMAN Admin</a>
+                @php
+                    $siteLogo = \App\Models\Setting::getValue('site_logo');
+                @endphp
+                <a href="/admin" class="flex items-center">
+                    @if($siteLogo)
+                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN Admin" class="h-8 w-auto">
+                    @else
+                        <span class="text-xl font-bold">XMAN Admin</span>
+                    @endif
+                </a>
             </div>
 
             <nav class="mt-4">
@@ -135,6 +156,13 @@
                 <div class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     การตั้งค่า
                 </div>
+                <a href="{{ route('admin.branding.index') }}"
+                   class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.branding*') ? 'bg-gray-800 text-white' : '' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    โลโก้และ Favicon
+                </a>
                 <a href="{{ route('admin.payment-settings.index') }}"
                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.payment-settings*') ? 'bg-gray-800 text-white' : '' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -44,8 +44,14 @@ class Setting extends Model
     /**
      * Set setting value
      */
-    public static function setValue(string $key, mixed $value, string $type = 'string', ?string $group = null): void
-    {
+    public static function setValue(
+        string $key,
+        mixed $value,
+        string $type = 'string',
+        ?string $group = null,
+        ?string $description = null,
+        bool $isPublic = false
+    ): void {
         $data = [
             'value' => $type === 'json' ? json_encode($value) : (string) $value,
             'type' => $type,
@@ -54,6 +60,12 @@ class Setting extends Model
         if ($group) {
             $data['group'] = $group;
         }
+
+        if ($description !== null) {
+            $data['description'] = $description;
+        }
+
+        $data['is_public'] = $isPublic;
 
         static::updateOrCreate(['key' => $key], $data);
 
