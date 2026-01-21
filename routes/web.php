@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdPlacementController;
 use App\Http\Controllers\Admin\AdsTxtController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\QuotationCategoryController;
 use App\Http\Controllers\Admin\QuotationOptionController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
+use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\CartController;
@@ -27,6 +29,7 @@ use App\Http\Controllers\RentalController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SupportTicketController;
 use App\Models\AdsTxtSetting;
+use App\Models\SeoSetting;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -91,6 +94,32 @@ Route::get('/metal-x', [MetalXController::class, 'index'])->name('metal-x.index'
 // Legal pages
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::view('/privacy', 'legal.privacy')->name('privacy');
+
+// Sitemap.xml (SEO)
+Route::get('/sitemap.xml', function () {
+    $sitemapPath = public_path('sitemap.xml');
+
+    if (! file_exists($sitemapPath)) {
+        abort(404);
+    }
+
+    return response()->file($sitemapPath, [
+        'Content-Type' => 'application/xml',
+    ]);
+})->name('sitemap');
+
+// Robots.txt (SEO)
+Route::get('/robots.txt', function () {
+    $setting = SeoSetting::getInstance();
+
+    if (! $setting->robots_txt_enabled || empty($setting->robots_txt_content)) {
+        return response('User-agent: *' . "\n" . 'Allow: /', 200)
+            ->header('Content-Type', 'text/plain; charset=UTF-8');
+    }
+
+    return response($setting->robots_txt_content, 200)
+        ->header('Content-Type', 'text/plain; charset=UTF-8');
+})->name('robots');
 
 // Ads.txt (Google Ads)
 Route::get('/ads.txt', function () {
@@ -266,6 +295,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Ads.txt Management
     Route::get('/ads-txt', [AdsTxtController::class, 'index'])->name('ads-txt.index');
     Route::put('/ads-txt', [AdsTxtController::class, 'update'])->name('ads-txt.update');
+
+    // SEO Management
+    Route::get('/seo', [SeoController::class, 'index'])->name('seo.index');
+    Route::put('/seo', [SeoController::class, 'update'])->name('seo.update');
+    Route::get('/seo/generate-sitemap', [SeoController::class, 'generateSitemap'])->name('seo.generate-sitemap');
+
+    // Google Ads Placements Management
+    Route::get('/ads', [AdPlacementController::class, 'index'])->name('ads.index');
+    Route::get('/ads/create', [AdPlacementController::class, 'create'])->name('ads.create');
+    Route::post('/ads', [AdPlacementController::class, 'store'])->name('ads.store');
+    Route::get('/ads/{ad}/edit', [AdPlacementController::class, 'edit'])->name('ads.edit');
+    Route::put('/ads/{ad}', [AdPlacementController::class, 'update'])->name('ads.update');
+    Route::patch('/ads/{ad}/toggle', [AdPlacementController::class, 'toggle'])->name('ads.toggle');
+    Route::delete('/ads/{ad}', [AdPlacementController::class, 'destroy'])->name('ads.destroy');
 
     // Quotation Management
     Route::prefix('quotations')->name('quotations.')->group(function () {
