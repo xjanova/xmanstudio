@@ -142,6 +142,80 @@ generate_error_report() {
     echo "═══════════════════════════════════════════════════════════" >> "$ERROR_LOG"
 }
 
+# Sanitize .env file to fix common issues
+sanitize_env_file() {
+    print_step "Sanitizing Environment File"
+
+    if [ ! -f .env ]; then
+        print_warning ".env file not found, skipping sanitization"
+        return 0
+    fi
+
+    # Create a backup
+    cp .env .env.backup.${TIMESTAMP}
+    print_info "Created backup: .env.backup.${TIMESTAMP}"
+
+    # Fix common .env issues using awk
+    awk '
+    BEGIN { FS="="; OFS="=" }
+    {
+        # Skip empty lines and comments
+        if ($0 ~ /^[[:space:]]*$/ || $0 ~ /^[[:space:]]*#/) {
+            print $0
+            next
+        }
+
+        # If line contains =, process it
+        if (NF >= 2) {
+            key = $1
+            # Get everything after first =
+            value = substr($0, length($1) + 2)
+
+            # Remove trailing whitespace and newlines from value
+            gsub(/[[:space:]]+$/, "", value)
+            gsub(/\r/, "", value)
+            gsub(/\n/, "", value)
+
+            # Print cleaned line
+            print key OFS value
+        } else {
+            # Print line as-is if it does not contain =
+            print $0
+        }
+    }
+    ' .env > .env.tmp && mv .env.tmp .env
+
+    # Check for duplicate keys and keep only the first occurrence
+    awk '
+    BEGIN { FS="="; OFS="=" }
+    !seen[$1]++ {
+        print $0
+    }
+    ' .env > .env.tmp && mv .env.tmp .env
+
+    print_success "Environment file sanitized"
+
+    # Verify the file is valid
+    set +e
+    PHP_CHECK=$(php artisan env:check 2>&1 || php -r "
+        \$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+        try {
+            \$dotenv->load();
+            echo 'valid';
+        } catch (Exception \$e) {
+            echo 'invalid: ' . \$e->getMessage();
+        }
+    " 2>&1)
+    set -e
+
+    if echo "$PHP_CHECK" | grep -q "invalid"; then
+        print_warning "Environment file may still have issues: $PHP_CHECK"
+        print_info "Backup available at: .env.backup.${TIMESTAMP}"
+    else
+        print_success "Environment file validation passed"
+    fi
+}
+
 # Check if in production
 check_environment() {
     print_step "Checking Environment"
@@ -322,10 +396,44 @@ run_migrations() {
     set -e
 
     if [ $MIGRATION_STATUS_EXIT -ne 0 ]; then
-        print_error "Could not check migration status"
-        generate_error_report "run_migrations" "migrate:status failed" "$MIGRATION_STATUS"
-        echo "$MIGRATION_STATUS"
-        return 1
+        # Check if the error is due to missing migrations table
+        if echo "$MIGRATION_STATUS" | grep -q "Migration table not found\|Base table or view not found.*migrations"; then
+            print_warning "Migration table not found - this appears to be a fresh database"
+            print_info "Installing migrations table..."
+
+            set +e
+            INSTALL_OUTPUT=$(php artisan migrate:install 2>&1)
+            INSTALL_EXIT=$?
+            set -e
+
+            if [ $INSTALL_EXIT -ne 0 ]; then
+                print_error "Failed to install migrations table"
+                generate_error_report "run_migrations" "migrate:install failed" "$INSTALL_OUTPUT"
+                echo "$INSTALL_OUTPUT"
+                return 1
+            fi
+
+            print_success "Migrations table created"
+
+            # Retry getting migration status
+            set +e
+            MIGRATION_STATUS=$(php artisan migrate:status 2>&1)
+            MIGRATION_STATUS_EXIT=$?
+            PENDING_COUNT=$(echo "$MIGRATION_STATUS" | grep -c "Pending" || echo "0")
+            set -e
+
+            if [ $MIGRATION_STATUS_EXIT -ne 0 ]; then
+                print_error "Could not check migration status after installing table"
+                generate_error_report "run_migrations" "migrate:status failed after install" "$MIGRATION_STATUS"
+                echo "$MIGRATION_STATUS"
+                return 1
+            fi
+        else
+            print_error "Could not check migration status"
+            generate_error_report "run_migrations" "migrate:status failed" "$MIGRATION_STATUS"
+            echo "$MIGRATION_STATUS"
+            return 1
+        fi
     fi
 
     if [ "$PENDING_COUNT" = "0" ]; then
@@ -711,6 +819,7 @@ main() {
     # Set trap for errors
     trap on_error ERR
 
+    sanitize_env_file
     check_environment
     enable_maintenance
     pull_code
@@ -797,20 +906,22 @@ if [ $DRY_RUN -eq 1 ]; then
     echo -e "${CYAN}╚════════════════════════════════════════════╝${NC}"
     echo ""
     echo "Would execute the following steps:"
-    echo "  1. Check environment (.env)"
-    echo "  2. Enable maintenance mode"
-    echo "  3. Pull code from branch: $BRANCH"
-    echo "  4. Update dependencies (composer, npm)"
-    echo "  5. Backup database"
-    echo "  6. Run migrations"
-    echo "  7. Run seeders (SmartDatabaseSeeder if exists)"
-    echo "  8. Run always-run seeders (QuotationSeeder, etc.)"
-    echo "  9. Build assets (npm run build)"
-    echo "  10. Optimize application"
-    echo "  11. Fix permissions"
-    echo "  12. Restart queue workers"
-    echo "  13. Disable maintenance mode"
-    echo "  14. Health check"
+    echo "  1. Sanitize .env file (fix newlines, duplicates)"
+    echo "  2. Check environment (.env)"
+    echo "  3. Enable maintenance mode"
+    echo "  4. Pull code from branch: $BRANCH"
+    echo "  5. Update dependencies (composer, npm)"
+    echo "  6. Backup database"
+    echo "  7. Run migrations (auto-create migrations table if needed)"
+    echo "  8. Run seeders (SmartDatabaseSeeder if exists)"
+    echo "  9. Run always-run seeders (QuotationSeeder, etc.)"
+    echo "  10. Build assets (npm run build)"
+    echo "  11. Optimize application"
+    echo "  12. Fix permissions"
+    echo "  13. Restart queue workers"
+    echo "  14. Post-deployment tasks"
+    echo "  15. Disable maintenance mode"
+    echo "  16. Health check"
     echo ""
     echo "Run without --dry-run to execute deployment."
     exit 0
