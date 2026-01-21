@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdPlacementController;
 use App\Http\Controllers\Admin\AdsTxtController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
@@ -299,6 +300,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/seo', [SeoController::class, 'index'])->name('seo.index');
     Route::put('/seo', [SeoController::class, 'update'])->name('seo.update');
     Route::get('/seo/generate-sitemap', [SeoController::class, 'generateSitemap'])->name('seo.generate-sitemap');
+
+    // Google Ads Placements Management
+    Route::get('/ads', [AdPlacementController::class, 'index'])->name('ads.index');
+    Route::get('/ads/create', [AdPlacementController::class, 'create'])->name('ads.create');
+    Route::post('/ads', [AdPlacementController::class, 'store'])->name('ads.store');
+    Route::get('/ads/{ad}/edit', [AdPlacementController::class, 'edit'])->name('ads.edit');
+    Route::put('/ads/{ad}', [AdPlacementController::class, 'update'])->name('ads.update');
+    Route::patch('/ads/{ad}/toggle', [AdPlacementController::class, 'toggle'])->name('ads.toggle');
+    Route::delete('/ads/{ad}', [AdPlacementController::class, 'destroy'])->name('ads.destroy');
 
     // Quotation Management
     Route::prefix('quotations')->name('quotations.')->group(function () {
