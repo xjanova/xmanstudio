@@ -133,15 +133,16 @@
         }
 
         .logo-container {
-            width: 150px;
-            height: 150px;
+            width: 100%;
+            padding: 0 10px;
             margin: 0 auto 2rem;
             position: relative;
         }
 
         .logo-image {
             width: 100%;
-            height: 100%;
+            height: auto;
+            max-height: 200px;
             object-fit: contain;
         }
     </style>
