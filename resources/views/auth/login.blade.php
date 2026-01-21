@@ -15,11 +15,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -29,11 +24,6 @@
                 opacity: 1;
                 transform: translateY(0);
             }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
         }
 
         .animate-gradient {
@@ -47,10 +37,6 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
-        }
-
-        .floating {
-            animation: float 6s ease-in-out infinite;
         }
 
         .fade-in-up {
@@ -147,30 +133,16 @@
         }
 
         .logo-container {
-            width: 120px;
-            height: 120px;
+            width: 150px;
+            height: 150px;
             margin: 0 auto 2rem;
             position: relative;
         }
 
-        .logo-glow {
-            position: absolute;
-            inset: -10px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 50%;
-            filter: blur(20px);
-            opacity: 0.5;
-            animation: pulse 3s ease-in-out infinite;
-        }
-
         .logo-image {
-            position: relative;
             width: 100%;
             height: 100%;
             object-fit: contain;
-            border-radius: 20px;
-            background: white;
-            padding: 10px;
         }
     </style>
 </head>
@@ -187,8 +159,7 @@
             <!-- Login Card -->
             <div class="glass-card rounded-3xl p-8 fade-in-up">
                 <!-- Logo -->
-                <div class="logo-container floating">
-                    <div class="logo-glow"></div>
+                <div class="logo-container">
                     @php
                         $siteLogo = \App\Models\Setting::getValue('site_logo');
                     @endphp
@@ -198,7 +169,7 @@
                              class="logo-image">
                     @else
                         <div class="logo-image flex items-center justify-center">
-                            <svg class="w-16 h-16 text-purple-600" fill="currentColor"
+                            <svg class="w-20 h-20 text-purple-600" fill="currentColor"
                                  viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                       d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 112 0v4a1 1 0 11-2 0V9z
