@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdPlacementController;
 use App\Http\Controllers\Admin\AdsTxtController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
@@ -132,6 +133,10 @@ Route::get('/ads.txt', function () {
     return response($setting->content, 200)
         ->header('Content-Type', 'text/plain; charset=UTF-8');
 })->name('ads-txt');
+
+// Banner tracking (public routes)
+Route::post('/banners/{banner}/track-view', [BannerController::class, 'trackView'])->name('banners.track-view');
+Route::post('/banners/{banner}/track-click', [BannerController::class, 'trackClick'])->name('banners.track-click');
 
 /*
 |--------------------------------------------------------------------------
@@ -309,6 +314,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/ads/{ad}', [AdPlacementController::class, 'update'])->name('ads.update');
     Route::patch('/ads/{ad}/toggle', [AdPlacementController::class, 'toggle'])->name('ads.toggle');
     Route::delete('/ads/{ad}', [AdPlacementController::class, 'destroy'])->name('ads.destroy');
+
+    // Banner Management
+    Route::get('/banners', [BannerController::class, 'index'])->name('banners.index');
+    Route::get('/banners/create', [BannerController::class, 'create'])->name('banners.create');
+    Route::post('/banners', [BannerController::class, 'store'])->name('banners.store');
+    Route::get('/banners/{banner}/edit', [BannerController::class, 'edit'])->name('banners.edit');
+    Route::put('/banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
+    Route::patch('/banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle');
+    Route::delete('/banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
 
     // Quotation Management
     Route::prefix('quotations')->name('quotations.')->group(function () {
