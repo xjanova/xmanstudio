@@ -192,13 +192,13 @@ jobs:
         run: |
           # Get current version
           if [ -f VERSION ]; then
-            CURRENT=$(cat VERSION)
+            CURRENT=$(cat VERSION | tr -d '[:space:]')
           else
             CURRENT="0.0.0"
           fi
 
-          # Bump patch version
-          NEW=$(npx semver -i patch $CURRENT)
+          # Bump patch version (use semver directly, not npx, since it's globally installed)
+          NEW=$(semver -i patch "$CURRENT")
           echo "new=$NEW" >> $GITHUB_OUTPUT
           echo "current=$CURRENT" >> $GITHUB_OUTPUT
 

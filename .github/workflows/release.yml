@@ -42,7 +42,7 @@ jobs:
         id: get_version
         run: |
           if [ -f VERSION ]; then
-            CURRENT_VERSION=$(cat VERSION)
+            CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
           else
             CURRENT_VERSION="0.0.0"
           fi
@@ -52,7 +52,7 @@ jobs:
         id: bump_version
         run: |
           BUMP_TYPE="${{ github.event.inputs.version_bump }}"
-          NEW_VERSION=$(npx semver -i $BUMP_TYPE ${{ steps.get_version.outputs.current }})
+          NEW_VERSION=$(semver -i $BUMP_TYPE "${{ steps.get_version.outputs.current }}")
           echo "new=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
           echo "$NEW_VERSION" > VERSION
