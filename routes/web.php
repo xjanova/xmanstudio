@@ -65,11 +65,15 @@ Route::get('/products/{slug}', [ProductController::class, 'show'])->name('produc
 Route::prefix('autotradex')->name('autotradex.')->group(function () {
     Route::get('/pricing', [\App\Http\Controllers\AutoTradeXController::class, 'pricing'])->name('pricing');
     Route::get('/buy', [\App\Http\Controllers\AutoTradeXController::class, 'buyRedirect'])->name('buy');
-    Route::get('/checkout/{plan}', [\App\Http\Controllers\AutoTradeXController::class, 'checkout'])->name('checkout');
-    Route::post('/checkout/{plan}', [\App\Http\Controllers\AutoTradeXController::class, 'processCheckout'])->name('process');
-    Route::get('/payment/{order}', [\App\Http\Controllers\AutoTradeXController::class, 'payment'])->name('payment');
-    Route::post('/payment/{order}/confirm', [\App\Http\Controllers\AutoTradeXController::class, 'confirmPayment'])->name('confirm-payment');
-    Route::get('/payment/{order}/success', [\App\Http\Controllers\AutoTradeXController::class, 'paymentSuccess'])->name('payment-success');
+
+    // Require authentication for checkout
+    Route::middleware('auth')->group(function () {
+        Route::get('/checkout/{plan}', [\App\Http\Controllers\AutoTradeXController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/{plan}', [\App\Http\Controllers\AutoTradeXController::class, 'processCheckout'])->name('process');
+        Route::get('/payment/{order}', [\App\Http\Controllers\AutoTradeXController::class, 'payment'])->name('payment');
+        Route::post('/payment/{order}/confirm', [\App\Http\Controllers\AutoTradeXController::class, 'confirmPayment'])->name('confirm-payment');
+        Route::get('/payment/{order}/success', [\App\Http\Controllers\AutoTradeXController::class, 'paymentSuccess'])->name('payment-success');
+    });
 });
 
 // Services
