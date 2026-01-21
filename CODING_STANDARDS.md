@@ -596,4 +596,409 @@ If Laravel Pint fails, the entire pipeline fails. **Always run locally first:**
 
 ---
 
+## Quick Reference Cheat Sheet
+
+Print this and keep it visible while coding:
+
+```
+✓ Line length: Max 120 chars
+✓ Negation: ! $var (with space)
+✓ Type everything: public string $name
+✓ Import facades: use Illuminate\Support\Facades\DB
+✓ Break chains: ->method()
+                    ->method()
+✓ Array comma: [..., 'last',]
+✓ Use implode(): implode("\n", [...])
+✓ Run Pint: ./vendor/bin/pint before commit
+```
+
+---
+
+## Pre-commit Hook Setup
+
+Automatically run Laravel Pint before every commit:
+
+### Setup Instructions:
+
+```bash
+# 1. Create pre-commit hook
+cat > .git/hooks/pre-commit << 'EOF'
+#!/bin/bash
+
+echo "Running Laravel Pint..."
+
+# Run Pint on staged PHP files
+./vendor/bin/pint --test
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Laravel Pint found style issues!"
+    echo "Run './vendor/bin/pint' to fix them automatically"
+    echo "Or fix manually and commit again"
+    exit 1
+fi
+
+echo "✅ Code style check passed!"
+exit 0
+EOF
+
+# 2. Make it executable
+chmod +x .git/hooks/pre-commit
+
+# 3. Test it
+git commit -m "test"
+```
+
+### Benefits:
+- Catches style issues before they reach CI/CD
+- Prevents failed pipeline builds
+- Enforces consistency automatically
+- Team members can't forget to run Pint
+
+---
+
+## IDE Configuration
+
+### PHPStorm / IntelliJ IDEA
+
+#### 1. Install Laravel Pint Plugin
+- Go to: `Settings` → `Plugins`
+- Search: "Laravel Pint"
+- Install and restart
+
+#### 2. Enable Pint on Save
+- Go to: `Settings` → `Tools` → `Laravel Pint`
+- Check: "Run Pint on Save"
+- Path: `./vendor/bin/pint`
+
+#### 3. Code Style Settings
+- Go to: `Settings` → `Editor` → `Code Style` → `PHP`
+- Set tab size: 4 spaces
+- Line length: 120
+- Import: Laravel style from `pint.json` if available
+
+### Visual Studio Code
+
+#### 1. Install Extensions
+```json
+{
+  "recommendations": [
+    "bmewburn.vscode-intelephense-client",
+    "onecentlin.laravel-blade",
+    "amirrizal.laravel-extra-intellisense"
+  ]
+}
+```
+
+#### 2. Settings (`.vscode/settings.json`)
+```json
+{
+  "editor.rulers": [120],
+  "editor.tabSize": 4,
+  "editor.formatOnSave": true,
+  "[php]": {
+    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+  },
+  "php.validate.executablePath": "/usr/bin/php",
+  "php.suggest.basic": false
+}
+```
+
+#### 3. Tasks for Pint (`.vscode/tasks.json`)
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Laravel Pint",
+      "type": "shell",
+      "command": "./vendor/bin/pint",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Laravel Pint (Check)",
+      "type": "shell",
+      "command": "./vendor/bin/pint --test",
+      "problemMatcher": []
+    }
+  ]
+}
+```
+
+Run with: `Cmd/Ctrl + Shift + B`
+
+---
+
+## Git Commit Message Standards
+
+Follow **Conventional Commits** format:
+
+### Format:
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types:
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation only
+- `style:` Code style (formatting, missing semicolons)
+- `refactor:` Code change that neither fixes nor adds feature
+- `perf:` Performance improvement
+- `test:` Adding tests
+- `chore:` Maintenance (dependencies, config)
+
+### Examples:
+
+```bash
+# Good commits
+git commit -m "feat: add banner image cropper with drag support"
+git commit -m "fix: add missing DB facade import in migrations"
+git commit -m "docs: add coding standards documentation"
+git commit -m "refactor: extract banner display logic to component"
+
+# With scope
+git commit -m "feat(banners): add Facebook-style image repositioner"
+git commit -m "fix(migrations): break long lines for Laravel Pint"
+
+# Multi-line
+git commit -m "feat: add comprehensive banner management system
+
+- Upload banner images with cropping
+- Schedule start/end dates
+- Track views and clicks
+- Multiple position support
+- Admin CRUD interface"
+```
+
+### Bad Examples:
+```bash
+# ❌ Too vague
+git commit -m "update"
+git commit -m "fix bug"
+git commit -m "changes"
+
+# ❌ No type prefix
+git commit -m "added new feature"
+git commit -m "fixed the issue"
+```
+
+---
+
+## Database & Migration Standards
+
+### Table Naming:
+- **Plural, snake_case**: `users`, `ad_placements`, `user_rentals`
+- **Pivot tables**: Alphabetical order: `post_tag` not `tag_post`
+
+### Column Naming:
+- **snake_case**: `created_at`, `user_id`, `display_width`
+- **Boolean prefix**: `is_active`, `has_permission`, `can_edit`
+- **Foreign keys**: `{table}_id` → `user_id`, `banner_id`
+
+### Migration Best Practices:
+
+```php
+// ✅ Good
+Schema::create('banners', function (Blueprint $table) {
+    $table->id();
+    $table->string('title');
+    $table->string('slug')->unique();
+    $table->boolean('enabled')->default(false);
+    $table->timestamps();
+    $table->softDeletes();
+
+    // Indexes
+    $table->index('enabled');
+    $table->index('slug');
+});
+
+// ❌ Bad
+Schema::create('Banner', function (Blueprint $table) {  // Wrong case
+    $table->id();
+    $table->string('Title');  // Wrong case
+    $table->boolean('isEnabled');  // Wrong naming
+    // Missing indexes
+});
+```
+
+### Column Order Convention:
+1. `id`
+2. Foreign keys (`user_id`, `category_id`)
+3. Core data columns
+4. Status/boolean columns
+5. JSON columns
+6. Text/longText columns
+7. Timestamps (`created_at`, `updated_at`)
+8. Soft deletes (`deleted_at`)
+
+---
+
+## Security Best Practices
+
+### 1. Always Validate Input
+
+```php
+// ✅ Good
+$request->validate([
+    'email' => ['required', 'email', 'max:255'],
+    'url' => ['nullable', 'url', 'max:500'],
+    'amount' => ['required', 'numeric', 'min:0'],
+]);
+
+// ❌ Bad
+$email = $request->input('email');  // No validation
+```
+
+### 2. Use Mass Assignment Protection
+
+```php
+// ✅ Good
+class User extends Model
+{
+    protected $fillable = ['name', 'email'];
+    // or
+    protected $guarded = ['id', 'role'];
+}
+
+// ❌ Bad
+class User extends Model
+{
+    protected $guarded = [];  // Everything is fillable!
+}
+```
+
+### 3. Prevent SQL Injection
+
+```php
+// ✅ Good - Use Query Builder/Eloquent
+User::where('email', $email)->first();
+DB::table('users')->where('id', $id)->get();
+
+// ❌ Bad - Raw SQL without bindings
+DB::select("SELECT * FROM users WHERE email = '$email'");
+```
+
+### 4. Prevent XSS
+
+```blade
+{{-- ✅ Good - Auto-escaped --}}
+<p>{{ $user->name }}</p>
+
+{{-- ❌ Bad - Unescaped HTML --}}
+<p>{!! $user->name !!}</p>
+```
+
+### 5. Use CSRF Protection
+
+```blade
+{{-- ✅ Always include in forms --}}
+<form method="POST">
+    @csrf
+    ...
+</form>
+```
+
+### 6. Protect Routes
+
+```php
+// ✅ Good
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+});
+
+// ❌ Bad
+Route::get('/admin/users', [UserController::class, 'index']);  // No auth!
+```
+
+---
+
+## Laravel Performance Best Practices
+
+### 1. Avoid N+1 Queries
+
+```php
+// ❌ Bad - N+1 Problem
+$users = User::all();
+foreach ($users as $user) {
+    echo $user->profile->bio;  // Query for each user
+}
+
+// ✅ Good - Eager Loading
+$users = User::with('profile')->get();
+foreach ($users as $user) {
+    echo $user->profile->bio;  // No extra queries
+}
+```
+
+### 2. Use Chunking for Large Datasets
+
+```php
+// ❌ Bad - Loads everything in memory
+User::all()->each(function ($user) {
+    // Process
+});
+
+// ✅ Good - Process in chunks
+User::chunk(200, function ($users) {
+    foreach ($users as $user) {
+        // Process
+    }
+});
+```
+
+### 3. Select Only Required Columns
+
+```php
+// ❌ Bad
+$users = User::all();  // Selects all columns
+
+// ✅ Good
+$users = User::select('id', 'name', 'email')->get();
+```
+
+### 4. Use Caching
+
+```php
+// ✅ Good
+$settings = Cache::remember('settings', 3600, function () {
+    return Setting::all();
+});
+
+// ❌ Bad
+$settings = Setting::all();  // Query every time
+```
+
+---
+
+## Code Review Checklist
+
+Before submitting PR, check:
+
+- [ ] Run `./vendor/bin/pint` - no style violations
+- [ ] All tests pass
+- [ ] No `dd()`, `dump()`, `var_dump()` left in code
+- [ ] No commented-out code blocks
+- [ ] All facades imported
+- [ ] Type declarations on properties
+- [ ] Validation on all user inputs
+- [ ] SQL injection prevention (use Query Builder)
+- [ ] XSS prevention (use `{{ }}` not `{!! !!}`)
+- [ ] CSRF tokens on forms
+- [ ] N+1 queries prevented (eager loading)
+- [ ] Proper error handling
+- [ ] Meaningful variable names
+- [ ] Clear commit messages
+- [ ] Documentation updated if needed
+
+---
+
 **Remember:** These rules ensure consistent, readable code that passes CI/CD checks automatically!
