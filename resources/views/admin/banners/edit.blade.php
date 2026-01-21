@@ -14,11 +14,11 @@
         <h2 class="text-xl font-semibold">กลับไปรายการแบนเนอร์</h2>
     </div>
 
-    @if($errors->any())
+    @if ($errors->any())
         <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
             <div class="font-semibold mb-2">กรุณาแก้ไขข้อผิดพลาด:</div>
             <ul class="list-disc list-inside">
-                @foreach($errors->all() as $error)
+                @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
