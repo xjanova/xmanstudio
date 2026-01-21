@@ -384,10 +384,61 @@
             </button>
         </div>
     </div>
+
+    <!-- Mobile Sticky Bottom Bar -->
+    <div x-show="formData.service_options.length > 0"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="translate-y-full"
+         x-transition:enter-end="translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-y-0"
+         x-transition:leave-end="translate-y-full"
+         class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-2xl"
+         style="padding-bottom: env(safe-area-inset-bottom, 0);">
+        <div class="px-4 py-3">
+            <!-- Price Summary -->
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">รายการที่เลือก (<span x-text="getSelectedItems().length"></span>)</div>
+                    <div class="text-xl font-bold text-primary-600" x-text="formatPrice(getGrandTotal()) + ' ฿'"></div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-gray-500 dark:text-gray-400" x-show="getDiscount() > 0">
+                        ส่วนลด <span class="text-green-600" x-text="getDiscountPercent() + '%'"></span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">รวม VAT 7%</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2">
+                <button type="button" @click="generateQuotation()" :disabled="!isFormValid() || isLoading"
+                        class="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        PDF
+                    </span>
+                </button>
+                <button type="button" @click="submitOrder('quotation')" :disabled="!isFormValid() || isLoading"
+                        class="flex-1 py-3 px-4 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                    <span x-show="!isLoading">ขอใบเสนอราคา</span>
+                    <span x-show="isLoading" class="flex items-center justify-center">
+                        <svg class="animate-spin h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        กำลังดำเนินการ
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
 </section>
 
 <!-- Contact Info Section -->
-<section class="py-16 bg-white dark:bg-gray-800">
+<section class="py-16 bg-white dark:bg-gray-800 pb-32 lg:pb-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">ติดต่อเราโดยตรง</h2>
