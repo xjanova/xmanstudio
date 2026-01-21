@@ -34,6 +34,11 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
+        // Use custom view for AutoTradeX
+        if ($slug === 'autotradex') {
+            return view('products.autotradex', compact('product', 'relatedProducts'));
+        }
+
         return view('products.show', compact('product', 'relatedProducts'));
     }
 
