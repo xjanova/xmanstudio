@@ -104,7 +104,7 @@ generate_error_report() {
     echo "Step: $step" >> "$ERROR_LOG"
     echo "Branch: $BRANCH" >> "$ERROR_LOG"
     echo "Commit: $(git rev-parse --short HEAD 2>/dev/null || echo 'N/A')" >> "$ERROR_LOG"
-    echo "Environment: $(grep APP_ENV .env 2>/dev/null | cut -d'=' -f2 || echo 'N/A')" >> "$ERROR_LOG"
+    echo "Environment: $(grep "^APP_ENV=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo 'N/A')" >> "$ERROR_LOG"
     echo "" >> "$ERROR_LOG"
     echo "Error Message:" >> "$ERROR_LOG"
     echo "$error_message" >> "$ERROR_LOG"
@@ -125,9 +125,10 @@ generate_error_report() {
 
     # Database info
     echo "Database Information:" >> "$ERROR_LOG"
-    echo "  Connection: $(grep DB_CONNECTION .env 2>/dev/null | cut -d'=' -f2 || echo 'N/A')" >> "$ERROR_LOG"
-    echo "  Host: $(grep DB_HOST .env 2>/dev/null | cut -d'=' -f2 || echo 'N/A')" >> "$ERROR_LOG"
-    echo "  Database: $(grep DB_DATABASE .env 2>/dev/null | cut -d'=' -f2 || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  Connection: $(grep "^DB_CONNECTION=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  Host: $(grep "^DB_HOST=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  Port: $(grep "^DB_PORT=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo 'N/A')" >> "$ERROR_LOG"
+    echo "  Database: $(grep "^DB_DATABASE=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo 'N/A')" >> "$ERROR_LOG"
     echo "" >> "$ERROR_LOG"
 
     # Recent Laravel log
@@ -270,12 +271,13 @@ check_environment() {
         exit 1
     fi
 
-    if grep -q "APP_ENV=production" .env; then
+    if grep -q "^APP_ENV=production" .env; then
         print_warning "Deploying to PRODUCTION environment"
         # Auto-continue without asking (use --dry-run to preview)
         print_info "Continuing deployment automatically..."
     else
-        print_info "Deploying to $(grep APP_ENV .env | cut -d'=' -f2) environment"
+        APP_ENV=$(grep "^APP_ENV=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "unknown")
+        print_info "Deploying to $APP_ENV environment"
     fi
 
     print_success "Environment check passed"
@@ -285,20 +287,32 @@ check_environment() {
 backup_database() {
     print_step "Backing Up Database"
 
-    # Get database type
-    DB_CONNECTION=$(grep DB_CONNECTION .env | cut -d'=' -f2)
+    # Get database type - safely read and sanitize .env values
+    # Use grep with ^ to match start of line (exclude comments)
+    # Use head -1 to get only first occurrence
+    # Use tr to remove newlines and carriage returns
+    DB_CONNECTION=$(grep "^DB_CONNECTION=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "")
 
     if [ "$DB_CONNECTION" = "mysql" ]; then
-        DB_HOST=$(grep DB_HOST .env | cut -d'=' -f2)
-        DB_PORT=$(grep DB_PORT .env | cut -d'=' -f2)
-        DB_DATABASE=$(grep DB_DATABASE .env | cut -d'=' -f2)
-        DB_USERNAME=$(grep DB_USERNAME .env | cut -d'=' -f2)
-        DB_PASSWORD=$(grep DB_PASSWORD .env | cut -d'=' -f2)
+        DB_HOST=$(grep "^DB_HOST=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "127.0.0.1")
+        DB_PORT=$(grep "^DB_PORT=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "3306")
+        DB_DATABASE=$(grep "^DB_DATABASE=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "")
+        DB_USERNAME=$(grep "^DB_USERNAME=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "")
+        DB_PASSWORD=$(grep "^DB_PASSWORD=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "")
+
+        # Validate that required database credentials exist
+        if [ -z "$DB_DATABASE" ] || [ -z "$DB_USERNAME" ]; then
+            print_warning "Database credentials incomplete, skipping backup"
+            print_info "DB_DATABASE='$DB_DATABASE', DB_USERNAME='$DB_USERNAME'"
+            return 0
+        fi
 
         BACKUP_FILE="$BACKUP_DIR/backup_${TIMESTAMP}.sql"
 
         if command -v mysqldump >/dev/null 2>&1; then
             print_info "Creating MySQL backup..."
+            print_info "Using DB_HOST=$DB_HOST, DB_PORT=$DB_PORT, DB_DATABASE=$DB_DATABASE"
+
             set +e
             BACKUP_OUTPUT=$(mysqldump -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>&1)
             BACKUP_EXIT=$?
@@ -310,6 +324,7 @@ backup_database() {
             else
                 print_warning "Could not create backup: $BACKUP_OUTPUT"
                 log_error_detail "Backup failed: $BACKUP_OUTPUT"
+                log_error_detail "DB_HOST='$DB_HOST', DB_PORT='$DB_PORT', DB_DATABASE='$DB_DATABASE'"
             fi
         else
             print_warning "mysqldump not available, skipping backup"
@@ -795,17 +810,22 @@ health_check() {
 
     # Check if application is accessible
     if command -v curl >/dev/null 2>&1; then
-        APP_URL=$(grep APP_URL .env | cut -d'=' -f2)
-        set +e
-        HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$APP_URL" 2>/dev/null)
-        set -e
+        APP_URL=$(grep "^APP_URL=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "")
 
-        if [ "$HTTP_RESPONSE" = "200" ] || [ "$HTTP_RESPONSE" = "302" ]; then
-            print_success "Application is accessible at $APP_URL (HTTP $HTTP_RESPONSE)"
-        elif [ "$HTTP_RESPONSE" = "000" ]; then
-            print_warning "Could not reach $APP_URL (timeout or connection refused)"
+        if [ -z "$APP_URL" ]; then
+            print_info "APP_URL not configured, skipping accessibility check"
         else
-            print_warning "Application returned HTTP $HTTP_RESPONSE"
+            set +e
+            HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$APP_URL" 2>/dev/null)
+            set -e
+
+            if [ "$HTTP_RESPONSE" = "200" ] || [ "$HTTP_RESPONSE" = "302" ]; then
+                print_success "Application is accessible at $APP_URL (HTTP $HTTP_RESPONSE)"
+            elif [ "$HTTP_RESPONSE" = "000" ]; then
+                print_warning "Could not reach $APP_URL (timeout or connection refused)"
+            else
+                print_warning "Application returned HTTP $HTTP_RESPONSE"
+            fi
         fi
     fi
 
@@ -895,7 +915,8 @@ main() {
     if [ -d .git ]; then
         echo -e "  ${PURPLE}Commit:${NC} $(git rev-parse --short HEAD)"
     fi
-    echo -e "  ${PURPLE}Environment:${NC} $(grep APP_ENV .env | cut -d'=' -f2)"
+    APP_ENV=$(grep "^APP_ENV=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "unknown")
+    echo -e "  ${PURPLE}Environment:${NC} $APP_ENV"
     echo -e "  ${PURPLE}Log:${NC} $LOG_FILE"
     echo
 }
