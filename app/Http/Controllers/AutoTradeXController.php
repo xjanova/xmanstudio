@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * AutoTradeX Web Controller
@@ -99,18 +100,15 @@ class AutoTradeXController extends Controller
         // Create order
         $order = Order::create([
             'user_id' => auth()->id(),
+            'order_number' => $this->generateOrderNumber(),
             'customer_name' => $validated['customer_name'],
-            'email' => $validated['customer_email'],
-            'phone' => $validated['customer_phone'],
+            'customer_email' => $validated['customer_email'],
+            'customer_phone' => $validated['customer_phone'],
+            'subtotal' => $planInfo['price'],
             'total' => $planInfo['price'],
             'status' => 'pending',
             'payment_method' => $validated['payment_method'],
-            'notes' => "AutoTradeX {$planInfo['name']} License",
-            'metadata' => json_encode([
-                'product_slug' => 'autotradex',
-                'plan' => $plan,
-                'license_type' => $planInfo['license_type'],
-            ]),
+            'notes' => "AutoTradeX {$planInfo['name']} License | Plan: {$plan} | Type: {$planInfo['license_type']}",
         ]);
 
         // Create order item
@@ -233,5 +231,16 @@ class AutoTradeXController extends Controller
             'order' => $order,
             'planInfo' => $planInfo,
         ]);
+    }
+
+    /**
+     * Generate unique order number
+     */
+    protected function generateOrderNumber(): string
+    {
+        $prefix = 'XM' . date('Ymd');
+        $random = strtoupper(Str::random(4));
+
+        return $prefix . '-' . $random;
     }
 }
