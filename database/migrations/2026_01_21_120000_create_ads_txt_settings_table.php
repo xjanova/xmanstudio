@@ -20,7 +20,13 @@ return new class extends Migration
 
         // Insert default content
         DB::table('ads_txt_settings')->insert([
-            'content' => "# Google AdSense\n# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n\n# Add your ads.txt entries here\n# Format: domain, publisher ID, relationship, certification authority ID",
+            'content' => implode("\n", [
+                '# Google AdSense',
+                '# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0',
+                '',
+                '# Add your ads.txt entries here',
+                '# Format: domain, publisher ID, relationship, certification authority ID',
+            ]),
             'enabled' => true,
             'created_at' => now(),
             'updated_at' => now(),

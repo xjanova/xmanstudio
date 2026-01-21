@@ -34,16 +34,20 @@ class AdsTxtSetting extends Model
 
     /**
      * Get the singleton instance of ads.txt settings.
-     *
-     * @return self
      */
     public static function getInstance(): self
     {
         $setting = self::first();
 
-        if (!$setting) {
+        if (! $setting) {
             $setting = self::create([
-                'content' => "# Google AdSense\n# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n\n# Add your ads.txt entries here\n# Format: domain, publisher ID, relationship, certification authority ID",
+                'content' => implode("\n", [
+                    '# Google AdSense',
+                    '# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0',
+                    '',
+                    '# Add your ads.txt entries here',
+                    '# Format: domain, publisher ID, relationship, certification authority ID',
+                ]),
                 'enabled' => true,
             ]);
         }
