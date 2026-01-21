@@ -7,11 +7,11 @@ use Illuminate\View\Component;
 
 class GoogleAd extends Component
 {
-    public $position;
+    public string $position;
 
-    public $page;
+    public string $page;
 
-    public $ad;
+    public ?AdPlacement $ad;
 
     public function __construct(string $position, string $page = 'all')
     {
