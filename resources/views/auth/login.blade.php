@@ -9,80 +9,144 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        /* Warp Drive Effect */
+        /* Space Warp Drive Effect */
         .warp-container {
             position: fixed;
             inset: 0;
-            background: #000;
+            background: radial-gradient(ellipse at center, #0a0a20 0%, #000008 50%, #000000 100%);
             overflow: hidden;
-            perspective: 500px;
+            perspective: 1000px;
         }
 
-        .warp-stars {
+        /* Nebula/Galaxy Clouds */
+        .nebula {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 191, 255, 0.12) 0%, transparent 45%),
+                radial-gradient(ellipse at 40% 80%, rgba(255, 20, 147, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 70%, rgba(75, 0, 130, 0.15) 0%, transparent 40%),
+                radial-gradient(ellipse at 10% 60%, rgba(0, 255, 255, 0.08) 0%, transparent 35%);
+            animation: nebulaShift 30s ease-in-out infinite;
+        }
+
+        @keyframes nebulaShift {
+            0%, 100% { opacity: 0.8; transform: scale(1) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.1) rotate(5deg); }
+        }
+
+        /* Static Stars Background */
+        .stars-static {
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 20% 50%, rgba(255,255,255,0.6), transparent),
+                radial-gradient(2px 2px at 30% 10%, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 50% 30%, rgba(255,255,255,0.7), transparent),
+                radial-gradient(2px 2px at 60% 80%, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 70% 15%, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.7), transparent),
+                radial-gradient(2px 2px at 90% 40%, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 35% 95%, rgba(255,255,255,0.7), transparent),
+                radial-gradient(2px 2px at 45% 5%, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 55% 55%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 65% 25%, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 75% 75%, rgba(255,255,255,0.7), transparent),
+                radial-gradient(2px 2px at 85% 45%, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 95% 90%, rgba(255,255,255,0.6), transparent);
+            animation: twinkle 8s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Warp Light Streaks */
+        .warp-streaks {
             position: absolute;
             width: 100%;
             height: 100%;
             transform-style: preserve-3d;
         }
 
-        .warp-stars-1 {
+        .warp-streaks-1 {
             background-image:
-                radial-gradient(2px 2px at 20px 30px, #ff0000, transparent),
-                radial-gradient(2px 2px at 60px 80px, #00ff00, transparent),
-                radial-gradient(2px 2px at 100px 40px, #0000ff, transparent),
-                radial-gradient(2px 2px at 140px 90px, #ff00ff, transparent),
-                radial-gradient(2px 2px at 180px 60px, #00ffff, transparent),
-                radial-gradient(2px 2px at 220px 120px, #ffff00, transparent),
-                radial-gradient(2px 2px at 260px 30px, #ff0080, transparent),
-                radial-gradient(2px 2px at 300px 100px, #80ff00, transparent),
-                radial-gradient(2px 2px at 340px 70px, #0080ff, transparent),
-                radial-gradient(2px 2px at 380px 110px, #ff8000, transparent);
-            background-size: 400px 150px;
-            animation: warpSpeed 0.5s linear infinite;
+                radial-gradient(1px 80px at 10% 50%, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 60px at 25% 30%, rgba(200,220,255,0.8), transparent),
+                radial-gradient(1px 100px at 40% 70%, rgba(255,255,255,0.7), transparent),
+                radial-gradient(1px 70px at 55% 20%, rgba(220,200,255,0.8), transparent),
+                radial-gradient(1px 90px at 70% 60%, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 50px at 85% 40%, rgba(200,255,255,0.7), transparent),
+                radial-gradient(1px 80px at 95% 80%, rgba(255,255,255,0.8), transparent);
+            background-size: 100% 100%;
+            animation: warpStreak 3s linear infinite;
         }
 
-        .warp-stars-2 {
+        .warp-streaks-2 {
             background-image:
-                radial-gradient(3px 3px at 30px 50px, #00ff80, transparent),
-                radial-gradient(3px 3px at 80px 110px, #8000ff, transparent),
-                radial-gradient(3px 3px at 130px 30px, #ff0040, transparent),
-                radial-gradient(3px 3px at 180px 80px, #40ff00, transparent),
-                radial-gradient(3px 3px at 230px 120px, #0040ff, transparent),
-                radial-gradient(3px 3px at 280px 50px, #ff4000, transparent),
-                radial-gradient(3px 3px at 330px 90px, #00ff40, transparent),
-                radial-gradient(3px 3px at 370px 60px, #4000ff, transparent);
-            background-size: 400px 180px;
-            animation: warpSpeed 0.4s linear infinite;
-            animation-delay: -0.2s;
+                radial-gradient(1px 120px at 5% 35%, rgba(180,200,255,0.6), transparent),
+                radial-gradient(1px 90px at 20% 65%, rgba(255,180,220,0.5), transparent),
+                radial-gradient(1px 70px at 35% 25%, rgba(200,255,220,0.6), transparent),
+                radial-gradient(1px 110px at 50% 85%, rgba(220,180,255,0.5), transparent),
+                radial-gradient(1px 80px at 65% 15%, rgba(255,220,180,0.6), transparent),
+                radial-gradient(1px 100px at 80% 55%, rgba(180,255,255,0.5), transparent),
+                radial-gradient(1px 60px at 92% 75%, rgba(255,200,200,0.6), transparent);
+            background-size: 100% 100%;
+            animation: warpStreak 4s linear infinite;
+            animation-delay: -1.5s;
         }
 
-        .warp-stars-3 {
+        .warp-streaks-3 {
             background-image:
-                radial-gradient(4px 4px at 50px 40px, #ff00ff, transparent),
-                radial-gradient(4px 4px at 120px 100px, #00ffff, transparent),
-                radial-gradient(4px 4px at 200px 60px, #ffff00, transparent),
-                radial-gradient(4px 4px at 280px 120px, #ff0000, transparent),
-                radial-gradient(4px 4px at 350px 80px, #00ff00, transparent);
-            background-size: 400px 160px;
-            animation: warpSpeed 0.3s linear infinite;
-            animation-delay: -0.1s;
+                radial-gradient(2px 150px at 8% 45%, rgba(138,43,226,0.4), transparent),
+                radial-gradient(2px 100px at 22% 75%, rgba(0,191,255,0.3), transparent),
+                radial-gradient(2px 130px at 38% 15%, rgba(255,20,147,0.4), transparent),
+                radial-gradient(2px 80px at 52% 55%, rgba(75,0,130,0.3), transparent),
+                radial-gradient(2px 120px at 68% 85%, rgba(0,255,255,0.4), transparent),
+                radial-gradient(2px 90px at 82% 25%, rgba(255,105,180,0.3), transparent);
+            background-size: 100% 100%;
+            animation: warpStreak 5s linear infinite;
+            animation-delay: -2s;
         }
 
-        @keyframes warpSpeed {
+        @keyframes warpStreak {
             0% {
-                transform: translateZ(0px) scale(1);
+                transform: translateZ(-200px) scale(0.5);
                 opacity: 0;
             }
-            5% {
-                opacity: 1;
+            10% {
+                opacity: 0.8;
             }
-            95% {
-                opacity: 1;
+            90% {
+                opacity: 0.8;
             }
             100% {
-                transform: translateZ(600px) scale(2.5);
+                transform: translateZ(800px) scale(2);
                 opacity: 0;
             }
+        }
+
+        /* Central Glow */
+        .center-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(100,150,255,0.1) 0%, transparent 70%);
+            animation: centerPulse 6s ease-in-out infinite;
+        }
+
+        @keyframes centerPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
         }
 
         @keyframes fadeInUp {
@@ -212,11 +276,18 @@
     </style>
 </head>
 <body class="antialiased">
-    <!-- Warp Drive Background -->
+    <!-- Space Warp Drive Background -->
     <div class="warp-container">
-        <div class="warp-stars warp-stars-1"></div>
-        <div class="warp-stars warp-stars-2"></div>
-        <div class="warp-stars warp-stars-3"></div>
+        <!-- Nebula/Galaxy Clouds -->
+        <div class="nebula"></div>
+        <!-- Static Stars -->
+        <div class="stars-static"></div>
+        <!-- Warp Light Streaks -->
+        <div class="warp-streaks warp-streaks-1"></div>
+        <div class="warp-streaks warp-streaks-2"></div>
+        <div class="warp-streaks warp-streaks-3"></div>
+        <!-- Central Glow -->
+        <div class="center-glow"></div>
     </div>
 
     <!-- Main Content -->
