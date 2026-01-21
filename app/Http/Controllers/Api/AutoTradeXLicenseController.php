@@ -1,0 +1,558 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\LicenseKey;
+use App\Models\Product;
+use Illuminate\Http\Request;
+
+/**
+ * License Controller for AutoTradeX
+ *
+ * This controller handles all license-related API requests from the
+ * AutoTradeX desktop application (Crypto Arbitrage Trading Bot).
+ */
+class AutoTradeXLicenseController extends Controller
+{
+    /**
+     * Product slug for AutoTradeX
+     */
+    private const PRODUCT_SLUG = 'autotradex';
+
+    /**
+     * Features available for trial/demo
+     */
+    private const TRIAL_FEATURES = [
+        'simulation_mode',
+        'single_exchange',
+        'basic_alerts',
+        'trade_history',
+    ];
+
+    /**
+     * Features for monthly subscription
+     */
+    private const MONTHLY_FEATURES = [
+        'simulation_mode',
+        'live_trading',
+        'multi_exchange',
+        'basic_alerts',
+        'advanced_alerts',
+        'trade_history',
+        'pnl_tracking',
+        'basic_arbitrage',
+    ];
+
+    /**
+     * Features for yearly subscription
+     */
+    private const YEARLY_FEATURES = [
+        'simulation_mode',
+        'live_trading',
+        'multi_exchange',
+        'basic_alerts',
+        'advanced_alerts',
+        'trade_history',
+        'pnl_tracking',
+        'basic_arbitrage',
+        'advanced_arbitrage',
+        'auto_rebalance',
+        'priority_support',
+    ];
+
+    /**
+     * Full features for lifetime license
+     */
+    private const LIFETIME_FEATURES = [
+        'simulation_mode',
+        'live_trading',
+        'multi_exchange',
+        'all_exchanges',
+        'basic_alerts',
+        'advanced_alerts',
+        'custom_alerts',
+        'trade_history',
+        'pnl_tracking',
+        'advanced_charts',
+        'basic_arbitrage',
+        'advanced_arbitrage',
+        'triangular_arbitrage',
+        'auto_rebalance',
+        'risk_management',
+        'api_access',
+        'priority_support',
+        'lifetime_updates',
+    ];
+
+    /**
+     * Supported exchanges
+     */
+    private const EXCHANGES = [
+        'trial' => ['binance'],
+        'monthly' => ['binance', 'kucoin', 'okx'],
+        'yearly' => ['binance', 'kucoin', 'okx', 'bybit', 'gateio'],
+        'lifetime' => ['binance', 'kucoin', 'okx', 'bybit', 'gateio', 'bitkub'],
+    ];
+
+    /**
+     * Get features based on license type
+     */
+    private function getFeaturesByType(string $type): array
+    {
+        return match ($type) {
+            LicenseKey::TYPE_DEMO => self::TRIAL_FEATURES,
+            LicenseKey::TYPE_MONTHLY => self::MONTHLY_FEATURES,
+            LicenseKey::TYPE_YEARLY => self::YEARLY_FEATURES,
+            LicenseKey::TYPE_LIFETIME, LicenseKey::TYPE_PRODUCT => self::LIFETIME_FEATURES,
+            default => self::TRIAL_FEATURES,
+        };
+    }
+
+    /**
+     * Get supported exchanges based on license type
+     */
+    private function getExchangesByType(string $type): array
+    {
+        return match ($type) {
+            LicenseKey::TYPE_DEMO => self::EXCHANGES['trial'],
+            LicenseKey::TYPE_MONTHLY => self::EXCHANGES['monthly'],
+            LicenseKey::TYPE_YEARLY => self::EXCHANGES['yearly'],
+            LicenseKey::TYPE_LIFETIME, LicenseKey::TYPE_PRODUCT => self::EXCHANGES['lifetime'],
+            default => self::EXCHANGES['trial'],
+        };
+    }
+
+    /**
+     * Activate a license key on a machine
+     *
+     * POST /api/v1/autotradex/activate
+     */
+    public function activate(Request $request)
+    {
+        $validated = $request->validate([
+            'license_key' => 'required|string',
+            'machine_id' => 'required|string|size:32',
+            'machine_name' => 'nullable|string|max:255',
+            'os_version' => 'nullable|string|max:255',
+            'app_version' => 'nullable|string|max:50',
+        ]);
+
+        // Find the license
+        $license = LicenseKey::where('license_key', strtoupper($validated['license_key']))
+            ->whereHas('product', fn ($q) => $q->where('slug', self::PRODUCT_SLUG))
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid license key',
+                'error_code' => 'INVALID_LICENSE',
+            ], 404);
+        }
+
+        // Check if license is revoked
+        if ($license->status === LicenseKey::STATUS_REVOKED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This license has been revoked',
+                'error_code' => 'LICENSE_REVOKED',
+            ], 403);
+        }
+
+        // Check if license is expired
+        if ($license->isExpired()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This license has expired',
+                'error_code' => 'LICENSE_EXPIRED',
+                'expired_at' => $license->expires_at?->toISOString(),
+            ], 403);
+        }
+
+        // Check max activations
+        if ($license->activations >= $license->max_activations) {
+            // Check if this machine is already activated
+            if ($license->machine_id !== $validated['machine_id']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Maximum activations reached ({$license->max_activations} devices). Please deactivate another device first.",
+                    'error_code' => 'MAX_ACTIVATIONS',
+                    'max_activations' => $license->max_activations,
+                    'current_activations' => $license->activations,
+                ], 403);
+            }
+        }
+
+        // Activate on this machine
+        $license->activateOnMachine(
+            $validated['machine_id'],
+            $request->input('machine_fingerprint', $validated['machine_id'])
+        );
+
+        // Update metadata
+        $metadata = json_decode($license->metadata ?? '{}', true);
+        $metadata['last_activation'] = [
+            'machine_name' => $validated['machine_name'] ?? 'Unknown',
+            'os_version' => $validated['os_version'] ?? 'Unknown',
+            'app_version' => $validated['app_version'] ?? 'Unknown',
+            'ip' => $request->ip(),
+            'timestamp' => now()->toISOString(),
+        ];
+        $license->update(['metadata' => json_encode($metadata)]);
+
+        // Get order info for customer details
+        $order = $license->order;
+        $features = $this->getFeaturesByType($license->license_type);
+        $exchanges = $this->getExchangesByType($license->license_type);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'License activated successfully',
+            'data' => [
+                'email' => $order?->email ?? null,
+                'customer_name' => $order?->customer_name ?? null,
+                'product_name' => $license->product->name,
+                'license_type' => $license->license_type,
+                'expires_at' => $license->expires_at?->toISOString(),
+                'days_remaining' => $license->daysRemaining(),
+                'max_devices' => $license->max_activations,
+                'current_devices' => $license->activations,
+                'features' => $features,
+                'exchanges' => $exchanges,
+                'status' => $license->status,
+            ],
+        ]);
+    }
+
+    /**
+     * Validate an existing license
+     *
+     * POST /api/v1/autotradex/validate
+     */
+    public function validate(Request $request)
+    {
+        $validated = $request->validate([
+            'license_key' => 'required|string',
+            'machine_id' => 'required|string|size:32',
+        ]);
+
+        $license = LicenseKey::where('license_key', strtoupper($validated['license_key']))
+            ->whereHas('product', fn ($q) => $q->where('slug', self::PRODUCT_SLUG))
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid license key',
+                'error_code' => 'INVALID_LICENSE',
+            ], 404);
+        }
+
+        // Verify machine ID matches
+        if ($license->machine_id && $license->machine_id !== $validated['machine_id']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'License is activated on a different device',
+                'error_code' => 'DEVICE_MISMATCH',
+            ], 403);
+        }
+
+        // Check if valid
+        if (! $license->isValid()) {
+            return response()->json([
+                'success' => false,
+                'message' => $license->isExpired() ? 'License has expired' : 'License is not valid',
+                'error_code' => $license->isExpired() ? 'LICENSE_EXPIRED' : 'LICENSE_INVALID',
+            ], 403);
+        }
+
+        // Update last validated timestamp
+        $license->update(['last_validated_at' => now()]);
+
+        $features = $this->getFeaturesByType($license->license_type);
+        $exchanges = $this->getExchangesByType($license->license_type);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'License is valid',
+            'data' => [
+                'license_type' => $license->license_type,
+                'expires_at' => $license->expires_at?->toISOString(),
+                'days_remaining' => $license->daysRemaining(),
+                'features' => $features,
+                'exchanges' => $exchanges,
+                'status' => $license->status,
+            ],
+        ]);
+    }
+
+    /**
+     * Deactivate a license from a machine
+     *
+     * POST /api/v1/autotradex/deactivate
+     */
+    public function deactivate(Request $request)
+    {
+        $validated = $request->validate([
+            'license_key' => 'required|string',
+            'machine_id' => 'required|string|size:32',
+        ]);
+
+        $license = LicenseKey::where('license_key', strtoupper($validated['license_key']))
+            ->whereHas('product', fn ($q) => $q->where('slug', self::PRODUCT_SLUG))
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid license key',
+                'error_code' => 'INVALID_LICENSE',
+            ], 404);
+        }
+
+        // Verify machine ID matches
+        if ($license->machine_id !== $validated['machine_id']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'License is not activated on this device',
+                'error_code' => 'DEVICE_MISMATCH',
+            ], 403);
+        }
+
+        // Deactivate
+        $license->update([
+            'machine_id' => null,
+            'device_id' => null,
+            'machine_fingerprint' => null,
+            'activated_at' => null,
+            'activations' => max(0, $license->activations - 1),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'License deactivated successfully',
+        ]);
+    }
+
+    /**
+     * Get license status
+     *
+     * GET /api/v1/autotradex/status/{license_key}
+     */
+    public function status(string $licenseKey)
+    {
+        $license = LicenseKey::where('license_key', strtoupper($licenseKey))
+            ->whereHas('product', fn ($q) => $q->where('slug', self::PRODUCT_SLUG))
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'message' => 'License not found',
+                'error_code' => 'NOT_FOUND',
+            ], 404);
+        }
+
+        $features = $this->getFeaturesByType($license->license_type);
+        $exchanges = $this->getExchangesByType($license->license_type);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'license_key' => $license->license_key,
+                'status' => $license->status,
+                'license_type' => $license->license_type,
+                'expires_at' => $license->expires_at?->toISOString(),
+                'activations' => $license->activations,
+                'max_activations' => $license->max_activations,
+                'is_valid' => $license->isValid(),
+                'days_remaining' => $license->daysRemaining(),
+                'features' => $features,
+                'exchanges' => $exchanges,
+            ],
+        ]);
+    }
+
+    /**
+     * Start a demo/trial period
+     *
+     * POST /api/v1/autotradex/demo
+     */
+    public function startDemo(Request $request)
+    {
+        $validated = $request->validate([
+            'machine_id' => 'required|string|size:32',
+            'machine_name' => 'nullable|string|max:255',
+            'os_version' => 'nullable|string|max:255',
+        ]);
+
+        // Find the product
+        $product = Product::where('slug', self::PRODUCT_SLUG)->first();
+
+        if (! $product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
+                'error_code' => 'PRODUCT_NOT_FOUND',
+            ], 404);
+        }
+
+        // Check if this machine already has a demo
+        $existingDemo = LicenseKey::where('machine_id', $validated['machine_id'])
+            ->where('product_id', $product->id)
+            ->where('license_type', LicenseKey::TYPE_DEMO)
+            ->first();
+
+        if ($existingDemo) {
+            // Check if demo is expired
+            if ($existingDemo->isExpired()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your trial period has ended. Please purchase a license to continue using AutoTradeX.',
+                    'error_code' => 'TRIAL_EXPIRED',
+                    'expired_at' => $existingDemo->expires_at?->toISOString(),
+                ], 403);
+            }
+
+            // Return existing demo
+            return response()->json([
+                'success' => true,
+                'message' => 'Trial already active',
+                'data' => [
+                    'expires_at' => $existingDemo->expires_at?->toISOString(),
+                    'days_remaining' => $existingDemo->daysRemaining(),
+                    'features' => self::TRIAL_FEATURES,
+                    'exchanges' => self::EXCHANGES['trial'],
+                ],
+            ]);
+        }
+
+        // Create new demo license (7-day trial)
+        $demoKey = LicenseKey::generateDemoKey();
+        $demo = LicenseKey::create([
+            'product_id' => $product->id,
+            'license_key' => $demoKey,
+            'status' => LicenseKey::STATUS_ACTIVE,
+            'license_type' => LicenseKey::TYPE_DEMO,
+            'machine_id' => $validated['machine_id'],
+            'activated_at' => now(),
+            'expires_at' => now()->addDays(7), // 7-day trial
+            'max_activations' => 1,
+            'activations' => 1,
+            'metadata' => json_encode([
+                'machine_name' => $validated['machine_name'] ?? 'Unknown',
+                'os_version' => $validated['os_version'] ?? 'Unknown',
+                'ip' => $request->ip(),
+                'started_at' => now()->toISOString(),
+            ]),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trial started successfully. You have 7 days to explore AutoTradeX!',
+            'data' => [
+                'license_key' => $demo->license_key,
+                'expires_at' => $demo->expires_at->toISOString(),
+                'days_remaining' => 7,
+                'features' => self::TRIAL_FEATURES,
+                'exchanges' => self::EXCHANGES['trial'],
+            ],
+        ]);
+    }
+
+    /**
+     * Check demo status
+     *
+     * POST /api/v1/autotradex/demo/check
+     */
+    public function checkDemo(Request $request)
+    {
+        $validated = $request->validate([
+            'machine_id' => 'required|string|size:32',
+        ]);
+
+        $product = Product::where('slug', self::PRODUCT_SLUG)->first();
+
+        if (! $product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
+                'error_code' => 'PRODUCT_NOT_FOUND',
+            ], 404);
+        }
+
+        $demo = LicenseKey::where('machine_id', $validated['machine_id'])
+            ->where('product_id', $product->id)
+            ->where('license_type', LicenseKey::TYPE_DEMO)
+            ->first();
+
+        if (! $demo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No trial found for this machine',
+                'error_code' => 'NO_TRIAL',
+                'can_start_trial' => true,
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'is_valid' => $demo->isValid(),
+                'is_expired' => $demo->isExpired(),
+                'days_remaining' => $demo->daysRemaining(),
+                'expires_at' => $demo->expires_at?->toISOString(),
+                'features' => self::TRIAL_FEATURES,
+                'exchanges' => self::EXCHANGES['trial'],
+                'can_start_trial' => false,
+            ],
+        ]);
+    }
+
+    /**
+     * Get pricing and feature comparison
+     *
+     * GET /api/v1/autotradex/pricing
+     */
+    public function pricing()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'trial' => [
+                    'name' => 'Trial',
+                    'duration' => '7 days',
+                    'price' => 0,
+                    'features' => self::TRIAL_FEATURES,
+                    'exchanges' => self::EXCHANGES['trial'],
+                ],
+                'monthly' => [
+                    'name' => 'Monthly',
+                    'duration' => '30 days',
+                    'price' => 990,
+                    'currency' => 'THB',
+                    'features' => self::MONTHLY_FEATURES,
+                    'exchanges' => self::EXCHANGES['monthly'],
+                ],
+                'yearly' => [
+                    'name' => 'Yearly',
+                    'duration' => '365 days',
+                    'price' => 7900,
+                    'currency' => 'THB',
+                    'features' => self::YEARLY_FEATURES,
+                    'exchanges' => self::EXCHANGES['yearly'],
+                    'save_percent' => 33,
+                ],
+                'lifetime' => [
+                    'name' => 'Lifetime',
+                    'duration' => 'Forever',
+                    'price' => 19900,
+                    'currency' => 'THB',
+                    'features' => self::LIFETIME_FEATURES,
+                    'exchanges' => self::EXCHANGES['lifetime'],
+                ],
+            ],
+        ]);
+    }
+}
