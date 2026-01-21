@@ -216,6 +216,50 @@ sanitize_env_file() {
     fi
 }
 
+# Check and generate APP_KEY if missing
+check_app_key() {
+    print_step "Checking Application Key"
+
+    if [ ! -f .env ]; then
+        print_warning ".env file not found, skipping APP_KEY check"
+        return 0
+    fi
+
+    # Check if APP_KEY exists and is not empty
+    APP_KEY=$(grep "^APP_KEY=" .env | cut -d'=' -f2 | tr -d '[:space:]' || echo "")
+
+    if [ -z "$APP_KEY" ]; then
+        print_warning "APP_KEY is missing or empty"
+        print_info "Generating new application key..."
+
+        set +e
+        KEYGEN_OUTPUT=$(php artisan key:generate --force 2>&1)
+        KEYGEN_EXIT=$?
+        set -e
+
+        if [ $KEYGEN_EXIT -eq 0 ]; then
+            print_success "Application key generated successfully"
+
+            # Get the new key for display (masked)
+            NEW_KEY=$(grep "^APP_KEY=" .env | cut -d'=' -f2 || echo "")
+            if [ -n "$NEW_KEY" ]; then
+                # Mask the key for security (show only first 10 chars)
+                MASKED_KEY="${NEW_KEY:0:10}..."
+                print_info "New key (masked): $MASKED_KEY"
+            fi
+        else
+            print_error "Failed to generate application key"
+            log_error_detail "Key generation output: $KEYGEN_OUTPUT"
+            echo "$KEYGEN_OUTPUT"
+            return 1
+        fi
+    else
+        # Mask the existing key for security
+        MASKED_KEY="${APP_KEY:0:10}..."
+        print_success "Application key exists (masked): $MASKED_KEY"
+    fi
+}
+
 # Check if in production
 check_environment() {
     print_step "Checking Environment"
@@ -820,6 +864,7 @@ main() {
     trap on_error ERR
 
     sanitize_env_file
+    check_app_key
     check_environment
     enable_maintenance
     pull_code
@@ -907,21 +952,22 @@ if [ $DRY_RUN -eq 1 ]; then
     echo ""
     echo "Would execute the following steps:"
     echo "  1. Sanitize .env file (fix newlines, duplicates)"
-    echo "  2. Check environment (.env)"
-    echo "  3. Enable maintenance mode"
-    echo "  4. Pull code from branch: $BRANCH"
-    echo "  5. Update dependencies (composer, npm)"
-    echo "  6. Backup database"
-    echo "  7. Run migrations (auto-create migrations table if needed)"
-    echo "  8. Run seeders (SmartDatabaseSeeder if exists)"
-    echo "  9. Run always-run seeders (QuotationSeeder, etc.)"
-    echo "  10. Build assets (npm run build)"
-    echo "  11. Optimize application"
-    echo "  12. Fix permissions"
-    echo "  13. Restart queue workers"
-    echo "  14. Post-deployment tasks"
-    echo "  15. Disable maintenance mode"
-    echo "  16. Health check"
+    echo "  2. Check and generate APP_KEY if missing"
+    echo "  3. Check environment (.env)"
+    echo "  4. Enable maintenance mode"
+    echo "  5. Pull code from branch: $BRANCH"
+    echo "  6. Update dependencies (composer, npm)"
+    echo "  7. Backup database"
+    echo "  8. Run migrations (auto-create migrations table if needed)"
+    echo "  9. Run seeders (SmartDatabaseSeeder if exists)"
+    echo "  10. Run always-run seeders (QuotationSeeder, etc.)"
+    echo "  11. Build assets (npm run build)"
+    echo "  12. Optimize application"
+    echo "  13. Fix permissions"
+    echo "  14. Restart queue workers"
+    echo "  15. Post-deployment tasks"
+    echo "  16. Disable maintenance mode"
+    echo "  17. Health check"
     echo ""
     echo "Run without --dry-run to execute deployment."
     exit 0
