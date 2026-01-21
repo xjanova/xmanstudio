@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
+use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
@@ -212,6 +213,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/branding', [BrandingSettingsController::class, 'update'])->name('branding.update');
     Route::delete('/branding/logo', [BrandingSettingsController::class, 'deleteLogo'])->name('branding.logo.delete');
     Route::delete('/branding/favicon', [BrandingSettingsController::class, 'deleteFavicon'])->name('branding.favicon.delete');
+
+    // Custom Code Settings (Tracking & Verification)
+    Route::get('/custom-code', [CustomCodeController::class, 'index'])->name('custom-code.index');
+    Route::put('/custom-code', [CustomCodeController::class, 'update'])->name('custom-code.update');
+    Route::post('/custom-code/clear', [CustomCodeController::class, 'clear'])->name('custom-code.clear');
 
     // Line Messaging
     Route::get('/line-messaging', [LineMessagingController::class, 'index'])->name('line-messaging.index');
