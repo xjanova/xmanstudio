@@ -654,6 +654,15 @@ run_smart_seeding() {
         print_info "No seeders found, skipping"
     fi
 
+    # Reset seeder hashes if requested
+    reset_seeder_hashes
+
+    # Check for deleted seeders
+    cleanup_deleted_seeders
+
+    # Run seeders that have changed or are new
+    run_changed_seeders
+
     # Always run seeders that use updateOrCreate pattern (safe to run multiple times)
     run_always_seeders
 }
@@ -667,6 +676,7 @@ run_always_seeders() {
     # These use updateOrCreate and keep data in sync without duplicating
     ALWAYS_RUN_SEEDERS=(
         "QuotationSeeder"
+        "AutoTradeXSeeder"
     )
 
     for SEEDER in "${ALWAYS_RUN_SEEDERS[@]}"; do
@@ -697,6 +707,178 @@ run_always_seeders() {
             print_info "$SEEDER not found, skipping"
         fi
     done
+}
+
+# Smart seeder detection - run seeders that have changed or are new
+SEEDER_HASH_FILE="storage/.seeder_hashes"
+
+# Reset seeder hashes if --reseed flag is set
+reset_seeder_hashes() {
+    if [ "${RESEED:-0}" = "1" ]; then
+        print_info "Resetting seeder hash tracking (--reseed flag)"
+        rm -f "$SEEDER_HASH_FILE"
+        print_success "Seeder hashes cleared - all seeders will run"
+    fi
+}
+
+run_changed_seeders() {
+    print_step "Detecting Changed/New Seeders"
+
+    if [ ! -d "database/seeders" ]; then
+        print_info "No seeders directory found, skipping"
+        return 0
+    fi
+
+    # Create hash file if it doesn't exist
+    if [ ! -f "$SEEDER_HASH_FILE" ]; then
+        touch "$SEEDER_HASH_FILE"
+        print_info "Created seeder hash tracking file"
+    fi
+
+    local CHANGED_SEEDERS=()
+    local NEW_SEEDERS=()
+
+    # Get all seeder files (excluding DatabaseSeeder and SmartDatabaseSeeder)
+    for SEEDER_FILE in database/seeders/*Seeder.php; do
+        [ -f "$SEEDER_FILE" ] || continue
+
+        SEEDER_NAME=$(basename "$SEEDER_FILE" .php)
+
+        # Skip main seeders (they're handled separately)
+        if [[ "$SEEDER_NAME" == "DatabaseSeeder" ]] || [[ "$SEEDER_NAME" == "SmartDatabaseSeeder" ]]; then
+            continue
+        fi
+
+        # Skip always-run seeders (they're handled separately)
+        if [[ " ${ALWAYS_RUN_SEEDERS[@]} " =~ " ${SEEDER_NAME} " ]]; then
+            continue
+        fi
+
+        # Calculate current hash
+        CURRENT_HASH=$(md5sum "$SEEDER_FILE" | cut -d' ' -f1)
+
+        # Get stored hash
+        STORED_HASH=$(grep "^${SEEDER_NAME}:" "$SEEDER_HASH_FILE" 2>/dev/null | cut -d':' -f2 || echo "")
+
+        if [ -z "$STORED_HASH" ]; then
+            # New seeder
+            NEW_SEEDERS+=("$SEEDER_NAME")
+            print_info "New seeder detected: $SEEDER_NAME"
+        elif [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
+            # Changed seeder
+            CHANGED_SEEDERS+=("$SEEDER_NAME")
+            print_info "Changed seeder detected: $SEEDER_NAME"
+        fi
+    done
+
+    # Run new seeders
+    if [ ${#NEW_SEEDERS[@]} -gt 0 ]; then
+        print_info "Running ${#NEW_SEEDERS[@]} new seeder(s)..."
+        for SEEDER in "${NEW_SEEDERS[@]}"; do
+            run_single_seeder "$SEEDER"
+        done
+    fi
+
+    # Run changed seeders
+    if [ ${#CHANGED_SEEDERS[@]} -gt 0 ]; then
+        print_info "Running ${#CHANGED_SEEDERS[@]} changed seeder(s)..."
+        for SEEDER in "${CHANGED_SEEDERS[@]}"; do
+            run_single_seeder "$SEEDER"
+        done
+    fi
+
+    if [ ${#NEW_SEEDERS[@]} -eq 0 ] && [ ${#CHANGED_SEEDERS[@]} -eq 0 ]; then
+        print_success "No seeder changes detected"
+    fi
+
+    # Update hash file with all current seeders
+    update_seeder_hashes
+}
+
+# Run a single seeder and track result
+run_single_seeder() {
+    local SEEDER_NAME="$1"
+    local SEEDER_FILE="database/seeders/${SEEDER_NAME}.php"
+
+    if [ ! -f "$SEEDER_FILE" ]; then
+        print_warning "Seeder file not found: $SEEDER_FILE"
+        return 1
+    fi
+
+    print_info "Running $SEEDER_NAME..."
+
+    set +e
+    SEED_OUTPUT=$(php artisan db:seed --class="$SEEDER_NAME" --force 2>&1)
+    SEED_EXIT=$?
+    set -e
+
+    if [ $SEED_EXIT -ne 0 ]; then
+        print_warning "$SEEDER_NAME failed"
+        log_error_detail "$SEEDER_NAME output: $SEED_OUTPUT"
+
+        # Show specific error messages
+        if echo "$SEED_OUTPUT" | grep -q "Table .* doesn't exist"; then
+            print_info "Table not yet created, will retry on next deployment"
+        elif echo "$SEED_OUTPUT" | grep -q "Unknown column"; then
+            print_info "Schema mismatch detected, check migrations"
+        else
+            echo "$SEED_OUTPUT"
+        fi
+        return 1
+    else
+        print_success "$SEEDER_NAME completed"
+        return 0
+    fi
+}
+
+# Update the seeder hash file with current hashes
+update_seeder_hashes() {
+    print_info "Updating seeder hash tracking..."
+
+    # Create new hash file content
+    local NEW_HASHES=""
+
+    for SEEDER_FILE in database/seeders/*Seeder.php; do
+        [ -f "$SEEDER_FILE" ] || continue
+
+        SEEDER_NAME=$(basename "$SEEDER_FILE" .php)
+
+        # Skip main seeders
+        if [[ "$SEEDER_NAME" == "DatabaseSeeder" ]] || [[ "$SEEDER_NAME" == "SmartDatabaseSeeder" ]]; then
+            continue
+        fi
+
+        CURRENT_HASH=$(md5sum "$SEEDER_FILE" | cut -d' ' -f1)
+        NEW_HASHES="${NEW_HASHES}${SEEDER_NAME}:${CURRENT_HASH}\n"
+    done
+
+    # Write to file
+    echo -e "$NEW_HASHES" > "$SEEDER_HASH_FILE"
+    print_success "Seeder hashes updated"
+}
+
+# Check for deleted seeders and clean up hash file
+cleanup_deleted_seeders() {
+    if [ ! -f "$SEEDER_HASH_FILE" ]; then
+        return 0
+    fi
+
+    local DELETED=()
+
+    while IFS=':' read -r SEEDER_NAME HASH; do
+        [ -z "$SEEDER_NAME" ] && continue
+
+        SEEDER_FILE="database/seeders/${SEEDER_NAME}.php"
+        if [ ! -f "$SEEDER_FILE" ]; then
+            DELETED+=("$SEEDER_NAME")
+            print_info "Seeder removed: $SEEDER_NAME"
+        fi
+    done < "$SEEDER_HASH_FILE"
+
+    if [ ${#DELETED[@]} -gt 0 ]; then
+        print_warning "${#DELETED[@]} seeder(s) were deleted"
+        print_info "Note: Deleted seeders don't remove data automatically"
+    fi
 }
 
 # Build assets
@@ -937,6 +1119,11 @@ while [[ $# -gt 0 ]]; do
             FORCE_SEED=1
             shift
             ;;
+        --reseed)
+            # Reset seeder hashes to force re-run all seeders
+            RESEED=1
+            shift
+            ;;
         --verbose|-v)
             VERBOSE=1
             shift
@@ -952,9 +1139,17 @@ while [[ $# -gt 0 ]]; do
             echo "  --branch=NAME    Specify branch to deploy (default: main)"
             echo "  --no-backup      Skip database backup"
             echo "  --seed           Force run seeders"
+            echo "  --reseed         Reset seeder tracking and re-run all seeders"
             echo "  --dry-run        Show what would be done without executing"
             echo "  --verbose, -v    Show verbose output"
             echo "  --help, -h       Show this help message"
+            echo ""
+            echo "Seeder Tracking:"
+            echo "  The script tracks seeder file changes using MD5 hashes."
+            echo "  - New seeders are automatically detected and run"
+            echo "  - Changed seeders are automatically re-run"
+            echo "  - updateOrCreate seeders (QuotationSeeder, AutoTradeXSeeder) always run"
+            echo "  - Use --reseed to force re-run all seeders"
             echo ""
             exit 0
             ;;
@@ -981,14 +1176,15 @@ if [ $DRY_RUN -eq 1 ]; then
     echo "  7. Backup database"
     echo "  8. Run migrations (auto-create migrations table if needed)"
     echo "  9. Run seeders (SmartDatabaseSeeder if exists)"
-    echo "  10. Run always-run seeders (QuotationSeeder, etc.)"
-    echo "  11. Build assets (npm run build)"
-    echo "  12. Optimize application"
-    echo "  13. Fix permissions"
-    echo "  14. Restart queue workers"
-    echo "  15. Post-deployment tasks"
-    echo "  16. Disable maintenance mode"
-    echo "  17. Health check"
+    echo "  10. Detect and run changed/new seeders (smart hash tracking)"
+    echo "  11. Run always-run seeders (QuotationSeeder, AutoTradeXSeeder)"
+    echo "  12. Build assets (npm run build)"
+    echo "  13. Optimize application"
+    echo "  14. Fix permissions"
+    echo "  15. Restart queue workers"
+    echo "  16. Post-deployment tasks"
+    echo "  17. Disable maintenance mode"
+    echo "  18. Health check"
     echo ""
     echo "Run without --dry-run to execute deployment."
     exit 0
