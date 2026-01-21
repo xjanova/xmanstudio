@@ -12,9 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('banners', function (Blueprint $table) {
-            $table->json('crop_data')->nullable()->after('image')->comment('Image crop position data');
-            $table->integer('display_width')->nullable()->after('crop_data')->comment('Banner display width in pixels');
-            $table->integer('display_height')->nullable()->after('display_width')->comment('Banner display height in pixels');
+            $table->json('crop_data')->nullable()->after('image')
+                ->comment('Image crop position data');
+            $table->integer('display_width')->nullable()->after('crop_data')
+                ->comment('Banner display width in pixels');
+            $table->integer('display_height')->nullable()->after('display_width')
+                ->comment('Banner display height in pixels');
         });
     }
 
