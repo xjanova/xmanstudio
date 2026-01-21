@@ -96,7 +96,7 @@ Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::get('/ads.txt', function () {
     $setting = AdsTxtSetting::getInstance();
 
-    if (!$setting->enabled || empty($setting->content)) {
+    if (! $setting->enabled || empty($setting->content)) {
         abort(404);
     }
 
