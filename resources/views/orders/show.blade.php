@@ -121,32 +121,123 @@
             @endif
 
             <!-- Payment Info -->
-            @if($order->status === 'pending')
+            @if($order->payment_status === 'pending')
                 <div class="bg-white rounded-lg shadow p-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-4">ข้อมูลการชำระเงิน</h2>
 
-                    @if($order->payment_method === 'promptpay')
+                    @if($order->payment_method === 'promptpay' && isset($paymentInfo['qr_image_url']))
                         <div class="text-center">
-                            <p class="text-gray-600 mb-4">สแกน QR Code เพื่อชำระเงิน</p>
-                            <div class="inline-block p-4 bg-white border-2 border-gray-200 rounded-lg">
-                                <!-- QR Code would be generated here -->
-                                <div class="w-48 h-48 bg-gray-100 flex items-center justify-center">
-                                    <span class="text-gray-400">QR Code</span>
-                                </div>
+                            <p class="text-gray-600 mb-4">สแกน QR Code ด้วยแอปธนาคารเพื่อชำระเงิน</p>
+                            <div class="inline-block p-4 bg-white border-2 border-primary-200 rounded-xl shadow-lg">
+                                <img src="{{ $paymentInfo['qr_image_url'] }}" alt="PromptPay QR Code" class="w-64 h-64">
                             </div>
-                            <p class="mt-4 text-2xl font-bold text-gray-900">{{ number_format($order->total, 2) }} บาท</p>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-500">พร้อมเพย์: {{ $paymentInfo['promptpay_number'] ?? 'N/A' }}</p>
+                                <p class="mt-2 text-3xl font-bold text-primary-600">{{ number_format($order->total, 2) }} บาท</p>
+                            </div>
+                            <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p class="text-sm text-yellow-700">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    อ้างอิง: {{ $order->order_number }}
+                                </p>
+                            </div>
                         </div>
-                    @else
+                    @elseif($order->payment_method === 'bank_transfer' && is_array($paymentInfo))
                         <div class="space-y-4">
                             <p class="text-gray-600">โปรดโอนเงินไปยังบัญชีด้านล่าง:</p>
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <p class="font-semibold">ธนาคาร: กสิกรไทย</p>
-                                <p class="font-mono text-lg">123-4-56789-0</p>
-                                <p class="text-gray-600">ชื่อบัญชี: บริษัท XMAN Studio จำกัด</p>
+                            @foreach($paymentInfo as $bank)
+                                <div class="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                                    <div class="flex items-center mb-2">
+                                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                                            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-900">{{ $bank['bank'] }}</p>
+                                            @if(isset($bank['branch']))
+                                                <p class="text-xs text-gray-500">สาขา: {{ $bank['branch'] }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="ml-13 pl-13">
+                                        <p class="font-mono text-xl font-bold text-gray-900 tracking-wider">{{ $bank['account_number'] }}</p>
+                                        <p class="text-gray-600">{{ $bank['account_name'] }}</p>
+                                    </div>
+                                </div>
+                            @endforeach
+                            <div class="text-center pt-4 border-t">
+                                <p class="text-sm text-gray-500 mb-1">ยอดที่ต้องชำระ</p>
+                                <p class="text-3xl font-bold text-primary-600">{{ number_format($order->total, 2) }} บาท</p>
                             </div>
-                            <p class="text-2xl font-bold text-center text-gray-900">{{ number_format($order->total, 2) }} บาท</p>
+                            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p class="text-sm text-yellow-700">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    กรุณาระบุเลขที่คำสั่งซื้อ <strong>{{ $order->order_number }}</strong> ในช่องหมายเหตุ
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center py-8">
+                            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <p class="text-gray-500">ข้อมูลการชำระเงินไม่พร้อมใช้งาน</p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2">{{ number_format($order->total, 2) }} บาท</p>
                         </div>
                     @endif
+
+                    <!-- Upload Payment Slip -->
+                    <div class="mt-6 pt-6 border-t">
+                        <h3 class="text-md font-semibold text-gray-900 mb-3">แนบหลักฐานการชำระเงิน</h3>
+                        <form action="{{ route('orders.confirm-payment', $order) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">อัพโหลดสลิปโอนเงิน</label>
+                                    <input type="file" name="payment_slip" accept="image/*" required
+                                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                                </div>
+                                <button type="submit"
+                                        class="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold transition">
+                                    ยืนยันการชำระเงิน
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            @elseif($order->payment_status === 'verifying')
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="text-center py-6">
+                        <div class="w-16 h-16 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900">กำลังตรวจสอบการชำระเงิน</h3>
+                        <p class="text-gray-500 mt-2">เราได้รับหลักฐานการชำระเงินแล้ว และกำลังดำเนินการตรวจสอบ</p>
+                        @if($order->payment_slip)
+                            <div class="mt-4">
+                                <img src="{{ asset('storage/' . $order->payment_slip) }}" alt="Payment Slip" class="max-w-xs mx-auto rounded-lg shadow">
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @elseif($order->payment_status === 'paid')
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="text-center py-6">
+                        <div class="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900">ชำระเงินสำเร็จ</h3>
+                        <p class="text-gray-500 mt-2">ขอบคุณสำหรับการชำระเงิน คำสั่งซื้อของคุณกำลังดำเนินการ</p>
+                    </div>
                 </div>
             @endif
         </div>
