@@ -72,37 +72,37 @@ class SeoSetting extends Model
         $tags = [];
 
         // Basic meta tags
-        $tags[] = '<meta name="description" content="' . e($description) . '">';
+        $tags[] = '<meta name="description" content="'.e($description).'">';
         if ($this->site_keywords) {
-            $tags[] = '<meta name="keywords" content="' . e($this->site_keywords) . '">';
+            $tags[] = '<meta name="keywords" content="'.e($this->site_keywords).'">';
         }
         if ($this->site_author) {
-            $tags[] = '<meta name="author" content="' . e($this->site_author) . '">';
+            $tags[] = '<meta name="author" content="'.e($this->site_author).'">';
         }
 
         // Open Graph
-        $tags[] = '<meta property="og:title" content="' . e($title) . '">';
-        $tags[] = '<meta property="og:description" content="' . e($description) . '">';
-        $tags[] = '<meta property="og:image" content="' . e($image) . '">';
-        $tags[] = '<meta property="og:url" content="' . e(url()->current()) . '">';
+        $tags[] = '<meta property="og:title" content="'.e($title).'">';
+        $tags[] = '<meta property="og:description" content="'.e($description).'">';
+        $tags[] = '<meta property="og:image" content="'.e($image).'">';
+        $tags[] = '<meta property="og:url" content="'.e(url()->current()).'">';
         $tags[] = '<meta property="og:type" content="website">';
-        $tags[] = '<meta property="og:site_name" content="' . e($this->site_name) . '">';
+        $tags[] = '<meta property="og:site_name" content="'.e($this->site_name).'">';
 
         // Twitter Card
         $tags[] = '<meta name="twitter:card" content="summary_large_image">';
-        $tags[] = '<meta name="twitter:title" content="' . e($title) . '">';
-        $tags[] = '<meta name="twitter:description" content="' . e($description) . '">';
-        $tags[] = '<meta name="twitter:image" content="' . e($image) . '">';
+        $tags[] = '<meta name="twitter:title" content="'.e($title).'">';
+        $tags[] = '<meta name="twitter:description" content="'.e($description).'">';
+        $tags[] = '<meta name="twitter:image" content="'.e($image).'">';
         if ($this->twitter_site) {
-            $tags[] = '<meta name="twitter:site" content="' . e($this->twitter_site) . '">';
+            $tags[] = '<meta name="twitter:site" content="'.e($this->twitter_site).'">';
         }
         if ($this->twitter_creator) {
-            $tags[] = '<meta name="twitter:creator" content="' . e($this->twitter_creator) . '">';
+            $tags[] = '<meta name="twitter:creator" content="'.e($this->twitter_creator).'">';
         }
 
         // Google verification
         if ($this->google_site_verification) {
-            $tags[] = '<meta name="google-site-verification" content="' . e($this->google_site_verification) . '">';
+            $tags[] = '<meta name="google-site-verification" content="'.e($this->google_site_verification).'">';
         }
 
         return implode("\n    ", $tags);
@@ -119,6 +119,6 @@ class SeoSetting extends Model
             $data = array_merge($data, $additionalData);
         }
 
-        return '<script type="application/ld+json">' . json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . '</script>';
+        return '<script type="application/ld+json">'.json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT).'</script>';
     }
 }

@@ -45,7 +45,7 @@ return new class extends Migration
                 'Disallow: /admin/',
                 'Disallow: /api/',
                 '',
-                'Sitemap: ' . url('/sitemap.xml'),
+                'Sitemap: '.url('/sitemap.xml'),
             ]),
             'structured_data' => json_encode([
                 '@context' => 'https://schema.org',
