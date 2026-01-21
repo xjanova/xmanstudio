@@ -192,7 +192,7 @@
                     @php
                         $siteLogo = \App\Models\Setting::getValue('site_logo');
                     @endphp
-                    @if($siteLogo)
+                    @if ($siteLogo)
                         <img src="{{ asset('storage/' . $siteLogo) }}"
                              alt="Logo"
                              class="logo-image">
