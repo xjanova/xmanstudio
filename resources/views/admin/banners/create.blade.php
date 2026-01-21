@@ -1,0 +1,200 @@
+@extends('layouts.admin')
+
+@section('title', 'Create Banner')
+@section('page-title', 'เพิ่มแบนเนอร์ใหม่')
+
+@section('content')
+<div class="space-y-6">
+    <div class="flex items-center space-x-4">
+        <a href="{{ route('admin.banners.index') }}" class="text-gray-600 hover:text-gray-900">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+        </a>
+        <h2 class="text-xl font-semibold">กลับไปรายการแบนเนอร์</h2>
+    </div>
+
+    @if($errors->any())
+        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+            <div class="font-semibold mb-2">กรุณาแก้ไขข้อผิดพลาด:</div>
+            <ul class="list-disc list-inside">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form action="{{ route('admin.banners.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        @csrf
+
+        <!-- Basic Info -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">ข้อมูลพื้นฐาน</h3>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อแบนเนอร์ *</label>
+                    <input type="text" name="title" value="{{ old('title') }}"
+                           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">รูปภาพแบนเนอร์ *</label>
+                    <input type="file" name="image" accept="image/*" required
+                           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500"
+                           onchange="previewImage(event)">
+                    <p class="text-xs text-gray-500 mt-1">รองรับ: JPG, PNG, GIF, WebP (สูงสุด 5MB)</p>
+                    <div id="image-preview" class="mt-3 hidden">
+                        <img id="preview-img" src="" alt="Preview" class="max-h-48 rounded border border-gray-300">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ลิงก์ URL</label>
+                    <input type="url" name="link_url" value="{{ old('link_url') }}"
+                           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500"
+                           placeholder="https://example.com">
+                    <p class="text-xs text-gray-500 mt-1">URL ที่จะเปิดเมื่อคลิกแบนเนอร์</p>
+                </div>
+
+                <div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="target_blank" value="1" class="sr-only peer" {{ old('target_blank', true) ? 'checked' : '' }}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <span class="ml-3 text-sm font-medium text-gray-900">เปิดลิงก์ในแท็บใหม่</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">คำอธิบาย</label>
+                    <textarea name="description" rows="2"
+                              class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500">{{ old('description') }}</textarea>
+                </div>
+
+                <div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="enabled" value="1" class="sr-only peer" {{ old('enabled') ? 'checked' : '' }}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <span class="ml-3 text-sm font-medium text-gray-900">เปิดใช้งานแบนเนอร์นี้</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Position & Pages -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">ตำแหน่งและหน้าที่แสดง</h3>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ตำแหน่งแบนเนอร์ *</label>
+                    <select name="position" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500" required>
+                        <option value="header" {{ old('position') === 'header' ? 'selected' : '' }}>Header Top</option>
+                        <option value="sidebar" {{ old('position') === 'sidebar' ? 'selected' : '' }}>Sidebar</option>
+                        <option value="in-content" {{ old('position') === 'in-content' ? 'selected' : '' }}>In Content</option>
+                        <option value="footer" {{ old('position') === 'footer' ? 'selected' : '' }}>Footer Above</option>
+                        <option value="between-products" {{ old('position') === 'between-products' ? 'selected' : '' }}>Between Products</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">หน้าที่จะแสดงแบนเนอร์ *</label>
+                    <div class="space-y-2">
+                        @php
+                            $selectedPages = old('pages', []);
+                        @endphp
+                        <label class="flex items-center">
+                            <input type="checkbox" name="pages[]" value="all" {{ in_array('all', $selectedPages) ? 'checked' : '' }}
+                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="ml-2 text-sm text-gray-700">ทุกหน้า</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="pages[]" value="home" {{ in_array('home', $selectedPages) ? 'checked' : '' }}
+                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="ml-2 text-sm text-gray-700">หน้าแรก</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="pages[]" value="products" {{ in_array('products', $selectedPages) ? 'checked' : '' }}
+                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="ml-2 text-sm text-gray-700">หน้าผลิตภัณฑ์</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="pages[]" value="services" {{ in_array('services', $selectedPages) ? 'checked' : '' }}
+                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="ml-2 text-sm text-gray-700">หน้าบริการ</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="pages[]" value="support" {{ in_array('support', $selectedPages) ? 'checked' : '' }}
+                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="ml-2 text-sm text-gray-700">หน้าสนับสนุน/ใบเสนอราคา</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="pages[]" value="rental" {{ in_array('rental', $selectedPages) ? 'checked' : '' }}
+                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="ml-2 text-sm text-gray-700">หน้าแพ็กเกจเช่า</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Priority (ลำดับความสำคัญ)</label>
+                    <input type="number" name="priority" value="{{ old('priority', 5) }}" min="0" max="100"
+                           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">ตัวเลขที่สูงกว่าจะแสดงก่อน (0-100)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Schedule -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">กำหนดเวลาการแสดงผล</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เริ่มแสดง</label>
+                    <input type="datetime-local" name="start_date" value="{{ old('start_date') }}"
+                           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">เว้นว่างหากต้องการแสดงทันที</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">วันที่สิ้นสุด</label>
+                    <input type="datetime-local" name="end_date" value="{{ old('end_date') }}"
+                           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">เว้นว่างหากไม่มีวันสิ้นสุด</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end space-x-3">
+            <a href="{{ route('admin.banners.index') }}"
+               class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                ยกเลิก
+            </a>
+            <button type="submit"
+                    class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 transition-colors">
+                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                สร้างแบนเนอร์
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function previewImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('image-preview').classList.remove('hidden');
+        }
+        reader.readAsDataURL(file);
+    }
+}
+</script>
+@endsection
