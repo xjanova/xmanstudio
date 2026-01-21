@@ -30,8 +30,24 @@
             document.documentElement.classList.add('dark');
         }
     </script>
+
+    <!-- Custom Head Code (Tracking & Verification) -->
+    @php
+        $customHeadCode = \App\Models\Setting::getValue('custom_code_head', '');
+    @endphp
+    @if($customHeadCode)
+        {!! $customHeadCode !!}
+    @endif
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Custom Body Start Code (Tracking noscript) -->
+    @php
+        $customBodyStartCode = \App\Models\Setting::getValue('custom_code_body_start', '');
+    @endphp
+    @if($customBodyStartCode)
+        {!! $customBodyStartCode !!}
+    @endif
+
     <!-- RGB Fireflies - Fixed Top Layer (Global) -->
     <div id="fireflies-layer" class="fireflies-fixed-layer"></div>
 
@@ -390,5 +406,13 @@
     </script>
 
     @stack('scripts')
+
+    <!-- Custom Body End Code (Chat widgets, Tracking pixels) -->
+    @php
+        $customBodyEndCode = \App\Models\Setting::getValue('custom_code_body_end', '');
+    @endphp
+    @if($customBodyEndCode)
+        {!! $customBodyEndCode !!}
+    @endif
 </body>
 </html>

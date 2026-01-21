@@ -13,8 +13,24 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <!-- Custom Head Code (Tracking & Verification) -->
+        @php
+            $customHeadCode = \App\Models\Setting::getValue('custom_code_head', '');
+        @endphp
+        @if($customHeadCode)
+            {!! $customHeadCode !!}
+        @endif
     </head>
     <body class="font-sans text-gray-900 antialiased">
+        <!-- Custom Body Start Code (Tracking noscript) -->
+        @php
+            $customBodyStartCode = \App\Models\Setting::getValue('custom_code_body_start', '');
+        @endphp
+        @if($customBodyStartCode)
+            {!! $customBodyStartCode !!}
+        @endif
+
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
             <div>
                 <a href="/">
@@ -26,5 +42,13 @@
                 {{ $slot }}
             </div>
         </div>
+
+        <!-- Custom Body End Code (Chat widgets, Tracking pixels) -->
+        @php
+            $customBodyEndCode = \App\Models\Setting::getValue('custom_code_body_end', '');
+        @endphp
+        @if($customBodyEndCode)
+            {!! $customBodyEndCode !!}
+        @endif
     </body>
 </html>
