@@ -517,41 +517,76 @@ class AutoTradeXLicenseController extends Controller
      */
     public function pricing()
     {
+        $baseUrl = config('app.url');
+
         return response()->json([
             'success' => true,
             'data' => [
-                'trial' => [
-                    'name' => 'Trial',
-                    'duration' => '7 days',
-                    'price' => 0,
-                    'features' => self::TRIAL_FEATURES,
-                    'exchanges' => self::EXCHANGES['trial'],
+                'purchase_url' => "{$baseUrl}/autotradex/buy",
+                'pricing_page' => "{$baseUrl}/autotradex/pricing",
+                'plans' => [
+                    'trial' => [
+                        'name' => 'Trial',
+                        'duration' => '7 days',
+                        'price' => 0,
+                        'features' => self::TRIAL_FEATURES,
+                        'exchanges' => self::EXCHANGES['trial'],
+                    ],
+                    'monthly' => [
+                        'name' => 'Monthly',
+                        'duration' => '30 days',
+                        'price' => 990,
+                        'currency' => 'THB',
+                        'features' => self::MONTHLY_FEATURES,
+                        'exchanges' => self::EXCHANGES['monthly'],
+                        'purchase_url' => "{$baseUrl}/autotradex/checkout/monthly",
+                    ],
+                    'yearly' => [
+                        'name' => 'Yearly',
+                        'duration' => '365 days',
+                        'price' => 7900,
+                        'currency' => 'THB',
+                        'features' => self::YEARLY_FEATURES,
+                        'exchanges' => self::EXCHANGES['yearly'],
+                        'save_percent' => 33,
+                        'purchase_url' => "{$baseUrl}/autotradex/checkout/yearly",
+                    ],
+                    'lifetime' => [
+                        'name' => 'Lifetime',
+                        'duration' => 'Forever',
+                        'price' => 19900,
+                        'currency' => 'THB',
+                        'features' => self::LIFETIME_FEATURES,
+                        'exchanges' => self::EXCHANGES['lifetime'],
+                        'purchase_url' => "{$baseUrl}/autotradex/checkout/lifetime",
+                    ],
                 ],
-                'monthly' => [
-                    'name' => 'Monthly',
-                    'duration' => '30 days',
-                    'price' => 990,
-                    'currency' => 'THB',
-                    'features' => self::MONTHLY_FEATURES,
-                    'exchanges' => self::EXCHANGES['monthly'],
-                ],
-                'yearly' => [
-                    'name' => 'Yearly',
-                    'duration' => '365 days',
-                    'price' => 7900,
-                    'currency' => 'THB',
-                    'features' => self::YEARLY_FEATURES,
-                    'exchanges' => self::EXCHANGES['yearly'],
-                    'save_percent' => 33,
-                ],
-                'lifetime' => [
-                    'name' => 'Lifetime',
-                    'duration' => 'Forever',
-                    'price' => 19900,
-                    'currency' => 'THB',
-                    'features' => self::LIFETIME_FEATURES,
-                    'exchanges' => self::EXCHANGES['lifetime'],
-                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Get purchase URL - for app to open browser
+     *
+     * GET /api/v1/autotradex/purchase-url
+     */
+    public function purchaseUrl(Request $request)
+    {
+        $baseUrl = config('app.url');
+        $plan = $request->query('plan', 'yearly'); // Default to best value
+        $machineId = $request->query('machine_id', '');
+
+        $url = "{$baseUrl}/autotradex/buy?plan={$plan}";
+
+        if ($machineId) {
+            $url .= "&machine_id={$machineId}";
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'url' => $url,
+                'plan' => $plan,
             ],
         ]);
     }
