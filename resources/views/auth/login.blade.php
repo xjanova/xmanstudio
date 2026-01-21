@@ -9,10 +9,80 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* Warp Drive Effect */
+        .warp-container {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            overflow: hidden;
+            perspective: 500px;
+        }
+
+        .warp-stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        .warp-stars-1 {
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #ff0000, transparent),
+                radial-gradient(2px 2px at 60px 80px, #00ff00, transparent),
+                radial-gradient(2px 2px at 100px 40px, #0000ff, transparent),
+                radial-gradient(2px 2px at 140px 90px, #ff00ff, transparent),
+                radial-gradient(2px 2px at 180px 60px, #00ffff, transparent),
+                radial-gradient(2px 2px at 220px 120px, #ffff00, transparent),
+                radial-gradient(2px 2px at 260px 30px, #ff0080, transparent),
+                radial-gradient(2px 2px at 300px 100px, #80ff00, transparent),
+                radial-gradient(2px 2px at 340px 70px, #0080ff, transparent),
+                radial-gradient(2px 2px at 380px 110px, #ff8000, transparent);
+            background-size: 400px 150px;
+            animation: warpSpeed 0.5s linear infinite;
+        }
+
+        .warp-stars-2 {
+            background-image:
+                radial-gradient(3px 3px at 30px 50px, #00ff80, transparent),
+                radial-gradient(3px 3px at 80px 110px, #8000ff, transparent),
+                radial-gradient(3px 3px at 130px 30px, #ff0040, transparent),
+                radial-gradient(3px 3px at 180px 80px, #40ff00, transparent),
+                radial-gradient(3px 3px at 230px 120px, #0040ff, transparent),
+                radial-gradient(3px 3px at 280px 50px, #ff4000, transparent),
+                radial-gradient(3px 3px at 330px 90px, #00ff40, transparent),
+                radial-gradient(3px 3px at 370px 60px, #4000ff, transparent);
+            background-size: 400px 180px;
+            animation: warpSpeed 0.4s linear infinite;
+            animation-delay: -0.2s;
+        }
+
+        .warp-stars-3 {
+            background-image:
+                radial-gradient(4px 4px at 50px 40px, #ff00ff, transparent),
+                radial-gradient(4px 4px at 120px 100px, #00ffff, transparent),
+                radial-gradient(4px 4px at 200px 60px, #ffff00, transparent),
+                radial-gradient(4px 4px at 280px 120px, #ff0000, transparent),
+                radial-gradient(4px 4px at 350px 80px, #00ff00, transparent);
+            background-size: 400px 160px;
+            animation: warpSpeed 0.3s linear infinite;
+            animation-delay: -0.1s;
+        }
+
+        @keyframes warpSpeed {
+            0% {
+                transform: translateZ(0px) scale(1);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateZ(600px) scale(2.5);
+                opacity: 0;
+            }
         }
 
         @keyframes fadeInUp {
@@ -24,12 +94,6 @@
                 opacity: 1;
                 transform: translateY(0);
             }
-        }
-
-        .animate-gradient {
-            background: linear-gradient(-45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #667eea 100%);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
         }
 
         .glass-card {
@@ -133,25 +197,27 @@
         }
 
         .logo-container {
-            width: 150px;
-            height: 150px;
+            width: 100%;
+            padding: 0 10px;
             margin: 0 auto 2rem;
             position: relative;
         }
 
         .logo-image {
             width: 100%;
-            height: 100%;
+            height: auto;
+            max-height: 200px;
             object-fit: contain;
         }
     </style>
 </head>
 <body class="antialiased">
-    <!-- Animated Gradient Background -->
-    <div class="fixed inset-0 animate-gradient"></div>
-
-    <!-- Particles Container -->
-    <div id="particles-container" class="fixed inset-0 overflow-hidden pointer-events-none"></div>
+    <!-- Warp Drive Background -->
+    <div class="warp-container">
+        <div class="warp-stars warp-stars-1"></div>
+        <div class="warp-stars warp-stars-2"></div>
+        <div class="warp-stars warp-stars-3"></div>
+    </div>
 
     <!-- Main Content -->
     <div class="relative min-h-screen flex items-center justify-center p-4">

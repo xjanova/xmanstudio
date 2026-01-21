@@ -261,7 +261,7 @@
         radial-gradient(1px 1px at 320px 180px, white, transparent),
         radial-gradient(2px 2px at 360px 60px, rgba(255,255,255,0.9), transparent);
     background-size: 400px 200px;
-    animation: hyperdrive 0.8s linear infinite;
+    animation: hyperdrive 1.6s linear infinite;
 }
 
 .hyperdrive-stars-2 {
@@ -275,8 +275,8 @@
         radial-gradient(1px 1px at 350px 30px, white, transparent),
         radial-gradient(2px 2px at 380px 120px, rgba(255,255,255,0.8), transparent);
     background-size: 400px 250px;
-    animation: hyperdrive 0.6s linear infinite;
-    animation-delay: -0.3s;
+    animation: hyperdrive 1.2s linear infinite;
+    animation-delay: -0.6s;
 }
 
 .hyperdrive-stars-3 {
@@ -289,8 +289,8 @@
         radial-gradient(1px 1px at 300px 50px, rgba(100,200,255,0.8), transparent),
         radial-gradient(2px 2px at 350px 130px, rgba(255,100,200,0.9), transparent);
     background-size: 400px 220px;
-    animation: hyperdrive 1s linear infinite;
-    animation-delay: -0.5s;
+    animation: hyperdrive 2s linear infinite;
+    animation-delay: -1s;
 }
 
 @keyframes hyperdrive {
