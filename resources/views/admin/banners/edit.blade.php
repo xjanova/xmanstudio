@@ -42,16 +42,12 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">รูปภาพแบนเนอร์</label>
-                    <div class="mb-3">
-                        <img src="{{ $banner->image_url }}" alt="{{ $banner->title }}" class="max-h-32 rounded border border-gray-300">
-                    </div>
-                    <input type="file" name="image" accept="image/*"
-                           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500"
-                           onchange="previewImage(event)">
-                    <p class="text-xs text-gray-500 mt-1">เว้นว่างหากไม่ต้องการเปลี่ยนรูป | รองรับ: JPG, PNG, GIF, WebP (สูงสุด 5MB)</p>
-                    <div id="image-preview" class="mt-3 hidden">
-                        <img id="preview-img" src="" alt="Preview" class="max-h-48 rounded border border-gray-300">
-                    </div>
+                    <input type="file" name="image" id="image-upload" accept="image/*"
+                           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500 mb-3">
+                    <p class="text-xs text-gray-500 mb-3">อัปโหลดรูปใหม่หากต้องการเปลี่ยน | รองรับ: JPG, PNG, GIF, WebP (สูงสุด 5MB)</p>
+
+                    <!-- Banner Cropper -->
+                    <div id="banner-cropper-container"></div>
                 </div>
 
                 <div>
@@ -209,17 +205,39 @@
     </form>
 </div>
 
+<script src="{{ asset('js/banner-cropper.js') }}"></script>
 <script>
-function previewImage(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('preview-img').src = e.target.result;
-            document.getElementById('image-preview').classList.remove('hidden');
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize banner cropper
+    bannerCropper = new BannerCropper('banner-cropper-container', {
+        aspectRatio: 16/9,
+        minWidth: 800,
+        minHeight: 400
+    });
+
+    // Load existing image and crop data
+    const existingImageUrl = '{{ $banner->image_url }}';
+    const existingCropData = @json($banner->crop_data);
+    const displayWidth = {{ $banner->display_width ?? 1200 }};
+    const displayHeight = {{ $banner->display_height ?? 630 }};
+
+    if (existingImageUrl) {
+        bannerCropper.loadExistingCrop(existingImageUrl, existingCropData);
+
+        // Set display size inputs
+        if (displayWidth && displayHeight) {
+            document.getElementById('display-width-input').value = displayWidth;
+            document.getElementById('display-height-input').value = displayHeight;
         }
-        reader.readAsDataURL(file);
     }
-}
+
+    // Handle new image upload
+    document.getElementById('image-upload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            bannerCropper.loadImage(file);
+        }
+    });
+});
 </script>
 @endsection

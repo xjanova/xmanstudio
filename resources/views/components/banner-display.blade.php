@@ -1,20 +1,40 @@
 @if($banner && $banner->isActive())
-<div class="banner-placement banner-{{ $position }}" data-position="{{ $position }}" data-page="{{ $page }}" data-banner-id="{{ $banner->id }}">
+@php
+    $displayWidth = $banner->display_width ?? 1200;
+    $displayHeight = $banner->display_height ?? 630;
+    $cropData = $banner->crop_data;
+
+    // Calculate object-position from crop data
+    $style = '';
+    if ($cropData && isset($cropData['x']) && isset($cropData['y'])) {
+        $offsetX = -($cropData['x'] * $cropData['scale']);
+        $offsetY = -($cropData['y'] * $cropData['scale']);
+        $style = sprintf('object-position: %dpx %dpx;', $offsetX, $offsetY);
+    }
+@endphp
+
+<div class="banner-placement banner-{{ $position }}"
+     data-position="{{ $position }}"
+     data-page="{{ $page }}"
+     data-banner-id="{{ $banner->id }}"
+     style="position: relative; overflow: hidden; width: 100%; max-width: {{ $displayWidth }}px; aspect-ratio: {{ $displayWidth }}/{{ $displayHeight }};">
+
     @if($banner->link_url)
         <a href="{{ $banner->link_url }}"
            {{ $banner->target_blank ? 'target="_blank" rel="noopener noreferrer"' : '' }}
            class="banner-link block"
            data-banner-id="{{ $banner->id }}"
-           onclick="trackBannerClick({{ $banner->id }})">
+           onclick="trackBannerClick({{ $banner->id }})"
+           style="display: block; width: 100%; height: 100%;">
             <img src="{{ $banner->image_url }}"
                  alt="{{ $banner->title }}"
-                 class="w-full h-auto"
+                 style="width: 100%; height: 100%; object-fit: cover; {{ $style }}"
                  loading="lazy">
         </a>
     @else
         <img src="{{ $banner->image_url }}"
              alt="{{ $banner->title }}"
-             class="w-full h-auto"
+             style="width: 100%; height: 100%; object-fit: cover; {{ $style }}"
              loading="lazy">
     @endif
 </div>

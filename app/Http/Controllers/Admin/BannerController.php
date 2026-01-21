@@ -37,6 +37,9 @@ class BannerController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:5120',
+            'crop_data' => 'nullable|json',
+            'display_width' => 'nullable|integer|min:100|max:5000',
+            'display_height' => 'nullable|integer|min:100|max:5000',
             'link_url' => 'nullable|url|max:500',
             'position' => 'required|string',
             'pages' => 'required|array',
@@ -52,6 +55,9 @@ class BannerController extends Controller
         Banner::create([
             'title' => $request->input('title'),
             'image' => $imagePath,
+            'crop_data' => $request->input('crop_data') ? json_decode($request->input('crop_data'), true) : null,
+            'display_width' => $request->input('display_width'),
+            'display_height' => $request->input('display_height'),
             'link_url' => $request->input('link_url'),
             'target_blank' => $request->has('target_blank'),
             'enabled' => $request->has('enabled'),
@@ -84,6 +90,9 @@ class BannerController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:5120',
+            'crop_data' => 'nullable|json',
+            'display_width' => 'nullable|integer|min:100|max:5000',
+            'display_height' => 'nullable|integer|min:100|max:5000',
             'link_url' => 'nullable|url|max:500',
             'position' => 'required|string',
             'pages' => 'required|array',
@@ -105,6 +114,13 @@ class BannerController extends Controller
             'end_date' => $request->input('end_date'),
             'description' => $request->input('description'),
         ];
+
+        // Update crop data if provided
+        if ($request->has('crop_data')) {
+            $data['crop_data'] = $request->input('crop_data') ? json_decode($request->input('crop_data'), true) : null;
+            $data['display_width'] = $request->input('display_width');
+            $data['display_height'] = $request->input('display_height');
+        }
 
         // Upload new image if provided
         if ($request->hasFile('image')) {

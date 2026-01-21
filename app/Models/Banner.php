@@ -19,6 +19,9 @@ class Banner extends Model
     protected $fillable = [
         'title',
         'image',
+        'crop_data',
+        'display_width',
+        'display_height',
         'link_url',
         'target_blank',
         'enabled',
@@ -39,6 +42,7 @@ class Banner extends Model
         'enabled' => 'boolean',
         'target_blank' => 'boolean',
         'pages' => 'array',
+        'crop_data' => 'array',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'views' => 'integer',
