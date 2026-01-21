@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdsTxtController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\CustomCodeController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SupportTicketController;
+use App\Models\AdsTxtSetting;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -89,6 +91,18 @@ Route::get('/metal-x', [MetalXController::class, 'index'])->name('metal-x.index'
 // Legal pages
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::view('/privacy', 'legal.privacy')->name('privacy');
+
+// Ads.txt (Google Ads)
+Route::get('/ads.txt', function () {
+    $setting = AdsTxtSetting::getInstance();
+
+    if (!$setting->enabled || empty($setting->content)) {
+        abort(404);
+    }
+
+    return response($setting->content, 200)
+        ->header('Content-Type', 'text/plain; charset=UTF-8');
+})->name('ads-txt');
 
 /*
 |--------------------------------------------------------------------------
@@ -248,6 +262,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');
         Route::post('/settings', [MetalXSettingsController::class, 'update'])->name('settings.update');
     });
+
+    // Ads.txt Management
+    Route::get('/ads-txt', [AdsTxtController::class, 'index'])->name('ads-txt.index');
+    Route::put('/ads-txt', [AdsTxtController::class, 'update'])->name('ads-txt.update');
 
     // Quotation Management
     Route::prefix('quotations')->name('quotations.')->group(function () {
