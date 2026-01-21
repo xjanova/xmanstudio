@@ -1,4 +1,4 @@
-@if($banner && $banner->isActive())
+@if ($banner && $banner->isActive())
 @php
     $displayWidth = $banner->display_width ?? 1200;
     $displayHeight = $banner->display_height ?? 630;
@@ -19,7 +19,7 @@
      data-banner-id="{{ $banner->id }}"
      style="position: relative; overflow: hidden; width: 100%; max-width: {{ $displayWidth }}px; aspect-ratio: {{ $displayWidth }}/{{ $displayHeight }};">
 
-    @if($banner->link_url)
+    @if ($banner->link_url)
         <a href="{{ $banner->link_url }}"
            {{ $banner->target_blank ? 'target="_blank" rel="noopener noreferrer"' : '' }}
            class="banner-link block"

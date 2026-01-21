@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="space-y-6">
-    @if(session('success'))
+    @if (session('success'))
         <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
             <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -63,10 +63,10 @@
                                     <img src="{{ $banner->image_url }}" alt="{{ $banner->title }}" class="h-16 w-auto object-contain rounded mr-4">
                                     <div>
                                         <div class="text-sm font-medium text-gray-900">{{ $banner->title }}</div>
-                                        @if($banner->description)
+                                        @if ($banner->description)
                                             <div class="text-xs text-gray-500 mt-1">{{ Str::limit($banner->description, 50) }}</div>
                                         @endif
-                                        @if($banner->link_url)
+                                        @if ($banner->link_url)
                                             <a href="{{ $banner->link_url }}" target="_blank" class="text-xs text-blue-600 hover:underline mt-1 block">
                                                 {{ Str::limit($banner->link_url, 40) }}
                                             </a>
@@ -86,22 +86,22 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm text-gray-900">
-                                    @if($banner->pages && in_array('all', $banner->pages))
+                                    @if ($banner->pages && in_array('all', $banner->pages))
                                         <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">ทุกหน้า</span>
                                     @else
-                                        @foreach($banner->pages ?? [] as $page)
+                                        @foreach ($banner->pages ?? [] as $page)
                                             <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs mr-1">{{ $page }}</span>
                                         @endforeach
                                     @endif
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                @if($banner->start_date)
+                                @if ($banner->start_date)
                                     <div>{{ $banner->start_date->format('d/m/Y H:i') }}</div>
                                 @else
                                     <div class="text-gray-400">ไม่กำหนด</div>
                                 @endif
-                                @if($banner->end_date)
+                                @if ($banner->end_date)
                                     <div>{{ $banner->end_date->format('d/m/Y H:i') }}</div>
                                 @else
                                     <div class="text-gray-400">ไม่กำหนด</div>
@@ -110,7 +110,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 <div class="text-gray-900">👁️ {{ number_format($banner->views) }}</div>
                                 <div class="text-gray-900">👆 {{ number_format($banner->clicks) }}</div>
-                                @if($banner->views > 0)
+                                @if ($banner->views > 0)
                                     <div class="text-xs text-gray-500">CTR: {{ $banner->ctr }}%</div>
                                 @endif
                             </td>
