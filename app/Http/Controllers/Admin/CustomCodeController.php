@@ -111,7 +111,7 @@ class CustomCodeController extends Controller
 
         $allowedFields = ['custom_code_head', 'custom_code_body_start', 'custom_code_body_end'];
 
-        if (!in_array($field, $allowedFields)) {
+        if (! in_array($field, $allowedFields)) {
             return redirect()
                 ->route('admin.custom-code.index')
                 ->with('error', 'ไม่พบฟิลด์ที่ต้องการล้าง');
