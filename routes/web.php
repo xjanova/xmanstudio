@@ -181,11 +181,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/rental/{rental}/cancel', [RentalController::class, 'cancel'])->name('rental.cancel');
     Route::get('/rental/invoices', [RentalController::class, 'invoices'])->name('rental.invoices');
 
-    // Orders
-    if (class_exists(OrderController::class)) {
-        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
-    }
+    // Checkout & Orders
+    Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout');
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('orders.confirm-payment');
+    Route::get('/orders/{order}/download', [OrderController::class, 'download'])->name('orders.download');
 
     // Customer Portal
     Route::prefix('my-account')->name('customer.')->group(function () {

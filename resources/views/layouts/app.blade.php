@@ -134,7 +134,7 @@
                                 @if(Auth::user()->isAdmin())
                                 <a href="/admin/rentals" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Admin Panel</a>
                                 @endif
-                                <a href="/rental/status" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">การเช่าของฉัน</a>
+                                <a href="{{ route('customer.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">บัญชีของฉัน</a>
                                 @if(Route::has('logout'))
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
