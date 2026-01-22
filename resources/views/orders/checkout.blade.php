@@ -47,23 +47,36 @@
                     <h2 class="text-lg font-semibold text-gray-900 mb-4">วิธีการชำระเงิน</h2>
 
                     <div class="space-y-3">
-                        <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:border-primary-500 transition">
-                            <input type="radio" name="payment_method" value="promptpay" checked
-                                   class="text-primary-600 focus:ring-primary-500">
-                            <div class="ml-3">
-                                <span class="font-medium text-gray-900">PromptPay QR</span>
-                                <p class="text-sm text-gray-500">สแกน QR Code ชำระผ่าน Mobile Banking</p>
-                            </div>
-                        </label>
-
-                        <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:border-primary-500 transition">
-                            <input type="radio" name="payment_method" value="bank_transfer"
-                                   class="text-primary-600 focus:ring-primary-500">
-                            <div class="ml-3">
-                                <span class="font-medium text-gray-900">โอนเงินผ่านธนาคาร</span>
-                                <p class="text-sm text-gray-500">โอนเงินและแนบสลิปหลักฐาน</p>
-                            </div>
-                        </label>
+                        @php $firstActive = true; @endphp
+                        @foreach($paymentMethods as $method)
+                            @if($method['is_active'])
+                                <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:border-primary-500 transition payment-method-option {{ $firstActive ? 'border-primary-500 bg-primary-50' : '' }}">
+                                    <input type="radio" name="payment_method" value="{{ $method['id'] }}" {{ $firstActive ? 'checked' : '' }}
+                                           class="text-primary-600 focus:ring-primary-500"
+                                           onchange="selectPaymentMethod(this)">
+                                    <div class="ml-3 flex-1">
+                                        <div class="flex items-center">
+                                            @if($method['icon'] === 'promptpay')
+                                                <svg class="w-6 h-6 mr-2 text-primary-600" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                                </svg>
+                                            @elseif($method['icon'] === 'bank')
+                                                <svg class="w-6 h-6 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                                </svg>
+                                            @elseif($method['icon'] === 'card')
+                                                <svg class="w-6 h-6 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                                </svg>
+                                            @endif
+                                            <span class="font-medium text-gray-900">{{ $method['name'] }}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500 ml-8">{{ $method['description'] }}</p>
+                                    </div>
+                                </label>
+                                @php $firstActive = false; @endphp
+                            @endif
+                        @endforeach
                     </div>
                 </div>
 
@@ -89,9 +102,26 @@
                             </div>
                         @endforeach
 
-                        <div class="border-t pt-3 flex justify-between text-lg font-bold text-gray-900">
-                            <span>ยอดรวมทั้งหมด</span>
-                            <span>{{ number_format($cart->total, 2) }} บาท</span>
+                        @php
+                            $subtotal = $cart->items->sum(fn($item) => $item->price * $item->quantity);
+                            $vatRate = config('app.vat_rate', 0.07);
+                            $vat = round($subtotal * $vatRate, 2);
+                            $total = $subtotal + $vat;
+                        @endphp
+
+                        <div class="border-t pt-3 space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">ยอดสินค้า</span>
+                                <span class="text-gray-700">{{ number_format($subtotal, 2) }} บาท</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">VAT ({{ number_format($vatRate * 100, 0) }}%)</span>
+                                <span class="text-gray-700">{{ number_format($vat, 2) }} บาท</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
+                                <span>ยอดรวมทั้งหมด</span>
+                                <span class="text-primary-600">{{ number_format($total, 2) }} บาท</span>
+                            </div>
                         </div>
                     </div>
 
@@ -109,3 +139,20 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function selectPaymentMethod(radio) {
+    // Remove highlight from all options
+    document.querySelectorAll('.payment-method-option').forEach(el => {
+        el.classList.remove('border-primary-500', 'bg-primary-50');
+        el.classList.add('border-gray-300');
+    });
+
+    // Add highlight to selected option
+    const label = radio.closest('.payment-method-option');
+    label.classList.remove('border-gray-300');
+    label.classList.add('border-primary-500', 'bg-primary-50');
+}
+</script>
+@endpush

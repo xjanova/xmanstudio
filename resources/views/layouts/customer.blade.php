@@ -7,16 +7,16 @@
     <title>@yield('title', 'My Account') - XMAN Studio</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-50">
-    <div class="min-h-screen flex">
+<body class="bg-gray-50 overflow-hidden">
+    <div class="h-screen flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white shadow-lg flex-shrink-0 hidden md:block">
-            <div class="p-6 border-b">
+        <aside class="w-64 bg-white shadow-lg flex-shrink-0 hidden md:flex md:flex-col h-screen">
+            <div class="p-6 border-b flex-shrink-0">
                 <a href="/" class="text-xl font-bold text-primary-600">XMAN Studio</a>
                 <p class="text-sm text-gray-500 mt-1">Customer Portal</p>
             </div>
 
-            <nav class="p-4 space-y-1">
+            <nav class="p-4 space-y-1 flex-1 overflow-y-auto">
                 <a href="{{ route('customer.dashboard') }}"
                    class="flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.dashboard') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,7 +84,7 @@
                 </a>
             </nav>
 
-            <div class="absolute bottom-0 w-64 p-4 border-t bg-gray-50">
+            <div class="p-4 border-t bg-gray-50 flex-shrink-0">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -100,9 +100,9 @@
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col min-h-screen">
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
             <!-- Top Bar -->
-            <header class="bg-white shadow-sm sticky top-0 z-10">
+            <header class="bg-white shadow-sm flex-shrink-0 z-10">
                 <div class="flex items-center justify-between px-6 py-4">
                     <div class="flex items-center">
                         <!-- Mobile menu button -->
@@ -133,7 +133,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 p-6">
+            <main class="flex-1 p-6 overflow-y-auto">
                 @if(session('success'))
                     <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
                         {{ session('success') }}
@@ -156,7 +156,7 @@
             </main>
 
             <!-- Footer -->
-            <footer class="bg-white border-t py-4 px-6">
+            <footer class="bg-white border-t py-4 px-6 flex-shrink-0">
                 <p class="text-sm text-gray-500 text-center">
                     &copy; {{ date('Y') }} XMAN Studio. All rights reserved.
                 </p>
