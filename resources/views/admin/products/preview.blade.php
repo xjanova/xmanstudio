@@ -108,7 +108,7 @@
         </section>
 
         <!-- Features Section -->
-        @if($product->features && count($product->features) > 0)
+        @if($product->features && is_array($product->features) && count($product->features) > 0)
         <section class="py-12 bg-gray-900/50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <h2 class="text-2xl font-bold text-white text-center mb-8">คุณสมบัติเด่น</h2>
@@ -147,7 +147,7 @@
         @endif
 
         <!-- Gallery Section -->
-        @if($product->images && count($product->images) > 0)
+        @if($product->images && is_array($product->images) && count($product->images) > 0)
         <section class="py-12 bg-gray-900/50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <h2 class="text-2xl font-bold text-white text-center mb-8">Gallery</h2>
