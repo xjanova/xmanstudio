@@ -287,6 +287,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/ai-settings', [AiSettingsController::class, 'index'])->name('ai-settings.index');
     Route::put('/ai-settings', [AiSettingsController::class, 'update'])->name('ai-settings.update');
     Route::post('/ai-settings/test', [AiSettingsController::class, 'test'])->name('ai-settings.test');
+    Route::get('/ai-settings/ollama-models', [AiSettingsController::class, 'getOllamaModels'])->name('ai-settings.ollama-models');
 
     // Line Settings
     Route::get('/line-settings', [LineSettingsController::class, 'index'])->name('line-settings.index');
