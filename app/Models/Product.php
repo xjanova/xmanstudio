@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Product extends Model
 {
@@ -48,5 +49,31 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(ProductVersion::class);
+    }
+
+    public function githubSetting(): HasOne
+    {
+        return $this->hasOne(GithubSetting::class);
+    }
+
+    /**
+     * Get the latest active version
+     */
+    public function latestVersion()
+    {
+        return $this->versions()->active()->latest()->first();
+    }
+
+    /**
+     * Check if product has GitHub settings configured
+     */
+    public function hasGithubSettings(): bool
+    {
+        return $this->githubSetting()->exists();
     }
 }

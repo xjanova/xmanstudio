@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ProductVersionController;
 use App\Http\Controllers\Admin\QuotationCategoryController;
 use App\Http\Controllers\Admin\QuotationOptionController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OrderController;
@@ -62,6 +64,11 @@ Route::get('/', function () {
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
+
+// Downloads (product downloads with license check)
+Route::get('/download/{slug}', [DownloadController::class, 'downloadPage'])->name('download.page');
+Route::get('/download/{slug}/{version?}', [DownloadController::class, 'download'])->name('download.product')->middleware('auth');
+Route::post('/api/download/{slug}/{version?}', [DownloadController::class, 'apiDownload'])->name('download.api');
 
 // AutoTradeX - Direct purchase from app
 Route::prefix('autotradex')->name('autotradex.')->group(function () {
@@ -258,6 +265,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Product Management
     Route::resource('products', AdminProductController::class);
     Route::post('/products/{product}/toggle', [AdminProductController::class, 'toggle'])->name('products.toggle');
+
+    // Product Versions & GitHub Settings
+    Route::prefix('products/{product}/versions')->name('products.versions.')->group(function () {
+        Route::get('/', [ProductVersionController::class, 'index'])->name('index');
+        Route::post('/github', [ProductVersionController::class, 'saveGithubSettings'])->name('github');
+        Route::get('/test', [ProductVersionController::class, 'testConnection'])->name('test');
+        Route::post('/sync', [ProductVersionController::class, 'syncRelease'])->name('sync');
+        Route::post('/create', [ProductVersionController::class, 'createVersion'])->name('create');
+        Route::get('/logs', [ProductVersionController::class, 'downloadLogs'])->name('logs');
+        Route::post('/{version}/toggle', [ProductVersionController::class, 'toggleVersion'])->name('toggle');
+        Route::delete('/{version}', [ProductVersionController::class, 'destroyVersion'])->name('destroy');
+    });
 
     // License Management
     Route::get('/licenses', [AdminLicenseController::class, 'index'])->name('licenses.index');

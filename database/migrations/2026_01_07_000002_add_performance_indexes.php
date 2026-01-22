@@ -45,7 +45,8 @@ return new class extends Migration
         });
 
         // Add machine_fingerprint index with length limit (column is VARCHAR(1024), too long for full index)
-        if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
+        // Only for MySQL - SQLite doesn't support prefix indexes
+        if (Schema::hasColumn('license_keys', 'machine_fingerprint') && DB::getDriverName() === 'mysql') {
             DB::statement('CREATE INDEX license_keys_machine_fingerprint_index ON license_keys (machine_fingerprint(255))');
         }
 
@@ -142,8 +143,8 @@ return new class extends Migration
             $table->dropIndex(['status', 'expires_at']);
         });
 
-        // Drop machine_fingerprint index
-        if (Schema::hasColumn('license_keys', 'machine_fingerprint')) {
+        // Drop machine_fingerprint index - only for MySQL
+        if (Schema::hasColumn('license_keys', 'machine_fingerprint') && DB::getDriverName() === 'mysql') {
             DB::statement('DROP INDEX license_keys_machine_fingerprint_index ON license_keys');
         }
 
