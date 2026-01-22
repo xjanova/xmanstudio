@@ -147,9 +147,14 @@
             <div class="p-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-sm">
-                            <span class="text-white font-semibold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
-                        </div>
+                        @if(auth()->user()->avatar)
+                            <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}"
+                                 class="h-10 w-10 rounded-full object-cover shadow-sm">
+                        @else
+                            <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-sm">
+                                <span class="text-white font-semibold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                            </div>
+                        @endif
                     </div>
                     <div class="ml-3 flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-900 truncate">{{ auth()->user()->name }}</p>

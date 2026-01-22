@@ -6,6 +6,72 @@
 
 @section('content')
 <div class="space-y-6">
+    <!-- Profile Photo -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+            <h2 class="text-lg font-semibold text-gray-900">รูปโปรไฟล์</h2>
+            <p class="text-sm text-gray-500 mt-1">อัปโหลดรูปภาพโปรไฟล์ของคุณ</p>
+        </div>
+        <div class="p-6">
+            <div class="flex items-center gap-6">
+                <!-- Current Avatar -->
+                <div class="flex-shrink-0">
+                    @if($user->avatar)
+                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}"
+                             class="w-24 h-24 rounded-full object-cover border-4 border-primary-100 shadow-lg">
+                    @else
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center border-4 border-primary-100 shadow-lg">
+                            <span class="text-white font-bold text-3xl">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Upload Form -->
+                <div class="flex-1">
+                    <form method="post" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label for="avatar" class="block text-sm font-medium text-gray-700 mb-2">เลือกรูปภาพใหม่</label>
+                            <input type="file" id="avatar" name="avatar" accept="image/*"
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer">
+                            <p class="mt-1 text-xs text-gray-500">PNG, JPG หรือ GIF ขนาดไม่เกิน 2MB</p>
+                            @error('avatar')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors text-sm">
+                                อัปโหลดรูปภาพ
+                            </button>
+                            @if($user->avatar)
+                                <button type="button" onclick="document.getElementById('delete-avatar-form').submit()"
+                                        class="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg font-medium transition-colors text-sm">
+                                    ลบรูปภาพ
+                                </button>
+                            @endif
+                        </div>
+                    </form>
+                    <form id="delete-avatar-form" method="post" action="{{ route('profile.avatar.destroy') }}" class="hidden">
+                        @csrf
+                        @method('delete')
+                    </form>
+                    @if (session('status') === 'avatar-updated')
+                        <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
+                           class="mt-2 text-sm text-green-600 font-medium">
+                            อัปโหลดรูปภาพแล้ว
+                        </p>
+                    @endif
+                    @if (session('status') === 'avatar-removed')
+                        <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
+                           class="mt-2 text-sm text-green-600 font-medium">
+                            ลบรูปภาพแล้ว
+                        </p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Profile Information -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
