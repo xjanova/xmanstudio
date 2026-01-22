@@ -238,9 +238,9 @@ class AutoTradeXController extends Controller
      */
     protected function generateOrderNumber(): string
     {
-        $prefix = 'XM' . date('Ymd');
+        $prefix = 'XM'.date('Ymd');
         $random = strtoupper(Str::random(4));
 
-        return $prefix . '-' . $random;
+        return $prefix.'-'.$random;
     }
 }
