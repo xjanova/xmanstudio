@@ -16,6 +16,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'avatar',
         'phone',
         'line_uid',
         'line_display_name',
@@ -23,6 +24,18 @@ class User extends Authenticatable
         'role',
         'is_active',
     ];
+
+    /**
+     * Get the URL for the user's avatar.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if ($this->avatar) {
+            return asset('storage/'.$this->avatar);
+        }
+
+        return null;
+    }
 
     protected $hidden = [
         'password',
