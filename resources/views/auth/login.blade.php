@@ -406,8 +406,18 @@
                     </button>
                 </form>
 
-                <!-- Footer -->
+                <!-- Register Link -->
+                @if (Route::has('register'))
                 <div class="mt-6 text-center">
+                    <span class="text-sm text-gray-600">ยังไม่มีบัญชี?</span>
+                    <a href="{{ route('register') }}" class="text-sm text-purple-600 hover:text-purple-700 hover:underline transition font-medium ml-1">
+                        สมัครสมาชิก
+                    </a>
+                </div>
+                @endif
+
+                <!-- Footer -->
+                <div class="mt-4 text-center">
                     <a href="/" class="text-sm text-gray-600 hover:text-purple-600
                                        transition">
                         ← กลับหน้าหลัก

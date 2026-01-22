@@ -144,6 +144,11 @@
                             </div>
                         </div>
                     @else
+                        @if(Route::has('register'))
+                        <a href="{{ route('register') }}" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                            สมัครสมาชิก
+                        </a>
+                        @endif
                         @if(Route::has('login'))
                         <a href="{{ route('login') }}" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors">
                             เข้าสู่ระบบ
@@ -171,6 +176,9 @@
                 <a href="/portfolio" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ผลงาน</a>
                 <a href="/support" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ติดต่อ/สั่งซื้อ</a>
                 @guest
+                    @if(Route::has('register'))
+                    <a href="{{ route('register') }}" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">สมัครสมาชิก</a>
+                    @endif
                     @if(Route::has('login'))
                     <a href="{{ route('login') }}" class="block px-3 py-2 text-base font-medium text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">เข้าสู่ระบบ</a>
                     @endif
