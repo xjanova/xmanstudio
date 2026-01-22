@@ -100,8 +100,31 @@
                                 @endif
 
                                 <!-- Badges -->
-                                <div class="absolute top-3 left-3 sm:top-4 sm:left-4 flex gap-1.5 sm:gap-2">
-                                    @if($product->requires_license)
+                                <div class="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-wrap gap-1.5 sm:gap-2">
+                                    @php
+                                        $productLicense = isset($userLicenses[$product->id]) ? $userLicenses[$product->id] : null;
+                                    @endphp
+                                    @if($product->requires_license && $productLicense)
+                                        @if($productLicense->isValid())
+                                            @php $remainingDays = $productLicense->daysRemaining(); @endphp
+                                            @if($remainingDays <= 7 && $productLicense->license_type !== 'lifetime')
+                                                <span class="px-2 py-0.5 sm:py-1 bg-amber-500/90 text-white text-[10px] sm:text-xs rounded-full backdrop-blur-sm flex items-center gap-1">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                                    เหลือ {{ $remainingDays }} วัน
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-0.5 sm:py-1 bg-green-500/90 text-white text-[10px] sm:text-xs rounded-full backdrop-blur-sm flex items-center gap-1">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                                    {{ $productLicense->license_type === 'lifetime' ? 'ตลอดชีพ' : 'มี License' }}
+                                                </span>
+                                            @endif
+                                        @else
+                                            <span class="px-2 py-0.5 sm:py-1 bg-red-500/90 text-white text-[10px] sm:text-xs rounded-full backdrop-blur-sm flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                                                หมดอายุ
+                                            </span>
+                                        @endif
+                                    @elseif($product->requires_license)
                                         <span class="px-2 py-0.5 sm:py-1 bg-purple-500/80 text-white text-[10px] sm:text-xs rounded-full backdrop-blur-sm">
                                             License
                                         </span>
@@ -115,8 +138,32 @@
 
                                 <!-- Hover Overlay -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                                    <span class="px-4 py-2 {{ $product->requires_license ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-primary-600' }} text-white text-sm font-medium rounded-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                        {{ $product->requires_license ? 'ดูแพ็กเกจราคา' : 'ดูรายละเอียด' }}
+                                    @php
+                                        $userLicense = isset($userLicenses[$product->id]) ? $userLicenses[$product->id] : null;
+                                        $hoverText = 'ดูรายละเอียด';
+                                        $hoverClass = 'bg-primary-600';
+
+                                        if ($product->requires_license && $userLicense) {
+                                            if ($userLicense->isValid()) {
+                                                $daysLeft = $userLicense->daysRemaining();
+                                                if ($daysLeft <= 7 && $userLicense->license_type !== 'lifetime') {
+                                                    $hoverText = 'ต่ออายุ License';
+                                                    $hoverClass = 'bg-gradient-to-r from-amber-500 to-orange-500';
+                                                } else {
+                                                    $hoverText = 'ดู License ของคุณ';
+                                                    $hoverClass = 'bg-gradient-to-r from-green-500 to-emerald-500';
+                                                }
+                                            } else {
+                                                $hoverText = 'ต่ออายุ License';
+                                                $hoverClass = 'bg-gradient-to-r from-red-500 to-pink-500';
+                                            }
+                                        } elseif ($product->requires_license) {
+                                            $hoverText = 'ดูแพ็กเกจราคา';
+                                            $hoverClass = 'bg-gradient-to-r from-purple-600 to-pink-600';
+                                        }
+                                    @endphp
+                                    <span class="px-4 py-2 {{ $hoverClass }} text-white text-sm font-medium rounded-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                        {{ $hoverText }}
                                     </span>
                                 </div>
                             </div>
@@ -169,12 +216,42 @@
                                     @endif
 
                                     @if($product->requires_license)
-                                        {{-- License products: show key icon to view packages --}}
-                                        <div class="p-2.5 sm:p-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl shadow-lg shadow-purple-500/25">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                                            </svg>
-                                        </div>
+                                        @php
+                                            $license = isset($userLicenses[$product->id]) ? $userLicenses[$product->id] : null;
+                                        @endphp
+
+                                        @if($license && $license->isValid())
+                                            @php $daysLeft = $license->daysRemaining(); @endphp
+                                            @if($daysLeft <= 7 && $license->license_type !== 'lifetime')
+                                                {{-- License expiring soon: show renew icon --}}
+                                                <div class="p-2.5 sm:p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/25">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                </div>
+                                            @else
+                                                {{-- Valid license: show view/check icon --}}
+                                                <div class="p-2.5 sm:p-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl shadow-lg shadow-green-500/25">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                </div>
+                                            @endif
+                                        @elseif($license && $license->isExpired())
+                                            {{-- Expired license: show renew icon --}}
+                                            <div class="p-2.5 sm:p-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl shadow-lg shadow-red-500/25">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                                </svg>
+                                            </div>
+                                        @else
+                                            {{-- No license: show key icon to view packages --}}
+                                            <div class="p-2.5 sm:p-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl shadow-lg shadow-purple-500/25">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                                                </svg>
+                                            </div>
+                                        @endif
                                     @elseif(!$product->is_custom)
                                         {{-- Regular products: add to cart --}}
                                         <div class="relative z-10" onclick="event.stopPropagation();">
