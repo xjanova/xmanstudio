@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('ai_title_th')->nullable()->after('title_th');
             $table->text('ai_description_th')->nullable()->after('description_th');
             $table->json('ai_tags')->nullable()->after('tags');
-            $table->string('ai_category')->nullable()->after('category_id');
+            $table->string('ai_category')->nullable()->after('category');
             $table->decimal('ai_confidence_score', 5, 2)->nullable()->after('ai_category');
             $table->boolean('ai_generated')->default(false)->after('ai_confidence_score');
             $table->boolean('ai_approved')->default(false)->after('ai_generated');
