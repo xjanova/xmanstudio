@@ -210,22 +210,19 @@
     @if($product->features && count($product->features) > 0)
         <section class="py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 class="text-2xl font-bold text-white mb-8 flex items-center">
-                    <svg class="w-6 h-6 mr-3 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-                    </svg>
-                    คุณสมบัติ
-                </h2>
+                <h2 class="text-3xl font-bold text-white text-center mb-12">คุณสมบัติเด่น</h2>
 
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                     @php
                         $features = is_array($product->features) ? $product->features : explode("\n", $product->features);
+                        $featureIcons = ['purple', 'green', 'blue', 'yellow', 'pink', 'cyan', 'red', 'orange'];
                     @endphp
                     @foreach($features as $index => $feature)
+                        @php $colorClass = $featureIcons[$index % count($featureIcons)]; @endphp
                         @if(is_array($feature))
                             <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-primary-500/50 transition-all">
-                                <div class="w-10 h-10 bg-primary-500/20 rounded-lg flex items-center justify-center mb-4">
-                                    <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="w-12 h-12 bg-{{ $colorClass }}-500/20 rounded-lg flex items-center justify-center mb-4">
+                                    <svg class="w-6 h-6 text-{{ $colorClass }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
@@ -237,12 +234,12 @@
                         @elseif(trim($feature))
                             <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-primary-500/50 transition-all">
                                 <div class="flex items-start">
-                                    <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                        <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <div class="w-10 h-10 bg-{{ $colorClass }}-500/20 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                                        <svg class="w-5 h-5 text-{{ $colorClass }}-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
-                                    <span class="text-gray-300">{{ trim($feature) }}</span>
+                                    <span class="text-gray-300 text-lg">{{ trim($feature) }}</span>
                                 </div>
                             </div>
                         @endif
@@ -252,16 +249,266 @@
         </section>
     @endif
 
+    <!-- How It Works Section -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-white text-center mb-4">หลักการทำงาน</h2>
+            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">ขั้นตอนการใช้งาน {{ $product->name }} อย่างง่าย</p>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-primary-500">
+                        <span class="text-2xl font-bold text-primary-400">1</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">ดาวน์โหลดและติดตั้ง</h3>
+                    <p class="text-gray-400">ดาวน์โหลดโปรแกรมจากเว็บไซต์และติดตั้งบนเครื่องของคุณ</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-primary-500">
+                        <span class="text-2xl font-bold text-primary-400">2</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">เปิดใช้งาน License</h3>
+                    <p class="text-gray-400">ใส่ License Key ที่ได้รับเพื่อเปิดใช้งานฟีเจอร์เต็มรูปแบบ</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-primary-500">
+                        <span class="text-2xl font-bold text-primary-400">3</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">เริ่มใช้งาน</h3>
+                    <p class="text-gray-400">ตั้งค่าตามคู่มือและเริ่มต้นใช้งานได้ทันที</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- System Requirements Section -->
+    <section class="py-16 bg-gray-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-white text-center mb-12">ความต้องการระบบ</h2>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                        <svg class="w-6 h-6 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        ขั้นต่ำ
+                    </h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-gray-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            Windows 10 (64-bit)
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-gray-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            RAM 4GB
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-gray-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            พื้นที่ว่าง 500MB
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-gray-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            การเชื่อมต่ออินเทอร์เน็ต
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800/50 rounded-xl p-6 border border-primary-500/50">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                        <svg class="w-6 h-6 text-primary-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        แนะนำ
+                    </h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-primary-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            Windows 11 (64-bit)
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-primary-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            RAM 8GB ขึ้นไป
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-primary-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            SSD Storage
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-primary-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            อินเทอร์เน็ตความเร็วสูง
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    @php
+        $latestVersion = $product->latestVersion();
+    @endphp
+    @if($latestVersion)
+    <section class="py-16" id="download">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-white mb-4">ดาวน์โหลด {{ $product->name }}</h2>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto">ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นใช้งานได้ทันที</p>
+
+            <div class="bg-gray-800/50 rounded-2xl p-8 border border-gray-700 max-w-xl mx-auto mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="text-left">
+                        <p class="text-gray-400 text-sm">เวอร์ชันล่าสุด</p>
+                        <p class="text-2xl font-bold text-white">v{{ $latestVersion->version }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-gray-400 text-sm">ขนาดไฟล์</p>
+                        <p class="text-lg font-semibold text-white">{{ $latestVersion->file_size_formatted }}</p>
+                    </div>
+                </div>
+
+                @if($latestVersion->changelog)
+                    <div class="text-left mb-6 bg-gray-700/30 rounded-lg p-4">
+                        <p class="text-gray-400 text-sm mb-2">Changelog</p>
+                        <p class="text-gray-300 text-sm whitespace-pre-wrap">{{ Str::limit($latestVersion->changelog, 200) }}</p>
+                    </div>
+                @endif
+
+                <a href="{{ route('download.page', ['slug' => $product->slug, 'version' => $latestVersion->version]) }}"
+                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    ดาวน์โหลดตอนนี้
+                </a>
+            </div>
+
+            <p class="text-gray-500 text-sm">
+                อัปเดตเมื่อ: {{ $latestVersion->synced_at?->format('d/m/Y') ?? 'N/A' }} |
+                รองรับ Windows 10/11 (64-bit)
+            </p>
+        </div>
+    </section>
+    @endif
+
+    <!-- License Info Section -->
+    @if($product->requires_license)
+    <section class="py-16 bg-gray-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-white text-center mb-4">การลงทะเบียน License</h2>
+            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">ขั้นตอนการเปิดใช้งาน {{ $product->name }}</p>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Steps -->
+                <div class="space-y-6">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold">1</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-bold text-white">ซื้อ License</h3>
+                            <p class="text-gray-400">เลือกแพ็กเกจที่เหมาะสมและทำการชำระเงิน</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold">2</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-bold text-white">รับ License Key</h3>
+                            <p class="text-gray-400">License Key จะถูกส่งไปยังอีเมลที่ลงทะเบียน</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold">3</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-bold text-white">เปิดโปรแกรม</h3>
+                            <p class="text-gray-400">ดาวน์โหลดและติดตั้งโปรแกรมบนเครื่องของคุณ</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold">4</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-bold text-white">Activate License</h3>
+                            <p class="text-gray-400">ใส่ License Key ในโปรแกรมเพื่อเปิดใช้งานเต็มรูปแบบ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- License Info Card -->
+                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+                    <h3 class="text-xl font-bold text-white mb-4">ข้อมูล License</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            License ผูกกับเครื่อง (Machine ID)
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            ใช้งานได้ 1 เครื่องต่อ 1 License
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            สามารถย้ายเครื่องได้ (ติดต่อ Support)
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            อัปเดตฟรีตลอดอายุ License
+                        </li>
+                    </ul>
+
+                    <div class="mt-6 pt-6 border-t border-gray-700">
+                        @if(!$product->is_custom)
+                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit"
+                                        class="block w-full py-3 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white text-center font-bold rounded-xl transition-all">
+                                    ซื้อ License - ฿{{ number_format($product->price, 0) }}
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('support.index') }}"
+                               class="block w-full py-3 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white text-center font-bold rounded-xl transition-all">
+                                ติดต่อสอบถามราคา
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    @endif
+
     <!-- Related Products -->
     @if($relatedProducts && $relatedProducts->count() > 0)
-        <section class="py-12 bg-gray-900/50">
+        <section class="py-16">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 class="text-2xl font-bold text-white mb-8 flex items-center">
-                    <svg class="w-6 h-6 mr-3 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                    </svg>
-                    ผลิตภัณฑ์ที่เกี่ยวข้อง
-                </h2>
+                <h2 class="text-3xl font-bold text-white text-center mb-12">ผลิตภัณฑ์ที่เกี่ยวข้อง</h2>
 
                 <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     @foreach($relatedProducts as $related)
@@ -272,8 +519,8 @@
                                     <img src="{{ Storage::url($related->image) }}" alt="{{ $related->name }}"
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center">
-                                        <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-purple-500/20">
+                                        <svg class="w-12 h-12 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                                         </svg>
                                     </div>
@@ -281,8 +528,11 @@
                             </div>
                             <div class="p-4">
                                 <h3 class="font-bold text-white group-hover:text-primary-400 transition-colors mb-2">{{ $related->name }}</h3>
+                                @if($related->short_description)
+                                    <p class="text-gray-400 text-sm mb-2 line-clamp-2">{{ $related->short_description }}</p>
+                                @endif
                                 @if(!$related->is_custom)
-                                    <p class="text-primary-400 font-bold">฿{{ number_format($related->price, 0) }}</p>
+                                    <p class="text-primary-400 font-bold text-lg">฿{{ number_format($related->price, 0) }}</p>
                                 @else
                                     <p class="text-gray-400">สอบถามราคา</p>
                                 @endif
@@ -295,19 +545,35 @@
     @endif
 
     <!-- CTA Section -->
-    <section class="py-12">
+    <section class="py-16 bg-gray-900/50">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-2xl font-bold text-white mb-4">มีคำถามเกี่ยวกับผลิตภัณฑ์นี้?</h2>
-            <p class="text-gray-400 mb-6">ติดต่อทีมงานของเราเพื่อรับคำปรึกษาและข้อมูลเพิ่มเติม</p>
+            <h2 class="text-3xl font-bold text-white mb-4">พร้อมเริ่มต้นใช้งาน?</h2>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto">
+                @if($product->requires_license)
+                    เลือกแพ็กเกจ License ที่เหมาะกับความต้องการของคุณ หรือติดต่อเราสำหรับข้อมูลเพิ่มเติม
+                @else
+                    ดาวน์โหลดและเริ่มต้นใช้งาน {{ $product->name }} ได้ทันที
+                @endif
+            </p>
 
             <div class="flex flex-wrap justify-center gap-4">
+                @if(!$product->is_custom)
+                    <form action="{{ route('cart.add', $product) }}" method="POST" class="inline">
+                        @csrf
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit"
+                                class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
+                            @if($product->requires_license)
+                                ซื้อ License - ฿{{ number_format($product->price, 0) }}
+                            @else
+                                สั่งซื้อตอนนี้ - ฿{{ number_format($product->price, 0) }}
+                            @endif
+                        </button>
+                    </form>
+                @endif
                 <a href="{{ route('support.index') }}"
-                   class="px-6 py-3 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                    ติดต่อเรา
-                </a>
-                <a href="{{ route('products.index') }}"
-                   class="px-6 py-3 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all">
-                    ดูผลิตภัณฑ์อื่นๆ
+                   class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
+                    ติดต่อสอบถาม
                 </a>
             </div>
         </div>
