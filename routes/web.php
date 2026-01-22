@@ -407,6 +407,55 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::post('/{playlist}/remove-video', [MetalXPlaylistController::class, 'removeVideo'])->name('remove-video');
         });
 
+        // AI Tools (Rate Limited: 10 requests/minute)
+        Route::prefix('ai')->name('ai.')->middleware('throttle:ai-operations')->group(function () {
+            Route::get('/', [MetalXAiController::class, 'index'])->name('index')->withoutMiddleware('throttle:ai-operations');
+            Route::post('/{video}/generate', [MetalXAiController::class, 'generateSingle'])->name('generate-single');
+            Route::post('/generate-batch', [MetalXAiController::class, 'generateBatch'])->name('generate-batch');
+            Route::post('/generate-all', [MetalXAiController::class, 'generateAll'])->name('generate-all');
+            Route::post('/{video}/approve', [MetalXAiController::class, 'approve'])->name('approve')->withoutMiddleware('throttle:ai-operations');
+            Route::post('/{video}/reject', [MetalXAiController::class, 'reject'])->name('reject')->withoutMiddleware('throttle:ai-operations');
+            Route::post('/approve-batch', [MetalXAiController::class, 'approveBatch'])->name('approve-batch')->withoutMiddleware('throttle:ai-operations');
+            Route::get('/{video}/preview', [MetalXAiController::class, 'preview'])->name('preview')->withoutMiddleware('throttle:ai-operations');
+            Route::get('/status', [MetalXAiController::class, 'status'])->name('status')->withoutMiddleware('throttle:ai-operations');
+        });
+
+        // Engagement & Comments (Rate Limited)
+        Route::prefix('engagement')->name('engagement.')->group(function () {
+            // View routes (no rate limit)
+            Route::get('/', [MetalXEngagementController::class, 'index'])->name('index');
+            Route::get('/{video}/stats', [MetalXEngagementController::class, 'videoStats'])->name('video-stats');
+            Route::get('/blacklist', [MetalXEngagementController::class, 'blacklist'])->name('blacklist');
+
+            // YouTube API operations (20 requests/minute)
+            Route::middleware('throttle:youtube-operations')->group(function () {
+                Route::post('/{video}/sync-comments', [MetalXEngagementController::class, 'syncComments'])->name('sync-comments');
+                Route::post('/sync-all-comments', [MetalXEngagementController::class, 'syncAllComments'])->name('sync-all-comments');
+                Route::post('/comment/{comment}/post-reply', [MetalXEngagementController::class, 'postReply'])->name('post-reply');
+                Route::post('/comment/{comment}/like', [MetalXEngagementController::class, 'likeComment'])->name('like-comment');
+                Route::delete('/comment/{comment}/delete', [MetalXEngagementController::class, 'deleteComment'])->name('delete-comment');
+            });
+
+            // AI operations (10 requests/minute)
+            Route::middleware('throttle:ai-operations')->group(function () {
+                Route::post('/comment/{comment}/process', [MetalXEngagementController::class, 'processComment'])->name('process-comment');
+                Route::post('/comment/{comment}/generate-reply', [MetalXEngagementController::class, 'generateReply'])->name('generate-reply');
+                Route::post('/{video}/improve-content', [MetalXEngagementController::class, 'improveContent'])->name('improve-content');
+                Route::post('/comment/{comment}/detect-violation', [MetalXEngagementController::class, 'detectViolation'])->name('detect-violation');
+            });
+
+            // Moderation operations (30 requests/minute)
+            Route::middleware('throttle:comment-moderation')->group(function () {
+                Route::post('/comment/{comment}/mark-spam', [MetalXEngagementController::class, 'markSpam'])->name('mark-spam');
+                Route::post('/comment/{comment}/toggle-attention', [MetalXEngagementController::class, 'toggleAttention'])->name('toggle-attention');
+                Route::post('/{video}/apply-improvements', [MetalXEngagementController::class, 'applyContentImprovements'])->name('apply-improvements');
+                Route::post('/batch-process', [MetalXEngagementController::class, 'batchProcess'])->name('batch-process');
+                Route::post('/comment/{comment}/block-channel', [MetalXEngagementController::class, 'blockChannel'])->name('block-channel');
+                Route::post('/comment/{comment}/auto-moderate', [MetalXEngagementController::class, 'autoModerate'])->name('auto-moderate');
+                Route::post('/blacklist/{id}/unblock', [MetalXEngagementController::class, 'unblockChannel'])->name('unblock-channel');
+            });
+        });
+
         // Settings
         Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');
         Route::post('/settings', [MetalXSettingsController::class, 'update'])->name('settings.update');

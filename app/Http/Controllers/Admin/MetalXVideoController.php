@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\GenerateVideoMetadataJob;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
 use App\Services\YouTubeService;
@@ -114,6 +115,11 @@ class MetalXVideoController extends Controller
                     'is_active' => $validated['is_active'] ?? true,
                     'order' => $validated['order'] ?? 0,
                 ]);
+
+                // Dispatch AI metadata generation if enabled
+                if (Setting::get('ai_content_generation', false) && !$validated['title_th']) {
+                    GenerateVideoMetadataJob::dispatch($video, false, 80.0);
+                }
 
                 return redirect()->route('admin.metal-x.videos.index')
                     ->with('success', 'Video imported successfully from YouTube!');
@@ -246,6 +252,15 @@ class MetalXVideoController extends Controller
         $limit = $request->get('limit', 50);
         $videos = $this->youtubeService->syncChannelVideos($channelId, $limit);
 
+        // Dispatch AI metadata generation for videos without Thai metadata
+        if (Setting::get('ai_content_generation', false)) {
+            foreach ($videos as $video) {
+                if (empty($video->title_th)) {
+                    GenerateVideoMetadataJob::dispatch($video, false, 80.0);
+                }
+            }
+        }
+
         return back()->with('success', count($videos).' videos synced from YouTube!');
     }
 
@@ -286,6 +301,11 @@ class MetalXVideoController extends Controller
             $video = $this->youtubeService->importVideo($videoId);
 
             if ($video) {
+                // Dispatch AI metadata generation if enabled
+                if (Setting::get('ai_content_generation', false)) {
+                    GenerateVideoMetadataJob::dispatch($video, false, 80.0);
+                }
+
                 return response()->json([
                     'success' => true,
                     'video' => $video,

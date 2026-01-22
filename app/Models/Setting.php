@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
@@ -21,7 +22,24 @@ class Setting extends Model
     ];
 
     /**
+     * List of setting keys that contain sensitive data and should be encrypted
+     */
+    protected static array $encryptedKeys = [
+        'ai_openai_key',
+        'ai_claude_key',
+        'line_notify_token',
+        'youtube_api_key',
+        'youtube_client_secret',
+        'youtube_refresh_token',
+        'smtp_password',
+        'database_password',
+        'stripe_secret_key',
+        'paypal_secret',
+    ];
+
+    /**
      * Get setting value by key
+     * Automatically decrypts sensitive data
      */
     public static function getValue(string $key, mixed $default = null): mixed
     {
@@ -33,16 +51,32 @@ class Setting extends Model
             return $default;
         }
 
+        $value = $setting->value;
+
+        // Decrypt if this is an encrypted key
+        if (static::isEncryptedKey($key) && !empty($value)) {
+            try {
+                $value = Crypt::decryptString($value);
+            } catch (\Exception $e) {
+                // If decryption fails, the value might not be encrypted yet
+                // This handles backward compatibility with existing unencrypted values
+                \Log::warning("Failed to decrypt setting '{$key}': " . $e->getMessage());
+                // Return the value as-is for backward compatibility
+                // Admin should re-save the setting to encrypt it
+            }
+        }
+
         return match ($setting->type) {
-            'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
-            'integer' => (int) $setting->value,
-            'json' => json_decode($setting->value, true),
-            default => $setting->value,
+            'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            'integer' => (int) $value,
+            'json' => json_decode($value, true),
+            default => $value,
         };
     }
 
     /**
      * Set setting value
+     * Automatically encrypts sensitive data
      */
     public static function setValue(
         string $key,
@@ -52,8 +86,15 @@ class Setting extends Model
         ?string $description = null,
         bool $isPublic = false
     ): void {
+        $storedValue = $type === 'json' ? json_encode($value) : (string) $value;
+
+        // Encrypt if this is a sensitive key
+        if (static::isEncryptedKey($key) && !empty($storedValue)) {
+            $storedValue = Crypt::encryptString($storedValue);
+        }
+
         $data = [
-            'value' => $type === 'json' ? json_encode($value) : (string) $value,
+            'value' => $storedValue,
             'type' => $type,
         ];
 
@@ -70,6 +111,30 @@ class Setting extends Model
         static::updateOrCreate(['key' => $key], $data);
 
         Cache::forget("setting.{$key}");
+    }
+
+    /**
+     * Check if a setting key should be encrypted
+     */
+    protected static function isEncryptedKey(string $key): bool
+    {
+        return in_array($key, static::$encryptedKeys);
+    }
+
+    /**
+     * Alias for getValue (for backward compatibility)
+     */
+    public static function get(string $key, mixed $default = null): mixed
+    {
+        return static::getValue($key, $default);
+    }
+
+    /**
+     * Alias for setValue (for backward compatibility)
+     */
+    public static function set(string $key, mixed $value, string $type = 'string'): void
+    {
+        static::setValue($key, $value, $type);
     }
 
     /**
