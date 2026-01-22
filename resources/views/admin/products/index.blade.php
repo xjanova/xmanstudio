@@ -4,6 +4,18 @@
 @section('page-title', 'จัดการผลิตภัณฑ์')
 
 @section('content')
+<!-- Success/Error Messages -->
+@if(session('success'))
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+        {{ session('success') }}
+    </div>
+@endif
+@if(session('error'))
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+        {{ session('error') }}
+    </div>
+@endif
+
 <!-- Stats Cards -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow p-6">
@@ -77,7 +89,7 @@
                     <option value="">ทุกหมวดหมู่</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
-                            {{ $category->name }}
+                            {{ $category->icon }} {{ $category->name }}
                         </option>
                     @endforeach
                 </select>
@@ -93,10 +105,16 @@
                 ค้นหา
             </button>
         </form>
-        <a href="{{ route('admin.products.create') }}"
-           class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-            + เพิ่มผลิตภัณฑ์
-        </a>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.products.categories.index') }}"
+               class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                หมวดหมู่
+            </a>
+            <a href="{{ route('admin.products.create') }}"
+               class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                + เพิ่มผลิตภัณฑ์
+            </a>
+        </div>
     </div>
 </div>
 
@@ -115,7 +133,7 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
             @forelse($products as $product)
-                <tr>
+                <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4">
                         <div class="flex items-center">
                             @if($product->image)
@@ -130,18 +148,28 @@
                             @endif
                             <div>
                                 <div class="text-sm font-medium text-gray-900">{{ $product->name }}</div>
-                                <div class="text-sm text-gray-500">{{ Str::limit($product->description, 50) }}</div>
+                                <div class="text-sm text-gray-500">{{ Str::limit($product->short_description ?? $product->description, 40) }}</div>
+                                @if($product->sku)
+                                    <code class="text-xs bg-gray-100 px-1 rounded">{{ $product->sku }}</code>
+                                @endif
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ $product->category->name ?? '-' }}
+                        @if($product->category)
+                            <span class="flex items-center">
+                                <span class="mr-1">{{ $product->category->icon }}</span>
+                                {{ $product->category->name }}
+                            </span>
+                        @else
+                            <span class="text-gray-400">-</span>
+                        @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         @if($product->is_custom)
-                            <span class="text-blue-600">สอบถามราคา</span>
+                            <span class="text-blue-600 font-medium">สอบถามราคา</span>
                         @else
-                            <span class="text-gray-900 font-semibold">{{ number_format($product->price, 2) }} บาท</span>
+                            <span class="text-gray-900 font-semibold">฿{{ number_format($product->price, 0) }}</span>
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -159,32 +187,79 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <a href="{{ route('admin.products.versions.index', $product) }}"
-                           class="text-gray-600 hover:text-gray-800 mr-3" title="จัดการเวอร์ชัน & GitHub">
-                            <svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
-                            </svg>
-                        </a>
-                        <a href="{{ route('admin.products.edit', $product) }}"
-                           class="text-primary-600 hover:underline mr-3">แก้ไข</a>
-                        <form action="{{ route('admin.products.toggle', $product) }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" class="{{ $product->is_active ? 'text-yellow-600' : 'text-green-600' }} hover:underline mr-3">
-                                {{ $product->is_active ? 'ปิด' : 'เปิด' }}
-                            </button>
-                        </form>
-                        <form action="{{ route('admin.products.destroy', $product) }}" method="POST" class="inline"
-                              onsubmit="return confirm('ยืนยันการลบผลิตภัณฑ์นี้?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:underline">ลบ</button>
-                        </form>
+                        <div class="flex items-center space-x-1">
+                            <!-- Preview -->
+                            <a href="{{ route('admin.products.preview', $product) }}"
+                               class="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                               title="Preview">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
+
+                            <!-- Edit -->
+                            <a href="{{ route('admin.products.edit', $product) }}"
+                               class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                               title="แก้ไข">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+
+                            <!-- Versions & GitHub -->
+                            <a href="{{ route('admin.products.versions.index', $product) }}"
+                               class="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition"
+                               title="จัดการ Version & GitHub">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                                </svg>
+                            </a>
+
+                            <!-- Toggle -->
+                            <form action="{{ route('admin.products.toggle', $product) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit"
+                                        class="p-2 rounded-lg transition {{ $product->is_active ? 'text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50' : 'text-green-500 hover:text-green-600 hover:bg-green-50' }}"
+                                        title="{{ $product->is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}">
+                                    @if($product->is_active)
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                        </svg>
+                                    @else
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    @endif
+                                </button>
+                            </form>
+
+                            <!-- Delete -->
+                            <form action="{{ route('admin.products.destroy', $product) }}" method="POST" class="inline"
+                                  onsubmit="return confirm('ยืนยันการลบผลิตภัณฑ์นี้?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                        class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                        title="ลบ">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                        ไม่พบผลิตภัณฑ์
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <p class="text-gray-500">ไม่พบผลิตภัณฑ์</p>
+                        <a href="{{ route('admin.products.create') }}" class="mt-2 inline-block text-primary-600 hover:underline">
+                            + เพิ่มผลิตภัณฑ์ใหม่
+                        </a>
                     </td>
                 </tr>
             @endforelse
@@ -196,5 +271,23 @@
             {{ $products->links() }}
         </div>
     @endif
+</div>
+
+<!-- Quick Help -->
+<div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div class="flex">
+        <svg class="w-5 h-5 text-blue-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+            <h4 class="font-medium text-blue-800 mb-1">เครื่องมือจัดการ</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li>👁️ <strong>Preview</strong> - ดูตัวอย่างหน้าผลิตภัณฑ์</li>
+                <li>✏️ <strong>แก้ไข</strong> - แก้ไขข้อมูลผลิตภัณฑ์</li>
+                <li>🐙 <strong>GitHub</strong> - จัดการ Version และเชื่อมต่อ GitHub Releases</li>
+                <li>🔄 <strong>เปิด/ปิด</strong> - เปิด/ปิดการแสดงผลในหน้าร้าน</li>
+            </ul>
+        </div>
+    </div>
 </div>
 @endsection

@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\LineSettingsController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\PaymentSettingController;
+use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductVersionController;
 use App\Http\Controllers\Admin\QuotationCategoryController;
@@ -262,9 +263,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('services', AdminServiceController::class);
     Route::post('/services/{service}/toggle', [AdminServiceController::class, 'toggle'])->name('services.toggle');
 
+    // Product Categories
+    Route::prefix('products/categories')->name('products.categories.')->group(function () {
+        Route::get('/', [ProductCategoryController::class, 'index'])->name('index');
+        Route::get('/create', [ProductCategoryController::class, 'create'])->name('create');
+        Route::post('/', [ProductCategoryController::class, 'store'])->name('store');
+        Route::get('/{category}/edit', [ProductCategoryController::class, 'edit'])->name('edit');
+        Route::put('/{category}', [ProductCategoryController::class, 'update'])->name('update');
+        Route::delete('/{category}', [ProductCategoryController::class, 'destroy'])->name('destroy');
+        Route::post('/{category}/toggle', [ProductCategoryController::class, 'toggle'])->name('toggle');
+    });
+
     // Product Management
     Route::resource('products', AdminProductController::class);
     Route::post('/products/{product}/toggle', [AdminProductController::class, 'toggle'])->name('products.toggle');
+    Route::get('/products/{product}/preview', [AdminProductController::class, 'preview'])->name('products.preview');
 
     // Product Versions & GitHub Settings
     Route::prefix('products/{product}/versions')->name('products.versions.')->group(function () {
