@@ -136,7 +136,22 @@
                                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
                         <span class="ml-2 text-sm text-gray-700">แนะนำ</span>
                     </label>
+
+                    <label class="flex items-center">
+                        <input type="checkbox" name="is_coming_soon" value="1" {{ old('is_coming_soon', $service->is_coming_soon) ? 'checked' : '' }}
+                               class="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                               id="is_coming_soon" onchange="toggleComingSoonDate()">
+                        <span class="ml-2 text-sm text-gray-700">Coming Soon</span>
+                    </label>
                 </div>
+            </div>
+
+            <div id="coming_soon_date_container" class="mt-4 {{ old('is_coming_soon', $service->is_coming_soon) ? '' : 'hidden' }}">
+                <label class="block text-sm font-medium text-gray-700 mb-1">เปิดให้บริการเมื่อ (ไม่จำเป็น)</label>
+                <input type="datetime-local" name="coming_soon_until"
+                       value="{{ old('coming_soon_until', $service->coming_soon_until?->format('Y-m-d\TH:i')) }}"
+                       class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500">
+                <p class="mt-1 text-xs text-gray-500">ระบบจะเปิดบริการอัตโนมัติเมื่อถึงวันที่กำหนด</p>
             </div>
         </div>
 
@@ -167,6 +182,16 @@
         const container = button.parentElement.parentElement;
         if (container.children.length > 1) {
             button.parentElement.remove();
+        }
+    }
+
+    function toggleComingSoonDate() {
+        const checkbox = document.getElementById('is_coming_soon');
+        const container = document.getElementById('coming_soon_date_container');
+        if (checkbox.checked) {
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
         }
     }
 </script>

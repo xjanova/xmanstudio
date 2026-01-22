@@ -88,6 +88,32 @@
                 @endif
             @endif
 
+            {{-- Coming Soon Banner --}}
+            @if($product->isComingSoon())
+                <div class="mb-6 bg-orange-500/20 border border-orange-500/50 text-orange-300 px-6 py-4 rounded-xl backdrop-blur-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold">Coming Soon!</p>
+                                <p class="text-sm text-orange-200">
+                                    @if($product->coming_soon_until)
+                                        เปิดขายวันที่ {{ $product->coming_soon_until->format('d/m/Y H:i') }}
+                                    @else
+                                        ผลิตภัณฑ์นี้จะเปิดขายเร็วๆ นี้
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+                        <a href="{{ route('support.index') }}" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
+                            แจ้งเตือนเมื่อเปิดขาย
+                        </a>
+                    </div>
+                </div>
+            @endif
+
             <div class="grid lg:grid-cols-2 gap-12 items-start">
                 <!-- Left: Product Images -->
                 <div class="space-y-4">
@@ -186,7 +212,19 @@
                     </div>
 
                     <!-- Add to Cart -->
-                    @if(!$product->is_custom)
+                    @if($product->isComingSoon())
+                        <div class="mb-8">
+                            <div class="flex-1 px-8 py-3 bg-orange-600/50 text-orange-200 font-bold rounded-xl text-center cursor-not-allowed">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Coming Soon
+                                @if($product->coming_soon_until)
+                                    - {{ $product->coming_soon_until->format('d/m/Y') }}
+                                @endif
+                            </div>
+                        </div>
+                    @elseif(!$product->is_custom)
                         <form action="{{ route('cart.add', $product) }}" method="POST" class="flex items-center gap-4 mb-8">
                             @csrf
                             <div class="flex items-center bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">

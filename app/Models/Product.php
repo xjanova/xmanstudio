@@ -25,6 +25,8 @@ class Product extends Model
         'stock',
         'low_stock_threshold',
         'is_active',
+        'is_coming_soon',
+        'coming_soon_until',
     ];
 
     protected $casts = [
@@ -33,6 +35,8 @@ class Product extends Model
         'is_custom' => 'boolean',
         'requires_license' => 'boolean',
         'is_active' => 'boolean',
+        'is_coming_soon' => 'boolean',
+        'coming_soon_until' => 'datetime',
         'price' => 'decimal:2',
     ];
 
@@ -75,5 +79,54 @@ class Product extends Model
     public function hasGithubSettings(): bool
     {
         return $this->githubSetting()->exists();
+    }
+
+    /**
+     * Check if product is currently coming soon
+     */
+    public function isComingSoon(): bool
+    {
+        if (! $this->is_coming_soon) {
+            return false;
+        }
+
+        // If coming_soon_until is set, check if it's still in the future
+        if ($this->coming_soon_until) {
+            return $this->coming_soon_until->isFuture();
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if product is available for purchase
+     */
+    public function isAvailable(): bool
+    {
+        return $this->is_active && ! $this->isComingSoon();
+    }
+
+    /**
+     * Scope for coming soon products
+     */
+    public function scopeComingSoon($query)
+    {
+        return $query->where('is_coming_soon', true);
+    }
+
+    /**
+     * Scope for available products (active and not coming soon)
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('is_coming_soon', false)
+                    ->orWhere(function ($q2) {
+                        $q2->where('is_coming_soon', true)
+                            ->whereNotNull('coming_soon_until')
+                            ->where('coming_soon_until', '<=', now());
+                    });
+            });
     }
 }

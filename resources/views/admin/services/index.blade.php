@@ -48,7 +48,7 @@
                         {{ $service->formatted_price }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center space-x-2">
+                        <div class="flex flex-wrap items-center gap-1">
                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                                 {{ $service->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
                                 {{ $service->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}
@@ -58,14 +58,28 @@
                                     แนะนำ
                                 </span>
                             @endif
+                            @if($service->is_coming_soon)
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                                    Coming Soon
+                                    @if($service->coming_soon_until)
+                                        <span class="ml-1">({{ $service->coming_soon_until->format('d/m') }})</span>
+                                    @endif
+                                </span>
+                            @endif
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <a href="{{ route('admin.services.edit', $service) }}"
                            class="text-primary-600 hover:underline mr-3">แก้ไข</a>
+                        <form action="{{ route('admin.services.toggle-coming-soon', $service) }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="{{ $service->is_coming_soon ? 'text-orange-600' : 'text-gray-400' }} hover:underline mr-3" title="{{ $service->is_coming_soon ? 'ปิด Coming Soon' : 'เปิด Coming Soon' }}">
+                                CS
+                            </button>
+                        </form>
                         <form action="{{ route('admin.services.toggle', $service) }}" method="POST" class="inline">
                             @csrf
-                            <button type="submit" class="{{ $service->is_active ? 'text-orange-600' : 'text-green-600' }} hover:underline mr-3">
+                            <button type="submit" class="{{ $service->is_active ? 'text-yellow-600' : 'text-green-600' }} hover:underline mr-3">
                                 {{ $service->is_active ? 'ปิด' : 'เปิด' }}
                             </button>
                         </form>

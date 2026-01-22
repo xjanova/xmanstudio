@@ -250,6 +250,24 @@
                         <p class="text-sm text-gray-500">แสดงสินค้าในหน้าร้านค้า</p>
                     </div>
                 </label>
+
+                <label class="flex items-start">
+                    <input type="checkbox" name="is_coming_soon" value="1" {{ old('is_coming_soon') ? 'checked' : '' }}
+                           class="mt-1 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                           x-model="isComingSoon">
+                    <div class="ml-3">
+                        <span class="text-gray-900 font-medium">Coming Soon</span>
+                        <p class="text-sm text-gray-500">แสดงสินค้าแต่ยังซื้อไม่ได้ (จะเปิดขายเร็วๆ นี้)</p>
+                    </div>
+                </label>
+
+                <div x-show="isComingSoon" x-cloak class="ml-7 mt-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เปิดขายเมื่อ (ไม่จำเป็น)</label>
+                    <input type="datetime-local" name="coming_soon_until"
+                           value="{{ old('coming_soon_until') }}"
+                           class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500">
+                    <p class="mt-1 text-xs text-gray-500">ระบบจะเปิดขายอัตโนมัติเมื่อถึงวันที่กำหนด</p>
+                </div>
             </div>
         </div>
 
@@ -273,6 +291,7 @@ function productForm() {
         galleryPreviews: [],
         galleryFiles: [],
         dragOver: false,
+        isComingSoon: {{ old('is_coming_soon') ? 'true' : 'false' }},
 
         addFeature() {
             this.features.push('');

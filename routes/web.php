@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductVersionController;
+use App\Http\Controllers\Admin\ProjectOrderController;
 use App\Http\Controllers\Admin\QuotationCategoryController;
 use App\Http\Controllers\Admin\QuotationOptionController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
@@ -217,6 +218,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/invoices', [CustomerPortalController::class, 'invoices'])->name('invoices');
         Route::get('/downloads', [CustomerPortalController::class, 'downloads'])->name('downloads');
 
+        // Projects (Order progress tracking)
+        Route::get('/projects', [CustomerPortalController::class, 'projects'])->name('projects');
+        Route::get('/projects/{project}', [CustomerPortalController::class, 'projectShow'])->name('projects.show');
+
         // Support Tickets
         Route::get('/support', [SupportTicketController::class, 'index'])->name('support.index');
         Route::get('/support/create', [SupportTicketController::class, 'create'])->name('support.create');
@@ -266,6 +271,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Service Management
     Route::resource('services', AdminServiceController::class);
     Route::post('/services/{service}/toggle', [AdminServiceController::class, 'toggle'])->name('services.toggle');
+    Route::post('/services/{service}/toggle-coming-soon', [AdminServiceController::class, 'toggleComingSoon'])->name('services.toggle-coming-soon');
 
     // Product Categories
     Route::prefix('products/categories')->name('products.categories.')->group(function () {
@@ -281,6 +287,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Product Management
     Route::resource('products', AdminProductController::class);
     Route::post('/products/{product}/toggle', [AdminProductController::class, 'toggle'])->name('products.toggle');
+    Route::post('/products/{product}/toggle-coming-soon', [AdminProductController::class, 'toggleComingSoon'])->name('products.toggle-coming-soon');
     Route::get('/products/{product}/preview', [AdminProductController::class, 'preview'])->name('products.preview');
 
     // Product Versions & GitHub Settings
@@ -455,5 +462,35 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::put('/{option}', [QuotationOptionController::class, 'update'])->name('update');
             Route::delete('/{option}', [QuotationOptionController::class, 'destroy'])->name('destroy');
         });
+    });
+
+    // Project Order Management
+    Route::prefix('projects')->name('projects.')->group(function () {
+        Route::get('/', [ProjectOrderController::class, 'index'])->name('index');
+        Route::get('/create', [ProjectOrderController::class, 'create'])->name('create');
+        Route::post('/', [ProjectOrderController::class, 'store'])->name('store');
+        Route::get('/{project}', [ProjectOrderController::class, 'show'])->name('show');
+        Route::get('/{project}/edit', [ProjectOrderController::class, 'edit'])->name('edit');
+        Route::put('/{project}', [ProjectOrderController::class, 'update'])->name('update');
+        Route::delete('/{project}', [ProjectOrderController::class, 'destroy'])->name('destroy');
+
+        // Create from quotation
+        Route::post('/from-quotation/{quotation}', [ProjectOrderController::class, 'createFromQuotation'])->name('from-quotation');
+
+        // Progress Updates
+        Route::post('/{project}/progress', [ProjectOrderController::class, 'addProgress'])->name('progress.store');
+
+        // Features
+        Route::post('/{project}/features', [ProjectOrderController::class, 'addFeature'])->name('features.store');
+        Route::put('/{project}/features/{feature}', [ProjectOrderController::class, 'updateFeature'])->name('features.update');
+        Route::delete('/{project}/features/{feature}', [ProjectOrderController::class, 'deleteFeature'])->name('features.destroy');
+
+        // Members
+        Route::post('/{project}/members', [ProjectOrderController::class, 'addMember'])->name('members.store');
+        Route::delete('/{project}/members/{member}', [ProjectOrderController::class, 'deleteMember'])->name('members.destroy');
+
+        // Timeline
+        Route::post('/{project}/timeline', [ProjectOrderController::class, 'addTimeline'])->name('timeline.store');
+        Route::post('/{project}/timeline/{timeline}/toggle', [ProjectOrderController::class, 'toggleTimeline'])->name('timeline.toggle');
     });
 });

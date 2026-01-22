@@ -21,6 +21,8 @@ class Service extends Model
         'order',
         'is_active',
         'is_featured',
+        'is_coming_soon',
+        'coming_soon_until',
     ];
 
     protected $casts = [
@@ -29,6 +31,8 @@ class Service extends Model
         'starting_price' => 'decimal:2',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
+        'is_coming_soon' => 'boolean',
+        'coming_soon_until' => 'datetime',
     ];
 
     /**
@@ -107,5 +111,54 @@ class Service extends Model
         }
 
         return number_format($this->starting_price).' บาท/'.$this->price_unit;
+    }
+
+    /**
+     * Check if service is currently coming soon
+     */
+    public function isComingSoon(): bool
+    {
+        if (! $this->is_coming_soon) {
+            return false;
+        }
+
+        // If coming_soon_until is set, check if it's still in the future
+        if ($this->coming_soon_until) {
+            return $this->coming_soon_until->isFuture();
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if service is available
+     */
+    public function isAvailable(): bool
+    {
+        return $this->is_active && ! $this->isComingSoon();
+    }
+
+    /**
+     * Scope for coming soon services
+     */
+    public function scopeComingSoon($query)
+    {
+        return $query->where('is_coming_soon', true);
+    }
+
+    /**
+     * Scope for available services (active and not coming soon)
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('is_coming_soon', false)
+                    ->orWhere(function ($q2) {
+                        $q2->where('is_coming_soon', true)
+                            ->whereNotNull('coming_soon_until')
+                            ->where('coming_soon_until', '<=', now());
+                    });
+            });
     }
 }
