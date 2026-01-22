@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\ProjectOrder;
 use App\Models\RentalInvoice;
 use App\Models\RentalPayment;
 use App\Models\SupportTicket;
@@ -51,6 +52,15 @@ class CustomerPortalController extends Controller
             ->whereNotIn('status', ['closed', 'resolved'])
             ->count();
 
+        // Active Projects
+        $activeProjects = ProjectOrder::where('user_id', $user->id)
+            ->active()
+            ->with(['features', 'members' => function ($q) {
+                $q->where('is_lead', true);
+            }])
+            ->limit(5)
+            ->get();
+
         // Stats
         $stats = [
             'active_subscriptions' => $activeRentals->count(),
@@ -59,6 +69,7 @@ class CustomerPortalController extends Controller
                 ->count(),
             'total_orders' => Order::where('user_id', $user->id)->count(),
             'open_tickets' => $openTickets,
+            'active_projects' => $activeProjects->count(),
         ];
 
         // Expiring Soon (within 7 days) - Subscriptions
@@ -87,6 +98,7 @@ class CustomerPortalController extends Controller
             'user',
             'activeRentals',
             'activeLicenses',
+            'activeProjects',
             'recentOrders',
             'stats',
             'expiringSoon',
@@ -270,5 +282,64 @@ class CustomerPortalController extends Controller
             ->get();
 
         return view('customer.downloads', compact('licensedProducts', 'rentalProducts'));
+    }
+
+    /**
+     * My Projects - รายการโครงการทั้งหมด
+     * GET /my-account/projects
+     */
+    public function projects(Request $request)
+    {
+        $user = Auth::user();
+
+        $query = ProjectOrder::where('user_id', $user->id)
+            ->with(['members' => function ($q) {
+                $q->where('is_lead', true);
+            }, 'features']);
+
+        // Filter by status
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $projects = $query->orderBy('created_at', 'desc')->paginate(10);
+
+        $stats = [
+            'total' => ProjectOrder::where('user_id', $user->id)->count(),
+            'active' => ProjectOrder::where('user_id', $user->id)->active()->count(),
+            'completed' => ProjectOrder::where('user_id', $user->id)->completed()->count(),
+        ];
+
+        return view('customer.projects', compact('projects', 'stats'));
+    }
+
+    /**
+     * Project Detail - ดูรายละเอียดโครงการ
+     * GET /my-account/projects/{project}
+     */
+    public function projectShow(ProjectOrder $project)
+    {
+        // Ensure user can only view their own projects
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $project->load([
+            'members',
+            'features' => function ($q) {
+                $q->orderBy('order');
+            },
+            'progress' => function ($q) {
+                $q->where('is_public', true)
+                    ->with('feature')
+                    ->latest()
+                    ->limit(20);
+            },
+            'timeline' => function ($q) {
+                $q->orderBy('event_date');
+            },
+        ]);
+
+        return view('customer.project-detail', compact('project'));
     }
 }
