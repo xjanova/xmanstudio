@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\LicenseApiController;
+use App\Http\Controllers\Api\VersionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,4 +75,22 @@ Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function ()
         Route::post('/demo', [AutoTradeXLicenseController::class, 'startDemo']);
         Route::post('/demo/check', [AutoTradeXLicenseController::class, 'checkDemo']);
     });
+});
+
+// ==================== Version & Download API Routes ====================
+// These routes are used by desktop applications for version checking and updates
+// Rate limited to 60 requests per minute per IP
+
+Route::prefix('v1/products')->middleware(['throttle:60,1'])->group(function () {
+    // Get latest version for a product (public)
+    Route::get('/{slug}/version', [VersionController::class, 'latest']);
+
+    // Get all versions for a product (public)
+    Route::get('/{slug}/versions', [VersionController::class, 'all']);
+
+    // Check if update is available (public, but enhanced with license)
+    Route::post('/{slug}/check-update', [VersionController::class, 'check']);
+
+    // Validate license key
+    Route::post('/validate-license', [VersionController::class, 'validateLicense']);
 });
