@@ -34,9 +34,20 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
-        // Use custom view for AutoTradeX
-        if ($slug === 'autotradex') {
-            return view('products.autotradex', compact('product', 'relatedProducts'));
+        // Custom views for each product
+        $customViews = [
+            'autotradex' => 'products.autotradex',
+            'spiderx' => 'products.spiderx',
+            'xcluadeagent' => 'products.xcluadeagent',
+            'phonex-manager' => 'products.phonexmanager',
+            'live-x-shop-pro' => 'products.livexshoppro',
+            'winxtools' => 'products.winxtools',
+            'postxagent' => 'products.postxagent',
+            'gpusharx' => 'products.gpusharx',
+        ];
+
+        if (isset($customViews[$slug])) {
+            return view($customViews[$slug], compact('product', 'relatedProducts'));
         }
 
         return view('products.show', compact('product', 'relatedProducts'));
