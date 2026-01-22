@@ -207,4 +207,21 @@ class ProductController extends Controller
             ->route('admin.products.index')
             ->with('success', "ลบ '{$name}' แล้ว");
     }
+
+    /**
+     * Preview product page
+     */
+    public function preview(Product $product)
+    {
+        // Get related products
+        $relatedProducts = Product::where('id', '!=', $product->id)
+            ->where('is_active', true)
+            ->when($product->category_id, function ($query) use ($product) {
+                $query->where('category_id', $product->category_id);
+            })
+            ->limit(4)
+            ->get();
+
+        return view('admin.products.preview', compact('product', 'relatedProducts'));
+    }
 }
