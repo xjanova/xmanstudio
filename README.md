@@ -1,59 +1,238 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# XMAN Studio
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+ระบบจัดการธุรกิจครบวงจร สำหรับการขายผลิตภัณฑ์ดิจิทัล, ระบบเช่า, License Management และ Metal-X YouTube Channel
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Framework:** Laravel 11
+- **Frontend:** Blade + Tailwind CSS + Vite
+- **Database:** MySQL/SQLite
+- **Authentication:** Laravel Breeze
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Project Structure
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```
+app/
+├── Http/Controllers/
+│   ├── Admin/           # Admin panel controllers
+│   │   ├── MetalXVideoController.php      # YouTube video management
+│   │   ├── MetalXPlaylistController.php   # Playlist management
+│   │   ├── MetalXAnalyticsController.php  # Analytics dashboard
+│   │   ├── MetalXTeamController.php       # Team members
+│   │   ├── MetalXSettingsController.php   # Channel settings
+│   │   ├── ProductController.php          # Product management
+│   │   ├── LicenseController.php          # License management
+│   │   ├── RentalController.php           # Rental system
+│   │   └── ...
+│   └── ...              # Frontend controllers
+├── Models/
+│   ├── MetalXVideo.php      # YouTube video model
+│   ├── MetalXPlaylist.php   # Playlist model
+│   ├── MetalXTeamMember.php # Team member model
+│   ├── Product.php          # Product model
+│   ├── LicenseKey.php       # License key model
+│   ├── Setting.php          # Dynamic settings
+│   └── ...
+├── Services/
+│   ├── YouTubeService.php           # YouTube Data API v3 integration
+│   └── MarketingNotificationService.php  # LINE notifications
+└── ...
 
-## Learning Laravel
+resources/views/
+├── admin/
+│   ├── metal-x/
+│   │   ├── analytics.blade.php     # Dashboard with stats
+│   │   ├── videos/                 # Video management views
+│   │   ├── playlists/              # Playlist management views
+│   │   ├── settings.blade.php      # Channel settings
+│   │   ├── index.blade.php         # Team members list
+│   │   ├── create.blade.php        # Add team member
+│   │   └── edit.blade.php          # Edit team member
+│   ├── products/          # Product management
+│   ├── licenses/          # License management
+│   ├── rentals/           # Rental system
+│   └── ...
+├── layouts/
+│   ├── admin.blade.php    # Admin layout with sidebar
+│   └── app.blade.php      # Frontend layout
+└── ...
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Main Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. Product & License Management
+- จัดการผลิตภัณฑ์ดิจิทัล (ซอฟต์แวร์, ปลั๊กอิน)
+- ระบบ License Key พร้อม Machine ID validation
+- GitHub integration สำหรับ version management
+- Download tracking
 
-## Laravel Sponsors
+### 2. Rental System
+- แพ็กเกจเช่าซอฟต์แวร์รายเดือน/ปี
+- การชำระเงินผ่านธนาคาร
+- ระบบต่ออายุอัตโนมัติ
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 3. Metal-X YouTube Management
+- **Dashboard:** สถิติรวม, Top videos, กราฟตามเดือน
+- **Video Management:** นำเข้าจาก YouTube API, sync อัตโนมัติ
+- **Playlist Management:** สร้าง/นำเข้าเพลย์ลิสต์
+- **Team Members:** จัดการสมาชิกทีม
+- **YouTube API Integration:** ดึงข้อมูลวิดีโอ, สถิติ, thumbnails
 
-### Premium Partners
+### 4. LINE Integration
+- LINE Login OAuth
+- LINE Messaging API (ส่งข้อความหาลูกค้า)
+- Marketing notifications
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 5. Admin Settings
+- Branding (Logo, Favicon)
+- Payment settings (ธนาคาร)
+- SEO & Google Search Console
+- Google Ads placements
+- Custom tracking code
+- Ads.txt management
 
-## Contributing
+## Development Notes for Claude
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Code Style
+- ใช้ **Laravel Pint** สำหรับ code formatting
+- รัน `./vendor/bin/pint` ก่อน commit เสมอ
+- CI จะ fail ถ้า Pint ไม่ผ่าน
 
-## Code of Conduct
+### Database
+- Migrations อยู่ใน `database/migrations/`
+- ใช้ `php artisan migrate` เพื่อรัน migrations
+- Settings เก็บใน `settings` table ผ่าน `Setting::getValue()` / `Setting::setValue()`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Routes
+- Admin routes: `routes/web.php` (prefix: `/admin`, middleware: `auth`, `admin`)
+- ทุก admin route ใช้ชื่อ `admin.*`
 
-## Security Vulnerabilities
+### Views
+- Admin views: `resources/views/admin/`
+- Layout: `resources/views/layouts/admin.blade.php`
+- ใช้ Tailwind CSS classes
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Key Models & Relationships
+
+```php
+// MetalXVideo - YouTube video
+MetalXVideo::active()->featured()->latest()->get();
+$video->playlists; // belongsToMany
+$video->youtube_url; // accessor
+$video->formatted_view_count; // accessor
+
+// MetalXPlaylist - Playlist
+$playlist->videos; // belongsToMany with position
+$playlist->updateVideoCount();
+
+// Setting - Dynamic settings
+Setting::getValue('key', 'default');
+Setting::setValue('key', 'value', 'type', 'group');
+```
+
+### YouTubeService
+
+```php
+$youtube = app(YouTubeService::class);
+
+// Check if API configured
+$youtube->isConfigured();
+
+// Import single video
+$youtube->importVideo('VIDEO_ID');
+
+// Sync all videos from channel
+$youtube->syncChannelVideos('CHANNEL_ID', 100);
+
+// Update statistics
+$youtube->updateVideoStatistics();
+
+// Import playlist with videos
+$youtube->importPlaylist('PLAYLIST_ID');
+
+// Extract IDs from URLs
+YouTubeService::extractVideoId($url);
+YouTubeService::extractPlaylistId($url);
+```
+
+### Admin Menu Structure
+
+เมนูอยู่ใน `resources/views/layouts/admin.blade.php`:
+- Analytics Dashboard
+- การเช่า (Rentals)
+- จัดการเนื้อหา (Services)
+- ผลิตภัณฑ์ & โปรแกรม (Products)
+- License
+- Line OA
+- **Metal-X YouTube** (Dashboard, วิดีโอ, เพลย์ลิสต์, สมาชิกทีม, ตั้งค่า)
+- ใบสั่งงาน & ราคา (Quotations)
+- Support
+- การตั้งค่า (Settings)
+
+### Common Patterns
+
+**Adding new admin feature:**
+1. สร้าง Migration: `php artisan make:migration create_xxx_table`
+2. สร้าง Model: `app/Models/Xxx.php`
+3. สร้าง Controller: `app/Http/Controllers/Admin/XxxController.php`
+4. เพิ่ม Routes ใน `routes/web.php` (ใน admin group)
+5. สร้าง Views: `resources/views/admin/xxx/`
+6. เพิ่มเมนูใน `resources/views/layouts/admin.blade.php`
+7. รัน `./vendor/bin/pint` แล้ว commit
+
+**Controller imports ที่ต้องเพิ่มใน web.php:**
+```php
+use App\Http\Controllers\Admin\XxxController;
+```
+
+### Recent Changes (Jan 2026)
+
+1. **Metal-X YouTube System** - ระบบจัดการช่อง YouTube ครบวงจร
+2. **LINE Login OAuth** - ล็อกอินด้วย LINE
+3. **AI Marketing Notifications** - ระบบแจ้งเตือนการตลาด
+4. **License Management** - ระบบจัดการ License ที่ละเอียดขึ้น
+5. **Product Versions** - GitHub integration สำหรับ releases
+
+## Environment Variables
+
+```env
+# YouTube API (สำหรับ Metal-X)
+# ตั้งค่าผ่าน Admin > Metal-X > ตั้งค่า Channel
+
+# LINE (สำหรับ LINE Login & Messaging)
+LINE_CHANNEL_ID=
+LINE_CHANNEL_SECRET=
+LINE_MESSAGING_ACCESS_TOKEN=
+```
+
+## Commands
+
+```bash
+# Install dependencies
+composer install
+npm install
+
+# Run migrations
+php artisan migrate
+
+# Build assets
+npm run build
+
+# Development
+npm run dev
+
+# Code style check
+./vendor/bin/pint --test
+
+# Fix code style
+./vendor/bin/pint
+
+# Clear cache
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT License
