@@ -74,23 +74,23 @@
                             @endif
                         </a>
                     </div>
-                    <div class="hidden md:ml-8 md:flex md:space-x-6">
-                        <a href="/" class="{{ request()->is('/') ? 'border-primary-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
+                    <div class="hidden md:ml-8 md:flex md:space-x-1">
+                        <a href="/" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('/') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-green-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-green-500/30' }}">
                             หน้าหลัก
                         </a>
-                        <a href="/services" class="{{ request()->is('services*') ? 'border-primary-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
+                        <a href="/services" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('services*') ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-yellow-400 hover:to-amber-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
                             บริการ
                         </a>
-                        <a href="/products" class="{{ request()->is('products*') ? 'border-primary-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
+                        <a href="/products" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('products*') ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/30' }}">
                             ผลิตภัณฑ์
                         </a>
-                        <a href="/rental" class="{{ request()->is('rental*') ? 'border-primary-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
+                        <a href="/rental" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('rental*') ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-rose-500 hover:text-white hover:shadow-lg hover:shadow-pink-500/30' }}">
                             เช่าบริการ
                         </a>
-                        <a href="/portfolio" class="{{ request()->is('portfolio*') ? 'border-primary-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
+                        <a href="/portfolio" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('portfolio*') ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-violet-500 hover:text-white hover:shadow-lg hover:shadow-purple-500/30' }}">
                             ผลงาน
                         </a>
-                        <a href="/support" class="{{ request()->is('support*') ? 'border-primary-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
+                        <a href="/support" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('support*') ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/30' }}">
                             ติดต่อ/สั่งซื้อ
                         </a>
                     </div>
@@ -220,13 +220,13 @@
 
         <!-- Mobile Menu -->
         <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-gray-800 border-t dark:border-gray-700">
-            <div class="px-4 py-3 space-y-1">
-                <a href="/" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">หน้าหลัก</a>
-                <a href="/services" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">บริการ</a>
-                <a href="/products" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ผลิตภัณฑ์</a>
-                <a href="/rental" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">เช่าบริการ</a>
-                <a href="/portfolio" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ผลงาน</a>
-                <a href="/support" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">ติดต่อ/สั่งซื้อ</a>
+            <div class="px-4 py-3 space-y-2">
+                <a href="/" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('/') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white' }}">หน้าหลัก</a>
+                <a href="/services" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('services*') ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-yellow-400 hover:to-amber-500 hover:text-white' }}">บริการ</a>
+                <a href="/products" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('products*') ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white' }}">ผลิตภัณฑ์</a>
+                <a href="/rental" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('rental*') ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-rose-500 hover:text-white' }}">เช่าบริการ</a>
+                <a href="/portfolio" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('portfolio*') ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-violet-500 hover:text-white' }}">ผลงาน</a>
+                <a href="/support" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('support*') ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white' }}">ติดต่อ/สั่งซื้อ</a>
                 @guest
                     @if(Route::has('register'))
                     <a href="{{ route('register') }}" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">สมัครสมาชิก</a>
