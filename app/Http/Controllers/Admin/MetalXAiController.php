@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MetalXVideo;
 use App\Services\YouTubeMetadataAiService;
 use App\Jobs\GenerateVideoMetadataJob;
+use App\Exceptions\AIServiceException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -73,12 +74,25 @@ class MetalXAiController extends Controller
                 'success' => true,
                 'message' => 'AI metadata generation started for: ' . $video->title_en,
             ]);
-        } catch (\Exception $e) {
-            Log::error("Error generating AI metadata for video {$video->id}: " . $e->getMessage());
+        } catch (AIServiceException $e) {
+            Log::error("AI service error for video {$video->id}", [
+                'provider' => $e->getProvider(),
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => $e->getUserMessage(),
+            ], $e->getCode() ?: 500);
+        } catch (\Exception $e) {
+            Log::error("Unexpected error generating AI metadata for video {$video->id}: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred. Please try again later.',
             ], 500);
         }
     }
@@ -121,12 +135,22 @@ class MetalXAiController extends Controller
                 'message' => "AI metadata generation started for {$count} videos",
                 'count' => $count,
             ]);
-        } catch (\Exception $e) {
-            Log::error("Error in batch AI generation: " . $e->getMessage());
+        } catch (AIServiceException $e) {
+            Log::error("AI service error in batch generation", [
+                'provider' => $e->getProvider(),
+                'error' => $e->getMessage(),
+            ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => $e->getUserMessage(),
+            ], $e->getCode() ?: 500);
+        } catch (\Exception $e) {
+            Log::error("Unexpected error in batch AI generation: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred. Please try again later.',
             ], 500);
         }
     }
@@ -166,12 +190,22 @@ class MetalXAiController extends Controller
                 'message' => "AI metadata generation started for {$count} videos",
                 'count' => $count,
             ]);
-        } catch (\Exception $e) {
-            Log::error("Error in generate all: " . $e->getMessage());
+        } catch (AIServiceException $e) {
+            Log::error("AI service error in generate all", [
+                'provider' => $e->getProvider(),
+                'error' => $e->getMessage(),
+            ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => $e->getUserMessage(),
+            ], $e->getCode() ?: 500);
+        } catch (\Exception $e) {
+            Log::error("Unexpected error in generate all: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred. Please try again later.',
             ], 500);
         }
     }
@@ -200,7 +234,7 @@ class MetalXAiController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'An error occurred while approving metadata. Please try again.',
             ], 500);
         }
     }
@@ -229,7 +263,7 @@ class MetalXAiController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'An error occurred while rejecting metadata. Please try again.',
             ], 500);
         }
     }
@@ -266,7 +300,7 @@ class MetalXAiController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'An error occurred while approving videos. Please try again.',
             ], 500);
         }
     }
