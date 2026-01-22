@@ -28,8 +28,9 @@ class CustomerPortalController extends Controller
             ->with('rentalPackage')
             ->get();
 
-        // Active Licenses
-        $activeLicenses = LicenseKey::where('user_id', $user->id)
+        // Active Licenses (through orders)
+        $userOrderIds = Order::where('user_id', $user->id)->pluck('id');
+        $activeLicenses = LicenseKey::whereIn('order_id', $userOrderIds)
             ->where('status', LicenseKey::STATUS_ACTIVE)
             ->where(function ($q) {
                 $q->whereNull('expires_at')
@@ -53,7 +54,7 @@ class CustomerPortalController extends Controller
         // Stats
         $stats = [
             'active_subscriptions' => $activeRentals->count(),
-            'active_licenses' => LicenseKey::where('user_id', $user->id)
+            'active_licenses' => LicenseKey::whereIn('order_id', $userOrderIds)
                 ->where('status', LicenseKey::STATUS_ACTIVE)
                 ->count(),
             'total_orders' => Order::where('user_id', $user->id)->count(),
@@ -84,8 +85,9 @@ class CustomerPortalController extends Controller
     public function licenses(Request $request)
     {
         $user = Auth::user();
+        $userOrderIds = Order::where('user_id', $user->id)->pluck('id');
 
-        $query = LicenseKey::where('user_id', $user->id)
+        $query = LicenseKey::whereIn('order_id', $userOrderIds)
             ->with('product');
 
         // Filter by status
@@ -101,10 +103,10 @@ class CustomerPortalController extends Controller
         $licenses = $query->orderBy('created_at', 'desc')->paginate(10);
 
         $stats = [
-            'total' => LicenseKey::where('user_id', $user->id)->count(),
-            'active' => LicenseKey::where('user_id', $user->id)
+            'total' => LicenseKey::whereIn('order_id', $userOrderIds)->count(),
+            'active' => LicenseKey::whereIn('order_id', $userOrderIds)
                 ->where('status', LicenseKey::STATUS_ACTIVE)->count(),
-            'expired' => LicenseKey::where('user_id', $user->id)
+            'expired' => LicenseKey::whereIn('order_id', $userOrderIds)
                 ->where('status', LicenseKey::STATUS_EXPIRED)->count(),
         ];
 
@@ -232,9 +234,10 @@ class CustomerPortalController extends Controller
     public function downloads()
     {
         $user = Auth::user();
+        $userOrderIds = Order::where('user_id', $user->id)->pluck('id');
 
         // Get products from licenses
-        $licensedProducts = LicenseKey::where('user_id', $user->id)
+        $licensedProducts = LicenseKey::whereIn('order_id', $userOrderIds)
             ->where('status', LicenseKey::STATUS_ACTIVE)
             ->with('product')
             ->get()
