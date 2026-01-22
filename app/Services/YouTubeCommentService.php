@@ -6,6 +6,7 @@ use App\Models\MetalXBlacklist;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Exception;
@@ -361,6 +362,7 @@ class YouTubeCommentService
 
     /**
      * Block channel and delete all their comments.
+     * Wrapped in DB transaction for data integrity.
      */
     public function blockAndDeleteChannel(
         MetalXComment $comment,
@@ -371,57 +373,60 @@ class YouTubeCommentService
             throw new Exception('Comment does not have author channel ID');
         }
 
-        // Add to blacklist
-        $blacklistEntry = MetalXBlacklist::addToBlacklist(
-            $comment->author_channel_id,
-            $comment->author_name,
-            $reason,
-            "Auto-blocked for: {$reason}",
-            $blockedBy
-        );
+        // Wrap entire operation in transaction for atomicity
+        return DB::transaction(function () use ($comment, $reason, $blockedBy) {
+            // Add to blacklist
+            $blacklistEntry = MetalXBlacklist::addToBlacklist(
+                $comment->author_channel_id,
+                $comment->author_name,
+                $reason,
+                "Auto-blocked for: {$reason}",
+                $blockedBy
+            );
 
-        // Find all comments from this author
-        $allComments = MetalXComment::where('author_channel_id', $comment->author_channel_id)
-            ->whereNull('deleted_at')
-            ->get();
+            // Find all comments from this author
+            $allComments = MetalXComment::where('author_channel_id', $comment->author_channel_id)
+                ->whereNull('deleted_at')
+                ->get();
 
-        $deleted = 0;
-        $failed = 0;
+            $deleted = 0;
+            $failed = 0;
 
-        foreach ($allComments as $authorComment) {
-            try {
-                // Mark as blacklisted
-                $authorComment->update([
-                    'is_blacklisted_author' => true,
-                    'violation_type' => $reason,
-                ]);
-
-                // Try to delete from YouTube
-                if ($this->deleteComment($authorComment)) {
-                    $deleted++;
-                } else {
-                    // Even if YouTube delete fails, mark as deleted locally
+            foreach ($allComments as $authorComment) {
+                try {
+                    // Mark as blacklisted
                     $authorComment->update([
-                        'deleted_at' => now(),
-                        'is_hidden' => true,
+                        'is_blacklisted_author' => true,
+                        'violation_type' => $reason,
                     ]);
+
+                    // Try to delete from YouTube
+                    if ($this->deleteComment($authorComment)) {
+                        $deleted++;
+                    } else {
+                        // Even if YouTube delete fails, mark as deleted locally
+                        $authorComment->update([
+                            'deleted_at' => now(),
+                            'is_hidden' => true,
+                        ]);
+                        $failed++;
+                    }
+                } catch (Exception $e) {
+                    Log::error("Failed to delete comment {$authorComment->id}: " . $e->getMessage());
                     $failed++;
                 }
-            } catch (Exception $e) {
-                Log::error("Failed to delete comment {$authorComment->id}: " . $e->getMessage());
-                $failed++;
             }
-        }
 
-        Log::info("Blocked channel {$comment->author_channel_id}. Deleted {$deleted} comments, {$failed} failed.");
+            Log::info("Blocked channel {$comment->author_channel_id}. Deleted {$deleted} comments, {$failed} failed.");
 
-        return [
-            'blocked' => true,
-            'blacklist_entry' => $blacklistEntry,
-            'total_comments' => count($allComments),
-            'deleted' => $deleted,
-            'failed' => $failed,
-        ];
+            return [
+                'blocked' => true,
+                'blacklist_entry' => $blacklistEntry,
+                'total_comments' => count($allComments),
+                'deleted' => $deleted,
+                'failed' => $failed,
+            ];
+        });
     }
 
     /**

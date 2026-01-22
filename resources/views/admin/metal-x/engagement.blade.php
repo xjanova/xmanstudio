@@ -134,15 +134,16 @@
                                 <div class="flex items-center gap-2">
                                     @if($comment->sentiment)
                                         @php
-                                            $colors = [
-                                                'positive' => 'green',
-                                                'negative' => 'red',
-                                                'question' => 'purple',
-                                                'neutral' => 'gray'
+                                            // XSS-safe: Use complete class names from whitelist
+                                            $sentimentBadges = [
+                                                'positive' => 'px-2 py-1 bg-green-100 text-green-700 text-xs rounded',
+                                                'negative' => 'px-2 py-1 bg-red-100 text-red-700 text-xs rounded',
+                                                'question' => 'px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded',
+                                                'neutral' => 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded'
                                             ];
-                                            $color = $colors[$comment->sentiment] ?? 'gray';
+                                            $badgeClass = $sentimentBadges[$comment->sentiment] ?? 'px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded';
                                         @endphp
-                                        <span class="px-2 py-1 bg-{{ $color }}-100 text-{{ $color }}-700 text-xs rounded">
+                                        <span class="{{ $badgeClass }}">
                                             {{ ucfirst($comment->sentiment) }}
                                         </span>
                                     @endif

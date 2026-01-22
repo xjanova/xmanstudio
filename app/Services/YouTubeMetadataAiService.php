@@ -15,9 +15,11 @@ class YouTubeMetadataAiService
     protected $apiKey;
     protected $temperature;
     protected $maxTokens;
+    protected $sanitizer;
 
-    public function __construct()
+    public function __construct(InputSanitizerService $sanitizer)
     {
+        $this->sanitizer = $sanitizer;
         $this->loadAiSettings();
     }
 
@@ -75,13 +77,17 @@ class YouTubeMetadataAiService
 
     /**
      * Generate metadata for multiple videos
+     * Fixed: Use findMany() to avoid N+1 query problem
      */
     public function generateBatchMetadata(array $videoIds): array
     {
         $results = [];
 
+        // Load all videos in a single query to avoid N+1 problem
+        $videos = MetalXVideo::findMany($videoIds)->keyBy('id');
+
         foreach ($videoIds as $videoId) {
-            $video = MetalXVideo::find($videoId);
+            $video = $videos->get($videoId);
 
             if (!$video) {
                 $results[$videoId] = [
@@ -103,22 +109,30 @@ class YouTubeMetadataAiService
 
     /**
      * Build prompt for metadata generation
+     * Sanitized to prevent prompt injection attacks
      */
     protected function buildMetadataPrompt(MetalXVideo $video): string
     {
-        $channelName = Setting::get('metalx_channel_name', 'Metal-X');
+        // Sanitize all user-provided content to prevent prompt injection
+        $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
+        $titleEn = $this->sanitizer->sanitizeForPrompt($video->title_en ?? '', 200);
+        $descriptionEn = $this->sanitizer->sanitizeForPrompt($video->description_en ?? '', 2000);
+        $tags = $this->sanitizer->sanitizeForPrompt($video->tags ?? '', 500);
+        $channelTitle = $this->sanitizer->sanitizeForPrompt($video->channel_title ?? '', 100);
+        $categoryId = (int) $video->category_id; // Ensure integer
+        $duration = (int) $video->duration; // Ensure integer
 
         return <<<PROMPT
 You are a professional YouTube content specialist for {$channelName}, a metal fabrication and engineering company in Thailand.
 
 Your task is to generate Thai metadata for the following YouTube video:
 
-**English Title:** {$video->title_en}
-**English Description:** {$video->description_en}
-**Existing Tags:** {$video->tags}
-**Category:** {$video->category_id}
-**Duration:** {$video->duration} seconds
-**Channel:** {$video->channel_title}
+**English Title:** {$titleEn}
+**English Description:** {$descriptionEn}
+**Existing Tags:** {$tags}
+**Category:** {$categoryId}
+**Duration:** {$duration} seconds
+**Channel:** {$channelTitle}
 
 Please generate the following in JSON format:
 

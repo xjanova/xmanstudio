@@ -59,28 +59,19 @@
                             </td>
                             <td class="px-6 py-4">
                                 @php
-                                    $colors = [
-                                        'gambling' => 'red',
-                                        'scam' => 'orange',
-                                        'inappropriate' => 'purple',
-                                        'harassment' => 'pink',
-                                        'spam' => 'yellow',
-                                        'impersonation' => 'indigo',
+                                    // XSS-safe: Use complete class names from whitelist
+                                    $reasonBadges = [
+                                        'gambling' => ['class' => 'px-3 py-1 bg-red-100 text-red-800 text-sm rounded-full', 'icon' => '🎰'],
+                                        'scam' => ['class' => 'px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full', 'icon' => '🚨'],
+                                        'inappropriate' => ['class' => 'px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full', 'icon' => '⚠️'],
+                                        'harassment' => ['class' => 'px-3 py-1 bg-pink-100 text-pink-800 text-sm rounded-full', 'icon' => '😡'],
+                                        'spam' => ['class' => 'px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full', 'icon' => '📧'],
+                                        'impersonation' => ['class' => 'px-3 py-1 bg-indigo-100 text-indigo-800 text-sm rounded-full', 'icon' => '👥'],
                                     ];
-                                    $color = $colors[$entry->reason] ?? 'gray';
-
-                                    $icons = [
-                                        'gambling' => '🎰',
-                                        'scam' => '🚨',
-                                        'inappropriate' => '⚠️',
-                                        'harassment' => '😡',
-                                        'spam' => '📧',
-                                        'impersonation' => '👥',
-                                    ];
-                                    $icon = $icons[$entry->reason] ?? '🚫';
+                                    $badge = $reasonBadges[$entry->reason] ?? ['class' => 'px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full', 'icon' => '🚫'];
                                 @endphp
-                                <span class="px-3 py-1 bg-{{ $color }}-100 text-{{ $color }}-800 text-sm rounded-full">
-                                    {{ $icon }} {{ ucfirst($entry->reason) }}
+                                <span class="{{ $badge['class'] }}">
+                                    {{ $badge['icon'] }} {{ ucfirst($entry->reason) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4">

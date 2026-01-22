@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MetalXComment extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'video_id',
         'comment_id',
@@ -33,7 +35,6 @@ class MetalXComment extends Model
         'is_hidden',
         'is_blacklisted_author',
         'violation_type',
-        'deleted_at',
     ];
 
     protected $casts = [
@@ -51,7 +52,6 @@ class MetalXComment extends Model
         'is_spam' => 'boolean',
         'is_hidden' => 'boolean',
         'is_blacklisted_author' => 'boolean',
-        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -149,14 +149,6 @@ class MetalXComment extends Model
         }
 
         return MetalXBlacklist::isBlacklisted($this->author_channel_id);
-    }
-
-    /**
-     * Scope to only include non-deleted comments.
-     */
-    public function scopeNotDeleted($query)
-    {
-        return $query->whereNull('deleted_at');
     }
 
     /**

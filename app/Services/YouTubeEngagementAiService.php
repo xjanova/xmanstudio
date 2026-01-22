@@ -16,9 +16,11 @@ class YouTubeEngagementAiService
     protected $apiKey;
     protected $temperature;
     protected $maxTokens;
+    protected $sanitizer;
 
-    public function __construct()
+    public function __construct(InputSanitizerService $sanitizer)
     {
+        $this->sanitizer = $sanitizer;
         $this->loadAiSettings();
     }
 
@@ -48,14 +50,19 @@ class YouTubeEngagementAiService
 
     /**
      * Analyze sentiment of a comment.
+     * Sanitized to prevent prompt injection attacks.
      */
     public function analyzeSentiment(MetalXComment $comment): array
     {
+        // Sanitize user-provided content to prevent prompt injection
+        $commentText = $this->sanitizer->sanitizeForPrompt($comment->text ?? '', 1000);
+        $videoTitle = $this->sanitizer->sanitizeForPrompt($comment->video->title_en ?? '', 200);
+
         $prompt = <<<PROMPT
 Analyze the sentiment and intent of this YouTube comment:
 
-Comment: "{$comment->text}"
-Video: "{$comment->video->title_en}"
+Comment: "{$commentText}"
+Video: "{$videoTitle}"
 
 Respond with JSON only:
 {
@@ -102,15 +109,21 @@ PROMPT;
 
     /**
      * Detect gambling, unsafe content, and violations.
+     * Sanitized to prevent prompt injection attacks.
      */
     public function detectViolation(MetalXComment $comment): array
     {
+        // Sanitize user-provided content to prevent prompt injection
+        $commentText = $this->sanitizer->sanitizeForPrompt($comment->text ?? '', 1000);
+        $authorName = $this->sanitizer->sanitizeForPrompt($comment->author_name ?? '', 100);
+        $videoTitle = $this->sanitizer->sanitizeForPrompt($comment->video->title_en ?? '', 200);
+
         $prompt = <<<PROMPT
 Analyze this YouTube comment for policy violations and unsafe content:
 
-Comment: "{$comment->text}"
-Author: {$comment->author_name}
-Video: "{$comment->video->title_en}"
+Comment: "{$commentText}"
+Author: {$authorName}
+Video: "{$videoTitle}"
 
 Detect the following violations:
 1. **Gambling**: Casino, betting, gambling sites, poker, slots, sports betting
@@ -218,22 +231,30 @@ PROMPT;
 
     /**
      * Generate creative reply for a comment.
+     * Sanitized to prevent prompt injection attacks.
      */
     public function generateReply(MetalXComment $comment): array
     {
         $video = $comment->video;
-        $channelName = Setting::get('metalx_channel_name', 'Metal-X');
-        $channelDescription = Setting::get('metalx_channel_description', 'A metal fabrication company');
+
+        // Sanitize all user-provided content
+        $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
+        $channelDescription = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_description', 'A metal fabrication company'), 200);
+        $videoTitle = $this->sanitizer->sanitizeForPrompt($video->title_en ?? '', 200);
+        $videoDescription = $this->sanitizer->sanitizeForPrompt($video->description_en ?? '', 500);
+        $authorName = $this->sanitizer->sanitizeForPrompt($comment->author_name ?? '', 100);
+        $commentText = $this->sanitizer->sanitizeForPrompt($comment->text ?? '', 1000);
+        $sentiment = in_array($comment->sentiment, ['positive', 'negative', 'neutral', 'question']) ? $comment->sentiment : 'neutral';
 
         $prompt = <<<PROMPT
 You are the social media manager for {$channelName}, {$channelDescription}.
 
 Generate a creative, engaging reply to this YouTube comment:
 
-Video Title: "{$video->title_en}"
-Video Description: "{$video->description_en}"
-Comment by {$comment->author_name}: "{$comment->text}"
-Sentiment: {$comment->sentiment}
+Video Title: "{$videoTitle}"
+Video Description: "{$videoDescription}"
+Comment by {$authorName}: "{$commentText}"
+Sentiment: {$sentiment}
 
 Guidelines for the reply:
 1. Be friendly, professional, and authentic
@@ -277,20 +298,27 @@ PROMPT;
 
     /**
      * Improve video title and description.
+     * Sanitized to prevent prompt injection attacks.
      */
     public function improveVideoContent(MetalXVideo $video): array
     {
-        $channelName = Setting::get('metalx_channel_name', 'Metal-X');
+        // Sanitize all user-provided content
+        $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
+        $titleEn = $this->sanitizer->sanitizeForPrompt($video->title_en ?? '', 200);
+        $descriptionEn = $this->sanitizer->sanitizeForPrompt($video->description_en ?? '', 2000);
+        $tags = $this->sanitizer->sanitizeForPrompt($video->tags ?? '', 500);
+        $viewCount = (int) ($video->view_count ?? 0);
+        $likeCount = (int) ($video->like_count ?? 0);
 
         $prompt = <<<PROMPT
 You are a YouTube SEO specialist for {$channelName}, a metal fabrication and engineering company.
 
 Current video content:
-Title (EN): "{$video->title_en}"
-Description (EN): "{$video->description_en}"
-Tags: {$video->tags}
-Views: {$video->view_count}
-Likes: {$video->like_count}
+Title (EN): "{$titleEn}"
+Description (EN): "{$descriptionEn}"
+Tags: {$tags}
+Views: {$viewCount}
+Likes: {$likeCount}
 
 Improve this content for better engagement and SEO:
 
