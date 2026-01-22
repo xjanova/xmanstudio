@@ -96,7 +96,82 @@
     </div>
 </div>
 
-<!-- Expiring Soon Alert -->
+<!-- Expired License Alert -->
+@if(isset($expiredLicenses) && $expiredLicenses->count() > 0)
+<div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-4 sm:p-5 mb-6">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <div class="p-2 bg-red-100 rounded-lg">
+                <svg class="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+        </div>
+        <div class="ml-4 flex-1">
+            <h3 class="text-base font-semibold text-red-800">License หมดอายุแล้ว!</h3>
+            <div class="mt-3 space-y-2">
+                @foreach($expiredLicenses as $license)
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white/50 rounded-lg p-3">
+                    <div>
+                        <p class="font-medium text-gray-900">{{ $license->product?->name ?? 'Software License' }}</p>
+                        <p class="text-sm text-red-700">
+                            หมดอายุเมื่อ {{ $license->expires_at->format('d/m/Y') }} ({{ $license->expires_at->diffForHumans() }})
+                        </p>
+                    </div>
+                    <a href="{{ route('products.show', $license->product?->slug ?? 'products') }}"
+                       class="mt-2 sm:mt-0 inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        ต่ออายุ
+                    </a>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- Expiring License Alert -->
+@if(isset($expiringLicenses) && $expiringLicenses->count() > 0)
+<div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 sm:p-5 mb-6">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <div class="p-2 bg-amber-100 rounded-lg">
+                <svg class="h-6 w-6 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+        </div>
+        <div class="ml-4 flex-1">
+            <h3 class="text-base font-semibold text-amber-800">License ใกล้หมดอายุ</h3>
+            <div class="mt-3 space-y-2">
+                @foreach($expiringLicenses as $license)
+                @php $daysLeft = max(0, (int) now()->diffInDays($license->expires_at, false)); @endphp
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white/50 rounded-lg p-3">
+                    <div>
+                        <p class="font-medium text-gray-900">{{ $license->product?->name ?? 'Software License' }}</p>
+                        <p class="text-sm text-amber-700">
+                            เหลืออีก {{ $daysLeft }} วัน ({{ $license->expires_at->format('d/m/Y') }})
+                        </p>
+                    </div>
+                    <a href="{{ route('products.show', $license->product?->slug ?? 'products') }}"
+                       class="mt-2 sm:mt-0 inline-flex items-center px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        ต่ออายุ
+                    </a>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- Expiring Subscription Alert -->
 @if($expiringSoon->count() > 0)
 <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 sm:p-5 mb-8">
     <div class="flex">

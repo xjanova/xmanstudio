@@ -61,11 +61,26 @@ class CustomerPortalController extends Controller
             'open_tickets' => $openTickets,
         ];
 
-        // Expiring Soon (within 7 days)
+        // Expiring Soon (within 7 days) - Subscriptions
         $expiringSoon = UserRental::where('user_id', $user->id)
             ->where('status', UserRental::STATUS_ACTIVE)
             ->whereBetween('expires_at', [now(), now()->addDays(7)])
             ->with('rentalPackage')
+            ->get();
+
+        // Expiring/Expired Licenses
+        $expiringLicenses = LicenseKey::whereIn('order_id', $userOrderIds)
+            ->where('status', LicenseKey::STATUS_ACTIVE)
+            ->where('license_type', '!=', 'lifetime')
+            ->whereBetween('expires_at', [now(), now()->addDays(7)])
+            ->with('product')
+            ->get();
+
+        $expiredLicenses = LicenseKey::whereIn('order_id', $userOrderIds)
+            ->where('status', LicenseKey::STATUS_ACTIVE)
+            ->where('license_type', '!=', 'lifetime')
+            ->where('expires_at', '<=', now())
+            ->with('product')
             ->get();
 
         return view('customer.dashboard', compact(
@@ -74,7 +89,9 @@ class CustomerPortalController extends Controller
             'activeLicenses',
             'recentOrders',
             'stats',
-            'expiringSoon'
+            'expiringSoon',
+            'expiringLicenses',
+            'expiredLicenses'
         ));
     }
 

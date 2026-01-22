@@ -20,6 +20,13 @@ class User extends Authenticatable
         'phone',
         'line_uid',
         'line_display_name',
+        'line_access_token',
+        'line_refresh_token',
+        'line_picture_url',
+        'notification_preferences',
+        'marketing_email_enabled',
+        'marketing_line_enabled',
+        'marketing_consent_at',
         'password',
         'role',
         'is_active',
@@ -49,6 +56,10 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
+            'notification_preferences' => 'array',
+            'marketing_email_enabled' => 'boolean',
+            'marketing_line_enabled' => 'boolean',
+            'marketing_consent_at' => 'datetime',
         ];
     }
 
@@ -103,5 +114,51 @@ class User extends Authenticatable
     public function scopeWithLineUid($query)
     {
         return $query->whereNotNull('line_uid')->where('line_uid', '!=', '');
+    }
+
+    /**
+     * Check if user wants to receive marketing emails
+     */
+    public function wantsMarketingEmail(): bool
+    {
+        return $this->marketing_email_enabled ?? true;
+    }
+
+    /**
+     * Check if user wants to receive marketing LINE messages
+     */
+    public function wantsMarketingLine(): bool
+    {
+        return $this->marketing_line_enabled && $this->hasLineUid();
+    }
+
+    /**
+     * Get notification preference for a specific type
+     */
+    public function getNotificationPreference(string $type, string $channel = 'email'): bool
+    {
+        $preferences = $this->notification_preferences ?? [];
+
+        return $preferences[$type][$channel] ?? true;
+    }
+
+    /**
+     * Check if user can receive LINE notifications
+     */
+    public function canReceiveLineNotifications(): bool
+    {
+        return $this->hasLineUid() && ($this->marketing_line_enabled ?? true);
+    }
+
+    /**
+     * Scope for users who can receive marketing notifications
+     */
+    public function scopeMarketingEnabled($query, string $channel = 'email')
+    {
+        if ($channel === 'line') {
+            return $query->withLineUid()->where('marketing_line_enabled', true);
+        }
+
+        return $query->where('marketing_email_enabled', true);
     }
 }

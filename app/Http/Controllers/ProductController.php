@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\Service;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -19,7 +21,28 @@ class ProductController extends Controller
             ->orderBy('order')
             ->get();
 
-        return view('products.index', compact('products', 'categories'));
+        // Get user's licenses for products if logged in
+        $userLicenses = [];
+        if (Auth::check()) {
+            $userLicenses = LicenseKey::whereHas('order', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+                ->with('product')
+                ->get()
+                ->groupBy('product_id')
+                ->map(function ($licenses) {
+                    // Return the best license (active first, then by expiry)
+                    return $licenses->sortByDesc(function ($license) {
+                        if ($license->isValid()) {
+                            return 2 + ($license->daysRemaining() / 1000000);
+                        }
+
+                        return $license->isExpired() ? 0 : 1;
+                    })->first();
+                });
+        }
+
+        return view('products.index', compact('products', 'categories', 'userLicenses'));
     }
 
     public function show($slug)
@@ -34,6 +57,17 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
+        // Get user's license for this product if logged in
+        $userLicense = null;
+        if (Auth::check()) {
+            $userLicense = LicenseKey::whereHas('order', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+                ->where('product_id', $product->id)
+                ->orderByDesc('created_at')
+                ->first();
+        }
+
         // Custom views for each product
         $customViews = [
             'autotradex' => 'products.autotradex',
@@ -47,10 +81,10 @@ class ProductController extends Controller
         ];
 
         if (isset($customViews[$slug])) {
-            return view($customViews[$slug], compact('product', 'relatedProducts'));
+            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense'));
         }
 
-        return view('products.show', compact('product', 'relatedProducts'));
+        return view('products.show', compact('product', 'relatedProducts', 'userLicense'));
     }
 
     public function services()
