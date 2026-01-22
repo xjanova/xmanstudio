@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DownloadLog;
-use App\Models\GithubSetting;
 use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Services\GithubReleaseService;
@@ -74,7 +73,7 @@ class ProductVersionController extends Controller
     {
         $githubSetting = $product->githubSetting;
 
-        if (!$githubSetting) {
+        if (! $githubSetting) {
             return response()->json([
                 'success' => false,
                 'message' => 'GitHub settings not configured',
@@ -100,7 +99,7 @@ class ProductVersionController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.products.versions.index', $product)
-                ->with('error', 'Sync ล้มเหลว: ' . $e->getMessage());
+                ->with('error', 'Sync ล้มเหลว: '.$e->getMessage());
         }
     }
 
@@ -109,7 +108,7 @@ class ProductVersionController extends Controller
      */
     public function toggleVersion(Product $product, ProductVersion $version)
     {
-        $version->update(['is_active' => !$version->is_active]);
+        $version->update(['is_active' => ! $version->is_active]);
 
         $status = $version->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
 

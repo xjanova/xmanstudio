@@ -38,7 +38,7 @@ class GithubSetting extends Model
      */
     public function setGithubTokenAttribute($value): void
     {
-        if (!empty($value)) {
+        if (! empty($value)) {
             $this->attributes['github_token'] = Crypt::encryptString($value);
         }
     }
