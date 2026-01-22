@@ -257,6 +257,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Product Management
     Route::resource('products', AdminProductController::class);
+    Route::post('/products/{product}/toggle', [AdminProductController::class, 'toggle'])->name('products.toggle');
 
     // License Management
     Route::get('/licenses', [AdminLicenseController::class, 'index'])->name('licenses.index');
