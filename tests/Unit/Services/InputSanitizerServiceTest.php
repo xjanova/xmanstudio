@@ -146,7 +146,12 @@ class InputSanitizerServiceTest extends TestCase
         foreach ($safeInputs as $input) {
             $sanitized = $this->sanitizer->sanitizeForPrompt($input);
             // Should be mostly unchanged (maybe whitespace normalized)
-            $this->assertStringContainsString('comment', $sanitized);
+            // Just verify the content is not drastically changed
+            $this->assertNotEmpty($sanitized, "Safe content should not become empty: {$input}");
+            // Check that most words are preserved
+            $originalWords = str_word_count($input);
+            $sanitizedWords = str_word_count($sanitized);
+            $this->assertGreaterThanOrEqual($originalWords * 0.8, $sanitizedWords, "Safe content should preserve most words: {$input}");
         }
     }
 

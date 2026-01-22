@@ -120,6 +120,24 @@ class InputSanitizerService
             }
         }
 
+        // Block localhost and internal IPs (SSRF protection)
+        $host = $parsed['host'] ?? '';
+        $localhostPatterns = [
+            '/^localhost$/i',
+            '/^127\.\d+\.\d+\.\d+$/',
+            '/^\[?::1\]?$/',
+            '/^0\.0\.0\.0$/',
+            '/^10\.\d+\.\d+\.\d+$/',
+            '/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/',
+            '/^192\.168\.\d+\.\d+$/',
+        ];
+
+        foreach ($localhostPatterns as $pattern) {
+            if (preg_match($pattern, $host)) {
+                return null;
+            }
+        }
+
         return $url;
     }
 
@@ -151,8 +169,8 @@ class InputSanitizerService
         // Prevent multiple dots
         $fileName = preg_replace('/\.+/', '.', $fileName);
 
-        // Remove leading dots
-        $fileName = ltrim($fileName, '.');
+        // Remove leading and trailing dots
+        $fileName = trim($fileName, '.');
 
         return $fileName;
     }

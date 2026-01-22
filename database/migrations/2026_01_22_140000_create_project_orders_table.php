@@ -36,7 +36,7 @@ return new class extends Migration
                 'review',       // รอตรวจสอบ
                 'revision',     // แก้ไข
                 'completed',    // เสร็จสิ้น
-                'cancelled'     // ยกเลิก
+                'cancelled',     // ยกเลิก
             ])->default('pending');
 
             // Progress
@@ -86,7 +86,7 @@ return new class extends Migration
                 'pending',      // รอดำเนินการ
                 'in_progress',  // กำลังทำ
                 'completed',    // เสร็จแล้ว
-                'cancelled'     // ยกเลิก
+                'cancelled',     // ยกเลิก
             ])->default('pending');
 
             $table->integer('progress_percent')->default(0);
@@ -114,7 +114,7 @@ return new class extends Migration
                 'issue',        // พบปัญหา
                 'delivery',     // ส่งมอบงาน
                 'meeting',      // นัดประชุม
-                'change_request' // ขอเปลี่ยนแปลง
+                'change_request', // ขอเปลี่ยนแปลง
             ])->default('update');
 
             // Attachments (stored as JSON array of file paths)
@@ -143,7 +143,7 @@ return new class extends Migration
                 'delivery',     // ส่งมอบ
                 'meeting',      // ประชุม
                 'payment',      // ชำระเงิน
-                'end'           // จบโครงการ
+                'end',           // จบโครงการ
             ])->default('milestone');
 
             $table->boolean('is_completed')->default(false);
