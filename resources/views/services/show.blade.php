@@ -3,6 +3,25 @@
 @section('title', $service->name . ' - XMAN Studio')
 
 @section('content')
+<!-- Coming Soon Banner -->
+@if(method_exists($service, 'isComingSoon') && $service->isComingSoon())
+<div class="bg-orange-500 text-white py-3">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="font-semibold">Coming Soon!</span>
+            @if($service->coming_soon_until)
+                <span>- เปิดให้บริการวันที่ {{ $service->coming_soon_until->format('d/m/Y H:i') }}</span>
+            @else
+                <span>- บริการนี้จะเปิดให้บริการเร็วๆ นี้</span>
+            @endif
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Hero Section -->
 <section class="py-16" style="background: linear-gradient(135deg, {{ $service->color ?? '#0ea5e9' }}, {{ $service->color ?? '#0ea5e9' }}99)">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,10 +48,22 @@
                     <div class="text-2xl font-bold mb-6">สอบถามราคา</div>
                 @endif
 
-                <a href="{{ route('support.index') }}"
-                   class="inline-block px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 font-semibold text-lg">
-                    ขอใบเสนอราคา
-                </a>
+                @if(method_exists($service, 'isComingSoon') && $service->isComingSoon())
+                    <div class="inline-block px-8 py-4 bg-orange-400/50 text-white rounded-lg cursor-not-allowed font-semibold text-lg">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Coming Soon
+                        @if($service->coming_soon_until)
+                            - {{ $service->coming_soon_until->format('d/m/Y') }}
+                        @endif
+                    </div>
+                @else
+                    <a href="{{ route('support.index') }}"
+                       class="inline-block px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 font-semibold text-lg">
+                        ขอใบเสนอราคา
+                    </a>
+                @endif
             </div>
 
             <div class="flex justify-center">

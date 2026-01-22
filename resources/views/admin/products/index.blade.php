@@ -17,7 +17,7 @@
 @endif
 
 <!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center">
             <div class="p-3 rounded-full bg-blue-100 text-blue-600">
@@ -70,6 +70,20 @@
             <div class="ml-4">
                 <p class="text-sm text-gray-500">ต้องใช้ License</p>
                 <p class="text-2xl font-bold text-gray-900">{{ $stats['with_license'] }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm text-gray-500">Coming Soon</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $stats['coming_soon'] ?? 0 }}</p>
             </div>
         </div>
     </div>
@@ -182,9 +196,19 @@
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $product->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                            {{ $product->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}
-                        </span>
+                        <div class="flex flex-col gap-1">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $product->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                {{ $product->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}
+                            </span>
+                            @if($product->is_coming_soon)
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                                    Coming Soon
+                                    @if($product->coming_soon_until)
+                                        <span class="ml-1 text-orange-600">({{ $product->coming_soon_until->format('d/m/Y') }})</span>
+                                    @endif
+                                </span>
+                            @endif
+                        </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <div class="flex items-center space-x-1">
@@ -215,6 +239,18 @@
                                     <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
                                 </svg>
                             </a>
+
+                            <!-- Toggle Coming Soon -->
+                            <form action="{{ route('admin.products.toggle-coming-soon', $product) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit"
+                                        class="p-2 rounded-lg transition {{ $product->is_coming_soon ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50' : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50' }}"
+                                        title="{{ $product->is_coming_soon ? 'ปิด Coming Soon' : 'เปิด Coming Soon' }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </button>
+                            </form>
 
                             <!-- Toggle -->
                             <form action="{{ route('admin.products.toggle', $product) }}" method="POST" class="inline">
@@ -285,6 +321,7 @@
                 <li>👁️ <strong>Preview</strong> - ดูตัวอย่างหน้าผลิตภัณฑ์</li>
                 <li>✏️ <strong>แก้ไข</strong> - แก้ไขข้อมูลผลิตภัณฑ์</li>
                 <li>🐙 <strong>GitHub</strong> - จัดการ Version และเชื่อมต่อ GitHub Releases</li>
+                <li>🕐 <strong>Coming Soon</strong> - เปิด/ปิดโหมด Coming Soon (แสดงผลแต่ซื้อไม่ได้)</li>
                 <li>🔄 <strong>เปิด/ปิด</strong> - เปิด/ปิดการแสดงผลในหน้าร้าน</li>
             </ul>
         </div>

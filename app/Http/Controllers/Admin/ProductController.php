@@ -37,6 +37,7 @@ class ProductController extends Controller
             'active' => Product::where('is_active', true)->count(),
             'inactive' => Product::where('is_active', false)->count(),
             'with_license' => Product::where('requires_license', true)->count(),
+            'coming_soon' => Product::where('is_coming_soon', true)->count(),
         ];
 
         return view('admin.products.index', compact('products', 'categories', 'stats'));
@@ -74,12 +75,16 @@ class ProductController extends Controller
             'is_custom' => 'boolean',
             'requires_license' => 'boolean',
             'is_active' => 'boolean',
+            'is_coming_soon' => 'boolean',
+            'coming_soon_until' => 'nullable|date',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
         $validated['is_custom'] = $request->boolean('is_custom');
         $validated['requires_license'] = $request->boolean('requires_license');
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
+        $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
 
         // Handle main image
         if ($request->hasFile('image')) {
@@ -136,12 +141,16 @@ class ProductController extends Controller
             'is_custom' => 'boolean',
             'requires_license' => 'boolean',
             'is_active' => 'boolean',
+            'is_coming_soon' => 'boolean',
+            'coming_soon_until' => 'nullable|date',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
         $validated['is_custom'] = $request->boolean('is_custom');
         $validated['requires_license'] = $request->boolean('requires_license');
         $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
+        $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
 
         // Handle main image
         if ($request->hasFile('image')) {
@@ -189,6 +198,20 @@ class ProductController extends Controller
         $product->update(['is_active' => ! $product->is_active]);
 
         $status = $product->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+
+        return redirect()
+            ->back()
+            ->with('success', "{$status} '{$product->name}' แล้ว");
+    }
+
+    /**
+     * Toggle product coming soon status
+     */
+    public function toggleComingSoon(Product $product)
+    {
+        $product->update(['is_coming_soon' => ! $product->is_coming_soon]);
+
+        $status = $product->is_coming_soon ? 'เปิด Coming Soon' : 'ปิด Coming Soon';
 
         return redirect()
             ->back()

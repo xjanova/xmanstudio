@@ -263,6 +263,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Service Management
     Route::resource('services', AdminServiceController::class);
     Route::post('/services/{service}/toggle', [AdminServiceController::class, 'toggle'])->name('services.toggle');
+    Route::post('/services/{service}/toggle-coming-soon', [AdminServiceController::class, 'toggleComingSoon'])->name('services.toggle-coming-soon');
 
     // Product Categories
     Route::prefix('products/categories')->name('products.categories.')->group(function () {
@@ -278,6 +279,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Product Management
     Route::resource('products', AdminProductController::class);
     Route::post('/products/{product}/toggle', [AdminProductController::class, 'toggle'])->name('products.toggle');
+    Route::post('/products/{product}/toggle-coming-soon', [AdminProductController::class, 'toggleComingSoon'])->name('products.toggle-coming-soon');
     Route::get('/products/{product}/preview', [AdminProductController::class, 'preview'])->name('products.preview');
 
     // Product Versions & GitHub Settings
