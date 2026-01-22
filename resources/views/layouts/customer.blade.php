@@ -51,14 +51,21 @@
         <aside class="w-64 bg-white shadow-lg flex-shrink-0 hidden md:flex md:flex-col h-screen">
             <!-- Logo Section -->
             <div class="p-6 border-b border-gray-100 flex-shrink-0">
+                @php
+                    $siteLogo = \App\Models\Setting::getValue('site_logo');
+                @endphp
                 <a href="/" class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">X</span>
-                    </div>
-                    <div>
-                        <span class="text-xl font-bold text-gray-900">XMAN</span>
-                        <span class="text-xl font-light text-primary-600">Studio</span>
-                    </div>
+                    @if($siteLogo)
+                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
+                    @else
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">X</span>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">XMAN</span>
+                            <span class="text-xl font-light text-primary-600">Studio</span>
+                        </div>
+                    @endif
                 </a>
                 <p class="text-sm text-gray-500 mt-2">ศูนย์จัดการบัญชีสมาชิก</p>
             </div>
