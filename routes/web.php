@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\Admin\AdPlacementController;
 use App\Http\Controllers\Admin\AdsTxtController;
+use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
+use App\Http\Controllers\Admin\LineSettingsController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\PaymentSettingController;
@@ -280,6 +282,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/branding', [BrandingSettingsController::class, 'update'])->name('branding.update');
     Route::delete('/branding/logo', [BrandingSettingsController::class, 'deleteLogo'])->name('branding.logo.delete');
     Route::delete('/branding/favicon', [BrandingSettingsController::class, 'deleteFavicon'])->name('branding.favicon.delete');
+
+    // AI Settings
+    Route::get('/ai-settings', [AiSettingsController::class, 'index'])->name('ai-settings.index');
+    Route::put('/ai-settings', [AiSettingsController::class, 'update'])->name('ai-settings.update');
+    Route::post('/ai-settings/test', [AiSettingsController::class, 'test'])->name('ai-settings.test');
+
+    // Line Settings
+    Route::get('/line-settings', [LineSettingsController::class, 'index'])->name('line-settings.index');
+    Route::put('/line-settings', [LineSettingsController::class, 'update'])->name('line-settings.update');
+    Route::post('/line-settings/test-messaging', [LineSettingsController::class, 'testMessaging'])->name('line-settings.test-messaging');
+    Route::post('/line-settings/test-notify', [LineSettingsController::class, 'testNotify'])->name('line-settings.test-notify');
 
     // Custom Code Settings (Tracking & Verification)
     Route::get('/custom-code', [CustomCodeController::class, 'index'])->name('custom-code.index');
