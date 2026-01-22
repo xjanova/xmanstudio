@@ -111,15 +111,67 @@
                     </button>
 
                     <!-- Cart -->
+                    @php
+                        $cartCount = 0;
+                        if (auth()->check()) {
+                            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+                        } else {
+                            $cart = \App\Models\Cart::where('session_id', session()->getId())->first();
+                        }
+                        if ($cart) {
+                            $cartCount = $cart->items()->sum('quantity');
+                        }
+                    @endphp
                     <a href="/cart" class="relative p-2 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
-                        @php $cartCount = session('cart_count', 0); @endphp
                         @if($cartCount > 0)
                         <span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primary-600 rounded-full">{{ $cartCount }}</span>
                         @endif
                     </a>
+
+                    <!-- Notifications -->
+                    @auth
+                    @php
+                        $unreadNotifications = auth()->user()->unreadNotifications()->count();
+                    @endphp
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="relative p-2 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            @if($unreadNotifications > 0)
+                            <span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">{{ $unreadNotifications > 9 ? '9+' : $unreadNotifications }}</span>
+                            @endif
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50">
+                            <div class="px-4 py-2 border-b dark:border-gray-700">
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">การแจ้งเตือน</h3>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                @forelse(auth()->user()->notifications()->take(5)->get() as $notification)
+                                    <a href="{{ $notification->data['url'] ?? '#' }}" class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 {{ $notification->read_at ? '' : 'bg-primary-50 dark:bg-primary-900/20' }}">
+                                        <p class="text-sm text-gray-900 dark:text-white">{{ $notification->data['message'] ?? 'การแจ้งเตือนใหม่' }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </a>
+                                @empty
+                                    <div class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                                        <svg class="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                        </svg>
+                                        <p class="text-sm">ไม่มีการแจ้งเตือน</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                            @if(auth()->user()->notifications()->count() > 0)
+                            <div class="px-4 py-2 border-t dark:border-gray-700">
+                                <a href="{{ route('customer.dashboard') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">ดูทั้งหมด</a>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endauth
 
                     <!-- User Menu / Login -->
                     @auth
