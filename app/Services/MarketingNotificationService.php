@@ -68,11 +68,11 @@ class MarketingNotificationService
         $daysLeft = now()->diffInDays($license->expires_at, false);
         $productName = $license->product->name ?? 'Unknown Product';
 
-        $subject = "แจ้งเตือน: License ของคุณกำลังจะหมดอายุ";
+        $subject = 'แจ้งเตือน: License ของคุณกำลังจะหมดอายุ';
         $message = "สวัสดีคุณ {$user->name}\n\n";
         $message .= "License สำหรับ {$productName} ของคุณจะหมดอายุใน {$daysLeft} วัน\n";
-        $message .= "วันหมดอายุ: " . $license->expires_at->format('d/m/Y') . "\n\n";
-        $message .= "กรุณาต่ออายุ License เพื่อใช้งานต่อเนื่องได้ที่เว็บไซต์ของเรา";
+        $message .= 'วันหมดอายุ: '.$license->expires_at->format('d/m/Y')."\n\n";
+        $message .= 'กรุณาต่ออายุ License เพื่อใช้งานต่อเนื่องได้ที่เว็บไซต์ของเรา';
 
         $sent = false;
 
@@ -106,9 +106,9 @@ class MarketingNotificationService
         $subject = "สินค้าใหม่: {$product->name}";
         $message = "สินค้าใหม่มาแล้ว!\n\n";
         $message .= "{$product->name}\n";
-        $message .= strip_tags($product->description ?? '') . "\n\n";
-        $message .= "ราคา: ฿" . number_format($product->price, 0) . "\n";
-        $message .= "ดูรายละเอียดเพิ่มเติมได้ที่เว็บไซต์ของเรา";
+        $message .= strip_tags($product->description ?? '')."\n\n";
+        $message .= 'ราคา: ฿'.number_format($product->price, 0)."\n";
+        $message .= 'ดูรายละเอียดเพิ่มเติมได้ที่เว็บไซต์ของเรา';
 
         return $this->sendMarketingNotification($subject, $message);
     }
@@ -154,8 +154,8 @@ class MarketingNotificationService
         $subject = "อัปเดตสถานะคำสั่งซื้อ #{$order->order_number}";
         $message = "สวัสดีคุณ {$user->name}\n\n";
         $message .= "คำสั่งซื้อ #{$order->order_number} ของคุณ{$statusText}\n";
-        $message .= "ยอดรวม: ฿" . number_format($order->total, 0) . "\n\n";
-        $message .= "ดูรายละเอียดเพิ่มเติมได้ที่เว็บไซต์ของเรา";
+        $message .= 'ยอดรวม: ฿'.number_format($order->total, 0)."\n\n";
+        $message .= 'ดูรายละเอียดเพิ่มเติมได้ที่เว็บไซต์ของเรา';
 
         $sent = false;
 
@@ -252,7 +252,7 @@ class MarketingNotificationService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
             'Content-Type' => 'application/json',
         ])->post('https://api.line.me/v2/bot/message/push', [
             'to' => $user->line_uid,
@@ -265,7 +265,7 @@ class MarketingNotificationService
         ]);
 
         if (! $response->successful()) {
-            throw new \Exception('LINE API error: ' . $response->status());
+            throw new \Exception('LINE API error: '.$response->status());
         }
     }
 
@@ -284,7 +284,7 @@ class MarketingNotificationService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
             'Content-Type' => 'application/json',
         ])->post('https://api.line.me/v2/bot/message/push', [
             'to' => $user->line_uid,
@@ -298,7 +298,7 @@ class MarketingNotificationService
         ]);
 
         if (! $response->successful()) {
-            throw new \Exception('LINE API error: ' . $response->status());
+            throw new \Exception('LINE API error: '.$response->status());
         }
     }
 
@@ -313,7 +313,7 @@ class MarketingNotificationService
                 'type' => 'bubble',
                 'hero' => $product->image ? [
                     'type' => 'image',
-                    'url' => asset('storage/' . $product->image),
+                    'url' => asset('storage/'.$product->image),
                     'size' => 'full',
                     'aspectRatio' => '20:13',
                     'aspectMode' => 'cover',
@@ -338,7 +338,7 @@ class MarketingNotificationService
                         ],
                         [
                             'type' => 'text',
-                            'text' => '฿' . number_format($product->price, 0),
+                            'text' => '฿'.number_format($product->price, 0),
                             'size' => 'xl',
                             'color' => '#FF6B00',
                             'weight' => 'bold',
