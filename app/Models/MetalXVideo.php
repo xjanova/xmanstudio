@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class MetalXVideo extends Model
@@ -31,6 +32,16 @@ class MetalXVideo extends Model
         'order',
         'published_at',
         'synced_at',
+        'ai_title_th',
+        'ai_description_th',
+        'ai_tags',
+        'ai_category',
+        'ai_confidence_score',
+        'ai_generated',
+        'ai_approved',
+        'ai_generated_at',
+        'ai_approved_at',
+        'ai_approved_by',
     ];
 
     protected $casts = [
@@ -43,6 +54,12 @@ class MetalXVideo extends Model
         'duration_seconds' => 'integer',
         'published_at' => 'datetime',
         'synced_at' => 'datetime',
+        'ai_tags' => 'array',
+        'ai_confidence_score' => 'decimal:2',
+        'ai_generated' => 'boolean',
+        'ai_approved' => 'boolean',
+        'ai_generated_at' => 'datetime',
+        'ai_approved_at' => 'datetime',
     ];
 
     /**
@@ -53,6 +70,14 @@ class MetalXVideo extends Model
         return $this->belongsToMany(MetalXPlaylist::class, 'metal_x_playlist_video', 'video_id', 'playlist_id')
             ->withPivot('position')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the user who approved the AI metadata.
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'ai_approved_by');
     }
 
     /**

@@ -407,6 +407,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::post('/{playlist}/remove-video', [MetalXPlaylistController::class, 'removeVideo'])->name('remove-video');
         });
 
+        // AI Tools
+        Route::prefix('ai')->name('ai.')->group(function () {
+            Route::get('/', [MetalXAiController::class, 'index'])->name('index');
+            Route::post('/{video}/generate', [MetalXAiController::class, 'generateSingle'])->name('generate-single');
+            Route::post('/generate-batch', [MetalXAiController::class, 'generateBatch'])->name('generate-batch');
+            Route::post('/generate-all', [MetalXAiController::class, 'generateAll'])->name('generate-all');
+            Route::post('/{video}/approve', [MetalXAiController::class, 'approve'])->name('approve');
+            Route::post('/{video}/reject', [MetalXAiController::class, 'reject'])->name('reject');
+            Route::post('/approve-batch', [MetalXAiController::class, 'approveBatch'])->name('approve-batch');
+            Route::get('/{video}/preview', [MetalXAiController::class, 'preview'])->name('preview');
+            Route::get('/status', [MetalXAiController::class, 'status'])->name('status');
+        });
+
         // Settings
         Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');
         Route::post('/settings', [MetalXSettingsController::class, 'update'])->name('settings.update');
