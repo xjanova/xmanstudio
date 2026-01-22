@@ -49,6 +49,8 @@ class ServiceController extends Controller
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'is_coming_soon' => 'boolean',
+            'coming_soon_until' => 'nullable|date',
         ]);
 
         // Generate slug if not provided
@@ -66,6 +68,8 @@ class ServiceController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['is_featured'] = $request->boolean('is_featured', false);
+        $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
+        $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
 
         $service = Service::create($validated);
 
@@ -104,6 +108,8 @@ class ServiceController extends Controller
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'is_coming_soon' => 'boolean',
+            'coming_soon_until' => 'nullable|date',
         ]);
 
         // Generate slug if not provided
@@ -121,6 +127,8 @@ class ServiceController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['is_featured'] = $request->boolean('is_featured', false);
+        $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
+        $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
 
         $service->update($validated);
 
@@ -137,6 +145,20 @@ class ServiceController extends Controller
         $service->update(['is_active' => ! $service->is_active]);
 
         $status = $service->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+
+        return redirect()
+            ->back()
+            ->with('success', "บริการ '{$service->name}' ถูก{$status}แล้ว");
+    }
+
+    /**
+     * Toggle service coming soon status
+     */
+    public function toggleComingSoon(Service $service)
+    {
+        $service->update(['is_coming_soon' => ! $service->is_coming_soon]);
+
+        $status = $service->is_coming_soon ? 'เปิด Coming Soon' : 'ปิด Coming Soon';
 
         return redirect()
             ->back()
