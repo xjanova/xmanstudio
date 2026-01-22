@@ -18,7 +18,7 @@ class VersionController extends Controller
     {
         $product = Product::where('slug', $slug)->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error' => 'Product not found',
@@ -27,7 +27,7 @@ class VersionController extends Controller
 
         $version = $product->latestVersion();
 
-        if (!$version) {
+        if (! $version) {
             return response()->json([
                 'success' => false,
                 'error' => 'No version available',
@@ -62,7 +62,7 @@ class VersionController extends Controller
     {
         $product = Product::where('slug', $slug)->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error' => 'Product not found',
@@ -111,7 +111,7 @@ class VersionController extends Controller
 
         $product = Product::where('slug', $slug)->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error' => 'Product not found',
@@ -120,7 +120,7 @@ class VersionController extends Controller
 
         $latestVersion = $product->latestVersion();
 
-        if (!$latestVersion) {
+        if (! $latestVersion) {
             return response()->json([
                 'success' => false,
                 'error' => 'No version available',
@@ -141,7 +141,7 @@ class VersionController extends Controller
 
             if ($license) {
                 $licenseValid = $license->status === 'active' &&
-                    (!$license->expires_at || $license->expires_at->isFuture());
+                    (! $license->expires_at || $license->expires_at->isFuture());
                 $licenseStatus = $license->status;
             }
         }
@@ -193,7 +193,7 @@ class VersionController extends Controller
 
         $license = $query->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'valid' => false,
@@ -211,14 +211,14 @@ class VersionController extends Controller
         }
 
         // Bind machine if not yet bound
-        if ($request->filled('machine_id') && !$license->machine_fingerprint && $license->status === 'active') {
+        if ($request->filled('machine_id') && ! $license->machine_fingerprint && $license->status === 'active') {
             $license->update([
                 'machine_fingerprint' => $request->input('machine_id'),
                 'activated_at' => now(),
             ]);
         }
 
-        $isValid = $license->status === 'active' && !$isExpired && $machineMatch;
+        $isValid = $license->status === 'active' && ! $isExpired && $machineMatch;
 
         return response()->json([
             'success' => true,
@@ -228,7 +228,7 @@ class VersionController extends Controller
                 'type' => $license->license_type,
                 'expires_at' => $license->expires_at?->toIso8601String(),
                 'is_expired' => $isExpired,
-                'machine_bound' => !empty($license->machine_fingerprint),
+                'machine_bound' => ! empty($license->machine_fingerprint),
                 'machine_match' => $machineMatch,
                 'activated_at' => $license->activated_at?->toIso8601String(),
             ],

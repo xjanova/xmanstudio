@@ -27,7 +27,7 @@ class DownloadController extends Controller
     {
         $product = Product::where('slug', $slug)->first();
 
-        if (!$product) {
+        if (! $product) {
             abort(404, 'Product not found');
         }
 
@@ -40,7 +40,7 @@ class DownloadController extends Controller
             $productVersion = $product->latestVersion();
         }
 
-        if (!$productVersion) {
+        if (! $productVersion) {
             abort(404, 'Version not found');
         }
 
@@ -51,7 +51,7 @@ class DownloadController extends Controller
         if ($product->requires_license) {
             $license = $this->validateUserLicense($request, $product, $user);
 
-            if (!$license) {
+            if (! $license) {
                 if ($request->wantsJson()) {
                     return response()->json([
                         'success' => false,
@@ -79,7 +79,7 @@ class DownloadController extends Controller
         // Get GitHub settings
         $githubSetting = $product->githubSetting;
 
-        if (!$githubSetting || !$productVersion->github_release_url) {
+        if (! $githubSetting || ! $productVersion->github_release_url) {
             // If no GitHub settings, redirect to external URL if available
             if ($productVersion->github_release_url) {
                 return redirect($productVersion->github_release_url);
@@ -99,7 +99,7 @@ class DownloadController extends Controller
     {
         $product = Product::where('slug', $slug)->first();
 
-        if (!$product) {
+        if (! $product) {
             abort(404, 'Product not found');
         }
 
@@ -112,7 +112,7 @@ class DownloadController extends Controller
             $productVersion = $product->latestVersion();
         }
 
-        if (!$productVersion) {
+        if (! $productVersion) {
             abort(404, 'Version not found');
         }
 
@@ -146,7 +146,7 @@ class DownloadController extends Controller
 
         $product = Product::where('slug', $slug)->first();
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error' => 'Product not found',
@@ -162,7 +162,7 @@ class DownloadController extends Controller
             $productVersion = $product->latestVersion();
         }
 
-        if (!$productVersion) {
+        if (! $productVersion) {
             return response()->json([
                 'success' => false,
                 'error' => 'Version not found',
@@ -179,7 +179,7 @@ class DownloadController extends Controller
             })
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'error' => 'Invalid or expired license key',
@@ -199,7 +199,7 @@ class DownloadController extends Controller
         // Get GitHub settings
         $githubSetting = $product->githubSetting;
 
-        if (!$githubSetting || !$productVersion->github_release_url) {
+        if (! $githubSetting || ! $productVersion->github_release_url) {
             if ($productVersion->github_release_url) {
                 return response()->json([
                     'success' => true,
@@ -266,7 +266,7 @@ class DownloadController extends Controller
 
         // Get the actual download URL (GitHub redirects to S3)
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download-Proxy',
         ])->withOptions([
@@ -297,7 +297,7 @@ class DownloadController extends Controller
             // For S3 URLs, we don't need auth, but for GitHub we do
             if (strpos($downloadUrl, 'github.com') !== false) {
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer ' . $token,
+                    'Authorization: Bearer '.$token,
                     'Accept: application/octet-stream',
                     'User-Agent: XMAN-Studio-Download-Proxy',
                 ]);
@@ -307,7 +307,7 @@ class DownloadController extends Controller
             curl_close($ch);
         }, 200, [
             'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             'Content-Length' => $fileSize,
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',

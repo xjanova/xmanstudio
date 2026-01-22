@@ -17,13 +17,13 @@ class GithubReleaseService
     {
         $githubSetting = $product->githubSetting;
 
-        if (!$githubSetting || !$githubSetting->is_active) {
+        if (! $githubSetting || ! $githubSetting->is_active) {
             throw new \Exception('GitHub settings not configured for this product');
         }
 
         $release = $this->fetchLatestRelease($githubSetting);
 
-        if (!$release) {
+        if (! $release) {
             throw new \Exception('Could not fetch release from GitHub');
         }
 
@@ -40,12 +40,13 @@ class GithubReleaseService
                 'per_page' => $perPage,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('GitHub API Error', [
                 'status' => $response->status(),
                 'body' => $response->body(),
                 'repo' => $githubSetting->full_repo_name,
             ]);
+
             return [];
         }
 
@@ -60,12 +61,13 @@ class GithubReleaseService
         $response = Http::withHeaders($this->getHeaders($githubSetting))
             ->get($githubSetting->latest_release_api_url);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('GitHub API Error - Latest Release', [
                 'status' => $response->status(),
                 'body' => $response->body(),
                 'repo' => $githubSetting->full_repo_name,
             ]);
+
             return null;
         }
 
@@ -82,7 +84,7 @@ class GithubReleaseService
         $response = Http::withHeaders($this->getHeaders($githubSetting))
             ->get($url);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             return null;
         }
 
@@ -96,14 +98,14 @@ class GithubReleaseService
     public function downloadAsset(GithubSetting $githubSetting, string $assetUrl)
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
+            'Authorization' => 'Bearer '.$githubSetting->github_token_decrypted,
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download-Service',
         ])->withOptions([
             'stream' => true,
         ])->get($assetUrl);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             throw new \Exception('Could not download asset from GitHub');
         }
 
@@ -118,7 +120,7 @@ class GithubReleaseService
         $url = "https://api.github.com/repos/{$githubSetting->full_repo_name}/releases/assets/{$assetId}";
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
+            'Authorization' => 'Bearer '.$githubSetting->github_token_decrypted,
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download-Service',
         ])->withOptions([
@@ -176,7 +178,7 @@ class GithubReleaseService
         }
 
         // Convert glob pattern to regex
-        $regex = '/^' . str_replace(['.', '*'], ['\.', '.*'], $pattern) . '$/i';
+        $regex = '/^'.str_replace(['.', '*'], ['\.', '.*'], $pattern).'$/i';
 
         foreach ($assets as $asset) {
             if (preg_match($regex, $asset['name'])) {
@@ -194,7 +196,7 @@ class GithubReleaseService
     protected function getHeaders(GithubSetting $githubSetting): array
     {
         return [
-            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
+            'Authorization' => 'Bearer '.$githubSetting->github_token_decrypted,
             'Accept' => 'application/vnd.github.v3+json',
             'User-Agent' => 'XMAN-Studio-Release-Service',
         ];
@@ -210,6 +212,7 @@ class GithubReleaseService
 
         if ($response->successful()) {
             $repo = $response->json();
+
             return [
                 'success' => true,
                 'message' => 'Connection successful',
@@ -221,7 +224,7 @@ class GithubReleaseService
 
         return [
             'success' => false,
-            'message' => 'Connection failed: ' . $response->body(),
+            'message' => 'Connection failed: '.$response->body(),
             'status' => $response->status(),
         ];
     }

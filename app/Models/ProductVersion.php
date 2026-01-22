@@ -52,7 +52,7 @@ class ProductVersion extends Model
 
     public function getFileSizeFormattedAttribute(): string
     {
-        if (!$this->file_size) {
+        if (! $this->file_size) {
             return 'N/A';
         }
 
@@ -65,6 +65,6 @@ class ProductVersion extends Model
             $unit++;
         }
 
-        return round($bytes, 2) . ' ' . $units[$unit];
+        return round($bytes, 2).' '.$units[$unit];
     }
 }
