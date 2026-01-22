@@ -435,6 +435,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::post('/{video}/apply-improvements', [MetalXEngagementController::class, 'applyContentImprovements'])->name('apply-improvements');
             Route::get('/{video}/stats', [MetalXEngagementController::class, 'videoStats'])->name('video-stats');
             Route::post('/batch-process', [MetalXEngagementController::class, 'batchProcess'])->name('batch-process');
+            Route::delete('/comment/{comment}/delete', [MetalXEngagementController::class, 'deleteComment'])->name('delete-comment');
+            Route::post('/comment/{comment}/block-channel', [MetalXEngagementController::class, 'blockChannel'])->name('block-channel');
+            Route::post('/comment/{comment}/detect-violation', [MetalXEngagementController::class, 'detectViolation'])->name('detect-violation');
+            Route::post('/comment/{comment}/auto-moderate', [MetalXEngagementController::class, 'autoModerate'])->name('auto-moderate');
+            Route::get('/blacklist', [MetalXEngagementController::class, 'blacklist'])->name('blacklist');
+            Route::post('/blacklist/{id}/unblock', [MetalXEngagementController::class, 'unblockChannel'])->name('unblock-channel');
         });
 
         // Settings

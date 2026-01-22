@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MetalXBlacklist;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
@@ -321,5 +322,124 @@ class YouTubeCommentService
         $comment->update([
             'requires_attention' => $requires,
         ]);
+    }
+
+    /**
+     * Delete comment from YouTube.
+     */
+    public function deleteComment(MetalXComment $comment): bool
+    {
+        if (!$this->isConfigured()) {
+            throw new Exception('YouTube API is not configured');
+        }
+
+        $accessToken = Setting::get('metalx_youtube_access_token');
+        if (empty($accessToken)) {
+            throw new Exception('YouTube access token is not configured.');
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $accessToken,
+        ])->delete('https://www.googleapis.com/youtube/v3/comments', [
+            'id' => $comment->comment_id,
+        ]);
+
+        if ($response->successful()) {
+            // Mark as deleted in our database
+            $comment->update([
+                'deleted_at' => now(),
+                'is_hidden' => true,
+            ]);
+
+            Log::info("Deleted comment {$comment->comment_id}");
+            return true;
+        }
+
+        Log::error("Failed to delete comment {$comment->comment_id}: " . $response->body());
+        return false;
+    }
+
+    /**
+     * Block channel and delete all their comments.
+     */
+    public function blockAndDeleteChannel(
+        MetalXComment $comment,
+        string $reason,
+        ?int $blockedBy = null
+    ): array {
+        if (!$comment->author_channel_id) {
+            throw new Exception('Comment does not have author channel ID');
+        }
+
+        // Add to blacklist
+        $blacklistEntry = MetalXBlacklist::addToBlacklist(
+            $comment->author_channel_id,
+            $comment->author_name,
+            $reason,
+            "Auto-blocked for: {$reason}",
+            $blockedBy
+        );
+
+        // Find all comments from this author
+        $allComments = MetalXComment::where('author_channel_id', $comment->author_channel_id)
+            ->whereNull('deleted_at')
+            ->get();
+
+        $deleted = 0;
+        $failed = 0;
+
+        foreach ($allComments as $authorComment) {
+            try {
+                // Mark as blacklisted
+                $authorComment->update([
+                    'is_blacklisted_author' => true,
+                    'violation_type' => $reason,
+                ]);
+
+                // Try to delete from YouTube
+                if ($this->deleteComment($authorComment)) {
+                    $deleted++;
+                } else {
+                    // Even if YouTube delete fails, mark as deleted locally
+                    $authorComment->update([
+                        'deleted_at' => now(),
+                        'is_hidden' => true,
+                    ]);
+                    $failed++;
+                }
+            } catch (Exception $e) {
+                Log::error("Failed to delete comment {$authorComment->id}: " . $e->getMessage());
+                $failed++;
+            }
+        }
+
+        Log::info("Blocked channel {$comment->author_channel_id}. Deleted {$deleted} comments, {$failed} failed.");
+
+        return [
+            'blocked' => true,
+            'blacklist_entry' => $blacklistEntry,
+            'total_comments' => count($allComments),
+            'deleted' => $deleted,
+            'failed' => $failed,
+        ];
+    }
+
+    /**
+     * Check if channel is blacklisted.
+     */
+    public function isChannelBlacklisted(string $channelId): bool
+    {
+        return MetalXBlacklist::isBlacklisted($channelId);
+    }
+
+    /**
+     * Record violation for existing blacklist entry.
+     */
+    public function recordViolation(string $channelId): void
+    {
+        $entry = MetalXBlacklist::where('channel_id', $channelId)->first();
+        if ($entry) {
+            $entry->recordViolation();
+        }
     }
 }

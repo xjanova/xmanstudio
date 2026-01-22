@@ -101,6 +101,122 @@ PROMPT;
     }
 
     /**
+     * Detect gambling, unsafe content, and violations.
+     */
+    public function detectViolation(MetalXComment $comment): array
+    {
+        $prompt = <<<PROMPT
+Analyze this YouTube comment for policy violations and unsafe content:
+
+Comment: "{$comment->text}"
+Author: {$comment->author_name}
+Video: "{$comment->video->title_en}"
+
+Detect the following violations:
+1. **Gambling**: Casino, betting, gambling sites, poker, slots, sports betting
+2. **Scam/Fraud**: Phishing, fake giveaways, "get rich quick", pyramid schemes
+3. **Inappropriate**: Adult content, sexual content, violence, drugs
+4. **Harassment**: Hate speech, bullying, threats, offensive language
+5. **Spam**: Irrelevant links, promotional spam, repeated messages
+6. **Impersonation**: Pretending to be someone else
+
+Respond with JSON only:
+{
+  "is_violation": true|false,
+  "violation_type": "gambling|scam|inappropriate|harassment|spam|impersonation|none",
+  "severity": "low|medium|high|critical",
+  "confidence": 0-100,
+  "should_delete": true|false,
+  "should_block": true|false,
+  "reasoning": "why this is a violation"
+}
+
+Guidelines:
+- high/critical severity: Immediate delete and block
+- medium severity: Delete, block if repeat offender
+- low severity: Warning, monitor
+- Gambling keywords: พนัน, เดิมพัน, casino, bet, สล็อต, บาคาร่า, แทงบอล, etc.
+- Be strict with gambling and scam content
+- Consider context (Thai and English)
+PROMPT;
+
+        try {
+            $response = $this->callAi($prompt);
+            $result = $this->parseJsonResponse($response);
+
+            // Update comment if violation detected
+            if ($result['is_violation']) {
+                $comment->update([
+                    'violation_type' => $result['violation_type'],
+                    'requires_attention' => true,
+                    'is_spam' => in_array($result['violation_type'], ['spam', 'scam']),
+                ]);
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            Log::error("Failed to detect violation for comment {$comment->id}: " . $e->getMessage());
+            return [
+                'is_violation' => false,
+                'violation_type' => 'none',
+                'severity' => 'low',
+                'confidence' => 0,
+                'should_delete' => false,
+                'should_block' => false,
+                'reasoning' => 'Detection failed',
+            ];
+        }
+    }
+
+    /**
+     * Quick pattern-based detection for common violations.
+     */
+    public function quickDetectGambling(string $text): bool
+    {
+        $gamblingPatterns = [
+            // Thai keywords
+            '/พนัน/ui',
+            '/เดิมพัน/ui',
+            '/สล็อต/ui',
+            '/บาคาร่า/ui',
+            '/แทงบอล/ui',
+            '/คาสิโน/ui',
+            '/เว็บพนัน/ui',
+            '/แทงหวย/ui',
+            '/รับเครดิต/ui',
+            '/ฝาก.*ถอน/ui',
+            '/โปรโมชั่น.*เครดิต/ui',
+
+            // English keywords
+            '/\bcasino\b/i',
+            '/\bbetting\b/i',
+            '/\bgambling\b/i',
+            '/\bslots?\b/i',
+            '/\bpoker\b/i',
+            '/\bbaccarat\b/i',
+            '/\broulette\b/i',
+            '/\bsports ?bet/i',
+            '/\b(?:bet|odds|wager).*(?:now|here|site)\b/i',
+            '/\bdeposit.*bonus\b/i',
+            '/\bfree.*credit\b/i',
+            '/\bwin.*money\b/i',
+
+            // URLs
+            '/\b(?:bet|casino|poker|slots?)(?:365|777|888)\b/i',
+            '/\.bet\b/i',
+            '/\.casino\b/i',
+        ];
+
+        foreach ($gamblingPatterns as $pattern) {
+            if (preg_match($pattern, $text)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Generate creative reply for a comment.
      */
     public function generateReply(MetalXComment $comment): array

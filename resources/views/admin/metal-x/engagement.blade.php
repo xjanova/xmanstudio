@@ -217,6 +217,22 @@
                                     </button>
                                 @endif
 
+                                <button onclick="detectViolation({{ $comment->id }})" class="px-3 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 text-sm rounded">
+                                    🔍 Check Violation
+                                </button>
+
+                                @if(!$comment->deleted_at)
+                                    <button onclick="deleteComment({{ $comment->id }})" class="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-sm rounded">
+                                        🗑️ Delete
+                                    </button>
+                                @endif
+
+                                @if(!$comment->is_blacklisted_author)
+                                    <button onclick="blockChannel({{ $comment->id }})" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded">
+                                        🚫 Block Channel
+                                    </button>
+                                @endif
+
                                 <a href="{{ $comment->video->youtube_url }}?lc={{ $comment->comment_id }}" target="_blank" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded">
                                     🔗 View on YouTube
                                 </a>
@@ -441,6 +457,134 @@ function batchAction(action) {
     .then(data => {
         if (data.success) {
             alert(data.message);
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด');
+    });
+}
+
+function detectViolation(commentId) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '🔍 กำลังตรวจสอบ...';
+
+    fetch(`/admin/metal-x/engagement/comment/${commentId}/detect-violation`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.textContent = '🔍 Check Violation';
+
+        if (data.success && data.violation) {
+            const v = data.violation;
+            let message = `Violation Detection Result:\n\n`;
+            message += `Type: ${v.violation_type}\n`;
+            message += `Severity: ${v.severity}\n`;
+            message += `Confidence: ${v.confidence}%\n`;
+            message += `Should Delete: ${v.should_delete ? 'Yes' : 'No'}\n`;
+            message += `Should Block: ${v.should_block ? 'Yes' : 'No'}\n`;
+            message += `\nReason: ${v.reasoning}`;
+
+            alert(message);
+
+            if (v.is_violation && confirm('Violation detected! Auto-moderate this comment?')) {
+                autoModerate(commentId);
+            }
+        } else {
+            alert('ไม่พบการละเมิด');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด');
+        btn.disabled = false;
+        btn.textContent = '🔍 Check Violation';
+    });
+}
+
+function deleteComment(commentId) {
+    if (!confirm('ลบคอมเมนต์นี้หรือไม่?\n(จะลบจาก YouTube และฐานข้อมูล)')) return;
+
+    fetch(`/admin/metal-x/engagement/comment/${commentId}/delete`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('ลบคอมเมนต์เรียบร้อย');
+            location.reload();
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด');
+    });
+}
+
+function blockChannel(commentId) {
+    const reason = prompt('เหตุผลในการบล็อก:\n\ngambling = การพนัน\nscam = หลอกลวง\ninappropriate = เนื้อหาไม่เหมาะสม\nharassment = การคุกคาม\nspam = สแปม\nimpersonation = ปลอมแปลง\n\nกรอก:', 'gambling');
+
+    if (!reason) return;
+
+    const validReasons = ['gambling', 'scam', 'inappropriate', 'harassment', 'spam', 'impersonation'];
+    if (!validReasons.includes(reason)) {
+        alert('เหตุผลไม่ถูกต้อง');
+        return;
+    }
+
+    if (!confirm(`บล็อกช่องนี้และลบคอมเมนต์ทั้งหมดเนื่องจาก "${reason}"?\n\n⚠️ การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+
+    fetch(`/admin/metal-x/engagement/comment/${commentId}/block-channel`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด');
+    });
+}
+
+function autoModerate(commentId) {
+    fetch(`/admin/metal-x/engagement/comment/${commentId}/auto-moderate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Auto-moderation started');
             setTimeout(() => location.reload(), 2000);
         } else {
             alert('เกิดข้อผิดพลาด: ' + data.message);

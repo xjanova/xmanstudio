@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\AutoModerateCommentJob;
 use App\Jobs\ProcessCommentEngagementJob;
 use App\Jobs\SyncVideoCommentsJob;
+use App\Models\MetalXBlacklist;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use App\Services\YouTubeCommentService;
@@ -352,5 +354,135 @@ class MetalXEngagementController extends Controller
             'message' => "Processed {$count} comments",
             'count' => $count,
         ]);
+    }
+
+    /**
+     * Delete comment.
+     */
+    public function deleteComment(MetalXComment $comment)
+    {
+        try {
+            $success = $this->commentService->deleteComment($comment);
+
+            if ($success) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Comment deleted successfully',
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete comment',
+            ], 500);
+        } catch (\Exception $e) {
+            Log::error("Error deleting comment {$comment->id}: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Block channel and delete all comments.
+     */
+    public function blockChannel(Request $request, MetalXComment $comment)
+    {
+        $request->validate([
+            'reason' => 'required|in:gambling,scam,inappropriate,harassment,spam,impersonation',
+        ]);
+
+        try {
+            $result = $this->commentService->blockAndDeleteChannel(
+                $comment,
+                $request->input('reason'),
+                auth()->id()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Channel blocked and {$result['deleted']} comments deleted",
+                'result' => $result,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error blocking channel: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Detect violation in comment.
+     */
+    public function detectViolation(MetalXComment $comment)
+    {
+        try {
+            $result = $this->aiService->detectViolation($comment);
+
+            return response()->json([
+                'success' => true,
+                'violation' => $result,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error detecting violation for comment {$comment->id}: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Auto-moderate comment.
+     */
+    public function autoModerate(MetalXComment $comment)
+    {
+        AutoModerateCommentJob::dispatch($comment);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Auto-moderation started',
+        ]);
+    }
+
+    /**
+     * Get blacklist.
+     */
+    public function blacklist()
+    {
+        $blacklist = MetalXBlacklist::with('blockedBy')
+            ->orderByDesc('violation_count')
+            ->paginate(50);
+
+        return view('admin.metal-x.blacklist', compact('blacklist'));
+    }
+
+    /**
+     * Unblock channel.
+     */
+    public function unblockChannel($id)
+    {
+        try {
+            $entry = MetalXBlacklist::findOrFail($id);
+            $entry->unblock();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Channel unblocked successfully',
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error unblocking channel: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

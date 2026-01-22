@@ -31,6 +31,9 @@ class MetalXComment extends Model
         'requires_attention',
         'is_spam',
         'is_hidden',
+        'is_blacklisted_author',
+        'violation_type',
+        'deleted_at',
     ];
 
     protected $casts = [
@@ -47,6 +50,8 @@ class MetalXComment extends Model
         'requires_attention' => 'boolean',
         'is_spam' => 'boolean',
         'is_hidden' => 'boolean',
+        'is_blacklisted_author' => 'boolean',
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -132,5 +137,41 @@ class MetalXComment extends Model
         return $this->requires_attention ||
                $this->sentiment === 'negative' ||
                $this->sentiment === 'question';
+    }
+
+    /**
+     * Check if author is blacklisted.
+     */
+    public function isAuthorBlacklisted(): bool
+    {
+        if (!$this->author_channel_id) {
+            return false;
+        }
+
+        return MetalXBlacklist::isBlacklisted($this->author_channel_id);
+    }
+
+    /**
+     * Scope to only include non-deleted comments.
+     */
+    public function scopeNotDeleted($query)
+    {
+        return $query->whereNull('deleted_at');
+    }
+
+    /**
+     * Scope to only include blacklisted authors.
+     */
+    public function scopeBlacklistedAuthors($query)
+    {
+        return $query->where('is_blacklisted_author', true);
+    }
+
+    /**
+     * Scope to filter by violation type.
+     */
+    public function scopeByViolationType($query, string $type)
+    {
+        return $query->where('violation_type', $type);
     }
 }
