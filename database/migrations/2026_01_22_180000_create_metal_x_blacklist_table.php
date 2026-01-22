@@ -11,34 +11,50 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('metal_x_blacklist', function (Blueprint $table) {
-            $table->id();
-            $table->string('channel_id')->unique();
-            $table->string('channel_name');
-            $table->string('reason'); // gambling, spam, unsafe, harassment, etc.
-            $table->text('notes')->nullable();
-            $table->integer('violation_count')->default(1);
-            $table->timestamp('first_violation_at');
-            $table->timestamp('last_violation_at');
-            $table->boolean('is_blocked')->default(true);
-            $table->unsignedBigInteger('blocked_by')->nullable();
-            $table->timestamps();
+        if (!Schema::hasTable('metal_x_blacklist')) {
+            Schema::create('metal_x_blacklist', function (Blueprint $table) {
+                $table->id();
+                $table->string('channel_id')->unique();
+                $table->string('channel_name');
+                $table->string('reason'); // gambling, spam, unsafe, harassment, etc.
+                $table->text('notes')->nullable();
+                $table->integer('violation_count')->default(1);
+                $table->timestamp('first_violation_at')->nullable();
+                $table->timestamp('last_violation_at')->nullable();
+                $table->boolean('is_blocked')->default(true);
+                $table->unsignedBigInteger('blocked_by')->nullable();
+                $table->timestamps();
 
-            $table->foreign('blocked_by')
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('set null');
+                $table->foreign('blocked_by')
+                      ->references('id')
+                      ->on('users')
+                      ->onDelete('set null');
 
-            $table->index(['is_blocked', 'reason']);
-            $table->index('channel_id');
-        });
+                $table->index(['is_blocked', 'reason']);
+                $table->index('channel_id');
+            });
+        }
 
         // Add blacklist tracking to comments table
-        Schema::table('metal_x_comments', function (Blueprint $table) {
-            $table->boolean('is_blacklisted_author')->default(false)->after('is_hidden');
-            $table->string('violation_type')->nullable()->after('is_blacklisted_author'); // gambling, unsafe, spam, harassment
-            $table->timestamp('deleted_at')->nullable()->after('updated_at');
-        });
+        if (Schema::hasTable('metal_x_comments')) {
+            if (!Schema::hasColumn('metal_x_comments', 'is_blacklisted_author')) {
+                Schema::table('metal_x_comments', function (Blueprint $table) {
+                    $table->boolean('is_blacklisted_author')->default(false)->after('is_hidden');
+                });
+            }
+
+            if (!Schema::hasColumn('metal_x_comments', 'violation_type')) {
+                Schema::table('metal_x_comments', function (Blueprint $table) {
+                    $table->string('violation_type')->nullable()->after('is_blacklisted_author');
+                });
+            }
+
+            if (!Schema::hasColumn('metal_x_comments', 'deleted_at')) {
+                Schema::table('metal_x_comments', function (Blueprint $table) {
+                    $table->timestamp('deleted_at')->nullable()->after('updated_at');
+                });
+            }
+        }
     }
 
     /**
@@ -46,9 +62,20 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('metal_x_comments', function (Blueprint $table) {
-            $table->dropColumn(['is_blacklisted_author', 'violation_type', 'deleted_at']);
-        });
+        if (Schema::hasTable('metal_x_comments')) {
+            $columnsToDrop = [];
+            foreach (['is_blacklisted_author', 'violation_type', 'deleted_at'] as $column) {
+                if (Schema::hasColumn('metal_x_comments', $column)) {
+                    $columnsToDrop[] = $column;
+                }
+            }
+
+            if (!empty($columnsToDrop)) {
+                Schema::table('metal_x_comments', function (Blueprint $table) use ($columnsToDrop) {
+                    $table->dropColumn($columnsToDrop);
+                });
+            }
+        }
 
         Schema::dropIfExists('metal_x_blacklist');
     }
