@@ -57,6 +57,17 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
+        // Get user's license for this product if logged in
+        $userLicense = null;
+        if (Auth::check()) {
+            $userLicense = LicenseKey::whereHas('order', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+                ->where('product_id', $product->id)
+                ->orderByDesc('created_at')
+                ->first();
+        }
+
         // Custom views for each product
         $customViews = [
             'autotradex' => 'products.autotradex',
@@ -70,10 +81,10 @@ class ProductController extends Controller
         ];
 
         if (isset($customViews[$slug])) {
-            return view($customViews[$slug], compact('product', 'relatedProducts'));
+            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense'));
         }
 
-        return view('products.show', compact('product', 'relatedProducts'));
+        return view('products.show', compact('product', 'relatedProducts', 'userLicense'));
     }
 
     public function services()
