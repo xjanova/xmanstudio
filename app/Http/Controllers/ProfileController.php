@@ -96,4 +96,45 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    /**
+     * Update user's notification preferences.
+     */
+    public function updateNotifications(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        // Update marketing preferences
+        $user->marketing_email_enabled = $request->boolean('marketing_email_enabled');
+        $user->marketing_line_enabled = $request->boolean('marketing_line_enabled');
+
+        if ($request->has('marketing_consent') && ! $user->marketing_consent_at) {
+            $user->marketing_consent_at = now();
+        }
+
+        // Update notification preferences (JSON)
+        $notificationPrefs = [
+            'license_expiry' => [
+                'email' => $request->boolean('notify_license_email'),
+                'line' => $request->boolean('notify_license_line'),
+            ],
+            'order_status' => [
+                'email' => $request->boolean('notify_order_email'),
+                'line' => $request->boolean('notify_order_line'),
+            ],
+            'promotions' => [
+                'email' => $request->boolean('notify_promo_email'),
+                'line' => $request->boolean('notify_promo_line'),
+            ],
+            'new_products' => [
+                'email' => $request->boolean('notify_products_email'),
+                'line' => $request->boolean('notify_products_line'),
+            ],
+        ];
+
+        $user->notification_preferences = $notificationPrefs;
+        $user->save();
+
+        return Redirect::route('profile.edit')->with('status', 'notifications-updated');
+    }
 }
