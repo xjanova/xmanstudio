@@ -10,8 +10,11 @@ use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
+use App\Http\Controllers\Admin\MetalXAnalyticsController;
+use App\Http\Controllers\Admin\MetalXPlaylistController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
+use App\Http\Controllers\Admin\MetalXVideoController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -352,12 +355,50 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Metal-X Project Management
     Route::prefix('metal-x')->name('metal-x.')->group(function () {
-        Route::get('/', [MetalXTeamController::class, 'index'])->name('index');
-        Route::get('/create', [MetalXTeamController::class, 'create'])->name('create');
-        Route::post('/', [MetalXTeamController::class, 'store'])->name('store');
-        Route::get('/{metalX}/edit', [MetalXTeamController::class, 'edit'])->name('edit');
-        Route::put('/{metalX}', [MetalXTeamController::class, 'update'])->name('update');
-        Route::delete('/{metalX}', [MetalXTeamController::class, 'destroy'])->name('destroy');
+        // Team Members
+        Route::get('/team', [MetalXTeamController::class, 'index'])->name('index');
+        Route::get('/team/create', [MetalXTeamController::class, 'create'])->name('create');
+        Route::post('/team', [MetalXTeamController::class, 'store'])->name('store');
+        Route::get('/team/{metalX}/edit', [MetalXTeamController::class, 'edit'])->name('edit');
+        Route::put('/team/{metalX}', [MetalXTeamController::class, 'update'])->name('update');
+        Route::delete('/team/{metalX}', [MetalXTeamController::class, 'destroy'])->name('destroy');
+
+        // Analytics Dashboard
+        Route::get('/', [MetalXAnalyticsController::class, 'index'])->name('analytics');
+        Route::post('/analytics/refresh', [MetalXAnalyticsController::class, 'refresh'])->name('analytics.refresh');
+        Route::get('/analytics/export', [MetalXAnalyticsController::class, 'export'])->name('analytics.export');
+
+        // Videos
+        Route::prefix('videos')->name('videos.')->group(function () {
+            Route::get('/', [MetalXVideoController::class, 'index'])->name('index');
+            Route::get('/create', [MetalXVideoController::class, 'create'])->name('create');
+            Route::post('/', [MetalXVideoController::class, 'store'])->name('store');
+            Route::get('/{video}/edit', [MetalXVideoController::class, 'edit'])->name('edit');
+            Route::put('/{video}', [MetalXVideoController::class, 'update'])->name('update');
+            Route::delete('/{video}', [MetalXVideoController::class, 'destroy'])->name('destroy');
+            Route::post('/{video}/toggle', [MetalXVideoController::class, 'toggle'])->name('toggle');
+            Route::post('/{video}/toggle-featured', [MetalXVideoController::class, 'toggleFeatured'])->name('toggle-featured');
+            Route::post('/{video}/sync', [MetalXVideoController::class, 'sync'])->name('sync');
+            Route::post('/sync-all', [MetalXVideoController::class, 'syncAll'])->name('sync-all');
+            Route::post('/update-stats', [MetalXVideoController::class, 'updateStats'])->name('update-stats');
+            Route::post('/import', [MetalXVideoController::class, 'import'])->name('import');
+        });
+
+        // Playlists
+        Route::prefix('playlists')->name('playlists.')->group(function () {
+            Route::get('/', [MetalXPlaylistController::class, 'index'])->name('index');
+            Route::get('/create', [MetalXPlaylistController::class, 'create'])->name('create');
+            Route::post('/', [MetalXPlaylistController::class, 'store'])->name('store');
+            Route::get('/{playlist}', [MetalXPlaylistController::class, 'show'])->name('show');
+            Route::get('/{playlist}/edit', [MetalXPlaylistController::class, 'edit'])->name('edit');
+            Route::put('/{playlist}', [MetalXPlaylistController::class, 'update'])->name('update');
+            Route::delete('/{playlist}', [MetalXPlaylistController::class, 'destroy'])->name('destroy');
+            Route::post('/{playlist}/toggle', [MetalXPlaylistController::class, 'toggle'])->name('toggle');
+            Route::post('/{playlist}/sync', [MetalXPlaylistController::class, 'sync'])->name('sync');
+            Route::post('/{playlist}/reorder', [MetalXPlaylistController::class, 'reorder'])->name('reorder');
+            Route::post('/{playlist}/add-video', [MetalXPlaylistController::class, 'addVideo'])->name('add-video');
+            Route::post('/{playlist}/remove-video', [MetalXPlaylistController::class, 'removeVideo'])->name('remove-video');
+        });
 
         // Settings
         Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');

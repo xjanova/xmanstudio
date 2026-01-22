@@ -81,16 +81,34 @@
 
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">YouTube API</h3>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p class="text-sm text-blue-700">
+                    ตั้งค่า YouTube API เพื่อเปิดใช้งานการ sync วิดีโออัตโนมัติ ดูสถิติ และจัดการเนื้อหา
+                </p>
+            </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">YouTube API Key</label>
-                <input type="text" name="youtube_api_key" value="{{ old('youtube_api_key', $settings['youtube_api_key']) }}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                       placeholder="AIza...">
-                <p class="mt-1 text-sm text-gray-500">API Key สำหรับดึงข้อมูลวิดีโอจาก YouTube (ถ้าต้องการ)</p>
-                @error('youtube_api_key')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">YouTube API Key</label>
+                    <input type="text" name="youtube_api_key" value="{{ old('youtube_api_key', $settings['youtube_api_key'] ?? '') }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                           placeholder="AIza...">
+                    <p class="mt-1 text-sm text-gray-500">สร้าง API Key ได้ที่ <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-primary-600 hover:underline">Google Cloud Console</a></p>
+                    @error('youtube_api_key')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Channel ID</label>
+                    <input type="text" name="channel_id" value="{{ old('channel_id', $settings['channel_id'] ?? '') }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                           placeholder="UCxxxxxxxxxxxxxxxxxx">
+                    <p class="mt-1 text-sm text-gray-500">Channel ID สำหรับ sync วิดีโอจากช่อง (หา ID ได้จาก YouTube Studio)</p>
+                    @error('channel_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
         </div>
 

@@ -18,6 +18,7 @@ class MetalXSettingsController extends Controller
             'channel_logo' => Setting::getValue('metalx_channel_logo'),
             'channel_banner' => Setting::getValue('metalx_channel_banner'),
             'youtube_api_key' => Setting::getValue('youtube_api_key'),
+            'channel_id' => Setting::getValue('metalx_channel_id'),
         ];
 
         return view('admin.metal-x.settings', compact('settings'));
@@ -32,6 +33,7 @@ class MetalXSettingsController extends Controller
             'channel_logo' => 'nullable|image|max:2048',
             'channel_banner' => 'nullable|image|max:2048',
             'youtube_api_key' => 'nullable|string',
+            'channel_id' => 'nullable|string|max:50',
         ]);
 
         // Handle logo upload
@@ -59,6 +61,7 @@ class MetalXSettingsController extends Controller
         Setting::setValue('metalx_channel_description', $validated['channel_description'] ?? '', 'string', 'metalx');
         Setting::setValue('metalx_channel_url', $validated['channel_url'], 'string', 'metalx');
         Setting::setValue('youtube_api_key', $validated['youtube_api_key'] ?? '', 'string', 'metalx');
+        Setting::setValue('metalx_channel_id', $validated['channel_id'] ?? '', 'string', 'metalx');
 
         return redirect()->route('admin.metal-x.settings')
             ->with('success', 'Settings updated successfully!');
