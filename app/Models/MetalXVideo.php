@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MetalXVideo extends Model
 {
@@ -78,6 +79,14 @@ class MetalXVideo extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'ai_approved_by');
+    }
+
+    /**
+     * Get the comments for the video.
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(MetalXComment::class, 'video_id');
     }
 
     /**

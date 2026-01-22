@@ -1,0 +1,446 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\MetalXComment;
+use App\Models\MetalXVideo;
+use App\Models\Setting;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Exception;
+
+class YouTubeEngagementAiService
+{
+    protected $provider;
+    protected $model;
+    protected $apiKey;
+    protected $temperature;
+    protected $maxTokens;
+
+    public function __construct()
+    {
+        $this->loadAiSettings();
+    }
+
+    /**
+     * Load AI settings from database.
+     */
+    protected function loadAiSettings(): void
+    {
+        $this->provider = Setting::get('ai_provider', 'openai');
+        $this->temperature = (float) Setting::get('ai_temperature', 0.7);
+        $this->maxTokens = (int) Setting::get('ai_max_tokens', 1000);
+
+        switch ($this->provider) {
+            case 'openai':
+                $this->apiKey = Setting::get('ai_openai_key');
+                $this->model = Setting::get('ai_openai_model', 'gpt-4o-mini');
+                break;
+            case 'claude':
+                $this->apiKey = Setting::get('ai_claude_key');
+                $this->model = Setting::get('ai_claude_model', 'claude-3-haiku-20240307');
+                break;
+            case 'ollama':
+                $this->model = Setting::get('ai_ollama_model', 'llama2');
+                break;
+        }
+    }
+
+    /**
+     * Analyze sentiment of a comment.
+     */
+    public function analyzeSentiment(MetalXComment $comment): array
+    {
+        $prompt = <<<PROMPT
+Analyze the sentiment and intent of this YouTube comment:
+
+Comment: "{$comment->text}"
+Video: "{$comment->video->title_en}"
+
+Respond with JSON only:
+{
+  "sentiment": "positive|negative|neutral|question",
+  "sentiment_score": 0-100,
+  "is_spam": true|false,
+  "requires_attention": true|false,
+  "reason": "brief explanation"
+}
+
+Guidelines:
+- positive: Praise, appreciation, positive feedback
+- negative: Criticism, complaints, negative feedback
+- neutral: General comments, observations
+- question: Questions that need answers
+- is_spam: Promotional, irrelevant, or spam content
+- requires_attention: Needs human review or urgent response
+PROMPT;
+
+        try {
+            $response = $this->callAi($prompt);
+            $result = $this->parseJsonResponse($response);
+
+            // Update comment with analysis
+            $comment->update([
+                'sentiment' => $result['sentiment'],
+                'sentiment_score' => $result['sentiment_score'],
+                'is_spam' => $result['is_spam'] ?? false,
+                'requires_attention' => $result['requires_attention'] ?? false,
+            ]);
+
+            return $result;
+        } catch (Exception $e) {
+            Log::error("Failed to analyze sentiment for comment {$comment->id}: " . $e->getMessage());
+            return [
+                'sentiment' => 'neutral',
+                'sentiment_score' => 50,
+                'is_spam' => false,
+                'requires_attention' => false,
+                'reason' => 'Analysis failed',
+            ];
+        }
+    }
+
+    /**
+     * Generate creative reply for a comment.
+     */
+    public function generateReply(MetalXComment $comment): array
+    {
+        $video = $comment->video;
+        $channelName = Setting::get('metalx_channel_name', 'Metal-X');
+        $channelDescription = Setting::get('metalx_channel_description', 'A metal fabrication company');
+
+        $prompt = <<<PROMPT
+You are the social media manager for {$channelName}, {$channelDescription}.
+
+Generate a creative, engaging reply to this YouTube comment:
+
+Video Title: "{$video->title_en}"
+Video Description: "{$video->description_en}"
+Comment by {$comment->author_name}: "{$comment->text}"
+Sentiment: {$comment->sentiment}
+
+Guidelines for the reply:
+1. Be friendly, professional, and authentic
+2. Show appreciation for positive comments
+3. Address questions with helpful information
+4. Handle negative feedback constructively
+5. Keep it concise (1-3 sentences)
+6. Use appropriate emoji occasionally (don't overdo it)
+7. Maintain Metal-X's brand voice: professional, innovative, customer-focused
+8. If it's a question, provide helpful information or direct them to resources
+9. For Thai users, you can use some Thai phrases to connect better
+
+Respond with JSON only:
+{
+  "reply_text": "your reply here",
+  "confidence_score": 0-100,
+  "should_reply": true|false,
+  "reasoning": "why this reply is appropriate"
+}
+PROMPT;
+
+        try {
+            $response = $this->callAi($prompt);
+            $result = $this->parseJsonResponse($response);
+
+            return [
+                'success' => true,
+                'reply_text' => $result['reply_text'],
+                'confidence_score' => $result['confidence_score'],
+                'should_reply' => $result['should_reply'] ?? true,
+                'reasoning' => $result['reasoning'] ?? '',
+            ];
+        } catch (Exception $e) {
+            Log::error("Failed to generate reply for comment {$comment->id}: " . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Improve video title and description.
+     */
+    public function improveVideoContent(MetalXVideo $video): array
+    {
+        $channelName = Setting::get('metalx_channel_name', 'Metal-X');
+
+        $prompt = <<<PROMPT
+You are a YouTube SEO specialist for {$channelName}, a metal fabrication and engineering company.
+
+Current video content:
+Title (EN): "{$video->title_en}"
+Description (EN): "{$video->description_en}"
+Tags: {$video->tags}
+Views: {$video->view_count}
+Likes: {$video->like_count}
+
+Improve this content for better engagement and SEO:
+
+1. Create a more compelling, click-worthy title (keep it under 60 characters)
+2. Write an improved description with:
+   - Engaging hook in first 2 lines
+   - Detailed content description
+   - Relevant keywords naturally integrated
+   - Call-to-action
+   - Timestamps if applicable
+3. Suggest 15-20 relevant tags for better discoverability
+
+Guidelines:
+- Maintain accuracy and authenticity
+- Use power words and emotional triggers appropriately
+- Optimize for YouTube search and suggested videos
+- Appeal to both Thai and international audiences
+- Focus on Metal-X's expertise and value proposition
+
+Respond with JSON only:
+{
+  "improved_title_en": "improved title",
+  "improved_description_en": "improved description",
+  "suggested_tags": ["tag1", "tag2", ...],
+  "improvement_reasoning": "why these changes help",
+  "estimated_impact": "low|medium|high"
+}
+PROMPT;
+
+        try {
+            $response = $this->callAi($prompt);
+            $result = $this->parseJsonResponse($response);
+
+            return [
+                'success' => true,
+                'improvements' => $result,
+            ];
+        } catch (Exception $e) {
+            Log::error("Failed to improve content for video {$video->id}: " . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Improve captions/transcript.
+     */
+    public function improveCaptions(string $originalCaptions, MetalXVideo $video): array
+    {
+        $prompt = <<<PROMPT
+You are a content editor specializing in video captions and subtitles.
+
+Original captions/transcript:
+{$originalCaptions}
+
+Video: "{$video->title_en}"
+
+Improve these captions by:
+1. Fixing grammar and spelling errors
+2. Improving readability and flow
+3. Adding proper punctuation
+4. Breaking into appropriate segments
+5. Maintaining timing and context
+6. Making it more engaging and clear
+
+Respond with JSON only:
+{
+  "improved_captions": "improved caption text",
+  "changes_made": ["list of key improvements"],
+  "confidence_score": 0-100
+}
+PROMPT;
+
+        try {
+            $response = $this->callAi($prompt);
+            $result = $this->parseJsonResponse($response);
+
+            return [
+                'success' => true,
+                'improved_captions' => $result['improved_captions'],
+                'changes_made' => $result['changes_made'],
+                'confidence_score' => $result['confidence_score'],
+            ];
+        } catch (Exception $e) {
+            Log::error("Failed to improve captions for video {$video->id}: " . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Batch analyze comments for a video.
+     */
+    public function analyzeVideoComments(MetalXVideo $video): array
+    {
+        $comments = $video->comments()
+            ->topLevel()
+            ->whereNull('sentiment')
+            ->limit(50)
+            ->get();
+
+        $results = [];
+        foreach ($comments as $comment) {
+            $results[] = $this->analyzeSentiment($comment);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Determine if comment should be liked.
+     */
+    public function shouldLikeComment(MetalXComment $comment): bool
+    {
+        // Auto-like positive comments and questions
+        if ($comment->sentiment === 'positive' || $comment->sentiment === 'question') {
+            return true;
+        }
+
+        // Don't like spam or negative comments
+        if ($comment->is_spam || $comment->sentiment === 'negative') {
+            return false;
+        }
+
+        // For neutral comments, like if they have some engagement
+        if ($comment->sentiment === 'neutral' && $comment->like_count >= 5) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Call AI API.
+     */
+    protected function callAi(string $prompt): string
+    {
+        switch ($this->provider) {
+            case 'openai':
+                return $this->callOpenAi($prompt);
+            case 'claude':
+                return $this->callClaude($prompt);
+            case 'ollama':
+                return $this->callOllama($prompt);
+            default:
+                throw new Exception("Unsupported AI provider: {$this->provider}");
+        }
+    }
+
+    /**
+     * Call OpenAI API.
+     */
+    protected function callOpenAi(string $prompt): string
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(60)->post('https://api.openai.com/v1/chat/completions', [
+            'model' => $this->model,
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => 'You are a professional YouTube engagement specialist. Always respond with valid JSON only.',
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $prompt,
+                ],
+            ],
+            'temperature' => $this->temperature,
+            'max_tokens' => $this->maxTokens,
+        ]);
+
+        if (!$response->successful()) {
+            throw new Exception("OpenAI API error: " . $response->body());
+        }
+
+        return $response->json('choices.0.message.content');
+    }
+
+    /**
+     * Call Claude API.
+     */
+    protected function callClaude(string $prompt): string
+    {
+        $response = Http::withHeaders([
+            'x-api-key' => $this->apiKey,
+            'Content-Type' => 'application/json',
+            'anthropic-version' => '2023-06-01',
+        ])->timeout(60)->post('https://api.anthropic.com/v1/messages', [
+            'model' => $this->model,
+            'max_tokens' => $this->maxTokens,
+            'temperature' => $this->temperature,
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => $prompt,
+                ],
+            ],
+        ]);
+
+        if (!$response->successful()) {
+            throw new Exception("Claude API error: " . $response->body());
+        }
+
+        return $response->json('content.0.text');
+    }
+
+    /**
+     * Call Ollama API.
+     */
+    protected function callOllama(string $prompt): string
+    {
+        $ollamaUrl = Setting::get('ai_ollama_url', 'http://localhost:11434');
+
+        $response = Http::timeout(120)->post("{$ollamaUrl}/api/generate", [
+            'model' => $this->model,
+            'prompt' => $prompt,
+            'stream' => false,
+            'options' => [
+                'temperature' => $this->temperature,
+            ],
+        ]);
+
+        if (!$response->successful()) {
+            throw new Exception("Ollama API error: " . $response->body());
+        }
+
+        return $response->json('response');
+    }
+
+    /**
+     * Parse JSON response from AI.
+     */
+    protected function parseJsonResponse(string $response): array
+    {
+        // Remove markdown code blocks if present
+        $response = preg_replace('/```json\s*|\s*```/', '', $response);
+        $response = trim($response);
+
+        $data = json_decode($response, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception("Invalid JSON response from AI: " . json_last_error_msg());
+        }
+
+        return $data;
+    }
+
+    /**
+     * Check if AI is configured.
+     */
+    public function isConfigured(): bool
+    {
+        switch ($this->provider) {
+            case 'openai':
+            case 'claude':
+                return !empty($this->apiKey) && !empty($this->model);
+            case 'ollama':
+                return !empty($this->model);
+            default:
+                return false;
+        }
+    }
+}

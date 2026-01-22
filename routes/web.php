@@ -420,6 +420,23 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::get('/status', [MetalXAiController::class, 'status'])->name('status');
         });
 
+        // Engagement & Comments
+        Route::prefix('engagement')->name('engagement.')->group(function () {
+            Route::get('/', [MetalXEngagementController::class, 'index'])->name('index');
+            Route::post('/{video}/sync-comments', [MetalXEngagementController::class, 'syncComments'])->name('sync-comments');
+            Route::post('/sync-all-comments', [MetalXEngagementController::class, 'syncAllComments'])->name('sync-all-comments');
+            Route::post('/comment/{comment}/process', [MetalXEngagementController::class, 'processComment'])->name('process-comment');
+            Route::post('/comment/{comment}/generate-reply', [MetalXEngagementController::class, 'generateReply'])->name('generate-reply');
+            Route::post('/comment/{comment}/post-reply', [MetalXEngagementController::class, 'postReply'])->name('post-reply');
+            Route::post('/comment/{comment}/like', [MetalXEngagementController::class, 'likeComment'])->name('like-comment');
+            Route::post('/comment/{comment}/mark-spam', [MetalXEngagementController::class, 'markSpam'])->name('mark-spam');
+            Route::post('/comment/{comment}/toggle-attention', [MetalXEngagementController::class, 'toggleAttention'])->name('toggle-attention');
+            Route::post('/{video}/improve-content', [MetalXEngagementController::class, 'improveContent'])->name('improve-content');
+            Route::post('/{video}/apply-improvements', [MetalXEngagementController::class, 'applyContentImprovements'])->name('apply-improvements');
+            Route::get('/{video}/stats', [MetalXEngagementController::class, 'videoStats'])->name('video-stats');
+            Route::post('/batch-process', [MetalXEngagementController::class, 'batchProcess'])->name('batch-process');
+        });
+
         // Settings
         Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');
         Route::post('/settings', [MetalXSettingsController::class, 'update'])->name('settings.update');
