@@ -115,8 +115,8 @@
 
                                 <!-- Hover Overlay -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                                    <span class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                        ดูรายละเอียด
+                                    <span class="px-4 py-2 {{ $product->requires_license ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-primary-600' }} text-white text-sm font-medium rounded-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                        {{ $product->requires_license ? 'ดูแพ็กเกจราคา' : 'ดูรายละเอียด' }}
                                     </span>
                                 </div>
                             </div>
@@ -168,7 +168,15 @@
                                         </div>
                                     @endif
 
-                                    @if(!$product->is_custom)
+                                    @if($product->requires_license)
+                                        {{-- License products: show key icon to view packages --}}
+                                        <div class="p-2.5 sm:p-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl shadow-lg shadow-purple-500/25">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                                            </svg>
+                                        </div>
+                                    @elseif(!$product->is_custom)
+                                        {{-- Regular products: add to cart --}}
                                         <div class="relative z-10" onclick="event.stopPropagation();">
                                             <form action="{{ route('cart.add', $product) }}" method="POST">
                                                 @csrf
@@ -181,6 +189,7 @@
                                             </form>
                                         </div>
                                     @else
+                                        {{-- Custom products: contact icon --}}
                                         <div class="p-2.5 sm:p-3 bg-gray-700/50 text-gray-400 rounded-xl">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
