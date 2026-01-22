@@ -75,7 +75,7 @@
                 <p class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">เมนูหลัก</p>
 
                 <a href="{{ route('customer.dashboard') }}"
-                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('customer.dashboard') ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('customer.dashboard') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-green-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-green-500/30' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
@@ -83,7 +83,7 @@
                 </a>
 
                 <a href="{{ route('customer.licenses') }}"
-                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('customer.licenses*') ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('customer.licenses*') ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-cyan-500 hover:to-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/30' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                     </svg>
@@ -91,7 +91,7 @@
                 </a>
 
                 <a href="{{ route('customer.subscriptions') }}"
-                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('customer.subscriptions*') ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('customer.subscriptions*') ? 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-violet-500 hover:to-purple-500 hover:text-white hover:shadow-lg hover:shadow-purple-500/30' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
@@ -101,7 +101,7 @@
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">ธุรกรรม</p>
 
                 <a href="{{ route('customer.orders') }}"
-                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('customer.orders*') ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('customer.orders*') ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/30' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
@@ -109,7 +109,7 @@
                 </a>
 
                 <a href="{{ route('customer.invoices') }}"
-                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('customer.invoices') ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('customer.invoices') ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-pink-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-rose-500 hover:to-pink-500 hover:text-white hover:shadow-lg hover:shadow-pink-500/30' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
@@ -117,7 +117,7 @@
                 </a>
 
                 <a href="{{ route('customer.downloads') }}"
-                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('customer.downloads') ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('customer.downloads') ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-teal-500 hover:to-emerald-500 hover:text-white hover:shadow-lg hover:shadow-teal-500/30' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
@@ -127,7 +127,7 @@
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">ช่วยเหลือ</p>
 
                 <a href="{{ route('customer.support.index') }}"
-                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('customer.support*') ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('customer.support*') ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-blue-600 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                     </svg>
@@ -135,7 +135,7 @@
                 </a>
 
                 <a href="{{ route('profile.edit') }}"
-                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('profile.*') ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('profile.*') ? 'bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white shadow-lg shadow-fuchsia-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-fuchsia-500 hover:to-pink-500 hover:text-white hover:shadow-lg hover:shadow-fuchsia-500/30' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
@@ -287,19 +287,19 @@
 
             <!-- Navigation -->
             <nav class="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-200px)]">
-                <a href="{{ route('customer.dashboard') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('customer.dashboard') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('customer.dashboard') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.dashboard') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-green-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
                     แดชบอร์ด
                 </a>
-                <a href="{{ route('customer.licenses') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('customer.licenses*') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('customer.licenses') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.licenses*') ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-cyan-500 hover:to-blue-500 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                     </svg>
                     ใบอนุญาต
                 </a>
-                <a href="{{ route('customer.subscriptions') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('customer.subscriptions*') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('customer.subscriptions') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.subscriptions*') ? 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-violet-500 hover:to-purple-500 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
@@ -310,19 +310,19 @@
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase">ธุรกรรม</p>
                 </div>
 
-                <a href="{{ route('customer.orders') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('customer.orders*') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('customer.orders') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.orders*') ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-500 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
                     คำสั่งซื้อ
                 </a>
-                <a href="{{ route('customer.invoices') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('customer.invoices') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('customer.invoices') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.invoices') ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-pink-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-rose-500 hover:to-pink-500 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     ใบแจ้งหนี้
                 </a>
-                <a href="{{ route('customer.downloads') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('customer.downloads') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('customer.downloads') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.downloads') ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-teal-500 hover:to-emerald-500 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
@@ -333,13 +333,13 @@
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase">ช่วยเหลือ</p>
                 </div>
 
-                <a href="{{ route('customer.support.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('customer.support*') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('customer.support.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.support*') ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-blue-600 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                     </svg>
                     ติดต่อสนับสนุน
                 </a>
-                <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('profile.*') ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('profile.*') ? 'bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white shadow-lg shadow-fuchsia-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-fuchsia-500 hover:to-pink-500 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
