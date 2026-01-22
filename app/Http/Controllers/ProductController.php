@@ -78,6 +78,7 @@ class ProductController extends Controller
             'winxtools' => 'products.winxtools',
             'postxagent' => 'products.postxagent',
             'gpusharx' => 'products.gpusharx',
+            'skidrow-killer' => 'products.skidrowkiller',
         ];
 
         if (isset($customViews[$slug])) {
