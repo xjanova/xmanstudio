@@ -19,11 +19,11 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-100">
-    <div class="min-h-screen flex">
+<body class="bg-gray-100 overflow-hidden">
+    <div class="h-screen flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-gray-900 text-white flex-shrink-0">
-            <div class="p-4">
+        <aside class="w-64 bg-gray-900 text-white flex-shrink-0 h-screen overflow-y-auto">
+            <div class="p-4 sticky top-0 bg-gray-900 z-10">
                 @php
                     $siteLogo = \App\Models\Setting::getValue('site_logo');
                 @endphp
@@ -220,9 +220,9 @@
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
             <!-- Top Bar -->
-            <header class="bg-white shadow-sm">
+            <header class="bg-white shadow-sm flex-shrink-0">
                 <div class="flex items-center justify-between px-6 py-4">
                     <h1 class="text-xl font-semibold text-gray-900">@yield('page-title', 'Dashboard')</h1>
 
@@ -237,7 +237,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 p-6">
+            <main class="flex-1 p-6 overflow-y-auto">
                 @if(session('success'))
                     <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
                         {{ session('success') }}

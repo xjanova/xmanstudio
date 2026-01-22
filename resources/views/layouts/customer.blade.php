@@ -42,15 +42,15 @@
         .toast.hiding { animation: slideOut 0.3s ease-in forwards; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 overflow-hidden">
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <div class="min-h-screen flex">
+    <div class="h-screen flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white shadow-lg flex-shrink-0 hidden md:flex md:flex-col">
+        <aside class="w-64 bg-white shadow-lg flex-shrink-0 hidden md:flex md:flex-col h-screen">
             <!-- Logo Section -->
-            <div class="p-6 border-b border-gray-100">
+            <div class="p-6 border-b border-gray-100 flex-shrink-0">
                 <a href="/" class="flex items-center gap-2">
                     <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
                         <span class="text-white font-bold text-sm">X</span>
@@ -137,7 +137,7 @@
             </nav>
 
             <!-- User Card -->
-            <div class="p-4 border-t border-gray-100 bg-gray-50">
+            <div class="p-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-sm">
@@ -161,9 +161,9 @@
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col min-h-screen">
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
             <!-- Top Bar -->
-            <header class="bg-white shadow-sm sticky top-0 z-10">
+            <header class="bg-white shadow-sm flex-shrink-0 z-10">
                 <div class="flex items-center justify-between px-4 sm:px-6 py-4">
                     <div class="flex items-center">
                         <!-- Mobile menu button -->
@@ -195,7 +195,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 p-4 sm:p-6">
+            <main class="flex-1 p-4 sm:p-6 overflow-y-auto">
                 @if(session('success'))
                     <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center animate-fade-in">
                         <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -227,7 +227,7 @@
             </main>
 
             <!-- Footer -->
-            <footer class="bg-white border-t border-gray-100 py-4 px-6">
+            <footer class="bg-white border-t border-gray-100 py-4 px-6 flex-shrink-0">
                 <div class="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500">
                     <p>&copy; {{ date('Y') }} XMAN Studio. สงวนลิขสิทธิ์</p>
                     <div class="flex items-center space-x-4 mt-2 sm:mt-0">
