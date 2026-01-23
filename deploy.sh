@@ -959,14 +959,16 @@ optimize_application() {
     print_info "Clearing PHP OPcache..."
     set +e
     if command -v php >/dev/null 2>&1; then
-        # Try to clear via artisan
-        php artisan opcache:clear 2>/dev/null || true
+        # Try to clear via CLI (note: this only clears CLI OPcache, not web server OPcache)
+        OPCACHE_OUTPUT=$(php -r "if (function_exists('opcache_reset')) { opcache_reset(); echo 'OPcache cleared via CLI'; } else { echo 'OPcache not enabled or not available'; }" 2>&1)
+        print_info "$OPCACHE_OUTPUT"
 
-        # Try to clear via CLI
-        php -r "if (function_exists('opcache_reset')) { opcache_reset(); echo 'OPcache cleared'; } else { echo 'OPcache not enabled'; }" 2>&1
+        # For web server OPcache, we'll clear it via web request in restart_web_server()
+        # or you can manually clear by restarting PHP-FPM
+    else
+        print_warning "PHP command not found"
     fi
     set -e
-    print_success "OPcache cleared"
 
     # Optimize for production
     if grep -q "APP_ENV=production" .env; then
