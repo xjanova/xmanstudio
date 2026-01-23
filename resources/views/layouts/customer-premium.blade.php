@@ -350,10 +350,15 @@
             </main>
 
             <!-- Footer -->
-            <footer class="bg-gray-900/50 border-t border-indigo-500/20 py-4 px-6 flex-shrink-0">
-                <div class="flex flex-col sm:flex-row justify-between items-center text-sm text-indigo-300/60">
-                    <p>&copy; {{ date('Y') }} XMAN Studio. สงวนลิขสิทธิ์</p>
-                    <div class="flex items-center space-x-4 mt-2 sm:mt-0">
+            <footer class="bg-gray-900/50 border-t border-indigo-500/20 py-3 px-6 flex-shrink-0">
+                <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-indigo-300/60">
+                    <div class="flex items-center space-x-2">
+                        <span>&copy; {{ date('Y') }} XMAN Studio. สงวนลิขสิทธิ์</span>
+                        <span class="hidden sm:inline">|</span>
+                        <span class="hidden sm:inline">MIT License</span>
+                    </div>
+                    <div class="flex items-center space-x-4 mt-1 sm:mt-0">
+                        <span class="text-indigo-400/50">Version {{ trim(file_get_contents(base_path('VERSION'))) }}</span>
                         <a href="{{ route('customer.support.create') }}" class="hover:text-indigo-200 transition-colors">ติดต่อเรา</a>
                     </div>
                 </div>

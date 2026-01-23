@@ -315,6 +315,12 @@
                     <h1 class="text-xl font-semibold text-gray-900">@yield('page-title', 'Dashboard')</h1>
 
                     <div class="flex items-center space-x-4">
+                        <a href="/" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            กลับหน้าเว็บ
+                        </a>
                         <span class="text-gray-600">{{ auth()->user()->name ?? 'Admin' }}</span>
                         <form action="{{ route('logout') }}" method="POST" class="inline">
                             @csrf
@@ -340,6 +346,20 @@
 
                 @yield('content')
             </main>
+
+            <!-- Footer -->
+            <footer class="bg-white border-t border-gray-200 py-3 px-6 flex-shrink-0">
+                <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500">
+                    <div class="flex items-center space-x-2">
+                        <span>&copy; {{ date('Y') }} XMAN Studio. สงวนลิขสิทธิ์</span>
+                        <span class="hidden sm:inline">|</span>
+                        <span class="hidden sm:inline">MIT License</span>
+                    </div>
+                    <div class="flex items-center space-x-3 mt-1 sm:mt-0">
+                        <span class="text-gray-400">Version {{ trim(file_get_contents(base_path('VERSION'))) }}</span>
+                    </div>
+                </div>
+            </footer>
         </div>
     </div>
 

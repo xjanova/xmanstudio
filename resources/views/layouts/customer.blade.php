@@ -247,10 +247,15 @@
             </main>
 
             <!-- Footer -->
-            <footer class="bg-white border-t border-gray-100 py-4 px-6 flex-shrink-0">
-                <div class="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500">
-                    <p>&copy; {{ date('Y') }} XMAN Studio. สงวนลิขสิทธิ์</p>
-                    <div class="flex items-center space-x-4 mt-2 sm:mt-0">
+            <footer class="bg-white border-t border-gray-100 py-3 px-6 flex-shrink-0">
+                <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500">
+                    <div class="flex items-center space-x-2">
+                        <span>&copy; {{ date('Y') }} XMAN Studio. สงวนลิขสิทธิ์</span>
+                        <span class="hidden sm:inline">|</span>
+                        <span class="hidden sm:inline">MIT License</span>
+                    </div>
+                    <div class="flex items-center space-x-4 mt-1 sm:mt-0">
+                        <span class="text-gray-400">Version {{ trim(file_get_contents(base_path('VERSION'))) }}</span>
                         <a href="{{ route('customer.support.create') }}" class="hover:text-primary-600 transition-colors">ติดต่อเรา</a>
                     </div>
                 </div>

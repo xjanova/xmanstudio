@@ -493,6 +493,12 @@
                     </div>
 
                     <div class="flex items-center space-x-4">
+                        <a href="/" class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300 border border-indigo-500/30">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            กลับหน้าเว็บ
+                        </a>
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                                 <span class="text-white font-bold">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}</span>
@@ -534,6 +540,20 @@
 
                 @yield('content')
             </main>
+
+            <!-- Footer -->
+            <footer class="bg-gray-900/50 border-t border-indigo-500/20 py-3 px-6 flex-shrink-0">
+                <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-indigo-300/60">
+                    <div class="flex items-center space-x-2">
+                        <span>&copy; {{ date('Y') }} XMAN Studio. สงวนลิขสิทธิ์</span>
+                        <span class="hidden sm:inline">|</span>
+                        <span class="hidden sm:inline">MIT License</span>
+                    </div>
+                    <div class="flex items-center space-x-3 mt-1 sm:mt-0">
+                        <span class="text-indigo-400/50">Version {{ trim(file_get_contents(base_path('VERSION'))) }}</span>
+                    </div>
+                </div>
+            </footer>
         </div>
     </div>
 
