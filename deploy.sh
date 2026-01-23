@@ -918,6 +918,19 @@ optimize_application() {
     php artisan view:clear 2>&1
     print_success "Caches cleared"
 
+    # Clear PHP OPcache (important for production!)
+    print_info "Clearing PHP OPcache..."
+    set +e
+    if command -v php >/dev/null 2>&1; then
+        # Try to clear via artisan
+        php artisan opcache:clear 2>/dev/null || true
+
+        # Try to clear via CLI
+        php -r "if (function_exists('opcache_reset')) { opcache_reset(); echo 'OPcache cleared'; } else { echo 'OPcache not enabled'; }" 2>&1
+    fi
+    set -e
+    print_success "OPcache cleared"
+
     # Optimize for production
     if grep -q "APP_ENV=production" .env; then
         print_info "Optimizing for production..."
@@ -955,6 +968,116 @@ restart_queue() {
 
     php artisan queue:restart 2>&1 || print_warning "queue:restart had issues"
     print_success "Queue workers will restart on next job"
+}
+
+# Restart web server/PHP-FPM
+restart_web_server() {
+    print_step "Restarting Web Server"
+
+    # Only restart in production to avoid local development issues
+    if ! grep -q "APP_ENV=production" .env; then
+        print_info "Skipping web server restart (not in production)"
+        return 0
+    fi
+
+    local RESTARTED=0
+
+    # Try to restart PHP-FPM (common in production)
+    if command -v systemctl >/dev/null 2>&1; then
+        # Detect PHP version
+        PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
+
+        # Try common PHP-FPM service names
+        for SERVICE in "php${PHP_VERSION}-fpm" "php-fpm" "php${PHP_VERSION:0:1}${PHP_VERSION:2:1}-fpm"; do
+            if systemctl list-units --full -all | grep -q "$SERVICE.service"; then
+                print_info "Restarting $SERVICE..."
+                set +e
+                sudo systemctl reload $SERVICE 2>&1 || sudo systemctl restart $SERVICE 2>&1
+                if [ $? -eq 0 ]; then
+                    print_success "$SERVICE restarted"
+                    RESTARTED=1
+                    break
+                fi
+                set -e
+            fi
+        done
+
+        # Try to restart Nginx
+        if systemctl list-units --full -all | grep -q "nginx.service"; then
+            print_info "Reloading Nginx..."
+            set +e
+            sudo systemctl reload nginx 2>&1
+            if [ $? -eq 0 ]; then
+                print_success "Nginx reloaded"
+                RESTARTED=1
+            fi
+            set -e
+        fi
+
+        # Try to restart Apache
+        if systemctl list-units --full -all | grep -q "apache2.service\|httpd.service"; then
+            print_info "Restarting Apache..."
+            set +e
+            sudo systemctl reload apache2 2>&1 || sudo systemctl reload httpd 2>&1
+            if [ $? -eq 0 ]; then
+                print_success "Apache reloaded"
+                RESTARTED=1
+            fi
+            set -e
+        fi
+    fi
+
+    if [ $RESTARTED -eq 0 ]; then
+        print_warning "Could not restart web server automatically"
+        print_info "Please manually restart: sudo systemctl restart php-fpm nginx"
+    fi
+}
+
+# Verify production security settings
+verify_production_security() {
+    print_step "Verifying Production Security"
+
+    local SECURITY_ISSUES=0
+
+    # Check if APP_DEBUG is false
+    if grep -q "^APP_DEBUG=true" .env; then
+        print_error "APP_DEBUG is enabled! This exposes sensitive information."
+        SECURITY_ISSUES=$((SECURITY_ISSUES + 1))
+    else
+        print_success "APP_DEBUG is disabled"
+    fi
+
+    # Check if APP_ENV is production
+    if ! grep -q "^APP_ENV=production" .env; then
+        APP_ENV=$(grep "^APP_ENV=" .env 2>/dev/null | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "unknown")
+        print_warning "APP_ENV is '$APP_ENV' (not production)"
+    else
+        print_success "APP_ENV is set to production"
+    fi
+
+    # Check if Laravel Telescope is disabled in production
+    if [ -f "config/telescope.php" ]; then
+        if grep -q "TELESCOPE_ENABLED=true" .env; then
+            print_warning "Laravel Telescope is enabled in production"
+            print_info "Consider disabling: TELESCOPE_ENABLED=false"
+        else
+            print_success "Laravel Telescope is disabled or not configured"
+        fi
+    fi
+
+    # Check if Laravel Debugbar is disabled
+    if grep -q "DEBUGBAR_ENABLED=true" .env; then
+        print_warning "Laravel Debugbar is enabled in production"
+        print_info "Consider disabling: DEBUGBAR_ENABLED=false"
+    fi
+
+    if [ $SECURITY_ISSUES -gt 0 ]; then
+        print_error "Found $SECURITY_ISSUES critical security issue(s)!"
+        print_warning "Please fix before deploying to production"
+        return 1
+    else
+        print_success "Security check passed"
+    fi
 }
 
 # Run post-deployment tasks
@@ -1068,6 +1191,7 @@ main() {
     sanitize_env_file
     check_app_key
     check_environment
+    verify_production_security
     enable_maintenance
     pull_code
     update_dependencies
@@ -1078,6 +1202,7 @@ main() {
     optimize_application
     fix_permissions
     restart_queue
+    restart_web_server
     post_deployment
     disable_maintenance
     health_check
@@ -1170,21 +1295,23 @@ if [ $DRY_RUN -eq 1 ]; then
     echo "  1. Sanitize .env file (fix newlines, duplicates)"
     echo "  2. Check and generate APP_KEY if missing"
     echo "  3. Check environment (.env)"
-    echo "  4. Enable maintenance mode"
-    echo "  5. Pull code from branch: $BRANCH"
-    echo "  6. Update dependencies (composer, npm)"
-    echo "  7. Backup database"
-    echo "  8. Run migrations (auto-create migrations table if needed)"
-    echo "  9. Run seeders (SmartDatabaseSeeder if exists)"
-    echo "  10. Detect and run changed/new seeders (smart hash tracking)"
-    echo "  11. Run always-run seeders (QuotationSeeder, AutoTradeXSeeder)"
-    echo "  12. Build assets (npm run build)"
-    echo "  13. Optimize application"
-    echo "  14. Fix permissions"
-    echo "  15. Restart queue workers"
-    echo "  16. Post-deployment tasks"
-    echo "  17. Disable maintenance mode"
-    echo "  18. Health check"
+    echo "  4. Verify production security (APP_DEBUG, Telescope, etc.)"
+    echo "  5. Enable maintenance mode"
+    echo "  6. Pull code from branch: $BRANCH"
+    echo "  7. Update dependencies (composer, npm)"
+    echo "  8. Backup database"
+    echo "  9. Run migrations (auto-create migrations table if needed)"
+    echo "  10. Run seeders (SmartDatabaseSeeder if exists)"
+    echo "  11. Detect and run changed/new seeders (smart hash tracking)"
+    echo "  12. Run always-run seeders (QuotationSeeder, AutoTradeXSeeder)"
+    echo "  13. Build assets (npm run build)"
+    echo "  14. Optimize application (cache, config, OPcache)"
+    echo "  15. Fix permissions"
+    echo "  16. Restart queue workers"
+    echo "  17. Restart web server (PHP-FPM, Nginx/Apache)"
+    echo "  18. Post-deployment tasks"
+    echo "  19. Disable maintenance mode"
+    echo "  20. Health check"
     echo ""
     echo "Run without --dry-run to execute deployment."
     exit 0
