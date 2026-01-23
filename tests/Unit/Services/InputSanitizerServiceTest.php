@@ -12,7 +12,7 @@ class InputSanitizerServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->sanitizer = new InputSanitizerService();
+        $this->sanitizer = new InputSanitizerService;
     }
 
     /** @test */
@@ -213,14 +213,14 @@ class InputSanitizerServiceTest extends TestCase
     /** @test */
     public function it_allows_localhost_when_enabled()
     {
-        $sanitizer = new InputSanitizerService();
+        $sanitizer = new InputSanitizerService;
         $url = 'http://localhost/test';
 
         // Without flag (default behavior - block)
         $this->assertNull($sanitizer->sanitizeUrl($url));
 
         // With flag (allow localhost)
-        $sanitizer2 = new InputSanitizerService();
+        $sanitizer2 = new InputSanitizerService;
         // Note: Since constructor doesn't have parameter, this test just verifies default behavior
         $this->assertNull($sanitizer2->sanitizeUrl($url));
     }
@@ -298,7 +298,7 @@ class InputSanitizerServiceTest extends TestCase
 
         foreach ($suspiciousInputs as $input) {
             $isSuspicious = $this->sanitizer->isSuspicious($input);
-            $this->assertTrue($isSuspicious, "Should detect as suspicious: " . substr($input, 0, 50));
+            $this->assertTrue($isSuspicious, 'Should detect as suspicious: '.substr($input, 0, 50));
         }
     }
 

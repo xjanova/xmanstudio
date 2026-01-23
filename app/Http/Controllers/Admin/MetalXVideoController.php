@@ -117,7 +117,7 @@ class MetalXVideoController extends Controller
                 ]);
 
                 // Dispatch AI metadata generation if enabled
-                if (Setting::get('ai_content_generation', false) && !$validated['title_th']) {
+                if (Setting::get('ai_content_generation', false) && ! $validated['title_th']) {
                     GenerateVideoMetadataJob::dispatch($video, false, 80.0);
                 }
 

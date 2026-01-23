@@ -12,7 +12,7 @@ class NoScriptTagsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->rule = new NoScriptTags();
+        $this->rule = new NoScriptTags;
     }
 
     /** @test */
@@ -28,7 +28,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($cleanInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -49,7 +49,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -70,7 +70,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -90,7 +90,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -109,7 +109,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -128,7 +128,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -147,7 +147,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -167,7 +167,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -185,7 +185,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -203,7 +203,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -222,7 +222,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -240,7 +240,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -259,7 +259,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -278,7 +278,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -296,7 +296,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -320,7 +320,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($safeInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -335,11 +335,11 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($values as $value) {
             $failed = false;
-            $this->rule->validate('test_field', $value, function() use (&$failed) {
+            $this->rule->validate('test_field', $value, function () use (&$failed) {
                 $failed = true;
             });
 
-            $this->assertFalse($failed, "Empty/null values should pass");
+            $this->assertFalse($failed, 'Empty/null values should pass');
         }
     }
 
@@ -350,11 +350,11 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($values as $value) {
             $failed = false;
-            $this->rule->validate('test_field', $value, function() use (&$failed) {
+            $this->rule->validate('test_field', $value, function () use (&$failed) {
                 $failed = true;
             });
 
-            $this->assertFalse($failed, "Non-string values should pass validation");
+            $this->assertFalse($failed, 'Non-string values should pass validation');
         }
     }
 
@@ -369,7 +369,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -387,7 +387,7 @@ class NoScriptTagsTest extends TestCase
 
         foreach ($maliciousInputs as $input) {
             $failed = false;
-            $this->rule->validate('test_field', $input, function() use (&$failed) {
+            $this->rule->validate('test_field', $input, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -410,7 +410,7 @@ class NoScriptTagsTest extends TestCase
     {
         $capturedMessage = null;
 
-        $this->rule->validate('comment_text', '<script>alert(1)</script>', function($message) use (&$capturedMessage) {
+        $this->rule->validate('comment_text', '<script>alert(1)</script>', function ($message) use (&$capturedMessage) {
             $capturedMessage = $message;
         });
 

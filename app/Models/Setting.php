@@ -54,13 +54,13 @@ class Setting extends Model
         $value = $setting->value;
 
         // Decrypt if this is an encrypted key
-        if (static::isEncryptedKey($key) && !empty($value)) {
+        if (static::isEncryptedKey($key) && ! empty($value)) {
             try {
                 $value = Crypt::decryptString($value);
             } catch (\Exception $e) {
                 // If decryption fails, the value might not be encrypted yet
                 // This handles backward compatibility with existing unencrypted values
-                \Log::warning("Failed to decrypt setting '{$key}': " . $e->getMessage());
+                \Log::warning("Failed to decrypt setting '{$key}': ".$e->getMessage());
                 // Return the value as-is for backward compatibility
                 // Admin should re-save the setting to encrypt it
             }
@@ -89,7 +89,7 @@ class Setting extends Model
         $storedValue = $type === 'json' ? json_encode($value) : (string) $value;
 
         // Encrypt if this is a sensitive key
-        if (static::isEncryptedKey($key) && !empty($storedValue)) {
+        if (static::isEncryptedKey($key) && ! empty($storedValue)) {
             $storedValue = Crypt::encryptString($storedValue);
         }
 
