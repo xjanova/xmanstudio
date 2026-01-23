@@ -253,8 +253,8 @@
                         @endphp
                         <a href="/" class="flex items-center group">
                             @if($siteLogo)
-                                {{-- Logo only - no frame, no text (Classic style) --}}
-                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-10 w-auto max-w-[180px] object-contain transition-all duration-300 group-hover:opacity-80">
+                                {{-- Logo only - full width, no frame, no text (Classic style) --}}
+                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-12 w-auto max-w-[240px] object-contain transition-all duration-300 group-hover:opacity-80">
                             @else
                                 {{-- Fallback: Show icon with text when no logo --}}
                                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300 mr-3">
@@ -548,8 +548,8 @@
                     @endphp
                     <div class="flex items-center gap-3 mb-4">
                         @if($siteLogo)
-                            {{-- Logo only - no frame, no text (Classic style) --}}
-                            <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-10 w-auto max-w-[180px] object-contain">
+                            {{-- Logo only - full width, no frame, no text (Classic style) --}}
+                            <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-12 w-auto max-w-[240px] object-contain">
                         @else
                             {{-- Fallback: Show icon with text when no logo --}}
                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
