@@ -1250,12 +1250,16 @@ health_check() {
             HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$APP_URL" 2>/dev/null)
             set -e
 
-            if [ "$HTTP_RESPONSE" = "200" ] || [ "$HTTP_RESPONSE" = "302" ]; then
+            if [ "$HTTP_RESPONSE" = "200" ] || [ "$HTTP_RESPONSE" = "302" ] || [ "$HTTP_RESPONSE" = "301" ]; then
                 print_success "Application is accessible at $APP_URL (HTTP $HTTP_RESPONSE)"
             elif [ "$HTTP_RESPONSE" = "000" ]; then
                 print_warning "Could not reach $APP_URL (timeout or connection refused)"
+                HEALTH_ISSUES=$((HEALTH_ISSUES + 1))
+            elif [[ "$HTTP_RESPONSE" =~ ^[45][0-9][0-9]$ ]]; then
+                print_error "Application returned HTTP $HTTP_RESPONSE (server error)"
+                HEALTH_ISSUES=$((HEALTH_ISSUES + 1))
             else
-                print_warning "Application returned HTTP $HTTP_RESPONSE"
+                print_warning "Application returned HTTP $HTTP_RESPONSE (unexpected status)"
             fi
         fi
     fi
