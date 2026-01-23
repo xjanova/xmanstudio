@@ -60,17 +60,21 @@ class NoMaliciousUrls implements ValidationRule
             if (! $this->allowLocalhost && isset($parsed['host'])) {
                 $host = $parsed['host'];
 
+                // Remove brackets from IPv6 addresses
+                $host_clean = trim($host, '[]');
+
                 // Block localhost
-                if (in_array($host, ['localhost', '127.0.0.1', '::1', '0.0.0.0'])) {
+                if (in_array($host_clean, ['localhost', '127.0.0.1', '::1', '0.0.0.0']) ||
+                    in_array($host, ['localhost', '127.0.0.1', '::1', '0.0.0.0'])) {
                     $fail("The {$attribute} field cannot point to localhost.");
 
                     return;
                 }
 
                 // Block private IP ranges
-                if (filter_var($host, FILTER_VALIDATE_IP)) {
+                if (filter_var($host_clean, FILTER_VALIDATE_IP)) {
                     if (! filter_var(
-                        $host,
+                        $host_clean,
                         FILTER_VALIDATE_IP,
                         FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
                     )) {
@@ -81,7 +85,7 @@ class NoMaliciousUrls implements ValidationRule
                 }
 
                 // Block link-local addresses
-                if (preg_match('/^(169\.254\.|fe80:)/i', $host)) {
+                if (preg_match('/^(169\.254\.|fe80:)/i', $host_clean)) {
                     $fail("The {$attribute} field cannot point to link-local addresses.");
 
                     return;
@@ -100,9 +104,6 @@ class NoMaliciousUrls implements ValidationRule
             // Multiple @ symbols (credential stealing attempt)
             '/@.*@/i',
 
-            // Excessive URL encoding (obfuscation)
-            '/(%[0-9a-f]{2}){10,}/i',
-
             // HTML entities in URL (obfuscation)
             '/&#/i',
         ];
@@ -113,6 +114,13 @@ class NoMaliciousUrls implements ValidationRule
 
                 return;
             }
+        }
+
+        // Check for excessive URL encoding (obfuscation) - count total occurrences
+        if (preg_match_all('/%[0-9a-f]{2}/i', $value, $matches) >= 10) {
+            $fail("The {$attribute} field contains a potentially malicious URL pattern.");
+
+            return;
         }
     }
 

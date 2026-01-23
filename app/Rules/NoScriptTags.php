@@ -20,18 +20,21 @@ class NoScriptTags implements ValidationRule
         }
 
         $dangerous_patterns = [
-            // Script tags
+            // Script tags (including obfuscated variants)
             '/<script[^>]*>.*?<\/script>/is',
             '/<script[^>]*>/i',
+            '/<scr.*?ipt>/i', // Obfuscated script tag
+            '/<<.*?script/i', // Double angle bracket obfuscation
+            '/script.*?>.*?alert/is', // Script with alert
 
             // Event handlers
             '/on\w+\s*=\s*["\'][^"\']*["\']/i',
             '/on\w+\s*=\s*\S+/i',
 
-            // JavaScript protocol
+            // Dangerous protocols
             '/javascript\s*:/i',
             '/vbscript\s*:/i',
-            '/data\s*:.*?base64/i',
+            '/data\s*:/i',
 
             // iframe and embed tags
             '/<iframe[^>]*>/i',
@@ -41,17 +44,26 @@ class NoScriptTags implements ValidationRule
             // Meta refresh
             '/<meta[^>]*http-equiv\s*=\s*["\']?refresh/i',
 
-            // Link with javascript
-            '/<link[^>]*href\s*=\s*["\']?javascript:/i',
+            // Base tag (can redirect all relative URLs)
+            '/<base[^>]*>/i',
 
-            // Form action with javascript
-            '/<form[^>]*action\s*=\s*["\']?javascript:/i',
+            // Link tags (can load external stylesheets or execute javascript)
+            '/<link[^>]*>/i',
+
+            // Style tags (can contain malicious CSS)
+            '/<style[^>]*>/i',
+
+            // Form tags (can be used for phishing)
+            '/<form[^>]*>/i',
 
             // Import statement
             '/@import/i',
 
             // Expression (old IE)
             '/expression\s*\(/i',
+
+            // HTML entity encoded tags (&#60; = <, &#62; = >)
+            '/&#\d+;.*?&#\d+;/i',
         ];
 
         foreach ($dangerous_patterns as $pattern) {

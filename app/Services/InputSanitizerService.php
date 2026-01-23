@@ -28,7 +28,7 @@ class InputSanitizerService
         // Step 3: Remove common prompt injection patterns
         $dangerousPatterns = [
             // Direct prompt manipulation
-            '/ignore (previous|all) (instructions?|commands?|prompts?)/i',
+            '/ignore\s+(all\s+)?(previous\s+)?(instructions?|commands?|prompts?)/i',
             '/forget (everything|all|previous)/i',
             '/system:?\s*role/i',
             '/\[?INST\]?/i',  // Instruction markers

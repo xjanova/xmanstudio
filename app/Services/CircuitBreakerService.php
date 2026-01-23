@@ -108,12 +108,13 @@ class CircuitBreakerService
     {
         $openUntil = Cache::get($this->getOpenKey());
 
-        if ($openUntil && time() < $openUntil) {
-            // Check if we should try half-open
-            if (time() >= ($openUntil - $this->recoveryTime / 2)) {
+        if ($openUntil) {
+            if (time() >= $openUntil) {
+                // Recovery time has passed, try half-open
                 return self::STATE_HALF_OPEN;
             }
 
+            // Still within recovery time, stay open
             return self::STATE_OPEN;
         }
 
@@ -171,7 +172,9 @@ class CircuitBreakerService
     protected function openCircuit(): void
     {
         $openUntil = time() + $this->recoveryTime;
-        Cache::put($this->getOpenKey(), $openUntil, $this->recoveryTime);
+        // Store cache for longer than recovery time to allow for half-open state
+        // Add buffer of 60 seconds to avoid edge cases
+        Cache::put($this->getOpenKey(), $openUntil, $this->recoveryTime + 60);
 
         Log::warning("Circuit breaker OPENED for {$this->serviceName}. Will retry after {$this->recoveryTime} seconds.");
     }
