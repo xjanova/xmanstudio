@@ -252,6 +252,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Analytics Dashboard
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
+    // Premium Mockup Dashboard
+    Route::get('/mockup', function () {
+        return view('admin.mockup');
+    })->name('mockup');
+
     // Rental Management
     Route::get('/rentals', [AdminRentalController::class, 'index'])->name('rentals.index');
     Route::get('/rentals/payments', [AdminRentalController::class, 'payments'])->name('rentals.payments');
