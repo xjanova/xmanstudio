@@ -1300,6 +1300,70 @@ on_error() {
     exit 1
 }
 
+# Update deploy.sh script to latest version
+update_deploy_script() {
+    # Skip if already updated (prevent infinite loop)
+    if [ "${DEPLOY_SCRIPT_UPDATED}" = "true" ]; then
+        return 0
+    fi
+
+    print_step "Updating Deployment Script"
+
+    # Check if we're in a git repository
+    if ! git rev-parse --git-dir >/dev/null 2>&1; then
+        print_info "Not a git repository, skipping deploy.sh update"
+        return 0
+    fi
+
+    # Get current branch
+    local CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
+    if [ -z "$CURRENT_BRANCH" ]; then
+        print_info "Could not determine branch, skipping deploy.sh update"
+        return 0
+    fi
+
+    # Check for uncommitted changes in deploy.sh
+    if git diff --name-only | grep -q "^deploy.sh$"; then
+        print_warning "deploy.sh has uncommitted changes, skipping update"
+        return 0
+    fi
+
+    # Fetch latest changes
+    print_info "Fetching latest changes from origin..."
+    if ! git fetch origin "$CURRENT_BRANCH" 2>/dev/null; then
+        print_warning "Could not fetch from origin, continuing with current version"
+        return 0
+    fi
+
+    # Check if deploy.sh is different from origin
+    local LOCAL_HASH=$(git hash-object deploy.sh 2>/dev/null || echo "")
+    local REMOTE_HASH=$(git show "origin/$CURRENT_BRANCH:deploy.sh" 2>/dev/null | git hash-object --stdin 2>/dev/null || echo "")
+
+    if [ -z "$LOCAL_HASH" ] || [ -z "$REMOTE_HASH" ]; then
+        print_info "Could not compare deploy.sh versions, continuing with current version"
+        return 0
+    fi
+
+    if [ "$LOCAL_HASH" = "$REMOTE_HASH" ]; then
+        print_success "deploy.sh is already up to date"
+        return 0
+    fi
+
+    # Pull only deploy.sh
+    print_info "New version of deploy.sh found, updating..."
+    if git checkout "origin/$CURRENT_BRANCH" -- deploy.sh 2>/dev/null; then
+        print_success "deploy.sh updated successfully"
+
+        # Re-execute the script with updated version
+        print_info "Re-executing with updated script..."
+        export DEPLOY_SCRIPT_UPDATED=true
+        exec bash "$0" "$@"
+    else
+        print_warning "Could not update deploy.sh, continuing with current version"
+        return 0
+    fi
+}
+
 # Main deployment flow
 main() {
     print_header
@@ -1312,6 +1376,7 @@ main() {
     # Set trap for errors
     trap on_error ERR
 
+    update_deploy_script "$@"
     sanitize_env_file
     check_app_key
     check_environment
