@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
+use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
@@ -494,6 +495,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
     Route::patch('/banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle');
     Route::delete('/banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
+
+    // Theme Settings
+    Route::get('/theme', [ThemeController::class, 'index'])->name('theme.index');
+    Route::put('/theme', [ThemeController::class, 'update'])->name('theme.update');
 
     // Quotation Management
     Route::prefix('quotations')->name('quotations.')->group(function () {
