@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Controllers\Auth\YouTubeOAuthController;
 use App\Models\MetalXBlacklist;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
@@ -29,6 +30,14 @@ class YouTubeCommentService
     public function isConfigured(): bool
     {
         return ! empty($this->apiKey);
+    }
+
+    /**
+     * Get valid access token with automatic refresh.
+     */
+    private function getValidAccessToken(): ?string
+    {
+        return YouTubeOAuthController::getValidAccessToken();
     }
 
     /**
@@ -124,9 +133,9 @@ class YouTubeCommentService
             throw new Exception('YouTube API is not configured');
         }
 
-        $accessToken = Setting::get('metalx_youtube_access_token');
+        $accessToken = $this->getValidAccessToken();
         if (empty($accessToken)) {
-            throw new Exception('YouTube access token is not configured. OAuth authentication required.');
+            throw new Exception('YouTube access token is not configured. Please authenticate via Settings > Integrations > Connect YouTube.');
         }
 
         $response = Http::withHeaders([
@@ -157,9 +166,9 @@ class YouTubeCommentService
             throw new Exception('YouTube API is not configured');
         }
 
-        $accessToken = Setting::get('metalx_youtube_access_token');
+        $accessToken = $this->getValidAccessToken();
         if (empty($accessToken)) {
-            throw new Exception('YouTube access token is not configured. OAuth authentication required.');
+            throw new Exception('YouTube access token is not configured. Please authenticate via Settings > Integrations > Connect YouTube.');
         }
 
         $response = Http::withHeaders([
@@ -243,9 +252,9 @@ class YouTubeCommentService
      */
     public function downloadCaption(string $captionId): ?string
     {
-        $accessToken = Setting::get('metalx_youtube_access_token');
+        $accessToken = $this->getValidAccessToken();
         if (empty($accessToken)) {
-            throw new Exception('YouTube access token is not configured.');
+            throw new Exception('YouTube access token is not configured. Please authenticate via Settings > Integrations > Connect YouTube.');
         }
 
         $response = Http::withHeaders([
@@ -338,9 +347,9 @@ class YouTubeCommentService
             throw new Exception('YouTube API is not configured');
         }
 
-        $accessToken = Setting::get('metalx_youtube_access_token');
+        $accessToken = $this->getValidAccessToken();
         if (empty($accessToken)) {
-            throw new Exception('YouTube access token is not configured.');
+            throw new Exception('YouTube access token is not configured. Please authenticate via Settings > Integrations > Connect YouTube.');
         }
 
         $response = Http::withHeaders([
