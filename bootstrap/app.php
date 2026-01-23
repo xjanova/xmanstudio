@@ -23,43 +23,6 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
         // Configure rate limiting for specific operations
         $middleware->throttleApi();
-
-        // Define custom rate limiters
-        \Illuminate\Support\Facades\RateLimiter::for('ai-operations', function ($request) {
-            return \Illuminate\Cache\RateLimiting\Limit::perMinute(10)
-                ->by($request->user()?->id ?: $request->ip())
-                ->response(function () {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'Too many AI requests. Please wait before trying again.',
-                        'code' => 'RATE_LIMIT_EXCEEDED',
-                    ], 429);
-                });
-        });
-
-        \Illuminate\Support\Facades\RateLimiter::for('youtube-operations', function ($request) {
-            return \Illuminate\Cache\RateLimiting\Limit::perMinute(20)
-                ->by($request->user()?->id ?: $request->ip())
-                ->response(function () {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'Too many YouTube API requests. Please wait before trying again.',
-                        'code' => 'RATE_LIMIT_EXCEEDED',
-                    ], 429);
-                });
-        });
-
-        \Illuminate\Support\Facades\RateLimiter::for('comment-moderation', function ($request) {
-            return \Illuminate\Cache\RateLimiting\Limit::perMinute(30)
-                ->by($request->user()?->id ?: $request->ip())
-                ->response(function () {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'Too many moderation requests. Please wait before trying again.',
-                        'code' => 'RATE_LIMIT_EXCEEDED',
-                    ], 429);
-                });
-        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle API exceptions - return JSON responses
