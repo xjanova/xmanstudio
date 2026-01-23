@@ -162,6 +162,7 @@ class YouTubeOAuthController extends Controller
 
         if (empty($refreshToken)) {
             Log::warning('Cannot refresh YouTube token: No refresh token available');
+
             return null;
         }
 
@@ -303,6 +304,7 @@ class YouTubeOAuthController extends Controller
         // Check if token is expired
         if (self::isTokenExpired()) {
             Log::info('YouTube access token expired, refreshing...');
+
             return self::refreshAccessToken();
         }
 
