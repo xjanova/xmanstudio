@@ -3,9 +3,9 @@
 namespace Tests\Unit\Services;
 
 use App\Services\CircuitBreakerService;
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
-use Exception;
 
 class CircuitBreakerServiceTest extends TestCase
 {
@@ -35,7 +35,7 @@ class CircuitBreakerServiceTest extends TestCase
     {
         $breaker = new CircuitBreakerService('test-service');
 
-        $result = $breaker->execute(function() {
+        $result = $breaker->execute(function () {
             return 'success';
         });
 
@@ -49,7 +49,7 @@ class CircuitBreakerServiceTest extends TestCase
 
         // First failure
         try {
-            $breaker->execute(function() {
+            $breaker->execute(function () {
                 throw new Exception('Test failure');
             });
         } catch (Exception $e) {
@@ -69,8 +69,8 @@ class CircuitBreakerServiceTest extends TestCase
         // Trigger 3 failures (threshold = 3)
         for ($i = 0; $i < 3; $i++) {
             try {
-                $breaker->execute(function() {
-                    throw new Exception('Test failure ' . $i);
+                $breaker->execute(function () {
+                    throw new Exception('Test failure '.$i);
                 });
             } catch (Exception $e) {
                 // Expected
@@ -90,7 +90,7 @@ class CircuitBreakerServiceTest extends TestCase
         // Open the circuit by causing failures
         for ($i = 0; $i < 2; $i++) {
             try {
-                $breaker->execute(function() {
+                $breaker->execute(function () {
                     throw new Exception('Opening circuit');
                 });
             } catch (Exception $e) {
@@ -102,7 +102,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('temporarily unavailable');
 
-        $breaker->execute(function() {
+        $breaker->execute(function () {
             return 'should not execute';
         });
     }
@@ -115,7 +115,7 @@ class CircuitBreakerServiceTest extends TestCase
         // Open the circuit
         for ($i = 0; $i < 2; $i++) {
             try {
-                $breaker->execute(function() {
+                $breaker->execute(function () {
                     throw new Exception('Opening circuit');
                 });
             } catch (Exception $e) {
@@ -125,10 +125,10 @@ class CircuitBreakerServiceTest extends TestCase
 
         // Use fallback
         $result = $breaker->execute(
-            function() {
+            function () {
                 return 'primary';
             },
-            function() {
+            function () {
                 return 'fallback';
             }
         );
@@ -144,7 +144,7 @@ class CircuitBreakerServiceTest extends TestCase
         // Open the circuit
         for ($i = 0; $i < 2; $i++) {
             try {
-                $breaker->execute(function() {
+                $breaker->execute(function () {
                     throw new Exception('Opening circuit');
                 });
             } catch (Exception $e) {
@@ -175,7 +175,7 @@ class CircuitBreakerServiceTest extends TestCase
         // Open the circuit
         for ($i = 0; $i < 2; $i++) {
             try {
-                $breaker->execute(function() {
+                $breaker->execute(function () {
                     throw new Exception('Opening circuit');
                 });
             } catch (Exception $e) {
@@ -188,7 +188,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(CircuitBreakerService::STATE_HALF_OPEN, $breaker->getState());
 
         // Successful execution should close circuit
-        $result = $breaker->execute(function() {
+        $result = $breaker->execute(function () {
             return 'recovered';
         });
 
@@ -204,7 +204,7 @@ class CircuitBreakerServiceTest extends TestCase
         // Open the circuit
         for ($i = 0; $i < 2; $i++) {
             try {
-                $breaker->execute(function() {
+                $breaker->execute(function () {
                     throw new Exception('Opening circuit');
                 });
             } catch (Exception $e) {
@@ -218,7 +218,7 @@ class CircuitBreakerServiceTest extends TestCase
 
         // Failed execution should reopen circuit
         try {
-            $breaker->execute(function() {
+            $breaker->execute(function () {
                 throw new Exception('Still failing');
             });
         } catch (Exception $e) {
@@ -236,8 +236,8 @@ class CircuitBreakerServiceTest extends TestCase
         // Cause 2 failures
         for ($i = 0; $i < 2; $i++) {
             try {
-                $breaker->execute(function() {
-                    throw new Exception('Failure ' . $i);
+                $breaker->execute(function () {
+                    throw new Exception('Failure '.$i);
                 });
             } catch (Exception $e) {
                 // Expected
@@ -264,7 +264,7 @@ class CircuitBreakerServiceTest extends TestCase
         // Open the circuit
         for ($i = 0; $i < 2; $i++) {
             try {
-                $breaker->execute(function() {
+                $breaker->execute(function () {
                     throw new Exception('Opening circuit');
                 });
             } catch (Exception $e) {
@@ -312,7 +312,7 @@ class CircuitBreakerServiceTest extends TestCase
         // Open service-1 circuit
         for ($i = 0; $i < 2; $i++) {
             try {
-                $breaker1->execute(function() {
+                $breaker1->execute(function () {
                     throw new Exception('Service 1 failure');
                 });
             } catch (Exception $e) {
@@ -327,7 +327,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(CircuitBreakerService::STATE_CLOSED, $breaker2->getState());
 
         // Service 2 should work normally
-        $result = $breaker2->execute(function() {
+        $result = $breaker2->execute(function () {
             return 'service-2 works';
         });
         $this->assertEquals('service-2 works', $result);
@@ -371,7 +371,7 @@ class CircuitBreakerServiceTest extends TestCase
         // 3 failures
         for ($i = 0; $i < 3; $i++) {
             try {
-                $breaker->execute(function() {
+                $breaker->execute(function () {
                     throw new Exception('Failure');
                 });
             } catch (Exception $e) {
@@ -383,7 +383,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(3, $stats['recent_failures']);
 
         // 1 success (clears failures)
-        $breaker->execute(function() {
+        $breaker->execute(function () {
             return 'success';
         });
 
@@ -397,10 +397,10 @@ class CircuitBreakerServiceTest extends TestCase
         $breaker = new CircuitBreakerService('test-service', 10, 60, 10);
 
         $result = $breaker->execute(
-            function() {
+            function () {
                 throw new Exception('Primary failed');
             },
-            function() {
+            function () {
                 return 'fallback executed';
             }
         );
@@ -415,7 +415,7 @@ class CircuitBreakerServiceTest extends TestCase
 
         // Open circuit
         try {
-            $breaker->execute(function() {
+            $breaker->execute(function () {
                 throw new Exception('Opening');
             });
         } catch (Exception $e) {
@@ -424,7 +424,7 @@ class CircuitBreakerServiceTest extends TestCase
 
         // Should throw when circuit is open and no fallback
         $this->expectException(Exception::class);
-        $breaker->execute(function() {
+        $breaker->execute(function () {
             return 'should not execute';
         });
     }
@@ -436,7 +436,7 @@ class CircuitBreakerServiceTest extends TestCase
 
         // Open circuit
         try {
-            $breaker->execute(function() {
+            $breaker->execute(function () {
                 throw new Exception('Opening');
             });
         } catch (Exception $e) {

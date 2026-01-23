@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class MetalXComment extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'video_id',
         'comment_id',
@@ -126,7 +127,7 @@ class MetalXComment extends Model
      */
     public function isReply(): bool
     {
-        return !empty($this->parent_id);
+        return ! empty($this->parent_id);
     }
 
     /**
@@ -144,7 +145,7 @@ class MetalXComment extends Model
      */
     public function isAuthorBlacklisted(): bool
     {
-        if (!$this->author_channel_id) {
+        if (! $this->author_channel_id) {
             return false;
         }
 

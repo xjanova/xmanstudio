@@ -12,7 +12,7 @@ class NoMaliciousUrlsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->rule = new NoMaliciousUrls();
+        $this->rule = new NoMaliciousUrls;
     }
 
     /** @test */
@@ -28,7 +28,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($validUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -47,7 +47,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($nonUrls as $value) {
             $failed = false;
-            $this->rule->validate('field', $value, function() use (&$failed) {
+            $this->rule->validate('field', $value, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -66,7 +66,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($maliciousUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -85,7 +85,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($maliciousUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -103,7 +103,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($maliciousUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -122,7 +122,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($maliciousUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -140,7 +140,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($maliciousUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -162,7 +162,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($localhostUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -183,7 +183,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($localhostUrls as $url) {
             $failed = false;
-            $rule->validate('url_field', $url, function() use (&$failed) {
+            $rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -203,7 +203,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($privateIps as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -222,7 +222,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($linkLocalUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -243,7 +243,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($shortenerUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -262,7 +262,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($typosquattingUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -280,7 +280,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($maliciousUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -293,12 +293,12 @@ class NoMaliciousUrlsTest extends TestCase
     {
         $maliciousUrls = [
             'http://example.com/%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd',
-            'http://test.com/' . str_repeat('%20', 10),
+            'http://test.com/'.str_repeat('%20', 10),
         ];
 
         foreach ($maliciousUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -316,7 +316,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($maliciousUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -335,7 +335,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($invalidSchemes as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -350,11 +350,11 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($values as $value) {
             $failed = false;
-            $this->rule->validate('url_field', $value, function() use (&$failed) {
+            $this->rule->validate('url_field', $value, function () use (&$failed) {
                 $failed = true;
             });
 
-            $this->assertFalse($failed, "Empty/null values should pass");
+            $this->assertFalse($failed, 'Empty/null values should pass');
         }
     }
 
@@ -365,11 +365,11 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($values as $value) {
             $failed = false;
-            $this->rule->validate('url_field', $value, function() use (&$failed) {
+            $this->rule->validate('url_field', $value, function () use (&$failed) {
                 $failed = true;
             });
 
-            $this->assertFalse($failed, "Non-string values should pass validation");
+            $this->assertFalse($failed, 'Non-string values should pass validation');
         }
     }
 
@@ -383,7 +383,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($validUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -403,7 +403,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($publicIps as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 
@@ -417,11 +417,11 @@ class NoMaliciousUrlsTest extends TestCase
         $idn = 'https://例え.jp'; // Japanese IDN
 
         $failed = false;
-        $this->rule->validate('url_field', $idn, function() use (&$failed) {
+        $this->rule->validate('url_field', $idn, function () use (&$failed) {
             $failed = true;
         });
 
-        $this->assertFalse($failed, "International domain names should pass");
+        $this->assertFalse($failed, 'International domain names should pass');
     }
 
     /** @test */
@@ -439,7 +439,7 @@ class NoMaliciousUrlsTest extends TestCase
     {
         $capturedMessage = null;
 
-        $this->rule->validate('callback_url', 'javascript:alert(1)', function($message) use (&$capturedMessage) {
+        $this->rule->validate('callback_url', 'javascript:alert(1)', function ($message) use (&$capturedMessage) {
             $capturedMessage = $message;
         });
 
@@ -457,7 +457,7 @@ class NoMaliciousUrlsTest extends TestCase
 
         foreach ($metadataUrls as $url) {
             $failed = false;
-            $this->rule->validate('url_field', $url, function() use (&$failed) {
+            $this->rule->validate('url_field', $url, function () use (&$failed) {
                 $failed = true;
             });
 

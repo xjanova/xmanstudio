@@ -15,7 +15,7 @@ class NoScriptTags implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return;
         }
 
@@ -57,6 +57,7 @@ class NoScriptTags implements ValidationRule
         foreach ($dangerous_patterns as $pattern) {
             if (preg_match($pattern, $value)) {
                 $fail("The {$attribute} field contains potentially dangerous content.");
+
                 return;
             }
         }

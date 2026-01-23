@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 /**
  * Circuit Breaker Service
@@ -20,13 +20,19 @@ use Exception;
 class CircuitBreakerService
 {
     const STATE_CLOSED = 'closed';
+
     const STATE_OPEN = 'open';
+
     const STATE_HALF_OPEN = 'half_open';
 
     protected $serviceName;
+
     protected $failureThreshold;
+
     protected $failureWindow;
+
     protected $recoveryTime;
+
     protected $halfOpenMaxAttempts;
 
     public function __construct(
@@ -46,9 +52,10 @@ class CircuitBreakerService
     /**
      * Execute a callable with circuit breaker protection
      *
-     * @param callable $callable The function to execute
-     * @param callable|null $fallback Fallback function if circuit is open
+     * @param  callable  $callable  The function to execute
+     * @param  callable|null  $fallback  Fallback function if circuit is open
      * @return mixed
+     *
      * @throws Exception
      */
     public function execute(callable $callable, ?callable $fallback = null)
@@ -106,6 +113,7 @@ class CircuitBreakerService
             if (time() >= ($openUntil - $this->recoveryTime / 2)) {
                 return self::STATE_HALF_OPEN;
             }
+
             return self::STATE_OPEN;
         }
 

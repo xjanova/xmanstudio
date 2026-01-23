@@ -5,17 +5,22 @@ namespace App\Services;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class YouTubeEngagementAiService
 {
     protected $provider;
+
     protected $model;
+
     protected $apiKey;
+
     protected $temperature;
+
     protected $maxTokens;
+
     protected $sanitizer;
 
     public function __construct(InputSanitizerService $sanitizer)
@@ -96,7 +101,8 @@ PROMPT;
 
             return $result;
         } catch (Exception $e) {
-            Log::error("Failed to analyze sentiment for comment {$comment->id}: " . $e->getMessage());
+            Log::error("Failed to analyze sentiment for comment {$comment->id}: ".$e->getMessage());
+
             return [
                 'sentiment' => 'neutral',
                 'sentiment_score' => 50,
@@ -168,7 +174,8 @@ PROMPT;
 
             return $result;
         } catch (Exception $e) {
-            Log::error("Failed to detect violation for comment {$comment->id}: " . $e->getMessage());
+            Log::error("Failed to detect violation for comment {$comment->id}: ".$e->getMessage());
+
             return [
                 'is_violation' => false,
                 'violation_type' => 'none',
@@ -288,7 +295,8 @@ PROMPT;
                 'reasoning' => $result['reasoning'] ?? '',
             ];
         } catch (Exception $e) {
-            Log::error("Failed to generate reply for comment {$comment->id}: " . $e->getMessage());
+            Log::error("Failed to generate reply for comment {$comment->id}: ".$e->getMessage());
+
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -357,7 +365,8 @@ PROMPT;
                 'improvements' => $result,
             ];
         } catch (Exception $e) {
-            Log::error("Failed to improve content for video {$video->id}: " . $e->getMessage());
+            Log::error("Failed to improve content for video {$video->id}: ".$e->getMessage());
+
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -405,7 +414,8 @@ PROMPT;
                 'confidence_score' => $result['confidence_score'],
             ];
         } catch (Exception $e) {
-            Log::error("Failed to improve captions for video {$video->id}: " . $e->getMessage());
+            Log::error("Failed to improve captions for video {$video->id}: ".$e->getMessage());
+
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -478,7 +488,7 @@ PROMPT;
     protected function callOpenAi(string $prompt): string
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Authorization' => 'Bearer '.$this->apiKey,
             'Content-Type' => 'application/json',
         ])->timeout(60)->post('https://api.openai.com/v1/chat/completions', [
             'model' => $this->model,
@@ -496,8 +506,8 @@ PROMPT;
             'max_tokens' => $this->maxTokens,
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception("OpenAI API error: " . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('OpenAI API error: '.$response->body());
         }
 
         return $response->json('choices.0.message.content');
@@ -524,8 +534,8 @@ PROMPT;
             ],
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception("Claude API error: " . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Claude API error: '.$response->body());
         }
 
         return $response->json('content.0.text');
@@ -547,8 +557,8 @@ PROMPT;
             ],
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception("Ollama API error: " . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Ollama API error: '.$response->body());
         }
 
         return $response->json('response');
@@ -566,7 +576,7 @@ PROMPT;
         $data = json_decode($response, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception("Invalid JSON response from AI: " . json_last_error_msg());
+            throw new Exception('Invalid JSON response from AI: '.json_last_error_msg());
         }
 
         return $data;
@@ -580,9 +590,9 @@ PROMPT;
         switch ($this->provider) {
             case 'openai':
             case 'claude':
-                return !empty($this->apiKey) && !empty($this->model);
+                return ! empty($this->apiKey) && ! empty($this->model);
             case 'ollama':
-                return !empty($this->model);
+                return ! empty($this->model);
             default:
                 return false;
         }

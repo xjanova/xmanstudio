@@ -17,10 +17,13 @@ class ProcessCommentEngagementJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 2;
+
     public $timeout = 120;
 
     protected $comment;
+
     protected $autoReply;
+
     protected $autoLike;
 
     /**
@@ -52,23 +55,24 @@ class ProcessCommentEngagementJob implements ShouldQueue
             // Skip spam comments
             if ($this->comment->is_spam) {
                 Log::info("Skipping spam comment {$this->comment->id}");
+
                 return;
             }
 
             // Auto-like if enabled and appropriate
-            if ($this->autoLike && !$this->comment->liked_by_channel) {
+            if ($this->autoLike && ! $this->comment->liked_by_channel) {
                 if ($aiService->shouldLikeComment($this->comment)) {
                     try {
                         $commentService->likeComment($this->comment);
                         Log::info("Liked comment {$this->comment->id}");
                     } catch (\Exception $e) {
-                        Log::warning("Could not like comment {$this->comment->id}: " . $e->getMessage());
+                        Log::warning("Could not like comment {$this->comment->id}: ".$e->getMessage());
                     }
                 }
             }
 
             // Auto-reply if enabled and appropriate
-            if ($this->autoReply && !$this->comment->ai_replied && $this->comment->can_reply) {
+            if ($this->autoReply && ! $this->comment->ai_replied && $this->comment->can_reply) {
                 $replyResult = $aiService->generateReply($this->comment);
 
                 if ($replyResult['success'] && $replyResult['should_reply']) {
@@ -92,7 +96,7 @@ class ProcessCommentEngagementJob implements ShouldQueue
 
                             Log::info("Replied to comment {$this->comment->id} with confidence {$confidence}");
                         } catch (\Exception $e) {
-                            Log::error("Failed to post reply for comment {$this->comment->id}: " . $e->getMessage());
+                            Log::error("Failed to post reply for comment {$this->comment->id}: ".$e->getMessage());
 
                             // Save draft reply for manual review
                             $this->comment->update([
@@ -114,7 +118,7 @@ class ProcessCommentEngagementJob implements ShouldQueue
                 }
             }
         } catch (\Exception $e) {
-            Log::error("Error processing engagement for comment {$this->comment->id}: " . $e->getMessage());
+            Log::error("Error processing engagement for comment {$this->comment->id}: ".$e->getMessage());
             $this->fail($e);
         }
     }
@@ -124,6 +128,6 @@ class ProcessCommentEngagementJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Log::error("ProcessCommentEngagementJob failed for comment {$this->comment->id}: " . $exception->getMessage());
+        Log::error("ProcessCommentEngagementJob failed for comment {$this->comment->id}: ".$exception->getMessage());
     }
 }

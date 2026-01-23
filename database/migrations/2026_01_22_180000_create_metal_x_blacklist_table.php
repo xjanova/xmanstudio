@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('metal_x_blacklist')) {
+        if (! Schema::hasTable('metal_x_blacklist')) {
             Schema::create('metal_x_blacklist', function (Blueprint $table) {
                 $table->id();
                 $table->string('channel_id')->unique();
@@ -26,9 +26,9 @@ return new class extends Migration
                 $table->timestamps();
 
                 $table->foreign('blocked_by')
-                      ->references('id')
-                      ->on('users')
-                      ->onDelete('set null');
+                    ->references('id')
+                    ->on('users')
+                    ->onDelete('set null');
 
                 $table->index(['is_blocked', 'reason']);
                 $table->index('channel_id');
@@ -37,19 +37,19 @@ return new class extends Migration
 
         // Add blacklist tracking to comments table
         if (Schema::hasTable('metal_x_comments')) {
-            if (!Schema::hasColumn('metal_x_comments', 'is_blacklisted_author')) {
+            if (! Schema::hasColumn('metal_x_comments', 'is_blacklisted_author')) {
                 Schema::table('metal_x_comments', function (Blueprint $table) {
                     $table->boolean('is_blacklisted_author')->default(false)->after('is_hidden');
                 });
             }
 
-            if (!Schema::hasColumn('metal_x_comments', 'violation_type')) {
+            if (! Schema::hasColumn('metal_x_comments', 'violation_type')) {
                 Schema::table('metal_x_comments', function (Blueprint $table) {
                     $table->string('violation_type')->nullable()->after('is_blacklisted_author');
                 });
             }
 
-            if (!Schema::hasColumn('metal_x_comments', 'deleted_at')) {
+            if (! Schema::hasColumn('metal_x_comments', 'deleted_at')) {
                 Schema::table('metal_x_comments', function (Blueprint $table) {
                     $table->timestamp('deleted_at')->nullable()->after('updated_at');
                 });
@@ -70,7 +70,7 @@ return new class extends Migration
                 }
             }
 
-            if (!empty($columnsToDrop)) {
+            if (! empty($columnsToDrop)) {
                 Schema::table('metal_x_comments', function (Blueprint $table) use ($columnsToDrop) {
                     $table->dropColumn($columnsToDrop);
                 });

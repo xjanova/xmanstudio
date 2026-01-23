@@ -6,14 +6,15 @@ use App\Models\MetalXBlacklist;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class YouTubeCommentService
 {
     protected $apiKey;
+
     protected $channelId;
 
     public function __construct()
@@ -27,7 +28,7 @@ class YouTubeCommentService
      */
     public function isConfigured(): bool
     {
-        return !empty($this->apiKey);
+        return ! empty($this->apiKey);
     }
 
     /**
@@ -35,7 +36,7 @@ class YouTubeCommentService
      */
     public function fetchVideoComments(MetalXVideo $video, int $maxResults = 100): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             throw new Exception('YouTube API is not configured');
         }
 
@@ -53,8 +54,8 @@ class YouTubeCommentService
                 'pageToken' => $pageToken,
             ]);
 
-            if (!$response->successful()) {
-                Log::error("Failed to fetch comments for video {$video->youtube_id}: " . $response->body());
+            if (! $response->successful()) {
+                Log::error("Failed to fetch comments for video {$video->youtube_id}: ".$response->body());
                 throw new Exception('Failed to fetch comments from YouTube');
             }
 
@@ -119,7 +120,7 @@ class YouTubeCommentService
      */
     public function replyToComment(MetalXComment $comment, string $replyText): ?array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             throw new Exception('YouTube API is not configured');
         }
 
@@ -129,7 +130,7 @@ class YouTubeCommentService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
+            'Authorization' => 'Bearer '.$accessToken,
             'Content-Type' => 'application/json',
         ])->post('https://www.googleapis.com/youtube/v3/comments', [
             'part' => 'snippet',
@@ -139,8 +140,8 @@ class YouTubeCommentService
             ],
         ]);
 
-        if (!$response->successful()) {
-            Log::error("Failed to reply to comment {$comment->comment_id}: " . $response->body());
+        if (! $response->successful()) {
+            Log::error("Failed to reply to comment {$comment->comment_id}: ".$response->body());
             throw new Exception('Failed to post reply to YouTube');
         }
 
@@ -152,7 +153,7 @@ class YouTubeCommentService
      */
     public function likeComment(MetalXComment $comment): bool
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             throw new Exception('YouTube API is not configured');
         }
 
@@ -162,7 +163,7 @@ class YouTubeCommentService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
+            'Authorization' => 'Bearer '.$accessToken,
         ])->post('https://www.googleapis.com/youtube/v3/comments/setModerationStatus', [
             'id' => $comment->comment_id,
             'moderationStatus' => 'published',
@@ -182,7 +183,8 @@ class YouTubeCommentService
             return true;
         }
 
-        Log::warning("Could not like comment {$comment->comment_id}: " . $response->body());
+        Log::warning("Could not like comment {$comment->comment_id}: ".$response->body());
+
         return false;
     }
 
@@ -191,7 +193,7 @@ class YouTubeCommentService
      */
     public function fetchVideoCaptions(string $videoId): ?array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             throw new Exception('YouTube API is not configured');
         }
 
@@ -202,8 +204,9 @@ class YouTubeCommentService
             'key' => $this->apiKey,
         ]);
 
-        if (!$response->successful()) {
-            Log::error("Failed to fetch captions for video {$videoId}: " . $response->body());
+        if (! $response->successful()) {
+            Log::error("Failed to fetch captions for video {$videoId}: ".$response->body());
+
             return null;
         }
 
@@ -224,12 +227,12 @@ class YouTubeCommentService
             }
         }
 
-        if (!$captionId && !empty($items)) {
+        if (! $captionId && ! empty($items)) {
             $captionId = $items[0]['id'];
         }
 
         return [
-            'available' => !empty($items),
+            'available' => ! empty($items),
             'tracks' => $items,
             'caption_id' => $captionId,
         ];
@@ -246,13 +249,14 @@ class YouTubeCommentService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
+            'Authorization' => 'Bearer '.$accessToken,
         ])->get("https://www.googleapis.com/youtube/v3/captions/{$captionId}", [
             'tfmt' => 'srt', // or 'vtt', 'sbv'
         ]);
 
-        if (!$response->successful()) {
-            Log::error("Failed to download caption {$captionId}: " . $response->body());
+        if (! $response->successful()) {
+            Log::error("Failed to download caption {$captionId}: ".$response->body());
+
             return null;
         }
 
@@ -274,7 +278,7 @@ class YouTubeCommentService
 
                 Log::info("Synced {count($comments)} comments for video {$video->youtube_id}");
             } catch (Exception $e) {
-                Log::error("Failed to sync comments for video {$video->youtube_id}: " . $e->getMessage());
+                Log::error("Failed to sync comments for video {$video->youtube_id}: ".$e->getMessage());
             }
         }
 
@@ -330,7 +334,7 @@ class YouTubeCommentService
      */
     public function deleteComment(MetalXComment $comment): bool
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             throw new Exception('YouTube API is not configured');
         }
 
@@ -340,7 +344,7 @@ class YouTubeCommentService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
+            'Authorization' => 'Bearer '.$accessToken,
         ])->delete('https://www.googleapis.com/youtube/v3/comments', [
             'id' => $comment->comment_id,
         ]);
@@ -353,10 +357,12 @@ class YouTubeCommentService
             ]);
 
             Log::info("Deleted comment {$comment->comment_id}");
+
             return true;
         }
 
-        Log::error("Failed to delete comment {$comment->comment_id}: " . $response->body());
+        Log::error("Failed to delete comment {$comment->comment_id}: ".$response->body());
+
         return false;
     }
 
@@ -369,7 +375,7 @@ class YouTubeCommentService
         string $reason,
         ?int $blockedBy = null
     ): array {
-        if (!$comment->author_channel_id) {
+        if (! $comment->author_channel_id) {
             throw new Exception('Comment does not have author channel ID');
         }
 
@@ -412,7 +418,7 @@ class YouTubeCommentService
                         $failed++;
                     }
                 } catch (Exception $e) {
-                    Log::error("Failed to delete comment {$authorComment->id}: " . $e->getMessage());
+                    Log::error("Failed to delete comment {$authorComment->id}: ".$e->getMessage());
                     $failed++;
                 }
             }

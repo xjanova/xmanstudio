@@ -96,13 +96,13 @@ class InputSanitizerService
         $url = trim($url);
 
         // Check if it's a valid URL
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
             return null;
         }
 
         // Only allow http and https protocols
         $parsed = parse_url($url);
-        if (!isset($parsed['scheme']) || !in_array($parsed['scheme'], ['http', 'https'])) {
+        if (! isset($parsed['scheme']) || ! in_array($parsed['scheme'], ['http', 'https'])) {
             return null;
         }
 
@@ -182,7 +182,7 @@ class InputSanitizerService
     {
         $email = trim(strtolower($email));
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return null;
         }
 

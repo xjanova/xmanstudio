@@ -11,8 +11,11 @@ use Throwable;
 class AIServiceException extends Exception
 {
     protected $aiProvider;
+
     protected $aiModel;
+
     protected $rateLimitExceeded = false;
+
     protected $quotaExceeded = false;
 
     public function __construct(
@@ -39,6 +42,7 @@ class AIServiceException extends Exception
             $provider
         );
         $exception->rateLimitExceeded = true;
+
         return $exception;
     }
 
@@ -54,6 +58,7 @@ class AIServiceException extends Exception
             $provider
         );
         $exception->quotaExceeded = true;
+
         return $exception;
     }
 
@@ -92,6 +97,7 @@ class AIServiceException extends Exception
         if ($reason) {
             $message .= ": {$reason}";
         }
+
         return new static($message, 502, null, $provider);
     }
 

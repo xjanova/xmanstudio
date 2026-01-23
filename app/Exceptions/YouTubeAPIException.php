@@ -11,8 +11,11 @@ use Throwable;
 class YouTubeAPIException extends Exception
 {
     protected $quotaExceeded = false;
+
     protected $rateLimitExceeded = false;
+
     protected $videoId;
+
     protected $commentId;
 
     public function __construct(
@@ -37,6 +40,7 @@ class YouTubeAPIException extends Exception
             403
         );
         $exception->quotaExceeded = true;
+
         return $exception;
     }
 
@@ -50,6 +54,7 @@ class YouTubeAPIException extends Exception
             429
         );
         $exception->rateLimitExceeded = true;
+
         return $exception;
     }
 
@@ -73,6 +78,7 @@ class YouTubeAPIException extends Exception
         if ($reason) {
             $message .= ": {$reason}";
         }
+
         return new static($message, 403);
     }
 
@@ -136,6 +142,7 @@ class YouTubeAPIException extends Exception
         if ($reason) {
             $message .= ": {$reason}";
         }
+
         return new static($message, 502);
     }
 
@@ -148,6 +155,7 @@ class YouTubeAPIException extends Exception
         if ($details) {
             $message .= ": {$details}";
         }
+
         return new static($message, 503);
     }
 

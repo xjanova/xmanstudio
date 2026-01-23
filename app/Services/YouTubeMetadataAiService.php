@@ -4,17 +4,22 @@ namespace App\Services;
 
 use App\Models\MetalXVideo;
 use App\Models\Setting;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class YouTubeMetadataAiService
 {
     protected $provider;
+
     protected $model;
+
     protected $apiKey;
+
     protected $temperature;
+
     protected $maxTokens;
+
     protected $sanitizer;
 
     public function __construct(InputSanitizerService $sanitizer)
@@ -66,7 +71,7 @@ class YouTubeMetadataAiService
                 'confidence' => $this->calculateConfidence($metadata),
             ];
         } catch (Exception $e) {
-            Log::error("AI metadata generation failed for video {$video->id}: " . $e->getMessage());
+            Log::error("AI metadata generation failed for video {$video->id}: ".$e->getMessage());
 
             return [
                 'success' => false,
@@ -89,11 +94,12 @@ class YouTubeMetadataAiService
         foreach ($videoIds as $videoId) {
             $video = $videos->get($videoId);
 
-            if (!$video) {
+            if (! $video) {
                 $results[$videoId] = [
                     'success' => false,
                     'error' => 'Video not found',
                 ];
+
                 continue;
             }
 
@@ -182,7 +188,7 @@ PROMPT;
     protected function callOpenAi(string $prompt): string
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Authorization' => 'Bearer '.$this->apiKey,
             'Content-Type' => 'application/json',
         ])->timeout(60)->post('https://api.openai.com/v1/chat/completions', [
             'model' => $this->model,
@@ -200,8 +206,8 @@ PROMPT;
             'max_tokens' => $this->maxTokens,
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception("OpenAI API error: " . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('OpenAI API error: '.$response->body());
         }
 
         return $response->json('choices.0.message.content');
@@ -228,8 +234,8 @@ PROMPT;
             ],
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception("Claude API error: " . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Claude API error: '.$response->body());
         }
 
         return $response->json('content.0.text');
@@ -251,8 +257,8 @@ PROMPT;
             ],
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception("Ollama API error: " . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Ollama API error: '.$response->body());
         }
 
         return $response->json('response');
@@ -270,20 +276,20 @@ PROMPT;
         $metadata = json_decode($response, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception("Invalid JSON response from AI: " . json_last_error_msg());
+            throw new Exception('Invalid JSON response from AI: '.json_last_error_msg());
         }
 
         // Validate required fields
         $required = ['title_th', 'description_th', 'tags', 'category'];
         foreach ($required as $field) {
-            if (!isset($metadata[$field])) {
+            if (! isset($metadata[$field])) {
                 throw new Exception("Missing required field: {$field}");
             }
         }
 
         // Validate tags is array
-        if (!is_array($metadata['tags'])) {
-            throw new Exception("Tags must be an array");
+        if (! is_array($metadata['tags'])) {
+            throw new Exception('Tags must be an array');
         }
 
         return $metadata;
@@ -297,16 +303,16 @@ PROMPT;
         $score = 0;
 
         // Title quality (30 points)
-        if (!empty($metadata['title_th']) && mb_strlen($metadata['title_th']) > 10) {
+        if (! empty($metadata['title_th']) && mb_strlen($metadata['title_th']) > 10) {
             $score += 30;
-        } elseif (!empty($metadata['title_th'])) {
+        } elseif (! empty($metadata['title_th'])) {
             $score += 15;
         }
 
         // Description quality (30 points)
-        if (!empty($metadata['description_th']) && mb_strlen($metadata['description_th']) > 50) {
+        if (! empty($metadata['description_th']) && mb_strlen($metadata['description_th']) > 50) {
             $score += 30;
-        } elseif (!empty($metadata['description_th'])) {
+        } elseif (! empty($metadata['description_th'])) {
             $score += 15;
         }
 
@@ -321,7 +327,7 @@ PROMPT;
         }
 
         // Category (20 points)
-        if (!empty($metadata['category'])) {
+        if (! empty($metadata['category'])) {
             $score += 20;
         }
 
@@ -349,8 +355,8 @@ PROMPT;
      */
     public function approveMetadata(MetalXVideo $video, int $userId): void
     {
-        if (!$video->ai_generated) {
-            throw new Exception("No AI metadata to approve");
+        if (! $video->ai_generated) {
+            throw new Exception('No AI metadata to approve');
         }
 
         $video->update([
@@ -384,17 +390,17 @@ PROMPT;
      */
     public function isConfigured(): bool
     {
-        if (!Setting::get('ai_content_generation', false)) {
+        if (! Setting::get('ai_content_generation', false)) {
             return false;
         }
 
         switch ($this->provider) {
             case 'openai':
-                return !empty($this->apiKey) && !empty($this->model);
+                return ! empty($this->apiKey) && ! empty($this->model);
             case 'claude':
-                return !empty($this->apiKey) && !empty($this->model);
+                return ! empty($this->apiKey) && ! empty($this->model);
             case 'ollama':
-                return !empty($this->model);
+                return ! empty($this->model);
             default:
                 return false;
         }
