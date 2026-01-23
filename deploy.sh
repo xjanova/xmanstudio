@@ -1250,12 +1250,33 @@ health_check() {
             HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$APP_URL" 2>/dev/null)
             set -e
 
-            if [ "$HTTP_RESPONSE" = "200" ] || [ "$HTTP_RESPONSE" = "302" ]; then
+            if [ "$HTTP_RESPONSE" = "200" ] || [ "$HTTP_RESPONSE" = "302" ] || [ "$HTTP_RESPONSE" = "301" ]; then
                 print_success "Application is accessible at $APP_URL (HTTP $HTTP_RESPONSE)"
             elif [ "$HTTP_RESPONSE" = "000" ]; then
                 print_warning "Could not reach $APP_URL (timeout or connection refused)"
+                HEALTH_ISSUES=$((HEALTH_ISSUES + 1))
+            elif [[ "$HTTP_RESPONSE" =~ ^[45][0-9][0-9]$ ]]; then
+                print_error "Application returned HTTP $HTTP_RESPONSE (server error)"
+                HEALTH_ISSUES=$((HEALTH_ISSUES + 1))
+
+                # Show recent error logs for debugging
+                echo ""
+                echo -e "${RED}━━━ Recent Error Log (Last 30 lines) ━━━${NC}"
+                if [ -f "storage/logs/laravel.log" ]; then
+                    tail -30 storage/logs/laravel.log | grep -A 5 -i "error\|exception\|fatal" || tail -30 storage/logs/laravel.log
+                    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                    echo ""
+                    echo -e "${YELLOW}To view full log:${NC}"
+                    echo -e "  tail -100 storage/logs/laravel.log"
+                    echo ""
+                    echo -e "${YELLOW}To copy error for debugging:${NC}"
+                    echo -e "  tail -100 storage/logs/laravel.log | grep -A 10 -i error"
+                else
+                    echo -e "${YELLOW}Log file not found: storage/logs/laravel.log${NC}"
+                fi
+                echo ""
             else
-                print_warning "Application returned HTTP $HTTP_RESPONSE"
+                print_warning "Application returned HTTP $HTTP_RESPONSE (unexpected status)"
             fi
         fi
     fi
@@ -1270,6 +1291,13 @@ health_check() {
 
     if [ $HEALTH_ISSUES -gt 0 ]; then
         print_warning "Health check completed with $HEALTH_ISSUES issue(s)"
+        echo ""
+        echo -e "${YELLOW}━━━ Troubleshooting Tips ━━━${NC}"
+        echo -e "1. Check Laravel logs: ${PURPLE}tail -50 storage/logs/laravel.log${NC}"
+        echo -e "2. Check PHP errors: ${PURPLE}tail -50 storage/logs/deploy/deploy_*.log${NC}"
+        echo -e "3. Clear all caches: ${PURPLE}php artisan cache:clear && php artisan config:clear${NC}"
+        echo -e "4. Check .env file: ${PURPLE}cat .env | grep -v '^#' | grep -v '^$'${NC}"
+        echo ""
     else
         print_success "Health check completed - all systems operational"
     fi
@@ -1309,31 +1337,25 @@ update_deploy_script() {
         return 0
     fi
 
-    print_step "Updating Deployment Script"
-
-    # Check if we're in a git repository
+    # Check if we're in a git repository (silent check)
     if ! git rev-parse --git-dir >/dev/null 2>&1; then
-        print_info "Not a git repository, skipping deploy.sh update"
         return 0
     fi
 
     # Get current branch
     local CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
     if [ -z "$CURRENT_BRANCH" ]; then
-        print_info "Could not determine branch, skipping deploy.sh update"
         return 0
     fi
 
     # Check for uncommitted changes in deploy.sh
     if git diff --name-only | grep -q "^deploy.sh$"; then
-        print_warning "deploy.sh has uncommitted changes, skipping update"
+        echo "⚠ deploy.sh has uncommitted changes, skipping update"
         return 0
     fi
 
-    # Fetch latest changes
-    print_info "Fetching latest changes from origin..."
+    # Fetch latest changes (silent)
     if ! git fetch origin "$CURRENT_BRANCH" 2>/dev/null; then
-        print_warning "Could not fetch from origin, continuing with current version"
         return 0
     fi
 
@@ -1342,32 +1364,40 @@ update_deploy_script() {
     local REMOTE_HASH=$(git show "origin/$CURRENT_BRANCH:deploy.sh" 2>/dev/null | git hash-object --stdin 2>/dev/null || echo "")
 
     if [ -z "$LOCAL_HASH" ] || [ -z "$REMOTE_HASH" ]; then
-        print_info "Could not compare deploy.sh versions, continuing with current version"
         return 0
     fi
 
     if [ "$LOCAL_HASH" = "$REMOTE_HASH" ]; then
-        print_success "deploy.sh is already up to date"
         return 0
     fi
 
     # Pull only deploy.sh
-    print_info "New version of deploy.sh found, updating..."
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🔄 New version of deploy.sh detected!"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "ℹ Updating deploy.sh from origin/$CURRENT_BRANCH..."
+
     if git checkout "origin/$CURRENT_BRANCH" -- deploy.sh 2>/dev/null; then
-        print_success "deploy.sh updated successfully"
+        echo "✓ deploy.sh updated successfully"
+        echo "🔄 Re-executing with new version..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
 
         # Re-execute the script with updated version
-        print_info "Re-executing with updated script..."
         export DEPLOY_SCRIPT_UPDATED=true
         exec bash "$0" "$@"
     else
-        print_warning "Could not update deploy.sh, continuing with current version"
+        echo "⚠ Could not update deploy.sh, continuing with current version"
         return 0
     fi
 }
 
 # Main deployment flow
 main() {
+    # Update deploy.sh FIRST before anything else
+    update_deploy_script "$@"
+
     print_header
 
     print_info "Starting deployment at $(date)"
@@ -1378,7 +1408,6 @@ main() {
     # Set trap for errors
     trap on_error ERR
 
-    update_deploy_script "$@"
     sanitize_env_file
     check_app_key
     check_environment
