@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Create Ad Placement')
 @section('page-title', 'เพิ่มตำแหน่งโฆษณาใหม่')

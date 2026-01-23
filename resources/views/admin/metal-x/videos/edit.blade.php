@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'แก้ไขวิดีโอ')
 @section('page-title', 'แก้ไขวิดีโอ')

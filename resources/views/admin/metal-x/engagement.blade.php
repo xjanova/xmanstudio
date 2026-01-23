@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Metal-X Engagement')
 @section('page-title', 'AI-Powered Comment Management & Engagement')

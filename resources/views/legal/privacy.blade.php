@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'นโยบายความเป็นส่วนตัว - ' . config('app.name', 'XMAN Studio'))
 

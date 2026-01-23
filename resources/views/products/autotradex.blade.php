@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'AutoTradeX - Crypto Arbitrage Bot | XMAN Studio')
 

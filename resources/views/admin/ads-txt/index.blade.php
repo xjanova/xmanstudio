@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Ads.txt Management')
 @section('page-title', 'Ads.txt Management (จัดการไฟล์ Ads.txt สำหรับ Google Ads)')

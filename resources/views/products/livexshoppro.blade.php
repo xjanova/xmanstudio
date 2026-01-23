@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'Live x Shop Pro - Live Shopping Platform | XMAN Studio')
 

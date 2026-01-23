@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'License Details - ' . ($license->product?->name ?? 'License'))
 @section('page-title', 'License Details')

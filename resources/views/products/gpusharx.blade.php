@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'GPUsharX - GPU Sharing Platform | XMAN Studio')
 

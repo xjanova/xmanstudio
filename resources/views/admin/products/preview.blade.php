@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Preview: ' . $product->name)
 @section('page-title', 'Preview: ' . $product->name)

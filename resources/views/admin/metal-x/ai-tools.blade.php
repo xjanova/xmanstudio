@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Metal-X AI Tools')
 @section('page-title', 'AI-Powered YouTube Metadata Management')

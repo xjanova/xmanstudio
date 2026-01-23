@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'ดาวน์โหลด')
 @section('page-title', 'ศูนย์ดาวน์โหลด')
