@@ -982,14 +982,59 @@ restart_web_server() {
 
     local RESTARTED=0
 
-    # Try to restart PHP-FPM (common in production)
+    # Check if DirectAdmin is installed
+    if [ -d "/usr/local/directadmin" ] || [ -f "/usr/local/directadmin/directadmin" ]; then
+        print_info "DirectAdmin detected - using DirectAdmin-compatible restart method"
+
+        # Method 1: Touch restart.txt (for mod_lsapi)
+        if [ -f "public_html/.htaccess" ] || [ -f "public/.htaccess" ]; then
+            print_info "Creating restart trigger for mod_lsapi..."
+            touch public_html/restart.txt 2>/dev/null || touch public/restart.txt 2>/dev/null || true
+            sleep 1
+            rm -f public_html/restart.txt public/restart.txt 2>/dev/null || true
+            print_success "Triggered PHP restart via restart.txt"
+            RESTARTED=1
+        fi
+
+        # Method 2: Clear OPcache (critical for DirectAdmin)
+        print_info "Clearing OPcache via web request..."
+        set +e
+        # Create a temporary OPcache clear script
+        OPCACHE_CLEAR_FILE="public_html/opcache-clear-$(date +%s).php"
+        cat > "$OPCACHE_CLEAR_FILE" 2>/dev/null <<'OPCACHE_EOF'
+<?php
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+    echo "OPcache cleared successfully\n";
+} else {
+    echo "OPcache not available\n";
+}
+OPCACHE_EOF
+
+        # Try to access it via web to clear OPcache
+        APP_URL=$(grep "^APP_URL=" .env 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "")
+        if [ -n "$APP_URL" ] && command -v curl >/dev/null 2>&1; then
+            CLEAR_URL="${APP_URL}/opcache-clear-$(date +%s).php"
+            curl -s "$CLEAR_URL" >/dev/null 2>&1 || true
+        fi
+
+        # Clean up the temporary file
+        rm -f "$OPCACHE_CLEAR_FILE" 2>/dev/null || true
+        set -e
+
+        print_success "DirectAdmin-compatible restart completed"
+        print_info "Note: PHP processes will restart automatically on next request"
+        return 0
+    fi
+
+    # Standard VPS/Dedicated server with systemctl
     if command -v systemctl >/dev/null 2>&1; then
         # Detect PHP version
         PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 
         # Try common PHP-FPM service names
         for SERVICE in "php${PHP_VERSION}-fpm" "php-fpm" "php${PHP_VERSION:0:1}${PHP_VERSION:2:1}-fpm"; do
-            if systemctl list-units --full -all | grep -q "$SERVICE.service"; then
+            if systemctl list-units --full -all 2>/dev/null | grep -q "$SERVICE.service"; then
                 print_info "Restarting $SERVICE..."
                 set +e
                 sudo systemctl reload $SERVICE 2>&1 || sudo systemctl restart $SERVICE 2>&1
@@ -1003,7 +1048,7 @@ restart_web_server() {
         done
 
         # Try to restart Nginx
-        if systemctl list-units --full -all | grep -q "nginx.service"; then
+        if systemctl list-units --full -all 2>/dev/null | grep -q "nginx.service"; then
             print_info "Reloading Nginx..."
             set +e
             sudo systemctl reload nginx 2>&1
@@ -1015,7 +1060,7 @@ restart_web_server() {
         fi
 
         # Try to restart Apache
-        if systemctl list-units --full -all | grep -q "apache2.service\|httpd.service"; then
+        if systemctl list-units --full -all 2>/dev/null | grep -q "apache2.service\|httpd.service"; then
             print_info "Restarting Apache..."
             set +e
             sudo systemctl reload apache2 2>&1 || sudo systemctl reload httpd 2>&1
@@ -1027,9 +1072,42 @@ restart_web_server() {
         fi
     fi
 
+    # cPanel/Plesk alternative methods
+    if [ $RESTARTED -eq 0 ]; then
+        # Try cPanel EA-PHP restart
+        if command -v /scripts/restartsrv_httpd >/dev/null 2>&1; then
+            print_info "cPanel detected - attempting graceful restart..."
+            set +e
+            /scripts/restartsrv_httpd graceful 2>&1
+            if [ $? -eq 0 ]; then
+                print_success "Apache restarted via cPanel"
+                RESTARTED=1
+            fi
+            set -e
+        fi
+
+        # Try killall -USR2 for PHP-FPM (graceful reload without sudo)
+        if [ $RESTARTED -eq 0 ] && command -v killall >/dev/null 2>&1; then
+            print_info "Attempting graceful PHP-FPM reload..."
+            set +e
+            killall -USR2 php-fpm 2>&1
+            if [ $? -eq 0 ]; then
+                print_success "PHP-FPM gracefully reloaded"
+                RESTARTED=1
+            fi
+            set -e
+        fi
+    fi
+
     if [ $RESTARTED -eq 0 ]; then
         print_warning "Could not restart web server automatically"
-        print_info "Please manually restart: sudo systemctl restart php-fpm nginx"
+        echo ""
+        print_info "Manual restart options:"
+        print_info "  VPS/Dedicated: sudo systemctl restart php-fpm nginx"
+        print_info "  DirectAdmin: Touch restart.txt or restart via DirectAdmin panel"
+        print_info "  cPanel: Use WHM > Restart Services or /scripts/restartsrv_httpd"
+        print_info "  Alternative: killall -USR2 php-fpm (graceful reload)"
+        echo ""
     fi
 }
 
