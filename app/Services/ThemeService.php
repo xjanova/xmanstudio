@@ -43,7 +43,7 @@ class ThemeService
      */
     public static function setTheme(string $theme): bool
     {
-        if (!array_key_exists($theme, self::THEMES)) {
+        if (! array_key_exists($theme, self::THEMES)) {
             return false;
         }
 
