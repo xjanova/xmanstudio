@@ -251,10 +251,10 @@
                         @php
                             $siteLogo = \App\Models\Setting::getValue('site_logo');
                         @endphp
-                        <a href="/" class="flex items-center group">
+                        <a href="/" class="flex items-center">
                             @if($siteLogo)
-                                {{-- Logo only - full size, no frame, no text (Classic style) --}}
-                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-14 w-auto object-contain transition-all duration-300 group-hover:opacity-80">
+                                {{-- Logo only - same as classic theme --}}
+                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
                             @else
                                 <span class="text-2xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent hover:from-indigo-100 hover:to-purple-100 transition-colors">
                                     XMAN STUDIO
@@ -543,8 +543,8 @@
                         $siteLogo = \App\Models\Setting::getValue('site_logo');
                     @endphp
                     @if($siteLogo)
-                        {{-- Logo only - full size, no frame, no text (Classic style) --}}
-                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-14 w-auto object-contain mb-4">
+                        {{-- Logo only - same as classic theme --}}
+                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-12 w-auto mb-4">
                     @else
                         <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">XMAN STUDIO</h3>
                     @endif
