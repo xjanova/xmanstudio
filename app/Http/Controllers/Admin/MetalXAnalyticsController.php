@@ -177,17 +177,17 @@ class MetalXAnalyticsController extends Controller
     private function formatDuration($seconds): string
     {
         if ($seconds < 60) {
-            return $seconds . ' วินาที';
+            return $seconds.' วินาที';
         }
 
         $hours = floor($seconds / 3600);
         $minutes = floor(($seconds % 3600) / 60);
 
         if ($hours > 0) {
-            return $hours . ' ชม. ' . $minutes . ' นาที';
+            return $hours.' ชม. '.$minutes.' นาที';
         }
 
-        return $minutes . ' นาที';
+        return $minutes.' นาที';
     }
 
     /**
