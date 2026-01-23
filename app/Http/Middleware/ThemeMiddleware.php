@@ -22,7 +22,7 @@ class ThemeMiddleware
 
         // Share theme data to all views
         View::share('currentTheme', $currentTheme);
-        View::share('themeService', new ThemeService());
+        View::share('themeService', new ThemeService);
 
         // Share layout paths
         View::share('adminLayout', ThemeService::getAdminLayout());
