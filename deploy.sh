@@ -196,21 +196,30 @@ sanitize_env_file() {
 
     print_success "Environment file sanitized"
 
-    # Verify the file is valid
+    # Verify the file is valid (using php directly, no artisan command)
     set +e
-    PHP_CHECK=$(php artisan env:check 2>&1 || php -r "
-        \$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-        try {
-            \$dotenv->load();
-            echo 'valid';
-        } catch (Exception \$e) {
-            echo 'invalid: ' . \$e->getMessage();
+    PHP_CHECK=$(php -r "
+        if (file_exists('.env')) {
+            \$lines = file('.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            \$valid = true;
+            foreach (\$lines as \$line) {
+                \$line = trim(\$line);
+                if (empty(\$line) || \$line[0] === '#') continue;
+                if (strpos(\$line, '=') === false) {
+                    echo 'invalid: Line without = found: ' . \$line;
+                    \$valid = false;
+                    break;
+                }
+            }
+            if (\$valid) echo 'valid';
+        } else {
+            echo 'invalid: .env file not found';
         }
     " 2>&1)
     set -e
 
     if echo "$PHP_CHECK" | grep -q "invalid"; then
-        print_warning "Environment file may still have issues: $PHP_CHECK"
+        print_warning "Environment file may have issues: $PHP_CHECK"
         print_info "Backup available at: .env.backup.${TIMESTAMP}"
     else
         print_success "Environment file validation passed"
