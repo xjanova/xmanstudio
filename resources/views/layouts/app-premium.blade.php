@@ -253,14 +253,9 @@
                         @endphp
                         <a href="/" class="flex items-center group">
                             @if($siteLogo)
-                                {{-- Logo only - full width, no frame, no text (Classic style) --}}
                                 <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-12 w-auto max-w-[240px] object-contain transition-all duration-300 group-hover:opacity-80">
                             @else
-                                {{-- Fallback: Show icon with text when no logo --}}
-                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300 mr-3">
-                                    <span class="text-white font-bold text-lg">X</span>
-                                </div>
-                                <span class="text-xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent hidden sm:block">
+                                <span class="text-2xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent hover:from-indigo-100 hover:to-purple-100 transition-colors">
                                     XMAN STUDIO
                                 </span>
                             @endif
@@ -546,18 +541,11 @@
                     @php
                         $siteLogo = \App\Models\Setting::getValue('site_logo');
                     @endphp
-                    <div class="flex items-center gap-3 mb-4">
-                        @if($siteLogo)
-                            {{-- Logo only - full width, no frame, no text (Classic style) --}}
-                            <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-12 w-auto max-w-[240px] object-contain">
-                        @else
-                            {{-- Fallback: Show icon with text when no logo --}}
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                                <span class="text-white font-bold text-lg">X</span>
-                            </div>
-                            <span class="text-xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">XMAN STUDIO</span>
-                        @endif
-                    </div>
+                    @if($siteLogo)
+                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-12 w-auto mb-4">
+                    @else
+                        <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">XMAN STUDIO</h3>
+                    @endif
                     <p class="text-indigo-300/60 mb-4">ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ</p>
                     <!-- Social Links -->
                     <div class="flex space-x-4">
