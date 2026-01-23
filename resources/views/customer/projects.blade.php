@@ -144,7 +144,7 @@
             </div>
             <p class="text-gray-600 font-medium">ยังไม่มีโครงการ</p>
             <p class="text-sm text-gray-500 mt-1">เมื่อคุณมีโครงการ จะแสดงที่นี่</p>
-            <a href="{{ route('quotation.index') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
+            <a href="{{ route('support.index') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
