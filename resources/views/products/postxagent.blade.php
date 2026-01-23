@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'PostXAgent - AI Brand Promotion Manager | XMAN Studio')
 

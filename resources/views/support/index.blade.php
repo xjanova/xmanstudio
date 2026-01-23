@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'สั่งงาน & ใบเสนอราคา - XMAN Studio')
 

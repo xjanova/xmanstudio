@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'แก้ไขโครงการ')
 @section('page-title', 'แก้ไขโครงการ: ' . $project->project_name)

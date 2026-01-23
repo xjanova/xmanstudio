@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Metal-X Analytics')
 @section('page-title', 'Metal-X Analytics Dashboard')

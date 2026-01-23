@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'PhoneX Manager - Android Device Management | XMAN Studio')
 

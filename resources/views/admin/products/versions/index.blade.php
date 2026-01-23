@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'จัดการเวอร์ชัน - ' . $product->name)
 @section('page-title', 'จัดการเวอร์ชัน: ' . $product->name)

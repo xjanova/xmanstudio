@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'Ticket #' . $ticket->ticket_number)
 @section('page-title', 'Ticket #' . $ticket->ticket_number)

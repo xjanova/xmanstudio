@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Custom Code')
 @section('page-title', 'Custom Code (โค้ด Tracking & Verification)')

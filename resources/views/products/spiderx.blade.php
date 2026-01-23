@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'SpiderX - P2P Mesh Network | XMAN Studio')
 

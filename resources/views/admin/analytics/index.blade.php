@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Analytics Dashboard')
 @section('page-title', 'Analytics Dashboard')

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'ชำระเงิน - ' . $package->display_name . ' - XMAN Studio')
 

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'WinXTools - Windows Network & System Management | XMAN Studio')
 

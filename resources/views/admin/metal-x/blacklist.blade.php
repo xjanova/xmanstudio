@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Metal-X Blacklist')
 @section('page-title', 'Blacklisted Channels Management')

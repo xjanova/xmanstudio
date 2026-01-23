@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'แพ็กเกจเช่าใช้งาน - XMAN Studio')
 @section('meta_description', 'เลือกแพ็กเกจเช่าใช้งานซอฟต์แวร์ที่เหมาะกับคุณ ราคาคุ้มค่า พร้อมบริการสนับสนุน')
