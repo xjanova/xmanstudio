@@ -16,6 +16,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'theme' => \App\Http\Middleware\ThemeMiddleware::class,
+        ]);
+
+        // Apply theme middleware to web routes
+        $middleware->web(append: [
+            \App\Http\Middleware\ThemeMiddleware::class,
         ]);
 
         // Trust proxies for load balancers
