@@ -252,16 +252,18 @@
                             $siteLogo = \App\Models\Setting::getValue('site_logo');
                         @endphp
                         <a href="/" class="flex items-center group">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300 mr-3">
-                                @if($siteLogo)
-                                    <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-6 w-auto">
-                                @else
+                            @if($siteLogo)
+                                {{-- Logo only - no frame, no text (Classic style) --}}
+                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-10 w-auto max-w-[180px] object-contain transition-all duration-300 group-hover:opacity-80">
+                            @else
+                                {{-- Fallback: Show icon with text when no logo --}}
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300 mr-3">
                                     <span class="text-white font-bold text-lg">X</span>
-                                @endif
-                            </div>
-                            <span class="text-xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent hidden sm:block">
-                                XMAN STUDIO
-                            </span>
+                                </div>
+                                <span class="text-xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent hidden sm:block">
+                                    XMAN STUDIO
+                                </span>
+                            @endif
                         </a>
                     </div>
                     <div class="hidden md:ml-8 md:flex md:items-center md:space-x-1">
@@ -453,10 +455,15 @@
                         @endif
                     @endauth
 
-                    <!-- Mobile Menu Button -->
-                    <button id="mobileMenuBtn" type="button" class="md:hidden p-2 text-indigo-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- Mobile Menu Button (Hamburger) -->
+                    <button id="mobileMenuBtn" type="button" class="md:hidden p-2 text-indigo-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors" aria-label="Toggle menu" aria-expanded="false">
+                        <!-- Hamburger Icon -->
+                        <svg id="hamburgerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                        <!-- Close Icon (hidden by default) -->
+                        <svg id="closeIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
@@ -540,14 +547,16 @@
                         $siteLogo = \App\Models\Setting::getValue('site_logo');
                     @endphp
                     <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-                            @if($siteLogo)
-                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-6 w-auto">
-                            @else
+                        @if($siteLogo)
+                            {{-- Logo only - no frame, no text (Classic style) --}}
+                            <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ config('app.name', 'XMAN STUDIO') }}" class="h-10 w-auto max-w-[180px] object-contain">
+                        @else
+                            {{-- Fallback: Show icon with text when no logo --}}
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                                 <span class="text-white font-bold text-lg">X</span>
-                            @endif
-                        </div>
-                        <span class="text-xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">XMAN STUDIO</span>
+                            </div>
+                            <span class="text-xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">XMAN STUDIO</span>
+                        @endif
                     </div>
                     <p class="text-indigo-300/60 mb-4">ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ</p>
                     <!-- Social Links -->
@@ -645,11 +654,38 @@
 
     <!-- Scripts -->
     <script>
-        // Mobile Menu Toggle
+        // Mobile Menu Toggle with icon animation
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const mobileMenu = document.getElementById('mobileMenu');
+        const hamburgerIcon = document.getElementById('hamburgerIcon');
+        const closeIcon = document.getElementById('closeIcon');
+
         mobileMenuBtn?.addEventListener('click', () => {
+            const isOpen = !mobileMenu?.classList.contains('hidden');
+
+            // Toggle menu visibility
             mobileMenu?.classList.toggle('hidden');
+
+            // Toggle icons
+            if (isOpen) {
+                hamburgerIcon?.classList.remove('hidden');
+                closeIcon?.classList.add('hidden');
+                mobileMenuBtn?.setAttribute('aria-expanded', 'false');
+            } else {
+                hamburgerIcon?.classList.add('hidden');
+                closeIcon?.classList.remove('hidden');
+                mobileMenuBtn?.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!mobileMenuBtn?.contains(e.target) && !mobileMenu?.contains(e.target)) {
+                mobileMenu?.classList.add('hidden');
+                hamburgerIcon?.classList.remove('hidden');
+                closeIcon?.classList.add('hidden');
+                mobileMenuBtn?.setAttribute('aria-expanded', 'false');
+            }
         });
 
         // Toast Notification Function
