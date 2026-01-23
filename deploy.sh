@@ -1152,6 +1152,16 @@ OPCACHE_EOF
 verify_production_security() {
     print_step "Verifying Production Security"
 
+    # Get current environment
+    local APP_ENV=$(grep "^APP_ENV=" .env 2>/dev/null | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "production")
+
+    # Skip security checks for local/development/testing environments
+    if [[ "$APP_ENV" =~ ^(local|development|testing|dev)$ ]]; then
+        print_info "Environment: $APP_ENV (skipping production security checks)"
+        return 0
+    fi
+
+    print_info "Environment: $APP_ENV (performing security checks)"
     local SECURITY_ISSUES=0
 
     # Check if APP_DEBUG is false
@@ -1164,7 +1174,6 @@ verify_production_security() {
 
     # Check if APP_ENV is production
     if ! grep -q "^APP_ENV=production" .env; then
-        APP_ENV=$(grep "^APP_ENV=" .env 2>/dev/null | cut -d'=' -f2 | tr -d '\r\n' | xargs || echo "unknown")
         print_warning "APP_ENV is '$APP_ENV' (not production)"
     else
         print_success "APP_ENV is set to production"
