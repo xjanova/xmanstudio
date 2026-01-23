@@ -339,6 +339,43 @@ backup_database() {
     fi
 }
 
+# Cleanup old backup files (older than 2 days)
+cleanup_old_backups() {
+    print_step "Cleaning Up Old Backups"
+
+    local DELETED_COUNT=0
+
+    # Clean .env backup files older than 2 days
+    if ls .env.backup.* >/dev/null 2>&1; then
+        print_info "Checking .env backup files..."
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                rm -f "$file"
+                print_info "Deleted: $file"
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+            fi
+        done < <(find . -maxdepth 1 -name ".env.backup.*" -type f -mtime +2)
+    fi
+
+    # Clean database backup files older than 2 days
+    if [ -d "$BACKUP_DIR" ]; then
+        print_info "Checking database backup files in $BACKUP_DIR..."
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                rm -f "$file"
+                print_info "Deleted: $file"
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+            fi
+        done < <(find "$BACKUP_DIR" -type f \( -name "backup_*.sql" -o -name "backup_*.sqlite" \) -mtime +2)
+    fi
+
+    if [ $DELETED_COUNT -eq 0 ]; then
+        print_success "No old backup files to clean (keeping files newer than 2 days)"
+    else
+        print_success "Deleted $DELETED_COUNT old backup file(s)"
+    fi
+}
+
 # Enable maintenance mode
 enable_maintenance() {
     print_step "Enabling Maintenance Mode"
@@ -1274,6 +1311,7 @@ main() {
     pull_code
     update_dependencies
     backup_database
+    cleanup_old_backups
     run_migrations
     run_smart_seeding
     build_assets
