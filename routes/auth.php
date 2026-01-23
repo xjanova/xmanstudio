@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\LineLoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\YouTubeOAuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -16,6 +17,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('auth/line', [LineLoginController::class, 'redirect'])->name('line.redirect');
 Route::get('auth/line/callback', [LineLoginController::class, 'callback'])->name('line.callback');
 Route::post('auth/line/unlink', [LineLoginController::class, 'unlink'])->name('line.unlink')->middleware('auth');
+
+// YouTube OAuth Routes (Admin only)
+Route::middleware('auth')->group(function () {
+    Route::get('auth/youtube', [YouTubeOAuthController::class, 'redirect'])->name('youtube.redirect');
+    Route::get('auth/youtube/callback', [YouTubeOAuthController::class, 'callback'])->name('youtube.callback');
+    Route::post('auth/youtube/disconnect', [YouTubeOAuthController::class, 'disconnect'])->name('youtube.disconnect');
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])

@@ -41,4 +41,13 @@ return [
         'admin_user_id' => env('LINE_ADMIN_USER_ID'),
     ],
 
+    // YouTube OAuth API
+    'youtube' => [
+        'client_id' => env('YOUTUBE_CLIENT_ID'),
+        'client_secret' => env('YOUTUBE_CLIENT_SECRET'),
+        // Redirect URI will be: {APP_URL}/auth/youtube/callback
+        // Example: https://yourdomain.com/auth/youtube/callback
+        // Add this exact URL to Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs > Authorized redirect URIs
+    ],
+
 ];
