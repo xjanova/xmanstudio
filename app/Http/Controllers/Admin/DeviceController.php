@@ -36,9 +36,9 @@ class DeviceController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('machine_id', 'like', "%{$search}%")
-                  ->orWhere('machine_name', 'like', "%{$search}%")
-                  ->orWhere('first_ip', 'like', "%{$search}%")
-                  ->orWhere('last_ip', 'like', "%{$search}%");
+                    ->orWhere('machine_name', 'like', "%{$search}%")
+                    ->orWhere('first_ip', 'like', "%{$search}%")
+                    ->orWhere('last_ip', 'like', "%{$search}%");
             });
         }
 

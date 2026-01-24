@@ -36,16 +36,25 @@ class WalletTransaction extends Model
     ];
 
     const TYPE_DEPOSIT = 'deposit';
+
     const TYPE_WITHDRAWAL = 'withdrawal';
+
     const TYPE_PAYMENT = 'payment';
+
     const TYPE_REFUND = 'refund';
+
     const TYPE_BONUS = 'bonus';
+
     const TYPE_ADJUSTMENT = 'adjustment';
+
     const TYPE_CASHBACK = 'cashback';
 
     const STATUS_PENDING = 'pending';
+
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_FAILED = 'failed';
+
     const STATUS_CANCELLED = 'cancelled';
 
     public function wallet()
