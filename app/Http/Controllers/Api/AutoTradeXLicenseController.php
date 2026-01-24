@@ -476,7 +476,28 @@ class AutoTradeXLicenseController extends Controller
             'ip' => $request->ip(),
             'timestamp' => now()->toISOString(),
         ];
+
+        // Remove this machine_id from revoked list if exists
+        // This allows re-activation after reset (e.g., same hardware after Windows reinstall)
+        if (! empty($metadata['revoked_machine_ids'])) {
+            $metadata['revoked_machine_ids'] = array_values(array_filter(
+                $metadata['revoked_machine_ids'],
+                fn ($revoked) => $revoked['machine_id'] !== $validated['machine_id']
+            ));
+        }
+
         $license->update(['metadata' => json_encode($metadata)]);
+
+        // Unblock device if it was blocked
+        $device = AutoTradeXDevice::where('machine_id', $validated['machine_id'])->first();
+        if ($device && $device->status === AutoTradeXDevice::STATUS_BLOCKED) {
+            $device->update([
+                'status' => AutoTradeXDevice::STATUS_LICENSED,
+                'license_id' => $license->id,
+                'is_suspicious' => false,
+                'abuse_reason' => null,
+            ]);
+        }
 
         // Get order info for customer details
         $order = $license->order;
@@ -524,6 +545,29 @@ class AutoTradeXLicenseController extends Controller
                 'message' => 'Invalid license key',
                 'error_code' => 'INVALID_LICENSE',
             ], 404);
+        }
+
+        // Check if this machine_id has been revoked (device was reset)
+        // But only if this is NOT the currently activated machine
+        // (allows re-validation after same hardware reinstall Windows)
+        $metadata = json_decode($license->metadata ?? '{}', true);
+        $revokedMachines = $metadata['revoked_machine_ids'] ?? [];
+
+        // If license is currently activated on THIS machine, don't check revoked list
+        $isCurrentlyActivated = $license->machine_id === $validated['machine_id'];
+
+        if (! $isCurrentlyActivated) {
+            foreach ($revokedMachines as $revoked) {
+                if ($revoked['machine_id'] === $validated['machine_id']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This device has been deauthorized. The license was moved to a new device.',
+                        'message_th' => 'อุปกรณ์นี้ถูกยกเลิกการใช้งานแล้ว License ถูกย้ายไปใช้งานบนเครื่องอื่น',
+                        'error_code' => 'DEVICE_REVOKED',
+                        'revoked_at' => $revoked['revoked_at'],
+                    ], 403);
+                }
+            }
         }
 
         // Verify machine ID matches
@@ -909,8 +953,8 @@ class AutoTradeXLicenseController extends Controller
                     'monthly' => [
                         'name' => 'Monthly',
                         'duration' => '30 days',
-                        'price' => 990,
-                        'currency' => 'THB',
+                        'price' => self::PRICING['monthly']['original'],
+                        'currency' => self::PRICING['monthly']['currency'],
                         'features' => self::MONTHLY_FEATURES,
                         'exchanges' => self::EXCHANGES['monthly'],
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/monthly",
@@ -918,18 +962,18 @@ class AutoTradeXLicenseController extends Controller
                     'yearly' => [
                         'name' => 'Yearly',
                         'duration' => '365 days',
-                        'price' => 7900,
-                        'currency' => 'THB',
+                        'price' => self::PRICING['yearly']['original'],
+                        'currency' => self::PRICING['yearly']['currency'],
                         'features' => self::YEARLY_FEATURES,
                         'exchanges' => self::EXCHANGES['yearly'],
-                        'save_percent' => 33,
+                        'save_percent' => 44, // (299*12 - 1990) / (299*12) * 100 ≈ 44%
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/yearly",
                     ],
                     'lifetime' => [
                         'name' => 'Lifetime',
                         'duration' => 'Forever',
-                        'price' => 19900,
-                        'currency' => 'THB',
+                        'price' => self::PRICING['lifetime']['original'],
+                        'currency' => self::PRICING['lifetime']['currency'],
                         'features' => self::LIFETIME_FEATURES,
                         'exchanges' => self::EXCHANGES['lifetime'],
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/lifetime",
@@ -1022,6 +1066,372 @@ class AutoTradeXLicenseController extends Controller
             'X-License-Signature' => $signature,
             'X-License-Timestamp' => (string) $currentTimestamp,
             'X-License-Nonce' => bin2hex(random_bytes(16)),
+        ]);
+    }
+
+    /**
+     * Reset device ID for Lifetime license holders
+     * Allows customer to move license to a new device
+     *
+     * POST /api/v1/autotradex/reset-device
+     */
+    public function resetDevice(Request $request)
+    {
+        $validated = $request->validate([
+            'license_key' => 'required|string',
+            'email' => 'required|email',
+            'current_machine_id' => 'nullable|string|max:64',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        // Find the license
+        $license = LicenseKey::where('license_key', strtoupper($validated['license_key']))
+            ->whereHas('product', fn ($q) => $q->where('slug', self::PRODUCT_SLUG))
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบ License Key นี้ในระบบ',
+                'error_code' => 'INVALID_LICENSE',
+            ], 404);
+        }
+
+        // Verify email matches order
+        $order = $license->order;
+        if (! $order || strtolower($order->email) !== strtolower($validated['email'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'อีเมลไม่ตรงกับที่ใช้สั่งซื้อ License',
+                'error_code' => 'EMAIL_MISMATCH',
+            ], 403);
+        }
+
+        // Only Lifetime licenses can reset device
+        if (! in_array($license->license_type, [LicenseKey::TYPE_LIFETIME, LicenseKey::TYPE_PRODUCT])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'เฉพาะ Lifetime License เท่านั้นที่สามารถ Reset Device ได้',
+                'error_code' => 'NOT_LIFETIME',
+                'license_type' => $license->license_type,
+            ], 403);
+        }
+
+        // Check if license is valid
+        if ($license->status === LicenseKey::STATUS_REVOKED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'License นี้ถูกยกเลิกแล้ว',
+                'error_code' => 'LICENSE_REVOKED',
+            ], 403);
+        }
+
+        // Check reset cooldown (max 1 reset per 30 days)
+        $metadata = json_decode($license->metadata ?? '{}', true);
+        $lastReset = $metadata['last_device_reset'] ?? null;
+
+        if ($lastReset) {
+            $lastResetTime = \Carbon\Carbon::parse($lastReset['timestamp']);
+            $daysSinceReset = $lastResetTime->diffInDays(now());
+
+            if ($daysSinceReset < 30) {
+                $daysRemaining = 30 - $daysSinceReset;
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "สามารถ Reset Device ได้อีกครั้งใน {$daysRemaining} วัน",
+                    'error_code' => 'RESET_COOLDOWN',
+                    'cooldown_days_remaining' => $daysRemaining,
+                    'last_reset_at' => $lastReset['timestamp'],
+                ], 429);
+            }
+        }
+
+        // Store previous device info for audit
+        $previousDevice = [
+            'machine_id' => $license->machine_id,
+            'device_id' => $license->device_id,
+            'machine_fingerprint' => $license->machine_fingerprint,
+            'reset_at' => now()->toISOString(),
+            'reason' => $validated['reason'] ?? 'Customer request',
+            'ip' => $request->ip(),
+        ];
+
+        // Update metadata with reset history
+        $resetHistory = $metadata['device_reset_history'] ?? [];
+        if ($license->machine_id) {
+            $resetHistory[] = $previousDevice;
+        }
+
+        $metadata['device_reset_history'] = array_slice($resetHistory, -10); // Keep last 10 resets
+        $metadata['last_device_reset'] = [
+            'timestamp' => now()->toISOString(),
+            'reason' => $validated['reason'] ?? 'Customer request',
+            'ip' => $request->ip(),
+            'previous_machine_id' => $license->machine_id,
+        ];
+        $metadata['total_device_resets'] = ($metadata['total_device_resets'] ?? 0) + 1;
+
+        // Add old machine_id to revoked list (IMPORTANT: prevents old device from using license)
+        if ($license->machine_id) {
+            $revokedMachines = $metadata['revoked_machine_ids'] ?? [];
+            $revokedMachines[] = [
+                'machine_id' => $license->machine_id,
+                'revoked_at' => now()->toISOString(),
+                'reason' => 'device_reset',
+            ];
+            $metadata['revoked_machine_ids'] = array_slice($revokedMachines, -20); // Keep last 20
+        }
+
+        // Reset device binding
+        $license->update([
+            'machine_id' => null,
+            'device_id' => null,
+            'machine_fingerprint' => null,
+            'activated_at' => null,
+            'activations' => 0,
+            'metadata' => json_encode($metadata),
+        ]);
+
+        // Also update the device record - mark as BLOCKED not just pending
+        if ($previousDevice['machine_id']) {
+            $device = AutoTradeXDevice::where('machine_id', $previousDevice['machine_id'])->first();
+            if ($device) {
+                $device->block('Device reset by customer - license moved to new device');
+            }
+        }
+
+        Log::info('AutoTradeX: Device reset by customer', [
+            'license_key' => $license->license_key,
+            'email' => $validated['email'],
+            'previous_machine_id' => $previousDevice['machine_id'],
+            'ip' => $request->ip(),
+            'total_resets' => $metadata['total_device_resets'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reset Device สำเร็จ! คุณสามารถ Activate บนเครื่องใหม่ได้แล้ว',
+            'data' => [
+                'license_key' => $license->license_key,
+                'can_activate' => true,
+                'next_reset_available_at' => now()->addDays(30)->toISOString(),
+                'total_resets' => $metadata['total_device_resets'],
+            ],
+        ]);
+    }
+
+    /**
+     * Admin: Reset device for any license
+     * Requires admin authentication
+     *
+     * POST /api/v1/autotradex/admin/reset-device
+     */
+    public function adminResetDevice(Request $request)
+    {
+        // Verify admin token (simple token check, in production use proper auth)
+        $adminToken = $request->header('X-Admin-Token');
+        $expectedToken = hash('sha256', config('app.key').'autotradex-admin');
+
+        if (! $adminToken || ! hash_equals($expectedToken, $adminToken)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+                'error_code' => 'UNAUTHORIZED',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'license_key' => 'required|string',
+            'reason' => 'required|string|max:500',
+            'admin_name' => 'required|string|max:100',
+            'bypass_cooldown' => 'nullable|boolean',
+        ]);
+
+        // Find the license
+        $license = LicenseKey::where('license_key', strtoupper($validated['license_key']))
+            ->whereHas('product', fn ($q) => $q->where('slug', self::PRODUCT_SLUG))
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'message' => 'License not found',
+                'error_code' => 'INVALID_LICENSE',
+            ], 404);
+        }
+
+        // Store previous device info for audit
+        $metadata = json_decode($license->metadata ?? '{}', true);
+        $previousDevice = [
+            'machine_id' => $license->machine_id,
+            'device_id' => $license->device_id,
+            'machine_fingerprint' => $license->machine_fingerprint,
+            'reset_at' => now()->toISOString(),
+            'reset_by' => 'admin',
+            'admin_name' => $validated['admin_name'],
+            'reason' => $validated['reason'],
+            'ip' => $request->ip(),
+        ];
+
+        // Update metadata with admin reset history
+        $adminResetHistory = $metadata['admin_reset_history'] ?? [];
+        if ($license->machine_id) {
+            $adminResetHistory[] = $previousDevice;
+        }
+
+        $metadata['admin_reset_history'] = array_slice($adminResetHistory, -20); // Keep last 20
+        $metadata['last_admin_reset'] = [
+            'timestamp' => now()->toISOString(),
+            'admin_name' => $validated['admin_name'],
+            'reason' => $validated['reason'],
+            'ip' => $request->ip(),
+            'previous_machine_id' => $license->machine_id,
+        ];
+        $metadata['total_admin_resets'] = ($metadata['total_admin_resets'] ?? 0) + 1;
+
+        // Add old machine_id to revoked list (IMPORTANT: prevents old device from using license)
+        if ($license->machine_id) {
+            $revokedMachines = $metadata['revoked_machine_ids'] ?? [];
+            $revokedMachines[] = [
+                'machine_id' => $license->machine_id,
+                'revoked_at' => now()->toISOString(),
+                'reason' => 'admin_reset',
+                'admin_name' => $validated['admin_name'],
+            ];
+            $metadata['revoked_machine_ids'] = array_slice($revokedMachines, -20); // Keep last 20
+        }
+
+        // If bypass cooldown, clear the customer reset cooldown
+        if ($validated['bypass_cooldown'] ?? false) {
+            unset($metadata['last_device_reset']);
+        }
+
+        // Reset device binding
+        $license->update([
+            'machine_id' => null,
+            'device_id' => null,
+            'machine_fingerprint' => null,
+            'activated_at' => null,
+            'activations' => 0,
+            'metadata' => json_encode($metadata),
+        ]);
+
+        // Also update the device record - mark as BLOCKED
+        if ($previousDevice['machine_id']) {
+            $device = AutoTradeXDevice::where('machine_id', $previousDevice['machine_id'])->first();
+            if ($device) {
+                $device->block("Admin reset by {$validated['admin_name']}: {$validated['reason']}");
+            }
+        }
+
+        Log::info('AutoTradeX: Device reset by admin', [
+            'license_key' => $license->license_key,
+            'admin_name' => $validated['admin_name'],
+            'reason' => $validated['reason'],
+            'previous_machine_id' => $previousDevice['machine_id'],
+            'ip' => $request->ip(),
+            'total_admin_resets' => $metadata['total_admin_resets'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Device reset successfully by admin',
+            'data' => [
+                'license_key' => $license->license_key,
+                'license_type' => $license->license_type,
+                'previous_machine_id' => $previousDevice['machine_id'],
+                'reset_by' => $validated['admin_name'],
+                'total_admin_resets' => $metadata['total_admin_resets'],
+            ],
+        ]);
+    }
+
+    /**
+     * Admin: Get license details
+     *
+     * GET /api/v1/autotradex/admin/license/{license_key}
+     */
+    public function adminGetLicense(Request $request, string $licenseKey)
+    {
+        // Verify admin token
+        $adminToken = $request->header('X-Admin-Token');
+        $expectedToken = hash('sha256', config('app.key').'autotradex-admin');
+
+        if (! $adminToken || ! hash_equals($expectedToken, $adminToken)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+                'error_code' => 'UNAUTHORIZED',
+            ], 401);
+        }
+
+        $license = LicenseKey::where('license_key', strtoupper($licenseKey))
+            ->whereHas('product', fn ($q) => $q->where('slug', self::PRODUCT_SLUG))
+            ->with(['order', 'product'])
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'message' => 'License not found',
+                'error_code' => 'NOT_FOUND',
+            ], 404);
+        }
+
+        $metadata = json_decode($license->metadata ?? '{}', true);
+
+        // Get device info if activated
+        $deviceInfo = null;
+        if ($license->machine_id) {
+            $device = AutoTradeXDevice::where('machine_id', $license->machine_id)->first();
+            if ($device) {
+                $deviceInfo = [
+                    'machine_id' => $device->machine_id,
+                    'machine_name' => $device->machine_name,
+                    'os_version' => $device->os_version,
+                    'app_version' => $device->app_version,
+                    'first_ip' => $device->first_ip,
+                    'last_ip' => $device->last_ip,
+                    'first_seen_at' => $device->first_seen_at?->toISOString(),
+                    'last_seen_at' => $device->last_seen_at?->toISOString(),
+                    'status' => $device->status,
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'license' => [
+                    'license_key' => $license->license_key,
+                    'status' => $license->status,
+                    'license_type' => $license->license_type,
+                    'expires_at' => $license->expires_at?->toISOString(),
+                    'activated_at' => $license->activated_at?->toISOString(),
+                    'machine_id' => $license->machine_id,
+                    'activations' => $license->activations,
+                    'max_activations' => $license->max_activations,
+                    'created_at' => $license->created_at?->toISOString(),
+                ],
+                'order' => $license->order ? [
+                    'order_id' => $license->order->order_id,
+                    'email' => $license->order->email,
+                    'customer_name' => $license->order->customer_name,
+                    'status' => $license->order->status,
+                    'total' => $license->order->total,
+                    'created_at' => $license->order->created_at?->toISOString(),
+                ] : null,
+                'device' => $deviceInfo,
+                'reset_history' => [
+                    'customer_resets' => $metadata['device_reset_history'] ?? [],
+                    'admin_resets' => $metadata['admin_reset_history'] ?? [],
+                    'total_customer_resets' => $metadata['total_device_resets'] ?? 0,
+                    'total_admin_resets' => $metadata['total_admin_resets'] ?? 0,
+                    'last_customer_reset' => $metadata['last_device_reset'] ?? null,
+                    'last_admin_reset' => $metadata['last_admin_reset'] ?? null,
+                ],
+            ],
         ]);
     }
 }

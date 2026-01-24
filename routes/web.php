@@ -83,6 +83,9 @@ Route::prefix('autotradex')->name('autotradex.')->group(function () {
     Route::get('/pricing', [\App\Http\Controllers\AutoTradeXController::class, 'pricing'])->name('pricing');
     Route::get('/buy', [\App\Http\Controllers\AutoTradeXController::class, 'buyRedirect'])->name('buy');
 
+    // Reset Device for Lifetime license holders (public page)
+    Route::get('/reset-device', [\App\Http\Controllers\AutoTradeXController::class, 'resetDevicePage'])->name('reset-device');
+
     // Require authentication for checkout
     Route::middleware('auth')->group(function () {
         Route::get('/checkout/{plan}', [\App\Http\Controllers\AutoTradeXController::class, 'checkout'])->name('checkout');

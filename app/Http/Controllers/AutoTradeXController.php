@@ -243,4 +243,14 @@ class AutoTradeXController extends Controller
 
         return $prefix.'-'.$random;
     }
+
+    /**
+     * Show Reset Device page for Lifetime license holders
+     *
+     * GET /autotradex/reset-device
+     */
+    public function resetDevicePage()
+    {
+        return view('products.autotradex-reset-device');
+    }
 }

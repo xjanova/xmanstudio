@@ -81,6 +81,17 @@ Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function ()
         Route::post('/demo', [AutoTradeXLicenseController::class, 'startDemo']);
         Route::post('/demo/check', [AutoTradeXLicenseController::class, 'checkDemo']);
     });
+
+    // Reset device for Lifetime license holders (rate limited - 5 requests per day)
+    Route::middleware(['throttle:5,1440'])->group(function () {
+        Route::post('/reset-device', [AutoTradeXLicenseController::class, 'resetDevice']);
+    });
+
+    // Admin routes (protected by X-Admin-Token header)
+    Route::prefix('admin')->group(function () {
+        Route::post('/reset-device', [AutoTradeXLicenseController::class, 'adminResetDevice']);
+        Route::get('/license/{licenseKey}', [AutoTradeXLicenseController::class, 'adminGetLicense']);
+    });
 });
 
 // ==================== Version & Download API Routes ====================

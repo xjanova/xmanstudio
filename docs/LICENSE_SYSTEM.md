@@ -703,6 +703,133 @@ early_bird_order_id VARCHAR(255) NULL      -- Order ID ที่ใช้ส่�
 | POST | `/api/v1/{product}/demo/check` | เช็คสถานะ trial | 10/min |
 | GET | `/api/v1/{product}/pricing` | ดูราคา | 60/min |
 | GET | `/api/v1/{product}/purchase-url` | URL สำหรับซื้อ | 60/min |
+| POST | `/api/v1/{product}/reset-device` | Reset Device (Lifetime) | 5/day |
+| POST | `/api/v1/{product}/admin/reset-device` | Admin Reset Device | 60/min |
+| GET | `/api/v1/{product}/admin/license/{key}` | Admin ดูรายละเอียด License | 60/min |
+
+### 6.1.1 Reset Device API (สำหรับลูกค้า Lifetime)
+
+ลูกค้าที่ซื้อ Lifetime สามารถ Reset Device ได้เอง (จำกัด 1 ครั้ง/30 วัน)
+
+**Request:**
+```json
+POST /api/v1/autotradex/reset-device
+{
+    "license_key": "ATX-XXXX-XXXX-XXXX",
+    "email": "customer@example.com",
+    "current_machine_id": "optional-current-machine-id",
+    "reason": "เปลี่ยนเครื่องคอมพิวเตอร์ใหม่"
+}
+```
+
+**Success Response:**
+```json
+{
+    "success": true,
+    "message": "Reset Device สำเร็จ! คุณสามารถ Activate บนเครื่องใหม่ได้แล้ว",
+    "data": {
+        "license_key": "ATX-XXXX-XXXX-XXXX",
+        "can_activate": true,
+        "next_reset_available_at": "2026-02-24T12:00:00Z",
+        "total_resets": 1
+    }
+}
+```
+
+**Error Responses:**
+
+| Error Code | HTTP | คำอธิบาย |
+|------------|------|----------|
+| `INVALID_LICENSE` | 404 | ไม่พบ License Key |
+| `EMAIL_MISMATCH` | 403 | อีเมลไม่ตรงกับที่สั่งซื้อ |
+| `NOT_LIFETIME` | 403 | เฉพาะ Lifetime เท่านั้น |
+| `LICENSE_REVOKED` | 403 | License ถูกยกเลิกแล้ว |
+| `RESET_COOLDOWN` | 429 | ยังไม่ถึงเวลา reset ได้อีก |
+
+### 6.1.2 Admin Reset Device API
+
+Admin สามารถ Reset Device ได้ทุกเมื่อ ต้องส่ง `X-Admin-Token` header
+
+**Request:**
+```json
+POST /api/v1/autotradex/admin/reset-device
+Headers: X-Admin-Token: {admin_token}
+
+{
+    "license_key": "ATX-XXXX-XXXX-XXXX",
+    "reason": "ลูกค้าขอ reset เนื่องจาก...",
+    "admin_name": "Admin User",
+    "bypass_cooldown": true
+}
+```
+
+**Success Response:**
+```json
+{
+    "success": true,
+    "message": "Device reset successfully by admin",
+    "data": {
+        "license_key": "ATX-XXXX-XXXX-XXXX",
+        "license_type": "lifetime",
+        "previous_machine_id": "old-machine-id-hash",
+        "reset_by": "Admin User",
+        "total_admin_resets": 1
+    }
+}
+```
+
+### 6.1.3 Admin Get License Details
+
+ดูรายละเอียด License รวมถึงประวัติการ Reset
+
+**Request:**
+```
+GET /api/v1/autotradex/admin/license/ATX-XXXX-XXXX-XXXX
+Headers: X-Admin-Token: {admin_token}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "data": {
+        "license": {
+            "license_key": "ATX-XXXX-XXXX-XXXX",
+            "status": "active",
+            "license_type": "lifetime",
+            "expires_at": null,
+            "activated_at": "2026-01-15T10:00:00Z",
+            "machine_id": "current-machine-hash",
+            "activations": 1,
+            "max_activations": 1
+        },
+        "order": {
+            "order_id": "ORD-2026-0001",
+            "email": "customer@example.com",
+            "customer_name": "John Doe",
+            "status": "completed",
+            "total": 4990
+        },
+        "device": {
+            "machine_name": "DESKTOP-ABC123",
+            "os_version": "Windows 11",
+            "app_version": "0.2.0",
+            "first_ip": "1.2.3.4",
+            "last_ip": "1.2.3.4",
+            "first_seen_at": "2026-01-15T09:55:00Z",
+            "last_seen_at": "2026-01-24T08:00:00Z"
+        },
+        "reset_history": {
+            "customer_resets": [],
+            "admin_resets": [],
+            "total_customer_resets": 0,
+            "total_admin_resets": 0,
+            "last_customer_reset": null,
+            "last_admin_reset": null
+        }
+    }
+}
+```
 
 ### 6.2 Response Formats
 
@@ -1030,6 +1157,191 @@ CREATE TABLE license_keys (
 
 ---
 
+## 10. Security Protection (Anti-Crack/Anti-Hack)
+
+### 10.1 ภาพรวมระบบป้องกัน
+
+Desktop Application มีระบบป้องกันหลายชั้นเพื่อป้องกันการ crack/hack:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    Security Protection Layers                 │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 1: Debugger Detection                                  │
+│  ├── IsDebuggerPresent (Windows API)                         │
+│  ├── CheckRemoteDebuggerPresent                              │
+│  ├── NtQueryInformationProcess (Debug Port)                  │
+│  ├── Timing-based detection                                   │
+│  └── Known debugger process detection                         │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 2: Code Integrity                                      │
+│  ├── Assembly hash verification                               │
+│  ├── Critical method IL hash                                  │
+│  └── Memory integrity checking                                │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 3: Memory Protection                                   │
+│  ├── Protected value storage (XOR obfuscation)                │
+│  ├── License status verification                              │
+│  └── Periodic memory checks                                   │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 4: Runtime Verification                                │
+│  ├── Periodic integrity checks (every 60 seconds)            │
+│  ├── License status cross-validation                          │
+│  └── Server verification                                      │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 10.2 Debugger Detection
+
+ตรวจสอบ debugger หลายวิธี:
+
+```csharp
+// 1. Windows API
+IsDebuggerPresent()
+
+// 2. Remote Debugger
+CheckRemoteDebuggerPresent(GetCurrentProcess(), ref isDebuggerPresent)
+
+// 3. .NET Debugger
+Debugger.IsAttached
+
+// 4. Debug Port (NtQueryInformationProcess)
+NtQueryInformationProcess(process, ProcessDebugPort, ...)
+
+// 5. Timing anomaly (debugger slows execution)
+if (sw.ElapsedMilliseconds > 100) // suspicious
+
+// 6. Known debugger processes
+"dnspy", "x64dbg", "cheatengine", "ida", etc.
+```
+
+### 10.3 Code Integrity Verification
+
+ตรวจสอบว่าโค้ดไม่ถูก patch:
+
+```csharp
+// ตรวจสอบ critical methods
+var criticalMethods = new[] {
+    "LicenseService.IsLicensed",
+    "LicenseService.IsTrial",
+    "LicenseService.CanTrade",
+    "LicenseService.HasFeature",
+    // etc.
+};
+
+// คำนวณ hash ของ IL bytecode
+foreach (var method in criticalMethods) {
+    var currentHash = ComputeMethodHash(method);
+    if (currentHash != storedHash) {
+        // TAMPERING DETECTED!
+    }
+}
+```
+
+### 10.4 Memory Protection
+
+ปกป้องค่าสำคัญในหน่วยความจำ:
+
+```csharp
+// เก็บค่าแบบ obfuscate
+securityService.ProtectValue("license_status", isLicensed);
+
+// ดึงค่าที่ป้องกันไว้
+var status = securityService.GetProtectedValue<bool>("license_status");
+
+// ตรวจสอบว่าค่าตรงกัน
+if (status != licenseService.IsLicensed) {
+    // Memory tampering detected!
+}
+```
+
+### 10.5 Runtime Checks
+
+ตรวจสอบอย่างต่อเนื่องระหว่างทำงาน:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Runtime Security Checks                  │
+├─────────────────────────────────────────────────────────────┤
+│  Integrity Check Timer: ทุก 60 วินาที                        │
+│  ├── ตรวจ debugger                                          │
+│  ├── ตรวจ code integrity                                     │
+│  └── ตรวจ license status                                     │
+├─────────────────────────────────────────────────────────────┤
+│  Memory Check Timer: ทุก 30 วินาที                           │
+│  ├── ตรวจ protected values                                   │
+│  └── ตรวจ license memory                                     │
+├─────────────────────────────────────────────────────────────┤
+│  Before Sensitive Actions:                                   │
+│  ├── ตรวจทุกอย่างก่อนเทรด                                    │
+│  └── Block ถ้าพบ tampering                                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 10.6 Security Events
+
+เมื่อตรวจพบการโจมตี:
+
+| Event | Action |
+|-------|--------|
+| Debugger detected | Block sensitive operations, log event |
+| Code tampering | Increment fail count, potential app termination |
+| Memory tampering | Block all trading, force re-validate |
+| Multiple failures | Mark as tampered, disable features |
+
+### 10.7 Integration กับ License Service
+
+```csharp
+// ก่อนทำการเทรด
+if (!securityService.VerifyLicenseIntegrity()) {
+    // Block trade
+    ShowSecurityViolationMessage();
+    return;
+}
+
+// Guard sensitive action
+await securityService.GuardSensitiveActionAsync("ExecuteTrade", async () => {
+    // Execute trade logic here
+    return await executeTrade();
+});
+```
+
+---
+
+## 11. Reset Device สำหรับ Lifetime
+
+### 11.1 สิทธิ์การ Reset
+
+| ประเภท License | Self-Reset | Admin Reset |
+|----------------|------------|-------------|
+| Monthly | ❌ | ✅ |
+| Yearly | ❌ | ✅ |
+| Lifetime | ✅ (1 ครั้ง/30 วัน) | ✅ |
+
+### 11.2 ขั้นตอนการ Reset (ลูกค้า)
+
+```
+1. ลูกค้าเข้าเว็บ → หน้า Reset Device
+2. กรอก License Key + Email
+3. ระบบตรวจสอบ:
+   - License เป็น Lifetime หรือไม่?
+   - Email ตรงกับ Order หรือไม่?
+   - Reset ล่าสุดเกิน 30 วันแล้วหรือไม่?
+4. ถ้าผ่าน → Reset device binding
+5. ลูกค้า Activate ใหม่บนเครื่องใหม่
+```
+
+### 11.3 Admin Reset
+
+Admin สามารถ Reset ได้ทุกเมื่อ และ bypass cooldown ได้
+
+```php
+// Admin token generation
+$adminToken = hash('sha256', config('app.key') . 'autotradex-admin');
+```
+
+---
+
 ## เวอร์ชัน
 
 | เวอร์ชัน | วันที่ | การเปลี่ยนแปลง |
@@ -1037,6 +1349,7 @@ CREATE TABLE license_keys (
 | 1.0.0 | 2026-01-24 | เอกสารเริ่มต้น |
 | 1.1.0 | 2026-01-24 | เพิ่ม Demo Mode documentation |
 | 1.2.0 | 2026-01-24 | เพิ่ม Early Bird Discount (20% off during trial) |
+| 1.3.0 | 2026-01-24 | เพิ่ม Reset Device API, Security Protection |
 
 ---
 
