@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
+use App\Http\Controllers\Admin\LicenseAnalyticsController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
@@ -320,6 +321,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // License Management
     Route::get('/licenses', [AdminLicenseController::class, 'index'])->name('licenses.index');
+    Route::get('/licenses/analytics', [LicenseAnalyticsController::class, 'index'])->name('licenses.analytics');
+    Route::get('/licenses/analytics/activity', [LicenseAnalyticsController::class, 'activityData'])->name('licenses.analytics.activity');
     Route::get('/licenses/export', [AdminLicenseController::class, 'export'])->name('licenses.export');
     Route::get('/licenses/create', [AdminLicenseController::class, 'create'])->name('licenses.create');
     Route::post('/licenses', [AdminLicenseController::class, 'store'])->name('licenses.store');
