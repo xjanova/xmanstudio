@@ -26,6 +26,7 @@ This document provides comprehensive guidelines for Claude AI assistants working
 - **Line OA Integration**: Automatic notifications
 - **Admin Backend**: Complete management dashboard
 - **Custom Software Orders**: Category-based ordering with downloadable forms
+- **Dual Theme System**: Classic (light) and Premium (dark) themes
 
 ### Target Users
 - IT service customers
@@ -110,6 +111,92 @@ xmanstudio/
 ├── VERSION
 └── CHANGELOG.md
 ```
+
+---
+
+## Theme System (IMPORTANT)
+
+The application uses a **dual-theme architecture**. All views must be compatible with both themes.
+
+### Theme Files Structure
+
+```
+resources/views/layouts/
+├── app.blade.php              # Public - Classic (light)
+├── app-premium.blade.php      # Public - Premium (dark)
+├── customer.blade.php         # Customer - Classic (light)
+├── customer-premium.blade.php # Customer - Premium (dark)
+├── admin.blade.php            # Admin - Classic (light)
+├── admin-premium.blade.php    # Admin - Premium (dark)
+└── guest.blade.php            # Auth pages
+```
+
+### How Theme Selection Works
+
+Theme is selected via Settings and managed by `ThemeService` (`app/Services/ThemeService.php`):
+
+```php
+// Controllers pass layout variable to views:
+$customerLayout = ThemeService::getCustomerLayout(); // 'layouts.customer' or 'layouts.customer-premium'
+$adminLayout = ThemeService::getAdminLayout();       // 'layouts.admin' or 'layouts.admin-premium'
+$publicLayout = ThemeService::getPublicLayout();     // 'layouts.app' or 'layouts.app-premium'
+```
+
+### Writing Views for Dual Theme
+
+**CRITICAL**: Views must extend layout dynamically:
+
+```blade
+@extends($customerLayout ?? 'layouts.customer')
+@extends($adminLayout ?? 'layouts.admin')
+@extends($publicLayout ?? 'layouts.app')
+```
+
+**DO NOT use hard-coded layout names** like `@extends('layouts.customer')`.
+
+### Premium Theme CSS Overrides
+
+Premium layouts include CSS overrides that automatically convert light theme classes to dark theme:
+
+| Light Class | Premium Override |
+|-------------|------------------|
+| `bg-white` | Dark purple `rgba(30, 27, 75, 0.6)` |
+| `bg-gray-50` | `rgba(49, 46, 129, 0.4)` |
+| `text-gray-900` | Light indigo `#e0e7ff` |
+| `text-gray-600` | `#a5b4fc` |
+| `border-gray-*` | `rgba(99, 102, 241, 0.2)` |
+
+**DO NOT add `dark:` Tailwind classes** - the Premium layout handles conversion automatically.
+
+### Logo System
+
+Both themes use the same logo system from Settings:
+
+```blade
+@php
+    $siteLogo = \App\Models\Setting::getValue('site_logo');
+@endphp
+
+@if($siteLogo)
+    <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
+@else
+    <!-- Fallback -->
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
+        <span class="text-white font-bold">X</span>
+    </div>
+@endif
+```
+
+### Footer Requirements
+
+All layouts must include footer with:
+- Copyright: `© {year} XMAN Studio. สงวนลิขสิทธิ์`
+- License: `MIT License`
+- Version: `{{ trim(file_get_contents(base_path('VERSION'))) }}`
+
+### Admin Header Requirements
+
+Admin layouts must include "กลับหน้าเว็บ" (Back to website) button in header bar.
 
 ---
 

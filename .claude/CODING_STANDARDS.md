@@ -224,6 +224,84 @@ return new class extends Migration
 
 ## Blade Template Standards
 
+### Dual Theme Compatibility (IMPORTANT)
+
+**All views must support both Classic and Premium themes.**
+
+#### Extending Layouts
+
+```blade
+{{-- CORRECT - Dynamic layout --}}
+@extends($customerLayout ?? 'layouts.customer')
+@extends($adminLayout ?? 'layouts.admin')
+@extends($publicLayout ?? 'layouts.app')
+
+{{-- INCORRECT - Hard-coded layout --}}
+@extends('layouts.customer')
+```
+
+#### Using CSS Classes
+
+Use standard Tailwind classes. Premium layout automatically converts them:
+
+```blade
+{{-- CORRECT - Standard classes, works in both themes --}}
+<div class="bg-white rounded-xl shadow-sm p-6">
+    <h2 class="text-gray-900 font-bold">Title</h2>
+    <p class="text-gray-600">Description</p>
+</div>
+
+{{-- INCORRECT - Don't use dark: classes --}}
+<div class="bg-white dark:bg-gray-800">
+    <h2 class="text-gray-900 dark:text-white">Title</h2>
+</div>
+```
+
+#### CSS Class Mappings (Premium Theme)
+
+| Light Class | Premium Override |
+|-------------|------------------|
+| `bg-white` | `rgba(30, 27, 75, 0.6)` |
+| `bg-gray-50` | `rgba(49, 46, 129, 0.4)` |
+| `bg-gray-100` | `rgba(99, 102, 241, 0.2)` |
+| `text-gray-900` | `#e0e7ff` |
+| `text-gray-800` | `#c7d2fe` |
+| `text-gray-700` | `#a5b4fc` |
+| `text-gray-600` | `#a5b4fc` |
+| `text-gray-500` | `rgba(165, 180, 252, 0.7)` |
+| `border-gray-*` | `rgba(99, 102, 241, 0.2)` |
+
+#### Common Patterns for Dual Theme
+
+**Stats Card:**
+```blade
+<div class="bg-white rounded-xl shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow">
+    <div class="flex items-center justify-between">
+        <div class="flex-shrink-0 p-3 bg-blue-100 rounded-xl">
+            <svg class="w-6 h-6 text-blue-600">...</svg>
+        </div>
+        <div class="text-right">
+            <p class="text-sm font-medium text-gray-500">Label</p>
+            <p class="text-2xl font-bold text-gray-900">{{ $value }}</p>
+        </div>
+    </div>
+</div>
+```
+
+**Section Header:**
+```blade
+<div class="px-5 sm:px-6 py-4 border-b border-gray-100">
+    <h3 class="text-lg font-semibold text-gray-900">Title</h3>
+    <p class="text-sm text-gray-500">Description</p>
+</div>
+```
+
+**Form Input:**
+```blade
+<input type="text"
+       class="w-full rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500">
+```
+
 ### Layout Structure
 
 ```blade
