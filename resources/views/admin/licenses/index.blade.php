@@ -118,6 +118,14 @@
                    placeholder="ค้นหา License Key...">
         </div>
         <div>
+            <select name="product_id" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                <option value="">ทุกผลิตภัณฑ์</option>
+                @foreach($products as $product)
+                    <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>{{ $product->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
             <select name="status" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
                 <option value="">ทุกสถานะ</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
@@ -137,6 +145,11 @@
         <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-xl hover:from-purple-600 hover:to-violet-700 transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
             ค้นหา
         </button>
+        @if(request()->hasAny(['search', 'product_id', 'status', 'type']))
+            <a href="{{ route('admin.licenses.index') }}" class="px-4 py-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                ล้างตัวกรอง
+            </a>
+        @endif
     </form>
 </div>
 

@@ -376,7 +376,7 @@
                 </a>
 
                 <div class="px-4 py-3 mt-4">
-                    <span class="text-xs font-semibold text-indigo-300/50 uppercase tracking-wider">License</span>
+                    <span class="text-xs font-semibold text-indigo-300/50 uppercase tracking-wider">License & Devices</span>
                 </div>
 
                 <a href="{{ route('admin.licenses.index') }}"
@@ -387,6 +387,16 @@
                         </svg>
                     </div>
                     จัดการ License
+                </a>
+
+                <a href="{{ route('admin.devices.index') }}"
+                   class="premium-nav-item flex items-center px-4 py-3 text-indigo-100 rounded-lg {{ request()->routeIs('admin.devices*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    จัดการ Devices
                 </a>
 
                 <div class="px-4 py-3 mt-4">

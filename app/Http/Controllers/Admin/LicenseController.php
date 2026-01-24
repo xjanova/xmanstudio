@@ -21,6 +21,11 @@ class LicenseController extends Controller
     {
         $query = LicenseKey::with('product')->latest();
 
+        // Filter by product
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
         // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -36,7 +41,10 @@ class LicenseController extends Controller
             $query->where('license_key', 'like', '%'.$request->search.'%');
         }
 
-        $licenses = $query->paginate(20);
+        $licenses = $query->paginate(20)->withQueryString();
+
+        // Get products for filter dropdown
+        $products = Product::where('requires_license', true)->get();
 
         // Stats
         $stats = [
@@ -47,7 +55,7 @@ class LicenseController extends Controller
             'activated' => LicenseKey::whereNotNull('machine_id')->count(),
         ];
 
-        return view('admin.licenses.index', compact('licenses', 'stats'));
+        return view('admin.licenses.index', compact('licenses', 'products', 'stats'));
     }
 
     /**

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\LicenseApiController;
+use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\VersionController;
 use Illuminate\Support\Facades\Route;
 
@@ -91,6 +92,37 @@ Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function ()
     Route::prefix('admin')->group(function () {
         Route::post('/reset-device', [AutoTradeXLicenseController::class, 'adminResetDevice']);
         Route::get('/license/{licenseKey}', [AutoTradeXLicenseController::class, 'adminGetLicense']);
+    });
+});
+
+// ==================== Generic Product License API Routes ====================
+// These routes support all products that require license
+// Use /{productSlug}/ to specify the product
+// Rate limited to 60 requests per minute per IP
+
+Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(function () {
+    // Register device when app starts
+    Route::post('/register-device', [ProductLicenseController::class, 'registerDevice']);
+
+    // Activate license on a machine
+    Route::post('/activate', [ProductLicenseController::class, 'activate']);
+
+    // Validate existing license
+    Route::post('/validate', [ProductLicenseController::class, 'validate']);
+
+    // Deactivate license
+    Route::post('/deactivate', [ProductLicenseController::class, 'deactivate']);
+
+    // Check license status
+    Route::get('/status/{licenseKey}', [ProductLicenseController::class, 'status']);
+
+    // Get pricing info (public)
+    Route::get('/pricing', [ProductLicenseController::class, 'pricing']);
+
+    // Demo endpoints (rate limited more strictly)
+    Route::middleware(['throttle:10,1'])->group(function () {
+        Route::post('/demo', [ProductLicenseController::class, 'startDemo']);
+        Route::post('/demo/check', [ProductLicenseController::class, 'checkDemo']);
     });
 });
 

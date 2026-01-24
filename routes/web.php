@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\CustomCodeController;
+use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
@@ -327,6 +328,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/licenses/{license}/reset-machine', [AdminLicenseController::class, 'resetMachine'])->name('licenses.reset-machine');
     Route::post('/licenses/{license}/extend', [AdminLicenseController::class, 'extend'])->name('licenses.extend');
     Route::delete('/licenses/{license}', [AdminLicenseController::class, 'destroy'])->name('licenses.destroy');
+
+    // Device Management
+    Route::get('/devices', [AdminDeviceController::class, 'index'])->name('devices.index');
+    Route::get('/devices/{device}', [AdminDeviceController::class, 'show'])->name('devices.show');
+    Route::post('/devices/{device}/block', [AdminDeviceController::class, 'block'])->name('devices.block');
+    Route::post('/devices/{device}/unblock', [AdminDeviceController::class, 'unblock'])->name('devices.unblock');
+    Route::post('/devices/{device}/clear-suspicious', [AdminDeviceController::class, 'clearSuspicious'])->name('devices.clear-suspicious');
+    Route::post('/devices/{device}/reset-trial', [AdminDeviceController::class, 'resetTrial'])->name('devices.reset-trial');
+    Route::delete('/devices/{device}', [AdminDeviceController::class, 'destroy'])->name('devices.destroy');
+    Route::post('/devices/bulk-block', [AdminDeviceController::class, 'bulkBlock'])->name('devices.bulk-block');
 
     // Payment Settings
     Route::get('/payment-settings', [PaymentSettingController::class, 'index'])->name('payment-settings.index');
