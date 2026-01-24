@@ -796,4 +796,64 @@ class AutoTradeXLicenseController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Verify server authenticity (Anti-fake server protection)
+     * App sends a challenge, server responds with the same challenge + signature
+     *
+     * POST /api/v1/autotradex/verify-server
+     */
+    public function verifyServer(Request $request)
+    {
+        $validated = $request->validate([
+            'challenge' => 'required|string|min:32|max:64',
+            'timestamp' => 'required|integer',
+            'app_name' => 'required|string|max:50',
+            'app_version' => 'required|string|max:20',
+        ]);
+
+        // Verify timestamp is within acceptable range (5 minutes)
+        $currentTimestamp = time();
+        if (abs($currentTimestamp - $validated['timestamp']) > 300) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Timestamp out of range',
+                'error_code' => 'TIMESTAMP_INVALID',
+            ], 400);
+        }
+
+        // Verify app name
+        if ($validated['app_name'] !== 'AutoTradeX') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid app name',
+                'error_code' => 'APP_INVALID',
+            ], 400);
+        }
+
+        // Create response with challenge echo and signature
+        $responseData = [
+            'challenge' => $validated['challenge'],
+            'timestamp' => $currentTimestamp,
+            'server_version' => '1.0.0',
+            'product' => self::PRODUCT_SLUG,
+        ];
+
+        // Create signature using server secret
+        // In production, use a proper signing key
+        $signatureData = $validated['challenge'].$currentTimestamp.self::PRODUCT_SLUG;
+        $signature = hash_hmac('sha256', $signatureData, config('app.key'));
+
+        return response()->json([
+            'success' => true,
+            'challenge' => $validated['challenge'],
+            'timestamp' => $currentTimestamp,
+            'signature' => $signature,
+            'server_version' => '1.0.0',
+        ])->withHeaders([
+            'X-License-Signature' => $signature,
+            'X-License-Timestamp' => (string) $currentTimestamp,
+            'X-License-Nonce' => bin2hex(random_bytes(16)),
+        ]);
+    }
 }
