@@ -23,7 +23,7 @@ class CouponController extends Controller
 
         $coupon = Coupon::where('code', $code)->first();
 
-        if (!$coupon) {
+        if (! $coupon) {
             return response()->json([
                 'valid' => false,
                 'message' => 'ไม่พบคูปองนี้',
@@ -37,7 +37,7 @@ class CouponController extends Controller
             $validated['product_ids'] ?? []
         );
 
-        if (!$canUse['valid']) {
+        if (! $canUse['valid']) {
             return response()->json([
                 'valid' => false,
                 'message' => $canUse['message'],
@@ -75,7 +75,7 @@ class CouponController extends Controller
 
         $coupon = Coupon::where('code', $code)->first();
 
-        if (!$coupon) {
+        if (! $coupon) {
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่พบคูปองนี้',
