@@ -3,17 +3,69 @@
 @section('title', 'ตั้งค่า AI')
 @section('page-title', 'ตั้งค่า AI')
 
+@push('styles')
+<style>
+    .animate-blob {
+        animation: blob 7s infinite;
+    }
+    .animation-delay-2000 {
+        animation-delay: 2s;
+    }
+    .animation-delay-4000 {
+        animation-delay: 4s;
+    }
+    @keyframes blob {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-6">
+    <!-- Premium Header Banner -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 p-8 shadow-2xl">
+        <div class="absolute top-0 left-0 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+        <div class="absolute top-0 right-0 w-72 h-72 bg-violet-400 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+
+        <div class="relative z-10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white mb-2">ตั้งค่า AI</h1>
+                    <p class="text-violet-100 text-lg">จัดการ AI Provider และพฤติกรรมของ AI Assistant</p>
+                </div>
+                <div class="hidden md:block">
+                    <div class="w-16 h-16 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-            {{ session('success') }}
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-6 py-4 rounded-xl flex items-center shadow-lg">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mr-4">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <span class="font-medium">{{ session('success') }}</span>
         </div>
     @endif
 
     @if(session('error'))
-        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-            {{ session('error') }}
+        <div class="bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-6 py-4 rounded-xl flex items-center shadow-lg">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-400 to-rose-500 flex items-center justify-center mr-4">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <span class="font-medium">{{ session('error') }}</span>
         </div>
     @endif
 
@@ -22,91 +74,105 @@
         @method('PUT')
 
         <!-- AI Provider Selection -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-                เลือก AI Provider
-            </h3>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-violet-600 flex items-center justify-center mr-4 shadow-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">เลือก AI Provider</h3>
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- OpenAI -->
-                <label class="provider-card relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all {{ $settings['ai_provider'] === 'openai' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300' }}">
+                <label class="provider-card relative flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-xl {{ $settings['ai_provider'] === 'openai' ? 'border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700' }}">
                     <input type="radio" name="ai_provider" value="openai" {{ $settings['ai_provider'] === 'openai' ? 'checked' : '' }} class="sr-only" onchange="updateProviderSelection(this)">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 bg-black rounded-lg flex items-center justify-center mr-4">
-                            <span class="text-white font-bold text-lg">AI</span>
+                        <div class="w-14 h-14 bg-gradient-to-br from-gray-900 to-black rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                            <span class="text-white font-bold text-xl">AI</span>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-900">OpenAI (GPT)</p>
-                            <p class="text-sm text-gray-500">GPT-4o, GPT-4o-mini</p>
+                            <p class="font-bold text-gray-900 dark:text-white text-lg">OpenAI (GPT)</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">GPT-4o, GPT-4o-mini</p>
                         </div>
                     </div>
-                    <div class="provider-check absolute top-2 right-2 {{ $settings['ai_provider'] === 'openai' ? '' : 'hidden' }}">
-                        <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <div class="provider-check absolute top-3 right-3 {{ $settings['ai_provider'] === 'openai' ? '' : 'hidden' }}">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
+                            </svg>
+                        </div>
                     </div>
                 </label>
 
                 <!-- Claude -->
-                <label class="provider-card relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all {{ $settings['ai_provider'] === 'claude' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300' }}">
+                <label class="provider-card relative flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-xl {{ $settings['ai_provider'] === 'claude' ? 'border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700' }}">
                     <input type="radio" name="ai_provider" value="claude" {{ $settings['ai_provider'] === 'claude' ? 'checked' : '' }} class="sr-only" onchange="updateProviderSelection(this)">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center mr-4">
-                            <span class="text-white font-bold text-lg">C</span>
+                        <div class="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                            <span class="text-white font-bold text-xl">C</span>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-900">Anthropic (Claude)</p>
-                            <p class="text-sm text-gray-500">Claude 3.5 Sonnet, Haiku</p>
+                            <p class="font-bold text-gray-900 dark:text-white text-lg">Anthropic (Claude)</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Claude 3.5 Sonnet, Haiku</p>
                         </div>
                     </div>
-                    <div class="provider-check absolute top-2 right-2 {{ $settings['ai_provider'] === 'claude' ? '' : 'hidden' }}">
-                        <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <div class="provider-check absolute top-3 right-3 {{ $settings['ai_provider'] === 'claude' ? '' : 'hidden' }}">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
+                            </svg>
+                        </div>
                     </div>
                 </label>
 
                 <!-- Ollama (Local) -->
-                <label class="provider-card relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all {{ $settings['ai_provider'] === 'ollama' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300' }}">
+                <label class="provider-card relative flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-xl {{ $settings['ai_provider'] === 'ollama' ? 'border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700' }}">
                     <input type="radio" name="ai_provider" value="ollama" {{ $settings['ai_provider'] === 'ollama' ? 'checked' : '' }} class="sr-only" onchange="updateProviderSelection(this)">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
                             </svg>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-900">Ollama (Local)</p>
-                            <p class="text-sm text-gray-500">LLaMA, Mistral, Qwen</p>
+                            <p class="font-bold text-gray-900 dark:text-white text-lg">Ollama (Local)</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">LLaMA, Mistral, Qwen</p>
                         </div>
                     </div>
-                    <div class="provider-check absolute top-2 right-2 {{ $settings['ai_provider'] === 'ollama' ? '' : 'hidden' }}">
-                        <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <div class="provider-check absolute top-3 right-3 {{ $settings['ai_provider'] === 'ollama' ? '' : 'hidden' }}">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                         </svg>
                     </div>
                 </label>
             </div>
 
-            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p class="text-sm text-blue-800">
-                    <strong>Ollama:</strong> รัน AI ในเครื่องของคุณเอง ไม่ต้องเสียค่า API ไม่ต้องส่งข้อมูลออกไปข้างนอก
-                    <a href="https://ollama.com" target="_blank" class="underline hover:text-blue-900">ดาวน์โหลด Ollama</a>
-                </p>
+            <div class="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                <div class="flex items-start">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center mr-3 shadow-lg flex-shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <p class="text-sm text-blue-800 dark:text-blue-200">
+                        <strong class="font-semibold">Ollama:</strong> รัน AI ในเครื่องของคุณเอง ไม่ต้องเสียค่า API ไม่ต้องส่งข้อมูลออกไปข้างนอก
+                        <a href="https://ollama.com" target="_blank" class="underline hover:text-blue-900 dark:hover:text-blue-50 font-medium">ดาวน์โหลด Ollama</a>
+                    </p>
+                </div>
             </div>
         </div>
 
         <!-- OpenAI Settings -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <div class="w-8 h-8 bg-black rounded flex items-center justify-center mr-2">
-                    <span class="text-white font-bold text-xs">AI</span>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-gray-900 to-black rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                    <span class="text-white font-bold text-lg">AI</span>
                 </div>
-                OpenAI Settings
-            </h3>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">OpenAI Settings</h3>
+            </div>
 
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
@@ -121,15 +187,15 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">API Key</label>
                     <input type="password" name="openai_api_key" value="{{ $settings['openai_api_key'] }}" placeholder="sk-..."
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                    <p class="mt-1 text-xs text-gray-500">รับ API Key ได้ที่ <a href="https://platform.openai.com/api-keys" target="_blank" class="text-primary-600 hover:underline">platform.openai.com</a></p>
+                           class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800 focus:border-purple-500 dark:focus:border-purple-400 transition-all duration-300">
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://platform.openai.com/api-keys" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline font-medium">platform.openai.com</a></p>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
-                    <select name="openai_model" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Model</label>
+                    <select name="openai_model" class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800 focus:border-purple-500 dark:focus:border-purple-400 transition-all duration-300">
                         <option value="gpt-4o" {{ $settings['openai_model'] === 'gpt-4o' ? 'selected' : '' }}>GPT-4o (แนะนำ)</option>
                         <option value="gpt-4o-mini" {{ $settings['openai_model'] === 'gpt-4o-mini' ? 'selected' : '' }}>GPT-4o Mini (ประหยัด)</option>
                         <option value="gpt-4-turbo" {{ $settings['openai_model'] === 'gpt-4-turbo' ? 'selected' : '' }}>GPT-4 Turbo</option>
@@ -142,13 +208,13 @@
         </div>
 
         <!-- Claude Settings -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <div class="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded flex items-center justify-center mr-2">
-                    <span class="text-white font-bold text-xs">C</span>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                    <span class="text-white font-bold text-lg">C</span>
                 </div>
-                Claude (Anthropic) Settings
-            </h3>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Claude (Anthropic) Settings</h3>
+            </div>
 
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
@@ -182,16 +248,18 @@
         </div>
 
         <!-- Ollama Settings (Local AI) -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded flex items-center justify-center mr-2">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
                     </svg>
                 </div>
-                Ollama Settings (Local AI)
-                <span class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">ไม่เสียค่าใช้จ่าย</span>
-            </h3>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Ollama Settings (Local AI)</h3>
+                </div>
+                <span class="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-xl shadow-lg">ไม่เสียค่าใช้จ่าย</span>
+            </div>
 
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
@@ -585,7 +653,10 @@
                 </button>
             </div>
 
-            <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors">
+            <button type="submit" class="px-8 py-3 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-xl hover:from-purple-600 hover:to-violet-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800">
+                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
                 บันทึกการตั้งค่า
             </button>
         </div>
@@ -595,14 +666,14 @@
 <script>
 function updateProviderSelection(input) {
     document.querySelectorAll('.provider-card').forEach(card => {
-        card.classList.remove('border-green-500', 'bg-green-50');
-        card.classList.add('border-gray-200');
+        card.classList.remove('border-emerald-500', 'bg-gradient-to-br', 'from-emerald-50', 'to-green-50', 'dark:from-emerald-900/20', 'dark:to-green-900/20');
+        card.classList.add('border-gray-200', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-700');
         card.querySelector('.provider-check').classList.add('hidden');
     });
 
     const card = input.closest('.provider-card');
-    card.classList.remove('border-gray-200');
-    card.classList.add('border-green-500', 'bg-green-50');
+    card.classList.remove('border-gray-200', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-700');
+    card.classList.add('border-emerald-500', 'bg-gradient-to-br', 'from-emerald-50', 'to-green-50', 'dark:from-emerald-900/20', 'dark:to-green-900/20');
     card.querySelector('.provider-check').classList.remove('hidden');
 }
 
