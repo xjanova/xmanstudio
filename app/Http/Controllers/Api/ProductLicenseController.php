@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductDevice;
@@ -219,6 +220,27 @@ class ProductLicenseController extends Controller
         // Link license to device
         $device->update(['license_id' => $license->id]);
 
+        // Log trial creation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_CREATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $validated['machine_id'],
+            'เริ่มใช้งาน Trial',
+            ['product_slug' => $productSlug, 'trial_days' => $trialDays]
+        );
+
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_ACTIVATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $validated['machine_id'],
+            'เปิดใช้งาน Trial',
+            ['product_slug' => $productSlug]
+        );
+
         return response()->json([
             'success' => true,
             'message' => "เริ่มใช้งาน Trial {$trialDays} วันสำเร็จ",
@@ -376,6 +398,17 @@ class ProductLicenseController extends Controller
             ]
         );
 
+        // Log activation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_ACTIVATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $validated['machine_id'],
+            'เปิดใช้งาน License ผ่าน API',
+            ['product_slug' => $productSlug, 'app_version' => $validated['app_version'] ?? null]
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'เปิดใช้งาน License สำเร็จ',
@@ -437,6 +470,17 @@ class ProductLicenseController extends Controller
 
         $isValid = $license->isValid();
 
+        // Log validation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_VALIDATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $validated['machine_id'],
+            $isValid ? 'ตรวจสอบ License สำเร็จ' : 'ตรวจสอบ License ล้มเหลว',
+            ['is_valid' => $isValid, 'product_slug' => $productSlug]
+        );
+
         return response()->json([
             'success' => true,
             'is_valid' => $isValid,
@@ -486,6 +530,8 @@ class ProductLicenseController extends Controller
             ], 404);
         }
 
+        $previousMachineId = $license->machine_id;
+
         // Clear machine binding
         $license->update([
             'machine_id' => null,
@@ -500,6 +546,17 @@ class ProductLicenseController extends Controller
                 'status' => ProductDevice::STATUS_PENDING,
                 'license_id' => null,
             ]);
+
+        // Log deactivation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_DEACTIVATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $previousMachineId,
+            'ยกเลิกการเปิดใช้งาน License ผ่าน API',
+            ['product_slug' => $productSlug, 'previous_machine_id' => $previousMachineId]
+        );
 
         return response()->json([
             'success' => true,

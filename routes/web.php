@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
 use App\Http\Controllers\Admin\LicenseAnalyticsController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\ThemeController;
+use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
@@ -43,6 +45,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Models\AdsTxtSetting;
 use App\Models\SeoSetting;
 use Illuminate\Support\Facades\Route;
@@ -242,6 +245,16 @@ Route::middleware('auth')->group(function () {
         // Theme Settings
         Route::get('/settings/theme', [\App\Http\Controllers\UserThemeController::class, 'index'])->name('settings.theme');
         Route::put('/settings/theme', [\App\Http\Controllers\UserThemeController::class, 'update'])->name('settings.theme.update');
+    });
+
+    // User Wallet
+    Route::prefix('wallet')->name('user.wallet.')->group(function () {
+        Route::get('/', [UserWalletController::class, 'index'])->name('index');
+        Route::get('/topup', [UserWalletController::class, 'topup'])->name('topup');
+        Route::post('/topup', [UserWalletController::class, 'submitTopup'])->name('submit-topup');
+        Route::get('/transactions', [UserWalletController::class, 'transactions'])->name('transactions');
+        Route::delete('/topup/{topup}', [UserWalletController::class, 'cancelTopup'])->name('cancel-topup');
+        Route::get('/bonus-preview', [UserWalletController::class, 'bonusPreview'])->name('bonus-preview');
     });
 });
 
@@ -578,5 +591,35 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         // Timeline
         Route::post('/{project}/timeline', [ProjectOrderController::class, 'addTimeline'])->name('timeline.store');
         Route::post('/{project}/timeline/{timeline}/toggle', [ProjectOrderController::class, 'toggleTimeline'])->name('timeline.toggle');
+    });
+
+    // Coupon Management
+    Route::prefix('coupons')->name('coupons.')->group(function () {
+        Route::get('/', [CouponController::class, 'index'])->name('index');
+        Route::get('/generate-code', [CouponController::class, 'generateCode'])->name('generate-code');
+        Route::get('/create', [CouponController::class, 'create'])->name('create');
+        Route::post('/', [CouponController::class, 'store'])->name('store');
+        Route::get('/{coupon}', [CouponController::class, 'show'])->name('show');
+        Route::get('/{coupon}/edit', [CouponController::class, 'edit'])->name('edit');
+        Route::put('/{coupon}', [CouponController::class, 'update'])->name('update');
+        Route::patch('/{coupon}/toggle', [CouponController::class, 'toggle'])->name('toggle');
+        Route::delete('/{coupon}', [CouponController::class, 'destroy'])->name('destroy');
+    });
+
+    // Wallet Management
+    Route::prefix('wallets')->name('wallets.')->group(function () {
+        Route::get('/', [AdminWalletController::class, 'index'])->name('index');
+        Route::get('/wallets', [AdminWalletController::class, 'wallets'])->name('wallets');
+        Route::get('/transactions', [AdminWalletController::class, 'transactions'])->name('transactions');
+        Route::get('/topups', [AdminWalletController::class, 'topups'])->name('topups');
+        Route::get('/bonus-tiers', [AdminWalletController::class, 'bonusTiers'])->name('bonus-tiers');
+        Route::post('/bonus-tiers', [AdminWalletController::class, 'storeBonusTier'])->name('bonus-tiers.store');
+        Route::put('/bonus-tiers/{tier}', [AdminWalletController::class, 'updateBonusTier'])->name('bonus-tiers.update');
+        Route::delete('/bonus-tiers/{tier}', [AdminWalletController::class, 'destroyBonusTier'])->name('bonus-tiers.destroy');
+        Route::get('/wallet/{wallet}', [AdminWalletController::class, 'show'])->name('show');
+        Route::post('/wallet/{wallet}/adjust', [AdminWalletController::class, 'adjust'])->name('adjust');
+        Route::get('/topups/{topup}', [AdminWalletController::class, 'showTopup'])->name('topups.show');
+        Route::post('/topups/{topup}/approve', [AdminWalletController::class, 'approveTopup'])->name('topups.approve');
+        Route::post('/topups/{topup}/reject', [AdminWalletController::class, 'rejectTopup'])->name('topups.reject');
     });
 });
