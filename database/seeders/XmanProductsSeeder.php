@@ -93,103 +93,7 @@ class XmanProductsSeeder extends Seeder
 
         // Products data
         $products = [
-            // 1. AutoTradeX
-            [
-                'category_id' => $tradingCategory->id,
-                'name' => 'AutoTrade-X',
-                'slug' => 'autotrade-x',
-                'sku' => 'ATX-001',
-                'short_description' => 'แพลตฟอร์มเทรด Cryptocurrency แบบ Arbitrage อัตโนมัติ รองรับ 6 Exchange ชั้นนำ พร้อม UI สวยงามแบบ Glass Morphism และระบบจัดการความเสี่ยง',
-                'description' => '<div class="prose max-w-none">
-<h2>AutoTrade-X - Cryptocurrency Arbitrage Platform</h2>
-<p>แพลตฟอร์มเทรด Cryptocurrency ระดับมืออาชีพที่ออกแบบมาเพื่อค้นหาและใช้ประโยชน์จากโอกาส Arbitrage ระหว่าง Exchange ต่างๆ โดยอัตโนมัติ พัฒนาด้วย .NET 8 และ WPF พร้อม UI ที่สวยงามแบบ Glass Morphism</p>
-
-<h3>Trading Capabilities</h3>
-<ul>
-<li><strong>Multi-Exchange Connectivity</strong> - เชื่อมต่อ 6 Exchange ชั้นนำในที่เดียว</li>
-<li><strong>Live Price Monitoring</strong> - ติดตามราคาแบบ Real-time พร้อมตรวจจับ Arbitrage อัตโนมัติ</li>
-<li><strong>Trade History & P&L Analytics</strong> - บันทึกประวัติการเทรดพร้อมวิเคราะห์กำไร/ขาดทุน</li>
-<li><strong>Configurable Risk Parameters</strong> - ตั้งค่าพารามิเตอร์ความเสี่ยงและ Safety Thresholds</li>
-<li><strong>Simulation Mode</strong> - ทดสอบกลยุทธ์โดยไม่ต้องใช้เงินจริง</li>
-</ul>
-
-<h3>Supported Exchanges</h3>
-<div class="grid grid-cols-3 gap-2 my-4">
-<span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">Binance</span>
-<span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">KuCoin</span>
-<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">OKX</span>
-<span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">Bybit</span>
-<span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">Gate.io</span>
-<span class="px-3 py-1 bg-cyan-100 text-cyan-800 rounded-full text-sm">Bitkub</span>
-</div>
-
-<h3>User Interface</h3>
-<ul>
-<li>Dark Theme พร้อม Glass Morphism Aesthetic</li>
-<li>Smooth Animation Effects</li>
-<li>Animated Splash Screen แบบ Hyperdrive Visual</li>
-<li>Chart Integration ด้วย LiveChartsCore และ SkiaSharp</li>
-</ul>
-
-<h3>Strategy Settings (ค่าเริ่มต้น)</h3>
-<table class="min-w-full">
-<tr><td>Minimum Spread Threshold</td><td>0.3%</td></tr>
-<tr><td>Minimum Expected Profit</td><td>0.5 Quote Currency</td></tr>
-<tr><td>Polling Frequency</td><td>1000ms</td></tr>
-</table>
-
-<h3>Risk Management Limits</h3>
-<table class="min-w-full">
-<tr><td>Maximum Position Size</td><td>100 per transaction</td></tr>
-<tr><td>Daily Loss Ceiling</td><td>50 units</td></tr>
-<tr><td>Max Daily Transactions</td><td>100 trades</td></tr>
-</table>
-
-<h3>Technical Stack</h3>
-<ul>
-<li><strong>Framework:</strong> .NET 8.0 (Windows)</li>
-<li><strong>UI:</strong> WPF with Custom Styling</li>
-<li><strong>Charts:</strong> LiveChartsCore + SkiaSharp</li>
-<li><strong>Architecture:</strong> Clean Architecture</li>
-<li><strong>Database:</strong> SQLite</li>
-</ul>
-
-<h3>System Requirements</h3>
-<table class="min-w-full">
-<tr><td>Operating System</td><td>Windows 10/11 (64-bit)</td></tr>
-<tr><td>Runtime</td><td>.NET 8.0 SDK</td></tr>
-<tr><td>RAM</td><td>8GB+ (แนะนำ)</td></tr>
-<tr><td>Network</td><td>การเชื่อมต่ออินเทอร์เน็ตที่เสถียร</td></tr>
-</table>
-
-<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 my-4">
-<p class="font-bold text-yellow-800">คำเตือน</p>
-<p class="text-yellow-700">การเทรด Cryptocurrency มีความเสี่ยงสูง อาจสูญเสียเงินทุนทั้งหมด แนะนำให้ทดสอบใน Simulation Mode ก่อนเทรดจริง</p>
-</div>
-</div>',
-                'features' => [
-                    'รองรับ 6 Exchange ชั้นนำ (Binance, KuCoin, OKX, Bybit, Gate.io, Bitkub)',
-                    'Live Price Monitoring และตรวจจับ Arbitrage อัตโนมัติ',
-                    'Trade History และ P&L Analytics พร้อม Charts',
-                    'Configurable Risk Parameters และ Safety Thresholds',
-                    'Simulation Mode ทดสอบกลยุทธ์โดยไม่ใช้เงินจริง',
-                    'UI แบบ Glass Morphism พร้อม Dark Theme',
-                    'Animated Splash Screen แบบ Hyperdrive',
-                    'Clean Architecture Design Pattern',
-                    'SQLite Database สำหรับเก็บข้อมูล',
-                    'พัฒนาด้วย .NET 8.0 และ WPF',
-                ],
-                'price' => 4990.00,
-                'image' => 'https://raw.githubusercontent.com/xjanova/autotradex/main/src/AutoTradeX.UI/Assets/logo2.png',
-                'images' => [
-                    'https://raw.githubusercontent.com/xjanova/autotradex/main/src/AutoTradeX.UI/Assets/logo2.png',
-                ],
-                'requires_license' => true,
-                'stock' => 999,
-                'is_active' => true,
-            ],
-
-            // 2. SpiderX
+            // 1. SpiderX
             [
                 'category_id' => $networkCategory->id,
                 'name' => 'SpiderX',
@@ -318,7 +222,7 @@ class XmanProductsSeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // 3. XcluadeAgent
+            // 2. XcluadeAgent
             [
                 'category_id' => $aiCategory->id,
                 'name' => 'XcluadeAgent',
@@ -437,7 +341,7 @@ class XmanProductsSeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // 4. PhoneX Manager
+            // 3. PhoneX Manager
             [
                 'category_id' => $mobileCategory->id,
                 'name' => 'PhoneX Manager',
@@ -534,7 +438,7 @@ class XmanProductsSeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // 5. LiveXShopPro
+            // 4. LiveXShopPro
             [
                 'category_id' => $ecommerceCategory->id,
                 'name' => 'Live x Shop Pro',
@@ -636,7 +540,7 @@ class XmanProductsSeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // 6. WinXTools
+            // 5. WinXTools
             [
                 'category_id' => $systemCategory->id,
                 'name' => 'WinXTools',
@@ -754,7 +658,7 @@ class XmanProductsSeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // 7. PostXAgent
+            // 6. PostXAgent
             [
                 'category_id' => $aiCategory->id,
                 'name' => 'PostXAgent',
@@ -888,7 +792,7 @@ class XmanProductsSeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // 8. GPUsharX
+            // 7. GPUsharX
             [
                 'category_id' => $cloudCategory->id,
                 'name' => 'GPUsharX',
@@ -1023,6 +927,6 @@ class XmanProductsSeeder extends Seeder
             );
         }
 
-        $this->command->info('Successfully seeded 8 Xman Studio products with comprehensive details!');
+        $this->command->info('Successfully seeded 7 Xman Studio products with comprehensive details!');
     }
 }

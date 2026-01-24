@@ -120,7 +120,7 @@ class AutoTradeXLicenseController extends Controller
             'currency' => 'THB',
         ],
         'lifetime' => [
-            'original' => 4990,
+            'original' => 19900,
             'currency' => 'THB',
         ],
     ];
