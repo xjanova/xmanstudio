@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AutoTradeXDevice;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * License Controller for AutoTradeX
@@ -121,6 +123,113 @@ class AutoTradeXLicenseController extends Controller
             LicenseKey::TYPE_LIFETIME, LicenseKey::TYPE_PRODUCT => self::EXCHANGES['lifetime'],
             default => self::EXCHANGES['trial'],
         };
+    }
+
+    /**
+     * Register a device automatically when app starts
+     * This is called immediately when the app connects to the server
+     *
+     * POST /api/v1/autotradex/register-device
+     */
+    public function registerDevice(Request $request)
+    {
+        $validated = $request->validate([
+            'machine_id' => 'required|string|min:32|max:64',
+            'machine_name' => 'nullable|string|max:255',
+            'os_version' => 'nullable|string|max:255',
+            'app_version' => 'nullable|string|max:50',
+            'hardware_hash' => 'nullable|string|max:64',
+        ]);
+
+        $ip = $request->ip();
+
+        // Find or create device
+        $device = AutoTradeXDevice::firstOrNew(['machine_id' => $validated['machine_id']]);
+
+        $isNew = ! $device->exists;
+
+        // Update device info
+        $device->fill([
+            'machine_name' => $validated['machine_name'] ?? $device->machine_name,
+            'os_version' => $validated['os_version'] ?? $device->os_version,
+            'app_version' => $validated['app_version'] ?? $device->app_version,
+            'hardware_hash' => $validated['hardware_hash'] ?? $device->hardware_hash,
+            'last_ip' => $ip,
+            'last_seen_at' => now(),
+        ]);
+
+        if ($isNew) {
+            $device->first_ip = $ip;
+            $device->first_seen_at = now();
+            $device->status = AutoTradeXDevice::STATUS_PENDING;
+        }
+
+        $device->save();
+
+        // Check for abuse patterns
+        $abuseCheck = $device->checkTrialAbuse();
+        if ($abuseCheck['is_abuse']) {
+            $device->markSuspicious(implode('; ', $abuseCheck['reasons']));
+            Log::warning('AutoTradeX: Suspicious device detected', [
+                'machine_id' => $validated['machine_id'],
+                'reasons' => $abuseCheck['reasons'],
+                'ip' => $ip,
+            ]);
+        }
+
+        // Check if device has an active license
+        $activeLicense = null;
+        if ($device->license_id) {
+            $activeLicense = $device->license;
+            if ($activeLicense && $activeLicense->isValid()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Device registered with active license',
+                    'data' => [
+                        'device_status' => 'licensed',
+                        'has_license' => true,
+                        'license_type' => $activeLicense->license_type,
+                        'expires_at' => $activeLicense->expires_at?->toISOString(),
+                        'features' => $this->getFeaturesByType($activeLicense->license_type),
+                        'exchanges' => $this->getExchangesByType($activeLicense->license_type),
+                    ],
+                ]);
+            }
+        }
+
+        // Check trial status
+        $trialInfo = null;
+        if ($device->status === AutoTradeXDevice::STATUS_TRIAL && ! $device->isTrialExpired()) {
+            $trialInfo = [
+                'is_active' => true,
+                'days_remaining' => $device->trialDaysRemaining(),
+                'expires_at' => $device->trial_expires_at->toISOString(),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $isNew ? 'Device registered successfully' : 'Device updated',
+            'data' => [
+                'device_status' => $device->status,
+                'is_new' => $isNew,
+                'has_license' => false,
+                'trial' => $trialInfo,
+                'can_start_trial' => $device->canStartTrial(),
+                'is_suspicious' => $device->is_suspicious,
+                'purchase_url' => $this->getPurchaseUrlForDevice($device),
+            ],
+        ]);
+    }
+
+    /**
+     * Get purchase URL for a device
+     */
+    private function getPurchaseUrlForDevice(AutoTradeXDevice $device): string
+    {
+        $baseUrl = config('app.url');
+
+        return "{$baseUrl}/autotradex/buy?machine_id=".substr($device->machine_id, 0, 16);
     }
 
     /**
@@ -376,16 +485,20 @@ class AutoTradeXLicenseController extends Controller
 
     /**
      * Start a demo/trial period
+     * Enhanced with abuse detection using AutoTradeXDevice
      *
      * POST /api/v1/autotradex/demo
      */
     public function startDemo(Request $request)
     {
         $validated = $request->validate([
-            'machine_id' => 'required|string|size:32',
+            'machine_id' => 'required|string|min:32|max:64',
             'machine_name' => 'nullable|string|max:255',
             'os_version' => 'nullable|string|max:255',
+            'hardware_hash' => 'nullable|string|max:64',
         ]);
+
+        $ip = $request->ip();
 
         // Find the product
         $product = Product::where('slug', self::PRODUCT_SLUG)->first();
@@ -398,28 +511,106 @@ class AutoTradeXLicenseController extends Controller
             ], 404);
         }
 
-        // Check if this machine already has a demo
+        // Get or create device record
+        $device = AutoTradeXDevice::firstOrCreate(
+            ['machine_id' => $validated['machine_id']],
+            [
+                'machine_name' => $validated['machine_name'] ?? 'Unknown',
+                'os_version' => $validated['os_version'] ?? 'Unknown',
+                'hardware_hash' => $validated['hardware_hash'] ?? null,
+                'first_ip' => $ip,
+                'last_ip' => $ip,
+                'first_seen_at' => now(),
+                'last_seen_at' => now(),
+                'status' => AutoTradeXDevice::STATUS_PENDING,
+            ]
+        );
+
+        // Update device info
+        $device->update([
+            'last_ip' => $ip,
+            'last_seen_at' => now(),
+            'hardware_hash' => $validated['hardware_hash'] ?? $device->hardware_hash,
+        ]);
+
+        // Check for trial abuse BEFORE allowing trial
+        $abuseCheck = $device->checkTrialAbuse();
+        if ($abuseCheck['is_abuse']) {
+            $device->markSuspicious(implode('; ', $abuseCheck['reasons']));
+
+            Log::warning('AutoTradeX: Trial abuse detected', [
+                'machine_id' => $validated['machine_id'],
+                'reasons' => $abuseCheck['reasons'],
+                'ip' => $ip,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Trial is not available for this device. Please purchase a license.',
+                'error_code' => 'TRIAL_ABUSE_DETECTED',
+                'purchase_url' => $this->getPurchaseUrlForDevice($device),
+            ], 403);
+        }
+
+        // Check if device is blocked
+        if ($device->status === AutoTradeXDevice::STATUS_BLOCKED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This device has been blocked. Please contact support.',
+                'error_code' => 'DEVICE_BLOCKED',
+            ], 403);
+        }
+
+        // Check if device already has active trial
+        if ($device->status === AutoTradeXDevice::STATUS_TRIAL && ! $device->isTrialExpired()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Trial already active',
+                'data' => [
+                    'expires_at' => $device->trial_expires_at?->toISOString(),
+                    'days_remaining' => $device->trialDaysRemaining(),
+                    'features' => self::TRIAL_FEATURES,
+                    'exchanges' => self::EXCHANGES['trial'],
+                ],
+            ]);
+        }
+
+        // Check if trial expired
+        if ($device->status === AutoTradeXDevice::STATUS_EXPIRED ||
+            ($device->trial_expires_at && $device->isTrialExpired())) {
+            $device->update(['status' => AutoTradeXDevice::STATUS_EXPIRED]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Your trial period has ended. Please purchase a license to continue using AutoTradeX.',
+                'error_code' => 'TRIAL_EXPIRED',
+                'expired_at' => $device->trial_expires_at?->toISOString(),
+                'purchase_url' => $this->getPurchaseUrlForDevice($device),
+            ], 403);
+        }
+
+        // Check if can start trial
+        if (! $device->canStartTrial()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Trial is not available for this device.',
+                'error_code' => 'TRIAL_NOT_AVAILABLE',
+                'purchase_url' => $this->getPurchaseUrlForDevice($device),
+            ], 403);
+        }
+
+        // Check for existing license key (legacy support)
         $existingDemo = LicenseKey::where('machine_id', $validated['machine_id'])
             ->where('product_id', $product->id)
             ->where('license_type', LicenseKey::TYPE_DEMO)
             ->first();
 
-        if ($existingDemo) {
-            // Check if demo is expired
-            if ($existingDemo->isExpired()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your trial period has ended. Please purchase a license to continue using AutoTradeX.',
-                    'error_code' => 'TRIAL_EXPIRED',
-                    'expired_at' => $existingDemo->expires_at?->toISOString(),
-                ], 403);
-            }
-
-            // Return existing demo
+        if ($existingDemo && ! $existingDemo->isExpired()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Trial already active',
                 'data' => [
+                    'license_key' => $existingDemo->license_key,
                     'expires_at' => $existingDemo->expires_at?->toISOString(),
                     'days_remaining' => $existingDemo->daysRemaining(),
                     'features' => self::TRIAL_FEATURES,
@@ -428,7 +619,10 @@ class AutoTradeXLicenseController extends Controller
             ]);
         }
 
-        // Create new demo license (7-day trial)
+        // Start trial on device
+        $device->startTrial(7);
+
+        // Create demo license key
         $demoKey = LicenseKey::generateDemoKey();
         $demo = LicenseKey::create([
             'product_id' => $product->id,
@@ -437,15 +631,27 @@ class AutoTradeXLicenseController extends Controller
             'license_type' => LicenseKey::TYPE_DEMO,
             'machine_id' => $validated['machine_id'],
             'activated_at' => now(),
-            'expires_at' => now()->addDays(7), // 7-day trial
+            'expires_at' => now()->addDays(7),
             'max_activations' => 1,
             'activations' => 1,
             'metadata' => json_encode([
                 'machine_name' => $validated['machine_name'] ?? 'Unknown',
                 'os_version' => $validated['os_version'] ?? 'Unknown',
-                'ip' => $request->ip(),
+                'hardware_hash' => $validated['hardware_hash'] ?? null,
+                'ip' => $ip,
                 'started_at' => now()->toISOString(),
+                'device_id' => $device->id,
             ]),
+        ]);
+
+        // Link license to device
+        $device->update(['license_id' => $demo->id]);
+
+        Log::info('AutoTradeX: New trial started', [
+            'machine_id' => $validated['machine_id'],
+            'license_key' => $demoKey,
+            'ip' => $ip,
+            'device_id' => $device->id,
         ]);
 
         return response()->json([

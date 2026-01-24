@@ -52,6 +52,9 @@ Route::prefix('v1/license')->middleware(['throttle:60,1'])->group(function () {
 // Rate limited to 60 requests per minute per IP
 
 Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function () {
+    // Register device automatically when app starts
+    Route::post('/register-device', [AutoTradeXLicenseController::class, 'registerDevice']);
+
     // Activate license on a machine
     Route::post('/activate', [AutoTradeXLicenseController::class, 'activate']);
 
