@@ -24,9 +24,9 @@
 
 @section('content')
 <!-- Premium Header Banner -->
-<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-red-500 p-8 shadow-2xl mb-8">
-    <div class="absolute top-0 left-0 w-72 h-72 bg-amber-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-    <div class="absolute top-0 right-0 w-72 h-72 bg-orange-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-red-500 p-8 shadow-2xl mb-8">
+    <div class="absolute top-0 left-0 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+    <div class="absolute top-0 right-0 w-72 h-72 bg-rose-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
     <div class="absolute -bottom-8 left-20 w-72 h-72 bg-red-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
     <div class="relative">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -38,7 +38,7 @@
                 </a>
                 <div>
                     <h2 class="text-3xl font-bold text-white mb-2">รายละเอียดการเช่า</h2>
-                    <p class="text-amber-100">{{ $rental->rentalPackage->display_name }}</p>
+                    <p class="text-pink-100">{{ $rental->rentalPackage->display_name }}</p>
                 </div>
             </div>
             <span class="px-4 py-2 rounded-xl text-sm font-semibold backdrop-blur-sm
@@ -59,7 +59,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                    <span class="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                    <span class="w-8 h-8 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg flex items-center justify-center mr-3">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
@@ -93,9 +93,9 @@
                         <dt class="text-sm text-gray-500 dark:text-gray-400">วันหมดอายุ</dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $rental->expires_at->format('d/m/Y H:i') }}</dd>
                     </div>
-                    <div class="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/30 dark:to-amber-900/30 rounded-xl p-4 border border-orange-100 dark:border-orange-800">
-                        <dt class="text-sm text-orange-600 dark:text-orange-400">เหลืออีก</dt>
-                        <dd class="mt-1 text-lg font-bold {{ $rental->days_remaining <= 7 ? 'text-red-600 dark:text-red-400' : 'text-orange-900 dark:text-orange-100' }}">
+                    <div class="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/30 dark:to-rose-900/30 rounded-xl p-4 border border-pink-100 dark:border-pink-800">
+                        <dt class="text-sm text-pink-600 dark:text-pink-400">เหลืออีก</dt>
+                        <dd class="mt-1 text-lg font-bold {{ $rental->days_remaining <= 7 ? 'text-red-600 dark:text-red-400' : 'text-pink-900 dark:text-pink-100' }}">
                             {{ $rental->days_remaining }} วัน
                         </dd>
                     </div>
@@ -232,7 +232,7 @@
                 @endif
 
                 <button type="button" onclick="showExtendModal()"
-                        class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg font-medium">
+                        class="w-full py-2.5 px-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl hover:from-pink-600 hover:to-rose-600 transition-all shadow-lg font-medium">
                     ขยายเวลา
                 </button>
             </div>
@@ -251,12 +251,12 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">จำนวนวัน</label>
                         <input type="number" name="days" min="1" max="365" required
-                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white transition-all">
+                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 dark:bg-gray-700 dark:text-white transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">เหตุผล</label>
                         <textarea name="reason" rows="3" required
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white transition-all"></textarea>
+                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 dark:bg-gray-700 dark:text-white transition-all"></textarea>
                     </div>
                 </div>
             </div>
@@ -264,7 +264,7 @@
                 <button type="button" onclick="hideExtendModal()"
                         class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">ยกเลิก</button>
                 <button type="submit"
-                        class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg">ขยายเวลา</button>
+                        class="px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl hover:from-pink-600 hover:to-rose-600 transition-all shadow-lg">ขยายเวลา</button>
             </div>
         </form>
     </div>
