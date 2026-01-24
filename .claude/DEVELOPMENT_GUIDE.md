@@ -10,8 +10,9 @@ This document provides comprehensive guidelines for Claude AI assistants working
 4. [Coding Standards](#coding-standards)
 5. [Development Workflow](#development-workflow)
 6. [Common Tasks](#common-tasks)
-7. [Troubleshooting](#troubleshooting)
-8. [Deployment](#deployment)
+7. [License System (CRITICAL)](#license-system-critical)
+8. [Troubleshooting](#troubleshooting)
+9. [Deployment](#deployment)
 
 ---
 
@@ -414,6 +415,76 @@ public function show(Product $product)
     return view('products.show', compact('product'));
 }
 ```
+
+---
+
+## License System (CRITICAL)
+
+> **⚠️ IMPORTANT:** When working on ANY license-related code, you MUST read the complete documentation at:
+> **`docs/LICENSE_SYSTEM.md`**
+
+This project provides a centralized License Management System used by multiple desktop applications (AutoTradeX, and future products).
+
+### Key Documentation
+
+**Full documentation:** [`docs/LICENSE_SYSTEM.md`](../docs/LICENSE_SYSTEM.md)
+
+This document contains:
+- Complete system architecture and flowcharts
+- Device registration process
+- Trial abuse detection methods
+- Fake server protection techniques
+- API endpoint reference
+- Database schema
+- Best practices for all products
+
+### Key Files
+
+| File | Description |
+|------|-------------|
+| `app/Http/Controllers/Api/AutoTradeXLicenseController.php` | License API for AutoTradeX |
+| `app/Models/AutoTradeXDevice.php` | Device tracking & abuse detection |
+| `app/Models/LicenseKey.php` | License key model |
+| `database/migrations/*_autotradex_devices_table.php` | Device tracking table |
+| `routes/api.php` | API routes for license endpoints |
+
+### API Endpoints (AutoTradeX)
+
+```
+POST /api/v1/autotradex/register-device  # Register device on app startup
+POST /api/v1/autotradex/activate         # Activate license
+POST /api/v1/autotradex/validate         # Validate license
+POST /api/v1/autotradex/deactivate       # Deactivate license
+POST /api/v1/autotradex/demo             # Start trial
+POST /api/v1/autotradex/verify-server    # Anti-fake server verification
+GET  /api/v1/autotradex/pricing          # Get pricing info
+```
+
+### Security Features
+
+1. **Device Registration** - Auto-registers device on app startup with machine ID
+2. **Trial Abuse Detection** - Hardware hash, IP tracking, attempt counting
+3. **Fake Server Protection** - Challenge-response verification
+4. **License Lock** - License is locked to specific device (machine_id)
+
+### Before Making License Changes
+
+**MANDATORY:** Before making ANY changes to license-related code:
+
+1. ✅ Read `docs/LICENSE_SYSTEM.md` completely
+2. ✅ Understand the abuse detection flow
+3. ✅ Understand the fake server protection
+4. ✅ Check both server-side (Laravel) and client-side (desktop app) code
+5. ✅ Test changes against actual server
+
+### Database Schema
+
+The license system uses these main tables:
+- `license_keys` - License key storage
+- `autotradex_devices` - Device tracking for AutoTradeX
+- `products` - Product definitions
+
+**Important:** When adding new products, create a new device table (e.g., `newproduct_devices`) following the same pattern as `autotradex_devices`.
 
 ---
 

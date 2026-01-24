@@ -42,6 +42,26 @@ Topics covered:
 - Code review
 - Ensuring consistency
 
+### 3. [LICENSE_SYSTEM.md](../docs/LICENSE_SYSTEM.md) ⚠️ CRITICAL
+**License system documentation for all products**
+
+> **⚠️ MUST READ when working on ANY license-related code!**
+
+Topics covered:
+- Device registration process
+- Trial abuse detection methods
+- Fake server protection techniques
+- API endpoint reference
+- Database schema
+- Best practices for all products
+
+**Use this when:**
+- Working on license validation
+- Adding new products to license system
+- Debugging license issues
+- Implementing trial system
+- Adding anti-piracy features
+
 ## 🚀 Quick Start for Claude AI
 
 ### First Time Working on This Project?
