@@ -77,7 +77,7 @@
                 </svg>
                 <div>
                     <p class="text-sm text-amber-700 dark:text-amber-300">
-                        <strong>ธีมส่วนตัวของคุณ:</strong> คุณกำลังใช้ธีม <span class="font-semibold">{{ $themes[$adminPersonalTheme]['name'] }}</span> เป็นการส่วนตัว ซึ่งแตกต่างจากธีมเริ่มต้นของเว็บไซต์ คุณสามารถเปลี่ยนธีมส่วนตัวได้ที่ <a href="{{ route('customer.theme.settings') }}" class="underline font-semibold hover:text-amber-800 dark:hover:text-amber-200">หน้าตั้งค่าธีม</a>
+                        <strong>ธีมส่วนตัวของคุณ:</strong> คุณกำลังใช้ธีม <span class="font-semibold">{{ $themes[$adminPersonalTheme]['name'] }}</span> เป็นการส่วนตัว ซึ่งแตกต่างจากธีมเริ่มต้นของเว็บไซต์ คุณสามารถเปลี่ยนธีมส่วนตัวได้ที่ <a href="{{ route('customer.settings.theme') }}" class="underline font-semibold hover:text-amber-800 dark:hover:text-amber-200">หน้าตั้งค่าธีม</a>
                     </p>
                 </div>
             </div>
