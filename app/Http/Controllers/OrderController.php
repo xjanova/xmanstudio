@@ -36,7 +36,7 @@ class OrderController extends Controller
     /**
      * Display checkout page
      */
-    public function checkout()
+    public function checkout(Request $request)
     {
         $cart = $this->getCart();
 
@@ -48,6 +48,33 @@ class OrderController extends Controller
 
         $cart->load('items.product');
         $paymentMethods = $this->paymentService->getSupportedMethods();
+
+        // Handle coupon removal via query parameter
+        if ($request->has('remove_coupon')) {
+            session()->forget('applied_coupon');
+            return redirect()->route('orders.checkout')->with('success', 'ลบคูปองเรียบร้อยแล้ว');
+        }
+
+        // Handle coupon application via query parameter
+        if ($request->has('coupon') && !empty($request->coupon)) {
+            $couponCode = strtoupper(trim($request->coupon));
+            $coupon = Coupon::where('code', $couponCode)->first();
+
+            if ($coupon) {
+                $subtotal = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
+                $productIds = $cart->items->pluck('product_id')->toArray();
+                $canUse = $coupon->canBeUsedBy(auth()->user(), $subtotal, $productIds);
+
+                if ($canUse['valid']) {
+                    session(['applied_coupon' => $couponCode]);
+                    return redirect()->route('orders.checkout')->with('success', 'ใช้คูปองเรียบร้อยแล้ว');
+                } else {
+                    return redirect()->route('orders.checkout')->with('error', $canUse['message'] ?? 'คูปองไม่สามารถใช้งานได้');
+                }
+            } else {
+                return redirect()->route('orders.checkout')->with('error', 'ไม่พบรหัสคูปองนี้');
+            }
+        }
 
         // Get wallet balance if user is authenticated
         $wallet = null;
