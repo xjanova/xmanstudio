@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'คูปอง: ' . $coupon->code)
 @section('page-title', 'รายละเอียดคูปอง')
