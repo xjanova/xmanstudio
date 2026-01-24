@@ -113,17 +113,17 @@
                     $siteLogo = \App\Models\Setting::getValue('site_logo');
                 @endphp
                 <a href="/admin" class="flex items-center gap-3 group">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300">
-                        @if($siteLogo)
-                            <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN Admin" class="h-6 w-auto">
-                        @else
+                    @if($siteLogo)
+                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN Admin" class="h-10 w-auto">
+                    @else
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300">
                             <span class="text-white font-bold text-lg">X</span>
-                        @endif
-                    </div>
-                    <div>
-                        <span class="text-lg font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">XMAN Admin</span>
-                        <div class="text-xs text-indigo-300/70">Premium Dashboard</div>
-                    </div>
+                        </div>
+                        <div>
+                            <span class="text-lg font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">XMAN Admin</span>
+                            <div class="text-xs text-indigo-300/70">Premium Dashboard</div>
+                        </div>
+                    @endif
                 </a>
             </div>
 
