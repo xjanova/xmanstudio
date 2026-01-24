@@ -52,6 +52,9 @@ Route::prefix('v1/license')->middleware(['throttle:60,1'])->group(function () {
 // Rate limited to 60 requests per minute per IP
 
 Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function () {
+    // Register device automatically when app starts
+    Route::post('/register-device', [AutoTradeXLicenseController::class, 'registerDevice']);
+
     // Activate license on a machine
     Route::post('/activate', [AutoTradeXLicenseController::class, 'activate']);
 
@@ -69,6 +72,9 @@ Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function ()
 
     // Get purchase URL for app to open browser
     Route::get('/purchase-url', [AutoTradeXLicenseController::class, 'purchaseUrl']);
+
+    // Verify server authenticity (anti-fake server)
+    Route::post('/verify-server', [AutoTradeXLicenseController::class, 'verifyServer']);
 
     // Demo endpoints (rate limited more strictly)
     Route::middleware(['throttle:10,1'])->group(function () {
