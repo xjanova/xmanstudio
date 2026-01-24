@@ -235,6 +235,30 @@
                 </a>
 
                 <div class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    การเงิน & โปรโมชั่น
+                </div>
+                <a href="{{ route('admin.wallets.index') }}"
+                   class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.wallets*') ? 'bg-gray-800 text-white' : '' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    Wallet
+                    @php
+                        $pendingTopups = \App\Models\WalletTopup::where('status', 'pending')->count();
+                    @endphp
+                    @if($pendingTopups > 0)
+                    <span class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ $pendingTopups }}</span>
+                    @endif
+                </a>
+                <a href="{{ route('admin.coupons.index') }}"
+                   class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.coupons*') ? 'bg-gray-800 text-white' : '' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                    </svg>
+                    คูปอง
+                </a>
+
+                <div class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     การตั้งค่า
                 </div>
                 <a href="{{ route('admin.theme.index') }}"
