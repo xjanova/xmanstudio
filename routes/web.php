@@ -233,6 +233,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/support/{ticket}/reply', [SupportTicketController::class, 'reply'])->name('support.reply');
         Route::post('/support/{ticket}/close', [SupportTicketController::class, 'close'])->name('support.close');
         Route::post('/support/{ticket}/reopen', [SupportTicketController::class, 'reopen'])->name('support.reopen');
+
+        // Theme Settings
+        Route::get('/settings/theme', [\App\Http\Controllers\UserThemeController::class, 'index'])->name('settings.theme');
+        Route::put('/settings/theme', [\App\Http\Controllers\UserThemeController::class, 'update'])->name('settings.theme.update');
     });
 });
 
