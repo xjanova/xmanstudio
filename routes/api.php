@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
+use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\VersionController;
@@ -142,4 +143,19 @@ Route::prefix('v1/products')->middleware(['throttle:60,1'])->group(function () {
 
     // Validate license key
     Route::post('/validate-license', [VersionController::class, 'validateLicense']);
+});
+
+// ==================== Coupon API Routes ====================
+// These routes are used during checkout to validate and apply coupons
+// Requires authentication (web session or Sanctum token)
+
+Route::prefix('v1/coupons')->middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
+    // Validate coupon code and get discount amount
+    Route::post('/validate', [CouponController::class, 'validate']);
+
+    // Apply coupon to current session
+    Route::post('/apply', [CouponController::class, 'apply']);
+
+    // Remove coupon from session
+    Route::delete('/remove', [CouponController::class, 'remove']);
 });

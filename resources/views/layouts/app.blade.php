@@ -110,6 +110,19 @@
                         </svg>
                     </button>
 
+                    <!-- Wallet Balance (for authenticated users) -->
+                    @auth
+                    @php
+                        $userWallet = \App\Models\Wallet::getOrCreateForUser(auth()->id());
+                    @endphp
+                    <a href="{{ route('user.wallet.index') }}" class="hidden sm:flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 transition-all shadow-sm">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        <span>{{ number_format($userWallet->balance, 0) }}</span>
+                    </a>
+                    @endauth
+
                     <!-- Cart -->
                     @php
                         $cartCount = 0;
@@ -254,6 +267,14 @@
                                 <a href="/admin/rentals" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Admin Panel</a>
                                 @endif
                                 <a href="{{ route('customer.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">บัญชีของฉัน</a>
+                                <a href="{{ route('user.wallet.index') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                        </svg>
+                                        Wallet ({{ number_format($userWallet->balance, 0) }})
+                                    </span>
+                                </a>
                                 @if(Route::has('logout'))
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
@@ -294,6 +315,14 @@
                 <a href="/rental" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('rental*') ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-rose-500 hover:text-white' }}">เช่าบริการ</a>
                 <a href="/portfolio" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('portfolio*') ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-violet-500 hover:text-white' }}">ผลงาน</a>
                 <a href="/support" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('support*') ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white' }}">ติดต่อ/สั่งซื้อ</a>
+                @auth
+                    <a href="{{ route('user.wallet.index') }}" class="flex items-center px-4 py-2.5 text-base font-medium rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        Wallet: {{ number_format(\App\Models\Wallet::getOrCreateForUser(auth()->id())->balance, 0) }}
+                    </a>
+                @endauth
                 @guest
                     @if(Route::has('register'))
                     <a href="{{ route('register') }}" class="block px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">สมัครสมาชิก</a>

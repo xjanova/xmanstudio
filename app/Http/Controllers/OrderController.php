@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Mail\OrderConfirmationMail;
 use App\Models\Cart;
+use App\Models\Coupon;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Wallet;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +49,33 @@ class OrderController extends Controller
         $cart->load('items.product');
         $paymentMethods = $this->paymentService->getSupportedMethods();
 
-        return view('orders.checkout', compact('cart', 'paymentMethods'));
+        // Get wallet balance if user is authenticated
+        $wallet = null;
+        if (auth()->check()) {
+            $wallet = Wallet::getOrCreateForUser(auth()->id());
+        }
+
+        // Check for applied coupon
+        $appliedCoupon = null;
+        $couponDiscount = 0;
+        if (session()->has('applied_coupon')) {
+            $coupon = Coupon::where('code', session('applied_coupon'))->first();
+            if ($coupon) {
+                $subtotal = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
+                $productIds = $cart->items->pluck('product_id')->toArray();
+                $canUse = $coupon->canBeUsedBy(auth()->user(), $subtotal, $productIds);
+
+                if ($canUse['valid']) {
+                    $appliedCoupon = $coupon;
+                    $couponDiscount = $coupon->calculateDiscount($subtotal);
+                } else {
+                    // Invalid coupon, remove from session
+                    session()->forget('applied_coupon');
+                }
+            }
+        }
+
+        return view('orders.checkout', compact('cart', 'paymentMethods', 'wallet', 'appliedCoupon', 'couponDiscount'));
     }
 
     /**
@@ -56,11 +84,12 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card',
+            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card,wallet',
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'nullable|string|max:20',
             'notes' => 'nullable|string|max:1000',
+            'coupon_code' => 'nullable|string',
         ]);
 
         $cart = $this->getCart();
@@ -80,7 +109,46 @@ class OrderController extends Controller
             $subtotal = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
             $vatRate = config('app.vat_rate', 0.07); // 7% VAT
             $tax = round($subtotal * $vatRate, 2);
-            $total = $subtotal + $tax;
+
+            // Apply coupon discount
+            $discount = 0;
+            $couponId = null;
+            $couponCode = $request->coupon_code ?? session('applied_coupon');
+
+            if ($couponCode) {
+                $coupon = Coupon::where('code', strtoupper(trim($couponCode)))->first();
+                if ($coupon) {
+                    $productIds = $cart->items->pluck('product_id')->toArray();
+                    $canUse = $coupon->canBeUsedBy(auth()->user(), $subtotal, $productIds);
+
+                    if ($canUse['valid']) {
+                        $discount = $coupon->calculateDiscount($subtotal);
+                        $couponId = $coupon->id;
+                    }
+                }
+            }
+
+            $total = max(0, $subtotal + $tax - $discount);
+
+            // Handle wallet payment
+            $paymentStatus = 'pending';
+            $orderStatus = 'pending';
+
+            if ($request->payment_method === 'wallet') {
+                if (!auth()->check()) {
+                    return redirect()
+                        ->back()
+                        ->with('error', 'กรุณาเข้าสู่ระบบก่อนใช้ Wallet');
+                }
+
+                $wallet = Wallet::getOrCreateForUser(auth()->id());
+
+                if ($wallet->balance < $total) {
+                    return redirect()
+                        ->back()
+                        ->with('error', 'ยอดเงินใน Wallet ไม่เพียงพอ (ยอดคงเหลือ: ฿' . number_format($wallet->balance, 2) . ')');
+                }
+            }
 
             // Create order
             $order = Order::create([
@@ -91,11 +159,13 @@ class OrderController extends Controller
                 'customer_phone' => $request->customer_phone,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
-                'discount' => 0,
+                'discount' => $discount,
+                'coupon_id' => $couponId,
+                'coupon_code' => $couponId ? $coupon->code : null,
                 'total' => $total,
                 'payment_method' => $request->payment_method,
-                'payment_status' => 'pending',
-                'status' => 'pending',
+                'payment_status' => $paymentStatus,
+                'status' => $orderStatus,
                 'notes' => $request->notes,
             ]);
 
@@ -112,8 +182,27 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Clear cart
+            // Process wallet payment
+            if ($request->payment_method === 'wallet') {
+                $wallet = Wallet::getOrCreateForUser(auth()->id());
+                $wallet->pay($total, "ชำระคำสั่งซื้อ #{$order->order_number}", $order);
+
+                // Mark order as paid
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'processing',
+                    'paid_at' => now(),
+                ]);
+            }
+
+            // Record coupon usage
+            if ($couponId && $coupon) {
+                $coupon->recordUsage(auth()->user(), $order, $discount, $subtotal);
+            }
+
+            // Clear cart and applied coupon
             $cart->items()->delete();
+            session()->forget('applied_coupon');
 
             DB::commit();
 
