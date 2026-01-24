@@ -52,11 +52,12 @@ class OrderController extends Controller
         // Handle coupon removal via query parameter
         if ($request->has('remove_coupon')) {
             session()->forget('applied_coupon');
+
             return redirect()->route('orders.checkout')->with('success', 'ลบคูปองเรียบร้อยแล้ว');
         }
 
         // Handle coupon application via query parameter
-        if ($request->has('coupon') && !empty($request->coupon)) {
+        if ($request->has('coupon') && ! empty($request->coupon)) {
             $couponCode = strtoupper(trim($request->coupon));
             $coupon = Coupon::where('code', $couponCode)->first();
 
@@ -67,6 +68,7 @@ class OrderController extends Controller
 
                 if ($canUse['valid']) {
                     session(['applied_coupon' => $couponCode]);
+
                     return redirect()->route('orders.checkout')->with('success', 'ใช้คูปองเรียบร้อยแล้ว');
                 } else {
                     return redirect()->route('orders.checkout')->with('error', $canUse['message'] ?? 'คูปองไม่สามารถใช้งานได้');
