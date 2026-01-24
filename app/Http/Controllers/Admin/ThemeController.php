@@ -13,10 +13,14 @@ class ThemeController extends Controller
      */
     public function index()
     {
-        $currentTheme = ThemeService::getCurrentTheme();
+        // Use getSiteDefaultTheme() to show actual site default, not user's personal preference
+        $currentTheme = ThemeService::getSiteDefaultTheme();
         $themes = ThemeService::getAvailableThemes();
 
-        return view('admin.theme.index', compact('currentTheme', 'themes'));
+        // Get admin's personal theme for info display
+        $adminPersonalTheme = ThemeService::getUserTheme();
+
+        return view('admin.theme.index', compact('currentTheme', 'themes', 'adminPersonalTheme'));
     }
 
     /**
