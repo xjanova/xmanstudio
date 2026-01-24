@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Services\LicenseService;
@@ -137,6 +138,19 @@ class LicenseController extends Controller
             $validated['product_id']
         );
 
+        // Log activity for each created license
+        foreach ($licenses as $license) {
+            LicenseActivity::log(
+                $license,
+                LicenseActivity::ACTION_CREATED,
+                LicenseActivity::ACTOR_ADMIN,
+                auth()->id(),
+                null,
+                'สร้างโดยแอดมิน',
+                ['type' => $validated['type'], 'max_activations' => $validated['max_activations']]
+            );
+        }
+
         return redirect()
             ->route('admin.licenses.index')
             ->with('success', sprintf('สร้าง %d license keys สำเร็จ', count($licenses)));
@@ -163,9 +177,21 @@ class LicenseController extends Controller
      */
     public function reactivate(LicenseKey $license)
     {
+        $previousStatus = $license->status;
+
         $license->update([
             'status' => LicenseKey::STATUS_ACTIVE,
         ]);
+
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_REACTIVATED,
+            LicenseActivity::ACTOR_ADMIN,
+            auth()->id(),
+            null,
+            'เปิดใช้งานใหม่โดยแอดมิน',
+            ['previous_status' => $previousStatus]
+        );
 
         return redirect()
             ->back()
@@ -177,10 +203,22 @@ class LicenseController extends Controller
      */
     public function resetMachine(LicenseKey $license)
     {
+        $previousMachineId = $license->machine_id;
+
         $license->update([
             'machine_id' => null,
             'machine_fingerprint' => null,
         ]);
+
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_MACHINE_RESET,
+            LicenseActivity::ACTOR_ADMIN,
+            auth()->id(),
+            null,
+            'รีเซ็ตเครื่องโดยแอดมิน',
+            ['previous_machine_id' => $previousMachineId]
+        );
 
         return redirect()
             ->back()
@@ -196,6 +234,7 @@ class LicenseController extends Controller
             'days' => 'required|integer|min:1|max:365',
         ]);
 
+        $previousExpiry = $license->expires_at?->format('Y-m-d H:i:s');
         $newExpiry = $license->expires_at
             ? $license->expires_at->addDays($request->days)
             : now()->addDays($request->days);
@@ -204,6 +243,16 @@ class LicenseController extends Controller
             'expires_at' => $newExpiry,
             'status' => LicenseKey::STATUS_ACTIVE,
         ]);
+
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_EXTENDED,
+            LicenseActivity::ACTOR_ADMIN,
+            auth()->id(),
+            null,
+            "ขยายเวลา {$request->days} วัน",
+            ['previous_expiry' => $previousExpiry, 'new_expiry' => $newExpiry->format('Y-m-d H:i:s'), 'days_extended' => $request->days]
+        );
 
         return redirect()
             ->back()
@@ -216,6 +265,19 @@ class LicenseController extends Controller
     public function destroy(LicenseKey $license)
     {
         $key = $license->license_key;
+        $licenseId = $license->id;
+
+        // Log before deletion
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_DELETED,
+            LicenseActivity::ACTOR_ADMIN,
+            auth()->id(),
+            null,
+            'ลบโดยแอดมิน',
+            ['license_key' => $key, 'product_id' => $license->product_id]
+        );
+
         $license->delete();
 
         return redirect()
@@ -234,12 +296,31 @@ class LicenseController extends Controller
             'reason' => 'nullable|string|max:500',
         ]);
 
+        // Get licenses before update for logging
+        $licenses = LicenseKey::whereIn('id', $request->license_ids)
+            ->where('status', LicenseKey::STATUS_ACTIVE)
+            ->get();
+
         $count = LicenseKey::whereIn('id', $request->license_ids)
             ->where('status', LicenseKey::STATUS_ACTIVE)
             ->update([
                 'status' => LicenseKey::STATUS_REVOKED,
                 'revoke_reason' => $request->reason,
             ]);
+
+        // Log activity for each revoked license
+        foreach ($licenses as $license) {
+            $license->refresh();
+            LicenseActivity::log(
+                $license,
+                LicenseActivity::ACTION_REVOKED,
+                LicenseActivity::ACTOR_ADMIN,
+                auth()->id(),
+                null,
+                $request->reason ?? 'ยกเลิกแบบกลุ่มโดยแอดมิน',
+                ['bulk_action' => true, 'reason' => $request->reason]
+            );
+        }
 
         return redirect()
             ->back()
@@ -262,6 +343,7 @@ class LicenseController extends Controller
 
         foreach ($licenses as $license) {
             if ($license->license_type !== 'lifetime') {
+                $previousExpiry = $license->expires_at?->format('Y-m-d H:i:s');
                 $newExpiry = $license->expires_at
                     ? $license->expires_at->addDays($request->days)
                     : now()->addDays($request->days);
@@ -270,6 +352,17 @@ class LicenseController extends Controller
                     'expires_at' => $newExpiry,
                     'status' => LicenseKey::STATUS_ACTIVE,
                 ]);
+
+                LicenseActivity::log(
+                    $license,
+                    LicenseActivity::ACTION_EXTENDED,
+                    LicenseActivity::ACTOR_ADMIN,
+                    auth()->id(),
+                    null,
+                    "ขยายเวลา {$request->days} วัน (Bulk)",
+                    ['bulk_action' => true, 'previous_expiry' => $previousExpiry, 'new_expiry' => $newExpiry->format('Y-m-d H:i:s'), 'days_extended' => $request->days]
+                );
+
                 $count++;
             }
         }
@@ -288,6 +381,22 @@ class LicenseController extends Controller
             'license_ids' => 'required|array|min:1',
             'license_ids.*' => 'exists:license_keys,id',
         ]);
+
+        // Get licenses before deletion for logging
+        $licenses = LicenseKey::whereIn('id', $request->license_ids)->get();
+
+        // Log activity for each license before deletion
+        foreach ($licenses as $license) {
+            LicenseActivity::log(
+                $license,
+                LicenseActivity::ACTION_DELETED,
+                LicenseActivity::ACTOR_ADMIN,
+                auth()->id(),
+                null,
+                'ลบแบบกลุ่มโดยแอดมิน',
+                ['bulk_action' => true, 'license_key' => $license->license_key, 'product_id' => $license->product_id]
+            );
+        }
 
         $count = LicenseKey::whereIn('id', $request->license_ids)->delete();
 

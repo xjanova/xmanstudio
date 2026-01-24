@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use Illuminate\Support\Facades\Hash;
 
@@ -98,6 +99,17 @@ class LicenseService
         $metadata['last_activation_ip'] = request()->ip();
         $license->update(['metadata' => $metadata]);
 
+        // Log activation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_ACTIVATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $machineId,
+            'เปิดใช้งานผ่าน API',
+            ['app_version' => $appVersion]
+        );
+
         return [
             'success' => true,
             'data' => [
@@ -135,6 +147,17 @@ class LicenseService
 
         // Update last validated
         $license->update(['last_validated_at' => now()]);
+
+        // Log validation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_VALIDATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $machineId,
+            $isValid ? 'ตรวจสอบสำเร็จ' : 'ตรวจสอบล้มเหลว',
+            ['is_valid' => $isValid]
+        );
 
         return [
             'success' => true,
@@ -205,6 +228,27 @@ class LicenseService
             ],
         ]);
 
+        // Log demo creation and activation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_CREATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $machineId,
+            'สร้าง Demo License',
+            ['product_slug' => $productSlug, 'demo_days' => 3]
+        );
+
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_ACTIVATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $machineId,
+            'เปิดใช้งาน Demo',
+            ['product_slug' => $productSlug]
+        );
+
         return [
             'success' => true,
             'data' => [
@@ -261,12 +305,25 @@ class LicenseService
             ];
         }
 
+        $previousMachineId = $license->machine_id;
+
         // Clear machine info
         $license->update([
             'machine_id' => null,
             'machine_fingerprint' => null,
             'activations' => max(0, $license->activations - 1),
         ]);
+
+        // Log deactivation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_DEACTIVATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $previousMachineId,
+            'ยกเลิกการเปิดใช้งานผ่าน API',
+            ['previous_machine_id' => $previousMachineId]
+        );
 
         return [
             'success' => true,
@@ -338,6 +395,17 @@ class LicenseService
             'status' => LicenseKey::STATUS_REVOKED,
             'metadata' => $metadata,
         ]);
+
+        // Log revocation
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_REVOKED,
+            LicenseActivity::ACTOR_ADMIN,
+            auth()->id(),
+            $license->machine_id,
+            $reason ?? 'ยกเลิก License',
+            ['reason' => $reason]
+        );
 
         return [
             'success' => true,
