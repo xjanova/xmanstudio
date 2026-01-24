@@ -3,71 +3,106 @@
 @section('title', 'จัดการเวอร์ชัน - ' . $product->name)
 @section('page-title', 'จัดการเวอร์ชัน: ' . $product->name)
 
+@push('styles')
+<style>
+    .animate-blob {
+        animation: blob 7s infinite;
+    }
+    .animation-delay-2000 {
+        animation-delay: 2s;
+    }
+    .animation-delay-4000 {
+        animation-delay: 4s;
+    }
+    @keyframes blob {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+</style>
+@endpush
+
 @section('content')
-<!-- Breadcrumb -->
-<div class="mb-6">
-    <a href="{{ route('admin.products.index') }}" class="text-primary-600 hover:underline flex items-center">
-        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
-        กลับไปรายการผลิตภัณฑ์
-    </a>
+<!-- Premium Header Banner -->
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-500 p-8 shadow-2xl mb-8">
+    <div class="absolute top-0 left-0 w-72 h-72 bg-sky-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+    <div class="absolute top-0 right-0 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+    <div class="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    <div class="relative">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <a href="{{ route('admin.products.index') }}" class="text-white/80 hover:text-white flex items-center mb-2 transition-colors">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    กลับไปรายการผลิตภัณฑ์
+                </a>
+                <h2 class="text-3xl font-bold text-white mb-2">{{ $product->name }}</h2>
+                <p class="text-blue-100">จัดการเวอร์ชันและการอัปเดตผลิตภัณฑ์</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                    <span class="text-white font-semibold">v{{ $product->latestVersion()?->version ?? 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Stats Cards -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center">
-            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+            <div class="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                 </svg>
             </div>
             <div class="ml-4">
-                <p class="text-sm text-gray-500">จำนวนเวอร์ชัน</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $product->versions->count() }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">จำนวนเวอร์ชัน</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $product->versions->count() }}</p>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center">
-            <div class="p-3 rounded-full bg-green-100 text-green-600">
+            <div class="p-3 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
             <div class="ml-4">
-                <p class="text-sm text-gray-500">เวอร์ชันล่าสุด</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $product->latestVersion()?->version ?? 'N/A' }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">เวอร์ชันล่าสุด</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $product->latestVersion()?->version ?? 'N/A' }}</p>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center">
-            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+            <div class="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 text-white shadow-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
             </div>
             <div class="ml-4">
-                <p class="text-sm text-gray-500">ดาวน์โหลด</p>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($downloadStats) }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">ดาวน์โหลด</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ number_format($downloadStats) }}</p>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-shadow">
         <div class="flex items-center">
-            <div class="p-3 rounded-full {{ $product->githubSetting ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600' }}">
+            <div class="p-3 rounded-xl {{ $product->githubSetting ? 'bg-gradient-to-br from-gray-700 to-gray-900' : 'bg-gradient-to-br from-gray-400 to-gray-500' }} text-white shadow-lg">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
                 </svg>
             </div>
             <div class="ml-4">
-                <p class="text-sm text-gray-500">GitHub</p>
-                <p class="text-xl font-bold text-gray-900">{{ $product->githubSetting ? 'เชื่อมต่อแล้ว' : 'ยังไม่ตั้งค่า' }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">GitHub</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ $product->githubSetting ? 'เชื่อมต่อแล้ว' : 'ยังไม่ตั้งค่า' }}</p>
             </div>
         </div>
     </div>
@@ -75,9 +110,9 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <!-- GitHub Settings -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-750">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
                 </svg>
@@ -89,49 +124,49 @@
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Owner</label>
                         <input type="text" name="github_owner" value="{{ $product->githubSetting?->github_owner ?? 'xjanova' }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all"
                                placeholder="username or org">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Repository</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Repository</label>
                         <input type="text" name="github_repo" value="{{ $product->githubSetting?->github_repo ?? '' }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all"
                                placeholder="repo-name">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Personal Access Token</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Personal Access Token</label>
                     <input type="password" name="github_token" value="{{ $product->githubSetting ? '********' : '' }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all"
                            placeholder="ghp_xxxxxxxxxxxx">
-                    <p class="text-xs text-gray-500 mt-1">สร้างที่: GitHub → Settings → Developer settings → Personal access tokens</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">สร้างที่: GitHub → Settings → Developer settings → Personal access tokens</p>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Asset Pattern</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Asset Pattern</label>
                     <input type="text" name="asset_pattern" value="{{ $product->githubSetting?->asset_pattern ?? '*.exe' }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all"
                            placeholder="*.exe, *.zip, *.msi">
-                    <p class="text-xs text-gray-500 mt-1">Pattern สำหรับเลือกไฟล์จาก Release assets</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Pattern สำหรับเลือกไฟล์จาก Release assets</p>
                 </div>
 
                 <div class="flex items-center">
                     <input type="checkbox" name="is_active" id="github_active" value="1"
                            {{ $product->githubSetting?->is_active ?? true ? 'checked' : '' }}
-                           class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
-                    <label for="github_active" class="ml-2 text-sm text-gray-700">เปิดใช้งาน</label>
+                           class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                    <label for="github_active" class="ml-2 text-sm text-gray-700 dark:text-gray-300">เปิดใช้งาน</label>
                 </div>
 
                 <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700">
+                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-xl hover:from-gray-800 hover:to-black transition-all shadow-lg">
                         บันทึก Settings
                     </button>
                     @if($product->githubSetting)
                         <button type="button" onclick="testConnection()"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                class="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg">
                             ทดสอบการเชื่อมต่อ
                         </button>
                     @endif
@@ -141,16 +176,16 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">การดำเนินการ</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-750">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">การดำเนินการ</h3>
         </div>
         <div class="p-6 space-y-4">
             @if($product->githubSetting)
                 <!-- Sync from GitHub -->
                 <form action="{{ route('admin.products.versions.sync', $product) }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <button type="submit" class="w-full flex items-center justify-center px-4 py-3.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
@@ -161,7 +196,7 @@
 
             <!-- Manual Create Version -->
             <button type="button" onclick="showCreateVersionModal()"
-                    class="w-full flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                    class="w-full flex items-center justify-center px-4 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all shadow-lg">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -170,7 +205,7 @@
 
             <!-- View Download Logs -->
             <a href="{{ route('admin.products.versions.logs', $product) }}"
-               class="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+               class="w-full flex items-center justify-center px-4 py-3.5 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all shadow-lg">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
@@ -181,116 +216,121 @@
 </div>
 
 <!-- Versions Table -->
-<div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="p-6 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-900">รายการเวอร์ชัน</h3>
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-750">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">รายการเวอร์ชัน</h3>
     </div>
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เวอร์ชัน</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ไฟล์</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ขนาด</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sync เมื่อ</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-            @forelse($product->versions as $version)
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="text-lg font-semibold text-gray-900">v{{ $version->version }}</span>
-                        @if($version->is_active)
-                            <span class="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                ล่าสุด
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">เวอร์ชัน</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ไฟล์</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ขนาด</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sync เมื่อ</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">สถานะ</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">การดำเนินการ</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                @forelse($product->versions as $version)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-lg font-semibold text-gray-900 dark:text-white">v{{ $version->version }}</span>
+                            @if($version->is_active)
+                                <span class="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 dark:from-green-900/30 dark:to-emerald-900/30 dark:text-green-400">
+                                    ล่าสุด
+                                </span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ $version->download_filename ?? 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ $version->file_size_formatted }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ $version->synced_at?->format('d/m/Y H:i') ?? '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full {{ $version->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400' }}">
+                                {{ $version->is_active ? 'Active' : 'Inactive' }}
                             </span>
-                        @endif
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ $version->download_filename ?? 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ $version->file_size_formatted }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ $version->synced_at?->format('d/m/Y H:i') ?? '-' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $version->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                            {{ $version->is_active ? 'Active' : 'Inactive' }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        @if($version->changelog)
-                            <button type="button" onclick="showChangelog('{{ addslashes($version->version) }}', `{{ addslashes($version->changelog) }}`)"
-                                    class="text-blue-600 hover:underline mr-3">Changelog</button>
-                        @endif
-                        <form action="{{ route('admin.products.versions.toggle', [$product, $version]) }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" class="{{ $version->is_active ? 'text-yellow-600' : 'text-green-600' }} hover:underline mr-3">
-                                {{ $version->is_active ? 'Deactivate' : 'Activate' }}
-                            </button>
-                        </form>
-                        <form action="{{ route('admin.products.versions.destroy', [$product, $version]) }}" method="POST" class="inline"
-                              onsubmit="return confirm('ยืนยันการลบเวอร์ชันนี้?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:underline">ลบ</button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                        ยังไม่มีเวอร์ชัน - Sync จาก GitHub หรือสร้างใหม่
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            @if($version->changelog)
+                                <button type="button" onclick="showChangelog('{{ addslashes($version->version) }}', `{{ addslashes($version->changelog) }}`)"
+                                        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-3 transition-colors">Changelog</button>
+                            @endif
+                            <form action="{{ route('admin.products.versions.toggle', [$product, $version]) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" class="{{ $version->is_active ? 'text-yellow-600 hover:text-yellow-800 dark:text-yellow-400' : 'text-green-600 hover:text-green-800 dark:text-green-400' }} mr-3 transition-colors">
+                                    {{ $version->is_active ? 'Deactivate' : 'Activate' }}
+                                </button>
+                            </form>
+                            <form action="{{ route('admin.products.versions.destroy', [$product, $version]) }}" method="POST" class="inline"
+                                  onsubmit="return confirm('ยืนยันการลบเวอร์ชันนี้?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors">ลบ</button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            ยังไม่มีเวอร์ชัน - Sync จาก GitHub หรือสร้างใหม่
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Create Version Modal -->
-<div id="createVersionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">สร้างเวอร์ชันใหม่</h3>
+<div id="createVersionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">สร้างเวอร์ชันใหม่</h3>
         </div>
         <form action="{{ route('admin.products.versions.create', $product) }}" method="POST" class="p-6">
             @csrf
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">เวอร์ชัน</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">เวอร์ชัน</label>
                     <input type="text" name="version" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                            placeholder="1.0.0">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Download URL (optional)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Download URL (optional)</label>
                     <input type="url" name="download_url"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                            placeholder="https://...">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Filename (optional)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filename (optional)</label>
                     <input type="text" name="download_filename"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                            placeholder="app-setup.exe">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Changelog</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Changelog</label>
                     <textarea name="changelog" rows="4"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                              class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                               placeholder="รายละเอียดการอัปเดต..."></textarea>
                 </div>
             </div>
             <div class="flex gap-2 mt-6">
-                <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all shadow-lg">
                     สร้างเวอร์ชัน
                 </button>
                 <button type="button" onclick="hideCreateVersionModal()"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        class="px-5 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all">
                     ยกเลิก
                 </button>
             </div>
@@ -299,18 +339,18 @@
 </div>
 
 <!-- Changelog Modal -->
-<div id="changelogModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-900" id="changelogTitle">Changelog</h3>
-            <button type="button" onclick="hideChangelog()" class="text-gray-500 hover:text-gray-700">
+<div id="changelogModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 border border-gray-200 dark:border-gray-700">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="changelogTitle">Changelog</h3>
+            <button type="button" onclick="hideChangelog()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
         <div class="p-6">
-            <pre id="changelogContent" class="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded-lg"></pre>
+            <pre id="changelogContent" class="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl max-h-96 overflow-y-auto"></pre>
         </div>
     </div>
 </div>

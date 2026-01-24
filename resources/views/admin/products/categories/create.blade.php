@@ -3,21 +3,70 @@
 @section('title', 'เพิ่มหมวดหมู่ผลิตภัณฑ์')
 @section('page-title', 'เพิ่มหมวดหมู่ผลิตภัณฑ์')
 
+@push('styles')
+<style>
+    .animate-blob {
+        animation: blob 7s infinite;
+    }
+    .animation-delay-2000 {
+        animation-delay: 2s;
+    }
+    .animation-delay-4000 {
+        animation-delay: 4s;
+    }
+    @keyframes blob {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+</style>
+@endpush
+
 @section('content')
+<!-- Premium Header Banner -->
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 p-8 shadow-2xl mb-8">
+    <div class="absolute top-0 left-0 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+    <div class="absolute top-0 right-0 w-72 h-72 bg-fuchsia-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+    <div class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    <div class="relative">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-4">
+                <a href="{{ route('admin.products.categories.index') }}" class="p-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <div>
+                    <h2 class="text-3xl font-bold text-white mb-2">เพิ่มหมวดหมู่ผลิตภัณฑ์</h2>
+                    <p class="text-purple-100">สร้างหมวดหมู่ใหม่สำหรับจัดกลุ่มผลิตภัณฑ์</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <form action="{{ route('admin.products.categories.store') }}" method="POST" class="space-y-6">
     @csrf
 
     <div class="max-w-2xl mx-auto">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">ข้อมูลหมวดหมู่</h3>
+        <!-- Category Info -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <span class="w-8 h-8 bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                </span>
+                ข้อมูลหมวดหมู่
+            </h3>
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         ชื่อหมวดหมู่ <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="name" value="{{ old('name') }}" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('name') border-red-500 @enderror"
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all @error('name') border-red-500 @enderror"
                            placeholder="เช่น Trading Bots, Automation Tools">
                     @error('name')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -25,24 +74,24 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         ไอคอน (Emoji)
                     </label>
                     <input type="text" name="icon" value="{{ old('icon') }}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('icon') border-red-500 @enderror"
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all @error('icon') border-red-500 @enderror"
                            placeholder="เช่น 📊, 🤖, 💻">
-                    <p class="mt-1 text-sm text-gray-500">ใช้ Emoji สำหรับแสดงเป็นไอคอนหมวดหมู่</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ใช้ Emoji สำหรับแสดงเป็นไอคอนหมวดหมู่</p>
                     @error('icon')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         คำอธิบาย
                     </label>
                     <textarea name="description" rows="3"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('description') border-red-500 @enderror"
+                              class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all @error('description') border-red-500 @enderror"
                               placeholder="คำอธิบายสั้นๆ เกี่ยวกับหมวดหมู่นี้">{{ old('description') }}</textarea>
                     @error('description')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -50,35 +99,43 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         ลำดับการแสดง
                     </label>
                     <input type="number" name="order" value="{{ old('order', 0) }}" min="0"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('order') border-red-500 @enderror">
-                    <p class="mt-1 text-sm text-gray-500">ตัวเลขน้อยจะแสดงก่อน</p>
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all @error('order') border-red-500 @enderror">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ตัวเลขน้อยจะแสดงก่อน</p>
                     @error('order')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label class="flex items-center">
+                    <label class="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
                         <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}
-                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                        <span class="ml-2 text-sm text-gray-700">เปิดใช้งาน</span>
+                               class="rounded border-gray-300 dark:border-gray-600 text-purple-600 focus:ring-purple-500">
+                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-white">เปิดใช้งาน</span>
                     </label>
                 </div>
             </div>
         </div>
 
         <!-- Preview -->
-        <div class="bg-white rounded-lg shadow p-6 mt-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">ตัวอย่าง</h3>
-            <div class="flex items-center p-4 bg-gray-50 rounded-lg" x-data="{ icon: '{{ old('icon', '📦') }}', name: '{{ old('name', 'ชื่อหมวดหมู่') }}' }">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 mt-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <span class="w-8 h-8 bg-gradient-to-r from-fuchsia-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                </span>
+                ตัวอย่าง
+            </h3>
+            <div class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-700/50 dark:to-purple-900/20 rounded-xl" x-data="{ icon: '{{ old('icon', '📦') }}', name: '{{ old('name', 'ชื่อหมวดหมู่') }}' }">
                 <span class="text-3xl mr-4" x-text="$refs.iconInput?.value || '📦'"></span>
                 <div>
-                    <div class="font-medium text-gray-900" x-text="$refs.nameInput?.value || 'ชื่อหมวดหมู่'"></div>
-                    <div class="text-sm text-gray-500">0 ผลิตภัณฑ์</div>
+                    <div class="font-medium text-gray-900 dark:text-white" x-text="$refs.nameInput?.value || 'ชื่อหมวดหมู่'"></div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">0 ผลิตภัณฑ์</div>
                 </div>
             </div>
         </div>
@@ -86,11 +143,14 @@
         <!-- Actions -->
         <div class="flex justify-end gap-4 mt-6">
             <a href="{{ route('admin.products.categories.index') }}"
-               class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+               class="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                 ยกเลิก
             </a>
             <button type="submit"
-                    class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                    class="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white rounded-xl hover:from-purple-600 hover:to-fuchsia-600 transition-all shadow-lg flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
                 บันทึก
             </button>
         </div>
