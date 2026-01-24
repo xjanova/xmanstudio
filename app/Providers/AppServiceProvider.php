@@ -29,6 +29,19 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting(): void
     {
+        // Default API rate limiter (required for throttleApi middleware)
+        RateLimiter::for('api', function ($request) {
+            return Limit::perMinute(60)
+                ->by($request->user()?->id ?: $request->ip())
+                ->response(function () {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Too many API requests. Please wait before trying again.',
+                        'code' => 'RATE_LIMIT_EXCEEDED',
+                    ], 429);
+                });
+        });
+
         RateLimiter::for('ai-operations', function ($request) {
             return Limit::perMinute(10)
                 ->by($request->user()?->id ?: $request->ip())
