@@ -327,6 +327,16 @@
                     <span class="text-indigo-100">การสมัครสมาชิก</span>
                 </a>
 
+                <a href="{{ route('user.wallet.index') }}"
+                   class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('user.wallet*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100">กระเป๋าเงิน</span>
+                </a>
+
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider">ธุรกรรม</p>
 
                 <a href="{{ route('customer.orders') }}"
@@ -576,6 +586,15 @@
                         </svg>
                     </div>
                     <span class="text-indigo-100">การสมัครสมาชิก</span>
+                </a>
+
+                <a href="{{ route('user.wallet.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('user.wallet*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100">กระเป๋าเงิน</span>
                 </a>
 
                 <div class="pt-2 pb-1">

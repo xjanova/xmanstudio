@@ -98,6 +98,14 @@
                     การสมัครสมาชิก
                 </a>
 
+                <a href="{{ route('user.wallet.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('user.wallet*') ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-teal-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-500 hover:text-white hover:shadow-lg hover:shadow-teal-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    กระเป๋าเงิน
+                </a>
+
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">ธุรกรรม</p>
 
                 <a href="{{ route('customer.orders') }}"
@@ -325,6 +333,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
                     การสมัครสมาชิก
+                </a>
+                <a href="{{ route('user.wallet.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('user.wallet*') ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-teal-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-500 hover:text-white hover:shadow-lg' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    กระเป๋าเงิน
                 </a>
 
                 <div class="pt-2 pb-1">
