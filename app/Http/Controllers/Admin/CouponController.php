@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Product;
-use App\Models\Category;
 use Illuminate\Http\Request;
 
 class CouponController extends Controller
@@ -111,7 +111,7 @@ class CouponController extends Controller
     public function update(Request $request, Coupon $coupon)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:coupons,code,' . $coupon->id,
+            'code' => 'required|string|max:50|unique:coupons,code,'.$coupon->id,
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'discount_type' => 'required|in:percentage,fixed',
@@ -150,7 +150,7 @@ class CouponController extends Controller
 
     public function toggle(Coupon $coupon)
     {
-        $coupon->update(['is_active' => !$coupon->is_active]);
+        $coupon->update(['is_active' => ! $coupon->is_active]);
 
         $status = $coupon->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
 

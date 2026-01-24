@@ -24,10 +24,15 @@ class ProductDevice extends Model
 
     // Status constants
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_TRIAL = 'trial';
+
     public const STATUS_LICENSED = 'licensed';
+
     public const STATUS_BLOCKED = 'blocked';
+
     public const STATUS_EXPIRED = 'expired';
+
     public const STATUS_DEMO = 'demo';
 
     protected $fillable = [
@@ -91,7 +96,7 @@ class ProductDevice extends Model
             return false;
         }
 
-        if ($this->status === self::STATUS_TRIAL && !$this->isTrialExpired()) {
+        if ($this->status === self::STATUS_TRIAL && ! $this->isTrialExpired()) {
             return false;
         }
 
@@ -115,7 +120,7 @@ class ProductDevice extends Model
      */
     public function isTrialExpired(): bool
     {
-        if (!$this->trial_expires_at) {
+        if (! $this->trial_expires_at) {
             return true;
         }
 
@@ -127,7 +132,7 @@ class ProductDevice extends Model
      */
     public function trialDaysRemaining(): int
     {
-        if (!$this->trial_expires_at || $this->isTrialExpired()) {
+        if (! $this->trial_expires_at || $this->isTrialExpired()) {
             return 0;
         }
 
@@ -155,7 +160,7 @@ class ProductDevice extends Model
      */
     public function findRelatedByHardware(): \Illuminate\Database\Eloquent\Collection
     {
-        if (!$this->hardware_hash) {
+        if (! $this->hardware_hash) {
             return collect();
         }
 
@@ -245,7 +250,7 @@ class ProductDevice extends Model
      */
     public function startTrial(int $days = 7): bool
     {
-        if (!$this->canStartTrial()) {
+        if (! $this->canStartTrial()) {
             return false;
         }
 
@@ -326,7 +331,7 @@ class ProductDevice extends Model
             return false;
         }
 
-        return $this->status === self::STATUS_TRIAL && !$this->isTrialExpired();
+        return $this->status === self::STATUS_TRIAL && ! $this->isTrialExpired();
     }
 
     /**

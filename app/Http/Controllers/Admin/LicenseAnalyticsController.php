@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\Product;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -48,7 +47,7 @@ class LicenseAnalyticsController extends Controller
 
         // Licenses created over time (for chart)
         $licensesOverTime = LicenseKey::query()
-            ->when($productId, fn($q) => $q->where('product_id', $productId))
+            ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->where('created_at', '>=', $startDate)
             ->select(
                 DB::raw('DATE(created_at) as date'),
@@ -70,7 +69,7 @@ class LicenseAnalyticsController extends Controller
         // Activations over time
         $activationsOverTime = LicenseActivity::query()
             ->when($productId, function ($q) use ($productId) {
-                $q->whereHas('license', fn($lq) => $lq->where('product_id', $productId));
+                $q->whereHas('license', fn ($lq) => $lq->where('product_id', $productId));
             })
             ->where('action', LicenseActivity::ACTION_ACTIVATED)
             ->where('created_at', '>=', $startDate)
@@ -92,7 +91,7 @@ class LicenseAnalyticsController extends Controller
 
         // License types distribution
         $typeDistribution = LicenseKey::query()
-            ->when($productId, fn($q) => $q->where('product_id', $productId))
+            ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->select('license_type', DB::raw('COUNT(*) as count'))
             ->groupBy('license_type')
             ->pluck('count', 'license_type')
@@ -100,7 +99,7 @@ class LicenseAnalyticsController extends Controller
 
         // Status distribution
         $statusDistribution = LicenseKey::query()
-            ->when($productId, fn($q) => $q->where('product_id', $productId))
+            ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
@@ -118,7 +117,7 @@ class LicenseAnalyticsController extends Controller
         // Recent activities
         $recentActivities = LicenseActivity::with(['license', 'user'])
             ->when($productId, function ($q) use ($productId) {
-                $q->whereHas('license', fn($lq) => $lq->where('product_id', $productId));
+                $q->whereHas('license', fn ($lq) => $lq->where('product_id', $productId));
             })
             ->latest()
             ->limit(20)
@@ -127,7 +126,7 @@ class LicenseAnalyticsController extends Controller
         // Activity by type (last 30 days)
         $activityByType = LicenseActivity::query()
             ->when($productId, function ($q) use ($productId) {
-                $q->whereHas('license', fn($lq) => $lq->where('product_id', $productId));
+                $q->whereHas('license', fn ($lq) => $lq->where('product_id', $productId));
             })
             ->where('created_at', '>=', $startDate)
             ->select('action', DB::raw('COUNT(*) as count'))
@@ -174,7 +173,7 @@ class LicenseAnalyticsController extends Controller
 
         // Revenue by type
         $typeQuery = LicenseKey::query()
-            ->when($productId, fn($q) => $q->where('product_id', $productId))
+            ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->where('created_at', '>=', $startDate);
 
         $revenueByType = [];
@@ -197,7 +196,7 @@ class LicenseAnalyticsController extends Controller
 
             foreach ($prices as $type => $price) {
                 $count = LicenseKey::query()
-                    ->when($productId, fn($q) => $q->where('product_id', $productId))
+                    ->when($productId, fn ($q) => $q->where('product_id', $productId))
                     ->where('license_type', $type)
                     ->whereDate('created_at', $date)
                     ->count();
@@ -223,7 +222,7 @@ class LicenseAnalyticsController extends Controller
         $limit = $request->get('limit', 50);
 
         $activities = LicenseActivity::with('user')
-            ->when($licenseId, fn($q) => $q->where('license_id', $licenseId))
+            ->when($licenseId, fn ($q) => $q->where('license_id', $licenseId))
             ->latest()
             ->limit($limit)
             ->get()

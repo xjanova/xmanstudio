@@ -49,9 +49,9 @@ class LicenseController extends Controller
         // Filter expiring soon (within 7 days)
         if ($request->filled('expiring_soon') && $request->expiring_soon === 'yes') {
             $query->where('license_type', '!=', 'lifetime')
-                  ->whereNotNull('expires_at')
-                  ->where('expires_at', '>', now())
-                  ->where('expires_at', '<=', now()->addDays(7));
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '>', now())
+                ->where('expires_at', '<=', now()->addDays(7));
         }
 
         // Filter by created date range
@@ -67,7 +67,7 @@ class LicenseController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('license_key', 'like', '%'.$search.'%')
-                  ->orWhere('machine_id', 'like', '%'.$search.'%');
+                    ->orWhere('machine_id', 'like', '%'.$search.'%');
             });
         }
 
@@ -425,13 +425,13 @@ class LicenseController extends Controller
 
         $licenses = $query->get();
 
-        $filename = 'licenses_' . now()->format('Y-m-d_His') . '.csv';
+        $filename = 'licenses_'.now()->format('Y-m-d_His').'.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function() use ($licenses) {
+        $callback = function () use ($licenses) {
             $file = fopen('php://output', 'w');
             // Add BOM for Excel UTF-8 support
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));

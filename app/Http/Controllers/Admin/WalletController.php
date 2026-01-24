@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletBonusTier;
 use App\Models\WalletTopup;

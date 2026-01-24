@@ -38,13 +38,19 @@ class WalletTopup extends Model
     ];
 
     const STATUS_PENDING = 'pending';
+
     const STATUS_APPROVED = 'approved';
+
     const STATUS_REJECTED = 'rejected';
+
     const STATUS_EXPIRED = 'expired';
 
     const METHOD_BANK_TRANSFER = 'bank_transfer';
+
     const METHOD_PROMPTPAY = 'promptpay';
+
     const METHOD_TRUEMONEY = 'truemoney';
+
     const METHOD_CREDIT_CARD = 'credit_card';
 
     public function wallet()
@@ -67,7 +73,7 @@ class WalletTopup extends Model
      */
     public static function generateTopupId(): string
     {
-        return 'TOP' . now()->format('ymd') . strtoupper(Str::random(6));
+        return 'TOP'.now()->format('ymd').strtoupper(Str::random(6));
     }
 
     /**
@@ -84,7 +90,7 @@ class WalletTopup extends Model
             ->orderBy('min_amount', 'desc')
             ->first();
 
-        if (!$tier) {
+        if (! $tier) {
             return 0;
         }
 

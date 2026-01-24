@@ -30,8 +30,8 @@ return new class extends Migration
 
             // Status
             $table->enum('status', ['pending', 'trial', 'licensed', 'blocked', 'expired', 'demo'])
-                  ->default('pending')
-                  ->index();
+                ->default('pending')
+                ->index();
 
             // License reference
             $table->foreignId('license_id')->nullable()->constrained('license_keys')->onDelete('set null');
