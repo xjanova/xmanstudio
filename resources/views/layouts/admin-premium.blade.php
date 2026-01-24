@@ -101,6 +101,161 @@
             background: linear-gradient(180deg, #818cf8, #c084fc);
             border-radius: 3px;
         }
+
+        /* Premium Content Dark Mode Overrides */
+        /* Cards and containers */
+        .bg-white {
+            background: rgba(30, 27, 75, 0.6) !important;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .bg-gray-50 {
+            background: rgba(49, 46, 129, 0.4) !important;
+        }
+
+        .bg-gray-100 {
+            background: rgba(99, 102, 241, 0.2) !important;
+        }
+
+        /* Text colors */
+        .text-gray-900 {
+            color: #e0e7ff !important;
+        }
+
+        .text-gray-800 {
+            color: #c7d2fe !important;
+        }
+
+        .text-gray-700 {
+            color: #a5b4fc !important;
+        }
+
+        .text-gray-600 {
+            color: #a5b4fc !important;
+        }
+
+        .text-gray-500 {
+            color: rgba(165, 180, 252, 0.7) !important;
+        }
+
+        .text-gray-400 {
+            color: rgba(165, 180, 252, 0.5) !important;
+        }
+
+        /* Borders */
+        .border-gray-100,
+        .border-gray-200,
+        .border-gray-300 {
+            border-color: rgba(99, 102, 241, 0.2) !important;
+        }
+
+        .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+        .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+            border-color: rgba(99, 102, 241, 0.2) !important;
+        }
+
+        /* Shadows */
+        .shadow-sm, .shadow, .shadow-md, .shadow-lg {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        /* Hover states */
+        .hover\:bg-gray-50:hover {
+            background: rgba(99, 102, 241, 0.15) !important;
+        }
+
+        .hover\:shadow-md:hover {
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Dashed borders */
+        .border-dashed {
+            border-color: rgba(99, 102, 241, 0.3) !important;
+        }
+
+        .hover\:border-primary-300:hover,
+        .hover\:border-blue-300:hover,
+        .hover\:border-orange-300:hover,
+        .hover\:border-gray-300:hover {
+            border-color: rgba(129, 140, 248, 0.5) !important;
+        }
+
+        .hover\:bg-primary-50:hover,
+        .hover\:bg-blue-50:hover,
+        .hover\:bg-orange-50:hover,
+        .hover\:bg-gray-50:hover {
+            background: rgba(99, 102, 241, 0.15) !important;
+        }
+
+        /* Code blocks */
+        code {
+            background: rgba(99, 102, 241, 0.2) !important;
+            color: #c7d2fe !important;
+        }
+
+        /* Alert/Banner backgrounds */
+        .bg-gradient-to-r.from-red-50,
+        .bg-gradient-to-r.from-amber-50,
+        .bg-gradient-to-r.from-yellow-50 {
+            background: rgba(30, 27, 75, 0.8) !important;
+        }
+
+        /* Table styles */
+        table {
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        th {
+            background: rgba(49, 46, 129, 0.5) !important;
+            color: #c7d2fe !important;
+        }
+
+        td {
+            border-color: rgba(99, 102, 241, 0.2) !important;
+        }
+
+        /* Form inputs */
+        input:not([type="checkbox"]):not([type="radio"]),
+        select,
+        textarea {
+            background: rgba(30, 27, 75, 0.8) !important;
+            border-color: rgba(99, 102, 241, 0.3) !important;
+            color: #e0e7ff !important;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: rgba(129, 140, 248, 0.6) !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: rgba(165, 180, 252, 0.5) !important;
+        }
+
+        /* Labels */
+        label {
+            color: #c7d2fe !important;
+        }
+
+        /* Pagination */
+        .pagination a, .pagination span {
+            background: rgba(30, 27, 75, 0.6) !important;
+            border-color: rgba(99, 102, 241, 0.2) !important;
+            color: #a5b4fc !important;
+        }
+
+        .pagination a:hover {
+            background: rgba(99, 102, 241, 0.3) !important;
+        }
+
+        /* Dropdown menus */
+        [x-show], .dropdown-menu {
+            background: rgba(30, 27, 75, 0.95) !important;
+            border-color: rgba(99, 102, 241, 0.2) !important;
+        }
     </style>
 </head>
 <body class="bg-gray-900 overflow-hidden">
