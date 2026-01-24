@@ -3,22 +3,71 @@
 @section('title', 'แก้ไขเพลย์ลิสต์')
 @section('page-title', 'แก้ไขเพลย์ลิสต์: ' . $playlist->title)
 
+@push('styles')
+<style>
+    .animate-blob {
+        animation: blob 7s infinite;
+    }
+    .animation-delay-2000 {
+        animation-delay: 2s;
+    }
+    .animation-delay-4000 {
+        animation-delay: 4s;
+    }
+    @keyframes blob {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="max-w-4xl">
+<!-- Premium Header Banner -->
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 p-8 shadow-2xl mb-8">
+    <div class="absolute top-0 left-0 w-72 h-72 bg-violet-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+    <div class="absolute top-0 right-0 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+    <div class="absolute -bottom-8 left-20 w-72 h-72 bg-fuchsia-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    <div class="relative">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-4">
+                <a href="{{ route('admin.metal-x.playlists.index') }}" class="p-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <div>
+                    <h2 class="text-3xl font-bold text-white mb-2">แก้ไขเพลย์ลิสต์</h2>
+                    <p class="text-violet-100 truncate max-w-md">{{ $playlist->title }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto">
     <form action="{{ route('admin.metal-x.playlists.update', $playlist) }}" method="POST" class="space-y-6">
         @csrf
         @method('PUT')
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">ข้อมูลเพลย์ลิสต์</h3>
+        <!-- Playlist Info -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <span class="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </span>
+                ข้อมูลเพลย์ลิสต์
+            </h3>
 
             @if($playlist->youtube_id)
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <p class="text-sm text-blue-700">
-                        <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 24 24">
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4 mb-6">
+                    <p class="text-sm text-blue-700 dark:text-blue-400 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
                         </svg>
-                        เชื่อมต่อกับ YouTube: <a href="{{ $playlist->youtube_url }}" target="_blank" class="underline">{{ $playlist->youtube_id }}</a>
+                        เชื่อมต่อกับ YouTube: <a href="{{ $playlist->youtube_url }}" target="_blank" class="underline ml-1 font-medium">{{ $playlist->youtube_id }}</a>
                     </p>
                 </div>
             @endif
@@ -26,85 +75,110 @@
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อเพลย์ลิสต์ (EN) <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ชื่อเพลย์ลิสต์ (EN) <span class="text-red-500">*</span></label>
                         <input type="text" name="title" value="{{ old('title', $playlist->title) }}" required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all @error('title') border-red-500 @enderror">
                         @error('title')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อเพลย์ลิสต์ (TH)</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ชื่อเพลย์ลิสต์ (TH)</label>
                         <input type="text" name="title_th" value="{{ old('title_th', $playlist->title_th) }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียด (EN)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">รายละเอียด (EN)</label>
                     <textarea name="description" rows="3"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">{{ old('description', $playlist->description) }}</textarea>
+                              class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all">{{ old('description', $playlist->description) }}</textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">รายละเอียด (TH)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">รายละเอียด (TH)</label>
                     <textarea name="description_th" rows="3"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">{{ old('description_th', $playlist->description_th) }}</textarea>
+                              class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all">{{ old('description_th', $playlist->description_th) }}</textarea>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">วิดีโอในเพลย์ลิสต์ ({{ count($selectedVideoIds) }} วิดีโอ)</h3>
-            <p class="text-sm text-gray-500 mb-4">เลือกวิดีโอที่ต้องการในเพลย์ลิสต์</p>
+        <!-- Video Selection -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <span class="w-8 h-8 bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                วิดีโอในเพลย์ลิสต์ ({{ count($selectedVideoIds) }} วิดีโอ)
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">เลือกวิดีโอที่ต้องการในเพลย์ลิสต์</p>
 
-            <div class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+            <div class="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-xl">
                 @foreach($allVideos as $video)
-                    <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
+                    <label class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors">
                         <input type="checkbox" name="videos[]" value="{{ $video->id }}"
                                {{ in_array($video->id, old('videos', $selectedVideoIds)) ? 'checked' : '' }}
-                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-3">
-                        <img src="{{ $video->thumbnail_url }}" alt="" class="w-16 h-10 object-cover rounded mr-3">
+                               class="rounded border-gray-300 dark:border-gray-600 text-purple-600 focus:ring-purple-500 mr-3">
+                        <img src="{{ $video->thumbnail_url }}" alt="" class="w-16 h-10 object-cover rounded-lg mr-3">
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">{{ $video->title }}</p>
-                            <p class="text-xs text-gray-500">{{ $video->formatted_view_count }} views</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $video->title }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $video->formatted_view_count }} views</p>
                         </div>
                     </label>
                 @endforeach
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">ตั้งค่าการแสดงผล</h3>
+        <!-- Display Settings -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <span class="w-8 h-8 bg-gradient-to-r from-fuchsia-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </span>
+                ตั้งค่าการแสดงผล
+            </h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">ลำดับ</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ลำดับ</label>
                     <input type="number" name="order" value="{{ old('order', $playlist->order) }}" min="0"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all">
                 </div>
 
-                <div class="flex items-end space-x-6">
-                    <label class="flex items-center">
+                <div class="flex items-end gap-4">
+                    <label class="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer flex-1">
                         <input type="checkbox" name="is_active" value="1" {{ old('is_active', $playlist->is_active) ? 'checked' : '' }}
-                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                        <span class="ml-2 text-sm text-gray-700">เปิดใช้งาน</span>
+                               class="rounded border-gray-300 dark:border-gray-600 text-purple-600 focus:ring-purple-500">
+                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-white">เปิดใช้งาน</span>
                     </label>
 
-                    <label class="flex items-center">
+                    <label class="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer flex-1">
                         <input type="checkbox" name="is_featured" value="1" {{ old('is_featured', $playlist->is_featured) ? 'checked' : '' }}
-                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                        <span class="ml-2 text-sm text-gray-700">แนะนำ</span>
+                               class="rounded border-gray-300 dark:border-gray-600 text-purple-600 focus:ring-purple-500">
+                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-white">แนะนำ</span>
                     </label>
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-end space-x-3">
+        <!-- Actions -->
+        <div class="flex justify-end gap-4">
             <a href="{{ route('admin.metal-x.playlists.index') }}"
-               class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">ยกเลิก</a>
+               class="px-6 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                ยกเลิก
+            </a>
             <button type="submit"
-                    class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">บันทึก</button>
+                    class="px-6 py-2.5 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-xl hover:from-violet-600 hover:to-purple-600 transition-all shadow-lg flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                บันทึก
+            </button>
         </div>
     </form>
 </div>
