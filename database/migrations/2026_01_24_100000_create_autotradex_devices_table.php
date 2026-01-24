@@ -45,6 +45,11 @@ return new class extends Migration
             $table->boolean('is_suspicious')->default(false); // Flag ว่าสงสัยว่า abuse
             $table->text('abuse_reason')->nullable(); // เหตุผลที่สงสัย
 
+            // Early bird discount tracking (20% off during trial - first purchase only)
+            $table->boolean('early_bird_used')->default(false); // ใช้ส่วนลดไปแล้วหรือยัง
+            $table->timestamp('early_bird_used_at')->nullable(); // เวลาที่ใช้ส่วนลด
+            $table->string('early_bird_order_id')->nullable(); // Order ID ที่ใช้ส่วนลด
+
             // Related devices (same IP or similar hardware)
             $table->json('related_devices')->nullable(); // Array of related device IDs
 

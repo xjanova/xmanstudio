@@ -53,6 +53,10 @@ class AutoTradeXDevice extends Model
         'related_devices',
         'first_seen_at',
         'last_seen_at',
+        // Early bird discount tracking
+        'early_bird_used',
+        'early_bird_used_at',
+        'early_bird_order_id',
     ];
 
     protected $casts = [
@@ -62,6 +66,8 @@ class AutoTradeXDevice extends Model
         'last_seen_at' => 'datetime',
         'is_suspicious' => 'boolean',
         'related_devices' => 'array',
+        'early_bird_used' => 'boolean',
+        'early_bird_used_at' => 'datetime',
     ];
 
     /**
@@ -344,6 +350,68 @@ class AutoTradeXDevice extends Model
             'max_exchanges' => 2,
             'reminder_interval_minutes' => 15,
             'demo_message' => 'คุณกำลังใช้งาน Demo Mode - ไม่สามารถเทรดจริงได้ กรุณา Activate License เพื่อใช้งานเต็มรูปแบบ',
+        ];
+    }
+
+    /**
+     * Check if device is eligible for early bird discount
+     * Must be in active trial and not have used discount before
+     */
+    public function isEligibleForEarlyBird(): bool
+    {
+        // Already used discount
+        if ($this->early_bird_used) {
+            return false;
+        }
+
+        // Already licensed
+        if ($this->status === self::STATUS_LICENSED) {
+            return false;
+        }
+
+        // Must be in active trial (not expired)
+        return $this->status === self::STATUS_TRIAL && ! $this->isTrialExpired();
+    }
+
+    /**
+     * Mark early bird discount as used
+     */
+    public function useEarlyBirdDiscount(string $orderId): void
+    {
+        $this->update([
+            'early_bird_used' => true,
+            'early_bird_used_at' => now(),
+            'early_bird_order_id' => $orderId,
+        ]);
+    }
+
+    /**
+     * Get early bird discount info for this device
+     */
+    public function getEarlyBirdInfo(): array
+    {
+        if (! $this->isEligibleForEarlyBird()) {
+            $reason = match (true) {
+                $this->early_bird_used => 'discount_already_used',
+                $this->status === self::STATUS_LICENSED => 'already_licensed',
+                $this->status === self::STATUS_PENDING => 'trial_not_started',
+                default => 'trial_expired',
+            };
+
+            return [
+                'eligible' => false,
+                'reason' => $reason,
+            ];
+        }
+
+        $daysRemaining = $this->trialDaysRemaining();
+
+        return [
+            'eligible' => true,
+            'discount_percent' => 20,
+            'days_remaining' => $daysRemaining,
+            'expires_at' => $this->trial_expires_at?->toISOString(),
+            'message' => "🎉 ซื้อตอนนี้ลด 20%! เหลือเวลาอีก {$daysRemaining} วัน",
         ];
     }
 }

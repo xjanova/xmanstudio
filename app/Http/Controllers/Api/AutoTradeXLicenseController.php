@@ -98,6 +98,34 @@ class AutoTradeXLicenseController extends Controller
     ];
 
     /**
+     * Trial duration in days
+     */
+    private const TRIAL_DAYS = 7;
+
+    /**
+     * Early bird discount (20% off when buying during trial)
+     */
+    private const EARLY_BIRD_DISCOUNT_PERCENT = 20;
+
+    /**
+     * Pricing (THB)
+     */
+    private const PRICING = [
+        'monthly' => [
+            'original' => 299,
+            'currency' => 'THB',
+        ],
+        'yearly' => [
+            'original' => 1990,
+            'currency' => 'THB',
+        ],
+        'lifetime' => [
+            'original' => 4990,
+            'currency' => 'THB',
+        ],
+    ];
+
+    /**
      * Get features based on license type
      */
     private function getFeaturesByType(string $type): array
@@ -197,14 +225,18 @@ class AutoTradeXLicenseController extends Controller
             }
         }
 
-        // Check trial status
+        // Check trial status and early bird discount
         $trialInfo = null;
+        $earlyBirdInfo = null;
         if ($device->status === AutoTradeXDevice::STATUS_TRIAL && ! $device->isTrialExpired()) {
             $trialInfo = [
                 'is_active' => true,
                 'days_remaining' => $device->trialDaysRemaining(),
                 'expires_at' => $device->trial_expires_at->toISOString(),
             ];
+
+            // Check for early bird discount
+            $earlyBirdInfo = $this->checkEarlyBirdDiscount($device);
         }
 
         // Check if should be in demo mode (trial expired)
@@ -221,6 +253,9 @@ class AutoTradeXLicenseController extends Controller
             $demoModeInfo['purchase_url'] = $this->getPurchaseUrlForDevice($device);
         }
 
+        // Get pricing info with potential discount
+        $pricingInfo = $this->getPricingForDevice($device);
+
         return response()->json([
             'success' => true,
             'message' => $isNew ? 'Device registered successfully' : 'Device updated',
@@ -235,6 +270,9 @@ class AutoTradeXLicenseController extends Controller
                 // Demo mode info
                 'is_demo_mode' => $isDemoMode,
                 'demo_mode' => $demoModeInfo,
+                // Early bird discount info
+                'early_bird' => $earlyBirdInfo,
+                'pricing' => $pricingInfo,
             ],
         ]);
     }
@@ -245,8 +283,121 @@ class AutoTradeXLicenseController extends Controller
     private function getPurchaseUrlForDevice(AutoTradeXDevice $device): string
     {
         $baseUrl = config('app.url');
+        $machineIdShort = substr($device->machine_id, 0, 16);
 
-        return "{$baseUrl}/autotradex/buy?machine_id=".substr($device->machine_id, 0, 16);
+        // Check if eligible for early bird discount
+        $discountInfo = $this->checkEarlyBirdDiscount($device);
+
+        if ($discountInfo['eligible']) {
+            return "{$baseUrl}/autotradex/buy?machine_id={$machineIdShort}&discount=earlybird&code={$discountInfo['code']}";
+        }
+
+        return "{$baseUrl}/autotradex/buy?machine_id={$machineIdShort}";
+    }
+
+    /**
+     * Check if device is eligible for early bird discount
+     * Discount is available only during active trial and only once per device
+     */
+    private function checkEarlyBirdDiscount(AutoTradeXDevice $device): array
+    {
+        // Not eligible if device has already used discount
+        if ($device->early_bird_used ?? false) {
+            return [
+                'eligible' => false,
+                'reason' => 'discount_already_used',
+            ];
+        }
+
+        // Not eligible if device already has a license (not first purchase)
+        if ($device->status === AutoTradeXDevice::STATUS_LICENSED) {
+            return [
+                'eligible' => false,
+                'reason' => 'already_licensed',
+            ];
+        }
+
+        // Eligible if in active trial (not expired)
+        if ($device->status === AutoTradeXDevice::STATUS_TRIAL && ! $device->isTrialExpired()) {
+            $daysRemaining = $device->trialDaysRemaining();
+            $discountCode = $this->generateDiscountCode($device->machine_id);
+
+            return [
+                'eligible' => true,
+                'discount_percent' => self::EARLY_BIRD_DISCOUNT_PERCENT,
+                'days_remaining' => $daysRemaining,
+                'code' => $discountCode,
+                'message' => "🎉 ซื้อตอนนี้ลด {self::EARLY_BIRD_DISCOUNT_PERCENT}%! เหลือเวลาอีก {$daysRemaining} วัน",
+                'expires_at' => $device->trial_expires_at?->toISOString(),
+            ];
+        }
+
+        // Not eligible - trial expired or not started
+        return [
+            'eligible' => false,
+            'reason' => $device->status === AutoTradeXDevice::STATUS_PENDING ? 'trial_not_started' : 'trial_expired',
+        ];
+    }
+
+    /**
+     * Generate unique discount code for a device
+     */
+    private function generateDiscountCode(string $machineId): string
+    {
+        $data = $machineId.config('app.key').date('Ymd');
+
+        return 'EARLY'.strtoupper(substr(hash('sha256', $data), 0, 8));
+    }
+
+    /**
+     * Validate discount code for a device
+     */
+    public function validateDiscountCode(string $code, string $machineId): bool
+    {
+        $expectedCode = $this->generateDiscountCode($machineId);
+
+        return hash_equals($expectedCode, $code);
+    }
+
+    /**
+     * Get pricing with optional early bird discount
+     */
+    private function getPricingForDevice(AutoTradeXDevice $device): array
+    {
+        $discountInfo = $this->checkEarlyBirdDiscount($device);
+        $pricing = [];
+
+        foreach (self::PRICING as $plan => $priceInfo) {
+            $originalPrice = $priceInfo['original'];
+            $finalPrice = $originalPrice;
+            $discount = null;
+
+            if ($discountInfo['eligible']) {
+                $discountAmount = $originalPrice * (self::EARLY_BIRD_DISCOUNT_PERCENT / 100);
+                $finalPrice = $originalPrice - $discountAmount;
+                $discount = [
+                    'percent' => self::EARLY_BIRD_DISCOUNT_PERCENT,
+                    'amount' => $discountAmount,
+                    'code' => $discountInfo['code'],
+                ];
+            }
+
+            $pricing[$plan] = [
+                'original_price' => $originalPrice,
+                'final_price' => $finalPrice,
+                'currency' => $priceInfo['currency'],
+                'discount' => $discount,
+                'features' => $this->getFeaturesByType($plan === 'monthly' ? LicenseKey::TYPE_MONTHLY :
+                    ($plan === 'yearly' ? LicenseKey::TYPE_YEARLY : LicenseKey::TYPE_LIFETIME)),
+                'exchanges' => $this->getExchangesByType($plan === 'monthly' ? LicenseKey::TYPE_MONTHLY :
+                    ($plan === 'yearly' ? LicenseKey::TYPE_YEARLY : LicenseKey::TYPE_LIFETIME)),
+            ];
+        }
+
+        return [
+            'plans' => $pricing,
+            'early_bird' => $discountInfo,
+        ];
     }
 
     /**
