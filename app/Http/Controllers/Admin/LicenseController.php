@@ -36,9 +36,38 @@ class LicenseController extends Controller
             $query->where('license_type', $request->type);
         }
 
-        // Search by license key
+        // Filter by activation status
+        if ($request->filled('activated')) {
+            if ($request->activated === 'yes') {
+                $query->whereNotNull('machine_id');
+            } else {
+                $query->whereNull('machine_id');
+            }
+        }
+
+        // Filter expiring soon (within 7 days)
+        if ($request->filled('expiring_soon') && $request->expiring_soon === 'yes') {
+            $query->where('license_type', '!=', 'lifetime')
+                  ->whereNotNull('expires_at')
+                  ->where('expires_at', '>', now())
+                  ->where('expires_at', '<=', now()->addDays(7));
+        }
+
+        // Filter by created date range
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Search by license key or machine_id
         if ($request->filled('search')) {
-            $query->where('license_key', 'like', '%'.$request->search.'%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('license_key', 'like', '%'.$search.'%')
+                  ->orWhere('machine_id', 'like', '%'.$search.'%');
+            });
         }
 
         $licenses = $query->paginate(20)->withQueryString();
@@ -46,13 +75,24 @@ class LicenseController extends Controller
         // Get products for filter dropdown
         $products = Product::where('requires_license', true)->get();
 
-        // Stats
+        // Stats - filtered by product if selected
+        $statsQuery = LicenseKey::query();
+        if ($request->filled('product_id')) {
+            $statsQuery->where('product_id', $request->product_id);
+        }
+
         $stats = [
-            'total' => LicenseKey::count(),
-            'active' => LicenseKey::where('status', LicenseKey::STATUS_ACTIVE)->count(),
-            'expired' => LicenseKey::where('status', LicenseKey::STATUS_EXPIRED)->count(),
-            'revoked' => LicenseKey::where('status', LicenseKey::STATUS_REVOKED)->count(),
-            'activated' => LicenseKey::whereNotNull('machine_id')->count(),
+            'total' => (clone $statsQuery)->count(),
+            'active' => (clone $statsQuery)->where('status', LicenseKey::STATUS_ACTIVE)->count(),
+            'expired' => (clone $statsQuery)->where('status', LicenseKey::STATUS_EXPIRED)->count(),
+            'revoked' => (clone $statsQuery)->where('status', LicenseKey::STATUS_REVOKED)->count(),
+            'activated' => (clone $statsQuery)->whereNotNull('machine_id')->count(),
+            'expiring_soon' => (clone $statsQuery)
+                ->where('license_type', '!=', 'lifetime')
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '>', now())
+                ->where('expires_at', '<=', now()->addDays(7))
+                ->count(),
         ];
 
         return view('admin.licenses.index', compact('licenses', 'products', 'stats'));
@@ -168,5 +208,151 @@ class LicenseController extends Controller
         return redirect()
             ->back()
             ->with('success', "ขยายเวลา License '{$license->license_key}' ไปถึง {$newExpiry->format('d/m/Y')}");
+    }
+
+    /**
+     * Delete a license
+     */
+    public function destroy(LicenseKey $license)
+    {
+        $key = $license->license_key;
+        $license->delete();
+
+        return redirect()
+            ->route('admin.licenses.index')
+            ->with('success', "ลบ License '{$key}' เรียบร้อยแล้ว");
+    }
+
+    /**
+     * Bulk revoke licenses
+     */
+    public function bulkRevoke(Request $request)
+    {
+        $request->validate([
+            'license_ids' => 'required|array|min:1',
+            'license_ids.*' => 'exists:license_keys,id',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $count = LicenseKey::whereIn('id', $request->license_ids)
+            ->where('status', LicenseKey::STATUS_ACTIVE)
+            ->update([
+                'status' => LicenseKey::STATUS_REVOKED,
+                'revoke_reason' => $request->reason,
+            ]);
+
+        return redirect()
+            ->back()
+            ->with('success', "ยกเลิก {$count} License(s) เรียบร้อยแล้ว");
+    }
+
+    /**
+     * Bulk extend licenses
+     */
+    public function bulkExtend(Request $request)
+    {
+        $request->validate([
+            'license_ids' => 'required|array|min:1',
+            'license_ids.*' => 'exists:license_keys,id',
+            'days' => 'required|integer|min:1|max:365',
+        ]);
+
+        $count = 0;
+        $licenses = LicenseKey::whereIn('id', $request->license_ids)->get();
+
+        foreach ($licenses as $license) {
+            if ($license->license_type !== 'lifetime') {
+                $newExpiry = $license->expires_at
+                    ? $license->expires_at->addDays($request->days)
+                    : now()->addDays($request->days);
+
+                $license->update([
+                    'expires_at' => $newExpiry,
+                    'status' => LicenseKey::STATUS_ACTIVE,
+                ]);
+                $count++;
+            }
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', "ขยายเวลา {$count} License(s) เรียบร้อยแล้ว");
+    }
+
+    /**
+     * Bulk delete licenses
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'license_ids' => 'required|array|min:1',
+            'license_ids.*' => 'exists:license_keys,id',
+        ]);
+
+        $count = LicenseKey::whereIn('id', $request->license_ids)->delete();
+
+        return redirect()
+            ->back()
+            ->with('success', "ลบ {$count} License(s) เรียบร้อยแล้ว");
+    }
+
+    /**
+     * Export licenses to CSV
+     */
+    public function export(Request $request)
+    {
+        $query = LicenseKey::with('product')->latest();
+
+        // Apply same filters as index
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('type')) {
+            $query->where('license_type', $request->type);
+        }
+
+        $licenses = $query->get();
+
+        $filename = 'licenses_' . now()->format('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($licenses) {
+            $file = fopen('php://output', 'w');
+            // Add BOM for Excel UTF-8 support
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Headers
+            fputcsv($file, [
+                'License Key',
+                'Product',
+                'Type',
+                'Status',
+                'Machine ID',
+                'Expires At',
+                'Created At',
+            ]);
+
+            foreach ($licenses as $license) {
+                fputcsv($file, [
+                    $license->license_key,
+                    $license->product?->name ?? '-',
+                    ucfirst($license->license_type),
+                    ucfirst($license->status),
+                    $license->machine_id ?? '-',
+                    $license->license_type === 'lifetime' ? 'Lifetime' : ($license->expires_at?->format('d/m/Y') ?? '-'),
+                    $license->created_at?->format('d/m/Y H:i'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

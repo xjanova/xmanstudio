@@ -320,6 +320,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // License Management
     Route::get('/licenses', [AdminLicenseController::class, 'index'])->name('licenses.index');
+    Route::get('/licenses/export', [AdminLicenseController::class, 'export'])->name('licenses.export');
     Route::get('/licenses/create', [AdminLicenseController::class, 'create'])->name('licenses.create');
     Route::post('/licenses', [AdminLicenseController::class, 'store'])->name('licenses.store');
     Route::get('/licenses/{license}', [AdminLicenseController::class, 'show'])->name('licenses.show');
@@ -328,6 +329,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/licenses/{license}/reset-machine', [AdminLicenseController::class, 'resetMachine'])->name('licenses.reset-machine');
     Route::post('/licenses/{license}/extend', [AdminLicenseController::class, 'extend'])->name('licenses.extend');
     Route::delete('/licenses/{license}', [AdminLicenseController::class, 'destroy'])->name('licenses.destroy');
+    Route::post('/licenses/bulk-revoke', [AdminLicenseController::class, 'bulkRevoke'])->name('licenses.bulk-revoke');
+    Route::post('/licenses/bulk-extend', [AdminLicenseController::class, 'bulkExtend'])->name('licenses.bulk-extend');
+    Route::post('/licenses/bulk-delete', [AdminLicenseController::class, 'bulkDelete'])->name('licenses.bulk-delete');
 
     // Device Management
     Route::get('/devices', [AdminDeviceController::class, 'index'])->name('devices.index');
