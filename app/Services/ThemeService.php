@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 class ThemeService
@@ -13,13 +14,19 @@ class ThemeService
     public const THEMES = [
         'classic' => [
             'name' => 'Classic',
-            'description' => 'ธีมคลาสสิก เรียบง่าย',
+            'description' => 'ธีมคลาสสิก เรียบง่าย สะอาดตา',
             'preview' => '/images/themes/classic-preview.png',
+            'features' => ['เรียบง่าย', 'โหลดเร็ว', 'Light Mode'],
+            'icon' => 'sun',
+            'gradient' => 'from-gray-200 to-gray-400',
         ],
         'premium' => [
             'name' => 'Premium',
-            'description' => 'ธีมพรีเมียม ทันสมัย พร้อม animation',
+            'description' => 'ธีมพรีเมียม ทันสมัย พร้อม animation สวยงาม',
             'preview' => '/images/themes/premium-preview.png',
+            'features' => ['Animations', 'Gradients', 'Dark Mode'],
+            'icon' => 'sparkles',
+            'gradient' => 'from-indigo-500 to-purple-600',
         ],
     ];
 
@@ -29,13 +36,42 @@ class ThemeService
     public const DEFAULT_THEME = 'classic';
 
     /**
-     * Get current theme
+     * Get site default theme
      */
-    public static function getCurrentTheme(): string
+    public static function getSiteDefaultTheme(): string
     {
         return Cache::remember('site_theme', 3600, function () {
             return Setting::getValue('site_theme', self::DEFAULT_THEME);
         });
+    }
+
+    /**
+     * Get current theme (respecting user preference)
+     */
+    public static function getCurrentTheme(): string
+    {
+        // Check if user is logged in and has a preferred theme
+        if (Auth::check()) {
+            $userTheme = Auth::user()->getPreferredTheme();
+            if ($userTheme && self::isValidTheme($userTheme)) {
+                return $userTheme;
+            }
+        }
+
+        // Fall back to site default theme
+        return self::getSiteDefaultTheme();
+    }
+
+    /**
+     * Get user's preferred theme or null if using site default
+     */
+    public static function getUserTheme(): ?string
+    {
+        if (Auth::check()) {
+            return Auth::user()->getPreferredTheme();
+        }
+
+        return null;
     }
 
     /**

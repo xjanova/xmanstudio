@@ -24,6 +24,7 @@ class User extends Authenticatable
         'line_refresh_token',
         'line_picture_url',
         'notification_preferences',
+        'preferred_theme',
         'marketing_email_enabled',
         'marketing_line_enabled',
         'marketing_consent_at',
@@ -160,5 +161,23 @@ class User extends Authenticatable
         }
 
         return $query->where('marketing_email_enabled', true);
+    }
+
+    /**
+     * Get user's preferred theme or fall back to site default
+     */
+    public function getPreferredTheme(): ?string
+    {
+        return $this->preferred_theme;
+    }
+
+    /**
+     * Set user's preferred theme
+     */
+    public function setPreferredTheme(?string $theme): bool
+    {
+        $this->preferred_theme = $theme;
+
+        return $this->save();
     }
 }
