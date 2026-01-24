@@ -33,6 +33,8 @@ class AutoTradeXDevice extends Model
 
     public const STATUS_EXPIRED = 'expired';
 
+    public const STATUS_DEMO = 'demo'; // Trial expired - limited functionality
+
     protected $fillable = [
         'machine_id',
         'machine_name',
@@ -300,5 +302,48 @@ class AutoTradeXDevice extends Model
     public function scopeSuspicious($query)
     {
         return $query->where('is_suspicious', true);
+    }
+
+    /**
+     * Scope: Demo mode devices
+     */
+    public function scopeDemoMode($query)
+    {
+        return $query->where('status', self::STATUS_DEMO);
+    }
+
+    /**
+     * Switch device to demo mode (trial expired)
+     */
+    public function switchToDemoMode(): void
+    {
+        $this->update([
+            'status' => self::STATUS_DEMO,
+        ]);
+    }
+
+    /**
+     * Check if device is in demo mode
+     */
+    public function isDemoMode(): bool
+    {
+        return $this->status === self::STATUS_DEMO ||
+               ($this->status === self::STATUS_EXPIRED) ||
+               ($this->status === self::STATUS_TRIAL && $this->isTrialExpired());
+    }
+
+    /**
+     * Get demo mode config for this device
+     */
+    public function getDemoModeConfig(): array
+    {
+        return [
+            'can_view_opportunities' => true,
+            'can_execute_trades' => false,
+            'can_use_auto_trading' => false,
+            'max_exchanges' => 2,
+            'reminder_interval_minutes' => 15,
+            'demo_message' => 'คุณกำลังใช้งาน Demo Mode - ไม่สามารถเทรดจริงได้ กรุณา Activate License เพื่อใช้งานเต็มรูปแบบ',
+        ];
     }
 }

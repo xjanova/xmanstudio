@@ -207,6 +207,20 @@ class AutoTradeXLicenseController extends Controller
             ];
         }
 
+        // Check if should be in demo mode (trial expired)
+        $isDemoMode = $device->isDemoMode();
+        $demoModeInfo = null;
+        if ($isDemoMode) {
+            // Auto-switch to demo mode status if trial expired
+            if ($device->status !== AutoTradeXDevice::STATUS_DEMO &&
+                $device->status !== AutoTradeXDevice::STATUS_LICENSED) {
+                $device->switchToDemoMode();
+            }
+
+            $demoModeInfo = $device->getDemoModeConfig();
+            $demoModeInfo['purchase_url'] = $this->getPurchaseUrlForDevice($device);
+        }
+
         return response()->json([
             'success' => true,
             'message' => $isNew ? 'Device registered successfully' : 'Device updated',
@@ -218,6 +232,9 @@ class AutoTradeXLicenseController extends Controller
                 'can_start_trial' => $device->canStartTrial(),
                 'is_suspicious' => $device->is_suspicious,
                 'purchase_url' => $this->getPurchaseUrlForDevice($device),
+                // Demo mode info
+                'is_demo_mode' => $isDemoMode,
+                'demo_mode' => $demoModeInfo,
             ],
         ]);
     }

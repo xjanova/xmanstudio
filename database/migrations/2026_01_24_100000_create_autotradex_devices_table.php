@@ -31,7 +31,8 @@ return new class extends Migration
             $table->string('last_ip', 45)->nullable(); // Last seen IP
 
             // Registration status
-            $table->enum('status', ['pending', 'trial', 'licensed', 'blocked', 'expired'])
+            // demo = trial expired, can view but not trade
+            $table->enum('status', ['pending', 'trial', 'licensed', 'blocked', 'expired', 'demo'])
                 ->default('pending');
 
             // Link to license (if activated)

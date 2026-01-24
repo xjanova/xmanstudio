@@ -61,6 +61,90 @@
 | `licensed` | มี license ใช้งานอยู่ |
 | `expired` | Trial/License หมดอายุ |
 | `blocked` | ถูกบล็อก (abuse detected) |
+| `demo` | Trial หมดอายุ - ใช้งานจำกัด (ดูได้แต่เทรดไม่ได้) |
+
+### 1.4 Demo Mode (เมื่อ Trial หมดอายุ)
+
+เมื่อ Trial หมดอายุ แอปจะเข้าสู่ **Demo Mode** โดยอัตโนมัติ:
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                      Demo Mode                              │
+├────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ✅ สามารถทำได้:                                            │
+│     • ดูโอกาสการเทรด Arbitrage                               │
+│     • ดูราคา Cryptocurrency                                  │
+│     • เชื่อมต่อกับ Exchange                                   │
+│                                                             │
+│  ❌ ไม่สามารถทำได้:                                           │
+│     • เทรดจริง (Execute Trade)                               │
+│     • Auto-Trading                                          │
+│     • สั่งซื้อ/ขาย                                            │
+│                                                             │
+│  ⚠️ แสดง Reminder:                                          │
+│     • ทุก 15 นาที                                            │
+│     • เมื่อพยายามเทรด                                        │
+│     • เมื่อเปิดแอป                                           │
+│                                                             │
+└────────────────────────────────────────────────────────────┘
+```
+
+#### Demo Mode Configuration
+
+```php
+// Server-side config
+public function getDemoModeConfig(): array
+{
+    return [
+        'can_view_opportunities' => true,
+        'can_execute_trades' => false,
+        'can_use_auto_trading' => false,
+        'max_exchanges' => 2,
+        'reminder_interval_minutes' => 15,
+        'demo_message' => 'คุณกำลังใช้งาน Demo Mode...',
+    ];
+}
+```
+
+```csharp
+// App-side config
+public class DemoModeConfig
+{
+    public bool CanViewOpportunities { get; set; } = true;
+    public bool CanExecuteTrades { get; set; } = false;
+    public bool CanUseAutoTrading { get; set; } = false;
+    public int MaxExchanges { get; set; } = 2;
+    public int ReminderIntervalMinutes { get; set; } = 15;
+    public string DemoMessage { get; set; }
+    public string PurchaseUrl { get; set; }
+}
+```
+
+#### การตรวจสอบ Action ใน Demo Mode
+
+```csharp
+public bool IsActionAllowed(string action)
+{
+    if (IsLicensed) return true;
+
+    if (IsDemoMode)
+    {
+        return action switch
+        {
+            "view_opportunities" => true,
+            "view_prices" => true,
+            "connect_exchange" => true,
+            "execute_trade" => false,  // ❌ ไม่อนุญาต
+            "auto_trade" => false,     // ❌ ไม่อนุญาต
+            "place_order" => false,    // ❌ ไม่อนุญาต
+            _ => false
+        };
+    }
+
+    return false;
+}
+```
 
 ---
 
@@ -726,6 +810,7 @@ CREATE TABLE license_keys (
 | เวอร์ชัน | วันที่ | การเปลี่ยนแปลง |
 |----------|--------|----------------|
 | 1.0.0 | 2026-01-24 | เอกสารเริ่มต้น |
+| 1.1.0 | 2026-01-24 | เพิ่ม Demo Mode documentation |
 
 ---
 
