@@ -55,8 +55,8 @@
                     @endif
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">ธีมปัจจุบัน</h2>
-                    <p class="text-gray-500 dark:text-gray-400">กำลังใช้งานธีม <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $themes[$currentTheme]['name'] }}</span></p>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">ธีมเริ่มต้นของเว็บไซต์</h2>
+                    <p class="text-gray-500 dark:text-gray-400">ผู้ใช้ใหม่จะเห็นธีม <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $themes[$currentTheme]['name'] }}</span> เป็นค่าเริ่มต้น</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -64,10 +64,25 @@
                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
-                    กำลังใช้งาน
+                    ค่าเริ่มต้น
                 </span>
             </div>
         </div>
+
+        @if(isset($adminPersonalTheme) && $adminPersonalTheme && $adminPersonalTheme !== $currentTheme)
+        <div class="p-4 bg-amber-50 dark:bg-amber-900/30 rounded-xl border border-amber-200 dark:border-amber-700 mb-4">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                    <p class="text-sm text-amber-700 dark:text-amber-300">
+                        <strong>ธีมส่วนตัวของคุณ:</strong> คุณกำลังใช้ธีม <span class="font-semibold">{{ $themes[$adminPersonalTheme]['name'] }}</span> เป็นการส่วนตัว ซึ่งแตกต่างจากธีมเริ่มต้นของเว็บไซต์ คุณสามารถเปลี่ยนธีมส่วนตัวได้ที่ <a href="{{ route('customer.theme.settings') }}" class="underline font-semibold hover:text-amber-800 dark:hover:text-amber-200">หน้าตั้งค่าธีม</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        @endif
 
         <div class="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-200 dark:border-indigo-700">
             <div class="flex items-start gap-3">
@@ -76,7 +91,7 @@
                 </svg>
                 <div>
                     <p class="text-sm text-indigo-700 dark:text-indigo-300">
-                        <strong>หมายเหตุ:</strong> ธีมหลักจะมีผลกับทั้งหน้า Admin Dashboard และหน้า Customer Dashboard ผู้ใช้งานสามารถเลือกใช้ธีมของตัวเองได้จากหน้าตั้งค่าบัญชี
+                        <strong>หมายเหตุ:</strong> ธีมเริ่มต้นจะใช้กับผู้ใช้ที่ยังไม่ได้ตั้งค่าธีมส่วนตัว ผู้ใช้ที่ตั้งค่าธีมส่วนตัวแล้วจะเห็นธีมของตัวเอง
                     </p>
                 </div>
             </div>
