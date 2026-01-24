@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
+            $table->decimal('discount', 10, 2)->default(0)->after('tax');
             $table->foreignId('coupon_id')->nullable()->after('discount')->constrained()->nullOnDelete();
             $table->string('coupon_code')->nullable()->after('coupon_id');
             $table->timestamp('paid_at')->nullable()->after('payment_status');
@@ -26,7 +27,7 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->dropForeign(['coupon_id']);
-            $table->dropColumn(['coupon_id', 'coupon_code', 'paid_at', 'wallet_transaction_id']);
+            $table->dropColumn(['discount', 'coupon_id', 'coupon_code', 'paid_at', 'wallet_transaction_id']);
         });
     }
 };

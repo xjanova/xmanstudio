@@ -9,21 +9,34 @@ class LicenseActivity extends Model
 {
     // Action constants
     public const ACTION_CREATED = 'created';
+
     public const ACTION_ACTIVATED = 'activated';
+
     public const ACTION_DEACTIVATED = 'deactivated';
+
     public const ACTION_VALIDATED = 'validated';
+
     public const ACTION_EXPIRED = 'expired';
+
     public const ACTION_REVOKED = 'revoked';
+
     public const ACTION_REACTIVATED = 'reactivated';
+
     public const ACTION_EXTENDED = 'extended';
+
     public const ACTION_MACHINE_RESET = 'machine_reset';
+
     public const ACTION_FAILED_ACTIVATION = 'failed_activation';
+
     public const ACTION_SUSPICIOUS = 'suspicious_activity';
 
     // Actor types
     public const ACTOR_SYSTEM = 'system';
+
     public const ACTOR_ADMIN = 'admin';
+
     public const ACTOR_API = 'api';
+
     public const ACTOR_USER = 'user';
 
     protected $fillable = [

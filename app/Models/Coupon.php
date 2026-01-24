@@ -49,6 +49,7 @@ class Coupon extends Model
     ];
 
     const TYPE_PERCENTAGE = 'percentage';
+
     const TYPE_FIXED = 'fixed';
 
     /**
@@ -64,7 +65,7 @@ class Coupon extends Model
      */
     public function isValid(): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
@@ -90,11 +91,11 @@ class Coupon extends Model
      */
     public function canBeUsedBy(?User $user, float $orderAmount = 0, array $productIds = []): array
     {
-        if (!$user) {
+        if (! $user) {
             return ['valid' => false, 'message' => 'กรุณาเข้าสู่ระบบก่อนใช้คูปอง'];
         }
 
-        if (!$this->isValid()) {
+        if (! $this->isValid()) {
             return ['valid' => false, 'message' => 'คูปองไม่สามารถใช้งานได้'];
         }
 
@@ -102,7 +103,7 @@ class Coupon extends Model
         if ($this->min_order_amount && $orderAmount < $this->min_order_amount) {
             return [
                 'valid' => false,
-                'message' => "ยอดสั่งซื้อขั้นต่ำ ฿" . number_format($this->min_order_amount, 2),
+                'message' => 'ยอดสั่งซื้อขั้นต่ำ ฿'.number_format($this->min_order_amount, 2),
             ];
         }
 
@@ -123,12 +124,12 @@ class Coupon extends Model
         }
 
         // Check allowed users
-        if (!empty($this->allowed_user_ids) && !in_array($user->id, $this->allowed_user_ids)) {
+        if (! empty($this->allowed_user_ids) && ! in_array($user->id, $this->allowed_user_ids)) {
             return ['valid' => false, 'message' => 'คูปองนี้ไม่สามารถใช้กับบัญชีของคุณได้'];
         }
 
         // Check applicable products
-        if (!empty($this->applicable_products) && !empty($productIds)) {
+        if (! empty($this->applicable_products) && ! empty($productIds)) {
             $applicableCount = count(array_intersect($productIds, $this->applicable_products));
             if ($applicableCount === 0) {
                 return ['valid' => false, 'message' => 'คูปองนี้ไม่สามารถใช้กับสินค้าที่เลือกได้'];
@@ -136,7 +137,7 @@ class Coupon extends Model
         }
 
         // Check excluded products
-        if (!empty($this->excluded_products) && !empty($productIds)) {
+        if (! empty($this->excluded_products) && ! empty($productIds)) {
             $excludedCount = count(array_intersect($productIds, $this->excluded_products));
             if ($excludedCount === count($productIds)) {
                 return ['valid' => false, 'message' => 'สินค้าทั้งหมดถูกยกเว้นจากคูปองนี้'];
@@ -230,17 +231,18 @@ class Coupon extends Model
         if ($this->discount_type === self::TYPE_PERCENTAGE) {
             $label = "{$this->discount_value}%";
             if ($this->max_discount) {
-                $label .= " (สูงสุด ฿" . number_format($this->max_discount, 0) . ")";
+                $label .= ' (สูงสุด ฿'.number_format($this->max_discount, 0).')';
             }
+
             return $label;
         }
 
-        return "฿" . number_format($this->discount_value, 0);
+        return '฿'.number_format($this->discount_value, 0);
     }
 
     public function getStatusLabelAttribute(): string
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return 'ปิดใช้งาน';
         }
 

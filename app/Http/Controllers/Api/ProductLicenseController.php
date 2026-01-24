@@ -8,7 +8,6 @@ use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductDevice;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 /**
  * Generic Product License Controller
@@ -52,7 +51,7 @@ class ProductLicenseController extends Controller
     public function registerDevice(Request $request, string $productSlug)
     {
         $product = $this->getProduct($productSlug);
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'PRODUCT_NOT_FOUND',
@@ -115,7 +114,7 @@ class ProductLicenseController extends Controller
     public function startDemo(Request $request, string $productSlug)
     {
         $product = $this->getProduct($productSlug);
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'PRODUCT_NOT_FOUND',
@@ -168,11 +167,11 @@ class ProductLicenseController extends Controller
         }
 
         // Check if can start trial
-        if (!$device->canStartTrial()) {
+        if (! $device->canStartTrial()) {
             $reason = match (true) {
                 $device->status === ProductDevice::STATUS_BLOCKED => 'DEVICE_BLOCKED',
                 $device->status === ProductDevice::STATUS_LICENSED => 'ALREADY_LICENSED',
-                $device->status === ProductDevice::STATUS_TRIAL && !$device->isTrialExpired() => 'TRIAL_ACTIVE',
+                $device->status === ProductDevice::STATUS_TRIAL && ! $device->isTrialExpired() => 'TRIAL_ACTIVE',
                 $device->trial_attempts >= 3 => 'TOO_MANY_ATTEMPTS',
                 default => 'TRIAL_NOT_AVAILABLE',
             };
@@ -190,7 +189,7 @@ class ProductLicenseController extends Controller
 
         // Start trial
         $trialDays = 7;
-        if (!$device->startTrial($trialDays)) {
+        if (! $device->startTrial($trialDays)) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'TRIAL_START_FAILED',
@@ -264,7 +263,7 @@ class ProductLicenseController extends Controller
     public function checkDemo(Request $request, string $productSlug)
     {
         $product = $this->getProduct($productSlug);
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'PRODUCT_NOT_FOUND',
@@ -280,7 +279,7 @@ class ProductLicenseController extends Controller
             ->where('machine_id', $validated['machine_id'])
             ->first();
 
-        if (!$device) {
+        if (! $device) {
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -290,7 +289,7 @@ class ProductLicenseController extends Controller
             ]);
         }
 
-        $isTrialActive = $device->status === ProductDevice::STATUS_TRIAL && !$device->isTrialExpired();
+        $isTrialActive = $device->status === ProductDevice::STATUS_TRIAL && ! $device->isTrialExpired();
 
         return response()->json([
             'success' => true,
@@ -318,7 +317,7 @@ class ProductLicenseController extends Controller
     public function activate(Request $request, string $productSlug)
     {
         $product = $this->getProduct($productSlug);
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'PRODUCT_NOT_FOUND',
@@ -339,7 +338,7 @@ class ProductLicenseController extends Controller
             ->where('product_id', $product->id)
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'INVALID_LICENSE',
@@ -375,7 +374,7 @@ class ProductLicenseController extends Controller
         }
 
         // Activate
-        if (!$license->activateOnMachine($validated['machine_id'], $validated['machine_fingerprint'])) {
+        if (! $license->activateOnMachine($validated['machine_id'], $validated['machine_fingerprint'])) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'ACTIVATION_FAILED',
@@ -428,7 +427,7 @@ class ProductLicenseController extends Controller
     public function validate(Request $request, string $productSlug)
     {
         $product = $this->getProduct($productSlug);
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'PRODUCT_NOT_FOUND',
@@ -448,7 +447,7 @@ class ProductLicenseController extends Controller
             ->where('machine_id', $validated['machine_id'])
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'is_valid' => false,
@@ -502,7 +501,7 @@ class ProductLicenseController extends Controller
     public function deactivate(Request $request, string $productSlug)
     {
         $product = $this->getProduct($productSlug);
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'PRODUCT_NOT_FOUND',
@@ -522,7 +521,7 @@ class ProductLicenseController extends Controller
             ->where('machine_id', $validated['machine_id'])
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'INVALID_LICENSE',
@@ -574,7 +573,7 @@ class ProductLicenseController extends Controller
     public function status(string $productSlug, string $licenseKey)
     {
         $product = $this->getProduct($productSlug);
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'PRODUCT_NOT_FOUND',
@@ -588,7 +587,7 @@ class ProductLicenseController extends Controller
             ->where('product_id', $product->id)
             ->first();
 
-        if (!$license) {
+        if (! $license) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'INVALID_LICENSE',
@@ -604,7 +603,7 @@ class ProductLicenseController extends Controller
                 'status' => $license->status,
                 'is_valid' => $license->isValid(),
                 'is_expired' => $license->isExpired(),
-                'is_activated' => !empty($license->machine_id),
+                'is_activated' => ! empty($license->machine_id),
                 'activated_at' => $license->activated_at?->toISOString(),
                 'expires_at' => $license->expires_at?->toISOString(),
                 'days_remaining' => $license->daysRemaining(),
@@ -620,7 +619,7 @@ class ProductLicenseController extends Controller
     public function pricing(string $productSlug)
     {
         $product = $this->getProduct($productSlug);
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'success' => false,
                 'error_code' => 'PRODUCT_NOT_FOUND',

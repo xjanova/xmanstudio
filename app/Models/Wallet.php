@@ -92,7 +92,7 @@ class Wallet extends Model
         ?int $referenceId = null,
         array $metadata = []
     ): ?WalletTransaction {
-        if (!$this->hasSufficientBalance($amount)) {
+        if (! $this->hasSufficientBalance($amount)) {
             return null;
         }
 
@@ -183,7 +183,7 @@ class Wallet extends Model
         float $amount,
         string $description,
         ?string $adminNote = null,
-        int $createdBy = null
+        ?int $createdBy = null
     ): WalletTransaction {
         $balanceBefore = $this->balance;
 
@@ -212,7 +212,7 @@ class Wallet extends Model
      */
     private function generateTransactionId(): string
     {
-        return 'TXN' . now()->format('ymd') . strtoupper(Str::random(8));
+        return 'TXN'.now()->format('ymd').strtoupper(Str::random(8));
     }
 
     /**

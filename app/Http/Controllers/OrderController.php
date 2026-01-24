@@ -162,7 +162,7 @@ class OrderController extends Controller
             $orderStatus = 'pending';
 
             if ($request->payment_method === 'wallet') {
-                if (!auth()->check()) {
+                if (! auth()->check()) {
                     return redirect()
                         ->back()
                         ->with('error', 'กรุณาเข้าสู่ระบบก่อนใช้ Wallet');
@@ -173,7 +173,7 @@ class OrderController extends Controller
                 if ($wallet->balance < $total) {
                     return redirect()
                         ->back()
-                        ->with('error', 'ยอดเงินใน Wallet ไม่เพียงพอ (ยอดคงเหลือ: ฿' . number_format($wallet->balance, 2) . ')');
+                        ->with('error', 'ยอดเงินใน Wallet ไม่เพียงพอ (ยอดคงเหลือ: ฿'.number_format($wallet->balance, 2).')');
                 }
             }
 
