@@ -47,14 +47,24 @@
 
                     <!-- CTA Buttons -->
                     <div class="flex flex-wrap gap-4">
-                        <a href="https://github.com/xjanova/xcluadeagent/releases" target="_blank"
-                           class="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
-                            ดาวน์โหลด
-                        </a>
-                        <a href="https://github.com/xjanova/xcluadeagent" target="_blank"
-                           class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
-                            GitHub Repository
-                        </a>
+                        @auth
+                            @if($hasPurchased)
+                                <a href="{{ route('customer.downloads') }}"
+                                   class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                                    ดาวน์โหลด
+                                </a>
+                            @else
+                                <a href="{{ route('packages.index') }}"
+                                   class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
+                                    ดูแพคเกจ
+                                </a>
+                            @endif
+                        @else
+                            <a href="{{ route('packages.index') }}"
+                               class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
+                                ดูแพคเกจ
+                            </a>
+                        @endauth
                     </div>
                 </div>
 
@@ -379,14 +389,24 @@
             <p class="text-gray-400 mb-8">ดาวน์โหลดฟรี และให้ AI ช่วยจัดการ Git Workflow ของคุณ</p>
 
             <div class="flex flex-wrap justify-center gap-4">
-                <a href="https://github.com/xjanova/xcluadeagent/releases" target="_blank"
-                   class="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
-                    ดาวน์โหลดเลย
-                </a>
-                <a href="https://github.com/xjanova/xcluadeagent" target="_blank"
-                   class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
-                    ดูเอกสาร
-                </a>
+                @auth
+                    @if($hasPurchased)
+                        <a href="{{ route('customer.downloads') }}"
+                           class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                            ดาวน์โหลดเลย
+                        </a>
+                    @else
+                        <a href="{{ route('packages.index') }}"
+                           class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
+                            ดูแพคเกจ
+                        </a>
+                    @endif
+                @else
+                    <a href="{{ route('packages.index') }}"
+                       class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
+                        ดูแพคเกจ
+                    </a>
+                @endauth
             </div>
         </div>
     </section>

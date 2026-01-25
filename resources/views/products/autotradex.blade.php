@@ -263,10 +263,21 @@
                     </ul>
 
                     <div class="mt-6 pt-6 border-t border-gray-700">
-                        <a href="{{ route('autotradex.pricing') }}"
-                           class="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-center font-bold rounded-xl transition-all">
-                            ซื้อ License
-                        </a>
+                        @if(!$product->is_custom)
+                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit"
+                                        class="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-center font-bold rounded-xl transition-all">
+                                    ซื้อ License - ฿{{ number_format($product->price, 0) }}
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('support.index') }}"
+                               class="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-center font-bold rounded-xl transition-all">
+                                ติดต่อสอบถามราคา
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -320,23 +331,36 @@
             <h2 class="text-3xl font-bold text-white mb-4">ดาวน์โหลด AutoTradeX</h2>
             <p class="text-gray-400 mb-8 max-w-2xl mx-auto">ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นใช้งานได้ทันที</p>
 
-            <div class="inline-flex flex-col sm:flex-row gap-4">
-                <a href="https://github.com/xjanova/autotradex/releases/latest" target="_blank"
-                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-purple-500/25">
-                    <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+            @auth
+                @if($hasPurchased)
+                    {{-- User has purchased - show download button --}}
+                    <a href="{{ route('customer.downloads') }}"
+                       class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        ดาวน์โหลด
+                    </a>
+                @else
+                    {{-- User has not purchased - show packages button --}}
+                    <a href="{{ route('packages.index') }}"
+                       class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        ดูแพคเกจ
+                    </a>
+                @endif
+            @else
+                {{-- User not logged in - show packages button --}}
+                <a href="{{ route('packages.index') }}"
+                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
-                    Download from GitHub
+                    ดูแพคเกจ
                 </a>
-
-                <a href="https://github.com/xjanova/autotradex" target="_blank"
-                   class="inline-flex items-center px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                    </svg>
-                    View Source Code
-                </a>
-            </div>
+            @endauth
 
             <p class="text-gray-500 text-sm mt-6">
                 เวอร์ชันล่าสุด: v1.0.0 | ขนาด: ~50MB | รองรับ Windows 10/11
