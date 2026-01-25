@@ -259,7 +259,7 @@
                     </div>
 
                     {{-- Screenshots Gallery --}}
-                    @if($product->images && count($product->images) > 0)
+                    @if($product->images && is_array($product->images) && count($product->images) > 0)
                         <div class="grid grid-cols-4 gap-3 mt-4">
                             @if($product->image)
                                 <div class="bg-gray-800/50 rounded-lg p-1 border-2 border-red-500 cursor-pointer transform hover:scale-105 transition-all"

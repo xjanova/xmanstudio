@@ -211,7 +211,7 @@
             </div>
 
             <!-- Existing Gallery Images -->
-            @if($product->images && count($product->images) > 0)
+            @if($product->images && is_array($product->images) && count($product->images) > 0)
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">รูปภาพ Gallery ปัจจุบัน</label>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
