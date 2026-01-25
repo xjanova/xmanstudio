@@ -762,6 +762,25 @@
         </div>
     </div>
 
+    <script>
+        // Scroll to active menu item on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find the active menu item in the sidebar
+            const sidebar = document.querySelector('aside.premium-sidebar');
+            if (sidebar) {
+                const activeMenuItem = sidebar.querySelector('a.premium-nav-item.active');
+                if (activeMenuItem) {
+                    // Scroll the active item into view smoothly
+                    activeMenuItem.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'nearest'
+                    });
+                }
+            }
+        });
+    </script>
+
     @stack('scripts')
 </body>
 </html>
