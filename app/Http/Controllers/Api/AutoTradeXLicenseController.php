@@ -375,12 +375,9 @@ class AutoTradeXLicenseController extends Controller
 
         // Eligible for Early Bird!
         $message = match (true) {
-            $device->status === AutoTradeXDevice::STATUS_PENDING =>
-                "🎉 ส่วนลดพิเศษสำหรับลูกค้าใหม่! เหลือเวลาอีก {$daysRemaining} วัน",
-            $daysRemaining <= 3 =>
-                "⏰ รีบซื้อเลย! เหลือเวลาอีกแค่ {$daysRemaining} วัน!",
-            default =>
-                "🔥 ซื้อตอนนี้ลด " . self::EARLY_BIRD_DISCOUNT_PERCENT . "%! เหลือเวลาอีก {$daysRemaining} วัน",
+            $device->status === AutoTradeXDevice::STATUS_PENDING => "🎉 ส่วนลดพิเศษสำหรับลูกค้าใหม่! เหลือเวลาอีก {$daysRemaining} วัน",
+            $daysRemaining <= 3 => "⏰ รีบซื้อเลย! เหลือเวลาอีกแค่ {$daysRemaining} วัน!",
+            default => '🔥 ซื้อตอนนี้ลด '.self::EARLY_BIRD_DISCOUNT_PERCENT."%! เหลือเวลาอีก {$daysRemaining} วัน",
         };
 
         return [
