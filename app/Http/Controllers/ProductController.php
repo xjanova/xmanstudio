@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\LicenseKey;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\Service;
@@ -59,6 +60,7 @@ class ProductController extends Controller
 
         // Get user's license for this product if logged in
         $userLicense = null;
+        $hasPurchased = false;
         if (Auth::check()) {
             $userLicense = LicenseKey::whereHas('order', function ($query) {
                 $query->where('user_id', Auth::id());
@@ -66,6 +68,14 @@ class ProductController extends Controller
                 ->where('product_id', $product->id)
                 ->orderByDesc('created_at')
                 ->first();
+
+            // Check if user has purchased this product (has a completed order)
+            $hasPurchased = Order::where('user_id', Auth::id())
+                ->whereHas('items', function ($query) use ($product) {
+                    $query->where('product_id', $product->id);
+                })
+                ->where('status', 'completed')
+                ->exists();
         }
 
         // Custom views for each product
@@ -82,10 +92,10 @@ class ProductController extends Controller
         ];
 
         if (isset($customViews[$slug])) {
-            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense'));
+            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense', 'hasPurchased'));
         }
 
-        return view('products.show', compact('product', 'relatedProducts', 'userLicense'));
+        return view('products.show', compact('product', 'relatedProducts', 'userLicense', 'hasPurchased'));
     }
 
     public function services()

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DownloadLog;
 use App\Models\LicenseKey;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Services\GithubReleaseService;
@@ -46,6 +47,39 @@ class DownloadController extends Controller
 
         // Check if user is authenticated
         $user = auth()->user();
+
+        // Check if user is authenticated
+        if (! $user) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Authentication required',
+                ], 401);
+            }
+
+            return redirect()->route('login')
+                ->with('error', 'กรุณาเข้าสู่ระบบเพื่อดาวน์โหลด');
+        }
+
+        // Check if user has purchased this product
+        $hasPurchased = Order::where('user_id', $user->id)
+            ->whereHas('items', function ($query) use ($product) {
+                $query->where('product_id', $product->id);
+            })
+            ->where('status', 'completed')
+            ->exists();
+
+        if (! $hasPurchased) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Product purchase required for download',
+                ], 403);
+            }
+
+            return redirect()->route('packages.index')
+                ->with('error', 'คุณต้องซื้อผลิตภัณฑ์นี้ก่อนจึงจะดาวน์โหลดได้');
+        }
 
         // Check license if product requires it
         if ($product->requires_license) {
@@ -117,6 +151,26 @@ class DownloadController extends Controller
         }
 
         $user = auth()->user();
+
+        // Check if user is authenticated
+        if (! $user) {
+            return redirect()->route('login')
+                ->with('error', 'กรุณาเข้าสู่ระบบเพื่อดาวน์โหลด');
+        }
+
+        // Check if user has purchased this product
+        $hasPurchased = Order::where('user_id', $user->id)
+            ->whereHas('items', function ($query) use ($product) {
+                $query->where('product_id', $product->id);
+            })
+            ->where('status', 'completed')
+            ->exists();
+
+        if (! $hasPurchased) {
+            return redirect()->route('packages.index')
+                ->with('error', 'คุณต้องซื้อผลิตภัณฑ์นี้ก่อนจึงจะดาวน์โหลดได้');
+        }
+
         $hasValidLicense = false;
 
         if ($user && $product->requires_license) {
