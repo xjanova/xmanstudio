@@ -35,6 +35,9 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Preserve machine_id before creating user (for AutoTradeX Early Bird)
+        $machineId = $request->session()->get('autotradex_machine_id');
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -44,6 +47,11 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        // Restore machine_id after login (session may regenerate)
+        if ($machineId) {
+            $request->session()->put('autotradex_machine_id', $machineId);
+        }
 
         return redirect(route('dashboard', absolute: false));
     }

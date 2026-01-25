@@ -24,9 +24,17 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // Preserve machine_id before session regeneration (for AutoTradeX Early Bird)
+        $machineId = $request->session()->get('autotradex_machine_id');
+
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        // Restore machine_id after session regeneration
+        if ($machineId) {
+            $request->session()->put('autotradex_machine_id', $machineId);
+        }
 
         return redirect()->intended(route('customer.dashboard', absolute: false));
     }

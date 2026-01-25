@@ -54,8 +54,13 @@ class AutoTradeXController extends Controller
      */
     public function pricing(Request $request)
     {
-        // Get machine_id from query string (sent from desktop app)
-        $machineId = $request->query('machine_id');
+        // Get machine_id from query string or session
+        $machineId = $request->query('machine_id') ?? session('autotradex_machine_id');
+
+        // Store machine_id in session for checkout flow
+        if ($machineId) {
+            session(['autotradex_machine_id' => $machineId]);
+        }
 
         // Check for early bird discount eligibility
         $earlyBirdInfo = $this->checkEarlyBirdEligibility($machineId);
