@@ -55,13 +55,13 @@
                                     ดาวน์โหลด
                                 </a>
                             @else
-                                <a href="{{ route('packages.index') }}"
+                                <a href="{{ route('products.index') }}"
                                    class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
                                     ดูแพคเกจ
                                 </a>
                             @endif
                         @else
-                            <a href="{{ route('packages.index') }}"
+                            <a href="{{ route('products.index') }}"
                                class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
                                 ดูแพคเกจ
                             </a>
@@ -374,13 +374,13 @@
                             ดาวน์โหลด
                         </a>
                     @else
-                        <a href="{{ route('packages.index') }}"
+                        <a href="{{ route('products.index') }}"
                            class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
                             ดูแพคเกจ
                         </a>
                     @endif
                 @else
-                    <a href="{{ route('packages.index') }}"
+                    <a href="{{ route('products.index') }}"
                        class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
                         ดูแพคเกจ
                     </a>

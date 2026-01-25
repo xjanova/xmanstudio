@@ -77,7 +77,7 @@ class DownloadController extends Controller
                 ], 403);
             }
 
-            return redirect()->route('packages.index')
+            return redirect()->route('products.index')
                 ->with('error', 'คุณต้องซื้อผลิตภัณฑ์นี้ก่อนจึงจะดาวน์โหลดได้');
         }
 
@@ -167,7 +167,7 @@ class DownloadController extends Controller
             ->exists();
 
         if (! $hasPurchased) {
-            return redirect()->route('packages.index')
+            return redirect()->route('products.index')
                 ->with('error', 'คุณต้องซื้อผลิตภัณฑ์นี้ก่อนจึงจะดาวน์โหลดได้');
         }
 
