@@ -132,6 +132,7 @@ class AutoTradeXController extends Controller
         // Create order item
         $order->items()->create([
             'product_id' => $product->id,
+            'product_name' => $product->name,
             'quantity' => 1,
             'price' => $planInfo['price'],
         ]);
