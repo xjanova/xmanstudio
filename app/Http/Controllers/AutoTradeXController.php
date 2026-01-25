@@ -339,8 +339,14 @@ class AutoTradeXController extends Controller
      *
      * Eligibility requirements:
      * 1. Must have a valid machine_id
-     * 2. Device must be registered and in trial period
+     * 2. Device must be registered (pending, trial, or demo status)
      * 3. Device must NOT have used early bird discount before
+     * 4. Device must NOT already be licensed
+     *
+     * Early Bird is available for:
+     * - New devices (pending status) - 30 days from first seen
+     * - Devices in trial - until trial expires
+     * - Devices in demo mode - 7 days grace period after trial expires
      *
      * @return array{eligible: bool, discount_percent: int, days_remaining: int, message: string}
      */
@@ -361,11 +367,16 @@ class AutoTradeXController extends Controller
             return $result;
         }
 
-        // Find device record
-        $device = AutoTradeXDevice::where('machine_id', $machineId)->first();
+        // Find device record (try both full and short machine_id)
+        $device = AutoTradeXDevice::where('machine_id', $machineId)
+            ->orWhere('machine_id', 'LIKE', $machineId.'%')
+            ->first();
 
         if (! $device) {
-            $result['message'] = 'ไม่พบอุปกรณ์นี้ในระบบ';
+            // Device not registered yet - still eligible if they register
+            // Store machine_id in session for later
+            session(['autotradex_machine_id' => $machineId]);
+            $result['message'] = 'กรุณาเปิดแอป AutoTrade-X เพื่อลงทะเบียนอุปกรณ์';
 
             return $result;
         }
@@ -377,20 +388,53 @@ class AutoTradeXController extends Controller
             return $result;
         }
 
-        // Check if still in trial period
-        if (! $device->first_trial_at) {
-            $result['message'] = 'กรุณาเริ่มทดลองใช้งานก่อน';
+        // Check if already licensed - no discount for existing customers
+        if ($device->status === AutoTradeXDevice::STATUS_LICENSED) {
+            $result['message'] = 'คุณมี License อยู่แล้ว';
 
             return $result;
         }
 
-        // Use trial_expires_at if available, otherwise calculate from first_trial_at
-        $trialEndDate = $device->trial_expires_at ?? $device->first_trial_at->addDays(30);
-        $daysRemaining = (int) now()->diffInDays($trialEndDate, false);
+        // Check if device is blocked
+        if ($device->status === AutoTradeXDevice::STATUS_BLOCKED) {
+            $result['message'] = 'อุปกรณ์นี้ถูกระงับ';
 
-        // Trial must still be active
+            return $result;
+        }
+
+        // Calculate eligibility period based on device status
+        $daysRemaining = 0;
+        $eligibleUntil = null;
+
+        if ($device->status === AutoTradeXDevice::STATUS_TRIAL && $device->trial_expires_at) {
+            // In active trial - eligible until trial expires
+            $eligibleUntil = $device->trial_expires_at;
+        } elseif ($device->status === AutoTradeXDevice::STATUS_DEMO ||
+                  $device->status === AutoTradeXDevice::STATUS_EXPIRED) {
+            // Trial expired but in demo/grace period - give 7 more days from expiry
+            if ($device->trial_expires_at) {
+                $eligibleUntil = $device->trial_expires_at->copy()->addDays(7);
+            } else {
+                // No trial info - use first_seen + 37 days (30 trial + 7 grace)
+                $eligibleUntil = $device->first_seen_at ?
+                    $device->first_seen_at->copy()->addDays(37) :
+                    now()->addDays(7);
+            }
+        } elseif ($device->status === AutoTradeXDevice::STATUS_PENDING) {
+            // New device, not started trial yet - eligible for 30 days from registration
+            $eligibleUntil = $device->first_seen_at ?
+                $device->first_seen_at->copy()->addDays(30) :
+                now()->addDays(30);
+        } else {
+            // Unknown status - give 7 days from now
+            $eligibleUntil = now()->addDays(7);
+        }
+
+        $daysRemaining = (int) now()->diffInDays($eligibleUntil, false);
+
+        // Check if still within eligibility period
         if ($daysRemaining <= 0) {
-            $result['message'] = 'ช่วงทดลองใช้งานสิ้นสุดแล้ว';
+            $result['message'] = 'หมดเวลารับส่วนลด Early Bird แล้ว';
 
             return $result;
         }
@@ -399,9 +443,14 @@ class AutoTradeXController extends Controller
         $result['eligible'] = true;
         $result['discount_percent'] = self::EARLY_BIRD_DISCOUNT_PERCENT;
         $result['days_remaining'] = $daysRemaining;
-        $result['message'] = $daysRemaining == 1
-            ? 'รีบซื้อเลย! เหลือเวลาอีกแค่ 1 วัน!'
-            : "รีบซื้อเลย! เหลือเวลาอีก {$daysRemaining} วัน";
+
+        if ($device->status === AutoTradeXDevice::STATUS_PENDING) {
+            $result['message'] = "🎉 ส่วนลดพิเศษสำหรับลูกค้าใหม่! เหลือเวลาอีก {$daysRemaining} วัน";
+        } elseif ($daysRemaining <= 3) {
+            $result['message'] = "⏰ รีบซื้อเลย! เหลือเวลาอีกแค่ {$daysRemaining} วัน!";
+        } else {
+            $result['message'] = "🔥 ซื้อตอนนี้ลด " . self::EARLY_BIRD_DISCOUNT_PERCENT . "%! เหลือเวลาอีก {$daysRemaining} วัน";
+        }
 
         return $result;
     }

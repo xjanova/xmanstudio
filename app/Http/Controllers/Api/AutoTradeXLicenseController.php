@@ -297,7 +297,16 @@ class AutoTradeXLicenseController extends Controller
 
     /**
      * Check if device is eligible for early bird discount
-     * Discount is available only during active trial and only once per device
+     *
+     * Early Bird is available for:
+     * - New devices (pending status) - 30 days from first seen
+     * - Devices in trial - until trial expires
+     * - Devices in demo mode - 7 days grace period after trial expires
+     *
+     * NOT available for:
+     * - Already licensed devices
+     * - Blocked devices
+     * - Devices that already used the discount
      */
     private function checkEarlyBirdDiscount(AutoTradeXDevice $device): array
     {
@@ -309,7 +318,7 @@ class AutoTradeXLicenseController extends Controller
             ];
         }
 
-        // Not eligible if device already has a license (not first purchase)
+        // Not eligible if device already has a license
         if ($device->status === AutoTradeXDevice::STATUS_LICENSED) {
             return [
                 'eligible' => false,
@@ -317,25 +326,70 @@ class AutoTradeXLicenseController extends Controller
             ];
         }
 
-        // Eligible if in active trial (not expired)
-        if ($device->status === AutoTradeXDevice::STATUS_TRIAL && ! $device->isTrialExpired()) {
-            $daysRemaining = $device->trialDaysRemaining();
-            $discountCode = $this->generateDiscountCode($device->machine_id);
-
+        // Not eligible if device is blocked
+        if ($device->status === AutoTradeXDevice::STATUS_BLOCKED) {
             return [
-                'eligible' => true,
-                'discount_percent' => self::EARLY_BIRD_DISCOUNT_PERCENT,
-                'days_remaining' => $daysRemaining,
-                'code' => $discountCode,
-                'message' => "🎉 ซื้อตอนนี้ลด {self::EARLY_BIRD_DISCOUNT_PERCENT}%! เหลือเวลาอีก {$daysRemaining} วัน",
-                'expires_at' => $device->trial_expires_at?->toISOString(),
+                'eligible' => false,
+                'reason' => 'device_blocked',
             ];
         }
 
-        // Not eligible - trial expired or not started
+        // Calculate eligibility period based on device status
+        $daysRemaining = 0;
+        $eligibleUntil = null;
+        $discountCode = $this->generateDiscountCode($device->machine_id);
+
+        if ($device->status === AutoTradeXDevice::STATUS_TRIAL && $device->trial_expires_at) {
+            // In active trial - eligible until trial expires
+            $eligibleUntil = $device->trial_expires_at;
+        } elseif ($device->status === AutoTradeXDevice::STATUS_DEMO ||
+                  $device->status === AutoTradeXDevice::STATUS_EXPIRED) {
+            // Trial expired but in demo/grace period - give 7 more days from expiry
+            if ($device->trial_expires_at) {
+                $eligibleUntil = $device->trial_expires_at->copy()->addDays(7);
+            } else {
+                // No trial info - use first_seen + 37 days (30 trial + 7 grace)
+                $eligibleUntil = $device->first_seen_at ?
+                    $device->first_seen_at->copy()->addDays(37) :
+                    now()->addDays(7);
+            }
+        } elseif ($device->status === AutoTradeXDevice::STATUS_PENDING) {
+            // New device, not started trial yet - eligible for 30 days from registration
+            $eligibleUntil = $device->first_seen_at ?
+                $device->first_seen_at->copy()->addDays(30) :
+                now()->addDays(30);
+        } else {
+            // Unknown status - give 7 days from now
+            $eligibleUntil = now()->addDays(7);
+        }
+
+        $daysRemaining = (int) now()->diffInDays($eligibleUntil, false);
+
+        // Check if still within eligibility period
+        if ($daysRemaining <= 0) {
+            return [
+                'eligible' => false,
+                'reason' => 'discount_expired',
+            ];
+        }
+
+        // Eligible for Early Bird!
+        $message = match (true) {
+            $device->status === AutoTradeXDevice::STATUS_PENDING =>
+                "🎉 ส่วนลดพิเศษสำหรับลูกค้าใหม่! เหลือเวลาอีก {$daysRemaining} วัน",
+            $daysRemaining <= 3 =>
+                "⏰ รีบซื้อเลย! เหลือเวลาอีกแค่ {$daysRemaining} วัน!",
+            default =>
+                "🔥 ซื้อตอนนี้ลด " . self::EARLY_BIRD_DISCOUNT_PERCENT . "%! เหลือเวลาอีก {$daysRemaining} วัน",
+        };
+
         return [
-            'eligible' => false,
-            'reason' => $device->status === AutoTradeXDevice::STATUS_PENDING ? 'trial_not_started' : 'trial_expired',
+            'eligible' => true,
+            'discount_percent' => self::EARLY_BIRD_DISCOUNT_PERCENT,
+            'days_remaining' => $daysRemaining,
+            'code' => $discountCode,
+            'message' => $message,
+            'expires_at' => $eligibleUntil->toISOString(),
         ];
     }
 
