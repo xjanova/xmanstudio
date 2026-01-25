@@ -36,16 +36,19 @@
                 </div>
 
                 @php
-                    $paymentSetting = \App\Models\PaymentSetting::getInstance();
+                    $promptpayEnabled = \App\Models\PaymentSetting::get('promptpay_enabled', false);
+                    $promptpayQrImage = \App\Models\PaymentSetting::get('promptpay_qr_image');
+                    $promptpayNumber = \App\Models\PaymentSetting::get('promptpay_number');
+                    $promptpayName = \App\Models\PaymentSetting::get('promptpay_name');
                     $bankAccounts = \App\Models\BankAccount::where('is_active', true)->get();
                 @endphp
 
-                @if($order->payment_method === 'promptpay' && $paymentSetting->promptpay_enabled)
+                @if($order->payment_method === 'promptpay' && $promptpayEnabled)
                     <!-- PromptPay QR Code -->
                     <div class="text-center">
                         <div class="inline-block p-4 bg-white rounded-xl">
-                            @if($paymentSetting->promptpay_qr_image)
-                                <img src="{{ Storage::url($paymentSetting->promptpay_qr_image) }}" alt="PromptPay QR Code"
+                            @if($promptpayQrImage)
+                                <img src="{{ Storage::url($promptpayQrImage) }}" alt="PromptPay QR Code"
                                      class="w-64 h-64 mx-auto object-contain">
                             @else
                                 <div class="w-64 h-64 flex items-center justify-center bg-gray-100 rounded-lg">
@@ -56,14 +59,14 @@
                         <p class="mt-4 text-gray-300">
                             สแกน QR Code ด้วยแอปธนาคารของคุณ
                         </p>
-                        @if($paymentSetting->promptpay_number)
+                        @if($promptpayNumber)
                             <p class="text-sm text-gray-500">
-                                พร้อมเพย์: {{ $paymentSetting->promptpay_number }}
+                                พร้อมเพย์: {{ $promptpayNumber }}
                             </p>
                         @endif
-                        @if($paymentSetting->promptpay_name)
+                        @if($promptpayName)
                             <p class="text-sm text-gray-500">
-                                ชื่อ: {{ $paymentSetting->promptpay_name }}
+                                ชื่อ: {{ $promptpayName }}
                             </p>
                         @endif
                     </div>
@@ -93,17 +96,17 @@
                 @else
                     <!-- Fallback - Show all payment options -->
                     <div class="space-y-6">
-                        @if($paymentSetting->promptpay_enabled)
+                        @if($promptpayEnabled)
                             <div class="text-center">
                                 <h3 class="text-lg font-semibold text-white mb-4">พร้อมเพย์</h3>
                                 <div class="inline-block p-4 bg-white rounded-xl">
-                                    @if($paymentSetting->promptpay_qr_image)
-                                        <img src="{{ Storage::url($paymentSetting->promptpay_qr_image) }}" alt="PromptPay QR Code"
+                                    @if($promptpayQrImage)
+                                        <img src="{{ Storage::url($promptpayQrImage) }}" alt="PromptPay QR Code"
                                              class="w-48 h-48 mx-auto object-contain">
                                     @endif
                                 </div>
-                                @if($paymentSetting->promptpay_number)
-                                    <p class="text-sm text-gray-400 mt-2">{{ $paymentSetting->promptpay_number }}</p>
+                                @if($promptpayNumber)
+                                    <p class="text-sm text-gray-400 mt-2">{{ $promptpayNumber }}</p>
                                 @endif
                             </div>
                         @endif
