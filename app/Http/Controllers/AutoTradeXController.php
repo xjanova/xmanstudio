@@ -135,6 +135,7 @@ class AutoTradeXController extends Controller
             'product_name' => $product->name,
             'quantity' => 1,
             'price' => $planInfo['price'],
+            'subtotal' => $planInfo['price'],
         ]);
 
         // Redirect to payment page
