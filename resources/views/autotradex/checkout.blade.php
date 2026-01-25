@@ -84,6 +84,11 @@
                     <form action="{{ route('autotradex.process', $plan) }}" method="POST">
                         @csrf
 
+                        {{-- Machine ID from desktop app --}}
+                        @if($machineId ?? false)
+                            <input type="hidden" name="machine_id" value="{{ $machineId }}">
+                        @endif
+
                         @if($errors->any())
                             <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
                                 <ul class="list-disc list-inside">

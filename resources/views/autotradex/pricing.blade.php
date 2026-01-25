@@ -104,7 +104,7 @@
                         </li>
                     </ul>
 
-                    <a href="{{ route('autotradex.checkout', 'monthly') }}"
+                    <a href="{{ route('autotradex.checkout', 'monthly') }}{{ $machineId ? '?machine_id=' . $machineId : '' }}"
                        class="block w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white text-center font-semibold rounded-xl transition-colors">
                         เลือกแพ็กเกจนี้
                     </a>
@@ -148,7 +148,7 @@
                         </li>
                     </ul>
 
-                    <a href="{{ route('autotradex.checkout', 'yearly') }}"
+                    <a href="{{ route('autotradex.checkout', 'yearly') }}{{ $machineId ? '?machine_id=' . $machineId : '' }}"
                        class="block w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-center font-semibold rounded-xl transition-colors">
                         เลือกแพ็กเกจนี้
                     </a>
@@ -192,7 +192,7 @@
                         </li>
                     </ul>
 
-                    <a href="{{ route('autotradex.checkout', 'lifetime') }}"
+                    <a href="{{ route('autotradex.checkout', 'lifetime') }}{{ $machineId ? '?machine_id=' . $machineId : '' }}"
                        class="block w-full py-3 px-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black text-center font-bold rounded-xl transition-colors">
                         เลือกแพ็กเกจนี้
                     </a>

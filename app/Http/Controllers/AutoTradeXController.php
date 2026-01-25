@@ -46,9 +46,14 @@ class AutoTradeXController extends Controller
      *
      * GET /autotradex/pricing
      */
-    public function pricing()
+    public function pricing(Request $request)
     {
-        return view('autotradex.pricing');
+        // Get machine_id from query string (sent from desktop app)
+        $machineId = $request->query('machine_id');
+
+        return view('autotradex.pricing', [
+            'machineId' => $machineId,
+        ]);
     }
 
     /**
@@ -56,7 +61,7 @@ class AutoTradeXController extends Controller
      *
      * GET /autotradex/checkout/{plan}
      */
-    public function checkout(string $plan)
+    public function checkout(Request $request, string $plan)
     {
         if (! isset(self::PRICING[$plan])) {
             abort(404, 'Plan not found');
@@ -69,10 +74,14 @@ class AutoTradeXController extends Controller
             abort(404, 'Product not found');
         }
 
+        // Get machine_id from query string (passed from pricing page)
+        $machineId = $request->query('machine_id');
+
         return view('autotradex.checkout', [
             'plan' => $plan,
             'planInfo' => $planInfo,
             'product' => $product,
+            'machineId' => $machineId,
         ]);
     }
 
@@ -92,10 +101,18 @@ class AutoTradeXController extends Controller
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
             'payment_method' => 'required|in:promptpay,bank_transfer',
+            'machine_id' => 'nullable|string|max:64',
         ]);
 
         $planInfo = self::PRICING[$plan];
         $product = Product::where('slug', 'autotradex')->firstOrFail();
+
+        // Prepare metadata with machine_id and plan info
+        $metadata = [
+            'plan' => $plan,
+            'license_type' => $planInfo['license_type'],
+            'machine_id' => $validated['machine_id'] ?? null,
+        ];
 
         // Create order
         $order = Order::create([
@@ -109,6 +126,7 @@ class AutoTradeXController extends Controller
             'status' => 'pending',
             'payment_method' => $validated['payment_method'],
             'notes' => "AutoTradeX {$planInfo['name']} License | Plan: {$plan} | Type: {$planInfo['license_type']}",
+            'metadata' => json_encode($metadata),
         ]);
 
         // Create order item
