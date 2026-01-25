@@ -453,6 +453,55 @@
                 showToast('ไม่สามารถคัดลอกได้', 'error');
             });
         }
+
+        // Scroll to active menu item on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Scroll to active menu in desktop sidebar
+            const desktopSidebar = document.querySelector('aside.w-64.bg-white');
+            if (desktopSidebar) {
+                const desktopNav = desktopSidebar.querySelector('nav.overflow-y-auto');
+                if (desktopNav) {
+                    // Find active menu item (one with gradient background)
+                    const activeMenuItem = desktopNav.querySelector('a[class*="bg-gradient-to-r"]');
+                    if (activeMenuItem) {
+                        activeMenuItem.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest',
+                            inline: 'nearest'
+                        });
+                    }
+                }
+            }
+
+            // Scroll to active menu in mobile menu when opened
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            const isHidden = mobileMenu.classList.contains('hidden');
+                            if (!isHidden) {
+                                // Mobile menu is now visible, scroll to active item
+                                const mobileNav = mobileMenu.querySelector('nav');
+                                if (mobileNav) {
+                                    const activeMenuItem = mobileNav.querySelector('a[class*="bg-gradient-to-r"]');
+                                    if (activeMenuItem) {
+                                        setTimeout(() => {
+                                            activeMenuItem.scrollIntoView({
+                                                behavior: 'smooth',
+                                                block: 'nearest',
+                                                inline: 'nearest'
+                                            });
+                                        }, 100);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+                observer.observe(mobileMenu, { attributes: true });
+            }
+        });
     </script>
     @stack('scripts')
 </body>
