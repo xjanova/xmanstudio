@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AutoTradeXDevice;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -14,6 +15,11 @@ use Illuminate\Support\Str;
  */
 class AutoTradeXController extends Controller
 {
+    /**
+     * Early bird discount percentage
+     */
+    private const EARLY_BIRD_DISCOUNT_PERCENT = 20;
+
     /**
      * License pricing information
      */
@@ -51,8 +57,16 @@ class AutoTradeXController extends Controller
         // Get machine_id from query string (sent from desktop app)
         $machineId = $request->query('machine_id');
 
+        // Check for early bird discount eligibility
+        $earlyBirdInfo = $this->checkEarlyBirdEligibility($machineId);
+
+        // Calculate discounted prices if eligible
+        $pricing = $this->getPricingWithDiscount($earlyBirdInfo);
+
         return view('autotradex.pricing', [
             'machineId' => $machineId,
+            'earlyBird' => $earlyBirdInfo,
+            'pricing' => $pricing,
         ]);
     }
 
@@ -67,21 +81,28 @@ class AutoTradeXController extends Controller
             abort(404, 'Plan not found');
         }
 
-        $planInfo = self::PRICING[$plan];
         $product = Product::where('slug', 'autotradex')->first();
 
         if (! $product) {
             abort(404, 'Product not found');
         }
 
-        // Get machine_id from query string (passed from pricing page)
-        $machineId = $request->query('machine_id');
+        // Get machine_id from query string or session
+        $machineId = $request->query('machine_id') ?? session('autotradex_machine_id');
+
+        // Check Early Bird eligibility
+        $earlyBirdInfo = $this->checkEarlyBirdEligibility($machineId);
+
+        // Get pricing with discount
+        $pricing = $this->getPricingWithDiscount($earlyBirdInfo);
+        $planInfo = $pricing[$plan];
 
         return view('autotradex.checkout', [
             'plan' => $plan,
             'planInfo' => $planInfo,
             'product' => $product,
             'machineId' => $machineId,
+            'earlyBird' => $earlyBirdInfo,
         ]);
     }
 
@@ -104,15 +125,35 @@ class AutoTradeXController extends Controller
             'machine_id' => 'nullable|string|max:64',
         ]);
 
-        $planInfo = self::PRICING[$plan];
+        $machineId = $validated['machine_id'] ?? session('autotradex_machine_id');
         $product = Product::where('slug', 'autotradex')->firstOrFail();
 
-        // Prepare metadata with machine_id and plan info
+        // Check Early Bird eligibility and get discounted pricing
+        $earlyBirdInfo = $this->checkEarlyBirdEligibility($machineId);
+        $pricing = $this->getPricingWithDiscount($earlyBirdInfo);
+        $planInfo = $pricing[$plan];
+
+        // Use discounted price if eligible
+        $finalPrice = $planInfo['discounted_price'];
+        $originalPrice = $planInfo['original_price'];
+        $discountAmount = $planInfo['discount_amount'];
+
+        // Prepare metadata with machine_id, plan info, and discount info
         $metadata = [
             'plan' => $plan,
             'license_type' => $planInfo['license_type'],
-            'machine_id' => $validated['machine_id'] ?? null,
+            'machine_id' => $machineId,
+            'early_bird_applied' => $earlyBirdInfo['eligible'],
+            'original_price' => $originalPrice,
+            'discount_amount' => $discountAmount,
+            'discount_percent' => $earlyBirdInfo['discount_percent'],
         ];
+
+        // Build notes with discount info
+        $notes = "AutoTradeX {$planInfo['name']} License | Plan: {$plan} | Type: {$planInfo['license_type']}";
+        if ($earlyBirdInfo['eligible']) {
+            $notes .= " | Early Bird: -{$earlyBirdInfo['discount_percent']}% (฿{$discountAmount})";
+        }
 
         // Create order
         $order = Order::create([
@@ -121,11 +162,12 @@ class AutoTradeXController extends Controller
             'customer_name' => $validated['customer_name'],
             'customer_email' => $validated['customer_email'],
             'customer_phone' => $validated['customer_phone'],
-            'subtotal' => $planInfo['price'],
-            'total' => $planInfo['price'],
+            'subtotal' => $originalPrice,
+            'discount' => $discountAmount,
+            'total' => $finalPrice,
             'status' => 'pending',
             'payment_method' => $validated['payment_method'],
-            'notes' => "AutoTradeX {$planInfo['name']} License | Plan: {$plan} | Type: {$planInfo['license_type']}",
+            'notes' => $notes,
             'metadata' => json_encode($metadata),
         ]);
 
@@ -134,9 +176,14 @@ class AutoTradeXController extends Controller
             'product_id' => $product->id,
             'product_name' => $product->name,
             'quantity' => 1,
-            'price' => $planInfo['price'],
-            'subtotal' => $planInfo['price'],
+            'price' => $finalPrice,
+            'subtotal' => $finalPrice,
         ]);
+
+        // Mark Early Bird as used if applicable
+        if ($earlyBirdInfo['eligible'] && $machineId) {
+            $this->markEarlyBirdUsed($machineId);
+        }
 
         // Redirect to payment page
         return redirect()->route('autotradex.payment', [
@@ -175,7 +222,7 @@ class AutoTradeXController extends Controller
      */
     public function buyRedirect(Request $request)
     {
-        $plan = $request->query('plan', 'yearly'); // Default to yearly (best value)
+        $plan = $request->query('plan');
         $machineId = $request->query('machine_id');
 
         // Store machine_id in session for later use
@@ -183,13 +230,26 @@ class AutoTradeXController extends Controller
             session(['autotradex_machine_id' => $machineId]);
         }
 
-        // If specific plan requested, go to checkout
-        if (in_array($plan, ['monthly', 'yearly', 'lifetime'])) {
-            return redirect()->route('autotradex.checkout', $plan);
+        // Build query params
+        $queryParams = $machineId ? ['machine_id' => $machineId] : [];
+
+        // If specific plan requested, go to checkout with machine_id
+        if ($plan && in_array($plan, ['monthly', 'yearly', 'lifetime'])) {
+            $url = route('autotradex.checkout', $plan);
+            if ($machineId) {
+                $url .= '?machine_id='.$machineId;
+            }
+
+            return redirect($url);
         }
 
-        // Otherwise show pricing page
-        return redirect()->route('autotradex.pricing');
+        // Otherwise show pricing page with machine_id (to show Early Bird info)
+        $url = route('autotradex.pricing');
+        if ($machineId) {
+            $url .= '?machine_id='.$machineId;
+        }
+
+        return redirect($url);
     }
 
     /**
@@ -272,5 +332,123 @@ class AutoTradeXController extends Controller
     public function resetDevicePage()
     {
         return view('products.autotradex-reset-device');
+    }
+
+    /**
+     * Check if a device is eligible for Early Bird discount
+     *
+     * Eligibility requirements:
+     * 1. Must have a valid machine_id
+     * 2. Device must be registered and in trial period
+     * 3. Device must NOT have used early bird discount before
+     *
+     * @return array{eligible: bool, discount_percent: int, days_remaining: int, message: string}
+     */
+    protected function checkEarlyBirdEligibility(?string $machineId): array
+    {
+        // Default: not eligible
+        $result = [
+            'eligible' => false,
+            'discount_percent' => 0,
+            'days_remaining' => 0,
+            'message' => '',
+        ];
+
+        // No machine_id = no discount
+        if (empty($machineId)) {
+            $result['message'] = 'กรุณาเปิดจากแอป AutoTrade-X เพื่อรับส่วนลด';
+
+            return $result;
+        }
+
+        // Find device record
+        $device = AutoTradeXDevice::where('machine_id', $machineId)->first();
+
+        if (! $device) {
+            $result['message'] = 'ไม่พบอุปกรณ์นี้ในระบบ';
+
+            return $result;
+        }
+
+        // Check if early bird discount was already used
+        if ($device->early_bird_used) {
+            $result['message'] = 'คุณได้ใช้สิทธิ์ Early Bird ไปแล้ว';
+
+            return $result;
+        }
+
+        // Check if still in trial period
+        if (! $device->first_trial_at) {
+            $result['message'] = 'กรุณาเริ่มทดลองใช้งานก่อน';
+
+            return $result;
+        }
+
+        // Use trial_expires_at if available, otherwise calculate from first_trial_at
+        $trialEndDate = $device->trial_expires_at ?? $device->first_trial_at->addDays(30);
+        $daysRemaining = (int) now()->diffInDays($trialEndDate, false);
+
+        // Trial must still be active
+        if ($daysRemaining <= 0) {
+            $result['message'] = 'ช่วงทดลองใช้งานสิ้นสุดแล้ว';
+
+            return $result;
+        }
+
+        // All checks passed - eligible for Early Bird
+        $result['eligible'] = true;
+        $result['discount_percent'] = self::EARLY_BIRD_DISCOUNT_PERCENT;
+        $result['days_remaining'] = $daysRemaining;
+        $result['message'] = $daysRemaining == 1
+            ? 'รีบซื้อเลย! เหลือเวลาอีกแค่ 1 วัน!'
+            : "รีบซื้อเลย! เหลือเวลาอีก {$daysRemaining} วัน";
+
+        return $result;
+    }
+
+    /**
+     * Get pricing with discount applied if eligible
+     *
+     * @param  array  $earlyBirdInfo  Result from checkEarlyBirdEligibility()
+     * @return array Pricing with original_price and discounted_price
+     */
+    protected function getPricingWithDiscount(array $earlyBirdInfo): array
+    {
+        $pricing = [];
+
+        foreach (self::PRICING as $key => $plan) {
+            $pricing[$key] = $plan;
+            $pricing[$key]['original_price'] = $plan['price'];
+
+            if ($earlyBirdInfo['eligible']) {
+                $discountAmount = (int) ($plan['price'] * $earlyBirdInfo['discount_percent'] / 100);
+                $pricing[$key]['discounted_price'] = $plan['price'] - $discountAmount;
+                $pricing[$key]['discount_amount'] = $discountAmount;
+            } else {
+                $pricing[$key]['discounted_price'] = $plan['price'];
+                $pricing[$key]['discount_amount'] = 0;
+            }
+        }
+
+        return $pricing;
+    }
+
+    /**
+     * Mark Early Bird discount as used for a device
+     */
+    protected function markEarlyBirdUsed(string $machineId): bool
+    {
+        $device = AutoTradeXDevice::where('machine_id', $machineId)->first();
+
+        if (! $device) {
+            return false;
+        }
+
+        $device->update([
+            'early_bird_used' => true,
+            'early_bird_used_at' => now(),
+        ]);
+
+        return true;
     }
 }
