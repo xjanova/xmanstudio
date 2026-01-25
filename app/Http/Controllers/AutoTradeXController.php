@@ -454,7 +454,7 @@ class AutoTradeXController extends Controller
         } elseif ($daysRemaining <= 3) {
             $result['message'] = "⏰ รีบซื้อเลย! เหลือเวลาอีกแค่ {$daysRemaining} วัน!";
         } else {
-            $result['message'] = "🔥 ซื้อตอนนี้ลด " . self::EARLY_BIRD_DISCOUNT_PERCENT . "%! เหลือเวลาอีก {$daysRemaining} วัน";
+            $result['message'] = '🔥 ซื้อตอนนี้ลด '.self::EARLY_BIRD_DISCOUNT_PERCENT."%! เหลือเวลาอีก {$daysRemaining} วัน";
         }
 
         return $result;
