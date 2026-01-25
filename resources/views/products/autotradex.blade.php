@@ -263,10 +263,21 @@
                     </ul>
 
                     <div class="mt-6 pt-6 border-t border-gray-700">
-                        <a href="{{ route('autotradex.pricing') }}"
-                           class="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-center font-bold rounded-xl transition-all">
-                            ซื้อ License
-                        </a>
+                        @if(!$product->is_custom)
+                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit"
+                                        class="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-center font-bold rounded-xl transition-all">
+                                    ซื้อ License - ฿{{ number_format($product->price, 0) }}
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('support.index') }}"
+                               class="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-center font-bold rounded-xl transition-all">
+                                ติดต่อสอบถามราคา
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
