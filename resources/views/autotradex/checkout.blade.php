@@ -20,6 +20,20 @@
                 <div class="md:w-1/3 bg-gradient-to-br from-purple-900 to-gray-900 p-8 text-white">
                     <h2 class="text-lg font-semibold mb-6">สรุปคำสั่งซื้อ</h2>
 
+                    {{-- Early Bird Badge --}}
+                    @if(isset($earlyBird) && $earlyBird['eligible'])
+                    <div class="bg-gradient-to-r from-orange-500 to-yellow-500 rounded-xl p-4 mb-6 text-center">
+                        <div class="flex items-center justify-center gap-2 mb-1">
+                            <span class="text-xl">🔥</span>
+                            <span class="font-bold text-white">EARLY BIRD</span>
+                            <span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                -{{ $earlyBird['discount_percent'] }}%
+                            </span>
+                        </div>
+                        <p class="text-white/90 text-sm">{{ $earlyBird['message'] }}</p>
+                    </div>
+                    @endif
+
                     <div class="space-y-4">
                         <div>
                             <div class="flex items-center mb-2">
@@ -48,10 +62,25 @@
                         </div>
 
                         <div class="py-4 border-t border-white/20">
-                            <div class="flex items-center justify-between">
-                                <span class="font-semibold">รวมทั้งสิ้น</span>
-                                <span class="text-3xl font-black">฿{{ number_format($planInfo['price']) }}</span>
-                            </div>
+                            @if(isset($planInfo['discount_amount']) && $planInfo['discount_amount'] > 0)
+                                <div class="flex items-center justify-between text-sm mb-2">
+                                    <span class="text-gray-400">ราคาปกติ</span>
+                                    <span class="text-gray-400 line-through">฿{{ number_format($planInfo['original_price']) }}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-sm mb-2">
+                                    <span class="text-green-400">ส่วนลด Early Bird</span>
+                                    <span class="text-green-400">-฿{{ number_format($planInfo['discount_amount']) }}</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-white/10">
+                                    <span class="font-semibold">รวมทั้งสิ้น</span>
+                                    <span class="text-3xl font-black text-green-400">฿{{ number_format($planInfo['discounted_price']) }}</span>
+                                </div>
+                            @else
+                                <div class="flex items-center justify-between">
+                                    <span class="font-semibold">รวมทั้งสิ้น</span>
+                                    <span class="text-3xl font-black">฿{{ number_format($planInfo['price'] ?? $planInfo['original_price']) }}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -158,7 +187,12 @@
 
                         <button type="submit"
                                 class="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg rounded-xl transition-all">
-                            ดำเนินการชำระเงิน ฿{{ number_format($planInfo['price']) }}
+                            @if(isset($planInfo['discount_amount']) && $planInfo['discount_amount'] > 0)
+                                ดำเนินการชำระเงิน ฿{{ number_format($planInfo['discounted_price']) }}
+                                <span class="text-sm font-normal line-through text-white/60 ml-2">฿{{ number_format($planInfo['original_price']) }}</span>
+                            @else
+                                ดำเนินการชำระเงิน ฿{{ number_format($planInfo['price'] ?? $planInfo['original_price']) }}
+                            @endif
                         </button>
 
                         <p class="mt-4 text-sm text-gray-500 text-center">

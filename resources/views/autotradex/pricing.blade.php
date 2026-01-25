@@ -36,12 +36,48 @@
         </div>
     </section>
 
+    <!-- Early Bird Discount Banner -->
+    @if(isset($earlyBird) && $earlyBird['eligible'])
+    <section class="py-6 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="relative overflow-hidden bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 rounded-2xl p-6 shadow-lg">
+                <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"40\" height=\"40\" viewBox=\"0 0 40 40\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23fff\" fill-opacity=\"0.1\"%3E%3Cpath d=\"M20 20l-4-4 4-4 4 4-4 4zm0 8l-4-4 4-4 4 4-4 4z\"/%3E%3C/g%3E%3C/svg%3E')]"></div>
+
+                <div class="relative flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="text-5xl">🔥</div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-2xl font-black text-white">EARLY BIRD DISCOUNT</span>
+                                <span class="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-full animate-pulse">
+                                    {{ $earlyBird['discount_percent'] }}% OFF
+                                </span>
+                            </div>
+                            <p class="text-white/90 font-medium">
+                                {{ $earlyBird['message'] }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/20 backdrop-blur-sm rounded-xl px-6 py-3 text-center">
+                        <div class="text-white/70 text-sm">เหลือเวลาอีก</div>
+                        <div class="text-3xl font-black text-white">{{ $earlyBird['days_remaining'] }} วัน</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    @endif
+
     <!-- Pricing Section -->
     <section class="py-16 px-4 sm:px-6 lg:px-8">
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold text-white mb-4">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
-                <p class="text-gray-400">เริ่มต้นด้วย Trial 7 วันฟรี หรือเลือกแพ็กเกจที่ตรงใจ</p>
+                <p class="text-gray-400">เริ่มต้นด้วย Trial 30 วันฟรี หรือเลือกแพ็กเกจที่ตรงใจ</p>
+                @if(isset($earlyBird) && $earlyBird['eligible'])
+                <p class="text-yellow-400 font-semibold mt-2">🎉 รับส่วนลด {{ $earlyBird['discount_percent'] }}% สำหรับทุกแพ็กเกจ!</p>
+                @endif
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -78,10 +114,23 @@
 
                 <!-- Monthly -->
                 <div class="relative bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 hover:border-purple-500 transition-all">
+                    @if(isset($earlyBird) && $earlyBird['eligible'])
+                    <div class="absolute -top-3 -right-3">
+                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-bounce">
+                            -{{ $earlyBird['discount_percent'] }}%
+                        </span>
+                    </div>
+                    @endif
+
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">Monthly</h3>
                         <p class="text-gray-400 text-sm mb-4">รายเดือน</p>
-                        <div class="text-4xl font-black text-white">฿990</div>
+                        @if(isset($pricing['monthly']) && $pricing['monthly']['discount_amount'] > 0)
+                            <div class="text-2xl text-gray-500 line-through">฿{{ number_format($pricing['monthly']['original_price']) }}</div>
+                            <div class="text-4xl font-black text-green-400">฿{{ number_format($pricing['monthly']['discounted_price']) }}</div>
+                        @else
+                            <div class="text-4xl font-black text-white">฿{{ number_format($pricing['monthly']['price'] ?? 990) }}</div>
+                        @endif
                         <p class="text-gray-500 text-sm mt-1">ต่อเดือน</p>
                     </div>
 
@@ -112,17 +161,28 @@
 
                 <!-- Yearly - Popular -->
                 <div class="relative bg-gradient-to-b from-purple-900/50 to-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border-2 border-purple-500 transform hover:scale-105 transition-all">
-                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 flex gap-2">
                         <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-4 py-1 rounded-full">
                             ยอดนิยม
                         </span>
+                        @if(isset($earlyBird) && $earlyBird['eligible'])
+                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-bounce">
+                            -{{ $earlyBird['discount_percent'] }}%
+                        </span>
+                        @endif
                     </div>
 
                     <div class="text-center mb-6 pt-2">
                         <h3 class="text-xl font-bold text-white mb-2">Yearly</h3>
                         <p class="text-gray-400 text-sm mb-4">รายปี</p>
-                        <div class="text-4xl font-black text-white">฿7,900</div>
-                        <p class="text-gray-500 text-sm mt-1">ต่อปี <span class="text-green-400">(ประหยัด 33%)</span></p>
+                        @if(isset($pricing['yearly']) && $pricing['yearly']['discount_amount'] > 0)
+                            <div class="text-2xl text-gray-500 line-through">฿{{ number_format($pricing['yearly']['original_price']) }}</div>
+                            <div class="text-4xl font-black text-green-400">฿{{ number_format($pricing['yearly']['discounted_price']) }}</div>
+                            <p class="text-gray-500 text-sm mt-1">ต่อปี <span class="text-green-400">(ประหยัด ฿{{ number_format($pricing['yearly']['discount_amount']) }})</span></p>
+                        @else
+                            <div class="text-4xl font-black text-white">฿{{ number_format($pricing['yearly']['price'] ?? 7900) }}</div>
+                            <p class="text-gray-500 text-sm mt-1">ต่อปี <span class="text-green-400">(ประหยัด 33%)</span></p>
+                        @endif
                     </div>
 
                     <ul class="space-y-3 mb-6 text-sm">
@@ -156,16 +216,27 @@
 
                 <!-- Lifetime -->
                 <div class="relative bg-gradient-to-b from-yellow-900/30 to-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-yellow-500/50 hover:border-yellow-500 transition-all">
-                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 flex gap-2">
                         <span class="bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold px-4 py-1 rounded-full">
                             ดีที่สุด
                         </span>
+                        @if(isset($earlyBird) && $earlyBird['eligible'])
+                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-bounce">
+                            -{{ $earlyBird['discount_percent'] }}%
+                        </span>
+                        @endif
                     </div>
 
                     <div class="text-center mb-6 pt-2">
                         <h3 class="text-xl font-bold text-white mb-2">Lifetime</h3>
                         <p class="text-gray-400 text-sm mb-4">ตลอดชีพ</p>
-                        <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">฿19,900</div>
+                        @if(isset($pricing['lifetime']) && $pricing['lifetime']['discount_amount'] > 0)
+                            <div class="text-2xl text-gray-500 line-through">฿{{ number_format($pricing['lifetime']['original_price']) }}</div>
+                            <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">฿{{ number_format($pricing['lifetime']['discounted_price']) }}</div>
+                            <p class="text-green-400 text-sm mt-1 font-semibold">ประหยัด ฿{{ number_format($pricing['lifetime']['discount_amount']) }}!</p>
+                        @else
+                            <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">฿{{ number_format($pricing['lifetime']['price'] ?? 19900) }}</div>
+                        @endif
                         <p class="text-gray-500 text-sm mt-1">จ่ายครั้งเดียว</p>
                     </div>
 
