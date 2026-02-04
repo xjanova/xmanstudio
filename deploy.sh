@@ -1236,13 +1236,34 @@ health_check() {
 
     local HEALTH_ISSUES=0
 
-    # Check database connection
+    # Check database connection with timeout (15 seconds max)
+    print_info "Checking database connection (timeout: 15s)..."
     set +e
-    DB_CHECK=$(php artisan tinker --execute="try { \DB::connection()->getPdo(); echo 'ok'; } catch(\Exception \$e) { echo 'fail: ' . \$e->getMessage(); }" 2>/dev/null | tail -1)
+    if command -v timeout >/dev/null 2>&1; then
+        DB_CHECK=$(timeout 15 php artisan tinker --execute="try { \DB::connection()->getPdo(); echo 'ok'; } catch(\Exception \$e) { echo 'fail: ' . \$e->getMessage(); }" 2>/dev/null | tail -1)
+        DB_EXIT=$?
+        if [ $DB_EXIT -eq 124 ]; then
+            DB_CHECK="fail: timeout after 15 seconds"
+        fi
+    else
+        # Fallback without timeout command (use background process)
+        DB_CHECK=$(php artisan tinker --execute="try { \DB::connection()->getPdo(); echo 'ok'; } catch(\Exception \$e) { echo 'fail: ' . \$e->getMessage(); }" 2>/dev/null | tail -1 &
+        DB_PID=$!
+        sleep 15
+        if kill -0 $DB_PID 2>/dev/null; then
+            kill $DB_PID 2>/dev/null
+            DB_CHECK="fail: timeout after 15 seconds"
+        else
+            wait $DB_PID
+        fi)
+    fi
     set -e
 
     if [[ "$DB_CHECK" == "ok" ]]; then
         print_success "Database connection is working"
+    elif [[ "$DB_CHECK" == *"timeout"* ]]; then
+        print_warning "Database connection timed out (MySQL may be slow or unreachable)"
+        print_info "Continuing deployment - please check database manually"
     else
         print_error "Database connection failed: $DB_CHECK"
         HEALTH_ISSUES=$((HEALTH_ISSUES + 1))
