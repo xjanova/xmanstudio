@@ -337,13 +337,14 @@
                 qrContainer.innerHTML = '';
 
                 // Create QR Code using qrcodejs library
+                // Use correctLevel M (Medium) for better scanning - H makes QR too dense
                 new QRCode(qrContainer, {
                     text: JSON.stringify(qrData),
-                    width: 250,
-                    height: 250,
+                    width: 280,
+                    height: 280,
                     colorDark: '#000000',
                     colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.H
+                    correctLevel: QRCode.CorrectLevel.M
                 });
             } catch (error) {
                 console.error('QR Code error:', error);
