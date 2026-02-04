@@ -410,6 +410,24 @@
                 </a>
 
                 <div class="px-4 py-3 mt-4">
+                    <span class="text-xs font-semibold text-indigo-300/50 uppercase tracking-wider">จัดการสมาชิก</span>
+                </div>
+
+                <a href="{{ route('admin.users.index') }}"
+                   class="premium-nav-item flex items-center px-4 py-3 text-indigo-100 rounded-lg {{ request()->routeIs('admin.users*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                    </div>
+                    รายชื่อสมาชิก
+                    @php
+                        $totalUsers = \App\Models\User::count();
+                    @endphp
+                    <span class="ml-auto bg-white/10 text-indigo-200 text-xs px-2 py-0.5 rounded-full">{{ $totalUsers }}</span>
+                </a>
+
+                <div class="px-4 py-3 mt-4">
                     <span class="text-xs font-semibold text-indigo-300/50 uppercase tracking-wider">Line OA</span>
                 </div>
 
