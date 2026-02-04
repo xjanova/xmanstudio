@@ -177,22 +177,30 @@
                     </h3>
                 </div>
                 <div class="p-6 space-y-4">
-                    <!-- Bank Account -->
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                </svg>
+                    @if($bankAccounts->count() > 0)
+                        @foreach($bankAccounts as $bank)
+                        <!-- Bank Account: {{ $bank->bank_name }} -->
+                        <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
+                            <div class="flex items-center mb-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-semibold text-green-800 dark:text-green-200">{{ $bank->bank_name }}</h4>
                             </div>
-                            <h4 class="font-semibold text-green-800 dark:text-green-200">ธนาคารกสิกรไทย</h4>
+                            <div class="space-y-2 text-sm">
+                                <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">ชื่อบัญชี:</span> {{ $bank->account_name }}</p>
+                                <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">เลขบัญชี:</span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">{{ $bank->account_number }}</code></p>
+                                @if($bank->branch)
+                                <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">สาขา:</span> {{ $bank->branch }}</p>
+                                @endif
+                            </div>
                         </div>
-                        <div class="space-y-2 text-sm">
-                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">ชื่อบัญชี:</span> XmanStudio</p>
-                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">เลขบัญชี:</span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">xxx-x-xxxxx-x</code></p>
-                        </div>
-                    </div>
+                        @endforeach
+                    @endif
 
+                    @if($promptpayNumber)
                     <!-- PromptPay -->
                     <div class="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
                         <div class="flex items-center mb-3">
@@ -204,9 +212,10 @@
                             <h4 class="font-semibold text-purple-800 dark:text-purple-200">PromptPay</h4>
                         </div>
                         <div class="space-y-2 text-sm">
-                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">หมายเลข:</span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">xxx-xxx-xxxx</code></p>
+                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">หมายเลข:</span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">{{ $promptpayNumber }}</code></p>
                         </div>
                     </div>
+                    @endif
 
                     <!-- Important Notice -->
                     <div class="flex items-start p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">

@@ -183,65 +183,25 @@
                         @enderror
                     </div>
 
-                    <!-- Note: ระบบตรวจสอบการชำระเงินอัตโนมัติผ่าน SMS -->
+                    <!-- SMS Auto-verification Notice -->
+                    <div class="mb-6 flex items-start p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                        <svg class="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="text-sm">
+                            <p class="font-medium text-blue-800 dark:text-blue-200">ระบบตรวจสอบอัตโนมัติ</p>
+                            <p class="text-blue-700 dark:text-blue-300 mt-1">หลังจากส่งคำขอ ระบบจะแสดงยอดเงินที่ต้องโอน เมื่อโอนเงินตรงตามยอด ระบบจะตรวจสอบและเติมเงินให้อัตโนมัติ</p>
+                        </div>
+                    </div>
 
                     <!-- Submit -->
                     <button type="submit" class="w-full flex items-center justify-center px-6 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                         </svg>
-                        ส่งคำขอเติมเงิน
+                        ดำเนินการเติมเงิน
                     </button>
                 </form>
-            </div>
-        </div>
-
-        <!-- Payment Info -->
-        <div class="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    ข้อมูลการชำระเงิน
-                </h3>
-            </div>
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                </svg>
-                            </div>
-                            <h4 class="font-semibold text-green-800 dark:text-green-200">ธนาคารกสิกรไทย</h4>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">ชื่อบัญชี:</span> XmanStudio</p>
-                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">เลขบัญชี:</span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">xxx-x-xxxxx-x</code></p>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            <h4 class="font-semibold text-purple-800 dark:text-purple-200">PromptPay</h4>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">หมายเลข:</span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">xxx-xxx-xxxx</code></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-6 flex items-start p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-                    <svg class="w-5 h-5 text-amber-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <p class="text-sm text-amber-800 dark:text-amber-200">หลังจากชำระเงินแล้ว กรุณารอการตรวจสอบ 1-24 ชั่วโมง (ในวันทำการ)</p>
-                </div>
             </div>
         </div>
     </div>

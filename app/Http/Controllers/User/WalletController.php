@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\BankAccount;
 use App\Models\Setting;
 use App\Models\Wallet;
 use App\Models\WalletBonusTier;
@@ -162,7 +163,11 @@ class WalletController extends Controller
         $wallet = $topup->wallet;
         $uniqueAmount = $topup->uniquePaymentAmount;
 
-        return view('user.wallet.topup-status', compact('topup', 'wallet', 'uniqueAmount'));
+        // Get bank accounts for payment info
+        $bankAccounts = BankAccount::active()->ordered()->get();
+        $promptpayNumber = config('payment.promptpay.number');
+
+        return view('user.wallet.topup-status', compact('topup', 'wallet', 'uniqueAmount', 'bankAccounts', 'promptpayNumber'));
     }
 
     /**
