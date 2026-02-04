@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
-use App\Models\UniquePaymentAmount;
 use App\Services\SmsPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,8 +16,7 @@ class SmsPaymentController extends Controller
 {
     public function __construct(
         private SmsPaymentService $smsPaymentService
-    ) {
-    }
+    ) {}
 
     /**
      * Receive an SMS payment notification from the Android app.
