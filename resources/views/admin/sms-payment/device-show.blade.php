@@ -46,6 +46,20 @@
 </div>
 @endif
 
+@if(session('new_device'))
+<div class="mb-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+    <div class="flex">
+        <svg class="w-5 h-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div class="text-sm text-blue-700 dark:text-blue-300">
+            <p class="font-medium mb-1">อุปกรณ์ถูกสร้างเรียบร้อย!</p>
+            <p class="text-blue-600 dark:text-blue-400">บันทึก API Key และ Secret Key ไว้ เพราะจะไม่แสดงอีกหลังจากออกจากหน้านี้</p>
+        </div>
+    </div>
+</div>
+@endif
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     <!-- QR Code Card -->
     <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -57,7 +71,7 @@
             <div class="flex flex-col items-center">
                 <!-- QR Code -->
                 <div class="p-4 bg-white rounded-2xl shadow-lg mb-6">
-                    {!! $qrCode !!}
+                    <div id="qrcode" class="flex items-center justify-center" style="width: 250px; height: 250px;"></div>
                 </div>
 
                 <p class="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
@@ -94,7 +108,7 @@
 
             <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                 <span class="text-gray-500 dark:text-gray-400">Device ID</span>
-                <code class="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 rounded">{{ Str::limit($device->device_id, 20) }}</code>
+                <code class="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 rounded">{{ $device->device_id }}</code>
             </div>
 
             <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700">
@@ -150,7 +164,129 @@
     </div>
 </div>
 
-<!-- API Information (for debugging) -->
+<!-- Manual Configuration (API Keys) -->
+<div class="mt-8 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">ตั้งค่าแบบ Manual</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ใช้สำหรับกรอกข้อมูลในแอพด้วยตนเอง (ไม่ต้องสแกน QR)</p>
+            </div>
+            <button type="button" onclick="toggleManualConfig()" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                <svg id="toggleIcon" class="w-4 h-4 mr-1.5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+                <span id="toggleText">แสดง</span>
+            </button>
+        </div>
+    </div>
+    <div id="manualConfig" class="p-6 hidden">
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Server URL -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Server URL</label>
+                <div class="relative">
+                    <input type="text" readonly value="{{ config('app.url') }}/api/v1/sms-payment"
+                        class="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-mono text-gray-900 dark:text-white">
+                    <button type="button" onclick="copyToClipboard('{{ config('app.url') }}/api/v1/sms-payment', this)"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Device ID -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Device ID</label>
+                <div class="relative">
+                    <input type="text" readonly value="{{ $device->device_id }}"
+                        class="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-mono text-gray-900 dark:text-white">
+                    <button type="button" onclick="copyToClipboard('{{ $device->device_id }}', this)"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- API Key -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    API Key
+                    <span class="text-rose-500 text-xs ml-1">(เก็บเป็นความลับ)</span>
+                </label>
+                <div class="relative">
+                    <input type="password" id="apiKeyInput" readonly value="{{ $config['api_key'] }}"
+                        class="w-full px-4 py-3 pr-24 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-mono text-gray-900 dark:text-white">
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <button type="button" onclick="togglePasswordVisibility('apiKeyInput', this)"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                        <button type="button" onclick="copyToClipboard('{{ $config['api_key'] }}', this)"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secret Key -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Secret Key
+                    <span class="text-rose-500 text-xs ml-1">(เก็บเป็นความลับ)</span>
+                </label>
+                <div class="relative">
+                    <input type="password" id="secretKeyInput" readonly value="{{ $config['secret_key'] }}"
+                        class="w-full px-4 py-3 pr-24 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-mono text-gray-900 dark:text-white">
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <button type="button" onclick="togglePasswordVisibility('secretKeyInput', this)"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                        <button type="button" onclick="copyToClipboard('{{ $config['secret_key'] }}', this)"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Warning -->
+        <div class="mt-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800">
+            <div class="flex">
+                <svg class="w-5 h-5 text-rose-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <div class="text-sm text-rose-700 dark:text-rose-300">
+                    <p class="font-medium mb-1">คำเตือนด้านความปลอดภัย</p>
+                    <ul class="list-disc list-inside text-rose-600 dark:text-rose-400 space-y-1">
+                        <li>อย่าเปิดเผย API Key และ Secret Key กับผู้อื่น</li>
+                        <li>หาก Key รั่วไหล ให้กด "สร้าง Key ใหม่" ทันที</li>
+                        <li>ใช้ HTTPS เสมอเมื่อเชื่อมต่อกับ Server</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Information (for developers) -->
 <div class="mt-8 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">ข้อมูล API (สำหรับนักพัฒนา)</h2>
@@ -173,12 +309,100 @@
 
         <div class="mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600">
             <p class="text-sm text-gray-500 dark:text-gray-400">
-                <strong class="text-gray-700 dark:text-gray-300">Headers:</strong><br>
-                <code>X-Api-Key: [API Key จาก QR Code]</code><br>
-                <code>X-Device-Id: {{ $device->device_id }}</code><br>
-                <code>X-Signature: [HMAC-SHA256 signature]</code>
+                <strong class="text-gray-700 dark:text-gray-300">Required Headers:</strong><br>
+                <code class="text-xs">X-Api-Key: [API Key]</code><br>
+                <code class="text-xs">X-Device-Id: {{ $device->device_id }}</code><br>
+                <code class="text-xs">X-Signature: [HMAC-SHA256 signature]</code><br>
+                <code class="text-xs">X-Nonce: [unique nonce]</code><br>
+                <code class="text-xs">X-Timestamp: [unix timestamp in milliseconds]</code>
             </p>
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<!-- QR Code Library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+    // QR Code configuration data
+    const qrData = @json($config);
+
+    // Generate QR Code
+    document.addEventListener('DOMContentLoaded', function() {
+        const qrContainer = document.getElementById('qrcode');
+        if (qrContainer && typeof QRCode !== 'undefined') {
+            QRCode.toCanvas(JSON.stringify(qrData), {
+                width: 250,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                },
+                errorCorrectionLevel: 'H'
+            }, function(error, canvas) {
+                if (error) {
+                    console.error('QR Code error:', error);
+                    qrContainer.innerHTML = '<p class="text-red-500 text-sm">ไม่สามารถสร้าง QR Code ได้</p>';
+                    return;
+                }
+                qrContainer.innerHTML = '';
+                qrContainer.appendChild(canvas);
+            });
+        }
+    });
+
+    // Toggle manual config visibility
+    function toggleManualConfig() {
+        const config = document.getElementById('manualConfig');
+        const icon = document.getElementById('toggleIcon');
+        const text = document.getElementById('toggleText');
+
+        if (config.classList.contains('hidden')) {
+            config.classList.remove('hidden');
+            icon.classList.add('rotate-180');
+            text.textContent = 'ซ่อน';
+        } else {
+            config.classList.add('hidden');
+            icon.classList.remove('rotate-180');
+            text.textContent = 'แสดง';
+        }
+    }
+
+    // Toggle password visibility
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('.eye-icon');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+            `;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            `;
+        }
+    }
+
+    // Copy to clipboard
+    function copyToClipboard(text, button) {
+        navigator.clipboard.writeText(text).then(function() {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = `
+                <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            `;
+            setTimeout(function() {
+                button.innerHTML = originalHTML;
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Could not copy text: ', err);
+        });
+    }
+</script>
+@endpush
