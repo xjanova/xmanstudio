@@ -52,6 +52,11 @@ class UniquePaymentAmount extends Model
         return $this->belongsTo(Order::class, 'transaction_id');
     }
 
+    public function walletTopup()
+    {
+        return $this->hasOne(WalletTopup::class, 'unique_payment_amount_id');
+    }
+
     public function notification()
     {
         return $this->hasOne(SmsPaymentNotification::class, 'matched_transaction_id', 'transaction_id');

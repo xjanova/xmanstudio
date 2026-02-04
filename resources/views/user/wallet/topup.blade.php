@@ -71,7 +71,7 @@
                 </h3>
             </div>
             <div class="p-6">
-                <form action="{{ route('user.wallet.submit-topup') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('user.wallet.submit-topup') }}" method="POST">
                     @csrf
 
                     <!-- Amount -->
@@ -177,43 +177,7 @@
                         @enderror
                     </div>
 
-                    <!-- Payment Reference -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            หมายเลขอ้างอิง/หมายเหตุ
-                        </label>
-                        <input type="text" name="payment_reference"
-                               class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200 @error('payment_reference') border-red-500 @enderror"
-                               value="{{ old('payment_reference') }}" placeholder="เช่น เลขที่รายการโอน">
-                        @error('payment_reference')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Payment Proof -->
-                    <div class="mb-8">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            หลักฐานการชำระเงิน (สลิป)
-                        </label>
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-xl hover:border-purple-400 dark:hover:border-purple-500 transition-colors duration-200">
-                            <div class="space-y-1 text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <div class="flex text-sm text-gray-600 dark:text-gray-400">
-                                    <label for="payment_proof" class="relative cursor-pointer bg-white dark:bg-gray-700 rounded-md font-medium text-purple-600 dark:text-purple-400 hover:text-purple-500 focus-within:outline-none">
-                                        <span>อัพโหลดไฟล์</span>
-                                        <input id="payment_proof" name="payment_proof" type="file" class="sr-only" accept="image/*">
-                                    </label>
-                                    <p class="pl-1">หรือลากไฟล์มาวางที่นี่</p>
-                                </div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">รองรับไฟล์ภาพ ขนาดไม่เกิน 5MB</p>
-                            </div>
-                        </div>
-                        @error('payment_proof')
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <!-- Note: ระบบตรวจสอบการชำระเงินอัตโนมัติผ่าน SMS -->
 
                     <!-- Submit -->
                     <button type="submit" class="w-full flex items-center justify-center px-6 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5">

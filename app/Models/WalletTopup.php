@@ -18,22 +18,28 @@ class WalletTopup extends Model
         'bonus_amount',
         'total_amount',
         'payment_method',
-        'payment_reference',
-        'payment_proof',
         'status',
         'reject_reason',
         'approved_by',
         'approved_at',
         'expires_at',
         'metadata',
+        // SMS Payment fields
+        'unique_payment_amount_id',
+        'payment_display_amount',
+        'sms_notification_id',
+        'sms_verification_status',
+        'sms_verified_at',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'bonus_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'payment_display_amount' => 'decimal:2',
         'approved_at' => 'datetime',
         'expires_at' => 'datetime',
+        'sms_verified_at' => 'datetime',
         'metadata' => 'array',
     ];
 
@@ -66,6 +72,16 @@ class WalletTopup extends Model
     public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function uniquePaymentAmount()
+    {
+        return $this->belongsTo(UniquePaymentAmount::class);
+    }
+
+    public function smsNotification()
+    {
+        return $this->belongsTo(SmsPaymentNotification::class, 'sms_notification_id');
     }
 
     /**

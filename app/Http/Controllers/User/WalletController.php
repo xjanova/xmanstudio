@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Wallet;
 use App\Models\WalletBonusTier;
 use App\Models\WalletTopup;
+use App\Services\SmsPaymentService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class WalletController extends Controller
 {
@@ -46,13 +46,11 @@ class WalletController extends Controller
     /**
      * Submit top-up request
      */
-    public function submitTopup(Request $request)
+    public function submitTopup(Request $request, SmsPaymentService $smsPaymentService)
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:100|max:100000',
             'payment_method' => 'required|in:bank_transfer,promptpay,truemoney',
-            'payment_reference' => 'nullable|string|max:100',
-            'payment_proof' => 'nullable|image|max:5120', // 5MB
         ]);
 
         $wallet = Wallet::getOrCreateForUser(auth()->id());
@@ -61,13 +59,7 @@ class WalletController extends Controller
         $bonusAmount = WalletTopup::calculateBonus($validated['amount']);
         $totalAmount = $validated['amount'] + $bonusAmount;
 
-        // Handle file upload
-        $proofPath = null;
-        if ($request->hasFile('payment_proof')) {
-            $proofPath = $request->file('payment_proof')->store('wallet/proofs', 'public');
-        }
-
-        // Create topup request
+        // Create topup request first (to get ID for unique amount)
         $topup = WalletTopup::create([
             'wallet_id' => $wallet->id,
             'user_id' => auth()->id(),
@@ -76,15 +68,28 @@ class WalletController extends Controller
             'bonus_amount' => $bonusAmount,
             'total_amount' => $totalAmount,
             'payment_method' => $validated['payment_method'],
-            'payment_reference' => $validated['payment_reference'],
-            'payment_proof' => $proofPath,
             'status' => WalletTopup::STATUS_PENDING,
-            'expires_at' => now()->addHours(24),
+            'expires_at' => now()->addMinutes(30),
         ]);
 
+        // Generate unique payment amount for SMS matching
+        $uniqueAmount = $smsPaymentService->generateUniqueAmount(
+            $validated['amount'],
+            $topup->id,
+            'wallet_topup',
+            30 // 30 minutes expiry
+        );
+
+        if ($uniqueAmount) {
+            $topup->update([
+                'unique_payment_amount_id' => $uniqueAmount->id,
+                'payment_display_amount' => $uniqueAmount->unique_amount,
+            ]);
+        }
+
         return redirect()
-            ->route('user.wallet.index')
-            ->with('success', "ส่งคำขอเติมเงิน #{$topup->topup_id} สำเร็จ รอการตรวจสอบ");
+            ->route('user.wallet.topup-status', $topup)
+            ->with('success', "สร้างรายการเติมเงิน #{$topup->topup_id} สำเร็จ");
     }
 
     /**
@@ -99,6 +104,69 @@ class WalletController extends Controller
             ->paginate(20);
 
         return view('user.wallet.transactions', compact('wallet', 'transactions'));
+    }
+
+    /**
+     * Show topup status page with unique amount
+     */
+    public function topupStatus(WalletTopup $topup)
+    {
+        // Check ownership
+        if ($topup->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $wallet = $topup->wallet;
+        $uniqueAmount = $topup->uniquePaymentAmount;
+
+        return view('user.wallet.topup-status', compact('topup', 'wallet', 'uniqueAmount'));
+    }
+
+    /**
+     * Regenerate unique amount for pending topup (pay later)
+     */
+    public function regenerateUniqueAmount(WalletTopup $topup, SmsPaymentService $smsPaymentService)
+    {
+        // Check ownership
+        if ($topup->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($topup->status !== WalletTopup::STATUS_PENDING) {
+            return redirect()
+                ->back()
+                ->with('error', 'ไม่สามารถสร้างยอดใหม่ได้ รายการนี้ไม่อยู่ในสถานะรอชำระ');
+        }
+
+        // Expire old unique amount if exists
+        if ($topup->uniquePaymentAmount) {
+            $topup->uniquePaymentAmount->update(['status' => 'expired']);
+        }
+
+        // Generate new unique amount
+        $uniqueAmount = $smsPaymentService->generateUniqueAmount(
+            (float) $topup->amount,
+            $topup->id,
+            'wallet_topup',
+            30 // 30 minutes
+        );
+
+        if (!$uniqueAmount) {
+            return redirect()
+                ->back()
+                ->with('error', 'ไม่สามารถสร้างยอดชำระใหม่ได้ กรุณาลองใหม่');
+        }
+
+        // Update topup with new unique amount
+        $topup->update([
+            'unique_payment_amount_id' => $uniqueAmount->id,
+            'payment_display_amount' => $uniqueAmount->unique_amount,
+            'expires_at' => now()->addMinutes(30),
+        ]);
+
+        return redirect()
+            ->route('user.wallet.topup-status', $topup)
+            ->with('success', 'สร้างยอดชำระใหม่สำเร็จ กรุณาโอนเงินภายใน 30 นาที');
     }
 
     /**
@@ -117,15 +185,15 @@ class WalletController extends Controller
                 ->with('error', 'ไม่สามารถยกเลิกรายการนี้ได้');
         }
 
-        // Delete proof file if exists
-        if ($topup->payment_proof) {
-            Storage::disk('public')->delete($topup->payment_proof);
+        // Expire unique amount if exists
+        if ($topup->uniquePaymentAmount) {
+            $topup->uniquePaymentAmount->update(['status' => 'expired']);
         }
 
         $topup->delete();
 
         return redirect()
-            ->back()
+            ->route('user.wallet.index')
             ->with('success', 'ยกเลิกรายการเติมเงินสำเร็จ');
     }
 

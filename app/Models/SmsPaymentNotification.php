@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\PaymentMatched;
+use App\Events\WalletTopupMatched;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -58,6 +59,11 @@ class SmsPaymentNotification extends Model
         return $this->belongsTo(Order::class, 'matched_transaction_id');
     }
 
+    public function matchedWalletTopup()
+    {
+        return $this->hasOne(WalletTopup::class, 'sms_notification_id');
+    }
+
     public function device()
     {
         return $this->belongsTo(SmsCheckerDevice::class, 'device_id', 'device_id');
@@ -66,6 +72,7 @@ class SmsPaymentNotification extends Model
     /**
      * Try to match this notification with a pending payment transaction.
      * Uses unique decimal amount matching.
+     * Supports both Orders and Wallet Topups.
      */
     public function attemptMatch(): bool
     {
@@ -79,75 +86,111 @@ class SmsPaymentNotification extends Model
             ->where('expires_at', '>', now())
             ->first();
 
-        if ($uniqueAmount && $uniqueAmount->transaction_type === 'order') {
-            // Match found
-            $this->status = 'matched';
-            $this->matched_transaction_id = $uniqueAmount->transaction_id;
-            $this->save();
-
-            $uniqueAmount->status = 'used';
-            $uniqueAmount->matched_at = now();
-            $uniqueAmount->save();
-
-            // Auto-confirm the Order
-            $order = Order::find($uniqueAmount->transaction_id);
-            if ($order && $order->payment_status === 'pending') {
-                // Check device approval mode
-                $device = $this->device;
-                $approvalMode = $device ? $device->getApprovalMode() : 'auto';
-
-                if ($approvalMode === 'auto') {
-                    // Auto-approve: set to confirmed
-                    $order->update([
-                        'sms_notification_id' => $this->id,
-                        'sms_verification_status' => 'confirmed',
-                        'sms_verified_at' => now(),
-                        'payment_status' => 'confirmed',
-                        'paid_at' => now(),
-                    ]);
-                    $this->update(['status' => 'confirmed']);
-                } else {
-                    // Manual/Smart: set to processing for admin review
-                    $order->update([
-                        'sms_notification_id' => $this->id,
-                        'sms_verification_status' => 'matched',
-                        'sms_verified_at' => now(),
-                        'payment_status' => 'processing',
-                    ]);
-                }
-
-                // Fire event for notifications
-                event(new PaymentMatched($order, $this));
-            }
-
-            return true;
+        if (!$uniqueAmount) {
+            return false;
         }
 
-        // Fallback: try to match by exact amount (for rentals, etc.)
-        if ($this->reference_number) {
-            $order = Order::where('reference_number', $this->reference_number)
-                ->where('payment_status', 'pending')
-                ->first();
+        // Mark unique amount as used
+        $uniqueAmount->status = 'used';
+        $uniqueAmount->matched_at = now();
+        $uniqueAmount->save();
 
-            if ($order && abs((float) $order->total - (float) $this->amount) < 0.01) {
-                $this->status = 'matched';
-                $this->matched_transaction_id = $order->id;
-                $this->save();
+        // Get device approval mode
+        $device = $this->device;
+        $approvalMode = $device ? $device->getApprovalMode() : 'auto';
 
-                $order->update([
-                    'sms_notification_id' => $this->id,
-                    'sms_verification_status' => 'matched',
-                    'sms_verified_at' => now(),
-                    'payment_status' => 'processing',
-                ]);
+        // Handle based on transaction type
+        if ($uniqueAmount->transaction_type === 'order') {
+            return $this->matchOrder($uniqueAmount, $approvalMode);
+        }
 
-                event(new PaymentMatched($order, $this));
-
-                return true;
-            }
+        if ($uniqueAmount->transaction_type === 'wallet_topup') {
+            return $this->matchWalletTopup($uniqueAmount, $approvalMode);
         }
 
         return false;
+    }
+
+    /**
+     * Match with an Order
+     */
+    protected function matchOrder(UniquePaymentAmount $uniqueAmount, string $approvalMode): bool
+    {
+        $this->status = 'matched';
+        $this->matched_transaction_id = $uniqueAmount->transaction_id;
+        $this->save();
+
+        $order = Order::find($uniqueAmount->transaction_id);
+        if (!$order || $order->payment_status !== 'pending') {
+            return true; // Still matched, but order state changed
+        }
+
+        if ($approvalMode === 'auto') {
+            // Auto-approve: set to confirmed
+            $order->update([
+                'sms_notification_id' => $this->id,
+                'sms_verification_status' => 'confirmed',
+                'sms_verified_at' => now(),
+                'payment_status' => 'confirmed',
+                'paid_at' => now(),
+            ]);
+            $this->update(['status' => 'confirmed']);
+        } else {
+            // Manual/Smart: set to processing for admin review
+            $order->update([
+                'sms_notification_id' => $this->id,
+                'sms_verification_status' => 'matched',
+                'sms_verified_at' => now(),
+                'payment_status' => 'processing',
+            ]);
+        }
+
+        // Fire event for notifications
+        event(new PaymentMatched($order, $this));
+
+        return true;
+    }
+
+    /**
+     * Match with a Wallet Topup
+     */
+    protected function matchWalletTopup(UniquePaymentAmount $uniqueAmount, string $approvalMode): bool
+    {
+        $this->status = 'matched';
+        $this->save();
+
+        $topup = WalletTopup::find($uniqueAmount->transaction_id);
+        if (!$topup || $topup->status !== WalletTopup::STATUS_PENDING) {
+            return true; // Still matched, but topup state changed
+        }
+
+        if ($approvalMode === 'auto') {
+            // Auto-approve: directly approve the topup
+            $topup->update([
+                'sms_notification_id' => $this->id,
+                'sms_verification_status' => 'confirmed',
+                'sms_verified_at' => now(),
+            ]);
+
+            // Approve the topup (adds money to wallet)
+            $topup->approve(0); // 0 = system approved
+
+            $this->update(['status' => 'confirmed']);
+        } else {
+            // Manual/Smart: set to matched for admin review
+            $topup->update([
+                'sms_notification_id' => $this->id,
+                'sms_verification_status' => 'matched',
+                'sms_verified_at' => now(),
+            ]);
+        }
+
+        // Fire event for notifications
+        if (class_exists(WalletTopupMatched::class)) {
+            event(new WalletTopupMatched($topup, $this));
+        }
+
+        return true;
     }
 
     /**

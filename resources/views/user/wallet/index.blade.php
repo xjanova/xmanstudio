@@ -92,7 +92,7 @@
                     </div>
                     <div class="divide-y divide-gray-100 dark:divide-gray-700">
                         @foreach($pendingTopups as $topup)
-                        <div class="p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                        <a href="{{ route('user.wallet.topup-status', $topup) }}" class="block p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div class="flex items-center">
                                     <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
@@ -105,23 +105,23 @@
                                         <p class="text-sm text-gray-500 dark:text-gray-400">
                                             {{ $topup->payment_method_label }} &bull; {{ $topup->created_at->diffForHumans() }}
                                         </p>
+                                        @if($topup->payment_display_amount)
+                                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                            โอนเงิน: ฿{{ number_format($topup->payment_display_amount, 2) }}
+                                        </p>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-between sm:justify-end gap-4">
                                     <span class="text-lg font-bold text-green-600 dark:text-green-400">
                                         +฿{{ number_format($topup->total_amount, 2) }}
                                     </span>
-                                    <form action="{{ route('user.wallet.cancel-topup', $topup) }}" method="POST"
-                                          onsubmit="return confirm('ยกเลิกรายการนี้?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors duration-200">
-                                            ยกเลิก
-                                        </button>
-                                    </form>
+                                    <span class="px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                                        ดูรายละเอียด &rarr;
+                                    </span>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                         @endforeach
                     </div>
                 </div>
