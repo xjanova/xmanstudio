@@ -151,7 +151,7 @@ class WalletController extends Controller
             30 // 30 minutes
         );
 
-        if (!$uniqueAmount) {
+        if (! $uniqueAmount) {
             return redirect()
                 ->back()
                 ->with('error', 'ไม่สามารถสร้างยอดชำระใหม่ได้ กรุณาลองใหม่');

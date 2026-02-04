@@ -137,7 +137,7 @@ class WalletTopup extends Model
             $this->total_amount,
             "เติมเงิน #{$this->topup_id}",
             $this->payment_method,
-            $this->payment_reference,
+            $this->topup_id, // Use topup_id as reference instead of removed payment_reference
             $approvedBy,
             [
                 'topup_id' => $this->id,

@@ -86,7 +86,7 @@ class SmsPaymentNotification extends Model
             ->where('expires_at', '>', now())
             ->first();
 
-        if (!$uniqueAmount) {
+        if (! $uniqueAmount) {
             return false;
         }
 
@@ -121,7 +121,7 @@ class SmsPaymentNotification extends Model
         $this->save();
 
         $order = Order::find($uniqueAmount->transaction_id);
-        if (!$order || $order->payment_status !== 'pending') {
+        if (! $order || $order->payment_status !== 'pending') {
             return true; // Still matched, but order state changed
         }
 
@@ -160,7 +160,7 @@ class SmsPaymentNotification extends Model
         $this->save();
 
         $topup = WalletTopup::find($uniqueAmount->transaction_id);
-        if (!$topup || $topup->status !== WalletTopup::STATUS_PENDING) {
+        if (! $topup || $topup->status !== WalletTopup::STATUS_PENDING) {
             return true; // Still matched, but topup state changed
         }
 
