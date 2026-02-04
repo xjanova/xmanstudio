@@ -4,8 +4,8 @@ use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\ProductLicenseController;
-use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\V1\SmsPaymentController;
+use App\Http\Controllers\Api\VersionController;
 use Illuminate\Support\Facades\Route;
 
 /*

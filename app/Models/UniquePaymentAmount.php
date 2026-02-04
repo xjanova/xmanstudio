@@ -62,12 +62,6 @@ class UniquePaymentAmount extends Model
      * Adds a unique decimal suffix (0.01 - 0.99) to differentiate transactions.
      *
      * Uses pessimistic locking to prevent race conditions in high-volume scenarios.
-     *
-     * @param float $baseAmount The original price
-     * @param int|null $transactionId Related transaction ID
-     * @param string $transactionType Type of transaction
-     * @param int $expiryMinutes How long the amount is reserved
-     * @return self|null
      */
     public static function generate(
         float $baseAmount,

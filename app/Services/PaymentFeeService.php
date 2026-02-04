@@ -7,11 +7,7 @@ use App\Models\PaymentSetting;
 class PaymentFeeService
 {
     /**
-     * Calculate fee for a payment method
-     *
-     * @param  string  $method  Payment method: promptpay, bank_transfer, card
-     * @param  float  $amount  Base amount
-     * @return array  ['fee' => float, 'total' => float, 'fee_display' => string]
+     * Calculate fee for a payment method.
      */
     public function calculateFee(string $method, float $amount): array
     {

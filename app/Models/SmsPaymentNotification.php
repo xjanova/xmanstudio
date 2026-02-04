@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Events\PaymentMatched;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Events\PaymentMatched;
 
 class SmsPaymentNotification extends Model
 {
@@ -155,6 +155,7 @@ class SmsPaymentNotification extends Model
     public function getBankDisplayNameAttribute(): string
     {
         $banks = config('smschecker.banks', []);
+
         return $banks[$this->bank] ?? $this->bank;
     }
 

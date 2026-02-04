@@ -19,11 +19,6 @@ class SmsPaymentService
 
     /**
      * Process an incoming SMS payment notification from the Android app.
-     *
-     * @param array $payload Decrypted payload from the app
-     * @param SmsCheckerDevice $device The authenticated device
-     * @param string $ipAddress Client IP
-     * @return array Result with success/failure info
      */
     public function processNotification(array $payload, SmsCheckerDevice $device, string $ipAddress): array
     {
