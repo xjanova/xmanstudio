@@ -137,18 +137,21 @@ class SmsPaymentService
 
             if ($decrypted === false) {
                 $this->log('warning', 'SMS Payment: Decryption failed');
+
                 return null;
             }
 
             $payload = json_decode($decrypted, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $this->log('warning', 'SMS Payment: Invalid JSON in payload');
+
                 return null;
             }
 
             return $payload;
         } catch (\Exception $e) {
             $this->log('error', 'SMS Payment: Decryption error', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
