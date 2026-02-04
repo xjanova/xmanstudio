@@ -624,6 +624,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/topups/{topup}', [AdminWalletController::class, 'showTopup'])->name('topups.show');
         Route::post('/topups/{topup}/approve', [AdminWalletController::class, 'approveTopup'])->name('topups.approve');
         Route::post('/topups/{topup}/reject', [AdminWalletController::class, 'rejectTopup'])->name('topups.reject');
+        Route::get('/settings', [AdminWalletController::class, 'settings'])->name('settings');
+        Route::put('/settings', [AdminWalletController::class, 'updateSettings'])->name('settings.update');
     });
 
     // SMS Payment Management (Auto-verification via SMS)

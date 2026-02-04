@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\Wallet;
 use App\Models\WalletBonusTier;
 use App\Models\WalletTopup;
@@ -276,5 +277,51 @@ class WalletController extends Controller
         return redirect()
             ->back()
             ->with('success', 'ลบโบนัสเติมเงินสำเร็จ');
+    }
+
+    /**
+     * Wallet settings page
+     */
+    public function settings()
+    {
+        $settings = [
+            'wallet_topup_min_amount' => Setting::getValue('wallet_topup_min_amount', 100),
+            'wallet_topup_max_amount' => Setting::getValue('wallet_topup_max_amount', 100000),
+            'wallet_topup_expiry_minutes' => Setting::getValue('wallet_topup_expiry_minutes', 30),
+            'wallet_enabled' => Setting::getValue('wallet_enabled', true),
+            'wallet_quick_amounts' => Setting::getValue('wallet_quick_amounts', '100,300,500,1000,2000,5000'),
+            'wallet_payment_bank_transfer' => Setting::getValue('wallet_payment_bank_transfer', true),
+            'wallet_payment_promptpay' => Setting::getValue('wallet_payment_promptpay', true),
+            'wallet_payment_truemoney' => Setting::getValue('wallet_payment_truemoney', true),
+        ];
+
+        return view('admin.wallets.settings', compact('settings'));
+    }
+
+    /**
+     * Update wallet settings
+     */
+    public function updateSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'wallet_topup_min_amount' => 'required|numeric|min:1',
+            'wallet_topup_max_amount' => 'required|numeric|min:1|gt:wallet_topup_min_amount',
+            'wallet_topup_expiry_minutes' => 'required|integer|min:5|max:1440',
+            'wallet_quick_amounts' => 'required|string',
+        ]);
+
+        // Save settings
+        Setting::setValue('wallet_topup_min_amount', $validated['wallet_topup_min_amount']);
+        Setting::setValue('wallet_topup_max_amount', $validated['wallet_topup_max_amount']);
+        Setting::setValue('wallet_topup_expiry_minutes', $validated['wallet_topup_expiry_minutes']);
+        Setting::setValue('wallet_quick_amounts', $validated['wallet_quick_amounts']);
+        Setting::setValue('wallet_enabled', $request->boolean('wallet_enabled'));
+        Setting::setValue('wallet_payment_bank_transfer', $request->boolean('wallet_payment_bank_transfer'));
+        Setting::setValue('wallet_payment_promptpay', $request->boolean('wallet_payment_promptpay'));
+        Setting::setValue('wallet_payment_truemoney', $request->boolean('wallet_payment_truemoney'));
+
+        return redirect()
+            ->back()
+            ->with('success', 'บันทึกการตั้งค่าสำเร็จ');
     }
 }

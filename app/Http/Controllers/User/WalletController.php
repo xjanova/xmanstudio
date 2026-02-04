@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\Wallet;
 use App\Models\WalletBonusTier;
 use App\Models\WalletTopup;
@@ -37,10 +38,29 @@ class WalletController extends Controller
      */
     public function topup()
     {
+        // Check if wallet is enabled
+        if (! Setting::getValue('wallet_enabled', true)) {
+            return redirect()
+                ->route('user.wallet.index')
+                ->with('error', 'ระบบเติมเงินปิดปรับปรุงชั่วคราว');
+        }
+
         $wallet = Wallet::getOrCreateForUser(auth()->id());
         $bonusTiers = WalletBonusTier::active()->orderBy('min_amount')->get();
 
-        return view('user.wallet.topup', compact('wallet', 'bonusTiers'));
+        // Get wallet settings
+        $settings = [
+            'min_amount' => (int) Setting::getValue('wallet_topup_min_amount', 100),
+            'max_amount' => (int) Setting::getValue('wallet_topup_max_amount', 100000),
+            'quick_amounts' => array_map('intval', explode(',', Setting::getValue('wallet_quick_amounts', '100,300,500,1000,2000,5000'))),
+            'payment_methods' => [
+                'bank_transfer' => Setting::getValue('wallet_payment_bank_transfer', true),
+                'promptpay' => Setting::getValue('wallet_payment_promptpay', true),
+                'truemoney' => Setting::getValue('wallet_payment_truemoney', true),
+            ],
+        ];
+
+        return view('user.wallet.topup', compact('wallet', 'bonusTiers', 'settings'));
     }
 
     /**
@@ -48,9 +68,32 @@ class WalletController extends Controller
      */
     public function submitTopup(Request $request, SmsPaymentService $smsPaymentService)
     {
+        // Check if wallet is enabled
+        if (! Setting::getValue('wallet_enabled', true)) {
+            return redirect()
+                ->route('user.wallet.index')
+                ->with('error', 'ระบบเติมเงินปิดปรับปรุงชั่วคราว');
+        }
+
+        $minAmount = (int) Setting::getValue('wallet_topup_min_amount', 100);
+        $maxAmount = (int) Setting::getValue('wallet_topup_max_amount', 100000);
+        $expiryMinutes = (int) Setting::getValue('wallet_topup_expiry_minutes', 30);
+
+        // Build allowed payment methods
+        $allowedMethods = [];
+        if (Setting::getValue('wallet_payment_bank_transfer', true)) {
+            $allowedMethods[] = 'bank_transfer';
+        }
+        if (Setting::getValue('wallet_payment_promptpay', true)) {
+            $allowedMethods[] = 'promptpay';
+        }
+        if (Setting::getValue('wallet_payment_truemoney', true)) {
+            $allowedMethods[] = 'truemoney';
+        }
+
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:100|max:100000',
-            'payment_method' => 'required|in:bank_transfer,promptpay,truemoney',
+            'amount' => "required|numeric|min:{$minAmount}|max:{$maxAmount}",
+            'payment_method' => 'required|in:'.implode(',', $allowedMethods),
         ]);
 
         $wallet = Wallet::getOrCreateForUser(auth()->id());
@@ -69,7 +112,7 @@ class WalletController extends Controller
             'total_amount' => $totalAmount,
             'payment_method' => $validated['payment_method'],
             'status' => WalletTopup::STATUS_PENDING,
-            'expires_at' => now()->addMinutes(30),
+            'expires_at' => now()->addMinutes($expiryMinutes),
         ]);
 
         // Generate unique payment amount for SMS matching
@@ -77,7 +120,7 @@ class WalletController extends Controller
             $validated['amount'],
             $topup->id,
             'wallet_topup',
-            30 // 30 minutes expiry
+            $expiryMinutes
         );
 
         if ($uniqueAmount) {
@@ -144,11 +187,13 @@ class WalletController extends Controller
         }
 
         // Generate new unique amount
+        $expiryMinutes = (int) Setting::getValue('wallet_topup_expiry_minutes', 30);
+
         $uniqueAmount = $smsPaymentService->generateUniqueAmount(
             (float) $topup->amount,
             $topup->id,
             'wallet_topup',
-            30 // 30 minutes
+            $expiryMinutes
         );
 
         if (! $uniqueAmount) {
@@ -161,12 +206,12 @@ class WalletController extends Controller
         $topup->update([
             'unique_payment_amount_id' => $uniqueAmount->id,
             'payment_display_amount' => $uniqueAmount->unique_amount,
-            'expires_at' => now()->addMinutes(30),
+            'expires_at' => now()->addMinutes($expiryMinutes),
         ]);
 
         return redirect()
             ->route('user.wallet.topup-status', $topup)
-            ->with('success', 'สร้างยอดชำระใหม่สำเร็จ กรุณาโอนเงินภายใน 30 นาที');
+            ->with('success', "สร้างยอดชำระใหม่สำเร็จ กรุณาโอนเงินภายใน {$expiryMinutes} นาที");
     }
 
     /**

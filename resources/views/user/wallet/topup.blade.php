@@ -85,7 +85,7 @@
                             </div>
                             <input type="number" name="amount" id="amount"
                                    class="block w-full pl-10 pr-4 py-4 text-xl font-semibold border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200 @error('amount') border-red-500 @enderror"
-                                   value="{{ old('amount') }}" min="100" max="100000" step="1" required placeholder="ขั้นต่ำ 100 บาท">
+                                   value="{{ old('amount') }}" min="{{ $settings['min_amount'] }}" max="{{ $settings['max_amount'] }}" step="1" required placeholder="ขั้นต่ำ {{ number_format($settings['min_amount']) }} บาท">
                         </div>
                         @error('amount')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -93,7 +93,7 @@
 
                         <!-- Quick amounts -->
                         <div class="mt-4 flex flex-wrap gap-2">
-                            @foreach([100, 300, 500, 1000, 2000, 5000] as $amount)
+                            @foreach($settings['quick_amounts'] as $amount)
                             <button type="button" class="quick-amount px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all duration-200 border border-purple-200 dark:border-purple-700" data-amount="{{ $amount }}">
                                 ฿{{ number_format($amount) }}
                             </button>
@@ -129,6 +129,7 @@
                             ช่องทางชำระเงิน <span class="text-red-500">*</span>
                         </label>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            @if($settings['payment_methods']['bank_transfer'])
                             <label class="relative">
                                 <input type="radio" class="peer hidden" name="payment_method" id="bank_transfer" value="bank_transfer" {{ old('payment_method') === 'bank_transfer' ? 'checked' : '' }} required>
                                 <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-600 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/30 peer-checked:ring-2 peer-checked:ring-purple-500/20">
@@ -143,6 +144,8 @@
                                     </div>
                                 </div>
                             </label>
+                            @endif
+                            @if($settings['payment_methods']['promptpay'])
                             <label class="relative">
                                 <input type="radio" class="peer hidden" name="payment_method" id="promptpay" value="promptpay" {{ old('payment_method', 'promptpay') === 'promptpay' ? 'checked' : '' }}>
                                 <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-600 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/30 peer-checked:ring-2 peer-checked:ring-purple-500/20">
@@ -157,6 +160,8 @@
                                     </div>
                                 </div>
                             </label>
+                            @endif
+                            @if($settings['payment_methods']['truemoney'])
                             <label class="relative">
                                 <input type="radio" class="peer hidden" name="payment_method" id="truemoney" value="truemoney" {{ old('payment_method') === 'truemoney' ? 'checked' : '' }}>
                                 <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-600 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/30 peer-checked:ring-2 peer-checked:ring-purple-500/20">
@@ -171,6 +176,7 @@
                                     </div>
                                 </div>
                             </label>
+                            @endif
                         </div>
                         @error('payment_method')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -269,8 +275,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateBonus() {
         const amount = parseFloat(amountInput.value) || 0;
+        const minAmount = {{ $settings['min_amount'] }};
 
-        if (amount >= 100) {
+        if (amount >= minAmount) {
             fetch('{{ route("user.wallet.bonus-preview") }}?amount=' + amount)
                 .then(r => r.json())
                 .then(data => {
