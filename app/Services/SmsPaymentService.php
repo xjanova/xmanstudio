@@ -101,8 +101,8 @@ class SmsPaymentService
     /**
      * Decrypt the encrypted payload from the app.
      *
-     * @param  string      $encryptedData Base64 encoded AES-256-GCM encrypted data
-     * @param  string      $secretKey     The device's secret key
+     * @param  string  $encryptedData  Base64 encoded AES-256-GCM encrypted data
+     * @param  string  $secretKey      The device's secret key
      * @return array|null  Decrypted payload or null on failure
      */
     public function decryptPayload(string $encryptedData, string $secretKey): ?array
@@ -159,6 +159,7 @@ class SmsPaymentService
     public function verifySignature(string $data, string $signature, string $secretKey): bool
     {
         $expected = base64_encode(hash_hmac('sha256', $data, $secretKey, true));
+
         return hash_equals($expected, $signature);
     }
 

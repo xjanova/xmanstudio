@@ -21,7 +21,7 @@ class VerifySmsCheckerDevice
     {
         $apiKey = $request->header('X-Api-Key');
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return response()->json([
                 'success' => false,
                 'message' => 'API key is required',
@@ -30,7 +30,7 @@ class VerifySmsCheckerDevice
 
         $device = SmsCheckerDevice::findByApiKey($apiKey);
 
-        if (!$device) {
+        if (! $device) {
             Log::warning('SMS Checker: Invalid API key attempt', [
                 'ip' => $request->ip(),
                 'api_key_prefix' => substr($apiKey, 0, 8).'...',
@@ -41,7 +41,7 @@ class VerifySmsCheckerDevice
             ], 401);
         }
 
-        if (!$device->isActive()) {
+        if (! $device->isActive()) {
             Log::warning('SMS Checker: Inactive device attempt', [
                 'device_id' => $device->device_id,
                 'status' => $device->status,
