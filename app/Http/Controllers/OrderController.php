@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\OrderConfirmationMail;
+use App\Models\BankAccount;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\LicenseKey;
@@ -298,10 +299,13 @@ class OrderController extends Controller
             abort(403);
         }
 
-        $order->load('items.product');
+        $order->load(['items.product', 'uniquePaymentAmount']);
 
         // Get payment info based on method
         $paymentInfo = null;
+        $bankAccounts = null;
+        $promptpayNumber = null;
+
         if ($order->payment_status === 'pending') {
             if ($order->payment_method === 'promptpay') {
                 $paymentInfo = $this->paymentService->generatePromptPayQR(
@@ -310,6 +314,10 @@ class OrderController extends Controller
                 );
             } elseif ($order->payment_method === 'bank_transfer') {
                 $paymentInfo = $this->paymentService->getBankTransferInfo();
+
+                // Get dynamic bank accounts
+                $bankAccounts = BankAccount::active()->ordered()->get();
+                $promptpayNumber = config('payment.promptpay.number');
 
                 // Add SMS payment info if using unique amount
                 if ($order->usesSmsPayment()) {
@@ -324,7 +332,7 @@ class OrderController extends Controller
             }
         }
 
-        return view('orders.show', compact('order', 'paymentInfo'));
+        return view('orders.show', compact('order', 'paymentInfo', 'bankAccounts', 'promptpayNumber'));
     }
 
     /**

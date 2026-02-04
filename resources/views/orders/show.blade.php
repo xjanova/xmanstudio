@@ -196,6 +196,60 @@
                             </h2>
                         </div>
                         <div class="p-6">
+                            {{-- SMS Auto-Verification Unique Amount Display --}}
+                            @if($order->usesSmsPayment() && $order->uniquePaymentAmount && !$order->uniquePaymentAmount->isExpired())
+                                <div class="mb-6">
+                                    <!-- SMS Verification Status Banner -->
+                                    <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center mr-3">
+                                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h3 class="font-semibold text-blue-800 dark:text-blue-200">ระบบตรวจสอบอัตโนมัติ</h3>
+                                                <p class="text-sm text-blue-700 dark:text-blue-300">
+                                                    กรุณาโอนเงินภายใน <span class="font-bold" id="countdown">{{ $order->uniquePaymentAmount->expires_at->diffForHumans() }}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Unique Amount Display -->
+                                    <div class="text-center">
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">โอนเงินจำนวน</p>
+                                        <div class="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl p-6 border-2 border-green-300 dark:border-green-700">
+                                            <p class="text-5xl font-bold text-green-600 dark:text-green-400">
+                                                {{ number_format($order->uniquePaymentAmount->unique_amount, 2) }}
+                                            </p>
+                                            <p class="text-green-700 dark:text-green-300 mt-2">บาท</p>
+                                        </div>
+                                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-3 flex items-center justify-center">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                            </svg>
+                                            โอนตรงตามยอดนี้ ระบบจะตรวจสอบอัตโนมัติ
+                                        </p>
+                                    </div>
+                                </div>
+                            @elseif($order->usesSmsPayment() && $order->uniquePaymentAmount && $order->uniquePaymentAmount->isExpired())
+                                <!-- Expired Unique Amount -->
+                                <div class="mb-6 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-lg flex items-center justify-center mr-3">
+                                            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-amber-800 dark:text-amber-200">ยอดชำระหมดอายุแล้ว</h3>
+                                            <p class="text-sm text-amber-700 dark:text-amber-300">กรุณาติดต่อเจ้าหน้าที่หรืออัปโหลดสลิปด้านล่าง</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
                             @if($order->payment_method === 'promptpay' && isset($paymentInfo['qr_image_url']))
                                 <div class="text-center">
                                     <p class="text-gray-600 dark:text-gray-400 mb-4">สแกน QR Code ด้วยแอปธนาคารเพื่อชำระเงิน</p>
@@ -215,40 +269,93 @@
                                         </p>
                                     </div>
                                 </div>
-                            @elseif($order->payment_method === 'bank_transfer' && is_array($paymentInfo))
+                            @elseif($order->payment_method === 'bank_transfer')
                                 <div class="space-y-4">
                                     <p class="text-gray-600 dark:text-gray-400">โปรดโอนเงินไปยังบัญชีด้านล่าง:</p>
-                                    @foreach($paymentInfo as $bank)
-                                        <div class="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl border border-gray-200 dark:border-gray-600">
-                                            <div class="flex items-center mb-2">
-                                                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
-                                                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                                                    </svg>
+                                    @if(isset($bankAccounts) && $bankAccounts->count() > 0)
+                                        @foreach($bankAccounts as $bank)
+                                            <div class="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl border border-gray-200 dark:border-gray-600">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
+                                                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-semibold text-gray-900 dark:text-white">{{ $bank->bank_name }}</p>
+                                                        @if($bank->branch)
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400">สาขา: {{ $bank->branch }}</p>
+                                                        @endif
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p class="font-semibold text-gray-900 dark:text-white">{{ $bank['bank'] }}</p>
-                                                    @if(isset($bank['branch']))
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400">สาขา: {{ $bank['branch'] }}</p>
-                                                    @endif
+                                                <div class="ml-13 pl-13">
+                                                    <p class="font-mono text-xl font-bold text-gray-900 dark:text-white tracking-wider">{{ $bank->account_number }}</p>
+                                                    <p class="text-gray-600 dark:text-gray-400">{{ $bank->account_name }}</p>
                                                 </div>
                                             </div>
-                                            <div class="ml-13 pl-13">
-                                                <p class="font-mono text-xl font-bold text-gray-900 dark:text-white tracking-wider">{{ $bank['account_number'] }}</p>
-                                                <p class="text-gray-600 dark:text-gray-400">{{ $bank['account_name'] }}</p>
+                                        @endforeach
+                                    @elseif(is_array($paymentInfo))
+                                        @foreach($paymentInfo as $bank)
+                                            @if(is_array($bank) && isset($bank['bank']))
+                                            <div class="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl border border-gray-200 dark:border-gray-600">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
+                                                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-semibold text-gray-900 dark:text-white">{{ $bank['bank'] }}</p>
+                                                        @if(isset($bank['branch']))
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400">สาขา: {{ $bank['branch'] }}</p>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                <div class="ml-13 pl-13">
+                                                    <p class="font-mono text-xl font-bold text-gray-900 dark:text-white tracking-wider">{{ $bank['account_number'] }}</p>
+                                                    <p class="text-gray-600 dark:text-gray-400">{{ $bank['account_name'] }}</p>
+                                                </div>
+                                            </div>
+                                            @endif
+                                        @endforeach
+                                    @endif
+
+                                    @if(isset($promptpayNumber))
+                                    <!-- PromptPay Option -->
+                                    <div class="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
+                                        <div class="flex items-center mb-2">
+                                            <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mr-3">
+                                                <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-gray-900 dark:text-white">PromptPay</p>
                                             </div>
                                         </div>
-                                    @endforeach
+                                        <div class="ml-13 pl-13">
+                                            <p class="font-mono text-xl font-bold text-purple-600 dark:text-purple-400 tracking-wider">{{ $promptpayNumber }}</p>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    @if(!$order->usesSmsPayment() || !$order->uniquePaymentAmount || $order->uniquePaymentAmount->isExpired())
                                     <div class="text-center pt-4 border-t dark:border-gray-700">
                                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">ยอดที่ต้องชำระ</p>
                                         <p class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">฿{{ number_format($order->total, 2) }}</p>
                                     </div>
+                                    @endif
+
                                     <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
                                         <p class="text-sm text-amber-700 dark:text-amber-300">
                                             <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
-                                            กรุณาระบุเลขที่คำสั่งซื้อ <strong>{{ $order->order_number }}</strong> ในช่องหมายเหตุ
+                                            @if($order->usesSmsPayment() && $order->uniquePaymentAmount && !$order->uniquePaymentAmount->isExpired())
+                                                โอนตรงตามยอดที่แสดง ระบบจะตรวจสอบและยืนยันให้อัตโนมัติ
+                                            @else
+                                                กรุณาระบุเลขที่คำสั่งซื้อ <strong>{{ $order->order_number }}</strong> ในช่องหมายเหตุ
+                                            @endif
                                         </p>
                                     </div>
                                 </div>
@@ -262,7 +369,8 @@
                                 </div>
                             @endif
 
-                            <!-- Upload Payment Slip -->
+                            <!-- Upload Payment Slip (only show if not using SMS auto-verification or if expired) -->
+                            @if(!$order->usesSmsPayment() || !$order->uniquePaymentAmount || $order->uniquePaymentAmount->isExpired())
                             <div class="mt-6 pt-6 border-t dark:border-gray-700">
                                 <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3">แนบหลักฐานการชำระเงิน</h3>
                                 <form action="{{ route('orders.confirm-payment', $order) }}" method="POST" enctype="multipart/form-data">
@@ -280,6 +388,16 @@
                                     </div>
                                 </form>
                             </div>
+                            @else
+                            <div class="mt-6 pt-6 border-t dark:border-gray-700">
+                                <div class="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                                    <svg class="w-5 h-5 text-blue-500 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    <span class="text-sm text-blue-700 dark:text-blue-300">รอระบบตรวจสอบการโอนเงินอัตโนมัติ...</span>
+                                </div>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 @elseif($order->payment_status === 'verifying')
@@ -457,6 +575,39 @@ function copyToClipboard(text) {
         setTimeout(() => toast.remove(), 2000);
     });
 }
+
+@if($order->payment_status === 'pending' && $order->usesSmsPayment() && $order->uniquePaymentAmount && !$order->uniquePaymentAmount->isExpired())
+// Auto refresh page every 30 seconds to check SMS verification status
+setTimeout(function() {
+    location.reload();
+}, 30000);
+
+// Countdown timer
+(function() {
+    const expiresAt = new Date('{{ $order->uniquePaymentAmount->expires_at->toIso8601String() }}');
+    const countdownEl = document.getElementById('countdown');
+
+    function updateCountdown() {
+        const now = new Date();
+        const diff = expiresAt - now;
+
+        if (diff <= 0) {
+            location.reload();
+            return;
+        }
+
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+
+        if (countdownEl) {
+            countdownEl.textContent = minutes + ' นาที ' + seconds + ' วินาที';
+        }
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+})();
+@endif
 </script>
 @endpush
 @endsection
