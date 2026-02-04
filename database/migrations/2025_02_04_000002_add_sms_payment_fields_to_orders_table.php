@@ -12,7 +12,7 @@ return new class extends Migration
             // Unique payment amount reference
             $table->foreignId('unique_payment_amount_id')
                 ->nullable()
-                ->after('payment_slip')
+                ->after('notes')
                 ->constrained('unique_payment_amounts')
                 ->nullOnDelete();
 
