@@ -130,7 +130,7 @@ class UniquePaymentAmount extends Model
      */
     public function getDisplayAmountAttribute(): string
     {
-        return number_format((float)$this->unique_amount, 2);
+        return number_format((float) $this->unique_amount, 2);
     }
 
     /**

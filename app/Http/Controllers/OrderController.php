@@ -316,7 +316,7 @@ class OrderController extends Controller
                     $paymentInfo['sms_payment'] = [
                         'enabled' => true,
                         'unique_amount' => $order->display_amount,
-                        'unique_amount_formatted' => '฿' . number_format($order->display_amount, 2),
+                        'unique_amount_formatted' => '฿'.number_format($order->display_amount, 2),
                         'expires_at' => $order->uniquePaymentAmount?->expires_at,
                         'status' => $order->sms_verification_status,
                     ];

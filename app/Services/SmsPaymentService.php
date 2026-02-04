@@ -237,17 +237,17 @@ class SmsPaymentService
         $bankName = $banks[$notification->bank] ?? $notification->bank;
 
         $message = "💰 ยืนยันการชำระเงิน!\n"
-            . "━━━━━━━━━━━━━━━\n"
-            . "🔢 Order: {$order->order_number}\n"
-            . "👤 ลูกค้า: {$order->customer_name}\n"
-            . "📧 อีเมล: {$order->customer_email}\n"
-            . "📱 โทร: {$order->customer_phone}\n"
-            . "━━━━━━━━━━━━━━━\n"
-            . "🏦 ธนาคาร: {$bankName}\n"
-            . '💵 ยอด: ฿'.number_format((float) $notification->amount, 2)."\n"
-            . '📋 สถานะ: '.($notification->status === 'confirmed' ? '✅ ยืนยันแล้ว' : '⏳ รอตรวจสอบ')."\n"
-            . "━━━━━━━━━━━━━━━\n"
-            . '⏰ '.now()->format('d/m/Y H:i');
+            ."━━━━━━━━━━━━━━━\n"
+            ."🔢 Order: {$order->order_number}\n"
+            ."👤 ลูกค้า: {$order->customer_name}\n"
+            ."📧 อีเมล: {$order->customer_email}\n"
+            ."📱 โทร: {$order->customer_phone}\n"
+            ."━━━━━━━━━━━━━━━\n"
+            ."🏦 ธนาคาร: {$bankName}\n"
+            .'💵 ยอด: ฿'.number_format((float) $notification->amount, 2)."\n"
+            .'📋 สถานะ: '.($notification->status === 'confirmed' ? '✅ ยืนยันแล้ว' : '⏳ รอตรวจสอบ')."\n"
+            ."━━━━━━━━━━━━━━━\n"
+            .'⏰ '.now()->format('d/m/Y H:i');
 
         return $this->lineNotifyService->send($message);
     }

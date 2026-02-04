@@ -129,7 +129,7 @@ class SmsPaymentNotification extends Model
                 ->where('payment_status', 'pending')
                 ->first();
 
-            if ($order && abs((float)$order->total - (float)$this->amount) < 0.01) {
+            if ($order && abs((float) $order->total - (float) $this->amount) < 0.01) {
                 $this->status = 'matched';
                 $this->matched_transaction_id = $order->id;
                 $this->save();
@@ -163,6 +163,6 @@ class SmsPaymentNotification extends Model
      */
     public function getFormattedAmountAttribute(): string
     {
-        return number_format((float)$this->amount, 2);
+        return number_format((float) $this->amount, 2);
     }
 }
