@@ -322,8 +322,8 @@
 @endsection
 
 @push('scripts')
-<!-- QR Code Library -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<!-- QR Code Library (Browser-compatible) -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
     // QR Code configuration data
     const qrData = @json($config);
@@ -332,23 +332,28 @@
     document.addEventListener('DOMContentLoaded', function() {
         const qrContainer = document.getElementById('qrcode');
         if (qrContainer && typeof QRCode !== 'undefined') {
-            QRCode.toCanvas(JSON.stringify(qrData), {
-                width: 250,
-                margin: 2,
-                color: {
-                    dark: '#000000',
-                    light: '#ffffff'
-                },
-                errorCorrectionLevel: 'H'
-            }, function(error, canvas) {
-                if (error) {
-                    console.error('QR Code error:', error);
-                    qrContainer.innerHTML = '<p class="text-red-500 text-sm">ไม่สามารถสร้าง QR Code ได้</p>';
-                    return;
-                }
+            try {
+                // Clear container
                 qrContainer.innerHTML = '';
-                qrContainer.appendChild(canvas);
-            });
+
+                // Create QR Code using qrcodejs library
+                new QRCode(qrContainer, {
+                    text: JSON.stringify(qrData),
+                    width: 250,
+                    height: 250,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } catch (error) {
+                console.error('QR Code error:', error);
+                qrContainer.innerHTML = '<p class="text-red-500 text-sm text-center">ไม่สามารถสร้าง QR Code ได้</p>';
+            }
+        } else {
+            console.error('QRCode library not loaded');
+            if (qrContainer) {
+                qrContainer.innerHTML = '<p class="text-red-500 text-sm text-center">QR Code library ไม่พร้อมใช้งาน</p>';
+            }
         }
     });
 
