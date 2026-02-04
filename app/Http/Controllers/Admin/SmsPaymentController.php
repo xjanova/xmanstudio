@@ -18,6 +18,18 @@ class SmsPaymentController extends Controller
     ) {}
 
     /**
+     * Display SMS Payment settings page.
+     */
+    public function settings()
+    {
+        $activeDevices = SmsCheckerDevice::where('status', 'active')->count();
+        $smsToday = SmsPaymentNotification::whereDate('created_at', today())->count();
+        $devices = SmsCheckerDevice::orderBy('created_at', 'desc')->get();
+
+        return view('admin.sms-payment.settings', compact('activeDevices', 'smsToday', 'devices'));
+    }
+
+    /**
      * Display SMS payment dashboard.
      */
     public function index()

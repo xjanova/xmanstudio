@@ -629,6 +629,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         // Dashboard
         Route::get('/', [AdminSmsPaymentController::class, 'index'])->name('index');
 
+        // Settings (how to connect app)
+        Route::get('/settings', [AdminSmsPaymentController::class, 'settings'])->name('settings');
+
         // Device Management
         Route::get('/devices', [AdminSmsPaymentController::class, 'devices'])->name('devices');
         Route::get('/devices/create', [AdminSmsPaymentController::class, 'createDevice'])->name('devices.create');
