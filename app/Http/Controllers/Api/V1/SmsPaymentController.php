@@ -27,7 +27,7 @@ class SmsPaymentController extends Controller
     public function notify(Request $request): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
@@ -36,7 +36,7 @@ class SmsPaymentController extends Controller
         $nonce = $request->header('X-Nonce');
         $timestamp = $request->header('X-Timestamp');
 
-        if (!$signature || !$nonce || !$timestamp) {
+        if (! $signature || ! $nonce || ! $timestamp) {
             return response()->json([
                 'success' => false,
                 'message' => 'Missing required security headers',
@@ -57,7 +57,7 @@ class SmsPaymentController extends Controller
 
         // Get encrypted data
         $encryptedData = $request->input('data');
-        if (!$encryptedData) {
+        if (! $encryptedData) {
             return response()->json([
                 'success' => false,
                 'message' => 'No payload data',
@@ -65,8 +65,8 @@ class SmsPaymentController extends Controller
         }
 
         // Verify HMAC signature
-        $signatureData = $encryptedData . $nonce . $timestamp;
-        if (!$this->smsPaymentService->verifySignature($signatureData, $signature, $device->secret_key)) {
+        $signatureData = $encryptedData.$nonce.$timestamp;
+        if (! $this->smsPaymentService->verifySignature($signatureData, $signature, $device->secret_key)) {
             Log::warning('SMS Payment: Invalid signature', [
                 'device_id' => $device->device_id,
                 'ip' => $request->ip(),
@@ -79,7 +79,7 @@ class SmsPaymentController extends Controller
 
         // Decrypt payload
         $payload = $this->smsPaymentService->decryptPayload($encryptedData, $device->secret_key);
-        if (!$payload) {
+        if (! $payload) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to decrypt payload',
@@ -125,7 +125,7 @@ class SmsPaymentController extends Controller
     public function status(Request $request): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
@@ -150,7 +150,7 @@ class SmsPaymentController extends Controller
     public function registerDevice(Request $request): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
@@ -214,7 +214,7 @@ class SmsPaymentController extends Controller
             $request->input('expiry_minutes', 30)
         );
 
-        if (!$uniqueAmount) {
+        if (! $uniqueAmount) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to generate unique amount. Too many pending transactions at this price.',
@@ -226,10 +226,10 @@ class SmsPaymentController extends Controller
             'message' => 'Unique amount generated',
             'data' => [
                 'id' => $uniqueAmount->id,
-                'base_amount' => number_format((float)$uniqueAmount->base_amount, 2, '.', ''),
-                'unique_amount' => number_format((float)$uniqueAmount->unique_amount, 2, '.', ''),
+                'base_amount' => number_format((float) $uniqueAmount->base_amount, 2, '.', ''),
+                'unique_amount' => number_format((float) $uniqueAmount->unique_amount, 2, '.', ''),
                 'expires_at' => $uniqueAmount->expires_at->toIso8601String(),
-                'display_amount' => '฿' . number_format((float)$uniqueAmount->unique_amount, 2),
+                'display_amount' => '฿'.number_format((float) $uniqueAmount->unique_amount, 2),
             ],
         ]);
     }
@@ -275,7 +275,7 @@ class SmsPaymentController extends Controller
     public function getOrders(Request $request): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
@@ -312,15 +312,15 @@ class SmsPaymentController extends Controller
                 'order_number' => $order->order_number,
                 'customer_name' => $order->customer_name,
                 'customer_email' => $order->customer_email,
-                'total' => (float)$order->total,
-                'unique_amount' => $order->uniquePaymentAmount ? (float)$order->uniquePaymentAmount->unique_amount : null,
+                'total' => (float) $order->total,
+                'unique_amount' => $order->uniquePaymentAmount ? (float) $order->uniquePaymentAmount->unique_amount : null,
                 'payment_status' => $order->payment_status,
                 'sms_verification_status' => $order->sms_verification_status ?? 'pending',
                 'sms_verified_at' => $order->sms_verified_at,
                 'notification' => $order->smsNotification ? [
                     'id' => $order->smsNotification->id,
                     'bank' => $order->smsNotification->bank,
-                    'amount' => (float)$order->smsNotification->amount,
+                    'amount' => (float) $order->smsNotification->amount,
                     'sms_timestamp' => $order->smsNotification->sms_timestamp,
                 ] : null,
                 'created_at' => $order->created_at->toIso8601String(),
@@ -341,16 +341,16 @@ class SmsPaymentController extends Controller
     public function approveOrder(Request $request, int $id): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
         $order = Order::find($id);
-        if (!$order) {
+        if (! $order) {
             return response()->json(['success' => false, 'message' => 'Order not found'], 404);
         }
 
-        if (!in_array($order->sms_verification_status, ['pending', 'matched'])) {
+        if (! in_array($order->sms_verification_status, ['pending', 'matched'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Order cannot be approved in current status',
@@ -387,12 +387,12 @@ class SmsPaymentController extends Controller
     public function rejectOrder(Request $request, int $id): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
         $order = Order::find($id);
-        if (!$order) {
+        if (! $order) {
             return response()->json(['success' => false, 'message' => 'Order not found'], 404);
         }
 
@@ -401,7 +401,7 @@ class SmsPaymentController extends Controller
         $order->update([
             'sms_verification_status' => 'rejected',
             'payment_status' => 'failed',
-            'notes' => $order->notes . "\n[SMS Rejected] " . $reason,
+            'notes' => $order->notes."\n[SMS Rejected] ".$reason,
         ]);
 
         // Update notification if exists
@@ -434,7 +434,7 @@ class SmsPaymentController extends Controller
     public function getDeviceSettings(Request $request): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
@@ -456,7 +456,7 @@ class SmsPaymentController extends Controller
     public function updateDeviceSettings(Request $request): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
@@ -490,7 +490,7 @@ class SmsPaymentController extends Controller
     public function getDashboardStats(Request $request): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
-        if (!$device instanceof SmsCheckerDevice) {
+        if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 

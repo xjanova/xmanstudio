@@ -77,7 +77,7 @@ class SmsPaymentController extends Controller
             'description' => 'nullable|string|max:500',
         ]);
 
-        $deviceId = 'SMSCHK-' . strtoupper(bin2hex(random_bytes(4)));
+        $deviceId = 'SMSCHK-'.strtoupper(bin2hex(random_bytes(4)));
         $apiKey = SmsCheckerDevice::generateApiKey();
         $secretKey = SmsCheckerDevice::generateSecretKey();
 
@@ -109,7 +109,7 @@ class SmsPaymentController extends Controller
     public function showDevice(SmsCheckerDevice $device)
     {
         $config = [
-            'server_url' => config('app.url') . '/api/v1/sms-payment',
+            'server_url' => config('app.url').'/api/v1/sms-payment',
             'api_key' => $device->api_key,
             'secret_key' => $device->secret_key,
             'device_id' => $device->device_id,
@@ -254,7 +254,7 @@ class SmsPaymentController extends Controller
      */
     public function confirmPayment(Order $order)
     {
-        if (!$order->usesSmsPayment()) {
+        if (! $order->usesSmsPayment()) {
             return redirect()
                 ->back()
                 ->with('error', 'Order นี้ไม่ได้ใช้ SMS Payment');
@@ -296,7 +296,7 @@ class SmsPaymentController extends Controller
             'reason' => 'nullable|string|max:255',
         ]);
 
-        if (!$order->usesSmsPayment()) {
+        if (! $order->usesSmsPayment()) {
             return redirect()
                 ->back()
                 ->with('error', 'Order นี้ไม่ได้ใช้ SMS Payment');
@@ -307,7 +307,7 @@ class SmsPaymentController extends Controller
         $order->update([
             'sms_verification_status' => 'rejected',
             'payment_status' => 'failed',
-            'notes' => $order->notes . "\n[SMS Rejected] " . $reason,
+            'notes' => $order->notes."\n[SMS Rejected] ".$reason,
         ]);
 
         if ($order->smsNotification) {

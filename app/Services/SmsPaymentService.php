@@ -244,10 +244,10 @@ class SmsPaymentService
             . "📱 โทร: {$order->customer_phone}\n"
             . "━━━━━━━━━━━━━━━\n"
             . "🏦 ธนาคาร: {$bankName}\n"
-            . "💵 ยอด: ฿" . number_format((float)$notification->amount, 2) . "\n"
-            . "📋 สถานะ: " . ($notification->status === 'confirmed' ? '✅ ยืนยันแล้ว' : '⏳ รอตรวจสอบ') . "\n"
+            . '💵 ยอด: ฿'.number_format((float) $notification->amount, 2)."\n"
+            . '📋 สถานะ: '.($notification->status === 'confirmed' ? '✅ ยืนยันแล้ว' : '⏳ รอตรวจสอบ')."\n"
             . "━━━━━━━━━━━━━━━\n"
-            . '⏰ ' . now()->format('d/m/Y H:i');
+            . '⏰ '.now()->format('d/m/Y H:i');
 
         return $this->lineNotifyService->send($message);
     }
