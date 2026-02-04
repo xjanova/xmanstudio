@@ -35,6 +35,7 @@ class VerifySmsCheckerDevice
                 'ip' => $request->ip(),
                 'api_key_prefix' => substr($apiKey, 0, 8).'...',
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid API key',
@@ -47,6 +48,7 @@ class VerifySmsCheckerDevice
                 'status' => $device->status,
                 'ip' => $request->ip(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Device is '.$device->status,
@@ -61,6 +63,7 @@ class VerifySmsCheckerDevice
                 'received' => $deviceId,
                 'ip' => $request->ip(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Device ID mismatch',

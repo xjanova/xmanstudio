@@ -72,6 +72,7 @@ class SmsPaymentController extends Controller
                 'device_id' => $device->device_id,
                 'ip' => $request->ip(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid signature',
