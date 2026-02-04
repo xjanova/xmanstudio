@@ -120,11 +120,15 @@ class SmsPaymentController extends Controller
      */
     public function showDevice(SmsCheckerDevice $device)
     {
+        // Config for QR Code - must match Android app expected format (camelCase)
         $config = [
-            'server_url' => config('app.url').'/api/v1/sms-payment',
-            'api_key' => $device->api_key,
-            'secret_key' => $device->secret_key,
-            'device_id' => $device->device_id,
+            'type' => 'smschecker_config',
+            'version' => 2,
+            'url' => config('app.url').'/api/v1/sms-payment',
+            'apiKey' => $device->api_key,
+            'secretKey' => $device->secret_key,
+            'deviceId' => $device->device_id,
+            'deviceName' => $device->name,
         ];
 
         $qrCode = '';

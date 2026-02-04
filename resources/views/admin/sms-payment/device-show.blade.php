@@ -219,7 +219,7 @@
                     <span class="text-rose-500 text-xs ml-1">(เก็บเป็นความลับ)</span>
                 </label>
                 <div class="relative">
-                    <input type="password" id="apiKeyInput" readonly value="{{ $config['api_key'] }}"
+                    <input type="password" id="apiKeyInput" readonly value="{{ $config['apiKey'] }}"
                         class="w-full px-4 py-3 pr-24 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-mono text-gray-900 dark:text-white">
                     <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                         <button type="button" onclick="togglePasswordVisibility('apiKeyInput', this)"
@@ -229,7 +229,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
                         </button>
-                        <button type="button" onclick="copyToClipboard('{{ $config['api_key'] }}', this)"
+                        <button type="button" onclick="copyToClipboard('{{ $config['apiKey'] }}', this)"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
@@ -246,7 +246,7 @@
                     <span class="text-rose-500 text-xs ml-1">(เก็บเป็นความลับ)</span>
                 </label>
                 <div class="relative">
-                    <input type="password" id="secretKeyInput" readonly value="{{ $config['secret_key'] }}"
+                    <input type="password" id="secretKeyInput" readonly value="{{ $config['secretKey'] }}"
                         class="w-full px-4 py-3 pr-24 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-mono text-gray-900 dark:text-white">
                     <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                         <button type="button" onclick="togglePasswordVisibility('secretKeyInput', this)"
@@ -256,7 +256,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
                         </button>
-                        <button type="button" onclick="copyToClipboard('{{ $config['secret_key'] }}', this)"
+                        <button type="button" onclick="copyToClipboard('{{ $config['secretKey'] }}', this)"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
