@@ -412,6 +412,32 @@
                 </a>
             </nav>
 
+            <!-- Wallet Balance Card -->
+            @auth
+                @php
+                    $sidebarWallet = \App\Models\Wallet::where('user_id', auth()->id())->first();
+                    $sidebarBalance = $sidebarWallet ? $sidebarWallet->balance : 0;
+                @endphp
+                <a href="{{ route('user.wallet.index') }}" class="mx-4 mb-2 p-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:from-emerald-500/30 hover:to-teal-500/30 transition-all block group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-emerald-400/70">ยอดเงินคงเหลือ</p>
+                                <p class="text-lg font-bold text-emerald-300 group-hover:text-emerald-200">฿{{ number_format($sidebarBalance, 2) }}</p>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-emerald-400/50 group-hover:text-emerald-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+            @endauth
+
             <!-- User Card -->
             <div class="p-4 border-t border-indigo-500/20 bg-indigo-950/50 flex-shrink-0">
                 <div class="flex items-center">
@@ -460,6 +486,20 @@
                     </div>
 
                     <div class="flex items-center space-x-2 sm:space-x-4">
+                        <!-- Wallet Balance -->
+                        @auth
+                            @php
+                                $userWallet = \App\Models\Wallet::where('user_id', auth()->id())->first();
+                                $walletBalance = $userWallet ? $userWallet->balance : 0;
+                            @endphp
+                            <a href="{{ route('user.wallet.index') }}" class="flex items-center px-3 py-2 text-sm font-medium bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 border border-emerald-500/30 rounded-lg transition-all group" title="กระเป๋าเงิน">
+                                <svg class="w-4 h-4 text-emerald-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                </svg>
+                                <span class="text-emerald-300 group-hover:text-emerald-200 font-semibold">฿{{ number_format($walletBalance, 2) }}</span>
+                            </a>
+                        @endauth
+
                         <a href="/" class="p-2 text-indigo-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="หน้าแรก">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -557,6 +597,20 @@
                         <p class="text-xs text-indigo-300/60">{{ auth()->user()->email }}</p>
                     </div>
                 </div>
+                <!-- Mobile Wallet Balance -->
+                @php
+                    $mobileWallet = \App\Models\Wallet::where('user_id', auth()->id())->first();
+                    $mobileBalance = $mobileWallet ? $mobileWallet->balance : 0;
+                @endphp
+                <a href="{{ route('user.wallet.index') }}" class="mt-3 p-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-emerald-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        <span class="text-xs text-emerald-400/70">ยอดเงิน:</span>
+                    </div>
+                    <span class="text-emerald-300 font-bold">฿{{ number_format($mobileBalance, 2) }}</span>
+                </a>
             </div>
 
             <!-- Navigation -->
