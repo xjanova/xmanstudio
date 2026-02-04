@@ -33,6 +33,7 @@ class SmsPaymentService
                     'nonce' => $payload['nonce'],
                     'device_id' => $device->device_id,
                 ]);
+
                 return [
                     'success' => false,
                     'message' => 'Duplicate request (nonce already used)',
@@ -100,9 +101,9 @@ class SmsPaymentService
     /**
      * Decrypt the encrypted payload from the app.
      *
-     * @param string $encryptedData Base64 encoded AES-256-GCM encrypted data
-     * @param string $secretKey The device's secret key
-     * @return array|null Decrypted payload or null on failure
+     * @param  string      $encryptedData Base64 encoded AES-256-GCM encrypted data
+     * @param  string      $secretKey     The device's secret key
+     * @return array|null  Decrypted payload or null on failure
      */
     public function decryptPayload(string $encryptedData, string $secretKey): ?array
     {

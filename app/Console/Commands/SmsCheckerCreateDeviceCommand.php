@@ -20,7 +20,7 @@ class SmsCheckerCreateDeviceCommand extends Command
         $userId = $this->option('user');
         $mode = $this->option('mode');
 
-        if (! in_array($mode, ['auto', 'manual', 'smart'])) {
+        if (!in_array($mode, ['auto', 'manual', 'smart'])) {
             $this->error('Invalid approval mode. Use: auto, manual, or smart');
             return self::FAILURE;
         }

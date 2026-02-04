@@ -142,6 +142,7 @@ class SmsPaymentNotification extends Model
                 ]);
 
                 event(new PaymentMatched($order, $this));
+
                 return true;
             }
         }
