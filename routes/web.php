@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SmsPaymentController as AdminSmsPaymentController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\ThemeController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
@@ -626,6 +627,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/topups/{topup}/reject', [AdminWalletController::class, 'rejectTopup'])->name('topups.reject');
         Route::get('/settings', [AdminWalletController::class, 'settings'])->name('settings');
         Route::put('/settings', [AdminWalletController::class, 'updateSettings'])->name('settings.update');
+    });
+
+    // User Management
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [AdminUserController::class, 'index'])->name('index');
+        Route::get('/export', [AdminUserController::class, 'export'])->name('export');
+        Route::post('/bulk', [AdminUserController::class, 'bulkAction'])->name('bulk');
+        Route::get('/create', [AdminUserController::class, 'create'])->name('create');
+        Route::post('/', [AdminUserController::class, 'store'])->name('store');
+        Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
+        Route::post('/{user}/toggle', [AdminUserController::class, 'toggle'])->name('toggle');
+        Route::post('/{user}/disconnect-line', [AdminUserController::class, 'disconnectLine'])->name('disconnect-line');
     });
 
     // SMS Payment Management (Auto-verification via SMS)
