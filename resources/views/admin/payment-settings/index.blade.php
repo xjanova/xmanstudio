@@ -83,13 +83,39 @@
                         </div>
                         <h4 class="font-semibold text-gray-900 dark:text-white text-lg">พร้อมเพย์ (PromptPay)</h4>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">เบอร์พร้อมเพย์</label>
                             <input type="text" name="promptpay_number"
                                    value="{{ $settings['promptpay']['promptpay_number'] ?? '' }}"
                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                                   placeholder="0812345678">
+                                   placeholder="0812345678 หรือ เลขบัตรประชาชน">
+                            <p class="mt-1 text-xs text-gray-500">เบอร์โทรศัพท์หรือเลขบัตรประชาชน 13 หลัก</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ชื่อบัญชีพร้อมเพย์</label>
+                            <input type="text" name="promptpay_name"
+                                   value="{{ $settings['promptpay']['promptpay_name'] ?? '' }}"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                                   placeholder="XMAN Studio Co., Ltd.">
+                            <p class="mt-1 text-xs text-gray-500">ชื่อที่จะแสดงหน้าชำระเงิน</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ค่าธรรมเนียม</label>
+                            <div class="flex space-x-2">
+                                <select name="promptpay_fee_type"
+                                        class="px-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                                    <option value="fixed" {{ ($settings['fees']['promptpay_fee_type'] ?? 'fixed') === 'fixed' ? 'selected' : '' }}>บาท</option>
+                                    <option value="percent" {{ ($settings['fees']['promptpay_fee_type'] ?? '') === 'percent' ? 'selected' : '' }}>%</option>
+                                </select>
+                                <input type="number" name="promptpay_fee_amount" step="0.01" min="0"
+                                       value="{{ $settings['fees']['promptpay_fee_amount'] ?? 0 }}"
+                                       class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                                       placeholder="0">
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">0 = ไม่มีค่าธรรมเนียม</p>
                         </div>
                         <div class="flex items-end">
                             <label class="relative inline-flex items-center cursor-pointer">
@@ -113,13 +139,32 @@
                         </div>
                         <h4 class="font-semibold text-gray-900 dark:text-white text-lg">โอนเงินธนาคาร</h4>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="bank_transfer_enabled" value="1"
-                               {{ ($settings['bank_transfer']['bank_transfer_enabled'] ?? true) ? 'checked' : '' }}
-                               class="sr-only peer">
-                        <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-amber-500 peer-checked:to-orange-500"></div>
-                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">เปิดใช้งานโอนเงินธนาคาร</span>
-                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ค่าธรรมเนียม</label>
+                            <div class="flex space-x-2">
+                                <select name="bank_transfer_fee_type"
+                                        class="px-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all">
+                                    <option value="fixed" {{ ($settings['fees']['bank_transfer_fee_type'] ?? 'fixed') === 'fixed' ? 'selected' : '' }}>บาท</option>
+                                    <option value="percent" {{ ($settings['fees']['bank_transfer_fee_type'] ?? '') === 'percent' ? 'selected' : '' }}>%</option>
+                                </select>
+                                <input type="number" name="bank_transfer_fee_amount" step="0.01" min="0"
+                                       value="{{ $settings['fees']['bank_transfer_fee_amount'] ?? 0 }}"
+                                       class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+                                       placeholder="0">
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">0 = ไม่มีค่าธรรมเนียม</p>
+                        </div>
+                        <div class="flex items-end">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="bank_transfer_enabled" value="1"
+                                       {{ ($settings['bank_transfer']['bank_transfer_enabled'] ?? true) ? 'checked' : '' }}
+                                       class="sr-only peer">
+                                <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-amber-500 peer-checked:to-orange-500"></div>
+                                <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">เปิดใช้งานโอนเงินธนาคาร</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Card Payment Settings -->
@@ -132,13 +177,32 @@
                         </div>
                         <h4 class="font-semibold text-gray-900 dark:text-white text-lg">บัตรเครดิต/เดบิต</h4>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="card_payment_enabled" value="1"
-                               {{ ($settings['card']['card_payment_enabled'] ?? false) ? 'checked' : '' }}
-                               class="sr-only peer">
-                        <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-300 dark:peer-focus:ring-violet-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-violet-500 peer-checked:to-purple-500"></div>
-                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">เปิดใช้งานบัตรเครดิต/เดบิต</span>
-                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ค่าธรรมเนียม</label>
+                            <div class="flex space-x-2">
+                                <select name="card_fee_type"
+                                        class="px-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all">
+                                    <option value="fixed" {{ ($settings['fees']['card_fee_type'] ?? '') === 'fixed' ? 'selected' : '' }}>บาท</option>
+                                    <option value="percent" {{ ($settings['fees']['card_fee_type'] ?? 'percent') === 'percent' ? 'selected' : '' }}>%</option>
+                                </select>
+                                <input type="number" name="card_fee_amount" step="0.01" min="0"
+                                       value="{{ $settings['fees']['card_fee_amount'] ?? 3 }}"
+                                       class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
+                                       placeholder="3">
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">ค่าเริ่มต้น 3% (Payment Gateway fee)</p>
+                        </div>
+                        <div class="flex items-end">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="card_payment_enabled" value="1"
+                                       {{ ($settings['card']['card_payment_enabled'] ?? false) ? 'checked' : '' }}
+                                       class="sr-only peer">
+                                <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-300 dark:peer-focus:ring-violet-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-violet-500 peer-checked:to-purple-500"></div>
+                                <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">เปิดใช้งานบัตรเครดิต/เดบิต</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- General Payment Settings -->

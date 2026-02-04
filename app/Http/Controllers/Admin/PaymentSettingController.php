@@ -27,11 +27,19 @@ class PaymentSettingController extends Controller
     {
         $validated = $request->validate([
             'promptpay_number' => 'nullable|string|max:20',
+            'promptpay_name' => 'nullable|string|max:255',
             'promptpay_enabled' => 'boolean',
             'bank_transfer_enabled' => 'boolean',
             'card_payment_enabled' => 'boolean',
             'payment_timeout_hours' => 'nullable|integer|min:1|max:168',
             'auto_cancel_pending_after_hours' => 'nullable|integer|min:1|max:168',
+            // Payment fees
+            'promptpay_fee_type' => 'nullable|in:fixed,percent',
+            'promptpay_fee_amount' => 'nullable|numeric|min:0',
+            'bank_transfer_fee_type' => 'nullable|in:fixed,percent',
+            'bank_transfer_fee_amount' => 'nullable|numeric|min:0',
+            'card_fee_type' => 'nullable|in:fixed,percent',
+            'card_fee_amount' => 'nullable|numeric|min:0',
         ]);
 
         // PromptPay settings
@@ -40,6 +48,13 @@ class PaymentSettingController extends Controller
             'type' => 'string',
             'label' => 'เบอร์พร้อมเพย์',
             'description' => 'เบอร์โทรศัพท์หรือเลขบัตรประชาชนสำหรับพร้อมเพย์',
+        ]);
+
+        PaymentSetting::set('promptpay_name', $validated['promptpay_name'] ?? '', [
+            'group' => 'promptpay',
+            'type' => 'string',
+            'label' => 'ชื่อบัญชีพร้อมเพย์',
+            'description' => 'ชื่อที่จะแสดงหน้าชำระเงิน',
         ]);
 
         PaymentSetting::set('promptpay_enabled', $request->boolean('promptpay_enabled'), [
@@ -60,6 +75,45 @@ class PaymentSettingController extends Controller
             'group' => 'card',
             'type' => 'boolean',
             'label' => 'เปิดใช้งานบัตรเครดิต/เดบิต',
+        ]);
+
+        // Payment fees - PromptPay
+        PaymentSetting::set('promptpay_fee_type', $validated['promptpay_fee_type'] ?? 'fixed', [
+            'group' => 'fees',
+            'type' => 'string',
+            'label' => 'ประเภทค่าธรรมเนียมพร้อมเพย์',
+        ]);
+
+        PaymentSetting::set('promptpay_fee_amount', $validated['promptpay_fee_amount'] ?? 0, [
+            'group' => 'fees',
+            'type' => 'float',
+            'label' => 'ค่าธรรมเนียมพร้อมเพย์',
+        ]);
+
+        // Payment fees - Bank Transfer
+        PaymentSetting::set('bank_transfer_fee_type', $validated['bank_transfer_fee_type'] ?? 'fixed', [
+            'group' => 'fees',
+            'type' => 'string',
+            'label' => 'ประเภทค่าธรรมเนียมโอนเงิน',
+        ]);
+
+        PaymentSetting::set('bank_transfer_fee_amount', $validated['bank_transfer_fee_amount'] ?? 0, [
+            'group' => 'fees',
+            'type' => 'float',
+            'label' => 'ค่าธรรมเนียมโอนเงิน',
+        ]);
+
+        // Payment fees - Card
+        PaymentSetting::set('card_fee_type', $validated['card_fee_type'] ?? 'percent', [
+            'group' => 'fees',
+            'type' => 'string',
+            'label' => 'ประเภทค่าธรรมเนียมบัตร',
+        ]);
+
+        PaymentSetting::set('card_fee_amount', $validated['card_fee_amount'] ?? 3, [
+            'group' => 'fees',
+            'type' => 'float',
+            'label' => 'ค่าธรรมเนียมบัตร',
         ]);
 
         // General payment settings
