@@ -9,6 +9,7 @@ use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Wallet;
+use App\Services\SmsPaymentService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,8 @@ use Illuminate\Support\Str;
 class OrderController extends Controller
 {
     public function __construct(
-        protected ThaiPaymentService $paymentService
+        protected ThaiPaymentService $paymentService,
+        protected SmsPaymentService $smsPaymentService
     ) {}
 
     /**
@@ -198,6 +200,24 @@ class OrderController extends Controller
                 'notes' => $request->notes,
             ]);
 
+            // Generate unique payment amount for bank transfer (SMS verification)
+            if ($request->payment_method === 'bank_transfer') {
+                $uniqueAmount = $this->smsPaymentService->generateUniqueAmount(
+                    $total,
+                    $order->id,
+                    'order',
+                    config('smschecker.amount_expiry', 30)
+                );
+
+                if ($uniqueAmount) {
+                    $order->update([
+                        'unique_payment_amount_id' => $uniqueAmount->id,
+                        'payment_display_amount' => $uniqueAmount->unique_amount,
+                        'sms_verification_status' => 'pending',
+                    ]);
+                }
+            }
+
             // Create order items
             foreach ($cart->items as $cartItem) {
                 OrderItem::create([
@@ -290,6 +310,17 @@ class OrderController extends Controller
                 );
             } elseif ($order->payment_method === 'bank_transfer') {
                 $paymentInfo = $this->paymentService->getBankTransferInfo();
+
+                // Add SMS payment info if using unique amount
+                if ($order->usesSmsPayment()) {
+                    $paymentInfo['sms_payment'] = [
+                        'enabled' => true,
+                        'unique_amount' => $order->display_amount,
+                        'unique_amount_formatted' => '฿' . number_format($order->display_amount, 2),
+                        'expires_at' => $order->uniquePaymentAmount?->expires_at,
+                        'status' => $order->sms_verification_status,
+                    ];
+                }
             }
         }
 

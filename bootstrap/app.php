@@ -17,6 +17,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'theme' => \App\Http\Middleware\ThemeMiddleware::class,
+            'smschecker.device' => \App\Http\Middleware\VerifySmsCheckerDevice::class,
         ]);
 
         // Apply theme middleware to web routes

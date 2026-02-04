@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\VersionController;
+use App\Http\Controllers\Api\V1\SmsPaymentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -158,4 +159,43 @@ Route::prefix('v1/coupons')->middleware(['auth:sanctum', 'throttle:30,1'])->grou
 
     // Remove coupon from session
     Route::delete('/remove', [CouponController::class, 'remove']);
+});
+
+// ==================== SMS Payment API Routes ====================
+// These routes handle SMS-based bank transfer verification
+// Used by SmsChecker Android app for automatic payment confirmation
+
+Route::prefix('v1/sms-payment')->group(function () {
+    // Device-authenticated endpoints (for Android app)
+    Route::middleware(['smschecker.device', 'throttle:60,1'])->group(function () {
+        // Receive SMS payment notification from Android device
+        Route::post('/notify', [SmsPaymentController::class, 'notify']);
+
+        // Check device status and pending count
+        Route::get('/status', [SmsPaymentController::class, 'status']);
+
+        // Register/update device information
+        Route::post('/register-device', [SmsPaymentController::class, 'registerDevice']);
+
+        // Order approval endpoints (for Android app)
+        Route::get('/orders', [SmsPaymentController::class, 'getOrders']);
+        Route::post('/orders/{id}/approve', [SmsPaymentController::class, 'approveOrder']);
+        Route::post('/orders/{id}/reject', [SmsPaymentController::class, 'rejectOrder']);
+
+        // Device settings
+        Route::get('/device-settings', [SmsPaymentController::class, 'getDeviceSettings']);
+        Route::put('/device-settings', [SmsPaymentController::class, 'updateDeviceSettings']);
+
+        // Dashboard statistics
+        Route::get('/dashboard-stats', [SmsPaymentController::class, 'getDashboardStats']);
+    });
+
+    // Web-authenticated endpoints (for checkout flow)
+    Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
+        // Generate unique payment amount for bank transfer
+        Route::post('/generate-amount', [SmsPaymentController::class, 'generateAmount']);
+
+        // Get notification history (admin)
+        Route::get('/notifications', [SmsPaymentController::class, 'notifications']);
+    });
 });

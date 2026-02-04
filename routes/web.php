@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
+use App\Http\Controllers\Admin\SmsPaymentController as AdminSmsPaymentController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
@@ -621,5 +622,36 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/topups/{topup}', [AdminWalletController::class, 'showTopup'])->name('topups.show');
         Route::post('/topups/{topup}/approve', [AdminWalletController::class, 'approveTopup'])->name('topups.approve');
         Route::post('/topups/{topup}/reject', [AdminWalletController::class, 'rejectTopup'])->name('topups.reject');
+    });
+
+    // SMS Payment Management (Auto-verification via SMS)
+    Route::prefix('sms-payment')->name('sms-payment.')->group(function () {
+        // Dashboard
+        Route::get('/', [AdminSmsPaymentController::class, 'index'])->name('index');
+
+        // Device Management
+        Route::get('/devices', [AdminSmsPaymentController::class, 'devices'])->name('devices');
+        Route::get('/devices/create', [AdminSmsPaymentController::class, 'createDevice'])->name('devices.create');
+        Route::post('/devices', [AdminSmsPaymentController::class, 'storeDevice'])->name('devices.store');
+        Route::get('/devices/{device}', [AdminSmsPaymentController::class, 'showDevice'])->name('devices.show');
+        Route::put('/devices/{device}', [AdminSmsPaymentController::class, 'updateDevice'])->name('devices.update');
+        Route::delete('/devices/{device}', [AdminSmsPaymentController::class, 'destroyDevice'])->name('devices.destroy');
+        Route::post('/devices/{device}/toggle', [AdminSmsPaymentController::class, 'toggleDevice'])->name('devices.toggle');
+        Route::post('/devices/{device}/regenerate-key', [AdminSmsPaymentController::class, 'regenerateKey'])->name('devices.regenerate-key');
+
+        // Pending Orders (waiting for SMS verification)
+        Route::get('/pending-orders', [AdminSmsPaymentController::class, 'pendingOrders'])->name('pending-orders');
+
+        // Manual Payment Actions
+        Route::post('/orders/{order}/confirm', [AdminSmsPaymentController::class, 'confirmPayment'])->name('confirm');
+        Route::post('/orders/{order}/reject', [AdminSmsPaymentController::class, 'rejectPayment'])->name('reject');
+
+        // SMS Notifications History
+        Route::get('/notifications', [AdminSmsPaymentController::class, 'notifications'])->name('notifications');
+        Route::get('/notifications/{notification}', [AdminSmsPaymentController::class, 'showNotification'])->name('notifications.show');
+        Route::post('/notifications/{notification}/match', [AdminSmsPaymentController::class, 'manualMatch'])->name('notifications.match');
+
+        // Cleanup
+        Route::post('/cleanup', [AdminSmsPaymentController::class, 'cleanup'])->name('cleanup');
     });
 });

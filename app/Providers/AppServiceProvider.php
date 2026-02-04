@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\PaymentMatched;
+use App\Listeners\SendPaymentMatchedNotification;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +25,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiting();
+        $this->registerSmsCheckerEvents();
+    }
+
+    /**
+     * Register SMS Checker event listeners.
+     */
+    protected function registerSmsCheckerEvents(): void
+    {
+        Event::listen(
+            PaymentMatched::class,
+            SendPaymentMatchedNotification::class
+        );
     }
 
     /**
