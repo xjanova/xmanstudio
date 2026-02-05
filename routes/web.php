@@ -32,9 +32,9 @@ use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SmsPaymentController as AdminSmsPaymentController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
+use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CustomerPortalController;
@@ -143,7 +143,7 @@ Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::get('/sitemap.xml', function () {
     $sitemapPath = public_path('sitemap.xml');
 
-    if (!file_exists($sitemapPath)) {
+    if (! file_exists($sitemapPath)) {
         abort(404);
     }
 
@@ -156,7 +156,7 @@ Route::get('/sitemap.xml', function () {
 Route::get('/robots.txt', function () {
     $setting = SeoSetting::getInstance();
 
-    if (!$setting->robots_txt_enabled || empty($setting->robots_txt_content)) {
+    if (! $setting->robots_txt_enabled || empty($setting->robots_txt_content)) {
         return response('User-agent: *'."\n".'Allow: /', 200)
             ->header('Content-Type', 'text/plain; charset=UTF-8');
     }
@@ -169,7 +169,7 @@ Route::get('/robots.txt', function () {
 Route::get('/ads.txt', function () {
     $setting = AdsTxtSetting::getInstance();
 
-    if (!$setting->enabled || empty($setting->content)) {
+    if (! $setting->enabled || empty($setting->content)) {
         abort(404);
     }
 

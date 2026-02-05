@@ -170,7 +170,7 @@ class UserController extends Controller
         ]);
 
         // Prevent super_admin from being demoted by non-super_admin
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
             return redirect()
                 ->back()
                 ->with('error', 'ไม่สามารถแก้ไข Super Admin ได้');
@@ -218,7 +218,7 @@ class UserController extends Controller
         }
 
         // Prevent deleting super_admin by non-super_admin
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
             return redirect()
                 ->back()
                 ->with('error', 'ไม่สามารถลบ Super Admin ได้');
@@ -255,13 +255,13 @@ class UserController extends Controller
         }
 
         // Prevent toggling super_admin by non-super_admin
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
             return redirect()
                 ->back()
                 ->with('error', 'ไม่สามารถปิดการใช้งาน Super Admin ได้');
         }
 
-        $user->is_active = !$user->is_active;
+        $user->is_active = ! $user->is_active;
         $user->save();
 
         $status = $user->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
@@ -369,8 +369,8 @@ class UserController extends Controller
         $users = User::whereIn('id', $userIds)->get();
 
         // Filter out super_admins if current user is not super_admin
-        if (!auth()->user()->isSuperAdmin()) {
-            $users = $users->filter(fn ($user) => !$user->isSuperAdmin());
+        if (! auth()->user()->isSuperAdmin()) {
+            $users = $users->filter(fn ($user) => ! $user->isSuperAdmin());
         }
 
         $count = 0;
