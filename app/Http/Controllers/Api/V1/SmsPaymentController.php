@@ -488,6 +488,75 @@ class SmsPaymentController extends Controller
     }
 
     /**
+     * Match order by amount - find pending order that matches the SMS amount.
+     *
+     * Android app calls this when SMS is received instead of fetching all orders.
+     * Returns only the order that matches the exact amount (unique decimal).
+     *
+     * GET /api/v1/sms-payment/orders/match?amount=500.37
+     */
+    public function matchOrderByAmount(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('sms_checker_device');
+        if (! $device instanceof SmsCheckerDevice) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $amount = $request->input('amount');
+        if (! $amount || ! is_numeric($amount)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Amount is required and must be numeric',
+            ], 400);
+        }
+
+        $amount = (float) $amount;
+
+        // Find Order with matching unique_amount
+        $order = Order::with(['smsNotification', 'uniquePaymentAmount'])
+            ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
+                $q->where('unique_amount', $amount)
+                    ->where('status', 'reserved');
+            })
+            ->whereIn('sms_verification_status', ['pending', null])
+            ->where('payment_status', '!=', 'paid')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (! $order) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'matched' => false,
+                    'order' => null,
+                    'message' => 'No pending order found with amount ' . number_format($amount, 2),
+                ],
+            ]);
+        }
+
+        // Transform to Android app format
+        $orderData = $this->transformOrderForAndroid($order);
+
+        // Update device last_active_at
+        $device->update(['last_active_at' => now()]);
+
+        Log::info('Order matched by amount', [
+            'device_id' => $device->device_id,
+            'amount' => $amount,
+            'order_id' => $order->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'matched' => true,
+                'order' => $orderData,
+                'message' => 'Found matching order',
+            ],
+        ]);
+    }
+
+    /**
      * Get device settings (for Android app).
      *
      * GET /api/v1/sms-payment/device-settings
