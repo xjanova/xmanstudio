@@ -409,6 +409,7 @@
                     จัดการ Devices
                 </a>
 
+                @permission('users.view')
                 <div class="px-4 py-3 mt-4">
                     <span class="text-xs font-semibold text-indigo-300/50 uppercase tracking-wider">จัดการสมาชิก</span>
                 </div>
@@ -426,7 +427,9 @@
                     @endphp
                     <span class="ml-auto bg-white/10 text-indigo-200 text-xs px-2 py-0.5 rounded-full">{{ $totalUsers }}</span>
                 </a>
+                @endpermission
 
+                @permission('roles.view')
                 <a href="{{ route('admin.roles.index') }}"
                    class="premium-nav-item flex items-center px-4 py-3 text-indigo-100 rounded-lg {{ request()->routeIs('admin.roles*') ? 'active bg-white/10' : '' }}">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-400 to-rose-500 flex items-center justify-center mr-3 shadow-lg">
@@ -436,6 +439,7 @@
                     </div>
                     จัดการบทบาท
                 </a>
+                @endpermission
 
                 <div class="px-4 py-3 mt-4">
                     <span class="text-xs font-semibold text-indigo-300/50 uppercase tracking-wider">Line OA</span>

@@ -632,37 +632,37 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // User Management
     Route::prefix('users')->name('users.')->group(function () {
-        Route::get('/', [AdminUserController::class, 'index'])->name('index');
-        Route::get('/export', [AdminUserController::class, 'export'])->name('export');
-        Route::post('/bulk', [AdminUserController::class, 'bulkAction'])->name('bulk');
-        Route::get('/create', [AdminUserController::class, 'create'])->name('create');
-        Route::post('/', [AdminUserController::class, 'store'])->name('store');
-        Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
-        Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit');
-        Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
-        Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
-        Route::post('/{user}/toggle', [AdminUserController::class, 'toggle'])->name('toggle');
-        Route::post('/{user}/disconnect-line', [AdminUserController::class, 'disconnectLine'])->name('disconnect-line');
-        Route::post('/{user}/avatar', [AdminUserController::class, 'updateAvatar'])->name('update-avatar');
-        Route::delete('/{user}/avatar', [AdminUserController::class, 'deleteAvatar'])->name('delete-avatar');
+        Route::get('/', [AdminUserController::class, 'index'])->name('index')->middleware('permission:users.view');
+        Route::get('/export', [AdminUserController::class, 'export'])->name('export')->middleware('permission:users.export');
+        Route::post('/bulk', [AdminUserController::class, 'bulkAction'])->name('bulk')->middleware('permission:users.delete');
+        Route::get('/create', [AdminUserController::class, 'create'])->name('create')->middleware('permission:users.create');
+        Route::post('/', [AdminUserController::class, 'store'])->name('store')->middleware('permission:users.create');
+        Route::get('/{user}', [AdminUserController::class, 'show'])->name('show')->middleware('permission:users.view');
+        Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit')->middleware('permission:users.edit');
+        Route::put('/{user}', [AdminUserController::class, 'update'])->name('update')->middleware('permission:users.edit');
+        Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy')->middleware('permission:users.delete');
+        Route::post('/{user}/toggle', [AdminUserController::class, 'toggle'])->name('toggle')->middleware('permission:users.edit');
+        Route::post('/{user}/disconnect-line', [AdminUserController::class, 'disconnectLine'])->name('disconnect-line')->middleware('permission:users.edit');
+        Route::post('/{user}/avatar', [AdminUserController::class, 'updateAvatar'])->name('update-avatar')->middleware('permission:users.edit');
+        Route::delete('/{user}/avatar', [AdminUserController::class, 'deleteAvatar'])->name('delete-avatar')->middleware('permission:users.edit');
     });
 
     // Role & Permission Management
     Route::prefix('roles')->name('roles.')->group(function () {
-        Route::get('/', [AdminRoleController::class, 'index'])->name('index');
-        Route::get('/permissions', [AdminRoleController::class, 'permissions'])->name('permissions');
-        Route::post('/permissions', [AdminRoleController::class, 'storePermission'])->name('permissions.store');
-        Route::delete('/permissions/{permission}', [AdminRoleController::class, 'destroyPermission'])->name('permissions.destroy');
-        Route::get('/create', [AdminRoleController::class, 'create'])->name('create');
-        Route::post('/', [AdminRoleController::class, 'store'])->name('store');
-        Route::get('/{role}', [AdminRoleController::class, 'show'])->name('show');
-        Route::get('/{role}/edit', [AdminRoleController::class, 'edit'])->name('edit');
-        Route::put('/{role}', [AdminRoleController::class, 'update'])->name('update');
-        Route::delete('/{role}', [AdminRoleController::class, 'destroy'])->name('destroy');
-        Route::post('/{role}/duplicate', [AdminRoleController::class, 'duplicate'])->name('duplicate');
-        Route::get('/{role}/users', [AdminRoleController::class, 'users'])->name('users');
-        Route::post('/{role}/add-user', [AdminRoleController::class, 'addUser'])->name('add-user');
-        Route::post('/{role}/remove-user', [AdminRoleController::class, 'removeUser'])->name('remove-user');
+        Route::get('/', [AdminRoleController::class, 'index'])->name('index')->middleware('permission:roles.view');
+        Route::get('/permissions', [AdminRoleController::class, 'permissions'])->name('permissions')->middleware('permission:permissions.view');
+        Route::post('/permissions', [AdminRoleController::class, 'storePermission'])->name('permissions.store')->middleware('permission:permissions.create');
+        Route::delete('/permissions/{permission}', [AdminRoleController::class, 'destroyPermission'])->name('permissions.destroy')->middleware('permission:permissions.delete');
+        Route::get('/create', [AdminRoleController::class, 'create'])->name('create')->middleware('permission:roles.create');
+        Route::post('/', [AdminRoleController::class, 'store'])->name('store')->middleware('permission:roles.create');
+        Route::get('/{role}', [AdminRoleController::class, 'show'])->name('show')->middleware('permission:roles.view');
+        Route::get('/{role}/edit', [AdminRoleController::class, 'edit'])->name('edit')->middleware('permission:roles.edit');
+        Route::put('/{role}', [AdminRoleController::class, 'update'])->name('update')->middleware('permission:roles.edit');
+        Route::delete('/{role}', [AdminRoleController::class, 'destroy'])->name('destroy')->middleware('permission:roles.delete');
+        Route::post('/{role}/duplicate', [AdminRoleController::class, 'duplicate'])->name('duplicate')->middleware('permission:roles.create');
+        Route::get('/{role}/users', [AdminRoleController::class, 'users'])->name('users')->middleware('permission:roles.view');
+        Route::post('/{role}/add-user', [AdminRoleController::class, 'addUser'])->name('add-user')->middleware('permission:roles.edit');
+        Route::post('/{role}/remove-user', [AdminRoleController::class, 'removeUser'])->name('remove-user')->middleware('permission:roles.edit');
     });
 
     // SMS Payment Management (Auto-verification via SMS)

@@ -18,6 +18,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'theme' => \App\Http\Middleware\ThemeMiddleware::class,
             'smschecker.device' => \App\Http\Middleware\VerifySmsCheckerDevice::class,
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
         // Apply theme middleware to web routes

@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Events\PaymentMatched;
 use App\Listeners\SendPaymentMatchedNotification;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +27,35 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiting();
         $this->registerSmsCheckerEvents();
+        $this->registerBladeDirectives();
+    }
+
+    /**
+     * Register custom Blade directives for authorization.
+     */
+    protected function registerBladeDirectives(): void
+    {
+        // @can('permission-name') ... @endcan
+        // @permission('users.view') ... @endpermission
+        Blade::if('permission', function (string $permission) {
+            return auth()->check() && auth()->user()->hasPermission($permission);
+        });
+
+        // @role('admin') ... @endrole
+        Blade::if('role', function (string $roles) {
+            if (! auth()->check()) {
+                return false;
+            }
+
+            $roleArray = array_map('trim', explode(',', $roles));
+
+            return auth()->user()->hasRole($roleArray) || auth()->user()->isSuperAdmin();
+        });
+
+        // @anypermission(['users.view', 'users.edit']) ... @endanypermission
+        Blade::if('anypermission', function (array $permissions) {
+            return auth()->check() && auth()->user()->hasAnyPermission($permissions);
+        });
     }
 
     /**
