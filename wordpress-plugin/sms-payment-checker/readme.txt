@@ -4,7 +4,7 @@ Tags: woocommerce, payment, bank transfer, sms, verification
 Requires at least: 5.8
 Tested up to: 6.4
 Requires PHP: 8.0
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,11 +18,11 @@ SMS Payment Checker automates bank transfer verification by reading SMS notifica
 
 * **Automatic Payment Matching** - Matches incoming SMS bank notifications with pending orders
 * **Unique Amount Generation** - Generates unique payment amounts (with satang variations) for easy matching
-* **Real-time Updates** - Pusher WebSocket integration for instant payment notifications
-* **Push Notifications** - Firebase Cloud Messaging (FCM) for Android app notifications
+* **Polling-based Sync** - Efficient polling every 30 seconds for data synchronization
 * **Multi-device Support** - Connect multiple Android devices
 * **Secure Communication** - AES-256-GCM encryption and HMAC signature verification
 * **15 Bank Support** - Works with major Thai banks
+* **LINE Notify Integration** - Optional notifications via LINE
 
 = Supported Banks =
 
@@ -76,20 +76,11 @@ SMS Payment Checker automates bank transfer verification by reading SMS notifica
 3. Enter device name and select approval mode
 4. Scan the QR code with SmsChecker Android app
 
-= Pusher Setup (Optional - for real-time updates) =
+= LINE Notify Setup (Optional - for notifications) =
 
-1. Create account at pusher.com
-2. Create new Channels app
-3. Go to SMS Checker > Settings > Pusher
-4. Enter App ID, Key, Secret, and Cluster
-
-= Firebase FCM Setup (Optional - for push notifications) =
-
-1. Go to Firebase Console
-2. Create or select project
-3. Go to Project Settings > Service Accounts
-4. Generate new private key
-5. Paste JSON in SMS Checker > Settings > Firebase FCM
+1. Go to LINE Notify (notify-bot.line.me)
+2. Create a token
+3. Configure in SMS Checker > Settings
 
 == Frequently Asked Questions ==
 
@@ -118,9 +109,12 @@ Unmatched payments are stored as "orphan transactions" and can be manually match
 
 == Changelog ==
 
+= 1.6.1 =
+* Removed external dependencies (Pusher, Firebase FCM)
+* Switched to polling-based sync for closed system
+* Improved security and privacy
+
 = 1.6.0 =
-* Added Pusher WebSocket support for real-time updates
-* Added Firebase FCM push notifications
 * Added REST API sync endpoints
 * Added WooCommerce payment gateway
 * Improved admin interface
@@ -131,5 +125,5 @@ Unmatched payments are stored as "orphan transactions" and can be manually match
 
 == Upgrade Notice ==
 
-= 1.6.0 =
-Major update with real-time features. Configure Pusher and FCM for best experience.
+= 1.6.1 =
+Major update removing external services. Now fully self-hosted with polling-based sync.

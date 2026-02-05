@@ -104,19 +104,7 @@ class SPC_Admin {
         register_setting('spc_general_settings', 'spc_amount_expiry');
         register_setting('spc_general_settings', 'spc_max_pending_per_amount');
         register_setting('spc_general_settings', 'spc_sync_interval');
-
-        // Pusher settings
-        register_setting('spc_pusher_settings', 'spc_pusher_app_id');
-        register_setting('spc_pusher_settings', 'spc_pusher_app_key');
-        register_setting('spc_pusher_settings', 'spc_pusher_app_secret');
-        register_setting('spc_pusher_settings', 'spc_pusher_cluster');
-
-        // FCM settings
-        register_setting('spc_fcm_settings', 'spc_firebase_project_id');
-        register_setting('spc_fcm_settings', 'spc_firebase_credentials');
-        register_setting('spc_fcm_settings', 'spc_fcm_enabled');
-        register_setting('spc_fcm_settings', 'spc_fcm_on_match');
-        register_setting('spc_fcm_settings', 'spc_fcm_on_new_order');
+        register_setting('spc_general_settings', 'spc_line_on_match');
     }
 
     /**
@@ -218,7 +206,7 @@ class SPC_Admin {
                     <span class="spc-step-number">3</span>
                     <div class="spc-step-content">
                         <h3><?php _e('Configure Settings', 'sms-payment-checker'); ?></h3>
-                        <p><?php _e('Set up Pusher and FCM for real-time notifications.', 'sms-payment-checker'); ?></p>
+                        <p><?php _e('Adjust sync settings and approval modes.', 'sms-payment-checker'); ?></p>
                         <a href="<?php echo admin_url('admin.php?page=sms-payment-checker-settings'); ?>" class="button"><?php _e('Configure', 'sms-payment-checker'); ?></a>
                     </div>
                 </div>
@@ -418,35 +406,14 @@ class SPC_Admin {
      * Render settings page
      */
     public function render_settings() {
-        $active_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
         ?>
         <div class="wrap spc-admin">
             <h1><?php _e('SMS Payment Checker Settings', 'sms-payment-checker'); ?></h1>
 
-            <nav class="nav-tab-wrapper">
-                <a href="?page=sms-payment-checker-settings&tab=general" class="nav-tab <?php echo $active_tab === 'general' ? 'nav-tab-active' : ''; ?>">
-                    <?php _e('General', 'sms-payment-checker'); ?>
-                </a>
-                <a href="?page=sms-payment-checker-settings&tab=pusher" class="nav-tab <?php echo $active_tab === 'pusher' ? 'nav-tab-active' : ''; ?>">
-                    <?php _e('Pusher', 'sms-payment-checker'); ?>
-                </a>
-                <a href="?page=sms-payment-checker-settings&tab=fcm" class="nav-tab <?php echo $active_tab === 'fcm' ? 'nav-tab-active' : ''; ?>">
-                    <?php _e('Firebase FCM', 'sms-payment-checker'); ?>
-                </a>
-            </nav>
-
             <form method="post" action="options.php">
                 <?php
-                if ($active_tab === 'general') {
-                    settings_fields('spc_general_settings');
-                    $this->render_general_settings();
-                } elseif ($active_tab === 'pusher') {
-                    settings_fields('spc_pusher_settings');
-                    $this->render_pusher_settings();
-                } elseif ($active_tab === 'fcm') {
-                    settings_fields('spc_fcm_settings');
-                    $this->render_fcm_settings();
-                }
+                settings_fields('spc_general_settings');
+                $this->render_general_settings();
                 submit_button();
                 ?>
             </form>
@@ -500,109 +467,16 @@ class SPC_Admin {
                     <p class="description"><?php _e('How often Android app should sync with server.', 'sms-payment-checker'); ?></p>
                 </td>
             </tr>
-        </table>
-        <?php
-    }
-
-    /**
-     * Render Pusher settings
-     */
-    private function render_pusher_settings() {
-        ?>
-        <table class="form-table">
-            <tr>
-                <th scope="row">
-                    <label for="spc_pusher_app_id"><?php _e('App ID', 'sms-payment-checker'); ?></label>
-                </th>
-                <td>
-                    <input type="text" id="spc_pusher_app_id" name="spc_pusher_app_id" value="<?php echo esc_attr(get_option('spc_pusher_app_id')); ?>" class="regular-text">
-                </td>
-            </tr>
-            <tr>
-                <th scope="row">
-                    <label for="spc_pusher_app_key"><?php _e('App Key', 'sms-payment-checker'); ?></label>
-                </th>
-                <td>
-                    <input type="text" id="spc_pusher_app_key" name="spc_pusher_app_key" value="<?php echo esc_attr(get_option('spc_pusher_app_key')); ?>" class="regular-text">
-                </td>
-            </tr>
-            <tr>
-                <th scope="row">
-                    <label for="spc_pusher_app_secret"><?php _e('App Secret', 'sms-payment-checker'); ?></label>
-                </th>
-                <td>
-                    <input type="password" id="spc_pusher_app_secret" name="spc_pusher_app_secret" value="<?php echo esc_attr(get_option('spc_pusher_app_secret')); ?>" class="regular-text">
-                </td>
-            </tr>
-            <tr>
-                <th scope="row">
-                    <label for="spc_pusher_cluster"><?php _e('Cluster', 'sms-payment-checker'); ?></label>
-                </th>
-                <td>
-                    <select id="spc_pusher_cluster" name="spc_pusher_cluster">
-                        <?php
-                        $clusters = array('ap1', 'ap2', 'ap3', 'ap4', 'eu', 'us2', 'us3', 'mt1');
-                        $current = get_option('spc_pusher_cluster', 'ap1');
-                        foreach ($clusters as $cluster) {
-                            printf('<option value="%s" %s>%s</option>', esc_attr($cluster), selected($current, $cluster, false), esc_html($cluster));
-                        }
-                        ?>
-                    </select>
-                </td>
-            </tr>
-        </table>
-        <p class="description">
-            <?php printf(__('Get your Pusher credentials from %s', 'sms-payment-checker'), '<a href="https://dashboard.pusher.com" target="_blank">Pusher Dashboard</a>'); ?>
-        </p>
-        <?php
-    }
-
-    /**
-     * Render FCM settings
-     */
-    private function render_fcm_settings() {
-        ?>
-        <table class="form-table">
-            <tr>
-                <th scope="row">
-                    <label for="spc_firebase_project_id"><?php _e('Project ID', 'sms-payment-checker'); ?></label>
-                </th>
-                <td>
-                    <input type="text" id="spc_firebase_project_id" name="spc_firebase_project_id" value="<?php echo esc_attr(get_option('spc_firebase_project_id')); ?>" class="regular-text">
-                </td>
-            </tr>
-            <tr>
-                <th scope="row">
-                    <label for="spc_firebase_credentials"><?php _e('Service Account JSON', 'sms-payment-checker'); ?></label>
-                </th>
-                <td>
-                    <textarea id="spc_firebase_credentials" name="spc_firebase_credentials" rows="10" class="large-text code"><?php echo esc_textarea(get_option('spc_firebase_credentials')); ?></textarea>
-                    <p class="description"><?php _e('Paste the entire Firebase service account JSON here.', 'sms-payment-checker'); ?></p>
-                </td>
-            </tr>
             <tr>
                 <th scope="row"><?php _e('Notifications', 'sms-payment-checker'); ?></th>
                 <td>
                     <label>
-                        <input type="checkbox" name="spc_fcm_enabled" value="1" <?php checked(get_option('spc_fcm_enabled', 1)); ?>>
-                        <?php _e('Enable FCM Push Notifications', 'sms-payment-checker'); ?>
-                    </label>
-                    <br><br>
-                    <label>
-                        <input type="checkbox" name="spc_fcm_on_match" value="1" <?php checked(get_option('spc_fcm_on_match', 1)); ?>>
-                        <?php _e('Send notification when payment matched', 'sms-payment-checker'); ?>
-                    </label>
-                    <br><br>
-                    <label>
-                        <input type="checkbox" name="spc_fcm_on_new_order" value="1" <?php checked(get_option('spc_fcm_on_new_order', 1)); ?>>
-                        <?php _e('Send notification for new orders', 'sms-payment-checker'); ?>
+                        <input type="checkbox" name="spc_line_on_match" value="1" <?php checked(get_option('spc_line_on_match', 0)); ?>>
+                        <?php _e('Send LINE notification when payment matched', 'sms-payment-checker'); ?>
                     </label>
                 </td>
             </tr>
         </table>
-        <p class="description">
-            <?php printf(__('Get your Firebase credentials from %s', 'sms-payment-checker'), '<a href="https://console.firebase.google.com" target="_blank">Firebase Console</a>'); ?>
-        </p>
         <?php
     }
 
@@ -732,10 +606,7 @@ class SPC_Admin {
             'device_id' => $device->device_id,
             'api_key' => $device->api_key,
             'secret_key' => $device->secret_key,
-            'pusher' => array(
-                'key' => get_option('spc_pusher_app_key'),
-                'cluster' => get_option('spc_pusher_cluster', 'ap1'),
-            ),
+            'sync_interval' => (int) get_option('spc_sync_interval', 30),
         ));
     }
 }

@@ -3,7 +3,7 @@
  * Plugin Name: SMS Payment Checker
  * Plugin URI: https://github.com/xjanova/smschecker
  * Description: Automatic bank transfer verification via SMS for WooCommerce. Works with SmsChecker Android app.
- * Version: 1.6.0
+ * Version: 1.6.1
  * Author: XMANStudio
  * Author URI: https://xmanstudio.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@
 defined('ABSPATH') || exit;
 
 // Plugin constants
-define('SPC_VERSION', '1.6.0');
+define('SPC_VERSION', '1.6.1');
 define('SPC_PLUGIN_FILE', __FILE__);
 define('SPC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SPC_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -69,8 +69,6 @@ final class SMS_Payment_Checker {
         require_once SPC_PLUGIN_DIR . 'includes/class-spc-notification.php';
         require_once SPC_PLUGIN_DIR . 'includes/class-spc-matching.php';
         require_once SPC_PLUGIN_DIR . 'includes/class-spc-api.php';
-        require_once SPC_PLUGIN_DIR . 'includes/class-spc-fcm.php';
-        require_once SPC_PLUGIN_DIR . 'includes/class-spc-pusher.php';
 
         // Admin
         if (is_admin()) {
@@ -232,15 +230,8 @@ final class SMS_Payment_Checker {
             'rate_limit_per_minute' => 30,
             'default_approval_mode' => 'auto',
             'nonce_expiry_hours' => 24,
-            'fcm_on_match' => true,
-            'fcm_on_new_order' => true,
             'line_on_match' => false,
-            'pusher_app_id' => '',
-            'pusher_app_key' => '',
-            'pusher_app_secret' => '',
-            'pusher_cluster' => 'ap1',
-            'firebase_project_id' => '',
-            'firebase_credentials' => '',
+            'sync_interval' => 30,
         );
 
         foreach ($defaults as $key => $value) {
@@ -264,8 +255,6 @@ final class SMS_Payment_Checker {
         SPC_Device::instance();
         SPC_Notification::instance();
         SPC_Matching::instance();
-        SPC_FCM::instance();
-        SPC_Pusher::instance();
 
         if (is_admin()) {
             SPC_Admin::instance();
@@ -288,10 +277,8 @@ final class SMS_Payment_Checker {
      * @param WC_Order $order      Order object.
      */
     public function on_order_status_changed($order_id, $old_status, $new_status, $order) {
-        // Broadcast status change via Pusher
-        if (get_option('spc_pusher_app_key')) {
-            SPC_Pusher::instance()->broadcast_order_status_changed($order, $old_status, $new_status);
-        }
+        // Increment sync version for polling
+        $this->increment_sync_version();
 
         // Handle payment completion
         if ($new_status === 'completed' || $new_status === 'processing') {
@@ -331,15 +318,8 @@ final class SMS_Payment_Checker {
                     $order->update_meta_data('_spc_verification_status', 'pending');
                     $order->save();
 
-                    // Broadcast new order via Pusher
-                    if (get_option('spc_pusher_app_key')) {
-                        SPC_Pusher::instance()->broadcast_new_order($order, $unique_amount);
-                    }
-
-                    // Send FCM notification
-                    if (get_option('spc_fcm_on_new_order')) {
-                        SPC_FCM::instance()->notify_new_order($order, $unique_amount);
-                    }
+                    // Increment sync version for polling
+                    $this->increment_sync_version();
                 }
             }
         }
@@ -365,6 +345,14 @@ final class SMS_Payment_Checker {
             $gateways[] = 'SPC_WC_Gateway';
         }
         return $gateways;
+    }
+
+    /**
+     * Increment sync version for polling-based sync
+     */
+    private function increment_sync_version() {
+        $version = (int) get_option('spc_sync_version', 0);
+        update_option('spc_sync_version', $version + 1);
     }
 
     /**

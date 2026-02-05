@@ -104,18 +104,6 @@ class SPC_API {
             'permission_callback' => array($this, 'check_device_permission'),
         ));
 
-        register_rest_route($this->namespace, '/register-fcm-token', array(
-            'methods' => 'POST',
-            'callback' => array($this, 'register_fcm_token'),
-            'permission_callback' => array($this, 'check_device_permission'),
-        ));
-
-        register_rest_route($this->namespace, '/pusher/auth', array(
-            'methods' => 'POST',
-            'callback' => array($this, 'pusher_auth'),
-            'permission_callback' => array($this, 'check_device_permission'),
-        ));
-
         register_rest_route($this->namespace, '/sync', array(
             'methods' => 'GET',
             'callback' => array($this, 'sync'),
@@ -341,11 +329,8 @@ class SPC_API {
             return new WP_Error('approval_failed', __('Failed to approve order', 'sms-payment-checker'), array('status' => 400));
         }
 
-        // Broadcast event
-        if (get_option('spc_pusher_app_key')) {
-            $order = wc_get_order($order_id);
-            SPC_Pusher::instance()->broadcast_order_status_changed($order, 'confirmed');
-        }
+        // Increment sync version for polling
+        $this->increment_sync_version();
 
         return rest_ensure_response(array(
             'success' => true,
@@ -370,11 +355,8 @@ class SPC_API {
             return new WP_Error('rejection_failed', __('Failed to reject order', 'sms-payment-checker'), array('status' => 400));
         }
 
-        // Broadcast event
-        if (get_option('spc_pusher_app_key')) {
-            $order = wc_get_order($order_id);
-            SPC_Pusher::instance()->broadcast_order_status_changed($order, 'rejected');
-        }
+        // Increment sync version for polling
+        $this->increment_sync_version();
 
         return rest_ensure_response(array(
             'success' => true,
@@ -395,7 +377,6 @@ class SPC_API {
             'success' => true,
             'settings' => array(
                 'approval_mode' => $device->approval_mode ?: get_option('spc_default_approval_mode', 'auto'),
-                'notification_enabled' => (bool) get_option('spc_fcm_enabled', true),
                 'sync_interval' => (int) get_option('spc_sync_interval', 30),
                 'supported_banks' => $this->get_supported_banks(),
             ),
@@ -445,50 +426,11 @@ class SPC_API {
     }
 
     /**
-     * Register FCM token
-     *
-     * @param WP_REST_Request $request Request object.
-     * @return WP_REST_Response|WP_Error
+     * Increment sync version for polling-based sync
      */
-    public function register_fcm_token($request) {
-        $device = $request->get_param('_device');
-        $params = $request->get_json_params();
-
-        if (empty($params['fcm_token'])) {
-            return new WP_Error('missing_token', __('FCM token is required', 'sms-payment-checker'), array('status' => 400));
-        }
-
-        SPC_Device::instance()->update($device->id, array(
-            'fcm_token' => sanitize_text_field($params['fcm_token']),
-        ));
-
-        return rest_ensure_response(array(
-            'success' => true,
-            'message' => __('FCM token registered successfully', 'sms-payment-checker'),
-        ));
-    }
-
-    /**
-     * Pusher auth endpoint
-     *
-     * @param WP_REST_Request $request Request object.
-     * @return WP_REST_Response|WP_Error
-     */
-    public function pusher_auth($request) {
-        $device = $request->get_param('_device');
-        $params = $request->get_json_params();
-
-        if (empty($params['socket_id']) || empty($params['channel_name'])) {
-            return new WP_Error('missing_params', __('socket_id and channel_name are required', 'sms-payment-checker'), array('status' => 400));
-        }
-
-        $auth = SPC_Pusher::instance()->auth($params['socket_id'], $params['channel_name'], $device);
-
-        if (!$auth) {
-            return new WP_Error('auth_failed', __('Pusher authentication failed', 'sms-payment-checker'), array('status' => 403));
-        }
-
-        return rest_ensure_response($auth);
+    private function increment_sync_version() {
+        $version = (int) get_option('spc_sync_version', 0);
+        update_option('spc_sync_version', $version + 1);
     }
 
     /**
@@ -582,15 +524,8 @@ class SPC_API {
                 $order->update_meta_data('_spc_verification_status', 'pending');
                 $order->save();
 
-                // Broadcast new order event
-                if (get_option('spc_pusher_app_key')) {
-                    SPC_Pusher::instance()->broadcast_new_order($order);
-                }
-
-                // Send FCM notification
-                if (get_option('spc_fcm_on_new_order')) {
-                    SPC_FCM::instance()->notify_new_order($order);
-                }
+                // Increment sync version for polling
+                $this->increment_sync_version();
             }
         }
 
