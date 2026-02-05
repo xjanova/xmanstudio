@@ -42,15 +42,18 @@ class SPC_Admin {
         add_action('wp_ajax_spc_delete_device', array($this, 'ajax_delete_device'));
         add_action('wp_ajax_spc_regenerate_qr', array($this, 'ajax_regenerate_qr'));
         add_action('wp_ajax_spc_get_device_qr', array($this, 'ajax_get_device_qr'));
+        add_action('wp_ajax_spc_confirm_order', array($this, 'ajax_confirm_order'));
+        add_action('wp_ajax_spc_reject_order', array($this, 'ajax_reject_order'));
     }
 
     /**
      * Add admin menu
      */
     public function add_menu() {
+        // Main menu
         add_menu_page(
-            __('SMS Checker', 'sms-payment-checker'),
-            __('SMS Checker', 'sms-payment-checker'),
+            __('SMS Payment', 'sms-payment-checker'),
+            __('SMS Payment', 'sms-payment-checker'),
             'manage_woocommerce',
             'sms-payment-checker',
             array($this, 'render_dashboard'),
@@ -58,40 +61,54 @@ class SPC_Admin {
             56
         );
 
+        // Submenu: Dashboard (same as main)
         add_submenu_page(
             'sms-payment-checker',
             __('Dashboard', 'sms-payment-checker'),
-            __('Dashboard', 'sms-payment-checker'),
+            __('📊 Dashboard', 'sms-payment-checker'),
             'manage_woocommerce',
             'sms-payment-checker',
             array($this, 'render_dashboard')
         );
 
+        // Submenu: Settings
+        add_submenu_page(
+            'sms-payment-checker',
+            __('Settings', 'sms-payment-checker'),
+            __('⚙️ Settings', 'sms-payment-checker'),
+            'manage_woocommerce',
+            'sms-payment-checker-settings',
+            array($this, 'render_settings')
+        );
+
+        // Submenu: Devices
         add_submenu_page(
             'sms-payment-checker',
             __('Devices', 'sms-payment-checker'),
-            __('Devices', 'sms-payment-checker'),
+            __('📱 Devices', 'sms-payment-checker'),
             'manage_woocommerce',
             'sms-payment-checker-devices',
             array($this, 'render_devices')
         );
 
+        // Submenu: Notifications
         add_submenu_page(
             'sms-payment-checker',
             __('Notifications', 'sms-payment-checker'),
-            __('Notifications', 'sms-payment-checker'),
+            __('📨 Notifications', 'sms-payment-checker'),
             'manage_woocommerce',
             'sms-payment-checker-notifications',
             array($this, 'render_notifications')
         );
 
+        // Submenu: Pending Orders
         add_submenu_page(
             'sms-payment-checker',
-            __('Settings', 'sms-payment-checker'),
-            __('Settings', 'sms-payment-checker'),
+            __('Pending Orders', 'sms-payment-checker'),
+            __('⏳ Pending Orders', 'sms-payment-checker'),
             'manage_woocommerce',
-            'sms-payment-checker-settings',
-            array($this, 'render_settings')
+            'sms-payment-checker-pending',
+            array($this, 'render_pending_orders')
         );
     }
 
@@ -608,5 +625,390 @@ class SPC_Admin {
             'secret_key' => $device->secret_key,
             'sync_interval' => (int) get_option('spc_sync_interval', 30),
         ));
+    }
+
+    /**
+     * Render pending orders page
+     */
+    public function render_pending_orders() {
+        // Get pending orders with bank transfer payment
+        $args = array(
+            'status' => array('on-hold', 'pending'),
+            'payment_method' => 'bacs',
+            'limit' => 50,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        );
+
+        // Search filter
+        $search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
+        if ($search) {
+            $args['s'] = $search;
+        }
+
+        $orders = wc_get_orders($args);
+
+        // Get unmatched notifications
+        global $wpdb;
+        $notifications_table = $wpdb->prefix . 'spc_notifications';
+        $unmatched_notifications = $wpdb->get_results(
+            "SELECT * FROM $notifications_table
+             WHERE status = 'pending' AND type = 'credit'
+             ORDER BY created_at DESC
+             LIMIT 20"
+        );
+        ?>
+        <div class="wrap spc-admin">
+            <h1><?php _e('⏳ Pending Orders', 'sms-payment-checker'); ?></h1>
+            <p class="description"><?php _e('Orders waiting for SMS payment verification', 'sms-payment-checker'); ?></p>
+
+            <!-- Search Form -->
+            <div class="spc-search-box" style="margin: 20px 0;">
+                <form method="GET">
+                    <input type="hidden" name="page" value="sms-payment-checker-pending">
+                    <input type="text" name="search" value="<?php echo esc_attr($search); ?>" placeholder="<?php _e('Search Order ID, Name, Email...', 'sms-payment-checker'); ?>" class="regular-text">
+                    <button type="submit" class="button"><?php _e('🔍 Search', 'sms-payment-checker'); ?></button>
+                </form>
+            </div>
+
+            <div class="spc-pending-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                <!-- Pending Orders Table -->
+                <div class="spc-orders-section">
+                    <h2><?php _e('📦 Orders Pending Payment', 'sms-payment-checker'); ?></h2>
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th><?php _e('Order', 'sms-payment-checker'); ?></th>
+                                <th><?php _e('Customer', 'sms-payment-checker'); ?></th>
+                                <th style="text-align: right;"><?php _e('Amount', 'sms-payment-checker'); ?></th>
+                                <th><?php _e('Method', 'sms-payment-checker'); ?></th>
+                                <th><?php _e('Date', 'sms-payment-checker'); ?></th>
+                                <th><?php _e('Actions', 'sms-payment-checker'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($orders)) : ?>
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 40px;">
+                                        <span style="font-size: 48px; display: block; margin-bottom: 10px;">🎉</span>
+                                        <?php _e('No pending orders! All payments are verified.', 'sms-payment-checker'); ?>
+                                    </td>
+                                </tr>
+                            <?php else : ?>
+                                <?php foreach ($orders as $order) :
+                                    $unique_amount = $order->get_meta('_spc_unique_amount');
+                                    $display_amount = $unique_amount ? $unique_amount : $order->get_total();
+                                ?>
+                                    <tr data-order-id="<?php echo esc_attr($order->get_id()); ?>">
+                                        <td>
+                                            <a href="<?php echo esc_url($order->get_edit_order_url()); ?>" class="order-link">
+                                                <strong>#<?php echo esc_html($order->get_order_number()); ?></strong>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <strong><?php echo esc_html($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()); ?></strong>
+                                            <br><small><?php echo esc_html($order->get_billing_email()); ?></small>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <strong style="color: #28a745; font-size: 1.1em;">
+                                                <?php echo wc_price($display_amount); ?>
+                                            </strong>
+                                            <?php if ($unique_amount && $unique_amount != $order->get_total()) : ?>
+                                                <br><small style="color: #666;">(<?php _e('Original:', 'sms-payment-checker'); ?> <?php echo wc_price($order->get_total()); ?>)</small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <span class="spc-badge spc-badge-info">🏦 <?php _e('Bank Transfer', 'sms-payment-checker'); ?></span>
+                                        </td>
+                                        <td>
+                                            <?php echo esc_html($order->get_date_created()->date_i18n('d/m/Y')); ?>
+                                            <br><small><?php echo esc_html($order->get_date_created()->date_i18n('H:i')); ?></small>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="button button-primary spc-confirm-order" data-order-id="<?php echo esc_attr($order->get_id()); ?>">
+                                                ✅ <?php _e('Confirm', 'sms-payment-checker'); ?>
+                                            </button>
+                                            <button type="button" class="button spc-reject-order" data-order-id="<?php echo esc_attr($order->get_id()); ?>">
+                                                ❌
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Unmatched SMS Notifications -->
+                <div class="spc-notifications-section">
+                    <h2><?php _e('📨 Unmatched SMS', 'sms-payment-checker'); ?></h2>
+                    <p class="description"><?php _e('SMS received but not matched to any order', 'sms-payment-checker'); ?></p>
+
+                    <?php if (empty($unmatched_notifications)) : ?>
+                        <div style="text-align: center; padding: 30px; background: #f9f9f9; border-radius: 8px;">
+                            <span style="font-size: 32px; display: block; margin-bottom: 10px;">📭</span>
+                            <?php _e('No unmatched SMS notifications', 'sms-payment-checker'); ?>
+                        </div>
+                    <?php else : ?>
+                        <div class="spc-notification-list" style="max-height: 600px; overflow-y: auto;">
+                            <?php foreach ($unmatched_notifications as $notification) : ?>
+                                <div class="spc-notification-card" style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                        <span class="spc-badge spc-badge-warning"><?php echo esc_html($notification->bank); ?></span>
+                                        <small style="color: #666;"><?php echo esc_html(human_time_diff(strtotime($notification->created_at)) . ' ago'); ?></small>
+                                    </div>
+                                    <div style="font-size: 1.3em; font-weight: bold; color: <?php echo $notification->type === 'credit' ? '#28a745' : '#dc3545'; ?>;">
+                                        <?php echo $notification->type === 'credit' ? '+' : '-'; ?>฿<?php echo esc_html(number_format($notification->amount, 2)); ?>
+                                    </div>
+                                    <?php if ($notification->sender_or_receiver) : ?>
+                                        <div style="color: #666; font-size: 0.9em; margin-top: 5px;">
+                                            <?php echo esc_html($notification->sender_or_receiver); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($notification->reference_number) : ?>
+                                        <div style="color: #999; font-size: 0.8em; font-family: monospace; margin-top: 5px;">
+                                            Ref: <?php echo esc_html($notification->reference_number); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <p style="text-align: center; margin-top: 15px;">
+                            <a href="<?php echo admin_url('admin.php?page=sms-payment-checker-notifications'); ?>" class="button">
+                                <?php _e('View All →', 'sms-payment-checker'); ?>
+                            </a>
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reject Modal -->
+        <div id="spc-reject-modal" class="spc-modal" style="display: none;">
+            <div class="spc-modal-content">
+                <span class="spc-modal-close">&times;</span>
+                <h2><?php _e('❌ Reject Payment', 'sms-payment-checker'); ?></h2>
+                <form id="spc-reject-form">
+                    <input type="hidden" id="reject_order_id" name="order_id" value="">
+                    <p>
+                        <label for="reject_reason"><?php _e('Reason (optional)', 'sms-payment-checker'); ?></label>
+                        <textarea id="reject_reason" name="reason" rows="3" class="large-text" placeholder="<?php _e('Enter rejection reason...', 'sms-payment-checker'); ?>"></textarea>
+                    </p>
+                    <p>
+                        <button type="button" class="button" onclick="document.getElementById('spc-reject-modal').style.display='none';">
+                            <?php _e('Cancel', 'sms-payment-checker'); ?>
+                        </button>
+                        <button type="submit" class="button button-primary" style="background: #dc3545; border-color: #dc3545;">
+                            <?php _e('Confirm Reject', 'sms-payment-checker'); ?>
+                        </button>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <style>
+            .spc-badge {
+                display: inline-block;
+                padding: 3px 8px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+            .spc-badge-info { background: #e3f2fd; color: #1565c0; }
+            .spc-badge-warning { background: #fff3e0; color: #ef6c00; }
+            .spc-badge-success { background: #e8f5e9; color: #2e7d32; }
+            .spc-badge-danger { background: #ffebee; color: #c62828; }
+            .spc-confirm-order { margin-right: 5px; }
+            @media (max-width: 1200px) {
+                .spc-pending-grid { grid-template-columns: 1fr; }
+            }
+        </style>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Confirm order
+            $('.spc-confirm-order').on('click', function() {
+                var orderId = $(this).data('order-id');
+                if (!confirm('<?php _e('Confirm payment for this order?', 'sms-payment-checker'); ?>')) {
+                    return;
+                }
+
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php _e('Processing...', 'sms-payment-checker'); ?>');
+
+                $.ajax({
+                    url: spcAdmin.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'spc_confirm_order',
+                        nonce: spcAdmin.nonce,
+                        order_id: orderId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('tr[data-order-id="' + orderId + '"]').fadeOut(function() {
+                                $(this).remove();
+                            });
+                        } else {
+                            alert(response.data.message || '<?php _e('An error occurred', 'sms-payment-checker'); ?>');
+                            $button.prop('disabled', false).text('✅ <?php _e('Confirm', 'sms-payment-checker'); ?>');
+                        }
+                    },
+                    error: function() {
+                        alert('<?php _e('An error occurred', 'sms-payment-checker'); ?>');
+                        $button.prop('disabled', false).text('✅ <?php _e('Confirm', 'sms-payment-checker'); ?>');
+                    }
+                });
+            });
+
+            // Show reject modal
+            $('.spc-reject-order').on('click', function() {
+                var orderId = $(this).data('order-id');
+                $('#reject_order_id').val(orderId);
+                $('#reject_reason').val('');
+                $('#spc-reject-modal').show();
+            });
+
+            // Close modal
+            $('.spc-modal-close').on('click', function() {
+                $(this).closest('.spc-modal').hide();
+            });
+
+            // Submit reject form
+            $('#spc-reject-form').on('submit', function(e) {
+                e.preventDefault();
+
+                var orderId = $('#reject_order_id').val();
+                var reason = $('#reject_reason').val();
+
+                $.ajax({
+                    url: spcAdmin.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'spc_reject_order',
+                        nonce: spcAdmin.nonce,
+                        order_id: orderId,
+                        reason: reason
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#spc-reject-modal').hide();
+                            $('tr[data-order-id="' + orderId + '"]').fadeOut(function() {
+                                $(this).remove();
+                            });
+                        } else {
+                            alert(response.data.message || '<?php _e('An error occurred', 'sms-payment-checker'); ?>');
+                        }
+                    },
+                    error: function() {
+                        alert('<?php _e('An error occurred', 'sms-payment-checker'); ?>');
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
+    }
+
+    /**
+     * AJAX: Confirm order payment
+     */
+    public function ajax_confirm_order() {
+        check_ajax_referer('spc_admin_nonce', 'nonce');
+
+        if (!current_user_can('manage_woocommerce')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'sms-payment-checker')));
+        }
+
+        $order_id = (int) ($_POST['order_id'] ?? 0);
+
+        if (!$order_id) {
+            wp_send_json_error(array('message' => __('Invalid order ID', 'sms-payment-checker')));
+        }
+
+        $order = wc_get_order($order_id);
+
+        if (!$order) {
+            wp_send_json_error(array('message' => __('Order not found', 'sms-payment-checker')));
+        }
+
+        // Update order status to processing
+        $order->update_status('processing', __('Payment confirmed via SMS Payment Checker admin.', 'sms-payment-checker'));
+        $order->update_meta_data('_spc_verification_status', 'confirmed');
+        $order->update_meta_data('_spc_confirmed_by', get_current_user_id());
+        $order->update_meta_data('_spc_confirmed_at', current_time('mysql'));
+        $order->save();
+
+        // Increment sync version
+        $this->increment_sync_version();
+
+        wp_send_json_success(array(
+            'message' => __('Order confirmed successfully', 'sms-payment-checker'),
+            'order_id' => $order_id,
+        ));
+    }
+
+    /**
+     * AJAX: Reject order payment
+     */
+    public function ajax_reject_order() {
+        check_ajax_referer('spc_admin_nonce', 'nonce');
+
+        if (!current_user_can('manage_woocommerce')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'sms-payment-checker')));
+        }
+
+        $order_id = (int) ($_POST['order_id'] ?? 0);
+        $reason = sanitize_textarea_field($_POST['reason'] ?? '');
+
+        if (!$order_id) {
+            wp_send_json_error(array('message' => __('Invalid order ID', 'sms-payment-checker')));
+        }
+
+        $order = wc_get_order($order_id);
+
+        if (!$order) {
+            wp_send_json_error(array('message' => __('Order not found', 'sms-payment-checker')));
+        }
+
+        // Update order status to cancelled
+        $note = __('Payment rejected via SMS Payment Checker admin.', 'sms-payment-checker');
+        if ($reason) {
+            $note .= ' ' . __('Reason:', 'sms-payment-checker') . ' ' . $reason;
+        }
+
+        $order->update_status('cancelled', $note);
+        $order->update_meta_data('_spc_verification_status', 'rejected');
+        $order->update_meta_data('_spc_rejected_by', get_current_user_id());
+        $order->update_meta_data('_spc_rejected_at', current_time('mysql'));
+        $order->update_meta_data('_spc_rejection_reason', $reason);
+        $order->save();
+
+        // Cancel unique amount if exists
+        global $wpdb;
+        $unique_amount_id = $order->get_meta('_spc_unique_amount_id');
+        if ($unique_amount_id) {
+            $wpdb->update(
+                $wpdb->prefix . 'spc_unique_amounts',
+                array('status' => 'cancelled'),
+                array('id' => $unique_amount_id)
+            );
+        }
+
+        // Increment sync version
+        $this->increment_sync_version();
+
+        wp_send_json_success(array(
+            'message' => __('Order rejected successfully', 'sms-payment-checker'),
+            'order_id' => $order_id,
+        ));
+    }
+
+    /**
+     * Increment sync version for polling
+     */
+    private function increment_sync_version() {
+        $version = (int) get_option('spc_sync_version', 0);
+        update_option('spc_sync_version', $version + 1);
     }
 }

@@ -3,7 +3,7 @@
  * Plugin Name: SMS Payment Checker
  * Plugin URI: https://github.com/xjanova/smschecker
  * Description: Automatic bank transfer verification via SMS for WooCommerce. Works with SmsChecker Android app.
- * Version: 1.6.1
+ * Version: 1.7.0
  * Author: XMANStudio
  * Author URI: https://xmanstudio.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@
 defined('ABSPATH') || exit;
 
 // Plugin constants
-define('SPC_VERSION', '1.6.1');
+define('SPC_VERSION', '1.7.0');
 define('SPC_PLUGIN_FILE', __FILE__);
 define('SPC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SPC_PLUGIN_URL', plugin_dir_url(__FILE__));

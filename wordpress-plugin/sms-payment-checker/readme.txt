@@ -4,7 +4,7 @@ Tags: woocommerce, payment, bank transfer, sms, verification
 Requires at least: 5.8
 Tested up to: 6.4
 Requires PHP: 8.0
-Stable tag: 1.6.1
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,6 +109,13 @@ Unmatched payments are stored as "orphan transactions" and can be manually match
 
 == Changelog ==
 
+= 1.7.0 =
+* Added Pending Orders management page
+* Improved admin menu structure with icons
+* Added quick confirm/reject actions for orders
+* Added unmatched SMS sidebar in pending orders
+* Updated documentation
+
 = 1.6.1 =
 * Removed external dependencies (Pusher, Firebase FCM)
 * Switched to polling-based sync for closed system
@@ -124,6 +131,9 @@ Unmatched payments are stored as "orphan transactions" and can be manually match
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.7.0 =
+New Pending Orders page for easy order management. Improved admin menu with icons.
 
 = 1.6.1 =
 Major update removing external services. Now fully self-hosted with polling-based sync.
