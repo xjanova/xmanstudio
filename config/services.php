@@ -50,4 +50,10 @@ return [
         // Add this exact URL to Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs > Authorized redirect URIs
     ],
 
+    // Firebase Cloud Messaging (FCM) for push notifications
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/firebase/service-account.json')),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+    ],
+
 ];

@@ -188,6 +188,18 @@ Route::prefix('v1/sms-payment')->group(function () {
 
         // Dashboard statistics
         Route::get('/dashboard-stats', [SmsPaymentController::class, 'getDashboardStats']);
+
+        // FCM Token registration
+        Route::post('/register-fcm-token', [SmsPaymentController::class, 'registerFcmToken']);
+
+        // WebSocket/Pusher authentication for private channels
+        Route::post('/pusher/auth', [SmsPaymentController::class, 'pusherAuth']);
+
+        // Server sync - get changes since last sync
+        Route::get('/sync', [SmsPaymentController::class, 'sync']);
+
+        // Version check for sync
+        Route::get('/sync-version', [SmsPaymentController::class, 'getSyncVersion']);
     });
 
     // Web-authenticated endpoints (for checkout flow)

@@ -6,16 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
+use App\Services\FcmNotificationService;
 use App\Services\SmsPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Pusher\Pusher;
 
 class SmsPaymentController extends Controller
 {
     public function __construct(
-        private SmsPaymentService $smsPaymentService
+        private SmsPaymentService $smsPaymentService,
+        private FcmNotificationService $fcmService
     ) {}
 
     /**
@@ -516,5 +520,220 @@ class SmsPaymentController extends Controller
             'success' => true,
             'data' => $stats,
         ]);
+    }
+
+    // ============================================
+    // REAL-TIME & FCM ENDPOINTS
+    // ============================================
+
+    /**
+     * Register FCM token for push notifications.
+     *
+     * POST /api/v1/sms-payment/register-fcm-token
+     */
+    public function registerFcmToken(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('sms_checker_device');
+        if (! $device instanceof SmsCheckerDevice) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'fcm_token' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $this->fcmService->registerToken($device, $request->input('fcm_token'));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'FCM token registered successfully',
+        ]);
+    }
+
+    /**
+     * Authenticate for Pusher private channels.
+     *
+     * POST /api/v1/sms-payment/pusher/auth
+     */
+    public function pusherAuth(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('sms_checker_device');
+        if (! $device instanceof SmsCheckerDevice) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $socketId = $request->input('socket_id');
+        $channelName = $request->input('channel_name');
+
+        if (! $socketId || ! $channelName) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing socket_id or channel_name',
+            ], 400);
+        }
+
+        // Validate that this device can access this channel
+        $allowedChannels = [
+            'sms-checker.broadcast',
+            'private-sms-checker.device.' . $device->device_id,
+        ];
+
+        $isAllowed = in_array($channelName, $allowedChannels) ||
+                     str_starts_with($channelName, 'sms-checker.broadcast');
+
+        if (! $isAllowed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Channel not authorized',
+            ], 403);
+        }
+
+        try {
+            $pusher = new Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                config('broadcasting.connections.pusher.options')
+            );
+
+            // For private channels
+            if (str_starts_with($channelName, 'private-')) {
+                $auth = $pusher->authorizeChannel($channelName, $socketId);
+            } else {
+                // For public channels, just return success
+                return response()->json(['success' => true]);
+            }
+
+            return response()->json(json_decode($auth, true));
+        } catch (\Exception $e) {
+            Log::error('Pusher auth failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Auth failed',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get changes since last sync (for delta sync).
+     *
+     * GET /api/v1/sms-payment/sync
+     */
+    public function sync(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('sms_checker_device');
+        if (! $device instanceof SmsCheckerDevice) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $sinceVersion = (int) $request->input('since_version', 0);
+        $sinceTimestamp = $request->input('since_timestamp');
+
+        // Get current sync version
+        $currentVersion = $this->getSyncVersionNumber();
+
+        // If client is up to date, return empty changes
+        if ($sinceVersion >= $currentVersion) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'version' => $currentVersion,
+                    'has_changes' => false,
+                    'orders' => [],
+                ],
+            ]);
+        }
+
+        // Get changed orders since the given timestamp or version
+        $query = Order::with(['smsNotification', 'uniquePaymentAmount'])
+            ->whereNotNull('unique_payment_amount_id');
+
+        if ($sinceTimestamp) {
+            $query->where('updated_at', '>', $sinceTimestamp);
+        } else {
+            // Get recent orders if no timestamp provided (last 24 hours)
+            $query->where('updated_at', '>=', now()->subDay());
+        }
+
+        $orders = $query->orderBy('updated_at', 'desc')
+            ->limit(100)
+            ->get();
+
+        // Transform orders
+        $transformedOrders = $orders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'customer_name' => $order->customer_name,
+                'customer_email' => $order->customer_email,
+                'total' => (float) $order->total,
+                'unique_amount' => $order->uniquePaymentAmount ? (float) $order->uniquePaymentAmount->unique_amount : null,
+                'payment_status' => $order->payment_status,
+                'sms_verification_status' => $order->sms_verification_status ?? 'pending',
+                'sms_verified_at' => $order->sms_verified_at,
+                'notification' => $order->smsNotification ? [
+                    'id' => $order->smsNotification->id,
+                    'bank' => $order->smsNotification->bank,
+                    'amount' => (float) $order->smsNotification->amount,
+                    'sms_timestamp' => $order->smsNotification->sms_timestamp,
+                ] : null,
+                'created_at' => $order->created_at->toIso8601String(),
+                'updated_at' => $order->updated_at->toIso8601String(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'version' => $currentVersion,
+                'has_changes' => $orders->isNotEmpty(),
+                'orders' => $transformedOrders,
+                'server_time' => now()->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get current sync version.
+     *
+     * GET /api/v1/sms-payment/sync-version
+     */
+    public function getSyncVersion(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('sms_checker_device');
+        if (! $device instanceof SmsCheckerDevice) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'version' => $this->getSyncVersionNumber(),
+                'server_time' => now()->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get the current sync version number.
+     * This increments whenever orders change.
+     */
+    private function getSyncVersionNumber(): int
+    {
+        return Cache::remember('sms_payment_sync_version', 60, function () {
+            $lastOrder = Order::whereNotNull('unique_payment_amount_id')
+                ->orderBy('updated_at', 'desc')
+                ->first();
+
+            return $lastOrder ? $lastOrder->updated_at->timestamp : time();
+        });
     }
 }

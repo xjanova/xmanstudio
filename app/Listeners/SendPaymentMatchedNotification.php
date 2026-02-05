@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\PaymentMatched;
+use App\Services\FcmNotificationService;
 use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,7 +16,8 @@ class SendPaymentMatchedNotification implements ShouldQueue
      */
     public function __construct(
         private LineNotifyService $lineNotifyService,
-        private SmsPaymentService $smsPaymentService
+        private SmsPaymentService $smsPaymentService,
+        private FcmNotificationService $fcmService
     ) {}
 
     /**
@@ -47,8 +49,25 @@ class SendPaymentMatchedNotification implements ShouldQueue
             }
         }
 
-        // Additional notification handling can be added here
-        // e.g., email notification, webhook, etc.
+        // Send FCM push notification if enabled
+        if (config('smschecker.notifications.fcm_on_match', true)) {
+            try {
+                $this->fcmService->notifyPaymentMatched($order, $notification);
+                Log::info('FCM notification sent for payment match', [
+                    'order_id' => $order->id,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send FCM notification', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Email notification if enabled
+        if (config('smschecker.notifications.email_on_match', false)) {
+            // TODO: Implement email notification
+        }
     }
 
     /**

@@ -136,5 +136,47 @@ return [
 
         // Send email notification on payment match
         'email_on_match' => env('SMSCHECKER_EMAIL_ON_MATCH', false),
+
+        // Send FCM push notification on payment match
+        'fcm_on_match' => env('SMSCHECKER_FCM_ON_MATCH', true),
+
+        // Send FCM push notification on new order
+        'fcm_on_new_order' => env('SMSCHECKER_FCM_ON_NEW_ORDER', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WebSocket Settings
+    |--------------------------------------------------------------------------
+    |
+    | Settings for WebSocket/Pusher broadcasting.
+    |
+    */
+    'websocket' => [
+        // Enable real-time broadcasting
+        'enabled' => env('SMSCHECKER_WEBSOCKET_ENABLED', true),
+
+        // WebSocket channel prefix
+        'channel_prefix' => env('SMSCHECKER_CHANNEL_PREFIX', 'sms-checker'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orphan Transaction Settings
+    |--------------------------------------------------------------------------
+    |
+    | Settings for handling orphan transactions (payments that don't match
+    | any order at the time of receipt).
+    |
+    */
+    'orphan' => [
+        // How many days to keep orphan transactions before expiring
+        'retention_days' => env('SMSCHECKER_ORPHAN_RETENTION_DAYS', 7),
+
+        // Time window in minutes to look for matching orders
+        'match_window_minutes' => env('SMSCHECKER_ORPHAN_MATCH_WINDOW', 60),
+
+        // Maximum decimal tolerance for amount matching
+        'amount_tolerance' => env('SMSCHECKER_ORPHAN_AMOUNT_TOLERANCE', 0.01),
     ],
 ];
