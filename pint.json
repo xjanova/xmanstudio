@@ -1,0 +1,11 @@
+{
+    "preset": "laravel",
+    "exclude": [
+        "wordpress-plugin"
+    ],
+    "rules": {
+        "concat_space": {
+            "spacing": "one"
+        }
+    }
+}
