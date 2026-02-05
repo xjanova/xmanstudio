@@ -10,6 +10,7 @@ use App\Models\UserRental;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -411,5 +412,45 @@ class UserController extends Controller
         return redirect()
             ->back()
             ->with('success', $message);
+    }
+
+    /**
+     * Update user avatar
+     */
+    public function updateAvatar(Request $request, User $user)
+    {
+        $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+        ]);
+
+        // Delete old avatar if exists
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        // Store new avatar
+        $path = $request->file('avatar')->store('avatars', 'public');
+        $user->avatar = $path;
+        $user->save();
+
+        return redirect()
+            ->back()
+            ->with('success', 'อัพเดทรูปโปรไฟล์สำเร็จ');
+    }
+
+    /**
+     * Delete user avatar
+     */
+    public function deleteAvatar(User $user)
+    {
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
+            $user->avatar = null;
+            $user->save();
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', 'ลบรูปโปรไฟล์สำเร็จ');
     }
 }

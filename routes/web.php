@@ -642,6 +642,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
         Route::post('/{user}/toggle', [AdminUserController::class, 'toggle'])->name('toggle');
         Route::post('/{user}/disconnect-line', [AdminUserController::class, 'disconnectLine'])->name('disconnect-line');
+        Route::post('/{user}/avatar', [AdminUserController::class, 'updateAvatar'])->name('update-avatar');
+        Route::delete('/{user}/avatar', [AdminUserController::class, 'deleteAvatar'])->name('delete-avatar');
     });
 
     // SMS Payment Management (Auto-verification via SMS)
