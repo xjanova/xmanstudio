@@ -158,6 +158,6 @@ class PromoCode extends Model
             return "ลด {$this->discount_value}%";
         }
 
-        return 'ลด '.number_format($this->discount_value, 0).' บาท';
+        return 'ลด ' . number_format($this->discount_value, 0) . ' บาท';
     }
 }

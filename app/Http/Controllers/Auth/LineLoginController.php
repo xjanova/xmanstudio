@@ -42,7 +42,7 @@ class LineLoginController extends Controller
         $redirectUri = route('line.callback');
         $scope = 'profile openid email';
 
-        $authUrl = 'https://access.line.me/oauth2/v2.1/authorize?'.http_build_query([
+        $authUrl = 'https://access.line.me/oauth2/v2.1/authorize?' . http_build_query([
             'response_type' => 'code',
             'client_id' => $channelId,
             'redirect_uri' => $redirectUri,
@@ -73,7 +73,7 @@ class LineLoginController extends Controller
             ]);
 
             return redirect()->route('login')
-                ->with('error', 'LINE Login ล้มเหลว: '.$request->input('error_description'));
+                ->with('error', 'LINE Login ล้มเหลว: ' . $request->input('error_description'));
         }
 
         // Get access token
@@ -142,7 +142,7 @@ class LineLoginController extends Controller
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$accessToken,
+                'Authorization' => 'Bearer ' . $accessToken,
             ])->get('https://api.line.me/v2/profile');
 
             if ($response->successful()) {
@@ -237,7 +237,7 @@ class LineLoginController extends Controller
         // Create new user
         $user = User::create([
             'name' => $profile['displayName'] ?? 'LINE User',
-            'email' => $email ?? 'line_'.$profile['userId'].'@line.local',
+            'email' => $email ?? 'line_' . $profile['userId'] . '@line.local',
             'password' => bcrypt(Str::random(32)),
             'line_uid' => $profile['userId'],
             'line_display_name' => $profile['displayName'] ?? null,

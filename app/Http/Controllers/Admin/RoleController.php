@@ -240,8 +240,8 @@ class RoleController extends Controller
     public function duplicate(Role $role)
     {
         $newRole = $role->replicate();
-        $newRole->name = $role->name.'_copy_'.time();
-        $newRole->display_name = $role->display_name.' (สำเนา)';
+        $newRole->name = $role->name . '_copy_' . time();
+        $newRole->display_name = $role->display_name . ' (สำเนา)';
         $newRole->is_system = false;
         $newRole->save();
 

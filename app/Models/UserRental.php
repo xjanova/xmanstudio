@@ -177,7 +177,7 @@ class UserRental extends Model
             'status' => self::STATUS_CANCELLED,
             'cancelled_at' => now(),
             'auto_renew' => false,
-            'notes' => $reason ? ($this->notes."\nยกเลิก: ".$reason) : $this->notes,
+            'notes' => $reason ? ($this->notes . "\nยกเลิก: " . $reason) : $this->notes,
         ]);
 
         return true;

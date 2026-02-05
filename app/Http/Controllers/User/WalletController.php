@@ -94,7 +94,7 @@ class WalletController extends Controller
 
         $validated = $request->validate([
             'amount' => "required|numeric|min:{$minAmount}|max:{$maxAmount}",
-            'payment_method' => 'required|in:'.implode(',', $allowedMethods),
+            'payment_method' => 'required|in:' . implode(',', $allowedMethods),
         ]);
 
         $wallet = Wallet::getOrCreateForUser(auth()->id());

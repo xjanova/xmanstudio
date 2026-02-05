@@ -157,7 +157,7 @@ class MetalXEngagementController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error("Unexpected error generating reply for comment {$comment->id}: ".$e->getMessage());
+            Log::error("Unexpected error generating reply for comment {$comment->id}: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -201,7 +201,7 @@ class MetalXEngagementController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error("Unexpected error posting reply for comment {$comment->id}: ".$e->getMessage());
+            Log::error("Unexpected error posting reply for comment {$comment->id}: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -239,7 +239,7 @@ class MetalXEngagementController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error("Unexpected error liking comment {$comment->id}: ".$e->getMessage());
+            Log::error("Unexpected error liking comment {$comment->id}: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -306,7 +306,7 @@ class MetalXEngagementController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error("Unexpected error improving content for video {$video->id}: ".$e->getMessage());
+            Log::error("Unexpected error improving content for video {$video->id}: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -427,7 +427,7 @@ class MetalXEngagementController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error("Unexpected error deleting comment {$comment->id}: ".$e->getMessage());
+            Log::error("Unexpected error deleting comment {$comment->id}: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -468,7 +468,7 @@ class MetalXEngagementController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error('Unexpected error blocking channel: '.$e->getMessage(), [
+            Log::error('Unexpected error blocking channel: ' . $e->getMessage(), [
                 'comment_id' => $comment->id,
             ]);
 
@@ -502,7 +502,7 @@ class MetalXEngagementController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error("Unexpected error detecting violation for comment {$comment->id}: ".$e->getMessage());
+            Log::error("Unexpected error detecting violation for comment {$comment->id}: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -550,7 +550,7 @@ class MetalXEngagementController extends Controller
                 'message' => 'Channel unblocked successfully',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error unblocking channel: '.$e->getMessage());
+            Log::error('Error unblocking channel: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,

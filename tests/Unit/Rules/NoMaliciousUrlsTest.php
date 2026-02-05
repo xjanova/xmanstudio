@@ -293,7 +293,7 @@ class NoMaliciousUrlsTest extends TestCase
     {
         $maliciousUrls = [
             'http://example.com/%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd',
-            'http://test.com/'.str_repeat('%20', 10),
+            'http://test.com/' . str_repeat('%20', 10),
         ];
 
         foreach ($maliciousUrls as $url) {

@@ -21,7 +21,7 @@ class SeoMeta extends Component
 
         $this->title = $title ?? $setting->site_title;
         $this->description = $description ?? $setting->site_description;
-        $this->image = $image ?? ($setting->og_image ? asset('storage/'.$setting->og_image) : null);
+        $this->image = $image ?? ($setting->og_image ? asset('storage/' . $setting->og_image) : null);
         $this->keywords = $keywords ?? $setting->site_keywords;
     }
 

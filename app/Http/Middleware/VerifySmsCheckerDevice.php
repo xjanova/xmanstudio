@@ -33,7 +33,7 @@ class VerifySmsCheckerDevice
         if (! $device) {
             Log::warning('SMS Checker: Invalid API key attempt', [
                 'ip' => $request->ip(),
-                'api_key_prefix' => substr($apiKey, 0, 8).'...',
+                'api_key_prefix' => substr($apiKey, 0, 8) . '...',
             ]);
 
             return response()->json([
@@ -51,7 +51,7 @@ class VerifySmsCheckerDevice
 
             return response()->json([
                 'success' => false,
-                'message' => 'Device is '.$device->status,
+                'message' => 'Device is ' . $device->status,
             ], 403);
         }
 
@@ -72,7 +72,7 @@ class VerifySmsCheckerDevice
 
         // Rate limiting check
         $rateLimit = config('smschecker.rate_limit_per_minute', 30);
-        $cacheKey = 'smschecker_rate:'.$device->device_id;
+        $cacheKey = 'smschecker_rate:' . $device->device_id;
         $requestCount = cache()->get($cacheKey, 0);
 
         if ($requestCount >= $rateLimit) {

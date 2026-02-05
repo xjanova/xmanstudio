@@ -25,6 +25,7 @@ Broadcast::channel('sms-checker.device.{deviceId}', function ($user, $deviceId) 
             ->where('user_id', $user->id)
             ->exists();
     }
+
     return false;
 });
 
@@ -56,5 +57,6 @@ Broadcast::channel('sms-checker.presence', function ($user) {
             'name' => $user->name,
         ];
     }
+
     return false;
 });

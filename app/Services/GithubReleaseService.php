@@ -98,7 +98,7 @@ class GithubReleaseService
     public function downloadAsset(GithubSetting $githubSetting, string $assetUrl)
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$githubSetting->github_token_decrypted,
+            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download-Service',
         ])->withOptions([
@@ -120,7 +120,7 @@ class GithubReleaseService
         $url = "https://api.github.com/repos/{$githubSetting->full_repo_name}/releases/assets/{$assetId}";
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$githubSetting->github_token_decrypted,
+            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download-Service',
         ])->withOptions([
@@ -178,7 +178,7 @@ class GithubReleaseService
         }
 
         // Convert glob pattern to regex
-        $regex = '/^'.str_replace(['.', '*'], ['\.', '.*'], $pattern).'$/i';
+        $regex = '/^' . str_replace(['.', '*'], ['\.', '.*'], $pattern) . '$/i';
 
         foreach ($assets as $asset) {
             if (preg_match($regex, $asset['name'])) {
@@ -196,7 +196,7 @@ class GithubReleaseService
     protected function getHeaders(GithubSetting $githubSetting): array
     {
         return [
-            'Authorization' => 'Bearer '.$githubSetting->github_token_decrypted,
+            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
             'Accept' => 'application/vnd.github.v3+json',
             'User-Agent' => 'XMAN-Studio-Release-Service',
         ];
@@ -224,7 +224,7 @@ class GithubReleaseService
 
         return [
             'success' => false,
-            'message' => 'Connection failed: '.$response->body(),
+            'message' => 'Connection failed: ' . $response->body(),
             'status' => $response->status(),
         ];
     }

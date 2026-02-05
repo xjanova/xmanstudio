@@ -128,7 +128,7 @@ class RentalPackage extends Model
      */
     public function getFormattedPrice(): string
     {
-        return number_format($this->price, 0).' '.$this->currency;
+        return number_format($this->price, 0) . ' ' . $this->currency;
     }
 
     /**

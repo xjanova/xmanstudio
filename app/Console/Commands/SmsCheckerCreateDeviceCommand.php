@@ -27,7 +27,7 @@ class SmsCheckerCreateDeviceCommand extends Command
         }
 
         // Generate unique device ID
-        $deviceId = 'SMSCHK-'.strtoupper(bin2hex(random_bytes(4)));
+        $deviceId = 'SMSCHK-' . strtoupper(bin2hex(random_bytes(4)));
 
         // Generate secure keys
         $apiKey = SmsCheckerDevice::generateApiKey();
@@ -60,7 +60,7 @@ class SmsCheckerCreateDeviceCommand extends Command
 
         // Show QR config JSON
         $config = [
-            'server_url' => config('app.url').'/api/v1/sms-payment',
+            'server_url' => config('app.url') . '/api/v1/sms-payment',
             'api_key' => $apiKey,
             'secret_key' => $secretKey,
             'device_id' => $device->device_id,

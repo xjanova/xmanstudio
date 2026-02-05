@@ -70,7 +70,7 @@ class CircuitBreakerServiceTest extends TestCase
         for ($i = 0; $i < 3; $i++) {
             try {
                 $breaker->execute(function () {
-                    throw new Exception('Test failure '.$i);
+                    throw new Exception('Test failure ' . $i);
                 });
             } catch (Exception $e) {
                 // Expected
@@ -237,7 +237,7 @@ class CircuitBreakerServiceTest extends TestCase
         for ($i = 0; $i < 2; $i++) {
             try {
                 $breaker->execute(function () {
-                    throw new Exception('Failure '.$i);
+                    throw new Exception('Failure ' . $i);
                 });
             } catch (Exception $e) {
                 // Expected

@@ -177,17 +177,17 @@ class MetalXAnalyticsController extends Controller
     private function formatDuration($seconds): string
     {
         if ($seconds < 60) {
-            return $seconds.' วินาที';
+            return $seconds . ' วินาที';
         }
 
         $hours = floor($seconds / 3600);
         $minutes = floor(($seconds % 3600) / 60);
 
         if ($hours > 0) {
-            return $hours.' ชม. '.$minutes.' นาที';
+            return $hours . ' ชม. ' . $minutes . ' นาที';
         }
 
-        return $minutes.' นาที';
+        return $minutes . ' นาที';
     }
 
     /**
@@ -231,7 +231,7 @@ class MetalXAnalyticsController extends Controller
         if ($format === 'csv') {
             $headers = [
                 'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="metal-x-analytics-'.date('Y-m-d').'.csv"',
+                'Content-Disposition' => 'attachment; filename="metal-x-analytics-' . date('Y-m-d') . '.csv"',
             ];
 
             $callback = function () use ($videos) {

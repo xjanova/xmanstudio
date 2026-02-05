@@ -261,7 +261,7 @@ class MetalXVideoController extends Controller
             }
         }
 
-        return back()->with('success', count($videos).' videos synced from YouTube!');
+        return back()->with('success', count($videos) . ' videos synced from YouTube!');
     }
 
     /**

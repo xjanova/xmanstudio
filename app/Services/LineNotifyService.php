@@ -37,7 +37,7 @@ class LineNotifyService
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$this->channelAccessToken,
+                'Authorization' => 'Bearer ' . $this->channelAccessToken,
                 'Content-Type' => 'application/json',
             ])->post('https://api.line.me/v2/bot/message/push', [
                 'to' => $targetUserId,
@@ -55,12 +55,12 @@ class LineNotifyService
                 return true;
             }
 
-            Log::error('Line API error: '.$response->body());
+            Log::error('Line API error: ' . $response->body());
 
             return $this->sendEmailFallback($message);
 
         } catch (\Exception $e) {
-            Log::error('Line notification failed: '.$e->getMessage());
+            Log::error('Line notification failed: ' . $e->getMessage());
 
             return $this->sendEmailFallback($message);
         }
@@ -75,7 +75,7 @@ class LineNotifyService
             $adminEmail = config('mail.admin_email', 'admin@xmanstudio.com');
 
             // Store notification in database instead if email fails
-            Log::info('Notification stored: '.$message);
+            Log::info('Notification stored: ' . $message);
 
             // Try to send email if configured
             if (config('mail.mailers.smtp.host')) {
@@ -89,7 +89,7 @@ class LineNotifyService
             return true;
 
         } catch (\Exception $e) {
-            Log::warning('Email fallback skipped: '.$e->getMessage());
+            Log::warning('Email fallback skipped: ' . $e->getMessage());
 
             return true; // Return true anyway, notification is logged
         }
@@ -103,20 +103,20 @@ class LineNotifyService
         $items = collect($quotation['items'])->pluck('name_th')->implode(', ');
 
         $message = "📋 ใบเสนอราคาใหม่!\n"
-            ."━━━━━━━━━━━━━━━\n"
-            ."🔢 เลขที่: {$quotation['quote_number']}\n"
-            ."👤 ลูกค้า: {$quotation['customer']['name']}\n"
-            .'🏢 บริษัท: '.($quotation['customer']['company'] ?: '-')."\n"
-            ."📧 อีเมล: {$quotation['customer']['email']}\n"
-            ."📱 โทร: {$quotation['customer']['phone']}\n"
-            ."━━━━━━━━━━━━━━━\n"
-            ."🛠️ บริการ: {$quotation['service']['name_th']}\n"
-            ."📝 รายการ: {$items}\n"
-            ."━━━━━━━━━━━━━━━\n"
-            .'💰 รวมทั้งสิ้น: ฿'.number_format($quotation['grand_total'], 2)."\n"
-            .'📅 Timeline: '.$this->getTimelineText($quotation['timeline'])."\n"
-            ."━━━━━━━━━━━━━━━\n"
-            .'⏰ '.now()->format('d/m/Y H:i');
+            . "━━━━━━━━━━━━━━━\n"
+            . "🔢 เลขที่: {$quotation['quote_number']}\n"
+            . "👤 ลูกค้า: {$quotation['customer']['name']}\n"
+            . '🏢 บริษัท: ' . ($quotation['customer']['company'] ?: '-') . "\n"
+            . "📧 อีเมล: {$quotation['customer']['email']}\n"
+            . "📱 โทร: {$quotation['customer']['phone']}\n"
+            . "━━━━━━━━━━━━━━━\n"
+            . "🛠️ บริการ: {$quotation['service']['name_th']}\n"
+            . "📝 รายการ: {$items}\n"
+            . "━━━━━━━━━━━━━━━\n"
+            . '💰 รวมทั้งสิ้น: ฿' . number_format($quotation['grand_total'], 2) . "\n"
+            . '📅 Timeline: ' . $this->getTimelineText($quotation['timeline']) . "\n"
+            . "━━━━━━━━━━━━━━━\n"
+            . '⏰ ' . now()->format('d/m/Y H:i');
 
         return $this->send($message);
     }
@@ -127,18 +127,18 @@ class LineNotifyService
     public function notifyNewOrder(array $quotation, ?string $paymentMethod = null): bool
     {
         $message = "🎉 คำสั่งซื้อใหม่!\n"
-            ."━━━━━━━━━━━━━━━\n"
-            ."🔢 เลขที่: {$quotation['quote_number']}\n"
-            ."👤 ลูกค้า: {$quotation['customer']['name']}\n"
-            ."📧 อีเมล: {$quotation['customer']['email']}\n"
-            ."📱 โทร: {$quotation['customer']['phone']}\n"
-            ."━━━━━━━━━━━━━━━\n"
-            ."🛠️ บริการ: {$quotation['service']['name_th']}\n"
-            .'💳 ชำระผ่าน: '.$this->getPaymentMethodText($paymentMethod ?? 'unknown')."\n"
-            .'💰 ยอดชำระ: ฿'.number_format($quotation['grand_total'], 2)."\n"
-            ."━━━━━━━━━━━━━━━\n"
-            ."🔔 กรุณาติดต่อลูกค้าภายใน 24 ชม.\n"
-            .'⏰ '.now()->format('d/m/Y H:i');
+            . "━━━━━━━━━━━━━━━\n"
+            . "🔢 เลขที่: {$quotation['quote_number']}\n"
+            . "👤 ลูกค้า: {$quotation['customer']['name']}\n"
+            . "📧 อีเมล: {$quotation['customer']['email']}\n"
+            . "📱 โทร: {$quotation['customer']['phone']}\n"
+            . "━━━━━━━━━━━━━━━\n"
+            . "🛠️ บริการ: {$quotation['service']['name_th']}\n"
+            . '💳 ชำระผ่าน: ' . $this->getPaymentMethodText($paymentMethod ?? 'unknown') . "\n"
+            . '💰 ยอดชำระ: ฿' . number_format($quotation['grand_total'], 2) . "\n"
+            . "━━━━━━━━━━━━━━━\n"
+            . "🔔 กรุณาติดต่อลูกค้าภายใน 24 ชม.\n"
+            . '⏰ ' . now()->format('d/m/Y H:i');
 
         return $this->send($message);
     }

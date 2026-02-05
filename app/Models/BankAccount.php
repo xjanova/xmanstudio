@@ -53,7 +53,7 @@ class BankAccount extends Model
         $masked = str_repeat('X', $length - 4);
 
         // Format as XXX-X-XXXXX-4
-        return substr($masked, 0, 3).'-'.substr($masked, 3, 1).'-'.substr($masked, 4).'-'.$visible;
+        return substr($masked, 0, 3) . '-' . substr($masked, 3, 1) . '-' . substr($masked, 4) . '-' . $visible;
     }
 
     /**

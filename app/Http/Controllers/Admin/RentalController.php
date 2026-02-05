@@ -78,8 +78,8 @@ class RentalController extends Controller
         $rental->update([
             'expires_at' => $newExpiresAt,
             'status' => UserRental::STATUS_ACTIVE,
-            'notes' => ($rental->notes ? $rental->notes."\n" : '').
-                '['.now()->format('Y-m-d H:i')."] ขยายเวลา {$request->days} วัน: {$request->reason}",
+            'notes' => ($rental->notes ? $rental->notes . "\n" : '') .
+                '[' . now()->format('Y-m-d H:i') . "] ขยายเวลา {$request->days} วัน: {$request->reason}",
         ]);
 
         return back()->with('success', "ขยายเวลาสำเร็จ {$request->days} วัน");
@@ -97,8 +97,8 @@ class RentalController extends Controller
 
         $rental->update([
             'status' => UserRental::STATUS_SUSPENDED,
-            'notes' => ($rental->notes ? $rental->notes."\n" : '').
-                '['.now()->format('Y-m-d H:i')."] ระงับ: {$request->reason}",
+            'notes' => ($rental->notes ? $rental->notes . "\n" : '') .
+                '[' . now()->format('Y-m-d H:i') . "] ระงับ: {$request->reason}",
         ]);
 
         return back()->with('success', 'ระงับการใช้งานสำเร็จ');
@@ -116,8 +116,8 @@ class RentalController extends Controller
 
         $rental->update([
             'status' => UserRental::STATUS_ACTIVE,
-            'notes' => ($rental->notes ? $rental->notes."\n" : '').
-                '['.now()->format('Y-m-d H:i').'] เปิดใช้งานอีกครั้ง',
+            'notes' => ($rental->notes ? $rental->notes . "\n" : '') .
+                '[' . now()->format('Y-m-d H:i') . '] เปิดใช้งานอีกครั้ง',
         ]);
 
         return back()->with('success', 'เปิดใช้งานอีกครั้งสำเร็จ');
@@ -189,7 +189,7 @@ class RentalController extends Controller
         if ($payment->userRental) {
             $payment->userRental->update([
                 'status' => UserRental::STATUS_CANCELLED,
-                'notes' => 'การชำระเงินถูกปฏิเสธ: '.$request->reason,
+                'notes' => 'การชำระเงินถูกปฏิเสธ: ' . $request->reason,
             ]);
         }
 
@@ -313,7 +313,7 @@ class RentalController extends Controller
         $endDate = $request->input('end_date', now()->toDateString());
 
         $payments = RentalPayment::where('status', 'completed')
-            ->whereBetween('paid_at', [$startDate, $endDate.' 23:59:59'])
+            ->whereBetween('paid_at', [$startDate, $endDate . ' 23:59:59'])
             ->get();
 
         $stats = [

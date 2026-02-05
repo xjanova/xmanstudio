@@ -89,7 +89,7 @@ class WalletTopup extends Model
      */
     public static function generateTopupId(): string
     {
-        return 'TOP'.now()->format('ymd').strtoupper(Str::random(6));
+        return 'TOP' . now()->format('ymd') . strtoupper(Str::random(6));
     }
 
     /**

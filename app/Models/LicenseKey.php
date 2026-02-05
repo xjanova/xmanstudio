@@ -127,7 +127,7 @@ class LicenseKey extends Model
 
     public static function generateDemoKey(): string
     {
-        return 'DEMO-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
+        return 'DEMO-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4));
     }
 
     public function activateOnMachine(string $machineId, string $fingerprint): bool

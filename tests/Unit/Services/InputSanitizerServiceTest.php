@@ -298,7 +298,7 @@ class InputSanitizerServiceTest extends TestCase
 
         foreach ($suspiciousInputs as $input) {
             $isSuspicious = $this->sanitizer->isSuspicious($input);
-            $this->assertTrue($isSuspicious, 'Should detect as suspicious: '.substr($input, 0, 50));
+            $this->assertTrue($isSuspicious, 'Should detect as suspicious: ' . substr($input, 0, 50));
         }
     }
 

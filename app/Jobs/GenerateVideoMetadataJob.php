@@ -88,7 +88,7 @@ class GenerateVideoMetadataJob implements ShouldQueue
                 Log::info("Auto-approved AI metadata for video {$this->video->id} (confidence: {$result['confidence']})");
             }
         } catch (\Exception $e) {
-            Log::error("Exception while generating metadata for video {$this->video->id}: ".$e->getMessage());
+            Log::error("Exception while generating metadata for video {$this->video->id}: " . $e->getMessage());
             $this->fail($e);
         }
     }
@@ -98,6 +98,6 @@ class GenerateVideoMetadataJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Log::error("GenerateVideoMetadataJob failed for video {$this->video->id}: ".$exception->getMessage());
+        Log::error("GenerateVideoMetadataJob failed for video {$this->video->id}: " . $exception->getMessage());
     }
 }

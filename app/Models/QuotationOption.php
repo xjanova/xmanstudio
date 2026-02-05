@@ -85,6 +85,6 @@ class QuotationOption extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        return number_format($this->price, 0).' ฿';
+        return number_format($this->price, 0) . ' ฿';
     }
 }

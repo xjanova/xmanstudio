@@ -96,6 +96,6 @@ class SetupController extends Controller
         // Auto login the admin
         auth()->login($admin);
 
-        return redirect()->route('dashboard')->with('success', 'ตั้งค่าระบบสำเร็จ! ยินดีต้อนรับ '.$admin->name);
+        return redirect()->route('dashboard')->with('success', 'ตั้งค่าระบบสำเร็จ! ยินดีต้อนรับ ' . $admin->name);
     }
 }

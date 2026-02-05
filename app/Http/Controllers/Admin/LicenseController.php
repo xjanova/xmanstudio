@@ -66,8 +66,8 @@ class LicenseController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('license_key', 'like', '%'.$search.'%')
-                    ->orWhere('machine_id', 'like', '%'.$search.'%');
+                $q->where('license_key', 'like', '%' . $search . '%')
+                    ->orWhere('machine_id', 'like', '%' . $search . '%');
             });
         }
 
@@ -425,7 +425,7 @@ class LicenseController extends Controller
 
         $licenses = $query->get();
 
-        $filename = 'licenses_'.now()->format('Y-m-d_His').'.csv';
+        $filename = 'licenses_' . now()->format('Y-m-d_His') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -434,7 +434,7 @@ class LicenseController extends Controller
         $callback = function () use ($licenses) {
             $file = fopen('php://output', 'w');
             // Add BOM for Excel UTF-8 support
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             // Headers
             fputcsv($file, [

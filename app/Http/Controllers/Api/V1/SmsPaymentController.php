@@ -68,7 +68,7 @@ class SmsPaymentController extends Controller
         }
 
         // Verify HMAC signature
-        $signatureData = $encryptedData.$nonce.$timestamp;
+        $signatureData = $encryptedData . $nonce . $timestamp;
         if (! $this->smsPaymentService->verifySignature($signatureData, $signature, $device->secret_key)) {
             Log::warning('SMS Payment: Invalid signature', [
                 'device_id' => $device->device_id,
@@ -233,7 +233,7 @@ class SmsPaymentController extends Controller
                 'base_amount' => number_format((float) $uniqueAmount->base_amount, 2, '.', ''),
                 'unique_amount' => number_format((float) $uniqueAmount->unique_amount, 2, '.', ''),
                 'expires_at' => $uniqueAmount->expires_at->toIso8601String(),
-                'display_amount' => '฿'.number_format((float) $uniqueAmount->unique_amount, 2),
+                'display_amount' => '฿' . number_format((float) $uniqueAmount->unique_amount, 2),
             ],
         ]);
     }
@@ -405,7 +405,7 @@ class SmsPaymentController extends Controller
         $order->update([
             'sms_verification_status' => 'rejected',
             'payment_status' => 'failed',
-            'notes' => $order->notes."\n[SMS Rejected] ".$reason,
+            'notes' => $order->notes . "\n[SMS Rejected] " . $reason,
         ]);
 
         // Update notification if exists
@@ -615,6 +615,7 @@ class SmsPaymentController extends Controller
             return response()->json(json_decode($auth, true));
         } catch (\Exception $e) {
             Log::error('Pusher auth failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Auth failed',

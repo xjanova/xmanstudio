@@ -65,6 +65,6 @@ class ProductVersion extends Model
             $unit++;
         }
 
-        return round($bytes, 2).' '.$units[$unit];
+        return round($bytes, 2) . ' ' . $units[$unit];
     }
 }

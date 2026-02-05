@@ -15,8 +15,8 @@ class ProductCategoryController extends Controller
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->search.'%')
-                    ->orWhere('description', 'like', '%'.$request->search.'%');
+                $q->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -58,7 +58,7 @@ class ProductCategoryController extends Controller
         // Check for duplicate slug
         $count = Category::where('slug', $validated['slug'])->count();
         if ($count > 0) {
-            $validated['slug'] = $validated['slug'].'-'.($count + 1);
+            $validated['slug'] = $validated['slug'] . '-' . ($count + 1);
         }
 
         Category::create($validated);
@@ -90,7 +90,7 @@ class ProductCategoryController extends Controller
             $newSlug = Str::slug($validated['name']);
             $count = Category::where('slug', $newSlug)->where('id', '!=', $category->id)->count();
             if ($count > 0) {
-                $newSlug = $newSlug.'-'.($count + 1);
+                $newSlug = $newSlug . '-' . ($count + 1);
             }
             $validated['slug'] = $newSlug;
         }
@@ -120,6 +120,6 @@ class ProductCategoryController extends Controller
         $category->update(['is_active' => ! $category->is_active]);
 
         return redirect()->route('admin.products.categories.index')
-            ->with('success', ($category->is_active ? 'เปิด' : 'ปิด').'ใช้งานหมวดหมู่เรียบร้อยแล้ว');
+            ->with('success', ($category->is_active ? 'เปิด' : 'ปิด') . 'ใช้งานหมวดหมู่เรียบร้อยแล้ว');
     }
 }

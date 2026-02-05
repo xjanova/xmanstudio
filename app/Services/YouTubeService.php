@@ -48,7 +48,7 @@ class YouTubeService
                 return $response->json('items.0');
             }
         } catch (\Exception $e) {
-            Log::error('YouTube API Error (getChannelInfo): '.$e->getMessage());
+            Log::error('YouTube API Error (getChannelInfo): ' . $e->getMessage());
         }
 
         return null;
@@ -77,7 +77,7 @@ class YouTubeService
                 return $response->json('items.0');
             }
         } catch (\Exception $e) {
-            Log::error('YouTube API Error (getChannelByHandle): '.$e->getMessage());
+            Log::error('YouTube API Error (getChannelByHandle): ' . $e->getMessage());
         }
 
         return null;
@@ -103,7 +103,7 @@ class YouTubeService
                 return $response->json('items.0');
             }
         } catch (\Exception $e) {
-            Log::error('YouTube API Error (getVideoDetails): '.$e->getMessage());
+            Log::error('YouTube API Error (getVideoDetails): ' . $e->getMessage());
         }
 
         return null;
@@ -129,7 +129,7 @@ class YouTubeService
                 return $response->json('items', []);
             }
         } catch (\Exception $e) {
-            Log::error('YouTube API Error (getVideosDetails): '.$e->getMessage());
+            Log::error('YouTube API Error (getVideosDetails): ' . $e->getMessage());
         }
 
         return [];
@@ -168,7 +168,7 @@ class YouTubeService
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('YouTube API Error (searchChannelVideos): '.$e->getMessage());
+            Log::error('YouTube API Error (searchChannelVideos): ' . $e->getMessage());
         }
 
         return ['items' => [], 'nextPageToken' => null];
@@ -194,7 +194,7 @@ class YouTubeService
                 return $response->json('items.0');
             }
         } catch (\Exception $e) {
-            Log::error('YouTube API Error (getPlaylistDetails): '.$e->getMessage());
+            Log::error('YouTube API Error (getPlaylistDetails): ' . $e->getMessage());
         }
 
         return null;
@@ -231,7 +231,7 @@ class YouTubeService
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('YouTube API Error (getPlaylistItems): '.$e->getMessage());
+            Log::error('YouTube API Error (getPlaylistItems): ' . $e->getMessage());
         }
 
         return ['items' => [], 'nextPageToken' => null];
@@ -258,7 +258,7 @@ class YouTubeService
                 return $response->json('items', []);
             }
         } catch (\Exception $e) {
-            Log::error('YouTube API Error (getChannelPlaylists): '.$e->getMessage());
+            Log::error('YouTube API Error (getChannelPlaylists): ' . $e->getMessage());
         }
 
         return [];

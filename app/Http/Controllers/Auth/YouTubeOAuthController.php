@@ -34,7 +34,7 @@ class YouTubeOAuthController extends Controller
         // https://www.googleapis.com/auth/youtube.force-ssl - Manage YouTube account (SSL)
         $scope = 'https://www.googleapis.com/auth/youtube.force-ssl';
 
-        $authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?'.http_build_query([
+        $authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query([
             'response_type' => 'code',
             'client_id' => $clientId,
             'redirect_uri' => $redirectUri,
@@ -67,7 +67,7 @@ class YouTubeOAuthController extends Controller
             ]);
 
             return redirect()->route('admin.settings.integrations')
-                ->with('error', 'YouTube OAuth ล้มเหลว: '.$request->input('error_description'));
+                ->with('error', 'YouTube OAuth ล้มเหลว: ' . $request->input('error_description'));
         }
 
         // Exchange authorization code for access token
@@ -116,7 +116,7 @@ class YouTubeOAuthController extends Controller
             ]);
 
             return redirect()->route('admin.settings.integrations')
-                ->with('error', 'เกิดข้อผิดพลาดในการบันทึก tokens: '.$e->getMessage());
+                ->with('error', 'เกิดข้อผิดพลาดในการบันทึก tokens: ' . $e->getMessage());
         }
     }
 
@@ -213,7 +213,7 @@ class YouTubeOAuthController extends Controller
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$accessToken,
+                'Authorization' => 'Bearer ' . $accessToken,
             ])->get('https://www.googleapis.com/youtube/v3/channels', [
                 'part' => 'snippet,contentDetails,statistics',
                 'mine' => 'true',
@@ -271,7 +271,7 @@ class YouTubeOAuthController extends Controller
             ]);
 
             return redirect()->route('admin.settings.integrations')
-                ->with('error', 'เกิดข้อผิดพลาดในการยกเลิกการเชื่อมต่อ: '.$e->getMessage());
+                ->with('error', 'เกิดข้อผิดพลาดในการยกเลิกการเชื่อมต่อ: ' . $e->getMessage());
         }
     }
 

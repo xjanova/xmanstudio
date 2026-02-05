@@ -377,7 +377,7 @@ class AutoTradeXLicenseController extends Controller
         $message = match (true) {
             $device->status === AutoTradeXDevice::STATUS_PENDING => "🎉 ส่วนลดพิเศษสำหรับลูกค้าใหม่! เหลือเวลาอีก {$daysRemaining} วัน",
             $daysRemaining <= 3 => "⏰ รีบซื้อเลย! เหลือเวลาอีกแค่ {$daysRemaining} วัน!",
-            default => '🔥 ซื้อตอนนี้ลด '.self::EARLY_BIRD_DISCOUNT_PERCENT."%! เหลือเวลาอีก {$daysRemaining} วัน",
+            default => '🔥 ซื้อตอนนี้ลด ' . self::EARLY_BIRD_DISCOUNT_PERCENT . "%! เหลือเวลาอีก {$daysRemaining} วัน",
         };
 
         return [
@@ -395,9 +395,9 @@ class AutoTradeXLicenseController extends Controller
      */
     private function generateDiscountCode(string $machineId): string
     {
-        $data = $machineId.config('app.key').date('Ymd');
+        $data = $machineId . config('app.key') . date('Ymd');
 
-        return 'EARLY'.strtoupper(substr(hash('sha256', $data), 0, 8));
+        return 'EARLY' . strtoupper(substr(hash('sha256', $data), 0, 8));
     }
 
     /**
@@ -1104,7 +1104,7 @@ class AutoTradeXLicenseController extends Controller
 
         // Create signature using server secret
         // In production, use a proper signing key
-        $signatureData = $validated['challenge'].$currentTimestamp.self::PRODUCT_SLUG;
+        $signatureData = $validated['challenge'] . $currentTimestamp . self::PRODUCT_SLUG;
         $signature = hash_hmac('sha256', $signatureData, config('app.key'));
 
         return response()->json([
@@ -1282,7 +1282,7 @@ class AutoTradeXLicenseController extends Controller
     {
         // Verify admin token (simple token check, in production use proper auth)
         $adminToken = $request->header('X-Admin-Token');
-        $expectedToken = hash('sha256', config('app.key').'autotradex-admin');
+        $expectedToken = hash('sha256', config('app.key') . 'autotradex-admin');
 
         if (! $adminToken || ! hash_equals($expectedToken, $adminToken)) {
             return response()->json([
@@ -1407,7 +1407,7 @@ class AutoTradeXLicenseController extends Controller
     {
         // Verify admin token
         $adminToken = $request->header('X-Admin-Token');
-        $expectedToken = hash('sha256', config('app.key').'autotradex-admin');
+        $expectedToken = hash('sha256', config('app.key') . 'autotradex-admin');
 
         if (! $adminToken || ! hash_equals($expectedToken, $adminToken)) {
             return response()->json([

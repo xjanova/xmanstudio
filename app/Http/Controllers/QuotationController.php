@@ -567,7 +567,7 @@ class QuotationController extends Controller
             'companyInfo' => $this->getCompanyInfo(),
         ])->setPaper('a4', 'portrait');
 
-        $filename = 'XMAN-Quotation-'.$quotation['quote_number'].'.pdf';
+        $filename = 'XMAN-Quotation-' . $quotation['quote_number'] . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -647,7 +647,7 @@ class QuotationController extends Controller
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
             'customer_address' => 'nullable|string|max:500',
-            'service_type' => 'required|string|in:'.implode(',', array_keys($this->servicePackages)),
+            'service_type' => 'required|string|in:' . implode(',', array_keys($this->servicePackages)),
             'service_options' => 'required|array|min:1',
             'service_options.*' => 'string',
             'additional_options' => 'nullable|array',
@@ -736,7 +736,7 @@ class QuotationController extends Controller
         $grandTotal = $total + $vat;
 
         return [
-            'quote_number' => 'QT-'.date('Ymd').'-'.strtoupper(Str::random(4)),
+            'quote_number' => 'QT-' . date('Ymd') . '-' . strtoupper(Str::random(4)),
             'quote_date' => now()->format('d/m/Y'),
             'valid_until' => now()->addDays(30)->format('d/m/Y'),
             'customer' => [

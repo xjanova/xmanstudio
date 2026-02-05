@@ -178,7 +178,7 @@ class OrderController extends Controller
                 if ($wallet->balance < $total) {
                     return redirect()
                         ->back()
-                        ->with('error', 'ยอดเงินใน Wallet ไม่เพียงพอ (ยอดคงเหลือ: ฿'.number_format($wallet->balance, 2).')');
+                        ->with('error', 'ยอดเงินใน Wallet ไม่เพียงพอ (ยอดคงเหลือ: ฿' . number_format($wallet->balance, 2) . ')');
                 }
             }
 
@@ -324,7 +324,7 @@ class OrderController extends Controller
                     $paymentInfo['sms_payment'] = [
                         'enabled' => true,
                         'unique_amount' => $order->display_amount,
-                        'unique_amount_formatted' => '฿'.number_format($order->display_amount, 2),
+                        'unique_amount_formatted' => '฿' . number_format($order->display_amount, 2),
                         'expires_at' => $order->uniquePaymentAmount?->expires_at,
                         'status' => $order->sms_verification_status,
                     ];
@@ -392,7 +392,7 @@ class OrderController extends Controller
         $content = "Order: {$order->order_number}\n";
         $content .= "Date: {$order->created_at->format('d/m/Y H:i')}\n\n";
         $content .= "License Keys:\n";
-        $content .= str_repeat('-', 50)."\n";
+        $content .= str_repeat('-', 50) . "\n";
 
         foreach ($licenses as $license) {
             $content .= "{$license->license_key} ({$license->license_type})\n";
@@ -423,9 +423,9 @@ class OrderController extends Controller
      */
     protected function generateOrderNumber(): string
     {
-        $prefix = 'XM'.date('Ymd');
+        $prefix = 'XM' . date('Ymd');
         $random = strtoupper(Str::random(4));
 
-        return $prefix.'-'.$random;
+        return $prefix . '-' . $random;
     }
 }

@@ -132,7 +132,7 @@ class SkidrowKillerSeeder extends Seeder
             );
         }
 
-        $this->command->info('Demo license keys created: '.count($demoKeys));
+        $this->command->info('Demo license keys created: ' . count($demoKeys));
 
         // ============================================
         // 5. Product Configuration (for API)

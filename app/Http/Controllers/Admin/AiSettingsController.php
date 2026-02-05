@@ -183,7 +183,7 @@ class AiSettingsController extends Controller
 
             return response()->json(['success' => false, 'message' => 'Provider ไม่ถูกต้อง']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาด: '.$e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
         }
     }
 
@@ -198,14 +198,14 @@ class AiSettingsController extends Controller
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$apiKey,
+            'Authorization' => 'Bearer ' . $apiKey,
         ])->get('https://api.openai.com/v1/models');
 
         if ($response->successful()) {
             return response()->json(['success' => true, 'message' => 'เชื่อมต่อ OpenAI สำเร็จ']);
         }
 
-        return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ OpenAI ได้: '.$response->status()]);
+        return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ OpenAI ได้: ' . $response->status()]);
     }
 
     /**
@@ -231,7 +231,7 @@ class AiSettingsController extends Controller
             return response()->json(['success' => true, 'message' => 'เชื่อมต่อ Claude สำเร็จ']);
         }
 
-        return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Claude ได้: '.$response->status()]);
+        return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Claude ได้: ' . $response->status()]);
     }
 
     /**
@@ -242,7 +242,7 @@ class AiSettingsController extends Controller
         $host = Setting::getValue('ollama_host', 'http://localhost:11434');
 
         try {
-            $response = Http::timeout(10)->get($host.'/api/tags');
+            $response = Http::timeout(10)->get($host . '/api/tags');
 
             if ($response->successful()) {
                 $models = $response->json('models', []);
@@ -255,11 +255,11 @@ class AiSettingsController extends Controller
                 ]);
             }
 
-            return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Ollama ได้: '.$response->status()]);
+            return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Ollama ได้: ' . $response->status()]);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'ไม่สามารถเชื่อมต่อ Ollama ได้ กรุณาตรวจสอบว่า Ollama กำลังทำงานอยู่ที่ '.$host,
+                'message' => 'ไม่สามารถเชื่อมต่อ Ollama ได้ กรุณาตรวจสอบว่า Ollama กำลังทำงานอยู่ที่ ' . $host,
             ]);
         }
     }
@@ -272,7 +272,7 @@ class AiSettingsController extends Controller
         $host = Setting::getValue('ollama_host', 'http://localhost:11434');
 
         try {
-            $response = Http::timeout(10)->get($host.'/api/tags');
+            $response = Http::timeout(10)->get($host . '/api/tags');
 
             if ($response->successful()) {
                 $models = $response->json('models', []);
@@ -308,6 +308,6 @@ class AiSettingsController extends Controller
 
         $bytes /= pow(1024, $pow);
 
-        return round($bytes, $precision).' '.$units[$pow];
+        return round($bytes, $precision) . ' ' . $units[$pow];
     }
 }

@@ -104,7 +104,7 @@ class MetalXPlaylistController extends Controller
                     ]);
 
                     return redirect()->route('admin.metal-x.playlists.index')
-                        ->with('success', 'Playlist imported from YouTube with '.($playlist->video_count).' videos!');
+                        ->with('success', 'Playlist imported from YouTube with ' . ($playlist->video_count) . ' videos!');
                 }
 
                 return back()->with('error', 'Failed to import playlist from YouTube');
@@ -243,7 +243,7 @@ class MetalXPlaylistController extends Controller
 
         $this->youtubeService->syncPlaylistVideos($playlist);
 
-        return back()->with('success', 'Playlist synced from YouTube! '.$playlist->video_count.' videos.');
+        return back()->with('success', 'Playlist synced from YouTube! ' . $playlist->video_count . ' videos.');
     }
 
     /**

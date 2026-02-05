@@ -72,7 +72,7 @@ class AdPlacementController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:ad_placements,slug,'.$ad->id,
+            'slug' => 'required|string|max:255|unique:ad_placements,slug,' . $ad->id,
             'code' => 'nullable|string',
             'position' => 'required|string',
             'pages' => 'required|array',

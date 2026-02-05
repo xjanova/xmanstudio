@@ -66,7 +66,7 @@ class ProcessCommentEngagementJob implements ShouldQueue
                         $commentService->likeComment($this->comment);
                         Log::info("Liked comment {$this->comment->id}");
                     } catch (\Exception $e) {
-                        Log::warning("Could not like comment {$this->comment->id}: ".$e->getMessage());
+                        Log::warning("Could not like comment {$this->comment->id}: " . $e->getMessage());
                     }
                 }
             }
@@ -96,7 +96,7 @@ class ProcessCommentEngagementJob implements ShouldQueue
 
                             Log::info("Replied to comment {$this->comment->id} with confidence {$confidence}");
                         } catch (\Exception $e) {
-                            Log::error("Failed to post reply for comment {$this->comment->id}: ".$e->getMessage());
+                            Log::error("Failed to post reply for comment {$this->comment->id}: " . $e->getMessage());
 
                             // Save draft reply for manual review
                             $this->comment->update([
@@ -118,7 +118,7 @@ class ProcessCommentEngagementJob implements ShouldQueue
                 }
             }
         } catch (\Exception $e) {
-            Log::error("Error processing engagement for comment {$this->comment->id}: ".$e->getMessage());
+            Log::error("Error processing engagement for comment {$this->comment->id}: " . $e->getMessage());
             $this->fail($e);
         }
     }
@@ -128,6 +128,6 @@ class ProcessCommentEngagementJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Log::error("ProcessCommentEngagementJob failed for comment {$this->comment->id}: ".$exception->getMessage());
+        Log::error("ProcessCommentEngagementJob failed for comment {$this->comment->id}: " . $exception->getMessage());
     }
 }

@@ -72,7 +72,7 @@ class MetalXAiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'AI metadata generation started for: '.$video->title_en,
+                'message' => 'AI metadata generation started for: ' . $video->title_en,
             ]);
         } catch (AIServiceException $e) {
             Log::error("AI service error for video {$video->id}", [
@@ -86,7 +86,7 @@ class MetalXAiController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error("Unexpected error generating AI metadata for video {$video->id}: ".$e->getMessage(), [
+            Log::error("Unexpected error generating AI metadata for video {$video->id}: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -146,7 +146,7 @@ class MetalXAiController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error('Unexpected error in batch AI generation: '.$e->getMessage());
+            Log::error('Unexpected error in batch AI generation: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -201,7 +201,7 @@ class MetalXAiController extends Controller
                 'message' => $e->getUserMessage(),
             ], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            Log::error('Unexpected error in generate all: '.$e->getMessage());
+            Log::error('Unexpected error in generate all: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -230,7 +230,7 @@ class MetalXAiController extends Controller
                 'message' => 'AI metadata approved and applied successfully',
             ]);
         } catch (\Exception $e) {
-            Log::error("Error approving AI metadata for video {$video->id}: ".$e->getMessage());
+            Log::error("Error approving AI metadata for video {$video->id}: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -259,7 +259,7 @@ class MetalXAiController extends Controller
                 'message' => 'AI metadata rejected successfully',
             ]);
         } catch (\Exception $e) {
-            Log::error("Error rejecting AI metadata for video {$video->id}: ".$e->getMessage());
+            Log::error("Error rejecting AI metadata for video {$video->id}: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -296,7 +296,7 @@ class MetalXAiController extends Controller
                 'count' => $count,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in batch approve: '.$e->getMessage());
+            Log::error('Error in batch approve: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,

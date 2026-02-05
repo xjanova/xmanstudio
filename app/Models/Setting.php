@@ -60,7 +60,7 @@ class Setting extends Model
             } catch (\Exception $e) {
                 // If decryption fails, the value might not be encrypted yet
                 // This handles backward compatibility with existing unencrypted values
-                \Log::warning("Failed to decrypt setting '{$key}': ".$e->getMessage());
+                \Log::warning("Failed to decrypt setting '{$key}': " . $e->getMessage());
                 // Return the value as-is for backward compatibility
                 // Admin should re-save the setting to encrypt it
             }

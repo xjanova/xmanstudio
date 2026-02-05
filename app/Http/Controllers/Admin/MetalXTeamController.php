@@ -18,10 +18,10 @@ class MetalXTeamController extends Controller
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->search.'%')
-                    ->orWhere('name_th', 'like', '%'.$request->search.'%')
-                    ->orWhere('role', 'like', '%'.$request->search.'%')
-                    ->orWhere('role_th', 'like', '%'.$request->search.'%');
+                $q->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('name_th', 'like', '%' . $request->search . '%')
+                    ->orWhere('role', 'like', '%' . $request->search . '%')
+                    ->orWhere('role_th', 'like', '%' . $request->search . '%');
             });
         }
 

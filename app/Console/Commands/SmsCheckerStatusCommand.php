@@ -83,7 +83,7 @@ class SmsCheckerStatusCommand extends Command
             $orderTable[] = [
                 $order->sms_verification_status ?? 'pending',
                 $order->count,
-                '฿'.number_format($order->total_amount, 2),
+                '฿' . number_format($order->total_amount, 2),
             ];
         }
         $this->table(['Status', 'Count', 'Total Amount'], $orderTable);
@@ -99,7 +99,7 @@ class SmsCheckerStatusCommand extends Command
         foreach ($recent as $n) {
             $recentTable[] = [
                 $n->bank,
-                '฿'.number_format($n->amount, 2),
+                '฿' . number_format($n->amount, 2),
                 $n->status,
                 $n->created_at->diffForHumans(),
             ];

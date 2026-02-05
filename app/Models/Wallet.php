@@ -212,7 +212,7 @@ class Wallet extends Model
      */
     private function generateTransactionId(): string
     {
-        return 'TXN'.now()->format('ymd').strtoupper(Str::random(8));
+        return 'TXN' . now()->format('ymd') . strtoupper(Str::random(8));
     }
 
     /**

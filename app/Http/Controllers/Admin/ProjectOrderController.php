@@ -256,7 +256,7 @@ class ProjectOrderController extends Controller
         $attachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('project-attachments/'.$project->id, 'public');
+                $path = $file->store('project-attachments/' . $project->id, 'public');
                 $attachments[] = [
                     'path' => $path,
                     'name' => $file->getClientOriginalName(),

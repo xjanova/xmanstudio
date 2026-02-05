@@ -157,7 +157,7 @@ Route::get('/robots.txt', function () {
     $setting = SeoSetting::getInstance();
 
     if (! $setting->robots_txt_enabled || empty($setting->robots_txt_content)) {
-        return response('User-agent: *'."\n".'Allow: /', 200)
+        return response('User-agent: *' . "\n" . 'Allow: /', 200)
             ->header('Content-Type', 'text/plain; charset=UTF-8');
     }
 
@@ -263,7 +263,7 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 /*
 |--------------------------------------------------------------------------

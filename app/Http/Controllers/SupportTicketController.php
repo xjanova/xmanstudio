@@ -79,8 +79,8 @@ class SupportTicketController extends Controller
     {
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
-            'category' => 'required|string|in:'.implode(',', array_keys(SupportTicket::getCategories())),
-            'priority' => 'required|string|in:'.implode(',', array_keys(SupportTicket::getPriorities())),
+            'category' => 'required|string|in:' . implode(',', array_keys(SupportTicket::getCategories())),
+            'priority' => 'required|string|in:' . implode(',', array_keys(SupportTicket::getPriorities())),
             'message' => 'required|string|min:10',
             'order_id' => 'nullable|exists:orders,id',
             'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,zip',
@@ -92,7 +92,7 @@ class SupportTicketController extends Controller
         $attachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('ticket-attachments/'.date('Y/m'), 'public');
+                $path = $file->store('ticket-attachments/' . date('Y/m'), 'public');
                 $attachments[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,
@@ -117,7 +117,7 @@ class SupportTicketController extends Controller
 
         return redirect()
             ->route('customer.support.show', $ticket)
-            ->with('success', 'สร้าง Ticket #'.$ticket->ticket_number.' เรียบร้อยแล้ว');
+            ->with('success', 'สร้าง Ticket #' . $ticket->ticket_number . ' เรียบร้อยแล้ว');
     }
 
     /**
@@ -164,7 +164,7 @@ class SupportTicketController extends Controller
         $attachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('ticket-attachments/'.date('Y/m'), 'public');
+                $path = $file->store('ticket-attachments/' . date('Y/m'), 'public');
                 $attachments[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,

@@ -324,7 +324,7 @@ class UserController extends Controller
 
         $users = $query->get();
 
-        $filename = 'users-'.date('Y-m-d-His').'.csv';
+        $filename = 'users-' . date('Y-m-d-His') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -335,7 +335,7 @@ class UserController extends Controller
             $file = fopen('php://output', 'w');
 
             // BOM for Excel UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             // Header row
             fputcsv($file, [

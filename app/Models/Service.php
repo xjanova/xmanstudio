@@ -110,7 +110,7 @@ class Service extends Model
             return 'ติดต่อสอบถาม';
         }
 
-        return number_format($this->starting_price).' บาท/'.$this->price_unit;
+        return number_format($this->starting_price) . ' บาท/' . $this->price_unit;
     }
 
     /**

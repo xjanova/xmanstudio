@@ -95,7 +95,7 @@ class QuotationOptionController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time().'_'.$image->getClientOriginalName();
+            $filename = time() . '_' . $image->getClientOriginalName();
             $path = $image->storeAs('quotations/options', $filename, 'public');
             $validated['image'] = $path;
         }
@@ -181,7 +181,7 @@ class QuotationOptionController extends Controller
             }
 
             $image = $request->file('image');
-            $filename = time().'_'.$image->getClientOriginalName();
+            $filename = time() . '_' . $image->getClientOriginalName();
             $path = $image->storeAs('quotations/options', $filename, 'public');
             $validated['image'] = $path;
         }

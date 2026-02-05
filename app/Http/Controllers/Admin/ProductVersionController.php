@@ -99,7 +99,7 @@ class ProductVersionController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.products.versions.index', $product)
-                ->with('error', 'Sync ล้มเหลว: '.$e->getMessage());
+                ->with('error', 'Sync ล้มเหลว: ' . $e->getMessage());
         }
     }
 

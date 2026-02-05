@@ -44,10 +44,10 @@ class ApiRateLimiter
     protected function resolveRequestSignature(Request $request): string
     {
         if ($user = $request->user()) {
-            return sha1('api-rate-limit|'.$user->id);
+            return sha1('api-rate-limit|' . $user->id);
         }
 
-        return sha1('api-rate-limit|'.$request->ip());
+        return sha1('api-rate-limit|' . $request->ip());
     }
 
     /**

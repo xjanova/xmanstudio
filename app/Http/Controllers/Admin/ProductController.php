@@ -18,7 +18,7 @@ class ProductController extends Controller
         $query = Product::with('category')->latest();
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%'.$request->search.'%');
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
         if ($request->filled('category')) {
@@ -132,7 +132,7 @@ class ProductController extends Controller
             'category_id' => 'nullable|exists:categories,id',
             'stock' => 'nullable|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
-            'sku' => 'nullable|string|max:100|unique:products,sku,'.$product->id,
+            'sku' => 'nullable|string|max:100|unique:products,sku,' . $product->id,
             'image' => 'nullable|image|max:2048',
             'gallery_images' => 'nullable|array',
             'gallery_images.*' => 'image|max:2048',

@@ -121,7 +121,7 @@ class LineSettingsController extends Controller
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$token,
+                'Authorization' => 'Bearer ' . $token,
             ])->get('https://api.line.me/v2/bot/info');
 
             if ($response->successful()) {
@@ -129,14 +129,14 @@ class LineSettingsController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'เชื่อมต่อสำเร็จ! Bot: '.$botInfo['displayName'],
+                    'message' => 'เชื่อมต่อสำเร็จ! Bot: ' . $botInfo['displayName'],
                     'data' => $botInfo,
                 ]);
             }
 
-            return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อได้: '.$response->status()]);
+            return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อได้: ' . $response->status()]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาด: '.$e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
         }
     }
 
@@ -153,18 +153,18 @@ class LineSettingsController extends Controller
 
         try {
             $response = Http::asForm()->withHeaders([
-                'Authorization' => 'Bearer '.$token,
+                'Authorization' => 'Bearer ' . $token,
             ])->post('https://notify-api.line.me/api/notify', [
-                'message' => "\n[XMAN Studio] ทดสอบการเชื่อมต่อ Line Notify สำเร็จ!\nเวลา: ".now()->format('d/m/Y H:i:s'),
+                'message' => "\n[XMAN Studio] ทดสอบการเชื่อมต่อ Line Notify สำเร็จ!\nเวลา: " . now()->format('d/m/Y H:i:s'),
             ]);
 
             if ($response->successful()) {
                 return response()->json(['success' => true, 'message' => 'ส่งข้อความทดสอบสำเร็จ!']);
             }
 
-            return response()->json(['success' => false, 'message' => 'ไม่สามารถส่งข้อความได้: '.$response->status()]);
+            return response()->json(['success' => false, 'message' => 'ไม่สามารถส่งข้อความได้: ' . $response->status()]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาด: '.$e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
         }
     }
 }

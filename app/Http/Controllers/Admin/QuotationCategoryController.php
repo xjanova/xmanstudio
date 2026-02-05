@@ -70,7 +70,7 @@ class QuotationCategoryController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time().'_'.$image->getClientOriginalName();
+            $filename = time() . '_' . $image->getClientOriginalName();
             $path = $image->storeAs('quotations/categories', $filename, 'public');
             $validated['image'] = $path;
         }
@@ -107,7 +107,7 @@ class QuotationCategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_th' => 'nullable|string|max:255',
-            'key' => 'required|string|max:255|unique:quotation_categories,key,'.$category->id,
+            'key' => 'required|string|max:255|unique:quotation_categories,key,' . $category->id,
             'icon' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'description_th' => 'nullable|string',
@@ -124,7 +124,7 @@ class QuotationCategoryController extends Controller
             }
 
             $image = $request->file('image');
-            $filename = time().'_'.$image->getClientOriginalName();
+            $filename = time() . '_' . $image->getClientOriginalName();
             $path = $image->storeAs('quotations/categories', $filename, 'public');
             $validated['image'] = $path;
         }

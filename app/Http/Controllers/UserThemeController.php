@@ -31,7 +31,7 @@ class UserThemeController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'theme' => ['nullable', 'string', 'in:'.implode(',', array_keys(ThemeService::THEMES)).',default'],
+            'theme' => ['nullable', 'string', 'in:' . implode(',', array_keys(ThemeService::THEMES)) . ',default'],
         ]);
 
         $theme = $request->theme;

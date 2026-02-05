@@ -63,7 +63,7 @@ class AutoModerateCommentJob implements ShouldQueue
                 try {
                     $commentService->deleteComment($this->comment);
                 } catch (\Exception $e) {
-                    Log::warning('Could not delete comment from YouTube: '.$e->getMessage());
+                    Log::warning('Could not delete comment from YouTube: ' . $e->getMessage());
                 }
 
                 // Record violation
@@ -110,7 +110,7 @@ class AutoModerateCommentJob implements ShouldQueue
             }
 
         } catch (\Exception $e) {
-            Log::error("Error auto-moderating comment {$this->comment->id}: ".$e->getMessage());
+            Log::error("Error auto-moderating comment {$this->comment->id}: " . $e->getMessage());
             $this->fail($e);
         }
     }
@@ -136,7 +136,7 @@ class AutoModerateCommentJob implements ShouldQueue
             }
 
         } catch (\Exception $e) {
-            Log::error("Failed to handle violation for comment {$this->comment->id}: ".$e->getMessage());
+            Log::error("Failed to handle violation for comment {$this->comment->id}: " . $e->getMessage());
 
             // Even if YouTube delete fails, mark locally
             $this->comment->update([
@@ -152,6 +152,6 @@ class AutoModerateCommentJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Log::error("AutoModerateCommentJob failed for comment {$this->comment->id}: ".$exception->getMessage());
+        Log::error("AutoModerateCommentJob failed for comment {$this->comment->id}: " . $exception->getMessage());
     }
 }

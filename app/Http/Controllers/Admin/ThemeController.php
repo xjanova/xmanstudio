@@ -36,7 +36,7 @@ class ThemeController extends Controller
 
         if (ThemeService::setTheme($theme)) {
             return redirect()->route('admin.theme.index')
-                ->with('success', 'เปลี่ยนธีมเป็น "'.ThemeService::getThemeInfo($theme)['name'].'" เรียบร้อยแล้ว');
+                ->with('success', 'เปลี่ยนธีมเป็น "' . ThemeService::getThemeInfo($theme)['name'] . '" เรียบร้อยแล้ว');
         }
 
         return redirect()->route('admin.theme.index')

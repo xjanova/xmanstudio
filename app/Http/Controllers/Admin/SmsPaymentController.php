@@ -89,7 +89,7 @@ class SmsPaymentController extends Controller
             'description' => 'nullable|string|max:500',
         ]);
 
-        $deviceId = 'SMSCHK-'.strtoupper(bin2hex(random_bytes(4)));
+        $deviceId = 'SMSCHK-' . strtoupper(bin2hex(random_bytes(4)));
         $apiKey = SmsCheckerDevice::generateApiKey();
         $secretKey = SmsCheckerDevice::generateSecretKey();
 
@@ -324,7 +324,7 @@ class SmsPaymentController extends Controller
         $order->update([
             'sms_verification_status' => 'rejected',
             'payment_status' => 'failed',
-            'notes' => $order->notes."\n[SMS Rejected] ".$reason,
+            'notes' => $order->notes . "\n[SMS Rejected] " . $reason,
         ]);
 
         if ($order->smsNotification) {

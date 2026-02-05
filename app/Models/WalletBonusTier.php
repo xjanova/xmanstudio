@@ -37,7 +37,7 @@ class WalletBonusTier extends Model
             return "{$this->bonus_value}%";
         }
 
-        return '฿'.number_format($this->bonus_value, 0);
+        return '฿' . number_format($this->bonus_value, 0);
     }
 
     /**
@@ -45,10 +45,10 @@ class WalletBonusTier extends Model
      */
     public function getRangeLabelAttribute(): string
     {
-        $min = '฿'.number_format($this->min_amount, 0);
+        $min = '฿' . number_format($this->min_amount, 0);
 
         if ($this->max_amount) {
-            $max = '฿'.number_format($this->max_amount, 0);
+            $max = '฿' . number_format($this->max_amount, 0);
 
             return "{$min} - {$max}";
         }

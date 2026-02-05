@@ -44,7 +44,7 @@ class PromptPayService
 
         // Calculate and append CRC
         $crc = $this->calculateCRC16($payload);
-        $payload = substr($payload, 0, -4).$crc;
+        $payload = substr($payload, 0, -4) . $crc;
 
         return $payload;
     }
@@ -96,7 +96,7 @@ class PromptPayService
     {
         if (strlen($id) === 10) {
             // Phone number: add country code
-            return '0066'.substr($id, 1);
+            return '0066' . substr($id, 1);
         }
 
         return $id;
@@ -112,12 +112,12 @@ class PromptPayService
 
         if ($length === 10) {
             // Phone: 08X-XXX-XXXX -> 08X-XXX-XX12
-            return substr($number, 0, 3).'-'.substr($number, 3, 3).'-'.substr($number, 6, 4);
+            return substr($number, 0, 3) . '-' . substr($number, 3, 3) . '-' . substr($number, 6, 4);
         }
 
         if ($length === 13) {
             // National ID: X-XXXX-XXXXX-XX-X
-            return substr($number, 0, 1).'-'.substr($number, 1, 4).'-'.substr($number, 5, 5).'-'.substr($number, 10, 2).'-'.substr($number, 12, 1);
+            return substr($number, 0, 1) . '-' . substr($number, 1, 4) . '-' . substr($number, 5, 5) . '-' . substr($number, 10, 2) . '-' . substr($number, 12, 1);
         }
 
         return $number;
@@ -130,7 +130,7 @@ class PromptPayService
     {
         $length = str_pad(strlen($value), 2, '0', STR_PAD_LEFT);
 
-        return $tag.$length.$value;
+        return $tag . $length . $value;
     }
 
     /**

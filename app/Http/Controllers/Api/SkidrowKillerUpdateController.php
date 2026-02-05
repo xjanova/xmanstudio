@@ -165,9 +165,9 @@ class SkidrowKillerUpdateController extends Controller
         return [
             'version' => '1.0.0',
             'release_notes' => 'Initial release',
-            'direct_download_url' => config('app.url').'/downloads/'.$product->slug.'/latest',
-            'public_download_url' => config('app.url').'/products/'.$product->slug,
-            'release_url' => config('app.url').'/products/'.$product->slug.'/releases/1.0.0',
+            'direct_download_url' => config('app.url') . '/downloads/' . $product->slug . '/latest',
+            'public_download_url' => config('app.url') . '/products/' . $product->slug,
+            'release_url' => config('app.url') . '/products/' . $product->slug . '/releases/1.0.0',
             'published_at' => now()->toISOString(),
             'is_pre_release' => false,
             'requires_license' => false,

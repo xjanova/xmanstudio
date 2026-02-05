@@ -80,7 +80,7 @@ class CustomCodeController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.custom-code.index')
-                ->with('error', 'เกิดข้อผิดพลาด: '.$e->getMessage());
+                ->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
         }
     }
 
@@ -128,12 +128,12 @@ class CustomCodeController extends Controller
 
             return redirect()
                 ->route('admin.custom-code.index')
-                ->with('success', 'ล้าง '.$fieldNames[$field].' เรียบร้อยแล้ว');
+                ->with('success', 'ล้าง ' . $fieldNames[$field] . ' เรียบร้อยแล้ว');
 
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.custom-code.index')
-                ->with('error', 'เกิดข้อผิดพลาด: '.$e->getMessage());
+                ->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
         }
     }
 }

@@ -242,7 +242,7 @@ class AutoTradeXController extends Controller
         if ($plan && in_array($plan, ['monthly', 'yearly', 'lifetime'])) {
             $url = route('autotradex.checkout', $plan);
             if ($machineId) {
-                $url .= '?machine_id='.$machineId;
+                $url .= '?machine_id=' . $machineId;
             }
 
             return redirect($url);
@@ -251,7 +251,7 @@ class AutoTradeXController extends Controller
         // Otherwise show pricing page with machine_id (to show Early Bird info)
         $url = route('autotradex.pricing');
         if ($machineId) {
-            $url .= '?machine_id='.$machineId;
+            $url .= '?machine_id=' . $machineId;
         }
 
         return redirect($url);
@@ -323,10 +323,10 @@ class AutoTradeXController extends Controller
      */
     protected function generateOrderNumber(): string
     {
-        $prefix = 'XM'.date('Ymd');
+        $prefix = 'XM' . date('Ymd');
         $random = strtoupper(Str::random(4));
 
-        return $prefix.'-'.$random;
+        return $prefix . '-' . $random;
     }
 
     /**
@@ -374,7 +374,7 @@ class AutoTradeXController extends Controller
 
         // Find device record (try both full and short machine_id)
         $device = AutoTradeXDevice::where('machine_id', $machineId)
-            ->orWhere('machine_id', 'LIKE', $machineId.'%')
+            ->orWhere('machine_id', 'LIKE', $machineId . '%')
             ->first();
 
         if (! $device) {
@@ -454,7 +454,7 @@ class AutoTradeXController extends Controller
         } elseif ($daysRemaining <= 3) {
             $result['message'] = "⏰ รีบซื้อเลย! เหลือเวลาอีกแค่ {$daysRemaining} วัน!";
         } else {
-            $result['message'] = '🔥 ซื้อตอนนี้ลด '.self::EARLY_BIRD_DISCOUNT_PERCENT."%! เหลือเวลาอีก {$daysRemaining} วัน";
+            $result['message'] = '🔥 ซื้อตอนนี้ลด ' . self::EARLY_BIRD_DISCOUNT_PERCENT . "%! เหลือเวลาอีก {$daysRemaining} วัน";
         }
 
         return $result;

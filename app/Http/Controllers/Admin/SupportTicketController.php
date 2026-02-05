@@ -132,7 +132,7 @@ class SupportTicketController extends Controller
         $attachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('ticket-attachments/'.date('Y/m'), 'public');
+                $path = $file->store('ticket-attachments/' . date('Y/m'), 'public');
                 $attachments[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,
@@ -171,7 +171,7 @@ class SupportTicketController extends Controller
     public function updateStatus(Request $request, SupportTicket $ticket)
     {
         $validated = $request->validate([
-            'status' => 'required|string|in:'.implode(',', array_keys(SupportTicket::getStatuses())),
+            'status' => 'required|string|in:' . implode(',', array_keys(SupportTicket::getStatuses())),
         ]);
 
         $ticket->update([
@@ -191,7 +191,7 @@ class SupportTicketController extends Controller
     public function updatePriority(Request $request, SupportTicket $ticket)
     {
         $validated = $request->validate([
-            'priority' => 'required|string|in:'.implode(',', array_keys(SupportTicket::getPriorities())),
+            'priority' => 'required|string|in:' . implode(',', array_keys(SupportTicket::getPriorities())),
         ]);
 
         $ticket->update(['priority' => $validated['priority']]);
@@ -211,7 +211,7 @@ class SupportTicketController extends Controller
         if ($validated['assigned_to']) {
             $user = User::find($validated['assigned_to']);
             $ticket->assignTo($user);
-            $message = 'มอบหมายให้ '.$user->name.' เรียบร้อยแล้ว';
+            $message = 'มอบหมายให้ ' . $user->name . ' เรียบร้อยแล้ว';
         } else {
             $ticket->update(['assigned_to' => null]);
             $message = 'ยกเลิกการมอบหมายเรียบร้อยแล้ว';

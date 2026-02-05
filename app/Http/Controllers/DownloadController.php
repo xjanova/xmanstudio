@@ -320,7 +320,7 @@ class DownloadController extends Controller
 
         // Get the actual download URL (GitHub redirects to S3)
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$token,
+            'Authorization' => 'Bearer ' . $token,
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download-Proxy',
         ])->withOptions([
@@ -351,7 +351,7 @@ class DownloadController extends Controller
             // For S3 URLs, we don't need auth, but for GitHub we do
             if (strpos($downloadUrl, 'github.com') !== false) {
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer '.$token,
+                    'Authorization: Bearer ' . $token,
                     'Accept: application/octet-stream',
                     'User-Agent: XMAN-Studio-Download-Proxy',
                 ]);
@@ -361,7 +361,7 @@ class DownloadController extends Controller
             curl_close($ch);
         }, 200, [
             'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Content-Length' => $fileSize,
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',

@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Log;
 class FcmNotificationService
 {
     private ?string $accessToken = null;
+
     private ?int $tokenExpiry = null;
 
     /**
@@ -32,6 +33,7 @@ class FcmNotificationService
         $tokens = $this->getTargetTokens($device);
         if (empty($tokens)) {
             Log::debug('FCM: No tokens available for new order notification');
+
             return false;
         }
 
@@ -63,6 +65,7 @@ class FcmNotificationService
         $tokens = $this->getTargetTokens($device);
         if (empty($tokens)) {
             Log::debug('FCM: No tokens available for payment matched notification');
+
             return false;
         }
 
@@ -168,7 +171,7 @@ class FcmNotificationService
         }
 
         // Mark failed tokens as invalid
-        if (!empty($failedTokens)) {
+        if (! empty($failedTokens)) {
             $this->markTokensInvalid($failedTokens);
         }
 
@@ -183,14 +186,16 @@ class FcmNotificationService
     private function sendToToken(string $token, array $data, ?array $notification): bool
     {
         $accessToken = $this->getAccessToken();
-        if (!$accessToken) {
+        if (! $accessToken) {
             Log::error('FCM: Failed to get access token');
+
             return false;
         }
 
         $projectId = config('services.firebase.project_id');
-        if (!$projectId) {
+        if (! $projectId) {
             Log::error('FCM: Firebase project ID not configured');
+
             return false;
         }
 
@@ -238,6 +243,7 @@ class FcmNotificationService
             return false;
         } catch (\Exception $e) {
             Log::error('FCM: Exception during send', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
@@ -253,8 +259,9 @@ class FcmNotificationService
         }
 
         $credentialsPath = config('services.firebase.credentials');
-        if (!$credentialsPath || !file_exists($credentialsPath)) {
+        if (! $credentialsPath || ! file_exists($credentialsPath)) {
             Log::error('FCM: Firebase credentials file not found', ['path' => $credentialsPath]);
+
             return null;
         }
 
@@ -282,13 +289,16 @@ class FcmNotificationService
                 $data = $response->json();
                 $this->accessToken = $data['access_token'];
                 $this->tokenExpiry = time() + ($data['expires_in'] ?? 3600);
+
                 return $this->accessToken;
             }
 
             Log::error('FCM: Failed to get access token', ['response' => $response->json()]);
+
             return null;
         } catch (\Exception $e) {
             Log::error('FCM: Exception getting access token', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
