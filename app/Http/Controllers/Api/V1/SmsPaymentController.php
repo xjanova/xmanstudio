@@ -293,7 +293,7 @@ class SmsPaymentController extends Controller
         if ($status !== 'all') {
             if ($status === 'pending') {
                 $query->whereIn('sms_verification_status', ['pending', null])
-                      ->where('payment_status', '!=', 'paid');
+                    ->where('payment_status', '!=', 'paid');
             } elseif ($status === 'matched') {
                 $query->where('sms_verification_status', 'matched');
             } elseif ($status === 'confirmed') {
@@ -643,8 +643,8 @@ class SmsPaymentController extends Controller
             'private-sms-checker.device.' . $device->device_id,
         ];
 
-        $isAllowed = in_array($channelName, $allowedChannels) ||
-                     str_starts_with($channelName, 'sms-checker.broadcast');
+        $isAllowed = in_array($channelName, $allowedChannels)
+            || str_starts_with($channelName, 'sms-checker.broadcast');
 
         if (! $isAllowed) {
             return response()->json([
