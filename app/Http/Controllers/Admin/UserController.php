@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\UserRental;
 use App\Models\Wallet;
@@ -73,7 +74,9 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.create');
+        $roles = Role::orderBy('name')->get();
+
+        return view('admin.users.create', compact('roles'));
     }
 
     /**
@@ -87,6 +90,8 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'role' => ['required', Rule::in(['user', 'admin', 'super_admin'])],
+            'role_ids' => ['nullable', 'array'],
+            'role_ids.*' => ['exists:roles,id'],
             'is_active' => ['boolean'],
         ]);
 
@@ -100,6 +105,11 @@ class UserController extends Controller
             'email_verified_at' => now(),
         ]);
 
+        // Sync roles
+        if (! empty($validated['role_ids'])) {
+            $user->roles()->sync($validated['role_ids']);
+        }
+
         return redirect()
             ->route('admin.users.show', $user)
             ->with('success', "สร้างสมาชิก {$user->name} สำเร็จ");
@@ -111,7 +121,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         // Load relationships
-        $user->load(['orders' => fn ($q) => $q->latest()->take(5)]);
+        $user->load(['orders' => fn ($q) => $q->latest()->take(5), 'roles.permissions']);
 
         // Get user's wallet
         $wallet = Wallet::where('user_id', $user->id)->first();
@@ -150,7 +160,10 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $roles = Role::orderBy('name')->get();
+        $user->load('roles');
+
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
     /**
@@ -164,6 +177,8 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'role' => ['required', Rule::in(['user', 'admin', 'super_admin'])],
+            'role_ids' => ['nullable', 'array'],
+            'role_ids.*' => ['exists:roles,id'],
             'is_active' => ['boolean'],
             'marketing_email_enabled' => ['boolean'],
             'marketing_line_enabled' => ['boolean'],
@@ -199,6 +214,9 @@ class UserController extends Controller
         }
 
         $user->save();
+
+        // Sync roles
+        $user->roles()->sync($validated['role_ids'] ?? []);
 
         return redirect()
             ->route('admin.users.show', $user)

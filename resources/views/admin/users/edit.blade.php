@@ -145,10 +145,10 @@
                     @enderror
                 </div>
 
-                <!-- Role -->
+                <!-- Role (Legacy) -->
                 <div>
                     <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        บทบาท <span class="text-rose-500">*</span>
+                        ระดับสิทธิ์หลัก <span class="text-rose-500">*</span>
                     </label>
                     <select name="role" id="role" required
                             class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 @error('role') border-rose-500 @enderror">
@@ -162,6 +162,46 @@
                     <p class="mt-2 text-sm text-rose-500">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <!-- Roles (New System) -->
+                @if(isset($roles) && $roles->count() > 0)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        บทบาท (ระบบใหม่)
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        @php
+                            $userRoleIds = old('role_ids', $user->roles->pluck('id')->toArray());
+                        @endphp
+                        @foreach($roles as $role)
+                        <label class="relative flex items-start p-4 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-amber-300 dark:hover:border-amber-600 cursor-pointer transition-all duration-200 @if(in_array($role->id, $userRoleIds)) border-amber-500 bg-amber-50 dark:bg-amber-900/20 @endif">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" name="role_ids[]" value="{{ $role->id }}"
+                                       {{ in_array($role->id, $userRoleIds) ? 'checked' : '' }}
+                                       class="w-5 h-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 transition-colors duration-200">
+                            </div>
+                            <div class="ml-3">
+                                <span class="block text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ $role->display_name ?? $role->name }}
+                                </span>
+                                @if($role->description)
+                                <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $role->description }}</span>
+                                @endif
+                                <span class="inline-flex items-center mt-2 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                    {{ $role->permissions->count() }} สิทธิ์
+                                </span>
+                            </div>
+                        </label>
+                        @endforeach
+                    </div>
+                    @error('role_ids')
+                    <p class="mt-2 text-sm text-rose-500">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        เลือกบทบาทเพื่อกำหนดสิทธิ์การใช้งานเพิ่มเติม สามารถเลือกได้หลายบทบาท
+                    </p>
+                </div>
+                @endif
 
                 <!-- Password -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

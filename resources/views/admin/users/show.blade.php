@@ -96,6 +96,36 @@
             </div>
         </div>
 
+        <!-- Roles Card -->
+        @if($user->roles && $user->roles->count() > 0)
+        <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">บทบาท</h3>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">
+                    {{ $user->roles->count() }} บทบาท
+                </span>
+            </div>
+            <div class="p-6 space-y-3">
+                @foreach($user->roles as $role)
+                <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ $role->display_name ?? $role->name }}</p>
+                        @if($role->description)
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $role->description }}</p>
+                        @endif
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400">
+                        {{ $role->permissions->count() }} สิทธิ์
+                    </span>
+                </div>
+                @endforeach
+                <a href="{{ route('admin.users.edit', $user) }}" class="block text-center text-sm text-indigo-600 dark:text-indigo-400 hover:underline mt-3">
+                    จัดการบทบาท →
+                </a>
+            </div>
+        </div>
+        @endif
+
         <!-- LINE Connection Card -->
         <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
