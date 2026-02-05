@@ -273,6 +273,7 @@ class SmsPaymentController extends Controller
 
     /**
      * Get orders for approval in Android app.
+     * Format matches Thaiprompt-Affiliate for compatibility.
      *
      * GET /api/v1/sms-payment/orders
      */
@@ -287,11 +288,12 @@ class SmsPaymentController extends Controller
             ->whereNotNull('unique_payment_amount_id')
             ->orderBy('created_at', 'desc');
 
-        // Filter by status
-        if ($request->has('status')) {
-            $status = $request->input('status');
+        // Filter by status (default: pending)
+        $status = $request->input('status', 'pending');
+        if ($status !== 'all') {
             if ($status === 'pending') {
-                $query->where('sms_verification_status', 'pending');
+                $query->whereIn('sms_verification_status', ['pending', null])
+                      ->where('payment_status', '!=', 'paid');
             } elseif ($status === 'matched') {
                 $query->where('sms_verification_status', 'matched');
             } elseif ($status === 'confirmed') {
@@ -309,32 +311,87 @@ class SmsPaymentController extends Controller
 
         $orders = $query->paginate($request->input('per_page', 20));
 
-        // Transform for Android app
-        $transformedOrders = $orders->through(function ($order) {
-            return [
-                'id' => $order->id,
-                'order_number' => $order->order_number,
-                'customer_name' => $order->customer_name,
-                'customer_email' => $order->customer_email,
-                'total' => (float) $order->total,
-                'unique_amount' => $order->uniquePaymentAmount ? (float) $order->uniquePaymentAmount->unique_amount : null,
-                'payment_status' => $order->payment_status,
-                'sms_verification_status' => $order->sms_verification_status ?? 'pending',
-                'sms_verified_at' => $order->sms_verified_at,
-                'notification' => $order->smsNotification ? [
-                    'id' => $order->smsNotification->id,
-                    'bank' => $order->smsNotification->bank,
-                    'amount' => (float) $order->smsNotification->amount,
-                    'sms_timestamp' => $order->smsNotification->sms_timestamp,
-                ] : null,
-                'created_at' => $order->created_at->toIso8601String(),
-            ];
+        // Transform to Android app format (matching Thaiprompt-Affiliate)
+        $transformedOrders = $orders->getCollection()->map(function ($order) {
+            return $this->transformOrderForAndroid($order);
         });
 
         return response()->json([
             'success' => true,
-            'data' => $transformedOrders,
+            'data' => [
+                'data' => $transformedOrders,
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'total' => $orders->total(),
+            ],
         ]);
+    }
+
+    /**
+     * Transform Order to Android app format (matching Thaiprompt-Affiliate).
+     */
+    private function transformOrderForAndroid(Order $order): array
+    {
+        // Map sms_verification_status to approval_status for Android
+        $approvalStatus = match ($order->sms_verification_status) {
+            'pending', null => 'pending_review',
+            'matched' => 'pending_review',
+            'confirmed' => 'auto_approved',
+            'rejected' => 'rejected',
+            default => 'pending_review',
+        };
+
+        // Get the amount to match (unique_amount or total)
+        $amount = $order->uniquePaymentAmount
+            ? (float) $order->uniquePaymentAmount->unique_amount
+            : (float) $order->total;
+
+        // Build order_details_json
+        $orderDetails = [
+            'order_number' => $order->order_number,
+            'product_name' => $order->items?->first()?->product?->name ?? $order->product_name ?? null,
+            'product_details' => null,
+            'quantity' => $order->items?->count() ?? 1,
+            'website_name' => config('app.name'),
+            'customer_name' => $order->customer_name,
+            'amount' => $amount,
+        ];
+
+        // Build notification object
+        $notification = $order->smsNotification ? [
+            'id' => $order->smsNotification->id,
+            'bank' => $order->smsNotification->bank,
+            'type' => $order->smsNotification->type ?? 'credit',
+            'amount' => sprintf('%.2f', (float) $order->smsNotification->amount),
+            'sms_timestamp' => $order->smsNotification->sms_timestamp,
+            'sender_or_receiver' => $order->smsNotification->sender_or_receiver ?? '',
+        ] : [
+            // Dummy notification for orders without SMS match yet
+            'id' => $order->id,
+            'bank' => 'PROMPTPAY',
+            'type' => 'credit',
+            'amount' => sprintf('%.2f', $amount),
+            'sms_timestamp' => $order->created_at?->format('Y-m-d H:i:s'),
+            'sender_or_receiver' => $order->customer_name ?? '',
+        ];
+
+        return [
+            'id' => $order->id,
+            'notification_id' => $order->smsNotification?->id,
+            'matched_transaction_id' => $order->smsNotification?->id,
+            'device_id' => $order->smsNotification?->device_id,
+            'approval_status' => $approvalStatus,
+            'confidence' => $order->smsNotification ? 'high' : 'medium',
+            'approved_by' => null,
+            'approved_at' => $order->paid_at?->toIso8601String(),
+            'rejected_at' => $order->sms_verification_status === 'rejected' ? $order->updated_at?->toIso8601String() : null,
+            'rejection_reason' => null,
+            'order_details_json' => $orderDetails,
+            'synced_version' => $order->updated_at ? intval($order->updated_at->timestamp * 1000) : 0,
+            'created_at' => $order->created_at?->toIso8601String(),
+            'updated_at' => $order->updated_at?->toIso8601String(),
+            'notification' => $notification,
+        ];
     }
 
     /**
@@ -625,81 +682,60 @@ class SmsPaymentController extends Controller
 
     /**
      * Get changes since last sync (for delta sync).
+     * Format matches Thaiprompt-Affiliate /orders/sync endpoint.
      *
-     * GET /api/v1/sms-payment/sync
+     * GET /api/v1/sms-payment/orders/sync
      */
-    public function sync(Request $request): JsonResponse
+    public function syncOrders(Request $request): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
         if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $sinceVersion = (int) $request->input('since_version', 0);
-        $sinceTimestamp = $request->input('since_timestamp');
+        // Support both since_version (Android app) and since (legacy)
+        $sinceVersion = $request->input('since_version') ?? $request->input('since') ?? 0;
 
-        // Get current sync version
-        $currentVersion = $this->getSyncVersionNumber();
-
-        // If client is up to date, return empty changes
-        if ($sinceVersion >= $currentVersion) {
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'version' => $currentVersion,
-                    'has_changes' => false,
-                    'orders' => [],
-                ],
-            ]);
-        }
-
-        // Get changed orders since the given timestamp or version
+        // Get changed orders since the given version (timestamp in milliseconds)
         $query = Order::with(['smsNotification', 'uniquePaymentAmount'])
             ->whereNotNull('unique_payment_amount_id');
 
-        if ($sinceTimestamp) {
-            $query->where('updated_at', '>', $sinceTimestamp);
-        } else {
-            // Get recent orders if no timestamp provided (last 24 hours)
-            $query->where('updated_at', '>=', now()->subDay());
+        if ($sinceVersion > 0) {
+            // Get orders updated after the given timestamp (milliseconds)
+            $query->where('updated_at', '>', date('Y-m-d H:i:s', $sinceVersion / 1000));
         }
 
         $orders = $query->orderBy('updated_at', 'desc')
-            ->limit(100)
+            ->limit($request->input('limit', 100))
             ->get();
 
-        // Transform orders
+        // Transform to Android app format
         $transformedOrders = $orders->map(function ($order) {
-            return [
-                'id' => $order->id,
-                'order_number' => $order->order_number,
-                'customer_name' => $order->customer_name,
-                'customer_email' => $order->customer_email,
-                'total' => (float) $order->total,
-                'unique_amount' => $order->uniquePaymentAmount ? (float) $order->uniquePaymentAmount->unique_amount : null,
-                'payment_status' => $order->payment_status,
-                'sms_verification_status' => $order->sms_verification_status ?? 'pending',
-                'sms_verified_at' => $order->sms_verified_at,
-                'notification' => $order->smsNotification ? [
-                    'id' => $order->smsNotification->id,
-                    'bank' => $order->smsNotification->bank,
-                    'amount' => (float) $order->smsNotification->amount,
-                    'sms_timestamp' => $order->smsNotification->sms_timestamp,
-                ] : null,
-                'created_at' => $order->created_at->toIso8601String(),
-                'updated_at' => $order->updated_at->toIso8601String(),
-            ];
+            return $this->transformOrderForAndroid($order);
         });
+
+        $latestVersion = intval(round(microtime(true) * 1000));
+
+        // Update device last_active_at
+        $device->update(['last_active_at' => now()]);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'version' => $currentVersion,
-                'has_changes' => $orders->isNotEmpty(),
                 'orders' => $transformedOrders,
-                'server_time' => now()->toIso8601String(),
+                'latest_version' => $latestVersion,
             ],
         ]);
+    }
+
+    /**
+     * Legacy sync endpoint - redirects to syncOrders.
+     *
+     * GET /api/v1/sms-payment/sync
+     */
+    public function sync(Request $request): JsonResponse
+    {
+        return $this->syncOrders($request);
     }
 
     /**
