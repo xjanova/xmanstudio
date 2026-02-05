@@ -128,8 +128,8 @@ class UserController extends Controller
 
         // Get user's licenses through orders
         $licenses = LicenseKey::whereHas('order', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
+            $query->where('user_id', $user->id);
+        })
             ->with(['product', 'order'])
             ->latest()
             ->take(10)
