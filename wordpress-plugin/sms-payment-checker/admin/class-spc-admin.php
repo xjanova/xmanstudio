@@ -480,8 +480,8 @@ class SPC_Admin {
                     <label for="spc_sync_interval"><?php _e('Sync Interval (seconds)', 'sms-payment-checker'); ?></label>
                 </th>
                 <td>
-                    <input type="number" id="spc_sync_interval" name="spc_sync_interval" value="<?php echo esc_attr(get_option('spc_sync_interval', 30)); ?>" min="10" max="300" class="small-text">
-                    <p class="description"><?php _e('How often Android app should sync with server.', 'sms-payment-checker'); ?></p>
+                    <input type="number" id="spc_sync_interval" name="spc_sync_interval" value="<?php echo esc_attr(get_option('spc_sync_interval', 5)); ?>" min="3" max="60" class="small-text">
+                    <p class="description"><?php _e('How often Android app should sync with server. (Recommended: 5 seconds)', 'sms-payment-checker'); ?></p>
                 </td>
             </tr>
             <tr>
@@ -623,7 +623,7 @@ class SPC_Admin {
             'device_id' => $device->device_id,
             'api_key' => $device->api_key,
             'secret_key' => $device->secret_key,
-            'sync_interval' => (int) get_option('spc_sync_interval', 30),
+            'sync_interval' => (int) get_option('spc_sync_interval', 5),
         ));
     }
 

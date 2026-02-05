@@ -231,7 +231,7 @@ final class SMS_Payment_Checker {
             'default_approval_mode' => 'auto',
             'nonce_expiry_hours' => 24,
             'line_on_match' => false,
-            'sync_interval' => 30,
+            'sync_interval' => 5, // 5 seconds for faster order updates
         );
 
         foreach ($defaults as $key => $value) {
