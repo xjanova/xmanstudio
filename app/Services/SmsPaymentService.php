@@ -101,6 +101,8 @@ class SmsPaymentService
     /**
      * Decrypt the encrypted payload from the app.
      *
+     * รูปแบบข้อมูล: Base64(IV[12 bytes] + Ciphertext + AuthTag[16 bytes])
+     *
      * @param  string  $encryptedData  Base64 encoded AES-256-GCM encrypted data
      * @param  string  $secretKey  The device's secret key
      * @return array|null Decrypted payload or null on failure
@@ -123,8 +125,8 @@ class SmsPaymentService
             $tag = substr($cipherTextWithTag, -$tagLength);
             $cipherText = substr($cipherTextWithTag, 0, -$tagLength);
 
-            // Derive key (first 32 bytes of secret)
-            $key = str_pad(substr($secretKey, 0, 32), 32, "\0");
+            // SECURITY: ใช้ PBKDF2 สร้าง encryption key (ตรงกับ Android CryptoManager)
+            $key = $this->deriveKey($secretKey, 'encryption');
 
             $decrypted = openssl_decrypt(
                 $cipherText,
@@ -136,7 +138,7 @@ class SmsPaymentService
             );
 
             if ($decrypted === false) {
-                $this->log('warning', 'SMS Payment: Decryption failed');
+                $this->log('warning', 'SMS Payment: Decryption failed (auth tag mismatch or wrong key)');
 
                 return null;
             }
@@ -158,12 +160,39 @@ class SmsPaymentService
 
     /**
      * Verify HMAC signature.
+     *
+     * ลายเซ็น = HMAC-SHA256(encrypted_data + nonce + timestamp, hmacKey)
+     * hmacKey ถูก derive แยกจาก encryption key ผ่าน PBKDF2
      */
     public function verifySignature(string $data, string $signature, string $secretKey): bool
     {
-        $expected = base64_encode(hash_hmac('sha256', $data, $secretKey, true));
+        // SECURITY: ใช้ dedicated HMAC key (แยกจาก encryption key)
+        $hmacKey = $this->deriveKey($secretKey, 'hmac-signing');
+        $expected = base64_encode(hash_hmac('sha256', $data, $hmacKey, true));
 
         return hash_equals($expected, $signature);
+    }
+
+    /**
+     * Derive a strong key from secret using PBKDF2-SHA256
+     *
+     * ต้องตรงกับ Android CryptoManager.deriveKey() ทุกประการ:
+     * - Algorithm: PBKDF2WithHmacSHA256
+     * - Iterations: 100,000
+     * - Key length: 256 bits (32 bytes)
+     * - Salt: "thaiprompt-smschecker-v1:{context}"
+     *
+     * หมายเหตุ: ใช้ salt เดียวกันกับ Android app เพื่อความเข้ากันได้
+     *
+     * @param  string  $secret  Secret key string
+     * @param  string  $context  Purpose context ('encryption' or 'hmac-signing')
+     * @return string 32-byte derived key (raw binary)
+     */
+    private function deriveKey(string $secret, string $context = 'encryption'): string
+    {
+        $salt = "thaiprompt-smschecker-v1:{$context}";
+
+        return hash_pbkdf2('sha256', $secret, $salt, 100000, 32, true);
     }
 
     /**

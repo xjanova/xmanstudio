@@ -22,6 +22,7 @@ class SmsCheckerDevice extends Model
         'last_active_at',
         'user_id',
         'ip_address',
+        'fcm_token',
         'approval_mode',
     ];
 
