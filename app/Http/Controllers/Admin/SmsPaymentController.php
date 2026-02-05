@@ -130,6 +130,7 @@ class SmsPaymentController extends Controller
             'secretKey' => $device->secret_key,
             'deviceId' => $device->device_id,
             'deviceName' => $device->name,
+            'sync_interval' => (int) config('smschecker.sync.interval', 5),
         ];
 
         $qrCode = '';

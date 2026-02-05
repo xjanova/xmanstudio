@@ -146,6 +146,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Sync Settings (Polling-based)
+    |--------------------------------------------------------------------------
+    |
+    | Settings for polling-based sync between Android app and Server.
+    | Uses polling instead of push notifications for privacy.
+    |
+    */
+    'sync' => [
+        // Sync interval in seconds - Android app will poll every X seconds
+        'interval' => env('SMSCHECKER_SYNC_INTERVAL', 5),
+
+        // Timeout for sync requests in seconds
+        'timeout' => env('SMSCHECKER_SYNC_TIMEOUT', 10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | WebSocket Settings
     |--------------------------------------------------------------------------
     |
