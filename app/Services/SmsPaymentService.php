@@ -197,28 +197,71 @@ class SmsPaymentService
     }
 
     /**
-     * Cleanup expired data.
+     * Cleanup expired data and auto-cancel orders.
+     *
+     * - ยกเลิก Orders ที่ unique amount หมดอายุ (30 นาที)
+     * - ล้าง unique amounts ที่หมดอายุ → สถานะ 'expired'
+     * - ลบ nonces เก่า
+     * - ล้าง pending notifications เก่า
      */
     public function cleanup(): array
     {
         $stats = [
+            'cancelled_orders' => 0,
             'expired_amounts' => 0,
             'deleted_nonces' => 0,
             'expired_notifications' => 0,
         ];
 
-        // Expire old unique amounts
-        $stats['expired_amounts'] = UniquePaymentAmount::where('status', 'reserved')
-            ->where('expires_at', '<=', now())
-            ->update(['status' => 'expired']);
+        // ========================================
+        // Step 1: ยกเลิก Orders ที่หมดเวลาชำระ (30 นาที)
+        // ========================================
 
-        // Clean old nonces (older than configured hours)
+        // ดึง unique amounts ที่หมดอายุและยังเป็น 'reserved'
+        $expiredUniqueAmounts = UniquePaymentAmount::where('status', 'reserved')
+            ->where('expires_at', '<=', now())
+            ->with('order')
+            ->get();
+
+        foreach ($expiredUniqueAmounts as $uniqueAmount) {
+            // ยกเลิก Order ถ้ายังเป็น pending และยังไม่ได้ชำระ
+            if ($uniqueAmount->order &&
+                $uniqueAmount->order->status === 'pending' &&
+                $uniqueAmount->order->payment_status !== 'paid') {
+
+                $uniqueAmount->order->update([
+                    'status' => 'cancelled',
+                    'payment_status' => 'expired',
+                    'notes' => ($uniqueAmount->order->notes ? $uniqueAmount->order->notes . "\n" : '') .
+                        'หมดเวลาชำระเงิน (30 นาที) - ระบบยกเลิกอัตโนมัติ ' . now()->format('d/m/Y H:i'),
+                ]);
+                $stats['cancelled_orders']++;
+
+                $this->log('info', 'SMS Payment: Auto-cancelled expired order', [
+                    'order_id' => $uniqueAmount->order->id,
+                    'order_number' => $uniqueAmount->order->order_number,
+                    'amount' => $uniqueAmount->unique_amount,
+                ]);
+            }
+
+            // อัปเดต unique amount เป็น expired
+            $uniqueAmount->update(['status' => 'expired']);
+            $stats['expired_amounts']++;
+        }
+
+        // ========================================
+        // Step 2: ลบ nonces เก่า
+        // ========================================
+
         $nonceExpiry = config('smschecker.nonce_expiry_hours', 24);
         $stats['deleted_nonces'] = DB::table('sms_payment_nonces')
             ->where('used_at', '<', now()->subHours($nonceExpiry))
             ->delete();
 
-        // Expire old pending notifications (older than 7 days)
+        // ========================================
+        // Step 3: ล้าง pending notifications เก่า (> 7 วัน)
+        // ========================================
+
         $stats['expired_notifications'] = SmsPaymentNotification::where('status', 'pending')
             ->where('created_at', '<', now()->subDays(7))
             ->update(['status' => 'expired']);
