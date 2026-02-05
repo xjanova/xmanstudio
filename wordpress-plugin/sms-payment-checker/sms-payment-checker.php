@@ -69,6 +69,7 @@ final class SMS_Payment_Checker {
         require_once SPC_PLUGIN_DIR . 'includes/class-spc-notification.php';
         require_once SPC_PLUGIN_DIR . 'includes/class-spc-matching.php';
         require_once SPC_PLUGIN_DIR . 'includes/class-spc-api.php';
+        require_once SPC_PLUGIN_DIR . 'includes/class-spc-license.php';
 
         // Admin
         if (is_admin()) {
@@ -119,7 +120,17 @@ final class SMS_Payment_Checker {
      * Plugin deactivation
      */
     public function deactivate() {
+        wp_clear_scheduled_hook('spc_daily_license_check');
         flush_rewrite_rules();
+    }
+
+    /**
+     * Check if license is active
+     *
+     * @return bool
+     */
+    public function has_valid_license() {
+        return SPC_License::instance()->is_active();
     }
 
     /**
@@ -252,6 +263,7 @@ final class SMS_Payment_Checker {
         load_plugin_textdomain('sms-payment-checker', false, dirname(SPC_PLUGIN_BASENAME) . '/languages');
 
         // Initialize components
+        SPC_License::instance();
         SPC_Device::instance();
         SPC_Notification::instance();
         SPC_Matching::instance();

@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PaymentConfirmedMail;
+use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
+use App\Services\LicenseService;
 use App\Services\SmsPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class SmsPaymentController extends Controller
@@ -295,6 +299,9 @@ class SmsPaymentController extends Controller
             $order->smsNotification->update(['status' => 'confirmed']);
         }
 
+        // Auto-generate license keys for products that require them
+        $this->generateLicensesForOrder($order);
+
         Log::info('Order payment manually confirmed by admin', [
             'order_id' => $order->id,
             'admin_id' => auth()->id(),
@@ -372,5 +379,78 @@ class SmsPaymentController extends Controller
         return redirect()
             ->back()
             ->with('success', "Cleanup เรียบร้อย: หมดอายุ {$stats['expired_amounts']} ยอด, ลบ {$stats['deleted_nonces']} nonces, หมดอายุ {$stats['expired_notifications']} notifications");
+    }
+
+    /**
+     * Auto-generate license keys for order items that require them.
+     */
+    private function generateLicensesForOrder(Order $order): void
+    {
+        $order->load('items.product');
+        $licenseService = app(LicenseService::class);
+        $generated = false;
+
+        foreach ($order->items as $item) {
+            if (! $item->product || ! $item->product->requires_license) {
+                continue;
+            }
+
+            // Check if licenses already exist for this order+product
+            $existingCount = LicenseKey::where('order_id', $order->id)
+                ->where('product_id', $item->product_id)
+                ->count();
+
+            if ($existingCount >= $item->quantity) {
+                continue;
+            }
+
+            // Determine license type from custom_requirements or default to yearly
+            $licenseType = 'yearly';
+            if ($item->custom_requirements) {
+                $requirements = json_decode($item->custom_requirements, true);
+                if (! empty($requirements['license_type'])) {
+                    $licenseType = $requirements['license_type'];
+                }
+            }
+
+            $expiresAt = match ($licenseType) {
+                'monthly' => now()->addDays(30),
+                'yearly' => now()->addYear(),
+                'lifetime' => null,
+                default => now()->addYear(),
+            };
+
+            $toGenerate = $item->quantity - $existingCount;
+            $licenses = $licenseService->generateLicenses(
+                $licenseType,
+                $toGenerate,
+                1,
+                $item->product_id
+            );
+
+            // Link licenses to the order
+            foreach ($licenses as $license) {
+                LicenseKey::where('id', $license['id'])->update([
+                    'order_id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'expires_at' => $expiresAt,
+                ]);
+            }
+
+            $generated = true;
+        }
+
+        // Send payment confirmed email with license keys
+        if ($generated && $order->customer_email) {
+            try {
+                Mail::to($order->customer_email)
+                    ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
+            } catch (\Exception $e) {
+                Log::error('Failed to send payment confirmed email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }

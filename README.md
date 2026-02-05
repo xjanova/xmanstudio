@@ -1,6 +1,29 @@
 # XMAN Studio
 
+[![Website](https://img.shields.io/badge/Website-xmanstudio.com-blue?style=flat-square&logo=google-chrome)](https://xmanstudio.com)
+[![Products](https://img.shields.io/badge/Products-Browse%20All-green?style=flat-square&logo=shopping-bag)](https://xmanstudio.com/products)
+[![Services](https://img.shields.io/badge/Services-Web%20%7C%20Mobile%20%7C%20AI-purple?style=flat-square&logo=code)](https://xmanstudio.com/services)
+
 ระบบจัดการธุรกิจครบวงจร สำหรับการขายผลิตภัณฑ์ดิจิทัล, ระบบเช่า, License Management และ Metal-X YouTube Channel
+
+## Products & Services
+
+### Digital Products
+- **[SMS Payment Checker](https://xmanstudio.com/products/sms-payment-checker)** - WordPress/WooCommerce plugin สำหรับตรวจสอบการชำระเงินผ่าน SMS อัตโนมัติ (15+ ธนาคารไทย)
+- **[Skidrow Killer](https://xmanstudio.com/products/skidrow-killer)** - Anti-malware scanner พร้อม Real-time Protection
+- **[AutoTradeX](https://xmanstudio.com/products/autotradex)** - ระบบเทรดอัตโนมัติ
+- **[PostXAgent](https://xmanstudio.com/products/postx-agent)** - AI Brand Promotion Manager (9 แพลตฟอร์ม)
+- **[SpiderX](https://xmanstudio.com/products/spiderx)** - Decentralized P2P Mesh Network
+- **[WinXTools](https://xmanstudio.com/products/winx-tools)** - Windows Network & System Management
+
+### Development Services
+- **[Web Development](https://xmanstudio.com/services)** - Landing Page, Corporate Website, E-commerce, Web Apps, Backend/APIs
+- **[Mobile Development](https://xmanstudio.com/services)** - Android, iOS, Flutter Cross-Platform
+- **[AI & Automation](https://xmanstudio.com/services)** - AI Integration, Chatbot, Data Analysis
+- **[Custom Software](https://xmanstudio.com/services)** - Desktop Apps, System Utilities
+
+### Support & Quotation
+- **[Support](https://xmanstudio.com/support)** - ติดต่อสอบถามหรือขอใบเสนอราคา
 
 ## Tech Stack
 

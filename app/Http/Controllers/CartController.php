@@ -27,23 +27,45 @@ class CartController extends Controller
     {
         $request->validate([
             'quantity' => 'integer|min:1|max:99',
+            'license_type' => 'nullable|in:monthly,yearly,lifetime',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         $cart = $this->getOrCreateCart();
         $quantity = $request->input('quantity', 1);
+        $price = $product->price;
 
-        // Check if product already in cart
+        // Build custom requirements with license_type if provided
+        $customRequirements = null;
+        if ($request->filled('license_type') && $product->requires_license) {
+            $licenseType = $request->license_type;
+            $customRequirements = json_encode(['license_type' => $licenseType]);
+
+            // Override price based on license type (from product page pricing)
+            if ($request->filled('price')) {
+                $requestedPrice = (float) $request->price;
+                if ($requestedPrice > 0) {
+                    $price = $requestedPrice;
+                }
+            }
+        }
+
+        // Check if product already in cart (replace if different license_type)
         $cartItem = $cart->items()->where('product_id', $product->id)->first();
 
         if ($cartItem) {
-            $cartItem->update([
-                'quantity' => $cartItem->quantity + $quantity,
-            ]);
+            $update = ['quantity' => $cartItem->quantity + $quantity];
+            if ($customRequirements) {
+                $update['custom_requirements'] = $customRequirements;
+                $update['price'] = $price;
+            }
+            $cartItem->update($update);
         } else {
             $cart->items()->create([
                 'product_id' => $product->id,
                 'quantity' => $quantity,
-                'price' => $product->price,
+                'price' => $price,
+                'custom_requirements' => $customRequirements,
             ]);
         }
 

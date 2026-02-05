@@ -15,6 +15,7 @@ class LicenseKey extends Model
     protected $fillable = [
         'product_id',
         'order_id',
+        'user_id',
         'license_key',
         'status',
         'license_type',
@@ -64,6 +65,11 @@ class LicenseKey extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function scopeActive($query)

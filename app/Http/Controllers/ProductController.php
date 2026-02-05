@@ -89,6 +89,7 @@ class ProductController extends Controller
             'postxagent' => 'products.postxagent',
             'gpusharx' => 'products.gpusharx',
             'skidrow-killer' => 'products.skidrowkiller',
+            'sms-payment-checker' => 'products.smspaymentchecker',
         ];
 
         if (isset($customViews[$slug])) {
