@@ -1,0 +1,153 @@
+# Copyright (C) 2024 XMANStudio
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: SMS Payment Checker 1.6.0\n"
+"Report-Msgid-Bugs-To: https://github.com/xjanova/smschecker/issues\n"
+"POT-Creation-Date: 2024-01-15 10:00:00+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: admin/class-spc-admin.php
+msgid "SMS Checker"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Dashboard"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Devices"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Notifications"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Settings"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Total Orders (7 days)"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Auto Approved"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Pending Review"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Rejected"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Total Verified Amount"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Add Device"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Device Name"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Device ID"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Status"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Approval Mode"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Last Active"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Actions"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "QR Code"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Regenerate"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Delete"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Auto (automatic approval)"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Manual (requires approval)"
+msgstr ""
+
+#: admin/class-spc-admin.php
+msgid "Smart (auto for exact match)"
+msgstr ""
+
+#: includes/class-spc-wc-gateway.php
+msgid "Bank Transfer (SMS Verified)"
+msgstr ""
+
+#: includes/class-spc-wc-gateway.php
+msgid "Accept bank transfers with automatic SMS verification."
+msgstr ""
+
+#: includes/class-spc-wc-gateway.php
+msgid "Payment Instructions"
+msgstr ""
+
+#: includes/class-spc-wc-gateway.php
+msgid "Amount to Transfer:"
+msgstr ""
+
+#: includes/class-spc-wc-gateway.php
+msgid "Payment Confirmed!"
+msgstr ""
+
+#: includes/class-spc-matching.php
+msgid "Payment verified via SMS Checker. Bank: %s, Amount: %s"
+msgstr ""
+
+#: includes/class-spc-matching.php
+msgid "Payment matched via SMS Checker (awaiting approval). Bank: %s, Amount: %s"
+msgstr ""
+
+#: includes/class-spc-matching.php
+msgid "Payment approved via SMS Checker"
+msgstr ""
+
+#: includes/class-spc-matching.php
+msgid "Payment rejected via SMS Checker. Reason: %s"
+msgstr ""
+
+#: includes/class-spc-fcm.php
+msgid "New Order"
+msgstr ""
+
+#: includes/class-spc-fcm.php
+msgid "Payment Matched!"
+msgstr ""
+
+#: includes/class-spc-fcm.php
+msgid "Order Updated"
+msgstr ""

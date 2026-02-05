@@ -225,56 +225,80 @@ $smsPaymentService->notifyPaymentMatched($order, $notification);
 
 ## WordPress Integration
 
-สำหรับ WordPress/WooCommerce ให้สร้าง plugin ที่ implement API เดียวกัน:
+WordPress plugin พร้อมใช้งานแล้วที่ `wordpress-plugin/sms-payment-checker/`
 
 ### Plugin Structure
 
 ```
 wp-content/plugins/sms-payment-checker/
-├── sms-payment-checker.php      # Main plugin file
+├── sms-payment-checker.php          # Main plugin file
+├── readme.txt                       # WordPress readme
 ├── includes/
-│   ├── class-api.php            # REST API endpoints
-│   ├── class-device.php         # Device management
-│   ├── class-notification.php   # SMS notification handling
-│   └── class-matching.php       # Order matching logic
+│   ├── class-spc-api.php            # REST API endpoints
+│   ├── class-spc-device.php         # Device management
+│   ├── class-spc-notification.php   # SMS notification handling
+│   ├── class-spc-matching.php       # Order matching logic
+│   ├── class-spc-encryption.php     # AES-256-GCM encryption
+│   ├── class-spc-fcm.php            # Firebase Cloud Messaging
+│   ├── class-spc-pusher.php         # Pusher broadcasting
+│   └── class-spc-wc-gateway.php     # WooCommerce payment gateway
 ├── admin/
-│   ├── class-admin.php          # Admin pages
-│   └── views/
-│       └── device-qr.php        # QR code page
-└── assets/
-    └── js/
-        └── admin.js             # Admin JavaScript
+│   └── class-spc-admin.php          # Admin pages & settings
+├── assets/
+│   ├── css/
+│   │   └── admin.css                # Admin styles
+│   └── js/
+│       └── admin.js                 # Admin JavaScript
+└── languages/
+    └── sms-payment-checker.pot      # Translation template
 ```
 
-### Required WordPress Hooks
+### Installation
 
-```php
-// Register REST API routes
-add_action('rest_api_init', function() {
-    register_rest_route('sms-payment/v1', '/notify', [...]);
-    register_rest_route('sms-payment/v1', '/orders', [...]);
-    // ... other endpoints
-});
+1. Copy `wordpress-plugin/sms-payment-checker/` to `wp-content/plugins/`
+2. Activate plugin in WordPress admin
+3. Go to SMS Checker > Settings to configure
+4. Create device at SMS Checker > Devices
+5. Scan QR code with Android app
 
-// WooCommerce order completed hook
-add_action('woocommerce_order_status_completed', function($order_id) {
-    // Fire events for SMS verification
-});
+### API Endpoints (WordPress)
 
-// Webhook for payment confirmation
-add_action('woocommerce_payment_complete', function($order_id) {
-    // Handle SMS verified payment
-});
-```
+API namespace: `sms-payment/v1`
 
-### Key Implementation Points
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/notify` | Receive SMS notification |
+| GET | `/status` | Check device status |
+| POST | `/register-device` | Register device info |
+| GET | `/orders` | Get orders list |
+| POST | `/orders/{id}/approve` | Approve order |
+| POST | `/orders/{id}/reject` | Reject order |
+| GET | `/device-settings` | Get device settings |
+| PUT | `/device-settings` | Update device settings |
+| GET | `/dashboard-stats` | Get dashboard statistics |
+| POST | `/register-fcm-token` | Register FCM token |
+| POST | `/pusher/auth` | Pusher authentication |
+| GET | `/sync` | Get changes since last sync |
+| GET | `/sync-version` | Get current sync version |
+| POST | `/generate-amount` | Generate unique amount |
+| GET | `/notifications` | Get notification history |
 
-1. **API Compatibility** - ใช้ format เดียวกับ Laravel API
-2. **Security** - Implement HMAC verification และ encryption
-3. **Device Management** - Store device credentials ใน custom table
-4. **Order Matching** - Match SMS amounts กับ WooCommerce orders
-5. **FCM Integration** - ใช้ Firebase SDK หรือ HTTP API
-6. **Pusher Integration** - ใช้ Pusher PHP SDK
+### Database Tables (WordPress)
+
+- `{prefix}_spc_devices` - Device credentials and settings
+- `{prefix}_spc_notifications` - SMS notifications
+- `{prefix}_spc_unique_amounts` - Unique payment amounts
+- `{prefix}_spc_nonces` - Used nonces for replay prevention
+
+### WooCommerce Payment Gateway
+
+Plugin includes a WooCommerce payment gateway that:
+- Generates unique payment amounts automatically
+- Shows payment instructions on thank you page
+- Sends email with payment details
+- Auto-confirms payment when SMS matches
+
+Enable at WooCommerce > Settings > Payments > Bank Transfer (SMS Verified)
 
 ## Testing
 

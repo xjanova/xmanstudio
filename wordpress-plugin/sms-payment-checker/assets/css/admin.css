@@ -1,0 +1,289 @@
+/**
+ * SMS Payment Checker Admin Styles
+ */
+
+/* Stats Grid */
+.spc-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.spc-stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+}
+
+.spc-stat-card.spc-stat-highlight {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+.spc-stat-card.spc-stat-success {
+    border-left: 4px solid #00a32a;
+}
+
+.spc-stat-card.spc-stat-warning {
+    border-left: 4px solid #dba617;
+}
+
+.spc-stat-card.spc-stat-danger {
+    border-left: 4px solid #d63638;
+}
+
+.spc-stat-value {
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.spc-stat-label {
+    font-size: 14px;
+    color: #50575e;
+    margin-top: 5px;
+}
+
+.spc-stat-highlight .spc-stat-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Setup Steps */
+.spc-setup-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.spc-setup-step {
+    display: flex;
+    align-items: flex-start;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    flex: 1;
+    min-width: 250px;
+}
+
+.spc-step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #2271b1;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-right: 15px;
+}
+
+.spc-step-content h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.spc-step-content p {
+    margin: 0 0 15px;
+    color: #50575e;
+}
+
+/* Status Badges */
+.spc-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.spc-status-active,
+.spc-status-confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.spc-status-inactive,
+.spc-status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.spc-status-blocked,
+.spc-status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.spc-status-matched {
+    background: #cce5ff;
+    color: #004085;
+}
+
+/* Type Badges */
+.spc-type {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.spc-type-credit {
+    background: #d4edda;
+    color: #155724;
+}
+
+.spc-type-debit {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Modal */
+.spc-modal {
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spc-modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 4px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.spc-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #666;
+}
+
+.spc-modal-close:hover {
+    color: #000;
+}
+
+.spc-modal h2 {
+    margin-top: 0;
+    padding-right: 30px;
+}
+
+/* QR Container */
+#spc-qr-container {
+    text-align: center;
+    padding: 20px;
+}
+
+#spc-qr-container canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Form styles */
+.spc-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.spc-modal input[type="text"],
+.spc-modal select {
+    width: 100%;
+}
+
+/* Table adjustments */
+.spc-admin .wp-list-table code {
+    background: #f0f0f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+/* Tabs */
+.spc-admin .nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+
+/* Settings form */
+.spc-admin .form-table th {
+    width: 220px;
+}
+
+.spc-admin .form-table .description {
+    font-style: italic;
+    color: #646970;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .spc-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .spc-setup-steps {
+        flex-direction: column;
+    }
+
+    .spc-setup-step {
+        min-width: auto;
+    }
+
+    .spc-admin .form-table th {
+        width: auto;
+    }
+}
+
+/* Button adjustments */
+.spc-admin .button {
+    margin-right: 5px;
+}
+
+.spc-admin .button:last-child {
+    margin-right: 0;
+}
+
+/* Loading state */
+.spc-loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Notification colors */
+.spc-notification-success {
+    background: #00a32a;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.spc-notification-error {
+    background: #d63638;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
