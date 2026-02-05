@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -179,5 +180,111 @@ class User extends Authenticatable
         $this->preferred_theme = $theme;
 
         return $this->save();
+    }
+
+    /**
+     * Get the roles for the user.
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'role_user')
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if user has a specific role.
+     */
+    public function hasRole(string|array $roles): bool
+    {
+        $roles = is_array($roles) ? $roles : [$roles];
+
+        return $this->roles()->whereIn('name', $roles)->exists();
+    }
+
+    /**
+     * Check if user has a specific permission.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        // Super admin has all permissions
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        foreach ($this->roles as $role) {
+            if ($role->hasPermission($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user has any of the given permissions.
+     */
+    public function hasAnyPermission(array $permissions): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        foreach ($this->roles as $role) {
+            if ($role->hasAnyPermission($permissions)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Assign a role to the user.
+     */
+    public function assignRole(string|Role $role): void
+    {
+        if (is_string($role)) {
+            $role = Role::where('name', $role)->firstOrFail();
+        }
+
+        $this->roles()->syncWithoutDetaching([$role->id]);
+    }
+
+    /**
+     * Remove a role from the user.
+     */
+    public function removeRole(string|Role $role): void
+    {
+        if (is_string($role)) {
+            $role = Role::where('name', $role)->first();
+            if (! $role) {
+                return;
+            }
+        }
+
+        $this->roles()->detach($role->id);
+    }
+
+    /**
+     * Sync roles to the user.
+     */
+    public function syncRoles(array $roles): void
+    {
+        $roleIds = Role::whereIn('name', $roles)->pluck('id');
+        $this->roles()->sync($roleIds);
+    }
+
+    /**
+     * Get all permissions for the user through their roles.
+     */
+    public function getAllPermissions(): \Illuminate\Support\Collection
+    {
+        if ($this->isSuperAdmin()) {
+            return Permission::all();
+        }
+
+        return $this->roles->flatMap(function ($role) {
+            return $role->permissions;
+        })->unique('id');
     }
 }
