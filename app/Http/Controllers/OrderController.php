@@ -203,13 +203,13 @@ class OrderController extends Controller
                 'notes' => $request->notes,
             ]);
 
-            // Generate unique payment amount for bank transfer (SMS verification)
-            if ($request->payment_method === 'bank_transfer') {
+            // Generate unique payment amount for bank transfer & promptpay (SMS verification)
+            if (in_array($request->payment_method, ['bank_transfer', 'promptpay'])) {
                 $uniqueAmount = $this->smsPaymentService->generateUniqueAmount(
                     $total,
                     $order->id,
                     'order',
-                    config('smschecker.amount_expiry', 30)
+                    config('smschecker.unique_amount_expiry', config('smschecker.amount_expiry', 30))
                 );
 
                 if ($uniqueAmount) {

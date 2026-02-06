@@ -6,6 +6,7 @@ use App\Events\PaymentMatched;
 use App\Events\WalletTopupMatched;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class SmsPaymentNotification extends Model
 {
@@ -73,6 +74,9 @@ class SmsPaymentNotification extends Model
      * Try to match this notification with a pending payment transaction.
      * Uses unique decimal amount matching.
      * Supports both Orders and Wallet Topups.
+     *
+     * ใช้ pessimistic locking (lockForUpdate) ป้องกัน double-match
+     * เมื่อ SMS 2 ตัวที่มียอดเดียวกันมาพร้อมกัน
      */
     public function attemptMatch(): bool
     {
@@ -80,35 +84,38 @@ class SmsPaymentNotification extends Model
             return false;
         }
 
-        // Find matching unique amount
-        $uniqueAmount = UniquePaymentAmount::where('unique_amount', $this->amount)
-            ->where('status', 'reserved')
-            ->where('expires_at', '>', now())
-            ->first();
+        return DB::transaction(function () {
+            // Find matching unique amount with pessimistic lock
+            $uniqueAmount = UniquePaymentAmount::where('unique_amount', $this->amount)
+                ->where('status', 'reserved')
+                ->where('expires_at', '>', now())
+                ->lockForUpdate()
+                ->first();
 
-        if (! $uniqueAmount) {
+            if (! $uniqueAmount) {
+                return false;
+            }
+
+            // Mark unique amount as used
+            $uniqueAmount->status = 'used';
+            $uniqueAmount->matched_at = now();
+            $uniqueAmount->save();
+
+            // Get device approval mode
+            $device = $this->device;
+            $approvalMode = $device ? $device->getApprovalMode() : 'auto';
+
+            // Handle based on transaction type
+            if ($uniqueAmount->transaction_type === 'order') {
+                return $this->matchOrder($uniqueAmount, $approvalMode);
+            }
+
+            if ($uniqueAmount->transaction_type === 'wallet_topup') {
+                return $this->matchWalletTopup($uniqueAmount, $approvalMode);
+            }
+
             return false;
-        }
-
-        // Mark unique amount as used
-        $uniqueAmount->status = 'used';
-        $uniqueAmount->matched_at = now();
-        $uniqueAmount->save();
-
-        // Get device approval mode
-        $device = $this->device;
-        $approvalMode = $device ? $device->getApprovalMode() : 'auto';
-
-        // Handle based on transaction type
-        if ($uniqueAmount->transaction_type === 'order') {
-            return $this->matchOrder($uniqueAmount, $approvalMode);
-        }
-
-        if ($uniqueAmount->transaction_type === 'wallet_topup') {
-            return $this->matchWalletTopup($uniqueAmount, $approvalMode);
-        }
-
-        return false;
+        });
     }
 
     /**

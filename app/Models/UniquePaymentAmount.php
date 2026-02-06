@@ -97,8 +97,10 @@ class UniquePaymentAmount extends Model
                 return null;
             }
 
-            // Pick random available suffix
-            $suffix = $availableSuffixes[array_rand($availableSuffixes)];
+            // Pick random available suffix (cryptographically secure)
+            $keys = array_keys($availableSuffixes);
+            $randomIndex = $keys[random_int(0, count($keys) - 1)];
+            $suffix = $availableSuffixes[$randomIndex];
             $uniqueAmount = floor($baseAmount) + ($suffix / 100);
 
             return static::create([

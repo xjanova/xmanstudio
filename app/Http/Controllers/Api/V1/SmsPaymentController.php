@@ -174,13 +174,21 @@ class SmsPaymentController extends Controller
             ], 422);
         }
 
-        $device->update([
+        $updateData = [
             'device_name' => $request->input('device_name'),
             'platform' => $request->input('platform'),
             'app_version' => $request->input('app_version'),
             'last_active_at' => now(),
             'ip_address' => $request->ip(),
-        ]);
+        ];
+
+        // Save FCM token if provided (for push notifications)
+        if ($request->filled('fcm_token')) {
+            $updateData['fcm_token'] = $request->input('fcm_token');
+            $updateData['fcm_token_updated_at'] = now();
+        }
+
+        $device->update($updateData);
 
         return response()->json([
             'success' => true,
@@ -488,6 +496,80 @@ class SmsPaymentController extends Controller
     }
 
     /**
+     * Bulk approve multiple orders at once (from Android app).
+     *
+     * POST /api/v1/sms-payment/orders/bulk-approve
+     */
+    public function bulkApproveOrders(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('sms_checker_device');
+        if (! $device instanceof SmsCheckerDevice) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $ids = $request->input('ids');
+        $approved = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($ids as $id) {
+            $order = Order::find($id);
+            if (! $order) {
+                $failed++;
+                $errors[] = "Order {$id} not found";
+                continue;
+            }
+
+            if (! in_array($order->sms_verification_status, ['pending', 'matched'])) {
+                $failed++;
+                $errors[] = "Order {$id} cannot be approved in current status";
+                continue;
+            }
+
+            $order->update([
+                'sms_verification_status' => 'confirmed',
+                'payment_status' => 'confirmed',
+                'paid_at' => now(),
+            ]);
+
+            if ($order->smsNotification) {
+                $order->smsNotification->update(['status' => 'confirmed']);
+            }
+
+            $approved++;
+        }
+
+        Log::info('Bulk approve via SMS Checker', [
+            'device_id' => $device->device_id,
+            'approved' => $approved,
+            'failed' => $failed,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Approved {$approved} orders" . ($failed > 0 ? ", {$failed} failed" : ''),
+            'data' => [
+                'approved' => $approved,
+                'failed' => $failed,
+                'errors' => $errors,
+            ],
+        ]);
+    }
+
+    /**
      * Match order by amount - find pending order that matches the SMS amount.
      *
      * Android app calls this when SMS is received instead of fetching all orders.
@@ -627,19 +709,55 @@ class SmsPaymentController extends Controller
         $days = $request->input('days', 7);
         $startDate = now()->subDays($days)->startOfDay();
 
+        $autoApproved = Order::where('sms_verification_status', 'confirmed')
+            ->whereNotNull('sms_notification_id')
+            ->where('created_at', '>=', $startDate)->count();
+
+        $totalConfirmed = Order::where('sms_verification_status', 'confirmed')
+            ->where('created_at', '>=', $startDate)->count();
+
+        $manuallyApproved = max(0, $totalConfirmed - $autoApproved);
+
+        // Daily breakdown
+        $dailyBreakdown = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $dayStart = now()->subDays($i)->startOfDay();
+            $dayEnd = now()->subDays($i)->endOfDay();
+
+            $dayCount = Order::whereNotNull('unique_payment_amount_id')
+                ->whereBetween('created_at', [$dayStart, $dayEnd])->count();
+            $dayApproved = Order::where('sms_verification_status', 'confirmed')
+                ->whereBetween('created_at', [$dayStart, $dayEnd])->count();
+            $dayRejected = Order::where('sms_verification_status', 'rejected')
+                ->whereBetween('created_at', [$dayStart, $dayEnd])->count();
+            $dayAmount = (float) Order::where('sms_verification_status', 'confirmed')
+                ->whereBetween('created_at', [$dayStart, $dayEnd])->sum('total');
+
+            $dailyBreakdown[] = [
+                'date' => $date,
+                'count' => $dayCount,
+                'approved' => $dayApproved,
+                'rejected' => $dayRejected,
+                'amount' => $dayAmount,
+            ];
+        }
+
         $stats = [
             'total_orders' => Order::whereNotNull('unique_payment_amount_id')
                 ->where('created_at', '>=', $startDate)->count(),
-            'auto_approved' => Order::where('sms_verification_status', 'confirmed')
-                ->where('created_at', '>=', $startDate)->count(),
-            'pending_review' => Order::where('sms_verification_status', 'matched')
-                ->orWhere('sms_verification_status', 'pending')
-                ->where('created_at', '>=', $startDate)->count(),
+            'auto_approved' => $autoApproved,
+            'manually_approved' => $manuallyApproved,
+            'pending_review' => Order::where(function ($q) {
+                $q->where('sms_verification_status', 'matched')
+                    ->orWhere('sms_verification_status', 'pending');
+            })->where('created_at', '>=', $startDate)->count(),
             'rejected' => Order::where('sms_verification_status', 'rejected')
                 ->where('created_at', '>=', $startDate)->count(),
-            'total_amount' => Order::where('sms_verification_status', 'confirmed')
+            'total_amount' => (float) Order::where('sms_verification_status', 'confirmed')
                 ->where('created_at', '>=', $startDate)
                 ->sum('total'),
+            'daily_breakdown' => $dailyBreakdown,
         ];
 
         return response()->json([

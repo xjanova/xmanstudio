@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
 use App\Models\UniquePaymentAmount;
+use App\Models\WalletTopup;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -204,7 +205,7 @@ class SmsPaymentService
         string $transactionType = 'order',
         int $expiryMinutes = 30
     ): ?UniquePaymentAmount {
-        $expiry = $expiryMinutes ?: config('smschecker.amount_expiry', 30);
+        $expiry = $expiryMinutes ?: config('smschecker.unique_amount_expiry', config('smschecker.amount_expiry', 30));
 
         return UniquePaymentAmount::generate(
             $baseAmount,
@@ -237,24 +238,26 @@ class SmsPaymentService
     {
         $stats = [
             'cancelled_orders' => 0,
+            'cancelled_topups' => 0,
             'expired_amounts' => 0,
             'deleted_nonces' => 0,
             'expired_notifications' => 0,
         ];
 
         // ========================================
-        // Step 1: ยกเลิก Orders ที่หมดเวลาชำระ (30 นาที)
+        // Step 1: ยกเลิก Orders และ WalletTopups ที่หมดเวลาชำระ
         // ========================================
 
         // ดึง unique amounts ที่หมดอายุและยังเป็น 'reserved'
         $expiredUniqueAmounts = UniquePaymentAmount::where('status', 'reserved')
             ->where('expires_at', '<=', now())
-            ->with('order')
+            ->with(['order', 'walletTopup'])
             ->get();
 
         foreach ($expiredUniqueAmounts as $uniqueAmount) {
             // ยกเลิก Order ถ้ายังเป็น pending และยังไม่ได้ชำระ
-            if ($uniqueAmount->order &&
+            if ($uniqueAmount->transaction_type === 'order' &&
+                $uniqueAmount->order &&
                 $uniqueAmount->order->status === 'pending' &&
                 $uniqueAmount->order->payment_status !== 'paid') {
 
@@ -262,13 +265,30 @@ class SmsPaymentService
                     'status' => 'cancelled',
                     'payment_status' => 'expired',
                     'notes' => ($uniqueAmount->order->notes ? $uniqueAmount->order->notes . "\n" : '') .
-                        'หมดเวลาชำระเงิน (30 นาที) - ระบบยกเลิกอัตโนมัติ ' . now()->format('d/m/Y H:i'),
+                        'หมดเวลาชำระเงิน - ระบบยกเลิกอัตโนมัติ ' . now()->format('d/m/Y H:i'),
                 ]);
                 $stats['cancelled_orders']++;
 
                 $this->log('info', 'SMS Payment: Auto-cancelled expired order', [
                     'order_id' => $uniqueAmount->order->id,
                     'order_number' => $uniqueAmount->order->order_number,
+                    'amount' => $uniqueAmount->unique_amount,
+                ]);
+            }
+
+            // ยกเลิก WalletTopup ถ้ายังเป็น pending
+            if ($uniqueAmount->transaction_type === 'wallet_topup' &&
+                $uniqueAmount->walletTopup &&
+                $uniqueAmount->walletTopup->status === WalletTopup::STATUS_PENDING) {
+
+                $uniqueAmount->walletTopup->update([
+                    'status' => WalletTopup::STATUS_EXPIRED,
+                    'notes' => 'หมดเวลาชำระเงิน - ระบบยกเลิกอัตโนมัติ ' . now()->format('d/m/Y H:i'),
+                ]);
+                $stats['cancelled_topups']++;
+
+                $this->log('info', 'SMS Payment: Auto-cancelled expired wallet topup', [
+                    'topup_id' => $uniqueAmount->walletTopup->id,
                     'amount' => $uniqueAmount->unique_amount,
                 ]);
             }

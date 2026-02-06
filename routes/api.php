@@ -181,6 +181,7 @@ Route::prefix('v1/sms-payment')->group(function () {
         Route::get('/orders', [SmsPaymentController::class, 'getOrders']);
         Route::get('/orders/match', [SmsPaymentController::class, 'matchOrderByAmount']); // Match-only mode: find order by SMS amount
         Route::get('/orders/sync', [SmsPaymentController::class, 'syncOrders']);
+        Route::post('/orders/bulk-approve', [SmsPaymentController::class, 'bulkApproveOrders']);
         Route::post('/orders/{id}/approve', [SmsPaymentController::class, 'approveOrder']);
         Route::post('/orders/{id}/reject', [SmsPaymentController::class, 'rejectOrder']);
 
