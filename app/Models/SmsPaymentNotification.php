@@ -108,24 +108,6 @@ class SmsPaymentNotification extends Model
             return false;
         }
 
-        // SECURITY: ตรวจสอบว่า notification มาจากบัญชีธนาคารที่ลงทะเบียนไว้
-        // ป้องกันคนร้ายส่ง SMS ปลอมจากบัญชีอื่นเพื่อ auto-approve
-        try {
-            if (!$this->isFromRegisteredAccount()) {
-                \Illuminate\Support\Facades\Log::warning('SMS Payment: notification จากบัญชีที่ไม่ได้ลงทะเบียน ไม่ auto-match', [
-                    'bank' => $this->bank,
-                    'account' => $this->account_number,
-                    'amount' => $this->amount,
-                ]);
-                // เก็บ notification ไว้ แต่ไม่ auto-match
-                // admin สามารถ approve ด้วยตนเองได้ในภายหลัง
-                return false;
-            }
-        } catch (\Exception $e) {
-            // ถ้า BankAccount table ยังไม่พร้อม → ข้ามการตรวจสอบ (backward compatible)
-            \Illuminate\Support\Facades\Log::debug('SMS Payment: ข้ามการตรวจสอบบัญชี - ' . $e->getMessage());
-        }
-
         return DB::transaction(function () {
             // Find matching unique amount with pessimistic lock
             $uniqueAmount = UniquePaymentAmount::where('unique_amount', $this->amount)
