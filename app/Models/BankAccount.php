@@ -15,10 +15,12 @@ class BankAccount extends Model
         'swift_code',
         'order',
         'is_active',
+        'sms_checker_enabled',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'sms_checker_enabled' => 'boolean',
     ];
 
     /**
@@ -35,6 +37,22 @@ class BankAccount extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('order')->orderBy('bank_name');
+    }
+
+    /**
+     * Scope for SMS Checker enabled accounts
+     */
+    public function scopeSmsCheckerEnabled($query)
+    {
+        return $query->where('sms_checker_enabled', true);
+    }
+
+    /**
+     * Scope by bank code
+     */
+    public function scopeByBank($query, string $bankCode)
+    {
+        return $query->where('bank_code', $bankCode);
     }
 
     /**
