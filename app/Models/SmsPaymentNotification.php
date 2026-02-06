@@ -73,8 +73,6 @@ class SmsPaymentNotification extends Model
     /**
      * ดึงบัญชีธนาคารที่ตรงกับ bank code ของ notification นี้
      * ใช้ตรวจสอบว่า SMS มาจากบัญชีที่ลงทะเบียนไว้
-     *
-     * @return BankAccount|null
      */
     public function getMatchingBankAccount(): ?BankAccount
     {
@@ -86,8 +84,6 @@ class SmsPaymentNotification extends Model
 
     /**
      * ตรวจสอบว่า notification มาจากบัญชีที่ลงทะเบียนไว้หรือไม่
-     *
-     * @return bool
      */
     public function isFromRegisteredAccount(): bool
     {
