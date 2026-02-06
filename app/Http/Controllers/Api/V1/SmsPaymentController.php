@@ -530,12 +530,14 @@ class SmsPaymentController extends Controller
             if (! $order) {
                 $failed++;
                 $errors[] = "Order {$id} not found";
+
                 continue;
             }
 
             if (! in_array($order->sms_verification_status, ['pending', 'matched'])) {
                 $failed++;
                 $errors[] = "Order {$id} cannot be approved in current status";
+
                 continue;
             }
 
