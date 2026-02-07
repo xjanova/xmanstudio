@@ -637,6 +637,19 @@ class QuotationController extends Controller
     }
 
     /**
+     * Get all valid service type keys (hardcoded + database)
+     */
+    protected function getAllServiceTypeKeys(): array
+    {
+        $keys = array_keys($this->servicePackages);
+
+        // Also include database category keys
+        $dbKeys = QuotationCategory::active()->pluck('key')->toArray();
+
+        return array_unique(array_merge($keys, $dbKeys));
+    }
+
+    /**
      * Validate request data
      */
     protected function validateRequest(Request $request): array
@@ -647,7 +660,7 @@ class QuotationController extends Controller
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
             'customer_address' => 'nullable|string|max:500',
-            'service_type' => 'required|string|in:' . implode(',', array_keys($this->servicePackages)),
+            'service_type' => 'required|string|in:' . implode(',', $this->getAllServiceTypeKeys()),
             'service_options' => 'required|array|min:1',
             'service_options.*' => 'string',
             'additional_options' => 'nullable|array',
@@ -659,11 +672,55 @@ class QuotationController extends Controller
     }
 
     /**
+     * Resolve service data from hardcoded packages or database
+     */
+    protected function resolveService(string $serviceType): array
+    {
+        // Try hardcoded packages first
+        if (isset($this->servicePackages[$serviceType])) {
+            return $this->servicePackages[$serviceType];
+        }
+
+        // Fallback to database
+        $category = QuotationCategory::where('key', $serviceType)
+            ->where('is_active', true)
+            ->with('activeOptions')
+            ->first();
+
+        if (! $category) {
+            throw new \InvalidArgumentException("Service type '{$serviceType}' not found");
+        }
+
+        $options = [];
+        foreach ($category->activeOptions as $option) {
+            $options[$option->key] = [
+                'name' => $option->name,
+                'name_th' => $option->name_th ?? $option->name,
+                'price' => (float) $option->price,
+            ];
+        }
+
+        return [
+            'name' => $category->name,
+            'name_th' => $category->name_th ?? $category->name,
+            'icon' => $category->icon ?? '',
+            'categories' => [
+                'main' => [
+                    'name' => $category->name,
+                    'name_th' => $category->name_th ?? $category->name,
+                    'icon' => $category->icon ?? '',
+                    'options' => $options,
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Calculate quotation details
      */
     protected function calculateQuotation(array $data): array
     {
-        $service = $this->servicePackages[$data['service_type']];
+        $service = $this->resolveService($data['service_type']);
         $items = [];
         $subtotal = 0;
 
@@ -725,13 +782,14 @@ class QuotationController extends Controller
         }
         $discount = $subtotal * ($discountPercent / 100);
 
-        // Rush fee for urgent timeline
+        // Rush fee for urgent timeline (calculated on discounted subtotal)
         $rushFee = 0;
+        $afterDiscount = $subtotal - $discount;
         if (($data['timeline'] ?? '') === 'urgent') {
-            $rushFee = $subtotal * 0.25;
+            $rushFee = $afterDiscount * 0.25;
         }
 
-        $total = $subtotal - $discount + $rushFee;
+        $total = $afterDiscount + $rushFee;
         $vat = $total * 0.07;
         $grandTotal = $total + $vat;
 

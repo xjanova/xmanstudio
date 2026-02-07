@@ -11,7 +11,9 @@ use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Wallet;
+use App\Events\NewOrderCreated;
 use App\Services\LicenseService;
+use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
@@ -275,6 +277,35 @@ class OrderController extends Controller
                 ]);
             }
 
+            // Notify admin via LINE and broadcast event
+            try {
+                $lineNotify = new LineNotifyService;
+                $itemNames = $order->items->pluck('product_name')->implode(', ');
+                $message = "🛒 คำสั่งซื้อใหม่!\n"
+                    . "━━━━━━━━━━━━━━━\n"
+                    . "🔢 เลขที่: {$order->order_number}\n"
+                    . "👤 ลูกค้า: {$order->customer_name}\n"
+                    . "📧 อีเมล: {$order->customer_email}\n"
+                    . "📱 โทร: " . ($order->customer_phone ?: '-') . "\n"
+                    . "━━━━━━━━━━━━━━━\n"
+                    . "📝 รายการ: {$itemNames}\n"
+                    . "💳 ชำระผ่าน: {$request->payment_method}\n"
+                    . '💰 ยอดชำระ: ฿' . number_format($order->total, 2) . "\n"
+                    . "━━━━━━━━━━━━━━━\n"
+                    . '⏰ ' . now()->format('d/m/Y H:i');
+                $lineNotify->send($message);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to send admin notification', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Dispatch event for SMS checker broadcast
+            if ($order->usesSmsPayment()) {
+                event(new NewOrderCreated($order->load('uniquePaymentAmount')));
+            }
+
             return redirect()
                 ->route('orders.show', $order)
                 ->with('success', 'สร้างคำสั่งซื้อเรียบร้อยแล้ว');
@@ -316,7 +347,7 @@ class OrderController extends Controller
         if ($order->payment_status === 'pending') {
             if ($order->payment_method === 'promptpay') {
                 $paymentInfo = $this->paymentService->generatePromptPayQR(
-                    $order->total,
+                    $order->display_amount,
                     $order->order_number
                 );
             } elseif ($order->payment_method === 'bank_transfer') {
