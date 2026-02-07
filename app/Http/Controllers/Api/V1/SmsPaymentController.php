@@ -561,6 +561,7 @@ class SmsPaymentController extends Controller
             'sms_verified_at' => now(),
             'payment_status' => 'paid',
             'paid_at' => now(),
+            'status' => 'completed',
         ]);
 
         // Update notification if exists
@@ -791,19 +792,22 @@ class SmsPaymentController extends Controller
             ]);
         }
 
-        // === Auto-approve: อนุมัติทันทีเมื่อจับคู่ได้ (skip ถ้า attemptMatch() ทำไปแล้ว) ===
+        // === Auto-approve: อนุมัติทันทีเมื่อจับคู่ได้ ===
+        // ถ้า payment_status ยังไม่ใช่ 'paid' → ต้อง approve ไม่ว่า alreadyMatched หรือไม่
         $autoConfirm = config('smschecker.auto_confirm_matched', true);
         $orderData = null;
 
         if ($order) {
-            // Auto-approve Order → trigger license generation + email (skip ถ้า already matched)
-            if (! $alreadyMatched && $autoConfirm && in_array($order->sms_verification_status, ['pending', null])) {
+            // Auto-approve Order → trigger license generation + email
+            $needsApprove = $autoConfirm && $order->payment_status !== 'paid';
+            if ($needsApprove) {
                 try {
                     $order->update([
                         'sms_verification_status' => 'confirmed',
                         'sms_verified_at' => now(),
                         'payment_status' => 'paid',
-                        'paid_at' => now(),
+                        'paid_at' => $order->paid_at ?? now(),
+                        'status' => 'completed',
                     ]);
 
                     // Mark unique amount as used
@@ -830,6 +834,7 @@ class SmsPaymentController extends Controller
                         'device_id' => $device->device_id,
                         'amount' => $amount,
                         'order_id' => $order->id,
+                        'was_already_matched' => $alreadyMatched,
                     ]);
                 } catch (\Exception $e) {
                     Log::error('SMS Payment: Auto-approve Order failed', [
@@ -840,8 +845,9 @@ class SmsPaymentController extends Controller
             }
             $orderData = $this->transformOrderForAndroid($order);
         } elseif ($topup) {
-            // Auto-approve Wallet Topup → trigger wallet deposit (skip ถ้า already matched)
-            if (! $alreadyMatched && $autoConfirm && in_array($topup->sms_verification_status, ['pending', null])) {
+            // Auto-approve Wallet Topup → trigger wallet deposit
+            $needsTopupApprove = $autoConfirm && $topup->status !== WalletTopup::STATUS_APPROVED;
+            if ($needsTopupApprove) {
                 try {
                     $topup->update([
                         'sms_verification_status' => 'confirmed',
@@ -864,6 +870,7 @@ class SmsPaymentController extends Controller
                         'device_id' => $device->device_id,
                         'amount' => $amount,
                         'topup_id' => $topup->id,
+                        'was_already_matched' => $alreadyMatched,
                     ]);
                 } catch (\Exception $e) {
                     Log::error('SMS Payment: Auto-approve WalletTopup failed', [

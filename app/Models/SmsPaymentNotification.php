@@ -4,9 +4,13 @@ namespace App\Models;
 
 use App\Events\PaymentMatched;
 use App\Events\WalletTopupMatched;
+use App\Mail\PaymentConfirmedMail;
+use App\Services\LicenseService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SmsPaymentNotification extends Model
 {
@@ -153,15 +157,26 @@ class SmsPaymentNotification extends Model
         }
 
         if ($approvalMode === 'auto') {
-            // Auto-approve: set to confirmed
+            // Auto-approve: อนุมัติทันที → payment_status = 'paid'
             $order->update([
                 'sms_notification_id' => $this->id,
                 'sms_verification_status' => 'confirmed',
                 'sms_verified_at' => now(),
-                'payment_status' => 'confirmed',
+                'payment_status' => 'paid',
                 'paid_at' => now(),
+                'status' => 'completed',
             ]);
             $this->update(['status' => 'confirmed']);
+
+            // Generate license keys + send email (same as admin confirmPayment)
+            try {
+                $this->generateLicensesForOrder($order);
+            } catch (\Exception $e) {
+                Log::error('matchOrder: License generation failed', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         } else {
             // Manual/Smart: set to processing for admin review
             $order->update([
@@ -176,6 +191,70 @@ class SmsPaymentNotification extends Model
         event(new PaymentMatched($order, $this));
 
         return true;
+    }
+
+    /**
+     * Auto-generate license keys for order items + send email.
+     */
+    private function generateLicensesForOrder(Order $order): void
+    {
+        $order->load('items.product');
+        $licenseService = app(LicenseService::class);
+        $generated = false;
+
+        foreach ($order->items as $item) {
+            if (! $item->product || ! $item->product->requires_license) {
+                continue;
+            }
+
+            $existingCount = LicenseKey::where('order_id', $order->id)
+                ->where('product_id', $item->product_id)
+                ->count();
+
+            if ($existingCount >= $item->quantity) {
+                continue;
+            }
+
+            $licenseType = 'yearly';
+            if ($item->custom_requirements) {
+                $requirements = json_decode($item->custom_requirements, true);
+                if (! empty($requirements['license_type'])) {
+                    $licenseType = $requirements['license_type'];
+                }
+            }
+
+            $expiresAt = match ($licenseType) {
+                'monthly' => now()->addDays(30),
+                'yearly' => now()->addYear(),
+                'lifetime' => null,
+                default => now()->addYear(),
+            };
+
+            $toGenerate = $item->quantity - $existingCount;
+            $licenses = $licenseService->generateLicenses($licenseType, $toGenerate, 1, $item->product_id);
+
+            foreach ($licenses as $license) {
+                LicenseKey::where('id', $license['id'])->update([
+                    'order_id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'expires_at' => $expiresAt,
+                ]);
+            }
+
+            $generated = true;
+        }
+
+        if ($generated && $order->customer_email) {
+            try {
+                Mail::to($order->customer_email)
+                    ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
+            } catch (\Exception $e) {
+                Log::error('matchOrder: Failed to send payment confirmed email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**
