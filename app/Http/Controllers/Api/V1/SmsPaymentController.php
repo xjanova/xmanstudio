@@ -74,7 +74,7 @@ class SmsPaymentController extends Controller
         }
 
         // Verify HMAC signature
-        $signatureData = $encryptedData . $nonce . $timestamp;
+        $signatureData = $encryptedData.$nonce.$timestamp;
         if (! $this->smsPaymentService->verifySignature($signatureData, $signature, $device->secret_key)) {
             Log::warning('SMS Payment: Invalid signature', [
                 'device_id' => $device->device_id,
@@ -247,7 +247,7 @@ class SmsPaymentController extends Controller
                 'base_amount' => number_format((float) $uniqueAmount->base_amount, 2, '.', ''),
                 'unique_amount' => number_format((float) $uniqueAmount->unique_amount, 2, '.', ''),
                 'expires_at' => $uniqueAmount->expires_at->toIso8601String(),
-                'display_amount' => '฿' . number_format((float) $uniqueAmount->unique_amount, 2),
+                'display_amount' => '฿'.number_format((float) $uniqueAmount->unique_amount, 2),
             ],
         ]);
     }
@@ -477,9 +477,9 @@ class SmsPaymentController extends Controller
         $smsNotification = $topup->smsNotification ?? null;
 
         $orderDetails = [
-            'order_number' => 'TOPUP-' . $topup->topup_id,
+            'order_number' => 'TOPUP-'.$topup->topup_id,
             'product_name' => 'เติมเงิน Wallet',
-            'product_details' => 'เติมเงินเข้า Wallet ฿' . number_format((float) $topup->amount, 2),
+            'product_details' => 'เติมเงินเข้า Wallet ฿'.number_format((float) $topup->amount, 2),
             'quantity' => 1,
             'website_name' => config('app.name'),
             'customer_name' => $topup->user?->name ?? 'N/A',
@@ -552,7 +552,7 @@ class SmsPaymentController extends Controller
         if (! in_array($order->sms_verification_status, ['pending', 'matched', null])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order cannot be approved in current status (current: ' . $order->sms_verification_status . ')',
+                'message' => 'Order cannot be approved in current status (current: '.$order->sms_verification_status.')',
             ], 422);
         }
 
@@ -609,7 +609,7 @@ class SmsPaymentController extends Controller
         $order->update([
             'sms_verification_status' => 'rejected',
             'payment_status' => 'failed',
-            'notes' => $order->notes . "\n[SMS Rejected] " . $reason,
+            'notes' => $order->notes."\n[SMS Rejected] ".$reason,
         ]);
 
         // Update notification if exists
@@ -701,7 +701,7 @@ class SmsPaymentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Approved {$approved} orders" . ($failed > 0 ? ", {$failed} failed" : ''),
+            'message' => "Approved {$approved} orders".($failed > 0 ? ", {$failed} failed" : ''),
             'data' => [
                 'approved' => $approved,
                 'failed' => $failed,
@@ -735,7 +735,7 @@ class SmsPaymentController extends Controller
 
         $amount = (float) $amount;
 
-        // Find Order with matching unique_amount
+        // Find Order with matching unique_amount (status=reserved → ยังไม่ถูก match)
         $order = Order::with(['smsNotification', 'uniquePaymentAmount'])
             ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
                 $q->where('unique_amount', $amount)
@@ -746,18 +746,38 @@ class SmsPaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
+        // Fallback: ถ้า /notify → attemptMatch() ทำงานก่อนแล้ว (status='used')
+        // → หา order ที่ match แล้ว (confirmed/paid) เพื่อ return ให้ Android รู้
+        $alreadyMatched = false;
+        if (! $order) {
+            $order = Order::with(['smsNotification', 'uniquePaymentAmount'])
+                ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
+                    $q->where('unique_amount', $amount)
+                        ->where('status', 'used');
+                })
+                ->where('created_at', '>=', now()->subHours(1))
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($order) {
+                $alreadyMatched = true;
+            }
+        }
+
         // ถ้าไม่พบ Order → ลองหา Wallet Topup (เติมเงิน)
         $topup = null;
         if (! $order) {
             $topup = WalletTopup::with(['uniquePaymentAmount', 'user'])
                 ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
                     $q->where('unique_amount', $amount)
-                        ->where('status', 'reserved');
+                        ->whereIn('status', ['reserved', 'used']);
                 })
-                ->whereIn('sms_verification_status', ['pending', null])
-                ->where('status', WalletTopup::STATUS_PENDING)
                 ->orderBy('created_at', 'desc')
                 ->first();
+
+            if ($topup) {
+                $alreadyMatched = in_array($topup->sms_verification_status, ['confirmed', 'matched']);
+            }
         }
 
         if (! $order && ! $topup) {
@@ -766,18 +786,18 @@ class SmsPaymentController extends Controller
                 'data' => [
                     'matched' => false,
                     'order' => null,
-                    'message' => 'No pending order found with amount ' . number_format($amount, 2),
+                    'message' => 'No pending order found with amount '.number_format($amount, 2),
                 ],
             ]);
         }
 
-        // === Auto-approve: อนุมัติทันทีเมื่อจับคู่ได้ ===
+        // === Auto-approve: อนุมัติทันทีเมื่อจับคู่ได้ (skip ถ้า attemptMatch() ทำไปแล้ว) ===
         $autoConfirm = config('smschecker.auto_confirm_matched', true);
         $orderData = null;
 
         if ($order) {
-            // Auto-approve Order → trigger license generation + email
-            if ($autoConfirm && in_array($order->sms_verification_status, ['pending', null])) {
+            // Auto-approve Order → trigger license generation + email (skip ถ้า already matched)
+            if (! $alreadyMatched && $autoConfirm && in_array($order->sms_verification_status, ['pending', null])) {
                 try {
                     $order->update([
                         'sms_verification_status' => 'confirmed',
@@ -820,8 +840,8 @@ class SmsPaymentController extends Controller
             }
             $orderData = $this->transformOrderForAndroid($order);
         } elseif ($topup) {
-            // Auto-approve Wallet Topup → trigger wallet deposit
-            if ($autoConfirm && in_array($topup->sms_verification_status, ['pending', null])) {
+            // Auto-approve Wallet Topup → trigger wallet deposit (skip ถ้า already matched)
+            if (! $alreadyMatched && $autoConfirm && in_array($topup->sms_verification_status, ['pending', null])) {
                 try {
                     $topup->update([
                         'sms_verification_status' => 'confirmed',
@@ -861,7 +881,9 @@ class SmsPaymentController extends Controller
         Log::info('Order matched by amount', [
             'device_id' => $device->device_id,
             'amount' => $amount,
-            'order_id' => $order->id,
+            'order_id' => $order?->id ?? $topup?->id,
+            'type' => $order ? 'order' : 'wallet_topup',
+            'already_matched' => $alreadyMatched,
         ]);
 
         return response()->json([
@@ -869,7 +891,7 @@ class SmsPaymentController extends Controller
             'data' => [
                 'matched' => true,
                 'order' => $orderData,
-                'message' => 'Found matching order',
+                'message' => $alreadyMatched ? 'Order already matched and approved' : 'Found matching order',
             ],
         ]);
     }
@@ -1063,7 +1085,7 @@ class SmsPaymentController extends Controller
         // Validate that this device can access this channel
         $allowedChannels = [
             'sms-checker.broadcast',
-            'private-sms-checker.device.' . $device->device_id,
+            'private-sms-checker.device.'.$device->device_id,
         ];
 
         $isAllowed = in_array($channelName, $allowedChannels)
