@@ -78,7 +78,7 @@ class WalletController extends Controller
 
         $minAmount = (int) Setting::getValue('wallet_topup_min_amount', 100);
         $maxAmount = (int) Setting::getValue('wallet_topup_max_amount', 100000);
-        $expiryMinutes = (int) Setting::getValue('wallet_topup_expiry_minutes', 30);
+        $expiryMinutes = (int) Setting::getValue('wallet_topup_expiry_minutes', config('smschecker.unique_amount_expiry', 30));
 
         // Build allowed payment methods
         $allowedMethods = [];
@@ -192,7 +192,7 @@ class WalletController extends Controller
         }
 
         // Generate new unique amount
-        $expiryMinutes = (int) Setting::getValue('wallet_topup_expiry_minutes', 30);
+        $expiryMinutes = (int) Setting::getValue('wallet_topup_expiry_minutes', config('smschecker.unique_amount_expiry', 30));
 
         $uniqueAmount = $smsPaymentService->generateUniqueAmount(
             (float) $topup->amount,

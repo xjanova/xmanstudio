@@ -30,9 +30,11 @@ return [
     |
     | How many minutes a unique payment amount reservation is valid for.
     | After this time, the amount will be marked as expired and can be reused.
+    | unique_amount_expiry overrides amount_expiry if set explicitly.
     |
     */
     'amount_expiry' => env('SMSCHECKER_AMOUNT_EXPIRY', 30),
+    'unique_amount_expiry' => env('SMSCHECKER_UNIQUE_AMOUNT_EXPIRY', 30),
 
     /*
     |--------------------------------------------------------------------------

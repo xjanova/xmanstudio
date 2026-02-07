@@ -209,7 +209,7 @@ class OrderController extends Controller
                     $total,
                     $order->id,
                     'order',
-                    config('smschecker.unique_amount_expiry', config('smschecker.amount_expiry', 30))
+                    (int) config('smschecker.unique_amount_expiry', 30)
                 );
 
                 if ($uniqueAmount) {
@@ -493,6 +493,28 @@ class OrderController extends Controller
         }
 
         return Cart::where('session_id', $sessionId)->first();
+    }
+
+    /**
+     * AJAX: Check payment status for polling (used by checkout page).
+     *
+     * GET /orders/{order}/payment-status
+     */
+    public function checkPaymentStatus(Order $order): \Illuminate\Http\JsonResponse
+    {
+        // Verify ownership
+        if (auth()->id() && $order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        return response()->json([
+            'payment_status' => $order->payment_status,
+            'status' => $order->status,
+            'sms_verification_status' => $order->sms_verification_status,
+            'redirect' => in_array($order->payment_status, ['paid', 'confirmed'])
+                ? route('orders.show', $order)
+                : null,
+        ]);
     }
 
     /**

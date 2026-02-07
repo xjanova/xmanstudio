@@ -205,7 +205,7 @@ class SmsPaymentService
         string $transactionType = 'order',
         int $expiryMinutes = 30
     ): ?UniquePaymentAmount {
-        $expiry = $expiryMinutes ?: config('smschecker.unique_amount_expiry', config('smschecker.amount_expiry', 30));
+        $expiry = $expiryMinutes ?: (int) config('smschecker.unique_amount_expiry', 30);
 
         return UniquePaymentAmount::generate(
             $baseAmount,

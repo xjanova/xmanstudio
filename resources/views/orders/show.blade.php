@@ -577,10 +577,48 @@ function copyToClipboard(text) {
 }
 
 @if($order->payment_status === 'pending' && $order->usesSmsPayment() && $order->uniquePaymentAmount && !$order->uniquePaymentAmount->isExpired())
-// Auto refresh page every 30 seconds to check SMS verification status
-setTimeout(function() {
-    location.reload();
-}, 30000);
+// AJAX polling every 5 seconds (lightweight — no full page reload)
+(function() {
+    const statusUrl = '{{ route("orders.payment-status", $order) }}';
+    let polling = true;
+
+    function checkPaymentStatus() {
+        if (!polling) return;
+        fetch(statusUrl, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.payment_status === 'paid' || data.payment_status === 'confirmed') {
+                polling = false;
+                // Show success toast before redirect
+                var toast = document.createElement('div');
+                toast.className = 'fixed inset-0 flex items-center justify-center z-50 bg-black/50';
+                toast.innerHTML = '<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 text-center max-w-sm mx-4">' +
+                    '<div class="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">' +
+                    '<svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' +
+                    '</div>' +
+                    '<h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">ชำระเงินสำเร็จ!</h3>' +
+                    '<p class="text-gray-500 dark:text-gray-400">กำลังโหลดหน้ายืนยัน...</p>' +
+                    '</div>';
+                document.body.appendChild(toast);
+                // Redirect after brief delay
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                setTimeout(checkPaymentStatus, 5000);
+            }
+        })
+        .catch(function() {
+            // On error, retry after 10 seconds
+            setTimeout(checkPaymentStatus, 10000);
+        });
+    }
+
+    // Start polling after initial 5 second delay
+    setTimeout(checkPaymentStatus, 5000);
+})();
 
 // Countdown timer
 (function() {
