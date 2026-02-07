@@ -74,7 +74,7 @@ class SmsPaymentController extends Controller
         }
 
         // Verify HMAC signature
-        $signatureData = $encryptedData.$nonce.$timestamp;
+        $signatureData = $encryptedData . $nonce . $timestamp;
         if (! $this->smsPaymentService->verifySignature($signatureData, $signature, $device->secret_key)) {
             Log::warning('SMS Payment: Invalid signature', [
                 'device_id' => $device->device_id,
@@ -247,7 +247,7 @@ class SmsPaymentController extends Controller
                 'base_amount' => number_format((float) $uniqueAmount->base_amount, 2, '.', ''),
                 'unique_amount' => number_format((float) $uniqueAmount->unique_amount, 2, '.', ''),
                 'expires_at' => $uniqueAmount->expires_at->toIso8601String(),
-                'display_amount' => '฿'.number_format((float) $uniqueAmount->unique_amount, 2),
+                'display_amount' => '฿' . number_format((float) $uniqueAmount->unique_amount, 2),
             ],
         ]);
     }
@@ -477,9 +477,9 @@ class SmsPaymentController extends Controller
         $smsNotification = $topup->smsNotification ?? null;
 
         $orderDetails = [
-            'order_number' => 'TOPUP-'.$topup->topup_id,
+            'order_number' => 'TOPUP-' . $topup->topup_id,
             'product_name' => 'เติมเงิน Wallet',
-            'product_details' => 'เติมเงินเข้า Wallet ฿'.number_format((float) $topup->amount, 2),
+            'product_details' => 'เติมเงินเข้า Wallet ฿' . number_format((float) $topup->amount, 2),
             'quantity' => 1,
             'website_name' => config('app.name'),
             'customer_name' => $topup->user?->name ?? 'N/A',
@@ -552,7 +552,7 @@ class SmsPaymentController extends Controller
         if (! in_array($order->sms_verification_status, ['pending', 'matched', null])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order cannot be approved in current status (current: '.$order->sms_verification_status.')',
+                'message' => 'Order cannot be approved in current status (current: ' . $order->sms_verification_status . ')',
             ], 422);
         }
 
@@ -609,7 +609,7 @@ class SmsPaymentController extends Controller
         $order->update([
             'sms_verification_status' => 'rejected',
             'payment_status' => 'failed',
-            'notes' => $order->notes."\n[SMS Rejected] ".$reason,
+            'notes' => $order->notes . "\n[SMS Rejected] " . $reason,
         ]);
 
         // Update notification if exists
@@ -701,7 +701,7 @@ class SmsPaymentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Approved {$approved} orders".($failed > 0 ? ", {$failed} failed" : ''),
+            'message' => "Approved {$approved} orders" . ($failed > 0 ? ", {$failed} failed" : ''),
             'data' => [
                 'approved' => $approved,
                 'failed' => $failed,
@@ -786,7 +786,7 @@ class SmsPaymentController extends Controller
                 'data' => [
                     'matched' => false,
                     'order' => null,
-                    'message' => 'No pending order found with amount '.number_format($amount, 2),
+                    'message' => 'No pending order found with amount ' . number_format($amount, 2),
                 ],
             ]);
         }
@@ -1085,7 +1085,7 @@ class SmsPaymentController extends Controller
         // Validate that this device can access this channel
         $allowedChannels = [
             'sms-checker.broadcast',
-            'private-sms-checker.device.'.$device->device_id,
+            'private-sms-checker.device.' . $device->device_id,
         ];
 
         $isAllowed = in_array($channelName, $allowedChannels)
