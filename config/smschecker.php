@@ -86,6 +86,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Auto-Confirm on Match (via /orders/match endpoint)
+    |--------------------------------------------------------------------------
+    |
+    | When Android app calls /orders/match?amount=X and a matching order is
+    | found, automatically confirm payment and trigger downstream logic
+    | (license generation, email, etc.) without requiring a separate
+    | approve call.
+    |
+    */
+    'auto_confirm_matched' => env('SMSCHECKER_AUTO_CONFIRM_MATCHED', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Logging Level
     |--------------------------------------------------------------------------
     |

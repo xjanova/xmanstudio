@@ -6,12 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
+use App\Events\PaymentMatched;
+use App\Mail\PaymentConfirmedMail;
+use App\Models\LicenseKey;
+use App\Models\WalletTopup;
 use App\Services\FcmNotificationService;
+use App\Services\LicenseService;
 use App\Services\SmsPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Pusher\Pusher;
 
@@ -292,45 +298,86 @@ class SmsPaymentController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $query = Order::with(['smsNotification', 'uniquePaymentAmount'])
+        $status = $request->input('status', 'pending');
+        $perPage = (int) $request->input('per_page', 20);
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
+        // === Query Orders ===
+        $orderQuery = Order::with(['smsNotification', 'uniquePaymentAmount'])
             ->whereNotNull('unique_payment_amount_id')
             ->orderBy('created_at', 'desc');
 
-        // Filter by status (default: pending)
-        $status = $request->input('status', 'pending');
         if ($status !== 'all') {
             if ($status === 'pending') {
-                $query->whereIn('sms_verification_status', ['pending', null])
+                $orderQuery->whereIn('sms_verification_status', ['pending', null])
                     ->where('payment_status', '!=', 'paid');
             } elseif ($status === 'matched') {
-                $query->where('sms_verification_status', 'matched');
+                $orderQuery->where('sms_verification_status', 'matched');
             } elseif ($status === 'confirmed') {
-                $query->where('sms_verification_status', 'confirmed');
+                $orderQuery->where('sms_verification_status', 'confirmed');
             }
         }
 
-        // Date filters
-        if ($request->has('date_from')) {
-            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        if ($dateFrom) {
+            $orderQuery->whereDate('created_at', '>=', $dateFrom);
         }
-        if ($request->has('date_to')) {
-            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        if ($dateTo) {
+            $orderQuery->whereDate('created_at', '<=', $dateTo);
         }
 
-        $orders = $query->paginate($request->input('per_page', 20));
+        $orders = $orderQuery->get();
 
-        // Transform to Android app format (matching Thaiprompt-Affiliate)
-        $transformedOrders = $orders->getCollection()->map(function ($order) {
-            return $this->transformOrderForAndroid($order);
-        });
+        // === Query Wallet Topups (เติมเงิน) — รวมให้โชว์ในแอพด้วย ===
+        $topupQuery = WalletTopup::with(['uniquePaymentAmount'])
+            ->whereNotNull('unique_payment_amount_id')
+            ->orderBy('created_at', 'desc');
+
+        if ($status !== 'all') {
+            if ($status === 'pending') {
+                $topupQuery->whereIn('sms_verification_status', ['pending', null])
+                    ->where('status', WalletTopup::STATUS_PENDING);
+            } elseif ($status === 'matched') {
+                $topupQuery->where('sms_verification_status', 'matched');
+            } elseif ($status === 'confirmed') {
+                $topupQuery->where('sms_verification_status', 'confirmed');
+            }
+        }
+
+        if ($dateFrom) {
+            $topupQuery->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $topupQuery->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $topups = $topupQuery->get();
+
+        // === Merge + Sort + Paginate ===
+        $allItems = collect();
+
+        foreach ($orders as $order) {
+            $allItems->push($this->transformOrderForAndroid($order));
+        }
+        foreach ($topups as $topup) {
+            $allItems->push($this->transformWalletTopupForAndroid($topup));
+        }
+
+        // Sort by created_at descending
+        $allItems = $allItems->sortByDesc('created_at')->values();
+
+        // Manual pagination
+        $page = (int) $request->input('page', 1);
+        $total = $allItems->count();
+        $paged = $allItems->forPage($page, $perPage)->values();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'data' => $transformedOrders,
-                'current_page' => $orders->currentPage(),
-                'last_page' => $orders->lastPage(),
-                'total' => $orders->total(),
+                'data' => $paged,
+                'current_page' => $page,
+                'last_page' => max(1, (int) ceil($total / $perPage)),
+                'total' => $total,
             ],
         ]);
     }
@@ -346,6 +393,9 @@ class SmsPaymentController extends Controller
             'matched' => 'pending_review',
             'confirmed' => 'auto_approved',
             'rejected' => 'rejected',
+            'cancelled' => 'cancelled',
+            'timeout' => 'expired',
+            'expired' => 'expired',
             default => 'pending_review',
         };
 
@@ -395,10 +445,81 @@ class SmsPaymentController extends Controller
             'rejected_at' => $order->sms_verification_status === 'rejected' ? $order->updated_at?->toIso8601String() : null,
             'rejection_reason' => null,
             'order_details_json' => $orderDetails,
+            'server_name' => config('app.name'),
             'synced_version' => $order->updated_at ? intval($order->updated_at->timestamp * 1000) : 0,
             'created_at' => $order->created_at?->toIso8601String(),
             'updated_at' => $order->updated_at?->toIso8601String(),
             'notification' => $notification,
+        ];
+    }
+
+    /**
+     * Transform WalletTopup (เติมเงิน) to Android app format — ให้โชว์เหมือน Order.
+     */
+    private function transformWalletTopupForAndroid(WalletTopup $topup): array
+    {
+        // Map sms_verification_status to approval_status for Android
+        $approvalStatus = match ($topup->sms_verification_status) {
+            'pending', null => 'pending_review',
+            'matched' => 'pending_review',
+            'confirmed' => 'auto_approved',
+            'rejected' => 'rejected',
+            'cancelled' => 'cancelled',
+            'timeout' => 'expired',
+            'expired' => 'expired',
+            default => 'pending_review',
+        };
+
+        $amount = $topup->uniquePaymentAmount
+            ? (float) $topup->uniquePaymentAmount->unique_amount
+            : (float) $topup->amount;
+
+        $smsNotification = $topup->smsNotification ?? null;
+
+        $orderDetails = [
+            'order_number' => 'TOPUP-' . $topup->topup_id,
+            'product_name' => 'เติมเงิน Wallet',
+            'product_details' => 'เติมเงินเข้า Wallet ฿' . number_format((float) $topup->amount, 2),
+            'quantity' => 1,
+            'website_name' => config('app.name'),
+            'customer_name' => $topup->user?->name ?? 'N/A',
+            'amount' => $amount,
+        ];
+
+        $notification = $smsNotification ? [
+            'id' => $smsNotification->id,
+            'bank' => $smsNotification->bank,
+            'type' => $smsNotification->type ?? 'credit',
+            'amount' => sprintf('%.2f', (float) $smsNotification->amount),
+            'sms_timestamp' => $smsNotification->sms_timestamp,
+            'sender_or_receiver' => $smsNotification->sender_or_receiver ?? '',
+        ] : [
+            'id' => $topup->id,
+            'bank' => 'PROMPTPAY',
+            'type' => 'credit',
+            'amount' => sprintf('%.2f', $amount),
+            'sms_timestamp' => $topup->created_at?->format('Y-m-d H:i:s'),
+            'sender_or_receiver' => $topup->user?->name ?? '',
+        ];
+
+        return [
+            'id' => $topup->id,
+            'notification_id' => $smsNotification?->id,
+            'matched_transaction_id' => $smsNotification?->id,
+            'device_id' => $smsNotification?->device_id,
+            'approval_status' => $approvalStatus,
+            'confidence' => $smsNotification ? 'high' : 'medium',
+            'approved_by' => null,
+            'approved_at' => $topup->approved_at?->toIso8601String(),
+            'rejected_at' => $topup->sms_verification_status === 'rejected' ? $topup->updated_at?->toIso8601String() : null,
+            'rejection_reason' => $topup->reject_reason,
+            'order_details_json' => $orderDetails,
+            'server_name' => config('app.name'),
+            'synced_version' => $topup->updated_at ? intval($topup->updated_at->timestamp * 1000) : 0,
+            'created_at' => $topup->created_at?->toIso8601String(),
+            'updated_at' => $topup->updated_at?->toIso8601String(),
+            'notification' => $notification,
+            '_type' => 'wallet_topup',
         ];
     }
 
@@ -414,27 +535,45 @@ class SmsPaymentController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $order = Order::find($id);
+        $order = Order::with(['smsNotification', 'uniquePaymentAmount'])->find($id);
         if (! $order) {
             return response()->json(['success' => false, 'message' => 'Order not found'], 404);
         }
 
-        if (! in_array($order->sms_verification_status, ['pending', 'matched'])) {
+        // Idempotent: ถ้า approved แล้ว (เช่น auto-approved ตอน match) → return success
+        if (in_array($order->sms_verification_status, ['confirmed']) && in_array($order->payment_status, ['confirmed', 'paid'])) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order already approved',
+                'data' => ['order_id' => $order->id, 'status' => $order->payment_status],
+            ]);
+        }
+
+        if (! in_array($order->sms_verification_status, ['pending', 'matched', null])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order cannot be approved in current status',
-            ], 400);
+                'message' => 'Order cannot be approved in current status (current: ' . $order->sms_verification_status . ')',
+            ], 422);
         }
 
         $order->update([
             'sms_verification_status' => 'confirmed',
-            'payment_status' => 'confirmed',
+            'sms_verified_at' => now(),
+            'payment_status' => 'paid',
             'paid_at' => now(),
         ]);
 
         // Update notification if exists
         if ($order->smsNotification) {
             $order->smsNotification->update(['status' => 'confirmed']);
+        }
+
+        // Generate license keys + send email (same as admin confirmPayment)
+        $this->generateLicensesForOrder($order);
+
+        // Fire PaymentMatched event for notifications
+        if ($order->smsNotification) {
+            event(new PaymentMatched($order, $order->smsNotification));
         }
 
         Log::info('Order approved via SMS Checker', [
@@ -607,7 +746,21 @@ class SmsPaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
+        // ถ้าไม่พบ Order → ลองหา Wallet Topup (เติมเงิน)
+        $topup = null;
         if (! $order) {
+            $topup = WalletTopup::with(['uniquePaymentAmount', 'user'])
+                ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
+                    $q->where('unique_amount', $amount)
+                        ->where('status', 'reserved');
+                })
+                ->whereIn('sms_verification_status', ['pending', null])
+                ->where('status', WalletTopup::STATUS_PENDING)
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+
+        if (! $order && ! $topup) {
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -618,8 +771,89 @@ class SmsPaymentController extends Controller
             ]);
         }
 
-        // Transform to Android app format
-        $orderData = $this->transformOrderForAndroid($order);
+        // === Auto-approve: อนุมัติทันทีเมื่อจับคู่ได้ ===
+        $autoConfirm = config('smschecker.auto_confirm_matched', true);
+        $orderData = null;
+
+        if ($order) {
+            // Auto-approve Order → trigger license generation + email
+            if ($autoConfirm && in_array($order->sms_verification_status, ['pending', null])) {
+                try {
+                    $order->update([
+                        'sms_verification_status' => 'confirmed',
+                        'sms_verified_at' => now(),
+                        'payment_status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
+
+                    // Mark unique amount as used
+                    if ($order->uniquePaymentAmount && $order->uniquePaymentAmount->status === 'reserved') {
+                        $order->uniquePaymentAmount->update([
+                            'status' => 'used',
+                            'matched_at' => now(),
+                        ]);
+                    }
+
+                    if ($order->smsNotification) {
+                        $order->smsNotification->update(['status' => 'confirmed']);
+                    }
+
+                    $this->generateLicensesForOrder($order);
+
+                    if ($order->smsNotification) {
+                        event(new PaymentMatched($order, $order->smsNotification));
+                    }
+
+                    $order = $order->fresh(['smsNotification', 'uniquePaymentAmount']);
+
+                    Log::info('SMS Payment: Auto-approved Order on match', [
+                        'device_id' => $device->device_id,
+                        'amount' => $amount,
+                        'order_id' => $order->id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('SMS Payment: Auto-approve Order failed', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            $orderData = $this->transformOrderForAndroid($order);
+        } elseif ($topup) {
+            // Auto-approve Wallet Topup → trigger wallet deposit
+            if ($autoConfirm && in_array($topup->sms_verification_status, ['pending', null])) {
+                try {
+                    $topup->update([
+                        'sms_verification_status' => 'confirmed',
+                        'sms_verified_at' => now(),
+                    ]);
+
+                    if ($topup->uniquePaymentAmount && $topup->uniquePaymentAmount->status === 'reserved') {
+                        $topup->uniquePaymentAmount->update([
+                            'status' => 'used',
+                            'matched_at' => now(),
+                        ]);
+                    }
+
+                    // Approve topup → adds money to wallet
+                    $topup->approve(0); // 0 = system approved
+
+                    $topup = $topup->fresh(['uniquePaymentAmount', 'user']);
+
+                    Log::info('SMS Payment: Auto-approved WalletTopup on match', [
+                        'device_id' => $device->device_id,
+                        'amount' => $amount,
+                        'topup_id' => $topup->id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('SMS Payment: Auto-approve WalletTopup failed', [
+                        'topup_id' => $topup->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            $orderData = $this->transformWalletTopupForAndroid($topup);
+        }
 
         // Update device last_active_at
         $device->update(['last_active_at' => now()]);
@@ -884,24 +1118,42 @@ class SmsPaymentController extends Controller
 
         // Support both since_version (Android app) and since (legacy)
         $sinceVersion = $request->input('since_version') ?? $request->input('since') ?? 0;
+        $limit = (int) $request->input('limit', 100);
 
-        // Get changed orders since the given version (timestamp in milliseconds)
-        $query = Order::with(['smsNotification', 'uniquePaymentAmount'])
+        // === Sync Orders ===
+        $orderQuery = Order::with(['smsNotification', 'uniquePaymentAmount'])
             ->whereNotNull('unique_payment_amount_id');
 
         if ($sinceVersion > 0) {
-            // Get orders updated after the given timestamp (milliseconds)
-            $query->where('updated_at', '>', date('Y-m-d H:i:s', $sinceVersion / 1000));
+            $orderQuery->where('updated_at', '>', date('Y-m-d H:i:s', $sinceVersion / 1000));
         }
 
-        $orders = $query->orderBy('updated_at', 'desc')
-            ->limit($request->input('limit', 100))
+        $orders = $orderQuery->orderBy('updated_at', 'desc')
+            ->limit($limit)
             ->get();
 
-        // Transform to Android app format
-        $transformedOrders = $orders->map(function ($order) {
-            return $this->transformOrderForAndroid($order);
-        });
+        // === Sync Wallet Topups (เติมเงิน) ===
+        $topupQuery = WalletTopup::with(['uniquePaymentAmount'])
+            ->whereNotNull('unique_payment_amount_id');
+
+        if ($sinceVersion > 0) {
+            $topupQuery->where('updated_at', '>', date('Y-m-d H:i:s', $sinceVersion / 1000));
+        }
+
+        $topups = $topupQuery->orderBy('updated_at', 'desc')
+            ->limit($limit)
+            ->get();
+
+        // Merge and transform
+        $allItems = collect();
+        foreach ($orders as $order) {
+            $allItems->push($this->transformOrderForAndroid($order));
+        }
+        foreach ($topups as $topup) {
+            $allItems->push($this->transformWalletTopupForAndroid($topup));
+        }
+
+        $allItems = $allItems->sortByDesc('updated_at')->values()->take($limit);
 
         $latestVersion = intval(round(microtime(true) * 1000));
 
@@ -911,7 +1163,7 @@ class SmsPaymentController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'orders' => $transformedOrders,
+                'orders' => $allItems,
                 'latest_version' => $latestVersion,
             ],
         ]);
@@ -961,5 +1213,79 @@ class SmsPaymentController extends Controller
 
             return $lastOrder ? $lastOrder->updated_at->timestamp : time();
         });
+    }
+
+    /**
+     * Auto-generate license keys for order items that require them.
+     * (Same logic as Admin\SmsPaymentController::generateLicensesForOrder)
+     */
+    private function generateLicensesForOrder(Order $order): void
+    {
+        $order->load('items.product');
+        $licenseService = app(LicenseService::class);
+        $generated = false;
+
+        foreach ($order->items as $item) {
+            if (! $item->product || ! $item->product->requires_license) {
+                continue;
+            }
+
+            // Check if licenses already exist for this order+product
+            $existingCount = LicenseKey::where('order_id', $order->id)
+                ->where('product_id', $item->product_id)
+                ->count();
+
+            if ($existingCount >= $item->quantity) {
+                continue;
+            }
+
+            // Determine license type from custom_requirements or default to yearly
+            $licenseType = 'yearly';
+            if ($item->custom_requirements) {
+                $requirements = json_decode($item->custom_requirements, true);
+                if (! empty($requirements['license_type'])) {
+                    $licenseType = $requirements['license_type'];
+                }
+            }
+
+            $expiresAt = match ($licenseType) {
+                'monthly' => now()->addDays(30),
+                'yearly' => now()->addYear(),
+                'lifetime' => null,
+                default => now()->addYear(),
+            };
+
+            $toGenerate = $item->quantity - $existingCount;
+            $licenses = $licenseService->generateLicenses(
+                $licenseType,
+                $toGenerate,
+                1,
+                $item->product_id
+            );
+
+            // Link licenses to the order
+            foreach ($licenses as $license) {
+                LicenseKey::where('id', $license['id'])->update([
+                    'order_id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'expires_at' => $expiresAt,
+                ]);
+            }
+
+            $generated = true;
+        }
+
+        // Send payment confirmed email with license keys
+        if ($generated && $order->customer_email) {
+            try {
+                Mail::to($order->customer_email)
+                    ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
+            } catch (\Exception $e) {
+                Log::error('Failed to send payment confirmed email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }
