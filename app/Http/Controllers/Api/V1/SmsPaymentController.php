@@ -683,9 +683,13 @@ class SmsPaymentController extends Controller
 
             $order->update([
                 'sms_verification_status' => 'confirmed',
-                'payment_status' => 'confirmed',
+                'payment_status' => 'paid',
                 'paid_at' => now(),
+                'status' => 'completed',
             ]);
+
+            // Generate license keys + send email
+            $this->generateLicensesForOrder($order);
 
             if ($order->smsNotification) {
                 $order->smsNotification->update(['status' => 'confirmed']);
