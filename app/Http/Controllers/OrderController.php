@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewOrderCreated;
 use App\Mail\OrderConfirmationMail;
 use App\Mail\PaymentConfirmedMail;
 use App\Models\BankAccount;
@@ -11,7 +12,6 @@ use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Wallet;
-use App\Events\NewOrderCreated;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
@@ -286,7 +286,7 @@ class OrderController extends Controller
                     . "🔢 เลขที่: {$order->order_number}\n"
                     . "👤 ลูกค้า: {$order->customer_name}\n"
                     . "📧 อีเมล: {$order->customer_email}\n"
-                    . "📱 โทร: " . ($order->customer_phone ?: '-') . "\n"
+                    . '📱 โทร: ' . ($order->customer_phone ?: '-') . "\n"
                     . "━━━━━━━━━━━━━━━\n"
                     . "📝 รายการ: {$itemNames}\n"
                     . "💳 ชำระผ่าน: {$request->payment_method}\n"
