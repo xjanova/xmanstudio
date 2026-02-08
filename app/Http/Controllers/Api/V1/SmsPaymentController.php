@@ -526,16 +526,20 @@ class SmsPaymentController extends Controller
     /**
      * Approve an order payment (manual approval from Android app).
      *
-     * POST /api/v1/sms-payment/orders/{id}/approve
+     * รองรับทั้ง numeric ID (legacy) และ order_number string (ใหม่)
+     *
+     * POST /api/v1/sms-payment/orders/{identifier}/approve
      */
-    public function approveOrder(Request $request, int $id): JsonResponse
+    public function approveOrder(Request $request, $identifier): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
         if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $order = Order::with(['smsNotification', 'uniquePaymentAmount'])->find($id);
+        $order = is_numeric($identifier)
+            ? Order::with(['smsNotification', 'uniquePaymentAmount'])->find($identifier)
+            : Order::with(['smsNotification', 'uniquePaymentAmount'])->where('order_number', $identifier)->first();
         if (! $order) {
             return response()->json(['success' => false, 'message' => 'Order not found'], 404);
         }
@@ -591,16 +595,20 @@ class SmsPaymentController extends Controller
     /**
      * Reject an order payment (from Android app).
      *
-     * POST /api/v1/sms-payment/orders/{id}/reject
+     * รองรับทั้ง numeric ID (legacy) และ order_number string (ใหม่)
+     *
+     * POST /api/v1/sms-payment/orders/{identifier}/reject
      */
-    public function rejectOrder(Request $request, int $id): JsonResponse
+    public function rejectOrder(Request $request, $identifier): JsonResponse
     {
         $device = $request->attributes->get('sms_checker_device');
         if (! $device instanceof SmsCheckerDevice) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $order = Order::find($id);
+        $order = is_numeric($identifier)
+            ? Order::find($identifier)
+            : Order::where('order_number', $identifier)->first();
         if (! $order) {
             return response()->json(['success' => false, 'message' => 'Order not found'], 404);
         }
@@ -649,7 +657,7 @@ class SmsPaymentController extends Controller
 
         $validator = Validator::make($request->all(), [
             'ids' => 'required|array|min:1',
-            'ids.*' => 'integer',
+            'ids.*' => ['required'], // รองรับทั้ง integer และ string (order_number)
         ]);
 
         if ($validator->fails()) {
@@ -660,23 +668,25 @@ class SmsPaymentController extends Controller
             ], 422);
         }
 
-        $ids = $request->input('ids');
+        $identifiers = $request->input('ids');
         $approved = 0;
         $failed = 0;
         $errors = [];
 
-        foreach ($ids as $id) {
-            $order = Order::find($id);
+        foreach ($identifiers as $identifier) {
+            $order = is_numeric($identifier)
+                ? Order::find($identifier)
+                : Order::where('order_number', $identifier)->first();
             if (! $order) {
                 $failed++;
-                $errors[] = "Order {$id} not found";
+                $errors[] = "Order {$identifier} not found";
 
                 continue;
             }
 
             if (! in_array($order->sms_verification_status, ['pending', 'matched'])) {
                 $failed++;
-                $errors[] = "Order {$id} cannot be approved in current status";
+                $errors[] = "Order {$identifier} cannot be approved in current status";
 
                 continue;
             }
