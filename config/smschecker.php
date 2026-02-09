@@ -53,11 +53,12 @@ return [
     | Rate Limiting
     |--------------------------------------------------------------------------
     |
-    | Maximum number of SMS notifications per device per minute.
-    | Helps prevent abuse and DoS attacks.
+    | Maximum number of API requests per device per minute.
+    | This covers ALL endpoints (fetchOrders, syncOrders, registerDevice, etc.)
+    | Default 120 to avoid blocking FCM token sync and debug reports.
     |
     */
-    'rate_limit_per_minute' => env('SMSCHECKER_RATE_LIMIT', 30),
+    'rate_limit_per_minute' => env('SMSCHECKER_RATE_LIMIT', 120),
 
     /*
     |--------------------------------------------------------------------------
