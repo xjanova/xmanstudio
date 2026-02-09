@@ -82,6 +82,7 @@ class VerifySmsCheckerDevice
                 'limit' => $rateLimit,
                 'path' => $request->path(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Rate limit exceeded',
