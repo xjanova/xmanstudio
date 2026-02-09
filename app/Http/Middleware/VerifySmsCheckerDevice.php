@@ -70,8 +70,10 @@ class VerifySmsCheckerDevice
             ], 403);
         }
 
-        // Rate limiting check (120/min to match route throttle, was 30 which blocked FCM token sync)
-        $rateLimit = config('smschecker.rate_limit_per_minute', 120);
+        // Rate limiting: 120 req/min per device
+        // Note: ใช้ค่าตรงเพราะ config cache อาจค้างค่าเก่า (30)
+        // ถ้าต้องการเปลี่ยน ให้แก้ที่นี่ + config/smschecker.php + รัน config:cache
+        $rateLimit = 120;
         $cacheKey = 'smschecker_rate:' . $device->device_id;
         $requestCount = cache()->get($cacheKey, 0);
 
