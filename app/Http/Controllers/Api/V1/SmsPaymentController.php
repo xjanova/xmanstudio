@@ -1341,4 +1341,40 @@ class SmsPaymentController extends Controller
             }
         }
     }
+
+    /**
+     * Debug endpoint: Receive diagnostic data from Android app.
+     * Used temporarily to debug FCM token registration issues.
+     *
+     * POST /api/v1/sms-payment/debug-report
+     */
+    public function debugReport(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('sms_checker_device');
+        $deviceId = $device instanceof SmsCheckerDevice ? $device->device_id : 'unknown';
+
+        // Log EVERYTHING the app sends us
+        Log::info('📱 APP DEBUG REPORT', [
+            'device_id' => $deviceId,
+            'ip' => $request->ip(),
+            'all_data' => $request->all(),
+            'all_headers' => collect($request->headers->all())->except([
+                'cookie', 'host', 'connection',
+            ])->toArray(),
+        ]);
+
+        // Update last_active_at
+        if ($device instanceof SmsCheckerDevice) {
+            $device->update(['last_active_at' => now()]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Debug report received',
+            'server_time' => now()->toDateTimeString(),
+            'device_fcm_token_on_server' => $device instanceof SmsCheckerDevice
+                ? ($device->fcm_token ? 'present (len=' . strlen($device->fcm_token) . ')' : 'NULL')
+                : 'N/A',
+        ]);
+    }
 }
