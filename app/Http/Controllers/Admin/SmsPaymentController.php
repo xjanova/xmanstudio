@@ -145,6 +145,44 @@ class SmsPaymentController extends Controller
     }
 
     /**
+     * Debug: แสดงข้อมูล device ทั้งหมด (JSON) เพื่อตรวจสอบ FCM token
+     */
+    public function debugDevices()
+    {
+        $devices = SmsCheckerDevice::all()->map(fn ($d) => [
+            'id' => $d->id,
+            'device_id' => $d->device_id,
+            'device_name' => $d->device_name,
+            'status' => $d->status,
+            'mode' => $d->mode,
+            'fcm_token' => $d->fcm_token ? substr($d->fcm_token, 0, 40) . '...(len=' . strlen($d->fcm_token) . ')' : null,
+            'app_version' => $d->app_version,
+            'last_active_at' => $d->last_active_at?->toDateTimeString(),
+            'created_at' => $d->created_at?->toDateTimeString(),
+            'updated_at' => $d->updated_at?->toDateTimeString(),
+        ]);
+
+        // เช็ค log ล่าสุดที่เกี่ยวกับ FCM
+        $logFile = storage_path('logs/laravel.log');
+        $recentFcmLogs = [];
+        if (file_exists($logFile)) {
+            $lines = array_slice(file($logFile), -500);
+            foreach ($lines as $line) {
+                if (stripos($line, 'fcm') !== false || stripos($line, 'registerDevice') !== false) {
+                    $recentFcmLogs[] = trim($line);
+                }
+            }
+            $recentFcmLogs = array_slice($recentFcmLogs, -20); // last 20 FCM-related lines
+        }
+
+        return response()->json([
+            'devices' => $devices,
+            'recent_fcm_logs' => $recentFcmLogs,
+            'server_time' => now()->toDateTimeString(),
+        ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
      * Display SMS payment dashboard.
      */
     public function index()
