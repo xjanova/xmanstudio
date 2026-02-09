@@ -295,7 +295,9 @@ POST   /api/v1/license/demo/check    - ตรวจสอบ Demo
 ## 📞 Support & Contact
 
 สำหรับข้อสงสัยหรือต้องการความช่วยเหลือ:
-- Email: support@xmanstudio.com
+- โทรศัพท์: 080-6038278 (คุณกรณิภา)
+- Email: xjanovax@gmail.com
+- Facebook: https://www.facebook.com/xmanenterprise/
 - LINE: @xmanstudio
 - GitHub Issues: [Repository URL]
 

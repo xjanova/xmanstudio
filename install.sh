@@ -256,7 +256,7 @@ configure_environment() {
             MAIL_PORT=$(get_input "Mail Port" "587")
             MAIL_USERNAME=$(get_input "Mail Username" "")
             MAIL_PASSWORD=$(get_password "Mail Password")
-            MAIL_FROM_ADDRESS=$(get_input "From Address" "info@xmanstudio.com")
+            MAIL_FROM_ADDRESS=$(get_input "From Address" "xjanovax@gmail.com")
 
             update_env_var "MAIL_MAILER" "$MAIL_MAILER"
             update_env_var "MAIL_HOST" "$MAIL_HOST"
@@ -425,7 +425,7 @@ print_completion() {
     echo -e "  ${GREEN}./deploy.sh${NC}           - Deploy updates"
 
     echo -e "\n${PURPLE}📖 Documentation:${NC} README_XMANSTUDIO.md"
-    echo -e "${PURPLE}🆘 Support:${NC} support@xmanstudio.com"
+    echo -e "${PURPLE}🆘 Support:${NC} xjanovax@gmail.com | Tel: 080-6038278"
     echo -e "${PURPLE}🌐 Website:${NC} https://xmanstudio.com"
 
     echo -e "\n${GREEN}Thank you for choosing XMAN Studio!${NC}\n"

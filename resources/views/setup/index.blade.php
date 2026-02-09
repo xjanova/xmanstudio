@@ -154,7 +154,7 @@
                                     <label class="block text-sm font-medium text-gray-300 mb-2">เบอร์โทรศัพท์</label>
                                     <input type="text" name="company_phone" value="{{ old('company_phone') }}"
                                         class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                                        placeholder="+66 XX XXX XXXX">
+                                        placeholder="080-6038278">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-300 mb-2">Line OA ID</label>
