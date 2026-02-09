@@ -388,9 +388,10 @@ class SmsPaymentController extends Controller
     private function transformOrderForAndroid(Order $order): array
     {
         // Map sms_verification_status to approval_status for Android
+        // 'matched' = SMS จับคู่ได้แล้ว → แสดงเป็น auto_approved (เขียว) ไม่ใช่ pending_review (แดง)
         $approvalStatus = match ($order->sms_verification_status) {
             'pending', null => 'pending_review',
-            'matched' => 'pending_review',
+            'matched' => 'auto_approved',
             'confirmed' => 'auto_approved',
             'rejected' => 'rejected',
             'cancelled' => 'cancelled',
@@ -459,9 +460,10 @@ class SmsPaymentController extends Controller
     private function transformWalletTopupForAndroid(WalletTopup $topup): array
     {
         // Map sms_verification_status to approval_status for Android
+        // 'matched' = SMS จับคู่ได้แล้ว → แสดงเป็น auto_approved (เขียว) ไม่ใช่ pending_review (แดง)
         $approvalStatus = match ($topup->sms_verification_status) {
             'pending', null => 'pending_review',
-            'matched' => 'pending_review',
+            'matched' => 'auto_approved',
             'confirmed' => 'auto_approved',
             'rejected' => 'rejected',
             'cancelled' => 'cancelled',
