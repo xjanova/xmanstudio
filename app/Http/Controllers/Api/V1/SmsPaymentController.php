@@ -191,7 +191,6 @@ class SmsPaymentController extends Controller
         // Save FCM token if provided (for push notifications)
         if ($request->filled('fcm_token')) {
             $updateData['fcm_token'] = $request->input('fcm_token');
-            $updateData['fcm_token_updated_at'] = now();
         }
 
         $device->update($updateData);
