@@ -70,11 +70,10 @@ class VerifySmsCheckerDevice
             ], 403);
         }
 
-        // Rate limiting: 300 req/min per device
-        // Note: ใช้ค่าตรงเพราะ config cache อาจค้างค่าเก่า
-        // Android app อาจ sync ถี่มาก (sync_interval=5s จาก migration เก่า)
-        // 300/min = 5 req/sec ซึ่งรองรับ sync ทุก 5 วินาทีได้
-        $rateLimit = 300;
+        // Rate limiting: TEMPORARILY DISABLED (9999) เพื่อ debug FCM token registration
+        // Android app ยิง 120-300+ req/min จาก RealtimeSyncService + WorkManager + ViewModels
+        // TODO: แก้ Android app ให้ลด request ก่อน แล้วค่อยลด rate limit กลับ
+        $rateLimit = 9999;
         $cacheKey = 'smschecker_rate:' . $device->device_id;
         $requestCount = cache()->get($cacheKey, 0);
 
