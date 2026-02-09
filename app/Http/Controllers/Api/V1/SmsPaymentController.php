@@ -191,6 +191,15 @@ class SmsPaymentController extends Controller
         // Save FCM token if provided (for push notifications)
         if ($request->filled('fcm_token')) {
             $updateData['fcm_token'] = $request->input('fcm_token');
+            \Log::info('registerDevice: FCM token received', [
+                'device_id' => $device->device_id,
+                'token_prefix' => substr($request->input('fcm_token'), 0, 30) . '...',
+            ]);
+        } else {
+            \Log::debug('registerDevice: No FCM token in request', [
+                'device_id' => $device->device_id,
+                'request_keys' => array_keys($request->all()),
+            ]);
         }
 
         $device->update($updateData);

@@ -139,8 +139,12 @@ class FcmNotificationService
     {
         $tokens = $this->getTargetTokens($device);
         if (empty($tokens)) {
+            Log::warning('FCM triggerSync: No tokens found - cannot send push notification');
+
             return false;
         }
+
+        Log::info('FCM triggerSync: Sending to ' . count($tokens) . ' token(s)');
 
         $data = [
             'type' => 'sync',
@@ -359,15 +363,30 @@ class FcmNotificationService
     private function getTargetTokens(?SmsCheckerDevice $device): array
     {
         if ($device && $device->fcm_token) {
+            Log::debug('FCM getTargetTokens: Using specific device token', [
+                'device_id' => $device->device_id,
+                'token_prefix' => substr($device->fcm_token, 0, 20) . '...',
+            ]);
+
             return [$device->fcm_token];
         }
 
         // Get all active devices with FCM tokens
-        return SmsCheckerDevice::where('status', 'active')
-            ->whereNotNull('fcm_token')
-            ->where('fcm_token', '!=', '')
-            ->pluck('fcm_token')
-            ->toArray();
+        $allDevices = SmsCheckerDevice::where('status', 'active')->get();
+        $tokensResult = $allDevices->filter(fn ($d) => ! empty($d->fcm_token))->pluck('fcm_token')->toArray();
+
+        Log::debug('FCM getTargetTokens: Query result', [
+            'active_devices_total' => $allDevices->count(),
+            'devices_with_token' => count($tokensResult),
+            'devices_detail' => $allDevices->map(fn ($d) => [
+                'device_id' => $d->device_id,
+                'device_name' => $d->device_name ?? 'N/A',
+                'has_fcm_token' => ! empty($d->fcm_token),
+                'fcm_token_prefix' => $d->fcm_token ? substr($d->fcm_token, 0, 20) . '...' : null,
+            ])->toArray(),
+        ]);
+
+        return $tokensResult;
     }
 
     /**

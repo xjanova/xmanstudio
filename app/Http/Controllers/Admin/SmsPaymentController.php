@@ -105,18 +105,43 @@ class SmsPaymentController extends Controller
      */
     public function testFcm()
     {
+        // Debug: Check device state before sending
+        $allDevices = SmsCheckerDevice::where('status', 'active')->get();
+        $devicesWithToken = $allDevices->filter(fn ($d) => ! empty($d->fcm_token));
+
+        \Log::info('FCM Test: Device state check', [
+            'active_devices' => $allDevices->count(),
+            'devices_with_fcm_token' => $devicesWithToken->count(),
+            'device_details' => $allDevices->map(fn ($d) => [
+                'id' => $d->id,
+                'device_id' => $d->device_id,
+                'device_name' => $d->device_name ?? 'N/A',
+                'status' => $d->status,
+                'fcm_token' => $d->fcm_token ? substr($d->fcm_token, 0, 30) . '...' : '(NULL)',
+                'last_active_at' => $d->last_active_at,
+            ])->toArray(),
+        ]);
+
+        if ($devicesWithToken->isEmpty()) {
+            $msg = "ส่ง FCM test push ล้มเหลว: มีอุปกรณ์ active {$allDevices->count()} เครื่อง แต่ไม่มีเครื่องไหนมี FCM token (อุปกรณ์ยังไม่ได้ส่ง token มาเซิร์ฟเวอร์)";
+
+            return redirect()
+                ->route('admin.sms-payment.settings')
+                ->with('error', $msg);
+        }
+
         $fcmService = app(FcmNotificationService::class);
         $result = $fcmService->triggerSync();
 
         if ($result) {
             return redirect()
                 ->route('admin.sms-payment.settings')
-                ->with('success', 'ส่ง FCM test push สำเร็จ! ตรวจสอบที่อุปกรณ์ Android');
+                ->with('success', "ส่ง FCM test push สำเร็จ! ส่งไปยัง {$devicesWithToken->count()} อุปกรณ์");
         }
 
         return redirect()
             ->route('admin.sms-payment.settings')
-            ->with('error', 'ส่ง FCM test push ล้มเหลว ตรวจสอบ log สำหรับรายละเอียด');
+            ->with('error', 'ส่ง FCM test push ล้มเหลว (มี token แต่ส่งไม่สำเร็จ) ตรวจสอบ log สำหรับรายละเอียด');
     }
 
     /**
