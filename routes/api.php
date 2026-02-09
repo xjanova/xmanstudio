@@ -166,16 +166,23 @@ Route::prefix('v1/coupons')->middleware(['auth:sanctum', 'throttle:30,1'])->grou
 // Used by SmsChecker Android app for automatic payment confirmation
 
 Route::prefix('v1/sms-payment')->group(function () {
-    // Device-authenticated endpoints (for Android app)
-    Route::middleware(['smschecker.device', 'throttle:60,1'])->group(function () {
+    // Critical device endpoints - higher rate limit to ensure always works
+    // These must succeed even when device is polling aggressively
+    Route::middleware(['smschecker.device', 'throttle:300,1'])->group(function () {
+        // Register/update device information (includes FCM token)
+        Route::post('/register-device', [SmsPaymentController::class, 'registerDevice']);
+
+        // FCM Token registration
+        Route::post('/register-fcm-token', [SmsPaymentController::class, 'registerFcmToken']);
+
         // Receive SMS payment notification from Android device
         Route::post('/notify', [SmsPaymentController::class, 'notify']);
+    });
 
+    // Standard device endpoints - normal rate limit
+    Route::middleware(['smschecker.device', 'throttle:120,1'])->group(function () {
         // Check device status and pending count
         Route::get('/status', [SmsPaymentController::class, 'status']);
-
-        // Register/update device information
-        Route::post('/register-device', [SmsPaymentController::class, 'registerDevice']);
 
         // Order approval endpoints (for Android app)
         Route::get('/orders', [SmsPaymentController::class, 'getOrders']);
@@ -191,9 +198,6 @@ Route::prefix('v1/sms-payment')->group(function () {
 
         // Dashboard statistics
         Route::get('/dashboard-stats', [SmsPaymentController::class, 'getDashboardStats']);
-
-        // FCM Token registration
-        Route::post('/register-fcm-token', [SmsPaymentController::class, 'registerFcmToken']);
 
         // WebSocket/Pusher authentication for private channels
         Route::post('/pusher/auth', [SmsPaymentController::class, 'pusherAuth']);
