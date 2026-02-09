@@ -70,28 +70,39 @@ class VerifySmsCheckerDevice
             ], 403);
         }
 
-        // Rate limiting: TEMPORARILY DISABLED (9999) เพื่อ debug FCM token registration
-        // Android app ยิง 120-300+ req/min จาก RealtimeSyncService + WorkManager + ViewModels
-        // TODO: แก้ Android app ให้ลด request ก่อน แล้วค่อยลด rate limit กลับ
-        $rateLimit = 9999;
-        $cacheKey = 'smschecker_rate:' . $device->device_id;
-        $requestCount = cache()->get($cacheKey, 0);
-
-        if ($requestCount >= $rateLimit) {
-            Log::warning('SMS Checker: Rate limit exceeded', [
-                'device_id' => $device->device_id,
-                'count' => $requestCount,
-                'limit' => $rateLimit,
-                'path' => $request->path(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Rate limit exceeded',
-            ], 429);
+        // Critical endpoints: register-device, debug-report, register-fcm-token
+        // ไม่ต้อง rate limit — ต้องผ่านเสมอเพื่อให้ FCM token ถึงเซิร์ฟเวอร์
+        $criticalPaths = ['register-device', 'debug-report', 'register-fcm-token', 'notify'];
+        $isCritical = false;
+        foreach ($criticalPaths as $path) {
+            if (str_contains($request->path(), $path)) {
+                $isCritical = true;
+                break;
+            }
         }
 
-        cache()->put($cacheKey, $requestCount + 1, now()->addMinute());
+        if (! $isCritical) {
+            // Rate limiting สำหรับ data sync endpoints เท่านั้น (orders, sync, status)
+            $rateLimit = 120;
+            $cacheKey = 'smschecker_rate:' . $device->device_id;
+            $requestCount = cache()->get($cacheKey, 0);
+
+            if ($requestCount >= $rateLimit) {
+                Log::warning('SMS Checker: Rate limit exceeded', [
+                    'device_id' => $device->device_id,
+                    'count' => $requestCount,
+                    'limit' => $rateLimit,
+                    'path' => $request->path(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Rate limit exceeded',
+                ], 429);
+            }
+
+            cache()->put($cacheKey, $requestCount + 1, now()->addMinute());
+        }
 
         // Attach device to request (use attributes for object, not merge)
         $request->attributes->set('sms_checker_device', $device);
