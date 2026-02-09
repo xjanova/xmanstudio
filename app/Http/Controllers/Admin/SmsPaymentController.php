@@ -162,22 +162,29 @@ class SmsPaymentController extends Controller
             'updated_at' => $d->updated_at?->toDateTimeString(),
         ]);
 
-        // เช็ค log ล่าสุดที่เกี่ยวกับ FCM
+        // เช็ค log ล่าสุด
         $logFile = storage_path('logs/laravel.log');
         $recentFcmLogs = [];
+        $recentAllLogs = [];
         if (file_exists($logFile)) {
-            $lines = array_slice(file($logFile), -500);
+            $lines = array_slice(file($logFile), -1000);
             foreach ($lines as $line) {
-                if (stripos($line, 'fcm') !== false || stripos($line, 'registerDevice') !== false) {
-                    $recentFcmLogs[] = trim($line);
+                $trimmed = trim($line);
+                if (stripos($trimmed, 'fcm') !== false || stripos($trimmed, 'registerDevice') !== false || stripos($trimmed, 'register-device') !== false) {
+                    $recentFcmLogs[] = $trimmed;
+                }
+                if (stripos($trimmed, 'sms') !== false || stripos($trimmed, 'smschecker') !== false || stripos($trimmed, '429') !== false || stripos($trimmed, '422') !== false || stripos($trimmed, 'ERROR') !== false || stripos($trimmed, 'WARNING') !== false) {
+                    $recentAllLogs[] = $trimmed;
                 }
             }
-            $recentFcmLogs = array_slice($recentFcmLogs, -20); // last 20 FCM-related lines
+            $recentFcmLogs = array_slice($recentFcmLogs, -20);
+            $recentAllLogs = array_slice($recentAllLogs, -30);
         }
 
         return response()->json([
             'devices' => $devices,
             'recent_fcm_logs' => $recentFcmLogs,
+            'recent_error_warning_logs' => $recentAllLogs,
             'server_time' => now()->toDateTimeString(),
         ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
