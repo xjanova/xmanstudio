@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\NewOrderCreated;
 use App\Events\PaymentMatched;
+use App\Listeners\SendNewOrderFcmNotification;
 use App\Listeners\SendPaymentMatchedNotification;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Blade;
@@ -66,6 +68,13 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             PaymentMatched::class,
             SendPaymentMatchedNotification::class
+        );
+
+        // ส่ง FCM push ไปยัง SmsChecker app เมื่อมีบิลใหม่
+        // แอพจะโหลดบิลทันทีโดยไม่ต้องรอ periodic sync
+        Event::listen(
+            NewOrderCreated::class,
+            SendNewOrderFcmNotification::class
         );
     }
 

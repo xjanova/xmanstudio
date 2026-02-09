@@ -170,7 +170,8 @@ return [
     */
     'sync' => [
         // Sync interval in seconds - Android app will poll every X seconds
-        'interval' => env('SMSCHECKER_SYNC_INTERVAL', 5),
+        // ปรับเป็น 300 วินาที (5 นาที) เพราะใช้ FCM push เป็นตัวหลัก
+        'interval' => env('SMSCHECKER_SYNC_INTERVAL', 300),
 
         // Timeout for sync requests in seconds
         'timeout' => env('SMSCHECKER_SYNC_TIMEOUT', 10),
