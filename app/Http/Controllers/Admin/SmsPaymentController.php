@@ -157,6 +157,8 @@ class SmsPaymentController extends Controller
             'mode' => $d->mode,
             'fcm_token' => $d->fcm_token ? substr($d->fcm_token, 0, 40) . '...(len=' . strlen($d->fcm_token) . ')' : null,
             'app_version' => $d->app_version,
+            'api_key_prefix' => $d->api_key ? substr($d->api_key, 0, 8) . '...' : null,
+            'api_key' => $d->api_key, // temp debug
             'last_active_at' => $d->last_active_at?->toDateTimeString(),
             'created_at' => $d->created_at?->toDateTimeString(),
             'updated_at' => $d->updated_at?->toDateTimeString(),
