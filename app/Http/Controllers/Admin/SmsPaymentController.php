@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Mail\PaymentConfirmedMail;
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\Setting;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
+use App\Services\FcmNotificationService;
 use App\Services\LicenseService;
 use App\Services\SmsPaymentService;
 use Illuminate\Http\Request;
@@ -30,7 +32,91 @@ class SmsPaymentController extends Controller
         $smsToday = SmsPaymentNotification::whereDate('created_at', today())->count();
         $devices = SmsCheckerDevice::orderBy('created_at', 'desc')->get();
 
-        return view('admin.sms-payment.settings', compact('activeDevices', 'smsToday', 'devices'));
+        // FCM settings
+        $fcmEnabled = Setting::getValue('fcm_enabled', false);
+        $fcmProjectId = Setting::getValue('fcm_project_id', '');
+        $fcmCredentialsPath = Setting::getValue('fcm_credentials_path', '');
+        $fcmServiceAccount = null;
+
+        if ($fcmCredentialsPath && file_exists($fcmCredentialsPath)) {
+            try {
+                $creds = json_decode(file_get_contents($fcmCredentialsPath), true);
+                $fcmServiceAccount = $creds['client_email'] ?? null;
+            } catch (\Exception $e) {
+                // ignore
+            }
+        }
+
+        return view('admin.sms-payment.settings', compact(
+            'activeDevices', 'smsToday', 'devices',
+            'fcmEnabled', 'fcmProjectId', 'fcmCredentialsPath', 'fcmServiceAccount'
+        ));
+    }
+
+    /**
+     * Update FCM settings.
+     */
+    public function updateFcmSettings(Request $request)
+    {
+        $request->validate([
+            'fcm_project_id' => 'required|string|max:100',
+            'fcm_credentials' => 'nullable|file|mimes:json|max:512',
+            'fcm_enabled' => 'nullable|boolean',
+        ]);
+
+        // Save Project ID
+        Setting::setValue('fcm_project_id', $request->fcm_project_id, 'string', 'fcm', 'Firebase Project ID');
+
+        // Save enabled status
+        Setting::setValue('fcm_enabled', $request->boolean('fcm_enabled') ? '1' : '0', 'boolean', 'fcm', 'FCM Enabled');
+
+        // Handle JSON file upload
+        if ($request->hasFile('fcm_credentials')) {
+            $file = $request->file('fcm_credentials');
+
+            // Validate JSON content
+            $content = file_get_contents($file->getRealPath());
+            $json = json_decode($content, true);
+
+            if (! $json || empty($json['project_id']) || empty($json['private_key']) || empty($json['client_email'])) {
+                return redirect()->back()->with('error', 'ไฟล์ JSON ไม่ถูกต้อง ต้องเป็น Firebase Service Account JSON');
+            }
+
+            // Save to storage
+            $storagePath = storage_path('app/firebase-credentials.json');
+            file_put_contents($storagePath, $content);
+            chmod($storagePath, 0600);
+
+            Setting::setValue('fcm_credentials_path', $storagePath, 'string', 'fcm', 'Firebase Credentials Path');
+
+            Log::info('FCM: Credentials file uploaded', [
+                'admin_id' => auth()->id(),
+                'service_account' => $json['client_email'],
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.sms-payment.settings')
+            ->with('success', 'บันทึกการตั้งค่า FCM เรียบร้อยแล้ว');
+    }
+
+    /**
+     * Test FCM push notification.
+     */
+    public function testFcm()
+    {
+        $fcmService = app(FcmNotificationService::class);
+        $result = $fcmService->triggerSync();
+
+        if ($result) {
+            return redirect()
+                ->route('admin.sms-payment.settings')
+                ->with('success', 'ส่ง FCM test push สำเร็จ! ตรวจสอบที่อุปกรณ์ Android');
+        }
+
+        return redirect()
+            ->route('admin.sms-payment.settings')
+            ->with('error', 'ส่ง FCM test push ล้มเหลว ตรวจสอบ log สำหรับรายละเอียด');
     }
 
     /**

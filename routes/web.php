@@ -696,6 +696,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/notifications/{notification}', [AdminSmsPaymentController::class, 'showNotification'])->name('notifications.show');
         Route::post('/notifications/{notification}/match', [AdminSmsPaymentController::class, 'manualMatch'])->name('notifications.match');
 
+        // FCM Settings
+        Route::post('/settings/fcm', [AdminSmsPaymentController::class, 'updateFcmSettings'])->name('settings.fcm');
+        Route::post('/settings/fcm-test', [AdminSmsPaymentController::class, 'testFcm'])->name('settings.fcm-test');
+
         // Cleanup
         Route::post('/cleanup', [AdminSmsPaymentController::class, 'cleanup'])->name('cleanup');
     });
