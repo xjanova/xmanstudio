@@ -70,12 +70,18 @@ class VerifySmsCheckerDevice
             ], 403);
         }
 
-        // Rate limiting check
-        $rateLimit = config('smschecker.rate_limit_per_minute', 30);
+        // Rate limiting check (120/min to match route throttle, was 30 which blocked FCM token sync)
+        $rateLimit = config('smschecker.rate_limit_per_minute', 120);
         $cacheKey = 'smschecker_rate:' . $device->device_id;
         $requestCount = cache()->get($cacheKey, 0);
 
         if ($requestCount >= $rateLimit) {
+            Log::warning('SMS Checker: Rate limit exceeded', [
+                'device_id' => $device->device_id,
+                'count' => $requestCount,
+                'limit' => $rateLimit,
+                'path' => $request->path(),
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Rate limit exceeded',
