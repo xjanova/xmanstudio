@@ -521,7 +521,9 @@ sudo systemctl restart nginx
 
 ## ติดต่อ & สนับสนุน
 
-- 📧 Email: support@xmanstudio.com
+- 📞 โทรศัพท์: 080-6038278 (คุณกรณิภา)
+- 📧 Email: xjanovax@gmail.com
+- 📘 Facebook: https://www.facebook.com/xmanenterprise/
 - 💬 Line OA: @xmanstudio
 - 📱 Website: https://xmanstudio.com
 - 📖 Documentation: README_XMANSTUDIO.md

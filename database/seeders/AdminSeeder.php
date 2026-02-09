@@ -66,7 +66,7 @@ class AdminSeeder extends Seeder
             [
                 'group' => 'company',
                 'key' => 'company_email',
-                'value' => 'info@xmanstudio.com',
+                'value' => 'xjanovax@gmail.com',
                 'type' => 'string',
                 'description' => 'Company email',
                 'is_public' => true,
@@ -74,7 +74,7 @@ class AdminSeeder extends Seeder
             [
                 'group' => 'company',
                 'key' => 'company_phone',
-                'value' => '+66 XX XXX XXXX',
+                'value' => '080-6038278',
                 'type' => 'string',
                 'description' => 'Company phone',
                 'is_public' => true,

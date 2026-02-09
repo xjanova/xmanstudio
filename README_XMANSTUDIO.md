@@ -224,7 +224,9 @@ colors: {
 
 ## 📞 ติดต่อและสนับสนุน
 
-- **Email**: info@xmanstudio.com
+- **โทรศัพท์**: 080-6038278 (คุณกรณิภา)
+- **Email**: xjanovax@gmail.com
+- **Facebook**: https://www.facebook.com/xmanenterprise/
 - **Line OA**: @xmanstudio
 - **YouTube**: Metal-X Project
 - **Website**: https://xmanstudio.com

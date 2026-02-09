@@ -132,7 +132,8 @@
                 <!-- Footer -->
                 <div class="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
                     <p>XMAN Studio - IT Solutions & Software Development</p>
-                    <p>Email: info@xmanstudio.com | Line OA: @xmanstudio</p>
+                    <p>Tel: 080-6038278 (คุณกรณิภา) | Email: xjanovax@gmail.com</p>
+                    <p>Facebook: facebook.com/xmanenterprise | Line OA: @xmanstudio</p>
                 </div>
             </div>
         </div>
