@@ -16,6 +16,7 @@ use App\Services\SmsPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -123,6 +124,28 @@ class SmsPaymentController extends Controller
             $device,
             $request->ip()
         );
+
+        // Enrich response with order data when matched (for Android app to update UI immediately)
+        if ($result['success'] && ! empty($result['data']['matched']) && ! empty($result['data']['matched_transaction_id'])) {
+            $notificationRecord = SmsPaymentNotification::find($result['data']['notification_id'] ?? null);
+            if ($notificationRecord) {
+                // Try to find the matched order
+                $matchedOrder = Order::with(['smsNotification', 'uniquePaymentAmount'])
+                    ->find($notificationRecord->matched_transaction_id);
+
+                if ($matchedOrder) {
+                    $result['data']['order'] = $this->transformOrderForAndroid($matchedOrder);
+                } else {
+                    // Try WalletTopup
+                    $matchedTopup = WalletTopup::with(['uniquePaymentAmount', 'user'])
+                        ->find($notificationRecord->matched_transaction_id);
+
+                    if ($matchedTopup) {
+                        $result['data']['order'] = $this->transformWalletTopupForAndroid($matchedTopup);
+                    }
+                }
+            }
+        }
 
         return response()->json($result, $result['success'] ? 200 : 400);
     }
@@ -1355,6 +1378,363 @@ class SmsPaymentController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+    }
+
+    /**
+     * Receive encrypted action (approve/reject) from Android app.
+     *
+     * ใช้ security flow เหมือน notify() (signature, nonce, timestamp, decrypt)
+     * Payload: { action, order_identifier, amount, bank, sms_reference, device_id, reason, nonce }
+     *
+     * POST /api/v1/sms-payment/notify-action
+     */
+    public function notifyAction(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('sms_checker_device');
+        if (! $device instanceof SmsCheckerDevice) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        // Validate required security headers
+        $signature = $request->header('X-Signature');
+        $nonce = $request->header('X-Nonce');
+        $timestamp = $request->header('X-Timestamp');
+
+        if (! $signature || ! $nonce || ! $timestamp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing required security headers',
+            ], 400);
+        }
+
+        // Check timestamp freshness (within 5 minutes)
+        $requestTime = intval($timestamp);
+        $currentTime = intval(round(microtime(true) * 1000));
+        $tolerance = config('smschecker.timestamp_tolerance', 300) * 1000;
+
+        if (abs($currentTime - $requestTime) > $tolerance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Request timestamp expired',
+            ], 400);
+        }
+
+        // Get encrypted data
+        $encryptedData = $request->input('data');
+        if (! $encryptedData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No payload data',
+            ], 400);
+        }
+
+        // Verify HMAC signature
+        $signatureData = $encryptedData . $nonce . $timestamp;
+        if (! $this->smsPaymentService->verifySignature($signatureData, $signature, $device->secret_key)) {
+            Log::warning('SMS Payment notifyAction: Invalid signature', [
+                'device_id' => $device->device_id,
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid signature',
+            ], 401);
+        }
+
+        // Decrypt payload
+        $payload = $this->smsPaymentService->decryptPayload($encryptedData, $device->secret_key);
+        if (! $payload) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to decrypt payload',
+            ], 400);
+        }
+
+        // Validate payload fields
+        $validator = Validator::make($payload, [
+            'action' => 'required|in:approve,reject',
+            'order_identifier' => 'required|string|max:100',
+            'amount' => 'required|numeric|min:0.01',
+            'bank' => 'nullable|string|max:20',
+            'sms_reference' => 'nullable|string|max:100',
+            'device_id' => 'required|string',
+            'reason' => 'nullable|string|max:500',
+            'nonce' => 'required|string|max:50',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid payload data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // Check for duplicate nonce
+        $existingNonce = DB::table('sms_payment_nonces')
+            ->where('nonce', $payload['nonce'])
+            ->exists();
+
+        if ($existingNonce) {
+            Log::warning('SMS Payment notifyAction: Duplicate nonce', [
+                'nonce' => $payload['nonce'],
+                'device_id' => $device->device_id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Duplicate request (nonce already used)',
+            ], 409);
+        }
+
+        // Record nonce
+        DB::table('sms_payment_nonces')->insert([
+            'nonce' => $payload['nonce'],
+            'device_id' => $device->device_id,
+            'used_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Find order by identifier (supports both order_number and numeric ID)
+        $identifier = $payload['order_identifier'];
+        $order = is_numeric($identifier)
+            ? Order::with(['smsNotification', 'uniquePaymentAmount'])->find($identifier)
+            : Order::with(['smsNotification', 'uniquePaymentAmount'])->where('order_number', $identifier)->first();
+
+        if (! $order) {
+            // Try matching WalletTopup
+            $topup = null;
+            if (str_starts_with($identifier, 'TOPUP-')) {
+                $topupId = str_replace('TOPUP-', '', $identifier);
+                $topup = WalletTopup::with(['uniquePaymentAmount', 'user'])->where('topup_id', $topupId)->first();
+            }
+
+            if (! $topup) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found: ' . $identifier,
+                ], 404);
+            }
+
+            // Handle WalletTopup action
+            return $this->handleTopupAction($payload, $topup, $device, $request->ip());
+        }
+
+        // Execute action
+        $action = $payload['action'];
+
+        if ($action === 'approve') {
+            return $this->executeApproveAction($payload, $order, $device, $request->ip());
+        } else {
+            return $this->executeRejectAction($payload, $order, $device, $request->ip());
+        }
+    }
+
+    /**
+     * Execute encrypted approve action on an order.
+     */
+    private function executeApproveAction(array $payload, Order $order, SmsCheckerDevice $device, string $ipAddress): JsonResponse
+    {
+        // Idempotent: already approved → return success with order data
+        if (in_array($order->sms_verification_status, ['confirmed']) && in_array($order->payment_status, ['confirmed', 'paid'])) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order already approved',
+                'data' => [
+                    'order' => $this->transformOrderForAndroid($order),
+                ],
+            ]);
+        }
+
+        if (! in_array($order->sms_verification_status, ['pending', 'matched', null])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order cannot be approved in current status: ' . $order->sms_verification_status,
+            ], 422);
+        }
+
+        $order->update([
+            'sms_verification_status' => 'confirmed',
+            'sms_verified_at' => now(),
+            'payment_status' => 'paid',
+            'paid_at' => now(),
+            'status' => 'completed',
+        ]);
+
+        // Mark unique amount as used
+        if ($order->uniquePaymentAmount && in_array($order->uniquePaymentAmount->status, ['reserved', 'expired'])) {
+            $order->uniquePaymentAmount->update([
+                'status' => 'used',
+                'matched_at' => now(),
+            ]);
+        }
+
+        // Update notification if exists
+        if ($order->smsNotification) {
+            $order->smsNotification->update(['status' => 'confirmed']);
+        }
+
+        // Generate license keys + send email
+        $this->generateLicensesForOrder($order);
+
+        // Fire PaymentMatched event for notifications (LINE, FCM)
+        if ($order->smsNotification) {
+            event(new PaymentMatched($order, $order->smsNotification));
+        }
+
+        // Update device activity
+        $device->update([
+            'last_active_at' => now(),
+            'ip_address' => $ipAddress,
+        ]);
+
+        $order = $order->fresh(['smsNotification', 'uniquePaymentAmount']);
+
+        Log::info('SMS Payment: Order approved via encrypted action', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'amount' => $payload['amount'],
+            'bank' => $payload['bank'] ?? 'N/A',
+            'device_id' => $device->device_id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order approved successfully',
+            'data' => [
+                'order' => $this->transformOrderForAndroid($order),
+            ],
+        ]);
+    }
+
+    /**
+     * Execute encrypted reject action on an order.
+     */
+    private function executeRejectAction(array $payload, Order $order, SmsCheckerDevice $device, string $ipAddress): JsonResponse
+    {
+        $reason = $payload['reason'] ?? '';
+
+        $order->update([
+            'sms_verification_status' => 'rejected',
+            'payment_status' => 'failed',
+            'notes' => ($order->notes ? $order->notes . "\n" : '') . '[SMS Rejected] ' . $reason,
+        ]);
+
+        // Update notification if exists
+        if ($order->smsNotification) {
+            $order->smsNotification->update(['status' => 'rejected']);
+        }
+
+        // Cancel unique amount
+        if ($order->uniquePaymentAmount) {
+            $order->uniquePaymentAmount->cancel();
+        }
+
+        // Update device activity
+        $device->update([
+            'last_active_at' => now(),
+            'ip_address' => $ipAddress,
+        ]);
+
+        $order = $order->fresh(['smsNotification', 'uniquePaymentAmount']);
+
+        Log::info('SMS Payment: Order rejected via encrypted action', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'reason' => $reason,
+            'device_id' => $device->device_id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order rejected',
+            'data' => [
+                'order' => $this->transformOrderForAndroid($order),
+            ],
+        ]);
+    }
+
+    /**
+     * Handle encrypted action on a WalletTopup.
+     */
+    private function handleTopupAction(array $payload, WalletTopup $topup, SmsCheckerDevice $device, string $ipAddress): JsonResponse
+    {
+        $action = $payload['action'];
+
+        if ($action === 'approve') {
+            // Idempotent check
+            if ($topup->status === WalletTopup::STATUS_APPROVED) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Topup already approved',
+                    'data' => [
+                        'order' => $this->transformWalletTopupForAndroid($topup),
+                    ],
+                ]);
+            }
+
+            $topup->update([
+                'sms_verification_status' => 'confirmed',
+                'sms_verified_at' => now(),
+            ]);
+
+            if ($topup->uniquePaymentAmount && in_array($topup->uniquePaymentAmount->status, ['reserved', 'expired'])) {
+                $topup->uniquePaymentAmount->update([
+                    'status' => 'used',
+                    'matched_at' => now(),
+                ]);
+            }
+
+            // Approve topup → adds money to wallet
+            $topup->approve(0);
+
+            $topup = $topup->fresh(['uniquePaymentAmount', 'user']);
+
+            Log::info('SMS Payment: WalletTopup approved via encrypted action', [
+                'topup_id' => $topup->id,
+                'amount' => $payload['amount'],
+                'device_id' => $device->device_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Wallet topup approved successfully',
+                'data' => [
+                    'order' => $this->transformWalletTopupForAndroid($topup),
+                ],
+            ]);
+        } else {
+            // Reject topup
+            $reason = $payload['reason'] ?? '';
+
+            $topup->update([
+                'sms_verification_status' => 'rejected',
+                'status' => WalletTopup::STATUS_REJECTED,
+                'notes' => '[SMS Rejected] ' . $reason,
+            ]);
+
+            if ($topup->uniquePaymentAmount) {
+                $topup->uniquePaymentAmount->cancel();
+            }
+
+            $topup = $topup->fresh(['uniquePaymentAmount', 'user']);
+
+            Log::info('SMS Payment: WalletTopup rejected via encrypted action', [
+                'topup_id' => $topup->id,
+                'reason' => $reason,
+                'device_id' => $device->device_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Wallet topup rejected',
+                'data' => [
+                    'order' => $this->transformWalletTopupForAndroid($topup),
+                ],
+            ]);
         }
     }
 

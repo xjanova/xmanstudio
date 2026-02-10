@@ -20,7 +20,8 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 class SmsPaymentController extends Controller
 {
     public function __construct(
-        protected SmsPaymentService $smsPaymentService
+        protected SmsPaymentService $smsPaymentService,
+        protected FcmNotificationService $fcmService
     ) {}
 
     /**
@@ -413,6 +414,16 @@ class SmsPaymentController extends Controller
         // Auto-generate license keys for products that require them
         $this->generateLicensesForOrder($order);
 
+        // Send FCM push to Android app so it updates immediately
+        try {
+            $this->fcmService->notifyOrderApproved($order);
+        } catch (\Exception $e) {
+            Log::error('FCM: Failed to send order_approved push', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         Log::info('Order payment manually confirmed by admin', [
             'order_id' => $order->id,
             'admin_id' => auth()->id(),
@@ -452,6 +463,16 @@ class SmsPaymentController extends Controller
 
         if ($order->uniquePaymentAmount) {
             $order->uniquePaymentAmount->cancel();
+        }
+
+        // Send FCM push to Android app so it updates immediately
+        try {
+            $this->fcmService->notifyOrderRejected($order);
+        } catch (\Exception $e) {
+            Log::error('FCM: Failed to send order_rejected push', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         Log::info('Order payment rejected by admin', [

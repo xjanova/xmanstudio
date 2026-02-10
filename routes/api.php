@@ -178,6 +178,9 @@ Route::prefix('v1/sms-payment')->group(function () {
         // Receive SMS payment notification from Android device
         Route::post('/notify', [SmsPaymentController::class, 'notify']);
 
+        // Receive encrypted action (approve/reject) from Android device
+        Route::post('/notify-action', [SmsPaymentController::class, 'notifyAction']);
+
         // Debug report from Android app (temporary)
         Route::post('/debug-report', [SmsPaymentController::class, 'debugReport']);
     });

@@ -133,6 +133,141 @@ class FcmNotificationService
     }
 
     /**
+     * Send push notification when order is approved (by admin or system).
+     * Android app receives this and updates local DB immediately.
+     */
+    public function notifyOrderApproved(Order $order, ?SmsCheckerDevice $device = null): bool
+    {
+        $tokens = $this->getTargetTokens($device);
+        if (empty($tokens)) {
+            return false;
+        }
+
+        $amount = $order->uniquePaymentAmount
+            ? number_format((float) $order->uniquePaymentAmount->unique_amount, 2, '.', '')
+            : number_format((float) $order->total, 2, '.', '');
+
+        $data = [
+            'type' => 'order_approved',
+            'order_id' => (string) $order->id,
+            'order_number' => $order->order_number,
+            'amount' => $amount,
+            'payment_status' => $order->payment_status ?? 'paid',
+            'sms_verification_status' => $order->sms_verification_status ?? 'confirmed',
+        ];
+
+        $notification = [
+            'title' => '✅ อนุมัติคำสั่งซื้อแล้ว',
+            'body' => sprintf(
+                'คำสั่งซื้อ #%s ยอด ฿%s อนุมัติแล้ว',
+                $order->order_number,
+                $amount
+            ),
+        ];
+
+        Log::info('FCM: Sending order_approved push', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+        ]);
+
+        return $this->sendToMultipleTokens($tokens, $data, $notification);
+    }
+
+    /**
+     * Send push notification when order is rejected (by admin or system).
+     */
+    public function notifyOrderRejected(Order $order, ?SmsCheckerDevice $device = null): bool
+    {
+        $tokens = $this->getTargetTokens($device);
+        if (empty($tokens)) {
+            return false;
+        }
+
+        $data = [
+            'type' => 'order_rejected',
+            'order_id' => (string) $order->id,
+            'order_number' => $order->order_number,
+            'payment_status' => $order->payment_status ?? 'failed',
+            'sms_verification_status' => $order->sms_verification_status ?? 'rejected',
+        ];
+
+        $notification = [
+            'title' => '❌ ปฏิเสธคำสั่งซื้อ',
+            'body' => sprintf(
+                'คำสั่งซื้อ #%s ถูกปฏิเสธ',
+                $order->order_number
+            ),
+        ];
+
+        Log::info('FCM: Sending order_rejected push', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+        ]);
+
+        return $this->sendToMultipleTokens($tokens, $data, $notification);
+    }
+
+    /**
+     * Send push notification when order is cancelled (by admin).
+     */
+    public function notifyOrderCancelled(Order $order, ?SmsCheckerDevice $device = null): bool
+    {
+        $tokens = $this->getTargetTokens($device);
+        if (empty($tokens)) {
+            return false;
+        }
+
+        $data = [
+            'type' => 'order_cancelled',
+            'order_id' => (string) $order->id,
+            'order_number' => $order->order_number,
+            'payment_status' => $order->payment_status ?? 'cancelled',
+            'sms_verification_status' => $order->sms_verification_status ?? 'cancelled',
+        ];
+
+        $notification = [
+            'title' => '🚫 ยกเลิกคำสั่งซื้อ',
+            'body' => sprintf(
+                'คำสั่งซื้อ #%s ถูกยกเลิก',
+                $order->order_number
+            ),
+        ];
+
+        Log::info('FCM: Sending order_cancelled push', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+        ]);
+
+        return $this->sendToMultipleTokens($tokens, $data, $notification);
+    }
+
+    /**
+     * Send push notification when order is deleted (by admin).
+     * Sends order_id so Android app can remove it from local DB.
+     */
+    public function notifyOrderDeleted(int $orderId, string $orderNumber, ?SmsCheckerDevice $device = null): bool
+    {
+        $tokens = $this->getTargetTokens($device);
+        if (empty($tokens)) {
+            return false;
+        }
+
+        $data = [
+            'type' => 'order_deleted',
+            'order_id' => (string) $orderId,
+            'order_number' => $orderNumber,
+        ];
+
+        // Silent push - no notification shown for deletion
+        Log::info('FCM: Sending order_deleted push', [
+            'order_id' => $orderId,
+            'order_number' => $orderNumber,
+        ]);
+
+        return $this->sendToMultipleTokens($tokens, $data, null);
+    }
+
+    /**
      * Send silent push to trigger sync
      */
     public function triggerSync(?SmsCheckerDevice $device = null): bool
