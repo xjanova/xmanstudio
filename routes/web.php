@@ -700,9 +700,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/settings/fcm', [AdminSmsPaymentController::class, 'updateFcmSettings'])->name('settings.fcm');
         Route::post('/settings/fcm-test', [AdminSmsPaymentController::class, 'testFcm'])->name('settings.fcm-test');
 
-        // Debug: Device FCM status (JSON)
-        Route::get('/debug/devices', [AdminSmsPaymentController::class, 'debugDevices'])->name('debug.devices');
-
         // Cleanup
         Route::post('/cleanup', [AdminSmsPaymentController::class, 'cleanup'])->name('cleanup');
     });

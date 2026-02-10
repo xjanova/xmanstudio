@@ -70,9 +70,12 @@ class VerifySmsCheckerDevice
             ], 403);
         }
 
-        // Critical endpoints: register-device, debug-report, register-fcm-token
-        // ไม่ต้อง rate limit — ต้องผ่านเสมอเพื่อให้ FCM token ถึงเซิร์ฟเวอร์
-        $criticalPaths = ['register-device', 'debug-report', 'register-fcm-token', 'notify'];
+        // Critical endpoints: ไม่ต้อง rate limit — ต้องผ่านเสมอ
+        // - register-device/fcm-token: FCM token registration
+        // - debug-report: diagnostic
+        // - notify: SMS notification
+        // - approve/reject: order approval ต้องไม่ถูก block
+        $criticalPaths = ['register-device', 'debug-report', 'register-fcm-token', 'notify', 'approve', 'reject'];
         $isCritical = false;
         foreach ($criticalPaths as $path) {
             if (str_contains($request->path(), $path)) {

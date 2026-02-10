@@ -145,53 +145,6 @@ class SmsPaymentController extends Controller
     }
 
     /**
-     * Debug: แสดงข้อมูล device ทั้งหมด (JSON) เพื่อตรวจสอบ FCM token
-     */
-    public function debugDevices()
-    {
-        $devices = SmsCheckerDevice::all()->map(fn ($d) => [
-            'id' => $d->id,
-            'device_id' => $d->device_id,
-            'device_name' => $d->device_name,
-            'status' => $d->status,
-            'mode' => $d->mode,
-            'fcm_token' => $d->fcm_token ? substr($d->fcm_token, 0, 40) . '...(len=' . strlen($d->fcm_token) . ')' : null,
-            'app_version' => $d->app_version,
-            'api_key_prefix' => $d->api_key ? substr($d->api_key, 0, 8) . '...' : null,
-            'api_key' => $d->api_key, // temp debug
-            'last_active_at' => $d->last_active_at?->toDateTimeString(),
-            'created_at' => $d->created_at?->toDateTimeString(),
-            'updated_at' => $d->updated_at?->toDateTimeString(),
-        ]);
-
-        // เช็ค log ล่าสุด
-        $logFile = storage_path('logs/laravel.log');
-        $recentFcmLogs = [];
-        $recentAllLogs = [];
-        if (file_exists($logFile)) {
-            $lines = array_slice(file($logFile), -1000);
-            foreach ($lines as $line) {
-                $trimmed = trim($line);
-                if (stripos($trimmed, 'fcm') !== false || stripos($trimmed, 'registerDevice') !== false || stripos($trimmed, 'register-device') !== false) {
-                    $recentFcmLogs[] = $trimmed;
-                }
-                if (stripos($trimmed, 'sms') !== false || stripos($trimmed, 'smschecker') !== false || stripos($trimmed, '429') !== false || stripos($trimmed, '422') !== false || stripos($trimmed, 'ERROR') !== false || stripos($trimmed, 'WARNING') !== false) {
-                    $recentAllLogs[] = $trimmed;
-                }
-            }
-            $recentFcmLogs = array_slice($recentFcmLogs, -20);
-            $recentAllLogs = array_slice($recentAllLogs, -30);
-        }
-
-        return response()->json([
-            'devices' => $devices,
-            'recent_fcm_logs' => $recentFcmLogs,
-            'recent_error_warning_logs' => $recentAllLogs,
-            'server_time' => now()->toDateTimeString(),
-        ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    }
-
-    /**
      * Display SMS payment dashboard.
      */
     public function index()
