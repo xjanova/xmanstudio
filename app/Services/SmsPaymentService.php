@@ -108,7 +108,7 @@ class SmsPaymentService
                         'customer_email' => $matchedOrder->customer_email,
                         'sms_verification_status' => $matchedOrder->sms_verification_status,
                         'product_name' => $matchedOrder->items->first()?->product?->name,
-                        'product_details' => $matchedOrder->items->map(fn($item) => $item->product?->name . ' x' . $item->quantity)->implode(', '),
+                        'product_details' => $matchedOrder->items->map(fn ($item) => $item->product?->name . ' x' . $item->quantity)->implode(', '),
                         'quantity' => $matchedOrder->items->sum('quantity'),
                         'created_at' => $matchedOrder->created_at?->toIso8601String(),
                         'updated_at' => $matchedOrder->updated_at?->toIso8601String(),
