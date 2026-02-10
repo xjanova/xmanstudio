@@ -109,12 +109,67 @@ class SmsPaymentNotification extends Model
         }
 
         return DB::transaction(function () {
-            // Find matching unique amount with pessimistic lock
+            // Step 1: หา active unique amount (ยังไม่หมดอายุ)
             $uniqueAmount = UniquePaymentAmount::where('unique_amount', $this->amount)
                 ->where('status', 'reserved')
                 ->where('expires_at', '>', now())
                 ->lockForUpdate()
                 ->first();
+
+            // Step 2: ถ้าไม่เจอ active → ลอง match กับที่หมดอายุไม่นาน (grace period)
+            // กรณี SMS มาช้า / rate limit block / network delay
+            if (! $uniqueAmount) {
+                $graceMinutes = (int) config('smschecker.orphan_match_window', 60);
+                $uniqueAmount = UniquePaymentAmount::where('unique_amount', $this->amount)
+                    ->where('status', 'reserved')
+                    ->where('expires_at', '<=', now())
+                    ->where('expires_at', '>', now()->subMinutes($graceMinutes))
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($uniqueAmount) {
+                    Log::info('SMS Payment: Grace period match for expired amount', [
+                        'notification_id' => $this->id,
+                        'unique_amount_id' => $uniqueAmount->id,
+                        'amount' => $this->amount,
+                        'expired_at' => $uniqueAmount->expires_at,
+                        'grace_minutes' => $graceMinutes,
+                    ]);
+                }
+            }
+
+            // Step 3: ยังไม่เจอ → ลอง match กับ expired status ที่ order ยังเป็น pending
+            // (cleanup อาจเปลี่ยน status เป็น 'expired' แล้ว แต่ order อาจยังไม่ถูก cancel)
+            if (! $uniqueAmount) {
+                $graceMinutes = (int) config('smschecker.orphan_match_window', 60);
+                $uniqueAmount = UniquePaymentAmount::where('unique_amount', $this->amount)
+                    ->where('status', 'expired')
+                    ->where('expires_at', '>', now()->subMinutes($graceMinutes))
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($uniqueAmount) {
+                    // ตรวจว่า order/topup ยังเป็น pending อยู่ไหม ถ้า cancel ไปแล้วไม่ match
+                    $stillPending = false;
+                    if ($uniqueAmount->transaction_type === 'order') {
+                        $order = \App\Models\Order::find($uniqueAmount->transaction_id);
+                        $stillPending = $order && in_array($order->payment_status, ['pending', 'expired']);
+                    } elseif ($uniqueAmount->transaction_type === 'wallet_topup') {
+                        $topup = WalletTopup::find($uniqueAmount->transaction_id);
+                        $stillPending = $topup && in_array($topup->status, [WalletTopup::STATUS_PENDING, WalletTopup::STATUS_EXPIRED]);
+                    }
+
+                    if (! $stillPending) {
+                        $uniqueAmount = null; // Order ถูก cancel จริงแล้ว ไม่ match
+                    } else {
+                        Log::info('SMS Payment: Recovered expired amount match', [
+                            'notification_id' => $this->id,
+                            'unique_amount_id' => $uniqueAmount->id,
+                            'amount' => $this->amount,
+                        ]);
+                    }
+                }
+            }
 
             if (! $uniqueAmount) {
                 return false;
@@ -152,8 +207,13 @@ class SmsPaymentNotification extends Model
         $this->save();
 
         $order = Order::find($uniqueAmount->transaction_id);
-        if (! $order || $order->payment_status !== 'pending') {
-            return true; // Still matched, but order state changed
+        if (! $order) {
+            return true; // Still matched, but order not found
+        }
+
+        // รองรับทั้ง pending (ปกติ) และ expired (grace period match หลังหมดเวลา)
+        if (! in_array($order->payment_status, ['pending', 'expired'])) {
+            return true; // Already paid/confirmed/cancelled — skip
         }
 
         if ($approvalMode === 'auto') {

@@ -75,7 +75,8 @@ class VerifySmsCheckerDevice
         // - debug-report: diagnostic
         // - notify: SMS notification
         // - approve/reject: order approval ต้องไม่ถูก block
-        $criticalPaths = ['register-device', 'debug-report', 'register-fcm-token', 'notify', 'approve', 'reject'];
+        // - orders/match: SMS matching ต้องทำงานได้ทันทีเมื่อรับ SMS
+        $criticalPaths = ['register-device', 'debug-report', 'register-fcm-token', 'notify', 'approve', 'reject', 'orders/match'];
         $isCritical = false;
         foreach ($criticalPaths as $path) {
             if (str_contains($request->path(), $path)) {

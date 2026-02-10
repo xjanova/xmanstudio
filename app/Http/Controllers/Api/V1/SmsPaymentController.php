@@ -760,6 +760,8 @@ class SmsPaymentController extends Controller
 
         $amount = (float) $amount;
 
+        $graceMinutes = (int) config('smschecker.orphan_match_window', 60);
+
         // Find Order with matching unique_amount (status=reserved → ยังไม่ถูก match)
         $order = Order::with(['smsNotification', 'uniquePaymentAmount'])
             ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
@@ -771,7 +773,7 @@ class SmsPaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
-        // Fallback: ถ้า /notify → attemptMatch() ทำงานก่อนแล้ว (status='used')
+        // Fallback 1: ถ้า /notify → attemptMatch() ทำงานก่อนแล้ว (status='used')
         // → หา order ที่ match แล้ว (confirmed/paid) เพื่อ return ให้ Android รู้
         $alreadyMatched = false;
         if (! $order) {
@@ -787,6 +789,20 @@ class SmsPaymentController extends Controller
             if ($order) {
                 $alreadyMatched = true;
             }
+        }
+
+        // Fallback 2: หา order ที่ UniquePaymentAmount หมดอายุแล้ว (ภายใน grace period)
+        // กรณี SMS มาช้า / cleanup ทำงานแล้ว แต่ order ยัง pending/expired
+        if (! $order) {
+            $order = Order::with(['smsNotification', 'uniquePaymentAmount'])
+                ->whereHas('uniquePaymentAmount', function ($q) use ($amount, $graceMinutes) {
+                    $q->where('unique_amount', $amount)
+                        ->whereIn('status', ['expired', 'reserved'])
+                        ->where('expires_at', '>', now()->subMinutes($graceMinutes));
+                })
+                ->whereIn('payment_status', ['pending', 'expired'])
+                ->orderBy('created_at', 'desc')
+                ->first();
         }
 
         // ถ้าไม่พบ Order → ลองหา Wallet Topup (เติมเงิน)
