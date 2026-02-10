@@ -786,12 +786,13 @@ class SmsPaymentController extends Controller
         $graceMinutes = (int) config('smschecker.orphan_match_window', 60);
 
         // Find Order with matching unique_amount (status=reserved → ยังไม่ถูก match)
+        // รวม 'matched' ด้วย กรณี notify→attemptMatch() ทำงานก่อน matchOrderByAmount
         $order = Order::with(['smsNotification', 'uniquePaymentAmount'])
             ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
                 $q->where('unique_amount', $amount)
-                    ->where('status', 'reserved');
+                    ->whereIn('status', ['reserved', 'used']);
             })
-            ->whereIn('sms_verification_status', ['pending', null])
+            ->whereIn('sms_verification_status', ['pending', 'matched', null])
             ->where('payment_status', '!=', 'paid')
             ->orderBy('created_at', 'desc')
             ->first();
