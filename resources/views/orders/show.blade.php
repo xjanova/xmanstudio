@@ -576,8 +576,9 @@ function copyToClipboard(text) {
     });
 }
 
-@if($order->payment_status === 'pending' && $order->usesSmsPayment() && $order->uniquePaymentAmount && !$order->uniquePaymentAmount->isExpired())
-// AJAX polling every 5 seconds (lightweight — no full page reload)
+@if($order->payment_status === 'pending' && $order->usesSmsPayment())
+// AJAX polling every 5 seconds — ทำงานเสมอเมื่อ payment_status=pending
+// ไม่ว่า uniquePaymentAmount จะหมดอายุหรือไม่ (เพราะแอพอาจ approve ทีหลัง)
 (function() {
     const statusUrl = '{{ route("orders.payment-status", $order) }}';
     let polling = true;
@@ -619,8 +620,10 @@ function copyToClipboard(text) {
     // Start polling after initial 5 second delay
     setTimeout(checkPaymentStatus, 5000);
 })();
+@endif
 
-// Countdown timer
+@if($order->payment_status === 'pending' && $order->usesSmsPayment() && $order->uniquePaymentAmount && !$order->uniquePaymentAmount->isExpired())
+// Countdown timer — ทำงานเฉพาะเมื่อยังไม่หมดอายุ
 (function() {
     const expiresAt = new Date('{{ $order->uniquePaymentAmount->expires_at->toIso8601String() }}');
     const countdownEl = document.getElementById('countdown');
@@ -630,7 +633,13 @@ function copyToClipboard(text) {
         const diff = expiresAt - now;
 
         if (diff <= 0) {
-            location.reload();
+            // หมดเวลา — reload เพื่อแสดงสถานะหมดอายุ
+            // แต่ polling ยังทำงานอยู่แยกต่างหาก
+            if (countdownEl) {
+                countdownEl.textContent = 'หมดเวลาแล้ว';
+                countdownEl.classList.add('text-red-600');
+            }
+            setTimeout(function() { location.reload(); }, 2000);
             return;
         }
 
