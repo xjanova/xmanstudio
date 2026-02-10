@@ -150,10 +150,8 @@
                                 <input type="radio" class="peer hidden" name="payment_method" id="promptpay" value="promptpay" {{ old('payment_method', 'promptpay') === 'promptpay' ? 'checked' : '' }}>
                                 <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-600 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/30 peer-checked:ring-2 peer-checked:ring-purple-500/20">
                                     <div class="text-center">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                            </svg>
+                                        <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg overflow-hidden bg-white">
+                                            <img src="https://www.bot.or.th/content/dam/bot/icons/icon-promptpay.png" alt="PromptPay" class="w-9 h-9 object-contain" onerror="this.style.display='none';this.parentElement.classList.add('bg-gradient-to-br','from-purple-400','to-indigo-600');this.parentElement.innerHTML='<svg class=\'w-6 h-6 text-white\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z\'/></svg>'">
                                         </div>
                                         <p class="font-medium text-gray-900 dark:text-white">PromptPay</p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">สแกน QR Code</p>

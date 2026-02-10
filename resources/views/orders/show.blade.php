@@ -324,10 +324,8 @@
                                     <!-- PromptPay Option -->
                                     <div class="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
                                         <div class="flex items-center mb-2">
-                                            <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mr-3">
-                                                <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                                </svg>
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-3 overflow-hidden bg-white">
+                                                <img src="https://www.bot.or.th/content/dam/bot/icons/icon-promptpay.png" alt="PromptPay" class="w-8 h-8 object-contain" onerror="this.style.display='none';this.parentElement.innerHTML='<svg class=\'w-5 h-5 text-purple-600\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z\'/></svg>'">
                                             </div>
                                             <div>
                                                 <p class="font-semibold text-gray-900 dark:text-white">PromptPay</p>
@@ -590,16 +588,20 @@ function copyToClipboard(text) {
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            if (data.payment_status === 'paid' || data.payment_status === 'confirmed') {
+            var isPaid = (data.payment_status === 'paid' || data.payment_status === 'confirmed');
+            var isProcessing = (data.payment_status === 'processing');
+            var isMatched = (data.sms_verification_status === 'matched' || data.sms_verification_status === 'confirmed');
+            if (isPaid || isProcessing || isMatched) {
                 polling = false;
                 // Show success toast before redirect
+                var statusMsg = isPaid ? 'ชำระเงินสำเร็จ!' : 'ตรวจพบการโอนเงิน กำลังยืนยัน...';
                 var toast = document.createElement('div');
                 toast.className = 'fixed inset-0 flex items-center justify-center z-50 bg-black/50';
                 toast.innerHTML = '<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 text-center max-w-sm mx-4">' +
                     '<div class="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">' +
                     '<svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' +
                     '</div>' +
-                    '<h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">ชำระเงินสำเร็จ!</h3>' +
+                    '<h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">' + statusMsg + '</h3>' +
                     '<p class="text-gray-500 dark:text-gray-400">กำลังโหลดหน้ายืนยัน...</p>' +
                     '</div>';
                 document.body.appendChild(toast);
@@ -625,7 +627,7 @@ function copyToClipboard(text) {
 @if($order->payment_status === 'pending' && $order->usesSmsPayment() && $order->uniquePaymentAmount && !$order->uniquePaymentAmount->isExpired())
 // Countdown timer — ทำงานเฉพาะเมื่อยังไม่หมดอายุ
 (function() {
-    const expiresAt = new Date('{{ $order->uniquePaymentAmount->expires_at->toIso8601String() }}');
+    const expiresAt = new Date('{{ $order->uniquePaymentAmount->expires_at->utc()->toIso8601String() }}');
     const countdownEl = document.getElementById('countdown');
 
     function updateCountdown() {

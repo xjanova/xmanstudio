@@ -86,15 +86,40 @@ class SmsPaymentService
                 'matched' => $matched,
             ]);
 
+            // Enrich response with matched order data for app to update local DB
+            $responseData = [
+                'notification_id' => $notification->id,
+                'status' => $notification->status,
+                'matched' => $matched,
+                'matched_transaction_id' => $notification->matched_transaction_id,
+            ];
+
+            if ($matched && $notification->matched_transaction_id) {
+                $matchedOrder = \App\Models\Order::with('items.product')->find($notification->matched_transaction_id);
+                if ($matchedOrder) {
+                    $responseData['order'] = [
+                        'id' => $matchedOrder->id,
+                        'order_number' => $matchedOrder->order_number,
+                        'total' => (float) $matchedOrder->total,
+                        'status' => $matchedOrder->status,
+                        'payment_status' => $matchedOrder->payment_status,
+                        'payment_method' => $matchedOrder->payment_method,
+                        'customer_name' => $matchedOrder->customer_name,
+                        'customer_email' => $matchedOrder->customer_email,
+                        'sms_verification_status' => $matchedOrder->sms_verification_status,
+                        'product_name' => $matchedOrder->items->first()?->product?->name,
+                        'product_details' => $matchedOrder->items->map(fn($item) => $item->product?->name . ' x' . $item->quantity)->implode(', '),
+                        'quantity' => $matchedOrder->items->sum('quantity'),
+                        'created_at' => $matchedOrder->created_at?->toIso8601String(),
+                        'updated_at' => $matchedOrder->updated_at?->toIso8601String(),
+                    ];
+                }
+            }
+
             return [
                 'success' => true,
                 'message' => $matched ? 'Payment matched and confirmed' : 'Notification recorded',
-                'data' => [
-                    'notification_id' => $notification->id,
-                    'status' => $notification->status,
-                    'matched' => $matched,
-                    'matched_transaction_id' => $notification->matched_transaction_id,
-                ],
+                'data' => $responseData,
             ];
         });
     }

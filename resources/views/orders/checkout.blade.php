@@ -116,9 +116,8 @@
                                         <div class="flex items-center">
                                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center mr-3">
                                                 @if($method['icon'] === 'promptpay')
-                                                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                                    </svg>
+                                                    <img src="https://www.bot.or.th/content/dam/bot/icons/icon-promptpay.png" alt="PromptPay" class="w-7 h-7 object-contain" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<svg class=\'w-5 h-5 text-white\' viewBox=\'0 0 24 24\' fill=\'currentColor\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z\'/></svg>')"
+                                                    >
                                                 @elseif($method['icon'] === 'bank')
                                                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
