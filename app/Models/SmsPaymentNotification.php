@@ -323,6 +323,7 @@ class SmsPaymentNotification extends Model
     protected function matchWalletTopup(UniquePaymentAmount $uniqueAmount, string $approvalMode): bool
     {
         $this->status = 'matched';
+        $this->matched_transaction_id = $uniqueAmount->transaction_id;
         $this->save();
 
         $topup = WalletTopup::find($uniqueAmount->transaction_id);

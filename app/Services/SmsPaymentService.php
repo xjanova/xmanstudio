@@ -95,6 +95,7 @@ class SmsPaymentService
             ];
 
             if ($matched && $notification->matched_transaction_id) {
+                // Try Order first
                 $matchedOrder = \App\Models\Order::with('items.product')->find($notification->matched_transaction_id);
                 if ($matchedOrder) {
                     $responseData['order'] = [
@@ -113,6 +114,28 @@ class SmsPaymentService
                         'created_at' => $matchedOrder->created_at?->toIso8601String(),
                         'updated_at' => $matchedOrder->updated_at?->toIso8601String(),
                     ];
+                } else {
+                    // Try WalletTopup (matched_transaction_id could be a topup id)
+                    $matchedTopup = \App\Models\WalletTopup::find($notification->matched_transaction_id);
+                    if ($matchedTopup) {
+                        $responseData['transaction_type'] = 'wallet_topup';
+                        $responseData['order'] = [
+                            'id' => $matchedTopup->id,
+                            'order_number' => $matchedTopup->topup_id ?? ('TOPUP-' . $matchedTopup->id),
+                            'total' => (float) $matchedTopup->amount,
+                            'status' => $matchedTopup->status,
+                            'payment_status' => $matchedTopup->status === 'approved' ? 'paid' : 'pending',
+                            'payment_method' => $matchedTopup->payment_method ?? 'bank_transfer',
+                            'customer_name' => $matchedTopup->wallet?->user?->name ?? '',
+                            'customer_email' => $matchedTopup->wallet?->user?->email ?? '',
+                            'sms_verification_status' => $matchedTopup->sms_verification_status,
+                            'product_name' => 'เติมเงิน ' . number_format((float) $matchedTopup->amount, 2) . ' บาท',
+                            'product_details' => 'เติมเงินกระเป๋า',
+                            'quantity' => 1,
+                            'created_at' => $matchedTopup->created_at?->toIso8601String(),
+                            'updated_at' => $matchedTopup->updated_at?->toIso8601String(),
+                        ];
+                    }
                 }
             }
 

@@ -832,7 +832,8 @@ class SmsPaymentController extends Controller
         // ถ้าไม่พบ Order → ลองหา Wallet Topup (เติมเงิน)
         $topup = null;
         if (! $order) {
-            $topup = WalletTopup::with(['uniquePaymentAmount', 'user'])
+            $topup = WalletTopup::with(['uniquePaymentAmount', 'wallet.user'])
+                ->whereIn('status', [WalletTopup::STATUS_PENDING, WalletTopup::STATUS_APPROVED])
                 ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
                     $q->where('unique_amount', $amount)
                         ->whereIn('status', ['reserved', 'used']);
@@ -1690,19 +1691,28 @@ class SmsPaymentController extends Controller
             }
 
             // Approve topup → adds money to wallet
-            $topup->approve(0);
+            $approved = $topup->approve(0);
 
-            $topup = $topup->fresh(['uniquePaymentAmount', 'user']);
+            if (! $approved) {
+                Log::warning('SMS Payment: WalletTopup approve() returned false', [
+                    'topup_id' => $topup->id,
+                    'topup_status' => $topup->status,
+                    'reason' => 'Status was not pending when approve() called',
+                ]);
+            }
+
+            $topup = $topup->fresh(['uniquePaymentAmount', 'wallet.user']);
 
             Log::info('SMS Payment: WalletTopup approved via encrypted action', [
                 'topup_id' => $topup->id,
                 'amount' => $payload['amount'],
                 'device_id' => $device->device_id,
+                'approve_result' => $approved,
             ]);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Wallet topup approved successfully',
+                'success' => $approved,
+                'message' => $approved ? 'Wallet topup approved successfully' : 'Topup could not be approved (status: ' . $topup->status . ')',
                 'data' => [
                     'order' => $this->transformWalletTopupForAndroid($topup),
                 ],
