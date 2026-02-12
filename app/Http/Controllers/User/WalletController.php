@@ -93,7 +93,7 @@ class WalletController extends Controller
         }
 
         $validated = $request->validate([
-            'amount' => "required|numeric|min:{$minAmount}|max:{$maxAmount}",
+            'amount' => "required|integer|min:{$minAmount}|max:{$maxAmount}",
             'payment_method' => 'required|in:' . implode(',', $allowedMethods),
         ]);
 

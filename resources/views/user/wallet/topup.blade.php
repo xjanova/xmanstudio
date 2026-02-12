@@ -85,7 +85,7 @@
                             </div>
                             <input type="number" name="amount" id="amount"
                                    class="block w-full pl-10 pr-4 py-4 text-xl font-semibold border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200 @error('amount') border-red-500 @enderror"
-                                   value="{{ old('amount') }}" min="{{ $settings['min_amount'] }}" max="{{ $settings['max_amount'] }}" step="1" required placeholder="ขั้นต่ำ {{ number_format($settings['min_amount']) }} บาท">
+                                   value="{{ old('amount') }}" min="{{ $settings['min_amount'] }}" max="{{ $settings['max_amount'] }}" step="1" pattern="\d*" inputmode="numeric" required placeholder="ขั้นต่ำ {{ number_format($settings['min_amount']) }} บาท">
                         </div>
                         @error('amount')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -226,6 +226,20 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.remove('bg-purple-50', 'text-purple-600', 'border-purple-200');
             this.classList.add('bg-purple-600', 'text-white', 'border-purple-600');
         });
+    });
+
+    // Prevent decimal input
+    amountInput.addEventListener('keydown', function(e) {
+        if (e.key === '.' || e.key === ',') {
+            e.preventDefault();
+        }
+    });
+
+    amountInput.addEventListener('input', function() {
+        // Strip any decimal portion that might get through (e.g. paste)
+        if (this.value.includes('.') || this.value.includes(',')) {
+            this.value = Math.floor(parseFloat(this.value.replace(',', '.')) || 0);
+        }
     });
 
     // Update bonus on amount change
