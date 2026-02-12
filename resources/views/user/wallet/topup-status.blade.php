@@ -102,6 +102,20 @@
                 </div>
             </div>
         </div>
+        @elseif($topup->status === 'expired')
+        <div class="bg-gray-50 dark:bg-gray-900/30 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">รายการหมดอายุ</h3>
+                    <p class="text-gray-600 dark:text-gray-400">หมดเวลาโอนเงิน - ระบบปฏิเสธอัตโนมัติ</p>
+                </div>
+            </div>
+        </div>
         @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -291,7 +305,16 @@
                 setTimeout(function() { window.location.href = walletUrl; }, 2000);
             } else if (data.status === 'rejected' || data.status === 'expired') {
                 clearInterval(polling);
-                location.reload();
+                var reason = data.reject_reason || '';
+                var reasonHtml = reason ? '<p class="text-red-700 dark:text-red-300 mt-1">เหตุผล: ' + reason + '</p>' : '';
+                document.querySelector('.max-w-4xl').innerHTML =
+                    '<div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-2xl p-8 text-center">' +
+                    '<svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                    '<h2 class="text-2xl font-bold text-red-800 dark:text-red-200 mb-2">รายการถูกปฏิเสธ</h2>' +
+                    reasonHtml +
+                    '<p class="text-sm text-gray-500 mt-4">กำลังนำคุณไปหน้ากระเป๋าเงิน...</p>' +
+                    '</div>';
+                setTimeout(function() { window.location.href = walletUrl; }, 3000);
             } else if (data.sms_verification_status === 'matched' || data.sms_verification_status === 'confirmed') {
                 // SMS matched — show detecting message, approval coming soon
                 var banner = document.getElementById('sms-status-banner');

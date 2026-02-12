@@ -854,10 +854,10 @@ class SmsPaymentController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Topup query 2: expired topup within grace period (cleanup ran but SMS came later)
+            // Topup query 2: expired/auto-rejected topup within grace period (cleanup ran but SMS came later)
             if (! $topup) {
                 $topup = WalletTopup::with(['uniquePaymentAmount', 'wallet.user'])
-                    ->whereIn('status', [WalletTopup::STATUS_EXPIRED, WalletTopup::STATUS_PENDING])
+                    ->whereIn('status', [WalletTopup::STATUS_EXPIRED, WalletTopup::STATUS_REJECTED, WalletTopup::STATUS_PENDING])
                     ->whereHas('uniquePaymentAmount', function ($q) use ($amount, $graceMinutes) {
                         $q->where('unique_amount', $amount)
                             ->whereIn('status', ['expired', 'reserved'])
@@ -866,10 +866,10 @@ class SmsPaymentController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->first();
 
-                if ($topup && $topup->status === WalletTopup::STATUS_EXPIRED) {
-                    // Recover expired topup → set back to pending so approve() can work
-                    $topup->update(['status' => WalletTopup::STATUS_PENDING]);
-                    Log::info('SMS Payment: Recovered expired WalletTopup for match', [
+                if ($topup && in_array($topup->status, [WalletTopup::STATUS_EXPIRED, WalletTopup::STATUS_REJECTED])) {
+                    // Recover expired/auto-rejected topup → set back to pending so approve() can work
+                    $topup->update(['status' => WalletTopup::STATUS_PENDING, 'reject_reason' => null]);
+                    Log::info('SMS Payment: Recovered expired/auto-rejected WalletTopup for match', [
                         'topup_id' => $topup->id,
                         'amount' => $amount,
                     ]);

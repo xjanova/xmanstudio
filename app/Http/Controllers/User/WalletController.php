@@ -236,6 +236,7 @@ class WalletController extends Controller
         return response()->json([
             'status' => $topup->status,
             'sms_verification_status' => $topup->sms_verification_status,
+            'reject_reason' => $topup->reject_reason,
         ]);
     }
 

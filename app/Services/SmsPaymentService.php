@@ -330,8 +330,9 @@ class SmsPaymentService
                 $uniqueAmount->walletTopup->status === WalletTopup::STATUS_PENDING) {
 
                 $uniqueAmount->walletTopup->update([
-                    'status' => WalletTopup::STATUS_EXPIRED,
-                    'notes' => 'หมดเวลาชำระเงิน - ระบบยกเลิกอัตโนมัติ ' . now()->format('d/m/Y H:i'),
+                    'status' => WalletTopup::STATUS_REJECTED,
+                    'reject_reason' => 'หมดเวลาโอนเงิน - ระบบปฏิเสธอัตโนมัติ',
+                    'approved_at' => now(),
                 ]);
                 $stats['cancelled_topups']++;
 

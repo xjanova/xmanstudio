@@ -156,7 +156,7 @@ class SmsPaymentNotification extends Model
                         $stillPending = $order && in_array($order->payment_status, ['pending', 'expired']);
                     } elseif ($uniqueAmount->transaction_type === 'wallet_topup') {
                         $topup = WalletTopup::find($uniqueAmount->transaction_id);
-                        $stillPending = $topup && in_array($topup->status, [WalletTopup::STATUS_PENDING, WalletTopup::STATUS_EXPIRED]);
+                        $stillPending = $topup && in_array($topup->status, [WalletTopup::STATUS_PENDING, WalletTopup::STATUS_EXPIRED, WalletTopup::STATUS_REJECTED]);
                     }
 
                     if (! $stillPending) {
@@ -336,11 +336,12 @@ class SmsPaymentNotification extends Model
             return true; // Still matched, but topup not found
         }
 
-        // Allow recovery of expired topups (SMS came after cleanup)
-        if ($topup->status === WalletTopup::STATUS_EXPIRED) {
-            $topup->update(['status' => WalletTopup::STATUS_PENDING]);
+        // Allow recovery of expired/auto-rejected topups (SMS came after cleanup)
+        if ($topup->status === WalletTopup::STATUS_EXPIRED ||
+            ($topup->status === WalletTopup::STATUS_REJECTED && str_contains($topup->reject_reason ?? '', 'หมดเวลาโอนเงิน'))) {
+            $topup->update(['status' => WalletTopup::STATUS_PENDING, 'reject_reason' => null]);
             $topup->refresh();
-            \Log::info('matchWalletTopup: Recovered expired topup to pending', [
+            \Log::info('matchWalletTopup: Recovered expired/auto-rejected topup to pending', [
                 'topup_id' => $topup->id,
             ]);
         }
