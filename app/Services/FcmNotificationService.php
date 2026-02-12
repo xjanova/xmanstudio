@@ -268,6 +268,33 @@ class FcmNotificationService
     }
 
     /**
+     * Notify device that settings changed (e.g. approval_mode changed from admin panel).
+     * Device will trigger sync to pull updated settings.
+     */
+    public function notifySettingsChanged(SmsCheckerDevice $device, string $setting, string $value): bool
+    {
+        $tokens = $this->getTargetTokens($device);
+        if (empty($tokens)) {
+            return false;
+        }
+
+        $data = [
+            'type' => 'settings_changed',
+            'setting' => $setting,
+            'value' => $value,
+            'device_id' => $device->device_id,
+        ];
+
+        Log::info('FCM: Sending settings_changed push', [
+            'device_id' => $device->device_id,
+            'setting' => $setting,
+            'value' => $value,
+        ]);
+
+        return $this->sendToMultipleTokens($tokens, $data, null);
+    }
+
+    /**
      * Send silent push to trigger sync
      */
     public function triggerSync(?SmsCheckerDevice $device = null): bool

@@ -128,15 +128,22 @@
 
             <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700">
                 <span class="text-gray-500 dark:text-gray-400">โหมดการอนุมัติ</span>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full
-                    @switch($device->approval_mode)
-                        @case('auto') bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 @break
-                        @case('manual') bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 @break
-                        @case('smart') bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 @break
-                        @default bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400
-                    @endswitch">
-                    {{ ucfirst($device->approval_mode ?? 'auto') }}
-                </span>
+                <div class="flex items-center gap-2">
+                    <form id="approvalModeForm" action="{{ route('admin.sms-payment.devices.update', $device) }}" method="POST" class="flex items-center gap-2">
+                        @csrf
+                        @method('PUT')
+                        <select name="approval_mode" id="approvalModeSelect"
+                            onchange="document.getElementById('approvalModeForm').submit()"
+                            class="text-xs font-semibold rounded-full px-3 py-1.5 border-0 cursor-pointer focus:ring-2 focus:ring-indigo-500
+                                {{ ($device->approval_mode ?? 'auto') === 'auto' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : '' }}
+                                {{ ($device->approval_mode ?? 'auto') === 'manual' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : '' }}
+                                {{ ($device->approval_mode ?? 'auto') === 'smart' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : '' }}">
+                            <option value="auto" {{ ($device->approval_mode ?? 'auto') === 'auto' ? 'selected' : '' }}>🟢 Auto</option>
+                            <option value="manual" {{ ($device->approval_mode ?? 'auto') === 'manual' ? 'selected' : '' }}>🟡 Manual</option>
+                            <option value="smart" {{ ($device->approval_mode ?? 'auto') === 'smart' ? 'selected' : '' }}>🔵 Smart</option>
+                        </select>
+                    </form>
+                </div>
             </div>
 
             <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700">

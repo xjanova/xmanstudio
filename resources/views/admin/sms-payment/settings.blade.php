@@ -346,15 +346,20 @@
                         @endif
                     </td>
                     <td class="px-6 py-4">
-                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full
-                            @switch($device->approval_mode)
-                                @case('auto') bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 @break
-                                @case('manual') bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 @break
-                                @case('smart') bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 @break
-                                @default bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400
-                            @endswitch">
-                            {{ ucfirst($device->approval_mode ?? 'auto') }}
-                        </span>
+                        <form action="{{ route('admin.sms-payment.devices.update', $device) }}" method="POST" class="inline">
+                            @csrf
+                            @method('PUT')
+                            <select name="approval_mode"
+                                onchange="this.form.submit()"
+                                class="text-xs font-semibold rounded-full px-2.5 py-1 border-0 cursor-pointer focus:ring-2 focus:ring-indigo-500
+                                    {{ ($device->approval_mode ?? 'auto') === 'auto' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : '' }}
+                                    {{ ($device->approval_mode ?? 'auto') === 'manual' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : '' }}
+                                    {{ ($device->approval_mode ?? 'auto') === 'smart' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : '' }}">
+                                <option value="auto" {{ ($device->approval_mode ?? 'auto') === 'auto' ? 'selected' : '' }}>🟢 Auto</option>
+                                <option value="manual" {{ ($device->approval_mode ?? 'auto') === 'manual' ? 'selected' : '' }}>🟡 Manual</option>
+                                <option value="smart" {{ ($device->approval_mode ?? 'auto') === 'smart' ? 'selected' : '' }}>🔵 Smart</option>
+                            </select>
+                        </form>
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {{ $device->last_active_at?->diffForHumans() ?? 'ยังไม่เคย' }}

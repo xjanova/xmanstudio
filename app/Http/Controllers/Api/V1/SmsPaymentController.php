@@ -418,16 +418,22 @@ class SmsPaymentController extends Controller
      */
     private function transformOrderForAndroid(Order $order): array
     {
-        // Map sms_verification_status to approval_status for Android
-        // 'matched' = SMS จับคู่ได้แล้ว → แสดงเป็น auto_approved (เขียว) ไม่ใช่ pending_review (แดง)
-        $approvalStatus = match ($order->sms_verification_status) {
-            'pending', null => 'pending_review',
-            'matched' => 'auto_approved',
-            'confirmed' => 'auto_approved',
-            'rejected' => 'rejected',
-            'cancelled' => 'cancelled',
-            'timeout' => 'expired',
-            'expired' => 'expired',
+        // Map sms_verification_status + payment_status to approval_status for Android
+        // Server is the source of truth — status must reflect actual server state
+        $approvalStatus = match (true) {
+            // Paid/confirmed = truly approved
+            in_array($order->payment_status, ['paid', 'confirmed']) => 'auto_approved',
+            // SMS matched but NOT yet paid → still pending admin/system confirmation
+            $order->sms_verification_status === 'matched' => 'pending_review',
+            // Confirmed by SMS (but payment not yet marked) → approved
+            $order->sms_verification_status === 'confirmed' => 'auto_approved',
+            // Explicitly rejected
+            $order->sms_verification_status === 'rejected' => 'rejected',
+            // Cancelled
+            $order->sms_verification_status === 'cancelled' || $order->payment_status === 'cancelled' => 'cancelled',
+            // Expired/timeout
+            in_array($order->sms_verification_status, ['timeout', 'expired']) || $order->payment_status === 'expired' => 'expired',
+            // Default: pending
             default => 'pending_review',
         };
 
@@ -490,16 +496,22 @@ class SmsPaymentController extends Controller
      */
     private function transformWalletTopupForAndroid(WalletTopup $topup): array
     {
-        // Map sms_verification_status to approval_status for Android
-        // 'matched' = SMS จับคู่ได้แล้ว → แสดงเป็น auto_approved (เขียว) ไม่ใช่ pending_review (แดง)
-        $approvalStatus = match ($topup->sms_verification_status) {
-            'pending', null => 'pending_review',
-            'matched' => 'auto_approved',
-            'confirmed' => 'auto_approved',
-            'rejected' => 'rejected',
-            'cancelled' => 'cancelled',
-            'timeout' => 'expired',
-            'expired' => 'expired',
+        // Map sms_verification_status + topup status to approval_status for Android
+        // Server is the source of truth — status must reflect actual server state
+        $approvalStatus = match (true) {
+            // Topup approved = truly approved
+            $topup->status === 'approved' => 'auto_approved',
+            // SMS matched but topup NOT yet approved → still pending
+            $topup->sms_verification_status === 'matched' && $topup->status === 'pending' => 'pending_review',
+            // Confirmed by SMS → approved
+            $topup->sms_verification_status === 'confirmed' => 'auto_approved',
+            // Rejected
+            $topup->sms_verification_status === 'rejected' || $topup->status === 'rejected' => 'rejected',
+            // Cancelled
+            $topup->sms_verification_status === 'cancelled' || $topup->status === 'cancelled' => 'cancelled',
+            // Expired
+            in_array($topup->sms_verification_status, ['timeout', 'expired']) || $topup->status === 'expired' => 'expired',
+            // Default: pending
             default => 'pending_review',
         };
 
