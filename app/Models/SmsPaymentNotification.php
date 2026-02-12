@@ -326,20 +326,31 @@ class SmsPaymentNotification extends Model
         $this->matched_transaction_id = $uniqueAmount->transaction_id;
         $this->save();
 
-        $topup = WalletTopup::find($uniqueAmount->transaction_id);
+        // ⚠️ CRITICAL: ต้อง load wallet relationship ด้วย ไม่งั้น approve() จะ fail
+        $topup = WalletTopup::with('wallet')->find($uniqueAmount->transaction_id);
         if (! $topup) {
+            \Log::warning('matchWalletTopup: Topup not found', [
+                'transaction_id' => $uniqueAmount->transaction_id,
+            ]);
+
             return true; // Still matched, but topup not found
         }
 
         // Allow recovery of expired topups (SMS came after cleanup)
         if ($topup->status === WalletTopup::STATUS_EXPIRED) {
             $topup->update(['status' => WalletTopup::STATUS_PENDING]);
+            $topup->refresh();
             \Log::info('matchWalletTopup: Recovered expired topup to pending', [
                 'topup_id' => $topup->id,
             ]);
         }
 
         if (! in_array($topup->status, [WalletTopup::STATUS_PENDING])) {
+            \Log::info('matchWalletTopup: Topup not in pending state, skipping', [
+                'topup_id' => $topup->id,
+                'status' => $topup->status,
+            ]);
+
             return true; // Still matched, but topup in final state (approved/rejected)
         }
 
@@ -350,13 +361,56 @@ class SmsPaymentNotification extends Model
                 'sms_verification_status' => 'confirmed',
                 'sms_verified_at' => now(),
             ]);
+            // ⚠️ refresh model to ensure DB state is in sync
+            $topup->refresh();
+            $topup->load('wallet');
+
+            // ⚠️ ตรวจสอบว่า wallet มีอยู่จริง ถ้าไม่มีให้สร้างให้
+            if (! $topup->wallet) {
+                \Log::warning('matchWalletTopup: Wallet is NULL! Creating wallet for user', [
+                    'topup_id' => $topup->id,
+                    'wallet_id' => $topup->wallet_id,
+                    'user_id' => $topup->user_id,
+                ]);
+                $wallet = \App\Models\Wallet::getOrCreateForUser($topup->user_id);
+                $topup->update(['wallet_id' => $wallet->id]);
+                $topup->refresh();
+                $topup->load('wallet');
+            }
 
             // Approve the topup (adds money to wallet)
-            $approved = $topup->approve(0); // 0 = system approved
-            if (! $approved) {
-                \Log::warning('matchWalletTopup: approve() returned false', [
+            try {
+                \Log::info('matchWalletTopup: Calling approve()', [
                     'topup_id' => $topup->id,
                     'topup_status' => $topup->status,
+                    'wallet_id' => $topup->wallet_id,
+                    'wallet_exists' => $topup->wallet !== null,
+                    'wallet_balance' => $topup->wallet?->balance,
+                    'total_amount' => $topup->total_amount,
+                ]);
+
+                $approved = $topup->approve(0); // 0 = system approved
+
+                if (! $approved) {
+                    \Log::error('matchWalletTopup: approve() returned false!', [
+                        'topup_id' => $topup->id,
+                        'topup_status' => $topup->status,
+                        'topup_status_raw' => $topup->getRawOriginal('status'),
+                        'status_equals_pending' => $topup->status === WalletTopup::STATUS_PENDING,
+                        'wallet_exists' => $topup->wallet !== null,
+                    ]);
+                } else {
+                    \Log::info('matchWalletTopup: approve() SUCCESS', [
+                        'topup_id' => $topup->id,
+                        'new_status' => $topup->fresh()->status,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('matchWalletTopup: approve() threw exception!', [
+                    'topup_id' => $topup->id,
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile() . ':' . $e->getLine(),
+                    'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 5),
                 ]);
             }
 

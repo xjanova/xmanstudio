@@ -183,6 +183,10 @@ Route::prefix('v1/sms-payment')->group(function () {
 
         // Debug report from Android app (temporary)
         Route::post('/debug-report', [SmsPaymentController::class, 'debugReport']);
+
+        // Debug: ตรวจสอบปัญหา topup approve
+        Route::get('/debug-topup', [SmsPaymentController::class, 'debugTopup']);
+        Route::post('/debug-topup-approve', [SmsPaymentController::class, 'debugTopupApprove']);
     });
 
     // Standard device endpoints - normal rate limit
