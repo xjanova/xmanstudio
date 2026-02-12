@@ -267,15 +267,43 @@
 @if($topup->status === 'pending' && $uniqueAmount && !$uniqueAmount->isExpired())
 @push('scripts')
 <script>
-// Auto refresh page every 30 seconds to check status
-setTimeout(function() {
-    location.reload();
-}, 30000);
+// AJAX polling every 5 seconds — check topup status without full page reload
+(function() {
+    var checkUrl = '{{ route("user.wallet.check-topup-status", $topup) }}';
+    var walletUrl = '{{ route("user.wallet.index") }}';
+    var polling = setInterval(function() {
+        fetch(checkUrl, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'approved') {
+                clearInterval(polling);
+                // Show success message and redirect to wallet
+                document.querySelector('.max-w-4xl').innerHTML =
+                    '<div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-2xl p-8 text-center">' +
+                    '<svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                    '<h2 class="text-2xl font-bold text-green-800 dark:text-green-200 mb-2">เติมเงินสำเร็จ!</h2>' +
+                    '<p class="text-green-700 dark:text-green-300 mb-4">ยอดเงินได้ถูกเพิ่มเข้ากระเป๋าของคุณแล้ว</p>' +
+                    '<p class="text-sm text-gray-500">กำลังนำคุณไปหน้ากระเป๋าเงิน...</p>' +
+                    '</div>';
+                setTimeout(function() { window.location.href = walletUrl; }, 2000);
+            } else if (data.status === 'rejected') {
+                clearInterval(polling);
+                location.reload();
+            }
+        })
+        .catch(function() { /* retry on next interval */ });
+    }, 5000);
+
+    // Fallback: full page reload every 60 seconds
+    setTimeout(function() { location.reload(); }, 60000);
+})();
 
 // Countdown timer
 @if($uniqueAmount)
 (function() {
-    const expiresAt = new Date('{{ $uniqueAmount->expires_at->toIso8601String() }}');
+    const expiresAt = new Date('{{ $uniqueAmount->expires_at->utc()->toIso8601String() }}');
     const countdownEl = document.getElementById('countdown');
 
     function updateCountdown() {

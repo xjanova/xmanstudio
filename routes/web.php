@@ -257,6 +257,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/topup', [UserWalletController::class, 'topup'])->name('topup');
         Route::post('/topup', [UserWalletController::class, 'submitTopup'])->name('submit-topup');
         Route::get('/topup/{topup}/status', [UserWalletController::class, 'topupStatus'])->name('topup-status');
+        Route::get('/topup/{topup}/check-status', [UserWalletController::class, 'checkTopupStatus'])->name('check-topup-status');
         Route::post('/topup/{topup}/regenerate', [UserWalletController::class, 'regenerateUniqueAmount'])->name('regenerate-amount');
         Route::get('/transactions', [UserWalletController::class, 'transactions'])->name('transactions');
         Route::delete('/topup/{topup}', [UserWalletController::class, 'cancelTopup'])->name('cancel-topup');

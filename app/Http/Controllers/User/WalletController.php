@@ -220,6 +220,21 @@ class WalletController extends Controller
     }
 
     /**
+     * AJAX: Check topup payment status (polling from frontend)
+     */
+    public function checkTopupStatus(WalletTopup $topup)
+    {
+        if ($topup->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return response()->json([
+            'status' => $topup->status,
+            'sms_verification_status' => $topup->sms_verification_status,
+        ]);
+    }
+
+    /**
      * Cancel pending top-up
      */
     public function cancelTopup(WalletTopup $topup)
