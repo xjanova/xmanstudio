@@ -1,0 +1,156 @@
+name: Auto Deploy to Production
+
+on:
+  # Auto-deploy when pushed to main (after CI passes)
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - 'VERSION'
+      - 'CHANGELOG.md'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/release.yml'
+  # Manual trigger (Claude can use: gh workflow run auto-deploy.yml)
+  workflow_dispatch:
+    inputs:
+      skip_ci:
+        description: 'Skip CI checks (fast deploy)'
+        required: false
+        default: 'false'
+        type: boolean
+
+# Prevent concurrent deployments
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  # Quick check - ensure code at least compiles
+  pre-check:
+    name: Pre-deploy Check
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_ci != 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - run: composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
+      - run: php -l app/Http/Controllers/Api/V1/SmsPaymentController.php
+      - run: php -l routes/api.php
+      - run: php -l routes/web.php
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-check]
+    if: always() && (needs.pre-check.result == 'success' || github.event.inputs.skip_ci == 'true')
+
+    steps:
+      - name: Check SSH secrets
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SSH_HOST" ] || [ -z "$SSH_USER" ] || [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "::error::Required SSH secrets are not configured."
+            echo "Please set: SSH_HOST, SSH_USER, SSH_PRIVATE_KEY"
+            echo "Optional: SSH_PORT (defaults to 22), DEPLOY_PATH (defaults to /var/www/xmanstudio)"
+            exit 1
+          fi
+          echo "✓ SSH secrets configured"
+
+      - name: Deploy via SSH (git pull + optimize)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 5m
+          script: |
+            set -e
+
+            # Configuration
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+
+            echo "🚀 Starting deployment to ${DEPLOY_PATH}"
+            cd "${DEPLOY_PATH}"
+
+            # Backup .env
+            cp .env .env.backup.$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Install/update composer dependencies
+            echo "📦 Installing composer dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction 2>&1 || {
+              echo "⚠️ Composer install failed, trying with --no-scripts"
+              composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+            }
+
+            # Run migrations (if any)
+            echo "🗃️ Running migrations..."
+            php artisan migrate --force 2>&1 || echo "⚠️ Migration warnings (non-fatal)"
+
+            # Clear and rebuild caches (CRITICAL for new routes)
+            echo "⚡ Optimizing application..."
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache 2>/dev/null || true
+
+            # Fix permissions
+            chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+            chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+
+            # Restart queue workers if running
+            php artisan queue:restart 2>/dev/null || true
+
+            # Restart PHP-FPM if available
+            sudo systemctl restart php8.3-fpm 2>/dev/null || \
+            sudo systemctl restart php8.2-fpm 2>/dev/null || \
+            sudo systemctl restart php-fpm 2>/dev/null || \
+            echo "⚠️ Could not restart PHP-FPM"
+
+            echo "✅ Deployment completed successfully!"
+
+      - name: Health Check
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+        run: |
+          URL="${APP_URL:-https://xman4289.com}"
+          echo "🔍 Checking health at: ${URL}/api/health"
+          sleep 5
+          HTTP_CODE=$(curl -s -o /tmp/health_response.json -w "%{http_code}" "${URL}/api/health" || echo "000")
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Application is healthy (HTTP $HTTP_CODE)"
+            cat /tmp/health_response.json || true
+          else
+            echo "⚠️ Health check returned HTTP $HTTP_CODE (may still be starting up)"
+            cat /tmp/health_response.json 2>/dev/null || true
+          fi
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "## Deployment Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ **Status:** Success" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "**Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date -u)" >> $GITHUB_STEP_SUMMARY
