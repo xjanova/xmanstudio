@@ -274,6 +274,91 @@ curl -X POST "https://your-domain.com/api/v1/sms-payment/notify" \
   }'
 ```
 
+## Wallet Topup Auto-Matching Flow
+
+### ขั้นตอนการทำงาน
+
+```
+User สร้างบิลเติมเงิน (฿100)
+        │
+        ▼
+ระบบสร้าง unique_payment_amount (฿100.51)
+        │
+        ▼
+User โอนเงิน ฿100.51 ──▶ ธนาคารส่ง SMS ──▶ SmsChecker App
+        │                                          │
+        │                                          ▼
+        │                              API POST /notify
+        │                                          │
+        │                                          ▼
+        │                     SmsPaymentNotification::attemptMatch()
+        │                              จับคู่ยอด ฿100.51
+        │                                          │
+        │                                          ▼
+        │                          matchWalletTopup() → อนุมัติอัตโนมัติ
+        │                                          │
+        ▼                                          ▼
+AJAX Polling (ทุก 5 วินาที)           status = approved
+checkTopupStatus() ◀──────────── เติมเงินเข้า wallet สำเร็จ
+```
+
+### Cleanup & Auto-Reject
+
+เมื่อบิลหมดอายุ (ผ่านไป 30 นาทีไม่มีการโอน):
+
+```php
+// SmsPaymentService::cleanup()
+$uniqueAmount->walletTopup->update([
+    'status' => WalletTopup::STATUS_REJECTED,
+    'reject_reason' => 'หมดเวลาโอนเงิน - ระบบปฏิเสธอัตโนมัติ',
+    'approved_at' => now(),
+]);
+```
+
+**เหตุผลที่ใช้ `rejected` แทน `expired`:**
+- User เข้าใจง่ายกว่า — เห็นเหตุผลชัดเจนว่าทำไมบิลถูกปฏิเสธ
+- AJAX polling แสดง reject_reason ให้ user เห็นแบบ real-time
+- รองรับ plugin ทั้ง Laravel และ WordPress ในรูปแบบเดียวกัน
+
+### Grace Period Recovery
+
+ถ้า SMS มาหลังจากบิลถูก auto-reject ระบบจะ recover กลับได้:
+
+```php
+// เงื่อนไข recovery
+if ($topup->status === WalletTopup::STATUS_EXPIRED ||
+    ($topup->status === WalletTopup::STATUS_REJECTED &&
+     str_contains($topup->reject_reason ?? '', 'หมดเวลาโอนเงิน'))) {
+    // recover กลับเป็น pending แล้วอนุมัติ
+    $topup->update(['status' => WalletTopup::STATUS_PENDING, 'reject_reason' => null]);
+}
+```
+
+**หมายเหตุ**: เฉพาะบิลที่ถูก auto-reject เท่านั้นที่ recover ได้ (ตรวจจาก `reject_reason` มีคำว่า "หมดเวลาโอนเงิน") — บิลที่ admin ปฏิเสธเองจะ recover ไม่ได้
+
+### Input Validation (ป้องกันทศนิยม)
+
+ยอดเติมเงินต้องเป็น **จำนวนเต็มเท่านั้น** เพราะระบบจะเพิ่มทศนิยม (.01-.99) เป็น unique amount เอง:
+
+| Layer | วิธีป้องกัน |
+|-------|------------|
+| HTML | `step="1"` + `pattern="\d*"` + `inputmode="numeric"` |
+| JavaScript | `keydown` block `.` `,` + `input` strip decimal on paste |
+| Laravel Backend | `'amount' => 'required\|integer\|min:10\|max:100000'` |
+| WordPress Backend | `absint($amount)` + `is_numeric` check |
+
+### สิ่งที่ต้องทำเพิ่มใน WordPress Plugin
+
+เมื่อ port ระบบนี้ไป WordPress plugin ต้องเพิ่ม:
+
+1. **`reject_reason` column** ใน `{prefix}_spc_unique_amounts` หรือ orders table
+2. **Cleanup cron**: WP-Cron event ที่ reject orders หมดอายุ + set reason
+3. **REST API**: endpoint check-status คืน `reject_reason`
+4. **JS polling**: WooCommerce thank-you page แสดง reject_reason
+5. **Amount validation**: `absint()` + block decimal ใน checkout form
+
+---
+
 ## Troubleshooting
 
 ### Sync Issues

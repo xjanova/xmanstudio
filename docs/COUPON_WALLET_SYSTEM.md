@@ -193,7 +193,10 @@ CREATE TABLE wallet_topups (
     payment_method ENUM('bank_transfer', 'promptpay', 'truemoney'),
     payment_reference VARCHAR(100) NULL,
     payment_proof VARCHAR(255) NULL,
+    payment_display_amount DECIMAL(12,2) NULL,  -- unique amount for SMS matching
     status ENUM('pending', 'approved', 'rejected', 'expired', 'cancelled'),
+    reject_reason VARCHAR(255) NULL,             -- เหตุผลการปฏิเสธ (auto/manual)
+    sms_verification_status ENUM('pending', 'confirmed', 'rejected') DEFAULT 'pending',
     admin_id BIGINT NULL,
     admin_note TEXT NULL,
     approved_at TIMESTAMP NULL,
@@ -228,10 +231,24 @@ CREATE TABLE wallet_bonus_tiers (
 
 #### Top-up
 - **URL**: `/user/wallet/topup`
-- เลือกจำนวนเงิน (ขั้นต่ำ ฿100)
+- เลือกจำนวนเงิน (ขั้นต่ำ ฿10, **จำนวนเต็มเท่านั้น** — ไม่รับทศนิยม)
 - เลือกช่องทางชำระเงิน
-- อัพโหลดหลักฐานการชำระเงิน
 - แสดงโบนัสที่จะได้รับ (preview)
+
+#### Top-up Status (สถานะการเติมเงิน)
+- **URL**: `/user/wallet/topup/{id}/status`
+- แสดงยอดเงินที่ต้องโอน (unique amount) พร้อม countdown
+- AJAX polling ทุก 5 วินาที ตรวจสอบสถานะอัตโนมัติ
+- เมื่อ **อนุมัติ**: แสดงข้อความสำเร็จ → redirect ไปหน้า wallet
+- เมื่อ **ปฏิเสธ/หมดอายุ**: แสดง "รายการถูกปฏิเสธ" พร้อมเหตุผล → redirect หลัง 3 วินาที
+- **AJAX Endpoint**: `GET /wallet/topup/{id}/check-status`
+  ```json
+  {
+    "status": "pending|approved|rejected|expired",
+    "sms_verification_status": "pending|confirmed|rejected",
+    "reject_reason": "หมดเวลาโอนเงิน - ระบบปฏิเสธอัตโนมัติ"
+  }
+  ```
 
 #### Transaction History
 - **URL**: `/user/wallet/transactions`
@@ -449,7 +466,30 @@ Route::prefix('v1/coupons')->middleware(['auth:sanctum'])->group(function () {
 
 ---
 
-## 7. Future Improvements
+## 7. Recent Changes (v1.0.225)
+
+### Topup Expiry → Auto-Reject
+- ✅ บิลเติมเงินที่หมดอายุจะถูก **ปฏิเสธอัตโนมัติ** พร้อมเหตุผล "หมดเวลาโอนเงิน - ระบบปฏิเสธอัตโนมัติ"
+- ✅ AJAX polling แสดง reject_reason แบบ real-time
+- ✅ Grace period recovery: ถ้า SMS มาหลัง auto-reject ระบบ recover กลับเป็น pending ได้
+- ✅ รองรับ backward compatibility กับ status `expired` เดิม
+
+### Input Validation
+- ✅ ป้องกันยอดทศนิยมในฟอร์มเติมเงิน (frontend + backend `integer` validation)
+- ✅ `inputmode="numeric"` สำหรับ mobile keyboard
+
+### แนวทางสำหรับ Plugin (Laravel/WordPress)
+การเปลี่ยนแปลงเหล่านี้ต้องนำไปปรับใน plugin ด้วย:
+
+1. **Cleanup Job**: เปลี่ยนจาก `expired` เป็น `rejected` + set `reject_reason`
+2. **API Response**: endpoint check-status ต้องคืน `reject_reason`
+3. **Frontend Polling**: JS handler ต้องแสดง reject_reason เมื่อ status = rejected
+4. **Grace Period**: query recovery ต้องรองรับทั้ง `expired` และ `rejected` ที่มี reject_reason ตรง
+5. **Amount Validation**: ใช้ `integer` validation, block decimal input บน frontend
+
+---
+
+## 8. Future Improvements
 
 - [ ] Email notifications สำหรับ topup status
 - [ ] Automatic topup approval via payment gateway
