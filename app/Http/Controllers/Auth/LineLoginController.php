@@ -251,7 +251,7 @@ class LineLoginController extends Controller
 
         Auth::login($user, true);
 
-        return redirect()->intended(route('customer.dashboard'))
+        return redirect()->route('profile.edit')
             ->with('success', 'สร้างบัญชีและเข้าสู่ระบบด้วย LINE สำเร็จ');
     }
 
