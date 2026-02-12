@@ -120,7 +120,7 @@ class WalletTopup extends Model
     /**
      * Approve topup
      */
-    public function approve(int $approvedBy): bool
+    public function approve(int $approvedBy = 0): bool
     {
         if ($this->status !== self::STATUS_PENDING) {
             return false;
@@ -128,7 +128,7 @@ class WalletTopup extends Model
 
         $this->update([
             'status' => self::STATUS_APPROVED,
-            'approved_by' => $approvedBy,
+            'approved_by' => $approvedBy > 0 ? $approvedBy : null,
             'approved_at' => now(),
         ]);
 
