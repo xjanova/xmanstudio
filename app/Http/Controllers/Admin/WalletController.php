@@ -188,6 +188,114 @@ class WalletController extends Controller
     }
 
     /**
+     * Debug: ตรวจสอบว่าทำไม topup approve() ไม่ทำงาน
+     * GET /admin/wallets/topups/{topup}/debug
+     */
+    public function debugTopup(WalletTopup $topup)
+    {
+        $topup->load(['wallet', 'uniquePaymentAmount', 'smsNotification', 'user']);
+
+        $debug = [
+            'timestamp' => now()->toDateTimeString(),
+            'topup' => [
+                'id' => $topup->id,
+                'topup_id' => $topup->topup_id,
+                'wallet_id' => $topup->wallet_id,
+                'user_id' => $topup->user_id,
+                'amount' => $topup->amount,
+                'total_amount' => $topup->total_amount,
+                'total_amount_raw' => $topup->getRawOriginal('total_amount'),
+                'status' => $topup->status,
+                'sms_verification_status' => $topup->sms_verification_status,
+                'sms_notification_id' => $topup->sms_notification_id,
+                'unique_payment_amount_id' => $topup->unique_payment_amount_id,
+                'payment_display_amount' => $topup->payment_display_amount,
+                'created_at' => $topup->created_at?->toDateTimeString(),
+                'expires_at' => $topup->expires_at?->toDateTimeString(),
+            ],
+            'wallet' => $topup->wallet ? [
+                'id' => $topup->wallet->id,
+                'user_id' => $topup->wallet->user_id,
+                'balance' => $topup->wallet->balance,
+                'is_active' => $topup->wallet->is_active,
+            ] : 'NULL — wallet ไม่มี!',
+            'unique_payment_amount' => $topup->uniquePaymentAmount ? [
+                'id' => $topup->uniquePaymentAmount->id,
+                'unique_amount' => $topup->uniquePaymentAmount->unique_amount,
+                'status' => $topup->uniquePaymentAmount->status,
+                'expires_at' => $topup->uniquePaymentAmount->expires_at?->toDateTimeString(),
+                'matched_at' => $topup->uniquePaymentAmount->matched_at?->toDateTimeString(),
+            ] : 'NULL',
+            'sms_notification' => $topup->smsNotification ? [
+                'id' => $topup->smsNotification->id,
+                'status' => $topup->smsNotification->status,
+                'amount' => $topup->smsNotification->amount,
+                'bank' => $topup->smsNotification->bank,
+                'type' => $topup->smsNotification->type,
+                'device_id' => $topup->smsNotification->device_id,
+            ] : 'NULL',
+        ];
+
+        // ลอง simulate approve
+        $debug['approve_simulation'] = [];
+        $debug['approve_simulation']['status_check'] = $topup->status === WalletTopup::STATUS_PENDING
+            ? 'PASS — status is pending' : 'FAIL — status is "' . $topup->status . '"';
+
+        if ($topup->wallet) {
+            $debug['approve_simulation']['wallet_check'] = 'PASS — wallet exists (id=' . $topup->wallet->id . ')';
+
+            // ลอง approve จริงๆ ถ้า ?do_approve=1
+            if (request()->has('do_approve') && $topup->status === WalletTopup::STATUS_PENDING) {
+                try {
+                    $result = $topup->approve(0); // system approve
+                    $topup->refresh();
+                    $debug['approve_result'] = [
+                        'success' => $result,
+                        'new_status' => $topup->status,
+                        'wallet_balance_after' => $topup->wallet->fresh()->balance,
+                    ];
+                } catch (\Exception $e) {
+                    $debug['approve_exception'] = [
+                        'message' => $e->getMessage(),
+                        'file' => $e->getFile() . ':' . $e->getLine(),
+                        'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 10),
+                    ];
+                }
+            }
+        } else {
+            $debug['approve_simulation']['wallet_check'] = 'FAIL — wallet is NULL!';
+            // ลองหา wallet ด้วย user_id
+            $walletByUser = Wallet::where('user_id', $topup->user_id)->first();
+            $debug['approve_simulation']['wallet_by_user'] = $walletByUser
+                ? 'Found wallet id=' . $walletByUser->id . ' (balance=' . $walletByUser->balance . ')'
+                : 'No wallet found for user_id=' . $topup->user_id;
+        }
+
+        // เช็ค recent log entries
+        try {
+            $logFile = storage_path('logs/laravel.log');
+            if (file_exists($logFile)) {
+                $lines = file($logFile);
+                $relevantLines = [];
+                $keywords = ['approve', 'topup', 'matchWalletTopup', 'matchOrderByAmount', 'deposit', 'wallet'];
+                foreach (array_slice($lines, -300) as $line) {
+                    foreach ($keywords as $keyword) {
+                        if (stripos($line, $keyword) !== false) {
+                            $relevantLines[] = trim($line);
+                            break;
+                        }
+                    }
+                }
+                $debug['recent_logs'] = array_slice($relevantLines, -30);
+            }
+        } catch (\Exception $e) {
+            $debug['log_error'] = $e->getMessage();
+        }
+
+        return response()->json($debug, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
      * Transactions list
      */
     public function transactions(Request $request)
