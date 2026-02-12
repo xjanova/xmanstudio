@@ -221,12 +221,17 @@ class WalletController extends Controller
 
     /**
      * AJAX: Check topup payment status (polling from frontend)
+     * CRITICAL: Must refresh() to get latest DB state — the topup may have been
+     * approved by a different process (e.g. matchOrderByAmount or notify endpoint)
      */
     public function checkTopupStatus(WalletTopup $topup)
     {
         if ($topup->user_id !== auth()->id()) {
             abort(403);
         }
+
+        // Always refresh from DB — another process may have approved this topup
+        $topup->refresh();
 
         return response()->json([
             'status' => $topup->status,

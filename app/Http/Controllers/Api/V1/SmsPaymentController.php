@@ -939,16 +939,34 @@ class SmsPaymentController extends Controller
                     }
 
                     // Approve topup → adds money to wallet
-                    $topup->approve(0); // 0 = system approved
+                    $approved = $topup->approve(0); // 0 = system approved
 
-                    $topup = $topup->fresh(['uniquePaymentAmount', 'user']);
+                    if (! $approved) {
+                        Log::warning('SMS Payment: WalletTopup approve() returned false on match', [
+                            'topup_id' => $topup->id,
+                            'topup_status' => $topup->status,
+                            'reason' => 'Status was not pending when approve() called — may have been approved by another process',
+                        ]);
+                    }
+
+                    $topup = $topup->fresh(['uniquePaymentAmount', 'user', 'wallet']);
 
                     Log::info('SMS Payment: Auto-approved WalletTopup on match', [
                         'device_id' => $device->device_id,
                         'amount' => $amount,
                         'topup_id' => $topup->id,
+                        'approved' => $approved,
                         'was_already_matched' => $alreadyMatched,
                     ]);
+
+                    // Send FCM push to notify device that topup was approved
+                    // This triggers the Android app to update its local DB immediately
+                    try {
+                        $fcmService = app(\App\Services\FcmNotificationService::class);
+                        $fcmService->notifySettingsChanged($device, 'topup_approved', (string) $topup->id);
+                    } catch (\Exception $e) {
+                        Log::warning('FCM push for topup_approved failed', ['error' => $e->getMessage()]);
+                    }
                 } catch (\Exception $e) {
                     Log::error('SMS Payment: Auto-approve WalletTopup failed', [
                         'topup_id' => $topup->id,
@@ -1722,6 +1740,19 @@ class SmsPaymentController extends Controller
                 'approve_result' => $approved,
             ]);
 
+            // Send FCM push to notify topup approved
+            if ($approved) {
+                try {
+                    $fcmService = app(\App\Services\FcmNotificationService::class);
+                    $fcmService->notifySettingsChanged($device, 'topup_approved', (string) $topup->id);
+                } catch (\Exception $e) {
+                    Log::error('handleTopupAction: FCM push failed', [
+                        'topup_id' => $topup->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             return response()->json([
                 'success' => $approved,
                 'message' => $approved ? 'Wallet topup approved successfully' : 'Topup could not be approved (status: ' . $topup->status . ')',
@@ -1750,6 +1781,17 @@ class SmsPaymentController extends Controller
                 'reason' => $reason,
                 'device_id' => $device->device_id,
             ]);
+
+            // Send FCM push to notify topup rejected
+            try {
+                $fcmService = app(\App\Services\FcmNotificationService::class);
+                $fcmService->notifySettingsChanged($device, 'topup_rejected', (string) $topup->id);
+            } catch (\Exception $e) {
+                Log::error('handleTopupAction: FCM push failed for rejection', [
+                    'topup_id' => $topup->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return response()->json([
                 'success' => true,

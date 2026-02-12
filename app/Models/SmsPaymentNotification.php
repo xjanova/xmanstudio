@@ -340,7 +340,13 @@ class SmsPaymentNotification extends Model
             ]);
 
             // Approve the topup (adds money to wallet)
-            $topup->approve(0); // 0 = system approved
+            $approved = $topup->approve(0); // 0 = system approved
+            if (! $approved) {
+                \Log::warning('matchWalletTopup: approve() returned false', [
+                    'topup_id' => $topup->id,
+                    'topup_status' => $topup->status,
+                ]);
+            }
 
             $this->update(['status' => 'confirmed']);
         } else {
