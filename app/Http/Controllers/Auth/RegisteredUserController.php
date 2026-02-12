@@ -53,6 +53,6 @@ class RegisteredUserController extends Controller
             $request->session()->put('autotradex_machine_id', $machineId);
         }
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('profile.edit', absolute: false));
     }
 }
