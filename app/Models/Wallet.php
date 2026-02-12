@@ -76,7 +76,7 @@ class Wallet extends Model
             'payment_method' => $paymentMethod,
             'payment_reference' => $paymentReference,
             'description' => $description,
-            'created_by' => $createdBy,
+            'created_by' => $createdBy ?: null,
             'status' => WalletTransaction::STATUS_COMPLETED,
             'metadata' => $metadata,
         ]);
