@@ -327,8 +327,20 @@ class SmsPaymentNotification extends Model
         $this->save();
 
         $topup = WalletTopup::find($uniqueAmount->transaction_id);
-        if (! $topup || $topup->status !== WalletTopup::STATUS_PENDING) {
-            return true; // Still matched, but topup state changed
+        if (! $topup) {
+            return true; // Still matched, but topup not found
+        }
+
+        // Allow recovery of expired topups (SMS came after cleanup)
+        if ($topup->status === WalletTopup::STATUS_EXPIRED) {
+            $topup->update(['status' => WalletTopup::STATUS_PENDING]);
+            \Log::info('matchWalletTopup: Recovered expired topup to pending', [
+                'topup_id' => $topup->id,
+            ]);
+        }
+
+        if (! in_array($topup->status, [WalletTopup::STATUS_PENDING])) {
+            return true; // Still matched, but topup in final state (approved/rejected)
         }
 
         if ($approvalMode === 'auto') {

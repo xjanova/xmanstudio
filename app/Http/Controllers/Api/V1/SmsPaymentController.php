@@ -499,12 +499,12 @@ class SmsPaymentController extends Controller
         // Map sms_verification_status + topup status to approval_status for Android
         // Server is the source of truth — status must reflect actual server state
         $approvalStatus = match (true) {
-            // Topup approved = truly approved
+            // Topup approved = truly approved (source of truth: topup.status)
             $topup->status === 'approved' => 'auto_approved',
+            // SMS confirmed BUT topup NOT yet approved → still pending (approve() may have failed)
+            $topup->sms_verification_status === 'confirmed' && $topup->status === 'pending' => 'pending_review',
             // SMS matched but topup NOT yet approved → still pending
             $topup->sms_verification_status === 'matched' && $topup->status === 'pending' => 'pending_review',
-            // Confirmed by SMS → approved
-            $topup->sms_verification_status === 'confirmed' => 'auto_approved',
             // Rejected
             $topup->sms_verification_status === 'rejected' || $topup->status === 'rejected' => 'rejected',
             // Cancelled
@@ -844,6 +844,7 @@ class SmsPaymentController extends Controller
         // ถ้าไม่พบ Order → ลองหา Wallet Topup (เติมเงิน)
         $topup = null;
         if (! $order) {
+            // Topup query 1: active/used unique amount
             $topup = WalletTopup::with(['uniquePaymentAmount', 'wallet.user'])
                 ->whereIn('status', [WalletTopup::STATUS_PENDING, WalletTopup::STATUS_APPROVED])
                 ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
@@ -852,6 +853,28 @@ class SmsPaymentController extends Controller
                 })
                 ->orderBy('created_at', 'desc')
                 ->first();
+
+            // Topup query 2: expired topup within grace period (cleanup ran but SMS came later)
+            if (! $topup) {
+                $topup = WalletTopup::with(['uniquePaymentAmount', 'wallet.user'])
+                    ->whereIn('status', [WalletTopup::STATUS_EXPIRED, WalletTopup::STATUS_PENDING])
+                    ->whereHas('uniquePaymentAmount', function ($q) use ($amount, $graceMinutes) {
+                        $q->where('unique_amount', $amount)
+                            ->whereIn('status', ['expired', 'reserved'])
+                            ->where('expires_at', '>', now()->subMinutes($graceMinutes));
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if ($topup && $topup->status === WalletTopup::STATUS_EXPIRED) {
+                    // Recover expired topup → set back to pending so approve() can work
+                    $topup->update(['status' => WalletTopup::STATUS_PENDING]);
+                    Log::info('SMS Payment: Recovered expired WalletTopup for match', [
+                        'topup_id' => $topup->id,
+                        'amount' => $amount,
+                    ]);
+                }
+            }
 
             if ($topup) {
                 $alreadyMatched = in_array($topup->sms_verification_status, ['confirmed', 'matched']);
