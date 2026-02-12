@@ -155,7 +155,8 @@ class SmsPaymentController extends Controller
                 ->whereIn('status', ['matched', 'confirmed'])->count(),
             'pending_orders' => Order::whereNotNull('unique_payment_amount_id')
                 ->whereIn('sms_verification_status', ['pending', 'matched'])
-                ->where('payment_status', '!=', 'paid')
+                ->whereNotIn('payment_status', ['paid', 'expired'])
+                ->where('status', '!=', 'cancelled')
                 ->count(),
             'active_devices' => SmsCheckerDevice::where('status', 'active')->count(),
             'sms_today' => SmsPaymentNotification::whereDate('created_at', today())->count(),
@@ -505,7 +506,8 @@ class SmsPaymentController extends Controller
         $orders = Order::with(['uniquePaymentAmount', 'smsNotification'])
             ->whereNotNull('unique_payment_amount_id')
             ->whereIn('sms_verification_status', ['pending', 'matched'])
-            ->where('payment_status', '!=', 'paid')
+            ->whereNotIn('payment_status', ['paid', 'expired'])
+            ->where('status', '!=', 'cancelled')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 

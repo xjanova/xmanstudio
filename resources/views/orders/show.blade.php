@@ -234,17 +234,17 @@
                                     </div>
                                 </div>
                             @elseif($order->usesSmsPayment() && $order->uniquePaymentAmount && $order->uniquePaymentAmount->isExpired())
-                                <!-- Expired Unique Amount -->
-                                <div class="mb-6 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+                                <!-- Expired/Cancelled Order -->
+                                <div class="mb-6 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-4">
                                     <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-lg flex items-center justify-center mr-3">
-                                            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        <div class="w-10 h-10 bg-red-100 dark:bg-red-800 rounded-lg flex items-center justify-center mr-3">
+                                            <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                             </svg>
                                         </div>
                                         <div class="flex-1">
-                                            <h3 class="font-semibold text-amber-800 dark:text-amber-200">ยอดชำระหมดอายุแล้ว</h3>
-                                            <p class="text-sm text-amber-700 dark:text-amber-300">กรุณาติดต่อเจ้าหน้าที่หรืออัปโหลดสลิปด้านล่าง</p>
+                                            <h3 class="font-semibold text-red-800 dark:text-red-200">บิลนี้ถูกยกเลิกแล้ว</h3>
+                                            <p class="text-sm text-red-700 dark:text-red-300">หมดเวลาชำระเงิน กรุณาสร้างคำสั่งซื้อใหม่</p>
                                         </div>
                                     </div>
                                 </div>
@@ -367,8 +367,8 @@
                                 </div>
                             @endif
 
-                            <!-- Upload Payment Slip (only show if not using SMS auto-verification or if expired) -->
-                            @if(!$order->usesSmsPayment() || !$order->uniquePaymentAmount || $order->uniquePaymentAmount->isExpired())
+                            <!-- Upload Payment Slip (only show for non-SMS orders that are still pending) -->
+                            @if(!$order->usesSmsPayment())
                             <div class="mt-6 pt-6 border-t dark:border-gray-700">
                                 <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3">แนบหลักฐานการชำระเงิน</h3>
                                 <form action="{{ route('orders.confirm-payment', $order) }}" method="POST" enctype="multipart/form-data">
@@ -591,7 +591,13 @@ function copyToClipboard(text) {
             var isPaid = (data.payment_status === 'paid' || data.payment_status === 'confirmed');
             var isProcessing = (data.payment_status === 'processing');
             var isMatched = (data.sms_verification_status === 'matched' || data.sms_verification_status === 'confirmed');
-            if (isPaid || isProcessing || isMatched) {
+            var isExpired = (data.payment_status === 'expired' || data.status === 'cancelled');
+
+            if (isExpired) {
+                polling = false;
+                // Order expired/cancelled — reload to show cancellation status
+                location.reload();
+            } else if (isPaid || isProcessing || isMatched) {
                 polling = false;
                 // Show success toast before redirect
                 var statusMsg = isPaid ? 'ชำระเงินสำเร็จ!' : 'ตรวจพบการโอนเงิน กำลังยืนยัน...';

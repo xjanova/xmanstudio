@@ -339,6 +339,26 @@ class OrderController extends Controller
 
         $order->load(['items.product', 'uniquePaymentAmount']);
 
+        // Auto-cancel order if unique amount has expired and order still pending
+        if ($order->payment_status === 'pending' &&
+            $order->usesSmsPayment() &&
+            $order->uniquePaymentAmount &&
+            $order->uniquePaymentAmount->isExpired()) {
+
+            $order->update([
+                'status' => 'cancelled',
+                'payment_status' => 'expired',
+                'notes' => ($order->notes ? $order->notes . "\n" : '') .
+                    'หมดเวลาชำระเงิน - ระบบยกเลิกอัตโนมัติ ' . now()->format('d/m/Y H:i'),
+            ]);
+
+            if ($order->uniquePaymentAmount->status === 'reserved') {
+                $order->uniquePaymentAmount->update(['status' => 'expired']);
+            }
+
+            $order->refresh();
+        }
+
         // Get payment info based on method
         $paymentInfo = null;
         $bankAccounts = null;
@@ -382,6 +402,28 @@ class OrderController extends Controller
             return redirect()
                 ->back()
                 ->with('error', 'คำสั่งซื้อนี้ไม่อยู่ในสถานะรอชำระเงิน');
+        }
+
+        // Block slip upload if unique amount has expired
+        if ($order->usesSmsPayment() &&
+            $order->uniquePaymentAmount &&
+            $order->uniquePaymentAmount->isExpired()) {
+
+            // Auto-cancel the order
+            $order->update([
+                'status' => 'cancelled',
+                'payment_status' => 'expired',
+                'notes' => ($order->notes ? $order->notes . "\n" : '') .
+                    'หมดเวลาชำระเงิน - ระบบยกเลิกอัตโนมัติ ' . now()->format('d/m/Y H:i'),
+            ]);
+
+            if ($order->uniquePaymentAmount->status === 'reserved') {
+                $order->uniquePaymentAmount->update(['status' => 'expired']);
+            }
+
+            return redirect()
+                ->back()
+                ->with('error', 'บิลนี้หมดอายุแล้ว กรุณาสร้างคำสั่งซื้อใหม่');
         }
 
         $request->validate([
@@ -536,6 +578,29 @@ class OrderController extends Controller
         // Verify ownership
         if (auth()->id() && $order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             abort(403);
+        }
+
+        $order->refresh();
+        $order->load('uniquePaymentAmount');
+
+        // Auto-cancel if amount expired but order still pending
+        if ($order->payment_status === 'pending' &&
+            $order->usesSmsPayment() &&
+            $order->uniquePaymentAmount &&
+            $order->uniquePaymentAmount->isExpired()) {
+
+            $order->update([
+                'status' => 'cancelled',
+                'payment_status' => 'expired',
+                'notes' => ($order->notes ? $order->notes . "\n" : '') .
+                    'หมดเวลาชำระเงิน - ระบบยกเลิกอัตโนมัติ ' . now()->format('d/m/Y H:i'),
+            ]);
+
+            if ($order->uniquePaymentAmount->status === 'reserved') {
+                $order->uniquePaymentAmount->update(['status' => 'expired']);
+            }
+
+            $order->refresh();
         }
 
         return response()->json([
