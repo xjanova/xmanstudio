@@ -91,11 +91,15 @@ class ThaiPaymentService
         // Simple PromptPay payload generation
         // In production, use proper PromptPay library
         $qrPayload = $this->generatePromptPayPayload($amount);
+        $type = $this->detectPromptPayType($this->promptpayNumber);
 
         return [
             'qr_code' => $qrPayload,
             'qr_image_url' => $this->generateQRImageUrl($qrPayload),
-            'promptpay_number' => $this->maskPhoneNumber($this->promptpayNumber),
+            'promptpay_number' => $this->formatDisplayNumber($this->promptpayNumber),
+            'promptpay_type' => $type,
+            'promptpay_type_label' => $this->getPromptPayTypeLabel($type),
+            'promptpay_name' => PaymentSetting::get('promptpay_name', ''),
             'amount' => $amount,
             'reference' => $reference,
         ];
@@ -177,16 +181,51 @@ class ThaiPaymentService
     }
 
     /**
-     * Mask phone number for display
+     * Format PromptPay number for display
      */
-    protected function maskPhoneNumber(string $phone): string
+    protected function formatDisplayNumber(string $number): string
     {
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-        if (strlen($phone) === 10) {
-            return substr($phone, 0, 3) . '-XXX-' . substr($phone, -4);
+        $number = preg_replace('/[^0-9]/', '', $number);
+
+        if (strlen($number) === 10) {
+            return substr($number, 0, 3) . '-XXX-' . substr($number, -4);
         }
 
-        return $phone;
+        if (strlen($number) === 13) {
+            return substr($number, 0, 1) . '-XXXX-XXXXX-' . substr($number, 10, 2) . '-' . substr($number, 12, 1);
+        }
+
+        return $number;
+    }
+
+    /**
+     * Detect PromptPay number type
+     */
+    protected function detectPromptPayType(string $number): string
+    {
+        $digits = preg_replace('/[^0-9]/', '', $number);
+
+        if (strlen($digits) === 10 && str_starts_with($digits, '0')) {
+            return 'phone';
+        }
+
+        if (strlen($digits) === 13) {
+            return 'national_id';
+        }
+
+        return 'other';
+    }
+
+    /**
+     * Get Thai label for PromptPay type
+     */
+    protected function getPromptPayTypeLabel(string $type): string
+    {
+        return match ($type) {
+            'phone' => 'เบอร์โทรศัพท์',
+            'national_id' => 'เลขบัตรประชาชน',
+            default => 'พร้อมเพย์',
+        };
     }
 
     /**

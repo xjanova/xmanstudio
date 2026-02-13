@@ -15,6 +15,7 @@ use App\Models\Wallet;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
+use App\Models\PaymentSetting;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -375,7 +376,8 @@ class OrderController extends Controller
 
                 // Get dynamic bank accounts
                 $bankAccounts = BankAccount::active()->ordered()->get();
-                $promptpayNumber = config('payment.promptpay.number');
+                $promptpayNumber = PaymentSetting::get('promptpay_number')
+                    ?? config('payment.promptpay.number');
 
                 // Add SMS payment info if using unique amount
                 if ($order->usesSmsPayment()) {

@@ -37,8 +37,13 @@
                             สแกน QR Code ด้วยแอปธนาคารของคุณ
                         </p>
                         <p class="text-sm text-gray-500">
-                            พร้อมเพย์: {{ $paymentInfo['promptpay_number'] ?? '-' }}
+                            {{ $paymentInfo['promptpay_type_label'] ?? 'พร้อมเพย์' }}: {{ $paymentInfo['promptpay_number'] ?? '-' }}
                         </p>
+                        @if(!empty($paymentInfo['promptpay_name']))
+                            <p class="text-sm text-gray-500">
+                                ชื่อบัญชี: {{ $paymentInfo['promptpay_name'] }}
+                            </p>
+                        @endif
                     </div>
                 @elseif($payment->payment_method === 'bank_transfer')
                     <!-- Bank Transfer Info -->
