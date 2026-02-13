@@ -261,6 +261,23 @@
                 </a>
 
                 <div class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    คำสั่งซื้อ
+                </div>
+                <a href="{{ route('admin.orders.index') }}"
+                   class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.orders.*') ? 'bg-gray-800 text-white' : '' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    คำสั่งซื้อทั้งหมด
+                    @php
+                        $pendingPaymentOrders = \App\Models\Order::where('payment_status', 'verifying')->count();
+                    @endphp
+                    @if($pendingPaymentOrders > 0)
+                    <span class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ $pendingPaymentOrders }}</span>
+                    @endif
+                </a>
+
+                <div class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     การเงิน & โปรโมชั่น
                 </div>
                 <a href="{{ route('admin.wallets.index') }}"
