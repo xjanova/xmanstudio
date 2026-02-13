@@ -61,6 +61,33 @@
                         </div>
                     </div>
                     @endif
+                    @if($quotation->option_details && count($quotation->option_details) > 0)
+                    <div class="mb-4">
+                        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">รายละเอียดออฟชั่นที่เลือก</h4>
+                        <div class="space-y-3">
+                            @foreach($quotation->option_details as $key => $value)
+                                @if(!empty($value))
+                                @php
+                                    $parts = explode('.', $key);
+                                    $optKey = $parts[0] ?? '';
+                                    $fieldKey = $parts[1] ?? '';
+                                    $label = str_replace('_', ' ', ucfirst($fieldKey));
+                                @endphp
+                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-4 py-2.5">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 block">{{ $label }}</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                        @if(is_array($value))
+                                            {{ implode(', ', $value) }}
+                                        @else
+                                            {{ $value }}
+                                        @endif
+                                    </span>
+                                </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                     @if($quotation->project_description)
                     <div>
                         <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">รายละเอียดโครงการ</h4>

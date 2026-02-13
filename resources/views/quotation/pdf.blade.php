@@ -456,6 +456,35 @@
         </div>
         @endif
 
+        <!-- Option Details -->
+        @if(!empty($quotation['option_details']))
+        @php $filteredDetails = collect($quotation['option_details'])->filter(fn($v) => !empty($v)); @endphp
+        @if($filteredDetails->isNotEmpty())
+        <div style="margin-bottom: 25px; padding: 15px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
+            <div style="font-weight: bold; color: #166534; margin-bottom: 10px;">รายละเอียดออฟชั่นเพิ่มเติม</div>
+            <table style="width: 100%; font-size: 12px; color: #14532d;">
+                @foreach($filteredDetails as $key => $value)
+                @php
+                    $parts = explode('.', $key);
+                    $fieldKey = $parts[1] ?? $key;
+                    $label = str_replace('_', ' ', ucfirst($fieldKey));
+                @endphp
+                <tr>
+                    <td style="padding: 4px 0; width: 40%; vertical-align: top; font-weight: bold;">{{ $label }}:</td>
+                    <td style="padding: 4px 0;">
+                        @if(is_array($value))
+                            {{ implode(', ', $value) }}
+                        @else
+                            {{ $value }}
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </table>
+        </div>
+        @endif
+        @endif
+
         <!-- Summary Section -->
         <div class="summary-section">
             <div class="summary-notes">

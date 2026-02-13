@@ -24,6 +24,7 @@ class Quotation extends Model
         'service_name',
         'service_options',
         'additional_options',
+        'option_details',
         'project_description',
         'timeline',
         'subtotal',
@@ -48,6 +49,7 @@ class Quotation extends Model
     protected $casts = [
         'service_options' => 'array',
         'additional_options' => 'array',
+        'option_details' => 'array',
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
         'rush_fee' => 'decimal:2',
