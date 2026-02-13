@@ -370,18 +370,82 @@
 
     <!-- Success Modal -->
     <div x-show="showSuccessModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="showSuccessModal = false">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-            <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2" x-text="successTitle"></h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4" x-text="successMessage"></p>
+                <p class="text-sm text-gray-500 dark:text-gray-500 mb-2">เลขที่อ้างอิง: <span class="font-mono font-bold text-primary-600" x-text="quoteNumber"></span></p>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2" x-text="successTitle"></h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-4" x-text="successMessage"></p>
-            <p class="text-sm text-gray-500 dark:text-gray-500 mb-6">เลขที่อ้างอิง: <span class="font-mono font-bold text-primary-600" x-text="quoteNumber"></span></p>
-            <button @click="showSuccessModal = false; resetForm()" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors">
-                ตกลง
-            </button>
+
+            <!-- Payment Amount -->
+            <template x-if="paymentMethod && grandTotal > 0">
+                <div class="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl text-center border border-primary-200 dark:border-primary-700">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">ยอดที่ต้องชำระ</p>
+                    <p class="text-3xl font-black text-primary-600" x-text="formatPrice(Math.round(grandTotal)) + ' บาท'"></p>
+                </div>
+            </template>
+
+            <!-- Bank Transfer Info -->
+            <template x-if="paymentMethod === 'bank_transfer' && bankAccounts.length > 0">
+                <div class="mt-6">
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-3 text-center">บัญชีธนาคารสำหรับโอนเงิน</h4>
+                    <div class="space-y-3">
+                        <template x-for="(bank, index) in bankAccounts" :key="index">
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-white dark:bg-gray-600 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-500">
+                                        <span class="text-sm font-bold text-gray-700 dark:text-gray-200" x-text="bank.bank_code || 'BANK'"></span>
+                                    </div>
+                                    <div class="ml-4 flex-1">
+                                        <p class="font-semibold text-gray-900 dark:text-white" x-text="bank.bank_name"></p>
+                                        <p class="text-lg font-mono text-primary-600 dark:text-primary-400 tracking-wider" x-text="bank.account_number"></p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400" x-text="bank.account_name"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl">
+                        <p class="text-sm text-yellow-800 dark:text-yellow-300 text-center">
+                            กรุณาโอนเงินตามยอดด้านบน แล้วแจ้งสลิปกลับมาที่ทีมงาน
+                        </p>
+                    </div>
+                </div>
+            </template>
+
+            <!-- PromptPay Info -->
+            <template x-if="paymentMethod === 'promptpay' && promptpayInfo">
+                <div class="mt-6 text-center">
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-3">สแกน QR Code เพื่อชำระเงิน</h4>
+                    <div class="inline-block p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <img :src="promptpayInfo.qr_image_url" alt="PromptPay QR Code" class="w-56 h-56 mx-auto object-contain">
+                    </div>
+                    <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                        <span x-text="promptpayInfo.promptpay_type_label"></span>: <span x-text="promptpayInfo.promptpay_number"></span>
+                    </p>
+                    <template x-if="promptpayInfo.promptpay_name">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            ชื่อบัญชี: <span x-text="promptpayInfo.promptpay_name"></span>
+                        </p>
+                    </template>
+                    <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl">
+                        <p class="text-sm text-yellow-800 dark:text-yellow-300">
+                            สแกน QR Code แล้วแจ้งสลิปกลับมาที่ทีมงาน
+                        </p>
+                    </div>
+                </div>
+            </template>
+
+            <div class="mt-6 text-center">
+                <button @click="showSuccessModal = false; resetForm()" class="px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors">
+                    ตกลง
+                </button>
+            </div>
         </div>
     </div>
 
@@ -500,6 +564,10 @@ function quotationForm() {
         successTitle: '',
         successMessage: '',
         quoteNumber: '',
+        paymentMethod: null,
+        grandTotal: 0,
+        bankAccounts: [],
+        promptpayInfo: null,
         formData: {
             customer_name: '',
             customer_company: '',
@@ -784,6 +852,10 @@ function quotationForm() {
                 }
 
                 this.quoteNumber = result.quote_number;
+                this.paymentMethod = result.payment_method || null;
+                this.grandTotal = result.grand_total || 0;
+                this.bankAccounts = result.bank_accounts || [];
+                this.promptpayInfo = result.promptpay || null;
 
                 if (actionType === 'order') {
                     this.successTitle = 'ได้รับคำสั่งซื้อแล้ว!';
@@ -818,6 +890,10 @@ function quotationForm() {
                 budget_range: '',
             };
             this.currentCategories = {};
+            this.paymentMethod = null;
+            this.grandTotal = 0;
+            this.bankAccounts = [];
+            this.promptpayInfo = null;
             // Clear saved selections from localStorage
             this.clearSavedSelections();
         },
