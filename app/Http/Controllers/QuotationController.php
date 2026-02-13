@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankAccount;
 use App\Models\ProjectOrder;
 use App\Models\Quotation;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
 use App\Services\LineNotifyService;
+use App\Services\ThaiPaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -618,12 +620,40 @@ class QuotationController extends Controller
             $quotation->markAsSent();
             $lineNotify->notifyNewOrder($quotationData, $validated['payment_method']);
 
-            return response()->json([
+            $responseData = [
                 'success' => true,
                 'message' => 'ได้รับคำสั่งซื้อแล้ว ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง',
                 'quote_number' => $quotation->quote_number,
                 'action' => 'order',
-            ]);
+                'payment_method' => $validated['payment_method'],
+                'grand_total' => $quotationData['grand_total'],
+            ];
+
+            if ($validated['payment_method'] === 'bank_transfer') {
+                $bankAccounts = BankAccount::active()->ordered()->get();
+                $responseData['bank_accounts'] = $bankAccounts->map(function ($bank) {
+                    return [
+                        'bank_name' => $bank->bank_name,
+                        'bank_code' => $bank->bank_code,
+                        'account_number' => $bank->account_number,
+                        'account_name' => $bank->account_name,
+                    ];
+                })->toArray();
+            } elseif ($validated['payment_method'] === 'promptpay') {
+                $paymentService = app(ThaiPaymentService::class);
+                $promptpayInfo = $paymentService->generatePromptPayQR(
+                    $quotationData['grand_total'],
+                    $quotation->quote_number
+                );
+                $responseData['promptpay'] = [
+                    'qr_image_url' => $promptpayInfo['qr_image_url'],
+                    'promptpay_number' => $promptpayInfo['promptpay_number'],
+                    'promptpay_name' => $promptpayInfo['promptpay_name'] ?? '',
+                    'promptpay_type_label' => $promptpayInfo['promptpay_type_label'] ?? 'พร้อมเพย์',
+                ];
+            }
+
+            return response()->json($responseData);
         } else {
             $quotation->markAsSent();
             $lineNotify->notifyNewQuotation($quotationData);
