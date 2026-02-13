@@ -182,7 +182,7 @@ class RentalPayment extends Model
     /**
      * Get payment method label (Thai)
      */
-    public function getMethodLabel(): string
+    public function getMethodLabelAttribute(): string
     {
         return match ($this->payment_method) {
             self::METHOD_PROMPTPAY => 'พร้อมเพย์',
@@ -198,7 +198,7 @@ class RentalPayment extends Model
     /**
      * Get status label (Thai)
      */
-    public function getStatusLabel(): string
+    public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
             self::STATUS_PENDING => 'รอชำระเงิน',
