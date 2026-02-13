@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\AutoTradeXDevice;
+use App\Models\BankAccount;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -212,9 +214,25 @@ class AutoTradeXController extends Controller
         $plan = $metadata['plan'] ?? 'monthly';
         $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
 
+        $paymentService = app(ThaiPaymentService::class);
+        $paymentInfo = null;
+        $bankAccounts = null;
+
+        if ($order->payment_method === 'promptpay') {
+            $paymentInfo = $paymentService->generatePromptPayQR(
+                $order->total,
+                (string) $order->id
+            );
+        } elseif ($order->payment_method === 'bank_transfer') {
+            $paymentInfo = $paymentService->getBankTransferInfo();
+            $bankAccounts = BankAccount::active()->ordered()->get();
+        }
+
         return view('autotradex.payment', [
             'order' => $order,
             'planInfo' => $planInfo,
+            'paymentInfo' => $paymentInfo,
+            'bankAccounts' => $bankAccounts,
         ]);
     }
 
