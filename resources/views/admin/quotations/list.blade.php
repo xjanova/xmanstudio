@@ -89,6 +89,7 @@
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">ยอดรวม</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">ประเภท</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">สถานะ</th>
+                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">โครงการ</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">วันที่</th>
                         <th class="px-4 py-3"></th>
                     </tr>
@@ -132,6 +133,15 @@
                                 {{ $statusLabel[$q->status] ?? $q->status }}
                             </span>
                         </td>
+                        <td class="px-4 py-3">
+                            @if($q->project)
+                                <a href="{{ route('admin.projects.show', $q->project) }}" class="inline-flex items-center px-2 py-0.5 text-xs font-mono font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 transition">
+                                    {{ $q->project->project_number }}
+                                </a>
+                            @else
+                                <span class="text-xs text-gray-400">-</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $q->created_at->format('d/m/Y H:i') }}</td>
                         <td class="px-4 py-3">
                             <a href="{{ route('admin.quotations.detail', $q) }}" class="px-3 py-1.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 transition">ดูรายละเอียด</a>
@@ -139,7 +149,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-12 text-center">
+                        <td colspan="9" class="px-4 py-12 text-center">
                             <p class="text-gray-500 dark:text-gray-400 font-medium">ไม่พบใบเสนอราคา</p>
                         </td>
                     </tr>

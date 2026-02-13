@@ -14,7 +14,7 @@ class QuotationController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Quotation::orderByDesc('created_at');
+        $query = Quotation::with('project')->orderByDesc('created_at');
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -84,6 +84,12 @@ class QuotationController extends Controller
 
         $quotation->update($data);
 
+        // Auto-create project when quotation is accepted (if not already linked)
+        $project = null;
+        if ($request->status === 'accepted' && ! ProjectOrder::where('quotation_id', $quotation->id)->exists()) {
+            $project = $this->createProjectFromQuotation($quotation);
+        }
+
         $statusLabels = [
             'draft' => 'ร่าง',
             'sent' => 'ส่งแล้ว',
@@ -94,8 +100,68 @@ class QuotationController extends Controller
             'rejected' => 'ปฏิเสธ',
         ];
 
+        $message = 'อัปเดตสถานะ #' . $quotation->quote_number . ' เป็น "' . ($statusLabels[$request->status] ?? $request->status) . '" สำเร็จ';
+
+        if ($project) {
+            $message .= ' — สร้างโครงการ ' . $project->project_number . ' อัตโนมัติแล้ว';
+
+            return redirect()
+                ->route('admin.projects.show', $project)
+                ->with('success', $message);
+        }
+
         return redirect()
             ->back()
-            ->with('success', 'อัปเดตสถานะ #' . $quotation->quote_number . ' เป็น "' . ($statusLabels[$request->status] ?? $request->status) . '" สำเร็จ');
+            ->with('success', $message);
+    }
+
+    /**
+     * Auto-create a project from an accepted quotation
+     */
+    protected function createProjectFromQuotation(Quotation $quotation): ProjectOrder
+    {
+        $project = ProjectOrder::create([
+            'user_id' => $quotation->user_id,
+            'quotation_id' => $quotation->id,
+            'project_name' => $quotation->service_name ?? $quotation->service_type,
+            'project_description' => $quotation->project_description,
+            'project_type' => $quotation->service_type,
+            'total_price' => $quotation->grand_total,
+            'admin_notes' => 'สร้างอัตโนมัติจากใบเสนอราคา #' . $quotation->quote_number,
+        ]);
+
+        // Create features from service options
+        if ($quotation->service_options) {
+            foreach ($quotation->service_options as $index => $option) {
+                $project->features()->create([
+                    'name' => is_array($option) ? ($option['name'] ?? $option) : $option,
+                    'description' => is_array($option) ? ($option['description'] ?? null) : null,
+                    'order' => $index,
+                ]);
+            }
+        }
+
+        // Create features from additional options
+        if ($quotation->additional_options) {
+            $offset = count($quotation->service_options ?? []);
+            foreach ($quotation->additional_options as $index => $option) {
+                $project->features()->create([
+                    'name' => is_array($option) ? ($option['name'] ?? $option) : $option,
+                    'description' => is_array($option) ? ('ตัวเลือกเพิ่มเติม — ฿' . number_format($option['price'] ?? 0)) : null,
+                    'order' => $offset + $index,
+                ]);
+            }
+        }
+
+        // Create initial timeline
+        $project->timeline()->create([
+            'title' => 'รับงาน — สร้างจากใบเสนอราคา',
+            'description' => "ลูกค้ายอมรับใบเสนอราคา #{$quotation->quote_number}\nชื่อ: {$quotation->customer_name}\nยอดรวม: ฿" . number_format($quotation->grand_total, 2),
+            'event_date' => now(),
+            'type' => 'start',
+            'is_completed' => true,
+        ]);
+
+        return $project;
     }
 }
