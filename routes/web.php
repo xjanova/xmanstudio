@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\MetalXPlaylistController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\MetalXVideoController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -568,6 +569,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::put('/{option}', [QuotationOptionController::class, 'update'])->name('update');
             Route::delete('/{option}', [QuotationOptionController::class, 'destroy'])->name('destroy');
         });
+    });
+
+    // Order Management (คำสั่งซื้อจากหน้าเว็บ)
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [AdminOrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
+        Route::patch('/{order}/payment-status', [AdminOrderController::class, 'updatePaymentStatus'])->name('update-payment-status');
+        Route::patch('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
     });
 
     // Project Order Management
