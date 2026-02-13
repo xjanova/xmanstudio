@@ -131,6 +131,83 @@
                         </div>
                     </div>
 
+                    <!-- Step 3.5: Additional Option Details -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8" x-show="hasOptionDetails()" x-transition>
+                        <div class="flex items-center mb-6">
+                            <div class="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold mr-4">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">รายละเอียดเพิ่มเติม</h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">กรอกรายละเอียดสำหรับออฟชั่นที่เลือก</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <template x-for="optKey in formData.additional_options" :key="optKey">
+                                <div x-show="optionDetailConfig[optKey]" class="border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+                                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                                        <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                        <span x-text="getAdditionalOptionName(optKey)"></span>
+                                    </h4>
+
+                                    <div class="space-y-4">
+                                        <template x-for="(fieldConfig, fieldKey) in (optionDetailConfig[optKey] || {})" :key="optKey + '_' + fieldKey">
+                                            <div>
+                                                <!-- Select -->
+                                                <template x-if="fieldConfig.type === 'select'">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" x-text="fieldConfig.label"></label>
+                                                        <select x-model="formData.option_details[optKey + '.' + fieldKey]"
+                                                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm">
+                                                            <option value="">-- เลือก --</option>
+                                                            <template x-for="opt in fieldConfig.options" :key="opt">
+                                                                <option :value="opt" x-text="opt"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Text -->
+                                                <template x-if="fieldConfig.type === 'text'">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                            <span x-text="fieldConfig.label"></span>
+                                                            <span x-show="fieldConfig.required" class="text-red-500">*</span>
+                                                        </label>
+                                                        <input type="text"
+                                                               x-model="formData.option_details[optKey + '.' + fieldKey]"
+                                                               :placeholder="fieldConfig.placeholder || ''"
+                                                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm">
+                                                    </div>
+                                                </template>
+
+                                                <!-- Checkbox Group -->
+                                                <template x-if="fieldConfig.type === 'checkbox_group'">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" x-text="fieldConfig.label"></label>
+                                                        <div class="flex flex-wrap gap-2">
+                                                            <template x-for="opt in fieldConfig.options" :key="opt">
+                                                                <label class="cursor-pointer">
+                                                                    <input type="checkbox" :value="opt"
+                                                                           x-model="formData.option_details[optKey + '.' + fieldKey]"
+                                                                           class="peer sr-only"
+                                                                           x-init="if (!Array.isArray(formData.option_details[optKey + '.' + fieldKey])) formData.option_details[optKey + '.' + fieldKey] = []">
+                                                                    <span class="inline-block px-3 py-1.5 text-sm border-2 rounded-lg transition-all peer-checked:border-green-500 peer-checked:bg-green-50 dark:peer-checked:bg-green-900/20 peer-checked:text-green-700 dark:peer-checked:text-green-400 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-400"
+                                                                           x-text="opt"></span>
+                                                                </label>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
                     <!-- Step 4: Project Details -->
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8" x-show="formData.service_options.length > 0" x-transition>
                         <div class="flex items-center mb-6">
@@ -577,12 +654,14 @@ function quotationForm() {
             service_type: '',
             service_options: [],
             additional_options: [],
+            option_details: {},
             project_description: '',
             timeline: 'normal',
             budget_range: '',
         },
         services: @json($services),
         additionalOptions: @json($additionalOptions),
+        optionDetailConfig: @json($optionDetailConfig),
         currentCategories: {},
 
         init() {
@@ -773,16 +852,36 @@ function quotationForm() {
             return new Intl.NumberFormat('th-TH').format(Math.round(price));
         },
 
+        hasOptionDetails() {
+            return this.formData.additional_options.some(key => this.optionDetailConfig[key]);
+        },
+
+        getAdditionalOptionName(optKey) {
+            const allOptions = this.getAllAdditionalOptions();
+            return allOptions[optKey] ? allOptions[optKey].name_th : optKey;
+        },
+
+        isDomainDetailValid() {
+            if (!this.formData.additional_options.includes('domain')) return true;
+            const d = this.formData.option_details;
+            return d['domain.domain_name_1'] && d['domain.domain_name_2'] && d['domain.domain_name_3'];
+        },
+
         isFormValid() {
             return this.formData.service_options.length > 0
                 && this.formData.customer_name
                 && this.formData.customer_email
-                && this.formData.customer_phone;
+                && this.formData.customer_phone
+                && this.isDomainDetailValid();
         },
 
         async generateQuotation() {
             if (!this.isFormValid()) {
-                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                if (!this.isDomainDetailValid()) {
+                    alert('กรุณากรอกชื่อโดเมนที่ต้องการอย่างน้อย 3 ชื่อ');
+                } else {
+                    alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                }
                 return;
             }
 
@@ -824,7 +923,11 @@ function quotationForm() {
 
         async submitOrder(actionType, paymentMethod = null) {
             if (!this.isFormValid()) {
-                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                if (!this.isDomainDetailValid()) {
+                    alert('กรุณากรอกชื่อโดเมนที่ต้องการอย่างน้อย 3 ชื่อ');
+                } else {
+                    alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                }
                 return;
             }
 
@@ -885,6 +988,7 @@ function quotationForm() {
                 service_type: '',
                 service_options: [],
                 additional_options: [],
+                option_details: {},
                 project_description: '',
                 timeline: 'normal',
                 budget_range: '',

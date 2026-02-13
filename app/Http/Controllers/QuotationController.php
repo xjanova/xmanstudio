@@ -452,6 +452,241 @@ class QuotationController extends Controller
     ];
 
     /**
+     * Detail configuration for additional options (sub-options)
+     */
+    protected array $optionDetailConfig = [
+        'priority' => [
+            'contact_channels' => [
+                'type' => 'checkbox_group',
+                'label' => 'ช่องทางติดต่อที่ต้องการ',
+                'options' => ['Line', 'Phone', 'Email', 'Slack'],
+            ],
+        ],
+        'maintenance' => [
+            'system_types' => [
+                'type' => 'checkbox_group',
+                'label' => 'ประเภทระบบที่ต้องดูแล',
+                'options' => ['Web Application', 'Mobile App', 'API/Backend', 'Database', 'Server/Infra'],
+            ],
+        ],
+        'source_code' => [
+            'platform' => [
+                'type' => 'select',
+                'label' => 'แพลตฟอร์ม Repository',
+                'options' => ['GitHub', 'GitLab', 'Bitbucket', 'ZIP Download'],
+            ],
+        ],
+        'documentation' => [
+            'doc_language' => [
+                'type' => 'select',
+                'label' => 'ภาษาเอกสาร',
+                'options' => ['ไทย', 'English', 'ทั้งสองภาษา'],
+            ],
+        ],
+        'training' => [
+            'training_format' => [
+                'type' => 'select',
+                'label' => 'รูปแบบอบรม',
+                'options' => ['Onsite', 'Online (Zoom/Meet)', 'Hybrid'],
+            ],
+            'participants' => [
+                'type' => 'text',
+                'label' => 'จำนวนผู้เข้าร่วม (คน)',
+                'placeholder' => 'เช่น 5',
+            ],
+        ],
+        'video_guide' => [
+            'video_language' => [
+                'type' => 'select',
+                'label' => 'ภาษาวิดีโอ',
+                'options' => ['ไทย', 'English', 'ทั้งสองภาษา'],
+            ],
+        ],
+        'hosting_basic' => [
+            'server_region' => [
+                'type' => 'select',
+                'label' => 'Server Region',
+                'options' => ['Thailand', 'Singapore', 'Japan', 'US'],
+            ],
+        ],
+        'hosting_pro' => [
+            'server_region' => [
+                'type' => 'select',
+                'label' => 'Server Region',
+                'options' => ['Thailand', 'Singapore', 'Japan', 'US'],
+            ],
+            'managed_service' => [
+                'type' => 'select',
+                'label' => 'Managed Service',
+                'options' => ['Self-managed', 'Fully Managed'],
+            ],
+        ],
+        'ssl' => [
+            'ssl_type' => [
+                'type' => 'select',
+                'label' => 'ประเภท SSL',
+                'options' => ['Standard SSL', 'Wildcard SSL', 'EV SSL (Extended Validation)'],
+            ],
+            'ssl_domain' => [
+                'type' => 'text',
+                'label' => 'ชื่อโดเมนสำหรับ SSL',
+                'placeholder' => 'เช่น example.com',
+            ],
+        ],
+        'domain' => [
+            'domain_extensions' => [
+                'type' => 'checkbox_group',
+                'label' => 'นามสกุลโดเมนที่ต้องการ',
+                'options' => ['.com', '.co.th', '.th', '.net', '.io', '.dev'],
+            ],
+            'domain_name_1' => [
+                'type' => 'text',
+                'label' => 'ชื่อโดเมน ตัวเลือกที่ 1',
+                'placeholder' => 'เช่น mybusiness',
+                'required' => true,
+            ],
+            'domain_name_2' => [
+                'type' => 'text',
+                'label' => 'ชื่อโดเมน ตัวเลือกที่ 2',
+                'placeholder' => 'เช่น mybiz',
+                'required' => true,
+            ],
+            'domain_name_3' => [
+                'type' => 'text',
+                'label' => 'ชื่อโดเมน ตัวเลือกที่ 3',
+                'placeholder' => 'เช่น my-business',
+                'required' => true,
+            ],
+        ],
+        'email' => [
+            'email_account_count' => [
+                'type' => 'select',
+                'label' => 'จำนวน Email Accounts',
+                'options' => ['5 Accounts', '10 Accounts', '20 Accounts', '50 Accounts', 'Unlimited'],
+            ],
+            'email_names' => [
+                'type' => 'text',
+                'label' => 'ชื่อ Email ที่ต้องการ',
+                'placeholder' => 'เช่น info@, admin@, support@ (คั่นด้วย ,)',
+            ],
+            'email_domain' => [
+                'type' => 'text',
+                'label' => 'โดเมนสำหรับ Email',
+                'placeholder' => 'เช่น yourdomain.com',
+            ],
+        ],
+        'cdn' => [
+            'cdn_provider' => [
+                'type' => 'select',
+                'label' => 'CDN Provider ที่ต้องการ',
+                'options' => ['Cloudflare', 'AWS CloudFront', 'Bunny CDN', 'ให้ทีมงานเลือก'],
+            ],
+        ],
+        'backup' => [
+            'backup_retention' => [
+                'type' => 'select',
+                'label' => 'ระยะเก็บข้อมูลสำรอง',
+                'options' => ['7 วัน', '14 วัน', '30 วัน', '90 วัน'],
+            ],
+        ],
+        'hosting_enterprise' => [
+            'server_region' => [
+                'type' => 'select',
+                'label' => 'Server Region',
+                'options' => ['Thailand', 'Singapore', 'Japan', 'US'],
+            ],
+            'managed_service' => [
+                'type' => 'select',
+                'label' => 'Managed Service',
+                'options' => ['Self-managed', 'Fully Managed'],
+            ],
+            'server_spec' => [
+                'type' => 'select',
+                'label' => 'สเปค Server',
+                'options' => ['4 vCPU / 8 GB RAM', '8 vCPU / 16 GB RAM', '16 vCPU / 32 GB RAM', 'Custom'],
+            ],
+        ],
+        'bug_fix' => [
+            'bug_priority' => [
+                'type' => 'select',
+                'label' => 'ระดับความเร่งด่วน',
+                'options' => ['ปกติ (ภายใน 48 ชม.)', 'เร่งด่วน (ภายใน 24 ชม.)', 'วิกฤต (ภายใน 4 ชม.)'],
+            ],
+        ],
+        'monitoring' => [
+            'monitoring_channels' => [
+                'type' => 'checkbox_group',
+                'label' => 'ช่องทางแจ้งเตือนเมื่อระบบล่ม',
+                'options' => ['Line', 'Email', 'SMS', 'Slack'],
+            ],
+        ],
+        'ui_design' => [
+            'design_style' => [
+                'type' => 'select',
+                'label' => 'สไตล์การออกแบบ',
+                'options' => ['Modern / Minimal', 'Corporate / Professional', 'Playful / Colorful', 'Dark / Tech', 'ให้ทีมงานเสนอ'],
+            ],
+            'design_pages' => [
+                'type' => 'select',
+                'label' => 'จำนวนหน้าที่ออกแบบ',
+                'options' => ['1-5 หน้า', '6-10 หน้า', '11-20 หน้า', 'มากกว่า 20 หน้า'],
+            ],
+        ],
+        'logo' => [
+            'logo_style' => [
+                'type' => 'select',
+                'label' => 'สไตล์โลโก้',
+                'options' => ['Wordmark (ตัวอักษร)', 'Lettermark (ตัวย่อ)', 'Icon/Symbol', 'Combination (ตัวอักษร+ไอคอน)', 'Mascot'],
+            ],
+            'logo_revisions' => [
+                'type' => 'select',
+                'label' => 'จำนวน Concept ที่ต้องการ',
+                'options' => ['2 Concepts', '3 Concepts', '5 Concepts'],
+            ],
+        ],
+        'brand_identity' => [
+            'brand_items' => [
+                'type' => 'checkbox_group',
+                'label' => 'รายการที่ต้องการ',
+                'options' => ['นามบัตร', 'หัวจดหมาย', 'ซองจดหมาย', 'Brand Guidelines', 'Social Media Kit'],
+            ],
+        ],
+        'seo_basic' => [
+            'seo_target' => [
+                'type' => 'text',
+                'label' => 'Keywords เป้าหมาย',
+                'placeholder' => 'เช่น ร้านอาหาร กรุงเทพ, web development thailand',
+            ],
+        ],
+        'seo_monthly' => [
+            'seo_target' => [
+                'type' => 'text',
+                'label' => 'Keywords เป้าหมาย',
+                'placeholder' => 'เช่น ร้านอาหาร กรุงเทพ, web development thailand',
+            ],
+            'seo_report' => [
+                'type' => 'select',
+                'label' => 'รายงาน SEO',
+                'options' => ['รายงานรายเดือน', 'รายงานราย 2 สัปดาห์', 'รายงานรายสัปดาห์'],
+            ],
+        ],
+        'google_ads' => [
+            'ads_budget' => [
+                'type' => 'select',
+                'label' => 'งบ Google Ads ต่อเดือน (โดยประมาณ)',
+                'options' => ['5,000 - 10,000 บาท', '10,000 - 30,000 บาท', '30,000 - 100,000 บาท', 'มากกว่า 100,000 บาท'],
+            ],
+        ],
+        'api_docs' => [
+            'api_doc_format' => [
+                'type' => 'select',
+                'label' => 'รูปแบบเอกสาร API',
+                'options' => ['Swagger/OpenAPI', 'Postman Collection', 'ทั้งสองแบบ'],
+            ],
+        ],
+    ];
+
+    /**
      * Additional options available for all services
      */
     protected array $additionalOptions = [
@@ -460,10 +695,12 @@ class QuotationController extends Controller
             'name_th' => 'ซัพพอร์ตและดูแลรักษา',
             'icon' => '🛠️',
             'options' => [
-                'priority' => ['name' => 'Priority Support', 'name_th' => 'ซัพพอร์ตเร่งด่วน 24/7', 'price' => 30000, 'icon' => '⚡'],
+                'priority' => ['name' => 'Priority Support 24/7', 'name_th' => 'ซัพพอร์ตเร่งด่วน 24/7', 'price' => 30000, 'icon' => '⚡'],
                 'warranty_1y' => ['name' => '1 Year Warranty', 'name_th' => 'รับประกัน 1 ปี', 'price' => 30000, 'icon' => '🛡️'],
                 'warranty_2y' => ['name' => '2 Year Warranty', 'name_th' => 'รับประกัน 2 ปี', 'price' => 50000, 'icon' => '🛡️'],
                 'maintenance' => ['name' => 'Annual Maintenance', 'name_th' => 'ดูแลระบบรายปี', 'price' => 60000, 'icon' => '🔧'],
+                'bug_fix' => ['name' => 'Bug Fix Package (10 issues)', 'name_th' => 'แพ็คแก้บั๊ก 10 รายการ', 'price' => 25000, 'icon' => '🐛'],
+                'monitoring' => ['name' => 'Uptime Monitoring/Year', 'name_th' => 'ตรวจสอบระบบ 24/7/ปี', 'price' => 18000, 'icon' => '📡'],
             ],
         ],
         'delivery' => [
@@ -475,6 +712,8 @@ class QuotationController extends Controller
                 'documentation' => ['name' => 'Technical Documentation', 'name_th' => 'เอกสารเทคนิคครบถ้วน', 'price' => 25000, 'icon' => '📝'],
                 'training' => ['name' => 'User Training (8 hrs)', 'name_th' => 'อบรมการใช้งาน 8 ชม.', 'price' => 20000, 'icon' => '👨‍🏫'],
                 'video_guide' => ['name' => 'Video User Guide', 'name_th' => 'วิดีโอสอนการใช้งาน', 'price' => 15000, 'icon' => '🎬'],
+                'user_manual' => ['name' => 'User Manual (Thai)', 'name_th' => 'คู่มือการใช้งาน (ภาษาไทย)', 'price' => 10000, 'icon' => '📖'],
+                'api_docs' => ['name' => 'API Documentation', 'name_th' => 'เอกสาร API (Swagger/Postman)', 'price' => 15000, 'icon' => '📋'],
             ],
         ],
         'hosting' => [
@@ -484,9 +723,36 @@ class QuotationController extends Controller
             'options' => [
                 'hosting_basic' => ['name' => 'Cloud Hosting Basic/Year', 'name_th' => 'Cloud Hosting พื้นฐาน/ปี', 'price' => 12000, 'icon' => '🌐'],
                 'hosting_pro' => ['name' => 'Cloud Hosting Pro/Year', 'name_th' => 'Cloud Hosting Pro/ปี', 'price' => 36000, 'icon' => '🚀'],
-                'ssl' => ['name' => 'SSL Certificate', 'name_th' => 'ใบรับรอง SSL', 'price' => 3000, 'icon' => '🔐'],
-                'domain' => ['name' => 'Domain Registration', 'name_th' => 'จดโดเมน 1 ปี', 'price' => 500, 'icon' => '🌍'],
+                'hosting_enterprise' => ['name' => 'Cloud Hosting Enterprise/Year', 'name_th' => 'Cloud Hosting Enterprise/ปี', 'price' => 72000, 'icon' => '🏢'],
+                'ssl' => ['name' => 'SSL Certificate/Year', 'name_th' => 'ใบรับรอง SSL/ปี', 'price' => 3000, 'icon' => '🔐'],
+                'domain' => ['name' => 'Domain Registration/Year', 'name_th' => 'จดโดเมน 1 ปี', 'price' => 500, 'icon' => '🌍'],
                 'email' => ['name' => 'Business Email/Year', 'name_th' => 'อีเมลธุรกิจ/ปี', 'price' => 6000, 'icon' => '📧'],
+                'cdn' => ['name' => 'CDN Service/Year', 'name_th' => 'บริการ CDN/ปี', 'price' => 15000, 'icon' => '⚡'],
+                'backup' => ['name' => 'Daily Backup/Year', 'name_th' => 'สำรองข้อมูลรายวัน/ปี', 'price' => 12000, 'icon' => '💿'],
+            ],
+        ],
+        'design' => [
+            'name' => 'Design & Branding',
+            'name_th' => 'ออกแบบและแบรนด์',
+            'icon' => '🎨',
+            'options' => [
+                'ui_design' => ['name' => 'UI/UX Design', 'name_th' => 'ออกแบบ UI/UX', 'price' => 35000, 'icon' => '🖌️'],
+                'logo' => ['name' => 'Logo Design', 'name_th' => 'ออกแบบโลโก้', 'price' => 8000, 'icon' => '✨'],
+                'brand_identity' => ['name' => 'Brand Identity Package', 'name_th' => 'แพ็คเกจอัตลักษณ์แบรนด์', 'price' => 25000, 'icon' => '🏷️'],
+                'banner' => ['name' => 'Banner & Social Media', 'name_th' => 'แบนเนอร์และ Social Media', 'price' => 5000, 'icon' => '🖼️'],
+                'favicon' => ['name' => 'Favicon & App Icon', 'name_th' => 'Favicon และ App Icon', 'price' => 2000, 'icon' => '📱'],
+            ],
+        ],
+        'seo_marketing' => [
+            'name' => 'SEO & Marketing',
+            'name_th' => 'SEO และการตลาด',
+            'icon' => '📈',
+            'options' => [
+                'seo_basic' => ['name' => 'Basic SEO Setup', 'name_th' => 'ตั้งค่า SEO พื้นฐาน', 'price' => 15000, 'icon' => '🔍'],
+                'seo_monthly' => ['name' => 'Monthly SEO/Month', 'name_th' => 'ดูแล SEO รายเดือน', 'price' => 12000, 'icon' => '📊'],
+                'google_ads' => ['name' => 'Google Ads Setup', 'name_th' => 'ตั้งค่า Google Ads', 'price' => 10000, 'icon' => '🎯'],
+                'analytics' => ['name' => 'Analytics & Tracking', 'name_th' => 'ติดตั้ง Analytics & Tracking', 'price' => 8000, 'icon' => '📉'],
+                'sitemap' => ['name' => 'Sitemap & Schema Markup', 'name_th' => 'Sitemap และ Schema Markup', 'price' => 5000, 'icon' => '🗺️'],
             ],
         ],
     ];
@@ -543,6 +809,7 @@ class QuotationController extends Controller
         return view('support.index', [
             'services' => $formattedCategories,
             'additionalOptions' => $this->additionalOptions ?? [],
+            'optionDetailConfig' => $this->optionDetailConfig,
         ]);
     }
 
@@ -599,6 +866,7 @@ class QuotationController extends Controller
             'service_name' => $quotationData['service']['name_th'],
             'service_options' => $quotationData['items'],
             'additional_options' => $validated['additional_options'] ?? [],
+            'option_details' => $validated['option_details'] ?? null,
             'project_description' => $quotationData['project_description'],
             'timeline' => $quotationData['timeline'],
             'subtotal' => $quotationData['subtotal'],
@@ -696,6 +964,8 @@ class QuotationController extends Controller
             'service_options.*' => 'string',
             'additional_options' => 'nullable|array',
             'additional_options.*' => 'string',
+            'option_details' => 'nullable|array',
+            'option_details.*' => 'nullable',
             'project_description' => 'nullable|string|max:2000',
             'timeline' => 'nullable|string|in:urgent,normal,flexible',
             'budget_range' => 'nullable|string',
@@ -842,6 +1112,7 @@ class QuotationController extends Controller
             ],
             'items' => $items,
             'project_description' => $data['project_description'] ?? '',
+            'option_details' => $data['option_details'] ?? [],
             'timeline' => $data['timeline'] ?? 'normal',
             'subtotal' => $subtotal,
             'discount_percent' => $discountPercent,
