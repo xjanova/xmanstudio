@@ -186,7 +186,7 @@ class UserRental extends Model
     /**
      * Get formatted status
      */
-    public function getStatusLabel(): string
+    public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
             self::STATUS_PENDING => 'รอชำระเงิน',
