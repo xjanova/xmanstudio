@@ -35,42 +35,26 @@
                     </p>
                 </div>
 
-                @php
-                    $promptpayEnabled = \App\Models\PaymentSetting::get('promptpay_enabled', false);
-                    $promptpayQrImage = \App\Models\PaymentSetting::get('promptpay_qr_image');
-                    $promptpayNumber = \App\Models\PaymentSetting::get('promptpay_number');
-                    $promptpayName = \App\Models\PaymentSetting::get('promptpay_name');
-                    $bankAccounts = \App\Models\BankAccount::where('is_active', true)->get();
-                @endphp
-
-                @if($order->payment_method === 'promptpay' && $promptpayEnabled)
+                @if($order->payment_method === 'promptpay' && isset($paymentInfo['qr_image_url']))
                     <!-- PromptPay QR Code -->
                     <div class="text-center">
                         <div class="inline-block p-4 bg-white rounded-xl">
-                            @if($promptpayQrImage)
-                                <img src="{{ Storage::url($promptpayQrImage) }}" alt="PromptPay QR Code"
-                                     class="w-64 h-64 mx-auto object-contain">
-                            @else
-                                <div class="w-64 h-64 flex items-center justify-center bg-gray-100 rounded-lg">
-                                    <span class="text-gray-400">QR Code</span>
-                                </div>
-                            @endif
+                            <img src="{{ $paymentInfo['qr_image_url'] }}" alt="PromptPay QR Code"
+                                 class="w-64 h-64 mx-auto object-contain">
                         </div>
                         <p class="mt-4 text-gray-300">
                             สแกน QR Code ด้วยแอปธนาคารของคุณ
                         </p>
-                        @if($promptpayNumber)
+                        <p class="text-sm text-gray-500">
+                            {{ $paymentInfo['promptpay_type_label'] ?? 'พร้อมเพย์' }}: {{ $paymentInfo['promptpay_number'] ?? '-' }}
+                        </p>
+                        @if(!empty($paymentInfo['promptpay_name']))
                             <p class="text-sm text-gray-500">
-                                พร้อมเพย์: {{ $promptpayNumber }}
-                            </p>
-                        @endif
-                        @if($promptpayName)
-                            <p class="text-sm text-gray-500">
-                                ชื่อ: {{ $promptpayName }}
+                                ชื่อบัญชี: {{ $paymentInfo['promptpay_name'] }}
                             </p>
                         @endif
                     </div>
-                @elseif($order->payment_method === 'bank_transfer' && $bankAccounts->count() > 0)
+                @elseif($order->payment_method === 'bank_transfer' && $bankAccounts && $bankAccounts->count() > 0)
                     <!-- Bank Transfer Info -->
                     <div class="space-y-4">
                         <h3 class="text-lg font-semibold text-white">บัญชีธนาคาร</h3>
@@ -94,35 +78,8 @@
                         @endforeach
                     </div>
                 @else
-                    <!-- Fallback - Show all payment options -->
-                    <div class="space-y-6">
-                        @if($promptpayEnabled)
-                            <div class="text-center">
-                                <h3 class="text-lg font-semibold text-white mb-4">พร้อมเพย์</h3>
-                                <div class="inline-block p-4 bg-white rounded-xl">
-                                    @if($promptpayQrImage)
-                                        <img src="{{ Storage::url($promptpayQrImage) }}" alt="PromptPay QR Code"
-                                             class="w-48 h-48 mx-auto object-contain">
-                                    @endif
-                                </div>
-                                @if($promptpayNumber)
-                                    <p class="text-sm text-gray-400 mt-2">{{ $promptpayNumber }}</p>
-                                @endif
-                            </div>
-                        @endif
-
-                        @if($bankAccounts->count() > 0)
-                            <div>
-                                <h3 class="text-lg font-semibold text-white mb-4">โอนเงินธนาคาร</h3>
-                                @foreach($bankAccounts as $bank)
-                                    <div class="p-4 bg-gray-700/50 rounded-xl border border-gray-600 mb-3">
-                                        <p class="font-semibold text-white">{{ $bank->bank_name }}</p>
-                                        <p class="text-lg font-mono text-purple-400">{{ $bank->account_number }}</p>
-                                        <p class="text-sm text-gray-400">{{ $bank->account_name }}</p>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
+                    <div class="text-center py-8">
+                        <p class="text-gray-400">ข้อมูลการชำระเงินไม่พร้อมใช้งาน</p>
                     </div>
                 @endif
 

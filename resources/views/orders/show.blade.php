@@ -338,6 +338,9 @@
                                         </div>
                                         <div class="ml-13 pl-13">
                                             <p class="font-mono text-xl font-bold text-purple-600 dark:text-purple-400 tracking-wider">{{ $promptpayNumber }}</p>
+                                            @if(!empty($promptpayName))
+                                                <p class="text-gray-600 dark:text-gray-400">{{ $promptpayName }}</p>
+                                            @endif
                                         </div>
                                     </div>
                                     @endif

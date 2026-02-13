@@ -378,6 +378,7 @@ class OrderController extends Controller
                 $bankAccounts = BankAccount::active()->ordered()->get();
                 $promptpayNumber = PaymentSetting::get('promptpay_number')
                     ?? config('payment.promptpay.number');
+                $promptpayName = PaymentSetting::get('promptpay_name', '');
 
                 // Add SMS payment info if using unique amount
                 if ($order->usesSmsPayment()) {
@@ -392,7 +393,7 @@ class OrderController extends Controller
             }
         }
 
-        return view('orders.show', compact('order', 'paymentInfo', 'bankAccounts', 'promptpayNumber'));
+        return view('orders.show', compact('order', 'paymentInfo', 'bankAccounts', 'promptpayNumber', 'promptpayName'));
     }
 
     /**
