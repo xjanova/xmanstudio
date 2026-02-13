@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProjectOrder;
 use App\Models\Quotation;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
@@ -912,5 +913,43 @@ class QuotationController extends Controller
             ->get();
 
         return view('services.detail', compact('category', 'option', 'relatedServices'));
+    }
+
+    /**
+     * Show order tracking page
+     */
+    public function tracking()
+    {
+        return view('support.tracking');
+    }
+
+    /**
+     * Search order/quotation by reference number or email
+     */
+    public function trackingSearch(Request $request)
+    {
+        $request->validate([
+            'query' => 'required|string|min:3|max:100',
+        ]);
+
+        $query = trim($request->query('query', ''));
+
+        // Search quotations
+        $quotations = Quotation::where('quote_number', 'like', "%{$query}%")
+            ->orWhere('customer_email', $query)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+
+        // Search projects linked to found quotations or by project number
+        $quotationIds = $quotations->pluck('id');
+        $projects = ProjectOrder::with(['quotation', 'features', 'progress' => fn ($q) => $q->limit(3)])
+            ->where('project_number', 'like', "%{$query}%")
+            ->orWhereIn('quotation_id', $quotationIds)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+
+        return view('support.tracking', compact('quotations', 'projects', 'query'));
     }
 }

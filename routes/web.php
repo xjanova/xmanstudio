@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductVersionController;
 use App\Http\Controllers\Admin\ProjectOrderController;
 use App\Http\Controllers\Admin\QuotationCategoryController;
+use App\Http\Controllers\Admin\QuotationController as AdminQuotationController;
 use App\Http\Controllers\Admin\QuotationOptionController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
@@ -126,6 +127,8 @@ Route::post('/quotation/preview', [QuotationController::class, 'preview'])->name
 Route::post('/quotation/pdf', [QuotationController::class, 'generatePdf'])->name('quotation.pdf');
 Route::post('/quotation/submit', [QuotationController::class, 'submitOrder'])->name('quotation.submit');
 Route::get('/quotation/services', [QuotationController::class, 'getServices'])->name('quotation.services');
+Route::get('/support/tracking', [QuotationController::class, 'tracking'])->name('support.tracking');
+Route::get('/support/tracking/search', [QuotationController::class, 'trackingSearch'])->name('support.tracking.search');
 
 // About page
 Route::view('/about', 'about')->name('about');
@@ -569,6 +572,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::put('/{option}', [QuotationOptionController::class, 'update'])->name('update');
             Route::delete('/{option}', [QuotationOptionController::class, 'destroy'])->name('destroy');
         });
+    });
+
+    // Quotation Management (ใบเสนอราคา/ใบสั่งงาน)
+    Route::prefix('quotations/manage')->name('quotations.')->group(function () {
+        Route::get('/', [AdminQuotationController::class, 'index'])->name('list');
+        Route::get('/{quotation}', [AdminQuotationController::class, 'show'])->name('detail');
+        Route::patch('/{quotation}/status', [AdminQuotationController::class, 'updateStatus'])->name('update-status');
     });
 
     // Order Management (คำสั่งซื้อจากหน้าเว็บ)

@@ -90,8 +90,11 @@
                         <a href="/portfolio" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('portfolio*') ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-violet-500 hover:text-white hover:shadow-lg hover:shadow-purple-500/30' }}">
                             ผลงาน
                         </a>
-                        <a href="/support" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('support*') ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/30' }}">
+                        <a href="/support" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('support') ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/30' }}">
                             ติดต่อ/สั่งซื้อ
+                        </a>
+                        <a href="/support/tracking" class="group relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-lg {{ request()->is('support/tracking*') ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-teal-500 hover:to-emerald-500 hover:text-white hover:shadow-lg hover:shadow-teal-500/30' }}">
+                            ติดตามงาน
                         </a>
                     </div>
                 </div>
