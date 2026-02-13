@@ -86,11 +86,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">เบอร์พร้อมเพย์</label>
-                            <input type="text" name="promptpay_number"
-                                   value="{{ $settings['promptpay']['promptpay_number'] ?? '' }}"
-                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                                   placeholder="0812345678 หรือ เลขบัตรประชาชน">
-                            <p class="mt-1 text-xs text-gray-500">เบอร์โทรศัพท์หรือเลขบัตรประชาชน 13 หลัก</p>
+                            <div class="relative">
+                                <input type="text" name="promptpay_number" id="promptpay_number_input"
+                                       value="{{ $settings['promptpay']['promptpay_number'] ?? '' }}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all pr-36"
+                                       placeholder="0812345678 หรือ เลขบัตรประชาชน">
+                                <span id="promptpay_type_badge" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold px-2.5 py-1 rounded-full hidden"></span>
+                            </div>
+                            <p id="promptpay_type_hint" class="mt-1 text-xs text-gray-500">เบอร์โทรศัพท์หรือเลขบัตรประชาชน 13 หลัก</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ชื่อบัญชีพร้อมเพย์</label>
@@ -556,6 +559,55 @@
         document.getElementById('deleteBankModal').classList.add('hidden');
         document.getElementById('deleteBankModal').classList.remove('flex');
     }
+
+    // PromptPay number type detection
+    function detectPromptPayType(value) {
+        const digits = value.replace(/\D/g, '');
+        const badge = document.getElementById('promptpay_type_badge');
+        const hint = document.getElementById('promptpay_type_hint');
+
+        if (digits.length === 0) {
+            badge.classList.add('hidden');
+            hint.textContent = 'เบอร์โทรศัพท์หรือเลขบัตรประชาชน 13 หลัก';
+            hint.className = 'mt-1 text-xs text-gray-500';
+            return;
+        }
+
+        badge.classList.remove('hidden');
+
+        if (digits.length === 10 && digits.startsWith('0')) {
+            badge.textContent = 'เบอร์โทรศัพท์';
+            badge.className = 'absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300';
+            hint.textContent = 'รูปแบบ: ' + digits.substr(0,3) + '-' + digits.substr(3,3) + '-' + digits.substr(6,4);
+            hint.className = 'mt-1 text-xs text-blue-600 dark:text-blue-400';
+        } else if (digits.length === 13) {
+            badge.textContent = 'เลขบัตรประชาชน';
+            badge.className = 'absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300';
+            hint.textContent = 'รูปแบบ: ' + digits.substr(0,1) + '-' + digits.substr(1,4) + '-' + digits.substr(5,5) + '-' + digits.substr(10,2) + '-' + digits.substr(12,1);
+            hint.className = 'mt-1 text-xs text-purple-600 dark:text-purple-400';
+        } else if (digits.length >= 15) {
+            badge.textContent = 'e-Wallet / Tax ID';
+            badge.className = 'absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold px-2.5 py-1 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300';
+            hint.textContent = 'หมายเลข e-Wallet หรือ Tax ID';
+            hint.className = 'mt-1 text-xs text-teal-600 dark:text-teal-400';
+        } else {
+            badge.textContent = 'กรอกไม่ครบ';
+            badge.className = 'absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300';
+            hint.textContent = 'เบอร์โทร 10 หลัก หรือ เลขบัตรประชาชน 13 หลัก';
+            hint.className = 'mt-1 text-xs text-amber-600 dark:text-amber-400';
+        }
+    }
+
+    // Initialize on page load and listen for input
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('promptpay_number_input');
+        if (input) {
+            detectPromptPayType(input.value);
+            input.addEventListener('input', function() {
+                detectPromptPayType(this.value);
+            });
+        }
+    });
 </script>
 @endpush
 @endsection

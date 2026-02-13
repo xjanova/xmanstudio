@@ -11,6 +11,7 @@ use App\Models\Coupon;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PaymentSetting;
 use App\Models\Wallet;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
@@ -375,7 +376,8 @@ class OrderController extends Controller
 
                 // Get dynamic bank accounts
                 $bankAccounts = BankAccount::active()->ordered()->get();
-                $promptpayNumber = config('payment.promptpay.number');
+                $promptpayNumber = PaymentSetting::get('promptpay_number')
+                    ?? config('payment.promptpay.number');
 
                 // Add SMS payment info if using unique amount
                 if ($order->usesSmsPayment()) {

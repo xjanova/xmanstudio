@@ -257,7 +257,12 @@
                                         <img src="{{ $paymentInfo['qr_image_url'] }}" alt="PromptPay QR Code" class="w-64 h-64">
                                     </div>
                                     <div class="mt-4">
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">พร้อมเพย์: {{ $paymentInfo['promptpay_number'] ?? 'N/A' }}</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ $paymentInfo['promptpay_type_label'] ?? 'พร้อมเพย์' }}: {{ $paymentInfo['promptpay_number'] ?? 'N/A' }}
+                                        </p>
+                                        @if(!empty($paymentInfo['promptpay_name']))
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">ชื่อบัญชี: {{ $paymentInfo['promptpay_name'] }}</p>
+                                        @endif
                                         <p class="mt-2 text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">฿{{ number_format($order->total, 2) }}</p>
                                     </div>
                                     <div class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
