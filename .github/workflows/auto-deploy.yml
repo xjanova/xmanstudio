@@ -1,17 +1,16 @@
 name: Auto Deploy to Production
 
 on:
-  # Auto-deploy when pushed to main (after CI passes)
-  push:
+  # Deploy after CI completes successfully on main
+  # This ensures tests pass and version is bumped before deploying
+  workflow_run:
+    workflows: ["CI - Tests & Quality Checks"]
+    types:
+      - completed
     branches:
       - main
-    paths-ignore:
-      - '*.md'
-      - 'VERSION'
-      - 'CHANGELOG.md'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/release.yml'
-  # Manual trigger (Claude can use: gh workflow run auto-deploy.yml)
+
+  # Manual trigger
   workflow_dispatch:
     inputs:
       skip_ci:
@@ -30,7 +29,10 @@ jobs:
   pre-check:
     name: Pre-deploy Check
     runs-on: ubuntu-latest
-    if: github.event.inputs.skip_ci != 'true'
+    # Only run if CI was successful, or if manually triggered
+    if: >
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
@@ -45,7 +47,9 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: [pre-check]
-    if: always() && (needs.pre-check.result == 'success' || github.event.inputs.skip_ci == 'true')
+    if: >
+      always() &&
+      (needs.pre-check.result == 'success' || github.event.inputs.skip_ci == 'true')
 
     steps:
       - name: Check SSH secrets
