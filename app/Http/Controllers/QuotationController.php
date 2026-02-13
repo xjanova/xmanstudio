@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\BankAccount;
-use App\Models\PaymentSetting;
 use App\Models\Quotation;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
