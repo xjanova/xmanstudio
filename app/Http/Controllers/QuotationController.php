@@ -131,6 +131,19 @@ class QuotationController extends Controller
                         'webapp_custom' => ['name' => 'Custom Web App', 'name_th' => 'เว็บแอปตามสั่ง', 'price' => 150000],
                     ],
                 ],
+                'wordpress' => [
+                    'name' => 'WordPress',
+                    'name_th' => 'WordPress',
+                    'icon' => '📝',
+                    'options' => [
+                        'wp_theme' => ['name' => 'Custom WordPress Theme', 'name_th' => 'สร้าง Theme WordPress', 'price' => 35000],
+                        'wp_plugin' => ['name' => 'Custom WordPress Plugin', 'name_th' => 'สร้าง Plugin WordPress', 'price' => 25000],
+                        'wp_woocommerce' => ['name' => 'WooCommerce Setup', 'name_th' => 'ตั้งค่าร้านค้า WooCommerce', 'price' => 45000],
+                        'wp_migration' => ['name' => 'WordPress Migration', 'name_th' => 'ย้ายเว็บ WordPress', 'price' => 15000],
+                        'wp_optimization' => ['name' => 'WordPress Optimization', 'name_th' => 'ปรับแต่งความเร็ว WordPress', 'price' => 12000],
+                        'wp_security' => ['name' => 'WordPress Security Hardening', 'name_th' => 'เสริมความปลอดภัย WordPress', 'price' => 10000],
+                    ],
+                ],
                 'backend' => [
                     'name' => 'Backend & API',
                     'name_th' => 'Backend & API',
@@ -448,6 +461,465 @@ class QuotationController extends Controller
                     ],
                 ],
             ],
+        ],
+    ];
+
+    /**
+     * Detail configuration for main service options (sub-options in Step 2)
+     */
+    protected array $serviceOptionDetailConfig = [
+        // ── Blockchain: Smart Contract ──
+        'sc_erc20' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum', 'Avalanche', 'Base']],
+            'token_name' => ['type' => 'text', 'label' => 'ชื่อ Token', 'placeholder' => 'เช่น MyToken'],
+            'token_symbol' => ['type' => 'text', 'label' => 'สัญลักษณ์ Token', 'placeholder' => 'เช่น MTK'],
+            'total_supply' => ['type' => 'text', 'label' => 'จำนวน Supply', 'placeholder' => 'เช่น 1,000,000'],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์เพิ่มเติม', 'options' => ['Mintable', 'Burnable', 'Pausable', 'Ownable', 'Tax/Fee', 'Anti-whale']],
+        ],
+        'sc_erc721' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum', 'Base']],
+            'collection_name' => ['type' => 'text', 'label' => 'ชื่อ Collection', 'placeholder' => 'เช่น My NFT Collection'],
+            'max_supply' => ['type' => 'text', 'label' => 'จำนวน NFT ทั้งหมด', 'placeholder' => 'เช่น 10,000'],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์เพิ่มเติม', 'options' => ['Whitelist/Allowlist', 'Reveal Mechanism', 'Royalty (EIP-2981)', 'On-chain Metadata']],
+        ],
+        'sc_erc1155' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum', 'Base']],
+            'use_case' => ['type' => 'select', 'label' => 'ลักษณะการใช้งาน', 'options' => ['Gaming Items', 'Membership Tiers', 'Multi-Token System', 'อื่นๆ']],
+        ],
+        'sc_staking' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum']],
+            'staking_type' => ['type' => 'select', 'label' => 'ประเภท Staking', 'options' => ['Fixed APR', 'Flexible APR', 'Lock Period', 'Pool-based']],
+            'reward_token' => ['type' => 'text', 'label' => 'Token ที่ใช้ Reward', 'placeholder' => 'เช่น ชื่อ Token หรือ Native'],
+        ],
+        'sc_vesting' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum']],
+            'vesting_schedule' => ['type' => 'select', 'label' => 'รูปแบบ Vesting', 'options' => ['Linear Vesting', 'Cliff + Linear', 'Milestone-based', 'Custom']],
+        ],
+        'sc_governance' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum']],
+            'governance_type' => ['type' => 'select', 'label' => 'ประเภท Governance', 'options' => ['Token-weighted', 'Quadratic Voting', 'Multisig', 'Timelock']],
+        ],
+        'sc_custom' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum', 'Solana', 'อื่นๆ']],
+            'description' => ['type' => 'text', 'label' => 'อธิบายความต้องการ', 'placeholder' => 'อธิบาย Smart Contract ที่ต้องการ'],
+        ],
+        // ── Blockchain: DeFi ──
+        'defi_dex' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum', 'Multi-chain']],
+            'dex_type' => ['type' => 'select', 'label' => 'ประเภท DEX', 'options' => ['AMM (Uniswap-style)', 'Order Book', 'Aggregator', 'Hybrid']],
+        ],
+        'defi_amm' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum']],
+        ],
+        'defi_lending' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum']],
+            'collateral_types' => ['type' => 'checkbox_group', 'label' => 'ประเภท Collateral', 'options' => ['ERC-20 Tokens', 'NFTs', 'LP Tokens', 'Real World Assets']],
+        ],
+        'defi_yield' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Arbitrum']],
+        ],
+        'defi_bridge' => [
+            'chains' => ['type' => 'checkbox_group', 'label' => 'เชนที่ต้อง Bridge', 'options' => ['Ethereum', 'BSC', 'Polygon', 'Arbitrum', 'Avalanche', 'Solana']],
+        ],
+        // ── Blockchain: NFT ──
+        'nft_marketplace' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Multi-chain']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์ Marketplace', 'options' => ['Auction', 'Fixed Price', 'Offer System', 'Lazy Minting', 'Collection Pages', 'Royalty System']],
+        ],
+        'nft_minting' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Base']],
+            'mint_type' => ['type' => 'select', 'label' => 'ประเภทการ Mint', 'options' => ['Public Mint', 'Whitelist + Public', 'Free Mint', 'Dutch Auction']],
+        ],
+        'nft_launchpad' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Multi-chain']],
+        ],
+        'nft_generative' => [
+            'collection_size' => ['type' => 'select', 'label' => 'ขนาด Collection', 'options' => ['1,000 items', '5,000 items', '10,000 items', 'มากกว่า 10,000']],
+            'layer_count' => ['type' => 'select', 'label' => 'จำนวน Layer', 'options' => ['3-5 Layers', '6-8 Layers', '9-12 Layers', 'มากกว่า 12']],
+        ],
+        'nft_gaming' => [
+            'game_type' => ['type' => 'select', 'label' => 'ประเภทเกม', 'options' => ['Play-to-Earn', 'Move-to-Earn', 'Card Game', 'Strategy', 'RPG', 'อื่นๆ']],
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Polygon', 'BSC (BNB Chain)', 'Immutable X', 'Solana']],
+        ],
+        // ── Blockchain: Token ──
+        'token_create' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Solana', 'Arbitrum']],
+            'token_type' => ['type' => 'select', 'label' => 'ประเภท Token', 'options' => ['Utility Token', 'Governance Token', 'Security Token', 'Meme Token', 'Stablecoin']],
+        ],
+        'token_ico' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Multi-chain']],
+            'sale_type' => ['type' => 'select', 'label' => 'ประเภทการขาย', 'options' => ['ICO', 'IDO (DEX Launchpad)', 'IEO (Exchange)', 'Private Sale + Public']],
+        ],
+        'token_presale' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon']],
+        ],
+        'token_airdrop' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Solana']],
+            'recipients' => ['type' => 'select', 'label' => 'จำนวนผู้รับ', 'options' => ['ไม่เกิน 1,000', '1,000 - 10,000', '10,000 - 100,000', 'มากกว่า 100,000']],
+        ],
+        // ── Blockchain: Wallet ──
+        'wallet_web3' => [
+            'wallet_support' => ['type' => 'checkbox_group', 'label' => 'Wallet ที่ต้องรองรับ', 'options' => ['MetaMask', 'WalletConnect', 'Coinbase Wallet', 'Trust Wallet', 'Phantom (Solana)']],
+        ],
+        'wallet_custom' => [
+            'platforms' => ['type' => 'checkbox_group', 'label' => 'แพลตฟอร์ม', 'options' => ['iOS', 'Android', 'Web', 'Browser Extension']],
+            'chains' => ['type' => 'checkbox_group', 'label' => 'เชนที่รองรับ', 'options' => ['Ethereum/EVM', 'Bitcoin', 'Solana', 'Tron']],
+        ],
+        'wallet_multisig' => [
+            'chain' => ['type' => 'select', 'label' => 'Blockchain Network', 'options' => ['Ethereum', 'BSC (BNB Chain)', 'Polygon', 'Multi-chain']],
+            'signers' => ['type' => 'select', 'label' => 'จำนวน Signer', 'options' => ['2-of-3', '3-of-5', '4-of-7', 'Custom']],
+        ],
+        'wallet_audit' => [
+            'audit_scope' => ['type' => 'select', 'label' => 'ขอบเขตการ Audit', 'options' => ['Smart Contract เดียว', 'หลาย Contract', 'ทั้ง Protocol']],
+            'language' => ['type' => 'select', 'label' => 'ภาษา Smart Contract', 'options' => ['Solidity', 'Vyper', 'Rust (Solana)', 'Move (Aptos/Sui)']],
+        ],
+
+        // ── Web Development ──
+        'web_landing' => [
+            'page_count' => ['type' => 'select', 'label' => 'จำนวนหน้า', 'options' => ['1 หน้า', '2-3 หน้า', '4-5 หน้า']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['Contact Form', 'Google Maps', 'Animation/Parallax', 'Video Background', 'Live Chat Widget']],
+        ],
+        'web_corporate' => [
+            'page_count' => ['type' => 'select', 'label' => 'จำนวนหน้าโดยประมาณ', 'options' => ['5-10 หน้า', '10-20 หน้า', '20-30 หน้า', 'มากกว่า 30']],
+            'cms' => ['type' => 'select', 'label' => 'ระบบจัดการเนื้อหา (CMS)', 'options' => ['WordPress', 'Laravel Custom CMS', 'Headless CMS', 'ไม่ต้องการ CMS']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['บล็อก/ข่าวสาร', 'แกลเลอรี่', 'สมัครงาน/Careers', 'ระบบสมาชิก', 'หลายภาษา']],
+        ],
+        'web_portfolio' => [
+            'style' => ['type' => 'select', 'label' => 'สไตล์', 'options' => ['Minimal/Clean', 'Creative/Artistic', 'Photography', 'Agency']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['กรองผลงานตามหมวด', 'Lightbox Gallery', 'Testimonials', 'Contact Form']],
+        ],
+        'web_blog' => [
+            'cms' => ['type' => 'select', 'label' => 'ระบบจัดการเนื้อหา', 'options' => ['WordPress', 'Laravel Custom', 'Ghost', 'Headless CMS']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['Categories/Tags', 'Comment System', 'Newsletter', 'Social Share', 'Related Posts']],
+        ],
+        'web_multilang' => [
+            'languages' => ['type' => 'text', 'label' => 'ภาษาที่ต้องการ', 'placeholder' => 'เช่น ไทย, English, 中文, 日本語'],
+            'language_count' => ['type' => 'select', 'label' => 'จำนวนภาษา', 'options' => ['2 ภาษา', '3 ภาษา', '4-5 ภาษา', 'มากกว่า 5']],
+        ],
+        'ecom_basic' => [
+            'product_count' => ['type' => 'select', 'label' => 'จำนวนสินค้า', 'options' => ['ไม่เกิน 50', '50-200', '200-500', '500-1,000']],
+            'payment' => ['type' => 'checkbox_group', 'label' => 'ช่องทางชำระเงิน', 'options' => ['PromptPay QR', 'Credit Card', 'โอนธนาคาร', 'COD (เก็บปลายทาง)', 'Line Pay']],
+            'shipping' => ['type' => 'checkbox_group', 'label' => 'ระบบจัดส่ง', 'options' => ['Thailand Post', 'Kerry Express', 'Flash Express', 'J&T', 'Grab/Lalamove']],
+        ],
+        'ecom_advanced' => [
+            'product_count' => ['type' => 'select', 'label' => 'จำนวนสินค้า', 'options' => ['500-1,000', '1,000-5,000', '5,000-10,000', 'มากกว่า 10,000']],
+            'payment' => ['type' => 'checkbox_group', 'label' => 'ช่องทางชำระเงิน', 'options' => ['PromptPay QR', 'Credit Card', 'โอนธนาคาร', 'COD', 'Installment (ผ่อนชำระ)', 'Wallet']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์เพิ่มเติม', 'options' => ['Multi-vendor', 'Coupon/Promotion', 'Loyalty Points', 'Product Reviews', 'Wishlist', 'Compare Products']],
+        ],
+        'ecom_marketplace' => [
+            'type' => ['type' => 'select', 'label' => 'ประเภท Marketplace', 'options' => ['B2C (ร้านค้า-ผู้บริโภค)', 'C2C (ผู้บริโภค-ผู้บริโภค)', 'B2B (ธุรกิจ-ธุรกิจ)', 'Service Marketplace']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์หลัก', 'options' => ['Vendor Dashboard', 'Commission System', 'Chat ผู้ซื้อ-ผู้ขาย', 'Rating/Review', 'Dispute Resolution']],
+        ],
+        'ecom_subscription' => [
+            'billing_cycle' => ['type' => 'checkbox_group', 'label' => 'รอบการเรียกเก็บ', 'options' => ['รายสัปดาห์', 'รายเดือน', 'รายปี', 'กำหนดเอง']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['ทดลองใช้ฟรี', 'อัปเกรด/ดาวน์เกรด', 'ยกเลิกอัตโนมัติ', 'Invoice อัตโนมัติ']],
+        ],
+        'ecom_booking' => [
+            'booking_type' => ['type' => 'select', 'label' => 'ประเภทการจอง', 'options' => ['จองบริการ (เวลา)', 'จองห้องพัก/สถานที่', 'จองคิว/นัดหมาย', 'จองรถ/ยานพาหนะ', 'จองคอร์ส/กิจกรรม']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['ปฏิทินจอง', 'แจ้งเตือนอัตโนมัติ', 'ชำระเงินล่วงหน้า', 'จัดการคิว', 'รีวิวบริการ']],
+        ],
+        'webapp_spa' => [
+            'framework' => ['type' => 'select', 'label' => 'Framework ที่ต้องการ', 'options' => ['React', 'Vue.js', 'Angular', 'Svelte', 'ให้ทีมงานเลือก']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['Authentication', 'Real-time Data', 'Offline Support', 'Push Notifications', 'Dark Mode']],
+        ],
+        'webapp_pwa' => [
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์ PWA', 'options' => ['Offline Mode', 'Push Notifications', 'Home Screen Install', 'Background Sync', 'Camera Access']],
+        ],
+        'webapp_dashboard' => [
+            'dashboard_type' => ['type' => 'select', 'label' => 'ประเภท Dashboard', 'options' => ['Analytics/BI', 'Admin Panel', 'CRM Dashboard', 'E-commerce Dashboard', 'IoT Dashboard']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['กราฟ/ชาร์ต', 'Export Excel/PDF', 'Real-time Data', 'Role-based Access', 'Activity Log']],
+        ],
+        'webapp_crm' => [
+            'crm_focus' => ['type' => 'select', 'label' => 'จุดเน้นของ CRM', 'options' => ['Sales Pipeline', 'Customer Service', 'Marketing Automation', 'All-in-One']],
+            'users' => ['type' => 'select', 'label' => 'จำนวนผู้ใช้งาน', 'options' => ['1-10 คน', '10-50 คน', '50-200 คน', 'มากกว่า 200']],
+        ],
+        'webapp_custom' => [
+            'description' => ['type' => 'text', 'label' => 'อธิบายเว็บแอปที่ต้องการ', 'placeholder' => 'อธิบายรายละเอียดเว็บแอปที่ต้องการพัฒนา'],
+            'users' => ['type' => 'select', 'label' => 'จำนวนผู้ใช้งาน', 'options' => ['ไม่เกิน 100', '100-1,000', '1,000-10,000', 'มากกว่า 10,000']],
+        ],
+        'api_rest' => [
+            'api_purpose' => ['type' => 'text', 'label' => 'วัตถุประสงค์ API', 'placeholder' => 'เช่น สำหรับแอปมือถือ, เชื่อมต่อระบบ ERP'],
+            'endpoints' => ['type' => 'select', 'label' => 'จำนวน Endpoint โดยประมาณ', 'options' => ['ไม่เกิน 20', '20-50', '50-100', 'มากกว่า 100']],
+        ],
+        'api_graphql' => [
+            'api_purpose' => ['type' => 'text', 'label' => 'วัตถุประสงค์ API', 'placeholder' => 'เช่น สำหรับ Frontend SPA, Mobile App'],
+        ],
+        'api_integration' => [
+            'third_party' => ['type' => 'text', 'label' => 'ระบบที่ต้องเชื่อมต่อ', 'placeholder' => 'เช่น LINE API, Facebook, Shopee, Lazada, SAP'],
+        ],
+        'backend_microservice' => [
+            'services_count' => ['type' => 'select', 'label' => 'จำนวน Services', 'options' => ['3-5 Services', '5-10 Services', '10-20 Services', 'มากกว่า 20']],
+            'infra' => ['type' => 'select', 'label' => 'Infrastructure', 'options' => ['Docker/Kubernetes', 'AWS ECS', 'Google Cloud Run', 'Azure Container Apps']],
+        ],
+        'backend_serverless' => [
+            'cloud' => ['type' => 'select', 'label' => 'Cloud Provider', 'options' => ['AWS Lambda', 'Google Cloud Functions', 'Azure Functions', 'Vercel/Netlify']],
+        ],
+        // ── WordPress ──
+        'wp_theme' => [
+            'theme_type' => ['type' => 'select', 'label' => 'ประเภท Theme', 'options' => ['สร้างจากศูนย์ (From Scratch)', 'Starter Theme (Underscores/Sage)', 'แปลงจาก Design (PSD/Figma)', 'Child Theme']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์ Theme', 'options' => ['Gutenberg Blocks', 'Full Site Editing', 'WooCommerce Support', 'Multi-language (WPML)', 'Custom Post Types', 'Page Builder Compatible']],
+        ],
+        'wp_plugin' => [
+            'plugin_type' => ['type' => 'select', 'label' => 'ประเภท Plugin', 'options' => ['ฟีเจอร์เฉพาะทาง', 'เชื่อมต่อ API ภายนอก', 'Payment Gateway', 'Membership/Subscription', 'Booking/Appointment', 'อื่นๆ']],
+            'description' => ['type' => 'text', 'label' => 'อธิบาย Plugin ที่ต้องการ', 'placeholder' => 'เช่น Plugin จัดการสต็อกสินค้าเชื่อมต่อกับ LINE'],
+            'wp_version' => ['type' => 'select', 'label' => 'WordPress Version', 'options' => ['WordPress 6.x (Latest)', 'WordPress 5.x', 'ทุกเวอร์ชัน']],
+            'distribution' => ['type' => 'select', 'label' => 'การเผยแพร่', 'options' => ['ใช้ส่วนตัว', 'ขายใน WordPress.org', 'ขายใน CodeCanyon/ThemeForest', 'ทั้งหมด']],
+        ],
+        'wp_woocommerce' => [
+            'product_count' => ['type' => 'select', 'label' => 'จำนวนสินค้า', 'options' => ['ไม่เกิน 50', '50-200', '200-1,000', 'มากกว่า 1,000']],
+            'payment' => ['type' => 'checkbox_group', 'label' => 'ช่องทางชำระเงิน', 'options' => ['PromptPay', 'Credit Card (Omise/2C2P)', 'โอนธนาคาร', 'COD', 'LINE Pay', 'PayPal']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์ร้านค้า', 'options' => ['Coupon/ส่วนลด', 'Product Variations', 'ติดตามพัสดุ', 'Affiliate', 'Multi-vendor', 'ภาษี VAT']],
+        ],
+        'wp_migration' => [
+            'from' => ['type' => 'select', 'label' => 'ย้ายจาก', 'options' => ['Hosting เดิม', 'Wix', 'Squarespace', 'Shopify', 'WordPress.com', 'อื่นๆ']],
+            'site_size' => ['type' => 'select', 'label' => 'ขนาดเว็บ', 'options' => ['ไม่เกิน 1 GB', '1-5 GB', '5-20 GB', 'มากกว่า 20 GB']],
+        ],
+        'wp_optimization' => [
+            'issues' => ['type' => 'checkbox_group', 'label' => 'ปัญหาปัจจุบัน', 'options' => ['โหลดช้า', 'Core Web Vitals ไม่ผ่าน', 'Database ใหญ่', 'รูปภาพไม่ Optimize', 'ไม่มี Cache']],
+        ],
+        'wp_security' => [
+            'issues' => ['type' => 'checkbox_group', 'label' => 'ความต้องการ', 'options' => ['ป้องกัน Brute Force', 'Firewall', 'Malware Scan', '2FA Login', 'SSL Setup', 'Auto Backup']],
+        ],
+
+        // ── Mobile Application ──
+        'native_ios' => [
+            'min_ios' => ['type' => 'select', 'label' => 'iOS ขั้นต่ำ', 'options' => ['iOS 15+', 'iOS 16+', 'iOS 17+', 'iOS 18+']],
+            'devices' => ['type' => 'checkbox_group', 'label' => 'อุปกรณ์ที่รองรับ', 'options' => ['iPhone', 'iPad', 'Apple Watch']],
+            'screens' => ['type' => 'select', 'label' => 'จำนวนหน้าจอโดยประมาณ', 'options' => ['5-10 หน้าจอ', '10-20 หน้าจอ', '20-40 หน้าจอ', 'มากกว่า 40']],
+        ],
+        'native_android' => [
+            'min_sdk' => ['type' => 'select', 'label' => 'Android ขั้นต่ำ', 'options' => ['Android 10 (API 29)', 'Android 11 (API 30)', 'Android 12 (API 31)', 'Android 13 (API 33)']],
+            'devices' => ['type' => 'checkbox_group', 'label' => 'อุปกรณ์ที่รองรับ', 'options' => ['Phone', 'Tablet', 'Wear OS']],
+            'screens' => ['type' => 'select', 'label' => 'จำนวนหน้าจอโดยประมาณ', 'options' => ['5-10 หน้าจอ', '10-20 หน้าจอ', '20-40 หน้าจอ', 'มากกว่า 40']],
+        ],
+        'native_both' => [
+            'screens' => ['type' => 'select', 'label' => 'จำนวนหน้าจอโดยประมาณ', 'options' => ['5-10 หน้าจอ', '10-20 หน้าจอ', '20-40 หน้าจอ', 'มากกว่า 40']],
+            'design' => ['type' => 'select', 'label' => 'การออกแบบ', 'options' => ['ออกแบบเหมือนกันทั้งสอง', 'ออกแบบตาม Platform Guidelines', 'ให้ทีมงานเสนอ']],
+        ],
+        'cross_flutter' => [
+            'screens' => ['type' => 'select', 'label' => 'จำนวนหน้าจอโดยประมาณ', 'options' => ['5-10 หน้าจอ', '10-20 หน้าจอ', '20-40 หน้าจอ', 'มากกว่า 40']],
+            'state_management' => ['type' => 'select', 'label' => 'State Management', 'options' => ['BLoC/Cubit', 'Riverpod', 'GetX', 'Provider', 'ให้ทีมงานเลือก']],
+            'platforms' => ['type' => 'checkbox_group', 'label' => 'แพลตฟอร์ม', 'options' => ['iOS', 'Android', 'Web', 'macOS', 'Windows']],
+        ],
+        'cross_reactnative' => [
+            'screens' => ['type' => 'select', 'label' => 'จำนวนหน้าจอโดยประมาณ', 'options' => ['5-10 หน้าจอ', '10-20 หน้าจอ', '20-40 หน้าจอ', 'มากกว่า 40']],
+            'architecture' => ['type' => 'select', 'label' => 'Architecture', 'options' => ['Expo', 'React Native CLI (Bare)', 'ให้ทีมงานเลือก']],
+        ],
+        'cross_kotlin' => [
+            'screens' => ['type' => 'select', 'label' => 'จำนวนหน้าจอโดยประมาณ', 'options' => ['5-10 หน้าจอ', '10-20 หน้าจอ', '20-40 หน้าจอ', 'มากกว่า 40']],
+        ],
+        'feat_push' => [
+            'push_provider' => ['type' => 'select', 'label' => 'Push Provider', 'options' => ['Firebase Cloud Messaging', 'OneSignal', 'AWS SNS', 'ให้ทีมงานเลือก']],
+        ],
+        'feat_chat' => [
+            'chat_type' => ['type' => 'select', 'label' => 'ประเภทแชท', 'options' => ['1-to-1 Chat', 'Group Chat', 'Channel/Room', 'Support Chat']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์แชท', 'options' => ['ส่งรูปภาพ', 'ส่งไฟล์', 'Voice Message', 'Video Call', 'Read Receipt', 'Emoji/Sticker']],
+        ],
+        'feat_payment' => [
+            'payment_methods' => ['type' => 'checkbox_group', 'label' => 'ช่องทางชำระเงิน', 'options' => ['Credit Card', 'PromptPay', 'TrueMoney Wallet', 'Rabbit LINE Pay', 'Apple Pay', 'Google Pay']],
+        ],
+        'feat_map' => [
+            'map_provider' => ['type' => 'select', 'label' => 'Map Provider', 'options' => ['Google Maps', 'Apple Maps', 'Mapbox', 'HERE Maps']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์แผนที่', 'options' => ['GPS Tracking', 'Geofencing', 'Route Navigation', 'Nearby Search', 'Custom Markers']],
+        ],
+        'feat_camera' => [
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์กล้อง', 'options' => ['ถ่ายรูป', 'บันทึกวิดีโอ', 'QR/Barcode Scanner', 'AR Filter', 'Image Editor', 'OCR (อ่านตัวอักษร)']],
+        ],
+        'feat_offline' => [
+            'sync_method' => ['type' => 'select', 'label' => 'วิธี Sync ข้อมูล', 'options' => ['เมื่อเชื่อมต่อ Internet', 'Background Sync', 'Manual Sync', 'ให้ทีมงานเลือก']],
+        ],
+        'svc_publish' => [
+            'stores' => ['type' => 'checkbox_group', 'label' => 'Store ที่ต้อง Publish', 'options' => ['Apple App Store', 'Google Play Store', 'Huawei AppGallery', 'Samsung Galaxy Store']],
+        ],
+        'svc_maintenance' => [
+            'scope' => ['type' => 'checkbox_group', 'label' => 'ขอบเขตการดูแล', 'options' => ['Bug Fixes', 'OS Update Compatibility', 'Library Updates', 'Performance Monitoring', 'Crash Reporting']],
+        ],
+        'svc_analytics' => [
+            'tools' => ['type' => 'checkbox_group', 'label' => 'เครื่องมือ Analytics', 'options' => ['Firebase Analytics', 'Mixpanel', 'Amplitude', 'Crashlytics', 'App Center']],
+        ],
+
+        // ── AI Solutions ──
+        'chat_basic' => [
+            'platform' => ['type' => 'checkbox_group', 'label' => 'แพลตฟอร์ม', 'options' => ['Website', 'LINE Official', 'Facebook Messenger', 'Telegram']],
+            'language' => ['type' => 'checkbox_group', 'label' => 'ภาษาที่รองรับ', 'options' => ['ไทย', 'English', 'จีน', 'ญี่ปุ่น']],
+        ],
+        'chat_gpt' => [
+            'platform' => ['type' => 'checkbox_group', 'label' => 'แพลตฟอร์ม', 'options' => ['Website', 'LINE Official', 'Facebook Messenger', 'Telegram', 'Slack']],
+            'knowledge_source' => ['type' => 'checkbox_group', 'label' => 'แหล่งข้อมูล', 'options' => ['เว็บไซต์/FAQ', 'เอกสาร PDF', 'ฐานข้อมูล', 'API ภายนอก']],
+            'model' => ['type' => 'select', 'label' => 'AI Model', 'options' => ['GPT-4o', 'Claude', 'Gemini', 'ให้ทีมงานเลือก']],
+        ],
+        'chat_voice' => [
+            'language' => ['type' => 'checkbox_group', 'label' => 'ภาษาเสียง', 'options' => ['ไทย', 'English', 'จีน', 'ญี่ปุ่น']],
+            'use_case' => ['type' => 'select', 'label' => 'การใช้งาน', 'options' => ['Call Center', 'Smart Speaker', 'Mobile App', 'Kiosk/หน้าร้าน']],
+        ],
+        'chat_multi' => [
+            'channels' => ['type' => 'checkbox_group', 'label' => 'ช่องทาง', 'options' => ['Website', 'LINE', 'Facebook', 'Instagram', 'WhatsApp', 'Telegram', 'Email']],
+        ],
+        'chat_custom' => [
+            'use_case' => ['type' => 'text', 'label' => 'อธิบายการใช้งาน AI Agent', 'placeholder' => 'เช่น AI สำหรับตอบคำถามลูกค้า, AI วิเคราะห์เอกสาร'],
+        ],
+        'gen_image' => [
+            'style' => ['type' => 'select', 'label' => 'สไตล์ภาพ', 'options' => ['Realistic', 'Anime/Manga', 'Digital Art', 'Photo Manipulation', 'Product Mockup', 'Custom Style']],
+            'volume' => ['type' => 'select', 'label' => 'จำนวนภาพต่อเดือน', 'options' => ['ไม่เกิน 100', '100-500', '500-1,000', 'Unlimited']],
+        ],
+        'gen_video' => [
+            'type' => ['type' => 'select', 'label' => 'ประเภทวิดีโอ', 'options' => ['Text-to-Video', 'Image-to-Video', 'Video Editing AI', 'Avatar Video', 'Product Demo']],
+            'duration' => ['type' => 'select', 'label' => 'ความยาววิดีโอ', 'options' => ['ไม่เกิน 1 นาที', '1-5 นาที', '5-15 นาที', 'มากกว่า 15 นาที']],
+        ],
+        'gen_text' => [
+            'content_type' => ['type' => 'checkbox_group', 'label' => 'ประเภทเนื้อหา', 'options' => ['บทความ/Blog', 'รายละเอียดสินค้า', 'Social Media Post', 'Email Marketing', 'SEO Content']],
+            'language' => ['type' => 'checkbox_group', 'label' => 'ภาษา', 'options' => ['ไทย', 'English', 'ทั้งสอง']],
+        ],
+        'gen_avatar' => [
+            'style' => ['type' => 'select', 'label' => 'สไตล์ Avatar', 'options' => ['Realistic 3D', 'Cartoon 2D', 'Anime', 'Pixel Art', 'Custom']],
+            'use_case' => ['type' => 'select', 'label' => 'การใช้งาน', 'options' => ['Profile/Social', 'Virtual Presenter', 'Game Character', 'Brand Mascot']],
+        ],
+        'music_basic' => [
+            'genre' => ['type' => 'checkbox_group', 'label' => 'แนวเพลง', 'options' => ['Pop', 'Rock', 'Electronic', 'Jazz', 'Classical', 'Lo-fi', 'Ambient']],
+            'duration' => ['type' => 'select', 'label' => 'ความยาว', 'options' => ['30 วินาที', '1 นาที', '2-3 นาที', '5 นาที+']],
+        ],
+        'music_custom' => [
+            'genre' => ['type' => 'text', 'label' => 'แนวเพลงที่ต้องการ', 'placeholder' => 'เช่น EDM, Thai Pop, Rock Ballad'],
+            'reference' => ['type' => 'text', 'label' => 'เพลงอ้างอิง (ถ้ามี)', 'placeholder' => 'เช่น เพลงคล้ายๆ กับ ...'],
+        ],
+        'ml_prediction' => [
+            'data_type' => ['type' => 'select', 'label' => 'ประเภทข้อมูล', 'options' => ['ข้อมูลยอดขาย', 'ข้อมูลลูกค้า', 'ข้อมูลตลาด/การเงิน', 'ข้อมูลสุขภาพ', 'อื่นๆ']],
+            'data_size' => ['type' => 'select', 'label' => 'ขนาดข้อมูล', 'options' => ['ไม่เกิน 10,000 rows', '10,000-100,000 rows', '100,000-1M rows', 'มากกว่า 1M']],
+        ],
+        'ml_classification' => [
+            'data_type' => ['type' => 'select', 'label' => 'ประเภทข้อมูล', 'options' => ['ข้อความ', 'รูปภาพ', 'เสียง', 'ตัวเลข/Tabular', 'อื่นๆ']],
+        ],
+        'ml_nlp' => [
+            'language' => ['type' => 'checkbox_group', 'label' => 'ภาษาที่ต้องวิเคราะห์', 'options' => ['ไทย', 'English', 'จีน', 'ญี่ปุ่น']],
+            'tasks' => ['type' => 'checkbox_group', 'label' => 'งานที่ต้องทำ', 'options' => ['Sentiment Analysis', 'Named Entity Recognition', 'Text Classification', 'Summarization', 'Translation']],
+        ],
+        'ml_vision' => [
+            'tasks' => ['type' => 'checkbox_group', 'label' => 'งานที่ต้องทำ', 'options' => ['Object Detection', 'Face Recognition', 'OCR', 'Image Classification', 'Segmentation', 'Anomaly Detection']],
+        ],
+        'ml_recommendation' => [
+            'use_case' => ['type' => 'select', 'label' => 'การใช้งาน', 'options' => ['แนะนำสินค้า', 'แนะนำเนื้อหา', 'แนะนำเพลง/หนัง', 'แนะนำเพื่อน/คน', 'อื่นๆ']],
+        ],
+        'ml_custom' => [
+            'description' => ['type' => 'text', 'label' => 'อธิบาย ML Model ที่ต้องการ', 'placeholder' => 'อธิบายปัญหาหรือโจทย์ที่ต้องการแก้'],
+        ],
+
+        // ── IoT Solutions ──
+        'home_automation' => [
+            'area' => ['type' => 'select', 'label' => 'ขนาดพื้นที่', 'options' => ['บ้านเดี่ยว', 'ทาวน์เฮ้าส์', 'คอนโด', 'อาคาร/สำนักงาน']],
+            'devices' => ['type' => 'checkbox_group', 'label' => 'อุปกรณ์ที่ต้องควบคุม', 'options' => ['ไฟ (Lighting)', 'แอร์/พัดลม', 'ประตู/ม่าน', 'กล้องวงจรปิด', 'เซ็นเซอร์']],
+            'protocol' => ['type' => 'select', 'label' => 'Protocol', 'options' => ['WiFi', 'Zigbee', 'Z-Wave', 'Matter/Thread', 'ให้ทีมงานเลือก']],
+        ],
+        'home_security' => [
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์ความปลอดภัย', 'options' => ['CCTV', 'Motion Sensor', 'Door/Window Sensor', 'Alarm', 'Face Recognition', 'Access Control']],
+        ],
+        'home_energy' => [
+            'energy_source' => ['type' => 'checkbox_group', 'label' => 'แหล่งพลังงาน', 'options' => ['Solar Panel', 'ไฟฟ้าทั่วไป', 'Battery Storage', 'EV Charger']],
+        ],
+        'farm_monitoring' => [
+            'crop_type' => ['type' => 'text', 'label' => 'ประเภทพืช', 'placeholder' => 'เช่น ข้าว, ผัก, ผลไม้, สมุนไพร'],
+            'area' => ['type' => 'select', 'label' => 'ขนาดพื้นที่', 'options' => ['ไม่เกิน 1 ไร่', '1-10 ไร่', '10-100 ไร่', 'มากกว่า 100 ไร่']],
+            'sensors' => ['type' => 'checkbox_group', 'label' => 'เซ็นเซอร์', 'options' => ['อุณหภูมิ', 'ความชื้น', 'แสง', 'pH ดิน', 'ระดับน้ำ', 'กล้องถ่ายภาพ']],
+        ],
+        'farm_irrigation' => [
+            'area' => ['type' => 'select', 'label' => 'ขนาดพื้นที่', 'options' => ['ไม่เกิน 1 ไร่', '1-10 ไร่', '10-100 ไร่', 'มากกว่า 100 ไร่']],
+            'water_source' => ['type' => 'select', 'label' => 'แหล่งน้ำ', 'options' => ['น้ำประปา', 'บ่อน้ำ', 'แม่น้ำ/คลอง', 'น้ำฝน']],
+        ],
+        'iiot_monitoring' => [
+            'industry' => ['type' => 'select', 'label' => 'อุตสาหกรรม', 'options' => ['อาหาร/เครื่องดื่ม', 'ยานยนต์', 'อิเล็กทรอนิกส์', 'เคมี/ปิโตรเคมี', 'โลจิสติกส์', 'อื่นๆ']],
+            'machines' => ['type' => 'select', 'label' => 'จำนวนเครื่องจักร', 'options' => ['1-10 เครื่อง', '10-50 เครื่อง', '50-200 เครื่อง', 'มากกว่า 200']],
+        ],
+        'platform_dashboard' => [
+            'devices' => ['type' => 'select', 'label' => 'จำนวนอุปกรณ์', 'options' => ['ไม่เกิน 50', '50-200', '200-1,000', 'มากกว่า 1,000']],
+        ],
+        'platform_cloud' => [
+            'cloud' => ['type' => 'select', 'label' => 'Cloud Provider', 'options' => ['AWS IoT', 'Google Cloud IoT', 'Azure IoT Hub', 'ให้ทีมงานเลือก']],
+            'devices' => ['type' => 'select', 'label' => 'จำนวนอุปกรณ์', 'options' => ['ไม่เกิน 100', '100-1,000', '1,000-10,000', 'มากกว่า 10,000']],
+        ],
+
+        // ── Security ──
+        'net_design' => [
+            'users' => ['type' => 'select', 'label' => 'จำนวนผู้ใช้งาน', 'options' => ['1-50 คน', '50-200 คน', '200-500 คน', 'มากกว่า 500']],
+            'sites' => ['type' => 'select', 'label' => 'จำนวนสาขา/อาคาร', 'options' => ['1 แห่ง', '2-5 แห่ง', '5-10 แห่ง', 'มากกว่า 10']],
+        ],
+        'net_wireless' => [
+            'area' => ['type' => 'select', 'label' => 'พื้นที่ครอบคลุม', 'options' => ['ไม่เกิน 500 ตร.ม.', '500-2,000 ตร.ม.', '2,000-5,000 ตร.ม.', 'มากกว่า 5,000 ตร.ม.']],
+            'users' => ['type' => 'select', 'label' => 'จำนวนผู้ใช้พร้อมกัน', 'options' => ['ไม่เกิน 50', '50-200', '200-500', 'มากกว่า 500']],
+        ],
+        'net_vpn' => [
+            'vpn_type' => ['type' => 'select', 'label' => 'ประเภท VPN', 'options' => ['Site-to-Site', 'Remote Access', 'SSL VPN', 'WireGuard']],
+            'users' => ['type' => 'select', 'label' => 'จำนวนผู้ใช้', 'options' => ['1-50 คน', '50-200 คน', '200-500 คน', 'มากกว่า 500']],
+        ],
+        'audit_pentest' => [
+            'scope' => ['type' => 'checkbox_group', 'label' => 'ขอบเขตการทดสอบ', 'options' => ['Web Application', 'Mobile App', 'Network/Infra', 'API', 'Cloud']],
+            'approach' => ['type' => 'select', 'label' => 'วิธีการทดสอบ', 'options' => ['Black Box', 'Gray Box', 'White Box']],
+        ],
+        'audit_vuln' => [
+            'scope' => ['type' => 'checkbox_group', 'label' => 'ขอบเขต', 'options' => ['External', 'Internal', 'Web Application', 'Network']],
+        ],
+        'audit_compliance' => [
+            'standard' => ['type' => 'checkbox_group', 'label' => 'มาตรฐานที่ต้องการ', 'options' => ['ISO 27001', 'PCI DSS', 'PDPA', 'GDPR', 'SOC 2']],
+        ],
+
+        // ── Custom Software ──
+        'erp_basic' => [
+            'modules' => ['type' => 'checkbox_group', 'label' => 'โมดูลที่ต้องการ', 'options' => ['การขาย', 'จัดซื้อ', 'คลังสินค้า', 'บัญชี/การเงิน', 'HR/เงินเดือน', 'ผลิต']],
+            'users' => ['type' => 'select', 'label' => 'จำนวนผู้ใช้งาน', 'options' => ['1-20 คน', '20-50 คน', '50-100 คน', 'มากกว่า 100']],
+        ],
+        'erp_enterprise' => [
+            'modules' => ['type' => 'checkbox_group', 'label' => 'โมดูลที่ต้องการ', 'options' => ['การขาย', 'จัดซื้อ', 'คลังสินค้า', 'บัญชี', 'HR', 'ผลิต', 'CRM', 'BI/Analytics']],
+            'users' => ['type' => 'select', 'label' => 'จำนวนผู้ใช้งาน', 'options' => ['50-200 คน', '200-500 คน', '500-1,000 คน', 'มากกว่า 1,000']],
+            'integration' => ['type' => 'text', 'label' => 'ระบบที่ต้องเชื่อมต่อ', 'placeholder' => 'เช่น SAP, Oracle, ระบบเดิมที่ใช้อยู่'],
+        ],
+        'crm_sales' => [
+            'pipeline_stages' => ['type' => 'select', 'label' => 'จำนวน Pipeline Stages', 'options' => ['3-5 stages', '5-8 stages', 'มากกว่า 8']],
+            'users' => ['type' => 'select', 'label' => 'จำนวนพนักงานขาย', 'options' => ['1-10 คน', '10-50 คน', '50-100 คน', 'มากกว่า 100']],
+        ],
+        'biz_pos' => [
+            'business_type' => ['type' => 'select', 'label' => 'ประเภทธุรกิจ', 'options' => ['ร้านอาหาร/คาเฟ่', 'ร้านค้าปลีก', 'ร้านบริการ', 'ซูเปอร์มาร์เก็ต', 'อื่นๆ']],
+            'terminals' => ['type' => 'select', 'label' => 'จำนวนจุดขาย', 'options' => ['1 จุด', '2-5 จุด', '5-10 จุด', 'มากกว่า 10']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['สต็อกสินค้า', 'สมาชิก/สะสมแต้ม', 'รายงานขาย', 'เชื่อมต่อเครื่องพิมพ์ใบเสร็จ', 'ลิ้นชักเงิน']],
+        ],
+        'biz_inventory' => [
+            'warehouse_count' => ['type' => 'select', 'label' => 'จำนวนคลังสินค้า', 'options' => ['1 แห่ง', '2-5 แห่ง', '5-10 แห่ง', 'มากกว่า 10']],
+            'sku_count' => ['type' => 'select', 'label' => 'จำนวน SKU', 'options' => ['ไม่เกิน 500', '500-5,000', '5,000-50,000', 'มากกว่า 50,000']],
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์', 'options' => ['Barcode/QR', 'Batch/Lot Tracking', 'FIFO/LIFO', 'Multi-warehouse', 'Min Stock Alert']],
+        ],
+        'biz_hr' => [
+            'employees' => ['type' => 'select', 'label' => 'จำนวนพนักงาน', 'options' => ['1-50 คน', '50-200 คน', '200-500 คน', 'มากกว่า 500']],
+            'modules' => ['type' => 'checkbox_group', 'label' => 'โมดูล HR', 'options' => ['เงินเดือน/Payroll', 'ลา/OT', 'สแกนลายนิ้วมือ', 'สวัสดิการ', 'ประเมินผลงาน', 'สมัครงาน']],
+        ],
+        'biz_accounting' => [
+            'features' => ['type' => 'checkbox_group', 'label' => 'ฟีเจอร์บัญชี', 'options' => ['ใบแจ้งหนี้/Invoice', 'ใบเสร็จ/Receipt', 'ภาษี (VAT/WHT)', 'งบการเงิน', 'Bank Reconciliation', 'Multi-currency']],
+        ],
+
+        // ── Flutter & Training ──
+        'train_basic' => [
+            'participants' => ['type' => 'select', 'label' => 'จำนวนผู้เข้าร่วม', 'options' => ['1-5 คน', '5-10 คน', '10-20 คน', 'มากกว่า 20']],
+            'experience' => ['type' => 'select', 'label' => 'ประสบการณ์ผู้เรียน', 'options' => ['ไม่มีพื้นฐานเลย', 'มีพื้นฐานเขียนโปรแกรม', 'เคยทำ Mobile App']],
+            'format' => ['type' => 'select', 'label' => 'รูปแบบ', 'options' => ['Onsite', 'Online', 'Hybrid']],
+        ],
+        'train_intermediate' => [
+            'participants' => ['type' => 'select', 'label' => 'จำนวนผู้เข้าร่วม', 'options' => ['1-5 คน', '5-10 คน', '10-20 คน', 'มากกว่า 20']],
+            'format' => ['type' => 'select', 'label' => 'รูปแบบ', 'options' => ['Onsite', 'Online', 'Hybrid']],
+        ],
+        'train_advanced' => [
+            'participants' => ['type' => 'select', 'label' => 'จำนวนผู้เข้าร่วม', 'options' => ['1-5 คน', '5-10 คน', '10-20 คน', 'มากกว่า 20']],
+            'topics' => ['type' => 'checkbox_group', 'label' => 'หัวข้อที่สนใจ', 'options' => ['State Management', 'Clean Architecture', 'CI/CD', 'Testing', 'Performance', 'Animations']],
+            'format' => ['type' => 'select', 'label' => 'รูปแบบ', 'options' => ['Onsite', 'Online', 'Hybrid']],
+        ],
+        'consult_hour' => [
+            'topic' => ['type' => 'text', 'label' => 'หัวข้อที่ต้องการปรึกษา', 'placeholder' => 'เช่น Architecture review, Performance optimization'],
+        ],
+        'consult_month' => [
+            'hours_per_month' => ['type' => 'select', 'label' => 'ชั่วโมงต่อเดือน', 'options' => ['4 ชม./เดือน', '8 ชม./เดือน', '16 ชม./เดือน', '20 ชม./เดือน']],
+        ],
+        'ws_team' => [
+            'team_size' => ['type' => 'select', 'label' => 'จำนวนคน', 'options' => ['5 คน', '6-8 คน', '9-10 คน']],
+            'focus' => ['type' => 'text', 'label' => 'โปรเจคหรือหัวข้อที่สนใจ', 'placeholder' => 'เช่น สร้าง E-commerce App ด้วย Flutter'],
+        ],
+        'ws_corporate' => [
+            'participants' => ['type' => 'select', 'label' => 'จำนวนผู้เข้าร่วม', 'options' => ['10-20 คน', '20-50 คน', '50-100 คน', 'มากกว่า 100']],
+            'duration' => ['type' => 'select', 'label' => 'ระยะเวลา', 'options' => ['1 วัน', '2-3 วัน', '1 สัปดาห์', '2 สัปดาห์']],
         ],
     ];
 
@@ -810,6 +1282,7 @@ class QuotationController extends Controller
             'services' => $formattedCategories,
             'additionalOptions' => $this->additionalOptions ?? [],
             'optionDetailConfig' => $this->optionDetailConfig,
+            'serviceOptionDetailConfig' => $this->serviceOptionDetailConfig,
         ]);
     }
 
