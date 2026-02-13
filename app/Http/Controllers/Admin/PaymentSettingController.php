@@ -14,7 +14,10 @@ class PaymentSettingController extends Controller
      */
     public function index()
     {
-        $settings = PaymentSetting::all()->groupBy('group');
+        $settings = PaymentSetting::all()
+            ->groupBy('group')
+            ->map(fn ($group) => $group->pluck('typed_value', 'key')->toArray())
+            ->toArray();
         $bankAccounts = BankAccount::ordered()->get();
 
         return view('admin.payment-settings.index', compact('settings', 'bankAccounts'));
