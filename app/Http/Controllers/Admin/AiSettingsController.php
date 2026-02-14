@@ -25,6 +25,11 @@ class AiSettingsController extends Controller
             'claude_model' => Setting::getValue('claude_model', 'claude-3-haiku-20240307'),
             'claude_enabled' => Setting::getValue('claude_enabled', false),
 
+            // Gemini Settings
+            'gemini_api_key' => Setting::getValue('gemini_api_key', ''),
+            'gemini_model' => Setting::getValue('gemini_model', 'gemini-2.0-flash'),
+            'gemini_enabled' => Setting::getValue('gemini_enabled', false),
+
             // Ollama Settings (Local AI)
             'ollama_enabled' => Setting::getValue('ollama_enabled', false),
             'ollama_host' => Setting::getValue('ollama_host', 'http://localhost:11434'),
@@ -83,9 +88,11 @@ class AiSettingsController extends Controller
             'openai_model' => 'required|string|max:100',
             'claude_api_key' => 'nullable|string|max:255',
             'claude_model' => 'required|string|max:100',
+            'gemini_api_key' => 'nullable|string|max:255',
+            'gemini_model' => 'required|string|max:100',
             'ollama_host' => 'nullable|url|max:255',
             'ollama_model' => 'nullable|string|max:100',
-            'ai_provider' => 'required|in:openai,claude,ollama',
+            'ai_provider' => 'required|in:openai,claude,gemini,ollama',
             'ai_max_tokens' => 'required|integer|min:100|max:32000',
             'ai_temperature' => 'required|numeric|min:0|max:2',
             'ai_top_p' => 'nullable|numeric|min:0|max:1',
@@ -116,6 +123,13 @@ class AiSettingsController extends Controller
         }
         Setting::setValue('claude_model', $request->claude_model, 'ai');
         Setting::setValue('claude_enabled', $request->boolean('claude_enabled'), 'ai', 'boolean');
+
+        // Gemini Settings
+        if ($request->filled('gemini_api_key')) {
+            Setting::setValue('gemini_api_key', $request->gemini_api_key, 'ai');
+        }
+        Setting::setValue('gemini_model', $request->gemini_model, 'ai');
+        Setting::setValue('gemini_enabled', $request->boolean('gemini_enabled'), 'ai', 'boolean');
 
         // Ollama Settings
         Setting::setValue('ollama_enabled', $request->boolean('ollama_enabled'), 'ai', 'boolean');
@@ -177,6 +191,8 @@ class AiSettingsController extends Controller
                 return $this->testOpenAI();
             } elseif ($provider === 'claude') {
                 return $this->testClaude();
+            } elseif ($provider === 'gemini') {
+                return $this->testGemini();
             } elseif ($provider === 'ollama') {
                 return $this->testOllama();
             }
@@ -232,6 +248,38 @@ class AiSettingsController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Claude ได้: ' . $response->status()]);
+    }
+
+    /**
+     * Test Gemini connection.
+     */
+    private function testGemini()
+    {
+        $apiKey = Setting::getValue('gemini_api_key');
+        if (empty($apiKey)) {
+            return response()->json(['success' => false, 'message' => 'ยังไม่ได้ตั้งค่า Gemini API Key']);
+        }
+
+        $model = Setting::getValue('gemini_model', 'gemini-2.0-flash');
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->timeout(30)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+            'contents' => [
+                ['parts' => [['text' => 'Hello, respond with "OK" only.']]],
+            ],
+            'generationConfig' => [
+                'maxOutputTokens' => 10,
+            ],
+        ]);
+
+        if ($response->successful()) {
+            return response()->json(['success' => true, 'message' => 'เชื่อมต่อ Google Gemini สำเร็จ']);
+        }
+
+        $error = $response->json('error.message', $response->status());
+
+        return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Gemini ได้: ' . $error]);
     }
 
     /**

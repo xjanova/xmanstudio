@@ -40,15 +40,19 @@ class YouTubeEngagementAiService
 
         switch ($this->provider) {
             case 'openai':
-                $this->apiKey = Setting::get('ai_openai_key');
-                $this->model = Setting::get('ai_openai_model', 'gpt-4o-mini');
+                $this->apiKey = Setting::get('openai_api_key') ?: Setting::get('ai_openai_key');
+                $this->model = Setting::get('openai_model', 'gpt-4o-mini');
                 break;
             case 'claude':
-                $this->apiKey = Setting::get('ai_claude_key');
-                $this->model = Setting::get('ai_claude_model', 'claude-3-haiku-20240307');
+                $this->apiKey = Setting::get('claude_api_key') ?: Setting::get('ai_claude_key');
+                $this->model = Setting::get('claude_model', 'claude-3-haiku-20240307');
+                break;
+            case 'gemini':
+                $this->apiKey = Setting::get('gemini_api_key') ?: Setting::get('ai_gemini_key');
+                $this->model = Setting::get('gemini_model', 'gemini-2.0-flash');
                 break;
             case 'ollama':
-                $this->model = Setting::get('ai_ollama_model', 'llama2');
+                $this->model = Setting::get('ollama_model', 'llama3.2');
                 break;
         }
     }
@@ -475,6 +479,8 @@ PROMPT;
                 return $this->callOpenAi($prompt);
             case 'claude':
                 return $this->callClaude($prompt);
+            case 'gemini':
+                return $this->callGemini($prompt);
             case 'ollama':
                 return $this->callOllama($prompt);
             default:
@@ -542,11 +548,40 @@ PROMPT;
     }
 
     /**
+     * Call Google Gemini API.
+     */
+    protected function callGemini(string $prompt): string
+    {
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->timeout(60)->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}", [
+            'contents' => [
+                [
+                    'parts' => [['text' => $prompt]],
+                ],
+            ],
+            'systemInstruction' => [
+                'parts' => [['text' => 'You are a professional YouTube engagement specialist. Always respond with valid JSON only.']],
+            ],
+            'generationConfig' => [
+                'temperature' => $this->temperature,
+                'maxOutputTokens' => $this->maxTokens,
+            ],
+        ]);
+
+        if (! $response->successful()) {
+            throw new Exception('Gemini API error: ' . $response->body());
+        }
+
+        return $response->json('candidates.0.content.parts.0.text');
+    }
+
+    /**
      * Call Ollama API.
      */
     protected function callOllama(string $prompt): string
     {
-        $ollamaUrl = Setting::get('ai_ollama_url', 'http://localhost:11434');
+        $ollamaUrl = Setting::get('ollama_host', 'http://localhost:11434');
 
         $response = Http::timeout(120)->post("{$ollamaUrl}/api/generate", [
             'model' => $this->model,
@@ -590,6 +625,7 @@ PROMPT;
         switch ($this->provider) {
             case 'openai':
             case 'claude':
+            case 'gemini':
                 return ! empty($this->apiKey) && ! empty($this->model);
             case 'ollama':
                 return ! empty($this->model);

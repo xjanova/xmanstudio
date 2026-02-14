@@ -74,7 +74,7 @@
                 เลือก AI Provider
             </h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- OpenAI -->
                 <label class="provider-card relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all {{ $settings['ai_provider'] === 'openai' ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500' }}">
                     <input type="radio" name="ai_provider" value="openai" {{ $settings['ai_provider'] === 'openai' ? 'checked' : '' }} class="sr-only" onchange="updateProviderSelection(this)">
@@ -88,6 +88,25 @@
                         </div>
                     </div>
                     <div class="provider-check absolute top-2 right-2 {{ $settings['ai_provider'] === 'openai' ? '' : 'hidden' }}">
+                        <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                </label>
+
+                <!-- Google Gemini -->
+                <label class="provider-card relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all {{ $settings['ai_provider'] === 'gemini' ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500' }}">
+                    <input type="radio" name="ai_provider" value="gemini" {{ $settings['ai_provider'] === 'gemini' ? 'checked' : '' }} class="sr-only" onchange="updateProviderSelection(this)">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500 rounded-xl flex items-center justify-center mr-4">
+                            <span class="text-white font-bold text-lg">G</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-900 dark:text-white">Google Gemini</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Gemini 2.0 Flash (ฟรี!)</p>
+                        </div>
+                    </div>
+                    <div class="provider-check absolute top-2 right-2 {{ $settings['ai_provider'] === 'gemini' ? '' : 'hidden' }}">
                         <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                         </svg>
@@ -135,7 +154,13 @@
                 </label>
             </div>
 
-            <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+            <div class="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                <p class="text-sm text-green-800 dark:text-green-200">
+                    <strong>Google Gemini (แนะนำ):</strong> ใช้งานฟรี! Gemini 2.0 Flash มี API ฟรี 15 requests/นาที เหมาะสำหรับเริ่มต้น
+                    <a href="https://aistudio.google.com/apikey" target="_blank" class="underline hover:text-green-600 dark:hover:text-green-300">รับ API Key ฟรี</a>
+                </p>
+            </div>
+            <div class="mt-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
                 <p class="text-sm text-blue-800 dark:text-blue-200">
                     <strong>Ollama:</strong> รัน AI ในเครื่องของคุณเอง ไม่ต้องเสียค่า API ไม่ต้องส่งข้อมูลออกไปข้างนอก
                     <a href="https://ollama.com" target="_blank" class="underline hover:text-blue-600 dark:hover:text-blue-300">ดาวน์โหลด Ollama</a>
@@ -180,6 +205,49 @@
                         <option value="gpt-3.5-turbo" {{ $settings['openai_model'] === 'gpt-3.5-turbo' ? 'selected' : '' }}>GPT-3.5 Turbo</option>
                         <option value="o1-preview" {{ $settings['openai_model'] === 'o1-preview' ? 'selected' : '' }}>o1-preview (Reasoning)</option>
                         <option value="o1-mini" {{ $settings['openai_model'] === 'o1-mini' ? 'selected' : '' }}>o1-mini (Reasoning ประหยัด)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Google Gemini Settings -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500 rounded-xl flex items-center justify-center mr-3">
+                    <span class="text-white font-bold text-sm">G</span>
+                </div>
+                Google Gemini Settings
+                <span class="ml-2 px-2.5 py-1 text-xs bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full shadow">ฟรี!</span>
+            </h3>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div>
+                        <label class="font-medium text-gray-900 dark:text-white">เปิดใช้งาน Google Gemini</label>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">เปิดใช้งาน Google Gemini API สำหรับฟีเจอร์ AI (ฟรี!)</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="gemini_enabled" value="1" {{ $settings['gemini_enabled'] ? 'checked' : '' }} class="sr-only peer">
+                        <div class="w-14 h-7 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-green-500"></div>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
+                    <input type="password" name="gemini_api_key" value="{{ $settings['gemini_api_key'] }}" placeholder="AIza..."
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ฟรีได้ที่ <a href="https://aistudio.google.com/apikey" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">aistudio.google.com</a> (ฟรี 15 requests/นาที)</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                    <select name="gemini_model" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
+                        <option value="gemini-2.0-flash" {{ $settings['gemini_model'] === 'gemini-2.0-flash' ? 'selected' : '' }}>Gemini 2.0 Flash (แนะนำ - เร็ว ฟรี)</option>
+                        <option value="gemini-2.0-flash-lite" {{ $settings['gemini_model'] === 'gemini-2.0-flash-lite' ? 'selected' : '' }}>Gemini 2.0 Flash-Lite (เร็วที่สุด ฟรี)</option>
+                        <option value="gemini-1.5-flash" {{ $settings['gemini_model'] === 'gemini-1.5-flash' ? 'selected' : '' }}>Gemini 1.5 Flash (ฟรี)</option>
+                        <option value="gemini-1.5-pro" {{ $settings['gemini_model'] === 'gemini-1.5-pro' ? 'selected' : '' }}>Gemini 1.5 Pro (ฟรี จำกัด)</option>
+                        <option value="gemini-2.5-flash-preview-05-20" {{ $settings['gemini_model'] === 'gemini-2.5-flash-preview-05-20' ? 'selected' : '' }}>Gemini 2.5 Flash Preview (ใหม่ล่าสุด)</option>
+                        <option value="gemini-2.5-pro-preview-05-06" {{ $settings['gemini_model'] === 'gemini-2.5-pro-preview-05-06' ? 'selected' : '' }}>Gemini 2.5 Pro Preview (พรีเมียม)</option>
                     </select>
                 </div>
             </div>
@@ -621,6 +689,14 @@
                             <span class="text-white text-xs font-bold">AI</span>
                         </div>
                         ทดสอบ OpenAI
+                    </span>
+                </button>
+                <button type="button" onclick="testConnection('gemini')" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-all text-sm text-gray-700 dark:text-gray-200">
+                    <span class="flex items-center">
+                        <div class="w-5 h-5 bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500 rounded mr-2 flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">G</span>
+                        </div>
+                        ทดสอบ Gemini
                     </span>
                 </button>
                 <button type="button" onclick="testConnection('claude')" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-all text-sm text-gray-700 dark:text-gray-200">

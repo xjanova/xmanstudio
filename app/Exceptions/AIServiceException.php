@@ -181,7 +181,7 @@ class AIServiceException extends Exception
     {
         return new static(
             $provider,
-            "AI provider '{$provider}' is not supported. Supported providers: openai, claude, ollama.",
+            "AI provider '{$provider}' is not supported. Supported providers: openai, gemini, claude, ollama.",
             400
         );
     }

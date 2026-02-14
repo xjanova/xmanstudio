@@ -27,6 +27,10 @@ class Setting extends Model
     protected static array $encryptedKeys = [
         'ai_openai_key',
         'ai_claude_key',
+        'ai_gemini_key',
+        'openai_api_key',
+        'claude_api_key',
+        'gemini_api_key',
         'line_notify_token',
         'youtube_api_key',
         'youtube_client_secret',
