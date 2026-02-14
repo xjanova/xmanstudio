@@ -43,6 +43,9 @@
             </div>
         </div>
 
+        {{-- AI Chat Floating Widget --}}
+        @include('components.ai-chat-widget')
+
         <!-- Custom Body End Code (Chat widgets, Tracking pixels) -->
         @php
             $customBodyEndCode = \App\Models\Setting::getValue('custom_code_body_end', '');

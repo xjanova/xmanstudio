@@ -831,6 +831,10 @@
             }
         });
     </script>
+
+    {{-- AI Chat Floating Widget --}}
+    @include('components.ai-chat-widget')
+
     @stack('scripts')
 </body>
 </html>

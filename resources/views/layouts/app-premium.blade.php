@@ -746,6 +746,9 @@
         })();
     </script>
 
+    {{-- AI Chat Floating Widget --}}
+    @include('components.ai-chat-widget')
+
     @stack('scripts')
 
     <!-- Custom Body End Code (Chat widgets, Tracking pixels) -->

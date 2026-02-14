@@ -47,6 +47,7 @@ use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicChatController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\SetupController;
@@ -70,6 +71,11 @@ Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
 | Public Routes
 |--------------------------------------------------------------------------
 */
+
+// Public AI Chat
+Route::post('/ai-chat', [PublicChatController::class, 'chat'])
+    ->middleware('throttle:20,1')
+    ->name('public.ai-chat');
 
 // Home (with setup check)
 Route::get('/', function () {
