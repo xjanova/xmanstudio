@@ -325,7 +325,7 @@ class AiChatService
         ];
 
         $parts[] = "คุณชื่อ {$botName}";
-        $parts[] = 'สไตล์การตอบ: '.($styleMap[$style] ?? 'มืออาชีพ');
+        $parts[] = 'สไตล์การตอบ: ' . ($styleMap[$style] ?? 'มืออาชีพ');
         $parts[] = $langMap[$language] ?? 'ตอบเป็นภาษาไทยเสมอ';
         $parts[] = $lengthMap[$length] ?? 'ตอบปานกลาง';
 
