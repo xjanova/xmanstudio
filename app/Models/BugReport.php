@@ -217,22 +217,22 @@ class BugReport extends Model
 
         $body .= "## Product Information\n\n";
         $body .= "- **Product:** {$this->product_name}\n";
-        $body .= "- **Version:** " . ($this->product_version ?? 'N/A') . "\n";
-        $body .= "- **App Version:** " . ($this->app_version ?? 'N/A') . "\n";
-        $body .= "- **OS:** " . ($this->os_version ?? 'N/A') . "\n";
+        $body .= '- **Version:** ' . ($this->product_version ?? 'N/A') . "\n";
+        $body .= '- **App Version:** ' . ($this->app_version ?? 'N/A') . "\n";
+        $body .= '- **OS:** ' . ($this->os_version ?? 'N/A') . "\n";
         $body .= "- **Report Type:** {$this->report_type}\n";
-        $body .= "- **Device ID:** " . ($this->device_id ?? 'N/A') . "\n\n";
+        $body .= '- **Device ID:** ' . ($this->device_id ?? 'N/A') . "\n\n";
 
         if ($this->report_type === 'misclassification' && $this->metadata) {
             $meta = $this->metadata;
             $body .= "## SMS Misclassification Details\n\n";
-            $body .= "- **Bank:** " . ($meta['bank'] ?? 'N/A') . "\n";
-            $body .= "- **Amount:** " . ($meta['amount'] ?? 'N/A') . " THB\n";
-            $body .= "- **Detected Type:** " . ($meta['detected_type'] ?? 'N/A') . "\n";
-            $body .= "- **Correct Type:** " . ($meta['correct_type'] ?? 'N/A') . "\n";
-            $body .= "- **Issue Type:** " . ($meta['issue_type'] ?? 'N/A') . "\n\n";
+            $body .= '- **Bank:** ' . ($meta['bank'] ?? 'N/A') . "\n";
+            $body .= '- **Amount:** ' . ($meta['amount'] ?? 'N/A') . " THB\n";
+            $body .= '- **Detected Type:** ' . ($meta['detected_type'] ?? 'N/A') . "\n";
+            $body .= '- **Correct Type:** ' . ($meta['correct_type'] ?? 'N/A') . "\n";
+            $body .= '- **Issue Type:** ' . ($meta['issue_type'] ?? 'N/A') . "\n\n";
 
-            if (!empty($meta['original_message'])) {
+            if (! empty($meta['original_message'])) {
                 $body .= "### Original SMS Message\n\n```\n{$meta['original_message']}\n```\n\n";
             }
         }

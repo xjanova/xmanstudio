@@ -158,7 +158,7 @@ class BugReportController extends Controller
     {
         $report = BugReport::with(['comments', 'attachments'])->find($id);
 
-        if (!$report) {
+        if (! $report) {
             return response()->json([
                 'success' => false,
                 'message' => 'Bug report not found',
