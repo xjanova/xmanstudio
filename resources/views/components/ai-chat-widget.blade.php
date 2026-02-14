@@ -340,6 +340,29 @@
     }
     .ai-msg-bubble li { margin: 2px 0; }
 
+    /* Clickable navigation links in chat */
+    .ai-chat-link {
+        display: inline-block;
+        background: linear-gradient(135deg, #7c3aed, #4f46e5);
+        color: white !important;
+        text-decoration: none !important;
+        padding: 5px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        margin: 3px 2px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
+        cursor: pointer;
+    }
+    .ai-chat-link:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(124, 58, 237, 0.4);
+    }
+    .ai-chat-link:active {
+        transform: scale(0.95);
+    }
+
     /* Mobile - FAB hidden, use bottom nav center AI button instead */
     @media (max-width: 767px) {
         .ai-chat-fab {
@@ -551,7 +574,7 @@
         return msgEl;
     }
 
-    // Format text content with basic markdown
+    // Format text content with basic markdown + clickable links
     function formatContent(text) {
         if (!text) return '';
         let html = text
@@ -562,6 +585,40 @@
             .replace(/`(.+?)`/g, '<code>$1</code>')
             .replace(/\n- /g, '\n&bull; ')
             .replace(/\n(\d+)\. /g, '\n$1. ');
+
+        // Markdown links [text](url) → clickable buttons (internal only)
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, linkText, url) {
+            // Only allow internal links (same domain or relative paths)
+            var baseHost = window.location.hostname;
+            var isInternal = false;
+            try {
+                if (url.startsWith('/') || url.startsWith('./')) {
+                    isInternal = true;
+                } else {
+                    var linkUrl = new URL(url);
+                    isInternal = linkUrl.hostname === baseHost;
+                }
+            } catch(e) {
+                isInternal = url.startsWith('/');
+            }
+
+            if (isInternal) {
+                return '<a href="' + url + '" class="ai-chat-link" onclick="event.stopPropagation();">📍 ' + linkText + '</a>';
+            }
+            return linkText;
+        });
+
+        // Auto-link plain URLs that start with our domain or /path
+        html = html.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
+            try {
+                var u = new URL(url);
+                if (u.hostname === window.location.hostname) {
+                    return '<a href="' + url + '" class="ai-chat-link" onclick="event.stopPropagation();">🔗 ' + u.pathname + '</a>';
+                }
+            } catch(e) {}
+            return url;
+        });
+
         // Paragraphs
         html = html.split('\n\n').map(function(p) { return '<p>' + p.replace(/\n/g, '<br>') + '</p>'; }).join('');
         return html;
