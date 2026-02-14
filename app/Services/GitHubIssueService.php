@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class GitHubIssueService
 {
-    private string $token;
+    private ?string $token;
 
     private string $owner;
 
@@ -25,10 +25,24 @@ class GitHubIssueService
     }
 
     /**
+     * Check if GitHub integration is configured
+     */
+    public function isConfigured(): bool
+    {
+        return ! empty($this->token);
+    }
+
+    /**
      * Create a GitHub issue from a bug report
      */
     public function createIssue(BugReport $report): ?array
     {
+        if (! $this->isConfigured()) {
+            Log::info("GitHub integration not configured, skipping issue creation for bug report #{$report->id}");
+
+            return null;
+        }
+
         if ($report->isPostedToGitHub()) {
             Log::warning("Bug report #{$report->id} already posted to GitHub as issue #{$report->github_issue_number}");
 
@@ -210,6 +224,12 @@ class GitHubIssueService
      */
     public function createBatchIssues($reports): array
     {
+        if (! $this->isConfigured()) {
+            Log::info('GitHub integration not configured, skipping batch issue creation');
+
+            return ['success' => [], 'failed' => $reports->pluck('id')->toArray()];
+        }
+
         $results = [
             'success' => [],
             'failed' => [],
