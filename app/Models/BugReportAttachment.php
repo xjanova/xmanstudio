@@ -41,7 +41,7 @@ class BugReportAttachment extends Model
      */
     public function getFormattedSizeAttribute(): string
     {
-        if (!$this->file_size) {
+        if (! $this->file_size) {
             return 'N/A';
         }
 

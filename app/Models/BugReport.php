@@ -146,7 +146,7 @@ class BugReport extends Model
      */
     public function isPostedToGitHub(): bool
     {
-        return !is_null($this->github_issue_number);
+        return ! is_null($this->github_issue_number);
     }
 
     /**

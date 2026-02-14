@@ -9,8 +9,11 @@ use Illuminate\Support\Facades\Log;
 class GitHubIssueService
 {
     private string $token;
+
     private string $owner;
+
     private string $repo;
+
     private string $apiUrl;
 
     public function __construct()

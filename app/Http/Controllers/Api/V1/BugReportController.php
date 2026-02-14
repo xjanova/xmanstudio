@@ -50,7 +50,7 @@ class BugReportController extends Controller
         try {
             $report = BugReport::create($validator->validated());
 
-            Log::info("Bug report created", [
+            Log::info('Bug report created', [
                 'report_id' => $report->id,
                 'product' => $report->product_name,
                 'type' => $report->report_type,
@@ -71,7 +71,7 @@ class BugReportController extends Controller
                 'message' => 'Bug report submitted successfully',
             ], 201);
         } catch (\Exception $e) {
-            Log::error("Failed to create bug report", [
+            Log::error('Failed to create bug report', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -138,7 +138,7 @@ class BugReportController extends Controller
                 'message' => sprintf('%d reports created, %d failed', count($created), count($failed)),
             ], 201);
         } catch (\Exception $e) {
-            Log::error("Failed to create batch bug reports", [
+            Log::error('Failed to create batch bug reports', [
                 'error' => $e->getMessage(),
             ]);
 
