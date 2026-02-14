@@ -191,7 +191,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                    <input type="password" name="openai_api_key" value="{{ $settings['openai_api_key'] }}" placeholder="sk-..."
+                    <input type="password" name="openai_api_key" value="" placeholder="{{ !empty($settings['openai_api_key']) ? '••••••••••••••••' : 'sk-...' }}" autocomplete="off"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://platform.openai.com/api-keys" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">platform.openai.com</a></p>
                 </div>
@@ -234,7 +234,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                    <input type="password" name="gemini_api_key" value="{{ $settings['gemini_api_key'] }}" placeholder="AIza..."
+                    <input type="password" name="gemini_api_key" value="" placeholder="{{ !empty($settings['gemini_api_key']) ? '••••••••••••••••' : 'AIza...' }}" autocomplete="off"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ฟรีได้ที่ <a href="https://aistudio.google.com/apikey" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">aistudio.google.com</a> (ฟรี 15 requests/นาที)</p>
                 </div>
@@ -276,7 +276,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                    <input type="password" name="claude_api_key" value="{{ $settings['claude_api_key'] }}" placeholder="sk-ant-..."
+                    <input type="password" name="claude_api_key" value="" placeholder="{{ !empty($settings['claude_api_key']) ? '••••••••••••••••' : 'sk-ant-...' }}" autocomplete="off"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://console.anthropic.com/" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">console.anthropic.com</a></p>
                 </div>

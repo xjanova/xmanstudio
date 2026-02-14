@@ -112,68 +112,68 @@ class AiSettingsController extends Controller
 
         // OpenAI Settings
         if ($request->filled('openai_api_key')) {
-            Setting::setValue('openai_api_key', $request->openai_api_key, 'ai');
+            Setting::setValue('openai_api_key', $request->openai_api_key, 'string', 'ai');
         }
-        Setting::setValue('openai_model', $request->openai_model, 'ai');
-        Setting::setValue('openai_enabled', $request->boolean('openai_enabled'), 'ai', 'boolean');
+        Setting::setValue('openai_model', $request->openai_model, 'string', 'ai');
+        Setting::setValue('openai_enabled', $request->boolean('openai_enabled'), 'boolean', 'ai');
 
         // Claude Settings
         if ($request->filled('claude_api_key')) {
-            Setting::setValue('claude_api_key', $request->claude_api_key, 'ai');
+            Setting::setValue('claude_api_key', $request->claude_api_key, 'string', 'ai');
         }
-        Setting::setValue('claude_model', $request->claude_model, 'ai');
-        Setting::setValue('claude_enabled', $request->boolean('claude_enabled'), 'ai', 'boolean');
+        Setting::setValue('claude_model', $request->claude_model, 'string', 'ai');
+        Setting::setValue('claude_enabled', $request->boolean('claude_enabled'), 'boolean', 'ai');
 
         // Gemini Settings
         if ($request->filled('gemini_api_key')) {
-            Setting::setValue('gemini_api_key', $request->gemini_api_key, 'ai');
+            Setting::setValue('gemini_api_key', $request->gemini_api_key, 'string', 'ai');
         }
-        Setting::setValue('gemini_model', $request->gemini_model, 'ai');
-        Setting::setValue('gemini_enabled', $request->boolean('gemini_enabled'), 'ai', 'boolean');
+        Setting::setValue('gemini_model', $request->gemini_model, 'string', 'ai');
+        Setting::setValue('gemini_enabled', $request->boolean('gemini_enabled'), 'boolean', 'ai');
 
         // Ollama Settings
-        Setting::setValue('ollama_enabled', $request->boolean('ollama_enabled'), 'ai', 'boolean');
-        Setting::setValue('ollama_host', $request->ollama_host ?? 'http://localhost:11434', 'ai');
-        Setting::setValue('ollama_model', $request->ollama_model ?? 'llama3.2', 'ai');
-        Setting::setValue('ollama_keep_alive', $request->ollama_keep_alive ?? '5m', 'ai');
+        Setting::setValue('ollama_enabled', $request->boolean('ollama_enabled'), 'boolean', 'ai');
+        Setting::setValue('ollama_host', $request->ollama_host ?? 'http://localhost:11434', 'string', 'ai');
+        Setting::setValue('ollama_model', $request->ollama_model ?? 'llama3.2', 'string', 'ai');
+        Setting::setValue('ollama_keep_alive', $request->ollama_keep_alive ?? '5m', 'string', 'ai');
 
         // General AI Settings
-        Setting::setValue('ai_provider', $request->ai_provider, 'ai');
-        Setting::setValue('ai_max_tokens', $request->ai_max_tokens, 'ai', 'integer');
-        Setting::setValue('ai_temperature', $request->ai_temperature, 'ai');
-        Setting::setValue('ai_top_p', $request->ai_top_p ?? 1.0, 'ai');
-        Setting::setValue('ai_frequency_penalty', $request->ai_frequency_penalty ?? 0, 'ai');
-        Setting::setValue('ai_presence_penalty', $request->ai_presence_penalty ?? 0, 'ai');
+        Setting::setValue('ai_provider', $request->ai_provider, 'string', 'ai');
+        Setting::setValue('ai_max_tokens', $request->ai_max_tokens, 'integer', 'ai');
+        Setting::setValue('ai_temperature', $request->ai_temperature, 'string', 'ai');
+        Setting::setValue('ai_top_p', $request->ai_top_p ?? 1.0, 'string', 'ai');
+        Setting::setValue('ai_frequency_penalty', $request->ai_frequency_penalty ?? 0, 'string', 'ai');
+        Setting::setValue('ai_presence_penalty', $request->ai_presence_penalty ?? 0, 'string', 'ai');
 
         // AI Bot Behavior Settings
-        Setting::setValue('ai_bot_name', $request->ai_bot_name ?? 'AI Assistant', 'ai');
-        Setting::setValue('ai_system_prompt', $request->ai_system_prompt ?? '', 'ai', 'text');
-        Setting::setValue('ai_response_language', $request->ai_response_language, 'ai');
-        Setting::setValue('ai_response_style', $request->ai_response_style, 'ai');
-        Setting::setValue('ai_response_length', $request->ai_response_length, 'ai');
+        Setting::setValue('ai_bot_name', $request->ai_bot_name ?? 'AI Assistant', 'string', 'ai');
+        Setting::setValue('ai_system_prompt', $request->ai_system_prompt ?? '', 'text', 'ai');
+        Setting::setValue('ai_response_language', $request->ai_response_language, 'string', 'ai');
+        Setting::setValue('ai_response_style', $request->ai_response_style, 'string', 'ai');
+        Setting::setValue('ai_response_length', $request->ai_response_length, 'string', 'ai');
 
         // Knowledge & Context Settings
-        Setting::setValue('ai_use_product_data', $request->boolean('ai_use_product_data'), 'ai', 'boolean');
-        Setting::setValue('ai_use_service_data', $request->boolean('ai_use_service_data'), 'ai', 'boolean');
-        Setting::setValue('ai_use_faq_data', $request->boolean('ai_use_faq_data'), 'ai', 'boolean');
-        Setting::setValue('ai_use_company_info', $request->boolean('ai_use_company_info'), 'ai', 'boolean');
-        Setting::setValue('ai_use_order_history', $request->boolean('ai_use_order_history'), 'ai', 'boolean');
-        Setting::setValue('ai_custom_knowledge', $request->ai_custom_knowledge ?? '', 'ai', 'text');
+        Setting::setValue('ai_use_product_data', $request->boolean('ai_use_product_data'), 'boolean', 'ai');
+        Setting::setValue('ai_use_service_data', $request->boolean('ai_use_service_data'), 'boolean', 'ai');
+        Setting::setValue('ai_use_faq_data', $request->boolean('ai_use_faq_data'), 'boolean', 'ai');
+        Setting::setValue('ai_use_company_info', $request->boolean('ai_use_company_info'), 'boolean', 'ai');
+        Setting::setValue('ai_use_order_history', $request->boolean('ai_use_order_history'), 'boolean', 'ai');
+        Setting::setValue('ai_custom_knowledge', $request->ai_custom_knowledge ?? '', 'text', 'ai');
 
         // Response Restrictions
-        Setting::setValue('ai_allowed_topics', $request->ai_allowed_topics ?? '', 'ai', 'text');
-        Setting::setValue('ai_forbidden_topics', $request->ai_forbidden_topics ?? '', 'ai', 'text');
-        Setting::setValue('ai_fallback_message', $request->ai_fallback_message ?? '', 'ai');
-        Setting::setValue('ai_require_human_handoff', $request->boolean('ai_require_human_handoff'), 'ai', 'boolean');
-        Setting::setValue('ai_handoff_keywords', $request->ai_handoff_keywords ?? '', 'ai');
+        Setting::setValue('ai_allowed_topics', $request->ai_allowed_topics ?? '', 'text', 'ai');
+        Setting::setValue('ai_forbidden_topics', $request->ai_forbidden_topics ?? '', 'text', 'ai');
+        Setting::setValue('ai_fallback_message', $request->ai_fallback_message ?? '', 'string', 'ai');
+        Setting::setValue('ai_require_human_handoff', $request->boolean('ai_require_human_handoff'), 'boolean', 'ai');
+        Setting::setValue('ai_handoff_keywords', $request->ai_handoff_keywords ?? '', 'string', 'ai');
 
         // Feature Toggles
-        Setting::setValue('ai_chat_enabled', $request->boolean('ai_chat_enabled'), 'ai', 'boolean');
-        Setting::setValue('ai_content_generation', $request->boolean('ai_content_generation'), 'ai', 'boolean');
-        Setting::setValue('ai_code_assistant', $request->boolean('ai_code_assistant'), 'ai', 'boolean');
-        Setting::setValue('ai_auto_reply_line', $request->boolean('ai_auto_reply_line'), 'ai', 'boolean');
-        Setting::setValue('ai_auto_translate', $request->boolean('ai_auto_translate'), 'ai', 'boolean');
-        Setting::setValue('ai_sentiment_analysis', $request->boolean('ai_sentiment_analysis'), 'ai', 'boolean');
+        Setting::setValue('ai_chat_enabled', $request->boolean('ai_chat_enabled'), 'boolean', 'ai');
+        Setting::setValue('ai_content_generation', $request->boolean('ai_content_generation'), 'boolean', 'ai');
+        Setting::setValue('ai_code_assistant', $request->boolean('ai_code_assistant'), 'boolean', 'ai');
+        Setting::setValue('ai_auto_reply_line', $request->boolean('ai_auto_reply_line'), 'boolean', 'ai');
+        Setting::setValue('ai_auto_translate', $request->boolean('ai_auto_translate'), 'boolean', 'ai');
+        Setting::setValue('ai_sentiment_analysis', $request->boolean('ai_sentiment_analysis'), 'boolean', 'ai');
 
         return redirect()->route('admin.ai-settings.index')
             ->with('success', 'บันทึกการตั้งค่า AI เรียบร้อยแล้ว');
