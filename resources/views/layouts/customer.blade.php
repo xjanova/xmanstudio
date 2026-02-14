@@ -231,7 +231,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 p-4 sm:p-6 overflow-y-auto">
+            <main class="flex-1 p-4 sm:p-6 overflow-y-auto pb-24 md:pb-6">
                 @if(session('success'))
                     <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center animate-fade-in">
                         <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -503,6 +503,9 @@
             }
         });
     </script>
+
+    {{-- Mobile Bottom Navigation Bar --}}
+    @include('components.mobile-bottom-nav')
 
     {{-- AI Chat Floating Widget --}}
     @include('components.ai-chat-widget')

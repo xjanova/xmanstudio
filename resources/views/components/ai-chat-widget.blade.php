@@ -340,18 +340,27 @@
     }
     .ai-msg-bubble li { margin: 2px 0; }
 
-    /* Mobile */
-    @media (max-width: 640px) {
-        .ai-chat-window {
-            right: 8px;
-            left: 8px;
-            bottom: 90px;
-            width: auto;
-            max-height: calc(100vh - 120px);
-        }
+    /* Mobile - with bottom nav bar */
+    @media (max-width: 767px) {
         .ai-chat-fab {
-            bottom: 16px;
-            right: 16px;
+            display: none !important; /* Hidden on mobile - use bottom nav AI button instead */
+        }
+        .ai-chat-window {
+            right: 0;
+            left: 0;
+            bottom: 64px; /* Above bottom nav bar */
+            width: 100%;
+            max-height: calc(100vh - 80px);
+            border-radius: 20px 20px 0 0;
+            border-bottom: none;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+    }
+    /* Tablet/small desktop - keep FAB */
+    @media (min-width: 768px) and (max-width: 1024px) {
+        .ai-chat-fab {
+            bottom: 20px;
+            right: 20px;
             width: 56px;
             height: 56px;
         }
@@ -665,10 +674,16 @@
         }
     }
 
+    function isMobile() {
+        return window.innerWidth < 768;
+    }
+
     function openChat() {
         isOpen = true;
         chatWindow.classList.add('open');
-        fab.classList.add('hidden');
+        if (!isMobile()) {
+            fab.classList.add('hidden');
+        }
         badge.style.display = 'none';
 
         if (!hasOpened) {
@@ -686,7 +701,9 @@
     function closeChat() {
         isOpen = false;
         chatWindow.classList.remove('open');
-        fab.classList.remove('hidden');
+        if (!isMobile()) {
+            fab.classList.remove('hidden');
+        }
     }
 
     // Auto-resize textarea
@@ -719,6 +736,7 @@
         open: openChat,
         close: closeChat,
         send: sendMessage,
+        isOpen: function() { return isOpen; },
     };
 })();
 </script>

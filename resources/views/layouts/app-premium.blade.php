@@ -529,7 +529,7 @@
     @endif
 
     <!-- Main Content -->
-    <main class="min-h-screen relative z-10">
+    <main class="min-h-screen relative z-10 pb-20 md:pb-0">
         @yield('content')
     </main>
 
@@ -745,6 +745,9 @@
             });
         })();
     </script>
+
+    {{-- Mobile Bottom Navigation Bar --}}
+    @include('components.mobile-bottom-nav')
 
     {{-- AI Chat Floating Widget --}}
     @include('components.ai-chat-widget')

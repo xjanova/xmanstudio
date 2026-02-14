@@ -43,6 +43,9 @@
             </div>
         </div>
 
+        {{-- Mobile Bottom Navigation Bar --}}
+        @include('components.mobile-bottom-nav')
+
         {{-- AI Chat Floating Widget --}}
         @include('components.ai-chat-widget')
 
