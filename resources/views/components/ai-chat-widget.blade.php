@@ -340,10 +340,10 @@
     }
     .ai-msg-bubble li { margin: 2px 0; }
 
-    /* Mobile - with bottom nav bar */
+    /* Mobile - FAB hidden, use bottom nav center AI button instead */
     @media (max-width: 767px) {
         .ai-chat-fab {
-            display: none !important; /* Hidden on mobile - use bottom nav AI button instead */
+            display: none !important;
         }
         .ai-chat-window {
             right: 0;
@@ -354,15 +354,6 @@
             border-radius: 20px 20px 0 0;
             border-bottom: none;
             padding-bottom: env(safe-area-inset-bottom, 0px);
-        }
-    }
-    /* Tablet/small desktop - keep FAB */
-    @media (min-width: 768px) and (max-width: 1024px) {
-        .ai-chat-fab {
-            bottom: 20px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
         }
     }
 
@@ -684,7 +675,6 @@
         if (!isMobile()) {
             fab.classList.add('hidden');
         }
-        badge.style.display = 'none';
 
         if (!hasOpened) {
             hasOpened = true;

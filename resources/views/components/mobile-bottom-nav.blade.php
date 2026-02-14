@@ -121,7 +121,7 @@
     .dark .mobile-nav-item.nav-services.active .mobile-nav-icon { color: #fbbf24; }
     .dark .mobile-nav-item.nav-services.active .mobile-nav-label { color: #fbbf24; }
 
-    /* Products - Orange */
+    /* Products - Orange (shown when AI chat disabled) */
     .mobile-nav-item.nav-products.active .mobile-nav-icon { color: #f97316; }
     .mobile-nav-item.nav-products.active .mobile-nav-label { color: #f97316; }
     .mobile-nav-item.nav-products .mobile-nav-dot { background: #f97316; }
@@ -142,32 +142,50 @@
     .dark .mobile-nav-item.nav-support.active .mobile-nav-icon { color: #60a5fa; }
     .dark .mobile-nav-item.nav-support.active .mobile-nav-label { color: #60a5fa; }
 
-    /* AI Chat button - special */
+    /* AI Chat button - special center BIG button */
     .mobile-nav-ai {
         position: relative;
+        margin-top: -28px; /* Elevate above the bar */
     }
     .mobile-nav-ai-icon {
-        width: 34px;
-        height: 34px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #7c3aed, #4f46e5);
+        background: linear-gradient(135deg, #7c3aed, #6366f1, #4f46e5);
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 1px;
-        box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+        margin-bottom: 2px;
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(255, 255, 255, 0.95);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: center-ai-glow 3s ease-in-out infinite;
+    }
+    .dark .mobile-nav-ai-icon {
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(17, 24, 39, 0.95);
+    }
+    @keyframes center-ai-glow {
+        0%, 100% { box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(255, 255, 255, 0.95); }
+        50% { box-shadow: 0 4px 28px rgba(124, 58, 237, 0.65), 0 0 0 4px rgba(255, 255, 255, 0.95); }
+    }
+    .dark .mobile-nav-ai-icon {
+        animation-name: center-ai-glow-dark;
+    }
+    @keyframes center-ai-glow-dark {
+        0%, 100% { box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(17, 24, 39, 0.95); }
+        50% { box-shadow: 0 4px 28px rgba(124, 58, 237, 0.65), 0 0 0 4px rgba(17, 24, 39, 0.95); }
     }
     .mobile-nav-item:active .mobile-nav-ai-icon {
         transform: scale(0.88);
     }
     .mobile-nav-ai-icon svg {
-        width: 18px;
-        height: 18px;
+        width: 30px;
+        height: 30px;
     }
     .mobile-nav-ai .mobile-nav-label {
         color: #7c3aed;
         font-weight: 600;
+        font-size: 9px;
+        margin-top: 1px;
     }
     .dark .mobile-nav-ai .mobile-nav-label {
         color: #a78bfa;
@@ -186,10 +204,10 @@
     /* AI notification dot */
     .mobile-nav-ai-dot {
         position: absolute;
-        top: 4px;
-        right: calc(50% - 20px);
-        width: 8px;
-        height: 8px;
+        top: -4px;
+        right: calc(50% - 28px);
+        width: 10px;
+        height: 10px;
         background: #ef4444;
         border-radius: 50%;
         border: 1.5px solid white;
@@ -219,16 +237,7 @@
             <span class="mobile-nav-label">บริการ</span>
         </a>
 
-        {{-- Products --}}
-        <a href="/products" class="mobile-nav-item nav-products {{ request()->is('products*') ? 'active' : '' }}">
-            <span class="mobile-nav-dot"></span>
-            <span class="mobile-nav-icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-            </span>
-            <span class="mobile-nav-label">สินค้า</span>
-        </a>
-
-        {{-- AI Chat (center special button) --}}
+        {{-- AI Chat (CENTER - main button) --}}
         @php
             $aiChatEnabledNav = \App\Models\Setting::getValue('ai_chat_enabled', false);
         @endphp
@@ -236,27 +245,27 @@
         <button type="button" class="mobile-nav-item mobile-nav-ai" id="mobileNavAiBtn" onclick="window.AiChat && window.AiChat.toggle()">
             <span class="mobile-nav-ai-dot"></span>
             <span class="mobile-nav-ai-icon">
-                <svg width="18" height="18" viewBox="0 0 40 40" fill="none">
+                <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
                     <circle cx="20" cy="20" r="16" fill="white" opacity="0.95"/>
-                    <ellipse cx="13.5" cy="16" rx="2" ry="2.2" fill="#4f46e5"/>
-                    <ellipse cx="26.5" cy="16" rx="2" ry="2.2" fill="#4f46e5"/>
-                    <circle cx="14.3" cy="15" r="0.7" fill="white"/>
-                    <circle cx="27.3" cy="15" r="0.7" fill="white"/>
-                    <path d="M 15 23 Q 20 26 25 23" stroke="#4f46e5" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                    <line x1="20" y1="4" x2="20" y2="6" stroke="#7c3aed" stroke-width="1.2" stroke-linecap="round"/>
-                    <circle cx="20" cy="3.5" r="1.2" fill="#7c3aed"/>
+                    <ellipse cx="13.5" cy="16" rx="2.3" ry="2.5" fill="#4f46e5"/>
+                    <ellipse cx="26.5" cy="16" rx="2.3" ry="2.5" fill="#4f46e5"/>
+                    <circle cx="14.5" cy="15" r="0.8" fill="white"/>
+                    <circle cx="27.5" cy="15" r="0.8" fill="white"/>
+                    <path d="M 14 23.5 Q 20 27 26 23.5" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+                    <line x1="20" y1="3" x2="20" y2="5.5" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="20" cy="2.5" r="1.5" fill="#7c3aed"/>
                 </svg>
             </span>
             <span class="mobile-nav-label">AI Chat</span>
         </button>
         @else
-        {{-- If AI chat disabled, show rental instead --}}
-        <a href="/rental" class="mobile-nav-item nav-portfolio {{ request()->is('rental*') ? 'active' : '' }}">
+        {{-- If AI chat disabled, show products instead --}}
+        <a href="/products" class="mobile-nav-item nav-products {{ request()->is('products*') ? 'active' : '' }}">
             <span class="mobile-nav-dot"></span>
             <span class="mobile-nav-icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             </span>
-            <span class="mobile-nav-label">เช่า</span>
+            <span class="mobile-nav-label">สินค้า</span>
         </a>
         @endif
 
