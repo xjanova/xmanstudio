@@ -31,6 +31,7 @@ class GitHubIssueService
     {
         if ($report->isPostedToGitHub()) {
             Log::warning("Bug report #{$report->id} already posted to GitHub as issue #{$report->github_issue_number}");
+
             return null;
         }
 
@@ -82,6 +83,7 @@ class GitHubIssueService
     {
         if (! $report->isPostedToGitHub()) {
             Log::warning("Bug report #{$report->id} not yet posted to GitHub");
+
             return null;
         }
 
@@ -119,6 +121,7 @@ class GitHubIssueService
     {
         if (! $report->isPostedToGitHub()) {
             Log::warning("Bug report #{$report->id} not yet posted to GitHub");
+
             return null;
         }
 
@@ -172,6 +175,7 @@ class GitHubIssueService
     {
         if (! $report->isPostedToGitHub()) {
             Log::warning("Bug report #{$report->id} not yet posted to GitHub");
+
             return null;
         }
 

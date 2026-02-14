@@ -114,14 +114,7 @@ jobs:
         run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Run Laravel Pint (Code Style)
-        run: |
-          ./vendor/bin/pint
-          git diff
-          git diff --stat
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::Pint found style issues (see diff above)"
-            exit 1
-          fi
+        run: ./vendor/bin/pint --test
 
       - name: Check for security vulnerabilities
         run: |

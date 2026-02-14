@@ -14,8 +14,7 @@ class BugReportController extends Controller
 {
     public function __construct(
         private GitHubIssueService $githubService
-    ) {
-    }
+    ) {}
 
     /**
      * Submit a new bug report
