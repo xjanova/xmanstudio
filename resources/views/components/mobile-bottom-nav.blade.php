@@ -252,8 +252,11 @@
                     <circle cx="14.5" cy="15" r="0.8" fill="white"/>
                     <circle cx="27.5" cy="15" r="0.8" fill="white"/>
                     <path d="M 14 23.5 Q 20 27 26 23.5" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-                    <line x1="20" y1="3" x2="20" y2="5.5" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
-                    <circle cx="20" cy="2.5" r="1.5" fill="#7c3aed"/>
+                    {{-- Bow ribbon --}}
+                    <g transform="translate(27, 5)">
+                        <path d="M -5 0 Q -7 -4 -3 -5 Q 0 -6 0 -2 Q 0 -6 3 -5 Q 7 -4 5 0 Z" fill="#f472b6"/>
+                        <ellipse cx="0" cy="-1" rx="1.2" ry="1.2" fill="#ec4899"/>
+                    </g>
                 </svg>
             </span>
             <span class="mobile-nav-label">AI Chat</span>

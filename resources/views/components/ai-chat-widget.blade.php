@@ -422,9 +422,14 @@
             <path class="ai-avatar-mouth-idle" d="M 14 23 Q 20 27 26 23" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" fill="none"/>
             {{-- Mouth - talking (animated ellipse) --}}
             <ellipse class="ai-avatar-mouth-talk" cx="20" cy="24" rx="4" ry="1" fill="#4f46e5"/>
-            {{-- Antenna --}}
-            <line x1="20" y1="2" x2="20" y2="5" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
-            <circle cx="20" cy="1.5" r="1.5" fill="#7c3aed"/>
+            {{-- Bow ribbon (cute feminine) --}}
+            <g transform="translate(27, 4)">
+                <path d="M -5 0 Q -7 -4 -3 -5 Q 0 -6 0 -2 Q 0 -6 3 -5 Q 7 -4 5 0 Z" fill="#f472b6"/>
+                <ellipse cx="0" cy="-1" rx="1.2" ry="1.2" fill="#ec4899"/>
+                <path d="M -1 0 Q 0 3 1 0" stroke="#f472b6" stroke-width="0.8" fill="none"/>
+                <path d="M -2 0 Q -3 4 -1 3" stroke="#f472b6" stroke-width="0.6" fill="none"/>
+                <path d="M 2 0 Q 3 4 1 3" stroke="#f472b6" stroke-width="0.6" fill="none"/>
+            </g>
             <defs>
                 <linearGradient id="ai-fab-grad" x1="0" y1="0" x2="40" y2="40">
                     <stop stop-color="#7c3aed"/>
@@ -449,8 +454,10 @@
                         <circle cx="27.3" cy="14.8" r="0.7" fill="rgba(255,255,255,0.5)"/>
                     </g>
                     <path d="M 14 23 Q 20 27 26 23" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                    <line x1="20" y1="3" x2="20" y2="5.5" stroke="white" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
-                    <circle cx="20" cy="2.5" r="1.2" fill="white" opacity="0.6"/>
+                    <g transform="translate(27, 4)">
+                        <path d="M -5 0 Q -7 -4 -3 -5 Q 0 -6 0 -2 Q 0 -6 3 -5 Q 7 -4 5 0 Z" fill="#f9a8d4" opacity="0.9"/>
+                        <ellipse cx="0" cy="-1" rx="1.2" ry="1.2" fill="#f472b6" opacity="0.9"/>
+                    </g>
                 </svg>
             </div>
             <div>
@@ -537,6 +544,7 @@
             '<ellipse cx="9" cy="21" rx="2" ry="1.2" fill="#f9a8d4" opacity="0.4"/><ellipse cx="31" cy="21" rx="2" ry="1.2" fill="#f9a8d4" opacity="0.4"/>' +
             '<path class="ai-avatar-mouth-idle" d="M 14 23 Q 20 27 26 23" stroke="#4f46e5" stroke-width="1.5" stroke-linecap="round" fill="none"/>' +
             '<ellipse class="ai-avatar-mouth-talk" cx="20" cy="24" rx="4" ry="1" fill="#4f46e5"/>' +
+            '<g transform="translate(27, 4)"><path d="M -5 0 Q -7 -4 -3 -5 Q 0 -6 0 -2 Q 0 -6 3 -5 Q 7 -4 5 0 Z" fill="#f472b6"/><ellipse cx="0" cy="-1" rx="1.2" ry="1.2" fill="#ec4899"/></g>' +
             '</svg>';
         return div;
     }
