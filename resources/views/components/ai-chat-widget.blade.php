@@ -585,19 +585,12 @@
     // Format text content with basic markdown + clickable links
     function formatContent(text) {
         if (!text) return '';
-        let html = text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/`(.+?)`/g, '<code>$1</code>')
-            .replace(/\n- /g, '\n&bull; ')
-            .replace(/\n(\d+)\. /g, '\n$1. ');
 
-        // Markdown links [text](url) → clickable buttons (internal only)
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, linkText, url) {
-            // Only allow internal links (same domain or relative paths)
-            var baseHost = window.location.hostname;
+        var baseHost = window.location.hostname;
+        var linkStore = [];
+
+        // Step 1: Extract markdown links BEFORE escaping [text](url)
+        var processed = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, linkText, url) {
             var isInternal = false;
             try {
                 if (url.startsWith('/') || url.startsWith('./')) {
@@ -609,25 +602,46 @@
             } catch(e) {
                 isInternal = url.startsWith('/');
             }
-
             if (isInternal) {
-                return '<a href="' + url + '" class="ai-chat-link" onclick="event.stopPropagation();">📍 ' + linkText + '</a>';
+                var placeholder = '%%LINK' + linkStore.length + '%%';
+                linkStore.push('<a href="' + url + '" class="ai-chat-link">📍 ' + linkText + '</a>');
+                return placeholder;
             }
             return linkText;
         });
 
-        // Auto-link plain URLs that start with our domain or /path
-        html = html.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
+        // Step 2: Extract full URLs before escaping
+        processed = processed.replace(/(https?:\/\/[^\s)\]]+)/g, function(url) {
             try {
                 var u = new URL(url);
-                if (u.hostname === window.location.hostname) {
-                    return '<a href="' + url + '" class="ai-chat-link" onclick="event.stopPropagation();">🔗 ' + u.pathname + '</a>';
+                if (u.hostname === baseHost) {
+                    var placeholder = '%%LINK' + linkStore.length + '%%';
+                    linkStore.push('<a href="' + url + '" class="ai-chat-link">🔗 ' + u.pathname + '</a>');
+                    return placeholder;
                 }
             } catch(e) {}
             return url;
         });
 
-        // Paragraphs
+        // Step 3: HTML escape
+        var html = processed
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Step 4: Markdown formatting
+        html = html
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`(.+?)`/g, '<code>$1</code>')
+            .replace(/\n- /g, '\n&bull; ')
+            .replace(/\n(\d+)\. /g, '\n$1. ');
+
+        // Step 5: Restore links from placeholders
+        for (var i = 0; i < linkStore.length; i++) {
+            html = html.replace('%%LINK' + i + '%%', linkStore[i]);
+        }
+
+        // Step 6: Paragraphs
         html = html.split('\n\n').map(function(p) { return '<p>' + p.replace(/\n/g, '<br>') + '</p>'; }).join('');
         return html;
     }
