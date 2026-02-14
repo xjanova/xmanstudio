@@ -14,7 +14,8 @@ class BugReportController extends Controller
 {
     public function __construct(
         private GitHubIssueService $githubService
-    ) {}
+    ) {
+    }
 
     /**
      * Submit a new bug report
@@ -158,7 +159,7 @@ class BugReportController extends Controller
     {
         $report = BugReport::with(['comments', 'attachments'])->find($id);
 
-        if (!$report) {
+        if (! $report) {
             return response()->json([
                 'success' => false,
                 'message' => 'Bug report not found',

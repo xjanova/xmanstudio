@@ -26,9 +26,6 @@ class GitHubIssueService
 
     /**
      * Create a GitHub issue from a bug report
-     *
-     * @param BugReport $report
-     * @return array|null Returns issue data or null on failure
      */
     public function createIssue(BugReport $report): ?array
     {
@@ -80,14 +77,10 @@ class GitHubIssueService
 
     /**
      * Update an existing GitHub issue
-     *
-     * @param BugReport $report
-     * @param array $data
-     * @return array|null
      */
     public function updateIssue(BugReport $report, array $data): ?array
     {
-        if (!$report->isPostedToGitHub()) {
+        if (! $report->isPostedToGitHub()) {
             Log::warning("Bug report #{$report->id} not yet posted to GitHub");
             return null;
         }
@@ -121,14 +114,10 @@ class GitHubIssueService
 
     /**
      * Add a comment to a GitHub issue
-     *
-     * @param BugReport $report
-     * @param string $comment
-     * @return array|null
      */
     public function addComment(BugReport $report, string $comment): ?array
     {
-        if (!$report->isPostedToGitHub()) {
+        if (! $report->isPostedToGitHub()) {
             Log::warning("Bug report #{$report->id} not yet posted to GitHub");
             return null;
         }
@@ -164,10 +153,6 @@ class GitHubIssueService
 
     /**
      * Close a GitHub issue
-     *
-     * @param BugReport $report
-     * @param string|null $reason
-     * @return array|null
      */
     public function closeIssue(BugReport $report, ?string $reason = null): ?array
     {
@@ -182,14 +167,10 @@ class GitHubIssueService
 
     /**
      * Add labels to a GitHub issue
-     *
-     * @param BugReport $report
-     * @param array $labels
-     * @return array|null
      */
     public function addLabels(BugReport $report, array $labels): ?array
     {
-        if (!$report->isPostedToGitHub()) {
+        if (! $report->isPostedToGitHub()) {
             Log::warning("Bug report #{$report->id} not yet posted to GitHub");
             return null;
         }
@@ -221,8 +202,7 @@ class GitHubIssueService
     /**
      * Create multiple GitHub issues in batch
      *
-     * @param \Illuminate\Support\Collection $reports
-     * @return array
+     * @param  \Illuminate\Support\Collection  $reports
      */
     public function createBatchIssues($reports): array
     {
