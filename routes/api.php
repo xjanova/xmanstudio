@@ -243,14 +243,14 @@ Route::prefix('v1/bug-reports')->middleware(['throttle:30,1'])->group(function (
     // Submit multiple bug reports in batch
     Route::post('/batch', [BugReportController::class, 'storeBatch']);
 
-    // Get bug report by ID
-    Route::get('/{id}', [BugReportController::class, 'show']);
-
     // List bug reports with filters
     Route::get('/', [BugReportController::class, 'index']);
 
-    // Get statistics
+    // Get statistics (must be before /{id} to avoid matching "stats" as an ID)
     Route::get('/stats', [BugReportController::class, 'stats']);
+
+    // Get bug report by ID
+    Route::get('/{id}', [BugReportController::class, 'show']);
 
     // Admin-only endpoints (require authentication)
     Route::middleware(['auth:sanctum'])->group(function () {
