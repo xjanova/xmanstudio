@@ -103,7 +103,7 @@ class AiChatService
         } catch (AIServiceException $e) {
             throw $e;
         } catch (\Exception $e) {
-            Log::error("AiChatService error [{$this->provider}]: ".$e->getMessage());
+            Log::error("AiChatService error [{$this->provider}]: " . $e->getMessage());
             throw AIServiceException::serviceUnavailable($this->provider);
         }
     }
@@ -139,7 +139,7 @@ class AiChatService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$this->apiKey,
+            'Authorization' => 'Bearer ' . $this->apiKey,
             'Content-Type' => 'application/json',
         ])->timeout(60)->post('https://api.openai.com/v1/chat/completions', [
             'model' => $this->model,
@@ -276,7 +276,7 @@ class AiChatService
         ]);
 
         if (! $response->successful()) {
-            throw new \Exception('Ollama: '.$response->body());
+            throw new \Exception('Ollama: ' . $response->body());
         }
 
         return $response->json('message.content', '');

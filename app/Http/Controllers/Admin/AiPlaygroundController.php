@@ -68,11 +68,11 @@ class AiPlaygroundController extends Controller
                 'message' => $e->getUserMessage(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('AI Playground error: '.$e->getMessage());
+            Log::error('AI Playground error: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'เกิดข้อผิดพลาด: '.$e->getMessage(),
+                'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage(),
             ], 500);
         }
     }
