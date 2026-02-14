@@ -56,4 +56,11 @@ return [
         'project_id' => env('FIREBASE_PROJECT_ID'),
     ],
 
+    // GitHub API for issue tracking and bug reports
+    'github' => [
+        'token' => env('GITHUB_API_TOKEN'),
+        'owner' => env('GITHUB_OWNER', 'xjanova'),
+        'repo' => env('GITHUB_REPO', 'xmanstudio'),
+    ],
+
 ];

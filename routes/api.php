@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\ProductLicenseController;
+use App\Http\Controllers\Api\V1\BugReportController;
 use App\Http\Controllers\Api\V1\SmsPaymentController;
 use App\Http\Controllers\Api\VersionController;
 use Illuminate\Support\Facades\Route;
@@ -226,5 +227,34 @@ Route::prefix('v1/sms-payment')->group(function () {
 
         // Get notification history (admin)
         Route::get('/notifications', [SmsPaymentController::class, 'notifications']);
+    });
+});
+
+// ==================== Bug Report API Routes ====================
+// These routes are used by mobile apps to submit bug reports and misclassification reports
+// Rate limited to 30 requests per minute per IP
+
+Route::prefix('v1/bug-reports')->middleware(['throttle:30,1'])->group(function () {
+    // Public endpoints (no authentication required)
+
+    // Submit a single bug report
+    Route::post('/', [BugReportController::class, 'store']);
+
+    // Submit multiple bug reports in batch
+    Route::post('/batch', [BugReportController::class, 'storeBatch']);
+
+    // Get bug report by ID
+    Route::get('/{id}', [BugReportController::class, 'show']);
+
+    // List bug reports with filters
+    Route::get('/', [BugReportController::class, 'index']);
+
+    // Get statistics
+    Route::get('/stats', [BugReportController::class, 'stats']);
+
+    // Admin-only endpoints (require authentication)
+    Route::middleware(['auth:sanctum'])->group(function () {
+        // Post unposted reports to GitHub
+        Route::post('/post-to-github', [BugReportController::class, 'postToGitHub']);
     });
 });
