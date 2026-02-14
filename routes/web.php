@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdPlacementController;
 use App\Http\Controllers\Admin\AdsTxtController;
+use App\Http\Controllers\Admin\AiPlaygroundController;
 use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
@@ -389,6 +390,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/ai-settings', [AiSettingsController::class, 'update'])->name('ai-settings.update');
     Route::post('/ai-settings/test', [AiSettingsController::class, 'test'])->name('ai-settings.test');
     Route::get('/ai-settings/ollama-models', [AiSettingsController::class, 'getOllamaModels'])->name('ai-settings.ollama-models');
+
+    // AI Playground
+    Route::get('/ai-playground', [AiPlaygroundController::class, 'index'])->name('ai-playground.index');
+    Route::post('/ai-playground/chat', [AiPlaygroundController::class, 'chat'])->name('ai-playground.chat');
 
     // Line Settings
     Route::get('/line-settings', [LineSettingsController::class, 'index'])->name('line-settings.index');
