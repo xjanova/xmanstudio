@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
+use App\Http\Controllers\Admin\BugReportController as AdminBugReportController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
@@ -734,5 +735,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
         // Cleanup
         Route::post('/cleanup', [AdminSmsPaymentController::class, 'cleanup'])->name('cleanup');
+    });
+
+    // Bug Reports Management
+    Route::prefix('bug-reports')->name('bug-reports.')->group(function () {
+        Route::get('/', [AdminBugReportController::class, 'index'])->name('index');
+        Route::get('/{report}', [AdminBugReportController::class, 'show'])->name('show');
+        Route::post('/{report}/analyze', [AdminBugReportController::class, 'markAnalyzed'])->name('analyze');
+        Route::post('/{report}/fix', [AdminBugReportController::class, 'markFixed'])->name('fix');
     });
 });
