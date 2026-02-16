@@ -148,7 +148,9 @@ class CustomerPortalController extends Controller
      */
     public function licenseShow(LicenseKey $license)
     {
-        $this->authorize('view', $license);
+        if ($license->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $license->load('product', 'activations');
 
@@ -191,7 +193,9 @@ class CustomerPortalController extends Controller
      */
     public function subscriptionShow(UserRental $rental)
     {
-        $this->authorize('view', $rental);
+        if ($rental->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $rental->load(['rentalPackage', 'payments', 'invoices']);
 
@@ -233,7 +237,9 @@ class CustomerPortalController extends Controller
      */
     public function orderShow(Order $order)
     {
-        $this->authorize('view', $order);
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $order->load('items.product');
 
