@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -70,6 +71,23 @@ class LicenseKey extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function activations(): HasMany
+    {
+        return $this->hasMany(LicenseActivity::class, 'license_id')
+            ->whereIn('action', [
+                LicenseActivity::ACTION_ACTIVATED,
+                LicenseActivity::ACTION_DEACTIVATED,
+                LicenseActivity::ACTION_REACTIVATED,
+                LicenseActivity::ACTION_MACHINE_RESET,
+            ])
+            ->latest();
+    }
+
+    public function getActivationCountAttribute(): int
+    {
+        return (int) $this->attributes['activations'];
     }
 
     public function scopeActive($query)
