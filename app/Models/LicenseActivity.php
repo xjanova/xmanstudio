@@ -100,6 +100,11 @@ class LicenseActivity extends Model
         ]);
     }
 
+    public function getIsActiveAttribute(): bool
+    {
+        return in_array($this->action, [self::ACTION_ACTIVATED, self::ACTION_REACTIVATED]);
+    }
+
     /**
      * Get action label in Thai.
      */
