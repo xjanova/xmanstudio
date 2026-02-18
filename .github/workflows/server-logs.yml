@@ -30,7 +30,7 @@ jobs:
       - name: Read logs via SSH
         uses: appleboy/ssh-action@v1
         env:
-          DEPLOY_DIR: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_DIR: ${{ secrets.DEPLOY_PATH }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
