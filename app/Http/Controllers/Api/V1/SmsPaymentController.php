@@ -211,16 +211,29 @@ class SmsPaymentController extends Controller
             'ip_address' => $request->ip(),
         ];
 
+        // ✅ อัพเดท device_id จากแอพ — ให้แอพเป็น source of truth สำหรับ device_id
+        // กรณี admin สร้าง device ไว้ด้วย SMSCHK-XXXXXXXX แต่แอพ generate ID ใหม่
+        // register-device จะ sync ให้ตรงกัน ป้องกัน "Device ID mismatch" error
+        $incomingDeviceId = $request->input('device_id');
+        if ($incomingDeviceId && $device->device_id !== $incomingDeviceId) {
+            \Log::info('registerDevice: อัพเดท device_id', [
+                'old_device_id' => $device->device_id,
+                'new_device_id' => $incomingDeviceId,
+                'ip' => $request->ip(),
+            ]);
+            $updateData['device_id'] = $incomingDeviceId;
+        }
+
         // Save FCM token if provided (for push notifications)
         if ($request->filled('fcm_token')) {
             $updateData['fcm_token'] = $request->input('fcm_token');
             \Log::info('registerDevice: FCM token received', [
-                'device_id' => $device->device_id,
+                'device_id' => $incomingDeviceId ?? $device->device_id,
                 'token_prefix' => substr($request->input('fcm_token'), 0, 30) . '...',
             ]);
         } else {
             \Log::debug('registerDevice: No FCM token in request', [
-                'device_id' => $device->device_id,
+                'device_id' => $incomingDeviceId ?? $device->device_id,
                 'request_keys' => array_keys($request->all()),
             ]);
         }
