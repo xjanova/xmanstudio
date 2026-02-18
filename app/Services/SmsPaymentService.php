@@ -95,46 +95,21 @@ class SmsPaymentService
             ];
 
             if ($matched && $notification->matched_transaction_id) {
-                // Try Order first
-                $matchedOrder = \App\Models\Order::with('items.product')->find($notification->matched_transaction_id);
+                // Try Order first — ใช้ RemoteOrderApproval format ที่ Android app คาดหวัง
+                // ต้องส่ง approval_status, order_details_json, notification object ครบ
+                $matchedOrder = \App\Models\Order::with(['items.product', 'smsNotification', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
                 if ($matchedOrder) {
-                    $responseData['order'] = [
-                        'id' => $matchedOrder->id,
-                        'order_number' => $matchedOrder->order_number,
-                        'total' => (float) $matchedOrder->total,
-                        'status' => $matchedOrder->status,
-                        'payment_status' => $matchedOrder->payment_status,
-                        'payment_method' => $matchedOrder->payment_method,
-                        'customer_name' => $matchedOrder->customer_name,
-                        'customer_email' => $matchedOrder->customer_email,
-                        'sms_verification_status' => $matchedOrder->sms_verification_status,
-                        'product_name' => $matchedOrder->items->first()?->product?->name,
-                        'product_details' => $matchedOrder->items->map(fn ($item) => $item->product?->name . ' x' . $item->quantity)->implode(', '),
-                        'quantity' => $matchedOrder->items->sum('quantity'),
-                        'created_at' => $matchedOrder->created_at?->toIso8601String(),
-                        'updated_at' => $matchedOrder->updated_at?->toIso8601String(),
-                    ];
+                    $matchedOrderData = $this->transformOrderToRemoteApproval($matchedOrder, $notification);
+                    $responseData['order'] = $matchedOrderData;
+                    $responseData['matched_order'] = $matchedOrderData;
                 } else {
                     // Try WalletTopup (matched_transaction_id could be a topup id)
-                    $matchedTopup = \App\Models\WalletTopup::find($notification->matched_transaction_id);
+                    $matchedTopup = \App\Models\WalletTopup::with(['wallet.user', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
                     if ($matchedTopup) {
                         $responseData['transaction_type'] = 'wallet_topup';
-                        $responseData['order'] = [
-                            'id' => $matchedTopup->id,
-                            'order_number' => $matchedTopup->topup_id ?? ('TOPUP-' . $matchedTopup->id),
-                            'total' => (float) $matchedTopup->amount,
-                            'status' => $matchedTopup->status,
-                            'payment_status' => $matchedTopup->status === 'approved' ? 'paid' : 'pending',
-                            'payment_method' => $matchedTopup->payment_method ?? 'bank_transfer',
-                            'customer_name' => $matchedTopup->wallet?->user?->name ?? '',
-                            'customer_email' => $matchedTopup->wallet?->user?->email ?? '',
-                            'sms_verification_status' => $matchedTopup->sms_verification_status,
-                            'product_name' => 'เติมเงิน ' . number_format((float) $matchedTopup->amount, 2) . ' บาท',
-                            'product_details' => 'เติมเงินกระเป๋า',
-                            'quantity' => 1,
-                            'created_at' => $matchedTopup->created_at?->toIso8601String(),
-                            'updated_at' => $matchedTopup->updated_at?->toIso8601String(),
-                        ];
+                        $matchedTopupData = $this->transformTopupToRemoteApproval($matchedTopup, $notification);
+                        $responseData['order'] = $matchedTopupData;
+                        $responseData['matched_order'] = $matchedTopupData;
                     }
                 }
             }
@@ -391,6 +366,113 @@ class SmsPaymentService
             . '⏰ ' . now()->format('d/m/Y H:i');
 
         return $this->lineNotifyService->send($message);
+    }
+
+    /**
+     * Transform Order → RemoteOrderApproval format ที่ Android app คาดหวัง
+     * ใช้สำหรับ notify response เมื่อ match สำเร็จ
+     * Format ตรงกับ SmsPaymentController::transformOrderForAndroid()
+     */
+    private function transformOrderToRemoteApproval(\App\Models\Order $order, SmsPaymentNotification $notification): array
+    {
+        $approvalStatus = match (true) {
+            in_array($order->payment_status, ['paid', 'confirmed']) => 'auto_approved',
+            $order->sms_verification_status === 'matched' => 'pending_review',
+            $order->sms_verification_status === 'confirmed' => 'auto_approved',
+            $order->sms_verification_status === 'rejected' => 'rejected',
+            default => 'pending_review',
+        };
+
+        $amount = $order->uniquePaymentAmount
+            ? (float) $order->uniquePaymentAmount->unique_amount
+            : (float) $order->total;
+
+        return [
+            'id' => $order->id,
+            'notification_id' => $notification->id,
+            'matched_transaction_id' => $notification->id,
+            'device_id' => $notification->device_id,
+            'approval_status' => $approvalStatus,
+            'confidence' => 'high',
+            'approved_by' => null,
+            'approved_at' => $order->paid_at?->toIso8601String(),
+            'rejected_at' => null,
+            'rejection_reason' => null,
+            'order_details_json' => [
+                'order_number' => $order->order_number,
+                'product_name' => $order->items?->first()?->product?->name ?? $order->product_name ?? null,
+                'product_details' => $order->items?->map(fn ($item) => $item->product?->name . ' x' . $item->quantity)->implode(', '),
+                'quantity' => $order->items?->count() ?? 1,
+                'website_name' => config('app.name'),
+                'customer_name' => $order->customer_name,
+                'amount' => $amount,
+            ],
+            'server_name' => config('app.name'),
+            'synced_version' => $order->updated_at ? intval($order->updated_at->timestamp * 1000) : 0,
+            'created_at' => $order->created_at?->toIso8601String(),
+            'updated_at' => $order->updated_at?->toIso8601String(),
+            'notification' => [
+                'id' => $notification->id,
+                'bank' => $notification->bank,
+                'type' => $notification->type ?? 'credit',
+                'amount' => sprintf('%.2f', (float) $notification->amount),
+                'sms_timestamp' => $notification->sms_timestamp,
+                'sender_or_receiver' => $notification->sender_or_receiver ?? '',
+            ],
+        ];
+    }
+
+    /**
+     * Transform WalletTopup → RemoteOrderApproval format ที่ Android app คาดหวัง
+     * ใช้สำหรับ notify response เมื่อ match กับ topup สำเร็จ
+     */
+    private function transformTopupToRemoteApproval(WalletTopup $topup, SmsPaymentNotification $notification): array
+    {
+        $approvalStatus = match (true) {
+            $topup->status === 'approved' => 'auto_approved',
+            $topup->sms_verification_status === 'confirmed' => 'auto_approved',
+            $topup->sms_verification_status === 'matched' => 'pending_review',
+            $topup->sms_verification_status === 'rejected' || $topup->status === 'rejected' => 'rejected',
+            default => 'pending_review',
+        };
+
+        $amount = $topup->uniquePaymentAmount
+            ? (float) $topup->uniquePaymentAmount->unique_amount
+            : (float) $topup->amount;
+
+        return [
+            'id' => $topup->id,
+            'notification_id' => $notification->id,
+            'matched_transaction_id' => $notification->id,
+            'device_id' => $notification->device_id,
+            'approval_status' => $approvalStatus,
+            'confidence' => 'high',
+            'approved_by' => null,
+            'approved_at' => $topup->status === 'approved' ? $topup->updated_at?->toIso8601String() : null,
+            'rejected_at' => null,
+            'rejection_reason' => null,
+            'order_details_json' => [
+                'order_number' => $topup->topup_id ?? ('TOPUP-' . $topup->id),
+                'product_name' => 'เติมเงิน ' . number_format($amount, 2) . ' บาท',
+                'product_details' => 'เติมเงินกระเป๋า',
+                'quantity' => 1,
+                'website_name' => config('app.name'),
+                'customer_name' => $topup->wallet?->user?->name ?? '',
+                'amount' => $amount,
+            ],
+            'server_name' => config('app.name'),
+            'synced_version' => $topup->updated_at ? intval($topup->updated_at->timestamp * 1000) : 0,
+            'created_at' => $topup->created_at?->toIso8601String(),
+            'updated_at' => $topup->updated_at?->toIso8601String(),
+            'notification' => [
+                'id' => $notification->id,
+                'bank' => $notification->bank,
+                'type' => $notification->type ?? 'credit',
+                'amount' => sprintf('%.2f', (float) $notification->amount),
+                'sms_timestamp' => $notification->sms_timestamp,
+                'sender_or_receiver' => $notification->sender_or_receiver ?? '',
+            ],
+        ];
     }
 
     /**
