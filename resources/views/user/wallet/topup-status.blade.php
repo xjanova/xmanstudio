@@ -225,6 +225,9 @@
                         </div>
                         <div class="space-y-2 text-sm">
                             <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">หมายเลข:</span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">{{ $promptpayNumber }}</code></p>
+                            @if(!empty($promptpayName))
+                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">ชื่อบัญชี:</span> {{ $promptpayName }}</p>
+                            @endif
                         </div>
                     </div>
                     @endif

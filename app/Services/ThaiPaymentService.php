@@ -181,18 +181,18 @@ class ThaiPaymentService
     }
 
     /**
-     * Format PromptPay number for display
+     * Format PromptPay number for display (full number, not masked)
      */
     protected function formatDisplayNumber(string $number): string
     {
         $number = preg_replace('/[^0-9]/', '', $number);
 
         if (strlen($number) === 10) {
-            return substr($number, 0, 3) . '-XXX-' . substr($number, -4);
+            return substr($number, 0, 3) . '-' . substr($number, 3, 3) . '-' . substr($number, 6, 4);
         }
 
         if (strlen($number) === 13) {
-            return substr($number, 0, 1) . '-XXXX-XXXXX-' . substr($number, 10, 2) . '-' . substr($number, 12, 1);
+            return substr($number, 0, 1) . '-' . substr($number, 1, 4) . '-' . substr($number, 5, 5) . '-' . substr($number, 10, 2) . '-' . substr($number, 12, 1);
         }
 
         return $number;
