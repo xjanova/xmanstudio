@@ -164,11 +164,14 @@ class WalletController extends Controller
         $wallet = $topup->wallet;
         $uniqueAmount = $topup->uniquePaymentAmount;
 
-        // Get bank accounts for payment info
-        $bankAccounts = BankAccount::active()->ordered()->get();
-        $promptpayNumber = PaymentSetting::get('promptpay_number')
-            ?? config('payment.promptpay.number');
-        $promptpayName = PaymentSetting::get('promptpay_name', '');
+        // Get payment info based on settings (respect enabled payment methods)
+        $bankAccounts = Setting::getValue('wallet_payment_bank_transfer', true)
+            ? BankAccount::active()->ordered()->get()
+            : collect();
+        $promptpayNumber = Setting::getValue('wallet_payment_promptpay', true)
+            ? (PaymentSetting::get('promptpay_number') ?? config('payment.promptpay.number'))
+            : null;
+        $promptpayName = $promptpayNumber ? PaymentSetting::get('promptpay_name', '') : '';
 
         return view('user.wallet.topup-status', compact('topup', 'wallet', 'uniqueAmount', 'bankAccounts', 'promptpayNumber', 'promptpayName'));
     }
