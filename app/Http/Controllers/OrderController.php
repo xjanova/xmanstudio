@@ -364,6 +364,7 @@ class OrderController extends Controller
         $paymentInfo = null;
         $bankAccounts = null;
         $promptpayNumber = null;
+        $promptpayName = null;
 
         if ($order->payment_status === 'pending') {
             if ($order->payment_method === 'promptpay') {

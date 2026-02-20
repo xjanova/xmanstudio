@@ -351,6 +351,40 @@ class AiChatService
             $parts[] = "ถ้าตอบไม่ได้ ให้ตอบว่า: {$fallback}";
         }
 
+        // Inject contact info from settings
+        $contactParts = [];
+        $phone = Setting::get('contact_phone', '');
+        $phoneName = Setting::get('contact_phone_name', '');
+        if ($phone) {
+            $contactParts[] = 'โทรศัพท์: ' . $phone . ($phoneName ? " ({$phoneName})" : '');
+        }
+        $email = Setting::get('contact_email', '');
+        if ($email) {
+            $contactParts[] = 'อีเมล: ' . $email;
+        }
+        $fbName = Setting::get('contact_facebook_name', '');
+        $fbUrl = Setting::get('contact_facebook_url', '');
+        if ($fbName) {
+            $contactParts[] = 'Facebook: ' . $fbName . ($fbUrl ? " ({$fbUrl})" : '');
+        }
+        $lineId = Setting::get('contact_line_id', '');
+        $lineUrl = Setting::get('contact_line_url', '');
+        if ($lineId) {
+            $contactParts[] = 'Line OA: ' . $lineId . ($lineUrl ? " ({$lineUrl})" : '');
+        }
+        $ytName = Setting::get('contact_youtube_name', '');
+        $ytUrl = Setting::get('contact_youtube_url', '');
+        if ($ytName) {
+            $contactParts[] = 'YouTube: ' . $ytName . ($ytUrl ? " ({$ytUrl})" : '');
+        }
+        $address = Setting::get('contact_address', '');
+        if ($address) {
+            $contactParts[] = 'ที่อยู่: ' . $address;
+        }
+        if (! empty($contactParts)) {
+            $parts[] = "ข้อมูลติดต่อของเรา (ใช้ข้อมูลนี้เมื่อลูกค้าถามเรื่องการติดต่อ):\n" . implode("\n", $contactParts);
+        }
+
         return implode("\n\n", array_filter($parts));
     }
 
