@@ -131,9 +131,16 @@
 
                 <!-- Footer -->
                 <div class="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-                    <p>XMAN Studio - IT Solutions & Software Development</p>
-                    <p>Tel: 080-6038278 (คุณกรณิภา) | Email: xjanovax@gmail.com</p>
-                    <p>Facebook: facebook.com/xmanenterprise | Line OA: @xmanstudio</p>
+                    <p>{{ config('app.name', 'XMAN Studio') }} - IT Solutions & Software Development</p>
+                    @php
+                        $invPhone = \App\Models\Setting::getValue('contact_phone', '080-6038278');
+                        $invPhoneName = \App\Models\Setting::getValue('contact_phone_name', 'คุณกรณิภา');
+                        $invEmail = \App\Models\Setting::getValue('contact_email', 'xjanovax@gmail.com');
+                        $invFbName = \App\Models\Setting::getValue('contact_facebook_name', 'XMAN Enterprise');
+                        $invLineId = \App\Models\Setting::getValue('contact_line_id', '@xmanstudio');
+                    @endphp
+                    <p>Tel: {{ $invPhone }}{{ $invPhoneName ? " ({$invPhoneName})" : '' }} | Email: {{ $invEmail }}</p>
+                    <p>Facebook: {{ $invFbName }} | Line OA: {{ $invLineId }}</p>
                 </div>
             </div>
         </div>

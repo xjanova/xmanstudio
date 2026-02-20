@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\BugReportController as AdminBugReportController;
+use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
@@ -391,6 +392,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/branding', [BrandingSettingsController::class, 'update'])->name('branding.update');
     Route::delete('/branding/logo', [BrandingSettingsController::class, 'deleteLogo'])->name('branding.logo.delete');
     Route::delete('/branding/favicon', [BrandingSettingsController::class, 'deleteFavicon'])->name('branding.favicon.delete');
+
+    // Contact Settings
+    Route::get('/contact-settings', [ContactSettingsController::class, 'index'])->name('contact-settings.index');
+    Route::put('/contact-settings', [ContactSettingsController::class, 'update'])->name('contact-settings.update');
 
     // AI Settings
     Route::get('/ai-settings', [AiSettingsController::class, 'index'])->name('ai-settings.index');
