@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\AIServiceException;
 use App\Models\Setting;
 use App\Services\AiChatService;
+use App\Services\WebsiteKnowledgeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -12,9 +13,12 @@ class PublicChatController extends Controller
 {
     protected AiChatService $chatService;
 
-    public function __construct(AiChatService $chatService)
+    protected WebsiteKnowledgeService $knowledgeService;
+
+    public function __construct(AiChatService $chatService, WebsiteKnowledgeService $knowledgeService)
     {
         $this->chatService = $chatService;
+        $this->knowledgeService = $knowledgeService;
     }
 
     /**
@@ -45,10 +49,18 @@ class PublicChatController extends Controller
         ]);
 
         try {
-            $systemPrompt = $this->buildPublicSystemPrompt();
+            // Get the latest user message for keyword search
+            $messages = $request->input('messages');
+            $lastUserMessage = collect($messages)->where('role', 'user')->last();
+            $userQuery = $lastUserMessage['content'] ?? '';
+
+            // Search website content based on user's question
+            $searchResults = $this->knowledgeService->search($userQuery);
+
+            $systemPrompt = $this->buildPublicSystemPrompt($searchResults);
 
             $result = $this->chatService->chat(
-                $request->input('messages'),
+                $messages,
                 $systemPrompt
             );
 
@@ -75,10 +87,10 @@ class PublicChatController extends Controller
     /**
      * Build an enhanced system prompt for public chat.
      *
+     * Dynamically pulls website content, contact info, and settings.
      * Forces the AI to only answer questions about the website/project.
-     * Includes smart question analysis, navigation, and context-aware responses.
      */
-    protected function buildPublicSystemPrompt(): string
+    protected function buildPublicSystemPrompt(string $searchResults = ''): string
     {
         $botName = Setting::getValue('ai_bot_name', 'AI Assistant');
         $language = Setting::getValue('ai_response_language', 'th');
@@ -117,52 +129,30 @@ class PublicChatController extends Controller
         $parts[] = $langMap[$language] ?? 'ตอบเป็นภาษาไทยเสมอ';
         $parts[] = $lengthMap[$length] ?? 'ตอบปานกลาง';
 
+        // === STRICT SCOPE RULE ===
+        $parts[] = '=== กฎสำคัญที่สุด (บังคับ) === ตอบได้เฉพาะเรื่องที่มีอยู่ในข้อมูลด้านล่างเท่านั้น ห้ามแต่งเรื่องหรือตอบจากความรู้ภายนอก ถ้าไม่มีข้อมูลในระบบ ให้แนะนำติดต่อทีมงานแทน ห้ามส่งลิงก์ไปเว็บภายนอก';
+
         // === SMART QUESTION ANALYSIS ===
         $parts[] = <<<'ANALYSIS'
 === กฎการวิเคราะห์คำถาม (สำคัญมาก) ===
 
 ก่อนตอบทุกคำถาม ให้วิเคราะห์ "เจตนา" ของผู้ถามก่อนเสมอ:
 
-ประเภท A - "ถามว่าทำได้ไหม/มีบริการไหม" → ตอบเชิงบวก แนะนำบริการ
-ตัวอย่าง:
-- "เขียนโค้ดได้ไหม" → หมายถึง "บริษัทรับเขียนโค้ดไหม" → ตอบว่า "ได้ค่ะ! XMAN Studio รับพัฒนาซอฟต์แวร์ทุกรูปแบบ"
-- "ทำเว็บได้ไหม" → ตอบว่า "ได้ค่ะ! เราเชี่ยวชาญพัฒนาเว็บไซต์"
-- "ทำแอพมือถือได้ไหม" → ตอบว่า "ได้ค่ะ! เราพัฒนาแอพพลิเคชันทั้ง iOS และ Android"
-- "ทำ AI ได้ไหม" → ตอบว่า "ได้ค่ะ! เรามีบริการ AI Services"
-- "ทำ Blockchain ได้ไหม" → ตอบว่า "ได้ค่ะ! เราเชี่ยวชาญด้าน Blockchain"
-- "มีบริการอะไรบ้าง" → แนะนำบริการทั้งหมด
-
+ประเภท A - "ถามว่าทำได้ไหม/มีบริการไหม" → ค้นหาจากข้อมูลบริการ/สินค้าด้านล่าง ถ้าพบข้อมูลที่เกี่ยวข้อง ตอบเชิงบวกพร้อมรายละเอียดจริง
 ประเภท B - "ขอให้ช่วยทำงานจริงๆ" → ปฏิเสธสุภาพ แนะนำติดต่อทีมงาน
-ตัวอย่าง:
-- "เขียนโค้ด Python ให้หน่อย" → ปฏิเสธ "ขออภัยค่ะ ดิฉันไม่สามารถเขียนโค้ดให้ได้โดยตรง แต่ทีมงาน XMAN Studio ยินดีรับพัฒนาให้ค่ะ"
-- "เขียนบทความเรื่อง... ให้หน่อย" → ปฏิเสธ
-- "แก้บัค... ให้หน่อย" → ปฏิเสธ
-- "ออกแบบ... ให้หน่อย" → ปฏิเสธ
-- "ช่วยแปลเอกสาร..." → ปฏิเสธ
-- "ช่วยสรุปบทความ..." → ปฏิเสธ
-
-ประเภท C - "ถามข้อมูลทั่วไปเกี่ยวกับเว็บ/บริษัท" → ตอบเต็มที่
-ตัวอย่าง:
-- "ราคาเท่าไหร่" → ให้ข้อมูลราคาหรือแนะนำไปหน้าบริการ
-- "ติดต่อยังไง" → ให้ข้อมูลติดต่อ
-- "มีผลงานอะไรบ้าง" → แนะนำไปดูผลงาน
-
-ประเภท D - "ถามเรื่องไม่เกี่ยวกับ XMAN Studio เลย" → ปฏิเสธสุภาพ
-ตัวอย่าง:
-- "วันนี้อากาศเป็นยังไง" → ปฏิเสธ
-- "ช่วยแนะนำร้านอาหาร" → ปฏิเสธ
+ประเภท C - "ถามข้อมูลเกี่ยวกับเว็บ/บริษัท" → ตอบจากข้อมูลจริงที่มีในระบบเท่านั้น
+ประเภท D - "ถามเรื่องไม่เกี่ยวกับ XMAN Studio" → ปฏิเสธสุภาพ
 
 หลักสำคัญ: ถ้าคำถามสามารถตีความได้ว่าเกี่ยวกับบริการของ XMAN Studio ให้ตีความในเชิงบวกเสมอ อย่าเพิ่งปฏิเสธ
 ANALYSIS;
 
         // === NAVIGATION SYSTEM ===
         $parts[] = <<<NAVIGATION
-=== ระบบนำทางอัจฉริยะ (สำคัญมาก) ===
+=== ระบบนำทางอัจฉริยะ ===
 
-คุณสามารถพาผู้ใช้ไปยังหน้าต่างๆ ในเว็บได้ทันที โดยใส่ลิงก์ในคำตอบเสมอเมื่อเกี่ยวข้อง
-ใช้รูปแบบ Markdown link: [ข้อความ](URL)
+ใส่ลิงก์ในคำตอบเสมอเมื่อเกี่ยวข้อง ใช้รูปแบบ Markdown link: [ข้อความ](URL)
 
-แผนที่หน้าเว็บ XMAN Studio:
+แผนที่หน้าเว็บ:
 - หน้าแรก: {$baseUrl}/
 - บริการทั้งหมด: {$baseUrl}/services
 - สินค้า/ซอฟต์แวร์: {$baseUrl}/products
@@ -177,30 +167,57 @@ ANALYSIS;
 - Metal X (ระบบจัดการวิดีโอ/เพลง AI): {$baseUrl}/metal-x
 - เข้าสู่ระบบ: {$baseUrl}/login
 - สมัครสมาชิก: {$baseUrl}/register
-- ข้อกำหนดการใช้งาน: {$baseUrl}/terms
-- นโยบายความเป็นส่วนตัว: {$baseUrl}/privacy
 
-กฎการนำทาง:
-1. เมื่อผู้ใช้ถามเรื่องใด ให้แนบลิงก์ที่เกี่ยวข้องด้วยเสมอ
-2. เมื่อแนะนำบริการ → ใส่ลิงก์ไป /services
-3. เมื่อพูดถึงสินค้า → ใส่ลิงก์ไป /products
-4. เมื่อพูดถึงราคา/ใบเสนอราคา → ใส่ลิงก์ไป /support
-5. เมื่อพูดถึงผลงาน → ใส่ลิงก์ไป /portfolio
-6. เมื่อพูดถึงการติดต่อ → ใส่ลิงก์ไป /support + ข้อมูลติดต่อ
-7. ห้ามส่งลิงก์ไปเว็บภายนอก ส่งได้เฉพาะลิงก์ภายในเว็บ XMAN Studio เท่านั้น
-8. เมื่อปฏิเสธงาน (ประเภท B) → แนะนำให้ติดต่อทีมงานพร้อมลิงก์ /support
+กฎ: ห้ามส่งลิงก์ไปเว็บภายนอก ส่งได้เฉพาะลิงก์ภายในเว็บเท่านั้น
 NAVIGATION;
 
-        // Company info context
-        $parts[] = "=== ข้อมูลบริษัท XMAN Studio ===\n" .
-            "- XMAN Studio เป็นผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร\n" .
-            "- บริการหลัก: พัฒนาเว็บไซต์, แอพพลิเคชัน (iOS/Android), ระบบ Blockchain, IoT, Network Security, AI Services, Music AI\n" .
-            "- ผลิตภัณฑ์เด่น: AutoTradeX (ระบบเทรดอัตโนมัติ), Metal X (ระบบจัดการวิดีโอ AI), ซอฟต์แวร์สำเร็จรูป\n" .
-            "- รับงานทุกขนาด: ตั้งแต่เว็บไซต์เล็กๆ ไปจนถึงระบบ Enterprise\n" .
-            "- ทีมงานเชี่ยวชาญ: Laravel, React, Vue.js, Flutter, Python, Node.js, Solidity, AI/ML\n" .
-            "- ติดต่อ: 080-6038278 (คุณกรณิภา), Email: xjanovax@gmail.com\n" .
-            "- Facebook: XMAN Enterprise, Line OA: @xmanstudio\n" .
-            '- เว็บไซต์: xman4289.com';
+        // === DYNAMIC COMPANY INFO from settings ===
+        $companyInfo = "=== ข้อมูลบริษัท ===\n" .
+            '- ' . config('app.name', 'XMAN Studio') . " เป็นผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร\n" .
+            '- เว็บไซต์: ' . $baseUrl;
+
+        // Contact info from settings
+        $contactParts = [];
+        $phone = Setting::get('contact_phone', '');
+        $phoneName = Setting::get('contact_phone_name', '');
+        if ($phone) {
+            $contactParts[] = 'โทรศัพท์: ' . $phone . ($phoneName ? " ({$phoneName})" : '');
+        }
+        $email = Setting::get('contact_email', '');
+        if ($email) {
+            $contactParts[] = 'อีเมล: ' . $email;
+        }
+        $fbName = Setting::get('contact_facebook_name', '');
+        if ($fbName) {
+            $contactParts[] = 'Facebook: ' . $fbName;
+        }
+        $lineId = Setting::get('contact_line_id', '');
+        if ($lineId) {
+            $contactParts[] = 'Line OA: ' . $lineId;
+        }
+        $ytName = Setting::get('contact_youtube_name', '');
+        if ($ytName) {
+            $contactParts[] = 'YouTube: ' . $ytName;
+        }
+        $address = Setting::get('contact_address', '');
+        if ($address) {
+            $contactParts[] = 'ที่อยู่: ' . $address;
+        }
+        if (! empty($contactParts)) {
+            $companyInfo .= "\n- ข้อมูลติดต่อ:\n  " . implode("\n  ", $contactParts);
+        }
+        $parts[] = $companyInfo;
+
+        // === FULL WEBSITE KNOWLEDGE (cached) ===
+        $fullKnowledge = $this->knowledgeService->buildFullKnowledge();
+        if (! empty($fullKnowledge)) {
+            $parts[] = $fullKnowledge;
+        }
+
+        // === KEYWORD SEARCH RESULTS for this specific question ===
+        if (! empty($searchResults)) {
+            $parts[] = $searchResults;
+        }
 
         // Base system prompt from settings
         $basePrompt = Setting::getValue('ai_system_prompt', '');
