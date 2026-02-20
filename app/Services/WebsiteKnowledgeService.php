@@ -9,17 +9,22 @@ use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
 use App\Models\RentalPackage;
 use App\Models\Service;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Searches the website's internal content (products, services, etc.)
  * and returns formatted knowledge for the AI chatbot.
+ *
+ * Respects admin toggle settings:
+ * - ai_use_product_data
+ * - ai_use_service_data
  */
 class WebsiteKnowledgeService
 {
     /**
      * Search website content by user query and return formatted context.
+     * Only searches models that are enabled via admin toggles.
      */
     public function search(string $query): string
     {
@@ -29,14 +34,22 @@ class WebsiteKnowledgeService
             return '';
         }
 
+        $useProducts = Setting::getValue('ai_use_product_data', true);
+        $useServices = Setting::getValue('ai_use_service_data', true);
+
         $results = [];
 
-        $results[] = $this->searchServices($keywords);
-        $results[] = $this->searchProducts($keywords);
-        $results[] = $this->searchRentalPackages($keywords);
-        $results[] = $this->searchQuotationOptions($keywords);
-        $results[] = $this->searchCoupons($keywords);
-        $results[] = $this->searchBanners($keywords);
+        if ($useServices) {
+            $results[] = $this->searchServices($keywords);
+            $results[] = $this->searchQuotationOptions($keywords);
+        }
+
+        if ($useProducts) {
+            $results[] = $this->searchProducts($keywords);
+            $results[] = $this->searchRentalPackages($keywords);
+            $results[] = $this->searchCoupons($keywords);
+            $results[] = $this->searchBanners($keywords);
+        }
 
         $combined = implode("\n", array_filter($results));
 
@@ -48,22 +61,38 @@ class WebsiteKnowledgeService
     }
 
     /**
-     * Build a full knowledge snapshot of all active website content.
+     * Build a full knowledge snapshot of active website content.
+     * Only includes data that is enabled via admin toggles.
      * Cached for 10 minutes to avoid repeated queries.
      */
     public function buildFullKnowledge(): string
     {
-        return Cache::remember('chatbot_full_knowledge', 600, function () {
+        $useProducts = Setting::getValue('ai_use_product_data', true);
+        $useServices = Setting::getValue('ai_use_service_data', true);
+
+        // If nothing is enabled, return empty
+        if (! $useProducts && ! $useServices) {
+            return '';
+        }
+
+        $cacheKey = 'chatbot_full_knowledge_' . ($useProducts ? '1' : '0') . '_' . ($useServices ? '1' : '0');
+
+        return Cache::remember($cacheKey, 600, function () use ($useProducts, $useServices) {
             $parts = [];
 
-            $parts[] = $this->getAllServices();
-            $parts[] = $this->getAllProducts();
-            $parts[] = $this->getAllRentalPackages();
-            $parts[] = $this->getAllQuotationCategories();
+            if ($useServices) {
+                $parts[] = $this->getAllServices();
+                $parts[] = $this->getAllQuotationCategories();
+            }
+
+            if ($useProducts) {
+                $parts[] = $this->getAllProducts();
+                $parts[] = $this->getAllRentalPackages();
+            }
 
             $combined = implode("\n", array_filter($parts));
 
-            return empty($combined) ? '' : "=== ข้อมูลบริการและสินค้าทั้งหมดของเว็บไซต์ ===\n" . $combined;
+            return empty($combined) ? '' : "=== ข้อมูลบริการและสินค้าของเว็บไซต์ ===\n" . $combined;
         });
     }
 
@@ -72,7 +101,6 @@ class WebsiteKnowledgeService
      */
     protected function extractKeywords(string $query): array
     {
-        // Remove common Thai particles and filler words
         $stopWords = [
             'ไหม', 'มั้ย', 'ครับ', 'ค่ะ', 'คะ', 'นะ', 'จ้า', 'จ๊ะ', 'หน่อย',
             'ได้', 'ไหม', 'บ้าง', 'อะไร', 'ยังไง', 'อย่างไร', 'เท่าไหร่', 'กี่',
@@ -82,7 +110,6 @@ class WebsiteKnowledgeService
             'what', 'how', 'do', 'you', 'have', 'can', 'about', 'this',
         ];
 
-        // Split by spaces, special chars, and Thai word boundaries
         $words = preg_split('/[\s,.\/?!;:()]+/u', mb_strtolower($query));
         $words = array_filter($words, function ($w) use ($stopWords) {
             return mb_strlen($w) >= 2 && ! in_array($w, $stopWords);
@@ -91,9 +118,6 @@ class WebsiteKnowledgeService
         return array_values(array_unique($words));
     }
 
-    /**
-     * Build a LIKE search scope for multiple columns with multiple keywords.
-     */
     protected function searchModels($modelClass, array $columns, array $keywords, ?callable $scope = null)
     {
         $query = $modelClass::query();
@@ -128,11 +152,11 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[บริการ]"];
+        $lines = ['[บริการ]'];
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
-            $price = $item->starting_price ? "เริ่มต้น " . number_format($item->starting_price) . " บาท" : '';
+            $price = $item->starting_price ? 'เริ่มต้น ' . number_format($item->starting_price) . ' บาท' : '';
             $features = is_array($item->features_th) ? implode(', ', $item->features_th) : (is_array($item->features) ? implode(', ', $item->features) : '');
             $lines[] = "- {$name}: {$desc}" . ($price ? " ({$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
         }
@@ -153,9 +177,9 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[สินค้า/ซอฟต์แวร์]"];
+        $lines = ['[สินค้า/ซอฟต์แวร์]'];
         foreach ($items as $item) {
-            $price = $item->price ? number_format($item->price) . " บาท" : 'สอบถามราคา';
+            $price = $item->price ? number_format($item->price) . ' บาท' : 'สอบถามราคา';
             $features = is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '';
             $lines[] = "- {$item->name}: " . ($item->short_description ?: $item->description) . " (ราคา: {$price})" . ($features ? " | ฟีเจอร์: {$features}" : '');
         }
@@ -176,11 +200,11 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[แพ็กเกจเช่าใช้บริการ]"];
+        $lines = ['[แพ็กเกจเช่าใช้บริการ]'];
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
-            $price = number_format($item->price) . " บาท";
+            $price = number_format($item->price) . ' บาท';
             $features = is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '';
             $lines[] = "- {$name}: {$desc} (ราคา: {$price})" . ($features ? " | รวม: {$features}" : '');
         }
@@ -201,12 +225,12 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[บริการและตัวเลือกงาน]"];
+        $lines = ['[บริการและตัวเลือกงาน]'];
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
             $category = $item->category ? ($item->category->name_th ?: $item->category->name) : '';
-            $price = $item->price ? number_format($item->price) . " บาท" : '';
+            $price = $item->price ? number_format($item->price) . ' บาท' : '';
             $features = is_array($item->features_th) ? implode(', ', array_slice($item->features_th, 0, 5)) : (is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '');
             $lines[] = "- {$name}" . ($category ? " (หมวด: {$category})" : '') . ": {$desc}" . ($price ? " (ราคา: {$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
         }
@@ -227,11 +251,11 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[โปรโมชั่น/คูปอง]"];
+        $lines = ['[โปรโมชั่น/คูปอง]'];
         foreach ($items as $item) {
             $discount = $item->discount_type === 'percentage'
                 ? "ลด {$item->discount_value}%"
-                : "ลด " . number_format($item->discount_value) . " บาท";
+                : 'ลด ' . number_format($item->discount_value) . ' บาท';
             $lines[] = "- {$item->name}: {$discount}" . ($item->description ? " - {$item->description}" : '');
         }
 
@@ -251,7 +275,7 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[ประกาศ/โปรโมชั่น]"];
+        $lines = ['[ประกาศ/โปรโมชั่น]'];
         foreach ($items as $item) {
             $lines[] = "- {$item->title}" . ($item->description ? ": {$item->description}" : '');
         }
@@ -259,7 +283,7 @@ class WebsiteKnowledgeService
         return implode("\n", $lines);
     }
 
-    // === Full knowledge builders (for base prompt) ===
+    // === Full knowledge builders ===
 
     protected function getAllServices(): string
     {
@@ -268,11 +292,11 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[บริการทั้งหมด]"];
+        $lines = ['[บริการทั้งหมด]'];
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
-            $price = $item->starting_price ? "เริ่มต้น " . number_format($item->starting_price) . " บาท" : '';
+            $price = $item->starting_price ? 'เริ่มต้น ' . number_format($item->starting_price) . ' บาท' : '';
             $lines[] = "- {$name}: {$desc}" . ($price ? " ({$price})" : '');
         }
 
@@ -286,9 +310,9 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[สินค้า/ซอฟต์แวร์ทั้งหมด]"];
+        $lines = ['[สินค้า/ซอฟต์แวร์ทั้งหมด]'];
         foreach ($items as $item) {
-            $price = $item->price ? number_format($item->price) . " บาท" : 'สอบถามราคา';
+            $price = $item->price ? number_format($item->price) . ' บาท' : 'สอบถามราคา';
             $lines[] = "- {$item->name}: " . ($item->short_description ?: $item->description) . " (ราคา: {$price})";
         }
 
@@ -302,10 +326,10 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[แพ็กเกจเช่าใช้บริการทั้งหมด]"];
+        $lines = ['[แพ็กเกจเช่าใช้บริการทั้งหมด]'];
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
-            $price = number_format($item->price) . " บาท";
+            $price = number_format($item->price) . ' บาท';
             $features = is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '';
             $lines[] = "- {$name}: {$price}" . ($features ? " | รวม: {$features}" : '');
         }
@@ -320,14 +344,14 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ["[หมวดบริการและตัวเลือกงาน]"];
+        $lines = ['[หมวดบริการและตัวเลือกงาน]'];
         foreach ($items as $cat) {
             $catName = $cat->name_th ?: $cat->name;
             $lines[] = "หมวด: {$catName}";
             foreach ($cat->options as $opt) {
                 $optName = $opt->name_th ?: $opt->name;
                 $optDesc = $opt->description_th ?: $opt->description;
-                $price = $opt->price ? number_format($opt->price) . " บาท" : '';
+                $price = $opt->price ? number_format($opt->price) . ' บาท' : '';
                 $lines[] = "  - {$optName}: {$optDesc}" . ($price ? " ({$price})" : '');
             }
         }

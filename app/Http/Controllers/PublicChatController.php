@@ -54,7 +54,7 @@ class PublicChatController extends Controller
             $lastUserMessage = collect($messages)->where('role', 'user')->last();
             $userQuery = $lastUserMessage['content'] ?? '';
 
-            // Search website content based on user's question
+            // Search website content based on user's question (respects toggle settings)
             $searchResults = $this->knowledgeService->search($userQuery);
 
             $systemPrompt = $this->buildPublicSystemPrompt($searchResults);
@@ -85,10 +85,10 @@ class PublicChatController extends Controller
     }
 
     /**
-     * Build an enhanced system prompt for public chat.
+     * Build the system prompt for public chat.
      *
-     * Dynamically pulls website content, contact info, and settings.
-     * Forces the AI to only answer questions about the website/project.
+     * Bot identity, persona, and knowledge all come from admin settings.
+     * Website data is only included when the respective toggles are enabled.
      */
     protected function buildPublicSystemPrompt(string $searchResults = ''): string
     {
@@ -116,68 +116,83 @@ class PublicChatController extends Controller
             'long' => 'ตอบละเอียด ครบถ้วน อธิบายเพิ่มเติม',
         ];
 
-        $baseUrl = config('app.url', 'https://xman4289.com');
-
         $parts = [];
 
-        // Core identity + gender
-        $parts[] = "คุณชื่อ {$botName} เป็นผู้ช่วย AI เพศหญิง ประจำเว็บไซต์ XMAN Studio คุณเป็นเหมือนพนักงานต้อนรับสาวที่ฉลาด น่ารัก และรู้ทุกอย่างเกี่ยวกับบริษัท";
-        $parts[] = '=== กฎเรื่องเพศและภาษา (บังคับเคร่งครัด) === คุณเป็นเพศหญิงเสมอ ห้ามใช้คำว่า "ครับ" โดยเด็ดขาด ใช้คำลงท้ายว่า "ค่ะ" หรือ "นะคะ" เท่านั้น ห้ามใช้ "ผม" ให้ใช้ "ดิฉัน" หรือ "เรา" แทน ใช้สรรพนามเพศหญิงตลอด';
+        // Bot identity (from settings only - no hardcoded persona)
+        $parts[] = "คุณชื่อ {$botName}";
+
+        // Admin-defined system prompt (persona, rules, personality all configured here)
+        $basePrompt = Setting::getValue('ai_system_prompt', '');
+        if (! empty($basePrompt)) {
+            $parts[] = $basePrompt;
+        }
 
         // Style and language
         $parts[] = 'สไตล์การตอบ: ' . ($styleMap[$style] ?? 'มืออาชีพ');
         $parts[] = $langMap[$language] ?? 'ตอบเป็นภาษาไทยเสมอ';
         $parts[] = $lengthMap[$length] ?? 'ตอบปานกลาง';
 
-        // === STRICT SCOPE RULE ===
-        $parts[] = '=== กฎสำคัญที่สุด (บังคับ) === ตอบได้เฉพาะเรื่องที่มีอยู่ในข้อมูลด้านล่างเท่านั้น ห้ามแต่งเรื่องหรือตอบจากความรู้ภายนอก ถ้าไม่มีข้อมูลในระบบ ให้แนะนำติดต่อทีมงานแทน ห้ามส่งลิงก์ไปเว็บภายนอก';
+        // Strict scope: only answer from provided data
+        $parts[] = '=== กฎสำคัญ === ตอบได้เฉพาะเรื่องที่มีอยู่ในข้อมูลด้านล่างเท่านั้น ห้ามแต่งเรื่องหรือตอบจากความรู้ภายนอก ถ้าไม่มีข้อมูล ให้แนะนำติดต่อทีมงานแทน ห้ามส่งลิงก์ไปเว็บภายนอก';
 
-        // === SMART QUESTION ANALYSIS ===
-        $parts[] = <<<'ANALYSIS'
-=== กฎการวิเคราะห์คำถาม (สำคัญมาก) ===
+        // Custom knowledge base (admin-configured: fortune telling, commission rates, etc.)
+        $knowledge = Setting::getValue('ai_custom_knowledge', '');
+        if (! empty($knowledge)) {
+            $parts[] = "=== ข้อมูลที่ต้องรู้ ===\n{$knowledge}";
+        }
 
-ก่อนตอบทุกคำถาม ให้วิเคราะห์ "เจตนา" ของผู้ถามก่อนเสมอ:
+        // Company info (only if toggle is on)
+        $useCompanyInfo = Setting::getValue('ai_use_company_info', true);
+        if ($useCompanyInfo) {
+            $companyInfo = $this->buildCompanyInfo();
+            if (! empty($companyInfo)) {
+                $parts[] = $companyInfo;
+            }
+        }
 
-ประเภท A - "ถามว่าทำได้ไหม/มีบริการไหม" → ค้นหาจากข้อมูลบริการ/สินค้าด้านล่าง ถ้าพบข้อมูลที่เกี่ยวข้อง ตอบเชิงบวกพร้อมรายละเอียดจริง
-ประเภท B - "ขอให้ช่วยทำงานจริงๆ" → ปฏิเสธสุภาพ แนะนำติดต่อทีมงาน
-ประเภท C - "ถามข้อมูลเกี่ยวกับเว็บ/บริษัท" → ตอบจากข้อมูลจริงที่มีในระบบเท่านั้น
-ประเภท D - "ถามเรื่องไม่เกี่ยวกับ XMAN Studio" → ปฏิเสธสุภาพ
+        // Website data (only if toggles are on - respects ai_use_product_data, ai_use_service_data)
+        $fullKnowledge = $this->knowledgeService->buildFullKnowledge();
+        if (! empty($fullKnowledge)) {
+            $parts[] = $fullKnowledge;
+        }
 
-หลักสำคัญ: ถ้าคำถามสามารถตีความได้ว่าเกี่ยวกับบริการของ XMAN Studio ให้ตีความในเชิงบวกเสมอ อย่าเพิ่งปฏิเสธ
-ANALYSIS;
+        // Keyword search results for this specific question
+        if (! empty($searchResults)) {
+            $parts[] = $searchResults;
+        }
 
-        // === NAVIGATION SYSTEM ===
-        $parts[] = <<<NAVIGATION
-=== ระบบนำทางอัจฉริยะ ===
+        // Navigation links (only if company info or website data is used)
+        if ($useCompanyInfo) {
+            $parts[] = $this->buildNavigation();
+        }
 
-ใส่ลิงก์ในคำตอบเสมอเมื่อเกี่ยวข้อง ใช้รูปแบบ Markdown link: [ข้อความ](URL)
+        // Topic restrictions from settings
+        $allowed = Setting::getValue('ai_allowed_topics', '');
+        if (! empty($allowed)) {
+            $parts[] = "หัวข้อที่อนุญาตให้ตอบ: {$allowed}";
+        }
 
-แผนที่หน้าเว็บ:
-- หน้าแรก: {$baseUrl}/
-- บริการทั้งหมด: {$baseUrl}/services
-- สินค้า/ซอฟต์แวร์: {$baseUrl}/products
-- ผลงาน: {$baseUrl}/portfolio
-- เช่าบริการ/Subscription: {$baseUrl}/rental
-- ติดต่อ/ขอใบเสนอราคา: {$baseUrl}/support
-- ตรวจสอบสถานะใบเสนอราคา: {$baseUrl}/support/tracking
-- ตะกร้าสินค้า: {$baseUrl}/cart
-- เกี่ยวกับเรา: {$baseUrl}/about
-- AutoTradeX (ผลิตภัณฑ์เด่น): {$baseUrl}/autotradex
-- AutoTradeX ราคา: {$baseUrl}/autotradex/pricing
-- Metal X (ระบบจัดการวิดีโอ/เพลง AI): {$baseUrl}/metal-x
-- เข้าสู่ระบบ: {$baseUrl}/login
-- สมัครสมาชิก: {$baseUrl}/register
+        $forbidden = Setting::getValue('ai_forbidden_topics', '');
+        if (! empty($forbidden)) {
+            $parts[] = "หัวข้อที่ห้ามตอบ: {$forbidden}";
+        }
 
-กฎ: ห้ามส่งลิงก์ไปเว็บภายนอก ส่งได้เฉพาะลิงก์ภายในเว็บเท่านั้น
-NAVIGATION;
+        // Fallback message
+        $fallback = Setting::getValue('ai_fallback_message', '');
+        if (! empty($fallback)) {
+            $parts[] = "ถ้าถูกถามเรื่องที่ไม่เกี่ยวข้อง ให้ตอบว่า: {$fallback}";
+        }
 
-        // === DYNAMIC COMPANY INFO from settings ===
-        $companyInfo = "=== ข้อมูลบริษัท ===\n" .
-            '- ' . config('app.name', 'XMAN Studio') . " เป็นผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร\n" .
-            '- เว็บไซต์: ' . $baseUrl;
+        return implode("\n\n", array_filter($parts));
+    }
 
-        // Contact info from settings
+    /**
+     * Build company/contact info section from settings.
+     */
+    protected function buildCompanyInfo(): string
+    {
         $contactParts = [];
+
         $phone = Setting::get('contact_phone', '');
         $phoneName = Setting::get('contact_phone_name', '');
         if ($phone) {
@@ -203,53 +218,34 @@ NAVIGATION;
         if ($address) {
             $contactParts[] = 'ที่อยู่: ' . $address;
         }
-        if (! empty($contactParts)) {
-            $companyInfo .= "\n- ข้อมูลติดต่อ:\n  " . implode("\n  ", $contactParts);
-        }
-        $parts[] = $companyInfo;
 
-        // === FULL WEBSITE KNOWLEDGE (cached) ===
-        $fullKnowledge = $this->knowledgeService->buildFullKnowledge();
-        if (! empty($fullKnowledge)) {
-            $parts[] = $fullKnowledge;
+        if (empty($contactParts)) {
+            return '';
         }
 
-        // === KEYWORD SEARCH RESULTS for this specific question ===
-        if (! empty($searchResults)) {
-            $parts[] = $searchResults;
-        }
+        return "=== ข้อมูลติดต่อ ===\n" . implode("\n", $contactParts);
+    }
 
-        // Base system prompt from settings
-        $basePrompt = Setting::getValue('ai_system_prompt', '');
-        if (! empty($basePrompt)) {
-            $parts[] = "คำสั่งเพิ่มเติม:\n{$basePrompt}";
-        }
+    /**
+     * Build navigation links section.
+     */
+    protected function buildNavigation(): string
+    {
+        $baseUrl = config('app.url', 'https://xman4289.com');
 
-        // Custom knowledge base
-        $knowledge = Setting::getValue('ai_custom_knowledge', '');
-        if (! empty($knowledge)) {
-            $parts[] = "ข้อมูลเพิ่มเติมที่ต้องรู้:\n{$knowledge}";
-        }
-
-        // Topic restrictions from settings
-        $allowed = Setting::getValue('ai_allowed_topics', '');
-        if (! empty($allowed)) {
-            $parts[] = "หัวข้อที่อนุญาตให้ตอบ: {$allowed}";
-        }
-
-        $forbidden = Setting::getValue('ai_forbidden_topics', '');
-        if (! empty($forbidden)) {
-            $parts[] = "หัวข้อที่ห้ามตอบ: {$forbidden}";
-        }
-
-        // Fallback message
-        $fallback = Setting::getValue('ai_fallback_message', '');
-        if (! empty($fallback)) {
-            $parts[] = "ถ้าถูกถามเรื่องที่ไม่เกี่ยวกับ XMAN Studio เลย (ประเภท D) ให้ตอบว่า: {$fallback}";
-        } else {
-            $parts[] = 'ถ้าถูกถามเรื่องที่ไม่เกี่ยวกับ XMAN Studio เลย (ประเภท D) ให้ตอบว่า: ขออภัยค่ะ ดิฉันตอบได้เฉพาะคำถามเกี่ยวกับ XMAN Studio เท่านั้นนะคะ มีอะไรเกี่ยวกับบริการหรือสินค้าของเราที่อยากทราบไหมคะ? 😊';
-        }
-
-        return implode("\n\n", array_filter($parts));
+        return <<<NAVIGATION
+=== ลิงก์ในเว็บไซต์ (ใส่ในคำตอบเมื่อเกี่ยวข้อง ใช้ Markdown link) ===
+- หน้าแรก: {$baseUrl}/
+- บริการ: {$baseUrl}/services
+- สินค้า: {$baseUrl}/products
+- ผลงาน: {$baseUrl}/portfolio
+- เช่าบริการ: {$baseUrl}/rental
+- ติดต่อ: {$baseUrl}/support
+- ตรวจสอบสถานะ: {$baseUrl}/support/tracking
+- เกี่ยวกับเรา: {$baseUrl}/about
+- AutoTradeX: {$baseUrl}/autotradex
+- Metal X: {$baseUrl}/metal-x
+ห้ามส่งลิงก์ไปเว็บภายนอก
+NAVIGATION;
     }
 }
