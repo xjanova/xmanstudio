@@ -46,6 +46,9 @@ class PublicChatController extends Controller
             'messages' => 'required|array|min:1|max:20',
             'messages.*.role' => 'required|in:user,assistant',
             'messages.*.content' => 'required|string|max:2000',
+            'current_url' => 'nullable|string|max:2000',
+            'current_path' => 'nullable|string|max:500',
+            'page_title' => 'nullable|string|max:500',
         ]);
 
         try {
@@ -54,10 +57,17 @@ class PublicChatController extends Controller
             $lastUserMessage = collect($messages)->where('role', 'user')->last();
             $userQuery = $lastUserMessage['content'] ?? '';
 
+            // Get current page context
+            $currentPath = $request->input('current_path', '/');
+            $pageTitle = $request->input('page_title', '');
+
             // Search website content based on user's question (respects toggle settings)
             $searchResults = $this->knowledgeService->search($userQuery);
 
-            $systemPrompt = $this->buildPublicSystemPrompt($searchResults);
+            // Build page-aware context
+            $pageContext = $this->buildPageContext($currentPath, $pageTitle);
+
+            $systemPrompt = $this->buildPublicSystemPrompt($searchResults, $pageContext);
 
             $result = $this->chatService->chat(
                 $messages,
@@ -85,12 +95,151 @@ class PublicChatController extends Controller
     }
 
     /**
+     * Build context about the page the user is currently viewing.
+     */
+    protected function buildPageContext(string $path, string $pageTitle): string
+    {
+        $path = rtrim($path, '/') ?: '/';
+        $baseUrl = config('app.url', 'https://xman4289.com');
+
+        // Map paths to page descriptions and contextual guidance
+        $pageMap = [
+            '/' => [
+                'name' => 'หน้าแรก',
+                'context' => 'ผู้ใช้อยู่หน้าแรก อาจกำลังดูภาพรวมบริการ',
+                'suggest' => 'แนะนำบริการเด่น สินค้ายอดนิยม หรือพาไปหน้าที่สนใจ',
+            ],
+            '/services' => [
+                'name' => 'หน้าบริการทั้งหมด',
+                'context' => 'ผู้ใช้กำลังดูบริการทั้งหมด อาจสนใจเปรียบเทียบหรือต้องการรายละเอียด',
+                'suggest' => 'อธิบายบริการแต่ละอย่าง เปรียบเทียบ แนะนำบริการที่เหมาะ หรือพาไปขอใบเสนอราคา',
+            ],
+            '/products' => [
+                'name' => 'หน้าสินค้า/ซอฟต์แวร์',
+                'context' => 'ผู้ใช้กำลังดูสินค้า อาจสนใจซื้อหรือต้องการข้อมูลเพิ่ม',
+                'suggest' => 'อธิบายฟีเจอร์สินค้า ราคา วิธีการซื้อ ลิขสิทธิ์ หรือแนะนำสินค้าที่เหมาะ',
+            ],
+            '/portfolio' => [
+                'name' => 'หน้าผลงาน',
+                'context' => 'ผู้ใช้กำลังดูผลงานของบริษัท อาจต้องการดูตัวอย่างงานก่อนตัดสินใจ',
+                'suggest' => 'อธิบายผลงานที่ทำ เทคโนโลยีที่ใช้ หรือพาไปขอใบเสนอราคา',
+            ],
+            '/rental' => [
+                'name' => 'หน้าเช่าใช้บริการ/Subscription',
+                'context' => 'ผู้ใช้กำลังดูแพ็กเกจเช่าใช้บริการ อาจสนใจสมัครหรือเปรียบเทียบแพ็กเกจ',
+                'suggest' => 'เปรียบเทียบแพ็กเกจ อธิบายฟีเจอร์ ราคา ระยะเวลา วิธีสมัคร ทดลองใช้ฟรี',
+            ],
+            '/support' => [
+                'name' => 'หน้าติดต่อ/ขอใบเสนอราคา',
+                'context' => 'ผู้ใช้ต้องการติดต่อหรือขอใบเสนอราคา',
+                'suggest' => 'ช่วยเลือกบริการ แนะนำวิธีกรอกฟอร์ม ให้ข้อมูลติดต่อ หรือช่วยประเมินราคาเบื้องต้น',
+            ],
+            '/support/tracking' => [
+                'name' => 'หน้าตรวจสอบสถานะใบเสนอราคา',
+                'context' => 'ผู้ใช้ต้องการตรวจสอบสถานะใบเสนอราคาที่ส่งไป',
+                'suggest' => 'แนะนำวิธีตรวจสอบ ใส่เลขที่อ้างอิง หรือติดต่อทีมงานเพื่อสอบถาม',
+            ],
+            '/cart' => [
+                'name' => 'หน้าตะกร้าสินค้า',
+                'context' => 'ผู้ใช้กำลังดูตะกร้าสินค้า อาจต้องการช่วยเรื่องการสั่งซื้อ',
+                'suggest' => 'ช่วยเรื่องวิธีชำระเงิน คูปองส่วนลด หรือแนะนำสินค้าเพิ่มเติม',
+            ],
+            '/about' => [
+                'name' => 'หน้าเกี่ยวกับเรา',
+                'context' => 'ผู้ใช้อยากรู้จักบริษัทมากขึ้น',
+                'suggest' => 'ให้ข้อมูลบริษัท ทีมงาน ประวัติ จุดเด่น หรือพาไปดูผลงาน',
+            ],
+            '/autotradex' => [
+                'name' => 'หน้า AutoTradeX',
+                'context' => 'ผู้ใช้สนใจ AutoTradeX (ระบบเทรดอัตโนมัติ)',
+                'suggest' => 'อธิบายฟีเจอร์ AutoTradeX, วิธีใช้งาน, ราคา, ทดลองใช้ หรือแนะนำไปหน้าราคา',
+            ],
+            '/autotradex/pricing' => [
+                'name' => 'หน้าราคา AutoTradeX',
+                'context' => 'ผู้ใช้กำลังดูราคา AutoTradeX อาจต้องการเปรียบเทียบแพ็กเกจ',
+                'suggest' => 'เปรียบเทียบแพ็กเกจราคา อธิบายฟีเจอร์แต่ละแพลน วิธีสั่งซื้อ',
+            ],
+            '/metal-x' => [
+                'name' => 'หน้า Metal X',
+                'context' => 'ผู้ใช้สนใจ Metal X (ระบบจัดการวิดีโอ/เพลง AI)',
+                'suggest' => 'อธิบายฟีเจอร์ Metal X, วิดีโอตัวอย่าง, ทีมงาน, AI Music',
+            ],
+            '/login' => [
+                'name' => 'หน้าเข้าสู่ระบบ',
+                'context' => 'ผู้ใช้ต้องการเข้าสู่ระบบ',
+                'suggest' => 'ช่วยเรื่องการเข้าสู่ระบบ ลืมรหัสผ่าน หรือแนะนำสมัครสมาชิก',
+            ],
+            '/register' => [
+                'name' => 'หน้าสมัครสมาชิก',
+                'context' => 'ผู้ใช้ต้องการสมัครสมาชิก',
+                'suggest' => 'ช่วยอธิบายสิทธิประโยชน์ของสมาชิก วิธีสมัคร',
+            ],
+        ];
+
+        // Try exact match first, then prefix match
+        $pageInfo = $pageMap[$path] ?? null;
+
+        if (! $pageInfo) {
+            // Prefix matching for dynamic routes
+            if (str_starts_with($path, '/services/')) {
+                $pageInfo = [
+                    'name' => 'หน้ารายละเอียดบริการ',
+                    'context' => 'ผู้ใช้กำลังดูรายละเอียดบริการเฉพาะอย่าง',
+                    'suggest' => 'อธิบายบริการนี้ให้ละเอียด ราคา ฟีเจอร์ ขั้นตอนการทำงาน หรือแนะนำบริการที่เกี่ยวข้อง',
+                ];
+            } elseif (str_starts_with($path, '/products/')) {
+                $pageInfo = [
+                    'name' => 'หน้ารายละเอียดสินค้า',
+                    'context' => 'ผู้ใช้กำลังดูรายละเอียดสินค้าเฉพาะชิ้น',
+                    'suggest' => 'อธิบายฟีเจอร์สินค้า ราคา ลิขสิทธิ์ วิธีซื้อ หรือเปรียบเทียบกับสินค้าอื่น',
+                ];
+            } elseif (str_starts_with($path, '/customer/')) {
+                $pageInfo = [
+                    'name' => 'หน้าระบบลูกค้า (Customer Portal)',
+                    'context' => 'ผู้ใช้เข้าสู่ระบบแล้วและอยู่ในหน้าจัดการ อาจต้องการช่วยเรื่อง license, subscription, คำสั่งซื้อ, หรือโปรเจกต์',
+                    'suggest' => 'ช่วยเรื่องการจัดการ license, ตรวจสอบสถานะสั่งซื้อ, subscription, ดาวน์โหลด, หรือส่ง support ticket',
+                ];
+            } elseif (str_starts_with($path, '/wallet')) {
+                $pageInfo = [
+                    'name' => 'หน้ากระเป๋าเงิน (Wallet)',
+                    'context' => 'ผู้ใช้อยู่ในหน้า Wallet อาจต้องการเติมเงิน ดูยอดคงเหลือ หรือดูประวัติธุรกรรม',
+                    'suggest' => 'ช่วยเรื่องวิธีเติมเงิน ยอดคงเหลือ ประวัติธุรกรรม โบนัส',
+                ];
+            } elseif (str_starts_with($path, '/rental/')) {
+                $pageInfo = [
+                    'name' => 'หน้ารายละเอียดการเช่า',
+                    'context' => 'ผู้ใช้กำลังดำเนินการเช่าบริการ (checkout/payment/status)',
+                    'suggest' => 'ช่วยเรื่องขั้นตอนการเช่า วิธีชำระเงิน สถานะ หรืออธิบายแพ็กเกจ',
+                ];
+            } elseif (str_starts_with($path, '/download')) {
+                $pageInfo = [
+                    'name' => 'หน้าดาวน์โหลดซอฟต์แวร์',
+                    'context' => 'ผู้ใช้ต้องการดาวน์โหลดซอฟต์แวร์',
+                    'suggest' => 'ช่วยเรื่องวิธีดาวน์โหลด ความต้องการระบบ วิธีติดตั้ง License Key',
+                ];
+            }
+        }
+
+        if (! $pageInfo) {
+            return '';
+        }
+
+        $titleInfo = ! empty($pageTitle) ? " (ชื่อหน้า: {$pageTitle})" : '';
+
+        return "=== ตำแหน่งปัจจุบันของผู้ใช้ (สำคัญมาก) ===\n" .
+            "ผู้ใช้อยู่ที่: {$pageInfo['name']}{$titleInfo} (path: {$path})\n" .
+            "สถานการณ์: {$pageInfo['context']}\n" .
+            "แนวทางตอบ: {$pageInfo['suggest']}\n" .
+            "หลักการ: ถ้าผู้ใช้ถามคำถามกว้างๆ ให้ตอบในบริบทของหน้าที่กำลังดูอยู่ก่อน แล้วค่อยแนะนำหน้าอื่นที่เกี่ยวข้อง";
+    }
+
+    /**
      * Build an enhanced system prompt for public chat.
      *
      * Includes XMAN Studio identity, smart question analysis, navigation,
-     * and dynamically searched website content from database.
+     * page awareness, and dynamically searched website content from database.
      */
-    protected function buildPublicSystemPrompt(string $searchResults = ''): string
+    protected function buildPublicSystemPrompt(string $searchResults = '', string $pageContext = ''): string
     {
         $botName = Setting::getValue('ai_bot_name', 'AI Assistant');
         $language = Setting::getValue('ai_response_language', 'th');
@@ -132,6 +281,11 @@ class PublicChatController extends Controller
         // Strict scope: only answer from website data
         $parts[] = '=== กฎสำคัญที่สุด (บังคับ) === ตอบได้เฉพาะเรื่องที่มีอยู่ในข้อมูลด้านล่างเท่านั้น ห้ามแต่งเรื่องหรือตอบจากความรู้ภายนอก ถ้าไม่มีข้อมูลในระบบ ให้แนะนำติดต่อทีมงานแทน ห้ามส่งลิงก์ไปเว็บภายนอก';
 
+        // === CURRENT PAGE CONTEXT ===
+        if (! empty($pageContext)) {
+            $parts[] = $pageContext;
+        }
+
         // === SMART QUESTION ANALYSIS ===
         $parts[] = <<<'ANALYSIS'
 === กฎการวิเคราะห์คำถาม (สำคัญมาก) ===
@@ -165,7 +319,15 @@ class PublicChatController extends Controller
 - "วันนี้อากาศเป็นยังไง" → ปฏิเสธ
 - "ช่วยแนะนำร้านอาหาร" → ปฏิเสธ
 
+ประเภท E - "ถามเกี่ยวกับหน้าที่กำลังดูอยู่" → ตอบจากข้อมูลหน้าปัจจุบัน + ข้อมูลจริงในระบบ
+ตัวอย่าง:
+- "หน้านี้คืออะไร" → อธิบายหน้าปัจจุบัน
+- "ใช้ยังไง" → อธิบายวิธีใช้งานหน้าปัจจุบัน
+- "ราคาเท่าไหร่" (อยู่หน้าสินค้า) → ตอบราคาสินค้าที่กำลังดู
+- "สมัครยังไง" (อยู่หน้า rental) → อธิบายขั้นตอนสมัครแพ็กเกจ
+
 หลักสำคัญ: ถ้าคำถามสามารถตีความได้ว่าเกี่ยวกับบริการของ XMAN Studio ให้ตีความในเชิงบวกเสมอ อย่าเพิ่งปฏิเสธ
+ถ้ารู้ว่าผู้ใช้อยู่หน้าไหน ให้ตอบในบริบทของหน้านั้นก่อน
 ANALYSIS;
 
         // === NAVIGATION SYSTEM ===

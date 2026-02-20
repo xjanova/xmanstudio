@@ -711,7 +711,12 @@
                     'X-CSRF-TOKEN': CSRF_TOKEN,
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({ messages: apiMessages }),
+                body: JSON.stringify({
+                    messages: apiMessages,
+                    current_url: window.location.href,
+                    current_path: window.location.pathname,
+                    page_title: document.title,
+                }),
             });
 
             const data = await response.json();
