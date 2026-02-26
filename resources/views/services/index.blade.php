@@ -120,6 +120,116 @@
     ];
 @endphp
 
+<!-- Featured: AI Chatbot Section -->
+<section class="py-16 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-violet-100 to-purple-100 text-purple-700 dark:from-violet-900/30 dark:to-purple-900/30 dark:text-purple-300 mb-4">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                แนะนำบริการ
+            </span>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">AI Chatbot อัจฉริยะ</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">ยกระดับธุรกิจด้วย Chatbot ที่ขับเคลื่อนโดย AI เข้าใจภาษาไทย ตอบได้ทันที พร้อมให้บริการ 24/7</p>
+        </div>
+
+        <div class="relative bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 rounded-3xl overflow-hidden shadow-2xl">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-10">
+                <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="chatbot-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#chatbot-grid)"/></svg>
+            </div>
+
+            <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 md:p-12">
+                <!-- Left: Feature Cards -->
+                <div class="space-y-4">
+                    <!-- Card 1 -->
+                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg">เข้าใจภาษาธรรมชาติ</h4>
+                            <p class="text-purple-100 text-sm mt-1">รองรับภาษาไทยและอังกฤษ เข้าใจบริบท คำสแลง และ Typo ได้อย่างแม่นยำ</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg">ให้บริการ 24/7</h4>
+                            <p class="text-purple-100 text-sm mt-1">ตอบคำถามลูกค้าได้ตลอด 24 ชั่วโมง ไม่มีวันหยุด ไม่ต้องรอคิว</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg">ตอบกลับทันทีใน 3 วินาที</h4>
+                            <p class="text-purple-100 text-sm mt-1">ลด Bounce Rate เพิ่ม Conversion ลูกค้าได้รับคำตอบโดยไม่ต้องรอ</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg">ลดต้นทุน CS สูงถึง 60%</h4>
+                            <p class="text-purple-100 text-sm mt-1">รับมือคำถามซ้ำๆ ได้เอง ทีมโฟกัสกับเคสที่ซับซ้อนจริงๆ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: CTA Area -->
+                <div class="flex flex-col items-center justify-center text-center lg:text-left lg:items-start space-y-6">
+                    <div class="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-white/30 shadow-lg">
+                        <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl md:text-3xl font-bold text-white mb-3">พร้อมทดลองใช้งาน Chatbot</h3>
+                        <p class="text-purple-100 text-lg max-w-md">ดูตัวอย่างการทำงานจริงของ AI Chatbot ที่พัฒนาให้ลูกค้าของเรา พร้อมฟีเจอร์ครบครัน</p>
+                    </div>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="https://cus008.xman4289.com"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-700 rounded-xl font-bold text-lg hover:bg-purple-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            ดูรายละเอียด
+                        </a>
+                        <a href="{{ route('support.index') }}"
+                           class="inline-flex items-center gap-2 px-8 py-4 border-2 border-white/40 text-white rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            ติดต่อสอบถาม
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Services Categories Grid -->
 <section class="py-16 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
