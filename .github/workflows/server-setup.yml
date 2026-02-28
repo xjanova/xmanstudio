@@ -1,0 +1,67 @@
+name: Server Setup (Temp)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Setup task'
+        required: true
+        type: choice
+        options:
+          - setup-thaixtrade-ssh
+          - test-ssh
+          - cleanup
+
+jobs:
+  setup:
+    name: Server Setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run setup via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 2m
+          script: |
+            TASK="${{ inputs.task }}"
+            echo "Running task: $TASK"
+
+            case "$TASK" in
+              setup-thaixtrade-ssh)
+                echo "=== Fixing sshd_config ==="
+                sed -i '/^PermitRootLogin no$/d' /etc/ssh/sshd_config
+                grep -n "PermitRootLogin" /etc/ssh/sshd_config
+
+                echo "=== Setting up admin SSH key ==="
+                mkdir -p /home/admin/.ssh
+                cat /root/.ssh/thaixtrade_deploy.pub >> /home/admin/.ssh/authorized_keys
+                chmod 700 /home/admin/.ssh
+                chmod 600 /home/admin/.ssh/authorized_keys
+                chown -R admin:admin /home/admin/.ssh
+
+                echo "=== Setting up sudo for admin ==="
+                echo "admin ALL=(ALL) NOPASSWD: /usr/sbin/service, /usr/bin/systemctl" > /etc/sudoers.d/admin-deploy
+                chmod 440 /etc/sudoers.d/admin-deploy
+
+                echo "=== Restarting sshd ==="
+                systemctl restart sshd
+
+                echo "=== Testing admin SSH ==="
+                ssh -i /root/.ssh/thaixtrade_deploy -o StrictHostKeyChecking=no -o PasswordAuthentication=no admin@localhost "echo ADMIN_SSH_OK" 2>&1
+
+                echo "=== DONE ==="
+                ;;
+
+              test-ssh)
+                echo "=== Testing admin SSH ==="
+                ssh -i /root/.ssh/thaixtrade_deploy -o StrictHostKeyChecking=no -o PasswordAuthentication=no admin@localhost "whoami && echo OK" 2>&1
+                ;;
+
+              cleanup)
+                echo "This workflow can be deleted after setup is complete"
+                ;;
+            esac
