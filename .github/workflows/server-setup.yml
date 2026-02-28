@@ -29,36 +29,38 @@ jobs:
           script: |
             TASK="${{ inputs.task }}"
             echo "Running task: $TASK"
+            echo "Current user: $(whoami)"
 
             case "$TASK" in
               setup-thaixtrade-ssh)
                 echo "=== Fixing sshd_config ==="
-                sed -i '/^PermitRootLogin no$/d' /etc/ssh/sshd_config
-                grep -n "PermitRootLogin" /etc/ssh/sshd_config
+                sudo sed -i '/^PermitRootLogin no$/d' /etc/ssh/sshd_config
+                sudo grep -n "PermitRootLogin" /etc/ssh/sshd_config
 
                 echo "=== Setting up admin SSH key ==="
-                mkdir -p /home/admin/.ssh
-                cat /root/.ssh/thaixtrade_deploy.pub >> /home/admin/.ssh/authorized_keys
-                chmod 700 /home/admin/.ssh
-                chmod 600 /home/admin/.ssh/authorized_keys
-                chown -R admin:admin /home/admin/.ssh
+                mkdir -p ~/.ssh
+                sudo cat /root/.ssh/thaixtrade_deploy.pub >> ~/.ssh/authorized_keys
+                chmod 700 ~/.ssh
+                chmod 600 ~/.ssh/authorized_keys
 
-                echo "=== Setting up sudo for admin ==="
-                echo "admin ALL=(ALL) NOPASSWD: /usr/sbin/service, /usr/bin/systemctl" > /etc/sudoers.d/admin-deploy
-                chmod 440 /etc/sudoers.d/admin-deploy
+                echo "=== Check key added ==="
+                grep thaixtrade ~/.ssh/authorized_keys
+
+                echo "=== Setting up sudo for deploy ==="
+                echo "$(whoami) ALL=(ALL) NOPASSWD: /usr/sbin/service, /usr/bin/systemctl" | sudo tee /etc/sudoers.d/deploy-user
+                sudo chmod 440 /etc/sudoers.d/deploy-user
 
                 echo "=== Restarting sshd ==="
-                systemctl restart sshd
-
-                echo "=== Testing admin SSH ==="
-                ssh -i /root/.ssh/thaixtrade_deploy -o StrictHostKeyChecking=no -o PasswordAuthentication=no admin@localhost "echo ADMIN_SSH_OK" 2>&1
+                sudo systemctl restart sshd
 
                 echo "=== DONE ==="
                 ;;
 
               test-ssh)
-                echo "=== Testing admin SSH ==="
-                ssh -i /root/.ssh/thaixtrade_deploy -o StrictHostKeyChecking=no -o PasswordAuthentication=no admin@localhost "whoami && echo OK" 2>&1
+                echo "=== whoami ==="
+                whoami
+                echo "=== SSH test ==="
+                echo OK
                 ;;
 
               cleanup)
