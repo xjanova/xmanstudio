@@ -3,6 +3,32 @@
 @section('title', 'XMAN Studio - IT Solutions & Software Development ครบวงจร')
 
 @section('content')
+<!-- Sale Promotion Banner -->
+<div class="relative z-50 overflow-hidden bg-gradient-to-r from-red-600 via-pink-600 to-red-600" style="background-size: 200% 100%; animation: sale-bg-shift 3s ease infinite;">
+    <div class="absolute inset-0 opacity-20">
+        <div class="absolute inset-0" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px);"></div>
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-center py-3 gap-3 flex-wrap">
+            <span class="inline-flex items-center gap-2 text-white font-bold text-sm md:text-base">
+                <span class="flex items-center justify-center w-7 h-7 bg-yellow-400 text-red-600 rounded-full text-xs font-black animate-bounce">%</span>
+                <span class="tracking-wide">มหกรรมลดราคา</span>
+            </span>
+            <span class="px-4 py-1 bg-yellow-400 text-red-700 font-black text-lg md:text-2xl rounded-lg shadow-lg" style="animation: sale-pulse 1.5s ease-in-out infinite;">
+                50-70% OFF
+            </span>
+            <a href="/services" class="inline-flex items-center gap-1 px-4 py-1.5 bg-white text-red-600 font-bold text-sm rounded-full hover:bg-yellow-100 transition-colors shadow-md">
+                ดูบริการทั้งหมด
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </div>
+</div>
+<style>
+    @keyframes sale-bg-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes sale-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+</style>
+
 <!-- Hero Hyperdrive Section -->
 <div class="hyperdrive-hero relative h-screen overflow-hidden bg-black" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)">
     <!-- Hyperdrive Stars Background -->
@@ -30,18 +56,28 @@
                 </span>
             </div>
 
-            <!-- Main Title -->
+            <!-- Main Title / Logo -->
+            @php
+                $heroLogo = \App\Models\Setting::getValue('site_logo');
+            @endphp
             <h1 class="mb-8">
-                <span class="block text-5xl md:text-7xl lg:text-9xl font-black text-white tracking-tight hyperdrive-title"
-                      :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
-                      style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;">
-                    XMAN
-                </span>
-                <span class="block text-4xl md:text-6xl lg:text-8xl font-black bg-gradient-to-r from-primary-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mt-2"
-                      :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
-                      style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s; background-size: 200% 200%; animation: gradient-shift 5s ease infinite;">
-                    STUDIO
-                </span>
+                @if($heroLogo)
+                    <div :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
+                         style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;">
+                        <img src="{{ asset('storage/' . $heroLogo) }}" alt="XMAN STUDIO" class="mx-auto h-28 md:h-40 lg:h-52 w-auto drop-shadow-2xl">
+                    </div>
+                @else
+                    <span class="block text-5xl md:text-7xl lg:text-9xl font-black text-white tracking-tight hyperdrive-title"
+                          :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
+                          style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;">
+                        XMAN
+                    </span>
+                    <span class="block text-4xl md:text-6xl lg:text-8xl font-black bg-gradient-to-r from-primary-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mt-2"
+                          :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
+                          style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s; background-size: 200% 200%; animation: gradient-shift 5s ease infinite;">
+                        STUDIO
+                    </span>
+                @endif
             </h1>
 
             <!-- Subtitle -->
