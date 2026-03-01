@@ -29,17 +29,16 @@
     @keyframes sale-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 </style>
 
-<!-- Hero Hyperdrive Section -->
-<div class="hyperdrive-hero relative h-screen overflow-hidden bg-black" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)">
-    <!-- Hyperdrive Stars Background -->
-    <div class="hyperdrive-container absolute inset-0">
-        <div class="hyperdrive-stars"></div>
-        <div class="hyperdrive-stars hyperdrive-stars-2"></div>
-        <div class="hyperdrive-stars hyperdrive-stars-3"></div>
-    </div>
+<!-- Hero Section with Fireflies -->
+<div class="relative h-screen overflow-hidden bg-gradient-to-b from-gray-950 via-black to-gray-950" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)" style="contain: layout style paint;">
+    <!-- Static Starfield Background (lightweight CSS only) -->
+    <div class="absolute inset-0 hero-starfield"></div>
+
+    <!-- Hero Fireflies Container -->
+    <div id="hero-fireflies" class="absolute inset-0 pointer-events-none" style="will-change: transform;"></div>
 
     <!-- Gradient Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60 z-10"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/40 z-10"></div>
 
     <!-- Central Content -->
     <div class="relative z-20 h-full flex items-center justify-center">
@@ -591,5 +590,64 @@
         </div>
     </div>
 </div>
+<!-- Hero Firefly Styles -->
+<style>
+    .hero-starfield {
+        background-image:
+            radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.7), transparent),
+            radial-gradient(1.5px 1.5px at 25% 50%, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1px 1px at 40% 15%, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1.5px 1.5px at 55% 70%, rgba(255,255,255,0.4), transparent),
+            radial-gradient(1px 1px at 70% 35%, rgba(255,255,255,0.7), transparent),
+            radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1.5px 1.5px at 15% 80%, rgba(255,255,255,0.3), transparent),
+            radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1.5px 1.5px at 35% 45%, rgba(255,255,255,0.4), transparent),
+            radial-gradient(1px 1px at 5% 55%, rgba(200,220,255,0.5), transparent),
+            radial-gradient(1px 1px at 80% 85%, rgba(200,220,255,0.4), transparent),
+            radial-gradient(1px 1px at 50% 5%, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1px 1px at 95% 45%, rgba(255,255,255,0.5), transparent);
+    }
+    .hero-firefly-wrap { position: absolute; will-change: transform; backface-visibility: hidden; }
+    .hero-firefly-dot { border-radius: 50%; will-change: opacity; backface-visibility: hidden; }
+    .hero-firefly-dot.hf-gold { background: #ffd700; box-shadow: 0 0 4px 2px #ffd700, 0 0 10px 4px rgba(255,215,0,0.4); }
+    .hero-firefly-dot.hf-blue { background: #60a5fa; box-shadow: 0 0 4px 2px #60a5fa, 0 0 10px 4px rgba(96,165,250,0.4); }
+    .hero-firefly-dot.hf-purple { background: #c084fc; box-shadow: 0 0 4px 2px #c084fc, 0 0 10px 4px rgba(192,132,252,0.4); }
+    .hero-firefly-dot.hf-cyan { background: #22d3ee; box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px rgba(34,211,238,0.4); }
+    .hero-firefly-dot.hf-pink { background: #f472b6; box-shadow: 0 0 4px 2px #f472b6, 0 0 10px 4px rgba(244,114,182,0.4); }
+</style>
 @endsection
+
+@push('scripts')
+<script>
+(function() {
+    const container = document.getElementById('hero-fireflies');
+    if (!container) return;
+
+    const colors = ['hf-gold', 'hf-blue', 'hf-purple', 'hf-cyan', 'hf-pink'];
+
+    for (let i = 0; i < 25; i++) {
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const size = 2 + Math.random() * 3;
+        const floatDur = 6 + Math.random() * 8;
+        const glowDur = 2 + Math.random() * 3;
+        const delay = Math.random() * 10;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        const wrap = document.createElement('div');
+        wrap.className = 'hero-firefly-wrap';
+        wrap.style.cssText = `left:${x}%;top:${y}%;animation:firefly-float ${floatDur}s ease-in-out infinite;animation-delay:${delay}s;`;
+
+        const dot = document.createElement('div');
+        dot.className = `hero-firefly-dot ${color}`;
+        dot.style.cssText = `width:${size}px;height:${size}px;animation:firefly-glow ${glowDur}s ease-in-out infinite alternate;animation-delay:${delay + 0.5}s;`;
+
+        wrap.appendChild(dot);
+        container.appendChild(wrap);
+    }
+})();
+</script>
+@endpush
 

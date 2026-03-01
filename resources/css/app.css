@@ -234,14 +234,18 @@
 }
 
 /* ==========================================================================
-   Hyperdrive Effect
+   Hyperdrive Effect (GPU-optimized for smooth scrolling)
    ========================================================================== */
 .hyperdrive-hero {
     perspective: 500px;
+    contain: layout style paint;
+    isolation: isolate;
 }
 
 .hyperdrive-container {
     transform-style: preserve-3d;
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
 .hyperdrive-stars {
@@ -262,6 +266,9 @@
         radial-gradient(2px 2px at 360px 60px, rgba(255,255,255,0.9), transparent);
     background-size: 400px 200px;
     animation: hyperdrive 1.6s linear infinite;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .hyperdrive-stars-2 {
