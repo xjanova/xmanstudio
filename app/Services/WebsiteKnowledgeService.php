@@ -152,11 +152,20 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ['[บริการ]'];
+        $lines = ['[บริการ] (โปรโมชั่นลดราคาพิเศษ!)'];
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
-            $price = $item->starting_price ? 'เริ่มต้น ' . number_format($item->starting_price) . ' บาท' : '';
+            $slug = $item->slug ?? '';
+            $discount = $slug === 'web' ? 0.50 : 0.70;
+            $discountLabel = $slug === 'web' ? 'ลด 50%' : 'ลด 70%';
+            if ($item->starting_price) {
+                $originalPrice = number_format($item->starting_price);
+                $salePrice = number_format($item->starting_price * (1 - $discount));
+                $price = "ราคาปกติ {$originalPrice} บาท → SALE {$discountLabel} เหลือ {$salePrice} บาท";
+            } else {
+                $price = '';
+            }
             $features = is_array($item->features_th) ? implode(', ', $item->features_th) : (is_array($item->features) ? implode(', ', $item->features) : '');
             $lines[] = "- {$name}: {$desc}" . ($price ? " ({$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
         }
@@ -225,14 +234,23 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ['[บริการและตัวเลือกงาน]'];
+        $lines = ['[บริการและตัวเลือกงาน] (โปรโมชั่นลดราคาพิเศษ!)'];
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
+            $catKey = $item->category ? $item->category->key : '';
             $category = $item->category ? ($item->category->name_th ?: $item->category->name) : '';
-            $price = $item->price ? number_format($item->price) . ' บาท' : '';
+            $discount = $catKey === 'web' ? 0.50 : 0.70;
+            $discountLabel = $catKey === 'web' ? 'ลด 50%' : 'ลด 70%';
+            if ($item->price) {
+                $originalPrice = number_format($item->price);
+                $salePrice = number_format($item->price * (1 - $discount));
+                $price = "ราคาปกติ {$originalPrice} บาท → SALE {$discountLabel} เหลือ {$salePrice} บาท";
+            } else {
+                $price = '';
+            }
             $features = is_array($item->features_th) ? implode(', ', array_slice($item->features_th, 0, 5)) : (is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '');
-            $lines[] = "- {$name}" . ($category ? " (หมวด: {$category})" : '') . ": {$desc}" . ($price ? " (ราคา: {$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
+            $lines[] = "- {$name}" . ($category ? " (หมวด: {$category})" : '') . ": {$desc}" . ($price ? " ({$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
         }
 
         return implode("\n", $lines);
@@ -292,11 +310,20 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ['[บริการทั้งหมด]'];
+        $lines = ['[บริการทั้งหมด] (โปรโมชั่นลดราคาพิเศษ!)'];
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
-            $price = $item->starting_price ? 'เริ่มต้น ' . number_format($item->starting_price) . ' บาท' : '';
+            $slug = $item->slug ?? '';
+            $discount = $slug === 'web' ? 0.50 : 0.70;
+            $discountLabel = $slug === 'web' ? 'ลด 50%' : 'ลด 70%';
+            if ($item->starting_price) {
+                $originalPrice = number_format($item->starting_price);
+                $salePrice = number_format($item->starting_price * (1 - $discount));
+                $price = "ราคาปกติ {$originalPrice} บาท → SALE {$discountLabel} เหลือ {$salePrice} บาท";
+            } else {
+                $price = '';
+            }
             $lines[] = "- {$name}: {$desc}" . ($price ? " ({$price})" : '');
         }
 
@@ -344,14 +371,23 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ['[หมวดบริการและตัวเลือกงาน]'];
+        $lines = ['[หมวดบริการและตัวเลือกงาน] (โปรโมชั่นลดราคาพิเศษ!)'];
         foreach ($items as $cat) {
             $catName = $cat->name_th ?: $cat->name;
-            $lines[] = "หมวด: {$catName}";
+            $catKey = $cat->key ?? '';
+            $discount = $catKey === 'web' ? 0.50 : 0.70;
+            $discountLabel = $catKey === 'web' ? 'ลด 50%' : 'ลด 70%';
+            $lines[] = "หมวด: {$catName} ({$discountLabel}!)";
             foreach ($cat->options as $opt) {
                 $optName = $opt->name_th ?: $opt->name;
                 $optDesc = $opt->description_th ?: $opt->description;
-                $price = $opt->price ? number_format($opt->price) . ' บาท' : '';
+                if ($opt->price) {
+                    $originalPrice = number_format($opt->price);
+                    $salePrice = number_format($opt->price * (1 - $discount));
+                    $price = "ราคาปกติ {$originalPrice} บาท → SALE เหลือ {$salePrice} บาท";
+                } else {
+                    $price = '';
+                }
                 $lines[] = "  - {$optName}: {$optDesc}" . ($price ? " ({$price})" : '');
             }
         }

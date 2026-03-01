@@ -61,9 +61,17 @@
                     @endif
 
                     <!-- Price -->
+                    @php
+                        $discount = $category->key === 'web' ? 0.50 : 0.70;
+                        $salePrice = $option->price * (1 - $discount);
+                    @endphp
                     <div class="mb-8">
-                        <div class="inline-flex items-baseline gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-purple-600 rounded-xl">
-                            <span class="text-4xl font-bold">{{ number_format($option->price, 0) }}</span>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-lg text-gray-500 line-through">{{ number_format($option->price, 0) }} ฿</span>
+                            <span class="px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full animate-pulse">SALE -{{ intval($discount * 100) }}%</span>
+                        </div>
+                        <div class="inline-flex items-baseline gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 rounded-xl">
+                            <span class="text-4xl font-bold">{{ number_format($salePrice, 0) }}</span>
                             <span class="text-xl">฿</span>
                         </div>
                     </div>
@@ -222,10 +230,17 @@
                                     {{ $related->description_th ?? $related->description }}
                                 </p>
                             @endif
+                            @php
+                                $relDiscount = $category->key === 'web' ? 0.50 : 0.70;
+                                $relSalePrice = $related->price * (1 - $relDiscount);
+                            @endphp
                             <div class="flex items-center justify-between">
-                                <span class="text-2xl font-bold text-primary-400">
-                                    {{ number_format($related->price, 0) }} ฿
-                                </span>
+                                <div>
+                                    <span class="text-xs text-gray-500 line-through">{{ number_format($related->price, 0) }} ฿</span>
+                                    <span class="text-2xl font-bold text-red-400">
+                                        {{ number_format($relSalePrice, 0) }} ฿
+                                    </span>
+                                </div>
                                 <span class="text-primary-400 group-hover:translate-x-2 transition-transform">→</span>
                             </div>
                         </a>

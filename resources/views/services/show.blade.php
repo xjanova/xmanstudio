@@ -34,15 +34,30 @@
                 <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ $service->name }}</h1>
                 <p class="text-xl text-white/90 mb-6">{{ $service->description }}</p>
 
+                @php
+                    $svcDiscount = ($service->slug ?? '') === 'web' ? 0.50 : 0.70;
+                @endphp
                 @if($service->price_type === 'fixed')
-                    <div class="text-3xl font-bold mb-6">
-                        {{ number_format($service->price, 0) }}
-                        <span class="text-lg">บาท</span>
+                    <div class="mb-6">
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="text-lg text-white/50 line-through">{{ number_format($service->price, 0) }} บาท</span>
+                            <span class="px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full animate-pulse">SALE -{{ intval($svcDiscount * 100) }}%</span>
+                        </div>
+                        <div class="text-3xl font-bold">
+                            {{ number_format($service->price * (1 - $svcDiscount), 0) }}
+                            <span class="text-lg">บาท</span>
+                        </div>
                     </div>
                 @elseif($service->price_type === 'range')
-                    <div class="text-2xl font-bold mb-6">
-                        เริ่มต้น {{ number_format($service->price_min, 0) }} - {{ number_format($service->price_max, 0) }}
-                        <span class="text-lg">บาท</span>
+                    <div class="mb-6">
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="text-base text-white/50 line-through">{{ number_format($service->price_min, 0) }} - {{ number_format($service->price_max, 0) }} บาท</span>
+                            <span class="px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full animate-pulse">SALE -{{ intval($svcDiscount * 100) }}%</span>
+                        </div>
+                        <div class="text-2xl font-bold">
+                            เริ่มต้น {{ number_format($service->price_min * (1 - $svcDiscount), 0) }} - {{ number_format($service->price_max * (1 - $svcDiscount), 0) }}
+                            <span class="text-lg">บาท</span>
+                        </div>
                     </div>
                 @else
                     <div class="text-2xl font-bold mb-6">สอบถามราคา</div>

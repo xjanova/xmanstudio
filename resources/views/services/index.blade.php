@@ -265,6 +265,11 @@
                                     <span class="text-4xl">{{ $category->icon }}</span>
                                 </div>
 
+                                            <!-- Sale Badge -->
+                                <div class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg animate-pulse">
+                                    SALE {{ $category->key === 'web' ? '50%' : '70%' }}
+                                </div>
+
                                 <!-- Options Count Badge -->
                                 <div class="absolute bottom-4 left-4 {{ $style['badge_bg'] }} {{ $style['badge_text'] }} px-3 py-1 rounded-full text-sm font-semibold">
                                     {{ $category->activeOptions->count() }} บริการ
@@ -376,10 +381,18 @@
                                         @endif
 
                                         <!-- Price and Action -->
+                                        @php
+                                            $discount = $category->key === 'web' ? 0.50 : 0.70;
+                                            $salePrice = $option->price * (1 - $discount);
+                                        @endphp
                                         <div class="flex items-center justify-between mt-auto pt-4 border-t {{ $style['border'] }}">
                                             <div>
-                                                <span class="text-2xl font-bold {{ $style['text'] }}">
-                                                    {{ number_format($option->price, 0) }}
+                                                <div class="flex items-center gap-1 mb-0.5">
+                                                    <span class="text-xs text-gray-400 line-through">{{ number_format($option->price, 0) }} ฿</span>
+                                                    <span class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">-{{ intval($discount * 100) }}%</span>
+                                                </div>
+                                                <span class="text-2xl font-bold text-red-500">
+                                                    {{ number_format($salePrice, 0) }}
                                                 </span>
                                                 <span class="text-sm text-gray-500 ml-1">฿</span>
                                             </div>
