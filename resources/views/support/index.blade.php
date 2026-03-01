@@ -77,7 +77,15 @@
                                                                 <div class="font-semibold text-gray-900 dark:text-white text-sm" x-text="option.name_th"></div>
                                                                 <div class="text-xs text-gray-500 mt-1" x-text="option.name"></div>
                                                             </div>
-                                                            <div class="text-primary-600 dark:text-primary-400 font-bold text-sm ml-2 whitespace-nowrap" x-text="formatPrice(option.price) + ' ฿'"></div>
+                                                            <div class="ml-2 whitespace-nowrap text-right">
+                                                                <template x-if="option.original_price && option.original_price > option.price">
+                                                                    <div>
+                                                                        <span class="text-xs text-gray-400 line-through" x-text="formatPrice(option.original_price) + ' ฿'"></span>
+                                                                        <span class="text-[10px] bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" x-text="'-' + option.sale_percent + '%'"></span>
+                                                                    </div>
+                                                                </template>
+                                                                <div class="text-red-500 font-bold text-sm" x-text="formatPrice(option.price) + ' ฿'"></div>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </label>

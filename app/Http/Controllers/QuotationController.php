@@ -1245,12 +1245,19 @@ class QuotationController extends Controller
         // If database has data, use it
         if ($categories->count() > 0) {
             foreach ($categories as $category) {
+                // Apply sale discount: web categories 50% off, others 70% off
+                $saleDiscount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
+
                 $options = [];
                 foreach ($category->activeOptions as $option) {
+                    $originalPrice = (float) $option->price;
+                    $salePrice = round($originalPrice * (1 - $saleDiscount));
                     $options[$option->key] = [
                         'name' => $option->name,
                         'name_th' => $option->name_th ?? $option->name,
-                        'price' => (float) $option->price,
+                        'price' => $salePrice,
+                        'original_price' => $originalPrice,
+                        'sale_percent' => intval($saleDiscount * 100),
                         'description' => $option->description,
                         'description_th' => $option->description_th,
                     ];

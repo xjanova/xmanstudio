@@ -62,7 +62,7 @@
 
                     <!-- Price -->
                     @php
-                        $discount = $category->key === 'web' ? 0.50 : 0.70;
+                        $discount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
                         $salePrice = $option->price * (1 - $discount);
                     @endphp
                     <div class="mb-8">
@@ -231,7 +231,7 @@
                                 </p>
                             @endif
                             @php
-                                $relDiscount = $category->key === 'web' ? 0.50 : 0.70;
+                                $relDiscount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
                                 $relSalePrice = $related->price * (1 - $relDiscount);
                             @endphp
                             <div class="flex items-center justify-between">

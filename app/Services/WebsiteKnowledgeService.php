@@ -157,8 +157,8 @@ class WebsiteKnowledgeService
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
             $slug = $item->slug ?? '';
-            $discount = $slug === 'web' ? 0.50 : 0.70;
-            $discountLabel = $slug === 'web' ? 'ลด 50%' : 'ลด 70%';
+            $discount = str_starts_with($slug, 'web') ? 0.50 : 0.70;
+            $discountLabel = str_starts_with($slug, 'web') ? 'ลด 50%' : 'ลด 70%';
             if ($item->starting_price) {
                 $originalPrice = number_format($item->starting_price);
                 $salePrice = number_format($item->starting_price * (1 - $discount));
@@ -240,8 +240,8 @@ class WebsiteKnowledgeService
             $desc = $item->description_th ?: $item->description;
             $catKey = $item->category ? $item->category->key : '';
             $category = $item->category ? ($item->category->name_th ?: $item->category->name) : '';
-            $discount = $catKey === 'web' ? 0.50 : 0.70;
-            $discountLabel = $catKey === 'web' ? 'ลด 50%' : 'ลด 70%';
+            $discount = str_starts_with($catKey, 'web') ? 0.50 : 0.70;
+            $discountLabel = str_starts_with($catKey, 'web') ? 'ลด 50%' : 'ลด 70%';
             if ($item->price) {
                 $originalPrice = number_format($item->price);
                 $salePrice = number_format($item->price * (1 - $discount));
@@ -315,8 +315,8 @@ class WebsiteKnowledgeService
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
             $slug = $item->slug ?? '';
-            $discount = $slug === 'web' ? 0.50 : 0.70;
-            $discountLabel = $slug === 'web' ? 'ลด 50%' : 'ลด 70%';
+            $discount = str_starts_with($slug, 'web') ? 0.50 : 0.70;
+            $discountLabel = str_starts_with($slug, 'web') ? 'ลด 50%' : 'ลด 70%';
             if ($item->starting_price) {
                 $originalPrice = number_format($item->starting_price);
                 $salePrice = number_format($item->starting_price * (1 - $discount));
@@ -375,8 +375,8 @@ class WebsiteKnowledgeService
         foreach ($items as $cat) {
             $catName = $cat->name_th ?: $cat->name;
             $catKey = $cat->key ?? '';
-            $discount = $catKey === 'web' ? 0.50 : 0.70;
-            $discountLabel = $catKey === 'web' ? 'ลด 50%' : 'ลด 70%';
+            $discount = str_starts_with($catKey, 'web') ? 0.50 : 0.70;
+            $discountLabel = str_starts_with($catKey, 'web') ? 'ลด 50%' : 'ลด 70%';
             $lines[] = "หมวด: {$catName} ({$discountLabel}!)";
             foreach ($cat->options as $opt) {
                 $optName = $opt->name_th ?: $opt->name;
