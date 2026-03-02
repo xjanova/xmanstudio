@@ -20,14 +20,17 @@ jobs:
     steps:
       - name: Run setup via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          INPUT_TASK: ${{ inputs.task }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           command_timeout: 2m
+          envs: INPUT_TASK
           script: |
-            TASK="${{ inputs.task }}"
+            TASK="${INPUT_TASK}"
             echo "Running task: $TASK"
             echo "Current user: $(whoami)"
 

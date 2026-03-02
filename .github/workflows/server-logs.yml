@@ -31,13 +31,16 @@ jobs:
         uses: appleboy/ssh-action@v1
         env:
           DEPLOY_DIR: ${{ secrets.DEPLOY_PATH }}
+          INPUT_LINES: ${{ inputs.lines }}
+          INPUT_COMMAND: ${{ inputs.log_command }}
+          INPUT_PATTERN: ${{ inputs.custom_grep }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           command_timeout: 2m
-          envs: DEPLOY_DIR
+          envs: DEPLOY_DIR,INPUT_LINES,INPUT_COMMAND,INPUT_PATTERN
           script: |
             cd "$DEPLOY_DIR" || exit 1
 
@@ -52,8 +55,8 @@ jobs:
                 LOG_FILE="storage/logs/laravel.log"
               fi
             fi
-            LINES=${{ inputs.lines }}
-            COMMAND="${{ inputs.log_command }}"
+            LINES="${INPUT_LINES:-500}"
+            COMMAND="${INPUT_COMMAND}"
 
             echo "============================================"
             echo "📋 Server Logs — $(date '+%Y-%m-%d %H:%M:%S')"
@@ -73,17 +76,17 @@ jobs:
                 tail -500 "$LOG_FILE"
                 ;;
               custom)
-                PATTERN="${{ inputs.custom_grep }}"
+                PATTERN="${INPUT_PATTERN}"
                 if [ -z "$PATTERN" ]; then
                   echo "❌ No custom grep pattern provided"
                   exit 1
                 fi
                 echo "🔍 Custom grep: $PATTERN"
                 echo "---"
-                tail -$LINES "$LOG_FILE" | grep -E "$PATTERN" | tail -60
+                tail -"$LINES" "$LOG_FILE" | grep -E "$PATTERN" | tail -60
                 ;;
               tinker)
-                PHP_CODE="${{ inputs.custom_grep }}"
+                PHP_CODE="${INPUT_PATTERN}"
                 if [ -z "$PHP_CODE" ]; then
                   echo "❌ No PHP code provided in custom_grep field"
                   exit 1

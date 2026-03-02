@@ -39,9 +39,11 @@ jobs:
         with:
           php-version: '8.3'
       - run: composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
-      - run: php -l app/Http/Controllers/Api/V1/SmsPaymentController.php
-      - run: php -l routes/api.php
-      - run: php -l routes/web.php
+      - name: Lint PHP files
+        run: |
+          find app/ routes/ config/ -name "*.php" -print0 | xargs -0 -n1 php -l 2>&1 | grep -v "No syntax errors" | head -20
+          # Fail if any syntax errors found
+          find app/ routes/ config/ -name "*.php" -print0 | xargs -0 -n1 php -l 2>&1 | grep -q "Parse error" && exit 1 || true
 
   deploy:
     name: Deploy to Production

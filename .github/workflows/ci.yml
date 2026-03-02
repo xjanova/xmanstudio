@@ -72,7 +72,6 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-          touch database/database.sqlite
           php artisan config:clear
           php artisan cache:clear
 
@@ -151,8 +150,8 @@ jobs:
 
       - name: Check build output
         run: |
-          if [ ! -f public/build/manifest.json ]; then
-            echo "Build manifest not found!"
+          if [ ! -f public_html/build/manifest.json ]; then
+            echo "Build manifest not found at public_html/build/manifest.json!"
             exit 1
           fi
           echo "✓ Build completed successfully"
