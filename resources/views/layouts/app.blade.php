@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'XMAN Studio - IT Solutions & Software Development')</title>
-    <meta name="description" content="@yield('meta_description', 'XMAN Studio ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร ทำเว็บไซต์ แอพพลิเคชัน Blockchain IoT Network Security AI และอื่นๆ')">
+
+    <!-- SEO & Social Media Preview -->
+    <x-seo-meta
+        :title="View::yieldContent('title', 'XMAN Studio - IT Solutions & Software Development')"
+        :description="View::yieldContent('meta_description', 'XMAN Studio ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร ทำเว็บไซต์ แอพพลิเคชัน Blockchain IoT Network Security AI และอื่นๆ')"
+        :image="View::yieldContent('og_image', '')"
+    />
 
     <!-- Favicon -->
     @php
