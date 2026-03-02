@@ -42,6 +42,7 @@ use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\HomeController;
@@ -73,6 +74,10 @@ Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
 | Public Routes
 |--------------------------------------------------------------------------
 */
+
+// OG Image Generation (Social Media Preview)
+Route::get('/og-image', [OgImageController::class, 'generate'])->name('og-image.generate');
+Route::get('/og-image/default', [OgImageController::class, 'defaultImage'])->name('og-image.default');
 
 // Public AI Chat
 Route::post('/ai-chat', [PublicChatController::class, 'chat'])
