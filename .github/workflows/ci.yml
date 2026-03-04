@@ -113,7 +113,13 @@ jobs:
         run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Run Laravel Pint (Code Style)
-        run: ./vendor/bin/pint --test
+        run: |
+          ./vendor/bin/pint
+          if ! git diff --quiet; then
+            echo "::error::Code style issues found. Run 'vendor/bin/pint' locally to fix."
+            git diff
+            exit 1
+          fi
 
       - name: Check for security vulnerabilities
         run: |
