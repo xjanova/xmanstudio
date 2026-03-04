@@ -3,8 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Insert Tping product for existing deployments (without re-seeding).
      */
@@ -13,7 +12,7 @@ return new class extends Migration
         // Find or create the mobile-tools category
         $categoryId = DB::table('categories')->where('slug', 'mobile-tools')->value('id');
 
-        if (!$categoryId) {
+        if (! $categoryId) {
             $categoryId = DB::table('categories')->insertGetId([
                 'name' => 'Mobile Tools',
                 'slug' => 'mobile-tools',
@@ -28,7 +27,7 @@ return new class extends Migration
 
         // Only insert if not already exists
         $exists = DB::table('products')->where('slug', 'tping')->exists();
-        if (!$exists) {
+        if (! $exists) {
             DB::table('products')->insert([
                 'category_id' => $categoryId,
                 'name' => 'Tping',
