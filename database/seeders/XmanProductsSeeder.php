@@ -918,6 +918,94 @@ class XmanProductsSeeder extends Seeder
                 'stock' => 999,
                 'is_active' => true,
             ],
+
+            // 8. Tping
+            [
+                'category_id' => $mobileCategory->id,
+                'name' => 'Tping',
+                'slug' => 'tping',
+                'sku' => 'TPG-001',
+                'short_description' => 'แอพช่วยพิมพ์อัตโนมัติสำหรับ Android บันทึกขั้นตอนแล้วเล่นซ้ำ รองรับเกมและแอพทั่วไป สำหรับผู้ที่ใช้นิ้วไม่สะดวก',
+                'description' => '<div class="prose max-w-none">
+<h2>Tping - Auto-Typing Assistant for Android</h2>
+<p><em>"ช่วยพิมพ์ สำหรับผู้ที่ใช้นิ้วไม่สะดวก"</em></p>
+<p>แอปพลิเคชัน Android สำหรับบันทึกและเล่นซ้ำขั้นตอนการพิมพ์และกดปุ่มอัตโนมัติ ออกแบบสำหรับผู้ที่ใช้นิ้วไม่สะดวก รองรับทั้งแอพทั่วไปและเกม</p>
+
+<h3>Core Features</h3>
+<ul>
+<li><strong>Auto-Recording</strong> - บันทึกทุกขั้นตอนการใช้งาน (กด, พิมพ์, เลื่อน)</li>
+<li><strong>Auto-Playback</strong> - เล่นซ้ำขั้นตอนที่บันทึกไว้อัตโนมัติ</li>
+<li><strong>Data Profiles</strong> - จัดการชุดข้อมูล (ชื่อผู้ใช้, รหัสผ่าน, อีเมล)</li>
+<li><strong>Tag Data Fields</strong> - ผูกช่องกรอกข้อมูลกับชุดข้อมูลที่เตรียมไว้</li>
+<li><strong>Loop Playback</strong> - เล่นซ้ำ 1-999 รอบ</li>
+</ul>
+
+<h3>Game Mode</h3>
+<ul>
+<li><strong>Coordinate Recording</strong> - บันทึกตำแหน่งกดด้วย Crosshair Overlay</li>
+<li><strong>Resolution Scaling</strong> - ปรับพิกัดตามความละเอียดจอ</li>
+<li><strong>Game Input</strong> - กรอกข้อมูลในเกมได้ (ชื่อผู้ใช้, รหัสผ่าน)</li>
+<li><strong>3-Tier Node Finding</strong> - ค้นหาปุ่ม 3 ชั้น: Resource ID → Text → Coordinate</li>
+</ul>
+
+<h3>Smart Features</h3>
+<ul>
+<li><strong>Auto App Launch</strong> - เปิดแอพเป้าหมายอัตโนมัติเมื่อเริ่มเล่น</li>
+<li><strong>Smart Field Suggestion</strong> - แนะนำชื่อฟิลด์อัจฉริยะ</li>
+<li><strong>Floating Overlay</strong> - ปุ่มควบคุมลอยหน้าจอ ใช้ได้ทุกแอพ</li>
+<li><strong>Accessibility Shortcut</strong> - เปิด Tping ได้ทันทีจากทุกหน้าจอ</li>
+</ul>
+
+<h3>Actions Supported</h3>
+<table class="min-w-full">
+<thead><tr><th>Action</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>CLICK</td><td>กดปุ่ม/ลิงก์</td></tr>
+<tr><td>LONG_CLICK</td><td>กดค้าง</td></tr>
+<tr><td>INPUT_TEXT</td><td>กรอกข้อความ</td></tr>
+<tr><td>SCROLL</td><td>เลื่อนหน้าจอ</td></tr>
+<tr><td>WAIT</td><td>รอเวลา</td></tr>
+</tbody>
+</table>
+
+<h3>Technical Stack</h3>
+<table class="min-w-full">
+<tr><td>Platform</td><td>Android (API 26+)</td></tr>
+<tr><td>Language</td><td>Kotlin</td></tr>
+<tr><td>UI</td><td>Jetpack Compose + Material 3</td></tr>
+<tr><td>Database</td><td>Room (SQLite)</td></tr>
+<tr><td>Service</td><td>AccessibilityService + WindowManager Overlay</td></tr>
+</table>
+
+<h3>Use Cases</h3>
+<ul>
+<li><strong>ผู้ที่ใช้นิ้วไม่สะดวก:</strong> พิมพ์และกดปุ่มอัตโนมัติ</li>
+<li><strong>เกมเมอร์:</strong> กดปุ่มซ้ำ ๆ ในเกม (รับของ, ทำภารกิจ)</li>
+<li><strong>การทำงานซ้ำ:</strong> กรอกฟอร์มหลายรอบ สลับบัญชี</li>
+</ul>
+</div>',
+                'features' => [
+                    'บันทึกขั้นตอนการใช้งานอัตโนมัติ',
+                    'เล่นซ้ำขั้นตอนที่บันทึกไว้ (1-999 รอบ)',
+                    'จัดการชุดข้อมูล (Data Profiles)',
+                    'ผูกข้อมูลกับช่องกรอก (Tag Data Fields)',
+                    'โหมดเกม — บันทึกพิกัดด้วย Crosshair Overlay',
+                    'Resolution Scaling ปรับตามจอ',
+                    'กรอกข้อมูลในเกมได้',
+                    '3-Tier Node Finding (ID → Text → Coordinate)',
+                    'เปิดแอพเป้าหมายอัตโนมัติ',
+                    'Smart Field Suggestion',
+                    'Floating Overlay ใช้ได้ทุกแอพ',
+                    'Accessibility Shortcut เปิดได้ทันที',
+                    'Kotlin + Jetpack Compose + Material 3',
+                ],
+                'price' => 299.00,
+                'image' => null,
+                'images' => [],
+                'requires_license' => true,
+                'stock' => 999,
+                'is_active' => true,
+            ],
         ];
 
         foreach ($products as $productData) {
@@ -927,6 +1015,6 @@ class XmanProductsSeeder extends Seeder
             );
         }
 
-        $this->command->info('Successfully seeded 7 Xman Studio products with comprehensive details!');
+        $this->command->info('Successfully seeded 8 Xman Studio products with comprehensive details!');
     }
 }
