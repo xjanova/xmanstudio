@@ -121,7 +121,7 @@
                         </div>
                     </div>
 
-                    <a href="{{ route('checkout') }}"
+                    <a href="{{ route('orders.checkout') }}"
                        class="block w-full text-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold">
                         ดำเนินการสั่งซื้อ
                     </a>
