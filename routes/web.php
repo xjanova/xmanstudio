@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
 use App\Http\Controllers\Admin\LicenseAnalyticsController;
+use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\HomeController;
@@ -54,6 +56,7 @@ use App\Http\Controllers\PublicChatController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\SetupController;
+use App\Http\Controllers\SharedWorkflowController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Models\AdsTxtSetting;
@@ -83,6 +86,9 @@ Route::get('/og-image/default', [OgImageController::class, 'defaultImage'])->nam
 Route::post('/ai-chat', [PublicChatController::class, 'chat'])
     ->middleware('throttle:20,1')
     ->name('public.ai-chat');
+
+// Shared Workflow (public)
+Route::get('/shared/workflow/{token}', [SharedWorkflowController::class, 'show'])->name('shared.workflow');
 
 // Home (with setup check)
 Route::get('/', function () {
@@ -267,6 +273,17 @@ Route::middleware('auth')->group(function () {
         // Theme Settings
         Route::get('/settings/theme', [\App\Http\Controllers\UserThemeController::class, 'index'])->name('settings.theme');
         Route::put('/settings/theme', [\App\Http\Controllers\UserThemeController::class, 'update'])->name('settings.theme.update');
+
+        // Tping Workflows
+        Route::prefix('tping-workflows')->name('tping.workflows.')->group(function () {
+            Route::get('/', [TpingWorkflowController::class, 'index'])->name('index');
+            Route::get('/{workflow}', [TpingWorkflowController::class, 'show'])->name('show');
+            Route::get('/{workflow}/edit', [TpingWorkflowController::class, 'edit'])->name('edit');
+            Route::put('/{workflow}', [TpingWorkflowController::class, 'update'])->name('update');
+            Route::delete('/{workflow}', [TpingWorkflowController::class, 'destroy'])->name('destroy');
+            Route::post('/{workflow}/share', [TpingWorkflowController::class, 'share'])->name('share');
+            Route::post('/{workflow}/unshare', [TpingWorkflowController::class, 'unshare'])->name('unshare');
+        });
     });
 
     // User Wallet
@@ -299,6 +316,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Analytics Dashboard
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+
+    // Tping Workflow Management
+    Route::prefix('tping-workflows')->name('tping.workflows.')->group(function () {
+        Route::get('/', [AdminTpingWorkflowController::class, 'index'])->name('index');
+        Route::get('/{workflow}', [AdminTpingWorkflowController::class, 'show'])->name('show');
+        Route::delete('/{workflow}', [AdminTpingWorkflowController::class, 'destroy'])->name('destroy');
+    });
 
     // Premium Mockup Dashboard
     Route::get('/mockup', function () {

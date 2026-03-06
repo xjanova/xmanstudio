@@ -4,8 +4,11 @@ use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\ProductLicenseController;
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BugReportController;
+use App\Http\Controllers\Api\V1\DataProfileController;
 use App\Http\Controllers\Api\V1\SmsPaymentController;
+use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use Illuminate\Support\Facades\Route;
 
@@ -98,6 +101,20 @@ Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function ()
     });
 });
 
+// ==================== Authentication API Routes ====================
+// Token-based auth for mobile apps via Laravel Sanctum
+// Rate limited to 10 requests per minute per IP
+
+Route::prefix('v1/auth')->middleware(['throttle:10,1'])->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/user', [AuthController::class, 'user']);
+    });
+});
+
 // ==================== Generic Product License API Routes ====================
 // These routes support all products that require license
 // Use /{productSlug}/ to specify the product
@@ -127,6 +144,28 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
         Route::post('/demo', [ProductLicenseController::class, 'startDemo']);
         Route::post('/demo/check', [ProductLicenseController::class, 'checkDemo']);
     });
+
+    // ===== Workflow & Data Profile Cloud Sync (requires auth) =====
+    Route::middleware('auth:sanctum')->group(function () {
+        // Workflows CRUD
+        Route::get('/workflows', [WorkflowController::class, 'index']);
+        Route::post('/workflows', [WorkflowController::class, 'store']);
+        Route::get('/workflows/{id}', [WorkflowController::class, 'show']);
+        Route::put('/workflows/{id}', [WorkflowController::class, 'update']);
+        Route::delete('/workflows/{id}', [WorkflowController::class, 'destroy']);
+        Route::post('/workflows/{id}/share', [WorkflowController::class, 'share']);
+        Route::post('/workflows/import', [WorkflowController::class, 'bulkImport']);
+
+        // Data Profiles CRUD
+        Route::get('/data-profiles', [DataProfileController::class, 'index']);
+        Route::post('/data-profiles', [DataProfileController::class, 'store']);
+        Route::put('/data-profiles/{id}', [DataProfileController::class, 'update']);
+        Route::delete('/data-profiles/{id}', [DataProfileController::class, 'destroy']);
+        Route::post('/data-profiles/import', [DataProfileController::class, 'bulkImport']);
+    });
+
+    // Public shared workflow access (no auth)
+    Route::get('/workflows/shared/{token}', [WorkflowController::class, 'getShared']);
 });
 
 // ==================== Version & Download API Routes ====================
