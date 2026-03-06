@@ -142,3 +142,11 @@ $seo->site_title;
 - The setup wizard (`/setup`) runs automatically if no admin user exists.
 - Custom tracking code (Google Analytics, Facebook Pixel, etc.) is injected via `Setting::getValue('custom_code_head')` in layouts.
 - Theme selection between standard and premium layouts is handled dynamically.
+
+## Pre-flight Checks (MUST follow before writing code)
+
+- **Routes:** Before using `route('name')` in Blade templates, always read `routes/web.php` first to verify the exact route name exists.
+- **Models/Controllers:** Before referencing any model, controller, or service, read the actual file to confirm the correct class name, method, and namespace.
+- **Blade Components:** Before using `<x-component>`, verify the component exists under `resources/views/components/`.
+- **Database columns:** Before accessing `$model->column`, check the migration or model's `$fillable` to confirm the column exists.
+- **Do not guess names** — always check the source of truth in the codebase.
