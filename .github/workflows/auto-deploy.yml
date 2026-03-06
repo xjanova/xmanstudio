@@ -38,7 +38,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-      - run: composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
+      - run: composer update --prefer-dist --no-interaction --no-dev --optimize-autoloader
       - name: Lint PHP files
         run: |
           find app/ routes/ config/ -name "*.php" -print0 | xargs -0 -n1 php -l 2>&1 | grep -v "No syntax errors" | head -20
@@ -96,9 +96,9 @@ jobs:
 
             # Install/update composer dependencies
             echo "📦 Installing composer dependencies..."
-            composer install --no-dev --optimize-autoloader --no-interaction 2>&1 || {
-              echo "⚠️ Composer install failed, trying with --no-scripts"
-              composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+            composer update --no-dev --optimize-autoloader --no-interaction 2>&1 || {
+              echo "⚠️ Composer update failed, trying with --no-scripts"
+              composer update --no-dev --optimize-autoloader --no-interaction --no-scripts
             }
 
             # Run migrations (if any)

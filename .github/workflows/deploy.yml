@@ -46,7 +46,7 @@ jobs:
           php-version: '8.3'
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
+        run: composer update --prefer-dist --no-interaction --no-dev --optimize-autoloader
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
