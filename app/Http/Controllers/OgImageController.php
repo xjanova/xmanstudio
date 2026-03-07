@@ -35,10 +35,10 @@ class OgImageController extends Controller
     {
         $seo = SeoSetting::getInstance();
 
-        $imageData = Cache::remember('og_image_default_v2', 3600, function () use ($seo) {
+        $imageData = Cache::remember('og_image_default_v3', 3600, function () use ($seo) {
             return $this->createImage(
                 $seo->site_name ?: 'XMAN Studio',
-                $seo->site_description ?: 'IT Solutions & Software Development ครบวงจร'
+                'IT Solutions & Software Development'
             );
         });
 
@@ -165,9 +165,14 @@ class OgImageController extends Controller
             }
         } catch (\Throwable $e) {
             // Fallback: use GD built-in fonts (no TTF needed)
-            imagestring($img, 5, 80, 200, 'X', $cyan);
-            imagestring($img, 5, 160, 250, $title, $white);
-            imagestring($img, 3, 160, 280, $subtitle, $lightGray);
+            // Draw large "X" using filled rectangles
+            $this->drawLargeX($img, 80, 160, 60, $cyan);
+
+            // Title - use largest built-in font (5)
+            imagestring($img, 5, 180, 220, $title, $white);
+
+            // Subtitle
+            imagestring($img, 4, 180, 260, $subtitle, $lightGray);
         }
     }
 
@@ -230,6 +235,19 @@ class OgImageController extends Controller
         } catch (\Throwable $e) {
             imagestring($img, 3, 80, $height - 35, 'xmanstudio.com', $urlColor);
             imagestring($img, 2, $width - 280, $height - 35, 'IT Solutions & Development', $tagColor);
+        }
+    }
+
+    private function drawLargeX($img, int $x, int $y, int $size, int $color): void
+    {
+        $thickness = (int) ($size / 6);
+        for ($i = 0; $i < $size; $i++) {
+            for ($t = 0; $t < $thickness; $t++) {
+                // Forward diagonal
+                imagesetpixel($img, $x + $i + $t, $y + $i, $color);
+                // Backward diagonal
+                imagesetpixel($img, $x + $size - $i + $t, $y + $i, $color);
+            }
         }
     }
 
