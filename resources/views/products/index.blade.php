@@ -42,25 +42,70 @@
         </div>
     </section>
 
-    <!-- Categories Filter (Optional) -->
-    @if(isset($categories) && $categories->count() > 0)
+    <!-- Search & Filters -->
     <section class="py-4 sm:py-6 border-b border-gray-700/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+            <!-- Search Bar -->
+            <form action="{{ route('products.index') }}" method="GET" class="max-w-md mx-auto">
+                @if(request('category'))
+                    <input type="hidden" name="category" value="{{ request('category') }}">
+                @endif
+                @if(request('status'))
+                    <input type="hidden" name="status" value="{{ request('status') }}">
+                @endif
+                <div class="relative">
+                    <input type="text" name="search" value="{{ request('search') }}"
+                           placeholder="ค้นหาผลิตภัณฑ์..."
+                           class="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    @if(request('search'))
+                        <a href="{{ route('products.index', array_filter(['category' => request('category'), 'status' => request('status')])) }}"
+                           class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </a>
+                    @endif
+                </div>
+            </form>
+
+            <!-- Status Filter -->
             <div class="flex flex-wrap justify-center gap-2 sm:gap-3">
-                <a href="{{ route('products.index') }}"
-                   class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all {{ !request('category') ? 'bg-primary-600 text-white' : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50' }}">
-                    ทั้งหมด
-                </a>
-                @foreach($categories as $category)
-                    <a href="{{ route('products.index', ['category' => $category->slug]) }}"
-                       class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all {{ request('category') == $category->slug ? 'bg-primary-600 text-white' : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50' }}">
-                        {{ $category->name }}
+                @php
+                    $currentStatus = request('status', 'all');
+                    $statusFilters = [
+                        'all' => 'ทั้งหมด',
+                        'available' => 'พร้อมใช้งาน',
+                        'coming_soon' => 'Coming Soon',
+                    ];
+                @endphp
+                @foreach($statusFilters as $key => $label)
+                    <a href="{{ route('products.index', array_filter(['search' => request('search'), 'category' => request('category'), 'status' => $key === 'all' ? null : $key])) }}"
+                       class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all {{ $currentStatus === $key ? 'bg-primary-600 text-white' : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50' }}">
+                        {{ $label }}
                     </a>
                 @endforeach
             </div>
+
+            <!-- Categories Filter -->
+            @if(isset($categories) && $categories->count() > 0)
+                <div class="flex flex-wrap justify-center gap-2 sm:gap-3 pt-2 border-t border-gray-700/30">
+                    <a href="{{ route('products.index', array_filter(['search' => request('search'), 'status' => request('status')])) }}"
+                       class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all {{ !request('category') ? 'bg-purple-600 text-white' : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50' }}">
+                        ทุกหมวดหมู่
+                    </a>
+                    @foreach($categories as $category)
+                        <a href="{{ route('products.index', array_filter(['search' => request('search'), 'category' => $category->slug, 'status' => request('status')])) }}"
+                           class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all {{ request('category') == $category->slug ? 'bg-purple-600 text-white' : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50' }}">
+                            {{ $category->name }}
+                        </a>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </section>
-    @endif
 
     <!-- Products Grid -->
     <section class="py-8 sm:py-12 lg:py-16">
@@ -78,8 +123,17 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                         </svg>
                     </div>
-                    <h2 class="text-xl sm:text-2xl font-bold text-white mb-2">ยังไม่มีผลิตภัณฑ์</h2>
-                    <p class="text-gray-400 text-sm sm:text-base">กรุณากลับมาใหม่ภายหลัง</p>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white mb-2">
+                        {{ request('search') || request('status') || request('category') ? 'ไม่พบผลิตภัณฑ์ที่ตรงกับตัวกรอง' : 'ยังไม่มีผลิตภัณฑ์' }}
+                    </h2>
+                    <p class="text-gray-400 text-sm sm:text-base">
+                        {{ request('search') || request('status') || request('category') ? 'ลองเปลี่ยนคำค้นหาหรือตัวกรอง' : 'กรุณากลับมาใหม่ภายหลัง' }}
+                    </p>
+                    @if(request('search') || request('status') || request('category'))
+                        <a href="{{ route('products.index') }}" class="inline-block mt-4 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl transition-colors">
+                            ล้างตัวกรอง
+                        </a>
+                    @endif
                 </div>
             @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">

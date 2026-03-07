@@ -8,15 +8,56 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\Service;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')
-            ->where('is_active', true)
-            ->paginate(12);
+        $query = Product::with('category')
+            ->where('is_active', true);
+
+        // Search by name or description
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('short_description', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by category
+        if ($categorySlug = $request->input('category')) {
+            $category = Category::where('slug', $categorySlug)->first();
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
+        }
+
+        // Filter by status
+        $status = $request->input('status', 'all');
+        if ($status === 'available') {
+            $query->where(function ($q) {
+                $q->where('is_coming_soon', false)
+                    ->orWhere(function ($q2) {
+                        $q2->where('is_coming_soon', true)
+                            ->whereNotNull('coming_soon_until')
+                            ->where('coming_soon_until', '<=', now());
+                    });
+            });
+        } elseif ($status === 'coming_soon') {
+            $query->where('is_coming_soon', true)
+                ->where(function ($q) {
+                    $q->whereNull('coming_soon_until')
+                        ->orWhere('coming_soon_until', '>', now());
+                });
+        }
+
+        // Sort: available products first, then coming soon
+        $query->orderByRaw('CASE WHEN is_coming_soon = 1 AND (coming_soon_until IS NULL OR coming_soon_until > NOW()) THEN 1 ELSE 0 END ASC')
+            ->orderBy('name');
+
+        $products = $query->paginate(12)->withQueryString();
 
         $categories = Category::where('is_active', true)
             ->orderBy('order')
