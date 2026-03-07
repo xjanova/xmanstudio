@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankAccount;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\ThaiPaymentService;
-use App\Models\BankAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
