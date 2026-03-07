@@ -131,15 +131,18 @@ class OgImageController extends Controller
 
     private function drawText($img, int $width, int $height, string $title, string $subtitle): void
     {
-        $fontBold = storage_path('fonts/Sarabun-Bold.ttf');
-        $fontRegular = storage_path('fonts/Sarabun-Regular.ttf');
+        $fontBold = $this->resolveFont('Sarabun-Bold.ttf', 'DejaVuSans-Bold.ttf');
+        $fontRegular = $this->resolveFont('Sarabun-Regular.ttf', 'DejaVuSans.ttf');
 
-        // Fallback to system fonts
-        if (! file_exists($fontBold)) {
-            $fontBold = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
-        }
-        if (! file_exists($fontRegular)) {
-            $fontRegular = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
+        if (! $fontBold || ! $fontRegular) {
+            // Ultimate fallback: use GD built-in font (no TTF needed)
+            $white = imagecolorallocate($img, 255, 255, 255);
+            $cyan = imagecolorallocate($img, 0, 220, 255);
+            imagestring($img, 5, 80, 200, 'X', $cyan);
+            imagestring($img, 5, 160, 230, $title, $white);
+            imagestring($img, 3, 160, 260, $subtitle, $white);
+
+            return;
         }
 
         $white = imagecolorallocate($img, 255, 255, 255);
@@ -169,12 +172,28 @@ class OgImageController extends Controller
         }
     }
 
+    private function resolveFont(string $sarabunName, string $dejavuName): ?string
+    {
+        $candidates = [
+            realpath(storage_path('fonts/' . $sarabunName)),
+            storage_path('fonts/' . $sarabunName),
+            base_path('storage/fonts/' . $sarabunName),
+            '/usr/share/fonts/truetype/dejavu/' . $dejavuName,
+            '/usr/share/fonts/dejavu/' . $dejavuName,
+        ];
+
+        foreach ($candidates as $path) {
+            if ($path && is_file($path) && is_readable($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
     private function drawBottomBar($img, int $width, int $height): void
     {
-        $fontRegular = storage_path('fonts/Sarabun-Regular.ttf');
-        if (! file_exists($fontRegular)) {
-            $fontRegular = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
-        }
+        $fontRegular = $this->resolveFont('Sarabun-Regular.ttf', 'DejaVuSans.ttf');
 
         // Bottom dark bar
         $barColor = imagecolorallocatealpha($img, 0, 0, 0, 60);
@@ -192,11 +211,15 @@ class OgImageController extends Controller
 
         // URL text
         $urlColor = imagecolorallocate($img, 140, 150, 170);
-        imagettftext($img, 16, 0, 80, $height - 22, $urlColor, $fontRegular, 'xmanstudio.com');
-
-        // Tagline
         $tagColor = imagecolorallocate($img, 0, 200, 240);
-        imagettftext($img, 14, 0, $width - 320, $height - 22, $tagColor, $fontRegular, 'IT Solutions & Development');
+
+        if ($fontRegular) {
+            imagettftext($img, 16, 0, 80, $height - 22, $urlColor, $fontRegular, 'xmanstudio.com');
+            imagettftext($img, 14, 0, $width - 320, $height - 22, $tagColor, $fontRegular, 'IT Solutions & Development');
+        } else {
+            imagestring($img, 3, 80, $height - 35, 'xmanstudio.com', $urlColor);
+            imagestring($img, 2, $width - 280, $height - 35, 'IT Solutions & Development', $tagColor);
+        }
     }
 
     private function wrapText(string $text, string $font, int $size, int $maxWidth): array
