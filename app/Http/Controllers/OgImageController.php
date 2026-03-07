@@ -35,7 +35,7 @@ class OgImageController extends Controller
     {
         $seo = SeoSetting::getInstance();
 
-        $imageData = Cache::remember('og_image_default_v3', 3600, function () use ($seo) {
+        $imageData = Cache::remember('og_image_default_v4', 3600, function () use ($seo) {
             return $this->createImage(
                 $seo->site_name ?: 'XMAN Studio',
                 'IT Solutions & Software Development'
@@ -164,15 +164,10 @@ class OgImageController extends Controller
                 $yPos += 35;
             }
         } catch (\Throwable $e) {
-            // Fallback: use GD built-in fonts (no TTF needed)
-            // Draw large "X" using filled rectangles
+            // Fallback: use GD built-in fonts (ASCII only, no Thai support)
             $this->drawLargeX($img, 80, 160, 60, $cyan);
-
-            // Title - use largest built-in font (5)
-            imagestring($img, 5, 180, 220, $title, $white);
-
-            // Subtitle
-            imagestring($img, 4, 180, 260, $subtitle, $lightGray);
+            imagestring($img, 5, 180, 220, 'XMAN Studio', $white);
+            imagestring($img, 4, 180, 260, 'IT Solutions & Software Development', $lightGray);
         }
     }
 
