@@ -35,7 +35,7 @@ class OgImageController extends Controller
     {
         $seo = SeoSetting::getInstance();
 
-        $imageData = Cache::remember('og_image_default', 3600, function () use ($seo) {
+        $imageData = Cache::remember('og_image_default_v2', 3600, function () use ($seo) {
             return $this->createImage(
                 $seo->site_name ?: 'XMAN Studio',
                 $seo->site_description ?: 'IT Solutions & Software Development ครบวงจร'
@@ -173,9 +173,18 @@ class OgImageController extends Controller
 
     private function resolveFont(string $sarabunName, string $dejavuName): ?string
     {
+        // Try copying font to temp directory (workaround for hosting path restrictions)
+        $storagePath = storage_path('fonts/' . $sarabunName);
+        $tempPath = sys_get_temp_dir() . '/' . $sarabunName;
+
+        if (is_file($storagePath) && (! is_file($tempPath) || filemtime($storagePath) > filemtime($tempPath))) {
+            @copy($storagePath, $tempPath);
+        }
+
         $candidates = [
-            realpath(storage_path('fonts/' . $sarabunName)),
-            storage_path('fonts/' . $sarabunName),
+            $tempPath,
+            realpath($storagePath) ?: null,
+            $storagePath,
             base_path('storage/fonts/' . $sarabunName),
             '/usr/share/fonts/truetype/dejavu/' . $dejavuName,
             '/usr/share/fonts/dejavu/' . $dejavuName,
