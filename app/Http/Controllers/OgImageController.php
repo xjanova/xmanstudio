@@ -134,41 +134,40 @@ class OgImageController extends Controller
         $fontBold = $this->resolveFont('Sarabun-Bold.ttf', 'DejaVuSans-Bold.ttf');
         $fontRegular = $this->resolveFont('Sarabun-Regular.ttf', 'DejaVuSans.ttf');
 
-        if (! $fontBold || ! $fontRegular) {
-            // Ultimate fallback: use GD built-in font (no TTF needed)
-            $white = imagecolorallocate($img, 255, 255, 255);
-            $cyan = imagecolorallocate($img, 0, 220, 255);
-            imagestring($img, 5, 80, 200, 'X', $cyan);
-            imagestring($img, 5, 160, 230, $title, $white);
-            imagestring($img, 3, 160, 260, $subtitle, $white);
-
-            return;
-        }
-
         $white = imagecolorallocate($img, 255, 255, 255);
         $lightGray = imagecolorallocate($img, 180, 190, 210);
         $cyan = imagecolorallocate($img, 0, 220, 255);
 
-        // "X" logo mark
-        $logoSize = 60;
-        imagettftext($img, $logoSize, 0, 80, 240, $cyan, $fontBold, 'X');
+        try {
+            if (! $fontBold || ! $fontRegular) {
+                throw new \RuntimeException('Font not found');
+            }
 
-        // Title
-        $titleSize = 48;
-        $titleLines = $this->wrapText($title, $fontBold, $titleSize, $width - 220);
-        $yPos = 230;
-        foreach ($titleLines as $line) {
-            imagettftext($img, $titleSize, 0, 160, $yPos, $white, $fontBold, $line);
-            $yPos += 65;
-        }
+            // "X" logo mark
+            imagettftext($img, 60, 0, 80, 240, $cyan, $fontBold, 'X');
 
-        // Subtitle
-        $subtitleSize = 22;
-        $subtitleLines = $this->wrapText($subtitle, $fontRegular, $subtitleSize, $width - 220);
-        $yPos += 15;
-        foreach ($subtitleLines as $line) {
-            imagettftext($img, $subtitleSize, 0, 160, $yPos, $lightGray, $fontRegular, $line);
-            $yPos += 35;
+            // Title
+            $titleSize = 48;
+            $titleLines = $this->wrapText($title, $fontBold, $titleSize, $width - 220);
+            $yPos = 230;
+            foreach ($titleLines as $line) {
+                imagettftext($img, $titleSize, 0, 160, $yPos, $white, $fontBold, $line);
+                $yPos += 65;
+            }
+
+            // Subtitle
+            $subtitleSize = 22;
+            $subtitleLines = $this->wrapText($subtitle, $fontRegular, $subtitleSize, $width - 220);
+            $yPos += 15;
+            foreach ($subtitleLines as $line) {
+                imagettftext($img, $subtitleSize, 0, 160, $yPos, $lightGray, $fontRegular, $line);
+                $yPos += 35;
+            }
+        } catch (\Throwable $e) {
+            // Fallback: use GD built-in fonts (no TTF needed)
+            imagestring($img, 5, 80, 200, 'X', $cyan);
+            imagestring($img, 5, 160, 250, $title, $white);
+            imagestring($img, 3, 160, 280, $subtitle, $lightGray);
         }
     }
 
@@ -213,10 +212,13 @@ class OgImageController extends Controller
         $urlColor = imagecolorallocate($img, 140, 150, 170);
         $tagColor = imagecolorallocate($img, 0, 200, 240);
 
-        if ($fontRegular) {
+        try {
+            if (! $fontRegular) {
+                throw new \RuntimeException('Font not found');
+            }
             imagettftext($img, 16, 0, 80, $height - 22, $urlColor, $fontRegular, 'xmanstudio.com');
             imagettftext($img, 14, 0, $width - 320, $height - 22, $tagColor, $fontRegular, 'IT Solutions & Development');
-        } else {
+        } catch (\Throwable $e) {
             imagestring($img, 3, 80, $height - 35, 'xmanstudio.com', $urlColor);
             imagestring($img, 2, $width - 280, $height - 35, 'IT Solutions & Development', $tagColor);
         }
