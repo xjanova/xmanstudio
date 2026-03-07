@@ -22,15 +22,15 @@ class ProductLicenseController extends Controller
      */
     private const DEFAULT_PRICING = [
         'monthly' => [
-            'original' => 299,
+            'original' => 399,
             'currency' => 'THB',
         ],
         'yearly' => [
-            'original' => 1990,
+            'original' => 2500,
             'currency' => 'THB',
         ],
         'lifetime' => [
-            'original' => 4990,
+            'original' => 5000,
             'currency' => 'THB',
         ],
     ];
@@ -667,10 +667,10 @@ class ProductLicenseController extends Controller
     {
         // Default features - can be customized per product
         $baseFeatures = [
-            'demo' => ['basic_features'],
-            'monthly' => ['basic_features', 'standard_support'],
-            'yearly' => ['basic_features', 'standard_support', 'priority_updates'],
-            'lifetime' => ['all_features', 'priority_support', 'lifetime_updates'],
+            'demo' => ['basic_features', 'trial_mode'],
+            'monthly' => ['all_features', 'standard_support', 'cloud_sync'],
+            'yearly' => ['all_features', 'priority_support', 'cloud_sync', 'priority_updates'],
+            'lifetime' => ['all_features', 'priority_support', 'cloud_sync', 'lifetime_updates', 'unlimited_devices'],
         ];
 
         return $baseFeatures[$type] ?? $baseFeatures['demo'];

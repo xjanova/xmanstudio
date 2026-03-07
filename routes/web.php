@@ -126,6 +126,21 @@ Route::prefix('autotradex')->name('autotradex.')->group(function () {
     });
 });
 
+// Tping - Direct purchase from app
+Route::prefix('tping')->name('tping.')->group(function () {
+    Route::get('/pricing', [\App\Http\Controllers\TpingController::class, 'pricing'])->name('pricing');
+    Route::get('/buy', [\App\Http\Controllers\TpingController::class, 'buyRedirect'])->name('buy');
+
+    // Require authentication for checkout
+    Route::middleware('auth')->group(function () {
+        Route::get('/checkout/{plan}', [\App\Http\Controllers\TpingController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/{plan}', [\App\Http\Controllers\TpingController::class, 'processCheckout'])->name('process');
+        Route::get('/payment/{order}', [\App\Http\Controllers\TpingController::class, 'payment'])->name('payment');
+        Route::post('/payment/{order}/confirm', [\App\Http\Controllers\TpingController::class, 'confirmPayment'])->name('confirm-payment');
+        Route::get('/payment/{order}/success', [\App\Http\Controllers\TpingController::class, 'paymentSuccess'])->name('payment-success');
+    });
+});
+
 // Services
 Route::get('/services', [ProductController::class, 'services'])->name('services.index');
 Route::get('/services/{slug}', [ProductController::class, 'serviceDetail'])->name('services.show');

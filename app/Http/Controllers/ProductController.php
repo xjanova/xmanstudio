@@ -78,6 +78,11 @@ class ProductController extends Controller
                 ->exists();
         }
 
+        // Redirect Tping to its dedicated pricing page
+        if ($slug === 'tping') {
+            return redirect()->route('tping.pricing');
+        }
+
         // Custom views for each product
         $customViews = [
             'autotradex' => 'products.autotradex',
