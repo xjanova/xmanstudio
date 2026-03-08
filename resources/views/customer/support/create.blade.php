@@ -152,6 +152,8 @@
             </div>
 
             {{-- Submit --}}
+            <x-turnstile section="support" />
+
             <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <a href="{{ route('customer.support.index') }}" class="px-5 py-2.5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors">
                     ยกเลิก

@@ -39,6 +39,7 @@ class Setting extends Model
         'database_password',
         'stripe_secret_key',
         'paypal_secret',
+        'turnstile_secret_key',
     ];
 
     /**

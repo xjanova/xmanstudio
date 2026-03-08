@@ -400,6 +400,8 @@
                         @endif
                     </div>
 
+                    <x-turnstile section="login" />
+
                     <!-- Submit Button -->
                     <button type="submit" class="w-full gradient-button">
                         เข้าสู่ระบบ

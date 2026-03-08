@@ -39,6 +39,7 @@ use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SmsPaymentController as AdminSmsPaymentController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\ThemeController;
+use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
@@ -253,7 +254,7 @@ Route::middleware('auth')->group(function () {
 
     // Checkout & Orders
     Route::get('/checkout', [OrderController::class, 'checkout'])->name('orders.checkout');
-    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store')->middleware('turnstile:checkout');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order}/payment-status', [OrderController::class, 'checkPaymentStatus'])->name('orders.payment-status');
@@ -279,7 +280,7 @@ Route::middleware('auth')->group(function () {
         // Support Tickets
         Route::get('/support', [SupportTicketController::class, 'index'])->name('support.index');
         Route::get('/support/create', [SupportTicketController::class, 'create'])->name('support.create');
-        Route::post('/support', [SupportTicketController::class, 'store'])->name('support.store');
+        Route::post('/support', [SupportTicketController::class, 'store'])->name('support.store')->middleware('turnstile:support');
         Route::get('/support/{ticket}', [SupportTicketController::class, 'show'])->name('support.show');
         Route::post('/support/{ticket}/reply', [SupportTicketController::class, 'reply'])->name('support.reply');
         Route::post('/support/{ticket}/close', [SupportTicketController::class, 'close'])->name('support.close');
@@ -440,6 +441,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Contact Settings
     Route::get('/contact-settings', [ContactSettingsController::class, 'index'])->name('contact-settings.index');
     Route::put('/contact-settings', [ContactSettingsController::class, 'update'])->name('contact-settings.update');
+
+    // Turnstile Settings
+    Route::get('/turnstile', [TurnstileSettingsController::class, 'index'])->name('turnstile.index');
+    Route::put('/turnstile', [TurnstileSettingsController::class, 'update'])->name('turnstile.update');
 
     // AI Settings
     Route::get('/ai-settings', [AiSettingsController::class, 'index'])->name('ai-settings.index');
