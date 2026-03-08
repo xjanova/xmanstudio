@@ -497,6 +497,70 @@ class ProductLicenseController extends Controller
     }
 
     /**
+     * Check if a machine already has an active license.
+     * Used by the app on first launch to auto-activate without entering a key.
+     */
+    public function checkMachine(Request $request, string $productSlug)
+    {
+        $product = $this->getProduct($productSlug);
+        if (! $product) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'PRODUCT_NOT_FOUND',
+                'message' => 'ไม่พบผลิตภัณฑ์',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'machine_id' => 'required|string|min:32|max:64',
+        ]);
+
+        // Find active, non-expired license bound to this machine_id
+        $license = LicenseKey::where('product_id', $product->id)
+            ->where('machine_id', $validated['machine_id'])
+            ->where('status', LicenseKey::STATUS_ACTIVE)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => true,
+                'has_license' => false,
+                'message' => 'ไม่พบ License สำหรับเครื่องนี้',
+            ]);
+        }
+
+        // Update last validated
+        $license->update(['last_validated_at' => now()]);
+
+        // Log check
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_VALIDATED,
+            LicenseActivity::ACTOR_API,
+            null,
+            $validated['machine_id'],
+            'ตรวจสอบ License จาก HWID สำเร็จ (auto-check)',
+            ['product_slug' => $productSlug, 'method' => 'check-machine']
+        );
+
+        return response()->json([
+            'success' => true,
+            'has_license' => true,
+            'data' => [
+                'license_key' => $license->license_key,
+                'license_type' => $license->license_type,
+                'status' => $license->status,
+                'expires_at' => $license->expires_at?->toISOString(),
+                'days_remaining' => $license->daysRemaining(),
+                'features' => $this->getFeaturesByType($productSlug, $license->license_type),
+            ],
+        ]);
+    }
+
+    /**
      * Deactivate license
      */
     public function deactivate(Request $request, string $productSlug)

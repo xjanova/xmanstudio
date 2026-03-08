@@ -131,6 +131,9 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
     // Validate existing license
     Route::post('/validate', [ProductLicenseController::class, 'validate']);
 
+    // Check if machine already has an active license (HWID auto-check)
+    Route::post('/check-machine', [ProductLicenseController::class, 'checkMachine']);
+
     // Deactivate license
     Route::post('/deactivate', [ProductLicenseController::class, 'deactivate']);
 
