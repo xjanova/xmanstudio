@@ -78,6 +78,14 @@ class UserRental extends Model
     }
 
     /**
+     * Get invoices for this rental
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(RentalInvoice::class);
+    }
+
+    /**
      * Scope for active rentals
      */
     public function scopeActive($query)
