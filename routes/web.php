@@ -44,6 +44,7 @@ use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
@@ -86,6 +87,7 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name
 // OG Image Generation (Social Media Preview)
 Route::get('/og-image', [OgImageController::class, 'generate'])->name('og-image.generate');
 Route::get('/og-image/default', [OgImageController::class, 'defaultImage'])->name('og-image.default');
+Route::get('/og-image/site', [OgImageController::class, 'siteImage'])->name('og-image.site');
 
 // Public AI Chat
 Route::post('/ai-chat', [PublicChatController::class, 'chat'])
@@ -303,6 +305,15 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{workflow}', [TpingWorkflowController::class, 'destroy'])->name('destroy');
             Route::post('/{workflow}/share', [TpingWorkflowController::class, 'share'])->name('share');
             Route::post('/{workflow}/unshare', [TpingWorkflowController::class, 'unshare'])->name('unshare');
+        });
+
+        // Tping Data Profiles
+        Route::prefix('tping-data-profiles')->name('tping.data-profiles.')->group(function () {
+            Route::get('/', [TpingDataProfileController::class, 'index'])->name('index');
+            Route::get('/{profile}', [TpingDataProfileController::class, 'show'])->name('show');
+            Route::get('/{profile}/edit', [TpingDataProfileController::class, 'edit'])->name('edit');
+            Route::put('/{profile}', [TpingDataProfileController::class, 'update'])->name('update');
+            Route::delete('/{profile}', [TpingDataProfileController::class, 'destroy'])->name('destroy');
         });
     });
 
