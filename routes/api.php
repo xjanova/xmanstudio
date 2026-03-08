@@ -139,6 +139,11 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
     // Get pricing info (public)
     Route::get('/pricing', [ProductLicenseController::class, 'pricing']);
 
+    // Diagnostic reports from app (rate limited)
+    Route::middleware(['throttle:10,1'])->group(function () {
+        Route::post('/diagnostics', [ProductLicenseController::class, 'storeDiagnostics']);
+    });
+
     // Demo endpoints (rate limited more strictly)
     Route::middleware(['throttle:10,1'])->group(function () {
         Route::post('/demo', [ProductLicenseController::class, 'startDemo']);

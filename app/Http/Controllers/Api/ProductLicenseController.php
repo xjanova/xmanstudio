@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BugReport;
 use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\Product;
@@ -691,5 +692,66 @@ class ProductLicenseController extends Controller
     {
         // Can be customized per product from database or config
         return self::DEFAULT_PRICING;
+    }
+
+    /**
+     * Store diagnostic reports from app
+     * POST /api/v1/product/{productSlug}/diagnostics
+     *
+     * Receives batch diagnostic events (crashes, captcha results, errors)
+     * and stores them as bug_reports for analysis.
+     */
+    public function storeDiagnostics(Request $request, string $productSlug)
+    {
+        $request->validate([
+            'machine_id' => 'required|string|max:255',
+            'machine_name' => 'nullable|string|max:255',
+            'os_version' => 'nullable|string|max:50',
+            'hardware_hash' => 'nullable|string|max:255',
+            'app_version' => 'nullable|string|max:20',
+            'app_version_code' => 'nullable|integer',
+            'events' => 'required|array|max:50',
+            'events.*.category' => 'required|string|max:50',
+            'events.*.message' => 'required|string|max:500',
+            'events.*.details' => 'nullable|string|max:2000',
+            'events.*.timestamp' => 'nullable|string|max:30',
+            'events.*.version' => 'nullable|string|max:20',
+        ]);
+
+        $events = $request->input('events', []);
+        $created = 0;
+
+        foreach ($events as $event) {
+            $category = $event['category'] ?? 'unknown';
+            $isCrash = $category === 'crash';
+
+            BugReport::create([
+                'product_name' => $productSlug,
+                'product_version' => $event['version'] ?? $request->input('app_version'),
+                'report_type' => $isCrash ? 'crash' : 'diagnostic',
+                'title' => mb_substr($event['message'] ?? 'Diagnostic event', 0, 255),
+                'description' => $event['details'] ?? '',
+                'device_id' => $request->input('machine_id'),
+                'os_version' => $request->input('os_version'),
+                'app_version' => $request->input('app_version'),
+                'stack_trace' => $isCrash ? ($event['details'] ?? null) : null,
+                'priority' => $isCrash ? 'high' : 'low',
+                'severity' => $isCrash ? 'major' : 'minor',
+                'metadata' => [
+                    'category' => $category,
+                    'machine_name' => $request->input('machine_name'),
+                    'hardware_hash' => $request->input('hardware_hash'),
+                    'app_version_code' => $request->input('app_version_code'),
+                    'event_timestamp' => $event['timestamp'] ?? null,
+                ],
+            ]);
+            $created++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Stored {$created} diagnostic events",
+            'count' => $created,
+        ]);
     }
 }
