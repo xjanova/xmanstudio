@@ -157,7 +157,7 @@
         @endif
 
         <!-- Activation History -->
-        @if($license->activations && $license->activations->count() > 0)
+        @if($license->activations()->count() > 0)
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center mr-3">
@@ -178,7 +178,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @foreach($license->activations as $activation)
+                        @foreach($license->activations()->get() as $activation)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td class="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-400">{{ Str::limit($activation->machine_id, 20) }}</td>
                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $activation->ip_address ?? '-' }}</td>
@@ -199,6 +199,23 @@
 
     <!-- Sidebar -->
     <div class="space-y-6">
+        <!-- QR Code for App Scan -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 text-center">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                    </svg>
+                </div>
+                Scan to Activate
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">สแกน QR Code ในแอพเพื่อกรอก License Key อัตโนมัติ</p>
+            <div class="bg-white p-3 rounded-xl inline-block shadow-inner border border-gray-200">
+                <div id="license-qrcode"></div>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">เปิดแอพ Tping → กดสแกน QR Code</p>
+        </div>
+
         <!-- Quick Actions -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
@@ -306,6 +323,7 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 function copyLicenseKey() {
     const licenseKey = '{{ $license->license_key }}';
@@ -315,6 +333,21 @@ function copyLicenseKey() {
         console.error('Failed to copy:', err);
     });
 }
+
+// Generate QR Code
+document.addEventListener('DOMContentLoaded', function() {
+    const qrEl = document.getElementById('license-qrcode');
+    if (qrEl) {
+        new QRCode(qrEl, {
+            text: 'tping://activate?key={{ $license->license_key }}',
+            width: 180,
+            height: 180,
+            colorDark: '#4c1d95',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    }
+});
 </script>
 @endpush
 @endsection

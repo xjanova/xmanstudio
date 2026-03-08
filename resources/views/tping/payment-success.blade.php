@@ -53,6 +53,16 @@
                         </div>
                         @endif
 
+                        {{-- QR Code for app scan --}}
+                        @if(!$license->machine_id)
+                        <div class="mt-4 pt-4 border-t border-green-500/20 text-center">
+                            <p class="text-sm text-gray-400 mb-3">สแกน QR Code เพื่อกรอก License Key ในแอพ</p>
+                            <div class="bg-white p-3 rounded-xl inline-block">
+                                <div id="license-qrcode-{{ $loop->index }}"></div>
+                            </div>
+                        </div>
+                        @endif
+
                         {{-- License details --}}
                         <div class="mt-4 pt-4 border-t border-green-500/20 grid grid-cols-2 gap-3 text-sm">
                             <div>
@@ -210,6 +220,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 function copyKey() {
     const key = document.getElementById('license-key')?.textContent;
@@ -223,5 +234,28 @@ function copyKey() {
         });
     }
 }
+
+// Generate QR Codes for license keys
+document.addEventListener('DOMContentLoaded', function() {
+    @if(isset($licenses))
+    @foreach($licenses as $license)
+    @if(!$license->machine_id)
+    (function() {
+        var el = document.getElementById('license-qrcode-{{ $loop->index }}');
+        if (el) {
+            new QRCode(el, {
+                text: 'tping://activate?key={{ $license->license_key }}',
+                width: 160,
+                height: 160,
+                colorDark: '#065f46',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+    })();
+    @endif
+    @endforeach
+    @endif
+});
 </script>
 @endsection
