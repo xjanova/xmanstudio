@@ -63,9 +63,9 @@
                             Cloud Sync
                         </li>
                     </ul>
-                    <div class="text-center text-gray-500 text-sm py-3 bg-gray-700/30 rounded-xl">
-                        ติดตั้งแอพเพื่อเริ่มทดลอง
-                    </div>
+                    <a href="{{ route('tping.download') }}" class="block text-center text-white text-sm py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl transition-all font-medium">
+                        ดาวน์โหลดแอพ
+                    </a>
                 </div>
 
                 <!-- Monthly Card -->

@@ -133,10 +133,12 @@ Route::prefix('autotradex')->name('autotradex.')->group(function () {
     });
 });
 
-// Tping - Direct purchase from app
-Route::prefix('tping')->name('tping.')->group(function () {
+// Tping - Direct purchase from app (with affiliate tracking)
+Route::prefix('tping')->name('tping.')->middleware('affiliate')->group(function () {
     Route::get('/pricing', [\App\Http\Controllers\TpingController::class, 'pricing'])->name('pricing');
     Route::get('/buy', [\App\Http\Controllers\TpingController::class, 'buyRedirect'])->name('buy');
+    Route::get('/download', [\App\Http\Controllers\TpingController::class, 'downloadPage'])->name('download');
+    Route::get('/download/apk', [\App\Http\Controllers\TpingController::class, 'downloadApk'])->name('download.apk');
 
     // Require authentication for checkout
     Route::middleware('auth')->group(function () {
@@ -315,6 +317,13 @@ Route::middleware('auth')->group(function () {
             Route::put('/{profile}', [TpingDataProfileController::class, 'update'])->name('update');
             Route::delete('/{profile}', [TpingDataProfileController::class, 'destroy'])->name('destroy');
         });
+
+        // Affiliate Program
+        Route::prefix('affiliate')->name('affiliate.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Customer\AffiliateController::class, 'dashboard'])->name('dashboard');
+            Route::post('/register', [\App\Http\Controllers\Customer\AffiliateController::class, 'register'])->name('register');
+            Route::get('/commissions', [\App\Http\Controllers\Customer\AffiliateController::class, 'commissions'])->name('commissions');
+        });
     });
 
     // User Wallet
@@ -353,6 +362,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/', [AdminTpingWorkflowController::class, 'index'])->name('index');
         Route::get('/{workflow}', [AdminTpingWorkflowController::class, 'show'])->name('show');
         Route::delete('/{workflow}', [AdminTpingWorkflowController::class, 'destroy'])->name('destroy');
+    });
+
+    // Affiliate Management
+    Route::prefix('affiliates')->name('affiliates.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AffiliateController::class, 'index'])->name('index');
+        Route::get('/commissions', [\App\Http\Controllers\Admin\AffiliateController::class, 'commissions'])->name('commissions');
+        Route::post('/commissions/bulk-approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'bulkApprove'])->name('commission.bulk-approve');
+        Route::get('/{affiliate}', [\App\Http\Controllers\Admin\AffiliateController::class, 'show'])->name('show');
+        Route::put('/{affiliate}', [\App\Http\Controllers\Admin\AffiliateController::class, 'update'])->name('update');
+        Route::post('/commission/{commission}/approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'approveCommission'])->name('commission.approve');
+        Route::post('/commission/{commission}/reject', [\App\Http\Controllers\Admin\AffiliateController::class, 'rejectCommission'])->name('commission.reject');
     });
 
     // Premium Mockup Dashboard

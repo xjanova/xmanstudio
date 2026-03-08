@@ -39,6 +39,9 @@ class Order extends Model
         'stripe_customer_id',
         'stripe_payment_method_id',
         'stripe_metadata',
+        // Affiliate
+        'affiliate_id',
+        'referral_code',
     ];
 
     protected $casts = [
@@ -61,6 +64,11 @@ class Order extends Model
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);
+    }
+
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
     }
 
     /**

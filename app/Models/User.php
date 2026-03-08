@@ -95,6 +95,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function affiliate()
+    {
+        return $this->hasOne(Affiliate::class);
+    }
+
     public function isAdmin(): bool
     {
         return in_array($this->role, ['admin', 'super_admin']);

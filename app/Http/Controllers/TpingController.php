@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Affiliate;
+use App\Models\AffiliateCommission;
 use App\Models\BankAccount;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVersion;
 use App\Models\Wallet;
+use App\Services\GithubReleaseService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Tping Web Controller
@@ -177,12 +182,26 @@ class TpingController extends Controller
             }
         }
 
+        // === Affiliate tracking ===
+        $affiliateRef = session('affiliate_ref') ?? $request->cookie('affiliate_ref');
+        $affiliate = null;
+        if ($affiliateRef) {
+            $affiliate = Affiliate::where('referral_code', $affiliateRef)
+                ->where('status', 'active')
+                ->first();
+            // Prevent self-referral
+            if ($affiliate && auth()->id() === $affiliate->user_id) {
+                $affiliate = null;
+            }
+        }
+
         // === Create order ===
         $metadata = [
             'plan' => $plan,
             'license_type' => $planInfo['license_type'],
             'machine_id' => $machineId,
             'wallet_discount_percent' => $isWallet ? self::WALLET_DISCOUNT_PERCENT : 0,
+            'affiliate_code' => $affiliate?->referral_code,
         ];
 
         $notes = "Tping {$planInfo['name']} License | Plan: {$plan} | Type: {$planInfo['license_type']}";
@@ -202,6 +221,8 @@ class TpingController extends Controller
             'paid_at' => $isWallet ? now() : null,
             'notes' => $notes,
             'metadata' => json_encode($metadata),
+            'affiliate_id' => $affiliate?->id,
+            'referral_code' => $affiliate?->referral_code,
         ]);
 
         $order->items()->create([
@@ -238,11 +259,17 @@ class TpingController extends Controller
             // Generate license key
             $this->generateLicenseForOrder($order, $product, $planInfo, $machineId);
 
+            // Record affiliate commission (wallet = instant, so commission pending for admin review)
+            $this->recordAffiliateCommission($order, $affiliate);
+
             // Redirect to success (skip payment page — already paid)
             return redirect()->route('tping.payment-success', $order->id);
         }
 
         // === PromptPay / Bank Transfer: redirect to payment page ===
+        // Record affiliate commission (will be pending until order is paid)
+        $this->recordAffiliateCommission($order, $affiliate);
+
         return redirect()->route('tping.payment', [
             'order' => $order->id,
         ]);
@@ -454,6 +481,161 @@ class TpingController extends Controller
         }
 
         return redirect($url);
+    }
+
+    /**
+     * Record affiliate commission for an order.
+     */
+    protected function recordAffiliateCommission(Order $order, ?Affiliate $affiliate): void
+    {
+        if (! $affiliate) {
+            return;
+        }
+
+        $commissionAmount = $affiliate->calculateCommission($order->total);
+
+        if ($commissionAmount <= 0) {
+            return;
+        }
+
+        AffiliateCommission::create([
+            'affiliate_id' => $affiliate->id,
+            'order_id' => $order->id,
+            'referred_user_id' => $order->user_id,
+            'order_amount' => $order->total,
+            'commission_rate' => $affiliate->commission_rate,
+            'commission_amount' => $commissionAmount,
+            'status' => 'pending', // Admin must approve before wallet payout
+        ]);
+
+        // Update affiliate counters
+        $affiliate->increment('total_referrals');
+        $affiliate->increment('total_conversions');
+        $affiliate->increment('total_earned', $commissionAmount);
+        $affiliate->increment('total_pending', $commissionAmount);
+
+        // Clear referral session/cookie
+        session()->forget('affiliate_ref');
+
+        Log::info('Affiliate commission recorded', [
+            'affiliate_id' => $affiliate->id,
+            'order_id' => $order->id,
+            'amount' => $commissionAmount,
+        ]);
+    }
+
+    // ================================================================
+    // APK Download — proxied from GitHub (no GitHub URL exposed)
+    // ================================================================
+
+    /**
+     * Public download page for Tping APK.
+     *
+     * GET /tping/download
+     */
+    public function downloadPage()
+    {
+        $product = Product::where('slug', 'tping')->first();
+
+        $version = null;
+        if ($product) {
+            $version = ProductVersion::where('product_id', $product->id)
+                ->where('is_active', true)
+                ->orderByDesc('version')
+                ->first();
+        }
+
+        return view('tping.download', [
+            'product' => $product,
+            'version' => $version,
+        ]);
+    }
+
+    /**
+     * Stream APK download proxied through our server.
+     * Users never see or reach GitHub.
+     *
+     * GET /tping/download/apk
+     */
+    public function downloadApk()
+    {
+        $product = Product::where('slug', 'tping')->firstOrFail();
+        $version = ProductVersion::where('product_id', $product->id)
+            ->where('is_active', true)
+            ->orderByDesc('version')
+            ->first();
+
+        if (! $version || ! $version->github_release_url) {
+            return redirect()->route('tping.download')
+                ->with('error', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        $githubSetting = $product->githubSetting;
+
+        if (! $githubSetting) {
+            return redirect()->route('tping.download')
+                ->with('error', 'ระบบดาวน์โหลดยังไม่พร้อม');
+        }
+
+        // Proxy the download
+        return $this->proxyGithubDownload($githubSetting, $version);
+    }
+
+    /**
+     * Proxy download from GitHub (same pattern as DownloadController).
+     */
+    protected function proxyGithubDownload($githubSetting, ProductVersion $productVersion): StreamedResponse
+    {
+        $token = $githubSetting->github_token_decrypted;
+        $assetUrl = $productVersion->github_release_url;
+
+        // Get the actual download URL (GitHub redirects to S3)
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+            'Accept' => 'application/octet-stream',
+            'User-Agent' => 'XMAN-Tping-Download-Proxy',
+        ])->withOptions([
+            'allow_redirects' => false,
+        ])->get($assetUrl);
+
+        if ($response->status() === 302) {
+            $downloadUrl = $response->header('Location');
+        } else {
+            $downloadUrl = $assetUrl;
+        }
+
+        $filename = $productVersion->download_filename ?? 'Tping-v' . $productVersion->version . '.apk';
+        $fileSize = $productVersion->file_size;
+
+        return new StreamedResponse(function () use ($downloadUrl, $token) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
+                echo $data;
+                flush();
+
+                return strlen($data);
+            });
+
+            if (strpos($downloadUrl, 'github.com') !== false) {
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Authorization: Bearer ' . $token,
+                    'Accept: application/octet-stream',
+                    'User-Agent: XMAN-Tping-Download-Proxy',
+                ]);
+            }
+
+            curl_exec($ch);
+            curl_close($ch);
+        }, 200, [
+            'Content-Type' => 'application/vnd.android.package-archive',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length' => $fileSize,
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     protected function generateOrderNumber(): string

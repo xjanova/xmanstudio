@@ -21,6 +21,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'turnstile' => \App\Http\Middleware\VerifyTurnstile::class,
+            'affiliate' => \App\Http\Middleware\AffiliateTracking::class,
         ]);
 
         // Exclude Stripe webhook from CSRF verification
