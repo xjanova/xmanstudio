@@ -169,7 +169,7 @@
                                 <div id="wallet-warning" class="hidden p-3 bg-red-50 border border-red-200 rounded-xl">
                                     <p class="text-sm text-red-600">
                                         ⚠️ ยอดเงินใน Wallet ไม่เพียงพอ (ต้องการ ฿{{ number_format($walletPrice) }})
-                                        <a href="{{ route('wallet.topup') ?? '#' }}" class="underline font-medium">เติมเงิน</a>
+                                        <a href="{{ route('user.wallet.topup') }}" class="underline font-medium">เติมเงิน</a>
                                     </p>
                                 </div>
                                 @endif
