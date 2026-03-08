@@ -241,13 +241,19 @@ class OrderController extends Controller
             // Process wallet payment
             if ($request->payment_method === 'wallet') {
                 $wallet = Wallet::getOrCreateForUser(auth()->id());
-                $wallet->pay($total, "ชำระคำสั่งซื้อ #{$order->order_number}", $order);
+                $transaction = $wallet->pay(
+                    $total,
+                    "ชำระคำสั่งซื้อ #{$order->order_number}",
+                    'App\Models\Order',
+                    $order->id
+                );
 
-                // Mark order as paid
+                // Mark order as paid + link wallet transaction
                 $order->update([
                     'payment_status' => 'paid',
                     'status' => 'processing',
                     'paid_at' => now(),
+                    'wallet_transaction_id' => $transaction?->id,
                 ]);
             }
 
@@ -442,10 +448,12 @@ class OrderController extends Controller
         // Stripe payment data
         $stripeClientSecret = session('stripe_client_secret');
         $stripePublishableKey = null;
+        $stripeFeeInfo = null;
 
         if ($order->usesStripe() && $order->payment_status === 'pending') {
             $stripeService = app(StripeService::class);
             $stripePublishableKey = $stripeService->getPublishableKey();
+            $stripeFeeInfo = $stripeService->calculateStripeFee($order->total);
 
             // If no client secret in session, create new PaymentIntent
             if (! $stripeClientSecret && $order->stripe_payment_intent_id) {
@@ -472,9 +480,15 @@ class OrderController extends Controller
             }
         }
 
+        // Also calculate fee for display even when payment is done
+        if ($order->payment_method === 'stripe' && ! $stripeFeeInfo) {
+            $stripeService = $stripeService ?? app(StripeService::class);
+            $stripeFeeInfo = $stripeService->calculateStripeFee($order->total);
+        }
+
         return view('orders.show', compact(
             'order', 'paymentInfo', 'bankAccounts', 'promptpayNumber', 'promptpayName',
-            'stripeClientSecret', 'stripePublishableKey'
+            'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo'
         ));
     }
 

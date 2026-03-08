@@ -75,26 +75,29 @@ class LicenseActivity extends Model
 
     /**
      * Log a license activity.
+     *
+     * Accepts LicenseKey model or integer ID as first parameter.
+     * IP address and user agent are auto-populated from the request.
      */
     public static function log(
-        int $licenseId,
+        int|LicenseKey $license,
         string $action,
-        ?int $userId = null,
         string $actorType = self::ACTOR_SYSTEM,
+        ?int $userId = null,
         ?string $machineId = null,
-        ?string $ipAddress = null,
-        ?string $userAgent = null,
-        ?array $metadata = null,
-        ?string $notes = null
+        ?string $notes = null,
+        ?array $metadata = null
     ): self {
+        $licenseId = $license instanceof LicenseKey ? $license->id : $license;
+
         return self::create([
             'license_id' => $licenseId,
             'action' => $action,
             'user_id' => $userId,
             'actor_type' => $actorType,
             'machine_id' => $machineId,
-            'ip_address' => $ipAddress ?? request()->ip(),
-            'user_agent' => $userAgent ?? request()->userAgent(),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
             'metadata' => $metadata,
             'notes' => $notes,
         ]);

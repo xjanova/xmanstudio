@@ -47,10 +47,25 @@
                             @endif
                         </div>
 
+                        <!-- Price display (updates via JS when wallet selected) -->
                         <div class="py-4 border-t border-white/20">
-                            <div class="flex items-center justify-between">
+                            <div id="price-normal" class="flex items-center justify-between">
                                 <span class="font-semibold">รวมทั้งสิ้น</span>
                                 <span class="text-3xl font-black">฿{{ number_format($planInfo['price']) }}</span>
+                            </div>
+                            <div id="price-wallet" class="hidden">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-gray-400">ราคาปกติ</span>
+                                    <span class="text-gray-400 line-through">฿{{ number_format($planInfo['price']) }}</span>
+                                </div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-green-400">ส่วนลด Wallet {{ $walletDiscountPercent }}%</span>
+                                    <span class="text-green-400">-฿{{ number_format($walletDiscount) }}</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-white/20">
+                                    <span class="font-semibold">จ่ายจริง</span>
+                                    <span class="text-3xl font-black text-green-400">฿{{ number_format($walletPrice) }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -73,7 +88,7 @@
                 <div class="md:w-2/3 p-8">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">ข้อมูลการชำระเงิน</h2>
 
-                    <form action="{{ route('tping.process', $plan) }}" method="POST">
+                    <form action="{{ route('tping.process', $plan) }}" method="POST" id="checkoutForm">
                         @csrf
 
                         @if($machineId ?? false)
@@ -87,6 +102,12 @@
                                         <li>{{ $error }}</li>
                                     @endforeach
                                 </ul>
+                            </div>
+                        @endif
+
+                        @if(session('error'))
+                            <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+                                {{ session('error') }}
                             </div>
                         @endif
 
@@ -115,8 +136,49 @@
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">เลือกวิธีชำระเงิน</h3>
 
                             <div class="space-y-3">
-                                <label class="block cursor-pointer">
-                                    <input type="radio" name="payment_method" value="promptpay" class="sr-only peer" checked>
+                                {{-- Wallet Payment Option --}}
+                                @auth
+                                @if($wallet && $wallet->balance > 0)
+                                <label class="block cursor-pointer" onclick="selectPayment('wallet')">
+                                    <input type="radio" name="payment_method" value="wallet" class="sr-only peer"
+                                           id="pm-wallet" {{ old('payment_method') === 'wallet' ? 'checked' : '' }}>
+                                    <div class="relative p-4 border-2 rounded-xl peer-checked:border-purple-500 peer-checked:bg-purple-50 hover:bg-gray-50 bg-gradient-to-r from-purple-50 to-indigo-50">
+                                        <div class="flex items-center">
+                                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mr-4 flex-shrink-0">
+                                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <p class="font-semibold text-gray-900">Wallet</p>
+                                                    <span class="text-lg font-bold text-purple-600">฿{{ number_format($wallet->balance, 2) }}</span>
+                                                </div>
+                                                <p class="text-sm text-gray-500">หักจาก Wallet ทันที • ได้ License เลย</p>
+                                            </div>
+                                        </div>
+                                        {{-- Discount badge --}}
+                                        <div class="mt-3 flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                            <span class="text-sm text-green-700 font-medium">🎉 ส่วนลด {{ $walletDiscountPercent }}% เมื่อชำระด้วย Wallet</span>
+                                            <span class="text-sm font-bold text-green-700">ประหยัด ฿{{ number_format($walletDiscount) }}</span>
+                                        </div>
+                                    </div>
+                                </label>
+
+                                {{-- Insufficient balance warning --}}
+                                <div id="wallet-warning" class="hidden p-3 bg-red-50 border border-red-200 rounded-xl">
+                                    <p class="text-sm text-red-600">
+                                        ⚠️ ยอดเงินใน Wallet ไม่เพียงพอ (ต้องการ ฿{{ number_format($walletPrice) }})
+                                        <a href="{{ route('wallet.topup') ?? '#' }}" class="underline font-medium">เติมเงิน</a>
+                                    </p>
+                                </div>
+                                @endif
+                                @endauth
+
+                                {{-- PromptPay --}}
+                                <label class="block cursor-pointer" onclick="selectPayment('promptpay')">
+                                    <input type="radio" name="payment_method" value="promptpay" class="sr-only peer"
+                                           id="pm-promptpay" {{ old('payment_method', 'promptpay') === 'promptpay' ? 'checked' : '' }}>
                                     <div class="flex items-center p-4 border-2 rounded-xl peer-checked:border-violet-500 peer-checked:bg-violet-50 hover:bg-gray-50">
                                         <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
                                             <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,8 +192,10 @@
                                     </div>
                                 </label>
 
-                                <label class="block cursor-pointer">
-                                    <input type="radio" name="payment_method" value="bank_transfer" class="sr-only peer">
+                                {{-- Bank Transfer --}}
+                                <label class="block cursor-pointer" onclick="selectPayment('bank_transfer')">
+                                    <input type="radio" name="payment_method" value="bank_transfer" class="sr-only peer"
+                                           id="pm-bank_transfer" {{ old('payment_method') === 'bank_transfer' ? 'checked' : '' }}>
                                     <div class="flex items-center p-4 border-2 rounded-xl peer-checked:border-violet-500 peer-checked:bg-violet-50 hover:bg-gray-50">
                                         <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                                             <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,9 +211,10 @@
                             </div>
                         </div>
 
-                        <button type="submit"
+                        <button type="submit" id="submitBtn"
                                 class="w-full py-4 px-6 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-lg rounded-xl transition-all">
-                            ดำเนินการชำระเงิน ฿{{ number_format($planInfo['price']) }}
+                            <span id="btn-text-normal">ดำเนินการชำระเงิน ฿{{ number_format($planInfo['price']) }}</span>
+                            <span id="btn-text-wallet" class="hidden">ชำระด้วย Wallet ฿{{ number_format($walletPrice) }}</span>
                         </button>
 
                         <p class="mt-4 text-sm text-gray-500 text-center">
@@ -162,4 +227,50 @@
         </div>
     </div>
 </div>
+
+<script>
+function selectPayment(method) {
+    const priceNormal = document.getElementById('price-normal');
+    const priceWallet = document.getElementById('price-wallet');
+    const btnNormal = document.getElementById('btn-text-normal');
+    const btnWallet = document.getElementById('btn-text-wallet');
+    const walletWarning = document.getElementById('wallet-warning');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (method === 'wallet') {
+        priceNormal?.classList.add('hidden');
+        priceWallet?.classList.remove('hidden');
+        btnNormal?.classList.add('hidden');
+        btnWallet?.classList.remove('hidden');
+
+        // Check wallet balance
+        const walletBalance = {{ $wallet?->balance ?? 0 }};
+        const walletPrice = {{ $walletPrice ?? 0 }};
+
+        if (walletBalance < walletPrice) {
+            walletWarning?.classList.remove('hidden');
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.disabled = true;
+        } else {
+            walletWarning?.classList.add('hidden');
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitBtn.disabled = false;
+        }
+    } else {
+        priceNormal?.classList.remove('hidden');
+        priceWallet?.classList.add('hidden');
+        btnNormal?.classList.remove('hidden');
+        btnWallet?.classList.add('hidden');
+        walletWarning?.classList.add('hidden');
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitBtn.disabled = false;
+    }
+}
+
+// Init on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const checked = document.querySelector('input[name="payment_method"]:checked');
+    if (checked) selectPayment(checked.value);
+});
+</script>
 @endsection
