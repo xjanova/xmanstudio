@@ -64,9 +64,17 @@
                             </div>
                         @endforeach
                     </div>
+                @elseif($payment->payment_method === 'stripe' && isset($stripeClientSecret) && isset($stripePublishableKey))
+                    <x-stripe-payment
+                        :clientSecret="$stripeClientSecret"
+                        :publishableKey="$stripePublishableKey"
+                        :amount="$payment->amount"
+                        :returnUrl="route('rental.payment', $payment->uuid)"
+                    />
                 @endif
 
-                <!-- Upload Slip Form -->
+                <!-- Upload Slip Form (hide for Stripe) -->
+                @if($payment->payment_method !== 'stripe')
                 <div class="mt-8 pt-8 border-t border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">แจ้งชำระเงิน</h3>
 
@@ -100,6 +108,7 @@
                         </div>
                     </form>
                 </div>
+                @endif
 
                 <!-- Payment Info -->
                 <div class="mt-8 p-4 bg-yellow-50 rounded-lg">

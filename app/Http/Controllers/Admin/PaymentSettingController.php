@@ -43,6 +43,13 @@ class PaymentSettingController extends Controller
             'bank_transfer_fee_amount' => 'nullable|numeric|min:0',
             'card_fee_type' => 'nullable|in:fixed,percent',
             'card_fee_amount' => 'nullable|numeric|min:0',
+            // Stripe settings
+            'stripe_enabled' => 'boolean',
+            'stripe_public_key' => 'nullable|string|max:255',
+            'stripe_secret_key' => 'nullable|string|max:255',
+            'stripe_webhook_secret' => 'nullable|string|max:255',
+            'stripe_fee_type' => 'nullable|in:fixed,percent',
+            'stripe_fee_amount' => 'nullable|numeric|min:0',
         ]);
 
         // PromptPay settings
@@ -117,6 +124,53 @@ class PaymentSettingController extends Controller
             'group' => 'fees',
             'type' => 'float',
             'label' => 'ค่าธรรมเนียมบัตร',
+        ]);
+
+        // Stripe settings
+        PaymentSetting::set('stripe_enabled', $request->boolean('stripe_enabled'), [
+            'group' => 'stripe',
+            'type' => 'boolean',
+            'label' => 'เปิดใช้งาน Stripe',
+        ]);
+
+        if (! empty($validated['stripe_public_key'])) {
+            PaymentSetting::set('stripe_public_key', $validated['stripe_public_key'], [
+                'group' => 'stripe',
+                'type' => 'string',
+                'label' => 'Stripe Publishable Key',
+                'is_encrypted' => true,
+            ]);
+        }
+
+        if (! empty($validated['stripe_secret_key'])) {
+            PaymentSetting::set('stripe_secret_key', $validated['stripe_secret_key'], [
+                'group' => 'stripe',
+                'type' => 'string',
+                'label' => 'Stripe Secret Key',
+                'is_encrypted' => true,
+            ]);
+        }
+
+        if (! empty($validated['stripe_webhook_secret'])) {
+            PaymentSetting::set('stripe_webhook_secret', $validated['stripe_webhook_secret'], [
+                'group' => 'stripe',
+                'type' => 'string',
+                'label' => 'Stripe Webhook Secret',
+                'is_encrypted' => true,
+            ]);
+        }
+
+        // Payment fees - Stripe
+        PaymentSetting::set('stripe_fee_type', $validated['stripe_fee_type'] ?? 'percent', [
+            'group' => 'fees',
+            'type' => 'string',
+            'label' => 'ประเภทค่าธรรมเนียม Stripe',
+        ]);
+
+        PaymentSetting::set('stripe_fee_amount', $validated['stripe_fee_amount'] ?? 3.65, [
+            'group' => 'fees',
+            'type' => 'float',
+            'label' => 'ค่าธรรมเนียม Stripe',
         ]);
 
         // General payment settings

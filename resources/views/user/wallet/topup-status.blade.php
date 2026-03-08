@@ -180,8 +180,30 @@
                 </div>
             </div>
 
-            <!-- Bank Info Card -->
+            <!-- Payment Info Card -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                @if($topup->payment_method === 'stripe' && isset($stripeClientSecret) && isset($stripePublishableKey))
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
+                    <h3 class="text-lg font-semibold text-indigo-800 dark:text-indigo-200 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        ชำระเงินผ่าน Stripe
+                    </h3>
+                </div>
+                <div class="p-6">
+                    @if($topup->status === 'pending')
+                        <x-stripe-payment
+                            :clientSecret="$stripeClientSecret"
+                            :publishableKey="$stripePublishableKey"
+                            :amount="$topup->amount"
+                            :returnUrl="route('user.wallet.topup-status', $topup)"
+                        />
+                    @else
+                        <p class="text-center text-gray-500 dark:text-gray-400">ชำระเงินผ่าน Stripe เรียบร้อยแล้ว</p>
+                    @endif
+                </div>
+                @else
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
                     <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,6 +265,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
         </div>
 

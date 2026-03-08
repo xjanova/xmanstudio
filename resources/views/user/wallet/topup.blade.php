@@ -175,6 +175,22 @@
                                 </div>
                             </label>
                             @endif
+                            @if($settings['payment_methods']['stripe'] ?? false)
+                            <label class="relative">
+                                <input type="radio" class="peer hidden" name="payment_method" id="stripe" value="stripe" {{ old('payment_method') === 'stripe' ? 'checked' : '' }}>
+                                <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-600 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/30 peer-checked:ring-2 peer-checked:ring-purple-500/20">
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                            </svg>
+                                        </div>
+                                        <p class="font-medium text-gray-900 dark:text-white">Stripe</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">บัตรเครดิต/เดบิต</p>
+                                    </div>
+                                </div>
+                            </label>
+                            @endif
                         </div>
                         @error('payment_method')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>

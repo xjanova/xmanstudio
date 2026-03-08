@@ -208,6 +208,73 @@
                     </div>
                 </div>
 
+                <!-- Stripe Settings -->
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <h4 class="font-semibold text-gray-900 dark:text-white text-lg">Stripe</h4>
+                            @if(\App\Services\StripeService::isEnabled())
+                                <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded-full">LIVE</span>
+                            @else
+                                <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium rounded-full">OFF</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Publishable Key</label>
+                                <input type="text" name="stripe_public_key"
+                                       value=""
+                                       placeholder="{{ ($settings['stripe']['stripe_public_key'] ?? '') ? 'pk_***' . substr($settings['stripe']['stripe_public_key'] ?? '', -4) : 'pk_...' }}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-mono text-sm">
+                                <p class="mt-1 text-xs text-gray-500">เว้นว่างไว้หากไม่ต้องการเปลี่ยน</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Secret Key</label>
+                                <input type="password" name="stripe_secret_key"
+                                       value=""
+                                       placeholder="{{ ($settings['stripe']['stripe_secret_key'] ?? '') ? 'sk_***' . substr($settings['stripe']['stripe_secret_key'] ?? '', -4) : 'sk_...' }}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-mono text-sm">
+                                <p class="mt-1 text-xs text-gray-500">เว้นว่างไว้หากไม่ต้องการเปลี่ยน</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Webhook Secret</label>
+                                <input type="password" name="stripe_webhook_secret"
+                                       value=""
+                                       placeholder="{{ ($settings['stripe']['stripe_webhook_secret'] ?? '') ? 'whsec_***' : 'whsec_...' }}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-mono text-sm">
+                                <p class="mt-1 text-xs text-gray-500">เว้นว่างไว้หากไม่ต้องการเปลี่ยน</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ค่าธรรมเนียม (%)</label>
+                                <input type="number" name="stripe_fee_amount" step="0.01"
+                                       value="{{ $settings['fees']['stripe_fee_amount'] ?? 3.65 }}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                                       placeholder="3.65">
+                                <input type="hidden" name="stripe_fee_type" value="percent">
+                                <p class="mt-1 text-xs text-gray-500">Stripe ในไทย: 3.65% สำหรับบัตรในประเทศ</p>
+                            </div>
+                        </div>
+                        <div class="flex items-end">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="stripe_enabled" value="1"
+                                       {{ ($settings['stripe']['stripe_enabled'] ?? false) ? 'checked' : '' }}
+                                       class="sr-only peer">
+                                <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-purple-500"></div>
+                                <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">เปิดใช้งาน Stripe</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- General Payment Settings -->
                 <div>
                     <div class="flex items-center mb-4">

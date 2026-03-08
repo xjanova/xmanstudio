@@ -23,6 +23,11 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'turnstile' => \App\Http\Middleware\VerifyTurnstile::class,
         ]);
 
+        // Exclude Stripe webhook from CSRF verification
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',
+        ]);
+
         // Apply theme middleware to web routes
         $middleware->web(append: [
             \App\Http\Middleware\ThemeMiddleware::class,

@@ -76,7 +76,7 @@ class PaymentFeeService
      */
     public function getAllMethodFees(): array
     {
-        $methods = ['promptpay', 'bank_transfer', 'card'];
+        $methods = ['promptpay', 'bank_transfer', 'card', 'stripe'];
         $result = [];
 
         foreach ($methods as $method) {
@@ -122,6 +122,14 @@ class PaymentFeeService
                 'name' => 'บัตรเครดิต/เดบิต',
                 'icon' => 'card',
                 ...$this->calculateFee('card', 0),
+            ];
+        }
+
+        if (PaymentSetting::get('stripe_enabled', false)) {
+            $methods['stripe'] = [
+                'name' => 'Stripe (บัตรเครดิต/เดบิต)',
+                'icon' => 'stripe',
+                ...$this->calculateFee('stripe', 0),
             ];
         }
 

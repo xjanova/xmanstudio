@@ -6,6 +6,7 @@ use App\Models\RentalPackage;
 use App\Models\RentalPayment;
 use App\Models\UserRental;
 use App\Services\RentalService;
+use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -62,7 +63,7 @@ class RentalController extends Controller
     {
         $request->validate([
             'package_id' => 'required|exists:rental_packages,id',
-            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card',
+            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card,stripe',
             'promo_code' => 'nullable|string|max:50',
         ]);
 
@@ -86,6 +87,15 @@ class RentalController extends Controller
                 ->with('success', 'เปิดใช้งานแพ็กเกจสำเร็จ');
         }
 
+        // Handle Stripe payment - create PaymentIntent
+        if ($request->payment_method === 'stripe') {
+            $stripeService = app(StripeService::class);
+            $intent = $stripeService->createPaymentIntentForRental($result['payment'], $user);
+
+            return redirect()->route('rental.payment', $result['payment']->uuid)
+                ->with('stripe_client_secret', $intent->client_secret);
+        }
+
         // Redirect to payment page
         return redirect()->route('rental.payment', $result['payment']->uuid);
     }
@@ -103,6 +113,8 @@ class RentalController extends Controller
             ->firstOrFail();
 
         $paymentInfo = [];
+        $stripeClientSecret = null;
+        $stripePublishableKey = null;
 
         if ($payment->payment_method === 'promptpay') {
             $paymentInfo = $this->paymentService->generatePromptPayQR(
@@ -113,9 +125,38 @@ class RentalController extends Controller
             $paymentInfo = [
                 'bank_accounts' => $this->paymentService->getBankTransferInfo(),
             ];
+        } elseif ($payment->payment_method === 'stripe') {
+            $stripeService = app(StripeService::class);
+            $stripePublishableKey = $stripeService->getPublishableKey();
+            $stripeClientSecret = session('stripe_client_secret');
+
+            if (! $stripeClientSecret && $payment->stripe_payment_intent_id) {
+                try {
+                    $intent = $stripeService->retrievePaymentIntent($payment->stripe_payment_intent_id);
+                    if ($intent->status !== 'canceled' && $intent->status !== 'succeeded') {
+                        $stripeClientSecret = $intent->client_secret;
+                    }
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+            }
+
+            if (! $stripeClientSecret) {
+                try {
+                    $intent = $stripeService->createPaymentIntentForRental($payment, Auth::user());
+                    $stripeClientSecret = $intent->client_secret;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to create Stripe PaymentIntent for rental', [
+                        'payment_id' => $payment->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
         }
 
-        return view('rental.payment', compact('payment', 'paymentInfo'));
+        return view('rental.payment', compact(
+            'payment', 'paymentInfo', 'stripeClientSecret', 'stripePublishableKey'
+        ));
     }
 
     /**

@@ -16,6 +16,7 @@ use App\Models\Wallet;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
+use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -121,7 +122,7 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card,wallet',
+            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card,wallet,stripe',
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'nullable|string|max:20',
@@ -264,6 +265,19 @@ class OrderController extends Controller
             $cart->items()->delete();
             session()->forget('applied_coupon');
 
+            // Handle Stripe payment - create PaymentIntent
+            if ($request->payment_method === 'stripe') {
+                $stripeService = app(StripeService::class);
+                $intent = $stripeService->createPaymentIntentForOrder($order, auth()->user());
+
+                DB::commit();
+
+                return redirect()
+                    ->route('orders.show', $order)
+                    ->with('stripe_client_secret', $intent->client_secret)
+                    ->with('success', 'สร้างคำสั่งซื้อเรียบร้อยแล้ว กรุณาชำระเงินผ่าน Stripe');
+            }
+
             DB::commit();
 
             // Send order confirmation email
@@ -394,7 +408,43 @@ class OrderController extends Controller
             }
         }
 
-        return view('orders.show', compact('order', 'paymentInfo', 'bankAccounts', 'promptpayNumber', 'promptpayName'));
+        // Stripe payment data
+        $stripeClientSecret = session('stripe_client_secret');
+        $stripePublishableKey = null;
+
+        if ($order->usesStripe() && $order->payment_status === 'pending') {
+            $stripeService = app(StripeService::class);
+            $stripePublishableKey = $stripeService->getPublishableKey();
+
+            // If no client secret in session, create new PaymentIntent
+            if (! $stripeClientSecret && $order->stripe_payment_intent_id) {
+                try {
+                    $intent = $stripeService->retrievePaymentIntent($order->stripe_payment_intent_id);
+                    if ($intent->status !== 'canceled' && $intent->status !== 'succeeded') {
+                        $stripeClientSecret = $intent->client_secret;
+                    }
+                } catch (\Exception $e) {
+                    // PaymentIntent not found, create new one
+                }
+            }
+
+            if (! $stripeClientSecret) {
+                try {
+                    $intent = $stripeService->createPaymentIntentForOrder($order, auth()->user());
+                    $stripeClientSecret = $intent->client_secret;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to create Stripe PaymentIntent', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        return view('orders.show', compact(
+            'order', 'paymentInfo', 'bankAccounts', 'promptpayNumber', 'promptpayName',
+            'stripeClientSecret', 'stripePublishableKey'
+        ));
     }
 
     /**

@@ -34,12 +34,18 @@ class Order extends Model
         'sms_verification_status',
         'sms_verified_at',
         'payment_display_amount',
+        // Stripe fields
+        'stripe_payment_intent_id',
+        'stripe_customer_id',
+        'stripe_payment_method_id',
+        'stripe_metadata',
     ];
 
     protected $casts = [
         'paid_at' => 'datetime',
         'sms_verified_at' => 'datetime',
         'payment_display_amount' => 'decimal:2',
+        'stripe_metadata' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -95,6 +101,17 @@ class Order extends Model
     public function getDisplayAmountAttribute(): float
     {
         return $this->payment_display_amount ?? $this->total;
+    }
+
+    /**
+     * Check if this order is waiting for SMS verification.
+     */
+    /**
+     * Check if this order uses Stripe payment.
+     */
+    public function usesStripe(): bool
+    {
+        return $this->payment_method === 'stripe';
     }
 
     /**

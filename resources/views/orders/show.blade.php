@@ -365,6 +365,13 @@
                                         </p>
                                     </div>
                                 </div>
+                            @elseif($order->payment_method === 'stripe' && isset($stripeClientSecret) && isset($stripePublishableKey))
+                                <x-stripe-payment
+                                    :clientSecret="$stripeClientSecret"
+                                    :publishableKey="$stripePublishableKey"
+                                    :amount="$order->total"
+                                    :returnUrl="route('orders.show', $order)"
+                                />
                             @else
                                 <div class="text-center py-8">
                                     <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

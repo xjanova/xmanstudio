@@ -30,6 +30,10 @@ class WalletTopup extends Model
         'sms_notification_id',
         'sms_verification_status',
         'sms_verified_at',
+        // Stripe fields
+        'stripe_payment_intent_id',
+        'stripe_customer_id',
+        'stripe_metadata',
     ];
 
     protected $casts = [
@@ -41,6 +45,7 @@ class WalletTopup extends Model
         'expires_at' => 'datetime',
         'sms_verified_at' => 'datetime',
         'metadata' => 'array',
+        'stripe_metadata' => 'array',
     ];
 
     const STATUS_PENDING = 'pending';
@@ -58,6 +63,8 @@ class WalletTopup extends Model
     const METHOD_TRUEMONEY = 'truemoney';
 
     const METHOD_CREDIT_CARD = 'credit_card';
+
+    const METHOD_STRIPE = 'stripe';
 
     public function wallet()
     {
@@ -206,6 +213,7 @@ class WalletTopup extends Model
             self::METHOD_PROMPTPAY => 'PromptPay',
             self::METHOD_TRUEMONEY => 'TrueMoney',
             self::METHOD_CREDIT_CARD => 'บัตรเครดิต',
+            self::METHOD_STRIPE => 'Stripe',
             default => $this->payment_method,
         };
     }

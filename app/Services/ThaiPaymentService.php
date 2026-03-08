@@ -80,6 +80,14 @@ class ThaiPaymentService
                 'description' => 'ชำระด้วยบัตรเครดิตหรือเดบิต',
                 'is_active' => $cardEnabled,
             ],
+            [
+                'id' => 'stripe',
+                'name' => 'Stripe',
+                'name_en' => 'Stripe Payment',
+                'icon' => 'stripe',
+                'description' => 'ชำระด้วย Visa, Mastercard, JCB ผ่าน Stripe',
+                'is_active' => StripeService::isEnabled(),
+            ],
         ];
     }
 

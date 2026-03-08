@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\ProductLicenseController;
+use App\Http\Controllers\Api\StripeController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BugReportController;
 use App\Http\Controllers\Api\V1\DataProfileController;
@@ -204,6 +205,19 @@ Route::prefix('v1/coupons')->middleware(['auth:sanctum', 'throttle:30,1'])->grou
 
     // Remove coupon from session
     Route::delete('/remove', [CouponController::class, 'remove']);
+});
+
+// ==================== Stripe API Routes ====================
+// These routes handle Stripe PaymentIntent creation for checkout flows
+// Requires authentication via Sanctum
+
+Route::prefix('v1/stripe')->middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
+    Route::post('/payment-intent/order/{order}', [StripeController::class, 'createOrderPaymentIntent'])
+        ->name('api.stripe.intent.order');
+    Route::post('/payment-intent/topup/{topup}', [StripeController::class, 'createTopupPaymentIntent'])
+        ->name('api.stripe.intent.topup');
+    Route::post('/payment-intent/rental/{payment}', [StripeController::class, 'createRentalPaymentIntent'])
+        ->name('api.stripe.intent.rental');
 });
 
 // ==================== SMS Payment API Routes ====================

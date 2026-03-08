@@ -10,6 +10,7 @@ use App\Models\Wallet;
 use App\Models\WalletBonusTier;
 use App\Models\WalletTopup;
 use App\Services\SmsPaymentService;
+use App\Services\StripeService;
 use Illuminate\Http\Request;
 
 class WalletController extends Controller
@@ -59,6 +60,7 @@ class WalletController extends Controller
                 'bank_transfer' => Setting::getValue('wallet_payment_bank_transfer', true),
                 'promptpay' => Setting::getValue('wallet_payment_promptpay', true),
                 'truemoney' => Setting::getValue('wallet_payment_truemoney', true),
+                'stripe' => StripeService::isEnabled(),
             ],
         ];
 
@@ -91,6 +93,9 @@ class WalletController extends Controller
         }
         if (Setting::getValue('wallet_payment_truemoney', true)) {
             $allowedMethods[] = 'truemoney';
+        }
+        if (StripeService::isEnabled()) {
+            $allowedMethods[] = 'stripe';
         }
 
         $validated = $request->validate([
@@ -130,6 +135,17 @@ class WalletController extends Controller
                 'unique_payment_amount_id' => $uniqueAmount->id,
                 'payment_display_amount' => $uniqueAmount->unique_amount,
             ]);
+        }
+
+        // Handle Stripe payment - create PaymentIntent
+        if ($validated['payment_method'] === 'stripe') {
+            $stripeService = app(StripeService::class);
+            $intent = $stripeService->createPaymentIntentForTopup($topup, auth()->user());
+
+            return redirect()
+                ->route('user.wallet.topup-status', $topup)
+                ->with('stripe_client_secret', $intent->client_secret)
+                ->with('success', "สร้างรายการเติมเงิน #{$topup->topup_id} สำเร็จ กรุณาชำระเงินผ่าน Stripe");
         }
 
         return redirect()
@@ -173,7 +189,42 @@ class WalletController extends Controller
             : null;
         $promptpayName = $promptpayNumber ? PaymentSetting::get('promptpay_name', '') : '';
 
-        return view('user.wallet.topup-status', compact('topup', 'wallet', 'uniqueAmount', 'bankAccounts', 'promptpayNumber', 'promptpayName'));
+        // Stripe payment data
+        $stripeClientSecret = session('stripe_client_secret');
+        $stripePublishableKey = null;
+
+        if ($topup->payment_method === 'stripe' && $topup->status === WalletTopup::STATUS_PENDING) {
+            $stripeService = app(StripeService::class);
+            $stripePublishableKey = $stripeService->getPublishableKey();
+
+            if (! $stripeClientSecret && $topup->stripe_payment_intent_id) {
+                try {
+                    $intent = $stripeService->retrievePaymentIntent($topup->stripe_payment_intent_id);
+                    if ($intent->status !== 'canceled' && $intent->status !== 'succeeded') {
+                        $stripeClientSecret = $intent->client_secret;
+                    }
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+            }
+
+            if (! $stripeClientSecret) {
+                try {
+                    $intent = $stripeService->createPaymentIntentForTopup($topup, auth()->user());
+                    $stripeClientSecret = $intent->client_secret;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to create Stripe PaymentIntent for topup', [
+                        'topup_id' => $topup->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        return view('user.wallet.topup-status', compact(
+            'topup', 'wallet', 'uniqueAmount', 'bankAccounts', 'promptpayNumber', 'promptpayName',
+            'stripeClientSecret', 'stripePublishableKey'
+        ));
     }
 
     /**

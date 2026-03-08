@@ -59,6 +59,7 @@ use App\Http\Controllers\RentalController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SharedWorkflowController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Models\AdsTxtSetting;
 use App\Models\SeoSetting;
@@ -78,6 +79,9 @@ Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
 | Public Routes
 |--------------------------------------------------------------------------
 */
+
+// Stripe Webhook (CSRF excluded via bootstrap/app.php)
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 // OG Image Generation (Social Media Preview)
 Route::get('/og-image', [OgImageController::class, 'generate'])->name('og-image.generate');

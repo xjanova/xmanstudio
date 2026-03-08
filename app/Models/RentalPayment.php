@@ -37,6 +37,9 @@ class RentalPayment extends Model
         'description',
         'metadata',
         'admin_notes',
+        // Stripe fields
+        'stripe_payment_intent_id',
+        'stripe_customer_id',
     ];
 
     protected $casts = [
@@ -62,6 +65,8 @@ class RentalPayment extends Model
     const METHOD_LINEPAY = 'linepay';
 
     const METHOD_MANUAL = 'manual';
+
+    const METHOD_STRIPE = 'stripe';
 
     const STATUS_PENDING = 'pending';
 
@@ -191,6 +196,7 @@ class RentalPayment extends Model
             self::METHOD_TRUEMONEY => 'TrueMoney',
             self::METHOD_LINEPAY => 'LINE Pay',
             self::METHOD_MANUAL => 'ชำระด้วยตนเอง',
+            self::METHOD_STRIPE => 'Stripe',
             default => $this->payment_method,
         };
     }
