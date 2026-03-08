@@ -140,6 +140,30 @@ class ProductDevice extends Model
     }
 
     /**
+     * Get trial hours remaining (precise)
+     */
+    public function trialHoursRemaining(): int
+    {
+        if (! $this->trial_expires_at || $this->isTrialExpired()) {
+            return 0;
+        }
+
+        return (int) max(0, now()->diffInHours($this->trial_expires_at, false));
+    }
+
+    /**
+     * Get trial seconds remaining (precise)
+     */
+    public function trialSecondsRemaining(): int
+    {
+        if (! $this->trial_expires_at || $this->isTrialExpired()) {
+            return 0;
+        }
+
+        return (int) max(0, now()->diffInSeconds($this->trial_expires_at, false));
+    }
+
+    /**
      * Find related devices by IP (within same product)
      */
     public function findRelatedByIp(): \Illuminate\Database\Eloquent\Collection

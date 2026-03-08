@@ -179,11 +179,14 @@ class ProductLicenseController extends Controller
 
             return response()->json([
                 'success' => false,
+                'server_time' => now()->toISOString(),
                 'error_code' => $reason,
                 'message' => 'ไม่สามารถเริ่ม Trial ได้',
                 'trial_info' => $device->status === ProductDevice::STATUS_TRIAL ? [
                     'expires_at' => $device->trial_expires_at?->toISOString(),
                     'days_remaining' => $device->trialDaysRemaining(),
+                    'hours_remaining' => $device->trialHoursRemaining(),
+                    'seconds_remaining' => $device->trialSecondsRemaining(),
                 ] : null,
             ], 403);
         }
@@ -243,11 +246,14 @@ class ProductLicenseController extends Controller
 
         return response()->json([
             'success' => true,
+            'server_time' => now()->toISOString(),
             'message' => "เริ่มใช้งาน Trial {$trialDays} วันสำเร็จ",
             'data' => [
                 'license_key' => $licenseKey,
                 'expires_at' => $license->expires_at->toISOString(),
                 'days_remaining' => $trialDays,
+                'hours_remaining' => $trialDays * 24,
+                'seconds_remaining' => $trialDays * 24 * 3600,
                 'features' => $this->getTrialFeatures($productSlug),
                 'early_bird' => [
                     'eligible' => true,
@@ -294,6 +300,7 @@ class ProductLicenseController extends Controller
 
         return response()->json([
             'success' => true,
+            'server_time' => now()->toISOString(),
             'data' => [
                 'has_used_demo' => $device->trial_attempts > 0,
                 'can_start_demo' => $device->canStartTrial(),
@@ -301,6 +308,8 @@ class ProductLicenseController extends Controller
                 'trial_info' => $device->trial_expires_at ? [
                     'expires_at' => $device->trial_expires_at->toISOString(),
                     'days_remaining' => $device->trialDaysRemaining(),
+                    'hours_remaining' => $device->trialHoursRemaining(),
+                    'seconds_remaining' => $device->trialSecondsRemaining(),
                     'is_expired' => $device->isTrialExpired(),
                 ] : null,
                 'early_bird' => $device->isEligibleForEarlyBird() ? [
