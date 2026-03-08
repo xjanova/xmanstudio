@@ -226,6 +226,116 @@
                         </div>
                     </div>
                     <div class="space-y-4">
+                        <!-- Stripe Setup Guide -->
+                        <div x-data="{ showGuide: false }">
+                            <button type="button" @click="showGuide = !showGuide"
+                                    class="w-full flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">วิธีหา API Keys และตั้งค่า Webhook</span>
+                                </div>
+                                <svg class="w-5 h-5 text-indigo-500 transition-transform" :class="{ 'rotate-180': showGuide }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+
+                            <div x-show="showGuide" x-collapse x-cloak class="mt-3 space-y-4">
+                                <!-- Step 1: API Keys -->
+                                <div class="p-4 bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-xl">
+                                    <h5 class="flex items-center text-sm font-bold text-gray-900 dark:text-white mb-3">
+                                        <span class="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-2">1</span>
+                                        หา API Keys (Publishable Key & Secret Key)
+                                    </h5>
+                                    <ol class="text-sm text-gray-600 dark:text-gray-400 space-y-2 ml-8 list-decimal">
+                                        <li>เข้าสู่ระบบ <a href="https://dashboard.stripe.com" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Stripe Dashboard</a></li>
+                                        <li>คลิกเมนู <strong class="text-gray-900 dark:text-white">Developers</strong> (มุมขวาบน)</li>
+                                        <li>คลิก <strong class="text-gray-900 dark:text-white">API keys</strong></li>
+                                        <li>คัดลอก <strong class="text-gray-900 dark:text-white">Publishable key</strong> (ขึ้นต้นด้วย <code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">pk_live_</code> หรือ <code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">pk_test_</code>)</li>
+                                        <li>คลิก <strong class="text-gray-900 dark:text-white">Reveal</strong> ที่ Secret key แล้วคัดลอก (ขึ้นต้นด้วย <code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">sk_live_</code> หรือ <code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">sk_test_</code>)</li>
+                                    </ol>
+                                    <a href="https://dashboard.stripe.com/apikeys" target="_blank"
+                                       class="inline-flex items-center mt-3 ml-8 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                        </svg>
+                                        เปิดหน้า API Keys โดยตรง
+                                    </a>
+                                </div>
+
+                                <!-- Step 2: Webhook -->
+                                <div class="p-4 bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-xl">
+                                    <h5 class="flex items-center text-sm font-bold text-gray-900 dark:text-white mb-3">
+                                        <span class="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-2">2</span>
+                                        ตั้งค่า Webhook Endpoint
+                                    </h5>
+                                    <ol class="text-sm text-gray-600 dark:text-gray-400 space-y-2 ml-8 list-decimal">
+                                        <li>ไปที่ <a href="https://dashboard.stripe.com/webhooks" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Stripe Dashboard → Developers → Webhooks</a></li>
+                                        <li>คลิก <strong class="text-gray-900 dark:text-white">+ Add endpoint</strong></li>
+                                        <li>
+                                            ใส่ Endpoint URL:
+                                            <div class="mt-1.5 flex items-center gap-2">
+                                                <code id="webhookEndpointUrl" class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-xs font-mono text-gray-800 dark:text-gray-200 select-all">{{ rtrim(config('app.url'), '/') }}/stripe/webhook</code>
+                                                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('webhookEndpointUrl').textContent).then(() => { this.innerHTML = '<svg class=\'w-4 h-4 text-green-500\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M5 13l4 4L19 7\'/></svg>'; setTimeout(() => { this.innerHTML = '<svg class=\'w-4 h-4\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3\'/></svg>'; }, 2000); })"
+                                                        class="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors" title="คัดลอก">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            เลือก Events ที่ต้องการรับ:
+                                            <div class="mt-1.5 flex flex-wrap gap-2">
+                                                <code class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-xs font-mono">payment_intent.succeeded</code>
+                                                <code class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded text-xs font-mono">payment_intent.payment_failed</code>
+                                            </div>
+                                        </li>
+                                        <li>คลิก <strong class="text-gray-900 dark:text-white">Add endpoint</strong></li>
+                                    </ol>
+                                    <a href="https://dashboard.stripe.com/webhooks/create" target="_blank"
+                                       class="inline-flex items-center mt-3 ml-8 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                        </svg>
+                                        เปิดหน้าสร้าง Webhook โดยตรง
+                                    </a>
+                                </div>
+
+                                <!-- Step 3: Signing Secret -->
+                                <div class="p-4 bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-xl">
+                                    <h5 class="flex items-center text-sm font-bold text-gray-900 dark:text-white mb-3">
+                                        <span class="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-2">3</span>
+                                        คัดลอก Webhook Signing Secret
+                                    </h5>
+                                    <ol class="text-sm text-gray-600 dark:text-gray-400 space-y-2 ml-8 list-decimal">
+                                        <li>หลังสร้าง Endpoint แล้ว คลิกที่ Endpoint ที่เพิ่งสร้าง</li>
+                                        <li>มองหา <strong class="text-gray-900 dark:text-white">Signing secret</strong> → คลิก <strong class="text-gray-900 dark:text-white">Reveal</strong></li>
+                                        <li>คัดลอกค่าที่ขึ้นต้นด้วย <code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">whsec_</code> มาใส่ในช่อง <strong class="text-gray-900 dark:text-white">Webhook Secret</strong> ด้านล่าง</li>
+                                    </ol>
+                                </div>
+
+                                <!-- Tips -->
+                                <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                                    <div class="flex">
+                                        <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <div class="ml-2 text-xs text-amber-700 dark:text-amber-400">
+                                            <p class="font-semibold mb-1">คำแนะนำ:</p>
+                                            <ul class="space-y-1 list-disc list-inside">
+                                                <li><strong>Test Mode</strong>: ใช้ keys ที่ขึ้นต้นด้วย <code class="px-1 bg-amber-100 dark:bg-amber-900/40 rounded font-mono">pk_test_</code> / <code class="px-1 bg-amber-100 dark:bg-amber-900/40 rounded font-mono">sk_test_</code> สำหรับทดสอบ</li>
+                                                <li><strong>Live Mode</strong>: ใช้ keys ที่ขึ้นต้นด้วย <code class="px-1 bg-amber-100 dark:bg-amber-900/40 rounded font-mono">pk_live_</code> / <code class="px-1 bg-amber-100 dark:bg-amber-900/40 rounded font-mono">sk_live_</code> สำหรับใช้งานจริง</li>
+                                                <li>API Keys ทั้งหมดจะถูก <strong>เข้ารหัส</strong> ก่อนบันทึกลงฐานข้อมูล</li>
+                                                <li>บัตรทดสอบ: <code class="px-1 bg-amber-100 dark:bg-amber-900/40 rounded font-mono">4242 4242 4242 4242</code> (วันหมดอายุ/CVC อะไรก็ได้)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Publishable Key</label>
