@@ -86,10 +86,10 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     อัพโหลดสลิปการโอนเงิน <span class="text-red-500">*</span>
                                 </label>
-                                <input type="file" name="payment_slip" accept="image/*" required
+                                <input type="file" name="slip" accept="image/*" required
                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                                 <p class="mt-1 text-sm text-gray-500">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB</p>
-                                @error('payment_slip')
+                                @error('slip')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -120,7 +120,7 @@
                             <h4 class="text-sm font-semibold text-yellow-800">หมายเหตุ</h4>
                             <ul class="mt-1 text-sm text-yellow-700 list-disc list-inside">
                                 <li>กรุณาชำระเงินภายใน 24 ชั่วโมง</li>
-                                <li>หมายเลขอ้างอิง: {{ $payment->reference_number }}</li>
+                                <li>หมายเลขอ้างอิง: {{ $payment->payment_reference }}</li>
                                 <li>หากมีข้อสงสัย ติดต่อ Line OA: @xmanstudio</li>
                             </ul>
                         </div>

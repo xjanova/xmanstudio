@@ -122,19 +122,21 @@ class WalletController extends Controller
             'expires_at' => now()->addMinutes($expiryMinutes),
         ]);
 
-        // Generate unique payment amount for SMS matching
-        $uniqueAmount = $smsPaymentService->generateUniqueAmount(
-            $validated['amount'],
-            $topup->id,
-            'wallet_topup',
-            $expiryMinutes
-        );
+        // Generate unique payment amount for SMS matching (only for bank transfer/promptpay)
+        if (in_array($validated['payment_method'], ['bank_transfer', 'promptpay'])) {
+            $uniqueAmount = $smsPaymentService->generateUniqueAmount(
+                $validated['amount'],
+                $topup->id,
+                'wallet_topup',
+                $expiryMinutes
+            );
 
-        if ($uniqueAmount) {
-            $topup->update([
-                'unique_payment_amount_id' => $uniqueAmount->id,
-                'payment_display_amount' => $uniqueAmount->unique_amount,
-            ]);
+            if ($uniqueAmount) {
+                $topup->update([
+                    'unique_payment_amount_id' => $uniqueAmount->id,
+                    'payment_display_amount' => $uniqueAmount->unique_amount,
+                ]);
+            }
         }
 
         // Handle Stripe payment - create PaymentIntent

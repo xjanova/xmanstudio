@@ -266,16 +266,11 @@ class OrderController extends Controller
             session()->forget('applied_coupon');
 
             // Handle Stripe payment - create PaymentIntent
+            $stripeClientSecret = null;
             if ($request->payment_method === 'stripe') {
                 $stripeService = app(StripeService::class);
                 $intent = $stripeService->createPaymentIntentForOrder($order, auth()->user());
-
-                DB::commit();
-
-                return redirect()
-                    ->route('orders.show', $order)
-                    ->with('stripe_client_secret', $intent->client_secret)
-                    ->with('success', 'สร้างคำสั่งซื้อเรียบร้อยแล้ว กรุณาชำระเงินผ่าน Stripe');
+                $stripeClientSecret = $intent->client_secret;
             }
 
             DB::commit();
@@ -319,6 +314,14 @@ class OrderController extends Controller
             // Dispatch event for SMS checker broadcast
             if ($order->usesSmsPayment()) {
                 event(new NewOrderCreated($order->load('uniquePaymentAmount')));
+            }
+
+            // Redirect based on payment method
+            if ($stripeClientSecret) {
+                return redirect()
+                    ->route('orders.show', $order)
+                    ->with('stripe_client_secret', $stripeClientSecret)
+                    ->with('success', 'สร้างคำสั่งซื้อเรียบร้อยแล้ว กรุณาชำระเงินผ่าน Stripe');
             }
 
             return redirect()

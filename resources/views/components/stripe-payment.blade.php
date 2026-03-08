@@ -136,7 +136,7 @@ function stripePayment() {
 
             const returnUrl = @json($returnUrl);
 
-            const { error } = await this.stripe.confirmPayment({
+            const { error, paymentIntent } = await this.stripe.confirmPayment({
                 elements: this.elements,
                 confirmParams: {
                     return_url: returnUrl,
@@ -151,13 +151,39 @@ function stripePayment() {
                     this.errorMessage = 'เกิดข้อผิดพลาดในการชำระเงิน กรุณาลองใหม่';
                 }
                 this.processing = false;
+            } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+                this.succeeded = true;
+                // Poll server to wait for webhook to update payment status before reload
+                this.pollPaymentStatus();
             } else {
                 this.succeeded = true;
-                // Reload page after success to let server-side handle the updated status
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
+                setTimeout(() => { window.location.reload(); }, 3000);
             }
+        },
+
+        pollPaymentStatus(attempts = 0) {
+            if (attempts >= 15) {
+                // After 15 attempts (30s), reload anyway
+                window.location.reload();
+                return;
+            }
+            setTimeout(() => {
+                fetch(window.location.href, {
+                    headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(() => {
+                    // Reload and check if status changed server-side
+                    if (attempts >= 2) {
+                        // After 4+ seconds, reload — webhook should have arrived
+                        window.location.reload();
+                    } else {
+                        this.pollPaymentStatus(attempts + 1);
+                    }
+                })
+                .catch(() => {
+                    this.pollPaymentStatus(attempts + 1);
+                });
+            }, 2000);
         }
     };
 }

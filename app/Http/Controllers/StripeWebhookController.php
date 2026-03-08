@@ -153,10 +153,45 @@ class StripeWebhookController extends Controller
 
     protected function handlePaymentIntentFailed($paymentIntent): void
     {
+        $errorMessage = $paymentIntent->last_payment_error?->message ?? 'Unknown';
+
         Log::warning('Stripe payment failed', [
             'payment_intent' => $paymentIntent->id,
-            'last_error' => $paymentIntent->last_payment_error?->message ?? 'Unknown',
+            'last_error' => $errorMessage,
         ]);
+
+        $metadata = $paymentIntent->metadata;
+        $type = $metadata->type ?? null;
+
+        // Update payment status to failed based on type
+        if ($type === 'order') {
+            $order = Order::where('stripe_payment_intent_id', $paymentIntent->id)->first();
+            if ($order && $order->payment_status === 'pending') {
+                $order->update([
+                    'payment_status' => 'failed',
+                    'notes' => ($order->notes ? $order->notes . "\n" : '') . "Stripe payment failed: {$errorMessage}",
+                ]);
+            }
+        } elseif ($type === 'wallet_topup') {
+            $topup = WalletTopup::where('stripe_payment_intent_id', $paymentIntent->id)->first();
+            if ($topup && $topup->status === WalletTopup::STATUS_PENDING) {
+                $topup->update([
+                    'status' => WalletTopup::STATUS_REJECTED,
+                    'reject_reason' => "Stripe: {$errorMessage}",
+                ]);
+            }
+        } elseif ($type === 'rental') {
+            $payment = RentalPayment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
+            if ($payment && $payment->status === RentalPayment::STATUS_PENDING) {
+                $payment->update([
+                    'status' => RentalPayment::STATUS_FAILED,
+                    'gateway_response' => [
+                        'error' => $errorMessage,
+                        'payment_intent_id' => $paymentIntent->id,
+                    ],
+                ]);
+            }
+        }
     }
 
     /**

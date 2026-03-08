@@ -589,7 +589,7 @@ function copyToClipboard(text) {
     });
 }
 
-@if($order->payment_status === 'pending' && $order->usesSmsPayment())
+@if($order->payment_status === 'pending' && ($order->usesSmsPayment() || $order->payment_method === 'stripe'))
 // AJAX polling every 5 seconds — ทำงานเสมอเมื่อ payment_status=pending
 // ไม่ว่า uniquePaymentAmount จะหมดอายุหรือไม่ (เพราะแอพอาจ approve ทีหลัง)
 (function() {
