@@ -93,7 +93,7 @@ class TpingDataProfileController extends Controller
             $keys = $request->input('field_keys', []);
             $values = $request->input('field_values', []);
             foreach ($keys as $i => $key) {
-                if (!empty(trim($key))) {
+                if (! empty(trim($key))) {
                     $fields[trim($key)] = $values[$i] ?? '';
                 }
             }
