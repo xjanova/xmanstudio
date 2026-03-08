@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\SeoSetting;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class OgImageController extends Controller
 {
@@ -35,7 +37,7 @@ class OgImageController extends Controller
     {
         $seo = SeoSetting::getInstance();
 
-        $imageData = Cache::remember('og_image_default_v4', 3600, function () use ($seo) {
+        $imageData = Cache::remember('og_image_default_v5', 3600, function () use ($seo) {
             return $this->createImage(
                 $seo->site_name ?: 'XMAN Studio',
                 'IT Solutions & Software Development'
@@ -57,14 +59,14 @@ class OgImageController extends Controller
         imagealphablending($img, true);
         imagesavealpha($img, true);
 
-        // Background gradient - dark blue to purple
+        // Background gradient
         $this->drawGradient($img, $width, $height);
 
         // Decorative elements
         $this->drawDecorations($img, $width, $height);
 
-        // Draw text
-        $this->drawText($img, $width, $height, $title, $subtitle);
+        // Draw logo centered, then text below
+        $this->drawLogoAndText($img, $width, $height, $title, $subtitle);
 
         // Draw bottom bar
         $this->drawBottomBar($img, $width, $height);
@@ -81,7 +83,6 @@ class OgImageController extends Controller
     {
         for ($y = 0; $y < $height; $y++) {
             $ratio = $y / $height;
-            // From deep navy (#0a0e27) to deep purple (#1a0533)
             $r = (int) (10 + $ratio * 16);
             $g = (int) (14 - $ratio * 9);
             $b = (int) (39 + $ratio * 12);
@@ -92,13 +93,13 @@ class OgImageController extends Controller
 
     private function drawDecorations($img, int $width, int $height): void
     {
-        // Glowing orb top-right (cyan/blue)
+        // Glowing orb top-right
         $this->drawGlow($img, (int) ($width * 0.85), (int) ($height * 0.2), 180, 0, 150, 255, 0.08);
 
-        // Glowing orb bottom-left (purple/pink)
+        // Glowing orb bottom-left
         $this->drawGlow($img, (int) ($width * 0.15), (int) ($height * 0.75), 200, 120, 50, 200, 0.06);
 
-        // Subtle grid pattern
+        // Subtle grid
         $gridColor = imagecolorallocatealpha($img, 255, 255, 255, 120);
         for ($x = 0; $x < $width; $x += 60) {
             imageline($img, $x, 0, $x, $height, $gridColor);
@@ -108,14 +109,11 @@ class OgImageController extends Controller
         }
 
         // Accent line at top
-        $accentStart = imagecolorallocate($img, 0, 200, 255);
-        $accentEnd = imagecolorallocate($img, 160, 80, 255);
         for ($x = 0; $x < $width; $x++) {
             $ratio = $x / $width;
             $r = (int) (0 + $ratio * 160);
             $g = (int) (200 - $ratio * 120);
-            $b = 255;
-            $color = imagecolorallocate($img, $r, $g, $b);
+            $color = imagecolorallocate($img, $r, $g, 255);
             imagefilledrectangle($img, $x, 0, $x, 4, $color);
         }
     }
@@ -129,7 +127,7 @@ class OgImageController extends Controller
         }
     }
 
-    private function drawText($img, int $width, int $height, string $title, string $subtitle): void
+    private function drawLogoAndText($img, int $width, int $height, string $title, string $subtitle): void
     {
         $fontBold = $this->resolveFont('Sarabun-Bold.ttf', 'DejaVuSans-Bold.ttf');
         $fontRegular = $this->resolveFont('Sarabun-Regular.ttf', 'DejaVuSans.ttf');
@@ -138,42 +136,99 @@ class OgImageController extends Controller
         $lightGray = imagecolorallocate($img, 180, 190, 210);
         $cyan = imagecolorallocate($img, 0, 220, 255);
 
+        // Try loading admin logo
+        $logoPlaced = $this->drawAdminLogo($img, $width, $height);
+
+        // Calculate text Y position based on whether logo was placed
+        $textStartY = $logoPlaced ? 340 : 230;
+
         try {
             if (! $fontBold || ! $fontRegular) {
                 throw new \RuntimeException('Font not found');
             }
 
-            // "X" logo mark
-            imagettftext($img, 60, 0, 80, 240, $cyan, $fontBold, 'X');
-
-            // Title
-            $titleSize = 48;
-            $titleLines = $this->wrapText($title, $fontBold, $titleSize, $width - 220);
-            $yPos = 230;
-            foreach ($titleLines as $line) {
-                imagettftext($img, $titleSize, 0, 160, $yPos, $white, $fontBold, $line);
-                $yPos += 65;
+            if (! $logoPlaced) {
+                // Draw "X" text logo if no admin logo
+                imagettftext($img, 60, 0, 80, 240, $cyan, $fontBold, 'X');
             }
 
-            // Subtitle
+            // Title - centered
+            $titleSize = $logoPlaced ? 42 : 48;
+            $bbox = imagettfbbox($titleSize, 0, $fontBold, $title);
+            $titleWidth = abs($bbox[2] - $bbox[0]);
+            $titleX = (int) (($width - $titleWidth) / 2);
+            imagettftext($img, $titleSize, 0, $titleX, $textStartY, $white, $fontBold, $title);
+
+            // Subtitle - centered
             $subtitleSize = 22;
-            $subtitleLines = $this->wrapText($subtitle, $fontRegular, $subtitleSize, $width - 220);
-            $yPos += 15;
-            foreach ($subtitleLines as $line) {
-                imagettftext($img, $subtitleSize, 0, 160, $yPos, $lightGray, $fontRegular, $line);
-                $yPos += 35;
-            }
+            $bbox = imagettfbbox($subtitleSize, 0, $fontRegular, $subtitle);
+            $subWidth = abs($bbox[2] - $bbox[0]);
+            $subX = (int) (($width - $subWidth) / 2);
+            imagettftext($img, $subtitleSize, 0, $subX, $textStartY + 50, $lightGray, $fontRegular, $subtitle);
         } catch (\Throwable $e) {
-            // Fallback: use GD built-in fonts (ASCII only, no Thai support)
-            $this->drawLargeX($img, 80, 160, 60, $cyan);
-            imagestring($img, 5, 180, 220, 'XMAN Studio', $white);
-            imagestring($img, 4, 180, 260, 'IT Solutions & Software Development', $lightGray);
+            // Fallback: GD built-in fonts (ASCII only)
+            if (! $logoPlaced) {
+                $this->drawLargeX($img, (int) ($width / 2 - 30), 130, 60, $cyan);
+            }
+
+            // Center text using built-in font width (font 5 = 9px wide, font 4 = 8px wide)
+            $titleLen = strlen($title);
+            $subLen = strlen($subtitle);
+            imagestring($img, 5, (int) (($width - $titleLen * 9) / 2), $textStartY, $title, $white);
+            imagestring($img, 4, (int) (($width - $subLen * 8) / 2), $textStartY + 30, $subtitle, $lightGray);
         }
+    }
+
+    private function drawAdminLogo($img, int $width, int $height): bool
+    {
+        $siteLogo = Setting::getValue('site_logo');
+        if (! $siteLogo) {
+            return false;
+        }
+
+        $logoPath = storage_path('app/public/' . $siteLogo);
+        if (! is_file($logoPath) || ! is_readable($logoPath)) {
+            return false;
+        }
+
+        $info = @getimagesize($logoPath);
+        if (! $info) {
+            return false;
+        }
+
+        $logo = match ($info[2]) {
+            IMAGETYPE_PNG => @imagecreatefrompng($logoPath),
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($logoPath),
+            IMAGETYPE_GIF => @imagecreatefromgif($logoPath),
+            IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($logoPath) : false,
+            default => false,
+        };
+
+        if (! $logo) {
+            return false;
+        }
+
+        // Scale logo to fit nicely (max 200px tall, max 400px wide)
+        $origW = imagesx($logo);
+        $origH = imagesy($logo);
+        $maxW = 400;
+        $maxH = 200;
+        $scale = min($maxW / $origW, $maxH / $origH, 1.0);
+        $newW = (int) ($origW * $scale);
+        $newH = (int) ($origH * $scale);
+
+        // Center horizontally, place in upper-center area
+        $destX = (int) (($width - $newW) / 2);
+        $destY = (int) (($height - $newH) / 2) - 80;
+
+        imagecopyresampled($img, $logo, $destX, $destY, 0, 0, $newW, $newH, $origW, $origH);
+        imagedestroy($logo);
+
+        return true;
     }
 
     private function resolveFont(string $sarabunName, string $dejavuName): ?string
     {
-        // Try copying font to temp directory (workaround for hosting path restrictions)
         $storagePath = storage_path('fonts/' . $sarabunName);
         $tempPath = sys_get_temp_dir() . '/' . $sarabunName;
 
@@ -203,21 +258,17 @@ class OgImageController extends Controller
     {
         $fontRegular = $this->resolveFont('Sarabun-Regular.ttf', 'DejaVuSans.ttf');
 
-        // Bottom dark bar
         $barColor = imagecolorallocatealpha($img, 0, 0, 0, 60);
         imagefilledrectangle($img, 0, $height - 60, $width, $height, $barColor);
 
-        // Bottom accent line
         for ($x = 0; $x < $width; $x++) {
             $ratio = $x / $width;
             $r = (int) (0 + $ratio * 160);
             $g = (int) (200 - $ratio * 120);
-            $b = 255;
-            $color = imagecolorallocate($img, $r, $g, $b);
+            $color = imagecolorallocate($img, $r, $g, 255);
             imagefilledrectangle($img, $x, $height - 60, $x, $height - 57, $color);
         }
 
-        // URL text
         $urlColor = imagecolorallocate($img, 140, 150, 170);
         $tagColor = imagecolorallocate($img, 0, 200, 240);
 
@@ -238,9 +289,7 @@ class OgImageController extends Controller
         $thickness = (int) ($size / 6);
         for ($i = 0; $i < $size; $i++) {
             for ($t = 0; $t < $thickness; $t++) {
-                // Forward diagonal
                 imagesetpixel($img, $x + $i + $t, $y + $i, $color);
-                // Backward diagonal
                 imagesetpixel($img, $x + $size - $i + $t, $y + $i, $color);
             }
         }
