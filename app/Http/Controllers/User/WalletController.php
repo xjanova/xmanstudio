@@ -199,18 +199,29 @@ class WalletController extends Controller
             $stripeService = app(StripeService::class);
             $stripePublishableKey = $stripeService->getPublishableKey();
 
-            if (! $stripeClientSecret && $topup->stripe_payment_intent_id) {
+            // Check existing PaymentIntent status
+            if ($topup->stripe_payment_intent_id) {
                 try {
                     $intent = $stripeService->retrievePaymentIntent($topup->stripe_payment_intent_id);
-                    if ($intent->status !== 'canceled' && $intent->status !== 'succeeded') {
-                        $stripeClientSecret = $intent->client_secret;
+
+                    if ($intent->status === 'succeeded') {
+                        // Payment succeeded on Stripe but webhook hasn't arrived — self-heal
+                        $topup->approve(0);
+                        $topup->refresh();
+                        // No clientSecret needed — payment is done
+                    } elseif ($intent->status === 'canceled') {
+                        // PI was canceled — need a new one
+                    } else {
+                        // PI still active — use existing client_secret
+                        $stripeClientSecret = $stripeClientSecret ?: $intent->client_secret;
                     }
                 } catch (\Exception $e) {
-                    // Ignore
+                    // Ignore — will create new PI below if needed
                 }
             }
 
-            if (! $stripeClientSecret) {
+            // Only create new PI if we still don't have a clientSecret AND topup is still pending
+            if (! $stripeClientSecret && $topup->status === WalletTopup::STATUS_PENDING) {
                 try {
                     $intent = $stripeService->createPaymentIntentForTopup($topup, auth()->user());
                     $stripeClientSecret = $intent->client_secret;
@@ -291,6 +302,23 @@ class WalletController extends Controller
 
         // Always refresh from DB — another process may have approved this topup
         $topup->refresh();
+
+        // Self-heal: If Stripe payment succeeded but webhook hasn't arrived yet
+        if ($topup->status === WalletTopup::STATUS_PENDING
+            && $topup->payment_method === 'stripe'
+            && $topup->stripe_payment_intent_id
+        ) {
+            try {
+                $stripeService = app(StripeService::class);
+                $intent = $stripeService->retrievePaymentIntent($topup->stripe_payment_intent_id);
+                if ($intent->status === 'succeeded') {
+                    $topup->approve(0);
+                    $topup->refresh();
+                }
+            } catch (\Exception $e) {
+                // Ignore — will try again on next poll
+            }
+        }
 
         return response()->json([
             'status' => $topup->status,

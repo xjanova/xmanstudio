@@ -411,6 +411,34 @@ class OrderController extends Controller
             }
         }
 
+        // Self-heal: Stripe payment succeeded but webhook hasn't arrived yet
+        if ($order->payment_status === 'pending'
+            && $order->payment_method === 'stripe'
+            && $order->stripe_payment_intent_id
+        ) {
+            try {
+                $stripeService = app(StripeService::class);
+                $intent = $stripeService->retrievePaymentIntent($order->stripe_payment_intent_id);
+                if ($intent->status === 'succeeded') {
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'status' => 'processing',
+                        'paid_at' => now(),
+                        'stripe_payment_method_id' => $intent->payment_method,
+                        'stripe_metadata' => [
+                            'amount_received' => $intent->amount_received,
+                            'payment_method_types' => $intent->payment_method_types,
+                            'latest_charge' => $intent->latest_charge,
+                        ],
+                    ]);
+                    $this->generateLicensesForOrder($order);
+                    $order->refresh();
+                }
+            } catch (\Exception $e) {
+                // Ignore — webhook or next poll will handle it
+            }
+        }
+
         // Stripe payment data
         $stripeClientSecret = session('stripe_client_secret');
         $stripePublishableKey = null;
@@ -639,6 +667,34 @@ class OrderController extends Controller
 
         $order->refresh();
         $order->load('uniquePaymentAmount');
+
+        // Self-heal: Stripe payment succeeded but webhook hasn't arrived yet
+        if ($order->payment_status === 'pending'
+            && $order->payment_method === 'stripe'
+            && $order->stripe_payment_intent_id
+        ) {
+            try {
+                $stripeService = app(StripeService::class);
+                $intent = $stripeService->retrievePaymentIntent($order->stripe_payment_intent_id);
+                if ($intent->status === 'succeeded') {
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'status' => 'processing',
+                        'paid_at' => now(),
+                        'stripe_payment_method_id' => $intent->payment_method,
+                        'stripe_metadata' => [
+                            'amount_received' => $intent->amount_received,
+                            'payment_method_types' => $intent->payment_method_types,
+                            'latest_charge' => $intent->latest_charge,
+                        ],
+                    ]);
+                    $this->generateLicensesForOrder($order);
+                    $order->refresh();
+                }
+            } catch (\Exception $e) {
+                // Ignore — will try again on next poll
+            }
+        }
 
         // Auto-cancel if amount expired but order still pending
         if ($order->payment_status === 'pending' &&

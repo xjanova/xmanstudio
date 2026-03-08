@@ -112,6 +112,29 @@ class RentalController extends Controller
             ->with(['userRental.rentalPackage'])
             ->firstOrFail();
 
+        // Self-heal: Stripe payment succeeded but webhook hasn't arrived yet
+        if ($payment->payment_method === 'stripe'
+            && $payment->stripe_payment_intent_id
+        ) {
+            try {
+                $stripeService = app(StripeService::class);
+                $intent = $stripeService->retrievePaymentIntent($payment->stripe_payment_intent_id);
+                if ($intent->status === 'succeeded') {
+                    $payment->update([
+                        'gateway_response' => [
+                            'payment_intent_id' => $intent->id,
+                            'amount_received' => $intent->amount_received,
+                            'payment_method' => $intent->payment_method,
+                        ],
+                    ]);
+                    $payment->markAsCompleted();
+                    $payment->refresh();
+                }
+            } catch (\Exception $e) {
+                // Ignore — webhook or next poll will handle it
+            }
+        }
+
         $paymentInfo = [];
         $stripeClientSecret = null;
         $stripePublishableKey = null;
@@ -195,6 +218,30 @@ class RentalController extends Controller
             ->where('user_id', Auth::id())
             ->with(['userRental.rentalPackage'])
             ->firstOrFail();
+
+        // Self-heal: Stripe payment succeeded but webhook hasn't arrived yet
+        if ($payment->status === RentalPayment::STATUS_PENDING
+            && $payment->payment_method === 'stripe'
+            && $payment->stripe_payment_intent_id
+        ) {
+            try {
+                $stripeService = app(StripeService::class);
+                $intent = $stripeService->retrievePaymentIntent($payment->stripe_payment_intent_id);
+                if ($intent->status === 'succeeded') {
+                    $payment->update([
+                        'gateway_response' => [
+                            'payment_intent_id' => $intent->id,
+                            'amount_received' => $intent->amount_received,
+                            'payment_method' => $intent->payment_method,
+                        ],
+                    ]);
+                    $payment->markAsCompleted();
+                    $payment->refresh();
+                }
+            } catch (\Exception $e) {
+                // Ignore — webhook or next poll will handle it
+            }
+        }
 
         return view('rental.payment-status', compact('payment'));
     }
