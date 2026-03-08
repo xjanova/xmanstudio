@@ -551,6 +551,33 @@ class TpingController extends Controller
     }
 
     /**
+     * Installation guide with phone mockups.
+     * Supports real screenshots uploaded by admin.
+     *
+     * GET /tping/install-guide
+     */
+    public function installGuide()
+    {
+        // Load admin-uploaded screenshots (keyed by step number)
+        $screenshots = [];
+        $guideDir = 'guide-screenshots/tping';
+
+        for ($i = 1; $i <= 6; $i++) {
+            foreach (['png', 'jpg', 'jpeg', 'webp'] as $ext) {
+                $path = "{$guideDir}/step-{$i}.{$ext}";
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                    $screenshots[$i] = $path;
+                    break;
+                }
+            }
+        }
+
+        return view('tping.install-guide', [
+            'screenshots' => $screenshots,
+        ]);
+    }
+
+    /**
      * Stream APK download proxied through our server.
      * Users never see or reach GitHub.
      *

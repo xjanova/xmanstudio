@@ -103,7 +103,13 @@
 
         {{-- Install Instructions --}}
         <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-8">
-            <h3 class="text-lg font-bold mb-4">วิธีติดตั้ง</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold">วิธีติดตั้ง</h3>
+                <a href="{{ route('tping.install-guide') }}" class="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1 transition-colors">
+                    ดูคู่มือฉบับเต็ม
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+            </div>
             <ol class="space-y-3 text-indigo-200 text-sm">
                 <li class="flex items-start gap-3">
                     <span class="flex-shrink-0 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold text-white">1</span>

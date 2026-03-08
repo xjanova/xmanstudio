@@ -139,6 +139,7 @@ Route::prefix('tping')->name('tping.')->middleware('affiliate')->group(function 
     Route::get('/buy', [\App\Http\Controllers\TpingController::class, 'buyRedirect'])->name('buy');
     Route::get('/download', [\App\Http\Controllers\TpingController::class, 'downloadPage'])->name('download');
     Route::get('/download/apk', [\App\Http\Controllers\TpingController::class, 'downloadApk'])->name('download.apk');
+    Route::get('/install-guide', [\App\Http\Controllers\TpingController::class, 'installGuide'])->name('install-guide');
 
     // Require authentication for checkout
     Route::middleware('auth')->group(function () {
@@ -419,6 +420,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/products/{product}/toggle', [AdminProductController::class, 'toggle'])->name('products.toggle');
     Route::post('/products/{product}/toggle-coming-soon', [AdminProductController::class, 'toggleComingSoon'])->name('products.toggle-coming-soon');
     Route::get('/products/{product}/preview', [AdminProductController::class, 'preview'])->name('products.preview');
+
+    // Guide Screenshots Management
+    Route::prefix('guide-screenshots')->name('guide-screenshots.')->group(function () {
+        Route::get('/{product}', [\App\Http\Controllers\Admin\GuideScreenshotController::class, 'index'])->name('index');
+        Route::post('/{product}/upload', [\App\Http\Controllers\Admin\GuideScreenshotController::class, 'upload'])->name('upload');
+        Route::delete('/{product}/{step}', [\App\Http\Controllers\Admin\GuideScreenshotController::class, 'destroy'])->name('destroy');
+    });
 
     // Product Versions & GitHub Settings
     Route::prefix('products/{product}/versions')->name('products.versions.')->group(function () {
