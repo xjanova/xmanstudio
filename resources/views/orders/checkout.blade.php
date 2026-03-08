@@ -270,6 +270,8 @@
                         @endif
                     @endauth
 
+                    <x-turnstile section="checkout" />
+
                     <!-- Submit Button -->
                     <button type="submit" id="submitBtn"
                             class="mt-6 block w-full text-center px-6 py-3.5 bg-gradient-to-r from-primary-600 to-teal-600 text-white rounded-xl hover:from-primary-700 hover:to-teal-700 font-semibold shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5">

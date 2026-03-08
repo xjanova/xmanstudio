@@ -401,6 +401,8 @@
                         </svg>
                     </div>
 
+                    <x-turnstile section="register" />
+
                     <!-- Submit Button -->
                     <button type="submit" class="w-full gradient-button">
                         สมัครสมาชิก
