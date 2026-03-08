@@ -382,8 +382,8 @@
                                 </div>
                             @endif
 
-                            <!-- Upload Payment Slip (only show for non-SMS orders that are still pending) -->
-                            @if(!$order->usesSmsPayment())
+                            <!-- Upload Payment Slip (only show for bank_transfer/promptpay non-SMS orders) -->
+                            @if(!$order->usesSmsPayment() && $order->payment_method !== 'stripe')
                             <div class="mt-6 pt-6 border-t dark:border-gray-700">
                                 <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3">แนบหลักฐานการชำระเงิน</h3>
                                 <form action="{{ route('orders.confirm-payment', $order) }}" method="POST" enctype="multipart/form-data">

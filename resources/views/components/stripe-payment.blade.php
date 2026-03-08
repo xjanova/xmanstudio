@@ -21,7 +21,7 @@
             </div>
         </div>
 
-        <div id="stripe-payment-element" class="mb-4 min-h-[150px]">
+        <div id="stripe-payment-element" class="mb-4 min-h-[150px]" x-show="!succeeded && !processingPayment">
             <!-- Stripe Elements will mount here -->
             <div x-show="loading" class="flex items-center justify-center py-8">
                 <svg class="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -36,6 +36,17 @@
             <p class="text-sm text-red-600 dark:text-red-400" x-text="errorMessage"></p>
         </div>
 
+        <!-- Processing Message (waiting for webhook) -->
+        <div x-show="processingPayment && !succeeded" x-cloak class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div class="flex items-center">
+                <svg class="animate-spin h-5 w-5 text-blue-500 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-sm text-blue-600 dark:text-blue-400">กำลังตรวจสอบการชำระเงิน กรุณารอสักครู่...</p>
+            </div>
+        </div>
+
         <!-- Success Message -->
         <div x-show="succeeded" x-cloak class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <p class="text-sm text-green-600 dark:text-green-400 flex items-center">
@@ -48,7 +59,7 @@
 
         <!-- Pay Button -->
         <button
-            x-show="!succeeded"
+            x-show="!succeeded && !processingPayment"
             @click="handlePayment()"
             :disabled="processing || loading"
             class="w-full py-3.5 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -81,6 +92,7 @@ function stripePayment() {
         paymentElement: null,
         loading: true,
         processing: false,
+        processingPayment: false,
         errorMessage: '',
         succeeded: false,
 
@@ -95,6 +107,17 @@ function stripePayment() {
             }
 
             this.stripe = Stripe(publishableKey);
+
+            // Check if returning from a Stripe redirect (QR/PromptPay/etc.)
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectStatus = urlParams.get('redirect_status');
+            const piClientSecret = urlParams.get('payment_intent_client_secret');
+
+            if (redirectStatus && piClientSecret) {
+                this.loading = false;
+                this.handleRedirectReturn(piClientSecret, redirectStatus);
+                return;
+            }
 
             const isDark = document.documentElement.classList.contains('dark');
 
@@ -129,6 +152,23 @@ function stripePayment() {
             });
         },
 
+        async handleRedirectReturn(clientSecret, redirectStatus) {
+            // Returning from Stripe redirect (QR code, bank redirect, etc.)
+            if (redirectStatus === 'succeeded') {
+                this.succeeded = true;
+                this.pollForServerUpdate();
+            } else if (redirectStatus === 'processing') {
+                this.processingPayment = true;
+                this.pollForServerUpdate();
+            } else {
+                // failed or requires_payment_method — show error and let user retry
+                this.errorMessage = 'การชำระเงินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+                // Clean URL params and reload to show payment form again
+                const cleanUrl = window.location.href.split('?')[0];
+                window.history.replaceState({}, '', cleanUrl);
+            }
+        },
+
         async handlePayment() {
             if (this.processing) return;
             this.processing = true;
@@ -151,37 +191,63 @@ function stripePayment() {
                     this.errorMessage = 'เกิดข้อผิดพลาดในการชำระเงิน กรุณาลองใหม่';
                 }
                 this.processing = false;
-            } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-                this.succeeded = true;
-                // Poll server to wait for webhook to update payment status before reload
-                this.pollPaymentStatus();
-            } else {
-                this.succeeded = true;
-                setTimeout(() => { window.location.reload(); }, 3000);
+            } else if (paymentIntent) {
+                this.processing = false;
+                this.handlePaymentIntentStatus(paymentIntent.status);
             }
         },
 
-        pollPaymentStatus(attempts = 0) {
-            if (attempts >= 15) {
-                // After 15 attempts (30s), reload anyway
+        handlePaymentIntentStatus(status) {
+            switch (status) {
+                case 'succeeded':
+                    this.succeeded = true;
+                    this.pollForServerUpdate();
+                    break;
+                case 'processing':
+                    this.processingPayment = true;
+                    this.pollForServerUpdate();
+                    break;
+                case 'requires_payment_method':
+                    this.errorMessage = 'การชำระเงินไม่สำเร็จ กรุณาเลือกวิธีชำระเงินและลองใหม่';
+                    break;
+                case 'requires_action':
+                    this.errorMessage = 'การชำระเงินถูกยกเลิก กรุณาลองใหม่อีกครั้ง';
+                    break;
+                case 'canceled':
+                    this.errorMessage = 'การชำระเงินถูกยกเลิก';
+                    break;
+                default:
+                    this.errorMessage = 'สถานะการชำระเงินไม่ชัดเจน กรุณาลองใหม่';
+            }
+        },
+
+        pollForServerUpdate(attempts = 0) {
+            if (attempts >= 20) {
+                // After 20 attempts (40s), reload anyway
                 window.location.reload();
                 return;
             }
             setTimeout(() => {
-                fetch(window.location.href, {
-                    headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
+                // Use the clean URL (without Stripe params) for polling
+                const cleanUrl = window.location.href.split('?')[0];
+                fetch(cleanUrl, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
                 })
-                .then(() => {
-                    // Reload and check if status changed server-side
-                    if (attempts >= 2) {
-                        // After 4+ seconds, reload — webhook should have arrived
+                .then((response) => response.text())
+                .then((html) => {
+                    // Check if server has updated payment status (page no longer shows payment form)
+                    if (attempts >= 3) {
+                        // After 6+ seconds, reload — webhook should have arrived
+                        // Clean URL params before reload
+                        window.history.replaceState({}, '', cleanUrl);
                         window.location.reload();
                     } else {
-                        this.pollPaymentStatus(attempts + 1);
+                        this.pollForServerUpdate(attempts + 1);
                     }
                 })
                 .catch(() => {
-                    this.pollPaymentStatus(attempts + 1);
+                    this.pollForServerUpdate(attempts + 1);
                 });
             }, 2000);
         }
