@@ -8,7 +8,6 @@ use App\Models\RentalPackage;
 use App\Models\RentalPayment;
 use App\Models\User;
 use App\Models\UserRental;
-use App\Services\AffiliateCommissionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
