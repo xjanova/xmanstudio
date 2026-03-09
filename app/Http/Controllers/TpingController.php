@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Affiliate;
-use App\Models\AffiliateCommission;
 use App\Models\BankAccount;
 use App\Models\LicenseKey;
 use App\Models\Order;
@@ -182,17 +180,8 @@ class TpingController extends Controller
         }
 
         // === Affiliate tracking ===
-        $affiliateRef = session('affiliate_ref') ?? $request->cookie('affiliate_ref');
-        $affiliate = null;
-        if ($affiliateRef) {
-            $affiliate = Affiliate::where('referral_code', $affiliateRef)
-                ->where('status', 'active')
-                ->first();
-            // Prevent self-referral
-            if ($affiliate && auth()->id() === $affiliate->user_id) {
-                $affiliate = null;
-            }
-        }
+        $affiliateService = app(\App\Services\AffiliateCommissionService::class);
+        $affiliate = $affiliateService->resolveAffiliate(auth()->id());
 
         // === Create order ===
         $metadata = [
@@ -259,7 +248,10 @@ class TpingController extends Controller
             $this->generateLicenseForOrder($order, $product, $planInfo, $machineId);
 
             // Record affiliate commission (wallet = instant, so commission pending for admin review)
-            $this->recordAffiliateCommission($order, $affiliate);
+            $affiliateService->recordCommission(
+                $affiliate, $order->total, $order->id, $order->user_id,
+                'tping', $order->id, "Tping {$planInfo['name']} License"
+            );
 
             // Redirect to success (skip payment page — already paid)
             return redirect()->route('tping.payment-success', $order->id);
@@ -267,7 +259,10 @@ class TpingController extends Controller
 
         // === PromptPay / Bank Transfer: redirect to payment page ===
         // Record affiliate commission (will be pending until order is paid)
-        $this->recordAffiliateCommission($order, $affiliate);
+        $affiliateService->recordCommission(
+            $affiliate, $order->total, $order->id, $order->user_id,
+            'tping', $order->id, "Tping {$planInfo['name']} License"
+        );
 
         return redirect()->route('tping.payment', [
             'order' => $order->id,
@@ -480,47 +475,6 @@ class TpingController extends Controller
         }
 
         return redirect($url);
-    }
-
-    /**
-     * Record affiliate commission for an order.
-     */
-    protected function recordAffiliateCommission(Order $order, ?Affiliate $affiliate): void
-    {
-        if (! $affiliate) {
-            return;
-        }
-
-        $commissionAmount = $affiliate->calculateCommission($order->total);
-
-        if ($commissionAmount <= 0) {
-            return;
-        }
-
-        AffiliateCommission::create([
-            'affiliate_id' => $affiliate->id,
-            'order_id' => $order->id,
-            'referred_user_id' => $order->user_id,
-            'order_amount' => $order->total,
-            'commission_rate' => $affiliate->commission_rate,
-            'commission_amount' => $commissionAmount,
-            'status' => 'pending', // Admin must approve before wallet payout
-        ]);
-
-        // Update affiliate counters
-        $affiliate->increment('total_referrals');
-        $affiliate->increment('total_conversions');
-        $affiliate->increment('total_earned', $commissionAmount);
-        $affiliate->increment('total_pending', $commissionAmount);
-
-        // Clear referral session/cookie
-        session()->forget('affiliate_ref');
-
-        Log::info('Affiliate commission recorded', [
-            'affiliate_id' => $affiliate->id,
-            'order_id' => $order->id,
-            'amount' => $commissionAmount,
-        ]);
     }
 
     // ================================================================

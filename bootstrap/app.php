@@ -29,9 +29,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'stripe/webhook',
         ]);
 
-        // Apply theme middleware to web routes
+        // Apply theme + affiliate tracking middleware to web routes
         $middleware->web(append: [
             \App\Http\Middleware\ThemeMiddleware::class,
+            \App\Http\Middleware\AffiliateTracking::class,
         ]);
 
         // Trust proxies for load balancers

@@ -187,6 +187,20 @@ class AutoTradeXController extends Controller
             'subtotal' => $finalPrice,
         ]);
 
+        // Affiliate commission tracking
+        $affiliateService = app(\App\Services\AffiliateCommissionService::class);
+        $affiliate = $affiliateService->resolveAffiliate(auth()->id());
+        if ($affiliate) {
+            $order->update([
+                'affiliate_id' => $affiliate->id,
+                'referral_code' => $affiliate->referral_code,
+            ]);
+            $affiliateService->recordCommission(
+                $affiliate, $finalPrice, $order->id, auth()->id(),
+                'autotradex', $order->id, "AutoTradeX {$planInfo['name']} License"
+            );
+        }
+
         // Mark Early Bird as used if applicable
         if ($earlyBirdInfo['eligible'] && $machineId) {
             $this->markEarlyBirdUsed($machineId);

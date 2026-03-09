@@ -42,9 +42,10 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">วันที่</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Affiliate</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">คำสั่งซื้อ</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">ประเภท</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">รายละเอียด</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">ผู้ซื้อ</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">ยอดสั่งซื้อ</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">ยอด</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">อัตรา</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">คอมมิชชั่น</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">สถานะ</th>
@@ -59,7 +60,21 @@
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $c->affiliate->user->name ?? '-' }}</div>
                                 <div class="text-xs text-gray-500 font-mono">{{ $c->affiliate->referral_code ?? '-' }}</div>
                             </td>
-                            <td class="px-6 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">{{ $c->order->order_number ?? '-' }}</td>
+                            <td class="px-6 py-3">
+                                @php
+                                    $typeColors = [
+                                        'tping' => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+                                        'order' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                                        'rental_payment' => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+                                        'autotradex' => 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300',
+                                    ];
+                                    $typeColor = $typeColors[$c->source_type ?? ''] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+                                @endphp
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $typeColor }}">
+                                    {{ $c->source_label }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $c->source_description ?: ($c->order->order_number ?? '-') }}</td>
                             <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $c->referredUser->name ?? '-' }}</td>
                             <td class="px-6 py-3 text-sm text-right text-gray-700 dark:text-gray-300">฿{{ number_format($c->order_amount) }}</td>
                             <td class="px-6 py-3 text-sm text-center text-gray-500">{{ number_format($c->commission_rate) }}%</td>
@@ -90,7 +105,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">ไม่มีรายการ</td>
+                            <td colspan="10" class="px-6 py-12 text-center text-gray-500">ไม่มีรายการ</td>
                         </tr>
                     @endforelse
                 </tbody>

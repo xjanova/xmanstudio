@@ -40,6 +40,9 @@ class RentalPayment extends Model
         // Stripe fields
         'stripe_payment_intent_id',
         'stripe_customer_id',
+        // Affiliate tracking
+        'affiliate_id',
+        'referral_code',
     ];
 
     protected $casts = [
@@ -111,6 +114,14 @@ class RentalPayment extends Model
     public function userRental(): BelongsTo
     {
         return $this->belongsTo(UserRental::class);
+    }
+
+    /**
+     * Get the affiliate that referred this payment.
+     */
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
     }
 
     /**

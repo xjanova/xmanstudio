@@ -469,6 +469,15 @@
                     </div>
                     ค่าคอมมิชชั่น
                 </a>
+                <a href="{{ route('admin.affiliates.tree') }}"
+                   class="premium-nav-item flex items-center px-4 py-3 text-indigo-100 rounded-lg {{ request()->routeIs('admin.affiliates.tree') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                        </svg>
+                    </div>
+                    แผนผังสายงาน
+                </a>
 
                 <div class="px-4 py-3 mt-4">
                     <span class="text-xs font-semibold text-indigo-300/50 uppercase tracking-wider">Line OA</span>

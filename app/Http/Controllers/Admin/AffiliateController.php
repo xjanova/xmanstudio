@@ -12,7 +12,8 @@ use Illuminate\Http\Request;
  *
  * - View all affiliates + stats
  * - Approve/reject/pay commissions
- * - Suspend/activate affiliates
+ * - Tree view (org chart)
+ * - Move, suspend, activate, delete affiliates
  * - Change commission rates
  */
 class AffiliateController extends Controller
@@ -22,7 +23,7 @@ class AffiliateController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Affiliate::with('user');
+        $query = Affiliate::with('user', 'parent.user');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -55,17 +56,48 @@ class AffiliateController extends Controller
     }
 
     /**
+     * Show affiliate tree/org chart.
+     */
+    public function tree()
+    {
+        // Get root-level affiliates with recursive children
+        $roots = Affiliate::root()
+            ->with(['user', 'allChildren.user'])
+            ->orderByDesc('total_earned')
+            ->get();
+
+        $treeData = $roots->map(fn ($a) => $a->toTreeArray())->toArray();
+        $totalAffiliates = Affiliate::count();
+        $totalRoots = $roots->count();
+
+        // Get all affiliates for the move dropdown
+        $allAffiliates = Affiliate::with('user')
+            ->orderBy('referral_code')
+            ->get(['id', 'user_id', 'referral_code', 'status'])
+            ->load('user:id,name,email');
+
+        return view('admin.affiliates.tree', compact('treeData', 'totalAffiliates', 'totalRoots', 'allAffiliates'));
+    }
+
+    /**
      * Show affiliate detail + commissions.
      */
     public function show(Affiliate $affiliate)
     {
-        $affiliate->load('user');
+        $affiliate->load('user', 'parent.user', 'children.user');
         $commissions = $affiliate->commissions()
             ->with('order', 'referredUser')
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        return view('admin.affiliates.show', compact('affiliate', 'commissions'));
+        // Get all affiliates for move dropdown (exclude self and descendants)
+        $allAffiliates = Affiliate::with('user')
+            ->where('id', '!=', $affiliate->id)
+            ->orderBy('referral_code')
+            ->get()
+            ->filter(fn ($a) => ! $a->isDescendantOf($affiliate->id));
+
+        return view('admin.affiliates.show', compact('affiliate', 'commissions', 'allAffiliates'));
     }
 
     /**
@@ -145,5 +177,84 @@ class AffiliateController extends Controller
         $affiliate->update(array_filter($validated));
 
         return back()->with('success', 'อัพเดทข้อมูล Affiliate แล้ว');
+    }
+
+    /**
+     * Move affiliate to a new parent (change upline).
+     */
+    public function move(Request $request, Affiliate $affiliate)
+    {
+        $validated = $request->validate([
+            'new_parent_id' => 'nullable|exists:affiliates,id',
+        ]);
+
+        $newParentId = $validated['new_parent_id'] ?: null;
+
+        // Prevent moving to self
+        if ($newParentId == $affiliate->id) {
+            return back()->with('error', 'ไม่สามารถย้ายไปอยู่ใต้ตัวเองได้');
+        }
+
+        // Prevent circular reference
+        if ($newParentId) {
+            $newParent = Affiliate::findOrFail($newParentId);
+            if ($newParent->isDescendantOf($affiliate->id)) {
+                return back()->with('error', 'ไม่สามารถย้ายไปอยู่ใต้ลูกทีมของตัวเองได้');
+            }
+        }
+
+        $affiliate->update(['parent_id' => $newParentId]);
+        $affiliate->updatePath();
+        $affiliate->updateDescendantPaths();
+
+        return back()->with('success', 'ย้ายสายงาน Affiliate สำเร็จ');
+    }
+
+    /**
+     * Suspend/block an affiliate.
+     */
+    public function suspend(Affiliate $affiliate)
+    {
+        $affiliate->update(['status' => 'suspended']);
+
+        return back()->with('success', "ระงับ Affiliate {$affiliate->referral_code} แล้ว");
+    }
+
+    /**
+     * Activate a suspended affiliate.
+     */
+    public function activate(Affiliate $affiliate)
+    {
+        $affiliate->update(['status' => 'active']);
+
+        return back()->with('success', "เปิดใช้งาน Affiliate {$affiliate->referral_code} แล้ว");
+    }
+
+    /**
+     * Delete an affiliate (reassign children to parent).
+     */
+    public function destroy(Affiliate $affiliate)
+    {
+        // Reassign children to this affiliate's parent (move up)
+        $childCount = $affiliate->children()->count();
+        if ($childCount > 0) {
+            $affiliate->children()->update(['parent_id' => $affiliate->parent_id]);
+            // Update children's paths
+            foreach (Affiliate::where('parent_id', $affiliate->parent_id)->get() as $child) {
+                $child->updatePath();
+                $child->updateDescendantPaths();
+            }
+        }
+
+        // Reject pending commissions
+        $affiliate->commissions()->where('status', 'pending')->each(function ($c) {
+            $c->reject('Affiliate ถูกลบ');
+        });
+
+        $code = $affiliate->referral_code;
+        $affiliate->delete();
+
+        return redirect()->route('admin.affiliates.index')
+            ->with('success', "ลบ Affiliate {$code} แล้ว (ลูกทีม {$childCount} คนถูกย้ายขึ้น)");
     }
 }

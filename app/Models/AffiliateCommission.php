@@ -18,6 +18,9 @@ class AffiliateCommission extends Model
         'wallet_transaction_id',
         'paid_at',
         'admin_note',
+        'source_type',
+        'source_id',
+        'source_description',
     ];
 
     protected $casts = [
@@ -75,15 +78,21 @@ class AffiliateCommission extends Model
         $affiliate = $this->affiliate;
         $wallet = Wallet::getOrCreateForUser($affiliate->user_id);
 
+        // Build description based on source
+        $description = $this->source_description
+            ?? ($this->order ? "Order #{$this->order->order_number}" : "Commission #{$this->id}");
+
         // Add commission to wallet as bonus
         $transaction = $wallet->addBonus(
             $this->commission_amount,
-            "ค่าแนะนำ Affiliate จาก Order #{$this->order->order_number}",
+            "ค่าแนะนำ Affiliate จาก {$description}",
             $adminId,
             [
                 'affiliate_commission_id' => $this->id,
                 'affiliate_id' => $affiliate->id,
                 'order_id' => $this->order_id,
+                'source_type' => $this->source_type,
+                'source_id' => $this->source_id,
             ]
         );
 
@@ -118,6 +127,20 @@ class AffiliateCommission extends Model
         $this->affiliate->decrement('total_pending', $this->commission_amount);
 
         return true;
+    }
+
+    /**
+     * Source type label in Thai.
+     */
+    public function getSourceLabelAttribute(): string
+    {
+        return match ($this->source_type) {
+            'tping' => 'Tping',
+            'order' => 'สินค้า',
+            'rental_payment' => 'Rental',
+            'autotradex' => 'AutoTradeX',
+            default => $this->source_type ?? 'ไม่ระบุ',
+        };
     }
 
     /**

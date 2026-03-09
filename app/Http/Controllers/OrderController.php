@@ -207,6 +207,20 @@ class OrderController extends Controller
                 'notes' => $request->notes,
             ]);
 
+            // Affiliate commission tracking
+            $affiliateService = app(\App\Services\AffiliateCommissionService::class);
+            $affiliate = $affiliateService->resolveAffiliate(auth()->id());
+            if ($affiliate) {
+                $order->update([
+                    'affiliate_id' => $affiliate->id,
+                    'referral_code' => $affiliate->referral_code,
+                ]);
+                $affiliateService->recordCommission(
+                    $affiliate, $total, $order->id, auth()->id(),
+                    'order', $order->id, "Order #{$order->order_number}"
+                );
+            }
+
             // Generate unique payment amount for bank transfer & promptpay (SMS verification)
             if (in_array($request->payment_method, ['bank_transfer', 'promptpay'])) {
                 $uniqueAmount = $this->smsPaymentService->generateUniqueAmount(

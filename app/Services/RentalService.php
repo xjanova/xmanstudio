@@ -8,6 +8,7 @@ use App\Models\RentalPackage;
 use App\Models\RentalPayment;
 use App\Models\User;
 use App\Models\UserRental;
+use App\Services\AffiliateCommissionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -153,6 +154,21 @@ class RentalService
 
             // Update rental with payment reference
             $rental->update(['payment_reference' => $payment->payment_reference]);
+
+            // Affiliate commission tracking
+            $affiliateService = app(AffiliateCommissionService::class);
+            $affiliate = $affiliateService->resolveAffiliate($user->id);
+            if ($affiliate && $finalAmount > 0) {
+                $payment->update([
+                    'affiliate_id' => $affiliate->id,
+                    'referral_code' => $affiliate->referral_code,
+                ]);
+                $affiliateService->recordCommission(
+                    $affiliate, $finalAmount, null, $user->id,
+                    'rental_payment', $payment->id,
+                    "Rental: {$package->display_name}"
+                );
+            }
 
             // Record promo code usage if applicable
             if ($appliedPromoCode && $discountAmount > 0) {

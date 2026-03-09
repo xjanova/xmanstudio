@@ -14,7 +14,7 @@
             </svg>
         </div>
         <h2 class="text-2xl font-bold text-gray-900 mb-3">เข้าร่วมโปรแกรม Affiliate</h2>
-        <p class="text-gray-600 mb-8 max-w-md mx-auto">แนะนำ Tping ให้เพื่อน เมื่อเพื่อนซื้อ License คุณจะได้รับค่าแนะนำ <span class="font-bold text-pink-600">10%</span> เข้า Wallet ทันที</p>
+        <p class="text-gray-600 mb-8 max-w-md mx-auto">แนะนำเพื่อนมาใช้บริการ เมื่อเพื่อนซื้อสินค้าหรือบริการ คุณจะได้รับค่าแนะนำ <span class="font-bold text-pink-600">10%</span> เข้า Wallet ทันที</p>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
@@ -77,7 +77,7 @@
     </div>
 
     {{-- Stats Cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {{-- Total Earned --}}
         <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <div class="flex items-center gap-3 mb-3">
@@ -130,6 +130,22 @@
             <p class="text-2xl font-bold text-gray-900">{{ number_format($affiliate->total_clicks) }} / {{ number_format($affiliate->total_conversions) }}</p>
             <p class="text-xs text-gray-400 mt-1">Conversion {{ $affiliate->conversion_rate }}%</p>
         </div>
+
+        {{-- Downline Count --}}
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <span class="text-sm text-gray-500">ลูกทีม</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ number_format($downlineCount) }}</p>
+            @if($downlineCount > 0)
+                <a href="{{ route('customer.affiliate.downline') }}" class="text-xs text-indigo-600 hover:text-indigo-700 mt-1 inline-block">ดูทั้งหมด &rarr;</a>
+            @endif
+        </div>
     </div>
 
     {{-- Referral Code Card --}}
@@ -159,7 +175,7 @@
                 </div>
             </div>
         </div>
-        <p class="text-xs text-gray-400 mt-3">เมื่อเพื่อนเปิดลิงก์นี้แล้วซื้อ License ภายใน 30 วัน คุณจะได้รับค่าแนะนำ {{ number_format($affiliate->commission_rate) }}% เข้า Wallet อัตโนมัติ</p>
+        <p class="text-xs text-gray-400 mt-3">เมื่อเพื่อนเปิดลิงก์นี้แล้วซื้อสินค้าหรือบริการภายใน 30 วัน คุณจะได้รับค่าแนะนำ {{ number_format($affiliate->commission_rate) }}% เข้า Wallet อัตโนมัติ</p>
     </div>
 
     {{-- Recent Commissions --}}
@@ -177,9 +193,10 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">วันที่</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">คำสั่งซื้อ</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ประเภท</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">รายละเอียด</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ผู้ซื้อ</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">ยอดสั่งซื้อ</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">ยอด</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">คอมมิชชั่น</th>
                             <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">สถานะ</th>
                         </tr>
@@ -188,7 +205,19 @@
                         @foreach($recentCommissions as $commission)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-3 text-sm text-gray-600">{{ $commission->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="px-6 py-3 text-sm font-mono text-gray-700">{{ $commission->order->order_number ?? '-' }}</td>
+                                <td class="px-6 py-3">
+                                    @php
+                                        $typeColors = [
+                                            'tping' => 'bg-purple-100 text-purple-800',
+                                            'order' => 'bg-blue-100 text-blue-800',
+                                            'rental_payment' => 'bg-orange-100 text-orange-800',
+                                            'autotradex' => 'bg-cyan-100 text-cyan-800',
+                                        ];
+                                        $typeColor = $typeColors[$commission->source_type ?? ''] ?? 'bg-gray-100 text-gray-800';
+                                    @endphp
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $typeColor }}">{{ $commission->source_label }}</span>
+                                </td>
+                                <td class="px-6 py-3 text-sm text-gray-700">{{ $commission->source_description ?: ($commission->order->order_number ?? '-') }}</td>
                                 <td class="px-6 py-3 text-sm text-gray-600">{{ $commission->referredUser->name ?? '-' }}</td>
                                 <td class="px-6 py-3 text-sm text-gray-700 text-right">฿{{ number_format($commission->order_amount) }}</td>
                                 <td class="px-6 py-3 text-sm font-semibold text-green-600 text-right">+฿{{ number_format($commission->commission_amount) }}</td>

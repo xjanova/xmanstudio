@@ -5,12 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class Affiliate extends Model
 {
     protected $fillable = [
         'user_id',
+        'parent_id',
+        'depth',
+        'path',
         'referral_code',
         'commission_rate',
         'status',
@@ -28,6 +32,7 @@ class Affiliate extends Model
         'total_earned' => 'decimal:2',
         'total_paid' => 'decimal:2',
         'total_pending' => 'decimal:2',
+        'depth' => 'integer',
     ];
 
     // ── Relationships ──
@@ -35,6 +40,24 @@ class Affiliate extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /**
+     * Recursive children (for eager loading entire subtree).
+     */
+    public function allChildren(): HasMany
+    {
+        return $this->children()->with('allChildren.user');
     }
 
     public function commissions(): HasMany
@@ -54,6 +77,113 @@ class Affiliate extends Model
         return $query->where('status', 'active');
     }
 
+    public function scopeRoot($query)
+    {
+        return $query->whereNull('parent_id');
+    }
+
+    public function scopeSuspended($query)
+    {
+        return $query->where('status', 'suspended');
+    }
+
+    // ── Tree Methods ──
+
+    /**
+     * Get all ancestor affiliates (using materialized path).
+     */
+    public function getAncestors(): Collection
+    {
+        if (empty($this->path)) {
+            return collect();
+        }
+
+        $ids = array_map('intval', explode('/', $this->path));
+
+        return static::whereIn('id', $ids)->with('user')->get()
+            ->sortBy(fn ($a) => array_search($a->id, $ids));
+    }
+
+    /**
+     * Get all descendants (using materialized path).
+     */
+    public function getDescendants(): Collection
+    {
+        $id = $this->id;
+
+        return static::where(function ($q) use ($id) {
+            $q->where('path', 'LIKE', "{$id}/%")
+                ->orWhere('path', 'LIKE', "%/{$id}/%")
+                ->orWhere('path', 'LIKE', "%/{$id}");
+        })->with('user')->get();
+    }
+
+    /**
+     * Check if this affiliate is a descendant of another.
+     */
+    public function isDescendantOf(int $affiliateId): bool
+    {
+        if (empty($this->path)) {
+            return false;
+        }
+
+        return in_array($affiliateId, array_map('intval', explode('/', $this->path)));
+    }
+
+    /**
+     * Update materialized path based on parent.
+     */
+    public function updatePath(): void
+    {
+        if ($this->parent_id) {
+            $parent = static::find($this->parent_id);
+            if ($parent) {
+                $this->path = $parent->path ? $parent->path . '/' . $parent->id : (string) $parent->id;
+                $this->depth = $parent->depth + 1;
+            } else {
+                $this->path = null;
+                $this->depth = 0;
+            }
+        } else {
+            $this->path = null;
+            $this->depth = 0;
+        }
+        $this->saveQuietly();
+    }
+
+    /**
+     * Recursively update paths for all descendants.
+     */
+    public function updateDescendantPaths(): void
+    {
+        foreach ($this->children()->get() as $child) {
+            $child->updatePath();
+            $child->updateDescendantPaths();
+        }
+    }
+
+    /**
+     * Build tree data for Alpine.js org chart.
+     */
+    public function toTreeArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->user->name ?? 'Unknown',
+            'email' => $this->user->email ?? '',
+            'referral_code' => $this->referral_code,
+            'commission_rate' => (float) $this->commission_rate,
+            'status' => $this->status,
+            'status_label' => $this->status_label,
+            'status_color' => $this->status_color,
+            'total_earned' => (float) $this->total_earned,
+            'total_referrals' => $this->total_referrals,
+            'total_conversions' => $this->total_conversions,
+            'children_count' => $this->children->count(),
+            'children' => $this->children->map(fn ($child) => $child->toTreeArray())->toArray(),
+        ];
+    }
+
     // ── Helpers ──
 
     /**
@@ -69,18 +199,26 @@ class Affiliate extends Model
     }
 
     /**
-     * Get or create affiliate for a user.
+     * Get or create affiliate for a user, optionally setting a parent.
      */
-    public static function getOrCreateForUser(int $userId): self
+    public static function getOrCreateForUser(int $userId, ?int $parentId = null): self
     {
-        return self::firstOrCreate(
-            ['user_id' => $userId],
-            [
-                'referral_code' => self::generateReferralCode(),
-                'commission_rate' => 10.00,
-                'status' => 'active',
-            ]
-        );
+        $existing = self::where('user_id', $userId)->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $affiliate = self::create([
+            'user_id' => $userId,
+            'parent_id' => $parentId,
+            'referral_code' => self::generateReferralCode(),
+            'commission_rate' => 10.00,
+            'status' => 'active',
+        ]);
+
+        $affiliate->updatePath();
+
+        return $affiliate->fresh();
     }
 
     /**
@@ -92,15 +230,15 @@ class Affiliate extends Model
     }
 
     /**
-     * Get the full referral URL for Tping pricing.
+     * Get the full referral URL (site-wide, not tied to specific product).
      */
     public function getReferralUrlAttribute(): string
     {
-        return url('/tping/pricing?ref=' . $this->referral_code);
+        return url('/?ref=' . $this->referral_code);
     }
 
     /**
-     * Calculate commission for a given order amount.
+     * Calculate commission for a given payment amount.
      */
     public function calculateCommission(float $orderAmount): float
     {
@@ -121,6 +259,14 @@ class Affiliate extends Model
     public function getUnpaidBalanceAttribute(): float
     {
         return $this->total_earned - $this->total_paid;
+    }
+
+    /**
+     * Get direct children count.
+     */
+    public function getDirectChildrenCountAttribute(): int
+    {
+        return $this->children()->count();
     }
 
     /**

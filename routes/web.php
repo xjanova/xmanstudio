@@ -133,8 +133,8 @@ Route::prefix('autotradex')->name('autotradex.')->group(function () {
     });
 });
 
-// Tping - Direct purchase from app (with affiliate tracking)
-Route::prefix('tping')->name('tping.')->middleware('affiliate')->group(function () {
+// Tping - Direct purchase from app
+Route::prefix('tping')->name('tping.')->group(function () {
     Route::get('/pricing', [\App\Http\Controllers\TpingController::class, 'pricing'])->name('pricing');
     Route::get('/buy', [\App\Http\Controllers\TpingController::class, 'buyRedirect'])->name('buy');
     Route::get('/download', [\App\Http\Controllers\TpingController::class, 'downloadPage'])->name('download');
@@ -324,6 +324,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [\App\Http\Controllers\Customer\AffiliateController::class, 'dashboard'])->name('dashboard');
             Route::post('/register', [\App\Http\Controllers\Customer\AffiliateController::class, 'register'])->name('register');
             Route::get('/commissions', [\App\Http\Controllers\Customer\AffiliateController::class, 'commissions'])->name('commissions');
+            Route::get('/downline', [\App\Http\Controllers\Customer\AffiliateController::class, 'downline'])->name('downline');
         });
     });
 
@@ -368,10 +369,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Affiliate Management
     Route::prefix('affiliates')->name('affiliates.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AffiliateController::class, 'index'])->name('index');
+        Route::get('/tree', [\App\Http\Controllers\Admin\AffiliateController::class, 'tree'])->name('tree');
         Route::get('/commissions', [\App\Http\Controllers\Admin\AffiliateController::class, 'commissions'])->name('commissions');
         Route::post('/commissions/bulk-approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'bulkApprove'])->name('commission.bulk-approve');
         Route::get('/{affiliate}', [\App\Http\Controllers\Admin\AffiliateController::class, 'show'])->name('show');
         Route::put('/{affiliate}', [\App\Http\Controllers\Admin\AffiliateController::class, 'update'])->name('update');
+        Route::post('/{affiliate}/move', [\App\Http\Controllers\Admin\AffiliateController::class, 'move'])->name('move');
+        Route::post('/{affiliate}/suspend', [\App\Http\Controllers\Admin\AffiliateController::class, 'suspend'])->name('suspend');
+        Route::post('/{affiliate}/activate', [\App\Http\Controllers\Admin\AffiliateController::class, 'activate'])->name('activate');
+        Route::delete('/{affiliate}', [\App\Http\Controllers\Admin\AffiliateController::class, 'destroy'])->name('destroy');
         Route::post('/commission/{commission}/approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'approveCommission'])->name('commission.approve');
         Route::post('/commission/{commission}/reject', [\App\Http\Controllers\Admin\AffiliateController::class, 'rejectCommission'])->name('commission.reject');
     });

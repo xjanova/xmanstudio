@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
  * - Register as affiliate
  * - View their referral link & stats
  * - Track commissions & wallet payouts
+ * - View their downline (direct children)
  */
 class AffiliateController extends Controller
 {
@@ -27,6 +28,7 @@ class AffiliateController extends Controller
 
         $recentCommissions = [];
         $monthlyStats = [];
+        $downlineCount = 0;
 
         if ($affiliate) {
             $recentCommissions = $affiliate->commissions()
@@ -45,12 +47,15 @@ class AffiliateController extends Controller
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get();
+
+            $downlineCount = $affiliate->children()->count();
         }
 
         return view('customer.affiliate.dashboard', compact(
             'affiliate',
             'recentCommissions',
             'monthlyStats',
+            'downlineCount',
         ));
     }
 
@@ -69,7 +74,21 @@ class AffiliateController extends Controller
                 ->with('info', 'คุณเป็นพันธมิตร (Affiliate) อยู่แล้ว');
         }
 
-        $affiliate = Affiliate::getOrCreateForUser($user->id);
+        // Check for referral parent from session/cookie
+        $parentId = null;
+        $referralCode = session('affiliate_ref') ?? request()->cookie('affiliate_ref');
+
+        if ($referralCode) {
+            $parentAffiliate = Affiliate::where('referral_code', $referralCode)
+                ->where('status', 'active')
+                ->first();
+
+            if ($parentAffiliate && $parentAffiliate->user_id !== $user->id) {
+                $parentId = $parentAffiliate->id;
+            }
+        }
+
+        $affiliate = Affiliate::getOrCreateForUser($user->id, $parentId);
 
         return redirect()->route('customer.affiliate.dashboard')
             ->with('success', 'ลงทะเบียนเป็นพันธมิตร (Affiliate) สำเร็จ!');
@@ -97,5 +116,26 @@ class AffiliateController extends Controller
         $commissions = $query->orderByDesc('created_at')->paginate(20);
 
         return view('customer.affiliate.commissions', compact('affiliate', 'commissions'));
+    }
+
+    /**
+     * Downline — view direct children affiliates.
+     */
+    public function downline()
+    {
+        $user = auth()->user();
+        $affiliate = Affiliate::where('user_id', $user->id)->first();
+
+        if (! $affiliate) {
+            return redirect()->route('customer.affiliate.dashboard');
+        }
+
+        $children = $affiliate->children()
+            ->with('user')
+            ->withCount('children')
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        return view('customer.affiliate.downline', compact('affiliate', 'children'));
     }
 }
