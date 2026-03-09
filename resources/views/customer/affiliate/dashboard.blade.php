@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'Affiliate Dashboard')
 @section('page-title', 'พันธมิตร (Affiliate)')
