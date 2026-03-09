@@ -106,12 +106,15 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Verify machine_id matches
+        // Verify machine_id — allow re-bind for HWID migration (same key = trusted user)
         if ($license->machine_id && $license->machine_id !== $request->machine_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'เครื่องนี้ไม่ตรงกับไลเซนส์',
-            ], 403);
+            // HWID changed (e.g. ANDROID_ID → MediaDrm after app update).
+            // Since the user has the correct license key, allow re-bind to new machine_id.
+            \Illuminate\Support\Facades\Log::info("DeviceAuth: HWID rebind for license #{$license->id}", [
+                'old_machine_id' => substr($license->machine_id, 0, 16) . '...',
+                'new_machine_id' => substr($request->machine_id, 0, 16) . '...',
+            ]);
+            $license->update(['machine_id' => $request->machine_id]);
         }
 
         // Check if license is expired
