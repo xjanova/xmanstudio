@@ -119,10 +119,14 @@ class ProductController extends Controller
     {
         $categories = Category::all();
 
-        // Fix double-encoded JSON features (string instead of array)
+        // Fix double-encoded JSON fields (string instead of array)
         if (is_string($product->features)) {
             $decoded = json_decode($product->features, true);
             $product->features = is_array($decoded) ? $decoded : [''];
+        }
+        if (is_string($product->images)) {
+            $decoded = json_decode($product->images, true);
+            $product->images = is_array($decoded) ? $decoded : [];
         }
 
         return view('admin.products.edit', compact('product', 'categories'));
