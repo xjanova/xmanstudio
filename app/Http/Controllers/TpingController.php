@@ -75,6 +75,30 @@ class TpingController extends Controller
     ];
 
     /**
+     * Show Tping detail / landing page
+     *
+     * GET /tping
+     */
+    public function detail()
+    {
+        $product = Product::where('slug', 'tping')->first();
+
+        $version = null;
+        if ($product) {
+            $version = ProductVersion::where('product_id', $product->id)
+                ->where('is_active', true)
+                ->orderByDesc('version')
+                ->first();
+        }
+
+        return view('tping.detail', [
+            'pricing' => self::PRICING,
+            'product' => $product,
+            'version' => $version,
+        ]);
+    }
+
+    /**
      * Show pricing page
      *
      * GET /tping/pricing

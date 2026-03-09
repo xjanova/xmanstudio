@@ -135,6 +135,7 @@ Route::prefix('autotradex')->name('autotradex.')->group(function () {
 
 // Tping - Direct purchase from app
 Route::prefix('tping')->name('tping.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\TpingController::class, 'detail'])->name('detail');
     Route::get('/pricing', [\App\Http\Controllers\TpingController::class, 'pricing'])->name('pricing');
     Route::get('/buy', [\App\Http\Controllers\TpingController::class, 'buyRedirect'])->name('buy');
     Route::get('/download', [\App\Http\Controllers\TpingController::class, 'downloadPage'])->name('download');
