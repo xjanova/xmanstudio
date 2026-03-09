@@ -86,6 +86,11 @@ class ProductController extends Controller
         $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
         $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
 
+        // Clean features - remove empty strings
+        if (isset($validated['features'])) {
+            $validated['features'] = array_values(array_filter($validated['features'], fn ($f) => trim($f) !== ''));
+        }
+
         // Handle main image
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
@@ -113,6 +118,12 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $categories = Category::all();
+
+        // Fix double-encoded JSON features (string instead of array)
+        if (is_string($product->features)) {
+            $decoded = json_decode($product->features, true);
+            $product->features = is_array($decoded) ? $decoded : [''];
+        }
 
         return view('admin.products.edit', compact('product', 'categories'));
     }
@@ -151,6 +162,11 @@ class ProductController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
         $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
         $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
+
+        // Clean features - remove empty strings
+        if (isset($validated['features'])) {
+            $validated['features'] = array_values(array_filter($validated['features'], fn ($f) => trim($f) !== ''));
+        }
 
         // Handle main image
         if ($request->hasFile('image')) {
