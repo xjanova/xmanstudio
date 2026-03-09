@@ -58,20 +58,37 @@ class StripeService
     }
 
     /**
+     * Calculate Stripe fee for a given base amount
+     *
+     * @return array{fee: float, total: float, fee_display: string, fee_type: string, fee_rate: float}
+     */
+    public function calculateStripeFee(float $baseAmount): array
+    {
+        $feeService = app(PaymentFeeService::class);
+
+        return $feeService->calculateFee('stripe', $baseAmount);
+    }
+
+    /**
      * Create PaymentIntent for an order
      */
     public function createPaymentIntentForOrder(Order $order, User $user): PaymentIntent
     {
         $customer = $this->getOrCreateCustomer($user);
+        $feeInfo = $this->calculateStripeFee($order->total);
 
         $intent = $this->stripe->paymentIntents->create([
-            'amount' => $this->toStripeAmount($order->total),
+            'amount' => $this->toStripeAmount($feeInfo['total']),
             'currency' => config('stripe.currency', 'thb'),
             'customer' => $customer->id,
             'metadata' => [
                 'type' => 'order',
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
+                'base_amount' => $order->total,
+                'fee' => $feeInfo['fee'],
+                'fee_type' => $feeInfo['fee_type'],
+                'fee_rate' => $feeInfo['fee_rate'],
             ],
             'automatic_payment_methods' => ['enabled' => true],
             'description' => "Order #{$order->order_number}",
@@ -91,15 +108,20 @@ class StripeService
     public function createPaymentIntentForTopup(WalletTopup $topup, User $user): PaymentIntent
     {
         $customer = $this->getOrCreateCustomer($user);
+        $feeInfo = $this->calculateStripeFee($topup->amount);
 
         $intent = $this->stripe->paymentIntents->create([
-            'amount' => $this->toStripeAmount($topup->amount),
+            'amount' => $this->toStripeAmount($feeInfo['total']),
             'currency' => config('stripe.currency', 'thb'),
             'customer' => $customer->id,
             'metadata' => [
                 'type' => 'wallet_topup',
                 'topup_id' => $topup->id,
                 'topup_number' => $topup->topup_id,
+                'base_amount' => $topup->amount,
+                'fee' => $feeInfo['fee'],
+                'fee_type' => $feeInfo['fee_type'],
+                'fee_rate' => $feeInfo['fee_rate'],
             ],
             'automatic_payment_methods' => ['enabled' => true],
             'description' => "Wallet Topup #{$topup->topup_id}",
@@ -119,15 +141,20 @@ class StripeService
     public function createPaymentIntentForRental(RentalPayment $payment, User $user): PaymentIntent
     {
         $customer = $this->getOrCreateCustomer($user);
+        $feeInfo = $this->calculateStripeFee($payment->amount);
 
         $intent = $this->stripe->paymentIntents->create([
-            'amount' => $this->toStripeAmount($payment->amount),
+            'amount' => $this->toStripeAmount($feeInfo['total']),
             'currency' => config('stripe.currency', 'thb'),
             'customer' => $customer->id,
             'metadata' => [
                 'type' => 'rental',
                 'payment_id' => $payment->id,
                 'payment_reference' => $payment->payment_reference,
+                'base_amount' => $payment->amount,
+                'fee' => $feeInfo['fee'],
+                'fee_type' => $feeInfo['fee_type'],
+                'fee_rate' => $feeInfo['fee_rate'],
             ],
             'automatic_payment_methods' => ['enabled' => true],
             'description' => "Rental Payment #{$payment->payment_reference}",

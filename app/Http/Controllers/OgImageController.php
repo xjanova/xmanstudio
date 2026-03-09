@@ -6,6 +6,7 @@ use App\Models\SeoSetting;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class OgImageController extends Controller
 {
@@ -27,6 +28,28 @@ class OgImageController extends Controller
             'Content-Type' => 'image/png',
             'Cache-Control' => 'public, max-age=86400',
         ]);
+    }
+
+    /**
+     * Serve the uploaded OG image from storage (no symlink needed).
+     * Falls back to dynamic generation if no image uploaded.
+     */
+    public function siteImage()
+    {
+        $seo = SeoSetting::getInstance();
+
+        if ($seo->og_image && Storage::disk('public')->exists($seo->og_image)) {
+            $path = Storage::disk('public')->path($seo->og_image);
+            $mimeType = Storage::disk('public')->mimeType($seo->og_image);
+
+            return response()->file($path, [
+                'Content-Type' => $mimeType,
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        }
+
+        // Fallback to dynamically generated image
+        return $this->defaultImage();
     }
 
     /**

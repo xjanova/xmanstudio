@@ -366,10 +366,26 @@
                                     </div>
                                 </div>
                             @elseif($order->payment_method === 'stripe' && isset($stripeClientSecret) && isset($stripePublishableKey))
+                                @if(isset($stripeFeeInfo) && $stripeFeeInfo['fee'] > 0)
+                                <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500 dark:text-gray-400">ยอดสินค้า</span>
+                                        <span class="text-gray-900 dark:text-white">฿{{ number_format($order->total, 2) }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500 dark:text-gray-400">ค่าธรรมเนียม Stripe ({{ $stripeFeeInfo['fee_display'] }})</span>
+                                        <span class="text-amber-600 dark:text-amber-400">+฿{{ number_format($stripeFeeInfo['fee'], 2) }}</span>
+                                    </div>
+                                    <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
+                                        <span class="font-semibold text-gray-700 dark:text-gray-200">ยอดที่ต้องชำระ</span>
+                                        <span class="font-bold text-indigo-600 dark:text-indigo-400 text-lg">฿{{ number_format($stripeFeeInfo['total'], 2) }}</span>
+                                    </div>
+                                </div>
+                                @endif
                                 <x-stripe-payment
                                     :clientSecret="$stripeClientSecret"
                                     :publishableKey="$stripePublishableKey"
-                                    :amount="$order->total"
+                                    :amount="isset($stripeFeeInfo) ? $stripeFeeInfo['total'] : $order->total"
                                     :returnUrl="route('orders.show', $order)"
                                 />
                             @else

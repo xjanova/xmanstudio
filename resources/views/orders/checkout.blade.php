@@ -131,6 +131,9 @@
                                             <div>
                                                 <span class="font-semibold text-gray-900 dark:text-white">{{ $method['name'] }}</span>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ $method['description'] }}</p>
+                                                @if(!empty($method['fee_display']))
+                                                <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">ค่าธรรมเนียม {{ $method['fee_display'] }}</p>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

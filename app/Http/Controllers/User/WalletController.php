@@ -9,8 +9,10 @@ use App\Models\Setting;
 use App\Models\Wallet;
 use App\Models\WalletBonusTier;
 use App\Models\WalletTopup;
+use App\Services\PaymentFeeService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
+use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 
 class WalletController extends Controller
@@ -51,6 +53,10 @@ class WalletController extends Controller
         $wallet = Wallet::getOrCreateForUser(auth()->id());
         $bonusTiers = WalletBonusTier::active()->orderBy('min_amount')->get();
 
+        // Get payment fee info
+        $feeService = app(PaymentFeeService::class);
+        $paymentFees = $feeService->getAllMethodFees();
+
         // Get wallet settings
         $settings = [
             'min_amount' => (int) Setting::getValue('wallet_topup_min_amount', 100),
@@ -64,7 +70,7 @@ class WalletController extends Controller
             ],
         ];
 
-        return view('user.wallet.topup', compact('wallet', 'bonusTiers', 'settings'));
+        return view('user.wallet.topup', compact('wallet', 'bonusTiers', 'settings', 'paymentFees'));
     }
 
     /**
@@ -191,13 +197,25 @@ class WalletController extends Controller
             : null;
         $promptpayName = $promptpayNumber ? PaymentSetting::get('promptpay_name', '') : '';
 
+        // Generate PromptPay QR code for easy scanning
+        $promptpayQR = null;
+        if ($promptpayNumber && $topup->payment_method === 'promptpay' && $topup->status === WalletTopup::STATUS_PENDING) {
+            $paymentAmount = $topup->payment_display_amount ?? $topup->amount;
+            $promptpayQR = app(ThaiPaymentService::class)->generatePromptPayQR(
+                (float) $paymentAmount,
+                $topup->topup_id
+            );
+        }
+
         // Stripe payment data
         $stripeClientSecret = session('stripe_client_secret');
         $stripePublishableKey = null;
+        $stripeFeeInfo = null;
 
         if ($topup->payment_method === 'stripe' && $topup->status === WalletTopup::STATUS_PENDING) {
             $stripeService = app(StripeService::class);
             $stripePublishableKey = $stripeService->getPublishableKey();
+            $stripeFeeInfo = $stripeService->calculateStripeFee($topup->amount);
 
             // Check existing PaymentIntent status
             if ($topup->stripe_payment_intent_id) {
@@ -234,9 +252,15 @@ class WalletController extends Controller
             }
         }
 
+        // Also get fee info for display even if Stripe payment is already completed
+        if ($topup->payment_method === 'stripe' && ! $stripeFeeInfo) {
+            $stripeService = $stripeService ?? app(StripeService::class);
+            $stripeFeeInfo = $stripeService->calculateStripeFee($topup->amount);
+        }
+
         return view('user.wallet.topup-status', compact(
             'topup', 'wallet', 'uniqueAmount', 'bankAccounts', 'promptpayNumber', 'promptpayName',
-            'stripeClientSecret', 'stripePublishableKey'
+            'promptpayQR', 'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo'
         ));
     }
 

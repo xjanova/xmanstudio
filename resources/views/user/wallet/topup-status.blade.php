@@ -147,6 +147,16 @@
                             โอนตรงตามยอดนี้ ระบบจะตรวจสอบอัตโนมัติ
                         </p>
                     </div>
+                    @elseif($topup->payment_method === 'stripe' && isset($stripeFeeInfo) && $stripeFeeInfo['fee'] > 0)
+                    <div class="text-center mb-6">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">ยอดที่ต้องชำระ (รวมค่าธรรมเนียม)</p>
+                        <div class="bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 rounded-2xl p-6 border-2 border-indigo-300 dark:border-indigo-700">
+                            <p class="text-5xl font-bold text-indigo-600 dark:text-indigo-400">
+                                {{ number_format($stripeFeeInfo['total'], 2) }}
+                            </p>
+                            <p class="text-indigo-700 dark:text-indigo-300 mt-2">บาท</p>
+                        </div>
+                    </div>
                     @else
                     <div class="text-center mb-6">
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">ยอดเติมเงิน</p>
@@ -172,6 +182,16 @@
                             <span class="text-gray-500 dark:text-gray-400">ยอดรวมที่จะได้รับ</span>
                             <span class="font-bold text-purple-600 dark:text-purple-400">{{ number_format($topup->total_amount, 2) }} บาท</span>
                         </div>
+                        @if($topup->payment_method === 'stripe' && isset($stripeFeeInfo) && $stripeFeeInfo['fee'] > 0)
+                        <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                            <span class="text-gray-500 dark:text-gray-400">ค่าธรรมเนียม Stripe ({{ $stripeFeeInfo['fee_display'] }})</span>
+                            <span class="font-medium text-amber-600 dark:text-amber-400">+{{ number_format($stripeFeeInfo['fee'], 2) }} บาท</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700 bg-indigo-50 dark:bg-indigo-900/20 -mx-2 px-2 rounded-lg">
+                            <span class="font-semibold text-gray-700 dark:text-gray-200">ยอดที่ต้องชำระ</span>
+                            <span class="font-bold text-indigo-600 dark:text-indigo-400 text-lg">{{ number_format($stripeFeeInfo['total'], 2) }} บาท</span>
+                        </div>
+                        @endif
                         <div class="flex justify-between py-2">
                             <span class="text-gray-500 dark:text-gray-400">ช่องทางชำระ</span>
                             <span class="font-medium text-gray-900 dark:text-white">{{ $topup->payment_method_label }}</span>
@@ -196,7 +216,7 @@
                         <x-stripe-payment
                             :clientSecret="$stripeClientSecret"
                             :publishableKey="$stripePublishableKey"
-                            :amount="$topup->amount"
+                            :amount="isset($stripeFeeInfo) ? $stripeFeeInfo['total'] : $topup->amount"
                             :returnUrl="route('user.wallet.topup-status', $topup)"
                         />
                     @elseif($topup->status === 'pending')
@@ -260,6 +280,20 @@
                             </div>
                             <h4 class="font-semibold text-purple-800 dark:text-purple-200">PromptPay</h4>
                         </div>
+
+                        @if(!empty($promptpayQR['qr_image_url']))
+                        <!-- QR Code for scanning -->
+                        <div class="text-center mb-4">
+                            <div class="inline-block p-3 bg-white rounded-xl border-2 border-purple-300 shadow-md">
+                                <img src="{{ $promptpayQR['qr_image_url'] }}" alt="PromptPay QR Code"
+                                     class="w-56 h-56 mx-auto object-contain" loading="lazy">
+                            </div>
+                            <p class="mt-2 text-sm text-purple-600 dark:text-purple-400 font-medium">
+                                สแกน QR Code ด้วยแอปธนาคารของคุณ
+                            </p>
+                        </div>
+                        @endif
+
                         <div class="space-y-2 text-sm">
                             <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200">หมายเลข:</span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">{{ $promptpayNumber }}</code></p>
                             @if(!empty($promptpayName))

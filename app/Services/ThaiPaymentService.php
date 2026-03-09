@@ -55,6 +55,8 @@ class ThaiPaymentService
         $cardEnabled = PaymentSetting::get('card_payment_enabled')
             ?? config('payment.card.enabled', false);
 
+        $feeService = app(PaymentFeeService::class);
+
         return [
             [
                 'id' => 'promptpay',
@@ -63,6 +65,7 @@ class ThaiPaymentService
                 'icon' => 'promptpay',
                 'description' => 'สแกน QR Code เพื่อชำระเงิน',
                 'is_active' => $promptpayEnabled,
+                'fee_display' => $feeService->hasFee('promptpay') ? $feeService->formatFeeDisplay($feeService->getFeeType('promptpay'), $feeService->getFeeAmount('promptpay')) : null,
             ],
             [
                 'id' => 'bank_transfer',
@@ -71,6 +74,7 @@ class ThaiPaymentService
                 'icon' => 'bank',
                 'description' => 'โอนเงินผ่านธนาคาร',
                 'is_active' => $bankTransferEnabled,
+                'fee_display' => $feeService->hasFee('bank_transfer') ? $feeService->formatFeeDisplay($feeService->getFeeType('bank_transfer'), $feeService->getFeeAmount('bank_transfer')) : null,
             ],
             [
                 'id' => 'credit_card',
@@ -79,6 +83,7 @@ class ThaiPaymentService
                 'icon' => 'card',
                 'description' => 'ชำระด้วยบัตรเครดิตหรือเดบิต',
                 'is_active' => $cardEnabled,
+                'fee_display' => $feeService->hasFee('card') ? $feeService->formatFeeDisplay($feeService->getFeeType('card'), $feeService->getFeeAmount('card')) : null,
             ],
             [
                 'id' => 'stripe',
@@ -87,6 +92,7 @@ class ThaiPaymentService
                 'icon' => 'stripe',
                 'description' => 'ชำระด้วย Visa, Mastercard, JCB ผ่าน Stripe',
                 'is_active' => StripeService::isEnabled(),
+                'fee_display' => $feeService->hasFee('stripe') ? $feeService->formatFeeDisplay($feeService->getFeeType('stripe'), $feeService->getFeeAmount('stripe')) : null,
             ],
         ];
     }

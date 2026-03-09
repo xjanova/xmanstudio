@@ -6,12 +6,25 @@
     $ogType = $type ?? 'website';
 
     // OG Image: priority → passed $image → database og_image → dynamic generator
+    // Uses route-based serving to avoid symlink dependency
     if (!empty($image)) {
         $pageImage = $image;
+        $pageImageType = 'image/png'; // Default for custom images
     } elseif ($seoSetting->og_image) {
-        $pageImage = asset('storage/' . $seoSetting->og_image);
+        // Serve uploaded image via route (no storage symlink needed)
+        $pageImage = route('og-image.site');
+        // Detect actual image type from file extension
+        $ext = strtolower(pathinfo($seoSetting->og_image, PATHINFO_EXTENSION));
+        $pageImageType = match($ext) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
     } else {
         $pageImage = route('og-image.default');
+        $pageImageType = 'image/png';
     }
 @endphp
 
@@ -35,7 +48,7 @@
 <meta property="og:image" content="{{ $pageImage }}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:type" content="image/png">
+<meta property="og:image:type" content="{{ $pageImageType }}">
 <meta property="og:site_name" content="{{ $seoSetting->site_name ?? 'XMAN Studio' }}">
 <meta property="og:locale" content="th_TH">
 

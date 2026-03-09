@@ -138,6 +138,7 @@ class RentalController extends Controller
         $paymentInfo = [];
         $stripeClientSecret = null;
         $stripePublishableKey = null;
+        $stripeFeeInfo = null;
 
         if ($payment->payment_method === 'promptpay') {
             $paymentInfo = $this->paymentService->generatePromptPayQR(
@@ -152,6 +153,7 @@ class RentalController extends Controller
             $stripeService = app(StripeService::class);
             $stripePublishableKey = $stripeService->getPublishableKey();
             $stripeClientSecret = session('stripe_client_secret');
+            $stripeFeeInfo = $stripeService->calculateStripeFee($payment->amount);
 
             if (! $stripeClientSecret && $payment->stripe_payment_intent_id) {
                 try {
@@ -178,7 +180,7 @@ class RentalController extends Controller
         }
 
         return view('rental.payment', compact(
-            'payment', 'paymentInfo', 'stripeClientSecret', 'stripePublishableKey'
+            'payment', 'paymentInfo', 'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo'
         ));
     }
 

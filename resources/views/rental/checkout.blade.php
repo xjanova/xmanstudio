@@ -137,6 +137,11 @@
 
                             <!-- Stripe -->
                             @if(\App\Services\StripeService::isEnabled())
+                                @php
+                                    $stripeFeeService = app(\App\Services\PaymentFeeService::class);
+                                    $stripeHasFee = $stripeFeeService->hasFee('stripe');
+                                    $stripeFeeDisplay = $stripeHasFee ? $stripeFeeService->formatFeeDisplay($stripeFeeService->getFeeType('stripe'), $stripeFeeService->getFeeAmount('stripe')) : null;
+                                @endphp
                                 <label class="block cursor-pointer">
                                     <input type="radio" name="payment_method" value="stripe" class="sr-only peer">
                                     <div class="flex items-center p-4 border-2 rounded-lg peer-checked:border-primary-500 peer-checked:bg-primary-50">
@@ -148,6 +153,9 @@
                                         <div class="ml-4">
                                             <p class="font-semibold text-gray-900">Stripe</p>
                                             <p class="text-sm text-gray-500">บัตรเครดิต/เดบิต และวิธีอื่นๆ</p>
+                                            @if($stripeFeeDisplay)
+                                            <p class="text-xs text-amber-600 mt-0.5">ค่าธรรมเนียม {{ $stripeFeeDisplay }}</p>
+                                            @endif
                                         </div>
                                     </div>
                                 </label>

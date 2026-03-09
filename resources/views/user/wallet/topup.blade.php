@@ -141,6 +141,9 @@
                                         </div>
                                         <p class="font-medium text-gray-900 dark:text-white">โอนเงิน</p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">ธนาคารทุกธนาคาร</p>
+                                        @if(isset($paymentFees['bank_transfer']) && $paymentFees['bank_transfer']['has_fee'])
+                                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">ค่าธรรมเนียม {{ $paymentFees['bank_transfer']['fee_display'] }}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </label>
@@ -155,6 +158,9 @@
                                         </div>
                                         <p class="font-medium text-gray-900 dark:text-white">PromptPay</p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">สแกน QR Code</p>
+                                        @if(isset($paymentFees['promptpay']) && $paymentFees['promptpay']['has_fee'])
+                                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">ค่าธรรมเนียม {{ $paymentFees['promptpay']['fee_display'] }}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </label>
@@ -187,6 +193,9 @@
                                         </div>
                                         <p class="font-medium text-gray-900 dark:text-white">Stripe</p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">บัตรเครดิต/เดบิต</p>
+                                        @if(isset($paymentFees['stripe']) && $paymentFees['stripe']['has_fee'])
+                                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">ค่าธรรมเนียม {{ $paymentFees['stripe']['fee_display'] }}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </label>
