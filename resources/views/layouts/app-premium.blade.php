@@ -267,7 +267,7 @@
                             @endif
                         </a>
                     </div>
-                    <div class="hidden md:ml-8 md:flex md:items-center md:space-x-1">
+                    <div class="hidden lg:ml-8 lg:flex lg:items-center lg:space-x-1">
                         <a href="/" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('/') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             หน้าหลัก
                         </a>
@@ -457,7 +457,7 @@
                     @endauth
 
                     <!-- Mobile Menu Button (Hamburger) -->
-                    <button id="mobileMenuBtn" type="button" class="md:hidden p-2 text-indigo-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors" aria-label="Toggle menu" aria-expanded="false">
+                    <button id="mobileMenuBtn" type="button" class="lg:hidden p-2 text-indigo-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors" aria-label="Toggle menu" aria-expanded="false">
                         <!-- Hamburger Icon -->
                         <svg id="hamburgerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -472,7 +472,7 @@
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden md:hidden border-t border-indigo-500/20">
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-indigo-500/20">
             <div class="px-4 py-3 space-y-2">
                 <a href="/" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('/') ? 'bg-white/10 text-white' : 'text-indigo-200 hover:bg-white/5 hover:text-white' }}">หน้าหลัก</a>
                 <a href="/services" class="block px-4 py-2.5 text-base font-medium rounded-lg transition-all duration-300 {{ request()->is('services*') ? 'bg-white/10 text-white' : 'text-indigo-200 hover:bg-white/5 hover:text-white' }}">บริการ</a>

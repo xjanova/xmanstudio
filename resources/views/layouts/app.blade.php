@@ -79,7 +79,7 @@
                             @endif
                         </a>
                     </div>
-                    <div class="hidden md:ml-8 md:flex md:space-x-1 md:items-center">
+                    <div class="hidden lg:ml-8 lg:flex lg:space-x-1 lg:items-center">
                         <a href="/" class="group flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('/') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-green-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-green-500/30' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>
                             หน้าหลัก
@@ -359,7 +359,7 @@
                     @endauth
 
                     <!-- Mobile Menu Button -->
-                    <button id="mobileMenuBtn" type="button" class="md:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                    <button id="mobileMenuBtn" type="button" class="lg:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
@@ -369,7 +369,7 @@
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-gray-800 border-t dark:border-gray-700">
+        <div id="mobileMenu" class="hidden lg:hidden bg-white dark:bg-gray-800 border-t dark:border-gray-700">
             <div class="px-4 py-3 space-y-1.5">
                 {{-- Main Navigation --}}
                 <a href="/" class="flex items-center gap-3 px-4 py-2.5 text-base font-medium rounded-xl transition-all duration-300 {{ request()->is('/') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">

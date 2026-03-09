@@ -119,9 +119,9 @@ class ProductController extends Controller
                 ->exists();
         }
 
-        // Redirect Tping to its dedicated pricing page
+        // Redirect Tping to its dedicated detail page
         if ($slug === 'tping') {
-            return redirect()->route('tping.pricing');
+            return redirect()->route('tping.detail');
         }
 
         // Custom views for each product
