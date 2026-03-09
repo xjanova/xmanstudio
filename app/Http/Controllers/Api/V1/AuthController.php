@@ -83,6 +83,79 @@ class AuthController extends Controller
     }
 
     /**
+     * Device auth — auto-authenticate using license key + machine ID.
+     * No email/password required. Creates a device-linked user automatically.
+     * Used for automatic cloud sync when license is active.
+     */
+    public function deviceAuth(Request $request): JsonResponse
+    {
+        $request->validate([
+            'license_key' => 'required|string',
+            'machine_id' => 'required|string|min:32|max:128',
+        ]);
+
+        // Verify license exists and is active
+        $license = \App\Models\LicenseKey::where('license_key', $request->license_key)
+            ->whereNotNull('activated_at')
+            ->first();
+
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไลเซนส์ไม่ถูกต้องหรือยังไม่ได้เปิดใช้งาน',
+            ], 401);
+        }
+
+        // Verify machine_id matches
+        if ($license->machine_id && $license->machine_id !== $request->machine_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'เครื่องนี้ไม่ตรงกับไลเซนส์',
+            ], 403);
+        }
+
+        // Check if license is expired
+        if ($license->expires_at && $license->expires_at->isPast()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไลเซนส์หมดอายุแล้ว',
+            ], 403);
+        }
+
+        // Find or create device user (linked to this license)
+        $deviceEmail = 'device-' . substr(hash('sha256', $request->machine_id), 0, 16) . '@tping.device';
+        $deviceName = 'Device ' . substr($request->machine_id, 0, 8) . '...';
+
+        $user = User::firstOrCreate(
+            ['email' => $deviceEmail],
+            [
+                'name' => $deviceName,
+                'password' => Hash::make(\Illuminate\Support\Str::random(32)),
+                'is_active' => true,
+            ]
+        );
+
+        // Link user to license if not already linked
+        if (! $license->user_id) {
+            $license->update(['user_id' => $user->id]);
+        }
+
+        // Revoke old tokens for this device and create new one
+        $user->tokens()->where('name', 'device-sync')->delete();
+        $token = $user->createToken('device-sync')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $deviceEmail,
+            ],
+        ]);
+    }
+
+    /**
      * Logout (revoke current token).
      */
     public function logout(Request $request): JsonResponse

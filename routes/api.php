@@ -109,6 +109,7 @@ Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function ()
 Route::prefix('v1/auth')->middleware(['throttle:10,1'])->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/device', [AuthController::class, 'deviceAuth']);  // License-based device auth (no login required)
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
