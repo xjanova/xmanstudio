@@ -199,12 +199,40 @@ class LicenseController extends Controller
     }
 
     /**
-     * Reset machine activation
+     * Reset machine activation (clear binding or rebind to new machine)
      */
-    public function resetMachine(LicenseKey $license)
+    public function resetMachine(Request $request, LicenseKey $license)
     {
-        $previousMachineId = $license->machine_id;
+        $request->validate([
+            'new_machine_id' => 'nullable|string|min:32|max:64',
+        ]);
 
+        $previousMachineId = $license->machine_id;
+        $newMachineId = $request->input('new_machine_id');
+
+        if ($newMachineId) {
+            // Rebind to new machine_id
+            $license->update([
+                'machine_id' => $newMachineId,
+                'machine_fingerprint' => null,
+            ]);
+
+            LicenseActivity::log(
+                $license,
+                LicenseActivity::ACTION_MACHINE_RESET,
+                LicenseActivity::ACTOR_ADMIN,
+                auth()->id(),
+                $newMachineId,
+                'Re-bind เครื่องโดยแอดมิน',
+                ['previous_machine_id' => $previousMachineId, 'new_machine_id' => $newMachineId]
+            );
+
+            return redirect()
+                ->back()
+                ->with('success', "Re-bind License '{$license->license_key}' ไปเครื่องใหม่แล้ว");
+        }
+
+        // Reset (clear binding)
         $license->update([
             'machine_id' => null,
             'machine_fingerprint' => null,

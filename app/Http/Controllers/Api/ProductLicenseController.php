@@ -373,13 +373,29 @@ class ProductLicenseController extends Controller
         }
 
         // Check if already activated on different machine
+        $isRebind = false;
+        $previousMachineId = null;
         if ($license->machine_id && $license->machine_id !== $validated['machine_id']) {
             if ($license->activations >= $license->max_activations) {
-                return response()->json([
-                    'success' => false,
-                    'error_code' => 'MAX_ACTIVATIONS',
-                    'message' => 'License ถูกใช้งานครบจำนวนเครื่องแล้ว',
-                ], 403);
+                // Allow re-bind: same license key + max_activations reached = HWID migration
+                // The user has the correct key, so allow switching to new device (e.g. HWID changed after app update)
+                $isRebind = true;
+                $previousMachineId = $license->machine_id;
+
+                // Clear old machine binding first
+                $license->update([
+                    'machine_id' => null,
+                    'machine_fingerprint' => null,
+                    'activations' => max(0, $license->activations - 1),
+                ]);
+
+                // Update old device status
+                ProductDevice::where('product_id', $product->id)
+                    ->where('machine_id', $previousMachineId)
+                    ->update([
+                        'status' => ProductDevice::STATUS_PENDING,
+                        'license_id' => null,
+                    ]);
             }
         }
 
@@ -407,15 +423,24 @@ class ProductLicenseController extends Controller
             ]
         );
 
-        // Log activation
+        // Log activation (include rebind info if applicable)
+        $logMessage = $isRebind
+            ? 'Re-bind License ไปเครื่องใหม่ (HWID migration)'
+            : 'เปิดใช้งาน License ผ่าน API';
+
         LicenseActivity::log(
             $license,
             LicenseActivity::ACTION_ACTIVATED,
             LicenseActivity::ACTOR_API,
             null,
             $validated['machine_id'],
-            'เปิดใช้งาน License ผ่าน API',
-            ['product_slug' => $productSlug, 'app_version' => $validated['app_version'] ?? null]
+            $logMessage,
+            array_filter([
+                'product_slug' => $productSlug,
+                'app_version' => $validated['app_version'] ?? null,
+                'is_rebind' => $isRebind ?: null,
+                'previous_machine_id' => $previousMachineId,
+            ])
         );
 
         return response()->json([

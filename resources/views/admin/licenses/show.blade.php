@@ -169,7 +169,7 @@
                     ข้อมูลเครื่อง
                 </h3>
                 @if($license->machine_id)
-                    <form action="{{ route('admin.licenses.reset-machine', $license) }}" method="POST" class="inline">
+                    <form action="{{ route('admin.licenses.reset-machine', $license) }}" method="POST" class="inline" onsubmit="return confirm('ต้องการรีเซ็ตเครื่องหรือไม่? License จะถูกปลดจากเครื่องนี้')">
                         @csrf
                         <button type="submit" class="px-4 py-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-xl transition font-medium">
                             <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +182,7 @@
             </div>
 
             @if($license->machine_id)
-                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-4">
                     <div class="flex items-center gap-3 mb-3">
                         <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,6 +207,27 @@
                         @endif
                     </div>
                 </div>
+
+                <!-- Re-bind Machine Form -->
+                <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                        Re-bind ไปเครื่องใหม่
+                    </p>
+                    <form action="{{ route('admin.licenses.reset-machine', $license) }}" method="POST" onsubmit="return confirm('ต้องการ Re-bind License ไปเครื่องใหม่หรือไม่?')">
+                        @csrf
+                        <div class="flex gap-2">
+                            <input type="text" name="new_machine_id" placeholder="วาง Machine ID ใหม่ (64 ตัวอักษร)" required
+                                   minlength="32" maxlength="64"
+                                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-xs font-mono">
+                            <button type="submit" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 font-medium text-sm shadow-lg transition whitespace-nowrap">
+                                Re-bind
+                            </button>
+                        </div>
+                    </form>
+                </div>
             @else
                 <div class="text-center py-8">
                     <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
@@ -215,6 +236,21 @@
                         </svg>
                     </div>
                     <p class="text-gray-500 dark:text-gray-400">ยังไม่ได้เปิดใช้งานบนเครื่องใด</p>
+
+                    <!-- Bind to machine (when not activated) -->
+                    <div class="mt-4">
+                        <form action="{{ route('admin.licenses.reset-machine', $license) }}" method="POST">
+                            @csrf
+                            <div class="flex gap-2 max-w-md mx-auto">
+                                <input type="text" name="new_machine_id" placeholder="วาง Machine ID (64 ตัวอักษร)" required
+                                       minlength="32" maxlength="64"
+                                       class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-xs font-mono">
+                                <button type="submit" class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 font-medium text-sm shadow-lg transition whitespace-nowrap">
+                                    Bind
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             @endif
         </div>
