@@ -157,6 +157,37 @@ class AuthController extends Controller
     }
 
     /**
+     * Generate a one-time web login token for device-auth users.
+     * The app calls this, then opens the returned URL in the browser.
+     * Token expires in 5 minutes and can only be used once.
+     */
+    public function webLoginToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['success' => false, 'message' => 'ยังไม่ได้เข้าสู่ระบบ'], 401);
+        }
+
+        // Generate a one-time token (stored in cache for 5 minutes)
+        $token = bin2hex(random_bytes(32));
+        \Illuminate\Support\Facades\Cache::put(
+            "web_login_token:{$token}",
+            $user->id,
+            now()->addMinutes(5)
+        );
+
+        $url = url("/auth/device-login/{$token}");
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'url' => $url,
+                'expires_in' => 300,
+            ],
+        ]);
+    }
+
+    /**
      * Logout (revoke current token).
      */
     public function logout(Request $request): JsonResponse

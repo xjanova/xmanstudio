@@ -97,6 +97,20 @@ Route::post('/ai-chat', [PublicChatController::class, 'chat'])
 // Shared Workflow (public)
 Route::get('/shared/workflow/{token}', [SharedWorkflowController::class, 'show'])->name('shared.workflow');
 
+// Device auto-login (one-time token from API, redirects to web dashboard)
+Route::get('/auth/device-login/{token}', function (string $token) {
+    $userId = \Illuminate\Support\Facades\Cache::pull("web_login_token:{$token}");
+    if (! $userId) {
+        return redirect('/')->with('error', 'ลิงก์หมดอายุหรือถูกใช้ไปแล้ว');
+    }
+    $user = \App\Models\User::find($userId);
+    if (! $user) {
+        return redirect('/')->with('error', 'ไม่พบบัญชีผู้ใช้');
+    }
+    \Illuminate\Support\Facades\Auth::login($user);
+    return redirect('/my-account/tping-workflows');
+})->name('auth.device-login');
+
 // Home (with setup check)
 Route::get('/', function () {
     if (SetupController::isSetupRequired()) {
@@ -365,6 +379,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/', [AdminTpingWorkflowController::class, 'index'])->name('index');
         Route::get('/{workflow}', [AdminTpingWorkflowController::class, 'show'])->name('show');
         Route::delete('/{workflow}', [AdminTpingWorkflowController::class, 'destroy'])->name('destroy');
+    });
+
+    // Tping Data Profile Management
+    Route::prefix('tping-data-profiles')->name('tping.data-profiles.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'index'])->name('index');
+        Route::get('/{profile}', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'show'])->name('show');
+        Route::delete('/{profile}', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'destroy'])->name('destroy');
     });
 
     // Affiliate Management

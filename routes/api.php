@@ -114,6 +114,7 @@ Route::prefix('v1/auth')->middleware(['throttle:10,1'])->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/user', [AuthController::class, 'user']);
+        Route::post('/web-login-token', [AuthController::class, 'webLoginToken']);
     });
 });
 
