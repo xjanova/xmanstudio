@@ -108,6 +108,7 @@ Route::get('/auth/device-login/{token}', function (string $token) {
         return redirect('/')->with('error', 'ไม่พบบัญชีผู้ใช้');
     }
     \Illuminate\Support\Facades\Auth::login($user);
+
     return redirect('/my-account/tping-workflows');
 })->name('auth.device-login');
 

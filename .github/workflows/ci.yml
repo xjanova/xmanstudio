@@ -54,7 +54,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: composer update --prefer-dist --no-interaction --no-progress
+        run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -110,16 +110,10 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
 
       - name: Install Composer dependencies
-        run: composer update --prefer-dist --no-interaction --no-progress
+        run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Run Laravel Pint (Code Style)
-        run: |
-          ./vendor/bin/pint
-          if ! git diff --quiet -- ':(exclude)composer.lock'; then
-            echo "::error::Code style issues found. Run 'vendor/bin/pint' locally to fix."
-            git diff -- ':(exclude)composer.lock'
-            exit 1
-          fi
+        run: ./vendor/bin/pint --test
 
       - name: Check for security vulnerabilities
         run: |
