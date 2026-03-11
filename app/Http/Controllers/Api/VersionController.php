@@ -172,6 +172,59 @@ class VersionController extends Controller
     }
 
     /**
+     * Simple update check for mobile apps (Tping Android).
+     * GET /api/v1/product/{slug}/update/check?current_version=X.Y.Z
+     *
+     * Returns flat JSON: { has_update, latest_version, download_url, changelog }
+     */
+    public function checkUpdate(Request $request, string $productSlug): JsonResponse
+    {
+        $product = Product::where('slug', $productSlug)->first();
+
+        if (! $product) {
+            return response()->json([
+                'has_update' => false,
+                'error' => 'Product not found',
+            ], 404);
+        }
+
+        $latestVersion = $product->latestVersion();
+
+        if (! $latestVersion) {
+            return response()->json([
+                'has_update' => false,
+                'latest_version' => '',
+                'download_url' => '',
+                'changelog' => '',
+            ]);
+        }
+
+        $currentVersion = $request->query('current_version', '0.0.0');
+        $hasUpdate = version_compare($currentVersion, $latestVersion->version, '<');
+
+        // Build download URL — use the public tping APK download route
+        $downloadUrl = '';
+        if ($hasUpdate) {
+            if ($productSlug === 'tping') {
+                // Tping: proxy download through our server (hides GitHub)
+                $downloadUrl = url('/tping/download/apk');
+            } else {
+                $downloadUrl = route('download.product', [
+                    'slug' => $product->slug,
+                    'version' => $latestVersion->version,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'has_update' => $hasUpdate,
+            'latest_version' => $latestVersion->version,
+            'download_url' => $downloadUrl,
+            'changelog' => $latestVersion->changelog ?? '',
+        ]);
+    }
+
+    /**
      * Validate a license key
      */
     public function validateLicense(Request $request): JsonResponse

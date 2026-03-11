@@ -177,6 +177,9 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
 
     // Public shared workflow access (no auth)
     Route::get('/workflows/shared/{token}', [WorkflowController::class, 'getShared']);
+
+    // In-app update check (GET for mobile apps)
+    Route::get('/update/check', [VersionController::class, 'checkUpdate']);
 });
 
 // ==================== Version & Download API Routes ====================
