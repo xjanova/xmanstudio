@@ -5,6 +5,18 @@
 @section('page-description', 'จัดการ Data Profile ที่ซิงค์จากแอพ Tping')
 
 @section('content')
+<!-- Tabs -->
+<div class="flex gap-2 mb-6">
+    <a href="{{ route('customer.tping.workflows.index') }}"
+       class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('customer.tping.workflows.*') ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/30' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+        Workflow
+    </a>
+    <a href="{{ route('customer.tping.data-profiles.index') }}"
+       class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('customer.tping.data-profiles.*') ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+        Data Profile
+    </a>
+</div>
+
 <!-- Header Banner -->
 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-6 sm:p-8 mb-8 shadow-xl">
     <div class="absolute inset-0 bg-black/10"></div>

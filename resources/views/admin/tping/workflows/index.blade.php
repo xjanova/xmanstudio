@@ -4,6 +4,18 @@
 @section('page-title', 'Tping Workflows')
 
 @section('content')
+<!-- Tabs -->
+<div class="flex gap-2 mb-6">
+    <a href="{{ route('admin.tping.workflows.index') }}"
+       class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('admin.tping.workflows.*') ? 'bg-cyan-600 text-white shadow-lg' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+        Workflow
+    </a>
+    <a href="{{ route('admin.tping.data-profiles.index') }}"
+       class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('admin.tping.data-profiles.*') ? 'bg-emerald-600 text-white shadow-lg' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+        Data Profile
+    </a>
+</div>
+
 <!-- Header -->
 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-800 via-gray-900 to-black p-6 sm:p-8 mb-8 shadow-xl">
     <div class="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl"></div>
