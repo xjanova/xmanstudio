@@ -413,9 +413,30 @@ class ProductLicenseController extends Controller
         $isRebind = false;
         $previousMachineId = null;
         if ($license->machine_id && $license->machine_id !== $validated['machine_id']) {
-            if ($license->activations >= $license->max_activations) {
-                // Allow re-bind: same license key + max_activations reached = HWID migration
-                // The user has the correct key, so allow switching to new device (e.g. HWID changed after app update)
+            $requestDrmId = $validated['drm_id'] ?? null;
+
+            // Determine if this is the SAME physical device (HWID migration)
+            // or a DIFFERENT device trying to steal the license
+            $isSameDevice = false;
+
+            // Check 1: drm_id matches — same physical device, HWID hash just changed
+            if ($requestDrmId && $license->drm_id && $requestDrmId === $license->drm_id) {
+                $isSameDevice = true;
+            }
+
+            // Check 2: drm_id matches via device record (fallback)
+            if (! $isSameDevice && $requestDrmId) {
+                $existingDevice = ProductDevice::where('product_id', $product->id)
+                    ->where('drm_id', $requestDrmId)
+                    ->where('license_id', $license->id)
+                    ->first();
+                if ($existingDevice) {
+                    $isSameDevice = true;
+                }
+            }
+
+            if ($isSameDevice) {
+                // Same device, HWID migration — allow re-bind
                 $isRebind = true;
                 $previousMachineId = $license->machine_id;
 
@@ -426,13 +447,19 @@ class ProductLicenseController extends Controller
                     'activations' => max(0, $license->activations - 1),
                 ]);
 
-                // Update old device status
+                // Update old device record to point to new machine_id
                 ProductDevice::where('product_id', $product->id)
                     ->where('machine_id', $previousMachineId)
                     ->update([
-                        'status' => ProductDevice::STATUS_PENDING,
-                        'license_id' => null,
+                        'machine_id' => $validated['machine_id'],
                     ]);
+            } else {
+                // DIFFERENT device — BLOCK activation, must contact admin
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'ALREADY_ACTIVATED_OTHER_DEVICE',
+                    'message' => 'License นี้ถูกใช้งานบนเครื่องอื่นแล้ว กรุณาติดต่อแอดมินเพื่อย้ายเครื่อง',
+                ], 403);
             }
         }
 
