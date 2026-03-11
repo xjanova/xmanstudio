@@ -19,7 +19,7 @@ class ReassignCloudDataCommand extends Command
         $dryRun = $this->option('dry-run');
 
         if ($dryRun) {
-            $this->info('🔍 DRY RUN — no changes will be made');
+            $this->info('DRY RUN - no changes will be made');
         }
 
         // Find all device users
@@ -96,19 +96,20 @@ class ReassignCloudDataCommand extends Command
                 // Update license user_id to real user
                 $license->update(['user_id' => $realUser->id]);
 
-                $this->info("  ✅ Reassigned {$workflowCount} workflows + {$profileCount} profiles → {$realUser->name}");
+                $this->info("  Reassigned {$workflowCount} workflows + {$profileCount} profiles to {$realUser->name}");
             } else {
-                $this->info("  Would reassign {$workflowCount} workflows + {$profileCount} profiles → {$realUser->name}");
+                $this->info("  Would reassign {$workflowCount} workflows + {$profileCount} profiles to {$realUser->name}");
             }
 
             $reassigned += $workflowCount + $profileCount;
         }
 
         $this->line('');
-        $this->info($dryRun
-            ? "Would reassign {$reassigned} total items."
-            : "Done! Reassigned {$reassigned} total items."
-        );
+        if ($dryRun) {
+            $this->info("Would reassign {$reassigned} total items.");
+        } else {
+            $this->info("Done! Reassigned {$reassigned} total items.");
+        }
 
         return self::SUCCESS;
     }
