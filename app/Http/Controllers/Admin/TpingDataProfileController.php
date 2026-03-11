@@ -48,6 +48,31 @@ class TpingDataProfileController extends Controller
         return view('admin.tping.data-profiles.show', compact('profile', 'fields'));
     }
 
+    public function edit(ProductDataProfile $profile)
+    {
+        $profile->load('user');
+
+        return view('admin.tping.data-profiles.edit', compact('profile'));
+    }
+
+    public function update(Request $request, ProductDataProfile $profile)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'fields_json' => 'nullable|string',
+        ]);
+
+        $profile->update([
+            'name' => $validated['name'],
+            'category' => $validated['category'] ?? $profile->category,
+            'fields_json' => $validated['fields_json'] ?? $profile->fields_json,
+        ]);
+
+        return redirect()->route('admin.tping.data-profiles.show', $profile)
+            ->with('success', 'อัพเดท Data Profile สำเร็จ');
+    }
+
     public function destroy(ProductDataProfile $profile)
     {
         $profile->delete();

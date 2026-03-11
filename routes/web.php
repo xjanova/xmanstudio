@@ -379,6 +379,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::prefix('tping-workflows')->name('tping.workflows.')->group(function () {
         Route::get('/', [AdminTpingWorkflowController::class, 'index'])->name('index');
         Route::get('/{workflow}', [AdminTpingWorkflowController::class, 'show'])->name('show');
+        Route::get('/{workflow}/edit', [AdminTpingWorkflowController::class, 'edit'])->name('edit');
+        Route::put('/{workflow}', [AdminTpingWorkflowController::class, 'update'])->name('update');
         Route::delete('/{workflow}', [AdminTpingWorkflowController::class, 'destroy'])->name('destroy');
     });
 
@@ -386,6 +388,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::prefix('tping-data-profiles')->name('tping.data-profiles.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'index'])->name('index');
         Route::get('/{profile}', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'show'])->name('show');
+        Route::get('/{profile}/edit', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'edit'])->name('edit');
+        Route::put('/{profile}', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'update'])->name('update');
         Route::delete('/{profile}', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'destroy'])->name('destroy');
     });
 

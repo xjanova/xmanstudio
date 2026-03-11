@@ -200,12 +200,21 @@ class Affiliate extends Model
 
     /**
      * Get or create affiliate for a user, optionally setting a parent.
+     * If no parent specified, defaults to admin's affiliate (first admin user).
      */
     public static function getOrCreateForUser(int $userId, ?int $parentId = null): self
     {
         $existing = self::where('user_id', $userId)->first();
         if ($existing) {
             return $existing;
+        }
+
+        // If no referrer, default parent to admin's affiliate
+        if ($parentId === null) {
+            $adminAffiliate = self::getAdminAffiliate($userId);
+            if ($adminAffiliate) {
+                $parentId = $adminAffiliate->id;
+            }
         }
 
         $affiliate = self::create([
@@ -219,6 +228,39 @@ class Affiliate extends Model
         $affiliate->updatePath();
 
         return $affiliate->fresh();
+    }
+
+    /**
+     * Get admin's affiliate record (auto-create if needed).
+     * Returns null only if the user being created IS the admin.
+     */
+    private static function getAdminAffiliate(int $excludeUserId): ?self
+    {
+        // Find first admin user (not the user being registered)
+        $admin = \App\Models\User::whereIn('role', ['admin', 'super_admin'])
+            ->where('id', '!=', $excludeUserId)
+            ->orderBy('id')
+            ->first();
+
+        if (! $admin) {
+            return null;
+        }
+
+        // Get or create admin's own affiliate (without parent — root node)
+        $adminAffiliate = self::where('user_id', $admin->id)->first();
+        if (! $adminAffiliate) {
+            $adminAffiliate = self::create([
+                'user_id' => $admin->id,
+                'parent_id' => null,
+                'referral_code' => self::generateReferralCode(),
+                'commission_rate' => 10.00,
+                'status' => 'active',
+            ]);
+            $adminAffiliate->updatePath();
+            $adminAffiliate = $adminAffiliate->fresh();
+        }
+
+        return $adminAffiliate;
     }
 
     /**

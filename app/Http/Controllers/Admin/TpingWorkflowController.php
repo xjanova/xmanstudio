@@ -51,6 +51,35 @@ class TpingWorkflowController extends Controller
         return view('admin.tping.workflows.show', compact('workflow', 'steps'));
     }
 
+    public function edit(ProductWorkflow $workflow)
+    {
+        $workflow->load('user');
+
+        return view('admin.tping.workflows.edit', compact('workflow'));
+    }
+
+    public function update(Request $request, ProductWorkflow $workflow)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'target_app_package' => 'nullable|string|max:255',
+            'target_app_name' => 'nullable|string|max:255',
+            'steps_json' => 'nullable|string',
+            'is_public' => 'nullable|boolean',
+        ]);
+
+        $workflow->update([
+            'name' => $validated['name'],
+            'target_app_package' => $validated['target_app_package'] ?? $workflow->target_app_package,
+            'target_app_name' => $validated['target_app_name'] ?? $workflow->target_app_name,
+            'steps_json' => $validated['steps_json'] ?? $workflow->steps_json,
+            'is_public' => $request->boolean('is_public'),
+        ]);
+
+        return redirect()->route('admin.tping.workflows.show', $workflow)
+            ->with('success', 'อัพเดท Workflow สำเร็จ');
+    }
+
     public function destroy(ProductWorkflow $workflow)
     {
         $workflow->delete();

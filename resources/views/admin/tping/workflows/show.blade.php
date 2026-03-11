@@ -33,10 +33,13 @@
                 </p>
             @endif
         </div>
-        <form method="POST" action="{{ route('admin.tping.workflows.destroy', $workflow) }}" onsubmit="return confirm('ลบ workflow #{{ $workflow->id }}?')">
-            @csrf @method('DELETE')
-            <button class="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-medium hover:bg-red-100 transition-all">ลบ</button>
-        </form>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('admin.tping.workflows.edit', $workflow) }}" class="px-4 py-2 bg-cyan-50 text-cyan-600 rounded-xl text-sm font-medium hover:bg-cyan-100 transition-all">แก้ไข</a>
+            <form method="POST" action="{{ route('admin.tping.workflows.destroy', $workflow) }}" onsubmit="return confirm('ลบ workflow #{{ $workflow->id }}?')">
+                @csrf @method('DELETE')
+                <button class="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-medium hover:bg-red-100 transition-all">ลบ</button>
+            </form>
+        </div>
     </div>
 </div>
 
