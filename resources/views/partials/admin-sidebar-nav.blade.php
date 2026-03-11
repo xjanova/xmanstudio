@@ -16,30 +16,32 @@
 
 {{-- Menu link helper class --}}
 @php
-    $linkClass = 'flex items-center px-3 py-1.5 text-sm rounded-md transition-colors';
-    $linkActive = 'bg-white/10 text-white';
+    $linkClass = 'flex items-center pl-7 pr-2 py-1.5 text-[13px] rounded-md transition-colors';
+    $linkActive = 'bg-white/10 text-white font-medium';
     $linkInactive = 'text-gray-400 hover:bg-white/5 hover:text-gray-200';
-    $iconClass = 'w-4 h-4 mr-2.5 flex-shrink-0';
-    $sectionClass = 'mb-1';
+    $iconClass = 'w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-70';
+    $sectionClass = 'pt-3 first:pt-0';
+    $headerClass = 'flex items-center gap-2 px-2 pb-1 mb-0.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5';
+    $headerBtnClass = 'w-full flex items-center justify-between px-2 pb-1 mb-0.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5 hover:text-gray-300 transition-colors';
 @endphp
 
 {{-- Dashboard --}}
-<div class="{{ $sectionClass }}">
+<div class="pb-1 mb-1 border-b border-white/5">
     <a href="{{ route('admin.analytics.index') }}"
-       class="{{ $linkClass }} {{ request()->routeIs('admin.analytics*') ? $linkActive : $linkInactive }}">
-        <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+       class="flex items-center px-2 py-1.5 text-[13px] rounded-md transition-colors {{ request()->routeIs('admin.analytics*') ? $linkActive : $linkInactive }}">
+        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Analytics
     </a>
     <a href="{{ route('admin.mockup') }}"
-       class="{{ $linkClass }} {{ request()->routeIs('admin.mockup') ? $linkActive : $linkInactive }}">
-        <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+       class="flex items-center px-2 py-1.5 text-[13px] rounded-md transition-colors {{ request()->routeIs('admin.mockup') ? $linkActive : $linkInactive }}">
+        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
         Premium Dashboard
     </a>
 </div>
 
 {{-- การเช่า --}}
 <div x-data="{ open: {{ request()->routeIs('admin.rentals.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>การเช่า</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -65,7 +67,7 @@
 
 {{-- เนื้อหา --}}
 <div class="{{ $sectionClass }}">
-    <div class="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">เนื้อหา</div>
+    <div class="{{ $headerClass }}">เนื้อหา</div>
     <a href="{{ route('admin.services.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.services*') ? $linkActive : $linkInactive }}">
         <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
         บริการ
@@ -74,7 +76,7 @@
 
 {{-- ผลิตภัณฑ์ --}}
 <div x-data="{ open: {{ request()->routeIs('admin.products.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>ผลิตภัณฑ์</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -92,7 +94,7 @@
 
 {{-- License & Devices --}}
 <div x-data="{ open: {{ request()->routeIs('admin.licenses*') || request()->routeIs('admin.devices*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>License</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -110,7 +112,7 @@
 
 {{-- สมาชิก --}}
 <div x-data="{ open: {{ request()->routeIs('admin.users*') || request()->routeIs('admin.roles*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>สมาชิก</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -133,7 +135,10 @@
 
 {{-- My Cloud --}}
 <div class="{{ $sectionClass }}">
-    <div class="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">My Cloud</div>
+    <div class="{{ $headerClass }}">
+        <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+        My Cloud
+    </div>
     <a href="{{ route('admin.tping.workflows.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.tping.*') ? $linkActive : $linkInactive }}">
         <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
         TPING
@@ -142,7 +147,7 @@
 
 {{-- Affiliate --}}
 <div x-data="{ open: {{ request()->routeIs('admin.affiliates.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>Affiliate</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -167,7 +172,7 @@
 
 {{-- Line OA --}}
 <div x-data="{ open: {{ request()->routeIs('admin.line-messaging.*') || request()->routeIs('admin.line-settings*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>Line OA</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -189,7 +194,7 @@
 
 {{-- Metal-X YouTube --}}
 <div x-data="{ open: {{ request()->routeIs('admin.metal-x.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>Metal-X YouTube</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -219,7 +224,7 @@
 
 {{-- ใบสั่งงาน & โครงการ --}}
 <div x-data="{ open: {{ request()->routeIs('admin.quotations.*') || request()->routeIs('admin.projects*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>ใบสั่งงาน</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -241,7 +246,7 @@
 
 {{-- Support --}}
 <div x-data="{ open: {{ request()->routeIs('admin.support*') || request()->routeIs('admin.bug-reports*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>Support</span>
         @if($newBugReports > 0)<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $newBugReports }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -263,7 +268,7 @@
 
 {{-- ใบเสนอราคา & คำสั่งซื้อ --}}
 <div x-data="{ open: {{ request()->routeIs('admin.quotations.list') || request()->routeIs('admin.quotations.detail') || request()->routeIs('admin.orders.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>ใบเสนอราคา</span>
         @if($pendingQuotations > 0)<span class="bg-indigo-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingQuotations }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -288,7 +293,7 @@
 
 {{-- การเงิน --}}
 <div x-data="{ open: {{ request()->routeIs('admin.wallets.*') || request()->routeIs('admin.coupons*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>การเงิน</span>
         @if($pendingTopups > 0)<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingTopups }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -330,7 +335,7 @@
 
 {{-- SMS Payment --}}
 <div x-data="{ open: {{ request()->routeIs('admin.sms-payment.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>SMS Payment</span>
         @if($pendingOrders > 0)<span class="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingOrders }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -367,7 +372,7 @@
 
 {{-- การตั้งค่า --}}
 <div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors">
+    <button @click="open = !open" class="{{ $headerBtnClass }}">
         <span>ตั้งค่า</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
@@ -425,7 +430,7 @@
 
 {{-- อื่นๆ --}}
 <div class="{{ $sectionClass }}">
-    <div class="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">อื่นๆ</div>
+    <div class="{{ $headerClass }}">อื่นๆ</div>
     <a href="/" class="{{ $linkClass }} {{ $linkInactive }}">
         <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         กลับหน้าเว็บ
