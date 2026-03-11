@@ -42,6 +42,8 @@ class ProductDevice extends Model
         'os_version',
         'app_version',
         'hardware_hash',
+        'drm_id',
+        'android_id',
         'first_ip',
         'last_ip',
         'status',
@@ -185,7 +187,7 @@ class ProductDevice extends Model
     public function findRelatedByHardware(): \Illuminate\Database\Eloquent\Collection
     {
         if (! $this->hardware_hash) {
-            return collect();
+            return self::whereNull('id')->get();
         }
 
         return self::where('id', '!=', $this->id)

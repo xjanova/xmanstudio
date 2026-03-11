@@ -66,23 +66,33 @@ class ProductLicenseController extends Controller
             'os_version' => 'nullable|string|max:255',
             'app_version' => 'nullable|string|max:50',
             'hardware_hash' => 'nullable|string|max:64',
+            'drm_id' => 'nullable|string|max:128',
+            'android_id' => 'nullable|string|max:64',
         ]);
+
+        $deviceData = [
+            'machine_name' => $validated['machine_name'] ?? null,
+            'os_version' => $validated['os_version'] ?? null,
+            'app_version' => $validated['app_version'] ?? null,
+            'hardware_hash' => $validated['hardware_hash'] ?? null,
+            'last_ip' => $request->ip(),
+            'first_ip' => $request->ip(),
+            'last_seen_at' => now(),
+            'first_seen_at' => now(),
+        ];
+        if (! empty($validated['drm_id'])) {
+            $deviceData['drm_id'] = $validated['drm_id'];
+        }
+        if (! empty($validated['android_id'])) {
+            $deviceData['android_id'] = $validated['android_id'];
+        }
 
         $device = ProductDevice::updateOrCreate(
             [
                 'product_id' => $product->id,
                 'machine_id' => $validated['machine_id'],
             ],
-            [
-                'machine_name' => $validated['machine_name'] ?? null,
-                'os_version' => $validated['os_version'] ?? null,
-                'app_version' => $validated['app_version'] ?? null,
-                'hardware_hash' => $validated['hardware_hash'] ?? null,
-                'last_ip' => $request->ip(),
-                'first_ip' => $request->ip(),
-                'last_seen_at' => now(),
-                'first_seen_at' => now(),
-            ]
+            $deviceData
         );
 
         // Check abuse if trying to start trial
@@ -126,28 +136,37 @@ class ProductLicenseController extends Controller
         $validated = $request->validate([
             'machine_id' => 'required|string|min:32|max:64',
             'hardware_hash' => 'nullable|string|max:64',
+            'drm_id' => 'nullable|string|max:128',
         ]);
 
         // Get or create device
+        $createData = [
+            'hardware_hash' => $validated['hardware_hash'] ?? null,
+            'first_ip' => $request->ip(),
+            'last_ip' => $request->ip(),
+            'first_seen_at' => now(),
+            'last_seen_at' => now(),
+        ];
+        if (! empty($validated['drm_id'])) {
+            $createData['drm_id'] = $validated['drm_id'];
+        }
         $device = ProductDevice::firstOrCreate(
             [
                 'product_id' => $product->id,
                 'machine_id' => $validated['machine_id'],
             ],
-            [
-                'hardware_hash' => $validated['hardware_hash'] ?? null,
-                'first_ip' => $request->ip(),
-                'last_ip' => $request->ip(),
-                'first_seen_at' => now(),
-                'last_seen_at' => now(),
-            ]
+            $createData
         );
 
-        // Update last seen
-        $device->update([
+        // Update last seen + drm_id
+        $updateData = [
             'last_ip' => $request->ip(),
             'last_seen_at' => now(),
-        ]);
+        ];
+        if (! empty($validated['drm_id']) && ! $device->drm_id) {
+            $updateData['drm_id'] = $validated['drm_id'];
+        }
+        $device->update($updateData);
 
         // Check for abuse
         $abuseCheck = $device->checkTrialAbuse();
@@ -340,6 +359,8 @@ class ProductLicenseController extends Controller
             'machine_id' => 'required|string|min:32|max:64',
             'machine_fingerprint' => 'required|string',
             'app_version' => 'nullable|string|max:50',
+            'drm_id' => 'nullable|string|max:128',
+            'android_id' => 'nullable|string|max:64',
         ]);
 
         $licenseKey = strtoupper(trim($validated['license_key']));
@@ -408,19 +429,40 @@ class ProductLicenseController extends Controller
             ], 500);
         }
 
+        // Store drm_id + android_id on license for future cross-HWID lookups
+        $drmId = $validated['drm_id'] ?? null;
+        $androidId = $validated['android_id'] ?? null;
+        $licenseUpdate = [];
+        if ($drmId) {
+            $licenseUpdate['drm_id'] = $drmId;
+        }
+        if ($androidId) {
+            $licenseUpdate['android_id'] = $androidId;
+        }
+        if ($licenseUpdate) {
+            $license->update($licenseUpdate);
+        }
+
         // Update device status
+        $deviceData = [
+            'status' => ProductDevice::STATUS_LICENSED,
+            'license_id' => $license->id,
+            'last_ip' => $request->ip(),
+            'last_seen_at' => now(),
+            'app_version' => $validated['app_version'] ?? null,
+        ];
+        if ($drmId) {
+            $deviceData['drm_id'] = $drmId;
+        }
+        if ($androidId) {
+            $deviceData['android_id'] = $androidId;
+        }
         $device = ProductDevice::updateOrCreate(
             [
                 'product_id' => $product->id,
                 'machine_id' => $validated['machine_id'],
             ],
-            [
-                'status' => ProductDevice::STATUS_LICENSED,
-                'license_id' => $license->id,
-                'last_ip' => $request->ip(),
-                'last_seen_at' => now(),
-                'app_version' => $validated['app_version'] ?? null,
-            ]
+            $deviceData
         );
 
         // Log activation (include rebind info if applicable)
@@ -547,9 +589,15 @@ class ProductLicenseController extends Controller
 
         $validated = $request->validate([
             'machine_id' => 'required|string|min:32|max:64',
+            'drm_id' => 'nullable|string|max:128',
+            'android_id' => 'nullable|string|max:64',
         ]);
 
-        // Find active, non-expired license bound to this machine_id
+        $drmId = $validated['drm_id'] ?? null;
+        $androidId = $validated['android_id'] ?? null;
+        $migratedFrom = null; // 'drm_id' | 'android_id' — which fallback matched
+
+        // ── Primary: lookup by machine_id ──────────────────────────────────
         $license = LicenseKey::where('product_id', $product->id)
             ->where('machine_id', $validated['machine_id'])
             ->where('status', LicenseKey::STATUS_ACTIVE)
@@ -557,6 +605,104 @@ class ProductLicenseController extends Controller
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })
             ->first();
+
+        // ── Fallback 1: search by drm_id (MediaDrm/Widevine) ───────────────
+        // Handles HWID migration (e.g. hardware hash formula change after update)
+        if (! $license && $drmId) {
+            // Check license_keys.drm_id
+            $license = LicenseKey::where('product_id', $product->id)
+                ->where('drm_id', $drmId)
+                ->where('status', LicenseKey::STATUS_ACTIVE)
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
+                ->first();
+
+            // Check product_devices.drm_id
+            if (! $license) {
+                $device = ProductDevice::where('product_id', $product->id)
+                    ->where('drm_id', $drmId)
+                    ->whereNotNull('license_id')
+                    ->first();
+                if ($device) {
+                    $license = LicenseKey::where('id', $device->license_id)
+                        ->where('status', LicenseKey::STATUS_ACTIVE)
+                        ->where(function ($q) {
+                            $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                        })
+                        ->first();
+                }
+            }
+
+            if ($license) {
+                $migratedFrom = 'drm_id';
+            }
+        }
+
+        // ── Fallback 2: search by android_id (ANDROID_ID) ──────────────────
+        // Stable across reinstall within the same signing key (Android 8+)
+        if (! $license && $androidId) {
+            // Check license_keys.android_id
+            $license = LicenseKey::where('product_id', $product->id)
+                ->where('android_id', $androidId)
+                ->where('status', LicenseKey::STATUS_ACTIVE)
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
+                ->first();
+
+            // Check product_devices.android_id
+            if (! $license) {
+                $device = ProductDevice::where('product_id', $product->id)
+                    ->where('android_id', $androidId)
+                    ->whereNotNull('license_id')
+                    ->first();
+                if ($device) {
+                    $license = LicenseKey::where('id', $device->license_id)
+                        ->where('status', LicenseKey::STATUS_ACTIVE)
+                        ->where(function ($q) {
+                            $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                        })
+                        ->first();
+                }
+            }
+
+            if ($license) {
+                $migratedFrom = 'android_id';
+            }
+        }
+
+        // ── If found via fallback: migrate machine_id to current one ────────
+        if ($license && $migratedFrom) {
+            $previousMachineId = $license->machine_id;
+
+            // Update license binding to new machine_id
+            $licenseUpdate = [
+                'machine_id' => $validated['machine_id'],
+                'last_validated_at' => now(),
+            ];
+            if ($drmId) {
+                $licenseUpdate['drm_id'] = $drmId;
+            }
+            if ($androidId) {
+                $licenseUpdate['android_id'] = $androidId;
+            }
+            $license->update($licenseUpdate);
+
+            // Update device record to new machine_id
+            if ($previousMachineId) {
+                $deviceUpdate = ['machine_id' => $validated['machine_id']];
+                if ($drmId) {
+                    $deviceUpdate['drm_id'] = $drmId;
+                }
+                if ($androidId) {
+                    $deviceUpdate['android_id'] = $androidId;
+                }
+                ProductDevice::where('product_id', $product->id)
+                    ->where('machine_id', $previousMachineId)
+                    ->update($deviceUpdate);
+            }
+        }
 
         if (! $license) {
             return response()->json([
@@ -566,8 +712,15 @@ class ProductLicenseController extends Controller
             ]);
         }
 
-        // Update last validated
-        $license->update(['last_validated_at' => now()]);
+        // Update last validated + store new IDs if not already present
+        $updateData = ['last_validated_at' => now()];
+        if ($drmId && ! $license->drm_id) {
+            $updateData['drm_id'] = $drmId;
+        }
+        if ($androidId && ! $license->android_id) {
+            $updateData['android_id'] = $androidId;
+        }
+        $license->update($updateData);
 
         // Log check
         LicenseActivity::log(
@@ -576,8 +729,14 @@ class ProductLicenseController extends Controller
             LicenseActivity::ACTOR_API,
             null,
             $validated['machine_id'],
-            'ตรวจสอบ License จาก HWID สำเร็จ (auto-check)',
-            ['product_slug' => $productSlug, 'method' => 'check-machine']
+            $migratedFrom
+                ? "ตรวจสอบ License จาก HWID สำเร็จ (migrated via {$migratedFrom})"
+                : 'ตรวจสอบ License จาก HWID สำเร็จ (auto-check)',
+            array_filter([
+                'product_slug' => $productSlug,
+                'method' => 'check-machine',
+                'migrated_from' => $migratedFrom,
+            ])
         );
 
         return response()->json([

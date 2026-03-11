@@ -26,6 +26,8 @@ class LicenseKey extends Model
         'device_id',
         'machine_id',
         'machine_fingerprint',
+        'drm_id',
+        'android_id',
         'max_activations',
         'activations',
         'metadata',
