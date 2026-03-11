@@ -16,27 +16,27 @@
 
 {{-- Menu link helper class --}}
 @php
-    $linkClass = 'flex items-center pl-7 pr-2 py-1.5 text-[13px] rounded-md transition-colors';
-    $linkActive = 'bg-white/10 text-white font-medium';
-    $linkInactive = 'text-gray-500 hover:bg-white/5 hover:text-gray-300';
+    $linkClass = 'flex items-center pl-7 pr-2 py-2 text-[13px] rounded-lg transition-all duration-200 border';
+    $linkActive = 'bg-gradient-to-b from-white/15 to-white/5 border-white/10 text-white font-medium shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]';
+    $linkInactive = 'border-transparent text-gray-500 hover:bg-gradient-to-b hover:from-white/8 hover:to-white/3 hover:border-white/5 hover:text-gray-300 hover:shadow-[0_1px_3px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]';
     $iconClass = 'w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-60';
     $sectionClass = 'mt-1';
-    $headerClass = 'flex items-center gap-1.5 px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-300 border-l-2 border-indigo-500/40';
-    $headerBtnClass = 'w-full flex items-center justify-between px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-300 border-l-2 border-transparent hover:border-indigo-500/40 hover:text-white transition-all';
-    $headerBtnActiveClass = 'w-full flex items-center justify-between px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-200 border-l-2 border-indigo-400 hover:text-white transition-all';
+    $headerClass = 'flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-300 rounded-lg bg-gradient-to-b from-white/8 to-white/3 border border-white/10 shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]';
+    $headerBtnClass = 'w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-400 rounded-lg border border-transparent hover:bg-gradient-to-b hover:from-white/6 hover:to-white/2 hover:border-white/8 hover:text-gray-200 hover:shadow-[0_1px_3px_rgba(0,0,0,0.2)] transition-all';
+    $headerBtnActiveClass = 'w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-200 rounded-lg bg-gradient-to-b from-white/10 to-white/4 border border-white/10 shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all';
     $subMenuClass = 'ml-2 pl-1 border-l border-white/5';
 @endphp
 
 {{-- Dashboard --}}
-<div class="pb-1 mb-1 border-b border-white/5">
+<div class="pb-2 mb-1 border-b border-white/5 space-y-1">
     <a href="{{ route('admin.analytics.index') }}"
-       class="flex items-center px-2 py-1.5 text-[13px] rounded-md transition-colors {{ request()->routeIs('admin.analytics*') ? $linkActive : $linkInactive }}">
-        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+       class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.analytics*') ? $linkActive : $linkInactive }}">
+        <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Analytics
     </a>
     <a href="{{ route('admin.mockup') }}"
-       class="flex items-center px-2 py-1.5 text-[13px] rounded-md transition-colors {{ request()->routeIs('admin.mockup') ? $linkActive : $linkInactive }}">
-        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+       class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.mockup') ? $linkActive : $linkInactive }}">
+        <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
         Premium Dashboard
     </a>
 </div>

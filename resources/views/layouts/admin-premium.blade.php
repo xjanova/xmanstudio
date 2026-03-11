@@ -75,23 +75,27 @@
         }
 
         /* ===== Premium Sidebar Nav Overrides ===== */
-        /* Section headers - prominent premium style */
+        /* Section headers - 3D premium buttons */
         .premium-sidebar nav button,
         .premium-sidebar nav > div > div.flex:first-child {
-            color: rgba(199, 186, 255, 0.85) !important;
+            color: rgba(199, 186, 255, 0.9) !important;
             text-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
-            border-left-color: rgba(139, 92, 246, 0.4) !important;
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.15), rgba(76, 29, 149, 0.1)) !important;
+            border-color: rgba(129, 140, 248, 0.2) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(165, 180, 252, 0.1) !important;
         }
         .premium-sidebar nav button:hover,
         .premium-sidebar nav > div > div.flex:first-child:hover {
             color: #e0d4ff !important;
             text-shadow: 0 0 14px rgba(139, 92, 246, 0.4);
-            border-left-color: rgba(167, 139, 250, 0.7) !important;
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.25), rgba(76, 29, 149, 0.15)) !important;
+            border-color: rgba(129, 140, 248, 0.35) !important;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(165, 180, 252, 0.15) !important;
         }
 
-        /* Sub-menu left border - premium gradient */
+        /* Sub-menu border - premium gradient */
         .premium-sidebar nav [x-collapse] {
-            border-left-color: rgba(129, 140, 248, 0.15) !important;
+            border-left-color: rgba(129, 140, 248, 0.12) !important;
         }
 
         /* Sub-menu items - dimmer in premium */
