@@ -39,13 +39,46 @@ class ReassignCloudDataCommand extends Command
             $this->line('');
             $this->info('Processing: ' . $deviceUser->name . ' (' . $deviceUser->email . ')');
 
-            // Find license linked to this device user
+            // Extract machine_id hash from device email (device-{hash}@tping.device)
+            $emailHash = str_replace(['device-', '@tping.device'], '', $deviceUser->email);
+            $this->line('  Machine hash: ' . $emailHash);
+
+            // Strategy 1: Find license linked directly to this device user
             $license = LicenseKey::where('user_id', $deviceUser->id)
                 ->with('order')
                 ->first();
 
+            // Strategy 2: Find license via product_id from workflows owned by this device user
             if (! $license) {
-                $this->warn('  No license found for device user #' . $deviceUser->id . ', skipping.');
+                $workflow = ProductWorkflow::where('user_id', $deviceUser->id)->first();
+                if ($workflow && $workflow->product_id) {
+                    // Find any active license for this product that has an order
+                    $license = LicenseKey::where('product_id', $workflow->product_id)
+                        ->whereNotNull('order_id')
+                        ->with('order')
+                        ->first();
+                    if ($license) {
+                        $this->line('  Found license via workflow product_id: #' . $license->id);
+                    }
+                }
+            }
+
+            // Strategy 3: Find license via data profile product_id
+            if (! $license) {
+                $profile = ProductDataProfile::where('user_id', $deviceUser->id)->first();
+                if ($profile && $profile->product_id) {
+                    $license = LicenseKey::where('product_id', $profile->product_id)
+                        ->whereNotNull('order_id')
+                        ->with('order')
+                        ->first();
+                    if ($license) {
+                        $this->line('  Found license via profile product_id: #' . $license->id);
+                    }
+                }
+            }
+
+            if (! $license) {
+                $this->warn('  No license found, skipping.');
 
                 continue;
             }
@@ -57,8 +90,16 @@ class ReassignCloudDataCommand extends Command
                 $realUser = User::find($license->order->user_id);
             }
 
+            // Fallback: check license user_id directly (if it's a real user)
+            if (! $realUser && $license->user_id && $license->user_id !== $deviceUser->id) {
+                $candidate = User::find($license->user_id);
+                if ($candidate && ! str_ends_with($candidate->email, '@tping.device')) {
+                    $realUser = $candidate;
+                }
+            }
+
             if (! $realUser) {
-                $this->warn('  License #' . $license->id . ' has no order with a real user, skipping.');
+                $this->warn('  License #' . $license->id . ' has no real user, skipping.');
 
                 continue;
             }
@@ -69,7 +110,7 @@ class ReassignCloudDataCommand extends Command
                 continue;
             }
 
-            $this->info('  Real user: ' . $realUser->name . ' (' . $realUser->email . ')');
+            $this->info('  Real user: ' . $realUser->name . ' (' . $realUser->email . ') #' . $realUser->id);
 
             // Count data to reassign
             $workflowCount = ProductWorkflow::where('user_id', $deviceUser->id)->count();
@@ -91,9 +132,6 @@ class ReassignCloudDataCommand extends Command
                 // Reassign data profiles
                 ProductDataProfile::where('user_id', $deviceUser->id)
                     ->update(['user_id' => $realUser->id]);
-
-                // Update license user_id to real user
-                $license->update(['user_id' => $realUser->id]);
 
                 $this->info('  Reassigned ' . $workflowCount . ' workflows + ' . $profileCount . ' profiles to ' . $realUser->name);
             } else {
