@@ -31,13 +31,13 @@ class ReassignCloudDataCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->info("Found {$deviceUsers->count()} device user(s)");
+        $this->info('Found ' . $deviceUsers->count() . ' device user(s)');
 
         $reassigned = 0;
 
         foreach ($deviceUsers as $deviceUser) {
             $this->line('');
-            $this->info("Processing: {$deviceUser->name} ({$deviceUser->email})");
+            $this->info('Processing: ' . $deviceUser->name . ' (' . $deviceUser->email . ')');
 
             // Find license linked to this device user
             $license = LicenseKey::where('user_id', $deviceUser->id)
@@ -45,8 +45,7 @@ class ReassignCloudDataCommand extends Command
                 ->first();
 
             if (! $license) {
-                // Try to find via license activities or other means
-                $this->warn("  No license found for device user #{$deviceUser->id}, skipping.");
+                $this->warn('  No license found for device user #' . $deviceUser->id . ', skipping.');
 
                 continue;
             }
@@ -59,24 +58,24 @@ class ReassignCloudDataCommand extends Command
             }
 
             if (! $realUser) {
-                $this->warn("  License #{$license->id} has no order with a real user, skipping.");
+                $this->warn('  License #' . $license->id . ' has no order with a real user, skipping.');
 
                 continue;
             }
 
             if ($realUser->id === $deviceUser->id) {
-                $this->line("  Already assigned to real user, skipping.");
+                $this->line('  Already assigned to real user, skipping.');
 
                 continue;
             }
 
-            $this->info("  Real user: {$realUser->name} ({$realUser->email})");
+            $this->info('  Real user: ' . $realUser->name . ' (' . $realUser->email . ')');
 
             // Count data to reassign
             $workflowCount = ProductWorkflow::where('user_id', $deviceUser->id)->count();
             $profileCount = ProductDataProfile::where('user_id', $deviceUser->id)->count();
 
-            $this->line("  Workflows: {$workflowCount}, Data Profiles: {$profileCount}");
+            $this->line('  Workflows: ' . $workflowCount . ', Data Profiles: ' . $profileCount);
 
             if ($workflowCount === 0 && $profileCount === 0) {
                 $this->line('  No cloud data to reassign.');
@@ -96,9 +95,9 @@ class ReassignCloudDataCommand extends Command
                 // Update license user_id to real user
                 $license->update(['user_id' => $realUser->id]);
 
-                $this->info("  Reassigned {$workflowCount} workflows + {$profileCount} profiles to {$realUser->name}");
+                $this->info('  Reassigned ' . $workflowCount . ' workflows + ' . $profileCount . ' profiles to ' . $realUser->name);
             } else {
-                $this->info("  Would reassign {$workflowCount} workflows + {$profileCount} profiles to {$realUser->name}");
+                $this->info('  Would reassign ' . $workflowCount . ' workflows + ' . $profileCount . ' profiles to ' . $realUser->name);
             }
 
             $reassigned += $workflowCount + $profileCount;
@@ -106,9 +105,9 @@ class ReassignCloudDataCommand extends Command
 
         $this->line('');
         if ($dryRun) {
-            $this->info("Would reassign {$reassigned} total items.");
+            $this->info('Would reassign ' . $reassigned . ' total items.');
         } else {
-            $this->info("Done! Reassigned {$reassigned} total items.");
+            $this->info('Done! Reassigned ' . $reassigned . ' total items.');
         }
 
         return self::SUCCESS;
