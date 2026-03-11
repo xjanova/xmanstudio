@@ -299,11 +299,27 @@ class ProductLicenseController extends Controller
 
         $validated = $request->validate([
             'machine_id' => 'required|string|min:32|max:64',
+            'drm_id' => 'nullable|string|max:128',
         ]);
 
+        $drmId = $validated['drm_id'] ?? null;
+
+        // Primary: lookup by machine_id
         $device = ProductDevice::where('product_id', $product->id)
             ->where('machine_id', $validated['machine_id'])
             ->first();
+
+        // Fallback: lookup by drm_id (handles HWID migration after reinstall/update)
+        if (! $device && $drmId) {
+            $device = ProductDevice::where('product_id', $product->id)
+                ->where('drm_id', $drmId)
+                ->first();
+
+            // Migrate machine_id if found via drm_id
+            if ($device) {
+                $device->update(['machine_id' => $validated['machine_id']]);
+            }
+        }
 
         if (! $device) {
             return response()->json([
