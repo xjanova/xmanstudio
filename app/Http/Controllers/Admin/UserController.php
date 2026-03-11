@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\ProductDataProfile;
+use App\Models\ProductWorkflow;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserRental;
@@ -152,7 +154,18 @@ class UserController extends Controller
             'total_spent' => Order::where('user_id', $user->id)->where('payment_status', 'paid')->sum('total'),
         ];
 
-        return view('admin.users.show', compact('user', 'wallet', 'activeRental', 'rentals', 'licenses', 'orderStats'));
+        // Get user's cloud data (TPING workflows & data profiles)
+        $cloudWorkflows = ProductWorkflow::where('user_id', $user->id)
+            ->with('product')
+            ->orderByDesc('updated_at')
+            ->get();
+
+        $cloudProfiles = ProductDataProfile::where('user_id', $user->id)
+            ->with('product')
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return view('admin.users.show', compact('user', 'wallet', 'activeRental', 'rentals', 'licenses', 'orderStats', 'cloudWorkflows', 'cloudProfiles'));
     }
 
     /**

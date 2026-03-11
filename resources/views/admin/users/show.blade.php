@@ -427,6 +427,98 @@
                 </table>
             </div>
         </div>
+
+        <!-- Cloud Data (TPING Workflows) -->
+        <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Cloud Workflows</h3>
+                </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400">
+                    {{ $cloudWorkflows->count() }} รายการ
+                </span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-700/50">
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">ชื่อ Workflow</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">แอปเป้าหมาย</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">แชร์</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">อัปเดตล่าสุด</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @forelse($cloudWorkflows as $wf)
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                            <td class="px-6 py-4">
+                                <a href="{{ route('admin.tping.workflows.show', $wf) }}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">{{ $wf->name }}</a>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $wf->target_app_name ?: ($wf->target_app_package ?: '-') }}</td>
+                            <td class="px-6 py-4">
+                                @if($wf->share_token)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">แชร์อยู่</span>
+                                @else
+                                <span class="text-gray-400 text-xs">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $wf->updated_at->format('d/m/Y H:i') }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">ไม่มี Workflow ใน Cloud</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Cloud Data (TPING Data Profiles) -->
+        <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Cloud Data Profiles</h3>
+                </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                    {{ $cloudProfiles->count() }} รายการ
+                </span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-700/50">
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">ชื่อ Profile</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">หมวดหมู่</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">จำนวนฟิลด์</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">อัปเดตล่าสุด</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @forelse($cloudProfiles as $dp)
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                            <td class="px-6 py-4">
+                                <a href="{{ route('admin.tping.data-profiles.show', $dp) }}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">{{ $dp->name }}</a>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $dp->category ?: '-' }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ count(json_decode($dp->fields_json ?? '{}', true)) }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $dp->updated_at->format('d/m/Y H:i') }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">ไม่มี Data Profile ใน Cloud</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
