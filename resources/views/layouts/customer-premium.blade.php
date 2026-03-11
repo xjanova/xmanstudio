@@ -379,6 +379,18 @@
                     <span class="text-indigo-100">โครงการของฉัน</span>
                 </a>
 
+                <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider">My Cloud</p>
+
+                <a href="{{ route('customer.tping.workflows.index') }}"
+                   class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.tping.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100">TPING</span>
+                </a>
+
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider">รายได้</p>
 
                 <a href="{{ route('customer.affiliate.dashboard') }}"
@@ -713,10 +725,23 @@
                 </a>
 
                 <div class="pt-2 pb-1">
+                    <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase">My Cloud</p>
+                </div>
+
+                <a href="{{ route('customer.tping.workflows.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.tping.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100">TPING</span>
+                </a>
+
+                <div class="pt-2 pb-1">
                     <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase">รายได้</p>
                 </div>
 
-                <a href="{{ route('customer.affiliate.dashboard') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.affiliate.dashboard') || request()->routeIs('customer.affiliate.commissions') ? 'active bg-white/10' : '' }}">
+                <a href="{{ route('customer.affiliate.dashboard') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.affiliate.dashboard') || request()->routeIs('customer.affiliate.commissions') ? 'active bg-white\10' : '' }}">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center mr-3 shadow-lg">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
