@@ -16,13 +16,15 @@
 
 {{-- Menu link helper class --}}
 @php
-    $linkClass = 'flex items-center pl-8 pr-2 py-1.5 text-[13px] rounded-md transition-colors';
+    $linkClass = 'flex items-center pl-7 pr-2 py-1.5 text-[13px] rounded-md transition-colors';
     $linkActive = 'bg-white/10 text-white font-medium';
     $linkInactive = 'text-gray-500 hover:bg-white/5 hover:text-gray-300';
     $iconClass = 'w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-60';
-    $sectionClass = 'pt-3.5 first:pt-0';
-    $headerClass = 'flex items-center gap-1.5 px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-widest text-gray-300';
-    $headerBtnClass = 'w-full flex items-center justify-between px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-widest text-gray-300 hover:text-white transition-colors';
+    $sectionClass = 'mt-1';
+    $headerClass = 'flex items-center gap-1.5 px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-300 border-l-2 border-indigo-500/40';
+    $headerBtnClass = 'w-full flex items-center justify-between px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-300 border-l-2 border-transparent hover:border-indigo-500/40 hover:text-white transition-all';
+    $headerBtnActiveClass = 'w-full flex items-center justify-between px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-200 border-l-2 border-indigo-400 hover:text-white transition-all';
+    $subMenuClass = 'ml-2 pl-1 border-l border-white/5';
 @endphp
 
 {{-- Dashboard --}}
@@ -41,11 +43,11 @@
 
 {{-- การเช่า --}}
 <div x-data="{ open: {{ request()->routeIs('admin.rentals.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>การเช่า</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.rentals.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.rentals.index') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             รายการเช่า
@@ -76,11 +78,11 @@
 
 {{-- ผลิตภัณฑ์ --}}
 <div x-data="{ open: {{ request()->routeIs('admin.products.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ผลิตภัณฑ์</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.products.categories.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.products.categories*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             หมวดหมู่
@@ -94,11 +96,11 @@
 
 {{-- License & Devices --}}
 <div x-data="{ open: {{ request()->routeIs('admin.licenses*') || request()->routeIs('admin.devices*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>License</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.licenses.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.licenses*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
             จัดการ License
@@ -112,11 +114,11 @@
 
 {{-- สมาชิก --}}
 <div x-data="{ open: {{ request()->routeIs('admin.users*') || request()->routeIs('admin.roles*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>สมาชิก</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         @permission('users.view')
         <a href="{{ route('admin.users.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.users*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -147,11 +149,11 @@
 
 {{-- Affiliate --}}
 <div x-data="{ open: {{ request()->routeIs('admin.affiliates.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>Affiliate</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.affiliates.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.affiliates.index') || request()->routeIs('admin.affiliates.show') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             จัดการ
@@ -172,11 +174,11 @@
 
 {{-- Line OA --}}
 <div x-data="{ open: {{ request()->routeIs('admin.line-messaging.*') || request()->routeIs('admin.line-settings*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>Line OA</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.line-messaging.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.line-messaging.index') || request()->routeIs('admin.line-messaging.send') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="currentColor" viewBox="0 0 24 24"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
             ส่งข้อความ
@@ -194,11 +196,11 @@
 
 {{-- Metal-X YouTube --}}
 <div x-data="{ open: {{ request()->routeIs('admin.metal-x.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>Metal-X YouTube</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.metal-x.analytics') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.metal-x.analytics*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             Dashboard
@@ -224,11 +226,11 @@
 
 {{-- ใบสั่งงาน & โครงการ --}}
 <div x-data="{ open: {{ request()->routeIs('admin.quotations.*') || request()->routeIs('admin.projects*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ใบสั่งงาน</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.quotations.categories.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.quotations.categories*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             หมวดหมู่บริการ
@@ -246,12 +248,12 @@
 
 {{-- Support --}}
 <div x-data="{ open: {{ request()->routeIs('admin.support*') || request()->routeIs('admin.bug-reports*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>Support</span>
         @if($newBugReports > 0)<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $newBugReports }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.support.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.support*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
             Support Tickets
@@ -268,12 +270,12 @@
 
 {{-- ใบเสนอราคา & คำสั่งซื้อ --}}
 <div x-data="{ open: {{ request()->routeIs('admin.quotations.list') || request()->routeIs('admin.quotations.detail') || request()->routeIs('admin.orders.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ใบเสนอราคา</span>
         @if($pendingQuotations > 0)<span class="bg-indigo-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingQuotations }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.quotations.list') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.quotations.list') || request()->routeIs('admin.quotations.detail') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             ใบเสนอราคา
@@ -293,12 +295,12 @@
 
 {{-- การเงิน --}}
 <div x-data="{ open: {{ request()->routeIs('admin.wallets.*') || request()->routeIs('admin.coupons*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>การเงิน</span>
         @if($pendingTopups > 0)<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingTopups }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.wallets.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.wallets.index') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             Dashboard
@@ -335,12 +337,12 @@
 
 {{-- SMS Payment --}}
 <div x-data="{ open: {{ request()->routeIs('admin.sms-payment.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>SMS Payment</span>
         @if($pendingOrders > 0)<span class="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingOrders }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.sms-payment.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.sms-payment.index') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             Dashboard
@@ -372,11 +374,11 @@
 
 {{-- การตั้งค่า --}}
 <div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
-    <button @click="open = !open" class="{{ $headerBtnClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ตั้งค่า</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.theme.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.theme*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
             ธีม

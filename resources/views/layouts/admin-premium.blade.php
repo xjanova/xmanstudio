@@ -79,16 +79,24 @@
         .premium-sidebar nav button,
         .premium-sidebar nav > div > div.flex:first-child {
             color: rgba(199, 186, 255, 0.85) !important;
-            text-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+            border-left-color: rgba(139, 92, 246, 0.4) !important;
         }
-        .premium-sidebar nav button:hover {
+        .premium-sidebar nav button:hover,
+        .premium-sidebar nav > div > div.flex:first-child:hover {
             color: #e0d4ff !important;
-            text-shadow: 0 0 16px rgba(139, 92, 246, 0.5);
+            text-shadow: 0 0 14px rgba(139, 92, 246, 0.4);
+            border-left-color: rgba(167, 139, 250, 0.7) !important;
+        }
+
+        /* Sub-menu left border - premium gradient */
+        .premium-sidebar nav [x-collapse] {
+            border-left-color: rgba(129, 140, 248, 0.15) !important;
         }
 
         /* Sub-menu items - dimmer in premium */
         .premium-sidebar nav a {
-            color: rgba(165, 180, 252, 0.55);
+            color: rgba(165, 180, 252, 0.5);
         }
         .premium-sidebar nav a:hover {
             color: rgba(224, 231, 255, 0.9) !important;
@@ -127,10 +135,9 @@
 
         /* Collapsible sections - subtle depth */
         .premium-sidebar nav [x-show] {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 0.5rem;
-            padding: 2px 0;
-            margin: 2px 0;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 0 0.375rem 0.375rem 0;
+            padding: 4px 0;
         }
 
         /* Badges - premium glow */
