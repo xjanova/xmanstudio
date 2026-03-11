@@ -84,7 +84,8 @@ class AuthController extends Controller
 
     /**
      * Device auth — auto-authenticate using license key + machine ID.
-     * No email/password required. Creates a device-linked user automatically.
+     * Uses the license holder's real account (from order) for cloud sync.
+     * Falls back to creating a device-linked user if no real user is found.
      * Used for automatic cloud sync when license is active.
      */
     public function deviceAuth(Request $request): JsonResponse
@@ -97,6 +98,7 @@ class AuthController extends Controller
         // Verify license exists and is active
         $license = \App\Models\LicenseKey::where('license_key', $request->license_key)
             ->whereNotNull('activated_at')
+            ->with('order')
             ->first();
 
         if (! $license) {
@@ -123,21 +125,39 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Find or create device user (linked to this license)
-        $deviceEmail = 'device-' . substr(hash('sha256', $request->machine_id), 0, 16) . '@tping.device';
-        $deviceName = 'Device ' . substr($request->machine_id, 0, 8) . '...';
+        // Use real license holder's account (from order) for cloud data ownership
+        $user = null;
 
-        $user = User::firstOrCreate(
-            ['email' => $deviceEmail],
-            [
-                'name' => $deviceName,
-                'password' => Hash::make(\Illuminate\Support\Str::random(32)),
-                'is_active' => true,
-            ]
-        );
+        // 1. Check if license has an order with a real user
+        if ($license->order && $license->order->user_id) {
+            $user = User::find($license->order->user_id);
+        }
+
+        // 2. Check if license has a direct user_id that's a real user (not a device user)
+        if (! $user && $license->user_id) {
+            $existingUser = User::find($license->user_id);
+            if ($existingUser && ! str_ends_with($existingUser->email, '@tping.device')) {
+                $user = $existingUser;
+            }
+        }
+
+        // 3. Fallback: create device user only if no real user found
+        if (! $user) {
+            $deviceEmail = 'device-' . substr(hash('sha256', $request->machine_id), 0, 16) . '@tping.device';
+            $deviceName = 'Device ' . substr($request->machine_id, 0, 8) . '...';
+
+            $user = User::firstOrCreate(
+                ['email' => $deviceEmail],
+                [
+                    'name' => $deviceName,
+                    'password' => Hash::make(\Illuminate\Support\Str::random(32)),
+                    'is_active' => true,
+                ]
+            );
+        }
 
         // Link user to license if not already linked
-        if (! $license->user_id) {
+        if (! $license->user_id || $license->user_id !== $user->id) {
             $license->update(['user_id' => $user->id]);
         }
 
@@ -151,7 +171,7 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $deviceEmail,
+                'email' => $user->email,
             ],
         ]);
     }
