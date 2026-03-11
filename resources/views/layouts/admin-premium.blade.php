@@ -77,12 +77,21 @@
         /* ===== Premium Sidebar Nav Overrides ===== */
         /* Section headers - prominent premium style */
         .premium-sidebar nav button,
-        .premium-sidebar nav > div > div:first-child:not(a) {
-            color: rgba(196, 181, 253, 0.7) !important;
-            border-bottom-color: rgba(129, 140, 248, 0.15) !important;
+        .premium-sidebar nav > div > div.flex:first-child {
+            color: rgba(199, 186, 255, 0.85) !important;
+            text-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
         }
         .premium-sidebar nav button:hover {
-            color: rgba(232, 225, 255, 0.95) !important;
+            color: #e0d4ff !important;
+            text-shadow: 0 0 16px rgba(139, 92, 246, 0.5);
+        }
+
+        /* Sub-menu items - dimmer in premium */
+        .premium-sidebar nav a {
+            color: rgba(165, 180, 252, 0.55);
+        }
+        .premium-sidebar nav a:hover {
+            color: rgba(224, 231, 255, 0.9) !important;
         }
 
         /* Nav links - glass morphism depth */

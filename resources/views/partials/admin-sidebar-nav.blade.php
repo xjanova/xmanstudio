@@ -16,13 +16,13 @@
 
 {{-- Menu link helper class --}}
 @php
-    $linkClass = 'flex items-center pl-7 pr-2 py-1.5 text-[13px] rounded-md transition-colors';
+    $linkClass = 'flex items-center pl-8 pr-2 py-1.5 text-[13px] rounded-md transition-colors';
     $linkActive = 'bg-white/10 text-white font-medium';
-    $linkInactive = 'text-gray-400 hover:bg-white/5 hover:text-gray-200';
-    $iconClass = 'w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-70';
-    $sectionClass = 'pt-3 first:pt-0';
-    $headerClass = 'flex items-center gap-2 px-2 pb-1 mb-0.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5';
-    $headerBtnClass = 'w-full flex items-center justify-between px-2 pb-1 mb-0.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/5 hover:text-gray-300 transition-colors';
+    $linkInactive = 'text-gray-500 hover:bg-white/5 hover:text-gray-300';
+    $iconClass = 'w-3.5 h-3.5 mr-2 flex-shrink-0 opacity-60';
+    $sectionClass = 'pt-3.5 first:pt-0';
+    $headerClass = 'flex items-center gap-1.5 px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-widest text-gray-300';
+    $headerBtnClass = 'w-full flex items-center justify-between px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-widest text-gray-300 hover:text-white transition-colors';
 @endphp
 
 {{-- Dashboard --}}
