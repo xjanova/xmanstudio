@@ -26,3 +26,16 @@ Schedule::command('smschecker:cleanup')
     ->onFailure(function () {
         \Illuminate\Support\Facades\Log::error('[SMS Checker] Cleanup failed');
     });
+
+// Bug Reports: ลบ Bug Reports เก่าอัตโนมัติตามจำนวนวันที่ตั้งค่าไว้
+// รันทุกวันตอนตี 2
+Schedule::command('bugreports:cleanup')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        \Illuminate\Support\Facades\Log::info('[Bug Reports] Cleanup completed successfully');
+    })
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('[Bug Reports] Cleanup failed');
+    });

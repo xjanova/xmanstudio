@@ -4,7 +4,7 @@
 @section('page-title', 'Bug Reports')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6" x-data="bugReportManager()">
     <!-- Header -->
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 p-8 shadow-2xl">
         <div class="relative flex items-center justify-between">
@@ -18,6 +18,18 @@
                     <h1 class="text-3xl font-bold text-white">Bug Reports</h1>
                 </div>
                 <p class="text-orange-100 text-lg">รายงาน Bug & SMS Misclassification จาก SmsChecker App</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- Auto-Delete Settings Button -->
+                <button @click="showAutoDelete = true" class="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg text-sm font-medium hover:bg-white/30 transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    ตั้งเวลาลบอัตโนมัติ
+                    @if($autoDeleteEnabled)
+                        <span class="ml-2 px-2 py-0.5 text-xs bg-white/30 rounded-full">{{ $autoDeleteDays }} วัน</span>
+                    @endif
+                </button>
             </div>
         </div>
     </div>
@@ -94,12 +106,30 @@
         </form>
     </div>
 
+    <!-- Bulk Actions Bar -->
+    <div x-show="selectedIds.length > 0" x-cloak class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <span class="text-sm font-medium text-red-700 dark:text-red-300">
+                เลือกแล้ว <span x-text="selectedIds.length" class="font-bold"></span> รายการ
+            </span>
+        </div>
+        <button @click="confirmBulkDelete()" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            ลบที่เลือก
+        </button>
+    </div>
+
     <!-- Reports Table -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700/50">
                     <tr>
+                        <th class="px-4 py-3 text-left">
+                            <input type="checkbox" @change="toggleAll($event)" :checked="allSelected" class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
+                        </th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">ID</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Title</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Product</th>
@@ -114,6 +144,9 @@
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($reports as $report)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <td class="px-4 py-3">
+                            <input type="checkbox" value="{{ $report->id }}" x-model.number="selectedIds" class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
+                        </td>
                         <td class="px-4 py-3 text-sm font-mono text-gray-500 dark:text-gray-400">
                             #{{ $report->id }}
                         </td>
@@ -196,14 +229,19 @@
                             {{ $report->created_at->format('H:i') }}
                         </td>
                         <td class="px-4 py-3">
-                            <a href="{{ route('admin.bug-reports.show', $report) }}" class="px-3 py-1.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 transition">
-                                ดูรายละเอียด
-                            </a>
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ route('admin.bug-reports.show', $report) }}" class="px-3 py-1.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 transition">
+                                    ดูรายละเอียด
+                                </a>
+                                <button @click="confirmDelete({{ $report->id }})" class="px-3 py-1.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 transition">
+                                    ลบ
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="px-4 py-12 text-center">
+                        <td colspan="10" class="px-4 py-12 text-center">
                             <div class="flex flex-col items-center">
                                 <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -222,5 +260,152 @@
         </div>
         @endif
     </div>
+
+    <!-- Auto-Delete Settings Modal -->
+    <div x-show="showAutoDelete" x-cloak class="fixed inset-0 z-50 overflow-y-auto" x-transition>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showAutoDelete = false"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 z-10">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">ตั้งเวลาลบอัตโนมัติ</h3>
+                    <button @click="showAutoDelete = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ route('admin.bug-reports.auto-delete') }}">
+                    @csrf
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ลบ Bug Reports ที่เก่ากว่า (วัน)</label>
+                        <input type="number" name="auto_delete_days" value="{{ $autoDeleteDays }}" min="0" max="365"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="0 = ปิดการลบอัตโนมัติ">
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            ระบุ <strong>0</strong> เพื่อปิดการลบอัตโนมัติ หรือระบุจำนวนวัน (1-365)<br>
+                            ระบบจะลบ Bug Reports ที่เก่ากว่าจำนวนวันที่กำหนด ทุกวันตอน 02:00 น.
+                        </p>
+                    </div>
+
+                    @if($autoDeleteEnabled)
+                        <div class="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                            <div class="flex items-center text-sm text-amber-700 dark:text-amber-300">
+                                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                กำลังใช้งาน: ลบ Bug Reports เก่ากว่า {{ $autoDeleteDays }} วัน อัตโนมัติ
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" @click="showAutoDelete = false" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+                            บันทึก
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="showDeleteModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" x-transition>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showDeleteModal = false"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6 z-10">
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                        <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2" x-text="deleteTitle"></h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6" x-text="deleteMessage"></p>
+
+                    <!-- Single Delete Form -->
+                    <form x-show="deleteMode === 'single'" :action="deleteAction" method="POST" class="flex justify-center space-x-3">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" @click="showDeleteModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">
+                            ลบ
+                        </button>
+                    </form>
+
+                    <!-- Bulk Delete Form -->
+                    <form x-show="deleteMode === 'bulk'" action="{{ route('admin.bug-reports.bulk-delete') }}" method="POST" class="flex justify-center space-x-3">
+                        @csrf
+                        <template x-for="id in selectedIds" :key="id">
+                            <input type="hidden" name="ids[]" :value="id">
+                        </template>
+                        <button type="button" @click="showDeleteModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">
+                            ลบ
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+function bugReportManager() {
+    return {
+        selectedIds: [],
+        showAutoDelete: false,
+        showDeleteModal: false,
+        deleteMode: 'single',
+        deleteAction: '',
+        deleteTitle: '',
+        deleteMessage: '',
+        reportIds: @json($reports->pluck('id')->toArray()),
+
+        get allSelected() {
+            return this.reportIds.length > 0 && this.reportIds.every(id => this.selectedIds.includes(id));
+        },
+
+        toggleAll(event) {
+            if (event.target.checked) {
+                this.selectedIds = [...this.reportIds];
+            } else {
+                this.selectedIds = [];
+            }
+        },
+
+        confirmDelete(id) {
+            this.deleteMode = 'single';
+            this.deleteAction = '{{ route("admin.bug-reports.index") }}/' + id;
+            this.deleteTitle = 'ยืนยันการลบ';
+            this.deleteMessage = 'คุณต้องการลบ Bug Report #' + id + ' หรือไม่? การดำเนินการนี้ไม่สามารถยกเลิกได้';
+            this.showDeleteModal = true;
+        },
+
+        confirmBulkDelete() {
+            this.deleteMode = 'bulk';
+            this.deleteTitle = 'ยืนยันการลบหลายรายการ';
+            this.deleteMessage = 'คุณต้องการลบ Bug Reports ' + this.selectedIds.length + ' รายการที่เลือกหรือไม่? การดำเนินการนี้ไม่สามารถยกเลิกได้';
+            this.showDeleteModal = true;
+        }
+    };
+}
+</script>
+
+@if(session('success'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-up';
+        toast.textContent = @json(session('success'));
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    });
+</script>
+@endif
 @endsection

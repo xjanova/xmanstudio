@@ -55,6 +55,10 @@ class AiChatService
                 $this->apiKey = Setting::get('gemini_api_key') ?: Setting::get('ai_gemini_key');
                 $this->model = Setting::get('gemini_model', 'gemini-2.0-flash');
                 break;
+            case 'groq':
+                $this->apiKey = Setting::get('groq_api_key');
+                $this->model = Setting::get('groq_model', 'llama-3.3-70b-versatile');
+                break;
             case 'ollama':
                 $this->apiKey = null;
                 $this->model = Setting::get('ollama_model', 'llama3.2');
@@ -90,6 +94,7 @@ class AiChatService
                 'openai' => $this->chatOpenAi($messages, $systemPrompt),
                 'claude' => $this->chatClaude($messages, $systemPrompt),
                 'gemini' => $this->chatGemini($messages, $systemPrompt),
+                'groq' => $this->chatGroq($messages, $systemPrompt),
                 'ollama' => $this->chatOllama($messages, $systemPrompt),
                 default => throw AIServiceException::unsupportedProvider($this->provider),
             };
@@ -241,6 +246,44 @@ class AiChatService
         }
 
         return $response->json('candidates.0.content.parts.0.text', '');
+    }
+
+    /**
+     * Chat via Groq API (OpenAI-compatible).
+     */
+    protected function chatGroq(array $messages, ?string $systemPrompt): string
+    {
+        $apiMessages = [];
+
+        if (! empty($systemPrompt)) {
+            $apiMessages[] = ['role' => 'system', 'content' => $systemPrompt];
+        }
+
+        foreach ($messages as $msg) {
+            if ($msg['role'] !== 'system') {
+                $apiMessages[] = [
+                    'role' => $msg['role'],
+                    'content' => $msg['content'],
+                ];
+            }
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(60)->post('https://api.groq.com/openai/v1/chat/completions', [
+            'model' => $this->model,
+            'messages' => $apiMessages,
+            'temperature' => $this->temperature,
+            'max_tokens' => $this->maxTokens,
+        ]);
+
+        if (! $response->successful()) {
+            $error = $response->json('error.message', $response->body());
+            throw new \Exception("Groq: {$error}");
+        }
+
+        return $response->json('choices.0.message.content', '');
     }
 
     /**
@@ -397,6 +440,7 @@ class AiChatService
             case 'openai':
             case 'claude':
             case 'gemini':
+            case 'groq':
                 return ! empty($this->apiKey) && ! empty($this->model);
             case 'ollama':
                 return ! empty($this->model);
@@ -414,6 +458,7 @@ class AiChatService
             'openai' => 'OpenAI (GPT)',
             'claude' => 'Anthropic (Claude)',
             'gemini' => 'Google Gemini',
+            'groq' => 'Groq',
             'ollama' => 'Ollama (Local)',
         ];
 

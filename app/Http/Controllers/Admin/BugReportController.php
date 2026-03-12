@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BugReport;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class BugReportController extends Controller
@@ -43,7 +44,10 @@ class BugReportController extends Controller
 
         $products = BugReport::distinct()->pluck('product_name')->filter()->sort()->values();
 
-        return view('admin.bug-reports.index', compact('reports', 'counts', 'products'));
+        $autoDeleteDays = Setting::getValue('bug_report_auto_delete_days', 0);
+        $autoDeleteEnabled = (int) $autoDeleteDays > 0;
+
+        return view('admin.bug-reports.index', compact('reports', 'counts', 'products', 'autoDeleteDays', 'autoDeleteEnabled'));
     }
 
     public function show(BugReport $report)
@@ -51,6 +55,47 @@ class BugReportController extends Controller
         $report->load(['comments', 'attachments']);
 
         return view('admin.bug-reports.show', compact('report'));
+    }
+
+    public function destroy(BugReport $report)
+    {
+        $report->attachments->each(fn ($a) => $a->deleteFile());
+        $report->forceDelete();
+
+        return redirect()->route('admin.bug-reports.index')->with('success', 'ลบ Bug Report #' . $report->id . ' สำเร็จ');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:bug_reports,id',
+        ]);
+
+        $reports = BugReport::whereIn('id', $request->input('ids'))->get();
+
+        foreach ($reports as $report) {
+            $report->attachments->each(fn ($a) => $a->deleteFile());
+            $report->forceDelete();
+        }
+
+        return back()->with('success', 'ลบ Bug Reports ' . count($request->input('ids')) . ' รายการสำเร็จ');
+    }
+
+    public function updateAutoDelete(Request $request)
+    {
+        $request->validate([
+            'auto_delete_days' => 'required|integer|min:0|max:365',
+        ]);
+
+        Setting::setValue('bug_report_auto_delete_days', $request->input('auto_delete_days'));
+
+        $days = (int) $request->input('auto_delete_days');
+        $msg = $days > 0
+            ? "ตั้งค่าลบอัตโนมัติ: ลบ Bug Reports ที่เก่ากว่า {$days} วัน"
+            : 'ปิดการลบอัตโนมัติแล้ว';
+
+        return back()->with('success', $msg);
     }
 
     public function markAnalyzed(Request $request, BugReport $report)

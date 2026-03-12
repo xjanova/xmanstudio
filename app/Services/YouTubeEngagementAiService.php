@@ -51,6 +51,10 @@ class YouTubeEngagementAiService
                 $this->apiKey = Setting::get('gemini_api_key') ?: Setting::get('ai_gemini_key');
                 $this->model = Setting::get('gemini_model', 'gemini-2.0-flash');
                 break;
+            case 'groq':
+                $this->apiKey = Setting::get('groq_api_key');
+                $this->model = Setting::get('groq_model', 'llama-3.3-70b-versatile');
+                break;
             case 'ollama':
                 $this->model = Setting::get('ollama_model', 'llama3.2');
                 break;
@@ -481,6 +485,8 @@ PROMPT;
                 return $this->callClaude($prompt);
             case 'gemini':
                 return $this->callGemini($prompt);
+            case 'groq':
+                return $this->callGroq($prompt);
             case 'ollama':
                 return $this->callOllama($prompt);
             default:
@@ -574,6 +580,30 @@ PROMPT;
         }
 
         return $response->json('candidates.0.content.parts.0.text');
+    }
+
+    /**
+     * Call Groq API (OpenAI-compatible).
+     */
+    protected function callGroq(string $prompt): string
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(60)->post('https://api.groq.com/openai/v1/chat/completions', [
+            'model' => $this->model,
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'temperature' => $this->temperature,
+            'max_tokens' => $this->maxTokens,
+        ]);
+
+        if (! $response->successful()) {
+            throw new Exception('Groq API Error: ' . $response->body());
+        }
+
+        return $response->json('choices.0.message.content', '');
     }
 
     /**
