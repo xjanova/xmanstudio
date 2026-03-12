@@ -94,6 +94,9 @@ Route::post('/ai-chat', [PublicChatController::class, 'chat'])
     ->middleware('throttle:20,1')
     ->name('public.ai-chat');
 
+// Changelog (public)
+Route::get('/changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog');
+
 // Shared Workflow (public)
 Route::get('/shared/workflow/{token}', [SharedWorkflowController::class, 'show'])->name('shared.workflow');
 
@@ -522,6 +525,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/turnstile', [TurnstileSettingsController::class, 'index'])->name('turnstile.index');
     Route::put('/turnstile', [TurnstileSettingsController::class, 'update'])->name('turnstile.update');
 
+    // Redis Settings
+    Route::get('/redis-settings', [\App\Http\Controllers\Admin\RedisSettingsController::class, 'index'])->name('redis-settings.index');
+    Route::put('/redis-settings', [\App\Http\Controllers\Admin\RedisSettingsController::class, 'updateEnv'])->name('redis-settings.update');
+    Route::get('/redis-settings/test', [\App\Http\Controllers\Admin\RedisSettingsController::class, 'testConnection'])->name('redis-settings.test');
+
     // AI Settings
     Route::get('/ai-settings', [AiSettingsController::class, 'index'])->name('ai-settings.index');
     Route::put('/ai-settings', [AiSettingsController::class, 'update'])->name('ai-settings.update');
@@ -870,7 +878,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Bug Reports Management
     Route::prefix('bug-reports')->name('bug-reports.')->group(function () {
         Route::get('/', [AdminBugReportController::class, 'index'])->name('index');
+        Route::post('/bulk-delete', [AdminBugReportController::class, 'bulkDelete'])->name('bulk-delete');
+        Route::post('/auto-delete', [AdminBugReportController::class, 'updateAutoDelete'])->name('auto-delete');
         Route::get('/{report}', [AdminBugReportController::class, 'show'])->name('show');
+        Route::delete('/{report}', [AdminBugReportController::class, 'destroy'])->name('destroy');
         Route::post('/{report}/analyze', [AdminBugReportController::class, 'markAnalyzed'])->name('analyze');
         Route::post('/{report}/fix', [AdminBugReportController::class, 'markFixed'])->name('fix');
     });

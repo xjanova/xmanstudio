@@ -74,7 +74,7 @@
                 เลือก AI Provider
             </h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <!-- OpenAI -->
                 <label class="provider-card relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all {{ $settings['ai_provider'] === 'openai' ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500' }}">
                     <input type="radio" name="ai_provider" value="openai" {{ $settings['ai_provider'] === 'openai' ? 'checked' : '' }} class="sr-only" onchange="updateProviderSelection(this)">
@@ -132,6 +132,25 @@
                     </div>
                 </label>
 
+                <!-- Groq -->
+                <label class="provider-card relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all {{ $settings['ai_provider'] === 'groq' ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500' }}">
+                    <input type="radio" name="ai_provider" value="groq" {{ $settings['ai_provider'] === 'groq' ? 'checked' : '' }} class="sr-only" onchange="updateProviderSelection(this)">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-4">
+                            <span class="text-white font-bold text-lg">G</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-900 dark:text-white">Groq</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">LLaMA 3.3, Mixtral (เร็วมาก!)</p>
+                        </div>
+                    </div>
+                    <div class="provider-check absolute top-2 right-2 {{ $settings['ai_provider'] === 'groq' ? '' : 'hidden' }}">
+                        <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                </label>
+
                 <!-- Ollama (Local) -->
                 <label class="provider-card relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all {{ $settings['ai_provider'] === 'ollama' ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500' }}">
                     <input type="radio" name="ai_provider" value="ollama" {{ $settings['ai_provider'] === 'ollama' ? 'checked' : '' }} class="sr-only" onchange="updateProviderSelection(this)">
@@ -158,6 +177,12 @@
                 <p class="text-sm text-green-800 dark:text-green-200">
                     <strong>Google Gemini (แนะนำ):</strong> ใช้งานฟรี! Gemini 2.0 Flash มี API ฟรี 15 requests/นาที เหมาะสำหรับเริ่มต้น
                     <a href="https://aistudio.google.com/apikey" target="_blank" class="underline hover:text-green-600 dark:hover:text-green-300">รับ API Key ฟรี</a>
+                </p>
+            </div>
+            <div class="mt-2 p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
+                <p class="text-sm text-orange-800 dark:text-orange-200">
+                    <strong>Groq:</strong> ใช้ LPU inference engine เร็วมาก! รองรับ LLaMA 3.3 70B, Mixtral และอื่นๆ มี free tier
+                    <a href="https://console.groq.com/keys" target="_blank" class="underline hover:text-orange-600 dark:hover:text-orange-300">รับ API Key</a>
                 </p>
             </div>
             <div class="mt-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
@@ -288,6 +313,47 @@
                         <option value="claude-3-5-sonnet-20241022" {{ $settings['claude_model'] === 'claude-3-5-sonnet-20241022' ? 'selected' : '' }}>Claude 3.5 Sonnet (แนะนำ)</option>
                         <option value="claude-3-haiku-20240307" {{ $settings['claude_model'] === 'claude-3-haiku-20240307' ? 'selected' : '' }}>Claude 3 Haiku (ประหยัด)</option>
                         <option value="claude-3-opus-20240229" {{ $settings['claude_model'] === 'claude-3-opus-20240229' ? 'selected' : '' }}>Claude 3 Opus (พรีเมียม)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Groq Settings -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-3">
+                    <span class="text-white font-bold text-sm">G</span>
+                </div>
+                Groq Settings
+                <span class="ml-2 px-2.5 py-1 text-xs bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full shadow">เร็วมาก!</span>
+            </h3>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div>
+                        <label class="font-medium text-gray-900 dark:text-white">เปิดใช้งาน Groq</label>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">ใช้ LPU inference engine สำหรับ response เร็วมาก</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="groq_enabled" value="1" {{ $settings['groq_enabled'] ? 'checked' : '' }} class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 dark:peer-focus:ring-orange-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
+                    <input type="password" name="groq_api_key" value="{{ $settings['groq_api_key'] ? '••••••••' : '' }}" placeholder="gsk_..."
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://console.groq.com/keys" target="_blank" class="text-orange-600 hover:underline">console.groq.com</a></p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                    <select name="groq_model" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
+                        <option value="llama-3.3-70b-versatile" {{ $settings['groq_model'] === 'llama-3.3-70b-versatile' ? 'selected' : '' }}>LLaMA 3.3 70B Versatile</option>
+                        <option value="llama-3.1-8b-instant" {{ $settings['groq_model'] === 'llama-3.1-8b-instant' ? 'selected' : '' }}>LLaMA 3.1 8B Instant</option>
+                        <option value="mixtral-8x7b-32768" {{ $settings['groq_model'] === 'mixtral-8x7b-32768' ? 'selected' : '' }}>Mixtral 8x7B</option>
+                        <option value="gemma2-9b-it" {{ $settings['groq_model'] === 'gemma2-9b-it' ? 'selected' : '' }}>Gemma 2 9B</option>
                     </select>
                 </div>
             </div>
@@ -705,6 +771,12 @@
                             <span class="text-white text-xs font-bold">C</span>
                         </div>
                         ทดสอบ Claude
+                    </span>
+                </button>
+                <button type="button" onclick="testConnection('groq')" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-all text-sm text-gray-700 dark:text-gray-200">
+                    <span class="flex items-center">
+                        <div class="w-5 h-5 bg-gradient-to-r from-orange-500 to-red-600 rounded mr-2"></div>
+                        ทดสอบ Groq
                     </span>
                 </button>
                 <button type="button" onclick="testConnection('ollama')" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-all text-sm text-gray-700 dark:text-gray-200">

@@ -30,6 +30,11 @@ class AiSettingsController extends Controller
             'gemini_model' => Setting::getValue('gemini_model', 'gemini-2.0-flash'),
             'gemini_enabled' => Setting::getValue('gemini_enabled', false),
 
+            // Groq Settings
+            'groq_api_key' => Setting::getValue('groq_api_key', ''),
+            'groq_model' => Setting::getValue('groq_model', 'llama-3.3-70b-versatile'),
+            'groq_enabled' => Setting::getValue('groq_enabled', false),
+
             // Ollama Settings (Local AI)
             'ollama_enabled' => Setting::getValue('ollama_enabled', false),
             'ollama_host' => Setting::getValue('ollama_host', 'http://localhost:11434'),
@@ -92,7 +97,9 @@ class AiSettingsController extends Controller
             'gemini_model' => 'required|string|max:100',
             'ollama_host' => 'nullable|url|max:255',
             'ollama_model' => 'nullable|string|max:100',
-            'ai_provider' => 'required|in:openai,claude,gemini,ollama',
+            'groq_api_key' => 'nullable|string|max:255',
+            'groq_model' => 'required|string|max:100',
+            'ai_provider' => 'required|in:openai,claude,gemini,groq,ollama',
             'ai_max_tokens' => 'required|integer|min:100|max:32000',
             'ai_temperature' => 'required|numeric|min:0|max:2',
             'ai_top_p' => 'nullable|numeric|min:0|max:1',
@@ -130,6 +137,13 @@ class AiSettingsController extends Controller
         }
         Setting::setValue('gemini_model', $request->gemini_model, 'string', 'ai');
         Setting::setValue('gemini_enabled', $request->boolean('gemini_enabled'), 'boolean', 'ai');
+
+        // Groq Settings
+        if ($request->filled('groq_api_key')) {
+            Setting::setValue('groq_api_key', $request->groq_api_key, 'string', 'ai');
+        }
+        Setting::setValue('groq_model', $request->groq_model, 'string', 'ai');
+        Setting::setValue('groq_enabled', $request->boolean('groq_enabled'), 'boolean', 'ai');
 
         // Ollama Settings
         Setting::setValue('ollama_enabled', $request->boolean('ollama_enabled'), 'boolean', 'ai');
@@ -193,6 +207,8 @@ class AiSettingsController extends Controller
                 return $this->testClaude();
             } elseif ($provider === 'gemini') {
                 return $this->testGemini();
+            } elseif ($provider === 'groq') {
+                return $this->testGroq();
             } elseif ($provider === 'ollama') {
                 return $this->testOllama();
             }
@@ -280,6 +296,36 @@ class AiSettingsController extends Controller
         $error = $response->json('error.message', $response->status());
 
         return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Gemini ได้: ' . $error]);
+    }
+
+    /**
+     * Test Groq connection.
+     */
+    private function testGroq()
+    {
+        $apiKey = Setting::getValue('groq_api_key');
+        if (empty($apiKey)) {
+            return response()->json(['success' => false, 'message' => 'ยังไม่ได้ตั้งค่า Groq API Key']);
+        }
+
+        $model = Setting::getValue('groq_model', 'llama-3.3-70b-versatile');
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(30)->post('https://api.groq.com/openai/v1/chat/completions', [
+            'model' => $model,
+            'messages' => [['role' => 'user', 'content' => 'Hi, respond with OK only.']],
+            'max_tokens' => 10,
+        ]);
+
+        if ($response->successful()) {
+            return response()->json(['success' => true, 'message' => 'เชื่อมต่อ Groq สำเร็จ']);
+        }
+
+        $error = $response->json('error.message', $response->status());
+
+        return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Groq ได้: ' . $error]);
     }
 
     /**
