@@ -70,7 +70,7 @@
                         </span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm text-gray-700 break-all">{{ $value ?: '-' }}</p>
+                        <p class="text-sm text-gray-700 break-all">{{ is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : ($value ?: '-') }}</p>
                     </div>
                 </div>
             @endforeach
