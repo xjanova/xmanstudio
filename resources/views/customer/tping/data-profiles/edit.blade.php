@@ -48,7 +48,7 @@
                     <div class="flex items-center gap-2 field-row">
                         <input type="text" name="field_keys[]" value="{{ $key }}" placeholder="Key"
                                class="w-1/3 rounded-lg border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-mono">
-                        <input type="text" name="field_values[]" value="{{ $value }}" placeholder="Value"
+                        <input type="text" name="field_values[]" value="{{ is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : $value }}" placeholder="Value"
                                class="flex-1 rounded-lg border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
                         <button type="button" onclick="removeField(this)" class="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all flex-shrink-0">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
