@@ -30,6 +30,8 @@ class LicenseActivity extends Model
 
     public const ACTION_SUSPICIOUS = 'suspicious_activity';
 
+    public const ACTION_DELETED = 'deleted';
+
     // Actor types
     public const ACTOR_SYSTEM = 'system';
 
