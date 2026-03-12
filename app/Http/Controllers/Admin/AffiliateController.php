@@ -97,7 +97,9 @@ class AffiliateController extends Controller
             ->get()
             ->filter(fn ($a) => ! $a->isDescendantOf($affiliate->id));
 
-        return view('admin.affiliates.show', compact('affiliate', 'commissions', 'allAffiliates'));
+        $moveOptions = $allAffiliates;
+
+        return view('admin.affiliates.show', compact('affiliate', 'commissions', 'allAffiliates', 'moveOptions'));
     }
 
     /**
