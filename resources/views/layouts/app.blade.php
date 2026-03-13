@@ -534,6 +534,8 @@
                 <div>
                     <h4 class="text-lg font-semibold mb-4">ช่วยเหลือ</h4>
                     <ul class="space-y-2 text-gray-400">
+                        <li><a href="/about" class="hover:text-white transition-colors">เกี่ยวกับเรา</a></li>
+                        <li><a href="/team" class="hover:text-white transition-colors">ทีมงานและผู้บริหาร</a></li>
                         <li><a href="/support" class="hover:text-white transition-colors">ติดต่อ/สั่งซื้อ</a></li>
                         <li><a href="/rental" class="hover:text-white transition-colors">เช่าบริการ</a></li>
                         <li><a href="/products" class="hover:text-white transition-colors">ผลิตภัณฑ์</a></li>

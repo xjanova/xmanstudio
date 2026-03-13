@@ -590,6 +590,8 @@
                 <div>
                     <h4 class="text-lg font-semibold text-white mb-4">ช่วยเหลือ</h4>
                     <ul class="space-y-2">
+                        <li><a href="/about" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">เกี่ยวกับเรา</a></li>
+                        <li><a href="/team" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">ทีมงานและผู้บริหาร</a></li>
                         <li><a href="/support" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">ติดต่อ/สั่งซื้อ</a></li>
                         <li><a href="/rental" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">เช่าบริการ</a></li>
                         <li><a href="/products" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">ผลิตภัณฑ์</a></li>

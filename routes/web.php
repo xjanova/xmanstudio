@@ -197,6 +197,9 @@ Route::get('/support/tracking/search', [QuotationController::class, 'trackingSea
 // About page
 Route::view('/about', 'about')->name('about');
 
+// Team page
+Route::view('/team', 'team')->name('team');
+
 // Portfolio page
 Route::view('/portfolio', 'portfolio')->name('portfolio');
 
