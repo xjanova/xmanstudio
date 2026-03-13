@@ -211,7 +211,7 @@
                         </a>
                     @endif
                     @if($project->quotation)
-                        <a href="{{ route('admin.quotations.show', $project->quotation) }}" class="block text-primary-600 hover:underline">
+                        <a href="{{ route('admin.quotations.detail', $project->quotation) }}" class="block text-primary-600 hover:underline">
                             ดูใบเสนอราคา
                         </a>
                     @endif
