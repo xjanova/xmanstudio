@@ -141,7 +141,7 @@ class LicenseController extends Controller
         // Log activity for each created license
         foreach ($licenses as $license) {
             LicenseActivity::log(
-                $license,
+                $license['id'],
                 LicenseActivity::ACTION_CREATED,
                 LicenseActivity::ACTOR_ADMIN,
                 auth()->id(),
