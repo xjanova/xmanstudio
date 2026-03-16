@@ -181,6 +181,8 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
     // Puzzle debug images for AI learning (rate limited)
     Route::middleware(['throttle:20,1'])->group(function () {
         Route::post('/debug-images', [PuzzleDebugController::class, 'store']);
+        Route::post('/debug-images/feedback', [PuzzleDebugController::class, 'feedback']);
+        Route::post('/debug-images/infer', [PuzzleDebugController::class, 'infer']);
         Route::get('/debug-images', [PuzzleDebugController::class, 'index']);
         Route::get('/debug-images/stats', [PuzzleDebugController::class, 'stats']);
         Route::get('/debug-images/export', [PuzzleDebugController::class, 'export']);

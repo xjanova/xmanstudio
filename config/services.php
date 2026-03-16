@@ -63,4 +63,9 @@ return [
         'repo' => env('GITHUB_REPO', 'xmanstudio'),
     ],
 
+    // Puzzle ML inference service (Python microservice)
+    'puzzle_ml' => [
+        'url' => env('PUZZLE_ML_URL', 'http://127.0.0.1:5050/predict'),
+    ],
+
 ];

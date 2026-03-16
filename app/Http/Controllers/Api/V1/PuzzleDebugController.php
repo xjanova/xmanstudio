@@ -243,4 +243,226 @@ class PuzzleDebugController extends Controller
             'data'    => $records,
         ]);
     }
+
+    /**
+     * Receive auto-feedback from app (success/fail + actual gap position).
+     * Auto-labels the most recent debug image record for this machine.
+     *
+     * POST /api/v1/product/{productSlug}/debug-images/feedback
+     */
+    public function feedback(Request $request, string $productSlug): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'machine_id'       => 'required|string|max:100',
+            'success'          => 'required|boolean',
+            'detected_gap_x'   => 'required|integer',
+            'actual_gap_x'     => 'nullable|integer',
+            'attempt'          => 'nullable|integer',
+            'detection_method' => 'nullable|string|max:30',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            // Find the most recent debug image record for this machine (within last 5 min)
+            $record = PuzzleDebugImage::where('machine_id', $request->input('machine_id'))
+                ->where('created_at', '>=', now()->subMinutes(5))
+                ->orderByDesc('created_at')
+                ->first();
+
+            $detectedGapX = $request->input('detected_gap_x');
+            $actualGapX = $request->input('actual_gap_x', $request->boolean('success') ? $detectedGapX : null);
+
+            if ($record) {
+                // Update existing record with feedback
+                $record->update([
+                    'success'      => $request->boolean('success'),
+                    'actual_gap_x' => $actualGapX,
+                    'metadata'     => array_merge($record->metadata ?? [], [
+                        'feedback_attempt' => $request->input('attempt'),
+                        'feedback_at'      => now()->toISOString(),
+                    ]),
+                ]);
+
+                Log::info("PuzzleDebug feedback: record #{$record->id} " .
+                    "success={$request->input('success')} actual_gap_x={$actualGapX}");
+            } else {
+                // No recent debug image — create a feedback-only record
+                $record = PuzzleDebugImage::create([
+                    'machine_id'       => $request->input('machine_id'),
+                    'app_version'      => $request->input('app_version'),
+                    'detection_method' => $request->input('detection_method'),
+                    'gap_x'            => $detectedGapX,
+                    'actual_gap_x'     => $actualGapX,
+                    'success'          => $request->boolean('success'),
+                    'metadata'         => [
+                        'product'          => $productSlug,
+                        'feedback_only'    => true,
+                        'feedback_attempt' => $request->input('attempt'),
+                        'timestamp'        => $request->input('timestamp'),
+                    ],
+                    'captured_at'      => now(),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'id'      => $record->id,
+                'labeled' => $actualGapX !== null,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("PuzzleDebug feedback failed: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Feedback failed'], 500);
+        }
+    }
+
+    /**
+     * Server-side inference: receive screenshots, return predicted gap_x.
+     *
+     * Currently uses the labeled data to compute average offset corrections.
+     * When enough data is collected, this can be upgraded to a real ML model.
+     *
+     * POST /api/v1/product/{productSlug}/debug-images/infer
+     */
+    public function infer(Request $request, string $productSlug): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'machine_id'    => 'required|string|max:100',
+            'slider_x'      => 'required|integer',
+            'slider_y'      => 'required|integer',
+            'move_distance'  => 'required|integer',
+            'track_width'    => 'required|integer',
+            'before'         => 'required|file|image|max:5120',
+            'after'          => 'required|file|image|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $machineId = $request->input('machine_id');
+            $sliderX = (int) $request->input('slider_x');
+            $trackWidth = (int) $request->input('track_width');
+
+            // Store images for future training
+            $shortId = substr($machineId, 0, 8);
+            $date = now()->format('Y-m-d');
+            $batch = now()->format('His');
+            $storagePath = "puzzle-debug/{$productSlug}/{$date}/{$shortId}/infer_{$batch}";
+
+            $beforePath = $request->file('before')->storeAs($storagePath, 'before.png', 'public');
+            $afterPath = $request->file('after')->storeAs($storagePath, 'after.png', 'public');
+
+            // Save record
+            $record = PuzzleDebugImage::create([
+                'machine_id'       => $machineId,
+                'app_version'      => $request->input('app_version'),
+                'detection_method' => 'server_infer',
+                'slider_x'         => $sliderX,
+                'track_width'      => $trackWidth,
+                'image_paths'      => [$beforePath, $afterPath],
+                'metadata'         => [
+                    'product'       => $productSlug,
+                    'move_distance' => (int) $request->input('move_distance'),
+                    'slider_y'      => (int) $request->input('slider_y'),
+                    'inference'     => true,
+                ],
+                'captured_at'      => now(),
+            ]);
+
+            // === INFERENCE LOGIC ===
+            // Phase 1: Statistical correction based on labeled data
+            // Calculate average detection error from successful solves
+            $correction = $this->computeCorrection($machineId);
+
+            // Phase 2: Check if Python ML service is available
+            $mlResult = $this->callMlService($beforePath, $afterPath, $request->all());
+
+            if ($mlResult !== null) {
+                // ML model available — use its prediction
+                $record->update([
+                    'gap_x' => $mlResult['gap_x'],
+                    'metadata' => array_merge($record->metadata ?? [], [
+                        'source' => 'ml_model',
+                        'ml_confidence' => $mlResult['confidence'],
+                    ]),
+                ]);
+
+                return response()->json([
+                    'success'    => true,
+                    'gap_x'      => $mlResult['gap_x'],
+                    'confidence' => $mlResult['confidence'],
+                    'source'     => 'ml_model',
+                    'record_id'  => $record->id,
+                ]);
+            }
+
+            // Phase 1 fallback: return correction hint (app applies to its own detection)
+            return response()->json([
+                'success'    => true,
+                'gap_x'      => null, // no prediction yet — not enough data or no ML
+                'confidence' => 0.0,
+                'correction' => $correction, // average px offset to add to detected gap_x
+                'source'     => 'statistical',
+                'record_id'  => $record->id,
+                'message'    => 'ML model not ready. Collecting data for training.',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("PuzzleDebug infer failed: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Inference failed'], 500);
+        }
+    }
+
+    /**
+     * Compute average detection error correction from labeled data.
+     */
+    private function computeCorrection(string $machineId): float
+    {
+        // Use labeled data where we know both detected and actual gap_x
+        $data = PuzzleDebugImage::labeled()
+            ->whereNotNull('gap_x')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->selectRaw('AVG(actual_gap_x - gap_x) as avg_correction')
+            ->first();
+
+        return round($data->avg_correction ?? 0, 1);
+    }
+
+    /**
+     * Call Python ML microservice if available.
+     * Returns ['gap_x' => int, 'confidence' => float] or null if service unavailable.
+     */
+    private function callMlService(string $beforePath, string $afterPath, array $params): ?array
+    {
+        $mlUrl = config('services.puzzle_ml.url', 'http://127.0.0.1:5050/predict');
+
+        try {
+            $client = new \GuzzleHttp\Client(['timeout' => 10, 'connect_timeout' => 3]);
+            $response = $client->post($mlUrl, [
+                'multipart' => [
+                    ['name' => 'before', 'contents' => Storage::disk('public')->readStream($beforePath), 'filename' => 'before.png'],
+                    ['name' => 'after', 'contents' => Storage::disk('public')->readStream($afterPath), 'filename' => 'after.png'],
+                    ['name' => 'slider_x', 'contents' => (string) ($params['slider_x'] ?? 0)],
+                    ['name' => 'slider_y', 'contents' => (string) ($params['slider_y'] ?? 0)],
+                    ['name' => 'move_distance', 'contents' => (string) ($params['move_distance'] ?? 0)],
+                    ['name' => 'track_width', 'contents' => (string) ($params['track_width'] ?? 0)],
+                ],
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            if (isset($result['gap_x']) && isset($result['confidence'])) {
+                return $result;
+            }
+        } catch (\Exception $e) {
+            // ML service not running — that's OK, use statistical fallback
+            Log::debug("PuzzleML service unavailable: " . $e->getMessage());
+        }
+
+        return null;
+    }
 }
