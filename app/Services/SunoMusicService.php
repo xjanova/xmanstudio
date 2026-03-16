@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\MetalXMusicGeneration;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -18,8 +19,8 @@ class SunoMusicService
 
     public function __construct()
     {
-        $this->apiKey = config('metalx.suno.api_key') ?: (string) \App\Models\Setting::getValue('suno_api_key', '');
-        $this->baseUrl = (string) \App\Models\Setting::getValue('suno_base_url') ?: config('metalx.suno.base_url', 'https://api.sunoapi.org');
+        $this->apiKey = config('metalx.suno.api_key') ?: (string) Setting::getValue('suno_api_key', '');
+        $this->baseUrl = (string) Setting::getValue('suno_base_url') ?: config('metalx.suno.base_url', 'https://api.sunoapi.org');
         $this->timeout = config('metalx.suno.timeout', 120);
     }
 
