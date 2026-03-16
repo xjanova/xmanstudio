@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          command_timeout: 3m
+          command_timeout: 5m
           script: |
             echo "========================================="
             echo "  SERVER DIAGNOSTIC - $(date)"
@@ -206,35 +206,8 @@ jobs:
                   ps aux | grep "queue:work" | grep -v grep || echo "WARNING: Queue worker may not have started"
                 fi
 
-                # Set up supervisor config if supervisor is available
-                if command -v supervisorctl &>/dev/null; then
-                  echo ""
-                  echo "--- Setting up Supervisor ---"
-                  SUPERVISOR_CONF="/etc/supervisor/conf.d/xmanstudio-queue.conf"
-                  sudo tee "$SUPERVISOR_CONF" > /dev/null << 'SUPEOF'
-[program:xmanstudio-queue]
-process_name=%(program_name)s_%(process_num)02d
-directory=LARAVEL_DIR_PLACEHOLDER
-command=php artisan queue:work --sleep=3 --tries=3 --max-time=3600
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-user=www-data
-numprocs=1
-redirect_stderr=true
-stdout_logfile=LARAVEL_DIR_PLACEHOLDER/storage/logs/queue-supervisor.log
-stopwaitsecs=3600
-SUPEOF
-                  sudo sed -i "s|LARAVEL_DIR_PLACEHOLDER|$LARAVEL_DIR|g" "$SUPERVISOR_CONF"
-                  sudo supervisorctl reread
-                  sudo supervisorctl update
-                  sudo supervisorctl start xmanstudio-queue:*
-                  echo "Supervisor configured and started"
-                else
-                  echo "Supervisor not installed. Queue worker running via nohup (will stop on server restart)"
-                  echo "To install supervisor: sudo apt-get install -y supervisor"
-                fi
+                echo "Queue worker running via nohup (will stop on server restart)"
+                echo "Consider setting up supervisor for persistence: sudo apt-get install -y supervisor"
               fi
             fi
 
