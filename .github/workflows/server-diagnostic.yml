@@ -12,6 +12,9 @@ on:
           - check
           - fix-proc-open
           - check-ffmpeg
+          - install-ffmpeg
+          - start-queue
+          - full-setup
 
 jobs:
   diagnostic:
@@ -133,6 +136,106 @@ jobs:
               echo ""
               echo "--- Verify fix ---"
               php -r "echo function_exists('proc_open') ? 'CLI: proc_open AVAILABLE' : 'CLI: proc_open STILL DISABLED';" && echo ""
+            fi
+
+            # Action: install-ffmpeg
+            if [ "${{ github.event.inputs.action }}" = "install-ffmpeg" ] || [ "${{ github.event.inputs.action }}" = "full-setup" ]; then
+              echo ""
+              echo "========================================="
+              echo "  INSTALLING FFMPEG"
+              echo "========================================="
+
+              if command -v ffmpeg &>/dev/null; then
+                echo "FFmpeg already installed:"
+                ffmpeg -version | head -1
+              else
+                echo "Installing FFmpeg..."
+                sudo apt-get update -qq
+                sudo apt-get install -y ffmpeg
+
+                echo ""
+                echo "--- Verify FFmpeg ---"
+                which ffmpeg && ffmpeg -version | head -1
+                which ffprobe && ffprobe -version | head -1
+              fi
+            fi
+
+            # Action: start-queue
+            if [ "${{ github.event.inputs.action }}" = "start-queue" ] || [ "${{ github.event.inputs.action }}" = "full-setup" ]; then
+              echo ""
+              echo "========================================="
+              echo "  SETTING UP QUEUE WORKER"
+              echo "========================================="
+
+              # Find the Laravel project directory
+              LARAVEL_DIR=""
+              for dir in /home/*/domains/*/public_html /var/www/*/public_html /var/www/*; do
+                if [ -f "$dir/../artisan" ]; then
+                  LARAVEL_DIR=$(dirname "$dir/../artisan" | xargs realpath)
+                  break
+                fi
+              done
+
+              if [ -z "$LARAVEL_DIR" ]; then
+                # Try common paths
+                for dir in /home/*/domains/xman4289.com/public_html; do
+                  if [ -f "$dir/../artisan" ]; then
+                    LARAVEL_DIR=$(realpath "$dir/..")
+                    break
+                  fi
+                done
+              fi
+
+              if [ -z "$LARAVEL_DIR" ]; then
+                echo "ERROR: Could not find Laravel project directory"
+                echo "Searching for artisan..."
+                find /home -name "artisan" -maxdepth 5 2>/dev/null | head -5
+              else
+                echo "Laravel directory: $LARAVEL_DIR"
+                cd "$LARAVEL_DIR"
+
+                # Check if queue worker is already running
+                if ps aux | grep "queue:work" | grep -v grep > /dev/null; then
+                  echo "Queue worker already running:"
+                  ps aux | grep "queue:work" | grep -v grep
+                else
+                  echo "Starting queue worker with nohup..."
+                  nohup php artisan queue:work --sleep=3 --tries=3 --max-time=3600 > storage/logs/queue-worker.log 2>&1 &
+                  echo "Queue worker started (PID: $!)"
+                  sleep 2
+                  ps aux | grep "queue:work" | grep -v grep || echo "WARNING: Queue worker may not have started"
+                fi
+
+                # Set up supervisor config if supervisor is available
+                if command -v supervisorctl &>/dev/null; then
+                  echo ""
+                  echo "--- Setting up Supervisor ---"
+                  SUPERVISOR_CONF="/etc/supervisor/conf.d/xmanstudio-queue.conf"
+                  sudo tee "$SUPERVISOR_CONF" > /dev/null << 'SUPEOF'
+[program:xmanstudio-queue]
+process_name=%(program_name)s_%(process_num)02d
+directory=LARAVEL_DIR_PLACEHOLDER
+command=php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=LARAVEL_DIR_PLACEHOLDER/storage/logs/queue-supervisor.log
+stopwaitsecs=3600
+SUPEOF
+                  sudo sed -i "s|LARAVEL_DIR_PLACEHOLDER|$LARAVEL_DIR|g" "$SUPERVISOR_CONF"
+                  sudo supervisorctl reread
+                  sudo supervisorctl update
+                  sudo supervisorctl start xmanstudio-queue:*
+                  echo "Supervisor configured and started"
+                else
+                  echo "Supervisor not installed. Queue worker running via nohup (will stop on server restart)"
+                  echo "To install supervisor: sudo apt-get install -y supervisor"
+                fi
+              fi
             fi
 
             echo ""
