@@ -33,7 +33,7 @@ class ThemeService
     /**
      * Default theme
      */
-    public const DEFAULT_THEME = 'classic';
+    public const DEFAULT_THEME = 'premium';
 
     /**
      * Get site default theme

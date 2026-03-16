@@ -231,15 +231,15 @@
 </section>
 
 <!-- Services Categories Grid -->
-<section class="py-16 bg-gray-50">
+<section class="py-16 bg-gray-50 dark:bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if($categories->isEmpty())
             <div class="text-center py-16">
-                <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                 </svg>
-                <h2 class="text-xl font-semibold text-gray-700">ยังไม่มีบริการ</h2>
-                <p class="text-gray-500 mt-2">กรุณากลับมาใหม่ภายหลัง</p>
+                <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">ยังไม่มีบริการ</h2>
+                <p class="text-gray-500 dark:text-gray-400 mt-2">กรุณากลับมาใหม่ภายหลัง</p>
             </div>
         @else
             <!-- Categories Grid -->
@@ -252,7 +252,7 @@
 
                     <!-- Category Card -->
                     <div class="category-card group cursor-pointer" data-category="{{ $category->key }}">
-                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl border-2 {{ $style['border'] }} {{ $style['hover'] }}">
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl border-2 {{ $style['border'] }} dark:border-gray-700 {{ $style['hover'] }}">
                             <!-- Category Image -->
                             <div class="relative h-48 overflow-hidden">
                                 <img src="{{ $categoryImage }}"
@@ -261,7 +261,7 @@
                                 <div class="absolute inset-0 bg-gradient-to-br {{ $style['gradient'] }} opacity-70 group-hover:opacity-60 transition-opacity"></div>
 
                                 <!-- Icon Badge -->
-                                <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg">
+                                <div class="absolute top-4 right-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl p-3 shadow-lg">
                                     <span class="text-4xl">{{ $category->icon }}</span>
                                 </div>
 
@@ -307,18 +307,18 @@
 
                 <div id="category-{{ $category->key }}" class="category-options hidden mb-12">
                     <!-- Category Header -->
-                    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 border-2 {{ $style['border'] }}">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border-2 {{ $style['border'] }} dark:border-gray-700">
                         <div class="flex items-center justify-between flex-wrap gap-4">
                             <div class="flex items-center gap-4">
                                 <div class="text-6xl">{{ $category->icon }}</div>
                                 <div>
                                     <h2 class="text-3xl font-bold {{ $style['text'] }}">{{ $category->display_name }}</h2>
                                     @if($category->display_description)
-                                        <p class="text-gray-600 mt-1">{{ $category->display_description }}</p>
+                                        <p class="text-gray-600 dark:text-gray-400 mt-1">{{ $category->display_description }}</p>
                                     @endif
                                 </div>
                             </div>
-                            <button class="close-category px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors">
+                            <button class="close-category px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-colors">
                                 <span class="flex items-center gap-2">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -333,7 +333,7 @@
                     @if($category->activeOptions->count() > 0)
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             @foreach($category->activeOptions as $option)
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group border-2 {{ $style['border'] }} {{ $style['hover'] }}">
+                                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group border-2 {{ $style['border'] }} dark:border-gray-700 {{ $style['hover'] }}">
                                     <div class="p-6">
                                         <!-- Option Image -->
                                         @if($option->image)
@@ -407,8 +407,8 @@
                             @endforeach
                         </div>
                     @else
-                        <div class="text-center py-12 bg-white rounded-xl">
-                            <p class="text-gray-500">ไม่มีตัวเลือกบริการในหมวดนี้ในขณะนี้</p>
+                        <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
+                            <p class="text-gray-500 dark:text-gray-400">ไม่มีตัวเลือกบริการในหมวดนี้ในขณะนี้</p>
                         </div>
                     @endif
                 </div>

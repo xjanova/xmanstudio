@@ -17,10 +17,10 @@
 </div>
 
 <!-- Packages Section -->
-<div class="py-16 bg-gray-50">
+<div class="py-16 bg-gray-50 dark:bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if(session('error'))
-            <div class="mb-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <div class="mb-8 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded">
                 {{ session('error') }}
             </div>
         @endif
@@ -124,22 +124,22 @@
 </div>
 
 <!-- FAQ Section -->
-<div class="py-16 bg-white">
+<div class="py-16 bg-white dark:bg-gray-800">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-12">คำถามที่พบบ่อย</h2>
+        <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white text-center mb-12">คำถามที่พบบ่อย</h2>
 
         <div class="space-y-6">
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900">สามารถเปลี่ยนแพ็กเกจได้หรือไม่?</h3>
-                <p class="mt-2 text-gray-600">ได้ครับ สามารถอัพเกรดแพ็กเกจได้ตลอดเวลา โดยจะคิดค่าใช้จ่ายส่วนต่างตามสัดส่วนเวลาที่เหลือ</p>
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">สามารถเปลี่ยนแพ็กเกจได้หรือไม่?</h3>
+                <p class="mt-2 text-gray-600 dark:text-gray-300">ได้ครับ สามารถอัพเกรดแพ็กเกจได้ตลอดเวลา โดยจะคิดค่าใช้จ่ายส่วนต่างตามสัดส่วนเวลาที่เหลือ</p>
             </div>
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900">วิธีการชำระเงินมีอะไรบ้าง?</h3>
-                <p class="mt-2 text-gray-600">รองรับการชำระผ่านพร้อมเพย์ (PromptPay QR Code), โอนเงินธนาคาร และบัตรเครดิต/เดบิต</p>
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">วิธีการชำระเงินมีอะไรบ้าง?</h3>
+                <p class="mt-2 text-gray-600 dark:text-gray-300">รองรับการชำระผ่านพร้อมเพย์ (PromptPay QR Code), โอนเงินธนาคาร และบัตรเครดิต/เดบิต</p>
             </div>
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900">มีการต่ออายุอัตโนมัติหรือไม่?</h3>
-                <p class="mt-2 text-gray-600">ในขณะนี้ยังไม่มีการต่ออายุอัตโนมัติ ระบบจะแจ้งเตือนก่อนหมดอายุ 7 วัน</p>
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">มีการต่ออายุอัตโนมัติหรือไม่?</h3>
+                <p class="mt-2 text-gray-600 dark:text-gray-300">ในขณะนี้ยังไม่มีการต่ออายุอัตโนมัติ ระบบจะแจ้งเตือนก่อนหมดอายุ 7 วัน</p>
             </div>
         </div>
     </div>
