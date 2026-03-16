@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BugReportController;
 use App\Http\Controllers\Api\V1\DataProfileController;
 use App\Http\Controllers\Api\V1\SmsPaymentController;
+use App\Http\Controllers\Api\V1\PuzzleDebugController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use Illuminate\Support\Facades\Route;
@@ -175,6 +176,15 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
     // Diagnostic reports from app (rate limited)
     Route::middleware(['throttle:10,1'])->group(function () {
         Route::post('/diagnostics', [ProductLicenseController::class, 'storeDiagnostics']);
+    });
+
+    // Puzzle debug images for AI learning (rate limited)
+    Route::middleware(['throttle:20,1'])->group(function () {
+        Route::post('/debug-images', [PuzzleDebugController::class, 'store']);
+        Route::get('/debug-images', [PuzzleDebugController::class, 'index']);
+        Route::get('/debug-images/stats', [PuzzleDebugController::class, 'stats']);
+        Route::get('/debug-images/export', [PuzzleDebugController::class, 'export']);
+        Route::put('/debug-images/{id}/label', [PuzzleDebugController::class, 'updateLabel']);
     });
 
     // Demo endpoints (rate limited more strictly)

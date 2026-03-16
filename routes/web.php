@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\BugReportController as AdminBugReportController;
+use App\Http\Controllers\Admin\PuzzleDebugController as AdminPuzzleDebugController;
 use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
@@ -954,6 +955,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
         // Cleanup
         Route::post('/cleanup', [AdminSmsPaymentController::class, 'cleanup'])->name('cleanup');
+    });
+
+    // Puzzle Debug Images (AI Learning)
+    Route::prefix('puzzle-debug')->name('puzzle-debug.')->group(function () {
+        Route::get('/', [AdminPuzzleDebugController::class, 'index'])->name('index');
+        Route::get('/{record}', [AdminPuzzleDebugController::class, 'show'])->name('show');
+        Route::put('/{record}/label', [AdminPuzzleDebugController::class, 'updateLabel'])->name('label');
+        Route::delete('/{record}', [AdminPuzzleDebugController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-delete', [AdminPuzzleDebugController::class, 'bulkDelete'])->name('bulk-delete');
     });
 
     // Bug Reports Management
