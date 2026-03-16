@@ -15,6 +15,8 @@ on:
           - install-ffmpeg
           - start-queue
           - full-setup
+          - trigger-render
+          - trigger-upload
 
 jobs:
   diagnostic:
@@ -216,6 +218,113 @@ jobs:
                 echo "Searching for artisan..."
                 find /home /var/www -name "artisan" -maxdepth 5 2>/dev/null | head -5
               fi
+            fi
+
+            # Action: trigger-render (dispatch RenderVideoJob for project 1)
+            if [ "${{ github.event.inputs.action }}" = "trigger-render" ]; then
+              echo ""
+              echo "========================================="
+              echo "  TRIGGERING RENDER FOR PROJECT 1"
+              echo "========================================="
+
+              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+              DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+              cd "$DEPLOY_PATH"
+
+              # Check project status
+              php artisan tinker --execute="
+                \$p = \\App\\Models\\MetalXVideoProject::find(1);
+                echo 'Project: ' . \$p->title . PHP_EOL;
+                echo 'Status: ' . \$p->status . PHP_EOL;
+                echo 'Music: ' . (\$p->musicGeneration ? \$p->musicGeneration->audio_path : 'none') . PHP_EOL;
+                echo 'Images: ' . count(\$p->images ?? []) . PHP_EOL;
+              "
+
+              # Ensure queue worker is running
+              if ! ps aux | grep "queue:work" | grep -v grep > /dev/null; then
+                echo "Starting queue worker..."
+                nohup php artisan queue:work --sleep=3 --tries=3 --max-time=3600 > storage/logs/queue-worker.log 2>&1 &
+                sleep 2
+              fi
+
+              # Dispatch render job
+              echo ""
+              echo "Dispatching RenderVideoJob..."
+              php artisan tinker --execute="
+                \$p = \\App\\Models\\MetalXVideoProject::find(1);
+                if (\$p->status === 'music_ready') {
+                  \\App\\Jobs\\RenderVideoJob::dispatch(\$p);
+                  echo 'RenderVideoJob dispatched!';
+                } else {
+                  echo 'Cannot render: status is ' . \$p->status;
+                }
+              "
+
+              echo ""
+              echo "Waiting 10s for job to start..."
+              sleep 10
+
+              # Check status after dispatch
+              php artisan tinker --execute="
+                \$p = \\App\\Models\\MetalXVideoProject::find(1);
+                echo 'Status after dispatch: ' . \$p->status . PHP_EOL;
+                echo 'Error: ' . (\$p->error_message ?? 'none') . PHP_EOL;
+              "
+            fi
+
+            # Action: trigger-upload (dispatch UploadVideoJob for project 1)
+            if [ "${{ github.event.inputs.action }}" = "trigger-upload" ]; then
+              echo ""
+              echo "========================================="
+              echo "  TRIGGERING UPLOAD FOR PROJECT 1"
+              echo "========================================="
+
+              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+              DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+              cd "$DEPLOY_PATH"
+
+              # Check project status
+              php artisan tinker --execute="
+                \$p = \\App\\Models\\MetalXVideoProject::find(1);
+                echo 'Project: ' . \$p->title . PHP_EOL;
+                echo 'Status: ' . \$p->status . PHP_EOL;
+                echo 'Video file: ' . (\$p->video_file_path ?? 'none') . PHP_EOL;
+                echo 'Channel: ' . (\$p->channel ? \$p->channel->name : 'none') . PHP_EOL;
+              "
+
+              # Ensure queue worker is running
+              if ! ps aux | grep "queue:work" | grep -v grep > /dev/null; then
+                echo "Starting queue worker..."
+                nohup php artisan queue:work --sleep=3 --tries=3 --max-time=3600 > storage/logs/queue-worker.log 2>&1 &
+                sleep 2
+              fi
+
+              # Dispatch upload job
+              echo ""
+              echo "Dispatching UploadVideoJob..."
+              php artisan tinker --execute="
+                \$p = \\App\\Models\\MetalXVideoProject::find(1);
+                if (\$p->status === 'rendered') {
+                  \\App\\Jobs\\UploadVideoJob::dispatch(\$p);
+                  echo 'UploadVideoJob dispatched!';
+                } else {
+                  echo 'Cannot upload: status is ' . \$p->status;
+                }
+              "
+
+              echo ""
+              echo "Waiting 30s for upload to start..."
+              sleep 30
+
+              # Check status
+              php artisan tinker --execute="
+                \$p = \\App\\Models\\MetalXVideoProject::find(1);
+                echo 'Status: ' . \$p->status . PHP_EOL;
+                echo 'Error: ' . (\$p->error_message ?? 'none') . PHP_EOL;
+                if (\$p->video) {
+                  echo 'YouTube ID: ' . (\$p->video->youtube_id ?? 'none') . PHP_EOL;
+                }
+              "
             fi
 
             echo ""
