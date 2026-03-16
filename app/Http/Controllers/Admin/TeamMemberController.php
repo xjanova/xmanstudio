@@ -14,12 +14,13 @@ class TeamMemberController extends Controller
         $query = TeamMember::query();
 
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                    ->orWhere('name_th', 'like', '%' . $request->search . '%')
-                    ->orWhere('position', 'like', '%' . $request->search . '%')
-                    ->orWhere('position_th', 'like', '%' . $request->search . '%')
-                    ->orWhere('department', 'like', '%' . $request->search . '%');
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('name_th', 'like', '%' . $search . '%')
+                    ->orWhere('position', 'like', '%' . $search . '%')
+                    ->orWhere('position_th', 'like', '%' . $search . '%')
+                    ->orWhere('department', 'like', '%' . $search . '%');
             });
         }
 
@@ -58,15 +59,15 @@ class TeamMemberController extends Controller
             'name_th' => 'nullable|string|max:255',
             'position' => 'required|string|max:255',
             'position_th' => 'nullable|string|max:255',
-            'bio' => 'nullable|string',
-            'bio_th' => 'nullable|string',
-            'image' => 'nullable|image|max:2048',
+            'bio' => 'nullable|string|max:5000',
+            'bio_th' => 'nullable|string|max:5000',
+            'image' => 'nullable|mimes:jpg,jpeg,png,webp,gif|max:2048',
             'department' => 'nullable|string|max:255',
             'skills' => 'nullable|string|max:500',
-            'facebook_url' => 'nullable|url',
-            'linkedin_url' => 'nullable|url',
-            'github_url' => 'nullable|url',
-            'website_url' => 'nullable|url',
+            'facebook_url' => 'nullable|url:http,https',
+            'linkedin_url' => 'nullable|url:http,https',
+            'github_url' => 'nullable|url:http,https',
+            'website_url' => 'nullable|url:http,https',
             'is_leader' => 'boolean',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
@@ -98,15 +99,15 @@ class TeamMemberController extends Controller
             'name_th' => 'nullable|string|max:255',
             'position' => 'required|string|max:255',
             'position_th' => 'nullable|string|max:255',
-            'bio' => 'nullable|string',
-            'bio_th' => 'nullable|string',
-            'image' => 'nullable|image|max:2048',
+            'bio' => 'nullable|string|max:5000',
+            'bio_th' => 'nullable|string|max:5000',
+            'image' => 'nullable|mimes:jpg,jpeg,png,webp,gif|max:2048',
             'department' => 'nullable|string|max:255',
             'skills' => 'nullable|string|max:500',
-            'facebook_url' => 'nullable|url',
-            'linkedin_url' => 'nullable|url',
-            'github_url' => 'nullable|url',
-            'website_url' => 'nullable|url',
+            'facebook_url' => 'nullable|url:http,https',
+            'linkedin_url' => 'nullable|url:http,https',
+            'github_url' => 'nullable|url:http,https',
+            'website_url' => 'nullable|url:http,https',
             'is_leader' => 'boolean',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
