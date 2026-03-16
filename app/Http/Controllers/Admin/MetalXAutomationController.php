@@ -10,7 +10,6 @@ use App\Models\MetalXAutomationSchedule;
 use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideo;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class MetalXAutomationController extends Controller
 {

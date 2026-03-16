@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Models\MetalXAutomationLog;
 use App\Models\MetalXAutomationSchedule;
-use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

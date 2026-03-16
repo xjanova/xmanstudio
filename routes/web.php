@@ -17,14 +17,13 @@ use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
 use App\Http\Controllers\Admin\MetalXAiController;
-use App\Http\Controllers\Admin\MetalXAutomationController;
 use App\Http\Controllers\Admin\MetalXAnalyticsController;
+use App\Http\Controllers\Admin\MetalXAutomationController;
 use App\Http\Controllers\Admin\MetalXEngagementController;
 use App\Http\Controllers\Admin\MetalXPlaylistController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\MetalXVideoController;
-use App\Http\Controllers\Admin\TeamMemberController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductCategoryController;
@@ -40,6 +39,7 @@ use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SmsPaymentController as AdminSmsPaymentController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
+use App\Http\Controllers\Admin\TeamMemberController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowController;
 use App\Http\Controllers\Admin\TurnstileSettingsController;
@@ -203,6 +203,7 @@ Route::view('/about', 'about')->name('about');
 Route::get('/team', function () {
     $leaders = \App\Models\TeamMember::active()->leaders()->ordered()->get();
     $members = \App\Models\TeamMember::active()->members()->ordered()->get();
+
     return view('team', compact('leaders', 'members'));
 })->name('team');
 
