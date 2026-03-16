@@ -10,6 +10,7 @@ use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RentalController extends Controller
 {
@@ -171,7 +172,7 @@ class RentalController extends Controller
                     $intent = $stripeService->createPaymentIntentForRental($payment, Auth::user());
                     $stripeClientSecret = $intent->client_secret;
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to create Stripe PaymentIntent for rental', [
+                    Log::error('Failed to create Stripe PaymentIntent for rental', [
                         'payment_id' => $payment->id,
                         'error' => $e->getMessage(),
                     ]);

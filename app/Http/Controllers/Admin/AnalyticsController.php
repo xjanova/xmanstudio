@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserRental;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
@@ -189,7 +190,7 @@ class AnalyticsController extends Controller
     /**
      * Get top products
      */
-    private function getTopProducts(Carbon $startDate): \Illuminate\Support\Collection
+    private function getTopProducts(Carbon $startDate): Collection
     {
         // Top rental packages
         $topPackages = UserRental::where('created_at', '>=', $startDate)
@@ -214,7 +215,7 @@ class AnalyticsController extends Controller
     /**
      * Get recent orders
      */
-    private function getRecentOrders(): \Illuminate\Support\Collection
+    private function getRecentOrders(): Collection
     {
         return Order::with('user')
             ->latest()

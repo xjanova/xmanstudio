@@ -1,7 +1,15 @@
 <?php
 
+use App\Jobs\AutoGenerateVideoJob;
+use App\Jobs\GenerateAndPostPromoCommentJob;
+use App\Jobs\RunAutomationScheduleJob;
+use App\Jobs\UploadVideoJob;
+use App\Models\MetalXAutomationLog;
+use App\Models\MetalXPromoComment;
+use App\Models\MetalXVideoProject;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -21,10 +29,10 @@ Schedule::command('smschecker:cleanup')
     ->withoutOverlapping()
     ->runInBackground()
     ->onSuccess(function () {
-        \Illuminate\Support\Facades\Log::info('[SMS Checker] Cleanup completed successfully');
+        Log::info('[SMS Checker] Cleanup completed successfully');
     })
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('[SMS Checker] Cleanup failed');
+        Log::error('[SMS Checker] Cleanup failed');
     });
 
 // Bug Reports: ลบ Bug Reports เก่าอัตโนมัติตามจำนวนวันที่ตั้งค่าไว้
@@ -34,42 +42,42 @@ Schedule::command('bugreports:cleanup')
     ->withoutOverlapping()
     ->runInBackground()
     ->onSuccess(function () {
-        \Illuminate\Support\Facades\Log::info('[Bug Reports] Cleanup completed successfully');
+        Log::info('[Bug Reports] Cleanup completed successfully');
     })
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('[Bug Reports] Cleanup failed');
+        Log::error('[Bug Reports] Cleanup failed');
     });
 
 // Metal-X: ผลิตวิดีโอจาก Content Plans อัตโนมัติ
 // รันทุก 5 นาที: ตรวจสอบ content plans ที่ถึงเวลาและสร้างโปรเจกต์ใหม่
-Schedule::job(new \App\Jobs\AutoGenerateVideoJob)
+Schedule::job(new AutoGenerateVideoJob)
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->onSuccess(function () {
-        \Illuminate\Support\Facades\Log::info('[Metal-X Auto Generate] Completed');
+        Log::info('[Metal-X Auto Generate] Completed');
     })
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('[Metal-X Auto Generate] Failed');
+        Log::error('[Metal-X Auto Generate] Failed');
     });
 
 // Metal-X: ระบบอัตโนมัติจัดการ YouTube (ตอบคอมเม้นต์, ไลค์, โปรโมท, ตรวจสอบ)
 // รันทุก 5 นาที: ตรวจสอบ schedules ที่ถึงเวลาและ dispatch jobs
-Schedule::job(new \App\Jobs\RunAutomationScheduleJob)
+Schedule::job(new RunAutomationScheduleJob)
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->onSuccess(function () {
-        \Illuminate\Support\Facades\Log::info('[Metal-X Automation] Schedule run completed');
+        Log::info('[Metal-X Automation] Schedule run completed');
     })
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('[Metal-X Automation] Schedule run failed');
+        Log::error('[Metal-X Automation] Schedule run failed');
     });
 
 // Metal-X: โพส Promo Comments ที่ถึงเวลา
 // รันทุก 15 นาที: ตรวจหา promo comments ที่ status=scheduled และ scheduled_at <= now
 Schedule::call(function () {
-    $promos = \App\Models\MetalXPromoComment::readyToPost()->get();
+    $promos = MetalXPromoComment::readyToPost()->get();
     foreach ($promos as $promo) {
-        \App\Jobs\GenerateAndPostPromoCommentJob::dispatch($promo->video, false);
+        GenerateAndPostPromoCommentJob::dispatch($promo->video, false);
     }
 })
     ->name('metalx-post-promo-comments')
@@ -80,8 +88,8 @@ Schedule::call(function () {
 // รันทุกวันตอนตี 3
 Schedule::call(function () {
     $days = config('metalx.automation.log_retention_days', 30);
-    $deleted = \App\Models\MetalXAutomationLog::where('created_at', '<', now()->subDays($days))->delete();
-    \Illuminate\Support\Facades\Log::info("[Metal-X Automation] Cleaned up {$deleted} old log entries (retention: {$days} days)");
+    $deleted = MetalXAutomationLog::where('created_at', '<', now()->subDays($days))->delete();
+    Log::info("[Metal-X Automation] Cleaned up {$deleted} old log entries (retention: {$days} days)");
 })
     ->name('metalx-cleanup-logs')
     ->dailyAt('03:00')
@@ -90,9 +98,9 @@ Schedule::call(function () {
 // Metal-X: อัปโหลดวิดีโอ Projects ที่ถึงเวลา
 // รันทุก 5 นาที: ตรวจหา projects ที่ status=rendered และ scheduled_at <= now
 Schedule::call(function () {
-    $projects = \App\Models\MetalXVideoProject::readyToPublish()->get();
+    $projects = MetalXVideoProject::readyToPublish()->get();
     foreach ($projects as $project) {
-        \App\Jobs\UploadVideoJob::dispatch($project);
+        UploadVideoJob::dispatch($project);
     }
 })
     ->name('metalx-publish-scheduled-videos')

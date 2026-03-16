@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -37,7 +38,7 @@ return new class extends Migration
         }
 
         // Backfill source_type for existing records
-        \Illuminate\Support\Facades\DB::table('affiliate_commissions')
+        DB::table('affiliate_commissions')
             ->whereNull('source_type')
             ->whereNotNull('order_id')
             ->update([

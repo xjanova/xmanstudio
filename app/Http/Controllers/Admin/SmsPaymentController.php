@@ -361,7 +361,7 @@ class SmsPaymentController extends Controller
         // Send FCM push when approval_mode changes → device syncs immediately
         if ($request->has('approval_mode') && $request->input('approval_mode') !== $oldApprovalMode) {
             try {
-                $fcmService = app(\App\Services\FcmNotificationService::class);
+                $fcmService = app(FcmNotificationService::class);
                 $fcmService->notifySettingsChanged($device, 'approval_mode', $request->input('approval_mode'));
             } catch (\Exception $e) {
                 \Log::warning('Failed to send FCM for approval_mode change', ['error' => $e->getMessage()]);

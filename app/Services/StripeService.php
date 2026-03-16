@@ -8,9 +8,12 @@ use App\Models\RentalPayment;
 use App\Models\User;
 use App\Models\WalletTopup;
 use Stripe\Customer;
+use Stripe\Event;
+use Stripe\Exception\InvalidRequestException;
 use Stripe\PaymentIntent;
 use Stripe\Refund;
 use Stripe\StripeClient;
+use Stripe\Webhook;
 
 class StripeService
 {
@@ -41,7 +44,7 @@ class StripeService
         if ($user->stripe_customer_id) {
             try {
                 return $this->stripe->customers->retrieve($user->stripe_customer_id);
-            } catch (\Stripe\Exception\InvalidRequestException $e) {
+            } catch (InvalidRequestException $e) {
                 // Customer was deleted in Stripe, create new one
             }
         }
@@ -194,12 +197,12 @@ class StripeService
     /**
      * Construct webhook event from payload
      */
-    public function constructWebhookEvent(string $payload, string $sigHeader): \Stripe\Event
+    public function constructWebhookEvent(string $payload, string $sigHeader): Event
     {
         $webhookSecret = PaymentSetting::get('stripe_webhook_secret')
             ?: config('stripe.webhook_secret');
 
-        return \Stripe\Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
+        return Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
     }
 
     /**

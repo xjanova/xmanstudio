@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Jobs\GenerateMusicJob;
+use App\Jobs\RenderVideoJob;
 use App\Models\MetalXAutomationLog;
 use App\Models\MetalXContentPlan;
 use App\Models\MetalXMediaLibrary;
@@ -112,11 +114,11 @@ class ContentPlanService
 
         // Dispatch pipeline
         if ($status === 'music_ready') {
-            \App\Jobs\RenderVideoJob::dispatch($project);
+            RenderVideoJob::dispatch($project);
             Log::info("[Content Plan] Dispatched RenderVideoJob for project {$project->id}");
         } else {
             // Need music generation first (Suno API mode)
-            \App\Jobs\GenerateMusicJob::dispatch($project);
+            GenerateMusicJob::dispatch($project);
             $project->update(['status' => 'generating_music']);
             Log::info("[Content Plan] Dispatched GenerateMusicJob for project {$project->id}");
         }

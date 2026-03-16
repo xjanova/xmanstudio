@@ -1,9 +1,17 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\AffiliateTracking;
+use App\Http\Middleware\PermissionMiddleware;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\ThemeMiddleware;
+use App\Http\Middleware\VerifySmsCheckerDevice;
+use App\Http\Middleware\VerifyTurnstile;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -15,13 +23,13 @@ $app = Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'theme' => \App\Http\Middleware\ThemeMiddleware::class,
-            'smschecker.device' => \App\Http\Middleware\VerifySmsCheckerDevice::class,
-            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'turnstile' => \App\Http\Middleware\VerifyTurnstile::class,
-            'affiliate' => \App\Http\Middleware\AffiliateTracking::class,
+            'admin' => AdminMiddleware::class,
+            'theme' => ThemeMiddleware::class,
+            'smschecker.device' => VerifySmsCheckerDevice::class,
+            'permission' => PermissionMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'turnstile' => VerifyTurnstile::class,
+            'affiliate' => AffiliateTracking::class,
         ]);
 
         // Exclude Stripe webhook from CSRF verification
@@ -31,8 +39,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
         // Apply theme + affiliate tracking middleware to web routes
         $middleware->web(append: [
-            \App\Http\Middleware\ThemeMiddleware::class,
-            \App\Http\Middleware\AffiliateTracking::class,
+            ThemeMiddleware::class,
+            AffiliateTracking::class,
         ]);
 
         // Trust proxies for load balancers
@@ -64,9 +72,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
         });
 
         // In production, don't expose internal errors
-        $exceptions->render(function (\Throwable $e, Request $request) {
+        $exceptions->render(function (Throwable $e, Request $request) {
             if (! config('app.debug') && ($request->is('api/*') || $request->wantsJson())) {
-                \Illuminate\Support\Facades\Log::error('API Error', [
+                Log::error('API Error', [
                     'message' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);

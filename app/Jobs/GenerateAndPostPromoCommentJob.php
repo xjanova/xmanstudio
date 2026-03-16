@@ -16,6 +16,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class GenerateAndPostPromoCommentJob implements ShouldQueue
 {
@@ -188,7 +189,7 @@ PROMPT;
                 return true;
             }
 
-            $errorBody = \Illuminate\Support\Str::limit($response->body(), 500);
+            $errorBody = Str::limit($response->body(), 500);
             $promo->update([
                 'status' => 'failed',
                 'error_message' => 'YouTube API error: ' . $errorBody,

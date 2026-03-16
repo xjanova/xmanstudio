@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -30,7 +31,7 @@ class ProductCategoryController extends Controller
             'total' => Category::count(),
             'active' => Category::where('is_active', true)->count(),
             'inactive' => Category::where('is_active', false)->count(),
-            'total_products' => \App\Models\Product::count(),
+            'total_products' => Product::count(),
         ];
 
         return view('admin.products.categories.index', compact('categories', 'stats'));

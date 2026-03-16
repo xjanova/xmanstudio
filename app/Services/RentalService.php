@@ -8,6 +8,7 @@ use App\Models\RentalPackage;
 use App\Models\RentalPayment;
 use App\Models\User;
 use App\Models\UserRental;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -16,7 +17,7 @@ class RentalService
     /**
      * Get available packages for display
      */
-    public function getAvailablePackages(bool $includeTrial = true): \Illuminate\Database\Eloquent\Collection
+    public function getAvailablePackages(bool $includeTrial = true): Collection
     {
         $query = RentalPackage::active()
             ->orderBy('sort_order')

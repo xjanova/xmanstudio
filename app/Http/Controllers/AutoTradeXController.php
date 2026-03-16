@@ -6,6 +6,7 @@ use App\Models\AutoTradeXDevice;
 use App\Models\BankAccount;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\AffiliateCommissionService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -188,7 +189,7 @@ class AutoTradeXController extends Controller
         ]);
 
         // Affiliate commission tracking
-        $affiliateService = app(\App\Services\AffiliateCommissionService::class);
+        $affiliateService = app(AffiliateCommissionService::class);
         $affiliate = $affiliateService->resolveAffiliate(auth()->id());
         if ($affiliate) {
             $order->update([

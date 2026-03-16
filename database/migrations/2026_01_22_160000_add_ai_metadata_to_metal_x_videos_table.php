@@ -80,7 +80,7 @@ return new class extends Migration
                         ->on('users')
                         ->onDelete('set null');
                 });
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Foreign key already exists, ignore
                 if (! str_contains($e->getMessage(), 'Duplicate foreign key')) {
                     throw $e;
@@ -99,7 +99,7 @@ return new class extends Migration
             Schema::table('metal_x_videos', function (Blueprint $table) {
                 $table->dropForeign(['ai_approved_by']);
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Foreign key doesn't exist, ignore
         }
 

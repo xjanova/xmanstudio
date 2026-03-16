@@ -2,8 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Order;
+use App\Models\SmsPaymentNotification;
+use App\Models\UniquePaymentAmount;
 use App\Services\SmsPaymentService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ทำความสะอาดข้อมูล SMS Payment ที่หมดอายุ
@@ -33,12 +37,12 @@ class SmsCheckerCleanupCommand extends Command
             $this->info('');
 
             // Show what would be cleaned
-            $expiredAmounts = \App\Models\UniquePaymentAmount::where('status', 'reserved')
+            $expiredAmounts = UniquePaymentAmount::where('status', 'reserved')
                 ->where('expires_at', '<=', now())
                 ->count();
 
             // Count orders that would be cancelled
-            $expiredOrders = \App\Models\Order::whereHas('uniquePaymentAmount', function ($q) {
+            $expiredOrders = Order::whereHas('uniquePaymentAmount', function ($q) {
                 $q->where('status', 'reserved')
                     ->where('expires_at', '<=', now());
             })
@@ -46,11 +50,11 @@ class SmsCheckerCleanupCommand extends Command
                 ->where('payment_status', '!=', 'paid')
                 ->count();
 
-            $oldNonces = \Illuminate\Support\Facades\DB::table('sms_payment_nonces')
+            $oldNonces = DB::table('sms_payment_nonces')
                 ->where('used_at', '<', now()->subHours(config('smschecker.nonce_expiry_hours', 24)))
                 ->count();
 
-            $oldNotifications = \App\Models\SmsPaymentNotification::where('status', 'pending')
+            $oldNotifications = SmsPaymentNotification::where('status', 'pending')
                 ->where('created_at', '<', now()->subDays(7))
                 ->count();
 

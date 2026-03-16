@@ -13,13 +13,16 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentSetting;
 use App\Models\Wallet;
+use App\Services\AffiliateCommissionService;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -208,7 +211,7 @@ class OrderController extends Controller
             ]);
 
             // Affiliate commission tracking
-            $affiliateService = app(\App\Services\AffiliateCommissionService::class);
+            $affiliateService = app(AffiliateCommissionService::class);
             $affiliate = $affiliateService->resolveAffiliate(auth()->id());
             if ($affiliate) {
                 $order->update([
@@ -301,7 +304,7 @@ class OrderController extends Controller
                     ->send(new OrderConfirmationMail($order->load('items.product', 'user')));
             } catch (\Exception $e) {
                 // Log email error but don't fail the order
-                \Illuminate\Support\Facades\Log::error('Failed to send order confirmation email', [
+                Log::error('Failed to send order confirmation email', [
                     'order_id' => $order->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -325,7 +328,7 @@ class OrderController extends Controller
                     . '⏰ ' . now()->format('d/m/Y H:i');
                 $lineNotify->send($message);
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to send admin notification', [
+                Log::error('Failed to send admin notification', [
                     'order_id' => $order->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -352,7 +355,7 @@ class OrderController extends Controller
             DB::rollBack();
 
             // Log the actual error for debugging
-            \Illuminate\Support\Facades\Log::error('Order creation failed', [
+            Log::error('Order creation failed', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -486,7 +489,7 @@ class OrderController extends Controller
                     $intent = $stripeService->createPaymentIntentForOrder($order, auth()->user());
                     $stripeClientSecret = $intent->client_secret;
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to create Stripe PaymentIntent', [
+                    Log::error('Failed to create Stripe PaymentIntent', [
                         'order_id' => $order->id,
                         'error' => $e->getMessage(),
                     ]);
@@ -658,7 +661,7 @@ class OrderController extends Controller
                 Mail::to($order->customer_email)
                     ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to send payment confirmed email with licenses', [
+                Log::error('Failed to send payment confirmed email with licenses', [
                     'order_id' => $order->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -686,7 +689,7 @@ class OrderController extends Controller
      *
      * GET /orders/{order}/payment-status
      */
-    public function checkPaymentStatus(Order $order): \Illuminate\Http\JsonResponse
+    public function checkPaymentStatus(Order $order): JsonResponse
     {
         // Verify ownership
         if (auth()->id() && $order->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {

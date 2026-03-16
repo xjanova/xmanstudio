@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class AdPlacement extends Model
@@ -51,7 +52,7 @@ class AdPlacement extends Model
     /**
      * Get all active ads for a specific page.
      */
-    public static function getForPage(string $page = 'all'): \Illuminate\Database\Eloquent\Collection
+    public static function getForPage(string $page = 'all'): Collection
     {
         return self::where('enabled', true)
             ->where(function ($query) use ($page) {

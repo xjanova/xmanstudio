@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -141,7 +142,7 @@ class MetalXContentPlan extends Model
         $this->increment('total_generated');
     }
 
-    public function calculatePublishTime(): \Carbon\Carbon
+    public function calculatePublishTime(): Carbon
     {
         $publishTime = now()->addHours(2); // Give time for rendering
 

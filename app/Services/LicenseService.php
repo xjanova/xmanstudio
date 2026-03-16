@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
+use App\Models\Product;
 use Illuminate\Support\Facades\Hash;
 
 class LicenseService
@@ -179,7 +180,7 @@ class LicenseService
     public function startDemo(string $machineId, string $machineFingerprint, string $productSlug = 'skidrow-killer'): array
     {
         // Find product by slug
-        $product = \App\Models\Product::where('slug', $productSlug)->first();
+        $product = Product::where('slug', $productSlug)->first();
 
         // Check if already has demo for this machine
         $existingDemo = LicenseKey::where('license_type', LicenseKey::TYPE_DEMO)

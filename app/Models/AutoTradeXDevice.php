@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -138,7 +139,7 @@ class AutoTradeXDevice extends Model
     /**
      * Find related devices by IP
      */
-    public function findRelatedByIp(): \Illuminate\Database\Eloquent\Collection
+    public function findRelatedByIp(): Collection
     {
         return self::where('id', '!=', $this->id)
             ->where(function ($query) {
@@ -153,7 +154,7 @@ class AutoTradeXDevice extends Model
     /**
      * Find related devices by hardware hash
      */
-    public function findRelatedByHardware(): \Illuminate\Database\Eloquent\Collection
+    public function findRelatedByHardware(): Collection
     {
         if (! $this->hardware_hash) {
             return collect();

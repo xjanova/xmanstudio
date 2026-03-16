@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MetalXMusicLibrary;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -83,7 +84,7 @@ class MetalXMusicLibraryController extends Controller
     protected function getAudioDuration(string $path): ?int
     {
         try {
-            $ffprobe = \App\Models\Setting::getValue('ffprobe_binary', 'ffprobe');
+            $ffprobe = Setting::getValue('ffprobe_binary', 'ffprobe');
             $result = shell_exec("{$ffprobe} -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($path) . ' 2>/dev/null');
             if ($result && is_numeric(trim($result))) {
                 return (int) round((float) trim($result));

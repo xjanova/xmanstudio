@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -350,7 +351,7 @@ class AiSettingsController extends Controller
             }
 
             return response()->json(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อ Ollama ได้: ' . $response->status()]);
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (ConnectionException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่สามารถเชื่อมต่อ Ollama ได้ กรุณาตรวจสอบว่า Ollama กำลังทำงานอยู่ที่ ' . $host,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -168,7 +169,7 @@ class ProductDevice extends Model
     /**
      * Find related devices by IP (within same product)
      */
-    public function findRelatedByIp(): \Illuminate\Database\Eloquent\Collection
+    public function findRelatedByIp(): Collection
     {
         return self::where('id', '!=', $this->id)
             ->where('product_id', $this->product_id)
@@ -184,7 +185,7 @@ class ProductDevice extends Model
     /**
      * Find related devices by hardware hash (within same product)
      */
-    public function findRelatedByHardware(): \Illuminate\Database\Eloquent\Collection
+    public function findRelatedByHardware(): Collection
     {
         if (! $this->hardware_hash) {
             return self::whereNull('id')->get();

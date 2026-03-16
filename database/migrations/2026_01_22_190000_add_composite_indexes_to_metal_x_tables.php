@@ -37,7 +37,7 @@ return new class extends Migration
                     // For other databases, try to create and catch exception
                     return false;
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return false;
             }
         };
@@ -233,7 +233,7 @@ return new class extends Migration
                         $tableBlueprint->dropIndex($indexName);
                     });
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Index doesn't exist or table doesn't exist, ignore
             }
         };

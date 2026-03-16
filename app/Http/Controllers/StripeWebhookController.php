@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PaymentConfirmedMail;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\RentalPayment;
@@ -12,6 +13,7 @@ use App\Services\StripeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Stripe\Exception\SignatureVerificationException;
 
 class StripeWebhookController extends Controller
 {
@@ -24,7 +26,7 @@ class StripeWebhookController extends Controller
 
         try {
             $event = $this->stripeService->constructWebhookEvent($payload, $sigHeader);
-        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+        } catch (SignatureVerificationException $e) {
             Log::warning('Stripe webhook signature verification failed', [
                 'error' => $e->getMessage(),
             ]);
@@ -253,7 +255,7 @@ class StripeWebhookController extends Controller
         if ($generated && $order->customer_email) {
             try {
                 Mail::to($order->customer_email)
-                    ->send(new \App\Mail\PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
+                    ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
             } catch (\Exception $e) {
                 Log::error('Failed to send Stripe payment confirmed email', [
                     'order_id' => $order->id,

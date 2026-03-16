@@ -152,7 +152,7 @@ class SmsPaymentNotification extends Model
                     // ตรวจว่า order/topup ยังเป็น pending อยู่ไหม ถ้า cancel ไปแล้วไม่ match
                     $stillPending = false;
                     if ($uniqueAmount->transaction_type === 'order') {
-                        $order = \App\Models\Order::find($uniqueAmount->transaction_id);
+                        $order = Order::find($uniqueAmount->transaction_id);
                         $stillPending = $order && in_array($order->payment_status, ['pending', 'expired']);
                     } elseif ($uniqueAmount->transaction_type === 'wallet_topup') {
                         $topup = WalletTopup::find($uniqueAmount->transaction_id);
@@ -373,7 +373,7 @@ class SmsPaymentNotification extends Model
                     'wallet_id' => $topup->wallet_id,
                     'user_id' => $topup->user_id,
                 ]);
-                $wallet = \App\Models\Wallet::getOrCreateForUser($topup->user_id);
+                $wallet = Wallet::getOrCreateForUser($topup->user_id);
                 $topup->update(['wallet_id' => $wallet->id]);
                 $topup->refresh();
                 $topup->load('wallet');

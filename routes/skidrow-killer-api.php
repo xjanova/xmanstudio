@@ -10,6 +10,8 @@
  *        require __DIR__ . '/skidrow-killer-routes.php';
  */
 
+use App\Http\Controllers\Api\SkidrowKillerLicenseController;
+use App\Http\Controllers\Api\SkidrowKillerUpdateController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -77,7 +79,7 @@ Route::prefix('v1/license')->group(function () {
      *   }
      * }
      */
-    Route::post('/activate', [App\Http\Controllers\Api\SkidrowKillerLicenseController::class, 'activate']);
+    Route::post('/activate', [SkidrowKillerLicenseController::class, 'activate']);
 
     // ============================================
     // License Validation
@@ -106,7 +108,7 @@ Route::prefix('v1/license')->group(function () {
      *   }
      * }
      */
-    Route::post('/validate', [App\Http\Controllers\Api\SkidrowKillerLicenseController::class, 'validate']);
+    Route::post('/validate', [SkidrowKillerLicenseController::class, 'validate']);
 
     // ============================================
     // License Deactivation
@@ -130,7 +132,7 @@ Route::prefix('v1/license')->group(function () {
      *   "message": "License deactivated successfully"
      * }
      */
-    Route::post('/deactivate', [App\Http\Controllers\Api\SkidrowKillerLicenseController::class, 'deactivate']);
+    Route::post('/deactivate', [SkidrowKillerLicenseController::class, 'deactivate']);
 
     // ============================================
     // License Status
@@ -154,7 +156,7 @@ Route::prefix('v1/license')->group(function () {
      *   }
      * }
      */
-    Route::get('/status/{license_key}', [App\Http\Controllers\Api\SkidrowKillerLicenseController::class, 'status']);
+    Route::get('/status/{license_key}', [SkidrowKillerLicenseController::class, 'status']);
 
     // ============================================
     // Demo / Trial
@@ -182,7 +184,7 @@ Route::prefix('v1/license')->group(function () {
      *   }
      * }
      */
-    Route::post('/demo', [App\Http\Controllers\Api\SkidrowKillerLicenseController::class, 'startDemo']);
+    Route::post('/demo', [SkidrowKillerLicenseController::class, 'startDemo']);
 
     /**
      * Check demo/trial status
@@ -205,7 +207,7 @@ Route::prefix('v1/license')->group(function () {
      *   }
      * }
      */
-    Route::post('/demo/check', [App\Http\Controllers\Api\SkidrowKillerLicenseController::class, 'checkDemo']);
+    Route::post('/demo/check', [SkidrowKillerLicenseController::class, 'checkDemo']);
 });
 
 /*
@@ -236,7 +238,7 @@ Route::prefix('v1/updates')->group(function () {
      *   "requires_license": false
      * }
      */
-    Route::get('/{product_id}/check', [App\Http\Controllers\Api\SkidrowKillerUpdateController::class, 'check']);
+    Route::get('/{product_id}/check', [SkidrowKillerUpdateController::class, 'check']);
 
     /**
      * Get authorized download URL (for licensed users)
@@ -253,5 +255,5 @@ Route::prefix('v1/updates')->group(function () {
      *   "expires_at": "2024-01-01T01:00:00Z"
      * }
      */
-    Route::post('/{product_id}/download', [App\Http\Controllers\Api\SkidrowKillerUpdateController::class, 'getDownloadUrl']);
+    Route::post('/{product_id}/download', [SkidrowKillerUpdateController::class, 'getDownloadUrl']);
 });

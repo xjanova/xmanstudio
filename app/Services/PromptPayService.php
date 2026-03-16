@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PaymentSetting;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PromptPayService
 {
@@ -61,8 +62,8 @@ class PromptPayService
         }
 
         // Use SimpleSoftwareIO/QrCode if available
-        if (class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
-            return \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+        if (class_exists(QrCode::class)) {
+            return QrCode::format('svg')
                 ->size($size)
                 ->errorCorrection('M')
                 ->generate($payload);

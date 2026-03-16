@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\PuzzleDebugImage;
+use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -445,7 +446,7 @@ class PuzzleDebugController extends Controller
         $mlUrl = config('services.puzzle_ml.url', 'http://127.0.0.1:5050/predict');
 
         try {
-            $client = new \GuzzleHttp\Client(['timeout' => 10, 'connect_timeout' => 3]);
+            $client = new Client(['timeout' => 10, 'connect_timeout' => 3]);
             $response = $client->post($mlUrl, [
                 'multipart' => [
                     ['name' => 'before', 'contents' => Storage::disk('public')->readStream($beforePath), 'filename' => 'before.png'],

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AutoTradeXDevice;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -1182,7 +1183,7 @@ class AutoTradeXLicenseController extends Controller
         $lastReset = $metadata['last_device_reset'] ?? null;
 
         if ($lastReset) {
-            $lastResetTime = \Carbon\Carbon::parse($lastReset['timestamp']);
+            $lastResetTime = Carbon::parse($lastReset['timestamp']);
             $daysSinceReset = $lastResetTime->diffInDays(now());
 
             if ($daysSinceReset < 30) {

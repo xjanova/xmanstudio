@@ -237,7 +237,7 @@ class Affiliate extends Model
     private static function getAdminAffiliate(int $excludeUserId): ?self
     {
         // Find first admin user (not the user being registered)
-        $admin = \App\Models\User::whereIn('role', ['admin', 'super_admin'])
+        $admin = User::whereIn('role', ['admin', 'super_admin'])
             ->where('id', '!=', $excludeUserId)
             ->orderBy('id')
             ->first();

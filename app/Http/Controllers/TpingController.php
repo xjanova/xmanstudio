@@ -8,10 +8,13 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Models\Wallet;
+use App\Services\AffiliateCommissionService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -204,7 +207,7 @@ class TpingController extends Controller
         }
 
         // === Affiliate tracking ===
-        $affiliateService = app(\App\Services\AffiliateCommissionService::class);
+        $affiliateService = app(AffiliateCommissionService::class);
         $affiliate = $affiliateService->resolveAffiliate(auth()->id());
 
         // === Create order ===
@@ -543,7 +546,7 @@ class TpingController extends Controller
         for ($i = 1; $i <= 6; $i++) {
             foreach (['png', 'jpg', 'jpeg', 'webp'] as $ext) {
                 $path = "{$guideDir}/step-{$i}.{$ext}";
-                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                if (Storage::disk('public')->exists($path)) {
                     $screenshots[$i] = $path;
                     break;
                 }
@@ -594,7 +597,7 @@ class TpingController extends Controller
         $assetUrl = $productVersion->github_release_url;
 
         // Get the actual download URL (GitHub redirects to S3)
-        $response = \Illuminate\Support\Facades\Http::withHeaders([
+        $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $token,
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Tping-Download-Proxy',

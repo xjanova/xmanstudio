@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\PuzzleDebugController;
 use App\Http\Controllers\Api\V1\SmsPaymentController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,7 +27,7 @@ use Illuminate\Support\Facades\Storage;
 
 // ==================== Metal-X Freepik Image Upload ====================
 // Receives images from Freepik browser automation and saves to Laravel storage
-Route::post('/metal-x/upload-image', function (\Illuminate\Http\Request $request) {
+Route::post('/metal-x/upload-image', function (Request $request) {
     $request->validate([
         'image' => 'required|string',
         'filename' => 'required|string',

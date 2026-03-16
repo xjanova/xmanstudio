@@ -14,6 +14,7 @@ use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class WalletController extends Controller
 {
@@ -244,7 +245,7 @@ class WalletController extends Controller
                     $intent = $stripeService->createPaymentIntentForTopup($topup, auth()->user());
                     $stripeClientSecret = $intent->client_secret;
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to create Stripe PaymentIntent for topup', [
+                    Log::error('Failed to create Stripe PaymentIntent for topup', [
                         'topup_id' => $topup->id,
                         'error' => $e->getMessage(),
                     ]);

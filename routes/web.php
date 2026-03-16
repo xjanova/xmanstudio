@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
+use App\Http\Controllers\Admin\GuideScreenshotController;
 use App\Http\Controllers\Admin\LicenseAnalyticsController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
@@ -40,6 +41,7 @@ use App\Http\Controllers\Admin\PuzzleDebugController as AdminPuzzleDebugControll
 use App\Http\Controllers\Admin\QuotationCategoryController;
 use App\Http\Controllers\Admin\QuotationController as AdminQuotationController;
 use App\Http\Controllers\Admin\QuotationOptionController;
+use App\Http\Controllers\Admin\RedisSettingsController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\SeoController;
@@ -52,7 +54,10 @@ use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowCont
 use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
+use App\Http\Controllers\AutoTradeXController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ChangelogController;
+use App\Http\Controllers\Customer\AffiliateController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\CustomerPortalController;
@@ -70,9 +75,15 @@ use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SharedWorkflowController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
+use App\Http\Controllers\UserThemeController;
 use App\Models\AdsTxtSetting;
 use App\Models\SeoSetting;
+use App\Models\TeamMember;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -104,22 +115,22 @@ Route::post('/ai-chat', [PublicChatController::class, 'chat'])
     ->name('public.ai-chat');
 
 // Changelog (public)
-Route::get('/changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog');
+Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
 
 // Shared Workflow (public)
 Route::get('/shared/workflow/{token}', [SharedWorkflowController::class, 'show'])->name('shared.workflow');
 
 // Device auto-login (one-time token from API, redirects to web dashboard)
 Route::get('/auth/device-login/{token}', function (string $token) {
-    $userId = \Illuminate\Support\Facades\Cache::pull("web_login_token:{$token}");
+    $userId = Cache::pull("web_login_token:{$token}");
     if (! $userId) {
         return redirect('/')->with('error', 'ลิงก์หมดอายุหรือถูกใช้ไปแล้ว');
     }
-    $user = \App\Models\User::find($userId);
+    $user = User::find($userId);
     if (! $user) {
         return redirect('/')->with('error', 'ไม่พบบัญชีผู้ใช้');
     }
-    \Illuminate\Support\Facades\Auth::login($user);
+    Auth::login($user);
 
     return redirect('/my-account/tping-workflows');
 })->name('auth.device-login');
@@ -144,38 +155,38 @@ Route::post('/api/download/{slug}/{version?}', [DownloadController::class, 'apiD
 
 // AutoTradeX - Direct purchase from app
 Route::prefix('autotradex')->name('autotradex.')->group(function () {
-    Route::get('/pricing', [\App\Http\Controllers\AutoTradeXController::class, 'pricing'])->name('pricing');
-    Route::get('/buy', [\App\Http\Controllers\AutoTradeXController::class, 'buyRedirect'])->name('buy');
+    Route::get('/pricing', [AutoTradeXController::class, 'pricing'])->name('pricing');
+    Route::get('/buy', [AutoTradeXController::class, 'buyRedirect'])->name('buy');
 
     // Reset Device for Lifetime license holders (public page)
-    Route::get('/reset-device', [\App\Http\Controllers\AutoTradeXController::class, 'resetDevicePage'])->name('reset-device');
+    Route::get('/reset-device', [AutoTradeXController::class, 'resetDevicePage'])->name('reset-device');
 
     // Require authentication for checkout
     Route::middleware('auth')->group(function () {
-        Route::get('/checkout/{plan}', [\App\Http\Controllers\AutoTradeXController::class, 'checkout'])->name('checkout');
-        Route::post('/checkout/{plan}', [\App\Http\Controllers\AutoTradeXController::class, 'processCheckout'])->name('process');
-        Route::get('/payment/{order}', [\App\Http\Controllers\AutoTradeXController::class, 'payment'])->name('payment');
-        Route::post('/payment/{order}/confirm', [\App\Http\Controllers\AutoTradeXController::class, 'confirmPayment'])->name('confirm-payment');
-        Route::get('/payment/{order}/success', [\App\Http\Controllers\AutoTradeXController::class, 'paymentSuccess'])->name('payment-success');
+        Route::get('/checkout/{plan}', [AutoTradeXController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/{plan}', [AutoTradeXController::class, 'processCheckout'])->name('process');
+        Route::get('/payment/{order}', [AutoTradeXController::class, 'payment'])->name('payment');
+        Route::post('/payment/{order}/confirm', [AutoTradeXController::class, 'confirmPayment'])->name('confirm-payment');
+        Route::get('/payment/{order}/success', [AutoTradeXController::class, 'paymentSuccess'])->name('payment-success');
     });
 });
 
 // Tping - Direct purchase from app
 Route::prefix('tping')->name('tping.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\TpingController::class, 'detail'])->name('detail');
-    Route::get('/pricing', [\App\Http\Controllers\TpingController::class, 'pricing'])->name('pricing');
-    Route::get('/buy', [\App\Http\Controllers\TpingController::class, 'buyRedirect'])->name('buy');
-    Route::get('/download', [\App\Http\Controllers\TpingController::class, 'downloadPage'])->name('download');
-    Route::get('/download/apk', [\App\Http\Controllers\TpingController::class, 'downloadApk'])->name('download.apk');
-    Route::get('/install-guide', [\App\Http\Controllers\TpingController::class, 'installGuide'])->name('install-guide');
+    Route::get('/', [TpingController::class, 'detail'])->name('detail');
+    Route::get('/pricing', [TpingController::class, 'pricing'])->name('pricing');
+    Route::get('/buy', [TpingController::class, 'buyRedirect'])->name('buy');
+    Route::get('/download', [TpingController::class, 'downloadPage'])->name('download');
+    Route::get('/download/apk', [TpingController::class, 'downloadApk'])->name('download.apk');
+    Route::get('/install-guide', [TpingController::class, 'installGuide'])->name('install-guide');
 
     // Require authentication for checkout
     Route::middleware('auth')->group(function () {
-        Route::get('/checkout/{plan}', [\App\Http\Controllers\TpingController::class, 'checkout'])->name('checkout');
-        Route::post('/checkout/{plan}', [\App\Http\Controllers\TpingController::class, 'processCheckout'])->name('process');
-        Route::get('/payment/{order}', [\App\Http\Controllers\TpingController::class, 'payment'])->name('payment');
-        Route::post('/payment/{order}/confirm', [\App\Http\Controllers\TpingController::class, 'confirmPayment'])->name('confirm-payment');
-        Route::get('/payment/{order}/success', [\App\Http\Controllers\TpingController::class, 'paymentSuccess'])->name('payment-success');
+        Route::get('/checkout/{plan}', [TpingController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/{plan}', [TpingController::class, 'processCheckout'])->name('process');
+        Route::get('/payment/{order}', [TpingController::class, 'payment'])->name('payment');
+        Route::post('/payment/{order}/confirm', [TpingController::class, 'confirmPayment'])->name('confirm-payment');
+        Route::get('/payment/{order}/success', [TpingController::class, 'paymentSuccess'])->name('payment-success');
     });
 });
 
@@ -208,8 +219,8 @@ Route::view('/about', 'about')->name('about');
 
 // Team page
 Route::get('/team', function () {
-    $leaders = \App\Models\TeamMember::active()->leaders()->ordered()->get();
-    $members = \App\Models\TeamMember::active()->members()->ordered()->get();
+    $leaders = TeamMember::active()->leaders()->ordered()->get();
+    $members = TeamMember::active()->members()->ordered()->get();
 
     return view('team', compact('leaders', 'members'));
 })->name('team');
@@ -332,8 +343,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/support/{ticket}/reopen', [SupportTicketController::class, 'reopen'])->name('support.reopen');
 
         // Theme Settings
-        Route::get('/settings/theme', [\App\Http\Controllers\UserThemeController::class, 'index'])->name('settings.theme');
-        Route::put('/settings/theme', [\App\Http\Controllers\UserThemeController::class, 'update'])->name('settings.theme.update');
+        Route::get('/settings/theme', [UserThemeController::class, 'index'])->name('settings.theme');
+        Route::put('/settings/theme', [UserThemeController::class, 'update'])->name('settings.theme.update');
 
         // Tping Workflows
         Route::prefix('tping-workflows')->name('tping.workflows.')->group(function () {
@@ -357,10 +368,10 @@ Route::middleware('auth')->group(function () {
 
         // Affiliate Program
         Route::prefix('affiliate')->name('affiliate.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Customer\AffiliateController::class, 'dashboard'])->name('dashboard');
-            Route::post('/register', [\App\Http\Controllers\Customer\AffiliateController::class, 'register'])->name('register');
-            Route::get('/commissions', [\App\Http\Controllers\Customer\AffiliateController::class, 'commissions'])->name('commissions');
-            Route::get('/downline', [\App\Http\Controllers\Customer\AffiliateController::class, 'downline'])->name('downline');
+            Route::get('/', [AffiliateController::class, 'dashboard'])->name('dashboard');
+            Route::post('/register', [AffiliateController::class, 'register'])->name('register');
+            Route::get('/commissions', [AffiliateController::class, 'commissions'])->name('commissions');
+            Route::get('/downline', [AffiliateController::class, 'downline'])->name('downline');
         });
     });
 
@@ -406,27 +417,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Tping Data Profile Management
     Route::prefix('tping-data-profiles')->name('tping.data-profiles.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'index'])->name('index');
-        Route::get('/{profile}', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'show'])->name('show');
-        Route::get('/{profile}/edit', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'edit'])->name('edit');
-        Route::put('/{profile}', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'update'])->name('update');
-        Route::delete('/{profile}', [\App\Http\Controllers\Admin\TpingDataProfileController::class, 'destroy'])->name('destroy');
+        Route::get('/', [App\Http\Controllers\Admin\TpingDataProfileController::class, 'index'])->name('index');
+        Route::get('/{profile}', [App\Http\Controllers\Admin\TpingDataProfileController::class, 'show'])->name('show');
+        Route::get('/{profile}/edit', [App\Http\Controllers\Admin\TpingDataProfileController::class, 'edit'])->name('edit');
+        Route::put('/{profile}', [App\Http\Controllers\Admin\TpingDataProfileController::class, 'update'])->name('update');
+        Route::delete('/{profile}', [App\Http\Controllers\Admin\TpingDataProfileController::class, 'destroy'])->name('destroy');
     });
 
     // Affiliate Management
     Route::prefix('affiliates')->name('affiliates.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AffiliateController::class, 'index'])->name('index');
-        Route::get('/tree', [\App\Http\Controllers\Admin\AffiliateController::class, 'tree'])->name('tree');
-        Route::get('/commissions', [\App\Http\Controllers\Admin\AffiliateController::class, 'commissions'])->name('commissions');
-        Route::post('/commissions/bulk-approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'bulkApprove'])->name('commission.bulk-approve');
-        Route::get('/{affiliate}', [\App\Http\Controllers\Admin\AffiliateController::class, 'show'])->name('show');
-        Route::put('/{affiliate}', [\App\Http\Controllers\Admin\AffiliateController::class, 'update'])->name('update');
-        Route::post('/{affiliate}/move', [\App\Http\Controllers\Admin\AffiliateController::class, 'move'])->name('move');
-        Route::post('/{affiliate}/suspend', [\App\Http\Controllers\Admin\AffiliateController::class, 'suspend'])->name('suspend');
-        Route::post('/{affiliate}/activate', [\App\Http\Controllers\Admin\AffiliateController::class, 'activate'])->name('activate');
-        Route::delete('/{affiliate}', [\App\Http\Controllers\Admin\AffiliateController::class, 'destroy'])->name('destroy');
-        Route::post('/commission/{commission}/approve', [\App\Http\Controllers\Admin\AffiliateController::class, 'approveCommission'])->name('commission.approve');
-        Route::post('/commission/{commission}/reject', [\App\Http\Controllers\Admin\AffiliateController::class, 'rejectCommission'])->name('commission.reject');
+        Route::get('/', [App\Http\Controllers\Admin\AffiliateController::class, 'index'])->name('index');
+        Route::get('/tree', [App\Http\Controllers\Admin\AffiliateController::class, 'tree'])->name('tree');
+        Route::get('/commissions', [App\Http\Controllers\Admin\AffiliateController::class, 'commissions'])->name('commissions');
+        Route::post('/commissions/bulk-approve', [App\Http\Controllers\Admin\AffiliateController::class, 'bulkApprove'])->name('commission.bulk-approve');
+        Route::get('/{affiliate}', [App\Http\Controllers\Admin\AffiliateController::class, 'show'])->name('show');
+        Route::put('/{affiliate}', [App\Http\Controllers\Admin\AffiliateController::class, 'update'])->name('update');
+        Route::post('/{affiliate}/move', [App\Http\Controllers\Admin\AffiliateController::class, 'move'])->name('move');
+        Route::post('/{affiliate}/suspend', [App\Http\Controllers\Admin\AffiliateController::class, 'suspend'])->name('suspend');
+        Route::post('/{affiliate}/activate', [App\Http\Controllers\Admin\AffiliateController::class, 'activate'])->name('activate');
+        Route::delete('/{affiliate}', [App\Http\Controllers\Admin\AffiliateController::class, 'destroy'])->name('destroy');
+        Route::post('/commission/{commission}/approve', [App\Http\Controllers\Admin\AffiliateController::class, 'approveCommission'])->name('commission.approve');
+        Route::post('/commission/{commission}/reject', [App\Http\Controllers\Admin\AffiliateController::class, 'rejectCommission'])->name('commission.reject');
     });
 
     // Premium Mockup Dashboard
@@ -476,9 +487,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Guide Screenshots Management
     Route::prefix('guide-screenshots')->name('guide-screenshots.')->group(function () {
-        Route::get('/{product}', [\App\Http\Controllers\Admin\GuideScreenshotController::class, 'index'])->name('index');
-        Route::post('/{product}/upload', [\App\Http\Controllers\Admin\GuideScreenshotController::class, 'upload'])->name('upload');
-        Route::delete('/{product}/{step}', [\App\Http\Controllers\Admin\GuideScreenshotController::class, 'destroy'])->name('destroy');
+        Route::get('/{product}', [GuideScreenshotController::class, 'index'])->name('index');
+        Route::post('/{product}/upload', [GuideScreenshotController::class, 'upload'])->name('upload');
+        Route::delete('/{product}/{step}', [GuideScreenshotController::class, 'destroy'])->name('destroy');
     });
 
     // Product Versions & GitHub Settings
@@ -543,9 +554,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/turnstile', [TurnstileSettingsController::class, 'update'])->name('turnstile.update');
 
     // Redis Settings
-    Route::get('/redis-settings', [\App\Http\Controllers\Admin\RedisSettingsController::class, 'index'])->name('redis-settings.index');
-    Route::put('/redis-settings', [\App\Http\Controllers\Admin\RedisSettingsController::class, 'updateEnv'])->name('redis-settings.update');
-    Route::get('/redis-settings/test', [\App\Http\Controllers\Admin\RedisSettingsController::class, 'testConnection'])->name('redis-settings.test');
+    Route::get('/redis-settings', [RedisSettingsController::class, 'index'])->name('redis-settings.index');
+    Route::put('/redis-settings', [RedisSettingsController::class, 'updateEnv'])->name('redis-settings.update');
+    Route::get('/redis-settings/test', [RedisSettingsController::class, 'testConnection'])->name('redis-settings.test');
 
     // AI Settings
     Route::get('/ai-settings', [AiSettingsController::class, 'index'])->name('ai-settings.index');

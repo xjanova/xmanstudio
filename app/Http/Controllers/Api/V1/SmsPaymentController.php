@@ -9,7 +9,9 @@ use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
+use App\Models\Wallet;
 use App\Models\WalletTopup;
+use App\Models\WalletTransaction;
 use App\Services\FcmNotificationService;
 use App\Services\LicenseService;
 use App\Services\SmsPaymentService;
@@ -985,7 +987,7 @@ class SmsPaymentController extends Controller
                             'wallet_id' => $topup->wallet_id,
                             'user_id' => $topup->user_id,
                         ]);
-                        $wallet = \App\Models\Wallet::getOrCreateForUser($topup->user_id);
+                        $wallet = Wallet::getOrCreateForUser($topup->user_id);
                         $topup->update(['wallet_id' => $wallet->id]);
                         $topup->refresh();
                         $topup->load('wallet');
@@ -1029,7 +1031,7 @@ class SmsPaymentController extends Controller
                     // Send FCM push to notify device that topup was approved
                     // This triggers the Android app to update its local DB immediately
                     try {
-                        $fcmService = app(\App\Services\FcmNotificationService::class);
+                        $fcmService = app(FcmNotificationService::class);
                         $fcmService->notifySettingsChanged($device, 'topup_approved', (string) $topup->id);
                     } catch (\Exception $e) {
                         Log::warning('FCM push for topup_approved failed', ['error' => $e->getMessage()]);
@@ -1812,7 +1814,7 @@ class SmsPaymentController extends Controller
             // Send FCM push to notify topup approved
             if ($approved) {
                 try {
-                    $fcmService = app(\App\Services\FcmNotificationService::class);
+                    $fcmService = app(FcmNotificationService::class);
                     $fcmService->notifySettingsChanged($device, 'topup_approved', (string) $topup->id);
                 } catch (\Exception $e) {
                     Log::error('handleTopupAction: FCM push failed', [
@@ -1853,7 +1855,7 @@ class SmsPaymentController extends Controller
 
             // Send FCM push to notify topup rejected
             try {
-                $fcmService = app(\App\Services\FcmNotificationService::class);
+                $fcmService = app(FcmNotificationService::class);
                 $fcmService->notifySettingsChanged($device, 'topup_rejected', (string) $topup->id);
             } catch (\Exception $e) {
                 Log::error('handleTopupAction: FCM push failed for rejection', [
@@ -2012,7 +2014,7 @@ class SmsPaymentController extends Controller
                     $debug['approve_simulation']['wallet_id_on_topup'] = $topup->wallet_id;
 
                     // ลองหา wallet ด้วย user_id
-                    $walletByUser = \App\Models\Wallet::where('user_id', $topup->user_id)->first();
+                    $walletByUser = Wallet::where('user_id', $topup->user_id)->first();
                     $debug['approve_simulation']['wallet_by_user_id'] = $walletByUser ? [
                         'id' => $walletByUser->id,
                         'balance' => $walletByUser->balance,
@@ -2021,7 +2023,7 @@ class SmsPaymentController extends Controller
                 }
 
                 // เช็ค WalletTransaction ที่เกี่ยวข้อง
-                $transactions = \App\Models\WalletTransaction::where(function ($q) use ($topup) {
+                $transactions = WalletTransaction::where(function ($q) use ($topup) {
                     $q->where('payment_reference', $topup->topup_id)
                         ->orWhere('description', 'like', "%{$topup->topup_id}%");
                 })->get(['id', 'type', 'amount', 'description', 'created_at']);
@@ -2106,7 +2108,7 @@ class SmsPaymentController extends Controller
             $debug['error'] = 'Wallet is NULL! wallet_id=' . $topup->wallet_id;
 
             // ลองสร้าง wallet ให้ user
-            $wallet = \App\Models\Wallet::getOrCreateForUser($topup->user_id);
+            $wallet = Wallet::getOrCreateForUser($topup->user_id);
             $topup->update(['wallet_id' => $wallet->id]);
             $topup->refresh();
             $topup->load('wallet');

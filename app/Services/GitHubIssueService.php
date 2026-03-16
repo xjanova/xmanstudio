@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BugReport;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -220,7 +221,7 @@ class GitHubIssueService
     /**
      * Create multiple GitHub issues in batch
      *
-     * @param  \Illuminate\Support\Collection  $reports
+     * @param  Collection  $reports
      */
     public function createBatchIssues($reports): array
     {

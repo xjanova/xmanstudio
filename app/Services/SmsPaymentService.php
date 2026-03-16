@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Order;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
 use App\Models\UniquePaymentAmount;
@@ -97,14 +98,14 @@ class SmsPaymentService
             if ($matched && $notification->matched_transaction_id) {
                 // Try Order first — ใช้ RemoteOrderApproval format ที่ Android app คาดหวัง
                 // ต้องส่ง approval_status, order_details_json, notification object ครบ
-                $matchedOrder = \App\Models\Order::with(['items.product', 'smsNotification', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
+                $matchedOrder = Order::with(['items.product', 'smsNotification', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
                 if ($matchedOrder) {
                     $matchedOrderData = $this->transformOrderToRemoteApproval($matchedOrder, $notification);
                     $responseData['order'] = $matchedOrderData;
                     $responseData['matched_order'] = $matchedOrderData;
                 } else {
                     // Try WalletTopup (matched_transaction_id could be a topup id)
-                    $matchedTopup = \App\Models\WalletTopup::with(['wallet.user', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
+                    $matchedTopup = WalletTopup::with(['wallet.user', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
                     if ($matchedTopup) {
                         $responseData['transaction_type'] = 'wallet_topup';
                         $matchedTopupData = $this->transformTopupToRemoteApproval($matchedTopup, $notification);
@@ -347,7 +348,7 @@ class SmsPaymentService
     /**
      * Send LINE notification for matched payment.
      */
-    public function notifyPaymentMatched(\App\Models\Order $order, SmsPaymentNotification $notification): bool
+    public function notifyPaymentMatched(Order $order, SmsPaymentNotification $notification): bool
     {
         $banks = config('smschecker.banks', []);
         $bankName = $banks[$notification->bank] ?? $notification->bank;
@@ -373,7 +374,7 @@ class SmsPaymentService
      * ใช้สำหรับ notify response เมื่อ match สำเร็จ
      * Format ตรงกับ SmsPaymentController::transformOrderForAndroid()
      */
-    private function transformOrderToRemoteApproval(\App\Models\Order $order, SmsPaymentNotification $notification): array
+    private function transformOrderToRemoteApproval(Order $order, SmsPaymentNotification $notification): array
     {
         $approvalStatus = match (true) {
             in_array($order->payment_status, ['paid', 'confirmed']) => 'auto_approved',

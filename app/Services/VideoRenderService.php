@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\MetalXVideoProject;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class VideoRenderService
 {
@@ -19,9 +21,9 @@ class VideoRenderService
 
     public function __construct()
     {
-        $this->ffmpeg = (string) \App\Models\Setting::getValue('ffmpeg_binary') ?: config('metalx.ffmpeg.binary', 'ffmpeg');
-        $this->ffprobe = (string) \App\Models\Setting::getValue('ffprobe_binary') ?: config('metalx.ffmpeg.ffprobe_binary', 'ffprobe');
-        $this->resolution = (string) \App\Models\Setting::getValue('metalx_video_resolution') ?: config('metalx.ffmpeg.default_resolution', '1920x1080');
+        $this->ffmpeg = (string) Setting::getValue('ffmpeg_binary') ?: config('metalx.ffmpeg.binary', 'ffmpeg');
+        $this->ffprobe = (string) Setting::getValue('ffprobe_binary') ?: config('metalx.ffmpeg.ffprobe_binary', 'ffprobe');
+        $this->resolution = (string) Setting::getValue('metalx_video_resolution') ?: config('metalx.ffmpeg.default_resolution', '1920x1080');
         $this->fps = config('metalx.ffmpeg.default_fps', 30);
     }
 
@@ -109,7 +111,7 @@ class VideoRenderService
         $result = Process::timeout(config('metalx.ffmpeg.timeout', 600))->run($command);
 
         if (! $result->successful()) {
-            $error = \Illuminate\Support\Str::limit($result->errorOutput(), 500);
+            $error = Str::limit($result->errorOutput(), 500);
             Log::error("[VideoRender] FFmpeg failed: {$error}");
 
             throw new \RuntimeException("FFmpeg rendering failed: {$error}");

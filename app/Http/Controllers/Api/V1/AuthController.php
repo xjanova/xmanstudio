@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\LicenseKey;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -96,7 +99,7 @@ class AuthController extends Controller
         ]);
 
         // Verify license exists and is active
-        $license = \App\Models\LicenseKey::where('license_key', $request->license_key)
+        $license = LicenseKey::where('license_key', $request->license_key)
             ->whereNotNull('activated_at')
             ->with('order')
             ->first();
@@ -150,7 +153,7 @@ class AuthController extends Controller
                 ['email' => $deviceEmail],
                 [
                     'name' => $deviceName,
-                    'password' => Hash::make(\Illuminate\Support\Str::random(32)),
+                    'password' => Hash::make(Str::random(32)),
                     'is_active' => true,
                 ]
             );
@@ -190,7 +193,7 @@ class AuthController extends Controller
 
         // Generate a one-time token (stored in cache for 5 minutes)
         $token = bin2hex(random_bytes(32));
-        \Illuminate\Support\Facades\Cache::put(
+        Cache::put(
             "web_login_token:{$token}",
             $user->id,
             now()->addMinutes(5)
