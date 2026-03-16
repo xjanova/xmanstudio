@@ -30,7 +30,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          command_timeout: 5m
+          command_timeout: 10m
           script: |
             echo "========================================="
             echo "  SERVER DIAGNOSTIC - $(date)"
@@ -247,12 +247,17 @@ jobs:
                 sleep 2
               fi
 
-              # Dispatch render job
+              # Reset status if failed, then dispatch render job
               echo ""
               echo "Dispatching RenderVideoJob..."
               php artisan tinker --execute="
                 \$p = \\App\\Models\\MetalXVideoProject::find(1);
+                if (\$p->status === 'failed') {
+                  \$p->update(['status' => 'music_ready', 'error_message' => null]);
+                  echo 'Reset status from failed to music_ready' . PHP_EOL;
+                }
                 if (\$p->status === 'music_ready') {
+                  echo 'FFmpeg binary: ' . \\App\\Models\\Setting::getValue('ffmpeg_binary', 'ffmpeg') . PHP_EOL;
                   \\App\\Jobs\\RenderVideoJob::dispatch(\$p);
                   echo 'RenderVideoJob dispatched!';
                 } else {
@@ -261,8 +266,8 @@ jobs:
               "
 
               echo ""
-              echo "Waiting 10s for job to start..."
-              sleep 10
+              echo "Waiting 60s for render to complete..."
+              sleep 60
 
               # Check status after dispatch
               php artisan tinker --execute="
