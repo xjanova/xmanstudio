@@ -69,6 +69,9 @@ class YouTubeUploadService
                     'privacy_status' => $project->privacy_status ?? 'private',
                     'is_active' => true,
                     'published_at' => ($project->scheduled_at && $project->scheduled_at->isFuture()) ? $project->scheduled_at : now(),
+                    'thumbnail_url' => "https://i.ytimg.com/vi/{$youtubeId}/default.jpg",
+                    'thumbnail_medium_url' => "https://i.ytimg.com/vi/{$youtubeId}/mqdefault.jpg",
+                    'thumbnail_high_url' => "https://i.ytimg.com/vi/{$youtubeId}/hqdefault.jpg",
                 ],
             );
 
