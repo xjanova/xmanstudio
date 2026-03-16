@@ -17,11 +17,11 @@ class YouTubeOAuthController extends Controller
      */
     public function redirect(Request $request)
     {
-        $clientId = config('services.youtube.client_id');
+        $clientId = config('services.youtube.client_id') ?: Setting::getValue('youtube_client_id');
 
         if (empty($clientId)) {
-            return redirect()->route('admin.settings.integrations')
-                ->with('error', 'ยังไม่ได้ตั้งค่า YouTube OAuth Client ID');
+            return redirect()->route('admin.metal-x.settings')
+                ->with('error', 'ยังไม่ได้ตั้งค่า YouTube OAuth Client ID — ตั้งค่าได้ที่หน้านี้');
         }
 
         // Generate state for CSRF protection
@@ -158,8 +158,8 @@ class YouTubeOAuthController extends Controller
                 'grant_type' => 'authorization_code',
                 'code' => $code,
                 'redirect_uri' => route('youtube.callback'),
-                'client_id' => config('services.youtube.client_id'),
-                'client_secret' => config('services.youtube.client_secret'),
+                'client_id' => config('services.youtube.client_id') ?: Setting::getValue('youtube_client_id'),
+                'client_secret' => config('services.youtube.client_secret') ?: Setting::getValue('youtube_client_secret'),
             ]);
 
             if ($response->successful()) {
@@ -198,8 +198,8 @@ class YouTubeOAuthController extends Controller
             $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => $refreshToken,
-                'client_id' => config('services.youtube.client_id'),
-                'client_secret' => config('services.youtube.client_secret'),
+                'client_id' => config('services.youtube.client_id') ?: Setting::getValue('youtube_client_id'),
+                'client_secret' => config('services.youtube.client_secret') ?: Setting::getValue('youtube_client_secret'),
             ]);
 
             if ($response->successful()) {

@@ -18,7 +18,7 @@ class SunoMusicService
     public function __construct()
     {
         $this->apiKey = config('metalx.suno.api_key') ?: (string) \App\Models\Setting::getValue('suno_api_key', '');
-        $this->baseUrl = config('metalx.suno.base_url', 'https://apibox.erweima.ai');
+        $this->baseUrl = (string) \App\Models\Setting::getValue('suno_base_url') ?: config('metalx.suno.base_url', 'https://apibox.erweima.ai');
         $this->timeout = config('metalx.suno.timeout', 120);
     }
 

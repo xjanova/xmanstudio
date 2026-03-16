@@ -136,8 +136,8 @@ class MetalXChannel extends Model
             $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => $refreshToken,
-                'client_id' => config('services.youtube.client_id'),
-                'client_secret' => config('services.youtube.client_secret'),
+                'client_id' => config('services.youtube.client_id') ?: Setting::getValue('youtube_client_id'),
+                'client_secret' => config('services.youtube.client_secret') ?: Setting::getValue('youtube_client_secret'),
             ]);
 
             if ($response->successful()) {

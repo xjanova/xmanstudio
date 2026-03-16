@@ -19,9 +19,9 @@ class VideoRenderService
 
     public function __construct()
     {
-        $this->ffmpeg = config('metalx.ffmpeg.binary', 'ffmpeg');
-        $this->ffprobe = config('metalx.ffmpeg.ffprobe_binary', 'ffprobe');
-        $this->resolution = config('metalx.ffmpeg.default_resolution', '1920x1080');
+        $this->ffmpeg = (string) \App\Models\Setting::getValue('ffmpeg_binary') ?: config('metalx.ffmpeg.binary', 'ffmpeg');
+        $this->ffprobe = (string) \App\Models\Setting::getValue('ffprobe_binary') ?: config('metalx.ffmpeg.ffprobe_binary', 'ffprobe');
+        $this->resolution = (string) \App\Models\Setting::getValue('metalx_video_resolution') ?: config('metalx.ffmpeg.default_resolution', '1920x1080');
         $this->fps = config('metalx.ffmpeg.default_fps', 30);
     }
 
