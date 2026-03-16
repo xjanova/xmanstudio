@@ -40,6 +40,18 @@ Schedule::command('bugreports:cleanup')
         \Illuminate\Support\Facades\Log::error('[Bug Reports] Cleanup failed');
     });
 
+// Metal-X: ผลิตวิดีโอจาก Content Plans อัตโนมัติ
+// รันทุก 5 นาที: ตรวจสอบ content plans ที่ถึงเวลาและสร้างโปรเจกต์ใหม่
+Schedule::job(new \App\Jobs\AutoGenerateVideoJob)
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onSuccess(function () {
+        \Illuminate\Support\Facades\Log::info('[Metal-X Auto Generate] Completed');
+    })
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('[Metal-X Auto Generate] Failed');
+    });
+
 // Metal-X: ระบบอัตโนมัติจัดการ YouTube (ตอบคอมเม้นต์, ไลค์, โปรโมท, ตรวจสอบ)
 // รันทุก 5 นาที: ตรวจสอบ schedules ที่ถึงเวลาและ dispatch jobs
 Schedule::job(new \App\Jobs\RunAutomationScheduleJob)

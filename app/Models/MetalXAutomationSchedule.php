@@ -32,6 +32,7 @@ class MetalXAutomationSchedule extends Model
         'auto_moderate' => 'ตรวจสอบคอมเม้นต์',
         'promo_comment' => 'โพสเรียกยอด',
         'sync_comments' => 'ซิงค์คอมเม้นต์',
+        'auto_generate' => 'สร้างวิดีโออัตโนมัติ',
     ];
 
     public const FREQUENCY_PRESETS = [

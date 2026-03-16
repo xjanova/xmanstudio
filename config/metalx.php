@@ -244,6 +244,9 @@ return [
         'video_creation' => env('METALX_FEATURE_VIDEO_CREATION', true),
         'suno_music' => env('METALX_FEATURE_SUNO_MUSIC', true),
         'auto_upload' => env('METALX_FEATURE_AUTO_UPLOAD', true),
+        'content_plans' => env('METALX_FEATURE_CONTENT_PLANS', true),
+        'media_library' => env('METALX_FEATURE_MEDIA_LIBRARY', true),
+        'music_library' => env('METALX_FEATURE_MUSIC_LIBRARY', true),
     ],
 
     /**

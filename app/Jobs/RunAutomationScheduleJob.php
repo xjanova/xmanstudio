@@ -109,11 +109,16 @@ class RunAutomationScheduleJob implements ShouldQueue
         $dispatched = 0;
 
         foreach ($videos as $video) {
+            // Reply to ALL unreplied comments (with or without sentiment)
+            // ProcessCommentEngagementJob will analyze sentiment if missing
             $comments = $video->comments()
                 ->topLevel()
                 ->where('ai_replied', false)
                 ->where('is_spam', false)
-                ->whereNotNull('sentiment')
+                ->where('is_hidden', false)
+                ->where(function ($q) {
+                    $q->where('can_reply', true)->orWhereNull('can_reply');
+                })
                 ->orderByDesc('published_at')
                 ->limit($max - $dispatched)
                 ->get();
@@ -138,11 +143,18 @@ class RunAutomationScheduleJob implements ShouldQueue
         $dispatched = 0;
 
         foreach ($videos as $video) {
+            // Like ALL non-spam, non-negative comments (not just positive/question)
+            // Heart every comment to show channel is active and appreciates viewers
             $comments = $video->comments()
                 ->topLevel()
                 ->where('liked_by_channel', false)
                 ->where('is_spam', false)
-                ->whereIn('sentiment', ['positive', 'question'])
+                ->where('is_hidden', false)
+                ->where(function ($q) {
+                    // Like everything except confirmed negative/spam
+                    $q->whereNull('sentiment')
+                        ->orWhereIn('sentiment', ['positive', 'question', 'neutral']);
+                })
                 ->orderByDesc('published_at')
                 ->limit($max - $dispatched)
                 ->get();

@@ -93,6 +93,21 @@ class YouTubeUploadService
     {
         $categoryId = config('metalx.upload.default_category_id', '10');
 
+        // Determine privacy and scheduling
+        $privacyStatus = $project->privacy_status ?? 'private';
+        $statusData = [
+            'privacyStatus' => $privacyStatus,
+            'selfDeclaredMadeForKids' => false,
+        ];
+
+        // YouTube scheduled publishing: upload as private with publishAt
+        // YouTube will auto-publish at the specified time
+        if ($project->scheduled_at && $project->scheduled_at->isFuture()) {
+            $statusData['privacyStatus'] = 'private';
+            $statusData['publishAt'] = $project->scheduled_at->toIso8601String();
+            Log::info("[YouTube Upload] Scheduled publish at: {$project->scheduled_at->toDateTimeString()}");
+        }
+
         $metadata = [
             'snippet' => [
                 'title' => Str::limit($project->title ?? 'Untitled', 100),
@@ -100,10 +115,7 @@ class YouTubeUploadService
                 'tags' => array_slice($project->tags ?? [], 0, 500),
                 'categoryId' => $categoryId,
             ],
-            'status' => [
-                'privacyStatus' => $project->privacy_status ?? 'private',
-                'selfDeclaredMadeForKids' => false,
-            ],
+            'status' => $statusData,
         ];
 
         try {

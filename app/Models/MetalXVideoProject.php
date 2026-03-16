@@ -9,6 +9,7 @@ class MetalXVideoProject extends Model
 {
     protected $fillable = [
         'channel_id',
+        'content_plan_id',
         'music_generation_id',
         'video_id',
         'title',
@@ -29,6 +30,7 @@ class MetalXVideoProject extends Model
         'ai_metadata_generated',
         'error_message',
         'created_by',
+        'auto_generated',
     ];
 
     protected $casts = [
@@ -38,6 +40,7 @@ class MetalXVideoProject extends Model
         'video_clips' => 'array',
         'eq_settings' => 'array',
         'ai_metadata_generated' => 'boolean',
+        'auto_generated' => 'boolean',
         'scheduled_at' => 'datetime',
         'published_at' => 'datetime',
         'video_duration_seconds' => 'integer',
@@ -80,6 +83,11 @@ class MetalXVideoProject extends Model
     public function channel(): BelongsTo
     {
         return $this->belongsTo(MetalXChannel::class, 'channel_id');
+    }
+
+    public function contentPlan(): BelongsTo
+    {
+        return $this->belongsTo(MetalXContentPlan::class, 'content_plan_id');
     }
 
     public function musicGeneration(): BelongsTo

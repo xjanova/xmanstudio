@@ -52,7 +52,7 @@ class MetalXAutomationController extends Controller
     {
         $validated = $request->validate([
             'video_id' => 'nullable|exists:metal_x_videos,id',
-            'action_type' => 'required|in:auto_reply,auto_like,auto_moderate,promo_comment,sync_comments',
+            'action_type' => 'required|in:auto_reply,auto_like,auto_moderate,promo_comment,sync_comments,auto_generate',
             'frequency_minutes' => 'required|integer|min:15|max:1440',
             'max_actions_per_run' => 'required|integer|min:1|max:100',
             'is_enabled' => 'boolean',
@@ -74,7 +74,7 @@ class MetalXAutomationController extends Controller
     {
         $validated = $request->validate([
             'video_id' => 'nullable|exists:metal_x_videos,id',
-            'action_type' => 'required|in:auto_reply,auto_like,auto_moderate,promo_comment,sync_comments',
+            'action_type' => 'required|in:auto_reply,auto_like,auto_moderate,promo_comment,sync_comments,auto_generate',
             'frequency_minutes' => 'required|integer|min:15|max:1440',
             'max_actions_per_run' => 'required|integer|min:1|max:100',
             'is_enabled' => 'boolean',
@@ -253,6 +253,77 @@ class MetalXAutomationController extends Controller
             'success' => true,
             'message' => 'อนุมัติแล้ว — จะโพสในรอบถัดไป',
         ]);
+    }
+
+    /**
+     * Quick Setup: create standard automation schedules for all action types.
+     * Designed for aggressive comment monitoring - check every channel, every video.
+     */
+    public function quickSetup()
+    {
+        $created = 0;
+        // Aggressive settings: check every 5 minutes (fastest scheduler interval)
+        // for ALL channels and ALL videos — respond to EVERY comment ASAP
+        $defaultSchedules = [
+            [
+                'action_type' => 'sync_comments',
+                'frequency_minutes' => 15, // Min allowed by model validation
+                'max_actions_per_run' => 100, // Sync up to 100 comments per video
+                'settings' => ['max_comments' => 200],
+            ],
+            [
+                'action_type' => 'auto_moderate',
+                'frequency_minutes' => 15, // Check spam/gambling/bad comments ASAP
+                'max_actions_per_run' => 50,
+                'settings' => null,
+            ],
+            [
+                'action_type' => 'auto_reply',
+                'frequency_minutes' => 15, // Reply to EVERY comment possible
+                'max_actions_per_run' => 50,
+                'settings' => ['min_confidence' => 60], // Lower threshold = reply more
+            ],
+            [
+                'action_type' => 'auto_like',
+                'frequency_minutes' => 15, // Heart every good comment
+                'max_actions_per_run' => 100,
+                'settings' => null,
+            ],
+            [
+                'action_type' => 'promo_comment',
+                'frequency_minutes' => 360, // Promo every 6 hours
+                'max_actions_per_run' => 5,
+                'settings' => ['require_approval' => false],
+            ],
+        ];
+
+        foreach ($defaultSchedules as $config) {
+            // Skip if same action_type already exists globally (video_id is null)
+            $exists = MetalXAutomationSchedule::whereNull('video_id')
+                ->where('action_type', $config['action_type'])
+                ->exists();
+
+            if (! $exists) {
+                MetalXAutomationSchedule::create([
+                    'video_id' => null, // Global = all videos on all channels
+                    'action_type' => $config['action_type'],
+                    'is_enabled' => true,
+                    'frequency_minutes' => $config['frequency_minutes'],
+                    'max_actions_per_run' => $config['max_actions_per_run'],
+                    'next_run_at' => now(),
+                    'settings' => $config['settings'],
+                ]);
+                $created++;
+            }
+        }
+
+        if ($created > 0) {
+            return redirect()->route('admin.metal-x.automation.index')
+                ->with('success', "ตั้งค่าด่วนสำเร็จ! สร้าง {$created} ตารางอัตโนมัติ — ซิงค์ทุก 15 นาที, ตอบ+ไลค์+ตรวจสอบทุกคอมเม้นต์");
+        }
+
+        return redirect()->route('admin.metal-x.automation.index')
+            ->with('info', 'มีตารางอัตโนมัติครบทุกประเภทแล้ว');
     }
 
     /**

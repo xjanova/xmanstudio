@@ -36,6 +36,15 @@
                 </svg>
                 Engagement
             </a>
+            <form action="{{ route('admin.metal-x.automation.quick-setup') }}" method="POST" class="inline">
+                @csrf
+                <button type="submit" class="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg flex items-center text-sm font-semibold" onclick="return confirm('ตั้งค่าด่วน: สร้างตารางอัตโนมัติทั้ง 5 ประเภท (ซิงค์/ตอบ/ไลค์/ตรวจสอบ/โปรโมท) ทุก 15 นาที สำหรับทุกวิดีโอทุกช่อง?')">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Quick Setup
+                </button>
+            </form>
         </div>
     </div>
 </div>

@@ -8,7 +8,6 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\BugReportController as AdminBugReportController;
-use App\Http\Controllers\Admin\PuzzleDebugController as AdminPuzzleDebugController;
 use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
@@ -21,7 +20,10 @@ use App\Http\Controllers\Admin\MetalXAiController;
 use App\Http\Controllers\Admin\MetalXAnalyticsController;
 use App\Http\Controllers\Admin\MetalXAutomationController;
 use App\Http\Controllers\Admin\MetalXChannelController;
+use App\Http\Controllers\Admin\MetalXContentPlanController;
 use App\Http\Controllers\Admin\MetalXEngagementController;
+use App\Http\Controllers\Admin\MetalXMediaLibraryController;
+use App\Http\Controllers\Admin\MetalXMusicLibraryController;
 use App\Http\Controllers\Admin\MetalXPipelineController;
 use App\Http\Controllers\Admin\MetalXPlaylistController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
@@ -34,6 +36,7 @@ use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductVersionController;
 use App\Http\Controllers\Admin\ProjectOrderController;
+use App\Http\Controllers\Admin\PuzzleDebugController as AdminPuzzleDebugController;
 use App\Http\Controllers\Admin\QuotationCategoryController;
 use App\Http\Controllers\Admin\QuotationController as AdminQuotationController;
 use App\Http\Controllers\Admin\QuotationOptionController;
@@ -734,6 +737,37 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::post('/{project}/upload-video-clips', [MetalXVideoProjectController::class, 'uploadVideoClips'])->name('upload-video-clips');
             Route::put('/{project}/template', [MetalXVideoProjectController::class, 'updateTemplate'])->name('update-template');
         });
+
+        // Content Plans (Auto Production)
+        Route::prefix('content-plans')->name('content-plans.')->group(function () {
+            Route::get('/', [MetalXContentPlanController::class, 'index'])->name('index');
+            Route::get('/create', [MetalXContentPlanController::class, 'create'])->name('create');
+            Route::post('/', [MetalXContentPlanController::class, 'store'])->name('store');
+            Route::get('/{plan}/edit', [MetalXContentPlanController::class, 'edit'])->name('edit');
+            Route::put('/{plan}', [MetalXContentPlanController::class, 'update'])->name('update');
+            Route::delete('/{plan}', [MetalXContentPlanController::class, 'destroy'])->name('destroy');
+            Route::post('/{plan}/toggle', [MetalXContentPlanController::class, 'toggle'])->name('toggle');
+            Route::post('/{plan}/generate-now', [MetalXContentPlanController::class, 'generateNow'])->name('generate-now');
+        });
+
+        // Media Library
+        Route::prefix('media-library')->name('media-library.')->group(function () {
+            Route::get('/', [MetalXMediaLibraryController::class, 'index'])->name('index');
+            Route::post('/upload', [MetalXMediaLibraryController::class, 'upload'])->name('upload');
+            Route::put('/{media}', [MetalXMediaLibraryController::class, 'update'])->name('update');
+            Route::delete('/{media}', [MetalXMediaLibraryController::class, 'destroy'])->name('destroy');
+            Route::post('/bulk-tag', [MetalXMediaLibraryController::class, 'bulkTag'])->name('bulk-tag');
+        });
+
+        // Music Library
+        Route::prefix('music-library')->name('music-library.')->group(function () {
+            Route::get('/', [MetalXMusicLibraryController::class, 'index'])->name('index');
+            Route::post('/upload', [MetalXMusicLibraryController::class, 'upload'])->name('upload');
+            Route::delete('/{track}', [MetalXMusicLibraryController::class, 'destroy'])->name('destroy');
+        });
+
+        // Comment Automation Quick Setup
+        Route::post('/automation/quick-setup', [MetalXAutomationController::class, 'quickSetup'])->name('automation.quick-setup');
 
         // Settings
         Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');
