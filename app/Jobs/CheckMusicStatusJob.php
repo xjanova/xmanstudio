@@ -33,7 +33,15 @@ class CheckMusicStatusJob implements ShouldQueue
 
     public function handle(SunoMusicService $suno): void
     {
+        Log::info("[CheckMusic] Attempt {$this->attempt}/40 for project {$this->project->id}, task: {$this->generation->suno_task_id}");
+
         $generation = $suno->checkStatus($this->generation);
+
+        Log::info("[CheckMusic] Status after check: {$generation->status}", [
+            'project_id' => $this->project->id,
+            'attempt' => $this->attempt,
+            'audio_url' => $generation->audio_url ? 'present' : 'null',
+        ]);
 
         if ($generation->status === 'completed') {
             // Download the audio file
@@ -41,7 +49,7 @@ class CheckMusicStatusJob implements ShouldQueue
 
             if ($path) {
                 $this->project->update(['status' => 'music_ready']);
-                Log::info("[CheckMusic] Music ready for project {$this->project->id}");
+                Log::info("[CheckMusic] Music ready for project {$this->project->id}, path: {$path}");
 
                 // Auto-render if project has images
                 if (! empty($this->project->images)) {
@@ -50,7 +58,7 @@ class CheckMusicStatusJob implements ShouldQueue
             } else {
                 $this->project->update([
                     'status' => 'failed',
-                    'error_message' => 'Failed to download audio file',
+                    'error_message' => 'Failed to download audio file from: ' . ($generation->audio_url ?? 'no URL'),
                 ]);
             }
 
@@ -66,14 +74,14 @@ class CheckMusicStatusJob implements ShouldQueue
             return;
         }
 
-        // Still processing - retry with delay
-        if ($this->attempt < 20) {
+        // Still processing - retry with delay (40 attempts × 30s = 20 minutes max)
+        if ($this->attempt < 40) {
             self::dispatch($this->project, $generation, $this->attempt + 1, $this->autoUpload)
                 ->delay(now()->addSeconds(30));
         } else {
             $this->project->update([
                 'status' => 'failed',
-                'error_message' => 'Music generation timed out after 10 minutes',
+                'error_message' => 'Music generation timed out after 20 minutes',
             ]);
         }
     }

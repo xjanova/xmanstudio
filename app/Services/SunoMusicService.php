@@ -67,14 +67,25 @@ class SunoMusicService
                     'metadata' => $data,
                 ]);
 
-                Log::info("[Suno] Music generation started, task: {$taskId}");
+                Log::info("[Suno] Music generation started", [
+                    'task_id' => $taskId,
+                    'callback_url' => $callbackUrl,
+                    'prompt_length' => strlen($prompt),
+                    'response_code' => $data['code'] ?? null,
+                    'response_msg' => $data['msg'] ?? null,
+                ]);
             } else {
+                $errorBody = \Illuminate\Support\Str::limit($response->body(), 500);
+
                 $generation->update([
                     'status' => 'failed',
-                    'error_message' => 'API error: ' . \Illuminate\Support\Str::limit($response->body(), 500),
+                    'error_message' => "API error (HTTP {$response->status()}): {$errorBody}",
                 ]);
 
-                Log::error('[Suno] Generation request failed', ['status' => $response->status()]);
+                Log::error('[Suno] Generation request failed', [
+                    'status' => $response->status(),
+                    'body' => $errorBody,
+                ]);
             }
         } catch (\Exception $e) {
             $generation->update([
@@ -109,6 +120,11 @@ class SunoMusicService
                 $status = $data['data']['status'] ?? '';
                 $sunoData = $data['data']['response']['sunoData'] ?? $data['data']['sunoData'] ?? [];
 
+                Log::info("[Suno] Status check for task {$generation->suno_task_id}: status={$status}", [
+                    'has_sunoData' => ! empty($sunoData),
+                    'sunoData_count' => is_array($sunoData) ? count($sunoData) : 0,
+                ]);
+
                 if (in_array($status, ['SUCCESS', 'FIRST_SUCCESS'])) {
                     $track = is_array($sunoData) ? ($sunoData[0] ?? null) : null;
                     $audioUrl = $track['audioUrl'] ?? $track['audio_url'] ?? $track['streamAudioUrl'] ?? null;
@@ -121,7 +137,7 @@ class SunoMusicService
                     ]);
 
                     Log::info("[Suno] Generation completed: {$generation->suno_task_id}");
-                } elseif (str_contains($status, 'FAILED') || $status === 'SENSITIVE_WORD_ERROR') {
+                } elseif (str_contains($status, 'FAILED') || in_array($status, ['SENSITIVE_WORD_ERROR', 'CALLBACK_EXCEPTION'])) {
                     $generation->update([
                         'status' => 'failed',
                         'error_message' => "Suno generation failed: {$status}",
