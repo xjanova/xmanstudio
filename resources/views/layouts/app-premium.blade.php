@@ -223,6 +223,8 @@
         }
     </style>
 
+    @stack('styles')
+
     <!-- Custom Head Code (Tracking & Verification) -->
     @php
         $customHeadCode = \App\Models\Setting::getValue('custom_code_head', '');
