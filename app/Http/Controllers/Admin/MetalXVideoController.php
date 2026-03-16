@@ -264,7 +264,7 @@ class MetalXVideoController extends Controller
             $channels = collect([(object) ['youtube_channel_id' => $channelId, 'id' => null, 'name' => 'Default']]);
         }
 
-        $limit = min(500, max(1, (int) $request->get('limit', 50)));
+        $limit = min(1000, max(1, (int) $request->get('limit', 500)));
         $totalVideos = [];
 
         foreach ($channels as $channel) {
