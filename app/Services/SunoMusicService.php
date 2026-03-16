@@ -6,6 +6,7 @@ use App\Models\MetalXMusicGeneration;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SunoMusicService
 {
@@ -75,7 +76,7 @@ class SunoMusicService
                     'response_msg' => $data['msg'] ?? null,
                 ]);
             } else {
-                $errorBody = \Illuminate\Support\Str::limit($response->body(), 500);
+                $errorBody = Str::limit($response->body(), 500);
 
                 $generation->update([
                     'status' => 'failed',
