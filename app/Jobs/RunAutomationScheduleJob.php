@@ -74,6 +74,12 @@ class RunAutomationScheduleJob implements ShouldQueue
                 $dispatched = $this->handlePromoComment($schedule);
                 break;
 
+            case 'auto_generate':
+                // Handled by AutoGenerateVideoJob (separate scheduler)
+                // Just mark the run to advance next_run_at
+                $dispatched = 0;
+                break;
+
             default:
                 Log::warning("[Metal-X Automation] Unknown action type: {$schedule->action_type}");
 
@@ -143,17 +149,19 @@ class RunAutomationScheduleJob implements ShouldQueue
         $dispatched = 0;
 
         foreach ($videos as $video) {
-            // Like ALL non-spam, non-negative comments (not just positive/question)
-            // Heart every comment to show channel is active and appreciates viewers
+            $positiveOnly = config('metalx.engagement.auto_like.positive_only', true);
             $comments = $video->comments()
                 ->topLevel()
                 ->where('liked_by_channel', false)
                 ->where('is_spam', false)
                 ->where('is_hidden', false)
-                ->where(function ($q) {
-                    // Like everything except confirmed negative/spam
-                    $q->whereNull('sentiment')
-                        ->orWhereIn('sentiment', ['positive', 'question', 'neutral']);
+                ->where(function ($q) use ($positiveOnly) {
+                    if ($positiveOnly) {
+                        $q->whereIn('sentiment', ['positive', 'question']);
+                    } else {
+                        $q->whereNull('sentiment')
+                            ->orWhereIn('sentiment', ['positive', 'question', 'neutral']);
+                    }
                 })
                 ->orderByDesc('published_at')
                 ->limit($max - $dispatched)

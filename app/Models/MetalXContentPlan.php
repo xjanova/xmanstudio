@@ -123,6 +123,9 @@ class MetalXContentPlan extends Model
         // Set preferred hour
         if ($this->preferred_publish_hour !== null) {
             $next->setTime($this->preferred_publish_hour, 0, 0);
+            if ($next->lte(now())) {
+                $next->addDay();
+            }
         }
 
         $this->update([

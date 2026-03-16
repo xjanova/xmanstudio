@@ -143,7 +143,7 @@ class MetalXAutomationController extends Controller
     public function logs(Request $request)
     {
         $request->validate([
-            'action_type' => 'nullable|in:auto_reply,auto_like,auto_moderate,promo_comment,sync_comments',
+            'action_type' => 'nullable|in:auto_reply,auto_like,auto_moderate,promo_comment,sync_comments,auto_generate',
             'status' => 'nullable|in:success,failed,skipped',
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
