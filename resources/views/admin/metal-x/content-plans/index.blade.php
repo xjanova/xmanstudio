@@ -105,7 +105,7 @@
                             </td>
                             {{-- Channel --}}
                             <td class="px-4 py-3">
-                                <span class="text-gray-700 dark:text-gray-300">{{ $plan->channel->name ?? '-' }}</span>
+                                <span class="text-gray-700 dark:text-gray-300">{{ $plan->channel?->name ?? '-' }}</span>
                             </td>
                             {{-- Template --}}
                             <td class="px-4 py-3">

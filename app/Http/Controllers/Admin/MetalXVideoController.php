@@ -44,9 +44,10 @@ class MetalXVideoController extends Controller
             $query->where('is_featured', $request->get('featured') === 'yes');
         }
 
-        // Sort
-        $sortBy = $request->get('sort', 'published_at');
-        $sortDir = $request->get('dir', 'desc');
+        // Sort (whitelist to prevent SQL injection)
+        $allowedSorts = ['published_at', 'title', 'view_count', 'like_count', 'comment_count', 'created_at'];
+        $sortBy = in_array($request->get('sort'), $allowedSorts) ? $request->get('sort') : 'published_at';
+        $sortDir = $request->get('dir') === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sortBy, $sortDir);
 
         $videos = $query->paginate(20)->withQueryString();
@@ -249,7 +250,7 @@ class MetalXVideoController extends Controller
             return back()->with('error', 'Channel ID is not configured. Please set it in Metal-X Settings.');
         }
 
-        $limit = $request->get('limit', 50);
+        $limit = min(500, max(1, (int) $request->get('limit', 50)));
         $videos = $this->youtubeService->syncChannelVideos($channelId, $limit);
 
         // Dispatch AI metadata generation for videos without Thai metadata

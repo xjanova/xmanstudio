@@ -34,7 +34,8 @@ class VideoRenderService
         $videoClips = $project->video_clips ?? [];
         $mediaMode = $project->media_mode ?? 'images';
         $eqSettings = $project->eq_settings ?? null;
-        $audioPath = $project->musicGeneration?->audio_path;
+        $audioPath = $project->musicGeneration?->audio_path
+            ?? data_get($project->template_settings, 'audio_file');
 
         // Build media items array based on mode
         $mediaItems = [];
@@ -77,6 +78,10 @@ class VideoRenderService
         $transitionDuration = $project->getTemplateSetting('transition_duration', 1);
         $effect = $project->getTemplateSetting('effect', 'ken_burns');
         $bgColor = $project->getTemplateSetting('background_color', '#000000');
+        // Validate color to prevent FFmpeg command injection
+        if (! preg_match('/^#[0-9a-fA-F]{6}$/', $bgColor)) {
+            $bgColor = '#000000';
+        }
 
         [$width, $height] = explode('x', $this->resolution);
 

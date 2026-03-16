@@ -65,7 +65,7 @@ class MetalXAiController extends Controller
             }
 
             $autoApprove = $request->boolean('auto_approve', false);
-            $minConfidence = $request->input('min_confidence', 80.0);
+            $minConfidence = min(100.0, max(0.0, (float) $request->input('min_confidence', 80.0)));
 
             // Dispatch job
             GenerateVideoMetadataJob::dispatch($video, $autoApprove, $minConfidence);
@@ -117,7 +117,7 @@ class MetalXAiController extends Controller
             }
 
             $autoApprove = $request->boolean('auto_approve', false);
-            $minConfidence = $request->input('min_confidence', 80.0);
+            $minConfidence = min(100.0, max(0.0, (float) $request->input('min_confidence', 80.0)));
 
             $videoIds = $request->input('video_ids');
             $count = 0;
@@ -170,7 +170,7 @@ class MetalXAiController extends Controller
             }
 
             $autoApprove = $request->boolean('auto_approve', false);
-            $minConfidence = $request->input('min_confidence', 80.0);
+            $minConfidence = min(100.0, max(0.0, (float) $request->input('min_confidence', 80.0)));
 
             // Get videos that don't have Thai metadata or AI metadata
             $videos = MetalXVideo::where(function ($query) {

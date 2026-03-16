@@ -95,16 +95,18 @@ class MetalXMediaLibraryController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $tags = null;
-        if ($request->filled('tags')) {
-            $tags = array_map('trim', explode(',', $validated['tags']));
-            $tags = array_values(array_filter($tags));
+        $updateData = ['is_active' => $request->boolean('is_active', $media->is_active)];
+
+        if ($request->has('tags')) {
+            if ($request->filled('tags')) {
+                $tags = array_map('trim', explode(',', $validated['tags']));
+                $updateData['tags'] = array_values(array_filter($tags));
+            } else {
+                $updateData['tags'] = [];
+            }
         }
 
-        $media->update([
-            'tags' => $tags,
-            'is_active' => $request->boolean('is_active', $media->is_active),
-        ]);
+        $media->update($updateData);
 
         return back()->with('success', 'อัปเดตสำเร็จ');
     }

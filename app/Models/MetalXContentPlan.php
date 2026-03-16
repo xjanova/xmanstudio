@@ -38,6 +38,12 @@ class MetalXContentPlan extends Model
         'media_pool_tags' => 'array',
         'preferred_publish_days' => 'array',
         'is_enabled' => 'boolean',
+        'schedule_frequency_hours' => 'integer',
+        'preferred_publish_hour' => 'integer',
+        'max_queue_size' => 'integer',
+        'media_count' => 'integer',
+        'music_duration' => 'integer',
+        'total_generated' => 'integer',
         'last_generated_at' => 'datetime',
         'next_generation_at' => 'datetime',
     ];

@@ -22,6 +22,8 @@ class MetalXMusicLibrary extends Model
     protected $casts = [
         'tags' => 'array',
         'is_active' => 'boolean',
+        'duration_seconds' => 'integer',
+        'usage_count' => 'integer',
     ];
 
     public const STYLES = [

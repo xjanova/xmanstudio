@@ -178,8 +178,8 @@ class ContentPlanService
     {
         $sunoMode = Setting::getValue('suno_mode', 'onsite');
 
-        // Try music library first (for onsite mode or as fallback)
-        if ($sunoMode === 'onsite' || $sunoMode !== 'api') {
+        // Try music library first (for any mode except explicit API-only)
+        if ($sunoMode !== 'api') {
             $music = MetalXMusicLibrary::active()
                 ->byStyle($plan->music_style)
                 ->leastUsed()
@@ -235,32 +235,48 @@ class ContentPlanService
 
     /**
      * Generate AI metadata for the video.
+     * Note: YouTubeMetadataAiService::generateMetadata() expects a MetalXVideo model,
+     * so we generate a simple metadata set from the plan's topic prompt instead.
      */
     protected function generateMetadata(MetalXContentPlan $plan): array
     {
+        $channelName = $plan->channel?->name ?? 'Metal-X';
+        $topicPrompt = $plan->topic_prompt;
+        $style = $plan->music_style;
+        $number = ($plan->total_generated ?? 0) + 1;
+
+        // Generate a descriptive title and description from the topic prompt
+        $title = Str::limit($topicPrompt, 80) . " #{$number}";
+        $description = "{$topicPrompt}\n\n🎵 {$channelName} | Style: {$style}\n#metal #music #{$style}";
+        $tags = [$channelName, $style, 'music', 'metal', 'visualizer', 'thai'];
+
+        // Try AI generation if available
         try {
             $aiService = app(YouTubeMetadataAiService::class);
+            $prompt = "สร้างชื่อวิดีโอ YouTube เป็นภาษาไทย สำหรับช่อง {$channelName}\n"
+                . "หัวข้อ: {$topicPrompt}\nสไตล์เพลง: {$style}\n"
+                . "ตอบเป็น JSON: {\"title_th\": \"...\", \"description_th\": \"...\", \"tags\": [\"...\"]}\n"
+                . 'ตอบ JSON เท่านั้น ไม่ต้องมีข้อความอื่น';
 
-            $result = $aiService->generateMetadata([
-                'topic' => $plan->topic_prompt,
-                'style' => $plan->music_style,
-                'channel_name' => $plan->channel->name ?? 'Metal-X',
-            ]);
+            $response = $aiService->callCustomPrompt($prompt);
 
-            return [
-                'title' => $result['title_th'] ?? $result['title'] ?? null,
-                'description' => $result['description_th'] ?? $result['description'] ?? null,
-                'tags' => $result['tags'] ?? [],
-            ];
+            $parsed = json_decode($response, true);
+            if (json_last_error() === JSON_ERROR_NONE && ! empty($parsed['title_th'])) {
+                return [
+                    'title' => $parsed['title_th'],
+                    'description' => $parsed['description_th'] ?? $description,
+                    'tags' => $parsed['tags'] ?? $tags,
+                ];
+            }
         } catch (\Exception $e) {
             Log::warning("[Content Plan] AI metadata generation failed: {$e->getMessage()}");
-
-            return [
-                'title' => null,
-                'description' => null,
-                'tags' => [],
-            ];
         }
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'tags' => $tags,
+        ];
     }
 
     /**

@@ -131,9 +131,10 @@ class YouTubeMetadataAiService
         $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
         $titleEn = $this->sanitizer->sanitizeForPrompt($video->title ?? '', 200);
         $descriptionEn = $this->sanitizer->sanitizeForPrompt($video->description ?? '', 2000);
-        $tags = $this->sanitizer->sanitizeForPrompt($video->tags ?? '', 500);
+        $tagsString = is_array($video->tags) ? implode(', ', $video->tags) : ($video->tags ?? '');
+        $tags = $this->sanitizer->sanitizeForPrompt($tagsString, 500);
         $channelTitle = $this->sanitizer->sanitizeForPrompt($video->channel_title ?? '', 100);
-        $categoryId = (int) $video->category_id; // Ensure integer
+        $categoryId = $this->sanitizer->sanitizeForPrompt($video->category ?? '', 50);
         $duration = (int) $video->duration; // Ensure integer
 
         return <<<PROMPT
@@ -171,6 +172,14 @@ Respond ONLY with valid JSON in this exact format:
   "category": "category-name"
 }
 PROMPT;
+    }
+
+    /**
+     * Call AI with a custom prompt (public interface for external services).
+     */
+    public function callCustomPrompt(string $prompt): string
+    {
+        return $this->callAi($prompt);
     }
 
     /**

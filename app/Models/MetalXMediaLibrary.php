@@ -25,6 +25,9 @@ class MetalXMediaLibrary extends Model
     protected $casts = [
         'tags' => 'array',
         'is_active' => 'boolean',
+        'file_size' => 'integer',
+        'duration_seconds' => 'integer',
+        'usage_count' => 'integer',
     ];
 
     public const TYPES = [

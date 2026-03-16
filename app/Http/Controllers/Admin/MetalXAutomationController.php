@@ -59,6 +59,8 @@ class MetalXAutomationController extends Controller
         ]);
 
         $validated['is_enabled'] = $request->boolean('is_enabled', true);
+        $validated['frequency_minutes'] = (int) $validated['frequency_minutes'];
+        $validated['max_actions_per_run'] = (int) $validated['max_actions_per_run'];
         $validated['next_run_at'] = now()->addMinutes($validated['frequency_minutes']);
 
         MetalXAutomationSchedule::create($validated);
@@ -81,6 +83,8 @@ class MetalXAutomationController extends Controller
         ]);
 
         $validated['is_enabled'] = $request->boolean('is_enabled');
+        $validated['frequency_minutes'] = (int) $validated['frequency_minutes'];
+        $validated['max_actions_per_run'] = (int) $validated['max_actions_per_run'];
 
         // Recalculate next_run_at if frequency changed
         if ($validated['frequency_minutes'] !== $schedule->frequency_minutes) {

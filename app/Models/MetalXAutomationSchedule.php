@@ -21,6 +21,9 @@ class MetalXAutomationSchedule extends Model
 
     protected $casts = [
         'is_enabled' => 'boolean',
+        'frequency_minutes' => 'integer',
+        'max_actions_per_run' => 'integer',
+        'run_count' => 'integer',
         'last_run_at' => 'datetime',
         'next_run_at' => 'datetime',
         'settings' => 'array',

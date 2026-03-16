@@ -78,7 +78,7 @@ class MetalXEngagementController extends Controller
      */
     public function syncComments(Request $request, MetalXVideo $video)
     {
-        $maxComments = $request->input('max_comments', 100);
+        $maxComments = min(500, max(1, (int) $request->input('max_comments', 100)));
         $processEngagement = $request->boolean('process_engagement', true);
 
         SyncVideoCommentsJob::dispatch($video, $maxComments, $processEngagement);
@@ -95,7 +95,7 @@ class MetalXEngagementController extends Controller
     public function syncAllComments(Request $request)
     {
         $videos = MetalXVideo::where('is_active', true)->get();
-        $maxComments = $request->input('max_comments', 50);
+        $maxComments = min(500, max(1, (int) $request->input('max_comments', 50)));
         $processEngagement = $request->boolean('process_engagement', true);
 
         foreach ($videos as $video) {
