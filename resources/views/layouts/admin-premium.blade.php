@@ -276,6 +276,7 @@
             border-color: rgba(99, 102, 241, 0.2) !important;
         }
     </style>
+    @stack('styles')
 </head>
 <body class="bg-gray-900 overflow-hidden">
     <div class="h-screen flex">

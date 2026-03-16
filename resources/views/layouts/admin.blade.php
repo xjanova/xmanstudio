@@ -18,6 +18,7 @@
     @endif
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 </head>
 <body class="bg-gray-100 overflow-hidden">
     <div class="h-screen flex">
