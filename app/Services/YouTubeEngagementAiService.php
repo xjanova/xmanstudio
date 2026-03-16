@@ -648,6 +648,16 @@ PROMPT;
     }
 
     /**
+     * Generate text from a raw prompt (public interface for callAi + parseJsonResponse).
+     */
+    public function generateFromPrompt(string $prompt): array
+    {
+        $response = $this->callAi($prompt);
+
+        return $this->parseJsonResponse($response);
+    }
+
+    /**
      * Check if AI is configured.
      */
     public function isConfigured(): bool

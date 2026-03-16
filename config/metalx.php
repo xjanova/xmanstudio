@@ -238,6 +238,35 @@ return [
         'sentiment_analysis' => env('METALX_FEATURE_SENTIMENT', true),
         'blacklist_management' => env('METALX_FEATURE_BLACKLIST', true),
         'analytics_tracking' => env('METALX_FEATURE_ANALYTICS', true),
+        'automation_scheduling' => env('METALX_FEATURE_AUTOMATION', true),
+        'promo_comments' => env('METALX_FEATURE_PROMO', true),
+    ],
+
+    /**
+     * Automation & Scheduling Configuration
+     */
+    'automation' => [
+        'enabled' => env('METALX_AUTOMATION_ENABLED', true),
+        'default_frequency_minutes' => env('METALX_DEFAULT_FREQUENCY', 360),
+        'min_interval_minutes' => 15,   // most frequent (every 15 min)
+        'max_interval_minutes' => 1440, // least frequent (once per day)
+
+        // Promo comment settings
+        'promo_comment' => [
+            'require_approval' => env('METALX_PROMO_REQUIRE_APPROVAL', true),
+            'max_per_video_per_day' => env('METALX_PROMO_MAX_PER_VIDEO', 2),
+        ],
+
+        // Daily action limits (prevent API quota exhaustion)
+        'daily_limits' => [
+            'replies' => env('METALX_DAILY_LIMIT_REPLIES', 50),
+            'likes' => env('METALX_DAILY_LIMIT_LIKES', 100),
+            'promo_comments' => env('METALX_DAILY_LIMIT_PROMOS', 10),
+            'moderations' => env('METALX_DAILY_LIMIT_MODERATIONS', 100),
+        ],
+
+        // Log retention (days)
+        'log_retention_days' => env('METALX_LOG_RETENTION_DAYS', 30),
     ],
 
     /**

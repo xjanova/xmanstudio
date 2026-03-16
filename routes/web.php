@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
 use App\Http\Controllers\Admin\MetalXAiController;
+use App\Http\Controllers\Admin\MetalXAutomationController;
 use App\Http\Controllers\Admin\MetalXAnalyticsController;
 use App\Http\Controllers\Admin\MetalXEngagementController;
 use App\Http\Controllers\Admin\MetalXPlaylistController;
@@ -669,6 +670,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
                 Route::post('/comment/{comment}/auto-moderate', [MetalXEngagementController::class, 'autoModerate'])->name('auto-moderate');
                 Route::post('/blacklist/{id}/unblock', [MetalXEngagementController::class, 'unblockChannel'])->name('unblock-channel');
             });
+        });
+
+        // Automation & Scheduling
+        Route::prefix('automation')->name('automation.')->group(function () {
+            Route::get('/', [MetalXAutomationController::class, 'index'])->name('index');
+            Route::post('/schedules', [MetalXAutomationController::class, 'storeSchedule'])->name('store');
+            Route::put('/schedules/{schedule}', [MetalXAutomationController::class, 'updateSchedule'])->name('update');
+            Route::delete('/schedules/{schedule}', [MetalXAutomationController::class, 'destroySchedule'])->name('destroy');
+            Route::post('/schedules/{schedule}/toggle', [MetalXAutomationController::class, 'toggleSchedule'])->name('toggle');
+            Route::post('/schedules/{schedule}/run', [MetalXAutomationController::class, 'runNow'])->name('run');
+            Route::get('/logs', [MetalXAutomationController::class, 'logs'])->name('logs');
+            Route::get('/promo', [MetalXAutomationController::class, 'promoComments'])->name('promo');
+            Route::post('/promo/{video}/generate', [MetalXAutomationController::class, 'generatePromo'])->name('promo.generate');
+            Route::post('/promo/{promo}/approve', [MetalXAutomationController::class, 'approvePromo'])->name('promo.approve');
+            Route::delete('/promo/{promo}', [MetalXAutomationController::class, 'deletePromo'])->name('promo.delete');
         });
 
         // Settings
