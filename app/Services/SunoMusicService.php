@@ -69,7 +69,7 @@ class SunoMusicService
                     'metadata' => $data,
                 ]);
 
-                Log::info("[Suno] Music generation started", [
+                Log::info('[Suno] Music generation started', [
                     'task_id' => $taskId,
                     'callback_url' => $callbackUrl,
                     'prompt_length' => strlen($prompt),
