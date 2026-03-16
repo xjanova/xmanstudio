@@ -1,0 +1,141 @@
+name: Server Diagnostic & Fix
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'check'
+        type: choice
+        options:
+          - check
+          - fix-proc-open
+          - check-ffmpeg
+
+jobs:
+  diagnostic:
+    name: Server Diagnostic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Server Diagnostic
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 3m
+          script: |
+            echo "========================================="
+            echo "  SERVER DIAGNOSTIC - $(date)"
+            echo "========================================="
+
+            # PHP Version
+            echo ""
+            echo "--- PHP CLI Version ---"
+            php -v | head -1
+
+            echo ""
+            echo "--- PHP-FPM Version ---"
+            php-fpm8.3 -v 2>/dev/null || php-fpm8.2 -v 2>/dev/null || echo "Could not detect PHP-FPM version"
+
+            # Check disabled functions (CLI)
+            echo ""
+            echo "--- PHP CLI disabled_functions ---"
+            php -r "echo ini_get('disable_functions');" | tr ',' '\n' | sort
+            echo ""
+
+            # Check disabled functions (FPM - via web)
+            echo ""
+            echo "--- PHP-FPM disabled_functions (from php.ini) ---"
+            PHP_INI_FPM=$(php-fpm8.3 -i 2>/dev/null | grep "disable_functions" | head -1 || echo "N/A")
+            echo "$PHP_INI_FPM"
+
+            # Find all php.ini files
+            echo ""
+            echo "--- PHP INI file locations ---"
+            php --ini 2>/dev/null
+            echo ""
+            find /etc/php* -name "php.ini" -o -name "*.conf" 2>/dev/null | grep -E "php\.ini|fpm" | head -20
+
+            # Check proc_open specifically
+            echo ""
+            echo "--- proc_open availability ---"
+            php -r "echo function_exists('proc_open') ? 'CLI: proc_open AVAILABLE' : 'CLI: proc_open DISABLED';" && echo ""
+
+            # Check FFmpeg
+            echo ""
+            echo "--- FFmpeg ---"
+            which ffmpeg 2>/dev/null && ffmpeg -version 2>/dev/null | head -1 || echo "FFmpeg NOT FOUND"
+            which ffprobe 2>/dev/null && ffprobe -version 2>/dev/null | head -1 || echo "ffprobe NOT FOUND"
+
+            # Check queue worker
+            echo ""
+            echo "--- Queue Worker Status ---"
+            ps aux | grep "queue:work" | grep -v grep || echo "No queue worker running"
+
+            # Check if proc_open is in FPM disable list
+            echo ""
+            echo "--- Checking FPM php.ini for proc_open ---"
+            FPM_INI=$(find /etc/php* -path "*/fpm/php.ini" 2>/dev/null | head -1)
+            if [ -n "$FPM_INI" ]; then
+              echo "FPM php.ini: $FPM_INI"
+              grep "disable_functions" "$FPM_INI" | head -3
+            else
+              echo "Could not find FPM php.ini"
+              # Try alternate locations
+              find /usr/local/etc/php* /etc/php* /opt/alt/php*/etc/php.d/ -name "*.ini" 2>/dev/null | xargs grep -l "proc_open" 2>/dev/null | head -5
+            fi
+
+            # Action: fix-proc-open
+            if [ "${{ github.event.inputs.action }}" = "fix-proc-open" ]; then
+              echo ""
+              echo "========================================="
+              echo "  FIXING proc_open"
+              echo "========================================="
+
+              # Find the FPM php.ini
+              FPM_INI=$(find /etc/php* -path "*/fpm/php.ini" 2>/dev/null | head -1)
+              CLI_INI=$(find /etc/php* -path "*/cli/php.ini" 2>/dev/null | head -1)
+
+              for INI_FILE in "$FPM_INI" "$CLI_INI"; do
+                if [ -n "$INI_FILE" ] && [ -f "$INI_FILE" ]; then
+                  echo "Processing: $INI_FILE"
+                  # Backup
+                  sudo cp "$INI_FILE" "${INI_FILE}.bak.$(date +%Y%m%d)" 2>/dev/null || true
+                  # Remove proc_open from disable_functions
+                  sudo sed -i 's/proc_open,//g; s/,proc_open//g; s/proc_open//g' "$INI_FILE" 2>/dev/null || true
+                  # Also remove proc_close and proc_get_status
+                  sudo sed -i 's/proc_close,//g; s/,proc_close//g; s/proc_close//g' "$INI_FILE" 2>/dev/null || true
+                  sudo sed -i 's/proc_get_status,//g; s/,proc_get_status//g; s/proc_get_status//g' "$INI_FILE" 2>/dev/null || true
+                  echo "Cleaned disable_functions in $INI_FILE"
+                  grep "disable_functions" "$INI_FILE" | head -1
+                fi
+              done
+
+              # Also check for CloudLinux/DirectAdmin custom configs
+              find /opt/alt/php*/etc/php.d/ /etc/php*/*/conf.d/ -name "*.ini" 2>/dev/null | xargs grep -l "proc_open" 2>/dev/null | while read f; do
+                echo "Found proc_open in: $f"
+                sudo sed -i 's/proc_open,//g; s/,proc_open//g; s/proc_open//g' "$f" 2>/dev/null || true
+                sudo sed -i 's/proc_close,//g; s/,proc_close//g; s/proc_close//g' "$f" 2>/dev/null || true
+                echo "Cleaned: $f"
+              done
+
+              # Restart PHP-FPM
+              echo ""
+              echo "Restarting PHP-FPM..."
+              sudo systemctl restart php8.3-fpm 2>/dev/null || \
+              sudo systemctl restart php8.2-fpm 2>/dev/null || \
+              sudo systemctl restart php-fpm 2>/dev/null || \
+              echo "Could not restart PHP-FPM"
+
+              echo ""
+              echo "--- Verify fix ---"
+              php -r "echo function_exists('proc_open') ? 'CLI: proc_open AVAILABLE' : 'CLI: proc_open STILL DISABLED';" && echo ""
+            fi
+
+            echo ""
+            echo "========================================="
+            echo "  DIAGNOSTIC COMPLETE"
+            echo "========================================="
