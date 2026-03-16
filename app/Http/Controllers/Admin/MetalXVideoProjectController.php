@@ -48,8 +48,9 @@ class MetalXVideoProjectController extends Controller
         $templates = VideoRenderService::getTemplates();
         $sunoMode = Setting::getValue('suno_mode', 'api');
         $sunoCreateUrl = Setting::getValue('suno_create_url', 'https://suno.com/create');
+        $freepikCreateUrl = Setting::getValue('freepik_create_url', 'https://www.freepik.com/pikaso/ai-video-generator');
 
-        return view('admin.metal-x.projects.create', compact('channels', 'templates', 'sunoMode', 'sunoCreateUrl'));
+        return view('admin.metal-x.projects.create', compact('channels', 'templates', 'sunoMode', 'sunoCreateUrl', 'freepikCreateUrl'));
     }
 
     public function store(Request $request)
@@ -68,14 +69,38 @@ class MetalXVideoProjectController extends Controller
             'effect' => 'nullable|string|in:ken_burns,slide_left,zoom,none',
             'background_color' => 'nullable|string|max:7',
             'scheduled_at' => 'nullable|date|after:now',
-            'images' => 'required|array|min:1|max:50',
+            'media_mode' => 'nullable|string|in:images,video_clips,mixed',
+            'images' => 'nullable|array|max:50',
             'images.*' => 'image|max:10240',
+            'video_clips' => 'nullable|array|max:20',
+            'video_clips.*' => 'file|mimes:mp4,webm,mov|max:102400', // 100MB
+            'eq_enabled' => 'nullable|boolean',
+            'eq_style' => 'nullable|string|in:showcqt,showwaves,showfreqs,bars',
+            'eq_position' => 'nullable|string|in:top,center,bottom',
+            'eq_height_percent' => 'nullable|integer|min:10|max:50',
+            'eq_opacity' => 'nullable|numeric|min:0.1|max:1.0',
+            'eq_color' => 'nullable|string|max:7',
         ]);
+
+        // At least images or video clips must be provided
+        if (! $request->hasFile('images') && ! $request->hasFile('video_clips')) {
+            return back()->withErrors(['images' => 'กรุณาอัปโหลดรูปภาพหรือคลิปวิดีโออย่างน้อย 1 รายการ'])->withInput();
+        }
 
         // Upload images
         $imagePaths = [];
-        foreach ($request->file('images') as $image) {
-            $imagePaths[] = $image->store('metal-x/project-images', 'local');
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $imagePaths[] = $image->store('metal-x/project-images', 'local');
+            }
+        }
+
+        // Upload video clips
+        $clipPaths = [];
+        if ($request->hasFile('video_clips')) {
+            foreach ($request->file('video_clips') as $clip) {
+                $clipPaths[] = $clip->store('metal-x/project-clips', 'local');
+            }
         }
 
         $project = MetalXVideoProject::create([
@@ -96,6 +121,16 @@ class MetalXVideoProjectController extends Controller
                 'background_color' => $validated['background_color'] ?? '#000000',
             ],
             'images' => $imagePaths,
+            'media_mode' => $validated['media_mode'] ?? 'images',
+            'video_clips' => $clipPaths ?: null,
+            'eq_settings' => $request->input('eq_enabled') ? [
+                'enabled' => true,
+                'style' => $validated['eq_style'] ?? 'showcqt',
+                'position' => $validated['eq_position'] ?? 'bottom',
+                'height_percent' => (int) ($validated['eq_height_percent'] ?? 20),
+                'opacity' => (float) ($validated['eq_opacity'] ?? 0.6),
+                'color' => $validated['eq_color'] ?? '#ff00ff',
+            ] : null,
             'status' => 'draft',
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'created_by' => auth()->id(),
@@ -110,8 +145,9 @@ class MetalXVideoProjectController extends Controller
         $project->load(['channel', 'musicGeneration', 'video', 'createdBy']);
         $sunoMode = Setting::getValue('suno_mode', 'api');
         $sunoCreateUrl = Setting::getValue('suno_create_url', 'https://suno.com/create');
+        $freepikCreateUrl = Setting::getValue('freepik_create_url', 'https://www.freepik.com/pikaso/ai-video-generator');
 
-        return view('admin.metal-x.projects.show', compact('project', 'sunoMode', 'sunoCreateUrl'));
+        return view('admin.metal-x.projects.show', compact('project', 'sunoMode', 'sunoCreateUrl', 'freepikCreateUrl'));
     }
 
     public function edit(MetalXVideoProject $project)
@@ -150,6 +186,15 @@ class MetalXVideoProjectController extends Controller
             'scheduled_at' => 'nullable|date|after:now',
             'new_images' => 'nullable|array|max:50',
             'new_images.*' => 'image|max:10240',
+            'media_mode' => 'nullable|string|in:images,video_clips,mixed',
+            'video_clips' => 'nullable|array|max:20',
+            'video_clips.*' => 'file|mimes:mp4,webm,mov|max:102400', // 100MB
+            'eq_enabled' => 'nullable|boolean',
+            'eq_style' => 'nullable|string|in:showcqt,showwaves,showfreqs,bars',
+            'eq_position' => 'nullable|string|in:top,center,bottom',
+            'eq_height_percent' => 'nullable|integer|min:10|max:50',
+            'eq_opacity' => 'nullable|numeric|min:0.1|max:1.0',
+            'eq_color' => 'nullable|string|max:7',
         ]);
 
         // Handle new images
@@ -157,6 +202,14 @@ class MetalXVideoProjectController extends Controller
         if ($request->hasFile('new_images')) {
             foreach ($request->file('new_images') as $image) {
                 $imagePaths[] = $image->store('metal-x/project-images', 'local');
+            }
+        }
+
+        // Handle video clips
+        $clipPaths = $project->video_clips ?? [];
+        if ($request->hasFile('video_clips')) {
+            foreach ($request->file('video_clips') as $clip) {
+                $clipPaths[] = $clip->store('metal-x/project-clips', 'local');
             }
         }
 
@@ -178,6 +231,16 @@ class MetalXVideoProjectController extends Controller
                 'background_color' => $validated['background_color'] ?? '#000000',
             ],
             'images' => $imagePaths,
+            'media_mode' => $validated['media_mode'] ?? 'images',
+            'video_clips' => $clipPaths ?: null,
+            'eq_settings' => $request->input('eq_enabled') ? [
+                'enabled' => true,
+                'style' => $validated['eq_style'] ?? 'showcqt',
+                'position' => $validated['eq_position'] ?? 'bottom',
+                'height_percent' => (int) ($validated['eq_height_percent'] ?? 20),
+                'opacity' => (float) ($validated['eq_opacity'] ?? 0.6),
+                'color' => $validated['eq_color'] ?? '#ff00ff',
+            ] : null,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'status' => 'draft',
             'error_message' => null,
@@ -193,6 +256,12 @@ class MetalXVideoProjectController extends Controller
         if ($project->images) {
             foreach ($project->images as $image) {
                 Storage::disk('local')->delete($image);
+            }
+        }
+
+        if ($project->video_clips) {
+            foreach ($project->video_clips as $clip) {
+                Storage::disk('local')->delete($clip);
             }
         }
 
@@ -339,6 +408,36 @@ class MetalXVideoProjectController extends Controller
             'success' => true,
             'message' => 'อัปโหลดเพลงสำเร็จ! พร้อมเรนเดอร์วิดีโอ',
             'audio_path' => $path,
+        ]);
+    }
+
+    /**
+     * Upload video clips (Freepik AI clips).
+     */
+    public function uploadVideoClips(Request $request, MetalXVideoProject $project)
+    {
+        $request->validate([
+            'video_clips' => 'required|array|min:1|max:20',
+            'video_clips.*' => 'file|mimes:mp4,webm,mov|max:102400',
+        ]);
+
+        if (! in_array($project->status, ['draft', 'failed', 'music_ready'])) {
+            return response()->json(['success' => false, 'message' => 'สถานะไม่อนุญาตให้อัปโหลด'], 422);
+        }
+
+        $clipPaths = $project->video_clips ?? [];
+        foreach ($request->file('video_clips') as $clip) {
+            $clipPaths[] = $clip->store('metal-x/project-clips', 'local');
+        }
+
+        $project->update([
+            'video_clips' => $clipPaths,
+            'media_mode' => count($project->images ?? []) > 0 ? 'mixed' : 'video_clips',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'อัปโหลดคลิปวิดีโอสำเร็จ! (' . count($clipPaths) . ' คลิป)',
         ]);
     }
 }

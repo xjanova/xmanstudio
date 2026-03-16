@@ -17,7 +17,10 @@ class MetalXVideoProject extends Model
         'privacy_status',
         'template',
         'template_settings',
+        'eq_settings',
         'images',
+        'video_clips',
+        'media_mode',
         'status',
         'video_file_path',
         'video_duration_seconds',
@@ -32,6 +35,8 @@ class MetalXVideoProject extends Model
         'tags' => 'array',
         'template_settings' => 'array',
         'images' => 'array',
+        'video_clips' => 'array',
+        'eq_settings' => 'array',
         'ai_metadata_generated' => 'boolean',
         'scheduled_at' => 'datetime',
         'published_at' => 'datetime',
@@ -42,6 +47,7 @@ class MetalXVideoProject extends Model
         'draft' => 'แบบร่าง',
         'generating_music' => 'กำลังสร้างเพลง',
         'music_ready' => 'เพลงพร้อม',
+        'generating_videos' => 'กำลังสร้างคลิปวิดีโอ',
         'rendering' => 'กำลังเรนเดอร์',
         'rendered' => 'เรนเดอร์เสร็จ',
         'uploading' => 'กำลังอัปโหลด',
@@ -55,6 +61,19 @@ class MetalXVideoProject extends Model
         'slideshow' => 'Slideshow',
         'ken_burns' => 'Ken Burns Effect',
         'zoom_pan' => 'Zoom & Pan',
+    ];
+
+    public const MEDIA_MODES = [
+        'images' => 'ภาพนิ่ง',
+        'video_clips' => 'คลิปวิดีโอ AI (Freepik)',
+        'mixed' => 'ผสม (ภาพ + คลิป)',
+    ];
+
+    public const EQ_STYLES = [
+        'showcqt' => 'Frequency Bars (CQT)',
+        'showwaves' => 'Waveform',
+        'showfreqs' => 'Spectrum Bars',
+        'bars' => 'Custom Bars',
     ];
 
     // Relationships
@@ -113,6 +132,7 @@ class MetalXVideoProject extends Model
             'draft' => 'gray',
             'generating_music' => 'yellow',
             'music_ready' => 'blue',
+            'generating_videos' => 'orange',
             'rendering' => 'yellow',
             'rendered' => 'indigo',
             'uploading' => 'yellow',
@@ -131,5 +151,39 @@ class MetalXVideoProject extends Model
     public function getTemplateSetting(string $key, $default = null)
     {
         return data_get($this->template_settings, $key, $default);
+    }
+
+    public function hasVideoClips(): bool
+    {
+        return ! empty($this->video_clips);
+    }
+
+    public function isEqEnabled(): bool
+    {
+        return (bool) data_get($this->eq_settings, 'enabled', false);
+    }
+
+    /**
+     * Get combined list of images and video clips with type info.
+     */
+    public function getMediaItems(): array
+    {
+        $items = [];
+
+        foreach ($this->images ?? [] as $image) {
+            $items[] = [
+                'type' => 'image',
+                'path' => $image,
+            ];
+        }
+
+        foreach ($this->video_clips ?? [] as $clip) {
+            $items[] = [
+                'type' => 'video_clip',
+                'path' => $clip,
+            ];
+        }
+
+        return $items;
     }
 }

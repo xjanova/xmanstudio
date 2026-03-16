@@ -31,9 +31,32 @@ class VideoRenderService
     public function render(MetalXVideoProject $project): string
     {
         $images = $project->images ?? [];
+        $videoClips = $project->video_clips ?? [];
+        $mediaMode = $project->media_mode ?? 'images';
+        $eqSettings = $project->eq_settings ?? null;
         $audioPath = $project->musicGeneration?->audio_path;
 
-        if (empty($images)) {
+        // Build media items array based on mode
+        $mediaItems = [];
+
+        if ($mediaMode === 'images' || $mediaMode === 'mixed') {
+            foreach ($images as $img) {
+                $mediaItems[] = ['path' => $img, 'type' => 'image'];
+            }
+        }
+        if ($mediaMode === 'video_clips' || $mediaMode === 'mixed') {
+            foreach ($videoClips as $clip) {
+                $mediaItems[] = ['path' => $clip, 'type' => 'video'];
+            }
+        }
+        // Fallback: if no media items resolved, use images
+        if (empty($mediaItems) && ! empty($images)) {
+            foreach ($images as $img) {
+                $mediaItems[] = ['path' => $img, 'type' => 'image'];
+            }
+        }
+
+        if (empty($mediaItems)) {
             throw new \RuntimeException('No images provided for rendering');
         }
 
@@ -62,7 +85,7 @@ class VideoRenderService
 
         // Build FFmpeg command
         $command = $this->buildFfmpegCommand(
-            $images,
+            $mediaItems,
             $audioFullPath,
             $outputFullPath,
             (int) $width,
@@ -73,6 +96,7 @@ class VideoRenderService
             $effect,
             $bgColor,
             $audioDuration,
+            $eqSettings,
         );
 
         Log::info("[VideoRender] Starting render for project {$project->id}");
@@ -101,9 +125,12 @@ class VideoRenderService
 
     /**
      * Build the FFmpeg command for rendering.
+     *
+     * @param  array  $mediaItems  Each item: ['path' => '...', 'type' => 'image'|'video']
+     * @param  ?array  $eqSettings  EQ overlay configuration (null = disabled)
      */
     protected function buildFfmpegCommand(
-        array $images,
+        array $mediaItems,
         string $audioPath,
         string $outputPath,
         int $width,
@@ -114,58 +141,83 @@ class VideoRenderService
         string $effect,
         string $bgColor,
         ?float $audioDuration,
+        ?array $eqSettings = null,
     ): string {
-        $imageCount = count($images);
+        $mediaCount = count($mediaItems);
 
         // If we have audio duration, adjust slide timing to fill
         if ($audioDuration && $audioDuration > 0) {
-            $slideDuration = $audioDuration / $imageCount;
+            $slideDuration = $audioDuration / $mediaCount;
         }
 
         // Build input arguments
         $inputs = '';
         $filterParts = [];
 
-        foreach ($images as $i => $imagePath) {
-            $fullPath = $this->resolveImagePath($imagePath);
+        foreach ($mediaItems as $i => $media) {
+            $fullPath = $this->resolveMediaPath($media['path']);
             $escapedPath = escapeshellarg($fullPath);
-            $inputs .= " -loop 1 -t {$slideDuration} -i {$escapedPath}";
+            $type = $media['type'] ?? 'image';
 
-            // Scale and pad each image to target resolution
-            $filterParts[] = "[{$i}:v]scale={$width}:{$height}:force_original_aspect_ratio=decrease," .
-                "pad={$width}:{$height}:(ow-iw)/2:(oh-ih)/2:color={$bgColor}," .
-                "setsar=1,fps={$this->fps}" .
-                $this->getEffectFilter($effect, $width, $height, $slideDuration) .
-                "[v{$i}]";
+            if ($type === 'video') {
+                // Video clip input: no -loop flag
+                $inputs .= " -i {$escapedPath}";
+
+                // Trim to slide duration, scale and pad (no zoompan effects)
+                $filterParts[] = "[{$i}:v]trim=duration={$slideDuration},setpts=PTS-STARTPTS," .
+                    "scale={$width}:{$height}:force_original_aspect_ratio=decrease," .
+                    "pad={$width}:{$height}:(ow-iw)/2:(oh-ih)/2:color={$bgColor}," .
+                    "setsar=1,fps={$this->fps}[v{$i}]";
+            } else {
+                // Image input: loop with duration
+                $inputs .= " -loop 1 -t {$slideDuration} -i {$escapedPath}";
+
+                // Scale and pad each image to target resolution with effects
+                $filterParts[] = "[{$i}:v]scale={$width}:{$height}:force_original_aspect_ratio=decrease," .
+                    "pad={$width}:{$height}:(ow-iw)/2:(oh-ih)/2:color={$bgColor}," .
+                    "setsar=1,fps={$this->fps}" .
+                    $this->getEffectFilter($effect, $width, $height, $slideDuration) .
+                    "[v{$i}]";
+            }
         }
 
         // Add audio input
         $escapedAudio = escapeshellarg($audioPath);
         $inputs .= " -i {$escapedAudio}";
-        $audioIndex = $imageCount;
+        $audioIndex = $mediaCount;
 
         // Build concat or xfade filter
         $filter = implode('; ', $filterParts);
 
-        if ($imageCount === 1) {
+        if ($mediaCount === 1) {
             $filter .= '; [v0]null[outv]';
-        } elseif ($transition === 'crossfade' && $imageCount > 1) {
+        } elseif ($transition === 'crossfade' && $mediaCount > 1) {
             // Chain xfade transitions
             $prev = 'v0';
-            for ($i = 1; $i < $imageCount; $i++) {
+            for ($i = 1; $i < $mediaCount; $i++) {
                 $offset = ($i * $slideDuration) - $transitionDuration;
                 $offset = max(0, $offset);
-                $out = ($i < $imageCount - 1) ? "xf{$i}" : 'outv';
+                $out = ($i < $mediaCount - 1) ? "xf{$i}" : 'outv';
                 $filter .= "; [{$prev}][v{$i}]xfade=transition=fade:duration={$transitionDuration}:offset={$offset}[{$out}]";
                 $prev = $out;
             }
         } else {
             // Simple concat
             $concatInputs = '';
-            for ($i = 0; $i < $imageCount; $i++) {
+            for ($i = 0; $i < $mediaCount; $i++) {
                 $concatInputs .= "[v{$i}]";
             }
-            $filter .= "; {$concatInputs}concat=n={$imageCount}:v=1:a=0[outv]";
+            $filter .= "; {$concatInputs}concat=n={$mediaCount}:v=1:a=0[outv]";
+        }
+
+        // Apply EQ overlay if enabled
+        $finalVideoLabel = 'outv';
+        if (! empty($eqSettings) && ($eqSettings['enabled'] ?? false)) {
+            $eqFilter = $this->buildEqOverlayFilter($eqSettings, $width, $height, $audioIndex);
+            if ($eqFilter) {
+                $filter .= '; ' . $eqFilter;
+                $finalVideoLabel = 'finalv';
+            }
         }
 
         $escapedOutput = escapeshellarg($outputPath);
@@ -174,7 +226,7 @@ class VideoRenderService
         $threads = config('metalx.ffmpeg.threads', 2);
 
         return "{$this->ffmpeg}{$inputs} -filter_complex \"{$filter}\" " .
-            "-map \"[outv]\" -map {$audioIndex}:a " .
+            "-map \"[{$finalVideoLabel}]\" -map {$audioIndex}:a " .
             "-c:v {$codec} -preset medium -crf 23 " .
             "-c:a {$audioCodec} -b:a 192k " .
             '-shortest -movflags +faststart ' .
@@ -221,6 +273,14 @@ class VideoRenderService
      */
     protected function resolveImagePath(string $path): string
     {
+        return $this->resolveMediaPath($path);
+    }
+
+    /**
+     * Resolve media path (image or video) to full filesystem path.
+     */
+    protected function resolveMediaPath(string $path): string
+    {
         // If it's already an absolute path
         if (str_starts_with($path, '/') || preg_match('/^[A-Z]:\\\\/i', $path)) {
             return $path;
@@ -237,6 +297,48 @@ class VideoRenderService
         }
 
         return $path;
+    }
+
+    /**
+     * Build FFmpeg filter for EQ/audio visualization overlay.
+     *
+     * @param  array  $eqSettings  Configuration: style, color, opacity, position, height_percent
+     * @param  int  $width  Video width
+     * @param  int  $height  Video height
+     * @param  int  $audioIndex  FFmpeg input index for the audio stream
+     */
+    protected function buildEqOverlayFilter(array $eqSettings, int $width, int $height, int $audioIndex): string
+    {
+        $style = $eqSettings['style'] ?? 'showcqt';
+        $color = $eqSettings['color'] ?? 'white';
+        $opacity = $eqSettings['opacity'] ?? 0.6;
+        $position = $eqSettings['position'] ?? 'bottom';
+        $heightPercent = $eqSettings['height_percent'] ?? 15;
+
+        $eqHeight = max(40, (int) ($height * $heightPercent / 100));
+
+        // Build the visualization filter based on style
+        $vizFilter = match ($style) {
+            'showcqt' => "[{$audioIndex}:a]showcqt=s={$width}x{$eqHeight}:sono_h=0:bar_h={$eqHeight}:sono_g=4:bar_g=4:fontcolor=white@0.0:tc=0.33:tlength=0.5:count=6[eq_raw]",
+            'showwaves' => "[{$audioIndex}:a]showwaves=s={$width}x{$eqHeight}:mode=cline:colors={$color}@{$opacity}:rate={$this->fps}[eq_raw]",
+            'showfreqs' => "[{$audioIndex}:a]showfreqs=s={$width}x{$eqHeight}:mode=bar:fscale=log:win_size=2048[eq_raw]",
+            'bars' => "[{$audioIndex}:a]showcqt=s={$width}x{$eqHeight}:sono_h=0:bar_h={$eqHeight}:sono_g=6:bar_g=6:fontcolor=white@0.0:tc=0.25:tlength=0.4:count=4[eq_raw]",
+            default => "[{$audioIndex}:a]showcqt=s={$width}x{$eqHeight}:sono_h=0:bar_h={$eqHeight}:sono_g=4:bar_g=4:fontcolor=white@0.0:tc=0.33:tlength=0.5:count=6[eq_raw]",
+        };
+
+        // Calculate Y position for overlay
+        $yPosition = match ($position) {
+            'top' => '0',
+            'center' => (string) (($height - $eqHeight) / 2),
+            'bottom' => (string) ($height - $eqHeight),
+            default => (string) ($height - $eqHeight),
+        };
+
+        // Apply transparency and overlay onto video
+        $transparencyFilter = "[eq_raw]colorchannelmixer=aa={$opacity}[eqtrans]";
+        $overlayFilter = "[outv][eqtrans]overlay=0:{$yPosition}:format=auto,format=yuv420p[finalv]";
+
+        return "{$vizFilter}; {$transparencyFilter}; {$overlayFilter}";
     }
 
     /**

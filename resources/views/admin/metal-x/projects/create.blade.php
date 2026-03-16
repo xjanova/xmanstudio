@@ -87,32 +87,78 @@
             </div>
         </div>
 
-        {{-- Step 3: Images --}}
+        {{-- Step 3: Media (Images + Video Clips) --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <span class="w-7 h-7 rounded-full bg-indigo-600 text-white text-sm flex items-center justify-center mr-3">3</span>
-                อัปโหลดรูปภาพสไลด์
+                สื่อวิดีโอ (รูปภาพ / คลิป AI)
             </h3>
-            <div x-data="{ files: [] }" class="space-y-4">
-                <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"
-                     @click="$refs.imageInput.click()">
-                    <svg class="w-10 h-10 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">คลิกเพื่ออัปโหลดรูปภาพ (อย่างน้อย 1 รูป, สูงสุด 50 รูป)</p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">รูปจะสไลด์สลับกันตลอดความยาวเพลง</p>
-                    <input type="file" name="images[]" multiple accept="image/*" required x-ref="imageInput" class="hidden"
-                           @change="files = Array.from($event.target.files)">
+
+            {{-- Media Mode Selector --}}
+            <div x-data="{ mediaMode: '{{ old('media_mode', 'images') }}' }" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ประเภทสื่อ</label>
+                    <div class="flex flex-wrap gap-3">
+                        <label class="flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors"
+                               :class="mediaMode === 'images' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                            <input type="radio" name="media_mode" value="images" x-model="mediaMode" class="sr-only">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span class="text-sm font-medium">ภาพนิ่ง</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors"
+                               :class="mediaMode === 'video_clips' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                            <input type="radio" name="media_mode" value="video_clips" x-model="mediaMode" class="sr-only">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span class="text-sm font-medium">คลิปวิดีโอ AI (Freepik)</span>
+                        </label>
+                        <label class="flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors"
+                               :class="mediaMode === 'mixed' ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                            <input type="radio" name="media_mode" value="mixed" x-model="mediaMode" class="sr-only">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            <span class="text-sm font-medium">ผสม (ภาพ + คลิป)</span>
+                        </label>
+                    </div>
                 </div>
-                <template x-if="files.length > 0">
-                    <p class="text-sm text-green-600 dark:text-green-400" x-text="files.length + ' ไฟล์ถูกเลือก'"></p>
-                </template>
-                @error('images')
-                    <p class="text-red-500 text-xs">{{ $message }}</p>
-                @enderror
-                @error('images.*')
-                    <p class="text-red-500 text-xs">{{ $message }}</p>
-                @enderror
+
+                {{-- Image Upload (shown for images and mixed modes) --}}
+                <div x-show="mediaMode === 'images' || mediaMode === 'mixed'" x-data="{ imageFiles: [] }">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">รูปภาพสไลด์</label>
+                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"
+                         @click="$refs.imageInput.click()">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">คลิกเพื่ออัปโหลดรูปภาพ (1-50 รูป)</p>
+                        <input type="file" name="images[]" multiple accept="image/*" x-ref="imageInput" class="hidden"
+                               :required="mediaMode === 'images'"
+                               @change="imageFiles = Array.from($event.target.files)">
+                    </div>
+                    <template x-if="imageFiles.length > 0">
+                        <p class="text-sm text-green-600 dark:text-green-400 mt-2" x-text="imageFiles.length + ' รูปถูกเลือก'"></p>
+                    </template>
+                </div>
+
+                {{-- Video Clip Upload (shown for video_clips and mixed modes) --}}
+                <div x-show="mediaMode === 'video_clips' || mediaMode === 'mixed'" x-data="{ clipFiles: [] }">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">คลิปวิดีโอ AI</label>
+                    <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 mb-3">
+                        <p class="text-xs text-purple-700 dark:text-purple-300">สร้างคลิปวิดีโอ AI จาก <a href="https://www.freepik.com/pikaso/ai-video-generator" target="_blank" class="underline font-medium">Freepik AI Video Generator</a> แล้วอัปโหลดที่นี่ (MP4, WebM, MOV สูงสุด 100MB ต่อคลิป)</p>
+                    </div>
+                    <div class="border-2 border-dashed border-purple-300 dark:border-purple-600 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 dark:hover:border-purple-500 transition-colors"
+                         @click="$refs.clipInput.click()">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <p class="text-sm text-purple-600 dark:text-purple-400">คลิกเพื่ออัปโหลดคลิปวิดีโอ (1-20 คลิป)</p>
+                        <input type="file" name="video_clips[]" multiple accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" x-ref="clipInput" class="hidden"
+                               :required="mediaMode === 'video_clips'"
+                               @change="clipFiles = Array.from($event.target.files)">
+                    </div>
+                    <template x-if="clipFiles.length > 0">
+                        <p class="text-sm text-purple-600 dark:text-purple-400 mt-2" x-text="clipFiles.length + ' คลิปถูกเลือก'"></p>
+                    </template>
+                </div>
+
+                @error('images') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                @error('images.*') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                @error('video_clips') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                @error('video_clips.*') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
             </div>
         </div>
 
@@ -155,10 +201,62 @@
             </div>
         </div>
 
-        {{-- Step 5: Metadata --}}
+        {{-- Step 5: Visual EQ --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <span class="w-7 h-7 rounded-full bg-indigo-600 text-white text-sm flex items-center justify-center mr-3">5</span>
+                Visual EQ Overlay
+            </h3>
+            <div x-data="{ eqEnabled: {{ old('eq_enabled') ? 'true' : 'false' }} }">
+                <label class="flex items-center gap-3 cursor-pointer mb-4">
+                    <div class="relative">
+                        <input type="checkbox" name="eq_enabled" value="1" x-model="eqEnabled" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer-checked:bg-indigo-600 transition-colors"></div>
+                        <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transform peer-checked:translate-x-5 transition-transform"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">เปิดใช้ Visual Equalizer ซ้อนบนวิดีโอ</span>
+                </label>
+
+                <div x-show="eqEnabled" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สไตล์ EQ</label>
+                        <select name="eq_style" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                            <option value="showcqt" {{ old('eq_style') === 'showcqt' ? 'selected' : '' }}>Frequency Bars (CQT) - แท่งความถี่</option>
+                            <option value="showwaves" {{ old('eq_style') === 'showwaves' ? 'selected' : '' }}>Waveform - คลื่นเสียง</option>
+                            <option value="showfreqs" {{ old('eq_style') === 'showfreqs' ? 'selected' : '' }}>Spectrum Bars - สเปกตรัม</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ตำแหน่ง</label>
+                        <select name="eq_position" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                            <option value="bottom" {{ old('eq_position', 'bottom') === 'bottom' ? 'selected' : '' }}>ด้านล่าง</option>
+                            <option value="top" {{ old('eq_position') === 'top' ? 'selected' : '' }}>ด้านบน</option>
+                            <option value="center" {{ old('eq_position') === 'center' ? 'selected' : '' }}>ตรงกลาง</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ความสูง EQ (<span x-text="$refs.eqHeight?.value || 20"></span>%)</label>
+                        <input type="range" name="eq_height_percent" x-ref="eqHeight" min="10" max="50" value="{{ old('eq_height_percent', 20) }}" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ความโปร่งใส (<span x-text="$refs.eqOpacity?.value || 0.6"></span>)</label>
+                        <input type="range" name="eq_opacity" x-ref="eqOpacity" min="0.1" max="1.0" step="0.1" value="{{ old('eq_opacity', '0.6') }}" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สี EQ</label>
+                        <div class="flex items-center gap-3">
+                            <input type="color" name="eq_color" value="{{ old('eq_color', '#ff00ff') }}" class="w-10 h-10 rounded-lg cursor-pointer border-0">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">ใช้กับ Waveform style</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Step 6: Metadata --}}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <span class="w-7 h-7 rounded-full bg-indigo-600 text-white text-sm flex items-center justify-center mr-3">6</span>
                 ข้อมูลวิดีโอ (สามารถให้ AI สร้างทีหลังได้)
             </h3>
             <div class="space-y-4">

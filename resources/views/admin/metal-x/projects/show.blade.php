@@ -114,6 +114,13 @@
                 </button>
             @endif
 
+            @if(in_array($project->status, ['draft', 'failed', 'music_ready']))
+                <button onclick="document.getElementById('clipUploadPanel').classList.toggle('hidden')" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium inline-flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    อัปโหลดคลิป Freepik
+                </button>
+            @endif
+
             @if($project->status === 'music_ready')
                 <button onclick="actionProject('render')" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm font-medium">เรนเดอร์วิดีโอ</button>
             @endif
@@ -161,6 +168,33 @@
         </div>
     @endif
 
+    {{-- Video Clip Upload Panel --}}
+    @if(in_array($project->status, ['draft', 'failed', 'music_ready']))
+        <div id="clipUploadPanel" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6 border-2 border-dashed border-purple-300 dark:border-purple-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                อัปโหลดคลิปวิดีโอ AI จาก Freepik
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                สร้างคลิปวิดีโอ AI จาก <a href="{{ $freepikCreateUrl ?? 'https://www.freepik.com/pikaso/ai-video-generator' }}" target="_blank" class="text-purple-600 dark:text-purple-400 underline">Freepik AI Video Generator</a>
+                แล้วอัปโหลดที่นี่ (MP4, WebM, MOV สูงสุด 100MB ต่อคลิป)
+            </p>
+            <form id="clipUploadForm" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <input type="file" name="video_clips[]" multiple accept=".mp4,.webm,.mov" required
+                           class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-purple-50 dark:file:bg-purple-900 file:text-purple-700 dark:file:text-purple-200 file:cursor-pointer">
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium inline-flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        อัปโหลดคลิป
+                    </button>
+                    <span id="clipUploadStatus" class="text-sm text-gray-500 dark:text-gray-400 hidden"></span>
+                </div>
+            </form>
+        </div>
+    @endif
+
     {{-- Music Info --}}
     @if($project->musicGeneration)
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
@@ -198,6 +232,28 @@
         </div>
     @endif
 
+    {{-- Video Clips --}}
+    @if($project->video_clips && count($project->video_clips) > 0)
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                คลิปวิดีโอ AI ({{ count($project->video_clips) }} คลิป)
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                @foreach($project->video_clips as $i => $clip)
+                    <div class="aspect-video rounded-lg overflow-hidden bg-gray-900 relative group">
+                        <video class="w-full h-full object-cover" preload="metadata">
+                            <source src="{{ Storage::disk('local')->url($clip) }}">
+                        </video>
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-colors">
+                            <span class="text-white text-xs font-bold bg-purple-600 px-2 py-1 rounded">คลิป {{ $i + 1 }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Template Settings --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">ตั้งค่า Template</h3>
@@ -209,6 +265,29 @@
                 </div>
             @endforeach
         </div>
+
+        @if($project->eq_settings && ($project->eq_settings['enabled'] ?? false))
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                    Visual EQ Overlay
+                </h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400">สไตล์</p>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ \App\Models\MetalXVideoProject::EQ_STYLES[$project->eq_settings['style'] ?? 'showcqt'] ?? $project->eq_settings['style'] }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400">ตำแหน่ง</p>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ $project->eq_settings['position'] ?? 'bottom' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 dark:text-gray-400">ความสูง / โปร่งใส</p>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ $project->eq_settings['height_percent'] ?? 20 }}% / {{ $project->eq_settings['opacity'] ?? 0.6 }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     {{-- Delete --}}
@@ -268,6 +347,44 @@ if (audioForm) {
         submitBtn.disabled = true;
 
         fetch(`{{ url('admin/metal-x/projects') }}/{{ $project->id }}/upload-audio`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                status.textContent = data.message || 'อัปโหลดล้มเหลว';
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(err => {
+            status.textContent = 'เกิดข้อผิดพลาดในการอัปโหลด';
+            submitBtn.disabled = false;
+        });
+    });
+}
+
+// Video clip upload form handler
+const clipForm = document.getElementById('clipUploadForm');
+if (clipForm) {
+    clipForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const status = document.getElementById('clipUploadStatus');
+        const submitBtn = this.querySelector('button[type="submit"]');
+
+        status.classList.remove('hidden');
+        status.textContent = 'กำลังอัปโหลดคลิป...';
+        submitBtn.disabled = true;
+
+        fetch(`{{ url('admin/metal-x/projects') }}/{{ $project->id }}/upload-video-clips`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
