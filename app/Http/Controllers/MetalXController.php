@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MetalXTeamMember;
+use App\Models\MetalXVideo;
 use App\Models\Setting;
 
 class MetalXController extends Controller
@@ -22,6 +23,13 @@ class MetalXController extends Controller
             'youtube_api_key' => Setting::getValue('youtube_api_key'),
         ];
 
-        return view('metal-x.index', compact('teamMembers', 'channelSettings'));
+        // Popular videos with >50K views from database
+        $popularVideos = MetalXVideo::active()
+            ->where('view_count', '>=', 50000)
+            ->orderByDesc('view_count')
+            ->limit(12)
+            ->get();
+
+        return view('metal-x.index', compact('teamMembers', 'channelSettings', 'popularVideos'));
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Controllers\Auth\YouTubeOAuthController;
 use App\Models\MetalXBlacklist;
+use App\Models\MetalXChannel;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
@@ -34,10 +35,28 @@ class YouTubeCommentService
 
     /**
      * Get valid access token with automatic refresh.
+     * If a MetalXChannel is provided, use its per-channel token.
+     * Otherwise fall back to global OAuth token.
      */
-    private function getValidAccessToken(): ?string
+    private function getValidAccessToken(?MetalXChannel $channel = null): ?string
     {
+        if ($channel) {
+            return $channel->getValidAccessToken();
+        }
+
         return YouTubeOAuthController::getValidAccessToken();
+    }
+
+    /**
+     * Resolve the MetalXChannel for a video (for per-channel OAuth).
+     */
+    public function resolveChannel(MetalXVideo $video): ?MetalXChannel
+    {
+        if ($video->metal_x_channel_id) {
+            return MetalXChannel::find($video->metal_x_channel_id);
+        }
+
+        return MetalXChannel::getDefault();
     }
 
     /**
@@ -127,13 +146,14 @@ class YouTubeCommentService
     /**
      * Reply to a comment on YouTube.
      */
-    public function replyToComment(MetalXComment $comment, string $replyText): ?array
+    public function replyToComment(MetalXComment $comment, string $replyText, ?MetalXChannel $channel = null): ?array
     {
         if (! $this->isConfigured()) {
             throw new Exception('YouTube API is not configured');
         }
 
-        $accessToken = $this->getValidAccessToken();
+        $channel = $channel ?? $this->resolveChannelForComment($comment);
+        $accessToken = $this->getValidAccessToken($channel);
         if (empty($accessToken)) {
             throw new Exception('YouTube access token is not configured. Please authenticate via Settings > Integrations > Connect YouTube.');
         }
@@ -160,13 +180,14 @@ class YouTubeCommentService
     /**
      * Like a comment on YouTube.
      */
-    public function likeComment(MetalXComment $comment): bool
+    public function likeComment(MetalXComment $comment, ?MetalXChannel $channel = null): bool
     {
         if (! $this->isConfigured()) {
             throw new Exception('YouTube API is not configured');
         }
 
-        $accessToken = $this->getValidAccessToken();
+        $channel = $channel ?? $this->resolveChannelForComment($comment);
+        $accessToken = $this->getValidAccessToken($channel);
         if (empty($accessToken)) {
             throw new Exception('YouTube access token is not configured. Please authenticate via Settings > Integrations > Connect YouTube.');
         }
@@ -248,11 +269,25 @@ class YouTubeCommentService
     }
 
     /**
+     * Resolve MetalXChannel from a comment's video.
+     */
+    private function resolveChannelForComment(MetalXComment $comment): ?MetalXChannel
+    {
+        $video = $comment->video;
+
+        if ($video) {
+            return $this->resolveChannel($video);
+        }
+
+        return MetalXChannel::getDefault();
+    }
+
+    /**
      * Download caption content (requires OAuth).
      */
-    public function downloadCaption(string $captionId): ?string
+    public function downloadCaption(string $captionId, ?MetalXChannel $channel = null): ?string
     {
-        $accessToken = $this->getValidAccessToken();
+        $accessToken = $this->getValidAccessToken($channel);
         if (empty($accessToken)) {
             throw new Exception('YouTube access token is not configured. Please authenticate via Settings > Integrations > Connect YouTube.');
         }
@@ -341,13 +376,14 @@ class YouTubeCommentService
     /**
      * Delete comment from YouTube.
      */
-    public function deleteComment(MetalXComment $comment): bool
+    public function deleteComment(MetalXComment $comment, ?MetalXChannel $channel = null): bool
     {
         if (! $this->isConfigured()) {
             throw new Exception('YouTube API is not configured');
         }
 
-        $accessToken = $this->getValidAccessToken();
+        $channel = $channel ?? $this->resolveChannelForComment($comment);
+        $accessToken = $this->getValidAccessToken($channel);
         if (empty($accessToken)) {
             throw new Exception('YouTube access token is not configured. Please authenticate via Settings > Integrations > Connect YouTube.');
         }
@@ -382,14 +418,17 @@ class YouTubeCommentService
     public function blockAndDeleteChannel(
         MetalXComment $comment,
         string $reason,
-        ?int $blockedBy = null
+        ?int $blockedBy = null,
+        ?MetalXChannel $channel = null
     ): array {
         if (! $comment->author_channel_id) {
             throw new Exception('Comment does not have author channel ID');
         }
 
+        $channel = $channel ?? $this->resolveChannelForComment($comment);
+
         // Wrap entire operation in transaction for atomicity
-        return DB::transaction(function () use ($comment, $reason, $blockedBy) {
+        return DB::transaction(function () use ($comment, $reason, $blockedBy, $channel) {
             // Add to blacklist
             $blacklistEntry = MetalXBlacklist::addToBlacklist(
                 $comment->author_channel_id,
@@ -416,7 +455,7 @@ class YouTubeCommentService
                     ]);
 
                     // Try to delete from YouTube
-                    if ($this->deleteComment($authorComment)) {
+                    if ($this->deleteComment($authorComment, $channel)) {
                         $deleted++;
                     } else {
                         // Even if YouTube delete fails, mark as deleted locally

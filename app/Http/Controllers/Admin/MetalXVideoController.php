@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\GenerateVideoMetadataJob;
+use App\Models\MetalXChannel;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
 use App\Services\YouTubeService;
@@ -24,6 +25,11 @@ class MetalXVideoController extends Controller
     public function index(Request $request)
     {
         $query = MetalXVideo::query();
+
+        // Filter by channel
+        if ($channelId = $request->get('channel')) {
+            $query->where('metal_x_channel_id', $channelId);
+        }
 
         // Search
         if ($search = $request->get('search')) {
@@ -60,8 +66,9 @@ class MetalXVideoController extends Controller
         ];
 
         $isApiConfigured = $this->youtubeService->isConfigured();
+        $channels = MetalXChannel::active()->get();
 
-        return view('admin.metal-x.videos.index', compact('videos', 'stats', 'isApiConfigured'));
+        return view('admin.metal-x.videos.index', compact('videos', 'stats', 'isApiConfigured', 'channels'));
     }
 
     /**
@@ -236,7 +243,7 @@ class MetalXVideoController extends Controller
     }
 
     /**
-     * Sync all videos from channel.
+     * Sync all videos from all active channels.
      */
     public function syncAll(Request $request)
     {
@@ -244,25 +251,44 @@ class MetalXVideoController extends Controller
             return back()->with('error', 'YouTube API is not configured');
         }
 
-        $channelId = Setting::getValue('metalx_channel_id');
+        $channels = MetalXChannel::active()->get();
 
-        if (! $channelId) {
-            return back()->with('error', 'Channel ID is not configured. Please set it in Metal-X Settings.');
+        if ($channels->isEmpty()) {
+            // Fallback to legacy single channel setting
+            $channelId = Setting::getValue('metalx_channel_id');
+
+            if (! $channelId) {
+                return back()->with('error', 'No channels configured. Please add channels in Metal-X Settings.');
+            }
+
+            $channels = collect([(object) ['youtube_channel_id' => $channelId, 'id' => null, 'name' => 'Default']]);
         }
 
         $limit = min(500, max(1, (int) $request->get('limit', 50)));
-        $videos = $this->youtubeService->syncChannelVideos($channelId, $limit);
+        $totalVideos = [];
+
+        foreach ($channels as $channel) {
+            $channelModel = $channel instanceof MetalXChannel ? $channel : null;
+            $videos = $this->youtubeService->syncChannelVideos(
+                $channel->youtube_channel_id,
+                $limit,
+                $channelModel
+            );
+            $totalVideos = array_merge($totalVideos, $videos);
+        }
 
         // Dispatch AI metadata generation for videos without Thai metadata
         if (Setting::get('ai_content_generation', false)) {
-            foreach ($videos as $video) {
+            foreach ($totalVideos as $video) {
                 if (empty($video->title_th)) {
                     GenerateVideoMetadataJob::dispatch($video, false, 80.0);
                 }
             }
         }
 
-        return back()->with('success', count($videos) . ' videos synced from YouTube!');
+        $channelNames = $channels->pluck('name')->implode(', ');
+
+        return back()->with('success', count($totalVideos) . " videos synced from {$channels->count()} channels ({$channelNames})!");
     }
 
     /**

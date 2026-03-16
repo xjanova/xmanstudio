@@ -59,45 +59,79 @@
     </div>
 </div>
 
-<!-- Latest Videos Section -->
+<!-- Popular Videos Section -->
 <section class="py-20 bg-gray-50 dark:bg-gray-900" id="videos">
     <div class="container mx-auto px-4">
         <div class="text-center mb-16">
             <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">
-                Latest <span class="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">Music Videos</span>
+                Popular <span class="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">Music Videos</span>
             </h2>
             <p class="text-xl text-gray-600 dark:text-gray-400">
-                Check out our latest releases on YouTube
+                50,000+ views
             </p>
         </div>
 
-        <!-- YouTube Videos Grid -->
-        <div id="youtube-videos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Videos will be loaded via JavaScript if API key is configured -->
-            @if($channelSettings['youtube_api_key'])
-                <div class="col-span-full text-center py-12">
-                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-                    <p class="mt-4 text-gray-600 dark:text-gray-400">Loading videos...</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            @forelse($popularVideos as $video)
+                <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                    <a href="{{ $video->youtube_url }}" target="_blank" rel="noopener noreferrer">
+                        <div class="relative aspect-video overflow-hidden">
+                            <img src="{{ $video->best_thumbnail }}"
+                                 alt="{{ $video->title }}"
+                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                 loading="lazy">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
+                                    <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-2 right-2 bg-black/75 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg font-medium">
+                                {{ $video->formatted_duration }}
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                                {{ $video->title }}
+                            </h3>
+                            @if($video->title_th)
+                                <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-1 mb-2">{{ $video->title_th }}</p>
+                            @endif
+                            <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    {{ $video->formatted_view_count }}
+                                </span>
+                                <span>{{ $video->published_at?->format('d M Y') }}</span>
+                            </div>
+                        </div>
+                    </a>
                 </div>
-            @else
+            @empty
                 <div class="col-span-full text-center py-12">
                     <div class="max-w-md mx-auto">
                         <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                         </svg>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">YouTube API Not Configured</h3>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">No Popular Videos Yet</h3>
                         <p class="text-gray-600 dark:text-gray-400 mb-4">
-                            Please configure YouTube API key in admin settings to display videos automatically.
+                            Sync videos from YouTube to display popular content here.
                         </p>
-                        <a href="{{ $channelSettings['channel_url'] }}" target="_blank" class="inline-flex items-center text-red-600 hover:text-red-700 font-semibold">
-                            Visit Channel
-                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                            </svg>
-                        </a>
+                        @if($channelSettings['channel_url'])
+                            <a href="{{ $channelSettings['channel_url'] }}" target="_blank" class="inline-flex items-center text-red-600 hover:text-red-700 font-semibold">
+                                Visit Channel
+                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
+                        @endif
                     </div>
                 </div>
-            @endif
+            @endforelse
         </div>
     </div>
 </section>
@@ -238,118 +272,4 @@
     </div>
 </section>
 
-@if($channelSettings['youtube_api_key'])
-<!-- YouTube API Script -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const apiKey = '{{ $channelSettings['youtube_api_key'] }}';
-    const channelUrl = '{{ $channelSettings['channel_url'] }}';
-
-    // Extract channel ID or handle from URL
-    const channelId = extractChannelInfo(channelUrl);
-
-    if (channelId) {
-        loadYouTubeVideos(apiKey, channelId);
-    }
-});
-
-function extractChannelInfo(url) {
-    // Extract @handle or channel ID from URL
-    const match = url.match(/@([^\/]+)|channel\/([^\/]+)/);
-    return match ? (match[1] || match[2]) : null;
-}
-
-function loadYouTubeVideos(apiKey, channelInfo) {
-    // First, get the channel ID if we have a handle
-    let endpoint;
-    if (channelInfo.startsWith('@')) {
-        // Use search to find channel by handle
-        endpoint = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${channelInfo}&type=channel&key=${apiKey}`;
-    } else {
-        // Direct channel ID
-        loadVideosFromChannel(apiKey, channelInfo);
-        return;
-    }
-
-    fetch(endpoint)
-        .then(response => response.json())
-        .then(data => {
-            if (data.items && data.items.length > 0) {
-                const channelId = data.items[0].snippet.channelId;
-                loadVideosFromChannel(apiKey, channelId);
-            }
-        })
-        .catch(error => {
-            console.error('Error loading channel:', error);
-            showError();
-        });
-}
-
-function loadVideosFromChannel(apiKey, channelId) {
-    const endpoint = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=6&type=video`;
-
-    fetch(endpoint)
-        .then(response => response.json())
-        .then(data => {
-            if (data.items && data.items.length > 0) {
-                displayVideos(data.items);
-            } else {
-                showError('No videos found');
-            }
-        })
-        .catch(error => {
-            console.error('Error loading videos:', error);
-            showError();
-        });
-}
-
-function displayVideos(videos) {
-    const container = document.getElementById('youtube-videos');
-    container.innerHTML = videos.map(video => `
-        <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-            <a href="https://www.youtube.com/watch?v=${video.id.videoId}" target="_blank" rel="noopener noreferrer">
-                <div class="relative aspect-video overflow-hidden">
-                    <img src="${video.snippet.thumbnails.high.url}"
-                         alt="${video.snippet.title}"
-                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
-                            <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                        ${video.snippet.title}
-                    </h3>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
-                        ${video.snippet.description || 'No description available'}
-                    </p>
-                    <p class="text-gray-500 dark:text-gray-500 text-xs mt-2">
-                        ${new Date(video.snippet.publishedAt).toLocaleDateString()}
-                    </p>
-                </div>
-            </a>
-        </div>
-    `).join('');
-}
-
-function showError(message = 'Unable to load videos') {
-    const container = document.getElementById('youtube-videos');
-    container.innerHTML = `
-        <div class="col-span-full text-center py-12">
-            <div class="max-w-md mx-auto">
-                <svg class="w-16 h-16 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Error Loading Videos</h3>
-                <p class="text-gray-600 dark:text-gray-400">${message}</p>
-            </div>
-        </div>
-    `;
-}
-</script>
-@endif
 @endsection

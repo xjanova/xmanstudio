@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MetalXChannel;
 use App\Models\MetalXPlaylist;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
@@ -267,7 +268,7 @@ class YouTubeService
     /**
      * Import a video from YouTube.
      */
-    public function importVideo(string $videoId): ?MetalXVideo
+    public function importVideo(string $videoId, ?MetalXChannel $channel = null): ?MetalXVideo
     {
         $details = $this->getVideoDetails($videoId);
 
@@ -275,24 +276,36 @@ class YouTubeService
             return null;
         }
 
+        $data = $this->mapVideoData($details);
+
+        if ($channel) {
+            $data['metal_x_channel_id'] = $channel->id;
+        }
+
         return MetalXVideo::updateOrCreate(
             ['youtube_id' => $videoId],
-            $this->mapVideoData($details)
+            $data
         );
     }
 
     /**
      * Import multiple videos from YouTube.
      */
-    public function importVideos(array $videoIds): array
+    public function importVideos(array $videoIds, ?MetalXChannel $channel = null): array
     {
         $details = $this->getVideosDetails($videoIds);
         $imported = [];
 
         foreach ($details as $detail) {
+            $data = $this->mapVideoData($detail);
+
+            if ($channel) {
+                $data['metal_x_channel_id'] = $channel->id;
+            }
+
             $video = MetalXVideo::updateOrCreate(
                 ['youtube_id' => $detail['id']],
-                $this->mapVideoData($detail)
+                $data
             );
             $imported[] = $video;
         }
@@ -303,7 +316,7 @@ class YouTubeService
     /**
      * Sync all videos from channel.
      */
-    public function syncChannelVideos(string $channelId, int $limit = 100): array
+    public function syncChannelVideos(string $channelId, int $limit = 100, ?MetalXChannel $channel = null): array
     {
         $imported = [];
         $pageToken = null;
@@ -314,7 +327,7 @@ class YouTubeService
             $videoIds = array_map(fn ($item) => $item['id']['videoId'], $result['items']);
 
             if (! empty($videoIds)) {
-                $videos = $this->importVideos($videoIds);
+                $videos = $this->importVideos($videoIds, $channel);
                 $imported = array_merge($imported, $videos);
                 $count += count($videos);
             }

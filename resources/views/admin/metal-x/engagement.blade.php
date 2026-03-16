@@ -65,27 +65,42 @@
     </div>
 </div>
 
-<!-- Filters -->
+<!-- Channel Filter + Filters -->
+@php $channelParam = isset($channelId) && $channelId ? '&channel=' . $channelId : ''; @endphp
 <div class="bg-white rounded-lg shadow p-4 mb-6">
-    <div class="flex flex-wrap gap-2">
-        <a href="?filter=all" class="px-4 py-2 rounded-lg {{ $filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
-            ทั้งหมด
-        </a>
-        <a href="?filter=needs_reply" class="px-4 py-2 rounded-lg {{ $filter === 'needs_reply' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
-            ต้องตอบ ({{ $stats['needs_reply'] }})
-        </a>
-        <a href="?filter=questions" class="px-4 py-2 rounded-lg {{ $filter === 'questions' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
-            คำถาม ({{ $stats['questions'] }})
-        </a>
-        <a href="?filter=negative" class="px-4 py-2 rounded-lg {{ $filter === 'negative' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
-            เชิงลบ
-        </a>
-        <a href="?filter=requires_attention" class="px-4 py-2 rounded-lg {{ $filter === 'requires_attention' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
-            ต้องตรวจสอบ ({{ $stats['requires_attention'] }})
-        </a>
-        <a href="?filter=ai_replied" class="px-4 py-2 rounded-lg {{ $filter === 'ai_replied' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
-            AI ตอบแล้ว ({{ $stats['ai_replied'] }})
-        </a>
+    <div class="flex flex-wrap items-center gap-4">
+        @if(isset($channels) && $channels->count() > 1)
+        <div>
+            <select onchange="window.location.href='?filter={{ $filter }}&channel=' + this.value"
+                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">ทุกช่อง</option>
+                @foreach($channels as $ch)
+                    <option value="{{ $ch->id }}" {{ (isset($channelId) && $channelId == $ch->id) ? 'selected' : '' }}>{{ $ch->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="w-px h-8 bg-gray-200"></div>
+        @endif
+        <div class="flex flex-wrap gap-2">
+            <a href="?filter=all{{ $channelParam }}" class="px-4 py-2 rounded-lg {{ $filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
+                ทั้งหมด
+            </a>
+            <a href="?filter=needs_reply{{ $channelParam }}" class="px-4 py-2 rounded-lg {{ $filter === 'needs_reply' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
+                ต้องตอบ ({{ $stats['needs_reply'] }})
+            </a>
+            <a href="?filter=questions{{ $channelParam }}" class="px-4 py-2 rounded-lg {{ $filter === 'questions' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
+                คำถาม ({{ $stats['questions'] }})
+            </a>
+            <a href="?filter=negative{{ $channelParam }}" class="px-4 py-2 rounded-lg {{ $filter === 'negative' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
+                เชิงลบ
+            </a>
+            <a href="?filter=requires_attention{{ $channelParam }}" class="px-4 py-2 rounded-lg {{ $filter === 'requires_attention' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
+                ต้องตรวจสอบ ({{ $stats['requires_attention'] }})
+            </a>
+            <a href="?filter=ai_replied{{ $channelParam }}" class="px-4 py-2 rounded-lg {{ $filter === 'ai_replied' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' }}">
+                AI ตอบแล้ว ({{ $stats['ai_replied'] }})
+            </a>
+        </div>
     </div>
 </div>
 

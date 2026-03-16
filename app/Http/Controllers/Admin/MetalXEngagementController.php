@@ -9,6 +9,7 @@ use App\Jobs\AutoModerateCommentJob;
 use App\Jobs\ProcessCommentEngagementJob;
 use App\Jobs\SyncVideoCommentsJob;
 use App\Models\MetalXBlacklist;
+use App\Models\MetalXChannel;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use App\Services\YouTubeCommentService;
@@ -36,8 +37,14 @@ class MetalXEngagementController extends Controller
     public function index(Request $request)
     {
         $filter = $request->get('filter', 'all');
+        $channelId = $request->get('channel');
 
         $query = MetalXComment::with('video')->topLevel();
+
+        // Filter by channel
+        if ($channelId) {
+            $query->whereHas('video', fn ($q) => $q->where('metal_x_channel_id', $channelId));
+        }
 
         switch ($filter) {
             case 'needs_reply':
@@ -57,20 +64,27 @@ class MetalXEngagementController extends Controller
                 break;
         }
 
-        $comments = $query->latest()->paginate(20);
+        $comments = $query->latest()->paginate(20)->withQueryString();
 
-        // Statistics
+        // Build stats query scoped to channel if filtered
+        $statsBase = MetalXComment::topLevel();
+        if ($channelId) {
+            $statsBase = $statsBase->whereHas('video', fn ($q) => $q->where('metal_x_channel_id', $channelId));
+        }
+
         $stats = [
-            'total' => MetalXComment::topLevel()->count(),
-            'needs_reply' => MetalXComment::needsReply()->count(),
-            'ai_replied' => MetalXComment::where('ai_replied', true)->count(),
-            'requires_attention' => MetalXComment::where('requires_attention', true)->count(),
-            'positive' => MetalXComment::positive()->count(),
-            'questions' => MetalXComment::questions()->count(),
-            'liked' => MetalXComment::where('liked_by_channel', true)->count(),
+            'total' => (clone $statsBase)->count(),
+            'needs_reply' => (clone $statsBase)->needsReply()->count(),
+            'ai_replied' => (clone $statsBase)->where('ai_replied', true)->count(),
+            'requires_attention' => (clone $statsBase)->where('requires_attention', true)->count(),
+            'positive' => (clone $statsBase)->positive()->count(),
+            'questions' => (clone $statsBase)->questions()->count(),
+            'liked' => (clone $statsBase)->where('liked_by_channel', true)->count(),
         ];
 
-        return view('admin.metal-x.engagement', compact('comments', 'stats', 'filter'));
+        $channels = MetalXChannel::active()->get();
+
+        return view('admin.metal-x.engagement', compact('comments', 'stats', 'filter', 'channels', 'channelId'));
     }
 
     /**
@@ -94,7 +108,14 @@ class MetalXEngagementController extends Controller
      */
     public function syncAllComments(Request $request)
     {
-        $videos = MetalXVideo::where('is_active', true)->get();
+        $query = MetalXVideo::where('is_active', true);
+
+        // Filter by channel if specified
+        if ($channelId = $request->get('channel')) {
+            $query->where('metal_x_channel_id', $channelId);
+        }
+
+        $videos = $query->get();
         $maxComments = min(500, max(1, (int) $request->input('max_comments', 50)));
         $processEngagement = $request->boolean('process_engagement', true);
 

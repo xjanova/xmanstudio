@@ -145,6 +145,16 @@
             <input type="text" name="search" value="{{ request('search') }}" placeholder="ค้นหาวิดีโอ..."
                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white transition-all">
         </div>
+        @if(isset($channels) && $channels->count() > 1)
+        <div>
+            <select name="channel" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white transition-all">
+                <option value="">ทุกช่อง</option>
+                @foreach($channels as $ch)
+                    <option value="{{ $ch->id }}" {{ request('channel') == $ch->id ? 'selected' : '' }}>{{ $ch->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
         <div>
             <select name="status" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white transition-all">
                 <option value="">ทุกสถานะ</option>
