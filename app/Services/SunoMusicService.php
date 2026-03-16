@@ -61,6 +61,25 @@ class SunoMusicService
 
             if ($response->successful()) {
                 $data = $response->json();
+                $apiCode = $data['code'] ?? null;
+                $apiMsg = $data['msg'] ?? '';
+
+                // Check for API-level errors even on HTTP 200
+                if ($apiCode && $apiCode !== 200) {
+                    $generation->update([
+                        'status' => 'failed',
+                        'error_message' => "Suno API error (code {$apiCode}): {$apiMsg}",
+                        'metadata' => $data,
+                    ]);
+
+                    Log::error('[Suno] API returned error code', [
+                        'code' => $apiCode,
+                        'msg' => $apiMsg,
+                    ]);
+
+                    return $generation;
+                }
+
                 $taskId = $data['data']['taskId'] ?? $data['taskId'] ?? null;
 
                 $generation->update([
@@ -73,10 +92,25 @@ class SunoMusicService
                     'task_id' => $taskId,
                     'callback_url' => $callbackUrl,
                     'prompt_length' => strlen($prompt),
-                    'response_code' => $data['code'] ?? null,
-                    'response_msg' => $data['msg'] ?? null,
+                    'response_code' => $apiCode,
+                    'response_msg' => $apiMsg,
                 ]);
             } else {
+                // Handle HTTP-level errors (429 = insufficient credits, etc.)
+                $data = $response->json() ?? [];
+                $apiMsg = $data['msg'] ?? '';
+
+                if ($response->status() === 429 || str_contains($apiMsg, 'credits')) {
+                    $generation->update([
+                        'status' => 'failed',
+                        'error_message' => 'Suno API credits insufficient — กรุณาเติมเครดิต Suno API',
+                        'metadata' => $data,
+                    ]);
+
+                    Log::error('[Suno] Insufficient credits', ['msg' => $apiMsg]);
+
+                    return $generation;
+                }
                 $errorBody = Str::limit($response->body(), 500);
 
                 $generation->update([
