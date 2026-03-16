@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\MetalXVideo;
-use App\Services\YouTubeMetadataAiService;
+use App\Models\MetalXVideoProject;
+use App\Services\YouTubeEngagementAiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -15,89 +15,59 @@ class GenerateVideoMetadataJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
     public $tries = 3;
 
-    /**
-     * The number of seconds the job can run before timing out.
-     *
-     * @var int
-     */
     public $timeout = 120;
 
-    /**
-     * The video to generate metadata for.
-     *
-     * @var MetalXVideo
-     */
-    protected $video;
+    public function __construct(
+        protected MetalXVideoProject $project,
+    ) {}
 
-    /**
-     * Auto-approve if confidence is high enough.
-     *
-     * @var bool
-     */
-    protected $autoApprove;
-
-    /**
-     * Minimum confidence score for auto-approval.
-     *
-     * @var float
-     */
-    protected $minConfidence;
-
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(MetalXVideo $video, bool $autoApprove = false, float $minConfidence = 80.0)
+    public function handle(YouTubeEngagementAiService $aiService): void
     {
-        $this->video = $video;
-        $this->autoApprove = $autoApprove;
-        $this->minConfidence = $minConfidence;
-    }
+        $musicPrompt = $this->project->getTemplateSetting('music_prompt', '');
+        $musicStyle = $this->project->musicGeneration?->style ?? '';
+        $channelName = $this->project->channel?->name ?? 'Channel';
 
-    /**
-     * Execute the job.
-     */
-    public function handle(YouTubeMetadataAiService $aiService): void
-    {
-        Log::info("Generating AI metadata for video: {$this->video->title_en} (ID: {$this->video->id})");
+        $prompt = <<<PROMPT
+You are a YouTube content creator for the channel "{$channelName}".
+
+Generate metadata for a music video being uploaded to YouTube:
+
+Music Style: {$musicStyle}
+Music Theme/Prompt: {$musicPrompt}
+Video Type: Visualizer with sliding images
+
+Generate an engaging, SEO-optimized metadata in Thai language:
+
+Guidelines:
+1. Title should be catchy and include the music style (max 70 characters)
+2. Description should be 3-5 paragraphs with relevant keywords
+3. Include a call to action (subscribe, like, share)
+4. Generate 10-15 relevant tags
+5. All text in Thai primarily, with English music terms where appropriate
+
+Respond with JSON only:
+{
+  "title": "video title in Thai",
+  "description": "full description in Thai",
+  "tags": ["tag1", "tag2", ...]
+}
+PROMPT;
 
         try {
-            $result = $aiService->generateMetadata($this->video);
+            $result = $aiService->generateFromPrompt($prompt);
 
-            if (! $result['success']) {
-                Log::error("Failed to generate metadata for video {$this->video->id}: {$result['error']}");
-                $this->fail(new \Exception($result['error']));
+            $this->project->update([
+                'title' => $result['title'] ?? $this->project->title,
+                'description' => $result['description'] ?? $this->project->description,
+                'tags' => $result['tags'] ?? $this->project->tags,
+                'ai_metadata_generated' => true,
+            ]);
 
-                return;
-            }
-
-            // Save metadata
-            $aiService->saveMetadata($this->video, $result['metadata'], $result['confidence']);
-
-            Log::info("Generated AI metadata for video {$this->video->id} with confidence score: {$result['confidence']}");
-
-            // Auto-approve if enabled and confidence is high enough
-            if ($this->autoApprove && $result['confidence'] >= $this->minConfidence) {
-                $aiService->approveMetadata($this->video->fresh(), 0); // 0 = system auto-approved
-                Log::info("Auto-approved AI metadata for video {$this->video->id} (confidence: {$result['confidence']})");
-            }
+            Log::info("[GenerateMetadata] AI metadata generated for project {$this->project->id}");
         } catch (\Exception $e) {
-            Log::error("Exception while generating metadata for video {$this->video->id}: " . $e->getMessage());
-            $this->fail($e);
+            Log::error("[GenerateMetadata] Failed for project {$this->project->id}: {$e->getMessage()}");
         }
-    }
-
-    /**
-     * Handle a job failure.
-     */
-    public function failed(\Throwable $exception): void
-    {
-        Log::error("GenerateVideoMetadataJob failed for video {$this->video->id}: " . $exception->getMessage());
     }
 }

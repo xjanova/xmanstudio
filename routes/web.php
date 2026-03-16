@@ -19,11 +19,13 @@ use App\Http\Controllers\Admin\LineSettingsController;
 use App\Http\Controllers\Admin\MetalXAiController;
 use App\Http\Controllers\Admin\MetalXAnalyticsController;
 use App\Http\Controllers\Admin\MetalXAutomationController;
+use App\Http\Controllers\Admin\MetalXChannelController;
 use App\Http\Controllers\Admin\MetalXEngagementController;
 use App\Http\Controllers\Admin\MetalXPlaylistController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\MetalXVideoController;
+use App\Http\Controllers\Admin\MetalXVideoProjectController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductCategoryController;
@@ -686,6 +688,33 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::post('/promo/{video}/generate', [MetalXAutomationController::class, 'generatePromo'])->name('promo.generate');
             Route::post('/promo/{promo}/approve', [MetalXAutomationController::class, 'approvePromo'])->name('promo.approve');
             Route::delete('/promo/{promo}', [MetalXAutomationController::class, 'deletePromo'])->name('promo.delete');
+        });
+
+        // Channels
+        Route::prefix('channels')->name('channels.')->group(function () {
+            Route::get('/', [MetalXChannelController::class, 'index'])->name('index');
+            Route::get('/{channel}/edit', [MetalXChannelController::class, 'edit'])->name('edit');
+            Route::put('/{channel}', [MetalXChannelController::class, 'update'])->name('update');
+            Route::delete('/{channel}', [MetalXChannelController::class, 'destroy'])->name('destroy');
+            Route::post('/{channel}/set-default', [MetalXChannelController::class, 'setDefault'])->name('set-default');
+            Route::post('/{channel}/sync', [MetalXChannelController::class, 'sync'])->name('sync');
+        });
+
+        // Video Projects (Music Creator)
+        Route::prefix('projects')->name('projects.')->group(function () {
+            Route::get('/', [MetalXVideoProjectController::class, 'index'])->name('index');
+            Route::get('/create', [MetalXVideoProjectController::class, 'create'])->name('create');
+            Route::post('/', [MetalXVideoProjectController::class, 'store'])->name('store');
+            Route::get('/{project}', [MetalXVideoProjectController::class, 'show'])->name('show');
+            Route::get('/{project}/edit', [MetalXVideoProjectController::class, 'edit'])->name('edit');
+            Route::put('/{project}', [MetalXVideoProjectController::class, 'update'])->name('update');
+            Route::delete('/{project}', [MetalXVideoProjectController::class, 'destroy'])->name('destroy');
+            Route::post('/{project}/generate-music', [MetalXVideoProjectController::class, 'generateMusic'])->name('generate-music');
+            Route::post('/{project}/generate-metadata', [MetalXVideoProjectController::class, 'generateMetadata'])->name('generate-metadata');
+            Route::post('/{project}/render', [MetalXVideoProjectController::class, 'renderVideo'])->name('render');
+            Route::post('/{project}/upload', [MetalXVideoProjectController::class, 'uploadVideo'])->name('upload');
+            Route::post('/{project}/publish', [MetalXVideoProjectController::class, 'publish'])->name('publish');
+            Route::put('/{project}/template', [MetalXVideoProjectController::class, 'updateTemplate'])->name('update-template');
         });
 
         // Settings

@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('metal_x_channels', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('youtube_channel_id')->unique();
+            $table->string('google_email')->nullable();
+            $table->text('access_token');
+            $table->text('refresh_token')->nullable();
+            $table->timestamp('token_expires_at')->nullable();
+            $table->string('channel_thumbnail_url')->nullable();
+            $table->bigInteger('subscriber_count')->default(0);
+            $table->bigInteger('video_count')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_default')->default(false);
+            $table->json('scopes')->nullable();
+            $table->timestamp('last_synced_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['is_active', 'is_default']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('metal_x_channels');
+    }
+};

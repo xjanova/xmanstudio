@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\MetalXChannel;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -30,9 +31,10 @@ class YouTubeOAuthController extends Controller
         $redirectUri = route('youtube.callback');
 
         // YouTube OAuth scopes
-        // https://www.googleapis.com/auth/youtube - Full YouTube account access
-        // https://www.googleapis.com/auth/youtube.force-ssl - Manage YouTube account (SSL)
-        $scope = 'https://www.googleapis.com/auth/youtube.force-ssl';
+        $scope = implode(' ', [
+            'https://www.googleapis.com/auth/youtube.force-ssl',
+            'https://www.googleapis.com/auth/youtube.upload',
+        ]);
 
         $authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query([
             'response_type' => 'code',
@@ -82,7 +84,7 @@ class YouTubeOAuthController extends Controller
         // Get channel information
         $channelInfo = $this->getChannelInfo($tokenData['access_token']);
 
-        // Store tokens in settings
+        // Store tokens in settings (backward compat)
         try {
             Setting::set('metalx_youtube_access_token', $tokenData['access_token']);
 
@@ -90,16 +92,42 @@ class YouTubeOAuthController extends Controller
                 Setting::set('youtube_refresh_token', $tokenData['refresh_token']);
             }
 
-            // Store token expiration time
             if (isset($tokenData['expires_in'])) {
                 $expiresAt = now()->addSeconds($tokenData['expires_in']);
                 Setting::set('youtube_token_expires_at', $expiresAt->toDateTimeString());
             }
 
-            // Store channel info if available
             if ($channelInfo) {
                 Setting::set('metalx_youtube_channel_id', $channelInfo['id']);
                 Setting::set('metalx_channel_name', $channelInfo['snippet']['title'] ?? 'Unknown Channel');
+
+                // Create or update MetalXChannel record
+                $channelData = [
+                    'name' => $channelInfo['snippet']['title'] ?? 'Unknown Channel',
+                    'access_token' => $tokenData['access_token'],
+                    'refresh_token' => $tokenData['refresh_token'] ?? null,
+                    'token_expires_at' => isset($tokenData['expires_in']) ? now()->addSeconds($tokenData['expires_in']) : null,
+                    'channel_thumbnail_url' => $channelInfo['snippet']['thumbnails']['default']['url'] ?? null,
+                    'subscriber_count' => $channelInfo['statistics']['subscriberCount'] ?? 0,
+                    'video_count' => $channelInfo['statistics']['videoCount'] ?? 0,
+                    'google_email' => $channelInfo['snippet']['customUrl'] ?? null,
+                    'scopes' => [
+                        'https://www.googleapis.com/auth/youtube.force-ssl',
+                        'https://www.googleapis.com/auth/youtube.upload',
+                    ],
+                    'is_active' => true,
+                    'last_synced_at' => now(),
+                ];
+
+                $channel = MetalXChannel::updateOrCreate(
+                    ['youtube_channel_id' => $channelInfo['id']],
+                    $channelData,
+                );
+
+                // Set as default if first channel
+                if (MetalXChannel::count() === 1) {
+                    $channel->update(['is_default' => true]);
+                }
 
                 Log::info('YouTube OAuth successful', [
                     'channel_id' => $channelInfo['id'],
@@ -107,8 +135,8 @@ class YouTubeOAuthController extends Controller
                 ]);
             }
 
-            return redirect()->route('admin.settings.integrations')
-                ->with('success', 'เชื่อมต่อ YouTube Channel สำเร็จ! คุณสามารถใช้งาน YouTube API ได้แล้ว');
+            return redirect()->route('admin.metal-x.channels.index')
+                ->with('success', 'เชื่อมต่อ YouTube Channel สำเร็จ!');
 
         } catch (\Exception $e) {
             Log::error('Failed to store YouTube tokens', [

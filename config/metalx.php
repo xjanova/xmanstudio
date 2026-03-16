@@ -240,6 +240,10 @@ return [
         'analytics_tracking' => env('METALX_FEATURE_ANALYTICS', true),
         'automation_scheduling' => env('METALX_FEATURE_AUTOMATION', true),
         'promo_comments' => env('METALX_FEATURE_PROMO', true),
+        'multi_channel' => env('METALX_FEATURE_MULTI_CHANNEL', true),
+        'video_creation' => env('METALX_FEATURE_VIDEO_CREATION', true),
+        'suno_music' => env('METALX_FEATURE_SUNO_MUSIC', true),
+        'auto_upload' => env('METALX_FEATURE_AUTO_UPLOAD', true),
     ],
 
     /**
@@ -267,6 +271,63 @@ return [
 
         // Log retention (days)
         'log_retention_days' => env('METALX_LOG_RETENTION_DAYS', 30),
+    ],
+
+    /**
+     * Suno AI Music Generation
+     */
+    'suno' => [
+        'api_key' => env('SUNO_API_KEY', ''),
+        'base_url' => env('SUNO_API_URL', 'https://apibox.erweima.ai'),
+        'timeout' => env('SUNO_TIMEOUT', 120),
+        'default_duration' => 60,
+        'default_style' => 'metal',
+    ],
+
+    /**
+     * FFmpeg Video Rendering
+     */
+    'ffmpeg' => [
+        'binary' => env('FFMPEG_BINARY', 'ffmpeg'),
+        'ffprobe_binary' => env('FFPROBE_BINARY', 'ffprobe'),
+        'threads' => env('FFMPEG_THREADS', 2),
+        'timeout' => env('FFMPEG_TIMEOUT', 600),
+        'default_resolution' => '1920x1080',
+        'default_fps' => 30,
+        'output_format' => 'mp4',
+        'codec' => 'libx264',
+        'audio_codec' => 'aac',
+    ],
+
+    /**
+     * Video Templates
+     */
+    'video_templates' => [
+        'visualizer' => [
+            'name' => 'Visualizer',
+            'slide_duration' => 5,
+            'transition' => 'crossfade',
+            'transition_duration' => 1,
+            'effect' => 'ken_burns',
+            'background_color' => '#000000',
+        ],
+        'slideshow' => [
+            'name' => 'Slideshow',
+            'slide_duration' => 4,
+            'transition' => 'fade',
+            'transition_duration' => 0.5,
+            'effect' => 'none',
+            'background_color' => '#1a1a1a',
+        ],
+    ],
+
+    /**
+     * YouTube Upload Settings
+     */
+    'upload' => [
+        'default_category_id' => '10', // Music
+        'default_privacy' => 'private',
+        'chunk_size' => 10 * 1024 * 1024, // 10MB
     ],
 
     /**

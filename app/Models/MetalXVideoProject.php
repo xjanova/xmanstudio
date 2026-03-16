@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class MetalXVideoProject extends Model
+{
+    protected $fillable = [
+        'channel_id',
+        'music_generation_id',
+        'video_id',
+        'title',
+        'description',
+        'tags',
+        'privacy_status',
+        'template',
+        'template_settings',
+        'images',
+        'status',
+        'video_file_path',
+        'video_duration_seconds',
+        'scheduled_at',
+        'published_at',
+        'ai_metadata_generated',
+        'error_message',
+        'created_by',
+    ];
+
+    protected $casts = [
+        'tags' => 'array',
+        'template_settings' => 'array',
+        'images' => 'array',
+        'ai_metadata_generated' => 'boolean',
+        'scheduled_at' => 'datetime',
+        'published_at' => 'datetime',
+        'video_duration_seconds' => 'integer',
+    ];
+
+    public const STATUSES = [
+        'draft' => 'แบบร่าง',
+        'generating_music' => 'กำลังสร้างเพลง',
+        'music_ready' => 'เพลงพร้อม',
+        'rendering' => 'กำลังเรนเดอร์',
+        'rendered' => 'เรนเดอร์เสร็จ',
+        'uploading' => 'กำลังอัปโหลด',
+        'uploaded' => 'อัปโหลดแล้ว',
+        'published' => 'เผยแพร่แล้ว',
+        'failed' => 'ล้มเหลว',
+    ];
+
+    public const TEMPLATES = [
+        'visualizer' => 'Visualizer + ภาพสไลด์',
+        'slideshow' => 'Slideshow',
+        'ken_burns' => 'Ken Burns Effect',
+        'zoom_pan' => 'Zoom & Pan',
+    ];
+
+    // Relationships
+    public function channel(): BelongsTo
+    {
+        return $this->belongsTo(MetalXChannel::class, 'channel_id');
+    }
+
+    public function musicGeneration(): BelongsTo
+    {
+        return $this->belongsTo(MetalXMusicGeneration::class, 'music_generation_id');
+    }
+
+    public function video(): BelongsTo
+    {
+        return $this->belongsTo(MetalXVideo::class, 'video_id');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // Scopes
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
+    }
+
+    public function scopeReady($query)
+    {
+        return $query->whereIn('status', ['music_ready', 'rendered']);
+    }
+
+    public function scopeScheduled($query)
+    {
+        return $query->whereNotNull('scheduled_at')->where('scheduled_at', '>', now());
+    }
+
+    public function scopeReadyToPublish($query)
+    {
+        return $query->where('status', 'rendered')
+            ->whereNotNull('scheduled_at')
+            ->where('scheduled_at', '<=', now());
+    }
+
+    // Accessors
+    public function getStatusLabelAttribute(): string
+    {
+        return self::STATUSES[$this->status] ?? $this->status;
+    }
+
+    public function getStatusColorAttribute(): string
+    {
+        return match ($this->status) {
+            'draft' => 'gray',
+            'generating_music' => 'yellow',
+            'music_ready' => 'blue',
+            'rendering' => 'yellow',
+            'rendered' => 'indigo',
+            'uploading' => 'yellow',
+            'uploaded' => 'green',
+            'published' => 'green',
+            'failed' => 'red',
+            default => 'gray',
+        };
+    }
+
+    public function getTemplateLabelAttribute(): string
+    {
+        return self::TEMPLATES[$this->template] ?? $this->template;
+    }
+
+    public function getTemplateSetting(string $key, $default = null)
+    {
+        return data_get($this->template_settings, $key, $default);
+    }
+}

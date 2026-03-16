@@ -74,3 +74,15 @@ Schedule::call(function () {
     ->name('metalx-cleanup-logs')
     ->dailyAt('03:00')
     ->withoutOverlapping();
+
+// Metal-X: อัปโหลดวิดีโอ Projects ที่ถึงเวลา
+// รันทุก 5 นาที: ตรวจหา projects ที่ status=rendered และ scheduled_at <= now
+Schedule::call(function () {
+    $projects = \App\Models\MetalXVideoProject::readyToPublish()->get();
+    foreach ($projects as $project) {
+        \App\Jobs\UploadVideoJob::dispatch($project);
+    }
+})
+    ->name('metalx-publish-scheduled-videos')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();

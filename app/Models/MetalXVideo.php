@@ -43,6 +43,8 @@ class MetalXVideo extends Model
         'ai_generated_at',
         'ai_approved_at',
         'ai_approved_by',
+        'metal_x_channel_id',
+        'source',
     ];
 
     protected $casts = [
@@ -62,6 +64,14 @@ class MetalXVideo extends Model
         'ai_generated_at' => 'datetime',
         'ai_approved_at' => 'datetime',
     ];
+
+    /**
+     * Get the channel this video belongs to.
+     */
+    public function metalXChannel(): BelongsTo
+    {
+        return $this->belongsTo(MetalXChannel::class, 'metal_x_channel_id');
+    }
 
     /**
      * Get the playlists that contain this video.
