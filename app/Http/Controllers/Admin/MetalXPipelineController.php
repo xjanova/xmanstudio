@@ -7,11 +7,8 @@ use App\Jobs\GenerateMusicJob;
 use App\Jobs\RenderVideoJob;
 use App\Jobs\UploadVideoJob;
 use App\Models\MetalXChannel;
-use App\Models\MetalXMusicGeneration;
 use App\Models\MetalXVideoProject;
 use App\Services\SunoMusicService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class MetalXPipelineController extends Controller

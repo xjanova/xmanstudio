@@ -9,6 +9,7 @@ use App\Models\MetalXVideo;
 use App\Models\Setting;
 use App\Services\YouTubeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MetalXAnalyticsController extends Controller
 {
@@ -99,7 +100,10 @@ class MetalXAnalyticsController extends Controller
             ->get();
 
         // Videos by Month (last 12 months)
-        $videosByMonth = MetalXVideo::selectRaw('DATE_FORMAT(published_at, "%Y-%m") as month, COUNT(*) as count, SUM(view_count) as views, SUM(like_count) as likes')
+        $dateFormat = DB::connection()->getDriverName() === 'sqlite'
+            ? 'strftime("%Y-%m", published_at)'
+            : 'DATE_FORMAT(published_at, "%Y-%m")';
+        $videosByMonth = MetalXVideo::selectRaw("{$dateFormat} as month, COUNT(*) as count, SUM(view_count) as views, SUM(like_count) as likes")
             ->whereNotNull('published_at')
             ->where('published_at', '>=', now()->subMonths(12))
             ->groupBy('month')

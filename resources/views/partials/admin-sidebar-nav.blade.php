@@ -1,17 +1,22 @@
 {{-- Admin Sidebar Navigation (shared across themes) --}}
 {{-- Uses Alpine.js for collapsible sections --}}
 @php
-    $pendingCommissions = \App\Models\AffiliateCommission::where('status', 'pending')->count();
-    $totalUsers = \App\Models\User::count();
-    $newBugReports = \App\Models\BugReport::byStatus('new')->count();
-    $pendingQuotations = \App\Models\Quotation::pending()->count();
-    $pendingPaymentOrders = \App\Models\Order::where('payment_status', 'verifying')->count();
-    $pendingTopups = \App\Models\WalletTopup::where('status', 'pending')->count();
-    $activeDevices = \App\Models\SmsCheckerDevice::where('status', 'active')->count();
-    $pendingOrders = \App\Models\Order::whereNotNull('unique_payment_amount_id')
-        ->whereIn('sms_verification_status', ['pending', 'matched'])
-        ->where('payment_status', '!=', 'paid')
-        ->count();
+    try {
+        $pendingCommissions = \App\Models\AffiliateCommission::where('status', 'pending')->count();
+        $totalUsers = \App\Models\User::count();
+        $newBugReports = \App\Models\BugReport::byStatus('new')->count();
+        $pendingQuotations = \App\Models\Quotation::pending()->count();
+        $pendingPaymentOrders = \App\Models\Order::where('payment_status', 'verifying')->count();
+        $pendingTopups = \App\Models\WalletTopup::where('status', 'pending')->count();
+        $activeDevices = \App\Models\SmsCheckerDevice::where('status', 'active')->count();
+        $pendingOrders = \App\Models\Order::whereNotNull('unique_payment_amount_id')
+            ->whereIn('sms_verification_status', ['pending', 'matched'])
+            ->where('payment_status', '!=', 'paid')
+            ->count();
+    } catch (\Throwable $e) {
+        $pendingCommissions = $totalUsers = $newBugReports = $pendingQuotations = 0;
+        $pendingPaymentOrders = $pendingTopups = $activeDevices = $pendingOrders = 0;
+    }
 @endphp
 
 {{-- Menu link helper class --}}
