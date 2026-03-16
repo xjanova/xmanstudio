@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\MetalXPlaylistController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\MetalXVideoController;
+use App\Http\Controllers\Admin\TeamMemberController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PaymentSettingController;
 use App\Http\Controllers\Admin\ProductCategoryController;
@@ -198,7 +199,11 @@ Route::get('/support/tracking/search', [QuotationController::class, 'trackingSea
 Route::view('/about', 'about')->name('about');
 
 // Team page
-Route::view('/team', 'team')->name('team');
+Route::get('/team', function () {
+    $leaders = \App\Models\TeamMember::active()->leaders()->ordered()->get();
+    $members = \App\Models\TeamMember::active()->members()->ordered()->get();
+    return view('team', compact('leaders', 'members'));
+})->name('team');
 
 // Portfolio page
 Route::view('/portfolio', 'portfolio')->name('portfolio');
@@ -669,6 +674,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         // Settings
         Route::get('/settings', [MetalXSettingsController::class, 'index'])->name('settings');
         Route::post('/settings', [MetalXSettingsController::class, 'update'])->name('settings.update');
+    });
+
+    // Team Members Management
+    Route::prefix('team')->name('team.')->group(function () {
+        Route::get('/', [TeamMemberController::class, 'index'])->name('index');
+        Route::get('/create', [TeamMemberController::class, 'create'])->name('create');
+        Route::post('/', [TeamMemberController::class, 'store'])->name('store');
+        Route::get('/{teamMember}/edit', [TeamMemberController::class, 'edit'])->name('edit');
+        Route::put('/{teamMember}', [TeamMemberController::class, 'update'])->name('update');
+        Route::delete('/{teamMember}', [TeamMemberController::class, 'destroy'])->name('destroy');
     });
 
     // Ads.txt Management
