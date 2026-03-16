@@ -28,7 +28,17 @@
 
         {{-- Music --}}
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">ตั้งค่าเพลง</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <span>ตั้งค่าเพลง</span>
+                <span class="ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ ($sunoMode ?? 'api') === 'onsite' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' }}">
+                    {{ ($sunoMode ?? 'api') === 'onsite' ? 'Onsite Mode' : 'API Mode' }}
+                </span>
+            </h3>
+            @if(($sunoMode ?? 'api') === 'onsite')
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
+                    <p class="text-xs text-amber-700 dark:text-amber-300">โหมด Onsite — ไปสร้างเพลงที่ <a href="{{ $sunoCreateUrl ?? 'https://suno.com/create' }}" target="_blank" class="underline font-medium">suno.com/create</a> แล้วอัปโหลด MP3 ในหน้าโปรเจกต์</p>
+                </div>
+            @endif
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">คำอธิบายเพลง</label>
@@ -37,6 +47,17 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สไตล์เพลง</label>
                     <input type="text" name="music_style" value="{{ old('music_style', $project->getTemplateSetting('music_style')) }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno Model</label>
+                    @php $currentModel = old('music_model', $project->getTemplateSetting('music_model', 'V4')); @endphp
+                    <select name="music_model" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                        <option value="V4" {{ $currentModel === 'V4' ? 'selected' : '' }}>V4 (Standard)</option>
+                        <option value="V4_5" {{ $currentModel === 'V4_5' ? 'selected' : '' }}>V4.5</option>
+                        <option value="V4_5PLUS" {{ $currentModel === 'V4_5PLUS' ? 'selected' : '' }}>V4.5 Plus</option>
+                        <option value="V4_5ALL" {{ $currentModel === 'V4_5ALL' ? 'selected' : '' }}>V4.5 All</option>
+                        <option value="V5" {{ $currentModel === 'V5' ? 'selected' : '' }}>V5 (Latest)</option>
+                    </select>
                 </div>
             </div>
         </div>

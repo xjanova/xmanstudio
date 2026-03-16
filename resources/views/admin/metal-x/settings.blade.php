@@ -96,7 +96,7 @@
         </div>
 
         {{-- Suno AI Music --}}
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6" x-data="{ sunoMode: '{{ old('suno_mode', $settings['suno_mode'] ?? 'api') }}' }">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
                 Suno AI Music
@@ -105,16 +105,57 @@
                 <p class="text-sm text-purple-700 dark:text-purple-300">Suno AI ใช้สร้างเพลงอัตโนมัติสำหรับคลิปวิดีโอ สมัครใช้งานที่ <a href="https://suno.com" target="_blank" class="underline font-medium">suno.com</a></p>
             </div>
             <div class="space-y-4">
+                {{-- Suno Mode Selector --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno API Key</label>
-                    <input type="password" name="suno_api_key" value="{{ old('suno_api_key', $settings['suno_api_key'] ?? '') }}"
-                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="your-suno-api-key">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">โหมดการใช้งาน Suno</label>
+                    <select name="suno_mode" x-model="sunoMode" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="api">API — ใช้ผ่าน Suno API (ต้องมี API Key + เครดิต)</option>
+                        <option value="onsite">Onsite — ใช้ผ่านเว็บ suno.com โดยตรง (อัปโหลดเพลงเอง)</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span x-show="sunoMode === 'api'">ระบบจะเรียก Suno API สร้างเพลงอัตโนมัติ (ต้องมีเครดิต API)</span>
+                        <span x-show="sunoMode === 'onsite'">คุณจะสร้างเพลงที่ suno.com เอง แล้วอัปโหลดไฟล์ MP3 ผ่านหน้าแอดมิน</span>
+                    </p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno API Base URL</label>
-                    <input type="url" name="suno_base_url" value="{{ old('suno_base_url', $settings['suno_base_url'] ?? 'https://apibox.erweima.ai') }}"
-                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ค่าเริ่มต้น: https://apibox.erweima.ai (เปลี่ยนได้ถ้าใช้ API provider อื่น)</p>
+
+                {{-- API Mode Fields --}}
+                <div x-show="sunoMode === 'api'" x-transition class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno API Key</label>
+                        <input type="password" name="suno_api_key" value="{{ old('suno_api_key', $settings['suno_api_key'] ?? '') }}"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="your-suno-api-key">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno API Base URL</label>
+                        <input type="url" name="suno_base_url" value="{{ old('suno_base_url', $settings['suno_base_url'] ?? 'https://apibox.erweima.ai') }}"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ค่าเริ่มต้น: https://apibox.erweima.ai (เปลี่ยนได้ถ้าใช้ API provider อื่น)</p>
+                    </div>
+                </div>
+
+                {{-- Onsite Mode Fields --}}
+                <div x-show="sunoMode === 'onsite'" x-transition class="space-y-4">
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-amber-500 mt-0.5 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div>
+                                <p class="text-sm font-medium text-amber-800 dark:text-amber-200">โหมด Onsite</p>
+                                <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">ใช้เว็บ suno.com สร้างเพลงเอง แล้วอัปโหลดไฟล์ MP3 ในหน้าโปรเจกต์ ไม่ต้องใช้ API Key/เครดิต</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno Account Email</label>
+                        <input type="email" name="suno_email" value="{{ old('suno_email', $settings['suno_email'] ?? '') }}"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="your-email@example.com">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">อีเมลสำหรับ login เข้า suno.com (เก็บไว้เตือนความจำ)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno Create URL</label>
+                        <input type="url" name="suno_create_url" value="{{ old('suno_create_url', $settings['suno_create_url'] ?? 'https://suno.com/create') }}"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ลิงก์ไปหน้าสร้างเพลง Suno (คลิกเปิดตอนต้องการสร้างเพลง)</p>
+                    </div>
                 </div>
             </div>
         </div>

@@ -26,6 +26,18 @@ class GenerateMusicJob implements ShouldQueue
 
     public function handle(SunoMusicService $suno): void
     {
+        // Onsite mode — skip API generation, user will upload audio manually
+        if ($suno->isOnsiteMode()) {
+            $this->project->update([
+                'status' => 'draft',
+                'error_message' => null,
+            ]);
+
+            Log::info("[GenerateMusic] Suno is in onsite mode — skipping API generation for project {$this->project->id}. User must upload audio manually.");
+
+            return;
+        }
+
         if (! $suno->isConfigured()) {
             $this->project->update([
                 'status' => 'failed',
@@ -39,10 +51,11 @@ class GenerateMusicJob implements ShouldQueue
 
         $style = $this->project->getTemplateSetting('music_style', '');
         $duration = $this->project->getTemplateSetting('music_duration', 60);
+        $model = $this->project->getTemplateSetting('music_model', 'V4');
 
         $prompt = $this->project->getTemplateSetting('music_prompt', $this->project->title ?? 'background music');
 
-        $generation = $suno->generateMusic($prompt, $style, $duration);
+        $generation = $suno->generateMusic($prompt, $style, $duration, $model);
 
         $this->project->update(['music_generation_id' => $generation->id]);
 

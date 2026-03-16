@@ -8,7 +8,9 @@ use App\Jobs\GenerateVideoMetadataJob;
 use App\Jobs\RenderVideoJob;
 use App\Jobs\UploadVideoJob;
 use App\Models\MetalXChannel;
+use App\Models\MetalXMusicGeneration;
 use App\Models\MetalXVideoProject;
+use App\Models\Setting;
 use App\Services\VideoRenderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -44,8 +46,10 @@ class MetalXVideoProjectController extends Controller
     {
         $channels = MetalXChannel::active()->orderBy('name')->get();
         $templates = VideoRenderService::getTemplates();
+        $sunoMode = Setting::getValue('suno_mode', 'api');
+        $sunoCreateUrl = Setting::getValue('suno_create_url', 'https://suno.com/create');
 
-        return view('admin.metal-x.projects.create', compact('channels', 'templates'));
+        return view('admin.metal-x.projects.create', compact('channels', 'templates', 'sunoMode', 'sunoCreateUrl'));
     }
 
     public function store(Request $request)
@@ -58,6 +62,7 @@ class MetalXVideoProjectController extends Controller
             'template' => 'required|string|in:' . implode(',', array_keys(MetalXVideoProject::TEMPLATES)),
             'music_prompt' => 'required|string|max:1000',
             'music_style' => 'nullable|string|max:200',
+            'music_model' => 'nullable|string|in:V4,V4_5,V4_5PLUS,V4_5ALL,V5',
             'slide_duration' => 'nullable|numeric|min:2|max:30',
             'transition' => 'nullable|string|in:crossfade,fade,concat',
             'effect' => 'nullable|string|in:ken_burns,slide_left,zoom,none',
@@ -82,6 +87,7 @@ class MetalXVideoProjectController extends Controller
             'template_settings' => [
                 'music_prompt' => $validated['music_prompt'],
                 'music_style' => $validated['music_style'] ?? '',
+                'music_model' => $validated['music_model'] ?? 'V4',
                 'music_duration' => 60,
                 'slide_duration' => $validated['slide_duration'] ?? 5,
                 'transition' => $validated['transition'] ?? 'crossfade',
@@ -102,8 +108,10 @@ class MetalXVideoProjectController extends Controller
     public function show(MetalXVideoProject $project)
     {
         $project->load(['channel', 'musicGeneration', 'video', 'createdBy']);
+        $sunoMode = Setting::getValue('suno_mode', 'api');
+        $sunoCreateUrl = Setting::getValue('suno_create_url', 'https://suno.com/create');
 
-        return view('admin.metal-x.projects.show', compact('project'));
+        return view('admin.metal-x.projects.show', compact('project', 'sunoMode', 'sunoCreateUrl'));
     }
 
     public function edit(MetalXVideoProject $project)
@@ -114,8 +122,10 @@ class MetalXVideoProjectController extends Controller
 
         $channels = MetalXChannel::active()->orderBy('name')->get();
         $templates = VideoRenderService::getTemplates();
+        $sunoMode = Setting::getValue('suno_mode', 'api');
+        $sunoCreateUrl = Setting::getValue('suno_create_url', 'https://suno.com/create');
 
-        return view('admin.metal-x.projects.edit', compact('project', 'channels', 'templates'));
+        return view('admin.metal-x.projects.edit', compact('project', 'channels', 'templates', 'sunoMode', 'sunoCreateUrl'));
     }
 
     public function update(Request $request, MetalXVideoProject $project)
@@ -132,6 +142,7 @@ class MetalXVideoProjectController extends Controller
             'template' => 'required|string|in:' . implode(',', array_keys(MetalXVideoProject::TEMPLATES)),
             'music_prompt' => 'required|string|max:1000',
             'music_style' => 'nullable|string|max:200',
+            'music_model' => 'nullable|string|in:V4,V4_5,V4_5PLUS,V4_5ALL,V5',
             'slide_duration' => 'nullable|numeric|min:2|max:30',
             'transition' => 'nullable|string|in:crossfade,fade,concat',
             'effect' => 'nullable|string|in:ken_burns,slide_left,zoom,none',
@@ -158,6 +169,7 @@ class MetalXVideoProjectController extends Controller
             'template_settings' => [
                 'music_prompt' => $validated['music_prompt'],
                 'music_style' => $validated['music_style'] ?? '',
+                'music_model' => $validated['music_model'] ?? 'V4',
                 'music_duration' => 60,
                 'slide_duration' => $validated['slide_duration'] ?? 5,
                 'transition' => $validated['transition'] ?? 'crossfade',
@@ -244,6 +256,16 @@ class MetalXVideoProjectController extends Controller
             return response()->json(['success' => false, 'message' => 'สถานะไม่ถูกต้อง'], 422);
         }
 
+        $sunoMode = Setting::getValue('suno_mode', 'api');
+
+        // Onsite mode — user must upload audio first
+        if ($sunoMode === 'onsite') {
+            return response()->json([
+                'success' => false,
+                'message' => 'โหมด Onsite — กรุณาสร้างเพลงที่ suno.com แล้วอัปโหลดไฟล์ MP3 ก่อน',
+            ], 422);
+        }
+
         // Auto-generate AI metadata if no title set
         if (empty($project->title) && ! $project->ai_metadata_generated) {
             GenerateVideoMetadataJob::dispatch($project);
@@ -264,5 +286,59 @@ class MetalXVideoProjectController extends Controller
         $project->update(['template_settings' => $validated['template_settings']]);
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Upload audio file manually (Onsite mode).
+     */
+    public function uploadAudio(Request $request, MetalXVideoProject $project)
+    {
+        $request->validate([
+            'audio_file' => 'required|file|mimes:mp3,wav,ogg,m4a,aac|max:51200', // max 50MB
+            'audio_url' => 'nullable|url|max:1000',
+        ]);
+
+        if (! in_array($project->status, ['draft', 'failed', 'generating_music'])) {
+            return response()->json(['success' => false, 'message' => 'สถานะโปรเจกต์ไม่อนุญาตให้อัปโหลดเพลง'], 422);
+        }
+
+        $audioFile = $request->file('audio_file');
+        $path = $audioFile->store('metal-x/music', 'local');
+
+        // Create or update music generation record
+        $generation = $project->musicGeneration;
+        if (! $generation) {
+            $generation = MetalXMusicGeneration::create([
+                'prompt' => $project->getTemplateSetting('music_prompt', 'manual upload'),
+                'style' => $project->getTemplateSetting('music_style', ''),
+                'duration_seconds' => 0,
+                'status' => 'completed',
+                'audio_path' => $path,
+                'audio_url' => $request->input('audio_url'),
+                'metadata' => ['source' => 'onsite_upload', 'original_name' => $audioFile->getClientOriginalName()],
+            ]);
+
+            $project->update(['music_generation_id' => $generation->id]);
+        } else {
+            // Delete old audio file if exists
+            if ($generation->audio_path) {
+                Storage::disk('local')->delete($generation->audio_path);
+            }
+
+            $generation->update([
+                'status' => 'completed',
+                'audio_path' => $path,
+                'audio_url' => $request->input('audio_url'),
+                'metadata' => ['source' => 'onsite_upload', 'original_name' => $audioFile->getClientOriginalName()],
+            ]);
+        }
+
+        $project->update(['status' => 'music_ready']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'อัปโหลดเพลงสำเร็จ! พร้อมเรนเดอร์วิดีโอ',
+            'audio_path' => $path,
+        ]);
     }
 }

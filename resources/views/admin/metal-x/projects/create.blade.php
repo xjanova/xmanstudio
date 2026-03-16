@@ -45,7 +45,23 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <span class="w-7 h-7 rounded-full bg-indigo-600 text-white text-sm flex items-center justify-center mr-3">2</span>
                 ตั้งค่าเพลง (Suno AI)
+                <span class="ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ ($sunoMode ?? 'api') === 'onsite' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' }}">
+                    {{ ($sunoMode ?? 'api') === 'onsite' ? 'Onsite Mode' : 'API Mode' }}
+                </span>
             </h3>
+
+            @if(($sunoMode ?? 'api') === 'onsite')
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-amber-500 mt-0.5 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <p class="text-sm font-medium text-amber-800 dark:text-amber-200">โหมด Onsite — สร้างเพลงที่ suno.com แล้วอัปโหลดเอง</p>
+                            <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">หลังสร้างโปรเจกต์ ไปที่ <a href="{{ $sunoCreateUrl ?? 'https://suno.com/create' }}" target="_blank" class="underline font-medium">suno.com/create</a> สร้างเพลง แล้วดาวน์โหลด MP3 มาอัปโหลดในหน้าโปรเจกต์</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">คำอธิบายเพลง (Prompt)</label>
@@ -57,6 +73,16 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สไตล์เพลง</label>
                     <input type="text" name="music_style" value="{{ old('music_style', 'metal') }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" placeholder="metal, rock, ambient, lo-fi...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno Model</label>
+                    <select name="music_model" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                        <option value="V4" {{ old('music_model', 'V4') === 'V4' ? 'selected' : '' }}>V4 (Standard)</option>
+                        <option value="V4_5" {{ old('music_model') === 'V4_5' ? 'selected' : '' }}>V4.5</option>
+                        <option value="V4_5PLUS" {{ old('music_model') === 'V4_5PLUS' ? 'selected' : '' }}>V4.5 Plus</option>
+                        <option value="V4_5ALL" {{ old('music_model') === 'V4_5ALL' ? 'selected' : '' }}>V4.5 All</option>
+                        <option value="V5" {{ old('music_model') === 'V5' ? 'selected' : '' }}>V5 (Latest)</option>
+                    </select>
                 </div>
             </div>
         </div>

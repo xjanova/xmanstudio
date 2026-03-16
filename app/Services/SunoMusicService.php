@@ -17,22 +17,45 @@ class SunoMusicService
 
     protected int $timeout;
 
+    protected string $mode;
+
     public function __construct()
     {
+        $this->mode = (string) Setting::getValue('suno_mode', 'api');
         $this->apiKey = config('metalx.suno.api_key') ?: (string) Setting::getValue('suno_api_key', '');
         $this->baseUrl = (string) Setting::getValue('suno_base_url') ?: config('metalx.suno.base_url', 'https://api.sunoapi.org');
         $this->timeout = config('metalx.suno.timeout', 120);
     }
 
+    /**
+     * Get the current Suno mode (api or onsite).
+     */
+    public function getMode(): string
+    {
+        return $this->mode;
+    }
+
+    /**
+     * Check if running in onsite (manual) mode.
+     */
+    public function isOnsiteMode(): bool
+    {
+        return $this->mode === 'onsite';
+    }
+
     public function isConfigured(): bool
     {
+        if ($this->isOnsiteMode()) {
+            return true; // Onsite mode is always "configured" — user uploads manually
+        }
+
         return ! empty($this->apiKey);
     }
 
     /**
      * Generate music via Suno API.
      */
-    public function generateMusic(string $prompt, string $style = '', int $durationSeconds = 60): MetalXMusicGeneration
+    public function generateMusic(string $prompt, string $style = '', int $durationSeconds = 60, string $model = 'V4'): MetalXMusicGeneration
     {
         $generation = MetalXMusicGeneration::create([
             'prompt' => $prompt,
@@ -50,7 +73,7 @@ class SunoMusicService
                 'instrumental' => true,
                 'style' => $style ?: 'metal',
                 'title' => 'Generated Track',
-                'model' => 'V4',
+                'model' => $model,
                 'callBackUrl' => $callbackUrl,
             ];
 

@@ -729,6 +729,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::post('/{project}/render', [MetalXVideoProjectController::class, 'renderVideo'])->name('render');
             Route::post('/{project}/upload', [MetalXVideoProjectController::class, 'uploadVideo'])->name('upload');
             Route::post('/{project}/publish', [MetalXVideoProjectController::class, 'publish'])->name('publish');
+            Route::post('/{project}/upload-audio', [MetalXVideoProjectController::class, 'uploadAudio'])->name('upload-audio');
             Route::put('/{project}/template', [MetalXVideoProjectController::class, 'updateTemplate'])->name('update-template');
         });
 

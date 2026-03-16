@@ -84,14 +84,34 @@
 
     {{-- Actions --}}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">การดำเนินการ</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+            <span>การดำเนินการ</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ ($sunoMode ?? 'api') === 'onsite' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' }}">
+                Suno: {{ ($sunoMode ?? 'api') === 'onsite' ? 'Onsite' : 'API' }}
+            </span>
+        </h3>
         <div class="flex flex-wrap gap-3">
             @if(in_array($project->status, ['draft', 'failed']))
-                <button onclick="actionProject('publish')" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 text-sm font-medium">
-                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    เริ่มสร้างทั้งหมด
+                @if(($sunoMode ?? 'api') === 'api')
+                    <button onclick="actionProject('publish')" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 text-sm font-medium">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        เริ่มสร้างทั้งหมด
+                    </button>
+                    <button onclick="actionProject('generate-music')" class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-sm font-medium">สร้างเพลง (API)</button>
+                @else
+                    {{-- Onsite mode: link to suno.com + upload form --}}
+                    <a href="{{ $sunoCreateUrl ?? 'https://suno.com/create' }}" target="_blank" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 text-sm font-medium inline-flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        เปิด Suno.com สร้างเพลง
+                    </a>
+                @endif
+            @endif
+
+            @if(($sunoMode ?? 'api') === 'onsite' && in_array($project->status, ['draft', 'failed', 'generating_music']))
+                <button onclick="document.getElementById('audioUploadPanel').classList.toggle('hidden')" class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-sm font-medium inline-flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    อัปโหลดเพลง (MP3)
                 </button>
-                <button onclick="actionProject('generate-music')" class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-sm font-medium">สร้างเพลง</button>
             @endif
 
             @if($project->status === 'music_ready')
@@ -109,6 +129,37 @@
             @endif
         </div>
     </div>
+
+    {{-- Audio Upload Panel (Onsite Mode) --}}
+    @if(($sunoMode ?? 'api') === 'onsite' && in_array($project->status, ['draft', 'failed', 'generating_music']))
+        <div id="audioUploadPanel" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6 border-2 border-dashed border-purple-300 dark:border-purple-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                อัปโหลดไฟล์เพลงจาก Suno
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">ดาวน์โหลดเพลงจาก suno.com แล้วอัปโหลดที่นี่ (รองรับ MP3, WAV, OGG, M4A, AAC สูงสุด 50MB)</p>
+            <form id="audioUploadForm" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ไฟล์เพลง <span class="text-red-500">*</span></label>
+                    <input type="file" name="audio_file" accept=".mp3,.wav,.ogg,.m4a,.aac" required
+                           class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-purple-50 dark:file:bg-purple-900 file:text-purple-700 dark:file:text-purple-200 file:cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL เพลงจาก Suno (ไม่บังคับ)</label>
+                    <input type="url" name="audio_url" placeholder="https://suno.com/song/..."
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ใส่ลิงก์เพลงจาก Suno เพื่อบันทึกเป็น reference</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium inline-flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        อัปโหลดเพลง
+                    </button>
+                    <span id="uploadStatus" class="text-sm text-gray-500 dark:text-gray-400 hidden"></span>
+                </div>
+            </form>
+        </div>
+    @endif
 
     {{-- Music Info --}}
     @if($project->musicGeneration)
@@ -173,6 +224,9 @@
 @push('scripts')
 <script>
 function actionProject(action) {
+    const notification = document.getElementById('actionNotification');
+    if (notification) notification.remove();
+
     fetch(`{{ url('admin/metal-x/projects') }}/{{ $project->id }}/${action}`, {
         method: 'POST',
         headers: {
@@ -182,10 +236,60 @@ function actionProject(action) {
     })
     .then(r => r.json())
     .then(data => {
-        alert(data.message || 'กำลังดำเนินการ...');
-        setTimeout(() => location.reload(), 2000);
+        showNotification(data.message || 'กำลังดำเนินการ...', data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 2000);
     })
-    .catch(() => alert('เกิดข้อผิดพลาด'));
+    .catch(() => showNotification('เกิดข้อผิดพลาด', 'error'));
+}
+
+function showNotification(message, type = 'success') {
+    const colors = type === 'success'
+        ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200 dark:border-green-700'
+        : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-200 dark:border-red-700';
+    const div = document.createElement('div');
+    div.id = 'actionNotification';
+    div.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg border shadow-lg text-sm font-medium ${colors}`;
+    div.textContent = message;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
+}
+
+// Audio upload form handler (Onsite mode)
+const audioForm = document.getElementById('audioUploadForm');
+if (audioForm) {
+    audioForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const status = document.getElementById('uploadStatus');
+        const submitBtn = this.querySelector('button[type="submit"]');
+
+        status.classList.remove('hidden');
+        status.textContent = 'กำลังอัปโหลด...';
+        submitBtn.disabled = true;
+
+        fetch(`{{ url('admin/metal-x/projects') }}/{{ $project->id }}/upload-audio`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                status.textContent = data.message || 'อัปโหลดล้มเหลว';
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(err => {
+            status.textContent = 'เกิดข้อผิดพลาดในการอัปโหลด';
+            submitBtn.disabled = false;
+        });
+    });
 }
 </script>
 @endpush

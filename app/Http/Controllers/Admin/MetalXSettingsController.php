@@ -26,8 +26,11 @@ class MetalXSettingsController extends Controller
             'youtube_client_secret' => Setting::getValue('youtube_client_secret'),
 
             // Suno AI Music
+            'suno_mode' => Setting::getValue('suno_mode', 'api'),
             'suno_api_key' => Setting::getValue('suno_api_key'),
             'suno_base_url' => Setting::getValue('suno_base_url', 'https://apibox.erweima.ai'),
+            'suno_email' => Setting::getValue('suno_email'),
+            'suno_create_url' => Setting::getValue('suno_create_url', 'https://suno.com/create'),
 
             // AI Provider
             'metalx_ai_provider' => Setting::getValue('metalx_ai_provider', 'groq'),
@@ -65,8 +68,11 @@ class MetalXSettingsController extends Controller
             'youtube_client_secret' => 'nullable|string|max:255',
 
             // Suno AI Music
+            'suno_mode' => 'nullable|string|in:api,onsite',
             'suno_api_key' => 'nullable|string|max:255',
             'suno_base_url' => 'nullable|url|max:255',
+            'suno_email' => 'nullable|email|max:255',
+            'suno_create_url' => 'nullable|url|max:500',
 
             // AI Provider
             'metalx_ai_provider' => 'nullable|string|in:groq,openai,claude,gemini,ollama',
@@ -116,8 +122,11 @@ class MetalXSettingsController extends Controller
         Setting::setValue('youtube_client_secret', $validated['youtube_client_secret'] ?? '', 'string', 'metalx');
 
         // Suno
+        Setting::setValue('suno_mode', $validated['suno_mode'] ?? 'api', 'string', 'metalx');
         Setting::setValue('suno_api_key', $validated['suno_api_key'] ?? '', 'string', 'metalx');
         Setting::setValue('suno_base_url', $validated['suno_base_url'] ?? 'https://apibox.erweima.ai', 'string', 'metalx');
+        Setting::setValue('suno_email', $validated['suno_email'] ?? '', 'string', 'metalx');
+        Setting::setValue('suno_create_url', $validated['suno_create_url'] ?? 'https://suno.com/create', 'string', 'metalx');
 
         // AI Provider
         Setting::setValue('metalx_ai_provider', $validated['metalx_ai_provider'] ?? 'groq', 'string', 'metalx');

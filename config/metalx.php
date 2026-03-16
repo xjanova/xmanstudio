@@ -277,11 +277,13 @@ return [
      * Suno AI Music Generation
      */
     'suno' => [
+        'mode' => env('SUNO_MODE', 'api'), // api or onsite
         'api_key' => env('SUNO_API_KEY', ''),
         'base_url' => env('SUNO_API_URL', 'https://apibox.erweima.ai'),
         'timeout' => env('SUNO_TIMEOUT', 120),
         'default_duration' => 60,
         'default_style' => 'metal',
+        'create_url' => env('SUNO_CREATE_URL', 'https://suno.com/create'),
     ],
 
     /**
