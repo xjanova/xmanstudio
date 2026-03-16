@@ -138,25 +138,48 @@ jobs:
               php -r "echo function_exists('proc_open') ? 'CLI: proc_open AVAILABLE' : 'CLI: proc_open STILL DISABLED';" && echo ""
             fi
 
-            # Action: install-ffmpeg
+            # Action: install-ffmpeg (static binary, no sudo needed)
             if [ "${{ github.event.inputs.action }}" = "install-ffmpeg" ] || [ "${{ github.event.inputs.action }}" = "full-setup" ]; then
               echo ""
               echo "========================================="
-              echo "  INSTALLING FFMPEG"
+              echo "  INSTALLING FFMPEG (static binary)"
               echo "========================================="
 
-              if command -v ffmpeg &>/dev/null; then
-                echo "FFmpeg already installed:"
-                ffmpeg -version | head -1
-              else
-                echo "Installing FFmpeg..."
-                sudo apt-get update -qq
-                sudo apt-get install -y ffmpeg
+              # Use DEPLOY_PATH from secrets or default
+              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+              DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+              BIN_DIR="$DEPLOY_PATH/bin"
+              mkdir -p "$BIN_DIR"
 
-                echo ""
-                echo "--- Verify FFmpeg ---"
-                which ffmpeg && ffmpeg -version | head -1
-                which ffprobe && ffprobe -version | head -1
+              if [ -x "$BIN_DIR/ffmpeg" ]; then
+                echo "FFmpeg already installed at $BIN_DIR/ffmpeg:"
+                "$BIN_DIR/ffmpeg" -version | head -1
+              else
+                echo "Downloading static FFmpeg build..."
+                cd /tmp
+                curl -L -o ffmpeg-release.tar.xz "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz" 2>&1 | tail -1
+                echo "Extracting..."
+                tar xf ffmpeg-release.tar.xz
+                FFMPEG_DIR=$(ls -d ffmpeg-*-amd64-static 2>/dev/null | head -1)
+                if [ -n "$FFMPEG_DIR" ]; then
+                  cp "$FFMPEG_DIR/ffmpeg" "$BIN_DIR/ffmpeg"
+                  cp "$FFMPEG_DIR/ffprobe" "$BIN_DIR/ffprobe"
+                  chmod +x "$BIN_DIR/ffmpeg" "$BIN_DIR/ffprobe"
+                  rm -rf "$FFMPEG_DIR" ffmpeg-release.tar.xz
+                  echo ""
+                  echo "--- Verify FFmpeg ---"
+                  "$BIN_DIR/ffmpeg" -version | head -1
+                  "$BIN_DIR/ffprobe" -version | head -1
+                  echo "FFmpeg installed at: $BIN_DIR/ffmpeg"
+                  echo "FFprobe installed at: $BIN_DIR/ffprobe"
+
+                  # Update Laravel settings to use custom binary paths
+                  cd "$DEPLOY_PATH"
+                  php artisan tinker --execute="\\App\\Models\\Setting::setValue('ffmpeg_binary', '$BIN_DIR/ffmpeg'); \\App\\Models\\Setting::setValue('ffprobe_binary', '$BIN_DIR/ffprobe'); echo 'Settings updated';" 2>/dev/null || echo "Could not update settings via tinker"
+                else
+                  echo "ERROR: Could not extract FFmpeg archive"
+                  ls -la /tmp/ffmpeg* 2>/dev/null
+                fi
               fi
             fi
 
@@ -167,32 +190,12 @@ jobs:
               echo "  SETTING UP QUEUE WORKER"
               echo "========================================="
 
-              # Find the Laravel project directory
-              LARAVEL_DIR=""
-              for dir in /home/*/domains/*/public_html /var/www/*/public_html /var/www/*; do
-                if [ -f "$dir/../artisan" ]; then
-                  LARAVEL_DIR=$(dirname "$dir/../artisan" | xargs realpath)
-                  break
-                fi
-              done
+              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+              DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
 
-              if [ -z "$LARAVEL_DIR" ]; then
-                # Try common paths
-                for dir in /home/*/domains/xman4289.com/public_html; do
-                  if [ -f "$dir/../artisan" ]; then
-                    LARAVEL_DIR=$(realpath "$dir/..")
-                    break
-                  fi
-                done
-              fi
-
-              if [ -z "$LARAVEL_DIR" ]; then
-                echo "ERROR: Could not find Laravel project directory"
-                echo "Searching for artisan..."
-                find /home -name "artisan" -maxdepth 5 2>/dev/null | head -5
-              else
-                echo "Laravel directory: $LARAVEL_DIR"
-                cd "$LARAVEL_DIR"
+              if [ -f "$DEPLOY_PATH/artisan" ]; then
+                echo "Laravel directory: $DEPLOY_PATH"
+                cd "$DEPLOY_PATH"
 
                 # Check if queue worker is already running
                 if ps aux | grep "queue:work" | grep -v grep > /dev/null; then
@@ -206,8 +209,12 @@ jobs:
                   ps aux | grep "queue:work" | grep -v grep || echo "WARNING: Queue worker may not have started"
                 fi
 
+                echo ""
                 echo "Queue worker running via nohup (will stop on server restart)"
-                echo "Consider setting up supervisor for persistence: sudo apt-get install -y supervisor"
+              else
+                echo "ERROR: artisan not found at $DEPLOY_PATH"
+                echo "Searching for artisan..."
+                find /home /var/www -name "artisan" -maxdepth 5 2>/dev/null | head -5
               fi
             fi
 
