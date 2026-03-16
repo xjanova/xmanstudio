@@ -34,7 +34,9 @@ class PuzzleDebugImage extends Model
      */
     public function getImageUrlsAttribute(): array
     {
-        if (!$this->image_paths) return [];
+        if (! $this->image_paths) {
+            return [];
+        }
 
         return array_map(function ($path) {
             return Storage::disk('public')->url($path);

@@ -81,6 +81,7 @@ class PuzzleDebugController extends Controller
         }
 
         $record->delete();
+
         return redirect()->route('admin.puzzle-debug.index')->with('success', 'ลบแล้ว');
     }
 

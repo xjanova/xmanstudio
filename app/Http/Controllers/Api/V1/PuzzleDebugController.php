@@ -28,22 +28,22 @@ class PuzzleDebugController extends Controller
     public function store(Request $request, string $productSlug): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'machine_id'       => 'required|string|max:100',
-            'app_version'      => 'nullable|string|max:20',
-            'timestamp'        => 'nullable|string|max:50',
+            'machine_id' => 'required|string|max:100',
+            'app_version' => 'nullable|string|max:20',
+            'timestamp' => 'nullable|string|max:50',
             'detection_method' => 'nullable|string|max:30',
-            'gap_x'            => 'nullable|integer',
-            'slider_x'         => 'nullable|integer',
-            'drag_dist'        => 'nullable|integer',
-            'track_width'      => 'nullable|integer',
-            'images'           => 'required|array|min:1|max:10',
-            'images.*'         => 'file|image|max:2048', // max 2MB per image
+            'gap_x' => 'nullable|integer',
+            'slider_x' => 'nullable|integer',
+            'drag_dist' => 'nullable|integer',
+            'track_width' => 'nullable|integer',
+            'images' => 'required|array|min:1|max:10',
+            'images.*' => 'file|image|max:2048', // max 2MB per image
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -67,32 +67,32 @@ class PuzzleDebugController extends Controller
 
             // Save record to DB
             $record = PuzzleDebugImage::create([
-                'machine_id'       => $machineId,
-                'app_version'      => $request->input('app_version'),
+                'machine_id' => $machineId,
+                'app_version' => $request->input('app_version'),
                 'detection_method' => $request->input('detection_method'),
-                'gap_x'            => $request->input('gap_x'),
-                'slider_x'         => $request->input('slider_x'),
-                'drag_dist'        => $request->input('drag_dist'),
-                'track_width'      => $request->input('track_width'),
-                'image_paths'      => $savedPaths,
-                'metadata'         => [
-                    'product'   => $productSlug,
+                'gap_x' => $request->input('gap_x'),
+                'slider_x' => $request->input('slider_x'),
+                'drag_dist' => $request->input('drag_dist'),
+                'track_width' => $request->input('track_width'),
+                'image_paths' => $savedPaths,
+                'metadata' => [
+                    'product' => $productSlug,
                     'timestamp' => $request->input('timestamp'),
-                    'ip'        => $request->ip(),
+                    'ip' => $request->ip(),
                 ],
-                'captured_at'      => now(),
+                'captured_at' => now(),
             ]);
 
             Log::info("PuzzleDebug: stored {$record->id} with " . count($savedPaths) . " images from {$shortId}");
 
             return response()->json([
                 'success' => true,
-                'id'      => $record->id,
-                'count'   => count($savedPaths),
+                'id' => $record->id,
+                'count' => count($savedPaths),
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error("PuzzleDebug upload failed: " . $e->getMessage());
+            Log::error('PuzzleDebug upload failed: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -128,12 +128,13 @@ class PuzzleDebugController extends Controller
         // Add image URLs to each record
         $records->getCollection()->transform(function ($record) {
             $record->image_urls = $record->image_urls;
+
             return $record;
         });
 
         return response()->json([
             'success' => true,
-            'data'    => $records,
+            'data' => $records,
         ]);
     }
 
@@ -146,25 +147,25 @@ class PuzzleDebugController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'actual_gap_x' => 'required|integer|min:0|max:3000',
-            'success'      => 'nullable|boolean',
+            'success' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $record = PuzzleDebugImage::findOrFail($id);
         $record->update([
             'actual_gap_x' => $request->input('actual_gap_x'),
-            'success'      => $request->input('success', $record->success),
+            'success' => $request->input('success', $record->success),
         ]);
 
         return response()->json([
             'success' => true,
-            'data'    => $record,
+            'data' => $record,
         ]);
     }
 
@@ -195,16 +196,16 @@ class PuzzleDebugController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'total'       => $total,
-                'labeled'     => $labeled,
-                'unlabeled'   => $unlabeled,
-                'avg_error'   => round($accuracyData->avg_error ?? 0, 1),
+            'data' => [
+                'total' => $total,
+                'labeled' => $labeled,
+                'unlabeled' => $unlabeled,
+                'avg_error' => round($accuracyData->avg_error ?? 0, 1),
                 'within_20px' => $accuracyData->within_20px ?? 0,
                 'accuracy_pct' => $labeled > 0
                     ? round(($accuracyData->within_20px / $labeled) * 100, 1)
                     : 0,
-                'by_method'   => $byMethod,
+                'by_method' => $byMethod,
             ],
         ]);
     }
@@ -222,25 +223,25 @@ class PuzzleDebugController extends Controller
             ->get()
             ->map(function ($record) {
                 return [
-                    'id'               => $record->id,
-                    'machine_id'       => $record->machine_id,
+                    'id' => $record->id,
+                    'machine_id' => $record->machine_id,
                     'detection_method' => $record->detection_method,
-                    'gap_x'            => $record->gap_x,
-                    'actual_gap_x'     => $record->actual_gap_x,
-                    'slider_x'         => $record->slider_x,
-                    'drag_dist'        => $record->drag_dist,
-                    'track_width'      => $record->track_width,
-                    'error_px'         => abs($record->gap_x - $record->actual_gap_x),
-                    'success'          => $record->success,
-                    'image_urls'       => $record->image_urls,
-                    'captured_at'      => $record->captured_at?->toISOString(),
+                    'gap_x' => $record->gap_x,
+                    'actual_gap_x' => $record->actual_gap_x,
+                    'slider_x' => $record->slider_x,
+                    'drag_dist' => $record->drag_dist,
+                    'track_width' => $record->track_width,
+                    'error_px' => abs($record->gap_x - $record->actual_gap_x),
+                    'success' => $record->success,
+                    'image_urls' => $record->image_urls,
+                    'captured_at' => $record->captured_at?->toISOString(),
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'count'   => $records->count(),
-            'data'    => $records,
+            'count' => $records->count(),
+            'data' => $records,
         ]);
     }
 
@@ -253,11 +254,11 @@ class PuzzleDebugController extends Controller
     public function feedback(Request $request, string $productSlug): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'machine_id'       => 'required|string|max:100',
-            'success'          => 'required|boolean',
-            'detected_gap_x'   => 'required|integer',
-            'actual_gap_x'     => 'nullable|integer',
-            'attempt'          => 'nullable|integer',
+            'machine_id' => 'required|string|max:100',
+            'success' => 'required|boolean',
+            'detected_gap_x' => 'required|integer',
+            'actual_gap_x' => 'nullable|integer',
+            'attempt' => 'nullable|integer',
             'detection_method' => 'nullable|string|max:30',
         ]);
 
@@ -278,11 +279,11 @@ class PuzzleDebugController extends Controller
             if ($record) {
                 // Update existing record with feedback
                 $record->update([
-                    'success'      => $request->boolean('success'),
+                    'success' => $request->boolean('success'),
                     'actual_gap_x' => $actualGapX,
-                    'metadata'     => array_merge($record->metadata ?? [], [
+                    'metadata' => array_merge($record->metadata ?? [], [
                         'feedback_attempt' => $request->input('attempt'),
-                        'feedback_at'      => now()->toISOString(),
+                        'feedback_at' => now()->toISOString(),
                     ]),
                 ]);
 
@@ -291,30 +292,31 @@ class PuzzleDebugController extends Controller
             } else {
                 // No recent debug image — create a feedback-only record
                 $record = PuzzleDebugImage::create([
-                    'machine_id'       => $request->input('machine_id'),
-                    'app_version'      => $request->input('app_version'),
+                    'machine_id' => $request->input('machine_id'),
+                    'app_version' => $request->input('app_version'),
                     'detection_method' => $request->input('detection_method'),
-                    'gap_x'            => $detectedGapX,
-                    'actual_gap_x'     => $actualGapX,
-                    'success'          => $request->boolean('success'),
-                    'metadata'         => [
-                        'product'          => $productSlug,
-                        'feedback_only'    => true,
+                    'gap_x' => $detectedGapX,
+                    'actual_gap_x' => $actualGapX,
+                    'success' => $request->boolean('success'),
+                    'metadata' => [
+                        'product' => $productSlug,
+                        'feedback_only' => true,
                         'feedback_attempt' => $request->input('attempt'),
-                        'timestamp'        => $request->input('timestamp'),
+                        'timestamp' => $request->input('timestamp'),
                     ],
-                    'captured_at'      => now(),
+                    'captured_at' => now(),
                 ]);
             }
 
             return response()->json([
                 'success' => true,
-                'id'      => $record->id,
+                'id' => $record->id,
                 'labeled' => $actualGapX !== null,
             ]);
 
         } catch (\Exception $e) {
-            Log::error("PuzzleDebug feedback failed: " . $e->getMessage());
+            Log::error('PuzzleDebug feedback failed: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Feedback failed'], 500);
         }
     }
@@ -330,13 +332,13 @@ class PuzzleDebugController extends Controller
     public function infer(Request $request, string $productSlug): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'machine_id'    => 'required|string|max:100',
-            'slider_x'      => 'required|integer',
-            'slider_y'      => 'required|integer',
-            'move_distance'  => 'required|integer',
-            'track_width'    => 'required|integer',
-            'before'         => 'required|file|image|max:5120',
-            'after'          => 'required|file|image|max:5120',
+            'machine_id' => 'required|string|max:100',
+            'slider_x' => 'required|integer',
+            'slider_y' => 'required|integer',
+            'move_distance' => 'required|integer',
+            'track_width' => 'required|integer',
+            'before' => 'required|file|image|max:5120',
+            'after' => 'required|file|image|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -359,19 +361,19 @@ class PuzzleDebugController extends Controller
 
             // Save record
             $record = PuzzleDebugImage::create([
-                'machine_id'       => $machineId,
-                'app_version'      => $request->input('app_version'),
+                'machine_id' => $machineId,
+                'app_version' => $request->input('app_version'),
                 'detection_method' => 'server_infer',
-                'slider_x'         => $sliderX,
-                'track_width'      => $trackWidth,
-                'image_paths'      => [$beforePath, $afterPath],
-                'metadata'         => [
-                    'product'       => $productSlug,
+                'slider_x' => $sliderX,
+                'track_width' => $trackWidth,
+                'image_paths' => [$beforePath, $afterPath],
+                'metadata' => [
+                    'product' => $productSlug,
                     'move_distance' => (int) $request->input('move_distance'),
-                    'slider_y'      => (int) $request->input('slider_y'),
-                    'inference'     => true,
+                    'slider_y' => (int) $request->input('slider_y'),
+                    'inference' => true,
                 ],
-                'captured_at'      => now(),
+                'captured_at' => now(),
             ]);
 
             // === INFERENCE LOGIC ===
@@ -393,27 +395,28 @@ class PuzzleDebugController extends Controller
                 ]);
 
                 return response()->json([
-                    'success'    => true,
-                    'gap_x'      => $mlResult['gap_x'],
+                    'success' => true,
+                    'gap_x' => $mlResult['gap_x'],
                     'confidence' => $mlResult['confidence'],
-                    'source'     => 'ml_model',
-                    'record_id'  => $record->id,
+                    'source' => 'ml_model',
+                    'record_id' => $record->id,
                 ]);
             }
 
             // Phase 1 fallback: return correction hint (app applies to its own detection)
             return response()->json([
-                'success'    => true,
-                'gap_x'      => null, // no prediction yet — not enough data or no ML
+                'success' => true,
+                'gap_x' => null, // no prediction yet — not enough data or no ML
                 'confidence' => 0.0,
                 'correction' => $correction, // average px offset to add to detected gap_x
-                'source'     => 'statistical',
-                'record_id'  => $record->id,
-                'message'    => 'ML model not ready. Collecting data for training.',
+                'source' => 'statistical',
+                'record_id' => $record->id,
+                'message' => 'ML model not ready. Collecting data for training.',
             ]);
 
         } catch (\Exception $e) {
-            Log::error("PuzzleDebug infer failed: " . $e->getMessage());
+            Log::error('PuzzleDebug infer failed: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Inference failed'], 500);
         }
     }
@@ -460,7 +463,7 @@ class PuzzleDebugController extends Controller
             }
         } catch (\Exception $e) {
             // ML service not running — that's OK, use statistical fallback
-            Log::debug("PuzzleML service unavailable: " . $e->getMessage());
+            Log::debug('PuzzleML service unavailable: ' . $e->getMessage());
         }
 
         return null;
