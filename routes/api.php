@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\SmsPaymentController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +22,32 @@ use Illuminate\Support\Facades\Route;
 | Here is where you can register API routes for your application.
 |
 */
+
+// ==================== Metal-X Freepik Image Upload ====================
+// Receives images from Freepik browser automation and saves to Laravel storage
+Route::post('/metal-x/upload-image', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'image' => 'required|string',
+        'filename' => 'required|string',
+        'project_dir' => 'required|string',
+    ]);
+
+    $imageData = base64_decode($request->input('image'));
+    if (! $imageData) {
+        return response()->json(['error' => 'Invalid base64 image'], 400);
+    }
+
+    $dir = 'metal-x/projects/' . $request->input('project_dir');
+    $path = $dir . '/' . $request->input('filename');
+
+    Storage::disk('local')->put($path, $imageData);
+
+    return response()->json([
+        'success' => true,
+        'path' => $path,
+        'size' => strlen($imageData),
+    ]);
+})->middleware('throttle:60,1');
 
 // Health check for API
 Route::get('/health', function () {

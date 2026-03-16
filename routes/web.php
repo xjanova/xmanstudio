@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\MetalXPlaylistController;
 use App\Http\Controllers\Admin\MetalXSettingsController;
 use App\Http\Controllers\Admin\MetalXTeamController;
 use App\Http\Controllers\Admin\MetalXVideoController;
+use App\Http\Controllers\Admin\MetalXPipelineController;
 use App\Http\Controllers\Admin\MetalXVideoProjectController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PaymentSettingController;
@@ -698,6 +699,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::delete('/{channel}', [MetalXChannelController::class, 'destroy'])->name('destroy');
             Route::post('/{channel}/set-default', [MetalXChannelController::class, 'setDefault'])->name('set-default');
             Route::post('/{channel}/sync', [MetalXChannelController::class, 'sync'])->name('sync');
+        });
+
+        // Pipeline Dashboard (Visual workflow control)
+        Route::prefix('pipeline')->name('pipeline.')->group(function () {
+            Route::get('/', [MetalXPipelineController::class, 'index'])->name('index');
+            Route::get('/status', [MetalXPipelineController::class, 'status'])->name('status');
+            Route::post('/{project}/start-music', [MetalXPipelineController::class, 'startMusic'])->name('start-music');
+            Route::post('/{project}/start-render', [MetalXPipelineController::class, 'startRender'])->name('start-render');
+            Route::post('/{project}/start-upload', [MetalXPipelineController::class, 'startUpload'])->name('start-upload');
+            Route::post('/{project}/start-full', [MetalXPipelineController::class, 'startFull'])->name('start-full');
+            Route::post('/{project}/retry', [MetalXPipelineController::class, 'retry'])->name('retry');
+            Route::post('/{project}/cancel', [MetalXPipelineController::class, 'cancel'])->name('cancel');
+            Route::get('/{project}/check-music', [MetalXPipelineController::class, 'checkMusic'])->name('check-music');
+            Route::delete('/{project}', [MetalXPipelineController::class, 'destroy'])->name('destroy');
         });
 
         // Video Projects (Music Creator)

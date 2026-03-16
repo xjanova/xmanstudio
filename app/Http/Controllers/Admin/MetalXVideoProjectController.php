@@ -244,8 +244,13 @@ class MetalXVideoProjectController extends Controller
             return response()->json(['success' => false, 'message' => 'สถานะไม่ถูกต้อง'], 422);
         }
 
-        // Start the full pipeline: generate music → render → upload
-        GenerateMusicJob::dispatch($project);
+        // Auto-generate AI metadata if no title set
+        if (empty($project->title) && ! $project->ai_metadata_generated) {
+            GenerateVideoMetadataJob::dispatch($project);
+        }
+
+        // Start the full pipeline: generate music → render → upload (auto)
+        GenerateMusicJob::dispatch($project, autoUpload: true);
 
         return response()->json(['success' => true, 'message' => 'เริ่มกระบวนการสร้างและเผยแพร่แล้ว']);
     }

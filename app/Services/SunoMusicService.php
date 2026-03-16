@@ -18,7 +18,7 @@ class SunoMusicService
     public function __construct()
     {
         $this->apiKey = config('metalx.suno.api_key') ?: (string) \App\Models\Setting::getValue('suno_api_key', '');
-        $this->baseUrl = (string) \App\Models\Setting::getValue('suno_base_url') ?: config('metalx.suno.base_url', 'https://apibox.erweima.ai');
+        $this->baseUrl = (string) \App\Models\Setting::getValue('suno_base_url') ?: config('metalx.suno.base_url', 'https://api.sunoapi.org');
         $this->timeout = config('metalx.suno.timeout', 120);
     }
 
@@ -40,12 +40,16 @@ class SunoMusicService
         ]);
 
         try {
+            $callbackUrl = config('app.url', 'http://localhost') . '/api/suno/callback';
+
             $payload = [
                 'prompt' => $prompt,
                 'customMode' => true,
-                'instrumental' => false,
+                'instrumental' => true,
                 'style' => $style ?: 'metal',
                 'title' => 'Generated Track',
+                'model' => 'V4',
+                'callBackUrl' => $callbackUrl,
             ];
 
             $response = Http::withHeaders([
@@ -96,30 +100,33 @@ class SunoMusicService
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
-            ])->timeout(30)->get("{$this->baseUrl}/api/v1/generate/record", [
+            ])->timeout(30)->get("{$this->baseUrl}/api/v1/generate/record-info", [
                 'taskId' => $generation->suno_task_id,
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                $records = $data['data'] ?? [];
+                $status = $data['data']['status'] ?? '';
+                $sunoData = $data['data']['response']['sunoData'] ?? $data['data']['sunoData'] ?? [];
 
-                // Check if any record is complete
-                $completed = collect($records)->first(function ($record) {
-                    return ($record['status'] ?? '') === 'complete';
-                });
-
-                if ($completed) {
-                    $audioUrl = $completed['audio_url'] ?? $completed['audioUrl'] ?? null;
+                if (in_array($status, ['SUCCESS', 'FIRST_SUCCESS'])) {
+                    $track = is_array($sunoData) ? ($sunoData[0] ?? null) : null;
+                    $audioUrl = $track['audioUrl'] ?? $track['audio_url'] ?? $track['streamAudioUrl'] ?? null;
 
                     $generation->update([
                         'status' => 'completed',
                         'audio_url' => $audioUrl,
-                        'title' => $completed['title'] ?? $generation->title,
+                        'title' => $track['title'] ?? $generation->title,
                         'metadata' => $data,
                     ]);
 
                     Log::info("[Suno] Generation completed: {$generation->suno_task_id}");
+                } elseif (str_contains($status, 'FAILED') || $status === 'SENSITIVE_WORD_ERROR') {
+                    $generation->update([
+                        'status' => 'failed',
+                        'error_message' => "Suno generation failed: {$status}",
+                        'metadata' => $data,
+                    ]);
                 } else {
                     $generation->update(['metadata' => $data]);
                 }

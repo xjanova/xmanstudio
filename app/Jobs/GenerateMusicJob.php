@@ -21,6 +21,7 @@ class GenerateMusicJob implements ShouldQueue
 
     public function __construct(
         protected MetalXVideoProject $project,
+        protected bool $autoUpload = false,
     ) {}
 
     public function handle(SunoMusicService $suno): void
@@ -46,7 +47,7 @@ class GenerateMusicJob implements ShouldQueue
         $this->project->update(['music_generation_id' => $generation->id]);
 
         if ($generation->status === 'processing') {
-            CheckMusicStatusJob::dispatch($this->project, $generation)->delay(now()->addSeconds(30));
+            CheckMusicStatusJob::dispatch($this->project, $generation, 1, $this->autoUpload)->delay(now()->addSeconds(30));
         } elseif ($generation->status === 'failed') {
             $this->project->update([
                 'status' => 'failed',

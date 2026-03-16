@@ -57,7 +57,7 @@ class YouTubeOAuthController extends Controller
         // Verify state for CSRF protection
         $state = $request->session()->pull('youtube_oauth_state');
         if (empty($state) || $state !== $request->input('state')) {
-            return redirect()->route('admin.settings.integrations')
+            return redirect()->route('admin.metal-x.channels.index')
                 ->with('error', 'Invalid state parameter - CSRF validation failed');
         }
 
@@ -68,7 +68,7 @@ class YouTubeOAuthController extends Controller
                 'description' => $request->input('error_description'),
             ]);
 
-            return redirect()->route('admin.settings.integrations')
+            return redirect()->route('admin.metal-x.channels.index')
                 ->with('error', 'YouTube OAuth ล้มเหลว: ' . $request->input('error_description'));
         }
 
@@ -77,7 +77,7 @@ class YouTubeOAuthController extends Controller
         $tokenData = $this->getAccessToken($code);
 
         if (! $tokenData) {
-            return redirect()->route('admin.settings.integrations')
+            return redirect()->route('admin.metal-x.channels.index')
                 ->with('error', 'ไม่สามารถรับ access token จาก YouTube ได้');
         }
 
@@ -143,7 +143,7 @@ class YouTubeOAuthController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->route('admin.settings.integrations')
+            return redirect()->route('admin.metal-x.channels.index')
                 ->with('error', 'เกิดข้อผิดพลาดในการบันทึก tokens: ' . $e->getMessage());
         }
     }
@@ -290,7 +290,7 @@ class YouTubeOAuthController extends Controller
             Setting::set('youtube_refresh_token', null);
             Setting::set('youtube_token_expires_at', null);
 
-            return redirect()->route('admin.settings.integrations')
+            return redirect()->route('admin.metal-x.channels.index')
                 ->with('success', 'ยกเลิกการเชื่อมต่อ YouTube สำเร็จ');
 
         } catch (\Exception $e) {
@@ -298,7 +298,7 @@ class YouTubeOAuthController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->route('admin.settings.integrations')
+            return redirect()->route('admin.metal-x.channels.index')
                 ->with('error', 'เกิดข้อผิดพลาดในการยกเลิกการเชื่อมต่อ: ' . $e->getMessage());
         }
     }

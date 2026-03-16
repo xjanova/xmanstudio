@@ -21,6 +21,7 @@ class RenderVideoJob implements ShouldQueue
 
     public function __construct(
         protected MetalXVideoProject $project,
+        protected bool $autoUpload = false,
     ) {}
 
     public function handle(VideoRenderService $renderer): void
@@ -33,8 +34,8 @@ class RenderVideoJob implements ShouldQueue
 
             Log::info("[RenderVideo] Render complete for project {$this->project->id}");
 
-            // Auto-upload if scheduled
-            if ($this->project->scheduled_at && $this->project->scheduled_at->isPast()) {
+            // Auto-upload if full pipeline (publish) or scheduled time has passed
+            if ($this->autoUpload || ($this->project->scheduled_at && $this->project->scheduled_at->isPast())) {
                 UploadVideoJob::dispatch($this->project);
             }
         } catch (\Exception $e) {

@@ -26,6 +26,7 @@ class CheckMusicStatusJob implements ShouldQueue
         protected MetalXVideoProject $project,
         protected MetalXMusicGeneration $generation,
         int $attempt = 1,
+        protected bool $autoUpload = false,
     ) {
         $this->attempt = $attempt;
     }
@@ -44,7 +45,7 @@ class CheckMusicStatusJob implements ShouldQueue
 
                 // Auto-render if project has images
                 if (! empty($this->project->images)) {
-                    RenderVideoJob::dispatch($this->project);
+                    RenderVideoJob::dispatch($this->project, $this->autoUpload);
                 }
             } else {
                 $this->project->update([
@@ -67,7 +68,7 @@ class CheckMusicStatusJob implements ShouldQueue
 
         // Still processing - retry with delay
         if ($this->attempt < 20) {
-            self::dispatch($this->project, $generation, $this->attempt + 1)
+            self::dispatch($this->project, $generation, $this->attempt + 1, $this->autoUpload)
                 ->delay(now()->addSeconds(30));
         } else {
             $this->project->update([
