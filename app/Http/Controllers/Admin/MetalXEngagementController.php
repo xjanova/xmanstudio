@@ -85,7 +85,7 @@ class MetalXEngagementController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Comment sync started for: {$video->title_en}",
+            'message' => "Comment sync started for: {$video->title}",
         ]);
     }
 
@@ -321,14 +321,14 @@ class MetalXEngagementController extends Controller
     public function applyContentImprovements(Request $request, MetalXVideo $video)
     {
         $request->validate([
-            'title_en' => 'nullable|string|max:255',
-            'description_en' => 'nullable|string',
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
             'tags' => 'nullable|array',
         ]);
 
         $video->update([
-            'title_en' => $request->input('title_en', $video->title_en),
-            'description_en' => $request->input('description_en', $video->description_en),
+            'title' => $request->input('title', $video->title),
+            'description' => $request->input('description', $video->description),
             'tags' => $request->input('tags') ? implode(',', $request->input('tags')) : $video->tags,
         ]);
 

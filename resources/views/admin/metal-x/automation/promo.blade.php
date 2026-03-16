@@ -58,7 +58,7 @@
             <select id="promo-video-select" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
                 <option value="">-- เลือกวิดีโอ --</option>
                 @foreach($videos as $video)
-                    <option value="{{ $video->id }}">{{ Str::limit($video->title_en, 60) }}</option>
+                    <option value="{{ $video->id }}">{{ Str::limit($video->title, 60) }}</option>
                 @endforeach
             </select>
         </div>
@@ -87,7 +87,7 @@
             <select name="video_id" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
                 <option value="">ทุกวิดีโอ</option>
                 @foreach($videos as $video)
-                    <option value="{{ $video->id }}" {{ request('video_id') == $video->id ? 'selected' : '' }}>{{ Str::limit($video->title_en, 40) }}</option>
+                    <option value="{{ $video->id }}" {{ request('video_id') == $video->id ? 'selected' : '' }}>{{ Str::limit($video->title, 40) }}</option>
                 @endforeach
             </select>
         </div>
@@ -124,7 +124,7 @@
                     </div>
 
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                        วิดีโอ: <span class="text-gray-900 dark:text-white font-medium">{{ $promo->video->title_en ?? '-' }}</span>
+                        วิดีโอ: <span class="text-gray-900 dark:text-white font-medium">{{ $promo->video->title ?? '-' }}</span>
                     </p>
 
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mt-2">

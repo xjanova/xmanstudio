@@ -102,8 +102,8 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
         $sanitizer = app(InputSanitizerService::class);
 
         $channelName = $sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
-        $videoTitle = $sanitizer->sanitizeForPrompt($this->video->title_en ?? '', 200);
-        $videoDescription = $sanitizer->sanitizeForPrompt(mb_substr($this->video->description_en ?? '', 0, 300), 300);
+        $videoTitle = $sanitizer->sanitizeForPrompt($this->video->title ?? '', 200);
+        $videoDescription = $sanitizer->sanitizeForPrompt(mb_substr($this->video->description ?? '', 0, 300), 300);
         $viewCount = (int) ($this->video->view_count ?? 0);
         $likeCount = (int) ($this->video->like_count ?? 0);
 

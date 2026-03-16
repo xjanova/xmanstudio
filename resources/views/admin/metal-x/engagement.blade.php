@@ -162,7 +162,7 @@
                             <!-- Video Info -->
                             <div class="mb-2 text-sm text-gray-600">
                                 <a href="{{ $comment->video->youtube_url }}" target="_blank" class="hover:text-blue-600">
-                                    📹 {{ Str::limit($comment->video->title_en, 60) }}
+                                    📹 {{ Str::limit($comment->video->title, 60) }}
                                 </a>
                             </div>
 

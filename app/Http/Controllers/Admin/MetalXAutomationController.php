@@ -24,7 +24,7 @@ class MetalXAutomationController extends Controller
             ->get();
 
         $videos = MetalXVideo::where('is_active', true)
-            ->orderBy('title_en')
+            ->orderBy('title')
             ->get();
 
         $stats = [
@@ -204,7 +204,7 @@ class MetalXAutomationController extends Controller
         $promos = $query->paginate(30);
 
         $videos = MetalXVideo::where('is_active', true)
-            ->orderBy('title_en')
+            ->orderBy('title')
             ->get();
 
         $stats = [
@@ -228,7 +228,7 @@ class MetalXAutomationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "กำลังสร้างคอมเม้นต์โปรโมทสำหรับ: {$video->title_en}",
+            'message' => "กำลังสร้างคอมเม้นต์โปรโมทสำหรับ: {$video->title}",
         ]);
     }
 

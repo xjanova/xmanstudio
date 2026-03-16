@@ -72,7 +72,7 @@ class MetalXAiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'AI metadata generation started for: ' . $video->title_en,
+                'message' => 'AI metadata generation started for: ' . $video->title,
             ]);
         } catch (AIServiceException $e) {
             Log::error("AI service error for video {$video->id}", [

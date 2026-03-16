@@ -118,9 +118,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-start gap-3">
-                                    <img src="{{ $video->thumbnail_url }}" alt="{{ $video->title_en }}" class="w-20 h-auto rounded">
+                                    <img src="{{ $video->thumbnail_url }}" alt="{{ $video->title }}" class="w-20 h-auto rounded">
                                     <div>
-                                        <div class="font-medium text-gray-900">{{ Str::limit($video->title_en, 50) }}</div>
+                                        <div class="font-medium text-gray-900">{{ Str::limit($video->title, 50) }}</div>
                                         <div class="text-sm text-gray-500">{{ $video->youtube_id }}</div>
                                     </div>
                                 </div>

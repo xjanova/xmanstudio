@@ -129,8 +129,8 @@ class YouTubeMetadataAiService
     {
         // Sanitize all user-provided content to prevent prompt injection
         $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
-        $titleEn = $this->sanitizer->sanitizeForPrompt($video->title_en ?? '', 200);
-        $descriptionEn = $this->sanitizer->sanitizeForPrompt($video->description_en ?? '', 2000);
+        $titleEn = $this->sanitizer->sanitizeForPrompt($video->title ?? '', 200);
+        $descriptionEn = $this->sanitizer->sanitizeForPrompt($video->description ?? '', 2000);
         $tags = $this->sanitizer->sanitizeForPrompt($video->tags ?? '', 500);
         $channelTitle = $this->sanitizer->sanitizeForPrompt($video->channel_title ?? '', 100);
         $categoryId = (int) $video->category_id; // Ensure integer

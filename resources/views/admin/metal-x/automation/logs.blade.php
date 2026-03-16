@@ -104,7 +104,7 @@
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $log->action_label }}</td>
                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                            {{ $log->video ? Str::limit($log->video->title_en, 35) : '-' }}
+                            {{ $log->video ? Str::limit($log->video->title, 35) : '-' }}
                         </td>
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium

@@ -69,7 +69,7 @@ class YouTubeEngagementAiService
     {
         // Sanitize user-provided content to prevent prompt injection
         $commentText = $this->sanitizer->sanitizeForPrompt($comment->text ?? '', 1000);
-        $videoTitle = $this->sanitizer->sanitizeForPrompt($comment->video->title_en ?? '', 200);
+        $videoTitle = $this->sanitizer->sanitizeForPrompt($comment->video->title ?? '', 200);
 
         $prompt = <<<PROMPT
 Analyze the sentiment and intent of this YouTube comment:
@@ -130,7 +130,7 @@ PROMPT;
         // Sanitize user-provided content to prevent prompt injection
         $commentText = $this->sanitizer->sanitizeForPrompt($comment->text ?? '', 1000);
         $authorName = $this->sanitizer->sanitizeForPrompt($comment->author_name ?? '', 100);
-        $videoTitle = $this->sanitizer->sanitizeForPrompt($comment->video->title_en ?? '', 200);
+        $videoTitle = $this->sanitizer->sanitizeForPrompt($comment->video->title ?? '', 200);
 
         $prompt = <<<PROMPT
 Analyze this YouTube comment for policy violations and unsafe content:
@@ -255,8 +255,8 @@ PROMPT;
         // Sanitize all user-provided content
         $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
         $channelDescription = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_description', 'A metal fabrication company'), 200);
-        $videoTitle = $this->sanitizer->sanitizeForPrompt($video->title_en ?? '', 200);
-        $videoDescription = $this->sanitizer->sanitizeForPrompt($video->description_en ?? '', 500);
+        $videoTitle = $this->sanitizer->sanitizeForPrompt($video->title ?? '', 200);
+        $videoDescription = $this->sanitizer->sanitizeForPrompt($video->description ?? '', 500);
         $authorName = $this->sanitizer->sanitizeForPrompt($comment->author_name ?? '', 100);
         $commentText = $this->sanitizer->sanitizeForPrompt($comment->text ?? '', 1000);
         $sentiment = in_array($comment->sentiment, ['positive', 'negative', 'neutral', 'question']) ? $comment->sentiment : 'neutral';
@@ -320,8 +320,8 @@ PROMPT;
     {
         // Sanitize all user-provided content
         $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
-        $titleEn = $this->sanitizer->sanitizeForPrompt($video->title_en ?? '', 200);
-        $descriptionEn = $this->sanitizer->sanitizeForPrompt($video->description_en ?? '', 2000);
+        $titleEn = $this->sanitizer->sanitizeForPrompt($video->title ?? '', 200);
+        $descriptionEn = $this->sanitizer->sanitizeForPrompt($video->description ?? '', 2000);
         $tags = $this->sanitizer->sanitizeForPrompt($video->tags ?? '', 500);
         $viewCount = (int) ($video->view_count ?? 0);
         $likeCount = (int) ($video->like_count ?? 0);
@@ -393,7 +393,7 @@ You are a content editor specializing in video captions and subtitles.
 Original captions/transcript:
 {$originalCaptions}
 
-Video: "{$video->title_en}"
+Video: "{$video->title}"
 
 Improve these captions by:
 1. Fixing grammar and spelling errors
