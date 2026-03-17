@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MetalXVideo;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -46,9 +47,15 @@ class MetalXSettingsController extends Controller
             'metalx_video_resolution' => Setting::getValue('metalx_video_resolution', '1920x1080'),
             'metalx_default_privacy' => Setting::getValue('metalx_default_privacy', 'private'),
             'metalx_promo_max_per_video_per_day' => Setting::getValue('metalx_promo_max_per_video_per_day', 2),
+
+            // Hero Video (Background)
+            'metalx_hero_video_mode' => Setting::getValue('metalx_hero_video_mode', 'featured'),
+            'metalx_hero_video_id' => Setting::getValue('metalx_hero_video_id'),
         ];
 
-        return view('admin.metal-x.settings', compact('settings'));
+        $heroVideos = MetalXVideo::active()->orderBy('title')->get();
+
+        return view('admin.metal-x.settings', compact('settings', 'heroVideos'));
     }
 
     public function update(Request $request)
@@ -88,6 +95,10 @@ class MetalXSettingsController extends Controller
             'metalx_video_resolution' => 'nullable|string|in:1920x1080,1280x720,3840x2160',
             'metalx_default_privacy' => 'nullable|string|in:public,private,unlisted',
             'metalx_promo_max_per_video_per_day' => 'nullable|integer|min:1|max:20',
+
+            // Hero Video
+            'metalx_hero_video_mode' => 'nullable|string|in:featured,random,locked,playlist',
+            'metalx_hero_video_id' => 'nullable|integer|exists:metal_x_videos,id',
         ]);
 
         // Handle logo upload
@@ -142,6 +153,10 @@ class MetalXSettingsController extends Controller
         Setting::setValue('metalx_video_resolution', $validated['metalx_video_resolution'] ?? '1920x1080', 'string', 'metalx');
         Setting::setValue('metalx_default_privacy', $validated['metalx_default_privacy'] ?? 'private', 'string', 'metalx');
         Setting::setValue('metalx_promo_max_per_video_per_day', $validated['metalx_promo_max_per_video_per_day'] ?? 2, 'integer', 'metalx');
+
+        // Hero Video
+        Setting::setValue('metalx_hero_video_mode', $validated['metalx_hero_video_mode'] ?? 'featured', 'string', 'metalx');
+        Setting::setValue('metalx_hero_video_id', $validated['metalx_hero_video_id'] ?? '', 'string', 'metalx');
 
         return redirect()->route('admin.metal-x.settings')
             ->with('success', 'บันทึกการตั้งค่าสำเร็จ!');

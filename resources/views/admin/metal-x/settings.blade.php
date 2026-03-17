@@ -253,6 +253,46 @@
             </div>
         </div>
 
+        {{-- Hero Video (Background) --}}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                วิดีโอพื้นหลัง (Hero Background)
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" x-data="{ mode: '{{ old('metalx_hero_video_mode', $settings['metalx_hero_video_mode'] ?? 'featured') }}' }">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">โหมดการเล่น</label>
+                    <select name="metalx_hero_video_mode" x-model="mode"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="featured">วิดีโอแนะนำ (Featured)</option>
+                        <option value="playlist">เพลย์ลิสต์ (หมุนเวียนวิดีโอแนะนำ)</option>
+                        <option value="random">สุ่มวิดีโอ</option>
+                        <option value="locked">ล็อกเฉพาะวิดีโอ</option>
+                    </select>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <span x-show="mode === 'featured'">ใช้วิดีโอแนะนำที่ยอดวิวสูงสุด</span>
+                        <span x-show="mode === 'playlist'">เล่นวิดีโอแนะนำทั้งหมดต่อเนื่อง (หมุนเวียนตามวัน)</span>
+                        <span x-show="mode === 'random'">สุ่มวิดีโอใหม่ทุกครั้งที่โหลดหน้า</span>
+                        <span x-show="mode === 'locked'">ล็อกเล่นวิดีโอที่เลือกเสมอ</span>
+                    </p>
+                </div>
+                <div x-show="mode === 'locked'" x-transition>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">เลือกวิดีโอ</label>
+                    <select name="metalx_hero_video_id"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="">-- เลือกวิดีโอ --</option>
+                        @foreach($heroVideos ?? [] as $video)
+                            <option value="{{ $video->id }}" {{ old('metalx_hero_video_id', $settings['metalx_hero_video_id'] ?? '') == $video->id ? 'selected' : '' }}>
+                                {{ Str::limit($video->title, 60) }} ({{ number_format($video->view_count ?? 0) }} views)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
+
         {{-- Submit --}}
         <div class="flex justify-end space-x-3">
             <a href="{{ route('admin.metal-x.analytics') }}" class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">ยกเลิก</a>

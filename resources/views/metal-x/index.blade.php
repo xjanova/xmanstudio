@@ -204,8 +204,16 @@
         {{-- Video Background (muted, autoplay, loop) --}}
         @if($heroVideo)
             <div class="absolute inset-0 z-0">
+                @php
+                    // Build playlist parameter based on mode
+                    $playlistParam = $heroVideo->youtube_id; // default: loop single video
+                    if (($heroVideoMode ?? 'featured') === 'playlist' && !empty($heroPlaylistIds)) {
+                        $playlistParam = implode(',', $heroPlaylistIds);
+                    }
+                @endphp
                 <iframe
-                    src="https://www.youtube.com/embed/{{ $heroVideo->youtube_id }}?autoplay=1&mute=1&loop=1&playlist={{ $heroVideo->youtube_id }}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin={{ url('/') }}"
+                    id="heroVideoFrame"
+                    src="https://www.youtube.com/embed/{{ $heroVideo->youtube_id }}?autoplay=1&mute=1&loop=1&playlist={{ $playlistParam }}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin={{ url('/') }}"
                     class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                     style="width: 177.78vh; height: 100vh; min-width: 100vw; min-height: 56.25vw;"
                     frameborder="0"
@@ -502,7 +510,7 @@
                         <div class="p-6 pb-4">
                             <div class="flex items-center gap-4 mb-4">
                                 {{-- Channel Avatar --}}
-                                <div class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-purple-500/30 p-0.5 bg-gradient-to-br from-blue-500 to-purple-500">
+                                <a href="{{ $channel->youtube_url }}" target="_blank" rel="noopener noreferrer" class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-purple-500/30 p-0.5 bg-gradient-to-br from-blue-500 to-purple-500 hover:ring-purple-400 transition-all hover:scale-105">
                                     @if($channel->channel_thumbnail_url)
                                         <img src="{{ $channel->channel_thumbnail_url }}" alt="{{ $channel->name }}" class="w-full h-full rounded-full object-cover">
                                     @else
@@ -512,11 +520,11 @@
                                             </svg>
                                         </div>
                                     @endif
-                                </div>
+                                </a>
 
                                 {{-- Channel Info --}}
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="text-xl font-bold text-white truncate">{{ $channel->name }}</h3>
+                                <a href="{{ $channel->youtube_url }}" target="_blank" rel="noopener noreferrer" class="flex-1 min-w-0 group/ch">
+                                    <h3 class="text-xl font-bold text-white truncate group-hover/ch:text-purple-300 transition-colors">{{ $channel->name }}</h3>
                                     <div class="flex items-center gap-4 text-sm text-gray-400 mt-1">
                                         @if($channel->subscriber_count)
                                             <span class="flex items-center gap-1">
@@ -535,7 +543,7 @@
                                             </span>
                                         @endif
                                     </div>
-                                </div>
+                                </a>
 
                                 {{-- Subscribe button --}}
                                 <a href="{{ $channel->youtube_url }}" target="_blank" rel="noopener noreferrer"
