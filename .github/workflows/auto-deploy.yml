@@ -119,8 +119,23 @@ jobs:
             chmod -R 775 storage bootstrap/cache 2>/dev/null || true
             chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 
-            # Restart queue workers if running
+            # Restart queue workers
             php artisan queue:restart 2>/dev/null || true
+            sleep 3
+
+            # Ensure queue worker is running (nohup will survive SSH disconnect)
+            if ! ps aux | grep "[q]ueue:work" | grep -q .; then
+              echo "🔄 Starting queue worker..."
+              nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --max-jobs=100 > storage/logs/queue-worker.log 2>&1 &
+              sleep 2
+              if ps aux | grep "[q]ueue:work" | grep -q .; then
+                echo "✅ Queue worker started"
+              else
+                echo "⚠️ Queue worker failed to start"
+              fi
+            else
+              echo "✅ Queue worker already running"
+            fi
 
             # Restart PHP-FPM if available
             sudo systemctl restart php8.3-fpm 2>/dev/null || \

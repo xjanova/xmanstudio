@@ -1,0 +1,126 @@
+name: Laravel Scheduler & Queue Monitor
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'schedule-run'
+        type: choice
+        options:
+          - schedule-run
+          - queue-status
+          - queue-restart
+          - full-check
+
+jobs:
+  scheduler:
+    name: Run Scheduler & Monitor Queue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Laravel Scheduler
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 5m
+          script: |
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+            ACTION="${{ github.event.inputs.action || 'schedule-run' }}"
+
+            if [ ! -f "$DEPLOY_PATH/artisan" ]; then
+              echo "ERROR: artisan not found at $DEPLOY_PATH"
+              exit 1
+            fi
+
+            cd "$DEPLOY_PATH"
+
+            # =============================================
+            # 1. Ensure Queue Worker is Running
+            # =============================================
+            QUEUE_PID=$(ps aux | grep "[q]ueue:work" | awk '{print $2}' | head -1)
+
+            if [ -z "$QUEUE_PID" ]; then
+              echo "[$(date)] Queue worker NOT running — starting..."
+              nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --max-jobs=100 > storage/logs/queue-worker.log 2>&1 &
+              sleep 2
+              NEW_PID=$(ps aux | grep "[q]ueue:work" | awk '{print $2}' | head -1)
+              if [ -n "$NEW_PID" ]; then
+                echo "[$(date)] Queue worker started (PID: $NEW_PID)"
+              else
+                echo "[$(date)] WARNING: Queue worker failed to start"
+              fi
+            else
+              echo "[$(date)] Queue worker running (PID: $QUEUE_PID)"
+            fi
+
+            # =============================================
+            # 2. Run Laravel Scheduler
+            # =============================================
+            if [ "$ACTION" = "schedule-run" ] || [ "$ACTION" = "full-check" ]; then
+              echo ""
+              echo "[$(date)] Running php artisan schedule:run..."
+              php artisan schedule:run 2>&1
+              echo "[$(date)] Scheduler completed"
+            fi
+
+            # =============================================
+            # 3. Queue Status (on demand)
+            # =============================================
+            if [ "$ACTION" = "queue-status" ] || [ "$ACTION" = "full-check" ]; then
+              echo ""
+              echo "=== Queue Status ==="
+              echo "--- Pending Jobs ---"
+              php artisan tinker --execute="echo \App\Models\MetalXVideoProject::whereIn('status', ['draft', 'music_ready', 'rendering', 'uploading'])->count() . ' video projects in progress';"
+              php artisan tinker --execute="echo DB::table('jobs')->count() . ' jobs in queue';"
+              php artisan tinker --execute="echo DB::table('failed_jobs')->count() . ' failed jobs';"
+
+              echo ""
+              echo "--- Automation Schedules ---"
+              php artisan tinker --execute="
+                \$schedules = \App\Models\MetalXAutomationSchedule::where('is_enabled', true)->get();
+                foreach (\$schedules as \$s) {
+                  echo \$s->action_type . ': next_run=' . \$s->next_run_at . ', runs=' . \$s->run_count . PHP_EOL;
+                }
+                echo \$schedules->count() . ' active schedules';
+              "
+
+              echo ""
+              echo "--- Content Plans ---"
+              php artisan tinker --execute="
+                \$plans = \App\Models\MetalXContentPlan::where('is_enabled', true)->get();
+                foreach (\$plans as \$p) {
+                  echo \$p->name . ': next_gen=' . \$p->next_generation_at . ', total=' . \$p->total_generated . PHP_EOL;
+                }
+                echo \$plans->count() . ' active content plans';
+              "
+            fi
+
+            # =============================================
+            # 4. Queue Restart (on demand)
+            # =============================================
+            if [ "$ACTION" = "queue-restart" ]; then
+              echo ""
+              echo "[$(date)] Restarting queue worker..."
+              # Gracefully stop existing workers
+              php artisan queue:restart 2>/dev/null || true
+              sleep 3
+              # Kill any remaining workers
+              pkill -f "queue:work" 2>/dev/null || true
+              sleep 2
+              # Start fresh
+              nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --max-jobs=100 > storage/logs/queue-worker.log 2>&1 &
+              sleep 2
+              ps aux | grep "[q]ueue:work" || echo "WARNING: Queue worker not running after restart"
+              echo "[$(date)] Queue restart complete"
+            fi
+
+            echo ""
+            echo "[$(date)] Done"
