@@ -144,13 +144,13 @@
     <!-- Image Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($records as $record)
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-400 transition"
+             onclick="window.location='{{ route('admin.puzzle-debug.show', $record) }}'">
             <!-- Image Preview -->
             <div class="relative">
                 @if($record->image_paths && count($record->image_paths) > 0)
                     <img src="{{ Storage::disk('public')->url($record->image_paths[0]) }}"
-                         alt="Debug Image" class="w-full h-48 object-cover cursor-pointer"
-                         onclick="window.location='{{ route('admin.puzzle-debug.show', $record) }}'">
+                         alt="Debug Image" class="w-full h-48 object-cover">
                     @if(count($record->image_paths) > 1)
                         <div class="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
                             {{ count($record->image_paths) }} images
@@ -158,7 +158,7 @@
                     @endif
                 @else
                     <div class="w-full h-48 bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-400">
-                        No images
+                        No images (feedback only)
                     </div>
                 @endif
 
