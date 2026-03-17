@@ -73,7 +73,17 @@ class PuzzleDebugController extends Controller
 
     public function show(PuzzleDebugImage $record)
     {
-        return view('admin.puzzle-debug.show', compact('record'));
+        $prevRecord = PuzzleDebugImage::unlabeled()
+            ->where('id', '<', $record->id)
+            ->orderByDesc('id')
+            ->first();
+
+        $nextRecord = PuzzleDebugImage::unlabeled()
+            ->where('id', '>', $record->id)
+            ->orderBy('id')
+            ->first();
+
+        return view('admin.puzzle-debug.show', compact('record', 'prevRecord', 'nextRecord'));
     }
 
     public function updateLabel(Request $request, PuzzleDebugImage $record)
