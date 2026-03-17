@@ -154,14 +154,18 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
     {
         $sanitizer = app(InputSanitizerService::class);
 
-        $channelName = $sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
+        // Use channel name from video's actual channel (not global setting)
+        $channel = $this->video->metalXChannel ?? MetalXChannel::getDefault();
+        $channelName = $sanitizer->sanitizeForPrompt($channel->name ?? Setting::get('metalx_channel_name', 'Metal-X'), 100);
+
         $videoTitle = $sanitizer->sanitizeForPrompt($this->video->title ?? '', 200);
         $videoDescription = $sanitizer->sanitizeForPrompt(mb_substr($this->video->description ?? '', 0, 300), 300);
         $viewCount = (int) ($this->video->view_count ?? 0);
         $likeCount = (int) ($this->video->like_count ?? 0);
 
         $prompt = <<<PROMPT
-You are the social media manager for {$channelName} YouTube channel.
+You are the social media manager for "{$channelName}" YouTube channel.
+IMPORTANT: You are posting as "{$channelName}" — always refer to yourself/your channel as "{$channelName}".
 
 Generate an engaging promotional comment to post on this video to boost engagement:
 
@@ -171,7 +175,7 @@ Current Views: {$viewCount}
 Current Likes: {$likeCount}
 
 Guidelines:
-1. Write as the channel owner/creator
+1. Write as the channel owner/creator of "{$channelName}"
 2. Encourage viewers to like, subscribe, and comment
 3. Ask an engaging question related to the video content
 4. Keep it natural and conversational (not spammy)
@@ -181,6 +185,7 @@ Guidelines:
 8. Vary the style - sometimes ask questions, sometimes share insights, sometimes call to action
 9. Do NOT use hashtags excessively
 10. Do NOT mention "algorithm" or "YouTube algorithm"
+11. Do NOT use other channel names — you are "{$channelName}" only
 
 Respond with JSON only:
 {

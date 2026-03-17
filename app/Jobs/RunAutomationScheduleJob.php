@@ -247,7 +247,7 @@ class RunAutomationScheduleJob implements ShouldQueue
     }
 
     /**
-     * Get target videos: specific video if set, or all active videos.
+     * Get target videos: specific video if set, or all active videos (respecting exclusions).
      */
     protected function getTargetVideos(MetalXAutomationSchedule $schedule)
     {
@@ -257,7 +257,15 @@ class RunAutomationScheduleJob implements ShouldQueue
             return $video ? collect([$video]) : collect();
         }
 
-        return MetalXVideo::where('is_active', true)->get();
+        $query = MetalXVideo::where('is_active', true);
+
+        // Exclude videos from settings
+        $excludedIds = $schedule->getSetting('excluded_video_ids', []);
+        if (! empty($excludedIds)) {
+            $query->whereNotIn('id', $excludedIds);
+        }
+
+        return $query->get();
     }
 
     public function failed(\Throwable $exception): void

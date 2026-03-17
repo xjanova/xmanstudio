@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MetalXChannel;
 use App\Models\MetalXComment;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
@@ -252,9 +253,11 @@ PROMPT;
     {
         $video = $comment->video;
 
-        // Sanitize all user-provided content
-        $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
+        // Use channel name from video's actual channel (not global setting)
+        $channel = $video->metalXChannel ?? MetalXChannel::getDefault();
+        $channelName = $this->sanitizer->sanitizeForPrompt($channel->name ?? Setting::get('metalx_channel_name', 'Metal-X'), 100);
         $channelDescription = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_description', 'A metal fabrication company'), 200);
+
         $videoTitle = $this->sanitizer->sanitizeForPrompt($video->title ?? '', 200);
         $videoDescription = $this->sanitizer->sanitizeForPrompt($video->description ?? '', 500);
         $authorName = $this->sanitizer->sanitizeForPrompt($comment->author_name ?? '', 100);
@@ -262,7 +265,8 @@ PROMPT;
         $sentiment = in_array($comment->sentiment, ['positive', 'negative', 'neutral', 'question']) ? $comment->sentiment : 'neutral';
 
         $prompt = <<<PROMPT
-You are the social media manager for {$channelName}, {$channelDescription}.
+You are the social media manager for "{$channelName}", {$channelDescription}.
+IMPORTANT: You are replying as "{$channelName}" — always refer to yourself/your channel as "{$channelName}".
 
 Generate a creative, engaging reply to this YouTube comment:
 
@@ -278,9 +282,10 @@ Guidelines for the reply:
 4. Handle negative feedback constructively
 5. Keep it concise (1-3 sentences)
 6. Use appropriate emoji occasionally (don't overdo it)
-7. Maintain Metal-X's brand voice: professional, innovative, customer-focused
+7. Maintain "{$channelName}" brand voice: professional, innovative, customer-focused
 8. If it's a question, provide helpful information or direct them to resources
 9. For Thai users, you can use some Thai phrases to connect better
+10. Do NOT use other channel names — you are "{$channelName}" only
 
 Respond with JSON only:
 {
@@ -318,8 +323,9 @@ PROMPT;
      */
     public function improveVideoContent(MetalXVideo $video): array
     {
-        // Sanitize all user-provided content
-        $channelName = $this->sanitizer->sanitizeForPrompt(Setting::get('metalx_channel_name', 'Metal-X'), 100);
+        // Use channel name from video's actual channel (not global setting)
+        $channel = $video->metalXChannel ?? MetalXChannel::getDefault();
+        $channelName = $this->sanitizer->sanitizeForPrompt($channel->name ?? Setting::get('metalx_channel_name', 'Metal-X'), 100);
         $titleEn = $this->sanitizer->sanitizeForPrompt($video->title ?? '', 200);
         $descriptionEn = $this->sanitizer->sanitizeForPrompt($video->description ?? '', 2000);
         $tags = $this->sanitizer->sanitizeForPrompt($video->tags ?? '', 500);
@@ -327,7 +333,7 @@ PROMPT;
         $likeCount = (int) ($video->like_count ?? 0);
 
         $prompt = <<<PROMPT
-You are a YouTube SEO specialist for {$channelName}, a metal fabrication and engineering company.
+You are a YouTube SEO specialist for "{$channelName}".
 
 Current video content:
 Title (EN): "{$titleEn}"

@@ -161,7 +161,15 @@
                             </span>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                            {{ $schedule->video ? Str::limit($schedule->video->title, 30) : 'ทุกวิดีโอ' }}
+                            @if($schedule->video)
+                                {{ Str::limit($schedule->video->title, 30) }}
+                            @else
+                                ทุกวิดีโอ
+                                @php $excludedCount = count($schedule->getSetting('excluded_video_ids', [])); @endphp
+                                @if($excludedCount > 0)
+                                    <span class="text-xs text-red-500">(ยกเว้น {{ $excludedCount }})</span>
+                                @endif
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $schedule->frequency_label }}</td>
                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $schedule->max_actions_per_run }}</td>
@@ -180,6 +188,12 @@
                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ number_format($schedule->run_count) }}</td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
+                                <a href="{{ route('admin.metal-x.automation.edit', $schedule) }}" class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 rounded hover:bg-yellow-200 dark:hover:bg-yellow-800" title="ตั้งค่า">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </a>
                                 <button onclick="runNow({{ $schedule->id }})" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded hover:bg-blue-200 dark:hover:bg-blue-800" title="รันเดี๋ยวนี้">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>

@@ -696,6 +696,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::prefix('automation')->name('automation.')->group(function () {
             Route::get('/', [MetalXAutomationController::class, 'index'])->name('index');
             Route::post('/schedules', [MetalXAutomationController::class, 'storeSchedule'])->name('store');
+            Route::get('/schedules/{schedule}/edit', [MetalXAutomationController::class, 'editSchedule'])->name('edit');
             Route::put('/schedules/{schedule}', [MetalXAutomationController::class, 'updateSchedule'])->name('update');
             Route::delete('/schedules/{schedule}', [MetalXAutomationController::class, 'destroySchedule'])->name('destroy');
             Route::post('/schedules/{schedule}/toggle', [MetalXAutomationController::class, 'toggleSchedule'])->name('toggle');

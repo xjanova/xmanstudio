@@ -8,6 +8,7 @@ use App\Jobs\ProcessCommentEngagementJob;
 use App\Jobs\RunAutomationScheduleJob;
 use App\Models\MetalXAutomationLog;
 use App\Models\MetalXAutomationSchedule;
+use App\Models\MetalXChannel;
 use App\Models\MetalXComment;
 use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideo;
@@ -47,6 +48,24 @@ class MetalXAutomationController extends Controller
             ->get();
 
         return view('admin.metal-x.automation.index', compact('schedules', 'videos', 'stats', 'recentLogs'));
+    }
+
+    /**
+     * Edit schedule settings (frequency, max_actions, video selection).
+     */
+    public function editSchedule(MetalXAutomationSchedule $schedule)
+    {
+        $videos = MetalXVideo::where('is_active', true)
+            ->orderBy('title')
+            ->get();
+
+        // Load channel info for each video
+        $channels = MetalXChannel::active()->orderBy('name')->get();
+
+        // Get excluded video IDs from schedule settings
+        $excludedVideoIds = $schedule->getSetting('excluded_video_ids', []);
+
+        return view('admin.metal-x.automation.edit', compact('schedule', 'videos', 'channels', 'excludedVideoIds'));
     }
 
     /**
@@ -99,6 +118,10 @@ class MetalXAutomationController extends Controller
             'frequency_minutes' => 'required|integer|min:15|max:1440',
             'max_actions_per_run' => 'required|integer|min:1|max:100',
             'is_enabled' => 'boolean',
+            'excluded_video_ids' => 'nullable|array',
+            'excluded_video_ids.*' => 'integer|exists:metal_x_videos,id',
+            'require_approval' => 'nullable|boolean',
+            'max_comments' => 'nullable|integer|min:10|max:500',
         ]);
 
         $validated['is_enabled'] = $request->boolean('is_enabled');
@@ -109,6 +132,23 @@ class MetalXAutomationController extends Controller
         if ($validated['frequency_minutes'] !== $schedule->frequency_minutes) {
             $validated['next_run_at'] = now()->addMinutes($validated['frequency_minutes']);
         }
+
+        // Build settings array
+        $settings = $schedule->settings ?? [];
+        $settings['excluded_video_ids'] = array_map('intval', $request->input('excluded_video_ids', []));
+
+        // Action-specific settings
+        if ($schedule->action_type === 'promo_comment') {
+            $settings['require_approval'] = $request->boolean('require_approval');
+        }
+        if ($schedule->action_type === 'sync_comments') {
+            $settings['max_comments'] = (int) $request->input('max_comments', 50);
+        }
+
+        $validated['settings'] = $settings;
+
+        // Remove non-model fields
+        unset($validated['excluded_video_ids'], $validated['require_approval'], $validated['max_comments']);
 
         $schedule->update($validated);
 
