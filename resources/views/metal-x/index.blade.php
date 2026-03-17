@@ -862,8 +862,7 @@ function featuredCarousel(totalSlides) {
 
             return `transform: translate(calc(-50% + ${cfg.x}%), -50%) scale(${cfg.scale}) rotateY(${cfg.rotateY}deg); ` +
                    `opacity: ${cfg.opacity}; z-index: ${cfg.z}; ` +
-                   `filter: blur(${cfg.blur}px); ` +
-                   `pointer-events: ${pos === 0 ? 'auto' : 'auto'};`;
+                   `filter: blur(${cfg.blur}px);`;
         },
 
         next() {
