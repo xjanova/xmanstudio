@@ -151,13 +151,17 @@
         <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-500" id="syncProgressBar" style="width: 0%"></div>
     </div>
     <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-        <span>นำเข้า: <strong id="syncImported" class="text-green-600">0</strong> | ข้าม: <strong id="syncSkipped" class="text-yellow-600">0</strong></span>
+        <span>
+            ใหม่: <strong id="syncImported" class="text-green-600">0</strong> |
+            อัพเดท: <strong id="syncUpdated" class="text-blue-600">0</strong> |
+            ลบแล้ว: <strong id="syncDeleted" class="text-red-600">0</strong>
+        </span>
         <span id="syncEstimate"></span>
     </div>
 </div>
 
 <!-- Video Type Stats -->
-<div class="grid grid-cols-3 gap-4 mb-6">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
     <a href="{{ route('admin.metal-x.videos.index', ['video_type' => 'standard']) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-4 hover:shadow-lg transition-shadow {{ request('video_type') === 'standard' ? 'ring-2 ring-blue-500' : '' }}">
         <p class="text-sm text-gray-500 dark:text-gray-400">วิดีโอมาตรฐาน</p>
         <p class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ number_format($stats['standard']) }}</p>
@@ -170,6 +174,12 @@
         <p class="text-sm text-gray-500 dark:text-gray-400">ถ่ายทอดสด (Live)</p>
         <p class="text-xl font-bold text-red-600 dark:text-red-400">{{ number_format($stats['live']) }}</p>
     </a>
+    @if($stats['deleted'] > 0)
+    <a href="{{ route('admin.metal-x.videos.index', ['status' => 'deleted']) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-4 hover:shadow-lg transition-shadow {{ request('status') === 'deleted' ? 'ring-2 ring-gray-500' : '' }}">
+        <p class="text-sm text-gray-500 dark:text-gray-400">ถูกลบจาก YouTube</p>
+        <p class="text-xl font-bold text-gray-500 dark:text-gray-400">{{ number_format($stats['deleted']) }}</p>
+    </a>
+    @endif
 </div>
 
 <!-- Search & Filter -->
@@ -194,6 +204,7 @@
                 <option value="">ทุกสถานะ</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>เปิดใช้งาน</option>
                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>ปิดใช้งาน</option>
+                <option value="deleted" {{ request('status') === 'deleted' ? 'selected' : '' }}>ถูกลบจาก YouTube</option>
             </select>
         </div>
         <div>
@@ -239,7 +250,11 @@
                 @elseif($video->video_type === 'live')
                     <div class="absolute top-2 right-2 bg-gradient-to-r from-red-600 to-red-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">LIVE</div>
                 @endif
-                @if($video->is_featured)
+                @if($video->privacy_status === 'deleted')
+                    <div class="absolute top-2 left-2 bg-gradient-to-r from-red-700 to-red-600 text-white text-xs px-2.5 py-1 rounded-lg font-medium shadow-lg">
+                        ถูกลบจาก YT
+                    </div>
+                @elseif($video->is_featured)
                     <div class="absolute top-2 left-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-white text-xs px-2.5 py-1 rounded-lg font-medium shadow-lg">
                         แนะนำ
                     </div>
@@ -421,10 +436,12 @@
         .then(data => {
             if (data.success) {
                 document.getElementById('syncStatusText').textContent = 'Sync เสร็จสิ้น!';
-                document.getElementById('syncImported').textContent = data.imported;
+                document.getElementById('syncImported').textContent = data.imported || 0;
+                document.getElementById('syncUpdated').textContent = data.updated || 0;
+                document.getElementById('syncDeleted').textContent = data.deleted || 0;
                 document.getElementById('syncProgressBar').style.width = '100%';
 
-                setTimeout(() => location.reload(), 1500);
+                setTimeout(() => location.reload(), 2000);
             } else {
                 alert(data.error || 'เกิดข้อผิดพลาด');
                 btn.disabled = false;

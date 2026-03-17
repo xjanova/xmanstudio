@@ -326,6 +326,9 @@ class YouTubeService
 
     /**
      * Sync ALL videos from channel using uploads playlist (more efficient than search API).
+     * - Imports new videos
+     * - Updates stats (views/likes/comments) for existing videos
+     * - Detects and marks deleted/private videos
      * Supports progress tracking via Cache and optional limit.
      */
     public function syncChannelVideos(string $channelId, int $limit = 0, ?MetalXChannel $channel = null, ?string $progressKey = null): array
@@ -339,21 +342,30 @@ class YouTubeService
             return $this->syncChannelVideosViaSearch($channelId, $limit ?: 100, $channel, $progressKey);
         }
 
-        // Get existing video IDs from DB to skip duplicates
-        $existingIds = MetalXVideo::pluck('youtube_id')->flip()->toArray();
+        // Get existing video IDs from DB
+        $channelQuery = $channel
+            ? MetalXVideo::where('metal_x_channel_id', $channel->id)
+            : MetalXVideo::where('channel_id', $channelId);
+        $existingIds = $channelQuery->pluck('youtube_id')->flip()->toArray();
 
         $imported = [];
+        $updated = 0;
         $skipped = 0;
+        $deleted = 0;
         $pageToken = null;
         $totalEstimate = 0;
+        $allYoutubeIds = []; // Track all IDs from YouTube to detect deleted
 
         // Initialize progress
         if ($progressKey) {
             Cache::put($progressKey, [
                 'status' => 'running',
+                'phase' => 'importing',
                 'total' => 0,
                 'imported' => 0,
+                'updated' => 0,
                 'skipped' => 0,
+                'deleted' => 0,
                 'current_page' => 0,
                 'channel' => $channel?->name ?? $channelId,
             ], 600);
@@ -369,37 +381,50 @@ class YouTubeService
                 $totalEstimate = $result['totalResults'] ?? 0;
             }
 
-            // Extract video IDs from playlist items
-            $videoIds = [];
+            // Extract video IDs from playlist items - separate new vs existing
+            $newVideoIds = [];
+            $existingVideoIds = [];
+
             foreach ($result['items'] as $item) {
                 $videoId = $item['contentDetails']['videoId'] ?? $item['snippet']['resourceId']['videoId'] ?? null;
                 if ($videoId) {
+                    $allYoutubeIds[$videoId] = true;
+
                     if (isset($existingIds[$videoId])) {
-                        $skipped++;
+                        $existingVideoIds[] = $videoId;
                     } else {
-                        $videoIds[] = $videoId;
+                        $newVideoIds[] = $videoId;
                     }
                 }
             }
 
-            // Import new videos in batch (50 at a time via videos API for full details)
-            if (! empty($videoIds)) {
-                $videos = $this->importVideos($videoIds, $channel);
+            // Import new videos in batch
+            if (! empty($newVideoIds)) {
+                $videos = $this->importVideos($newVideoIds, $channel);
                 $imported = array_merge($imported, $videos);
 
-                // Mark these as existing now
-                foreach ($videoIds as $vid) {
+                foreach ($newVideoIds as $vid) {
                     $existingIds[$vid] = true;
                 }
             }
+
+            // Update stats for existing videos in batch
+            if (! empty($existingVideoIds)) {
+                $updated += $this->updateVideosStats($existingVideoIds);
+            }
+
+            $skipped = count($existingVideoIds);
 
             // Update progress
             if ($progressKey) {
                 Cache::put($progressKey, [
                     'status' => 'running',
+                    'phase' => 'importing',
                     'total' => $totalEstimate,
                     'imported' => count($imported),
-                    'skipped' => $skipped,
+                    'updated' => $updated,
+                    'skipped' => 0,
+                    'deleted' => 0,
                     'current_page' => $page,
                     'channel' => $channel?->name ?? $channelId,
                 ], 600);
@@ -408,26 +433,108 @@ class YouTubeService
             $pageToken = $result['nextPageToken'];
 
             // Check limit (0 = unlimited)
-            if ($limit > 0 && (count($imported) + $skipped) >= $limit) {
+            if ($limit > 0 && (count($imported) + $updated) >= $limit) {
                 break;
             }
         } while ($pageToken);
 
-        // Mark progress complete
+        // Phase 2: Detect deleted videos
+        // Videos in our DB but NOT in YouTube uploads playlist = deleted/privated
         if ($progressKey) {
             Cache::put($progressKey, [
-                'status' => 'completed',
+                'status' => 'running',
+                'phase' => 'checking_deleted',
                 'total' => $totalEstimate,
                 'imported' => count($imported),
-                'skipped' => $skipped,
+                'updated' => $updated,
+                'skipped' => 0,
+                'deleted' => 0,
                 'current_page' => $page,
                 'channel' => $channel?->name ?? $channelId,
             ], 600);
         }
 
-        Log::info("[YouTube] Channel sync complete: {$channelId} — imported " . count($imported) . ", skipped {$skipped}");
+        $deletedIds = array_diff(array_keys($existingIds), array_keys($allYoutubeIds));
 
-        return $imported;
+        if (! empty($deletedIds)) {
+            // Verify they're truly deleted by checking via videos API (in batches of 50)
+            foreach (array_chunk($deletedIds, 50) as $batch) {
+                $verifyResult = $this->getVideosDetails($batch);
+                $stillExistIds = collect($verifyResult)->pluck('id')->flip()->toArray();
+
+                foreach ($batch as $deletedId) {
+                    if (! isset($stillExistIds[$deletedId])) {
+                        // Video truly deleted/private - mark it
+                        MetalXVideo::where('youtube_id', $deletedId)->update([
+                            'is_active' => false,
+                            'privacy_status' => 'deleted',
+                            'synced_at' => now(),
+                        ]);
+                        $deleted++;
+                    }
+                }
+            }
+        }
+
+        // Mark progress complete
+        if ($progressKey) {
+            Cache::put($progressKey, [
+                'status' => 'completed',
+                'phase' => 'done',
+                'total' => $totalEstimate,
+                'imported' => count($imported),
+                'updated' => $updated,
+                'skipped' => 0,
+                'deleted' => $deleted,
+                'current_page' => $page,
+                'channel' => $channel?->name ?? $channelId,
+            ], 600);
+        }
+
+        Log::info("[YouTube] Channel sync complete: {$channelId} — imported " . count($imported) . ", updated {$updated}, deleted {$deleted}");
+
+        return [
+            'videos' => $imported,
+            'imported' => count($imported),
+            'updated' => $updated,
+            'deleted' => $deleted,
+        ];
+    }
+
+    /**
+     * Update statistics for a batch of videos by their YouTube IDs.
+     */
+    protected function updateVideosStats(array $videoIds): int
+    {
+        $details = $this->getVideosDetails($videoIds);
+        $updated = 0;
+
+        foreach ($details as $detail) {
+            $snippet = $detail['snippet'] ?? [];
+            $statistics = $detail['statistics'] ?? [];
+            $contentDetails = $detail['contentDetails'] ?? [];
+
+            $durationSeconds = $this->parseDuration($contentDetails['duration'] ?? 'PT0S');
+
+            MetalXVideo::where('youtube_id', $detail['id'])->update([
+                'title' => $snippet['title'] ?? null,
+                'description' => $snippet['description'] ?? null,
+                'thumbnail_url' => $snippet['thumbnails']['default']['url'] ?? null,
+                'thumbnail_medium_url' => $snippet['thumbnails']['medium']['url'] ?? null,
+                'thumbnail_high_url' => $snippet['thumbnails']['high']['url'] ?? $snippet['thumbnails']['maxres']['url'] ?? null,
+                'view_count' => $statistics['viewCount'] ?? 0,
+                'like_count' => $statistics['likeCount'] ?? 0,
+                'comment_count' => $statistics['commentCount'] ?? 0,
+                'duration' => $contentDetails['duration'] ?? null,
+                'duration_seconds' => $durationSeconds,
+                'video_type' => MetalXVideo::classifyVideoType($durationSeconds, $snippet['liveBroadcastContent'] ?? null),
+                'privacy_status' => $contentDetails['privacyStatus'] ?? 'public',
+                'synced_at' => now(),
+            ]);
+            $updated++;
+        }
+
+        return $updated;
     }
 
     /**
@@ -435,61 +542,102 @@ class YouTubeService
      */
     protected function syncChannelVideosViaSearch(string $channelId, int $limit, ?MetalXChannel $channel, ?string $progressKey): array
     {
-        $existingIds = MetalXVideo::pluck('youtube_id')->flip()->toArray();
+        $existingIds = MetalXVideo::where('channel_id', $channelId)->pluck('youtube_id')->flip()->toArray();
         $imported = [];
-        $skipped = 0;
+        $updated = 0;
+        $deleted = 0;
         $pageToken = null;
         $page = 0;
+        $allYoutubeIds = [];
 
         do {
             $result = $this->searchChannelVideos($channelId, 50, $pageToken);
             $page++;
 
-            $videoIds = [];
+            $newVideoIds = [];
+            $existingVideoIds = [];
+
             foreach ($result['items'] as $item) {
                 $videoId = $item['id']['videoId'] ?? null;
                 if (! $videoId) {
                     continue;
                 }
+                $allYoutubeIds[$videoId] = true;
+
                 if (isset($existingIds[$videoId])) {
-                    $skipped++;
+                    $existingVideoIds[] = $videoId;
                 } else {
-                    $videoIds[] = $videoId;
+                    $newVideoIds[] = $videoId;
                     $existingIds[$videoId] = true;
                 }
             }
 
-            if (! empty($videoIds)) {
-                $videos = $this->importVideos($videoIds, $channel);
+            if (! empty($newVideoIds)) {
+                $videos = $this->importVideos($newVideoIds, $channel);
                 $imported = array_merge($imported, $videos);
+            }
+
+            if (! empty($existingVideoIds)) {
+                $updated += $this->updateVideosStats($existingVideoIds);
             }
 
             if ($progressKey) {
                 Cache::put($progressKey, [
                     'status' => 'running',
+                    'phase' => 'importing',
                     'total' => $result['totalResults'] ?? 0,
                     'imported' => count($imported),
-                    'skipped' => $skipped,
+                    'updated' => $updated,
+                    'skipped' => 0,
+                    'deleted' => 0,
                     'current_page' => $page,
                     'channel' => $channel?->name ?? $channelId,
                 ], 600);
             }
 
             $pageToken = $result['nextPageToken'];
-        } while ($pageToken && (count($imported) + $skipped) < $limit);
+        } while ($pageToken && (count($imported) + $updated) < $limit);
+
+        // Detect deleted videos
+        $deletedIds = array_diff(array_keys($existingIds), array_keys($allYoutubeIds));
+        if (! empty($deletedIds)) {
+            foreach (array_chunk($deletedIds, 50) as $batch) {
+                $verifyResult = $this->getVideosDetails($batch);
+                $stillExistIds = collect($verifyResult)->pluck('id')->flip()->toArray();
+
+                foreach ($batch as $deletedId) {
+                    if (! isset($stillExistIds[$deletedId])) {
+                        MetalXVideo::where('youtube_id', $deletedId)->update([
+                            'is_active' => false,
+                            'privacy_status' => 'deleted',
+                            'synced_at' => now(),
+                        ]);
+                        $deleted++;
+                    }
+                }
+            }
+        }
 
         if ($progressKey) {
             Cache::put($progressKey, [
                 'status' => 'completed',
-                'total' => count($imported) + $skipped,
+                'phase' => 'done',
+                'total' => count($imported) + $updated,
                 'imported' => count($imported),
-                'skipped' => $skipped,
+                'updated' => $updated,
+                'skipped' => 0,
+                'deleted' => $deleted,
                 'current_page' => $page,
                 'channel' => $channel?->name ?? $channelId,
             ], 600);
         }
 
-        return $imported;
+        return [
+            'videos' => $imported,
+            'imported' => count($imported),
+            'updated' => $updated,
+            'deleted' => $deleted,
+        ];
     }
 
     /**
@@ -565,18 +713,25 @@ class YouTubeService
     }
 
     /**
-     * Update statistics for all videos.
+     * Update statistics for all videos and detect deleted ones.
+     *
+     * @return array{updated: int, deleted: int}
      */
-    public function updateVideoStatistics(): int
+    public function updateVideoStatistics(): array
     {
-        $videos = MetalXVideo::pluck('youtube_id')->toArray();
+        $videos = MetalXVideo::where('privacy_status', '!=', 'deleted')
+            ->pluck('youtube_id')
+            ->toArray();
         $updated = 0;
+        $deleted = 0;
 
         // Process in batches of 50
         foreach (array_chunk($videos, 50) as $batch) {
             $details = $this->getVideosDetails($batch);
+            $returnedIds = [];
 
             foreach ($details as $detail) {
+                $returnedIds[] = $detail['id'];
                 MetalXVideo::where('youtube_id', $detail['id'])->update([
                     'view_count' => $detail['statistics']['viewCount'] ?? 0,
                     'like_count' => $detail['statistics']['likeCount'] ?? 0,
@@ -585,9 +740,20 @@ class YouTubeService
                 ]);
                 $updated++;
             }
+
+            // Videos in batch but NOT returned by API = deleted/private
+            $missingIds = array_diff($batch, $returnedIds);
+            if (! empty($missingIds)) {
+                MetalXVideo::whereIn('youtube_id', $missingIds)->update([
+                    'is_active' => false,
+                    'privacy_status' => 'deleted',
+                    'synced_at' => now(),
+                ]);
+                $deleted += count($missingIds);
+            }
         }
 
-        return $updated;
+        return ['updated' => $updated, 'deleted' => $deleted];
     }
 
     /**

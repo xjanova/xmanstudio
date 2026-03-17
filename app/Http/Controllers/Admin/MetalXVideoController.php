@@ -44,7 +44,11 @@ class MetalXVideoController extends Controller
 
         // Filter by status
         if ($request->has('status')) {
-            $query->where('is_active', $request->get('status') === 'active');
+            if ($request->get('status') === 'deleted') {
+                $query->where('privacy_status', 'deleted');
+            } else {
+                $query->where('is_active', $request->get('status') === 'active');
+            }
         }
 
         // Filter by featured
@@ -73,6 +77,7 @@ class MetalXVideoController extends Controller
             'shorts' => MetalXVideo::where('video_type', 'short')->count(),
             'live' => MetalXVideo::where('video_type', 'live')->count(),
             'standard' => MetalXVideo::where('video_type', 'standard')->count(),
+            'deleted' => MetalXVideo::where('privacy_status', 'deleted')->count(),
         ];
 
         $isApiConfigured = $this->youtubeService->isConfigured();
@@ -297,7 +302,10 @@ class MetalXVideoController extends Controller
         ], 600);
 
         // Process synchronously but with progress updates
-        $totalVideos = [];
+        $totalImported = 0;
+        $totalUpdated = 0;
+        $totalDeleted = 0;
+        $newVideos = [];
 
         foreach ($channels as $index => $channel) {
             $channelModel = $channel instanceof MetalXChannel ? $channel : null;
@@ -308,20 +316,25 @@ class MetalXVideoController extends Controller
             $masterProgress['current_channel'] = $channel->name ?? $channel->youtube_channel_id;
             Cache::put($progressKey, $masterProgress, 600);
 
-            $videos = $this->youtubeService->syncChannelVideos(
+            $result = $this->youtubeService->syncChannelVideos(
                 $channel->youtube_channel_id,
                 $limit,
                 $channelModel,
                 $channelProgressKey
             );
-            $totalVideos = array_merge($totalVideos, $videos);
+
+            $totalImported += $result['imported'];
+            $totalUpdated += $result['updated'];
+            $totalDeleted += $result['deleted'];
+            $newVideos = array_merge($newVideos, $result['videos']);
 
             // Update master progress
             $channelResult = Cache::get($channelProgressKey, []);
             $masterProgress = Cache::get($progressKey, []);
             $masterProgress['channels_done'] = $index + 1;
-            $masterProgress['total_imported'] += count($videos);
-            $masterProgress['total_skipped'] += $channelResult['skipped'] ?? 0;
+            $masterProgress['total_imported'] = $totalImported;
+            $masterProgress['total_updated'] = $totalUpdated;
+            $masterProgress['total_deleted'] = $totalDeleted;
             $masterProgress['channel_progress'][$channel->name ?? $channel->youtube_channel_id] = $channelResult;
             Cache::put($progressKey, $masterProgress, 600);
 
@@ -329,9 +342,9 @@ class MetalXVideoController extends Controller
             Cache::forget($channelProgressKey);
         }
 
-        // Dispatch AI metadata generation for videos without Thai metadata
+        // Dispatch AI metadata generation for new videos without Thai metadata
         if (Setting::get('ai_content_generation', false)) {
-            foreach ($totalVideos as $video) {
+            foreach ($newVideos as $video) {
                 if (empty($video->title_th)) {
                     GenerateVideoMetadataJob::dispatch($video, false, 80.0);
                 }
@@ -341,18 +354,25 @@ class MetalXVideoController extends Controller
         // Mark complete
         $masterProgress = Cache::get($progressKey, []);
         $masterProgress['status'] = 'completed';
+        $masterProgress['total_imported'] = $totalImported;
+        $masterProgress['total_updated'] = $totalUpdated;
+        $masterProgress['total_deleted'] = $totalDeleted;
         Cache::put($progressKey, $masterProgress, 600);
+
+        $summary = "นำเข้าใหม่ {$totalImported} | อัพเดท {$totalUpdated} | ลบแล้ว {$totalDeleted} จาก {$channels->count()} ช่อง";
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'progress_key' => $progressKey,
-                'imported' => count($totalVideos),
-                'message' => count($totalVideos) . " วิดีโอซิงค์จาก {$channels->count()} ช่อง",
+                'imported' => $totalImported,
+                'updated' => $totalUpdated,
+                'deleted' => $totalDeleted,
+                'message' => $summary,
             ]);
         }
 
-        return back()->with('success', count($totalVideos) . " videos synced from {$channels->count()} channels!");
+        return back()->with('success', $summary);
     }
 
     /**
@@ -384,9 +404,14 @@ class MetalXVideoController extends Controller
             return back()->with('error', 'YouTube API is not configured');
         }
 
-        $updated = $this->youtubeService->updateVideoStatistics();
+        $result = $this->youtubeService->updateVideoStatistics();
+        $message = "อัพเดทสถิติ {$result['updated']} วิดีโอ";
 
-        return back()->with('success', "{$updated} videos statistics updated!");
+        if ($result['deleted'] > 0) {
+            $message .= " | พบวิดีโอที่ถูกลบ {$result['deleted']} รายการ";
+        }
+
+        return back()->with('success', $message);
     }
 
     /**
