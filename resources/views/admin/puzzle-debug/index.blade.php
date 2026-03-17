@@ -128,9 +128,9 @@
                 <option value="static" {{ request('method') === 'static' ? 'selected' : '' }}>Static</option>
             </select>
             <label class="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
-                <input type="checkbox" name="unlabeled" value="1" {{ request('unlabeled') === '1' ? 'checked' : '' }}
+                <input type="checkbox" name="show_all" value="1" {{ request('show_all') === '1' ? 'checked' : '' }}
                        class="rounded border-gray-300">
-                <span>Unlabeled เท่านั้น</span>
+                <span>แสดงที่ Label แล้วด้วย</span>
             </label>
             <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
                 ค้นหา

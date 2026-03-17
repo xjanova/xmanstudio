@@ -22,7 +22,9 @@ class PuzzleDebugController extends Controller
             $query->where('detection_method', $method);
         }
 
-        if ($request->get('unlabeled') === '1') {
+        // Default: hide labeled records (show only unlabeled/pending)
+        // Use show_all=1 to see everything including labeled
+        if ($request->get('show_all') !== '1') {
             $query->unlabeled();
         }
 
