@@ -186,6 +186,7 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
         Route::post('/debug-images/infer', [PuzzleDebugController::class, 'infer']);
         Route::get('/debug-images', [PuzzleDebugController::class, 'index']);
         Route::get('/debug-images/stats', [PuzzleDebugController::class, 'stats']);
+        Route::get('/debug-images/correction', [PuzzleDebugController::class, 'correction']);
         Route::get('/debug-images/export', [PuzzleDebugController::class, 'export']);
         Route::put('/debug-images/{id}/label', [PuzzleDebugController::class, 'updateLabel']);
     });

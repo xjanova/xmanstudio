@@ -443,6 +443,72 @@ class PuzzleDebugController extends Controller
     }
 
     /**
+     * Get the current correction model (lightweight GET — no images needed).
+     * App fetches this once per session and applies correction to every detection.
+     *
+     * GET /api/v1/product/{productSlug}/debug-images/correction
+     */
+    public function correction(Request $request, string $productSlug): JsonResponse
+    {
+        $machineId = $request->query('machine_id', '');
+
+        // Auto-train if no model exists yet but we have enough human-labeled data
+        $model = Cache::get('puzzle_ai_model');
+        if (! $model || ($model['samples'] ?? 0) < 3) {
+            $humanCount = PuzzleDebugImage::labeled()
+                ->where('labeled_by', 'human')
+                ->whereNotNull('gap_x')
+                ->count();
+
+            if ($humanCount >= 3) {
+                // Auto-compute from human-labeled data
+                $data = PuzzleDebugImage::labeled()
+                    ->where('labeled_by', 'human')
+                    ->whereNotNull('gap_x')
+                    ->selectRaw('AVG(actual_gap_x - gap_x) as avg_correction')
+                    ->selectRaw('COUNT(*) as samples')
+                    ->selectRaw('AVG(ABS(actual_gap_x - gap_x)) as avg_error')
+                    ->first();
+
+                $model = [
+                    'correction' => round($data->avg_correction ?? 0, 1),
+                    'samples' => $data->samples ?? 0,
+                    'avg_error' => round($data->avg_error ?? 0, 1),
+                    'trained_at' => now()->toISOString(),
+                    'auto_computed' => true,
+                ];
+
+                // Cache for 1 hour (shorter than manual train's 30 days)
+                Cache::put('puzzle_ai_model', $model, now()->addHour());
+            }
+        }
+
+        // Per-machine correction if available
+        $machineCorrection = null;
+        if ($machineId) {
+            $machineData = PuzzleDebugImage::labeled()
+                ->where('labeled_by', 'human')
+                ->where('machine_id', $machineId)
+                ->whereNotNull('gap_x')
+                ->selectRaw('AVG(actual_gap_x - gap_x) as avg_correction')
+                ->selectRaw('COUNT(*) as samples')
+                ->first();
+
+            if (($machineData->samples ?? 0) >= 3) {
+                $machineCorrection = round($machineData->avg_correction, 1);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'correction' => round($model['correction'] ?? 0, 1),
+            'machine_correction' => $machineCorrection,
+            'samples' => $model['samples'] ?? 0,
+            'trained_at' => $model['trained_at'] ?? null,
+        ]);
+    }
+
+    /**
      * Compute average detection error correction from labeled data.
      */
     private function computeCorrection(string $machineId): float
@@ -453,8 +519,9 @@ class PuzzleDebugController extends Controller
             return (float) ($model['correction'] ?? 0);
         }
 
-        // Fallback: compute from labeled data
+        // Fallback: compute from human-labeled data
         $data = PuzzleDebugImage::labeled()
+            ->where('labeled_by', 'human')
             ->whereNotNull('gap_x')
             ->where('created_at', '>=', now()->subDays(7))
             ->selectRaw('AVG(actual_gap_x - gap_x) as avg_correction')
