@@ -49,6 +49,37 @@
     </div>
 </div>
 
+<!-- Quota/Failed Management -->
+@php
+    $failedCount = \App\Models\MetalXPromoComment::where('status', 'failed')->count();
+    $quotaFailedCount = \App\Models\MetalXPromoComment::where('status', 'failed')->where('error_message', 'like', '%quotaExceeded%')->count();
+@endphp
+@if($failedCount > 0)
+<div class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg shadow p-4 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h4 class="text-sm font-semibold text-red-800 dark:text-red-200">
+                คอมเม้นต์ที่ล้มเหลว: {{ $failedCount }} รายการ
+                @if($quotaFailedCount > 0)
+                    <span class="text-xs text-red-600 dark:text-red-400">({{ $quotaFailedCount }} จาก quota เต็ม)</span>
+                @endif
+            </h4>
+            <p class="text-xs text-red-600 dark:text-red-400 mt-1">YouTube API quota จะรีเซ็ตทุกเที่ยงคืน Pacific Time (ประมาณ 14:00 ไทย)</p>
+        </div>
+        <div class="flex items-center gap-2">
+            @if($quotaFailedCount > 0)
+                <button onclick="retryFailedPromos()" class="px-3 py-1.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-800 text-xs font-medium">
+                    🔄 ลองโพสใหม่ ({{ $quotaFailedCount }})
+                </button>
+            @endif
+            <button onclick="cleanupFailedPromos()" class="px-3 py-1.5 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 text-xs font-medium">
+                🗑️ ลบซ้ำที่ล้มเหลว
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Pinned Comment Section -->
 <div class="bg-gradient-to-r from-amber-600/20 to-yellow-600/20 border border-amber-500/30 rounded-lg shadow p-6 mb-6" x-data="pinnedManager()">
     <div class="flex items-center justify-between mb-4">
@@ -325,6 +356,40 @@ function markPinned(id) {
         else alert(data.message || 'เกิดข้อผิดพลาด');
     })
     .catch(() => alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'));
+}
+
+function retryFailedPromos() {
+    if (!confirm('ลองโพสคอมเม้นต์ที่ล้มเหลวจาก quota อีกครั้ง?')) return;
+    fetch('{{ route("admin.metal-x.automation.promo.retry-failed") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.message || 'สำเร็จ');
+        location.reload();
+    })
+    .catch(() => alert('เกิดข้อผิดพลาด'));
+}
+
+function cleanupFailedPromos() {
+    if (!confirm('ลบคอมเม้นต์ที่ล้มเหลวซ้ำ? (เก็บไว้ 1 ต่อวิดีโอสำหรับลองใหม่)')) return;
+    fetch('{{ route("admin.metal-x.automation.promo.cleanup-failed") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.message || 'สำเร็จ');
+        location.reload();
+    })
+    .catch(() => alert('เกิดข้อผิดพลาด'));
 }
 
 function pinnedManager() {

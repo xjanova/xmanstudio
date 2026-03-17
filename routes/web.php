@@ -709,6 +709,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::post('/promo/generate-pinned', [MetalXAutomationController::class, 'generatePinnedPromos'])->name('promo.generate-pinned');
             Route::get('/promo/without-pins', [MetalXAutomationController::class, 'videosWithoutPins'])->name('promo.without-pins');
             Route::post('/promo/{promo}/mark-pinned', [MetalXAutomationController::class, 'markPinned'])->name('promo.mark-pinned');
+            Route::post('/promo/retry-failed', [MetalXAutomationController::class, 'retryFailedPromos'])->name('promo.retry-failed');
+            Route::post('/promo/cleanup-failed', [MetalXAutomationController::class, 'cleanupFailedPromos'])->name('promo.cleanup-failed');
         });
 
         // Channels

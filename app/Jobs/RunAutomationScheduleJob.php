@@ -4,12 +4,14 @@ namespace App\Jobs;
 
 use App\Models\MetalXAutomationLog;
 use App\Models\MetalXAutomationSchedule;
+use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class RunAutomationScheduleJob implements ShouldQueue
@@ -210,12 +212,35 @@ class RunAutomationScheduleJob implements ShouldQueue
 
     protected function handlePromoComment(MetalXAutomationSchedule $schedule): int
     {
+        // Check if YouTube quota is exhausted
+        if (Cache::get('youtube_quota_exhausted')) {
+            Log::info('[Metal-X Automation] Promo comments skipped — YouTube quota exhausted');
+
+            return 0;
+        }
+
         $videos = $this->getTargetVideos($schedule);
+        $max = $schedule->max_actions_per_run;
         $dispatched = 0;
+        $requireApproval = $schedule->getSetting('require_approval', true);
 
         foreach ($videos as $video) {
-            GenerateAndPostPromoCommentJob::dispatch($video, $schedule->getSetting('require_approval', true));
+            // Skip videos that already have a non-failed promo today
+            $hasPromoToday = MetalXPromoComment::where('video_id', $video->id)
+                ->where('created_at', '>=', now()->startOfDay())
+                ->whereIn('status', ['draft', 'scheduled', 'posted'])
+                ->exists();
+
+            if ($hasPromoToday) {
+                continue;
+            }
+
+            GenerateAndPostPromoCommentJob::dispatch($video, $requireApproval);
             $dispatched++;
+
+            if ($dispatched >= $max) {
+                break;
+            }
         }
 
         return $dispatched;

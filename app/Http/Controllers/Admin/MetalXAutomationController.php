@@ -351,6 +351,7 @@ class MetalXAutomationController extends Controller
             'drafts' => MetalXPromoComment::draft()->count(),
             'scheduled' => MetalXPromoComment::scheduled()->count(),
             'posted' => MetalXPromoComment::posted()->count(),
+            'failed' => MetalXPromoComment::where('status', 'failed')->count(),
             'posted_today' => MetalXPromoComment::posted()
                 ->where('posted_at', '>=', now()->startOfDay())->count(),
         ];
@@ -565,6 +566,88 @@ class MetalXAutomationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'ทำเครื่องหมายว่าปักหมุดแล้ว',
+        ]);
+    }
+
+    /**
+     * Retry all quota-failed promo comments (reset to scheduled for next run).
+     */
+    public function retryFailedPromos()
+    {
+        // Only retry promos that failed due to quota
+        $quotaFailed = MetalXPromoComment::where('status', 'failed')
+            ->where('error_message', 'like', '%quotaExceeded%')
+            ->get();
+
+        if ($quotaFailed->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'retried' => 0,
+                'message' => 'ไม่มีคอมเม้นต์ที่ล้มเหลวจาก quota',
+            ]);
+        }
+
+        $retried = 0;
+        foreach ($quotaFailed as $promo) {
+            $promo->update([
+                'status' => 'scheduled',
+                'scheduled_at' => now(),
+                'error_message' => null,
+            ]);
+            $retried++;
+        }
+
+        // Clear quota exhausted cache
+        Cache::forget('youtube_quota_exhausted');
+
+        return response()->json([
+            'success' => true,
+            'retried' => $retried,
+            'message' => "ตั้งค่าลองใหม่ {$retried} คอมเม้นต์ — จะโพสในรอบถัดไป",
+        ]);
+    }
+
+    /**
+     * Clean up duplicate failed promo comments (keep one per video, delete rest).
+     */
+    public function cleanupFailedPromos()
+    {
+        $deleted = 0;
+
+        // Get all video IDs that have failed promos
+        $videoIds = MetalXPromoComment::where('status', 'failed')
+            ->pluck('video_id')
+            ->unique();
+
+        foreach ($videoIds as $videoId) {
+            // Check if video already has a successful/draft/scheduled promo
+            $hasGoodPromo = MetalXPromoComment::where('video_id', $videoId)
+                ->whereIn('status', ['posted', 'draft', 'scheduled'])
+                ->exists();
+
+            if ($hasGoodPromo) {
+                // Delete ALL failed promos for this video (already has a good one)
+                $deleted += MetalXPromoComment::where('video_id', $videoId)
+                    ->where('status', 'failed')
+                    ->delete();
+            } else {
+                // Keep the newest failed one, delete the rest
+                $failedPromos = MetalXPromoComment::where('video_id', $videoId)
+                    ->where('status', 'failed')
+                    ->orderByDesc('created_at')
+                    ->get();
+
+                if ($failedPromos->count() > 1) {
+                    $toDelete = $failedPromos->slice(1)->pluck('id');
+                    $deleted += MetalXPromoComment::whereIn('id', $toDelete)->delete();
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+            'message' => "ลบคอมเม้นต์ที่ล้มเหลวซ้ำ {$deleted} รายการ",
         ]);
     }
 

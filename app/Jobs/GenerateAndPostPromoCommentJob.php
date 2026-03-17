@@ -15,6 +15,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -42,10 +43,17 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
 
     public function handle(YouTubeEngagementAiService $aiService): void
     {
+        // Check if YouTube quota is exhausted (shared across all promo jobs)
+        if (Cache::get('youtube_quota_exhausted')) {
+            Log::debug("[Metal-X Promo] Skipping video {$this->video->youtube_id} — YouTube quota exhausted until reset");
+
+            return;
+        }
+
         Log::info("[Metal-X Promo] Generating promo comment for video {$this->video->youtube_id}");
 
         try {
-            // Check daily limit
+            // Check daily limit per video
             $todayCount = MetalXPromoComment::where('video_id', $this->video->id)
                 ->where('created_at', '>=', now()->startOfDay())
                 ->count();
@@ -59,6 +67,16 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
                     'details' => ['reason' => 'daily_limit', 'count' => $todayCount, 'limit' => $dailyLimit],
                 ]);
 
+                return;
+            }
+
+            // Check if video already has a non-failed promo today (avoid duplicates)
+            $hasPromoToday = MetalXPromoComment::where('video_id', $this->video->id)
+                ->where('created_at', '>=', now()->startOfDay())
+                ->whereIn('status', ['draft', 'scheduled', 'posted'])
+                ->exists();
+
+            if ($hasPromoToday) {
                 return;
             }
 
@@ -83,7 +101,12 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
 
             // Auto-post if no approval needed
             if (! $this->requireApproval) {
-                $this->postToYouTube($promo);
+                $posted = $this->postToYouTube($promo);
+
+                // If quota exhausted, stop all subsequent jobs
+                if (! $posted && $this->isQuotaExhausted($promo)) {
+                    $this->markQuotaExhausted();
+                }
             }
 
             MetalXAutomationLog::log('promo_comment', 'success', [
@@ -101,6 +124,30 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
                 'error_message' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Check if a failed promo was caused by quota exhaustion.
+     */
+    protected function isQuotaExhausted(MetalXPromoComment $promo): bool
+    {
+        return $promo->status === 'failed'
+            && $promo->error_message
+            && str_contains($promo->error_message, 'quotaExceeded');
+    }
+
+    /**
+     * Mark YouTube quota as exhausted — cache until midnight PT (quota reset time).
+     */
+    protected function markQuotaExhausted(): void
+    {
+        // YouTube quota resets at midnight Pacific Time
+        $now = now('America/Los_Angeles');
+        $resetAt = $now->copy()->addDay()->startOfDay();
+        $minutesUntilReset = (int) $now->diffInMinutes($resetAt);
+
+        Cache::put('youtube_quota_exhausted', true, $minutesUntilReset * 60);
+        Log::warning("[Metal-X Promo] YouTube quota exhausted — pausing promo posts until {$resetAt->toDateTimeString()} PT ({$minutesUntilReset} min)");
     }
 
     protected function generatePromoText(YouTubeEngagementAiService $aiService): ?string
