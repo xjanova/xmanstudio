@@ -210,8 +210,8 @@ class ProductLicenseController extends Controller
             ], 403);
         }
 
-        // Start trial
-        $trialDays = 7;
+        // Start trial (24 hours)
+        $trialDays = 1;
         if (! $device->startTrial($trialDays)) {
             return response()->json([
                 'success' => false,
