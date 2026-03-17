@@ -19,6 +19,7 @@ on:
           - trigger-upload
           - setup-auto-production
           - import-content
+          - create-video-project
       project_id:
         description: 'Project ID (for trigger-render/trigger-upload actions)'
         required: false
@@ -515,6 +516,93 @@ jobs:
               php artisan tinker --execute="
                 echo 'Media: ' . \App\Models\MetalXMediaLibrary::active()->count() . PHP_EOL;
                 echo 'Music: ' . \App\Models\MetalXMusicLibrary::active()->count() . PHP_EOL;
+              "
+            fi
+
+            # Action: create-video-project (create project with video clips, render + upload)
+            if [ "${{ github.event.inputs.action }}" = "create-video-project" ]; then
+              echo ""
+              echo "========================================="
+              echo "  CREATING VIDEO PROJECT WITH CLIPS"
+              echo "========================================="
+
+              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+              DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+              cd "$DEPLOY_PATH"
+
+              php artisan tinker --execute="
+                // Get video clips from library
+                \$clips = \App\Models\MetalXMediaLibrary::active()->videoClips()->pluck('file_path')->values()->toArray();
+                if (empty(\$clips)) { echo 'ERROR: No video clips in library!'; exit; }
+                echo 'Found ' . count(\$clips) . ' video clips' . PHP_EOL;
+
+                // Get music (least used)
+                \$music = \App\Models\MetalXMusicLibrary::active()->orderBy('usage_count')->first();
+                if (!\$music) { echo 'ERROR: No music in library!'; exit; }
+                echo 'Music: ' . \$music->title . PHP_EOL;
+
+                // Get channel
+                \$channel = \App\Models\MetalXChannel::where('is_default', true)->first()
+                  ?? \App\Models\MetalXChannel::first();
+                if (!\$channel) { echo 'ERROR: No channel found!'; exit; }
+                echo 'Channel: ' . \$channel->name . PHP_EOL;
+
+                // Create project
+                \$project = \App\Models\MetalXVideoProject::create([
+                  'channel_id' => \$channel->id,
+                  'title' => 'Cyberpunk Metal Apocalypse - AI Generated Video Clips [Metal-X]',
+                  'description' => 'Epic cyberpunk metal music visualizer featuring AI-generated video clips from Freepik Kling 2.5. Dark cityscapes, neon lights, and metal warriors.',
+                  'tags' => ['metal', 'cyberpunk', 'ai-generated', 'metal-x', 'music-visualizer', 'freepik', 'kling'],
+                  'privacy_status' => 'public',
+                  'template' => 'visualizer',
+                  'template_settings' => ['transition' => 'crossfade', 'transition_duration' => 1, 'effect' => 'none'],
+                  'video_clips' => \$clips,
+                  'media_mode' => 'video_clips',
+                  'status' => 'music_ready',
+                  'auto_generated' => true,
+                ]);
+
+                // Copy music to project dir
+                \$audioDir = 'metal-x/projects/' . \$project->id;
+                \$audioPath = \$audioDir . '/audio_' . \Illuminate\Support\Str::random(8) . '.mp3';
+                \Illuminate\Support\Facades\Storage::disk('local')->makeDirectory(\$audioDir);
+                \Illuminate\Support\Facades\Storage::disk('local')->copy(\$music->file_path, \$audioPath);
+                \$ts = \$project->template_settings ?? [];
+                \$ts['audio_file'] = \$audioPath;
+                \$project->update(['template_settings' => \$ts]);
+                \$music->incrementUsage();
+
+                echo 'Project #' . \$project->id . ' created with ' . count(\$clips) . ' video clips' . PHP_EOL;
+                echo 'Audio: ' . \$audioPath . PHP_EOL;
+
+                // Dispatch render (with auto-upload)
+                \App\Jobs\RenderVideoJob::dispatch(\$project, true);
+                echo 'RenderVideoJob dispatched (auto-upload enabled)!' . PHP_EOL;
+              "
+
+              # Ensure queue worker is running
+              if ! ps aux | grep "queue:work" | grep -v grep > /dev/null; then
+                echo "Starting queue worker..."
+                nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 > storage/logs/queue-worker.log 2>&1 &
+                sleep 2
+              fi
+
+              echo ""
+              echo "Waiting 120s for render + upload..."
+              sleep 120
+
+              # Check status
+              php artisan tinker --execute="
+                \$p = \App\Models\MetalXVideoProject::orderBy('id', 'desc')->first();
+                echo 'Project #' . \$p->id . ': ' . \$p->title . PHP_EOL;
+                echo 'Status: ' . \$p->status . PHP_EOL;
+                echo 'Error: ' . (\$p->error_message ?? 'none') . PHP_EOL;
+                echo 'Video file: ' . (\$p->video_file_path ?? 'none') . PHP_EOL;
+                if (\$p->video) {
+                  echo 'YouTube ID: ' . (\$p->video->youtube_id ?? 'none') . PHP_EOL;
+                }
+                echo 'Jobs in queue: ' . DB::table('jobs')->count() . PHP_EOL;
+                echo 'Failed jobs: ' . DB::table('failed_jobs')->count() . PHP_EOL;
               "
             fi
 
