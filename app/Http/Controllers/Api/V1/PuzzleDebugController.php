@@ -283,24 +283,33 @@ class PuzzleDebugController extends Controller
             }
 
             $detectedGapX = $request->input('detected_gap_x');
-            $actualGapX = $request->input('actual_gap_x', $request->boolean('success') ? $detectedGapX : null);
+            // Only use actual_gap_x if explicitly provided by caller (manual label).
+            // Do NOT auto-set from detected_gap_x — human must verify via admin page.
+            $actualGapX = $request->input('actual_gap_x');
 
             $uploadStatus = $request->input('upload_status');
 
             if ($record) {
-                // Update existing record with feedback
-                $record->update([
+                // Update existing record with feedback (success/fail status only)
+                $updateData = [
                     'success' => $request->boolean('success'),
-                    'actual_gap_x' => $actualGapX,
                     'metadata' => array_merge($record->metadata ?? [], [
                         'feedback_attempt' => $request->input('attempt'),
                         'feedback_at' => now()->toISOString(),
                         'upload_status' => $uploadStatus,
+                        'detected_gap_x' => $detectedGapX,
                     ]),
-                ]);
+                ];
+
+                // Only set actual_gap_x if explicitly provided (not auto-derived)
+                if ($actualGapX !== null) {
+                    $updateData['actual_gap_x'] = $actualGapX;
+                }
+
+                $record->update($updateData);
 
                 Log::info("PuzzleDebug feedback: record #{$record->id} " .
-                    "success={$request->input('success')} actual_gap_x={$actualGapX} upload={$uploadStatus}");
+                    "success={$request->input('success')} detected_gap_x={$detectedGapX} upload={$uploadStatus}");
             } else {
                 // No recent debug image — create a feedback-only record
                 $record = PuzzleDebugImage::create([
@@ -308,7 +317,7 @@ class PuzzleDebugController extends Controller
                     'app_version' => $request->input('app_version'),
                     'detection_method' => $request->input('detection_method'),
                     'gap_x' => $detectedGapX,
-                    'actual_gap_x' => $actualGapX,
+                    'actual_gap_x' => $actualGapX, // null unless explicitly provided
                     'success' => $request->boolean('success'),
                     'metadata' => [
                         'product' => $productSlug,
