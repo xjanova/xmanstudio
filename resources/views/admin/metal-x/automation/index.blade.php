@@ -269,6 +269,38 @@
     </div>
 </div>
 
+<!-- Auto Reply Progress Modal -->
+<div id="replyProgressModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700 p-6">
+        <div class="text-center mb-4">
+            <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="replyProgressTitle">กำลังตอบคอมเม้นต์...</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="replyProgressMessage"></p>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600 dark:text-gray-400">คอมเม้นต์ที่ต้องตอบ</span>
+                    <span class="font-semibold text-gray-900 dark:text-white" id="replyTotal">0</span>
+                </div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600 dark:text-gray-400">ส่งไปประมวลผล</span>
+                    <span class="font-semibold text-green-600" id="replyDispatched">0</span>
+                </div>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500" id="replyProgressBar" style="width: 0%"></div>
+            </div>
+        </div>
+        <button type="button" onclick="closeReplyProgress()" class="mt-4 w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 text-sm hidden" id="replyCloseBtn">ปิด</button>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 function toggleSchedule(id) {
@@ -311,10 +343,41 @@ function runNow(id) {
     })
     .then(r => r.json())
     .then(data => {
-        alert(data.message || 'เริ่มรันแล้ว');
-        location.reload();
+        if (data.progress_key) {
+            // Show progress modal for auto_reply
+            showReplyProgress(data);
+        } else {
+            alert(data.message || 'เริ่มรันแล้ว');
+            location.reload();
+        }
     })
     .catch(() => alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'));
+}
+
+function showReplyProgress(data) {
+    const modal = document.getElementById('replyProgressModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    document.getElementById('replyTotal').textContent = data.total_unreplied || 0;
+    document.getElementById('replyDispatched').textContent = data.dispatched || 0;
+    document.getElementById('replyProgressMessage').textContent = data.message || '';
+
+    if (data.dispatched > 0) {
+        document.getElementById('replyProgressBar').style.width = '100%';
+        document.getElementById('replyProgressTitle').textContent = 'ส่งไปประมวลผลแล้ว!';
+        document.getElementById('replyCloseBtn').classList.remove('hidden');
+    } else {
+        document.getElementById('replyProgressBar').style.width = '100%';
+        document.getElementById('replyProgressTitle').textContent = 'ไม่มีคอมเม้นต์ที่ต้องตอบ';
+        document.getElementById('replyCloseBtn').classList.remove('hidden');
+    }
+}
+
+function closeReplyProgress() {
+    document.getElementById('replyProgressModal').classList.add('hidden');
+    document.getElementById('replyProgressModal').classList.remove('flex');
+    location.reload();
 }
 </script>
 @endpush

@@ -25,6 +25,7 @@ class MetalXVideo extends Model
         'comment_count',
         'duration',
         'duration_seconds',
+        'video_type',
         'tags',
         'category',
         'privacy_status',
@@ -132,11 +133,63 @@ class MetalXVideo extends Model
     }
 
     /**
+     * Scope a query to filter by video type.
+     */
+    public function scopeOfType($query, string $type)
+    {
+        return $query->where('video_type', $type);
+    }
+
+    /**
+     * Scope for shorts only.
+     */
+    public function scopeShorts($query)
+    {
+        return $query->where('video_type', 'short');
+    }
+
+    /**
+     * Scope for live streams only.
+     */
+    public function scopeLive($query)
+    {
+        return $query->where('video_type', 'live');
+    }
+
+    /**
      * Scope a query to order by view count.
      */
     public function scopePopular($query)
     {
         return $query->orderByDesc('view_count');
+    }
+
+    /**
+     * Classify video type based on duration and live broadcast content.
+     */
+    public static function classifyVideoType(int $durationSeconds, ?string $liveBroadcastContent = null): string
+    {
+        if ($liveBroadcastContent === 'live' || $liveBroadcastContent === 'upcoming') {
+            return 'live';
+        }
+
+        if ($durationSeconds > 0 && $durationSeconds <= 60) {
+            return 'short';
+        }
+
+        return 'standard';
+    }
+
+    /**
+     * Get Thai label for video type.
+     */
+    public function getVideoTypeLabelAttribute(): string
+    {
+        return match ($this->video_type) {
+            'short' => 'คลิปสั้น',
+            'live' => 'ถ่ายทอดสด',
+            default => 'วิดีโอ',
+        };
     }
 
     /**

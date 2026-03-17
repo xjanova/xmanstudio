@@ -9,6 +9,8 @@ use App\Models\MetalXVideo;
 use App\Models\Setting;
 use App\Services\YouTubeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class MetalXVideoController extends Controller
 {
@@ -50,6 +52,11 @@ class MetalXVideoController extends Controller
             $query->where('is_featured', $request->get('featured') === 'yes');
         }
 
+        // Filter by video type (whitelist to prevent SQL injection)
+        if ($request->filled('video_type') && in_array($request->get('video_type'), ['standard', 'short', 'live'])) {
+            $query->where('video_type', $request->get('video_type'));
+        }
+
         // Sort (whitelist to prevent SQL injection)
         $allowedSorts = ['published_at', 'title', 'view_count', 'like_count', 'comment_count', 'created_at'];
         $sortBy = in_array($request->get('sort'), $allowedSorts) ? $request->get('sort') : 'published_at';
@@ -63,6 +70,9 @@ class MetalXVideoController extends Controller
             'active' => MetalXVideo::where('is_active', true)->count(),
             'featured' => MetalXVideo::where('is_featured', true)->count(),
             'total_views' => MetalXVideo::sum('view_count'),
+            'shorts' => MetalXVideo::where('video_type', 'short')->count(),
+            'live' => MetalXVideo::where('video_type', 'live')->count(),
+            'standard' => MetalXVideo::where('video_type', 'standard')->count(),
         ];
 
         $isApiConfigured = $this->youtubeService->isConfigured();
@@ -243,38 +253,80 @@ class MetalXVideoController extends Controller
     }
 
     /**
-     * Sync all videos from all active channels.
+     * Start async sync of all videos from all active channels (AJAX).
      */
     public function syncAll(Request $request)
     {
         if (! $this->youtubeService->isConfigured()) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'YouTube API is not configured'], 400);
+            }
+
             return back()->with('error', 'YouTube API is not configured');
         }
 
         $channels = MetalXChannel::active()->get();
 
         if ($channels->isEmpty()) {
-            // Fallback to legacy single channel setting
             $channelId = Setting::getValue('metalx_channel_id');
 
             if (! $channelId) {
+                if ($request->expectsJson()) {
+                    return response()->json(['error' => 'No channels configured'], 400);
+                }
+
                 return back()->with('error', 'No channels configured. Please add channels in Metal-X Settings.');
             }
 
             $channels = collect([(object) ['youtube_channel_id' => $channelId, 'id' => null, 'name' => 'Default']]);
         }
 
-        $limit = min(1000, max(1, (int) $request->get('limit', 500)));
+        // limit=0 means import ALL videos from channel
+        $limit = (int) $request->get('limit', 0);
+        $progressKey = 'video_sync_' . Str::random(16);
+
+        // Initialize master progress
+        Cache::put($progressKey, [
+            'status' => 'running',
+            'channels_total' => $channels->count(),
+            'channels_done' => 0,
+            'total_imported' => 0,
+            'total_skipped' => 0,
+            'current_channel' => '',
+            'channel_progress' => [],
+        ], 600);
+
+        // Process synchronously but with progress updates
         $totalVideos = [];
 
-        foreach ($channels as $channel) {
+        foreach ($channels as $index => $channel) {
             $channelModel = $channel instanceof MetalXChannel ? $channel : null;
+            $channelProgressKey = $progressKey . '_ch_' . $index;
+
+            // Update master progress with current channel
+            $masterProgress = Cache::get($progressKey, []);
+            $masterProgress['current_channel'] = $channel->name ?? $channel->youtube_channel_id;
+            Cache::put($progressKey, $masterProgress, 600);
+
             $videos = $this->youtubeService->syncChannelVideos(
                 $channel->youtube_channel_id,
                 $limit,
-                $channelModel
+                $channelModel,
+                $channelProgressKey
             );
             $totalVideos = array_merge($totalVideos, $videos);
+
+            // Update master progress
+            $channelResult = Cache::get($channelProgressKey, []);
+            $masterProgress = Cache::get($progressKey, []);
+            $masterProgress['channels_done'] = $index + 1;
+            $masterProgress['total_imported'] += count($videos);
+            $masterProgress['total_skipped'] += $channelResult['skipped'] ?? 0;
+            $masterProgress['channel_progress'][$channel->name ?? $channel->youtube_channel_id] = $channelResult;
+            Cache::put($progressKey, $masterProgress, 600);
+
+            // Clean up channel progress key
+            Cache::forget($channelProgressKey);
         }
 
         // Dispatch AI metadata generation for videos without Thai metadata
@@ -286,9 +338,41 @@ class MetalXVideoController extends Controller
             }
         }
 
-        $channelNames = $channels->pluck('name')->implode(', ');
+        // Mark complete
+        $masterProgress = Cache::get($progressKey, []);
+        $masterProgress['status'] = 'completed';
+        Cache::put($progressKey, $masterProgress, 600);
 
-        return back()->with('success', count($totalVideos) . " videos synced from {$channels->count()} channels ({$channelNames})!");
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'progress_key' => $progressKey,
+                'imported' => count($totalVideos),
+                'message' => count($totalVideos) . " วิดีโอซิงค์จาก {$channels->count()} ช่อง",
+            ]);
+        }
+
+        return back()->with('success', count($totalVideos) . " videos synced from {$channels->count()} channels!");
+    }
+
+    /**
+     * Get sync progress (AJAX polling endpoint).
+     */
+    public function syncProgress(Request $request)
+    {
+        $key = $request->get('key');
+
+        if (! $key) {
+            return response()->json(['error' => 'No progress key'], 400);
+        }
+
+        $progress = Cache::get($key);
+
+        if (! $progress) {
+            return response()->json(['status' => 'not_found']);
+        }
+
+        return response()->json($progress);
     }
 
     /**

@@ -36,15 +36,12 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 @if($isApiConfigured)
-                    <form action="{{ route('admin.metal-x.videos.sync-all') }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all flex items-center font-medium">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                            </svg>
-                            Sync จาก YouTube
-                        </button>
-                    </form>
+                    <button type="button" onclick="startSyncAll()" id="syncAllBtn" class="px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all flex items-center font-medium">
+                        <svg class="w-4 h-4 mr-2" id="syncIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span id="syncBtnText">Sync ทั้งช่อง</span>
+                    </button>
                     <form action="{{ route('admin.metal-x.videos.update-stats') }}" method="POST" class="inline">
                         @csrf
                         <button type="submit" class="px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all flex items-center font-medium">
@@ -138,6 +135,43 @@
     </div>
 @endif
 
+<!-- Sync Progress Bar -->
+<div id="syncProgress" class="hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 mb-6">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="font-semibold text-gray-900 dark:text-white" id="syncStatusText">กำลัง sync...</span>
+        </div>
+        <span class="text-sm text-gray-500 dark:text-gray-400" id="syncChannelText"></span>
+    </div>
+    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-2">
+        <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-500" id="syncProgressBar" style="width: 0%"></div>
+    </div>
+    <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+        <span>นำเข้า: <strong id="syncImported" class="text-green-600">0</strong> | ข้าม: <strong id="syncSkipped" class="text-yellow-600">0</strong></span>
+        <span id="syncEstimate"></span>
+    </div>
+</div>
+
+<!-- Video Type Stats -->
+<div class="grid grid-cols-3 gap-4 mb-6">
+    <a href="{{ route('admin.metal-x.videos.index', ['video_type' => 'standard']) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-4 hover:shadow-lg transition-shadow {{ request('video_type') === 'standard' ? 'ring-2 ring-blue-500' : '' }}">
+        <p class="text-sm text-gray-500 dark:text-gray-400">วิดีโอมาตรฐาน</p>
+        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ number_format($stats['standard']) }}</p>
+    </a>
+    <a href="{{ route('admin.metal-x.videos.index', ['video_type' => 'short']) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-4 hover:shadow-lg transition-shadow {{ request('video_type') === 'short' ? 'ring-2 ring-pink-500' : '' }}">
+        <p class="text-sm text-gray-500 dark:text-gray-400">คลิปสั้น (Shorts)</p>
+        <p class="text-xl font-bold text-pink-600 dark:text-pink-400">{{ number_format($stats['shorts']) }}</p>
+    </a>
+    <a href="{{ route('admin.metal-x.videos.index', ['video_type' => 'live']) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-4 hover:shadow-lg transition-shadow {{ request('video_type') === 'live' ? 'ring-2 ring-red-500' : '' }}">
+        <p class="text-sm text-gray-500 dark:text-gray-400">ถ่ายทอดสด (Live)</p>
+        <p class="text-xl font-bold text-red-600 dark:text-red-400">{{ number_format($stats['live']) }}</p>
+    </a>
+</div>
+
 <!-- Search & Filter -->
 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 mb-6">
     <form action="" method="GET" class="flex flex-wrap gap-4 items-center">
@@ -160,6 +194,14 @@
                 <option value="">ทุกสถานะ</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>เปิดใช้งาน</option>
                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>ปิดใช้งาน</option>
+            </select>
+        </div>
+        <div>
+            <select name="video_type" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white transition-all">
+                <option value="">ทุกประเภท</option>
+                <option value="standard" {{ request('video_type') === 'standard' ? 'selected' : '' }}>วิดีโอมาตรฐาน</option>
+                <option value="short" {{ request('video_type') === 'short' ? 'selected' : '' }}>คลิปสั้น</option>
+                <option value="live" {{ request('video_type') === 'live' ? 'selected' : '' }}>ถ่ายทอดสด</option>
             </select>
         </div>
         <div>
@@ -192,6 +234,11 @@
                 <div class="absolute bottom-2 right-2 bg-black/75 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg font-medium">
                     {{ $video->formatted_duration }}
                 </div>
+                @if($video->video_type === 'short')
+                    <div class="absolute top-2 right-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">Shorts</div>
+                @elseif($video->video_type === 'live')
+                    <div class="absolute top-2 right-2 bg-gradient-to-r from-red-600 to-red-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">LIVE</div>
+                @endif
                 @if($video->is_featured)
                     <div class="absolute top-2 left-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-white text-xs px-2.5 py-1 rounded-lg font-medium shadow-lg">
                         แนะนำ
@@ -346,6 +393,53 @@
     function hideDeleteModal() {
         document.getElementById('deleteModal').classList.add('hidden');
         document.getElementById('deleteModal').classList.remove('flex');
+    }
+
+    let syncPollingInterval = null;
+
+    function startSyncAll() {
+        const btn = document.getElementById('syncAllBtn');
+        const btnText = document.getElementById('syncBtnText');
+        const icon = document.getElementById('syncIcon');
+        const progressEl = document.getElementById('syncProgress');
+
+        btn.disabled = true;
+        btnText.textContent = 'กำลัง sync...';
+        icon.classList.add('animate-spin');
+        progressEl.classList.remove('hidden');
+
+        fetch('{{ route("admin.metal-x.videos.sync-all") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ limit: 0 })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('syncStatusText').textContent = 'Sync เสร็จสิ้น!';
+                document.getElementById('syncImported').textContent = data.imported;
+                document.getElementById('syncProgressBar').style.width = '100%';
+
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                alert(data.error || 'เกิดข้อผิดพลาด');
+                btn.disabled = false;
+                btnText.textContent = 'Sync ทั้งช่อง';
+                icon.classList.remove('animate-spin');
+                progressEl.classList.add('hidden');
+            }
+        })
+        .catch(err => {
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            btn.disabled = false;
+            btnText.textContent = 'Sync ทั้งช่อง';
+            icon.classList.remove('animate-spin');
+            progressEl.classList.add('hidden');
+        });
     }
 </script>
 @endpush

@@ -622,6 +622,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::post('/{video}/toggle-featured', [MetalXVideoController::class, 'toggleFeatured'])->name('toggle-featured');
             Route::post('/{video}/sync', [MetalXVideoController::class, 'sync'])->name('sync');
             Route::post('/sync-all', [MetalXVideoController::class, 'syncAll'])->name('sync-all');
+            Route::get('/sync-progress', [MetalXVideoController::class, 'syncProgress'])->name('sync-progress');
             Route::post('/update-stats', [MetalXVideoController::class, 'updateStats'])->name('update-stats');
             Route::post('/import', [MetalXVideoController::class, 'import'])->name('import');
         });
@@ -699,6 +700,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::delete('/schedules/{schedule}', [MetalXAutomationController::class, 'destroySchedule'])->name('destroy');
             Route::post('/schedules/{schedule}/toggle', [MetalXAutomationController::class, 'toggleSchedule'])->name('toggle');
             Route::post('/schedules/{schedule}/run', [MetalXAutomationController::class, 'runNow'])->name('run');
+            Route::get('/run-progress', [MetalXAutomationController::class, 'runProgress'])->name('run-progress');
             Route::get('/logs', [MetalXAutomationController::class, 'logs'])->name('logs');
             Route::get('/promo', [MetalXAutomationController::class, 'promoComments'])->name('promo');
             Route::post('/promo/{video}/generate', [MetalXAutomationController::class, 'generatePromo'])->name('promo.generate');

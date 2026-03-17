@@ -7,6 +7,7 @@ use App\Models\MetalXPlaylist;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -314,26 +315,179 @@ class YouTubeService
     }
 
     /**
-     * Sync all videos from channel.
+     * Get the uploads playlist ID for a channel.
      */
-    public function syncChannelVideos(string $channelId, int $limit = 100, ?MetalXChannel $channel = null): array
+    public function getUploadsPlaylistId(string $channelId): ?string
     {
+        $channelInfo = $this->getChannelInfo($channelId);
+
+        return $channelInfo['contentDetails']['relatedPlaylists']['uploads'] ?? null;
+    }
+
+    /**
+     * Sync ALL videos from channel using uploads playlist (more efficient than search API).
+     * Supports progress tracking via Cache and optional limit.
+     */
+    public function syncChannelVideos(string $channelId, int $limit = 0, ?MetalXChannel $channel = null, ?string $progressKey = null): array
+    {
+        // Get uploads playlist for efficient full-channel import
+        $uploadsPlaylistId = $this->getUploadsPlaylistId($channelId);
+
+        if (! $uploadsPlaylistId) {
+            Log::warning("[YouTube] Could not get uploads playlist for channel {$channelId}, falling back to search");
+
+            return $this->syncChannelVideosViaSearch($channelId, $limit ?: 100, $channel, $progressKey);
+        }
+
+        // Get existing video IDs from DB to skip duplicates
+        $existingIds = MetalXVideo::pluck('youtube_id')->flip()->toArray();
+
         $imported = [];
+        $skipped = 0;
         $pageToken = null;
-        $count = 0;
+        $totalEstimate = 0;
+
+        // Initialize progress
+        if ($progressKey) {
+            Cache::put($progressKey, [
+                'status' => 'running',
+                'total' => 0,
+                'imported' => 0,
+                'skipped' => 0,
+                'current_page' => 0,
+                'channel' => $channel?->name ?? $channelId,
+            ], 600);
+        }
+
+        $page = 0;
+
+        do {
+            $result = $this->getPlaylistItems($uploadsPlaylistId, 50, $pageToken);
+            $page++;
+
+            if ($page === 1) {
+                $totalEstimate = $result['totalResults'] ?? 0;
+            }
+
+            // Extract video IDs from playlist items
+            $videoIds = [];
+            foreach ($result['items'] as $item) {
+                $videoId = $item['contentDetails']['videoId'] ?? $item['snippet']['resourceId']['videoId'] ?? null;
+                if ($videoId) {
+                    if (isset($existingIds[$videoId])) {
+                        $skipped++;
+                    } else {
+                        $videoIds[] = $videoId;
+                    }
+                }
+            }
+
+            // Import new videos in batch (50 at a time via videos API for full details)
+            if (! empty($videoIds)) {
+                $videos = $this->importVideos($videoIds, $channel);
+                $imported = array_merge($imported, $videos);
+
+                // Mark these as existing now
+                foreach ($videoIds as $vid) {
+                    $existingIds[$vid] = true;
+                }
+            }
+
+            // Update progress
+            if ($progressKey) {
+                Cache::put($progressKey, [
+                    'status' => 'running',
+                    'total' => $totalEstimate,
+                    'imported' => count($imported),
+                    'skipped' => $skipped,
+                    'current_page' => $page,
+                    'channel' => $channel?->name ?? $channelId,
+                ], 600);
+            }
+
+            $pageToken = $result['nextPageToken'];
+
+            // Check limit (0 = unlimited)
+            if ($limit > 0 && (count($imported) + $skipped) >= $limit) {
+                break;
+            }
+        } while ($pageToken);
+
+        // Mark progress complete
+        if ($progressKey) {
+            Cache::put($progressKey, [
+                'status' => 'completed',
+                'total' => $totalEstimate,
+                'imported' => count($imported),
+                'skipped' => $skipped,
+                'current_page' => $page,
+                'channel' => $channel?->name ?? $channelId,
+            ], 600);
+        }
+
+        Log::info("[YouTube] Channel sync complete: {$channelId} — imported " . count($imported) . ", skipped {$skipped}");
+
+        return $imported;
+    }
+
+    /**
+     * Fallback: sync via search API when uploads playlist is unavailable.
+     */
+    protected function syncChannelVideosViaSearch(string $channelId, int $limit, ?MetalXChannel $channel, ?string $progressKey): array
+    {
+        $existingIds = MetalXVideo::pluck('youtube_id')->flip()->toArray();
+        $imported = [];
+        $skipped = 0;
+        $pageToken = null;
+        $page = 0;
 
         do {
             $result = $this->searchChannelVideos($channelId, 50, $pageToken);
-            $videoIds = array_map(fn ($item) => $item['id']['videoId'], $result['items']);
+            $page++;
+
+            $videoIds = [];
+            foreach ($result['items'] as $item) {
+                $videoId = $item['id']['videoId'] ?? null;
+                if (! $videoId) {
+                    continue;
+                }
+                if (isset($existingIds[$videoId])) {
+                    $skipped++;
+                } else {
+                    $videoIds[] = $videoId;
+                    $existingIds[$videoId] = true;
+                }
+            }
 
             if (! empty($videoIds)) {
                 $videos = $this->importVideos($videoIds, $channel);
                 $imported = array_merge($imported, $videos);
-                $count += count($videos);
+            }
+
+            if ($progressKey) {
+                Cache::put($progressKey, [
+                    'status' => 'running',
+                    'total' => $result['totalResults'] ?? 0,
+                    'imported' => count($imported),
+                    'skipped' => $skipped,
+                    'current_page' => $page,
+                    'channel' => $channel?->name ?? $channelId,
+                ], 600);
             }
 
             $pageToken = $result['nextPageToken'];
-        } while ($pageToken && $count < $limit);
+        } while ($pageToken && (count($imported) + $skipped) < $limit);
+
+        if ($progressKey) {
+            Cache::put($progressKey, [
+                'status' => 'completed',
+                'total' => count($imported) + $skipped,
+                'imported' => count($imported),
+                'skipped' => $skipped,
+                'current_page' => $page,
+                'channel' => $channel?->name ?? $channelId,
+            ], 600);
+        }
 
         return $imported;
     }
@@ -457,7 +611,8 @@ class YouTubeService
             'like_count' => $statistics['likeCount'] ?? 0,
             'comment_count' => $statistics['commentCount'] ?? 0,
             'duration' => $contentDetails['duration'] ?? null,
-            'duration_seconds' => $this->parseDuration($contentDetails['duration'] ?? 'PT0S'),
+            'duration_seconds' => $durationSeconds = $this->parseDuration($contentDetails['duration'] ?? 'PT0S'),
+            'video_type' => MetalXVideo::classifyVideoType($durationSeconds, $snippet['liveBroadcastContent'] ?? null),
             'tags' => $snippet['tags'] ?? [],
             'category' => $snippet['categoryId'] ?? null,
             'privacy_status' => $contentDetails['privacyStatus'] ?? $snippet['privacyStatus'] ?? 'public',

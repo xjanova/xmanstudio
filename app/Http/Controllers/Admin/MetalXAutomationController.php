@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\GenerateAndPostPromoCommentJob;
+use App\Jobs\ProcessCommentEngagementJob;
 use App\Jobs\RunAutomationScheduleJob;
 use App\Models\MetalXAutomationLog;
 use App\Models\MetalXAutomationSchedule;
+use App\Models\MetalXComment;
 use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class MetalXAutomationController extends Controller
 {
@@ -126,19 +130,135 @@ class MetalXAutomationController extends Controller
     }
 
     /**
-     * Manually trigger a schedule run.
+     * Manually trigger a schedule run with progress tracking for auto_reply.
      */
     public function runNow(MetalXAutomationSchedule $schedule)
     {
-        // Set next_run_at to now so RunAutomationScheduleJob picks it up
-        $schedule->update(['next_run_at' => now()]);
+        // For auto_reply, process ALL unreplied comments with progress tracking
+        if ($schedule->action_type === 'auto_reply') {
+            return $this->runAutoReplyWithProgress($schedule);
+        }
 
+        // For other types, dispatch normally
+        $schedule->update(['next_run_at' => now()]);
         RunAutomationScheduleJob::dispatch();
 
         return response()->json([
             'success' => true,
             'message' => "เริ่มรัน {$schedule->action_label} แล้ว",
         ]);
+    }
+
+    /**
+     * Run auto-reply for ALL unreplied comments with progress tracking.
+     */
+    protected function runAutoReplyWithProgress(MetalXAutomationSchedule $schedule)
+    {
+        $progressKey = 'auto_reply_' . Str::random(16);
+
+        // Get target videos
+        $videos = $schedule->video_id
+            ? collect([$schedule->video])->filter()
+            : MetalXVideo::where('is_active', true)->get();
+
+        // Count total unreplied comments across all target videos
+        $unrepliedQuery = MetalXComment::topLevel()
+            ->where('ai_replied', false)
+            ->where('is_spam', false)
+            ->where('is_hidden', false)
+            ->where(function ($q) {
+                $q->where('can_reply', true)->orWhereNull('can_reply');
+            });
+
+        if ($schedule->video_id) {
+            $unrepliedQuery->where('video_id', $schedule->video_id);
+        } else {
+            $unrepliedQuery->whereIn('video_id', $videos->pluck('id'));
+        }
+
+        $totalUnreplied = $unrepliedQuery->count();
+
+        // Initialize progress
+        Cache::put($progressKey, [
+            'status' => 'running',
+            'total' => $totalUnreplied,
+            'processed' => 0,
+            'replied' => 0,
+            'failed' => 0,
+            'current_comment' => '',
+        ], 600);
+
+        // Dispatch each comment reply job (they run async via queue)
+        $comments = $unrepliedQuery->orderByDesc('published_at')->get();
+        $dispatched = 0;
+
+        foreach ($comments as $comment) {
+            ProcessCommentEngagementJob::dispatch($comment, true, false);
+            $dispatched++;
+        }
+
+        // Update progress with dispatch count
+        Cache::put($progressKey, [
+            'status' => $dispatched > 0 ? 'dispatched' : 'completed',
+            'total' => $totalUnreplied,
+            'dispatched' => $dispatched,
+            'processed' => 0,
+            'replied' => 0,
+            'failed' => 0,
+            'message' => $dispatched > 0
+                ? "กำลังตอบคอมเม้นต์ {$dispatched} รายการ..."
+                : 'ไม่มีคอมเม้นต์ที่ต้องตอบ',
+        ], 600);
+
+        $schedule->markRun();
+
+        MetalXAutomationLog::log('auto_reply', 'success', [
+            'video_id' => $schedule->video_id,
+            'details' => ['dispatched' => $dispatched, 'total_unreplied' => $totalUnreplied],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'progress_key' => $progressKey,
+            'total_unreplied' => $totalUnreplied,
+            'dispatched' => $dispatched,
+            'message' => $dispatched > 0
+                ? "กำลังตอบคอมเม้นต์ {$dispatched} จาก {$totalUnreplied} รายการ"
+                : 'ไม่มีคอมเม้นต์ที่ต้องตอบ',
+        ]);
+    }
+
+    /**
+     * Get automation run progress (AJAX polling endpoint).
+     */
+    public function runProgress(Request $request)
+    {
+        $key = $request->get('key');
+
+        if (! $key) {
+            return response()->json(['error' => 'No progress key'], 400);
+        }
+
+        $progress = Cache::get($key);
+
+        if (! $progress) {
+            // Key expired or doesn't exist — check unreplied count as live status
+            $unreplied = MetalXComment::topLevel()
+                ->where('ai_replied', false)
+                ->where('is_spam', false)
+                ->where('is_hidden', false)
+                ->where(function ($q) {
+                    $q->where('can_reply', true)->orWhereNull('can_reply');
+                })
+                ->count();
+
+            return response()->json([
+                'status' => 'live',
+                'unreplied_remaining' => $unreplied,
+            ]);
+        }
+
+        return response()->json($progress);
     }
 
     /**
