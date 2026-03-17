@@ -13,15 +13,21 @@ class MetalXPromoComment extends Model
         'youtube_comment_id',
         'generated_by_ai',
         'status',
+        'is_pinned',
+        'should_pin',
         'scheduled_at',
         'posted_at',
+        'pinned_at',
         'error_message',
     ];
 
     protected $casts = [
         'generated_by_ai' => 'boolean',
+        'is_pinned' => 'boolean',
+        'should_pin' => 'boolean',
         'scheduled_at' => 'datetime',
         'posted_at' => 'datetime',
+        'pinned_at' => 'datetime',
     ];
 
     public function video(): BelongsTo
@@ -48,6 +54,19 @@ class MetalXPromoComment extends Model
     {
         return $query->where('status', 'scheduled')
             ->where('scheduled_at', '<=', now());
+    }
+
+    public function scopePinned($query)
+    {
+        return $query->where('is_pinned', true);
+    }
+
+    public function scopeNeedsPinning($query)
+    {
+        return $query->where('status', 'posted')
+            ->where('should_pin', true)
+            ->where('is_pinned', false)
+            ->whereNotNull('youtube_comment_id');
     }
 
     public function getStatusLabelAttribute(): string

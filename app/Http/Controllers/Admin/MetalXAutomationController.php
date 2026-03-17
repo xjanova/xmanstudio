@@ -62,6 +62,21 @@ class MetalXAutomationController extends Controller
             'is_enabled' => 'boolean',
         ]);
 
+        // Prevent duplicate: same action_type + same video_id (or both null for global)
+        $existsQuery = MetalXAutomationSchedule::where('action_type', $validated['action_type']);
+        if (empty($validated['video_id'])) {
+            $existsQuery->whereNull('video_id');
+        } else {
+            $existsQuery->where('video_id', $validated['video_id']);
+        }
+
+        if ($existsQuery->exists()) {
+            $targetLabel = empty($validated['video_id']) ? 'แบบ Global' : 'สำหรับวิดีโอนี้';
+
+            return redirect()->route('admin.metal-x.automation.index')
+                ->with('error', "มีตาราง \"{$validated['action_type']}\" {$targetLabel} อยู่แล้ว — ไม่สามารถสร้างซ้ำได้");
+        }
+
         $validated['is_enabled'] = $request->boolean('is_enabled', true);
         $validated['frequency_minutes'] = (int) $validated['frequency_minutes'];
         $validated['max_actions_per_run'] = (int) $validated['max_actions_per_run'];
@@ -448,6 +463,109 @@ class MetalXAutomationController extends Controller
 
         return redirect()->route('admin.metal-x.automation.index')
             ->with('info', 'มีตารางอัตโนมัติครบทุกประเภทแล้ว');
+    }
+
+    /**
+     * Generate pinned promo comments for all videos that don't have one.
+     */
+    public function generatePinnedPromos(Request $request)
+    {
+        $videos = MetalXVideo::where('is_active', true)
+            ->where('privacy_status', '!=', 'deleted')
+            ->get();
+
+        $dispatched = 0;
+        $skipped = 0;
+
+        foreach ($videos as $video) {
+            // Check if video already has a pinned or should_pin promo comment
+            $hasPinnedPromo = MetalXPromoComment::where('video_id', $video->id)
+                ->where(function ($q) {
+                    $q->where('is_pinned', true)
+                        ->orWhere('should_pin', true);
+                })
+                ->whereIn('status', ['posted', 'draft', 'scheduled'])
+                ->exists();
+
+            if ($hasPinnedPromo) {
+                $skipped++;
+
+                continue;
+            }
+
+            // Dispatch job to generate pinned promo comment (auto-post, should_pin=true)
+            GenerateAndPostPromoCommentJob::dispatch($video, false, true);
+            $dispatched++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'dispatched' => $dispatched,
+            'skipped' => $skipped,
+            'message' => "สร้างคอมเม้นต์ปักหมุดสำหรับ {$dispatched} วิดีโอ (ข้าม {$skipped} ที่มีอยู่แล้ว)",
+        ]);
+    }
+
+    /**
+     * Get list of videos without pinned comments.
+     */
+    public function videosWithoutPins()
+    {
+        $allActiveVideos = MetalXVideo::where('is_active', true)
+            ->where('privacy_status', '!=', 'deleted')
+            ->orderByDesc('view_count')
+            ->get();
+
+        $videosWithPins = MetalXPromoComment::where(function ($q) {
+            $q->where('is_pinned', true)
+                ->orWhere('should_pin', true);
+        })
+            ->whereIn('status', ['posted', 'draft', 'scheduled'])
+            ->pluck('video_id')
+            ->unique()
+            ->toArray();
+
+        $withoutPins = $allActiveVideos->filter(function ($video) use ($videosWithPins) {
+            return ! in_array($video->id, $videosWithPins);
+        });
+
+        return response()->json([
+            'total_active' => $allActiveVideos->count(),
+            'with_pins' => count($videosWithPins),
+            'without_pins' => $withoutPins->count(),
+            'videos' => $withoutPins->map(function ($video) {
+                return [
+                    'id' => $video->id,
+                    'title' => Str::limit($video->title, 60),
+                    'youtube_id' => $video->youtube_id,
+                    'view_count' => $video->view_count,
+                    'studio_url' => "https://studio.youtube.com/video/{$video->youtube_id}/comments",
+                ];
+            })->values(),
+        ]);
+    }
+
+    /**
+     * Mark a promo comment as pinned (after admin pins via YouTube Studio).
+     */
+    public function markPinned(MetalXPromoComment $promo)
+    {
+        if ($promo->status !== 'posted') {
+            return response()->json([
+                'success' => false,
+                'message' => 'คอมเม้นต์ยังไม่ได้โพส — ไม่สามารถปักหมุดได้',
+            ], 422);
+        }
+
+        $promo->update([
+            'is_pinned' => true,
+            'pinned_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ทำเครื่องหมายว่าปักหมุดแล้ว',
+        ]);
     }
 
     /**

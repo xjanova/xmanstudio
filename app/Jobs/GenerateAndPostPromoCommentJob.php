@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Http\Controllers\Auth\YouTubeOAuthController;
 use App\Models\MetalXAutomationLog;
+use App\Models\MetalXChannel;
 use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
@@ -30,10 +31,13 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
 
     protected bool $requireApproval;
 
-    public function __construct(MetalXVideo $video, bool $requireApproval = true)
+    protected bool $shouldPin;
+
+    public function __construct(MetalXVideo $video, bool $requireApproval = true, bool $shouldPin = false)
     {
         $this->video = $video;
         $this->requireApproval = $requireApproval;
+        $this->shouldPin = $shouldPin;
     }
 
     public function handle(YouTubeEngagementAiService $aiService): void
@@ -73,6 +77,7 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
                 'comment_text' => $promoText,
                 'generated_by_ai' => true,
                 'status' => $this->requireApproval ? 'draft' : 'scheduled',
+                'should_pin' => $this->shouldPin,
                 'scheduled_at' => $this->requireApproval ? null : now(),
             ]);
 
@@ -150,7 +155,15 @@ PROMPT;
 
     public function postToYouTube(MetalXPromoComment $promo): bool
     {
-        $accessToken = YouTubeOAuthController::getValidAccessToken();
+        // Use per-channel token if available, fallback to global
+        $video = $promo->video;
+        $channel = $video->metal_x_channel_id
+            ? MetalXChannel::find($video->metal_x_channel_id)
+            : MetalXChannel::getDefault();
+
+        $accessToken = $channel
+            ? $channel->getValidAccessToken()
+            : YouTubeOAuthController::getValidAccessToken();
 
         if (empty($accessToken)) {
             $promo->update([
@@ -167,7 +180,7 @@ PROMPT;
                 'Content-Type' => 'application/json',
             ])->post('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet', [
                 'snippet' => [
-                    'videoId' => $promo->video->youtube_id,
+                    'videoId' => $video->youtube_id,
                     'topLevelComment' => [
                         'snippet' => [
                             'textOriginal' => $promo->comment_text,
@@ -178,13 +191,20 @@ PROMPT;
 
             if ($response->successful()) {
                 $data = $response->json();
+                $commentId = $data['id'] ?? null;
+
                 $promo->update([
                     'status' => 'posted',
                     'posted_at' => now(),
-                    'youtube_comment_id' => $data['id'] ?? null,
+                    'youtube_comment_id' => $commentId,
                 ]);
 
-                Log::info("[Metal-X Promo] Posted promo comment for video {$promo->video->youtube_id}");
+                Log::info("[Metal-X Promo] Posted promo comment for video {$video->youtube_id}");
+
+                // If should_pin is set, mark for pinning (admin pins via YouTube Studio)
+                if ($promo->should_pin && $commentId) {
+                    Log::info("[Metal-X Promo] Comment {$commentId} marked for pinning — pin via YouTube Studio");
+                }
 
                 return true;
             }

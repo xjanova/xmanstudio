@@ -49,6 +49,71 @@
     </div>
 </div>
 
+<!-- Pinned Comment Section -->
+<div class="bg-gradient-to-r from-amber-600/20 to-yellow-600/20 border border-amber-500/30 rounded-lg shadow p-6 mb-6" x-data="pinnedManager()">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">ปักหมุดคอมเม้นต์เรียกวิว</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">สร้างคอมเม้นต์ปักหมุดสำหรับทุกวิดีโอที่ยังไม่มี</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button @click="checkWithoutPins()" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm font-medium">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                ตรวจสอบ
+            </button>
+            <button @click="generateAllPinned()" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-yellow-600 text-white rounded-lg hover:from-amber-700 hover:to-yellow-700 text-sm font-medium" :disabled="generating">
+                <svg class="w-4 h-4 inline mr-1" :class="generating ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span x-text="generating ? 'กำลังสร้าง...' : 'สร้างปักหมุดทั้งหมด'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div x-show="checked" x-cloak class="mt-4">
+        <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="bg-white/10 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-500 dark:text-gray-400">วิดีโอทั้งหมด</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="totalActive"></p>
+            </div>
+            <div class="bg-white/10 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-500 dark:text-gray-400">มีปักหมุดแล้ว</p>
+                <p class="text-xl font-bold text-green-500" x-text="withPins"></p>
+            </div>
+            <div class="bg-white/10 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-500 dark:text-gray-400">ยังไม่มีปักหมุด</p>
+                <p class="text-xl font-bold text-amber-500" x-text="withoutPins"></p>
+            </div>
+        </div>
+
+        <div x-show="videos.length > 0" class="max-h-60 overflow-y-auto space-y-2">
+            <template x-for="video in videos" :key="video.id">
+                <div class="flex items-center justify-between bg-white/5 dark:bg-gray-700/30 rounded-lg p-2 text-sm">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-gray-900 dark:text-white truncate" x-text="video.title"></p>
+                        <p class="text-xs text-gray-500" x-text="'👁 ' + Number(video.view_count).toLocaleString() + ' views'"></p>
+                    </div>
+                    <a :href="video.studio_url" target="_blank" class="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs hover:bg-blue-600/30 shrink-0 ml-2">
+                        YouTube Studio
+                    </a>
+                </div>
+            </template>
+        </div>
+
+        <div x-show="generateResult" class="mt-3 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-sm text-green-300" x-text="generateResult"></div>
+    </div>
+</div>
+
 <!-- Generate Promo -->
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">สร้างคอมเม้นต์โปรโมทด้วย AI</h3>
@@ -118,6 +183,15 @@
                                 AI
                             </span>
                         @endif
+                        @if($promo->is_pinned)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                                📌 ปักหมุดแล้ว
+                            </span>
+                        @elseif($promo->should_pin)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300">
+                                📌 รอปักหมุด
+                            </span>
+                        @endif
                         <span class="text-xs text-gray-500 dark:text-gray-400">
                             {{ $promo->created_at->format('d/m/Y H:i') }}
                         </span>
@@ -141,6 +215,14 @@
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0">
+                    @if($promo->status === 'posted' && $promo->should_pin && !$promo->is_pinned)
+                        <a href="https://studio.youtube.com/video/{{ $promo->video->youtube_id ?? '' }}/comments" target="_blank" class="px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 text-xs font-medium" title="เปิด YouTube Studio เพื่อปักหมุด">
+                            YT Studio
+                        </a>
+                        <button onclick="markPinned({{ $promo->id }})" class="px-3 py-1.5 bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800 text-xs font-medium">
+                            ✓ ปักหมุดแล้ว
+                        </button>
+                    @endif
                     @if($promo->status === 'draft')
                         <button onclick="approvePromo({{ $promo->id }})" class="px-3 py-1.5 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 text-xs font-medium">
                             อนุมัติ
@@ -226,6 +308,74 @@ function deletePromo(id) {
         else alert(data.message || 'เกิดข้อผิดพลาด');
     })
     .catch(() => alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'));
+}
+
+function markPinned(id) {
+    if (!confirm('ยืนยันว่าคุณได้ปักหมุดคอมเม้นต์นี้บน YouTube Studio แล้ว?')) return;
+    fetch(`{{ url('admin/metal-x/automation/promo') }}/${id}/mark-pinned`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert(data.message || 'เกิดข้อผิดพลาด');
+    })
+    .catch(() => alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'));
+}
+
+function pinnedManager() {
+    return {
+        checked: false,
+        generating: false,
+        totalActive: 0,
+        withPins: 0,
+        withoutPins: 0,
+        videos: [],
+        generateResult: '',
+
+        checkWithoutPins() {
+            fetch('{{ route("admin.metal-x.automation.promo.without-pins") }}', {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.totalActive = data.total_active;
+                this.withPins = data.with_pins;
+                this.withoutPins = data.without_pins;
+                this.videos = data.videos;
+                this.checked = true;
+            })
+            .catch(() => alert('เกิดข้อผิดพลาด'));
+        },
+
+        generateAllPinned() {
+            if (!confirm(`สร้างคอมเม้นต์ปักหมุดสำหรับวิดีโอที่ยังไม่มี (${this.withoutPins} วิดีโอ)?`)) return;
+            this.generating = true;
+            this.generateResult = '';
+
+            fetch('{{ route("admin.metal-x.automation.promo.generate-pinned") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.generating = false;
+                this.generateResult = data.message || 'สำเร็จ!';
+                setTimeout(() => location.reload(), 3000);
+            })
+            .catch(() => {
+                this.generating = false;
+                alert('เกิดข้อผิดพลาด');
+            });
+        }
+    };
 }
 </script>
 @endpush
