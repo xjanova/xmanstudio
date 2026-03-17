@@ -167,8 +167,8 @@ class VideoRenderService
             $type = $media['type'] ?? 'image';
 
             if ($type === 'video') {
-                // Video clip input: no -loop flag
-                $inputs .= " -i {$escapedPath}";
+                // Video clip input: loop to fill slide duration
+                $inputs .= " -stream_loop -1 -i {$escapedPath}";
 
                 // Trim to slide duration, scale and pad (no zoompan effects)
                 $filterParts[] = "[{$i}:v]trim=duration={$slideDuration},setpts=PTS-STARTPTS," .
