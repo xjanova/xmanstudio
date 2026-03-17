@@ -120,10 +120,16 @@ class MetalXSetupAutoProduction extends Command
 
     protected function setupChannel(): ?MetalXChannel
     {
-        $channel = MetalXChannel::where('is_active', true)->first();
+        // Prefer default/primary channel, then most subscribed active channel
+        $channel = MetalXChannel::where('is_default', true)->where('is_active', true)->first();
 
         if (! $channel) {
-            // Try default
+            $channel = MetalXChannel::where('is_active', true)
+                ->orderByDesc('subscriber_count')
+                ->first();
+        }
+
+        if (! $channel) {
             $channel = MetalXChannel::first();
         }
 
@@ -202,12 +208,84 @@ class MetalXSetupAutoProduction extends Command
             return;
         }
 
-        $this->warn('⚠️ No music in library and Suno API not configured');
-        $this->warn('   Music will be needed for video rendering.');
-        $this->warn('   Options:');
-        $this->warn('   1. Upload music via admin panel: /admin/metal-x/music-library');
-        $this->warn('   2. Set SUNO_API_KEY in .env for AI music generation');
-        $this->warn('   3. The system will try to generate without music (may fail)');
+        // Try to generate a silent audio track with FFmpeg as placeholder
+        $this->info('🎵 Generating placeholder audio track...');
+        $this->seedMusicWithFFmpeg();
+    }
+
+    protected function seedMusicWithFFmpeg(): void
+    {
+        $dir = 'metal-x/music-library';
+        Storage::disk('local')->makeDirectory($dir);
+
+        // Try to find FFmpeg binary
+        $ffmpeg = $this->findFFmpeg();
+        if (! $ffmpeg) {
+            $this->warn('⚠️ FFmpeg not found — cannot generate audio');
+            $this->warn('   Upload music manually via /admin/metal-x/music-library');
+
+            return;
+        }
+
+        // Generate a 60-second synthesized tone (metal-like drone)
+        $filename = 'synth_metal_drone_' . Str::random(6) . '.mp3';
+        $outputPath = Storage::disk('local')->path("{$dir}/{$filename}");
+
+        // Use FFmpeg to generate a synthesized audio: bass sine wave + distortion harmonics
+        $cmd = sprintf(
+            '%s -f lavfi -i "sine=frequency=80:duration=60" '
+            . '-f lavfi -i "sine=frequency=160:duration=60" '
+            . '-f lavfi -i "sine=frequency=240:duration=60" '
+            . '-filter_complex "[0:a][1:a][2:a]amix=inputs=3:duration=longest,volume=0.8" '
+            . '-codec:a libmp3lame -b:a 192k -y %s 2>&1',
+            escapeshellarg($ffmpeg),
+            escapeshellarg($outputPath)
+        );
+
+        $this->info("  Generating audio with FFmpeg...");
+        exec($cmd, $output, $returnCode);
+
+        if ($returnCode === 0 && file_exists($outputPath)) {
+            MetalXMusicLibrary::create([
+                'title' => 'Synth Metal Drone (Auto-generated)',
+                'file_path' => "{$dir}/{$filename}",
+                'style' => 'metal',
+                'tags' => ['synth', 'drone', 'metal', 'auto-generated'],
+                'duration_seconds' => 60,
+                'source' => 'custom',
+                'is_active' => true,
+            ]);
+
+            $this->info("  ✅ Audio track created: {$filename}");
+        } else {
+            $this->warn('  ⚠️ FFmpeg audio generation failed');
+            $this->warn('  Output: ' . implode("\n", array_slice($output, -3)));
+        }
+    }
+
+    protected function findFFmpeg(): ?string
+    {
+        // Check custom setting first
+        $customPath = \App\Models\Setting::getValue('ffmpeg_binary');
+        if ($customPath && file_exists($customPath)) {
+            return $customPath;
+        }
+
+        // Check common locations
+        $paths = ['ffmpeg', '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'];
+        $deployPath = base_path('bin/ffmpeg');
+        if (file_exists($deployPath)) {
+            return $deployPath;
+        }
+
+        foreach ($paths as $path) {
+            exec("which {$path} 2>/dev/null", $output, $code);
+            if ($code === 0 && ! empty($output[0])) {
+                return $output[0];
+            }
+        }
+
+        return null;
     }
 
     protected function createContentPlan(MetalXChannel $channel): MetalXContentPlan
