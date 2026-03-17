@@ -17,6 +17,7 @@ on:
           - full-setup
           - trigger-render
           - trigger-upload
+          - setup-auto-production
 
 jobs:
   diagnostic:
@@ -329,6 +330,39 @@ jobs:
                 if (\$p->video) {
                   echo 'YouTube ID: ' . (\$p->video->youtube_id ?? 'none') . PHP_EOL;
                 }
+              "
+            fi
+
+            # Action: setup-auto-production
+            if [ "${{ github.event.inputs.action }}" = "setup-auto-production" ]; then
+              echo ""
+              echo "========================================="
+              echo "  SETUP AUTO PRODUCTION"
+              echo "========================================="
+
+              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+              DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+              cd "$DEPLOY_PATH"
+
+              # Ensure queue worker is running
+              if ! ps aux | grep "[q]ueue:work" | grep -q .; then
+                echo "Starting queue worker..."
+                nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --max-jobs=100 > storage/logs/queue-worker.log 2>&1 &
+                sleep 2
+              fi
+
+              echo "Running metalx:setup-auto-production --generate-now..."
+              php artisan metalx:setup-auto-production --generate-now 2>&1
+
+              echo ""
+              echo "--- Post-setup status ---"
+              php artisan tinker --execute="
+                echo 'Media: ' . \App\Models\MetalXMediaLibrary::active()->count() . PHP_EOL;
+                echo 'Music: ' . \App\Models\MetalXMusicLibrary::active()->count() . PHP_EOL;
+                echo 'Plans: ' . \App\Models\MetalXContentPlan::where('is_enabled', true)->count() . PHP_EOL;
+                \$p = \App\Models\MetalXVideoProject::orderBy('id', 'desc')->first();
+                if (\$p) { echo 'Latest project: ' . \$p->title . ' (status: ' . \$p->status . ')' . PHP_EOL; }
+                echo 'Jobs in queue: ' . DB::table('jobs')->count() . PHP_EOL;
               "
             fi
 
