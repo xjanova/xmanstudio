@@ -285,6 +285,8 @@ class PuzzleDebugController extends Controller
             $detectedGapX = $request->input('detected_gap_x');
             $actualGapX = $request->input('actual_gap_x', $request->boolean('success') ? $detectedGapX : null);
 
+            $uploadStatus = $request->input('upload_status');
+
             if ($record) {
                 // Update existing record with feedback
                 $record->update([
@@ -293,11 +295,12 @@ class PuzzleDebugController extends Controller
                     'metadata' => array_merge($record->metadata ?? [], [
                         'feedback_attempt' => $request->input('attempt'),
                         'feedback_at' => now()->toISOString(),
+                        'upload_status' => $uploadStatus,
                     ]),
                 ]);
 
                 Log::info("PuzzleDebug feedback: record #{$record->id} " .
-                    "success={$request->input('success')} actual_gap_x={$actualGapX}");
+                    "success={$request->input('success')} actual_gap_x={$actualGapX} upload={$uploadStatus}");
             } else {
                 // No recent debug image — create a feedback-only record
                 $record = PuzzleDebugImage::create([
@@ -311,6 +314,7 @@ class PuzzleDebugController extends Controller
                         'product' => $productSlug,
                         'feedback_only' => true,
                         'feedback_attempt' => $request->input('attempt'),
+                        'upload_status' => $uploadStatus,
                         'timestamp' => $request->input('timestamp'),
                     ],
                     'captured_at' => now(),
