@@ -18,6 +18,11 @@ on:
           - trigger-render
           - trigger-upload
           - setup-auto-production
+          - import-content
+      import_urls:
+        description: 'URLs to import (one per line, format: type|source|title|tags|url)'
+        required: false
+        type: string
 
 jobs:
   diagnostic:
@@ -363,6 +368,44 @@ jobs:
                 \$p = \App\Models\MetalXVideoProject::orderBy('id', 'desc')->first();
                 if (\$p) { echo 'Latest project: ' . \$p->title . ' (status: ' . \$p->status . ')' . PHP_EOL; }
                 echo 'Jobs in queue: ' . DB::table('jobs')->count() . PHP_EOL;
+              "
+            fi
+
+            # Action: import-content (download from URLs into Metal-X)
+            if [ "${{ github.event.inputs.action }}" = "import-content" ]; then
+              echo ""
+              echo "========================================="
+              echo "  IMPORTING CONTENT FROM URLs"
+              echo "========================================="
+
+              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+              DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+              cd "$DEPLOY_PATH"
+
+              # Parse import_urls input (format: type|source|title|tags|url)
+              IMPORT_DATA="${{ github.event.inputs.import_urls }}"
+              if [ -n "$IMPORT_DATA" ]; then
+                echo "$IMPORT_DATA" | while IFS='|' read -r ITYPE ISOURCE ITITLE ITAGS IURL; do
+                  if [ -z "$IURL" ]; then continue; fi
+                  echo ""
+                  echo "--- Importing: $ITITLE ($ITYPE from $ISOURCE) ---"
+                  CMD="php artisan metalx:import-url \"$IURL\" --type=$ITYPE --source=$ISOURCE"
+                  [ -n "$ITITLE" ] && CMD="$CMD --title=\"$ITITLE\""
+                  [ -n "$ITAGS" ] && CMD="$CMD --tags=\"$ITAGS\""
+                  [ "$ITYPE" = "music" ] && CMD="$CMD --style=metal"
+                  eval $CMD 2>&1
+                done
+              else
+                echo "No URLs provided. Use import_urls input."
+                echo "Format: type|source|title|tags|url (one per line)"
+                echo "Example: music|suno|Cyberpunk Apocalypse|metal,cyberpunk|https://cdn1.suno.ai/xxx.mp3"
+              fi
+
+              echo ""
+              echo "--- Import Summary ---"
+              php artisan tinker --execute="
+                echo 'Media: ' . \App\Models\MetalXMediaLibrary::active()->count() . PHP_EOL;
+                echo 'Music: ' . \App\Models\MetalXMusicLibrary::active()->count() . PHP_EOL;
               "
             fi
 

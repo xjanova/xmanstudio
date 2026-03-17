@@ -51,6 +51,41 @@ Route::post('/metal-x/upload-image', function (Request $request) {
     ]);
 })->middleware('throttle:60,1');
 
+// Metal-X Import from URL — server downloads file directly from external URL
+// Protected by X-Admin-Token header (must match METAL_X_ADMIN_TOKEN env var)
+Route::post('/metal-x/import-url', function (Request $request) {
+    $token = $request->header('X-Admin-Token');
+    $expectedToken = config('metalx.admin_token', env('METAL_X_ADMIN_TOKEN'));
+    if (! $expectedToken || $token !== $expectedToken) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    $request->validate([
+        'url' => 'required|url',
+        'type' => 'required|string|in:music,image,video,auto',
+        'title' => 'nullable|string|max:255',
+        'tags' => 'nullable|string|max:500',
+        'style' => 'nullable|string|max:50',
+        'source' => 'required|string|in:freepik,suno,custom,ai_generated',
+    ]);
+
+    $exitCode = \Illuminate\Support\Facades\Artisan::call('metalx:import-url', [
+        'url' => $request->input('url'),
+        '--type' => $request->input('type', 'auto'),
+        '--title' => $request->input('title'),
+        '--tags' => $request->input('tags'),
+        '--style' => $request->input('style', 'metal'),
+        '--source' => $request->input('source'),
+    ]);
+
+    $output = \Illuminate\Support\Facades\Artisan::output();
+
+    return response()->json([
+        'success' => $exitCode === 0,
+        'output' => trim($output),
+    ]);
+})->middleware('throttle:30,1');
+
 // Health check for API
 Route::get('/health', function () {
     return response()->json([
