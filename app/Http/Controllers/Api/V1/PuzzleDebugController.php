@@ -262,6 +262,7 @@ class PuzzleDebugController extends Controller
             'actual_gap_x' => 'nullable|integer',
             'attempt' => 'nullable|integer',
             'detection_method' => 'nullable|string|max:30',
+            'record_id' => 'nullable|integer',
         ]);
 
         if ($validator->fails()) {
@@ -269,11 +270,17 @@ class PuzzleDebugController extends Controller
         }
 
         try {
-            // Find the most recent debug image record for this machine (within last 5 min)
-            $record = PuzzleDebugImage::where('machine_id', $request->input('machine_id'))
-                ->where('created_at', '>=', now()->subMinutes(5))
-                ->orderByDesc('created_at')
-                ->first();
+            // Find the specific upload record by ID, or fall back to most recent
+            $record = null;
+            if ($recordId = $request->input('record_id')) {
+                $record = PuzzleDebugImage::find($recordId);
+            }
+            if (! $record) {
+                $record = PuzzleDebugImage::where('machine_id', $request->input('machine_id'))
+                    ->where('created_at', '>=', now()->subMinutes(5))
+                    ->orderByDesc('created_at')
+                    ->first();
+            }
 
             $detectedGapX = $request->input('detected_gap_x');
             $actualGapX = $request->input('actual_gap_x', $request->boolean('success') ? $detectedGapX : null);
