@@ -17,11 +17,11 @@
             <p class="text-blue-200 text-sm">ตอบคอมเมนต์อัตโนมัติ, กดไลค์, และจัดการการมีส่วนร่วมด้วย AI</p>
         </div>
         <div class="flex gap-4">
-            <button onclick="syncAllComments()" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button id="syncCommentsBtn" onclick="syncAllComments()" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg flex items-center">
+                <svg id="syncCommentsIcon" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                Sync Comments
+                <span id="syncCommentsBtnText">Sync Comments</span>
             </button>
             <a href="{{ route('admin.metal-x.videos.index') }}" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,6 +30,20 @@
                 Back
             </a>
         </div>
+    </div>
+</div>
+
+<!-- Sync Progress -->
+<div id="commentSyncProgress" class="hidden mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+    <div class="flex items-center justify-between mb-2">
+        <span id="commentSyncStatusText" class="text-sm font-medium text-blue-700 dark:text-blue-300">กำลังเริ่มต้น...</span>
+        <span class="text-xs text-blue-500">
+            <span id="commentSyncVideosDone">0</span>/<span id="commentSyncVideosTotal">0</span> วิดีโอ |
+            <span id="commentSyncTotalComments">0</span> คอมเมนต์
+        </span>
+    </div>
+    <div class="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2.5">
+        <div id="commentSyncProgressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
     </div>
 </div>
 
@@ -281,8 +295,21 @@ function updateSelectedCount() {
     document.getElementById('selected-count').textContent = count;
 }
 
+let commentSyncInterval = null;
+
 function syncAllComments() {
     if (!confirm('ดึงคอมเมนต์จากวิดีโอทั้งหมดหรือไม่?')) return;
+
+    const btn = document.getElementById('syncCommentsBtn');
+    const btnText = document.getElementById('syncCommentsBtnText');
+    const icon = document.getElementById('syncCommentsIcon');
+    const progressEl = document.getElementById('commentSyncProgress');
+
+    btn.disabled = true;
+    btnText.textContent = 'กำลัง sync...';
+    icon.classList.add('animate-spin');
+    progressEl.classList.remove('hidden');
+    document.getElementById('commentSyncStatusText').textContent = 'กำลังเริ่มต้น...';
 
     fetch('{{ route("admin.metal-x.engagement.sync-all-comments") }}', {
         method: 'POST',
@@ -297,17 +324,66 @@ function syncAllComments() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            alert(data.message);
-            setTimeout(() => location.reload(), 3000);
+        if (data.success && data.progress_key) {
+            pollCommentSyncProgress(data.progress_key);
         } else {
-            alert('เกิดข้อผิดพลาด: ' + data.message);
+            alert('เกิดข้อผิดพลาด: ' + (data.message || data.error));
+            resetCommentSyncBtn();
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        resetCommentSyncBtn();
     });
+}
+
+function pollCommentSyncProgress(progressKey) {
+    if (commentSyncInterval) clearInterval(commentSyncInterval);
+
+    commentSyncInterval = setInterval(() => {
+        fetch(`{{ route("admin.metal-x.engagement.comment-sync-progress") }}?key=${progressKey}`, {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(progress => {
+            const statusText = document.getElementById('commentSyncStatusText');
+            const videosDone = progress.videos_done || 0;
+            const videosTotal = progress.total_videos || 1;
+            const totalComments = progress.total_comments || 0;
+            const currentVideo = progress.current_video || '';
+            const pct = Math.round((videosDone / videosTotal) * 100);
+
+            document.getElementById('commentSyncVideosDone').textContent = videosDone;
+            document.getElementById('commentSyncVideosTotal').textContent = videosTotal;
+            document.getElementById('commentSyncTotalComments').textContent = totalComments;
+            document.getElementById('commentSyncProgressBar').style.width = pct + '%';
+
+            if (progress.status === 'completed') {
+                clearInterval(commentSyncInterval);
+                statusText.textContent = `Sync เสร็จสิ้น! ดึงมา ${totalComments} คอมเมนต์`;
+                document.getElementById('commentSyncProgressBar').style.width = '100%';
+                setTimeout(() => location.reload(), 2000);
+            } else if (progress.status === 'failed') {
+                clearInterval(commentSyncInterval);
+                statusText.textContent = 'เกิดข้อผิดพลาด: ' + (progress.error || 'Unknown');
+                resetCommentSyncBtn();
+            } else {
+                statusText.textContent = `กำลัง sync: ${currentVideo} (${videosDone}/${videosTotal})`;
+            }
+        })
+        .catch(() => {});
+    }, 2000);
+}
+
+function resetCommentSyncBtn() {
+    const btn = document.getElementById('syncCommentsBtn');
+    const btnText = document.getElementById('syncCommentsBtnText');
+    const icon = document.getElementById('syncCommentsIcon');
+
+    btn.disabled = false;
+    btnText.textContent = 'Sync Comments';
+    icon.classList.remove('animate-spin');
 }
 
 function generateReply(commentId) {

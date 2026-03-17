@@ -662,6 +662,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::get('/', [MetalXEngagementController::class, 'index'])->name('index');
             Route::get('/{video}/stats', [MetalXEngagementController::class, 'videoStats'])->name('video-stats');
             Route::get('/blacklist', [MetalXEngagementController::class, 'blacklist'])->name('blacklist');
+            Route::get('/comment-sync-progress', [MetalXEngagementController::class, 'commentSyncProgress'])->name('comment-sync-progress');
 
             // YouTube API operations (20 requests/minute)
             Route::middleware('throttle:youtube-operations')->group(function () {

@@ -7,6 +7,7 @@ use App\Exceptions\YouTubeAPIException;
 use App\Http\Controllers\Controller;
 use App\Jobs\AutoModerateCommentJob;
 use App\Jobs\ProcessCommentEngagementJob;
+use App\Jobs\SyncAllCommentsJob;
 use App\Jobs\SyncVideoCommentsJob;
 use App\Models\MetalXBlacklist;
 use App\Models\MetalXChannel;
@@ -15,7 +16,9 @@ use App\Models\MetalXVideo;
 use App\Services\YouTubeCommentService;
 use App\Services\YouTubeEngagementAiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class MetalXEngagementController extends Controller
 {
@@ -104,30 +107,62 @@ class MetalXEngagementController extends Controller
     }
 
     /**
-     * Sync comments for all videos.
+     * Sync comments for all videos (dispatched to run after response).
      */
     public function syncAllComments(Request $request)
     {
-        $query = MetalXVideo::where('is_active', true);
-
-        // Filter by channel if specified
-        if ($channelId = $request->get('channel')) {
-            $query->where('metal_x_channel_id', $channelId);
-        }
-
-        $videos = $query->get();
         $maxComments = min(500, max(1, (int) $request->input('max_comments', 50)));
         $processEngagement = $request->boolean('process_engagement', true);
+        $channelId = $request->get('channel') ? (int) $request->get('channel') : null;
 
-        foreach ($videos as $video) {
-            SyncVideoCommentsJob::dispatch($video, $maxComments, $processEngagement);
+        $progressKey = 'comment_sync_' . Str::random(16);
+
+        // Count videos to show in response
+        $query = MetalXVideo::where('is_active', true);
+        if ($channelId) {
+            $query->where('metal_x_channel_id', $channelId);
         }
+        $videoCount = $query->count();
+
+        // Initialize progress
+        Cache::put($progressKey, [
+            'status' => 'queued',
+            'total_videos' => $videoCount,
+            'videos_done' => 0,
+            'total_comments' => 0,
+            'current_video' => 'กำลังเริ่มต้น...',
+            'errors' => 0,
+        ], 900);
+
+        // Dispatch after response — returns immediately
+        SyncAllCommentsJob::dispatchAfterResponse($progressKey, $maxComments, $processEngagement, $channelId);
 
         return response()->json([
             'success' => true,
-            'message' => "Comment sync started for {$videos->count()} videos",
-            'count' => $videos->count(),
+            'progress_key' => $progressKey,
+            'message' => "เริ่ม sync คอมเมนต์จาก {$videoCount} วิดีโอแล้ว",
+            'count' => $videoCount,
         ]);
+    }
+
+    /**
+     * Get comment sync progress (AJAX polling).
+     */
+    public function commentSyncProgress(Request $request)
+    {
+        $key = $request->get('key');
+
+        if (! $key) {
+            return response()->json(['error' => 'No progress key'], 400);
+        }
+
+        $progress = Cache::get($key);
+
+        if (! $progress) {
+            return response()->json(['status' => 'not_found']);
+        }
+
+        return response()->json($progress);
     }
 
     /**
