@@ -19,6 +19,11 @@ on:
           - trigger-upload
           - setup-auto-production
           - import-content
+      project_id:
+        description: 'Project ID (for trigger-render/trigger-upload actions)'
+        required: false
+        default: '0'
+        type: string
       import_urls:
         description: 'URLs to import (one per line, format: type|source|title|tags|url)'
         required: false
@@ -226,110 +231,184 @@ jobs:
               fi
             fi
 
-            # Action: trigger-render (dispatch RenderVideoJob for project 1)
+            # Action: trigger-render (dispatch RenderVideoJob for a project)
             if [ "${{ github.event.inputs.action }}" = "trigger-render" ]; then
               echo ""
               echo "========================================="
-              echo "  TRIGGERING RENDER FOR PROJECT 1"
+              echo "  TRIGGERING RENDER"
               echo "========================================="
 
               DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
               DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
               cd "$DEPLOY_PATH"
 
-              # Check project status
+              PROJECT_ID="${{ github.event.inputs.project_id }}"
+              if [ "$PROJECT_ID" = "0" ] || [ -z "$PROJECT_ID" ]; then
+                PROJECT_ID="0"
+              fi
+
+              # Fix suno_mode to onsite so future projects use library music
+              echo "--- Fixing suno_mode to onsite ---"
               php artisan tinker --execute="
-                \$p = \\App\\Models\\MetalXVideoProject::find(1);
-                echo 'Project: ' . \$p->title . PHP_EOL;
+                \\App\\Models\\Setting::setValue('suno_mode', 'onsite');
+                echo 'suno_mode set to: ' . \\App\\Models\\Setting::getValue('suno_mode') . PHP_EOL;
+              "
+
+              # Find project to render
+              echo ""
+              echo "--- Finding project to render ---"
+              php artisan tinker --execute="
+                \$pid = $PROJECT_ID;
+                if (\$pid > 0) {
+                  \$p = \\App\\Models\\MetalXVideoProject::find(\$pid);
+                } else {
+                  \$p = \\App\\Models\\MetalXVideoProject::whereIn('status', ['generating_music', 'music_ready', 'failed', 'draft'])
+                    ->orderBy('id', 'desc')->first();
+                }
+                if (!\$p) { echo 'No project found'; exit; }
+                echo 'Project #' . \$p->id . ': ' . \$p->title . PHP_EOL;
                 echo 'Status: ' . \$p->status . PHP_EOL;
-                echo 'Music: ' . (\$p->musicGeneration ? \$p->musicGeneration->audio_path : 'none') . PHP_EOL;
+                echo 'Media mode: ' . (\$p->media_mode ?? 'none') . PHP_EOL;
                 echo 'Images: ' . count(\$p->images ?? []) . PHP_EOL;
+                echo 'Video clips: ' . count(\$p->video_clips ?? []) . PHP_EOL;
+
+                // Check template_settings for audio
+                \$ts = \$p->template_settings ?? [];
+                echo 'Audio file: ' . (\$ts['audio_file'] ?? 'none') . PHP_EOL;
+
+                // If no audio assigned, copy from library to project dir
+                if (empty(\$ts['audio_file'])) {
+                  \$music = \\App\\Models\\MetalXMusicLibrary::active()->first();
+                  if (\$music) {
+                    \$audioDir = 'metal-x/projects/' . \$p->id;
+                    \$audioPath = \$audioDir . '/audio_' . \\Illuminate\\Support\\Str::random(8) . '.mp3';
+                    \\Illuminate\\Support\\Facades\\Storage::disk('local')->makeDirectory(\$audioDir);
+                    \\Illuminate\\Support\\Facades\\Storage::disk('local')->copy(\$music->file_path, \$audioPath);
+                    \$ts['audio_file'] = \$audioPath;
+                    \$p->update(['template_settings' => \$ts]);
+                    \$music->incrementUsage();
+                    echo 'Assigned music: ' . \$music->title . ' -> ' . \$audioPath . PHP_EOL;
+                  } else {
+                    echo 'ERROR: No music in library!' . PHP_EOL;
+                    exit;
+                  }
+                }
+
+                // If no media, assign video clips from library
+                if (empty(\$p->images) && empty(\$p->video_clips)) {
+                  \$media = \\App\\Models\\MetalXMediaLibrary::active()->get();
+                  \$clips = \$media->where('type', 'video_clip')->pluck('file_path')->values()->toArray();
+                  \$imgs = \$media->where('type', 'image')->pluck('file_path')->values()->toArray();
+                  if (!empty(\$clips)) {
+                    \$p->update(['video_clips' => \$clips, 'media_mode' => 'video_clips']);
+                    echo 'Assigned ' . count(\$clips) . ' video clips' . PHP_EOL;
+                  } elseif (!empty(\$imgs)) {
+                    \$p->update(['images' => \$imgs, 'media_mode' => 'images']);
+                    echo 'Assigned ' . count(\$imgs) . ' images' . PHP_EOL;
+                  } else {
+                    echo 'ERROR: No media in library!' . PHP_EOL;
+                    exit;
+                  }
+                }
+
+                // Reset status to music_ready if needed
+                if (in_array(\$p->status, ['generating_music', 'failed', 'draft'])) {
+                  \$p->update(['status' => 'music_ready', 'error_message' => null]);
+                  echo 'Reset status to music_ready' . PHP_EOL;
+                }
+
+                if (\$p->fresh()->status === 'music_ready') {
+                  echo 'FFmpeg: ' . \\App\\Models\\Setting::getValue('ffmpeg_binary', 'ffmpeg') . PHP_EOL;
+                  \\App\\Jobs\\RenderVideoJob::dispatch(\$p->fresh());
+                  echo 'RenderVideoJob dispatched!' . PHP_EOL;
+                } else {
+                  echo 'Cannot render: status is ' . \$p->status . PHP_EOL;
+                }
               "
 
               # Ensure queue worker is running
               if ! ps aux | grep "queue:work" | grep -v grep > /dev/null; then
                 echo "Starting queue worker..."
-                nohup php artisan queue:work --sleep=3 --tries=3 --max-time=3600 > storage/logs/queue-worker.log 2>&1 &
+                nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 > storage/logs/queue-worker.log 2>&1 &
                 sleep 2
               fi
 
-              # Reset status if failed, then dispatch render job
               echo ""
-              echo "Dispatching RenderVideoJob..."
-              php artisan tinker --execute="
-                \$p = \\App\\Models\\MetalXVideoProject::find(1);
-                if (\$p->status === 'failed') {
-                  \$p->update(['status' => 'music_ready', 'error_message' => null]);
-                  echo 'Reset status from failed to music_ready' . PHP_EOL;
-                }
-                if (\$p->status === 'music_ready') {
-                  echo 'FFmpeg binary: ' . \\App\\Models\\Setting::getValue('ffmpeg_binary', 'ffmpeg') . PHP_EOL;
-                  \\App\\Jobs\\RenderVideoJob::dispatch(\$p);
-                  echo 'RenderVideoJob dispatched!';
-                } else {
-                  echo 'Cannot render: status is ' . \$p->status;
-                }
-              "
-
-              echo ""
-              echo "Waiting 60s for render to complete..."
-              sleep 60
+              echo "Waiting 90s for render to complete..."
+              sleep 90
 
               # Check status after dispatch
               php artisan tinker --execute="
-                \$p = \\App\\Models\\MetalXVideoProject::find(1);
-                echo 'Status after dispatch: ' . \$p->status . PHP_EOL;
+                \$pid = $PROJECT_ID;
+                if (\$pid > 0) {
+                  \$p = \\App\\Models\\MetalXVideoProject::find(\$pid);
+                } else {
+                  \$p = \\App\\Models\\MetalXVideoProject::orderBy('id', 'desc')->first();
+                }
+                echo 'Status: ' . \$p->status . PHP_EOL;
                 echo 'Error: ' . (\$p->error_message ?? 'none') . PHP_EOL;
+                echo 'Video file: ' . (\$p->video_file_path ?? 'none') . PHP_EOL;
+                echo 'Jobs in queue: ' . DB::table('jobs')->count() . PHP_EOL;
+                echo 'Failed jobs: ' . DB::table('failed_jobs')->count() . PHP_EOL;
               "
             fi
 
-            # Action: trigger-upload (dispatch UploadVideoJob for project 1)
+            # Action: trigger-upload (dispatch UploadVideoJob)
             if [ "${{ github.event.inputs.action }}" = "trigger-upload" ]; then
               echo ""
               echo "========================================="
-              echo "  TRIGGERING UPLOAD FOR PROJECT 1"
+              echo "  TRIGGERING UPLOAD"
               echo "========================================="
 
               DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
               DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
               cd "$DEPLOY_PATH"
 
-              # Check project status
+              PROJECT_ID="${{ github.event.inputs.project_id }}"
+              if [ "$PROJECT_ID" = "0" ] || [ -z "$PROJECT_ID" ]; then
+                PROJECT_ID="0"
+              fi
+
               php artisan tinker --execute="
-                \$p = \\App\\Models\\MetalXVideoProject::find(1);
-                echo 'Project: ' . \$p->title . PHP_EOL;
+                \$pid = $PROJECT_ID;
+                if (\$pid > 0) {
+                  \$p = \\App\\Models\\MetalXVideoProject::find(\$pid);
+                } else {
+                  \$p = \\App\\Models\\MetalXVideoProject::where('status', 'rendered')->orderBy('id', 'desc')->first();
+                }
+                if (!\$p) { echo 'No rendered project found'; exit; }
+                echo 'Project #' . \$p->id . ': ' . \$p->title . PHP_EOL;
                 echo 'Status: ' . \$p->status . PHP_EOL;
                 echo 'Video file: ' . (\$p->video_file_path ?? 'none') . PHP_EOL;
                 echo 'Channel: ' . (\$p->channel ? \$p->channel->name : 'none') . PHP_EOL;
+
+                if (\$p->status === 'rendered') {
+                  \\App\\Jobs\\UploadVideoJob::dispatch(\$p);
+                  echo 'UploadVideoJob dispatched!' . PHP_EOL;
+                } else {
+                  echo 'Cannot upload: status is ' . \$p->status . PHP_EOL;
+                }
               "
 
               # Ensure queue worker is running
               if ! ps aux | grep "queue:work" | grep -v grep > /dev/null; then
                 echo "Starting queue worker..."
-                nohup php artisan queue:work --sleep=3 --tries=3 --max-time=3600 > storage/logs/queue-worker.log 2>&1 &
+                nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 > storage/logs/queue-worker.log 2>&1 &
                 sleep 2
               fi
 
-              # Dispatch upload job
               echo ""
-              echo "Dispatching UploadVideoJob..."
-              php artisan tinker --execute="
-                \$p = \\App\\Models\\MetalXVideoProject::find(1);
-                if (\$p->status === 'rendered') {
-                  \\App\\Jobs\\UploadVideoJob::dispatch(\$p);
-                  echo 'UploadVideoJob dispatched!';
-                } else {
-                  echo 'Cannot upload: status is ' . \$p->status;
-                }
-              "
-
-              echo ""
-              echo "Waiting 30s for upload to start..."
-              sleep 30
+              echo "Waiting 60s for upload..."
+              sleep 60
 
               # Check status
               php artisan tinker --execute="
-                \$p = \\App\\Models\\MetalXVideoProject::find(1);
+                \$pid = $PROJECT_ID;
+                if (\$pid > 0) {
+                  \$p = \\App\\Models\\MetalXVideoProject::find(\$pid);
+                } else {
+                  \$p = \\App\\Models\\MetalXVideoProject::orderBy('id', 'desc')->first();
+                }
                 echo 'Status: ' . \$p->status . PHP_EOL;
                 echo 'Error: ' . (\$p->error_message ?? 'none') . PHP_EOL;
                 if (\$p->video) {
