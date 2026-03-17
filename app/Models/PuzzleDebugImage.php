@@ -17,6 +17,7 @@ class PuzzleDebugImage extends Model
         'track_width',
         'success',
         'actual_gap_x',
+        'labeled_by',
         'image_paths',
         'metadata',
         'captured_at',

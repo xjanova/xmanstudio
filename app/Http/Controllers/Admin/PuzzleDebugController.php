@@ -33,10 +33,12 @@ class PuzzleDebugController extends Controller
         // Stats
         $total = PuzzleDebugImage::count();
         $labeled = PuzzleDebugImage::labeled()->count();
+        $humanLabeled = PuzzleDebugImage::labeled()->where('labeled_by', 'human')->count();
         $unlabeled = PuzzleDebugImage::unlabeled()->count();
 
-        // Accuracy for labeled records
+        // Accuracy for HUMAN-labeled records only (reliable ground truth)
         $accuracy = PuzzleDebugImage::labeled()
+            ->where('labeled_by', 'human')
             ->selectRaw('AVG(ABS(gap_x - actual_gap_x)) as avg_error')
             ->selectRaw('SUM(CASE WHEN ABS(gap_x - actual_gap_x) <= 20 THEN 1 ELSE 0 END) as within_20px')
             ->selectRaw('COUNT(*) as total')
@@ -58,10 +60,11 @@ class PuzzleDebugController extends Controller
         $stats = [
             'total' => $total,
             'labeled' => $labeled,
+            'human_labeled' => $humanLabeled,
             'unlabeled' => $unlabeled,
             'avg_error' => round($accuracy->avg_error ?? 0, 1),
-            'accuracy_pct' => $labeled > 0
-                ? round(($accuracy->within_20px / $labeled) * 100, 1)
+            'accuracy_pct' => $humanLabeled > 0
+                ? round(($accuracy->within_20px / $humanLabeled) * 100, 1)
                 : 0,
             'success_count' => $successCount,
             'fail_count' => $failCount,
@@ -98,9 +101,10 @@ class PuzzleDebugController extends Controller
         $record->update([
             'actual_gap_x' => $request->input('actual_gap_x'),
             'success' => $request->boolean('success'),
+            'labeled_by' => 'human',
         ]);
 
-        return redirect()->back()->with('success', 'Label อัปเดตแล้ว');
+        return redirect()->back()->with('success', 'Label อัปเดตแล้ว (by human)');
     }
 
     /**
@@ -109,8 +113,9 @@ class PuzzleDebugController extends Controller
      */
     public function train(Request $request)
     {
-        // Global correction: average(actual_gap_x - gap_x) from labeled data
+        // ONLY train from HUMAN-labeled data — auto-labeled data is unreliable
         $global = PuzzleDebugImage::labeled()
+            ->where('labeled_by', 'human')
             ->whereNotNull('gap_x')
             ->selectRaw('AVG(actual_gap_x - gap_x) as avg_correction')
             ->selectRaw('STDDEV(actual_gap_x - gap_x) as std_correction')
@@ -119,8 +124,9 @@ class PuzzleDebugController extends Controller
             ->selectRaw('SUM(CASE WHEN ABS(actual_gap_x - gap_x) <= 20 THEN 1 ELSE 0 END) as within_20px')
             ->first();
 
-        // Per-method breakdown
+        // Per-method breakdown (human-labeled only)
         $byMethod = PuzzleDebugImage::labeled()
+            ->where('labeled_by', 'human')
             ->whereNotNull('gap_x')
             ->selectRaw('detection_method')
             ->selectRaw('AVG(actual_gap_x - gap_x) as avg_correction')
@@ -131,8 +137,9 @@ class PuzzleDebugController extends Controller
             ->keyBy('detection_method')
             ->toArray();
 
-        // Per-machine breakdown (top 5)
+        // Per-machine breakdown (top 5, human-labeled only)
         $byMachine = PuzzleDebugImage::labeled()
+            ->where('labeled_by', 'human')
             ->whereNotNull('gap_x')
             ->selectRaw('SUBSTRING(machine_id, 1, 12) as machine_short')
             ->selectRaw('AVG(actual_gap_x - gap_x) as avg_correction')
@@ -177,6 +184,7 @@ class PuzzleDebugController extends Controller
             ->whereNotNull('gap_x')
             ->update([
                 'actual_gap_x' => \DB::raw('gap_x'),
+                'labeled_by' => 'auto_success',
             ]);
 
         return redirect()->back()->with('success',

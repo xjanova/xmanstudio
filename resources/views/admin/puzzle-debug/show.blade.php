@@ -24,17 +24,27 @@
     </div>
 
     <!-- Status Banner -->
-    @if($record->success === true)
+    @if($record->actual_gap_x !== null)
         <div class="p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium">
-            Puzzle แก้สำเร็จ (gap_x={{ $record->gap_x }})
+            ✅ Label แล้ว — Actual Gap: {{ $record->actual_gap_x }}px
+            @if($record->gap_x)
+                | Error: {{ abs($record->gap_x - $record->actual_gap_x) }}px
+            @endif
+        </div>
+    @elseif($record->success === true)
+        <div class="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium">
+            App แก้สำเร็จ (gap_x={{ $record->gap_x }}) — ⬇ คลิกภาพเพื่อยืนยันตำแหน่งที่ถูกต้อง
         </div>
     @elseif($record->success === false)
         <div class="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm font-medium">
-            Puzzle แก้ไม่ได้ — คลิกบนภาพด้านล่างเพื่อบอกตำแหน่ง gap ที่ถูกต้อง
+            App แก้ไม่ได้ (เดา gap_x={{ $record->gap_x }}) — ⬇ คลิกภาพเพื่อบอกตำแหน่งที่ถูกต้อง
+            @if($record->metadata['app_estimated_gap_x'] ?? null)
+                <span class="text-xs opacity-70">(App คิดว่า gap อยู่ที่ {{ $record->metadata['app_estimated_gap_x'] }}px)</span>
+            @endif
         </div>
     @else
         <div class="p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium">
-            ยังไม่ทราบผล — คลิกบนภาพเพื่อ label ตำแหน่ง gap ที่ถูกต้อง
+            ยังไม่ทราบผล — ⬇ คลิกบนภาพเพื่อ label ตำแหน่ง gap ที่ถูกต้อง
         </div>
     @endif
 

@@ -100,8 +100,11 @@
             <div class="text-sm text-gray-500">ทั้งหมด</div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
-            <div class="text-2xl font-bold text-green-600">{{ $stats['labeled'] }}</div>
-            <div class="text-sm text-gray-500">Labeled แล้ว</div>
+            <div class="text-2xl font-bold text-green-600">{{ $stats['human_labeled'] }}</div>
+            <div class="text-sm text-gray-500">Human Labeled</div>
+            @if($stats['labeled'] > $stats['human_labeled'])
+                <div class="text-xs text-gray-400">+{{ $stats['labeled'] - $stats['human_labeled'] }} auto</div>
+            @endif
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
             <div class="text-2xl font-bold text-amber-600">{{ $stats['unlabeled'] }}</div>

@@ -283,14 +283,16 @@ class PuzzleDebugController extends Controller
             }
 
             $detectedGapX = $request->input('detected_gap_x');
-            // Only use actual_gap_x if explicitly provided by caller (manual label).
-            // Do NOT auto-set from detected_gap_x — human must verify via admin page.
-            $actualGapX = $request->input('actual_gap_x');
-
             $uploadStatus = $request->input('upload_status');
+
+            // NEVER set actual_gap_x from app feedback — only human labeling
+            // via admin page should set this. Otherwise records get auto-labeled
+            // and hidden from admin review queue, poisoning the training data.
+            $appEstimatedGapX = $request->input('app_estimated_gap_x');
 
             if ($record) {
                 // Update existing record with feedback (success/fail status only)
+                // Do NOT touch actual_gap_x — leave for human labeling
                 $updateData = [
                     'success' => $request->boolean('success'),
                     'metadata' => array_merge($record->metadata ?? [], [
@@ -298,13 +300,9 @@ class PuzzleDebugController extends Controller
                         'feedback_at' => now()->toISOString(),
                         'upload_status' => $uploadStatus,
                         'detected_gap_x' => $detectedGapX,
+                        'app_estimated_gap_x' => $appEstimatedGapX,
                     ]),
                 ];
-
-                // Only set actual_gap_x if explicitly provided (not auto-derived)
-                if ($actualGapX !== null) {
-                    $updateData['actual_gap_x'] = $actualGapX;
-                }
 
                 $record->update($updateData);
 
@@ -312,18 +310,19 @@ class PuzzleDebugController extends Controller
                     "success={$request->input('success')} detected_gap_x={$detectedGapX} upload={$uploadStatus}");
             } else {
                 // No recent debug image — create a feedback-only record
+                // NEVER set actual_gap_x — leave for human labeling
                 $record = PuzzleDebugImage::create([
                     'machine_id' => $request->input('machine_id'),
                     'app_version' => $request->input('app_version'),
                     'detection_method' => $request->input('detection_method'),
                     'gap_x' => $detectedGapX,
-                    'actual_gap_x' => $actualGapX, // null unless explicitly provided
                     'success' => $request->boolean('success'),
                     'metadata' => [
                         'product' => $productSlug,
                         'feedback_only' => true,
                         'feedback_attempt' => $request->input('attempt'),
                         'upload_status' => $uploadStatus,
+                        'app_estimated_gap_x' => $appEstimatedGapX,
                         'timestamp' => $request->input('timestamp'),
                     ],
                     'captured_at' => now(),
@@ -333,7 +332,7 @@ class PuzzleDebugController extends Controller
             return response()->json([
                 'success' => true,
                 'id' => $record->id,
-                'labeled' => $actualGapX !== null,
+                'labeled' => false, // Never auto-labeled — human must review
             ]);
 
         } catch (\Exception $e) {
