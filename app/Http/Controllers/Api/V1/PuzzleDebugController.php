@@ -7,6 +7,7 @@ use App\Models\PuzzleDebugImage;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -427,7 +428,13 @@ class PuzzleDebugController extends Controller
      */
     private function computeCorrection(string $machineId): float
     {
-        // Use labeled data where we know both detected and actual gap_x
+        // Use cached AI model from admin "AI Learning" button if available
+        $model = Cache::get('puzzle_ai_model');
+        if ($model && ($model['samples'] ?? 0) >= 5) {
+            return (float) ($model['correction'] ?? 0);
+        }
+
+        // Fallback: compute from labeled data
         $data = PuzzleDebugImage::labeled()
             ->whereNotNull('gap_x')
             ->where('created_at', '>=', now()->subDays(7))

@@ -22,6 +22,77 @@
         </div>
     </div>
 
+    <!-- AI Learning Panel -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+        <div class="p-6 border-b dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">AI Learning Center</h2>
+                    <p class="text-sm text-gray-500 mt-1">คำนวณ correction model จากข้อมูลที่เก็บมา</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <form method="POST" action="{{ route('admin.puzzle-debug.auto-label') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition">
+                            Auto-Label (success=true)
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('admin.puzzle-debug.train') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-sm font-bold hover:from-purple-700 hover:to-indigo-700 transition shadow-lg">
+                            AI Learning
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            @if(session('success'))
+                <div class="mt-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm">
+                    {{ session('success') }}
+                </div>
+            @endif
+        </div>
+
+        <!-- AI Model Status -->
+        <div class="p-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="text-2xl font-bold {{ ($aiModel['correction'] ?? 0) == 0 ? 'text-gray-400' : 'text-purple-600' }}">
+                        {{ ($aiModel['correction'] ?? 0) > 0 ? '+' : '' }}{{ $aiModel['correction'] ?? 0 }}px
+                    </div>
+                    <div class="text-xs text-gray-500">Correction Offset</div>
+                </div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600">{{ $aiModel['samples'] ?? 0 }}</div>
+                    <div class="text-xs text-gray-500">Training Samples</div>
+                </div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="text-2xl font-bold {{ ($stats['success_rate'] ?? 0) >= 80 ? 'text-green-600' : (($stats['success_rate'] ?? 0) >= 50 ? 'text-amber-600' : 'text-red-600') }}">
+                        {{ $stats['success_rate'] }}%
+                    </div>
+                    <div class="text-xs text-gray-500">Success Rate ({{ $stats['success_count'] }}/{{ $stats['success_count'] + $stats['fail_count'] }})</div>
+                </div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="text-xs text-gray-500 mb-1">Last Trained</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ $aiModel['trained_at'] ? \Carbon\Carbon::parse($aiModel['trained_at'])->diffForHumans() : 'ยังไม่เคย' }}
+                    </div>
+                </div>
+            </div>
+
+            @if(!empty($aiModel['by_method']))
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                    <span class="font-medium">Per Method:</span>
+                    @foreach($aiModel['by_method'] as $method => $data)
+                        <span class="ml-3 px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 rounded text-indigo-700 dark:text-indigo-300">
+                            {{ $method }}: {{ $data['avg_correction'] > 0 ? '+' : '' }}{{ round($data['avg_correction'], 1) }}px ({{ $data['samples'] }} samples)
+                        </span>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
+
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
