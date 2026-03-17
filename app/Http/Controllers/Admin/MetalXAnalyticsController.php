@@ -144,8 +144,9 @@ class MetalXAnalyticsController extends Controller
         // API Status
         $isApiConfigured = $this->youtubeService->isConfigured();
 
-        // Last sync time
-        $lastSync = MetalXVideo::max('synced_at');
+        // Last sync time (max() returns raw string, need to parse to Carbon)
+        $lastSyncRaw = MetalXVideo::max('synced_at');
+        $lastSync = $lastSyncRaw ? \Carbon\Carbon::parse($lastSyncRaw) : null;
 
         return view('admin.metal-x.analytics', compact(
             'channelInfo',
