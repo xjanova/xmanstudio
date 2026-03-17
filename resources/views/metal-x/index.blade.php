@@ -37,41 +37,6 @@
     .delay-400 { animation-delay: 0.4s; }
     .delay-500 { animation-delay: 0.5s; }
 
-    /* Shimmer effect for loading */
-    .shimmer {
-        background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%);
-        background-size: 200% 100%;
-        animation: shimmer 2s infinite;
-    }
-
-    /* Thumbnail slider */
-    .slider-track {
-        display: flex;
-        gap: 1rem;
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-        padding: 1rem 0;
-    }
-    .slider-track::-webkit-scrollbar { display: none; }
-
-    .slider-item {
-        flex: 0 0 auto;
-        width: 320px;
-        transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    .slider-item:hover {
-        transform: scale(1.05);
-    }
-    .slider-item.active {
-        transform: scale(1.08);
-    }
-    .slider-item.active .slider-ring {
-        border-color: rgba(168, 85, 247, 0.8);
-        box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
-    }
-
     /* Glass morphism */
     .glass {
         background: rgba(255, 255, 255, 0.05);
@@ -131,6 +96,101 @@
         transition: opacity 0.5s;
     }
     .team-card:hover::before { opacity: 1; }
+
+    /* =============================== */
+    /* SLOT-MACHINE CAROUSEL           */
+    /* =============================== */
+    .carousel-viewport {
+        position: relative;
+        height: 420px;
+        perspective: 1200px;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: pan-y;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .carousel-viewport:active { cursor: grabbing; }
+
+    .carousel-card {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 340px;
+        max-width: 85vw;
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        will-change: transform, opacity;
+    }
+
+    .carousel-card .card-inner {
+        border-radius: 1.25rem;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.08);
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    .carousel-card[data-pos="0"] .card-inner {
+        border-color: rgba(168, 85, 247, 0.5);
+        box-shadow: 0 0 40px rgba(168, 85, 247, 0.3), 0 20px 60px rgba(0,0,0,0.6);
+    }
+
+    /* Dot indicators */
+    .carousel-dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+    .carousel-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        transition: all 0.4s;
+        cursor: pointer;
+    }
+    .carousel-dot.active {
+        background: #a855f7;
+        box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+        width: 24px;
+        border-radius: 4px;
+    }
+
+    /* Partner channel card */
+    .partner-card {
+        position: relative;
+        border-radius: 1.25rem;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .partner-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(135deg, rgba(59,130,246,0), rgba(59,130,246,0.5), rgba(168,85,247,0.5), rgba(59,130,246,0));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.5s;
+        z-index: 1;
+    }
+    .partner-card:hover::before { opacity: 1; }
+    .partner-card:hover { transform: translateY(-8px); }
+
+    /* Partner mini video slider */
+    .partner-videos-track {
+        display: flex;
+        gap: 0.75rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        scroll-behavior: smooth;
+        padding: 0.5rem 0;
+    }
+    .partner-videos-track::-webkit-scrollbar { display: none; }
 </style>
 @endpush
 
@@ -221,7 +281,7 @@
     </section>
 
     {{-- ============================================ --}}
-    {{-- FEATURED SHOWCASE - Thumbnail Slider --}}
+    {{-- FEATURED SHOWCASE - Slot-Machine Carousel   --}}
     {{-- ============================================ --}}
     @if($featuredVideos->count() > 0)
     <section id="showcase" class="relative py-24 noise-overlay">
@@ -237,53 +297,61 @@
                 <div class="w-20 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full"></div>
             </div>
 
-            {{-- Thumbnail Slider --}}
-            <div class="relative group/slider">
+            {{-- Slot-Machine Carousel --}}
+            <div x-data="featuredCarousel({{ $featuredVideos->count() }})" x-init="startAutoPlay()" class="relative">
+
                 {{-- Navigation Arrows --}}
-                <button @click="scrollSlider('left')"
-                        class="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-14 md:h-14 glass rounded-full flex items-center justify-center text-white opacity-0 group-hover/slider:opacity-100 transition-all duration-300 hover:bg-white/20 -translate-x-4 md:-translate-x-6">
+                <button @click="prev()" class="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 md:w-14 md:h-14 glass rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 hover:scale-110">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
-                <button @click="scrollSlider('right')"
-                        class="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-14 md:h-14 glass rounded-full flex items-center justify-center text-white opacity-0 group-hover/slider:opacity-100 transition-all duration-300 hover:bg-white/20 translate-x-4 md:translate-x-6">
+                <button @click="next()" class="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 md:w-14 md:h-14 glass rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 hover:scale-110">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>
 
-                {{-- Edge fade --}}
-                <div class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
-                <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
+                {{-- Carousel viewport --}}
+                <div class="carousel-viewport"
+                     @mousedown="onDragStart($event)"
+                     @mousemove="onDragMove($event)"
+                     @mouseup="onDragEnd()"
+                     @mouseleave="onDragEnd()"
+                     @touchstart.passive="onTouchStart($event)"
+                     @touchmove.passive="onTouchMove($event)"
+                     @touchend="onDragEnd()"
+                     @mouseenter="pauseAutoPlay()"
+                     @mouseleave="resumeAutoPlay()">
 
-                {{-- Slider Track --}}
-                <div x-ref="sliderTrack" class="slider-track px-4">
                     @foreach($featuredVideos as $i => $video)
-                        <div class="slider-item" :class="{ 'active': activeSlide === {{ $i }} }" @click="activeSlide = {{ $i }}">
-                            <div class="slider-ring rounded-2xl overflow-hidden border border-white/10 transition-all duration-500 cursor-pointer group/card"
-                                 @click="openPlayer('{{ $video->youtube_id }}', {{ Js::from($video->title) }})">
+                        <div class="carousel-card"
+                             :data-pos="getRelativePos({{ $i }})"
+                             :style="getCardStyle({{ $i }})"
+                             @click="handleCardClick({{ $i }}, '{{ $video->youtube_id }}', {{ Js::from($video->title) }})">
+                            <div class="card-inner">
                                 {{-- Thumbnail --}}
                                 <div class="relative aspect-video overflow-hidden">
                                     <img src="{{ $video->best_thumbnail }}"
                                          alt="{{ $video->title }}"
-                                         class="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110"
+                                         class="w-full h-full object-cover"
                                          loading="lazy">
-                                    {{-- Hover overlay --}}
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover/card:opacity-90 transition-opacity"></div>
-                                    {{-- Play button --}}
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all duration-300 scale-75 group-hover/card:scale-100">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+
+                                    {{-- Play button (center card only) --}}
+                                    <div class="absolute inset-0 flex items-center justify-center" x-show="activeIndex === {{ $i }}" x-cloak>
+                                        <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 transition-transform hover:scale-110">
                                             <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                                                 <path d="M8 5v14l11-7z"/>
                                             </svg>
                                         </div>
                                     </div>
+
                                     {{-- Duration --}}
                                     <div class="absolute bottom-3 right-3 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-lg font-mono tracking-wide">
                                         {{ $video->formatted_duration }}
                                     </div>
-                                    {{-- View count badge --}}
+                                    {{-- View count --}}
                                     <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -294,7 +362,7 @@
                                 </div>
                                 {{-- Info --}}
                                 <div class="p-5 bg-gradient-to-b from-gray-900/90 to-black">
-                                    <h3 class="text-white font-bold text-sm line-clamp-2 mb-1 group-hover/card:text-purple-300 transition-colors">
+                                    <h3 class="text-white font-bold text-sm line-clamp-2 mb-1">
                                         {{ $video->title }}
                                     </h3>
                                     @if($video->title_th)
@@ -303,6 +371,13 @@
                                 </div>
                             </div>
                         </div>
+                    @endforeach
+                </div>
+
+                {{-- Dot indicators --}}
+                <div class="carousel-dots">
+                    @foreach($featuredVideos as $i => $video)
+                        <button class="carousel-dot" :class="{ 'active': activeIndex === {{ $i }} }" @click="goTo({{ $i }})"></button>
                     @endforeach
                 </div>
             </div>
@@ -391,21 +466,121 @@
                             </div>
                             <h3 class="text-xl font-bold text-white mb-2">No Popular Videos Yet</h3>
                             <p class="text-gray-500 mb-6">Sync videos from YouTube to display popular content here.</p>
-                            @if($channelSettings['channel_url'])
-                                <a href="{{ $channelSettings['channel_url'] }}" target="_blank"
-                                   class="inline-flex items-center text-purple-400 hover:text-purple-300 font-semibold transition-colors">
-                                    Visit Channel
-                                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                                    </svg>
-                                </a>
-                            @endif
                         </div>
                     </div>
                 @endforelse
             </div>
         </div>
     </section>
+
+    {{-- ============================================ --}}
+    {{-- PARTNER CHANNELS - Allied Channels           --}}
+    {{-- ============================================ --}}
+    @if($partnerChannels->count() > 0)
+    <section class="relative py-24 noise-overlay" id="partners">
+        <div class="absolute inset-0 bg-gradient-to-b from-black via-gray-950 to-black"></div>
+        {{-- Decorative orbs --}}
+        <div class="absolute top-20 right-10 w-80 h-80 bg-blue-600/10 rounded-full blur-[130px]"></div>
+        <div class="absolute bottom-20 left-10 w-72 h-72 bg-purple-600/10 rounded-full blur-[120px]"></div>
+
+        <div class="relative z-10 container mx-auto px-4">
+            {{-- Section Header --}}
+            <div class="text-center mb-16">
+                <span class="inline-block text-xs font-bold tracking-[0.3em] uppercase text-blue-400 mb-4">Network</span>
+                <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4">
+                    Partner <span class="text-gradient-gold">Channels</span>
+                </h2>
+                <p class="text-gray-500 text-lg">ช่องพันธมิตรของเรา</p>
+                <div class="w-20 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full mt-4"></div>
+            </div>
+
+            {{-- Partner Channel Cards --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                @foreach($partnerChannels as $channel)
+                    <div class="partner-card glass-dark">
+                        {{-- Channel Header --}}
+                        <div class="p-6 pb-4">
+                            <div class="flex items-center gap-4 mb-4">
+                                {{-- Channel Avatar --}}
+                                <div class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-purple-500/30 p-0.5 bg-gradient-to-br from-blue-500 to-purple-500">
+                                    @if($channel->channel_thumbnail_url)
+                                        <img src="{{ $channel->channel_thumbnail_url }}" alt="{{ $channel->name }}" class="w-full h-full rounded-full object-cover">
+                                    @else
+                                        <div class="w-full h-full rounded-full bg-gray-800 flex items-center justify-center">
+                                            <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Channel Info --}}
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-xl font-bold text-white truncate">{{ $channel->name }}</h3>
+                                    <div class="flex items-center gap-4 text-sm text-gray-400 mt-1">
+                                        @if($channel->subscriber_count)
+                                            <span class="flex items-center gap-1">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                </svg>
+                                                {{ number_format($channel->subscriber_count) }}
+                                            </span>
+                                        @endif
+                                        @if($channel->video_count)
+                                            <span class="flex items-center gap-1">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                                </svg>
+                                                {{ number_format($channel->video_count) }} videos
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Subscribe button --}}
+                                <a href="{{ $channel->youtube_url }}" target="_blank" rel="noopener noreferrer"
+                                   class="flex-shrink-0 inline-flex items-center px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg shadow-red-600/20">
+                                    <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                    </svg>
+                                    Subscribe
+                                </a>
+                            </div>
+                        </div>
+
+                        {{-- Channel Videos --}}
+                        @if($channel->videos->count() > 0)
+                            <div class="px-6 pb-6">
+                                <div class="partner-videos-track">
+                                    @foreach($channel->videos as $video)
+                                        <div class="flex-shrink-0 w-48 cursor-pointer group/pv"
+                                             @click="openPlayer('{{ $video->youtube_id }}', {{ Js::from($video->title) }})">
+                                            <div class="relative aspect-video rounded-xl overflow-hidden mb-2">
+                                                <img src="{{ $video->best_thumbnail }}" alt="{{ $video->title }}"
+                                                     class="w-full h-full object-cover transition-transform duration-500 group-hover/pv:scale-110" loading="lazy">
+                                                <div class="absolute inset-0 bg-black/30 group-hover/pv:bg-black/50 transition-colors"></div>
+                                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover/pv:opacity-100 transition-opacity">
+                                                    <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                                        <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
+                                                    {{ $video->formatted_duration }}
+                                                </div>
+                                            </div>
+                                            <h4 class="text-white text-xs font-medium line-clamp-2 group-hover/pv:text-purple-300 transition-colors">{{ $video->title }}</h4>
+                                            <p class="text-gray-500 text-[10px] mt-0.5">{{ $video->formatted_view_count }} views</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
 
     {{-- ============================================ --}}
     {{-- TEAM SECTION - Premium --}}
@@ -628,7 +803,6 @@ function metalXPage() {
         playerOpen: false,
         currentVideoId: '',
         currentVideoTitle: '',
-        activeSlide: 0,
 
         openPlayer(videoId, title) {
             this.currentVideoId = videoId;
@@ -642,16 +816,140 @@ function metalXPage() {
             this.currentVideoId = '';
             this.currentVideoTitle = '';
             document.body.style.overflow = '';
+        }
+    }
+}
+
+function featuredCarousel(totalSlides) {
+    return {
+        activeIndex: 0,
+        total: totalSlides,
+        autoPlayTimer: null,
+        isDragging: false,
+        dragStartX: 0,
+        dragDelta: 0,
+
+        // Get relative position from active (-2, -1, 0, 1, 2, hidden)
+        getRelativePos(index) {
+            let diff = index - this.activeIndex;
+            // Wrap around for circular carousel
+            if (diff > Math.floor(this.total / 2)) diff -= this.total;
+            if (diff < -Math.floor(this.total / 2)) diff += this.total;
+            return diff;
         },
 
-        scrollSlider(direction) {
-            const track = this.$refs.sliderTrack;
-            if (!track) return;
-            const scrollAmount = 340;
-            track.scrollBy({
-                left: direction === 'left' ? -scrollAmount : scrollAmount,
-                behavior: 'smooth'
-            });
+        // Calculate 3D card style based on relative position
+        getCardStyle(index) {
+            const pos = this.getRelativePos(index);
+            const absPos = Math.abs(pos);
+
+            // Hide cards too far away
+            if (absPos > 2) {
+                return 'transform: translate(-50%, -50%) scale(0.6); opacity: 0; z-index: 0; pointer-events: none;';
+            }
+
+            // Each position: translateX, scale, opacity, z-index, rotateY
+            const configs = {
+                0:  { x: 0,    scale: 1,    opacity: 1,   z: 20, rotateY: 0,   blur: 0 },
+                1:  { x: 110,  scale: 0.82, opacity: 0.6, z: 10, rotateY: -8,  blur: 1 },
+                '-1': { x: -110, scale: 0.82, opacity: 0.6, z: 10, rotateY: 8, blur: 1 },
+                2:  { x: 195,  scale: 0.68, opacity: 0.3, z: 5,  rotateY: -15, blur: 2 },
+                '-2': { x: -195, scale: 0.68, opacity: 0.3, z: 5, rotateY: 15, blur: 2 },
+            };
+
+            const key = pos === 0 ? 0 : (absPos <= 2 ? pos : (pos > 0 ? 2 : -2));
+            const cfg = configs[key] || configs[absPos > 0 ? 2 : 0];
+
+            return `transform: translate(calc(-50% + ${cfg.x}%), -50%) scale(${cfg.scale}) rotateY(${cfg.rotateY}deg); ` +
+                   `opacity: ${cfg.opacity}; z-index: ${cfg.z}; ` +
+                   `filter: blur(${cfg.blur}px); ` +
+                   `pointer-events: ${pos === 0 ? 'auto' : 'auto'};`;
+        },
+
+        next() {
+            this.activeIndex = (this.activeIndex + 1) % this.total;
+        },
+
+        prev() {
+            this.activeIndex = (this.activeIndex - 1 + this.total) % this.total;
+        },
+
+        goTo(index) {
+            this.activeIndex = index;
+        },
+
+        handleCardClick(index, videoId, title) {
+            if (index === this.activeIndex) {
+                // Center card -> play video
+                const pageRoot = document.querySelector('[x-data="metalXPage()"]');
+                if (pageRoot && pageRoot._x_dataStack) {
+                    pageRoot._x_dataStack[0].openPlayer(videoId, title);
+                }
+            } else {
+                // Non-center card -> navigate to it
+                this.goTo(index);
+            }
+        },
+
+        // Auto-play (slow continuous rotation)
+        startAutoPlay() {
+            this.autoPlayTimer = setInterval(() => {
+                this.next();
+            }, 4000);
+        },
+
+        pauseAutoPlay() {
+            if (this.autoPlayTimer) {
+                clearInterval(this.autoPlayTimer);
+                this.autoPlayTimer = null;
+            }
+        },
+
+        resumeAutoPlay() {
+            if (!this.autoPlayTimer) {
+                this.startAutoPlay();
+            }
+        },
+
+        // Touch / Mouse drag support
+        onDragStart(e) {
+            this.isDragging = true;
+            this.dragStartX = e.clientX || e.pageX;
+            this.dragDelta = 0;
+            this.pauseAutoPlay();
+        },
+
+        onTouchStart(e) {
+            this.isDragging = true;
+            this.dragStartX = e.touches[0].clientX;
+            this.dragDelta = 0;
+            this.pauseAutoPlay();
+        },
+
+        onDragMove(e) {
+            if (!this.isDragging) return;
+            const x = e.clientX || e.pageX;
+            this.dragDelta = x - this.dragStartX;
+        },
+
+        onTouchMove(e) {
+            if (!this.isDragging) return;
+            this.dragDelta = e.touches[0].clientX - this.dragStartX;
+        },
+
+        onDragEnd() {
+            if (!this.isDragging) return;
+            this.isDragging = false;
+
+            // Threshold: 50px swipe
+            if (this.dragDelta > 50) {
+                this.prev();
+            } else if (this.dragDelta < -50) {
+                this.next();
+            }
+
+            this.dragDelta = 0;
+            this.resumeAutoPlay();
         }
     }
 }
