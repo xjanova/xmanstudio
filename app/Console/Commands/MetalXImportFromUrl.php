@@ -47,7 +47,7 @@ class MetalXImportFromUrl extends Command
             $contentType = $response->header('Content-Type', '');
             $fileSize = strlen($content);
 
-            $this->info("Downloaded: " . number_format($fileSize) . " bytes ({$contentType})");
+            $this->info('Downloaded: ' . number_format($fileSize) . " bytes ({$contentType})");
 
             // Determine filename
             $filename = $this->option('filename');

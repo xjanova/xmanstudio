@@ -7,6 +7,7 @@ use App\Models\MetalXChannel;
 use App\Models\MetalXContentPlan;
 use App\Models\MetalXMediaLibrary;
 use App\Models\MetalXMusicLibrary;
+use App\Models\Setting;
 use App\Services\ContentPlanService;
 use Exception;
 use Illuminate\Console\Command;
@@ -242,7 +243,7 @@ class MetalXSetupAutoProduction extends Command
             escapeshellarg($outputPath)
         );
 
-        $this->info("  Generating audio with FFmpeg...");
+        $this->info('  Generating audio with FFmpeg...');
         exec($cmd, $output, $returnCode);
 
         if ($returnCode === 0 && file_exists($outputPath)) {
@@ -266,7 +267,7 @@ class MetalXSetupAutoProduction extends Command
     protected function findFFmpeg(): ?string
     {
         // Check custom setting first
-        $customPath = \App\Models\Setting::getValue('ffmpeg_binary');
+        $customPath = Setting::getValue('ffmpeg_binary');
         if ($customPath && file_exists($customPath)) {
             return $customPath;
         }

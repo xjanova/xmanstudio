@@ -8,6 +8,7 @@ use App\Models\MetalXTeamMember;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
 use App\Services\YouTubeService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -146,7 +147,7 @@ class MetalXAnalyticsController extends Controller
 
         // Last sync time (max() returns raw string, need to parse to Carbon)
         $lastSyncRaw = MetalXVideo::max('synced_at');
-        $lastSync = $lastSyncRaw ? \Carbon\Carbon::parse($lastSyncRaw) : null;
+        $lastSync = $lastSyncRaw ? Carbon::parse($lastSyncRaw) : null;
 
         return view('admin.metal-x.analytics', compact(
             'channelInfo',

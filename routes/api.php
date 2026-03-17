@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\SmsPaymentController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -69,7 +70,7 @@ Route::post('/metal-x/import-url', function (Request $request) {
         'source' => 'required|string|in:freepik,suno,custom,ai_generated',
     ]);
 
-    $exitCode = \Illuminate\Support\Facades\Artisan::call('metalx:import-url', [
+    $exitCode = Artisan::call('metalx:import-url', [
         'url' => $request->input('url'),
         '--type' => $request->input('type', 'auto'),
         '--title' => $request->input('title'),
@@ -78,7 +79,7 @@ Route::post('/metal-x/import-url', function (Request $request) {
         '--source' => $request->input('source'),
     ]);
 
-    $output = \Illuminate\Support\Facades\Artisan::output();
+    $output = Artisan::output();
 
     return response()->json([
         'success' => $exitCode === 0,
