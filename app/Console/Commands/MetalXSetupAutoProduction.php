@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Console\Commands;
 
 use App\Models\MetalXAutomationSchedule;
@@ -9,6 +7,8 @@ use App\Models\MetalXChannel;
 use App\Models\MetalXContentPlan;
 use App\Models\MetalXMediaLibrary;
 use App\Models\MetalXMusicLibrary;
+use App\Services\ContentPlanService;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -100,14 +100,14 @@ class MetalXSetupAutoProduction extends Command
         if ($this->option('generate-now')) {
             $this->info('🔄 Triggering immediate generation...');
             try {
-                $service = app(\App\Services\ContentPlanService::class);
+                $service = app(ContentPlanService::class);
                 $project = $service->generateProject($plan);
                 if ($project) {
                     $this->info("✅ Project created: {$project->title} (ID: {$project->id}, Status: {$project->status})");
                 } else {
                     $this->warn('⚠️ Generation returned null — check logs for details');
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("❌ Generation failed: {$e->getMessage()}");
             }
         } else {
@@ -172,7 +172,7 @@ class MetalXSetupAutoProduction extends Command
 
                     $downloaded++;
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->warn("  ⚠️ Failed: {$filename} — {$e->getMessage()}");
             }
 
