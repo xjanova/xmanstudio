@@ -422,6 +422,7 @@
         btnText.textContent = 'กำลัง sync...';
         icon.classList.add('animate-spin');
         progressEl.classList.remove('hidden');
+        document.getElementById('syncStatusText').textContent = 'กำลังเริ่มต้น...';
 
         fetch('{{ route("admin.metal-x.videos.sync-all") }}', {
             method: 'POST',
@@ -434,29 +435,72 @@
         })
         .then(r => r.json())
         .then(data => {
-            if (data.success) {
-                document.getElementById('syncStatusText').textContent = 'Sync เสร็จสิ้น!';
-                document.getElementById('syncImported').textContent = data.imported || 0;
-                document.getElementById('syncUpdated').textContent = data.updated || 0;
-                document.getElementById('syncDeleted').textContent = data.deleted || 0;
-                document.getElementById('syncProgressBar').style.width = '100%';
-
-                setTimeout(() => location.reload(), 2000);
+            if (data.success && data.progress_key) {
+                // Start polling for progress
+                pollSyncProgress(data.progress_key);
             } else {
                 alert(data.error || 'เกิดข้อผิดพลาด');
-                btn.disabled = false;
-                btnText.textContent = 'Sync ทั้งช่อง';
-                icon.classList.remove('animate-spin');
-                progressEl.classList.add('hidden');
+                resetSyncBtn();
             }
         })
         .catch(err => {
             alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-            btn.disabled = false;
-            btnText.textContent = 'Sync ทั้งช่อง';
-            icon.classList.remove('animate-spin');
-            progressEl.classList.add('hidden');
+            resetSyncBtn();
         });
+    }
+
+    function pollSyncProgress(progressKey) {
+        if (syncPollingInterval) clearInterval(syncPollingInterval);
+
+        syncPollingInterval = setInterval(() => {
+            fetch(`{{ route("admin.metal-x.videos.sync-progress") }}?key=${progressKey}`, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(progress => {
+                const statusText = document.getElementById('syncStatusText');
+                const imported = progress.total_imported || 0;
+                const updated = progress.total_updated || 0;
+                const deleted = progress.total_deleted || 0;
+                const channelsDone = progress.channels_done || 0;
+                const channelsTotal = progress.channels_total || 1;
+                const currentChannel = progress.current_channel || '';
+                const pct = Math.round((channelsDone / channelsTotal) * 100);
+
+                document.getElementById('syncImported').textContent = imported;
+                document.getElementById('syncUpdated').textContent = updated;
+                document.getElementById('syncDeleted').textContent = deleted;
+                document.getElementById('syncProgressBar').style.width = pct + '%';
+
+                if (progress.status === 'completed') {
+                    clearInterval(syncPollingInterval);
+                    statusText.textContent = 'Sync เสร็จสิ้น!';
+                    document.getElementById('syncProgressBar').style.width = '100%';
+                    setTimeout(() => location.reload(), 2000);
+                } else if (progress.status === 'failed') {
+                    clearInterval(syncPollingInterval);
+                    statusText.textContent = 'เกิดข้อผิดพลาด: ' + (progress.error || 'Unknown error');
+                    resetSyncBtn();
+                } else {
+                    statusText.textContent = `กำลัง sync: ${currentChannel} (${channelsDone}/${channelsTotal} ช่อง)`;
+                }
+            })
+            .catch(() => {
+                // Network error during poll — keep trying
+            });
+        }, 2000);
+    }
+
+    function resetSyncBtn() {
+        const btn = document.getElementById('syncAllBtn');
+        const btnText = document.getElementById('syncBtnText');
+        const icon = document.getElementById('syncIcon');
+        const progressEl = document.getElementById('syncProgress');
+
+        btn.disabled = false;
+        btnText.textContent = 'Sync ทั้งช่อง';
+        icon.classList.remove('animate-spin');
+        progressEl.classList.add('hidden');
     }
 </script>
 @endpush

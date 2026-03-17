@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\GenerateVideoMetadataJob;
+use App\Jobs\SyncAllVideosJob;
 use App\Models\MetalXChannel;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
@@ -258,7 +259,7 @@ class MetalXVideoController extends Controller
     }
 
     /**
-     * Start async sync of all videos from all active channels (AJAX).
+     * Start async sync of all videos from all active channels (dispatched to queue).
      */
     public function syncAll(Request $request)
     {
@@ -282,97 +283,36 @@ class MetalXVideoController extends Controller
 
                 return back()->with('error', 'No channels configured. Please add channels in Metal-X Settings.');
             }
-
-            $channels = collect([(object) ['youtube_channel_id' => $channelId, 'id' => null, 'name' => 'Default']]);
         }
 
-        // limit=0 means import ALL videos from channel
         $limit = (int) $request->get('limit', 0);
         $progressKey = 'video_sync_' . Str::random(16);
 
-        // Initialize master progress
+        // Initialize progress immediately
         Cache::put($progressKey, [
-            'status' => 'running',
-            'channels_total' => $channels->count(),
+            'status' => 'queued',
+            'channels_total' => $channels->count() ?: 1,
             'channels_done' => 0,
             'total_imported' => 0,
-            'total_skipped' => 0,
-            'current_channel' => '',
+            'total_updated' => 0,
+            'total_deleted' => 0,
+            'current_channel' => 'กำลังเริ่มต้น...',
             'channel_progress' => [],
         ], 600);
 
-        // Process synchronously but with progress updates
-        $totalImported = 0;
-        $totalUpdated = 0;
-        $totalDeleted = 0;
-        $newVideos = [];
-
-        foreach ($channels as $index => $channel) {
-            $channelModel = $channel instanceof MetalXChannel ? $channel : null;
-            $channelProgressKey = $progressKey . '_ch_' . $index;
-
-            // Update master progress with current channel
-            $masterProgress = Cache::get($progressKey, []);
-            $masterProgress['current_channel'] = $channel->name ?? $channel->youtube_channel_id;
-            Cache::put($progressKey, $masterProgress, 600);
-
-            $result = $this->youtubeService->syncChannelVideos(
-                $channel->youtube_channel_id,
-                $limit,
-                $channelModel,
-                $channelProgressKey
-            );
-
-            $totalImported += $result['imported'];
-            $totalUpdated += $result['updated'];
-            $totalDeleted += $result['deleted'];
-            $newVideos = array_merge($newVideos, $result['videos']);
-
-            // Update master progress
-            $channelResult = Cache::get($channelProgressKey, []);
-            $masterProgress = Cache::get($progressKey, []);
-            $masterProgress['channels_done'] = $index + 1;
-            $masterProgress['total_imported'] = $totalImported;
-            $masterProgress['total_updated'] = $totalUpdated;
-            $masterProgress['total_deleted'] = $totalDeleted;
-            $masterProgress['channel_progress'][$channel->name ?? $channel->youtube_channel_id] = $channelResult;
-            Cache::put($progressKey, $masterProgress, 600);
-
-            // Clean up channel progress key
-            Cache::forget($channelProgressKey);
-        }
-
-        // Dispatch AI metadata generation for new videos without Thai metadata
-        if (Setting::get('ai_content_generation', false)) {
-            foreach ($newVideos as $video) {
-                if (empty($video->title_th)) {
-                    GenerateVideoMetadataJob::dispatch($video, false, 80.0);
-                }
-            }
-        }
-
-        // Mark complete
-        $masterProgress = Cache::get($progressKey, []);
-        $masterProgress['status'] = 'completed';
-        $masterProgress['total_imported'] = $totalImported;
-        $masterProgress['total_updated'] = $totalUpdated;
-        $masterProgress['total_deleted'] = $totalDeleted;
-        Cache::put($progressKey, $masterProgress, 600);
-
-        $summary = "นำเข้าใหม่ {$totalImported} | อัพเดท {$totalUpdated} | ลบแล้ว {$totalDeleted} จาก {$channels->count()} ช่อง";
+        // Dispatch after response — sends JSON immediately, then runs sync in background
+        SyncAllVideosJob::dispatchAfterResponse($progressKey, $limit);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
+                'async' => true,
                 'progress_key' => $progressKey,
-                'imported' => $totalImported,
-                'updated' => $totalUpdated,
-                'deleted' => $totalDeleted,
-                'message' => $summary,
+                'message' => 'เริ่ม sync แล้ว กำลังดำเนินการ...',
             ]);
         }
 
-        return back()->with('success', $summary);
+        return back()->with('success', 'เริ่ม sync ทั้งช่องแล้ว กรุณารอสักครู่...');
     }
 
     /**
