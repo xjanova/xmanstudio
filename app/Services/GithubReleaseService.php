@@ -13,6 +13,9 @@ class GithubReleaseService
     /**
      * Sync the latest release from GitHub for a product
      */
+    /** Maximum number of versions to keep per product */
+    public const MAX_VERSIONS_KEEP = 5;
+
     public function syncLatestRelease(Product $product): ?ProductVersion
     {
         $githubSetting = $product->githubSetting;
@@ -27,7 +30,51 @@ class GithubReleaseService
             throw new \Exception('Could not fetch release from GitHub');
         }
 
-        return $this->createOrUpdateVersion($product, $githubSetting, $release);
+        $version = $this->createOrUpdateVersion($product, $githubSetting, $release);
+
+        // Cleanup: keep only the latest N versions, delete the rest
+        $this->cleanupOldVersions($product);
+
+        return $version;
+    }
+
+    /**
+     * Remove old versions beyond MAX_VERSIONS_KEEP.
+     * Deletes associated download logs and any local files.
+     */
+    public function cleanupOldVersions(Product $product): int
+    {
+        // Get IDs of versions to keep (latest N by synced_at/created_at)
+        $keepIds = ProductVersion::where('product_id', $product->id)
+            ->orderByDesc('synced_at')
+            ->orderByDesc('created_at')
+            ->limit(self::MAX_VERSIONS_KEEP)
+            ->pluck('id');
+
+        // Find versions to delete
+        $toDelete = ProductVersion::where('product_id', $product->id)
+            ->whereNotIn('id', $keepIds)
+            ->get();
+
+        if ($toDelete->isEmpty()) {
+            return 0;
+        }
+
+        $deletedCount = 0;
+        foreach ($toDelete as $version) {
+            // Delete associated download logs
+            $version->downloadLogs()->delete();
+
+            // Delete version record
+            $version->delete();
+            $deletedCount++;
+
+            Log::info("Cleaned up old version: {$product->name} v{$version->version}");
+        }
+
+        Log::info("Version cleanup for {$product->name}: deleted {$deletedCount} old versions, kept " . self::MAX_VERSIONS_KEEP);
+
+        return $deletedCount;
     }
 
     /**

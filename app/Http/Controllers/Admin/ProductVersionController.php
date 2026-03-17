@@ -93,9 +93,14 @@ class ProductVersionController extends Controller
         try {
             $version = $this->githubService->syncLatestRelease($product);
 
+            $totalVersions = $product->versions()->count();
+            $maxKeep = GithubReleaseService::MAX_VERSIONS_KEEP;
+
+            $msg = "Sync สำเร็จ! เวอร์ชันล่าสุด: {$version->version} (เก็บ {$totalVersions} เวอร์ชัน, สูงสุด {$maxKeep})";
+
             return redirect()
                 ->route('admin.products.versions.index', $product)
-                ->with('success', "Sync สำเร็จ! เวอร์ชันล่าสุด: {$version->version}");
+                ->with('success', $msg);
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.products.versions.index', $product)
