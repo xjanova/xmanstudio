@@ -104,6 +104,36 @@ jobs:
               find /usr/local/etc/php* /etc/php* /opt/alt/php*/etc/php.d/ -name "*.ini" 2>/dev/null | xargs grep -l "proc_open" 2>/dev/null | head -5
             fi
 
+            # Metal-X Library Status
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+            if [ -f "$DEPLOY_PATH/artisan" ]; then
+              echo ""
+              echo "--- Metal-X Library Status ---"
+              cd "$DEPLOY_PATH"
+              php artisan tinker --execute="
+                echo '=== Media Library ===' . PHP_EOL;
+                \$media = \App\Models\MetalXMediaLibrary::all();
+                echo 'Total: ' . \$media->count() . ' (Active: ' . \$media->where('is_active', true)->count() . ')' . PHP_EOL;
+                echo 'Images: ' . \$media->where('type', 'image')->count() . PHP_EOL;
+                echo 'Video clips: ' . \$media->where('type', 'video_clip')->count() . PHP_EOL;
+                foreach (\$media as \$m) {
+                  echo '  [' . \$m->id . '] ' . \$m->type . ' | ' . \$m->source . ' | ' . \$m->file_path . ' | ' . (\$m->is_active ? 'active' : 'inactive') . PHP_EOL;
+                }
+                echo PHP_EOL . '=== Music Library ===' . PHP_EOL;
+                \$music = \App\Models\MetalXMusicLibrary::all();
+                echo 'Total: ' . \$music->count() . ' (Active: ' . \$music->where('is_active', true)->count() . ')' . PHP_EOL;
+                foreach (\$music as \$t) {
+                  echo '  [' . \$t->id . '] ' . \$t->title . ' | ' . \$t->style . ' | ' . \$t->duration_seconds . 's | ' . \$t->file_path . PHP_EOL;
+                }
+                echo PHP_EOL . '=== Latest Projects ===' . PHP_EOL;
+                \$projects = \App\Models\MetalXVideoProject::orderBy('id', 'desc')->limit(5)->get();
+                foreach (\$projects as \$p) {
+                  echo '  [' . \$p->id . '] ' . \$p->status . ' | mode:' . (\$p->media_mode ?? 'n/a') . ' | imgs:' . count(\$p->images ?? []) . ' clips:' . count(\$p->video_clips ?? []) . ' | ' . \Illuminate\Support\Str::limit(\$p->title, 60) . PHP_EOL;
+                }
+              " 2>&1 || echo "Could not query Metal-X data"
+            fi
+
             # Action: fix-proc-open
             if [ "${{ github.event.inputs.action }}" = "fix-proc-open" ]; then
               echo ""
