@@ -245,16 +245,32 @@ class PuzzleDebugController extends Controller
 
     /**
      * Train real ML model from human-labeled data.
-     * Calls the Python ML service's /train endpoint.
+     * Auto-starts ML service if not running.
      */
     public function trainMl(Request $request)
     {
         $epochs = $request->input('epochs', 100);
         $mlUrl = config('services.puzzle_ml.url', 'http://127.0.0.1:5050');
-        $trainUrl = str_replace('/predict', '', $mlUrl) . '/train';
+        $baseUrl = str_replace('/predict', '', $mlUrl);
+        $trainUrl = $baseUrl . '/train';
+
+        // Auto-start ML service if not running
+        if (! $this->isMlServiceRunning($baseUrl)) {
+            $started = $this->startMlService();
+            if (! $started) {
+                return redirect()->back()->with('error',
+                    'ML Service ไม่สามารถเริ่มได้อัตโนมัติ — ตรวจสอบ Python + venv บน server');
+            }
+            // Wait for service to be ready
+            sleep(3);
+            if (! $this->isMlServiceRunning($baseUrl)) {
+                return redirect()->back()->with('error',
+                    'ML Service เริ่มแล้วแต่ยังไม่พร้อม — ลองกดอีกครั้ง');
+            }
+        }
 
         try {
-            $client = new Client(['timeout' => 600, 'connect_timeout' => 5]);
+            $client = new Client(['timeout' => 600, 'connect_timeout' => 10]);
             $response = $client->post($trainUrl, [
                 'form_params' => [
                     'api_url' => config('app.url') . '/api/v1/product/tping',
@@ -279,10 +295,66 @@ class PuzzleDebugController extends Controller
             return redirect()->back()->with('error', 'ML Training failed: ' . substr($error, 0, 200));
         } catch (ConnectException $e) {
             return redirect()->back()->with('error',
-                'ML Service not running. Start: cd ml-services/puzzle-solver && python app.py');
+                'ML Service ไม่ตอบสนอง — ตรวจสอบ log: storage/logs/ml-service.log');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'ML Training error: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Check if ML service is running.
+     */
+    private function isMlServiceRunning(string $baseUrl): bool
+    {
+        try {
+            $client = new Client(['timeout' => 3, 'connect_timeout' => 2]);
+            $response = $client->get($baseUrl . '/health');
+
+            return $response->getStatusCode() === 200;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Auto-start ML service via shell command.
+     */
+    private function startMlService(): bool
+    {
+        $mlDir = base_path('ml-services/puzzle-solver');
+        $logFile = storage_path('logs/ml-service.log');
+
+        if (! is_dir($mlDir)) {
+            Log::warning('ML service directory not found: ' . $mlDir);
+
+            return false;
+        }
+
+        // Setup venv + install deps if needed
+        $venvDir = $mlDir . '/venv';
+        if (! is_dir($venvDir)) {
+            Log::info('Creating ML service venv...');
+            exec("cd {$mlDir} && python3 -m venv venv 2>&1", $output, $code);
+            if ($code !== 0) {
+                Log::error('Failed to create venv: ' . implode("\n", $output));
+
+                return false;
+            }
+        }
+
+        // Install inference deps
+        exec("cd {$mlDir} && source venv/bin/activate && pip install -q -r requirements-inference.txt 2>&1", $pipOut, $pipCode);
+        Log::info('ML pip install: code=' . $pipCode);
+
+        // Start gunicorn
+        $cmd = "cd {$mlDir} && source venv/bin/activate && "
+            . "nohup gunicorn -w 2 -b 127.0.0.1:5050 --timeout 600 --pid {$mlDir}/ml-service.pid app:app "
+            . "> {$logFile} 2>&1 &";
+
+        exec($cmd, $startOut, $startCode);
+        Log::info('ML service start: code=' . $startCode);
+
+        return true;
     }
 
     public function bulkDelete(Request $request)
