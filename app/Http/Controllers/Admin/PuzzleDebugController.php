@@ -330,30 +330,26 @@ class PuzzleDebugController extends Controller
 
     /**
      * Find working Python command (venv or system).
+     * Uses Process instead of file_exists() to avoid open_basedir restrictions.
      */
     private function findPython(string $mlDir): ?string
     {
-        // Try venv first
+        // Try venv python first
         $venvPython = $mlDir . '/venv/bin/python';
-        if (file_exists($venvPython)) {
-            return $venvPython;
-        }
-
-        // Try system python3
         try {
-            $result = Process::timeout(5)->run('which python3');
+            $result = Process::timeout(5)->run("{$venvPython} --version 2>&1");
             if ($result->successful()) {
-                return 'python3';
+                return $venvPython;
             }
         } catch (\Exception $e) {
             // ignore
         }
 
-        // Try python
+        // Try system python3
         try {
-            $result = Process::timeout(5)->run('which python');
+            $result = Process::timeout(5)->run('python3 --version 2>&1');
             if ($result->successful()) {
-                return 'python';
+                return 'python3';
             }
         } catch (\Exception $e) {
             // ignore
@@ -364,6 +360,7 @@ class PuzzleDebugController extends Controller
 
     /**
      * Ensure Python dependencies are installed.
+     * Uses Process for all checks to avoid open_basedir restrictions.
      */
     private function ensurePythonDeps(string $mlDir, string $pythonCmd): void
     {
@@ -378,24 +375,11 @@ class PuzzleDebugController extends Controller
             // ignore
         }
 
-        // Install deps
+        // Install deps using python -m pip (always works)
         Log::info('Installing ML training dependencies...');
         try {
-            // Create venv if python is system python
-            if (! file_exists($mlDir . '/venv/bin/python')) {
-                Process::timeout(60)->path($mlDir)
-                    ->run('python3 -m venv venv 2>&1 || true');
-                if (file_exists($mlDir . '/venv/bin/python')) {
-                    $pythonCmd = $mlDir . '/venv/bin/python';
-                }
-            }
-
-            $pip = str_replace('python', 'pip', $pythonCmd);
-            if (! file_exists($pip)) {
-                $pip = "{$pythonCmd} -m pip";
-            }
             Process::timeout(300)->path($mlDir)
-                ->run("{$pip} install -q -r requirements.txt 2>&1");
+                ->run("{$pythonCmd} -m pip install -q -r requirements.txt 2>&1");
         } catch (\Exception $e) {
             Log::warning('ML deps install failed: ' . $e->getMessage());
         }
