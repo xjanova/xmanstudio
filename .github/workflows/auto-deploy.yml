@@ -63,7 +63,7 @@ jobs:
           if [ -z "$SSH_HOST" ] || [ -z "$SSH_USER" ] || [ -z "$SSH_PRIVATE_KEY" ]; then
             echo "::error::Required SSH secrets are not configured."
             echo "Please set: SSH_HOST, SSH_USER, SSH_PRIVATE_KEY"
-            echo "Optional: SSH_PORT (defaults to 22), DEPLOY_PATH (defaults to /var/www/xmanstudio)"
+            echo "Optional: SSH_PORT (defaults to 22), DEPLOY_PATH (defaults to /home/admin/domains/xman4289.com)"
             exit 1
           fi
           echo "✓ SSH secrets configured"
@@ -81,7 +81,7 @@ jobs:
 
             # Configuration
             DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
+            DEPLOY_PATH="${DEPLOY_PATH:-/home/admin/domains/xman4289.com}"
 
             echo "🚀 Starting deployment to ${DEPLOY_PATH}"
             cd "${DEPLOY_PATH}"
