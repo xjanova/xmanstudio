@@ -1015,6 +1015,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::prefix('puzzle-debug')->name('puzzle-debug.')->group(function () {
         Route::get('/', [AdminPuzzleDebugController::class, 'index'])->name('index');
         Route::post('/train', [AdminPuzzleDebugController::class, 'train'])->name('train');
+        Route::post('/train-ml', [AdminPuzzleDebugController::class, 'trainMl'])->name('train-ml');
         Route::post('/auto-label', [AdminPuzzleDebugController::class, 'autoLabel'])->name('auto-label');
         Route::get('/{record}', [AdminPuzzleDebugController::class, 'show'])->name('show');
         Route::put('/{record}/label', [AdminPuzzleDebugController::class, 'updateLabel'])->name('label');

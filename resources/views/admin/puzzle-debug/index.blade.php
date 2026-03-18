@@ -30,7 +30,7 @@
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">AI Learning Center</h2>
                     <p class="text-sm text-gray-500 mt-1">คำนวณ correction model จากข้อมูลที่เก็บมา</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
                     <form method="POST" action="{{ route('admin.puzzle-debug.auto-label') }}" class="inline">
                         @csrf
                         <button type="submit" class="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition">
@@ -40,8 +40,19 @@
                     <form method="POST" action="{{ route('admin.puzzle-debug.train') }}" class="inline">
                         @csrf
                         <button type="submit" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-sm font-bold hover:from-purple-700 hover:to-indigo-700 transition shadow-lg">
-                            AI Learning
+                            Statistical Learning
                         </button>
+                    </form>
+                    <form method="POST" action="{{ route('admin.puzzle-debug.train-ml') }}" class="inline"
+                          onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='Training...';">
+                        @csrf
+                        <button type="submit" class="px-6 py-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg text-sm font-bold hover:from-rose-700 hover:to-pink-700 transition shadow-lg"
+                                {{ $stats['human_labeled'] < 3 ? 'disabled' : '' }}>
+                            Train ML Model (CNN)
+                        </button>
+                        @if($stats['human_labeled'] < 3)
+                            <span class="text-[10px] text-gray-400 block mt-1">ต้อง label 3+ ภาพก่อน</span>
+                        @endif
                     </form>
                 </div>
             </div>
@@ -49,6 +60,11 @@
             @if(session('success'))
                 <div class="mt-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm">
                     {{ session('success') }}
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
+                    {{ session('error') }}
                 </div>
             @endif
         </div>

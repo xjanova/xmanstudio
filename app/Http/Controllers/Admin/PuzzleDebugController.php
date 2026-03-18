@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PuzzleDebugImage;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -239,6 +241,48 @@ class PuzzleDebugController extends Controller
         $record->delete();
 
         return redirect()->route('admin.puzzle-debug.index')->with('success', 'ลบแล้ว');
+    }
+
+    /**
+     * Train real ML model from human-labeled data.
+     * Calls the Python ML service's /train endpoint.
+     */
+    public function trainMl(Request $request)
+    {
+        $epochs = $request->input('epochs', 100);
+        $mlUrl = config('services.puzzle_ml.url', 'http://127.0.0.1:5050');
+        $trainUrl = str_replace('/predict', '', $mlUrl) . '/train';
+
+        try {
+            $client = new Client(['timeout' => 600, 'connect_timeout' => 5]);
+            $response = $client->post($trainUrl, [
+                'form_params' => [
+                    'api_url' => config('app.url') . '/api/v1/product/tping',
+                    'epochs' => $epochs,
+                ],
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+
+            if ($result['success'] ?? false) {
+                $stats = $result['stats'] ?? [];
+                $msg = 'ML Model trained! ';
+                $msg .= 'Samples: ' . ($stats['samples'] ?? '?');
+                $msg .= ' | Avg Error: ' . ($stats['avg_error_px'] ?? '?') . 'px';
+                $msg .= ' | Accuracy: ' . ($stats['accuracy_within_20px'] ?? '?') . '%';
+
+                return redirect()->back()->with('success', $msg);
+            }
+
+            $error = $result['stderr'] ?? $result['error'] ?? 'Unknown error';
+
+            return redirect()->back()->with('error', 'ML Training failed: ' . substr($error, 0, 200));
+        } catch (ConnectException $e) {
+            return redirect()->back()->with('error',
+                'ML Service not running. Start: cd ml-services/puzzle-solver && python app.py');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'ML Training error: ' . $e->getMessage());
+        }
     }
 
     public function bulkDelete(Request $request)

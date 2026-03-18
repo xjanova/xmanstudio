@@ -232,6 +232,73 @@ def reload_model():
     })
 
 
+@app.route("/train", methods=["POST"])
+def train():
+    """Trigger model training from labeled data."""
+    import subprocess
+    import json as json_mod
+
+    api_url = request.form.get("api_url", "https://xman4289.com/api/v1/product/tping")
+    epochs = int(request.form.get("epochs", 100))
+
+    logger.info(f"Training triggered: api_url={api_url}, epochs={epochs}")
+
+    try:
+        result = subprocess.run(
+            ["python", "train.py", "--api-url", api_url, "--epochs", str(epochs)],
+            capture_output=True, text=True, timeout=600, cwd=os.path.dirname(os.path.abspath(__file__))
+        )
+
+        success = result.returncode == 0
+
+        # Read training log if available
+        log_path = os.path.join("model", "training_log.json")
+        training_stats = {}
+        if os.path.exists(log_path):
+            with open(log_path) as f:
+                training_stats = json_mod.load(f)
+
+        if success:
+            # Reload the newly trained model
+            load_ml_model()
+
+        return jsonify({
+            "success": success,
+            "ml_model_loaded": ml_model is not None,
+            "stats": training_stats,
+            "stdout": result.stdout[-2000:] if result.stdout else "",
+            "stderr": result.stderr[-2000:] if result.stderr else "",
+        })
+
+    except subprocess.TimeoutExpired:
+        return jsonify({"success": False, "error": "Training timed out (10min)"}), 504
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/model-info", methods=["GET"])
+def model_info():
+    """Get current model info and training stats."""
+    import json as json_mod
+
+    log_path = os.path.join("model", "training_log.json")
+    stats = {}
+    if os.path.exists(log_path):
+        with open(log_path) as f:
+            stats = json_mod.load(f)
+
+    model_exists = os.path.exists(MODEL_PATH)
+    model_size = os.path.getsize(MODEL_PATH) if model_exists else 0
+
+    return jsonify({
+        "model_exists": model_exists,
+        "model_loaded": ml_model is not None,
+        "model_path": MODEL_PATH,
+        "model_size_kb": round(model_size / 1024, 1),
+        "training_stats": stats,
+    })
+
+
 if __name__ == "__main__":
     load_ml_model()
     port = int(os.environ.get("PORT", 5050))
