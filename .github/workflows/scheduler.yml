@@ -1,28 +1,29 @@
-name: Laravel Scheduler & Queue Monitor
+name: Queue Monitor (Manual Only)
 
 on:
-  schedule:
-    # Run every 5 minutes
-    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       action:
         description: 'Action to perform'
         required: true
-        default: 'schedule-run'
+        default: 'queue-status'
         type: choice
         options:
-          - schedule-run
           - queue-status
           - queue-restart
+          - queue-ensure
           - full-check
 
+# NOTE: Laravel Scheduler ให้ตั้ง cron บน DirectAdmin แทน (ไม่ต้องใช้ GitHub Actions)
+# Cron Command: cd /path/to/xmanstudio && php artisan schedule:run >> /dev/null 2>&1
+# Schedule: Every 5 minutes (*/5 * * * *)
+
 jobs:
-  scheduler:
-    name: Run Scheduler & Monitor Queue
+  queue-monitor:
+    name: Queue Monitor
     runs-on: ubuntu-latest
     steps:
-      - name: Run Laravel Scheduler
+      - name: Run Queue Action via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -33,7 +34,7 @@ jobs:
           script: |
             DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
             DEPLOY_PATH="${DEPLOY_PATH:-/var/www/xmanstudio}"
-            ACTION="${{ github.event.inputs.action || 'schedule-run' }}"
+            ACTION="${{ github.event.inputs.action }}"
 
             if [ ! -f "$DEPLOY_PATH/artisan" ]; then
               echo "ERROR: artisan not found at $DEPLOY_PATH"
@@ -43,38 +44,31 @@ jobs:
             cd "$DEPLOY_PATH"
 
             # =============================================
-            # 1. Ensure Queue Worker is Running
+            # Queue Worker: Ensure Running
             # =============================================
-            QUEUE_PID=$(ps aux | grep "[q]ueue:work" | awk '{print $2}' | head -1)
-
-            if [ -z "$QUEUE_PID" ]; then
-              echo "[$(date)] Queue worker NOT running — starting..."
-              nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --max-jobs=100 > storage/logs/queue-worker.log 2>&1 &
-              sleep 2
-              NEW_PID=$(ps aux | grep "[q]ueue:work" | awk '{print $2}' | head -1)
-              if [ -n "$NEW_PID" ]; then
-                echo "[$(date)] Queue worker started (PID: $NEW_PID)"
+            ensure_queue_worker() {
+              QUEUE_PID=$(ps aux | grep "[q]ueue:work" | awk '{print $2}' | head -1)
+              if [ -z "$QUEUE_PID" ]; then
+                echo "[$(date)] Queue worker NOT running — starting..."
+                nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --max-jobs=100 > storage/logs/queue-worker.log 2>&1 &
+                sleep 2
+                NEW_PID=$(ps aux | grep "[q]ueue:work" | awk '{print $2}' | head -1)
+                if [ -n "$NEW_PID" ]; then
+                  echo "[$(date)] Queue worker started (PID: $NEW_PID)"
+                else
+                  echo "[$(date)] WARNING: Queue worker failed to start"
+                fi
               else
-                echo "[$(date)] WARNING: Queue worker failed to start"
+                echo "[$(date)] Queue worker running (PID: $QUEUE_PID)"
               fi
-            else
-              echo "[$(date)] Queue worker running (PID: $QUEUE_PID)"
-            fi
+            }
 
             # =============================================
-            # 2. Run Laravel Scheduler
-            # =============================================
-            if [ "$ACTION" = "schedule-run" ] || [ "$ACTION" = "full-check" ]; then
-              echo ""
-              echo "[$(date)] Running php artisan schedule:run..."
-              php artisan schedule:run 2>&1
-              echo "[$(date)] Scheduler completed"
-            fi
-
-            # =============================================
-            # 3. Queue Status (on demand)
+            # Queue Status
             # =============================================
             if [ "$ACTION" = "queue-status" ] || [ "$ACTION" = "full-check" ]; then
+              ensure_queue_worker
+
               echo ""
               echo "=== Queue Status ==="
               echo "--- Pending Jobs ---"
@@ -104,18 +98,22 @@ jobs:
             fi
 
             # =============================================
-            # 4. Queue Restart (on demand)
+            # Queue Ensure (just start if not running)
             # =============================================
-            if [ "$ACTION" = "queue-restart" ]; then
+            if [ "$ACTION" = "queue-ensure" ]; then
+              ensure_queue_worker
+            fi
+
+            # =============================================
+            # Queue Restart
+            # =============================================
+            if [ "$ACTION" = "queue-restart" ] || [ "$ACTION" = "full-check" ]; then
               echo ""
               echo "[$(date)] Restarting queue worker..."
-              # Gracefully stop existing workers
               php artisan queue:restart 2>/dev/null || true
               sleep 3
-              # Kill any remaining workers
               pkill -f "queue:work" 2>/dev/null || true
               sleep 2
-              # Start fresh
               nohup php artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --max-jobs=100 > storage/logs/queue-worker.log 2>&1 &
               sleep 2
               ps aux | grep "[q]ueue:work" || echo "WARNING: Queue worker not running after restart"
