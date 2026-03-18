@@ -54,8 +54,9 @@
         </div>
 
         <!-- AI Model Status -->
-        <div class="p-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div class="p-6 space-y-5">
+            <!-- Row 1: Model core stats -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div class="text-2xl font-bold {{ ($aiModel['correction'] ?? 0) == 0 ? 'text-gray-400' : 'text-purple-600' }}">
                         {{ ($aiModel['correction'] ?? 0) > 0 ? '+' : '' }}{{ $aiModel['correction'] ?? 0 }}px
@@ -65,21 +66,166 @@
                 <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div class="text-2xl font-bold text-blue-600">{{ $aiModel['samples'] ?? 0 }}</div>
                     <div class="text-xs text-gray-500">Training Samples</div>
+                    @if(($aiModel['samples'] ?? 0) < 10)
+                        <div class="text-[10px] text-amber-500 mt-1">ต้องการ 10+ เพื่อเปิดใช้</div>
+                    @else
+                        <div class="text-[10px] text-green-500 mt-1">เปิดใช้กับ App แล้ว</div>
+                    @endif
                 </div>
                 <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div class="text-2xl font-bold {{ ($stats['success_rate'] ?? 0) >= 80 ? 'text-green-600' : (($stats['success_rate'] ?? 0) >= 50 ? 'text-amber-600' : 'text-red-600') }}">
                         {{ $stats['success_rate'] }}%
                     </div>
-                    <div class="text-xs text-gray-500">Success Rate ({{ $stats['success_count'] }}/{{ $stats['success_count'] + $stats['fail_count'] }})</div>
+                    <div class="text-xs text-gray-500">Success Rate</div>
+                    <div class="text-[10px] text-gray-400">({{ $stats['success_count'] }}/{{ $stats['success_count'] + $stats['fail_count'] }})</div>
+                </div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="text-2xl font-bold {{ ($stats['recent_24h_rate'] ?? 0) >= 80 ? 'text-green-600' : (($stats['recent_24h_rate'] ?? 0) >= 50 ? 'text-amber-600' : 'text-red-600') }}">
+                        {{ $stats['recent_24h_rate'] }}%
+                    </div>
+                    <div class="text-xs text-gray-500">24 ชม. ล่าสุด</div>
+                    <div class="text-[10px] text-gray-400">({{ $stats['recent_24h_success'] }}/{{ $stats['recent_24h'] }})</div>
                 </div>
                 <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div class="text-xs text-gray-500 mb-1">Last Trained</div>
                     <div class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ $aiModel['trained_at'] ? \Carbon\Carbon::parse($aiModel['trained_at'])->diffForHumans() : 'ยังไม่เคย' }}
                     </div>
+                    @if($aiModel['std_dev'] ?? 0)
+                        <div class="text-[10px] text-gray-400">std: {{ $aiModel['std_dev'] }}px</div>
+                    @endif
                 </div>
             </div>
 
+            <!-- Row 2: Model intelligence progress -->
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-purple-800 dark:text-purple-300">ความฉลาดของ Model</h3>
+                    <span class="text-xs px-2 py-1 rounded-full font-medium
+                        @if(($aiModel['samples'] ?? 0) >= 50) bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300
+                        @elseif(($aiModel['samples'] ?? 0) >= 10) bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300
+                        @else bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400
+                        @endif">
+                        @if(($aiModel['samples'] ?? 0) >= 100) Expert
+                        @elseif(($aiModel['samples'] ?? 0) >= 50) Advanced
+                        @elseif(($aiModel['samples'] ?? 0) >= 20) Intermediate
+                        @elseif(($aiModel['samples'] ?? 0) >= 10) Beginner (Active)
+                        @elseif(($aiModel['samples'] ?? 0) >= 3) Learning (Inactive)
+                        @else No Data
+                        @endif
+                    </span>
+                </div>
+
+                <!-- Progress bar -->
+                @php
+                    $samples = $aiModel['samples'] ?? 0;
+                    $milestones = [
+                        ['at' => 3, 'label' => 'เริ่มเรียน', 'pct' => 6],
+                        ['at' => 10, 'label' => 'เปิดใช้งาน', 'pct' => 20],
+                        ['at' => 20, 'label' => 'เข้าใจ pattern', 'pct' => 40],
+                        ['at' => 50, 'label' => 'แม่นยำ', 'pct' => 70],
+                        ['at' => 100, 'label' => 'Expert', 'pct' => 100],
+                    ];
+                    $progressPct = 0;
+                    foreach ($milestones as $m) {
+                        if ($samples >= $m['at']) $progressPct = $m['pct'];
+                    }
+                    if ($samples > 0 && $samples < 3) $progressPct = (int)($samples / 3 * 6);
+                @endphp
+                <div class="relative mb-2">
+                    <div class="h-3 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all duration-500
+                            @if($progressPct >= 70) bg-gradient-to-r from-green-400 to-emerald-500
+                            @elseif($progressPct >= 20) bg-gradient-to-r from-blue-400 to-indigo-500
+                            @else bg-gradient-to-r from-gray-300 to-gray-400
+                            @endif"
+                             style="width: {{ $progressPct }}%"></div>
+                    </div>
+                    <!-- Milestone markers -->
+                    <div class="flex justify-between mt-1">
+                        @foreach($milestones as $m)
+                            <div class="text-center" style="width: 1px;">
+                                <div class="text-[9px] {{ $samples >= $m['at'] ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-gray-400' }}">
+                                    {{ $m['at'] }}
+                                </div>
+                                <div class="text-[8px] {{ $samples >= $m['at'] ? 'text-purple-500' : 'text-gray-300' }}">
+                                    {{ $m['label'] }}
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Key metrics row -->
+                <div class="grid grid-cols-4 gap-2 mt-3">
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-purple-700 dark:text-purple-300">{{ $stats['human_labeled'] }}</div>
+                        <div class="text-[10px] text-gray-500">Human Labels</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-blue-600">{{ $stats['with_images'] }}</div>
+                        <div class="text-[10px] text-gray-500">มีภาพ</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold {{ ($stats['avg_error'] ?? 0) <= 15 ? 'text-green-600' : (($stats['avg_error'] ?? 0) <= 30 ? 'text-amber-600' : 'text-red-600') }}">
+                            {{ $stats['avg_error'] }}px
+                        </div>
+                        <div class="text-[10px] text-gray-500">Avg Error</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold {{ ($stats['accuracy_pct'] ?? 0) >= 80 ? 'text-green-600' : 'text-amber-600' }}">
+                            {{ $stats['accuracy_pct'] }}%
+                        </div>
+                        <div class="text-[10px] text-gray-500">within 20px</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Error distribution -->
+            @if($stats['human_labeled'] > 0)
+            <div>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">การกระจายความผิดพลาด (Human-labeled)</h3>
+                <div class="flex gap-1 h-6 rounded-lg overflow-hidden">
+                    @php
+                        $buckets = $stats['error_buckets'];
+                        $totalBucket = array_sum($buckets) ?: 1;
+                        $colors = [
+                            'perfect' => 'bg-emerald-500',
+                            'good' => 'bg-green-400',
+                            'ok' => 'bg-amber-400',
+                            'bad' => 'bg-orange-500',
+                            'miss' => 'bg-red-500',
+                        ];
+                        $labels = [
+                            'perfect' => '0-5px',
+                            'good' => '6-15px',
+                            'ok' => '16-30px',
+                            'bad' => '31-50px',
+                            'miss' => '51+px',
+                        ];
+                    @endphp
+                    @foreach($buckets as $key => $count)
+                        @if($count > 0)
+                            <div class="{{ $colors[$key] }} flex items-center justify-center text-[9px] text-white font-bold"
+                                 style="width: {{ round($count / $totalBucket * 100, 1) }}%"
+                                 title="{{ $labels[$key] }}: {{ $count }} ({{ round($count / $totalBucket * 100, 1) }}%)">
+                                @if(round($count / $totalBucket * 100) >= 10){{ $count }}@endif
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+                <div class="flex gap-3 mt-1 flex-wrap">
+                    @foreach($buckets as $key => $count)
+                        <span class="text-[10px] text-gray-500 flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full {{ $colors[$key] }}"></span>
+                            {{ $labels[$key] }}: {{ $count }}
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            <!-- Row 4: Per-method breakdown -->
             @if(!empty($aiModel['by_method']))
                 <div class="text-sm text-gray-600 dark:text-gray-400">
                     <span class="font-medium">Per Method:</span>

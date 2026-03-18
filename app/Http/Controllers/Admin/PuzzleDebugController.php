@@ -57,11 +57,43 @@ class PuzzleDebugController extends Controller
             'by_method' => [],
         ]);
 
+        // With-images count (records that have debug images vs feedback-only)
+        $withImages = PuzzleDebugImage::whereNotNull('image_paths')
+            ->whereRaw("JSON_LENGTH(image_paths) > 0")
+            ->count();
+
+        // Error distribution for human-labeled data
+        $errorBuckets = [
+            'perfect' => 0,   // 0-5px
+            'good' => 0,      // 6-15px
+            'ok' => 0,        // 16-30px
+            'bad' => 0,       // 31-50px
+            'miss' => 0,      // 51+px
+        ];
+        if ($humanLabeled > 0) {
+            $errorBuckets['perfect'] = PuzzleDebugImage::labeled()->where('labeled_by', 'human')
+                ->whereNotNull('gap_x')->whereRaw('ABS(gap_x - actual_gap_x) <= 5')->count();
+            $errorBuckets['good'] = PuzzleDebugImage::labeled()->where('labeled_by', 'human')
+                ->whereNotNull('gap_x')->whereRaw('ABS(gap_x - actual_gap_x) BETWEEN 6 AND 15')->count();
+            $errorBuckets['ok'] = PuzzleDebugImage::labeled()->where('labeled_by', 'human')
+                ->whereNotNull('gap_x')->whereRaw('ABS(gap_x - actual_gap_x) BETWEEN 16 AND 30')->count();
+            $errorBuckets['bad'] = PuzzleDebugImage::labeled()->where('labeled_by', 'human')
+                ->whereNotNull('gap_x')->whereRaw('ABS(gap_x - actual_gap_x) BETWEEN 31 AND 50')->count();
+            $errorBuckets['miss'] = PuzzleDebugImage::labeled()->where('labeled_by', 'human')
+                ->whereNotNull('gap_x')->whereRaw('ABS(gap_x - actual_gap_x) > 50')->count();
+        }
+
+        // Recent trend: last 24h vs older
+        $recent24h = PuzzleDebugImage::where('created_at', '>=', now()->subDay());
+        $recentTotal = (clone $recent24h)->count();
+        $recentSuccess = (clone $recent24h)->where('success', true)->count();
+
         $stats = [
             'total' => $total,
             'labeled' => $labeled,
             'human_labeled' => $humanLabeled,
             'unlabeled' => $unlabeled,
+            'with_images' => $withImages,
             'avg_error' => round($accuracy->avg_error ?? 0, 1),
             'accuracy_pct' => $humanLabeled > 0
                 ? round(($accuracy->within_20px / $humanLabeled) * 100, 1)
@@ -71,6 +103,10 @@ class PuzzleDebugController extends Controller
             'success_rate' => $totalAttempts > 0
                 ? round(($successCount / $totalAttempts) * 100, 1)
                 : 0,
+            'error_buckets' => $errorBuckets,
+            'recent_24h' => $recentTotal,
+            'recent_24h_success' => $recentSuccess,
+            'recent_24h_rate' => $recentTotal > 0 ? round(($recentSuccess / $recentTotal) * 100, 1) : 0,
         ];
 
         return view('admin.puzzle-debug.index', compact('records', 'stats', 'aiModel'));
