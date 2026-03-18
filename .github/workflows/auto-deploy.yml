@@ -119,6 +119,48 @@ jobs:
             chmod -R 775 storage bootstrap/cache 2>/dev/null || true
             chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 
+            # ===== ML Service (Puzzle Solver) =====
+            echo "🧠 Setting up ML service..."
+            ML_DIR="${DEPLOY_PATH}/ml-services/puzzle-solver"
+            if [ -d "$ML_DIR" ]; then
+              cd "$ML_DIR"
+
+              # Install Python deps if needed (use venv)
+              if [ ! -d "venv" ]; then
+                echo "📦 Creating Python venv..."
+                python3 -m venv venv 2>/dev/null || python -m venv venv 2>/dev/null || echo "⚠️ Python venv creation failed"
+              fi
+
+              if [ -d "venv" ]; then
+                source venv/bin/activate
+                pip install -q -r requirements.txt 2>&1 | tail -3
+                deactivate
+
+                # Restart ML service
+                if ps aux | grep "[g]unicorn.*puzzle" | grep -q .; then
+                  echo "🔄 Restarting ML service..."
+                  pkill -f "gunicorn.*puzzle-solver" 2>/dev/null || true
+                  sleep 2
+                fi
+
+                echo "🚀 Starting ML service..."
+                source venv/bin/activate
+                nohup gunicorn -w 2 -b 127.0.0.1:5050 --timeout 600 --chdir "$ML_DIR" app:app > "$DEPLOY_PATH/storage/logs/ml-service.log" 2>&1 &
+                deactivate
+                sleep 2
+
+                if curl -s http://127.0.0.1:5050/health | grep -q '"status"'; then
+                  echo "✅ ML service running on port 5050"
+                else
+                  echo "⚠️ ML service may not have started (check ml-service.log)"
+                fi
+              else
+                echo "⚠️ No Python venv — ML service skipped"
+              fi
+
+              cd "${DEPLOY_PATH}"
+            fi
+
             # Restart queue workers
             php artisan queue:restart 2>/dev/null || true
             sleep 3
