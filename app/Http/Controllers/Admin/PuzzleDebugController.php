@@ -276,112 +276,44 @@ class PuzzleDebugController extends Controller
             Log::info('Flask train unavailable, falling back to direct python: ' . $e->getMessage());
         }
 
-        // Fallback: run train.py directly via Process
-        $pythonCmd = $this->findPython($mlDir);
-        if (! $pythonCmd) {
-            return redirect()->back()->with('error',
-                'Python3 ไม่พบบน server — ต้องติดตั้ง: sudo apt install python3 python3-venv python3-pip');
-        }
+        // Fallback: run train.py directly via bash script
+        // Uses bash to avoid PHP open_basedir restrictions on venv symlinks
+        $script = "cd {$mlDir} && source venv/bin/activate && python train.py --api-url {$apiUrl} --epochs {$epochs} 2>&1";
 
-        // Install deps if needed (first run)
-        $this->ensurePythonDeps($mlDir, $pythonCmd);
-
-        // Run training
-        Log::info("ML training: {$pythonCmd} train.py --api-url {$apiUrl} --epochs {$epochs}");
+        Log::info("ML training: {$script}");
 
         try {
-            $result = Process::timeout(600)
-                ->path($mlDir)
-                ->run("{$pythonCmd} train.py --api-url {$apiUrl} --epochs {$epochs} 2>&1");
+            $result = Process::timeout(600)->run(['bash', '-c', $script]);
 
-            file_put_contents($logFile, $result->output() . "\n" . $result->errorOutput());
+            @file_put_contents($logFile, $result->output() . "\n" . $result->errorOutput());
 
             if ($result->successful()) {
                 // Read training stats
                 $statsFile = $mlDir . '/model/training_log.json';
-                $stats = file_exists($statsFile) ? json_decode(file_get_contents($statsFile), true) : [];
+                $stats = @file_get_contents($statsFile);
+                $stats = $stats ? json_decode($stats, true) : [];
 
                 // Try to reload Flask model if service is running
                 try {
                     (new Client(['timeout' => 5]))->post($mlBaseUrl . '/reload-model');
                 } catch (\Exception $e) {
-                    // Flask not running — that's fine, model file is saved for next start
+                    // Flask not running — model file saved for next start
                 }
 
-                return redirect()->back()->with('success', $this->formatTrainResult($stats));
+                $msg = 'ML Model trained! '
+                    . 'Samples: ' . ($stats['samples'] ?? '?')
+                    . ' | Avg Error: ' . ($stats['avg_error_px'] ?? '?') . 'px'
+                    . ' | Accuracy: ' . ($stats['accuracy_within_20px'] ?? '?') . '%';
+
+                return redirect()->back()->with('success', $msg);
             }
 
             $error = $result->output() ?: $result->errorOutput();
 
             return redirect()->back()->with('error',
-                'ML Training failed: ' . substr($error, -300));
+                'ML Training failed: ' . substr($error, -500));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'ML Training error: ' . $e->getMessage());
-        }
-    }
-
-    private function formatTrainResult(array $stats): string
-    {
-        return 'ML Model trained! '
-            . 'Samples: ' . ($stats['samples'] ?? '?')
-            . ' | Avg Error: ' . ($stats['avg_error_px'] ?? '?') . 'px'
-            . ' | Accuracy: ' . ($stats['accuracy_within_20px'] ?? '?') . '%';
-    }
-
-    /**
-     * Find working Python command (venv or system).
-     * Uses Process instead of file_exists() to avoid open_basedir restrictions.
-     */
-    private function findPython(string $mlDir): ?string
-    {
-        // Try venv python first
-        $venvPython = $mlDir . '/venv/bin/python';
-        try {
-            $result = Process::timeout(5)->run("{$venvPython} --version 2>&1");
-            if ($result->successful()) {
-                return $venvPython;
-            }
-        } catch (\Exception $e) {
-            // ignore
-        }
-
-        // Try system python3
-        try {
-            $result = Process::timeout(5)->run('python3 --version 2>&1');
-            if ($result->successful()) {
-                return 'python3';
-            }
-        } catch (\Exception $e) {
-            // ignore
-        }
-
-        return null;
-    }
-
-    /**
-     * Ensure Python dependencies are installed.
-     * Uses Process for all checks to avoid open_basedir restrictions.
-     */
-    private function ensurePythonDeps(string $mlDir, string $pythonCmd): void
-    {
-        // Check if torch is importable
-        try {
-            $check = Process::timeout(10)->path($mlDir)
-                ->run("{$pythonCmd} -c \"import torch; print('ok')\" 2>&1");
-            if (str_contains($check->output(), 'ok')) {
-                return; // Already installed
-            }
-        } catch (\Exception $e) {
-            // ignore
-        }
-
-        // Install deps using python -m pip (always works)
-        Log::info('Installing ML training dependencies...');
-        try {
-            Process::timeout(300)->path($mlDir)
-                ->run("{$pythonCmd} -m pip install -q -r requirements.txt 2>&1");
-        } catch (\Exception $e) {
-            Log::warning('ML deps install failed: ' . $e->getMessage());
         }
     }
 
