@@ -59,7 +59,7 @@ class PuzzleDebugController extends Controller
 
         // With-images count (records that have debug images vs feedback-only)
         $withImages = PuzzleDebugImage::whereNotNull('image_paths')
-            ->whereRaw("JSON_LENGTH(image_paths) > 0")
+            ->whereRaw('JSON_LENGTH(image_paths) > 0')
             ->count();
 
         // Error distribution for human-labeled data
