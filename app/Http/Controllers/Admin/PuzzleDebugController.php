@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PuzzleDebugImage;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -246,130 +245,159 @@ class PuzzleDebugController extends Controller
 
     /**
      * Train real ML model from human-labeled data.
-     * Auto-starts ML service if not running.
+     * Runs train.py directly — no Flask service needed for training.
+     * Tries: Flask /train → direct python3 train.py → pip install + retry
      */
     public function trainMl(Request $request)
     {
         $epochs = $request->input('epochs', 100);
-        $mlUrl = config('services.puzzle_ml.url', 'http://127.0.0.1:5050');
-        $baseUrl = str_replace('/predict', '', $mlUrl);
-        $trainUrl = $baseUrl . '/train';
+        $mlDir = base_path('ml-services/puzzle-solver');
+        $apiUrl = config('app.url') . '/api/v1/product/tping';
+        $logFile = storage_path('logs/ml-training.log');
 
-        // Auto-start ML service if not running
-        if (! $this->isMlServiceRunning($baseUrl)) {
-            $started = $this->startMlService();
-            if (! $started) {
-                return redirect()->back()->with('error',
-                    'ML Service ไม่สามารถเริ่มได้อัตโนมัติ — ตรวจสอบ Python + venv บน server');
-            }
-            // Wait for service to be ready
-            sleep(3);
-            if (! $this->isMlServiceRunning($baseUrl)) {
-                return redirect()->back()->with('error',
-                    'ML Service เริ่มแล้วแต่ยังไม่พร้อม — ลองกดอีกครั้ง');
-            }
+        if (! is_dir($mlDir)) {
+            return redirect()->back()->with('error', 'ML directory not found: ml-services/puzzle-solver');
         }
 
+        // Try Flask service first (fastest if running)
+        $mlBaseUrl = str_replace('/predict', '', config('services.puzzle_ml.url', 'http://127.0.0.1:5050'));
         try {
-            $client = new Client(['timeout' => 600, 'connect_timeout' => 10]);
-            $response = $client->post($trainUrl, [
-                'form_params' => [
-                    'api_url' => config('app.url') . '/api/v1/product/tping',
-                    'epochs' => $epochs,
-                ],
+            $client = new Client(['timeout' => 600, 'connect_timeout' => 3]);
+            $response = $client->post($mlBaseUrl . '/train', [
+                'form_params' => ['api_url' => $apiUrl, 'epochs' => $epochs],
             ]);
-
             $result = json_decode($response->getBody()->getContents(), true);
-
             if ($result['success'] ?? false) {
                 $stats = $result['stats'] ?? [];
-                $msg = 'ML Model trained! ';
-                $msg .= 'Samples: ' . ($stats['samples'] ?? '?');
-                $msg .= ' | Avg Error: ' . ($stats['avg_error_px'] ?? '?') . 'px';
-                $msg .= ' | Accuracy: ' . ($stats['accuracy_within_20px'] ?? '?') . '%';
 
-                return redirect()->back()->with('success', $msg);
+                return redirect()->back()->with('success', $this->formatTrainResult($stats));
+            }
+        } catch (\Exception $e) {
+            Log::info('Flask train unavailable, falling back to direct python: ' . $e->getMessage());
+        }
+
+        // Fallback: run train.py directly via Process
+        $pythonCmd = $this->findPython($mlDir);
+        if (! $pythonCmd) {
+            return redirect()->back()->with('error',
+                'Python3 ไม่พบบน server — ต้องติดตั้ง: sudo apt install python3 python3-venv python3-pip');
+        }
+
+        // Install deps if needed (first run)
+        $this->ensurePythonDeps($mlDir, $pythonCmd);
+
+        // Run training
+        Log::info("ML training: {$pythonCmd} train.py --api-url {$apiUrl} --epochs {$epochs}");
+
+        try {
+            $result = Process::timeout(600)
+                ->path($mlDir)
+                ->run("{$pythonCmd} train.py --api-url {$apiUrl} --epochs {$epochs} 2>&1");
+
+            file_put_contents($logFile, $result->output() . "\n" . $result->errorOutput());
+
+            if ($result->successful()) {
+                // Read training stats
+                $statsFile = $mlDir . '/model/training_log.json';
+                $stats = file_exists($statsFile) ? json_decode(file_get_contents($statsFile), true) : [];
+
+                // Try to reload Flask model if service is running
+                try {
+                    (new Client(['timeout' => 5]))->post($mlBaseUrl . '/reload-model');
+                } catch (\Exception $e) {
+                    // Flask not running — that's fine, model file is saved for next start
+                }
+
+                return redirect()->back()->with('success', $this->formatTrainResult($stats));
             }
 
-            $error = $result['stderr'] ?? $result['error'] ?? 'Unknown error';
+            $error = $result->output() ?: $result->errorOutput();
 
-            return redirect()->back()->with('error', 'ML Training failed: ' . substr($error, 0, 200));
-        } catch (ConnectException $e) {
             return redirect()->back()->with('error',
-                'ML Service ไม่ตอบสนอง — ตรวจสอบ log: storage/logs/ml-service.log');
+                'ML Training failed: ' . substr($error, -300));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'ML Training error: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Check if ML service is running.
-     */
-    private function isMlServiceRunning(string $baseUrl): bool
+    private function formatTrainResult(array $stats): string
     {
-        try {
-            $client = new Client(['timeout' => 3, 'connect_timeout' => 2]);
-            $response = $client->get($baseUrl . '/health');
-
-            return $response->getStatusCode() === 200;
-        } catch (\Exception $e) {
-            return false;
-        }
+        return 'ML Model trained! '
+            . 'Samples: ' . ($stats['samples'] ?? '?')
+            . ' | Avg Error: ' . ($stats['avg_error_px'] ?? '?') . 'px'
+            . ' | Accuracy: ' . ($stats['accuracy_within_20px'] ?? '?') . '%';
     }
 
     /**
-     * Auto-start ML service via Laravel Process.
+     * Find working Python command (venv or system).
      */
-    private function startMlService(): bool
+    private function findPython(string $mlDir): ?string
     {
-        $mlDir = base_path('ml-services/puzzle-solver');
-        $logFile = storage_path('logs/ml-service.log');
-
-        if (! is_dir($mlDir)) {
-            Log::warning('ML service directory not found: ' . $mlDir);
-
-            return false;
+        // Try venv first
+        $venvPython = $mlDir . '/venv/bin/python';
+        if (file_exists($venvPython)) {
+            return $venvPython;
         }
 
-        // Build a bash script that sets up venv + starts gunicorn
-        $script = <<<BASH
-            cd {$mlDir}
-
-            # Create venv if not exists
-            if [ ! -d "venv" ]; then
-                python3 -m venv venv 2>&1 || python -m venv venv 2>&1 || exit 1
-            fi
-
-            # Install inference deps
-            source venv/bin/activate
-            pip install -q -r requirements-inference.txt 2>&1 | tail -3
-
-            # Stop old service
-            if [ -f ml-service.pid ]; then
-                kill \$(cat ml-service.pid) 2>/dev/null || true
-                rm -f ml-service.pid
-                sleep 1
-            fi
-
-            # Start gunicorn in background
-            nohup gunicorn -w 2 -b 127.0.0.1:5050 --timeout 600 --pid ml-service.pid app:app > {$logFile} 2>&1 &
-            sleep 2
-            echo "started"
-        BASH;
-
+        // Try system python3
         try {
-            $result = Process::timeout(120)->run(['bash', '-c', $script]);
-            Log::info('ML service start: ' . $result->output());
+            $result = Process::timeout(5)->run('which python3');
+            if ($result->successful()) {
+                return 'python3';
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
 
-            if (! $result->successful()) {
-                Log::error('ML service start failed: ' . $result->errorOutput());
+        // Try python
+        try {
+            $result = Process::timeout(5)->run('which python');
+            if ($result->successful()) {
+                return 'python';
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
+
+        return null;
+    }
+
+    /**
+     * Ensure Python dependencies are installed.
+     */
+    private function ensurePythonDeps(string $mlDir, string $pythonCmd): void
+    {
+        // Check if torch is importable
+        try {
+            $check = Process::timeout(10)->path($mlDir)
+                ->run("{$pythonCmd} -c \"import torch; print('ok')\" 2>&1");
+            if (str_contains($check->output(), 'ok')) {
+                return; // Already installed
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
+
+        // Install deps
+        Log::info('Installing ML training dependencies...');
+        try {
+            // Create venv if python is system python
+            if (! file_exists($mlDir . '/venv/bin/python')) {
+                Process::timeout(60)->path($mlDir)
+                    ->run('python3 -m venv venv 2>&1 || true');
+                if (file_exists($mlDir . '/venv/bin/python')) {
+                    $pythonCmd = $mlDir . '/venv/bin/python';
+                }
             }
 
-            return str_contains($result->output(), 'started');
+            $pip = str_replace('python', 'pip', $pythonCmd);
+            if (! file_exists($pip)) {
+                $pip = "{$pythonCmd} -m pip";
+            }
+            Process::timeout(300)->path($mlDir)
+                ->run("{$pip} install -q -r requirements.txt 2>&1");
         } catch (\Exception $e) {
-            Log::error('ML service start exception: ' . $e->getMessage());
-
-            return false;
+            Log::warning('ML deps install failed: ' . $e->getMessage());
         }
     }
 
