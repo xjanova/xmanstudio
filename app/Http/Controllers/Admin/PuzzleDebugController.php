@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 
 class PuzzleDebugController extends Controller
 {
@@ -317,7 +318,7 @@ class PuzzleDebugController extends Controller
     }
 
     /**
-     * Auto-start ML service via shell command.
+     * Auto-start ML service via Laravel Process.
      */
     private function startMlService(): bool
     {
@@ -330,31 +331,46 @@ class PuzzleDebugController extends Controller
             return false;
         }
 
-        // Setup venv + install deps if needed
-        $venvDir = $mlDir . '/venv';
-        if (! is_dir($venvDir)) {
-            Log::info('Creating ML service venv...');
-            exec("cd {$mlDir} && python3 -m venv venv 2>&1", $output, $code);
-            if ($code !== 0) {
-                Log::error('Failed to create venv: ' . implode("\n", $output));
+        // Build a bash script that sets up venv + starts gunicorn
+        $script = <<<BASH
+            cd {$mlDir}
 
-                return false;
+            # Create venv if not exists
+            if [ ! -d "venv" ]; then
+                python3 -m venv venv 2>&1 || python -m venv venv 2>&1 || exit 1
+            fi
+
+            # Install inference deps
+            source venv/bin/activate
+            pip install -q -r requirements-inference.txt 2>&1 | tail -3
+
+            # Stop old service
+            if [ -f ml-service.pid ]; then
+                kill \$(cat ml-service.pid) 2>/dev/null || true
+                rm -f ml-service.pid
+                sleep 1
+            fi
+
+            # Start gunicorn in background
+            nohup gunicorn -w 2 -b 127.0.0.1:5050 --timeout 600 --pid ml-service.pid app:app > {$logFile} 2>&1 &
+            sleep 2
+            echo "started"
+        BASH;
+
+        try {
+            $result = Process::timeout(120)->run(['bash', '-c', $script]);
+            Log::info('ML service start: ' . $result->output());
+
+            if (! $result->successful()) {
+                Log::error('ML service start failed: ' . $result->errorOutput());
             }
+
+            return str_contains($result->output(), 'started');
+        } catch (\Exception $e) {
+            Log::error('ML service start exception: ' . $e->getMessage());
+
+            return false;
         }
-
-        // Install inference deps
-        exec("cd {$mlDir} && source venv/bin/activate && pip install -q -r requirements-inference.txt 2>&1", $pipOut, $pipCode);
-        Log::info('ML pip install: code=' . $pipCode);
-
-        // Start gunicorn
-        $cmd = "cd {$mlDir} && source venv/bin/activate && "
-            . "nohup gunicorn -w 2 -b 127.0.0.1:5050 --timeout 600 --pid {$mlDir}/ml-service.pid app:app "
-            . "> {$logFile} 2>&1 &";
-
-        exec($cmd, $startOut, $startCode);
-        Log::info('ML service start: code=' . $startCode);
-
-        return true;
     }
 
     public function bulkDelete(Request $request)
