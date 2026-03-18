@@ -12,6 +12,7 @@ on:
           - last-500
           - custom
           - tinker
+          - shell
       custom_grep:
         description: 'Custom grep pattern or tinker PHP code'
         required: false
@@ -96,6 +97,16 @@ jobs:
                 PHP_BIN=$(which php8.3 2>/dev/null || which php83 2>/dev/null || which php 2>/dev/null)
                 echo "PHP: $PHP_BIN"
                 $PHP_BIN artisan tinker --execute="$PHP_CODE" 2>&1
+                ;;
+              shell)
+                SHELL_CMD="${INPUT_PATTERN}"
+                if [ -z "$SHELL_CMD" ]; then
+                  echo "❌ No shell command provided in custom_grep field"
+                  exit 1
+                fi
+                echo "🔧 Running shell command..."
+                echo "---"
+                eval "$SHELL_CMD" 2>&1
                 ;;
               *)
                 echo "❌ Unknown command: $COMMAND"
