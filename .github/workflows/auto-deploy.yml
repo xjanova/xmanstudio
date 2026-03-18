@@ -120,50 +120,41 @@ jobs:
             chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 
             # ===== ML Service (Puzzle Solver) =====
+            # Non-fatal: ML service is optional, deploy continues even if it fails
             echo "🧠 Setting up ML service..."
             ML_DIR="${DEPLOY_PATH}/ml-services/puzzle-solver"
-            if [ -d "$ML_DIR" ]; then
-              cd "$ML_DIR"
+            bash -c '
+              set +e
+              cd "'"$ML_DIR"'" 2>/dev/null || exit 0
 
-              # Create venv + install INFERENCE-ONLY deps (no torch — too big)
-              # torch is only needed for training, which runs manually
+              # Create venv if not exists
               if [ ! -d "venv" ]; then
-                echo "📦 Creating Python venv..."
-                python3 -m venv venv 2>/dev/null || python -m venv venv 2>/dev/null || {
-                  echo "⚠️ Python venv failed — trying system pip"
-                }
+                python3 -m venv venv 2>/dev/null || python -m venv venv 2>/dev/null || { echo "⚠️ No Python venv"; exit 0; }
               fi
 
+              # Install inference-only deps (no torch)
               if [ -d "venv" ]; then
                 source venv/bin/activate
-                # Use inference-only requirements (no torch/torchvision)
                 pip install -q -r requirements-inference.txt 2>&1 | tail -3
                 deactivate
               fi
 
-              # Restart ML service (if venv exists OR system python has deps)
-              pkill -f "gunicorn.*app:app.*5050" 2>/dev/null || true
-              sleep 1
+              # Stop old ML service by PID file
+              if [ -f ml-service.pid ]; then
+                kill $(cat ml-service.pid) 2>/dev/null || true
+                rm -f ml-service.pid
+                sleep 1
+              fi
 
+              # Start ML service
               if [ -d "venv" ]; then
-                echo "🚀 Starting ML service (venv)..."
                 source venv/bin/activate
-                nohup gunicorn -w 2 -b 127.0.0.1:5050 --timeout 600 --chdir "$ML_DIR" app:app > "$DEPLOY_PATH/storage/logs/ml-service.log" 2>&1 &
+                nohup gunicorn -w 2 -b 127.0.0.1:5050 --timeout 600 --pid ml-service.pid app:app > "'"${DEPLOY_PATH}"'/storage/logs/ml-service.log" 2>&1 &
                 deactivate
-              else
-                echo "🚀 Starting ML service (system python)..."
-                nohup python3 -m gunicorn -w 2 -b 127.0.0.1:5050 --timeout 600 --chdir "$ML_DIR" app:app > "$DEPLOY_PATH/storage/logs/ml-service.log" 2>&1 &
+                sleep 2
+                curl -s http://127.0.0.1:5050/health && echo " ✅ ML service OK" || echo " ⚠️ ML service not ready"
               fi
-              sleep 2
-
-              if curl -s http://127.0.0.1:5050/health | grep -q '"status"'; then
-                echo "✅ ML service running on port 5050"
-              else
-                echo "⚠️ ML service may not have started (check ml-service.log)"
-              fi
-
-              cd "${DEPLOY_PATH}"
-            fi
+            ' || echo "⚠️ ML setup skipped (non-fatal)"
 
             # Restart queue workers
             php artisan queue:restart 2>/dev/null || true
