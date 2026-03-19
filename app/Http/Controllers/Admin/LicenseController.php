@@ -125,7 +125,7 @@ class LicenseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => 'required|in:monthly,yearly,lifetime',
+            'type' => 'required|in:daily,weekly,monthly,yearly,lifetime',
             'quantity' => 'required|integer|min:1|max:100',
             'max_activations' => 'required|integer|min:1|max:10',
             'product_id' => 'required|exists:products,id',

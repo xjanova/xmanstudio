@@ -46,6 +46,10 @@ class LicenseKey extends Model
 
     const TYPE_DEMO = 'demo';
 
+    const TYPE_DAILY = 'daily';
+
+    const TYPE_WEEKLY = 'weekly';
+
     const TYPE_MONTHLY = 'monthly';
 
     const TYPE_YEARLY = 'yearly';
@@ -165,6 +169,8 @@ class LicenseKey extends Model
         }
 
         $expiresAt = match ($this->license_type) {
+            self::TYPE_DAILY => now()->addDay(),
+            self::TYPE_WEEKLY => now()->addDays(7),
             self::TYPE_MONTHLY => now()->addDays(30),
             self::TYPE_YEARLY => now()->addYear(),
             self::TYPE_LIFETIME => null,

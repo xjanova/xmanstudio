@@ -168,6 +168,8 @@
                 <select name="type" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
                     <option value="">ทุกประเภท</option>
                     <option value="demo" {{ request('type') === 'demo' ? 'selected' : '' }}>Demo</option>
+                    <option value="daily" {{ request('type') === 'daily' ? 'selected' : '' }}>Daily (1 วัน)</option>
+                    <option value="weekly" {{ request('type') === 'weekly' ? 'selected' : '' }}>Weekly (7 วัน)</option>
                     <option value="monthly" {{ request('type') === 'monthly' ? 'selected' : '' }}>Monthly</option>
                     <option value="yearly" {{ request('type') === 'yearly' ? 'selected' : '' }}>Yearly</option>
                     <option value="lifetime" {{ request('type') === 'lifetime' ? 'selected' : '' }}>Lifetime</option>
@@ -300,6 +302,8 @@
                                 @if($license->license_type === 'lifetime') bg-gradient-to-r from-purple-400 to-violet-500 text-white
                                 @elseif($license->license_type === 'yearly') bg-gradient-to-r from-blue-400 to-indigo-500 text-white
                                 @elseif($license->license_type === 'monthly') bg-gradient-to-r from-cyan-400 to-teal-500 text-white
+                                @elseif($license->license_type === 'weekly') bg-gradient-to-r from-amber-400 to-orange-500 text-white
+                                @elseif($license->license_type === 'daily') bg-gradient-to-r from-rose-400 to-pink-500 text-white
                                 @else bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 @endif">
                                 {{ ucfirst($license->license_type) }}
                             </span>
