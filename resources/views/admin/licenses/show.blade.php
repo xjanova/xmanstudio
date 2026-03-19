@@ -105,6 +105,8 @@
                             @if($license->license_type === 'lifetime') bg-gradient-to-r from-purple-400 to-violet-500 text-white
                             @elseif($license->license_type === 'yearly') bg-gradient-to-r from-blue-400 to-indigo-500 text-white
                             @elseif($license->license_type === 'monthly') bg-gradient-to-r from-cyan-400 to-teal-500 text-white
+                            @elseif($license->license_type === 'weekly') bg-gradient-to-r from-amber-400 to-orange-500 text-white
+                            @elseif($license->license_type === 'daily') bg-gradient-to-r from-rose-400 to-pink-500 text-white
                             @else bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 @endif">
                             {{ ucfirst($license->license_type) }}
                         </span>
@@ -156,6 +158,88 @@
                     </div>
                     @endif
                 </div>
+            </div>
+        </div>
+
+        <!-- Edit License Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700" x-data="{ editing: false }">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    แก้ไขข้อมูล License
+                </h3>
+                <button @click="editing = !editing" class="px-4 py-2 text-sm font-medium rounded-xl transition"
+                        :class="editing ? 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50'">
+                    <span x-show="!editing">แก้ไข</span>
+                    <span x-show="editing">ยกเลิก</span>
+                </button>
+            </div>
+
+            <form action="{{ route('admin.licenses.update', $license) }}" method="POST" x-show="editing" x-transition>
+                @csrf
+                @method('PUT')
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">License Key</label>
+                        <input type="text" name="license_key" value="{{ $license->license_key }}"
+                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ประเภท</label>
+                        <select name="license_type"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                            <option value="daily" {{ $license->license_type === 'daily' ? 'selected' : '' }}>Daily (1 วัน)</option>
+                            <option value="weekly" {{ $license->license_type === 'weekly' ? 'selected' : '' }}>Weekly (7 วัน)</option>
+                            <option value="monthly" {{ $license->license_type === 'monthly' ? 'selected' : '' }}>Monthly (30 วัน)</option>
+                            <option value="yearly" {{ $license->license_type === 'yearly' ? 'selected' : '' }}>Yearly (1 ปี)</option>
+                            <option value="lifetime" {{ $license->license_type === 'lifetime' ? 'selected' : '' }}>Lifetime (ตลอดชีพ)</option>
+                            <option value="demo" {{ $license->license_type === 'demo' ? 'selected' : '' }}>Demo</option>
+                            <option value="product" {{ $license->license_type === 'product' ? 'selected' : '' }}>Product</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สถานะ</label>
+                        <select name="status"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                            <option value="active" {{ $license->status === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="expired" {{ $license->status === 'expired' ? 'selected' : '' }}>Expired</option>
+                            <option value="revoked" {{ $license->status === 'revoked' ? 'selected' : '' }}>Revoked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">จำนวนเครื่องที่ใช้ได้</label>
+                        <input type="number" name="max_activations" value="{{ $license->max_activations }}" min="1" max="100"
+                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">วันหมดอายุ</label>
+                        <input type="datetime-local" name="expires_at"
+                               value="{{ $license->expires_at ? $license->expires_at->format('Y-m-d\TH:i') : '' }}"
+                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                        <p class="text-xs text-gray-500 mt-1">ว่างไว้ = ไม่มีวันหมดอายุ (สำหรับ Lifetime)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ผลิตภัณฑ์</label>
+                        <select name="product_id"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                            <option value="">-- ไม่ระบุ --</option>
+                            @foreach(\App\Models\Product::where('requires_license', true)->get() as $product)
+                                <option value="{{ $product->id }}" {{ $license->product_id == $product->id ? 'selected' : '' }}>{{ $product->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:from-amber-600 hover:to-orange-700 font-medium shadow-lg transition transform hover:scale-105">
+                        บันทึกการเปลี่ยนแปลง
+                    </button>
+                </div>
+            </form>
+
+            <div x-show="!editing" class="text-sm text-gray-500 dark:text-gray-400">
+                กดปุ่ม "แก้ไข" เพื่อเปลี่ยนประเภท, License Key, สถานะ, วันหมดอายุ และข้อมูลอื่นๆ
             </div>
         </div>
 

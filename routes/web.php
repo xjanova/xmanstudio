@@ -512,6 +512,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/licenses/create', [AdminLicenseController::class, 'create'])->name('licenses.create');
     Route::post('/licenses', [AdminLicenseController::class, 'store'])->name('licenses.store');
     Route::get('/licenses/{license}', [AdminLicenseController::class, 'show'])->name('licenses.show');
+    Route::put('/licenses/{license}', [AdminLicenseController::class, 'update'])->name('licenses.update');
     Route::post('/licenses/{license}/revoke', [AdminLicenseController::class, 'revoke'])->name('licenses.revoke');
     Route::post('/licenses/{license}/reactivate', [AdminLicenseController::class, 'reactivate'])->name('licenses.reactivate');
     Route::post('/licenses/{license}/reset-machine', [AdminLicenseController::class, 'resetMachine'])->name('licenses.reset-machine');

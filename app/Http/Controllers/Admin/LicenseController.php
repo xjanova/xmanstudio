@@ -157,6 +157,57 @@ class LicenseController extends Controller
     }
 
     /**
+     * Update license details
+     */
+    public function update(Request $request, LicenseKey $license)
+    {
+        $validated = $request->validate([
+            'license_key' => 'required|string|max:50|unique:license_keys,license_key,' . $license->id,
+            'license_type' => 'required|in:demo,daily,weekly,monthly,yearly,lifetime,product',
+            'status' => 'required|in:active,expired,revoked',
+            'max_activations' => 'required|integer|min:1|max:100',
+            'expires_at' => 'nullable|date',
+            'product_id' => 'nullable|exists:products,id',
+        ]);
+
+        $changes = [];
+        foreach (['license_key', 'license_type', 'status', 'max_activations', 'expires_at', 'product_id'] as $field) {
+            $oldValue = $field === 'expires_at'
+                ? $license->expires_at?->format('Y-m-d H:i:s')
+                : $license->{$field};
+            $newValue = $validated[$field] ?? null;
+            if ((string) $oldValue !== (string) $newValue) {
+                $changes[$field] = ['from' => $oldValue, 'to' => $newValue];
+            }
+        }
+
+        $license->update([
+            'license_key' => strtoupper(trim($validated['license_key'])),
+            'license_type' => $validated['license_type'],
+            'status' => $validated['status'],
+            'max_activations' => $validated['max_activations'],
+            'expires_at' => $validated['expires_at'] ?: null,
+            'product_id' => $validated['product_id'] ?: null,
+        ]);
+
+        if (! empty($changes)) {
+            LicenseActivity::log(
+                $license,
+                LicenseActivity::ACTION_EXTENDED,
+                LicenseActivity::ACTOR_ADMIN,
+                auth()->id(),
+                null,
+                'แก้ไขข้อมูล License โดยแอดมิน',
+                ['changes' => $changes]
+            );
+        }
+
+        return redirect()
+            ->route('admin.licenses.show', $license)
+            ->with('success', 'อัปเดต License สำเร็จ');
+    }
+
+    /**
      * Revoke a license
      */
     public function revoke(Request $request, LicenseKey $license)
