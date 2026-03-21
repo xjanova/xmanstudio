@@ -226,6 +226,7 @@ class SmsCheckerController extends Controller
                 $order->update(['wallet_transaction_id' => $transaction->id]);
             } else {
                 $order->update(['status' => 'cancelled', 'payment_status' => 'failed']);
+
                 return redirect()->back()->with('error', 'ชำระเงินไม่สำเร็จ กรุณาลองใหม่');
             }
 
@@ -264,6 +265,7 @@ class SmsCheckerController extends Controller
 
             if (empty($licenses)) {
                 Log::error('SmsCheckerController: License generation returned empty', ['order_id' => $order->id]);
+
                 return null;
             }
 
@@ -308,6 +310,7 @@ class SmsCheckerController extends Controller
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -404,6 +407,7 @@ class SmsCheckerController extends Controller
             if ($machineId) {
                 $url .= '?machine_id=' . $machineId;
             }
+
             return redirect($url);
         }
 
@@ -411,6 +415,7 @@ class SmsCheckerController extends Controller
         if ($machineId) {
             $url .= '?machine_id=' . $machineId;
         }
+
         return redirect($url);
     }
 
@@ -484,6 +489,7 @@ class SmsCheckerController extends Controller
             curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
                 echo $data;
                 flush();
+
                 return strlen($data);
             });
 
@@ -511,6 +517,7 @@ class SmsCheckerController extends Controller
     {
         $prefix = 'SC' . date('Ymd');
         $random = strtoupper(Str::random(4));
+
         return $prefix . '-' . $random;
     }
 }
