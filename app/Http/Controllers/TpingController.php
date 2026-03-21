@@ -331,6 +331,8 @@ class TpingController extends Controller
 
             // Set expiry
             $expiresAt = match ($planInfo['license_type']) {
+                'daily' => now()->addDay(),
+                'weekly' => now()->addDays(7),
                 'monthly' => now()->addDays(30),
                 'yearly' => now()->addYear(),
                 'lifetime' => null,

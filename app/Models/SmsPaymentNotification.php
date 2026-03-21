@@ -284,6 +284,8 @@ class SmsPaymentNotification extends Model
             }
 
             $expiresAt = match ($licenseType) {
+                'daily' => now()->addDay(),
+                'weekly' => now()->addDays(7),
                 'monthly' => now()->addDays(30),
                 'yearly' => now()->addYear(),
                 'lifetime' => null,
