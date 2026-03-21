@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\PaymentConfirmedMail;
-use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\SmsCheckerDevice;
@@ -14,7 +12,6 @@ use App\Services\LicenseService;
 use App\Services\SmsPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class SmsPaymentController extends Controller

@@ -6,11 +6,11 @@ use App\Events\NewOrderCreated;
 use App\Events\PaymentMatched;
 use App\Listeners\SendNewOrderFcmNotification;
 use App\Listeners\SendPaymentMatchedNotification;
+use App\Models\PaymentSetting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
-use App\Models\PaymentSetting;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider

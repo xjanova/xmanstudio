@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PaymentConfirmedMail;
 use App\Models\BankAccount;
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\PaymentSetting;
 use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Models\Wallet;
@@ -14,6 +16,7 @@ use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -309,6 +312,19 @@ class SmsCheckerController extends Controller
             $metadata['license_id'] = $license->id;
             $metadata['hwid_bound'] = ! empty($machineId);
             $order->update(['metadata' => json_encode($metadata)]);
+
+            // Send payment confirmed email with license keys
+            if ($order->customer_email && PaymentSetting::get('mail_enabled', true)) {
+                try {
+                    Mail::to($order->customer_email)
+                        ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
+                } catch (\Exception $mailError) {
+                    Log::error('SmsChecker: Failed to send payment email', [
+                        'order_id' => $order->id,
+                        'error' => $mailError->getMessage(),
+                    ]);
+                }
+            }
 
             return $license;
         } catch (\Exception $e) {

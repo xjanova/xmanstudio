@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Events\NewOrderCreated;
 use App\Mail\OrderConfirmationMail;
-use App\Mail\PaymentConfirmedMail;
 use App\Models\BankAccount;
 use App\Models\Cart;
 use App\Models\Coupon;

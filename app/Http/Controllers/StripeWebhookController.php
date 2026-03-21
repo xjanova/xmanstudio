@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\PaymentConfirmedMail;
-use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\RentalPayment;
 use App\Models\WalletTopup;
@@ -12,7 +10,6 @@ use App\Services\LineNotifyService;
 use App\Services\StripeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Stripe\Exception\SignatureVerificationException;
 
 class StripeWebhookController extends Controller

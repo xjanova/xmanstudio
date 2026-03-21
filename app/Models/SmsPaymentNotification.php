@@ -4,13 +4,11 @@ namespace App\Models;
 
 use App\Events\PaymentMatched;
 use App\Events\WalletTopupMatched;
-use App\Mail\PaymentConfirmedMail;
 use App\Services\LicenseService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class SmsPaymentNotification extends Model
 {
