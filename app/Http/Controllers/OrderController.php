@@ -604,71 +604,7 @@ class OrderController extends Controller
      */
     protected function generateLicensesForOrder(Order $order): void
     {
-        $order->load('items.product');
-        $licenseService = app(LicenseService::class);
-        $generated = false;
-
-        foreach ($order->items as $item) {
-            if (! $item->product || ! $item->product->requires_license) {
-                continue;
-            }
-
-            $existingCount = LicenseKey::where('order_id', $order->id)
-                ->where('product_id', $item->product_id)
-                ->count();
-
-            if ($existingCount >= $item->quantity) {
-                continue;
-            }
-
-            // Determine license type from custom_requirements or default to yearly
-            $licenseType = 'yearly';
-            if ($item->custom_requirements) {
-                $requirements = json_decode($item->custom_requirements, true);
-                if (! empty($requirements['license_type'])) {
-                    $licenseType = $requirements['license_type'];
-                }
-            }
-
-            $expiresAt = match ($licenseType) {
-                'daily' => now()->addDay(),
-                'weekly' => now()->addDays(7),
-                'monthly' => now()->addDays(30),
-                'yearly' => now()->addYear(),
-                'lifetime' => null,
-                default => now()->addYear(),
-            };
-
-            $toGenerate = $item->quantity - $existingCount;
-            $licenses = $licenseService->generateLicenses(
-                $licenseType,
-                $toGenerate,
-                1,
-                $item->product_id
-            );
-
-            foreach ($licenses as $license) {
-                LicenseKey::where('id', $license['id'])->update([
-                    'order_id' => $order->id,
-                    'user_id' => $order->user_id,
-                    'expires_at' => $expiresAt,
-                ]);
-            }
-
-            $generated = true;
-        }
-
-        if ($generated && $order->customer_email) {
-            try {
-                Mail::to($order->customer_email)
-                    ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
-            } catch (\Exception $e) {
-                Log::error('Failed to send payment confirmed email with licenses', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
+        app(LicenseService::class)->generateLicensesForOrder($order);
     }
 
     /**
