@@ -990,8 +990,16 @@ class ProductLicenseController extends Controller
      */
     private function getPricingForProduct(string $productSlug): array
     {
-        // Can be customized per product from database or config
-        return self::DEFAULT_PRICING;
+        // Per-product pricing overrides
+        $productPricing = [
+            'smschecker' => [
+                'monthly' => ['original' => 499, 'currency' => 'THB'],
+                'yearly' => ['original' => 4990, 'currency' => 'THB'],
+                'lifetime' => ['original' => 29000, 'currency' => 'THB'],
+            ],
+        ];
+
+        return $productPricing[$productSlug] ?? self::DEFAULT_PRICING;
     }
 
     /**
