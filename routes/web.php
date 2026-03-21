@@ -75,6 +75,7 @@ use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SharedWorkflowController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\SmsCheckerController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Http\Controllers\UserThemeController;
@@ -187,6 +188,24 @@ Route::prefix('tping')->name('tping.')->group(function () {
         Route::get('/payment/{order}', [TpingController::class, 'payment'])->name('payment');
         Route::post('/payment/{order}/confirm', [TpingController::class, 'confirmPayment'])->name('confirm-payment');
         Route::get('/payment/{order}/success', [TpingController::class, 'paymentSuccess'])->name('payment-success');
+    });
+});
+
+// SmsChecker - Direct purchase from app
+Route::prefix('smschecker')->name('smschecker.')->group(function () {
+    Route::get('/', [SmsCheckerController::class, 'detail'])->name('detail');
+    Route::get('/pricing', [SmsCheckerController::class, 'pricing'])->name('pricing');
+    Route::get('/buy', [SmsCheckerController::class, 'buyRedirect'])->name('buy');
+    Route::get('/download', [SmsCheckerController::class, 'downloadPage'])->name('download');
+    Route::get('/download/apk', [SmsCheckerController::class, 'downloadApk'])->name('download.apk');
+
+    // Require authentication for checkout
+    Route::middleware('auth')->group(function () {
+        Route::get('/checkout/{plan}', [SmsCheckerController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/{plan}', [SmsCheckerController::class, 'processCheckout'])->name('process');
+        Route::get('/payment/{order}', [SmsCheckerController::class, 'payment'])->name('payment');
+        Route::post('/payment/{order}/confirm', [SmsCheckerController::class, 'confirmPayment'])->name('confirm-payment');
+        Route::get('/payment/{order}/success', [SmsCheckerController::class, 'paymentSuccess'])->name('payment-success');
     });
 });
 

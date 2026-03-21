@@ -1,0 +1,424 @@
+@extends($publicLayout ?? 'layouts.app')
+
+@section('title', 'SmsChecker - ระบบตรวจสอบ SMS อัตโนมัติ')
+@section('meta_description', 'SmsChecker SmsChecker ระบบตรวจจับ SMS ธนาคารอัตโนมัติ รองรับ 14+ ธนาคารไทย ตรวจสอบยอดชำระ อนุมัติออเดอร์ Real-time')
+
+@section('content')
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900">
+
+    {{-- ============================================================ --}}
+    {{-- HERO SECTION --}}
+    {{-- ============================================================ --}}
+    <section class="relative py-24 lg:py-32 overflow-hidden">
+        {{-- Background decoration --}}
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.4) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.4) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.2) 0%, transparent 70%);"></div>
+        </div>
+        <div class="absolute top-20 left-10 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-10 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                {{-- Badge --}}
+                <div class="inline-flex items-center px-4 py-2 bg-violet-500/20 rounded-full text-violet-300 text-sm mb-8 backdrop-blur-sm border border-violet-500/30">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    SMS Payment Checker for Android
+                </div>
+
+                {{-- Title --}}
+                <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight">
+                    Sms<span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-blue-400">Checker</span>
+                </h1>
+
+                {{-- Tagline --}}
+                <p class="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto mb-4 leading-relaxed">
+                    ระบบตรวจสอบ SMS อัตโนมัติ
+                </p>
+                <p class="text-base text-gray-400 max-w-2xl mx-auto mb-10">
+                    ตรวจจับ SMS ธนาคาร อนุมัติออเดอร์อัตโนมัติ
+                    ด้วย SMS Payment Checker for Android
+                </p>
+
+                {{-- CTA Buttons --}}
+                <div class="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+                    <a href="{{ route('smschecker.download') }}"
+                       class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        ดาวน์โหลด ทดลองฟรี 24 ชม.
+                    </a>
+                    <a href="{{ route('smschecker.pricing') }}"
+                       class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                        ดูราคา
+                    </a>
+                </div>
+
+                {{-- Feature badges --}}
+                <div class="flex flex-wrap justify-center gap-3 text-sm">
+                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">SMS Detection</span>
+                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Bank Parser</span>
+                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Real-time Sync</span>
+                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Multi-Server</span>
+                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">14+ Banks</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============================================================ --}}
+    {{-- FEATURES SECTION (6 cards) --}}
+    {{-- ============================================================ --}}
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">ฟีเจอร์หลัก</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">SmsChecker ออกแบบมาเพื่อตรวจจับ SMS การชำระเงินจากธนาคารไทยอัตโนมัติ</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {{-- Feature 1: SMS Detection --}}
+                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-violet-500/50 transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">SMS Detection</h3>
+                    <p class="text-gray-400 leading-relaxed">ตรวจจับ SMS จากธนาคารไทยอัตโนมัติ แยกยอดเงิน ชื่อผู้โอน เลขอ้างอิง และวันที่ ส่งข้อมูลไปเซิร์ฟเวอร์ทันที</p>
+                </div>
+
+                {{-- Feature 2: Bank Parser --}}
+                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Bank Parser</h3>
+                    <p class="text-gray-400 leading-relaxed">ตรวจจับ SMS จากธนาคารไทย 14+ ธนาคาร แยกยอด ชื่อ เลขอ้างอิงอัตโนมัติ แจ้งเตือน Real-time</p>
+                </div>
+
+                {{-- Feature 3: Multi-Server --}}
+                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Multi-Server</h3>
+                    <p class="text-gray-400 leading-relaxed">เชื่อมต่อหลายเซิร์ฟเวอร์พร้อมกัน จัดการร้านค้าหลายร้านจากมือถือเครื่องเดียว ตั้งค่าผ่าน QR Code</p>
+                </div>
+
+                {{-- Feature 4: Real-time Sync --}}
+                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-sky-500/50 transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Real-time Sync</h3>
+                    <p class="text-gray-400 leading-relaxed">เชื่อมต่อเซิร์ฟเวอร์ผ่าน WebSocket + FCM Push แจ้งเตือนยอดโอนเข้าทันทีแม้ปิดจอ ไม่พลาดทุกรายการ</p>
+                </div>
+
+                {{-- Feature 5: 14+ Banks --}}
+                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">14+ Banks</h3>
+                    <p class="text-gray-400 leading-relaxed">รองรับธนาคารไทย 14+ ธนาคาร ทั้ง KBANK SCB KTB BBL GSB BAY TTB PromptPay และอื่นๆ</p>
+                </div>
+
+                {{-- Feature 6: SMS Monitoring Service --}}
+                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-pink-500/50 transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">SMS Monitoring Service</h3>
+                    <p class="text-gray-400 leading-relaxed">ทำงาน Background ตลอด 24 ชม. แม้เครื่องหลับ ข้อมูลเข้ารหัส AES-256 ปลอดภัย</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============================================================ --}}
+    {{-- HOW IT WORKS (3 steps) --}}
+    {{-- ============================================================ --}}
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">เริ่มใช้งานง่ายๆ 3 ขั้นตอน</h2>
+                <p class="text-gray-400">ไม่ต้อง Root เครื่อง ติดตั้งง่าย ใช้งานได้ทันที</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                {{-- Step 1 --}}
+                <div class="relative text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-violet-500/20">
+                        <span class="text-3xl font-black text-white">1</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">ดาวน์โหลดแอพ</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">ดาวน์โหลด SmsChecker APK จากเว็บไซต์ แล้วติดตั้งบนมือถือ Android ของคุณ</p>
+                    {{-- Connector arrow (hidden on mobile) --}}
+                    <div class="hidden md:block absolute top-10 -right-4 w-8 text-gray-600">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+
+                {{-- Step 2 --}}
+                <div class="relative text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
+                        <span class="text-3xl font-black text-white">2</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">สแกน QR เชื่อมเซิร์ฟเวอร์</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">สแกน QR Code จากเว็บร้านค้า เพื่อเชื่อมต่อแอพกับเซิร์ฟเวอร์ของคุณ</p>
+                    {{-- Connector arrow --}}
+                    <div class="hidden md:block absolute top-10 -right-4 w-8 text-gray-600">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+
+                {{-- Step 3 --}}
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-emerald-600 to-green-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/20">
+                        <span class="text-3xl font-black text-white">3</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">ใช้งานได้เลย</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">SmsChecker จะตรวจจับ SMS ธนาคารอัตโนมัติ ส่งข้อมูลไปเซิร์ฟเวอร์ และอนุมัติออเดอร์ได้ทันที</p>
+                </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <a href="{{ route('smschecker.download') }}"
+                   class="inline-flex items-center text-violet-400 hover:text-violet-300 font-medium transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    อ่านคู่มือติดตั้งแบบละเอียด
+                </a>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============================================================ --}}
+    {{-- USE CASES --}}
+    {{-- ============================================================ --}}
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">เหมาะกับใคร?</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">SmsChecker ช่วยให้ร้านค้าออนไลน์ตรวจสอบการชำระเงินได้อัตโนมัติ</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                {{-- Use Case 1 --}}
+                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+                    <div class="w-12 h-12 bg-violet-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">ตรวจสอบการชำระเงิน</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">ลูกค้าโอนเงินมา SMS เข้า ระบบตรวจจับทันที แยกยอดเงิน ชื่อ เลขอ้างอิง จับคู่กับออเดอร์อัตโนมัติ</p>
+                </div>
+
+                {{-- Use Case 2 --}}
+                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">ร้านค้าออนไลน์</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">เจ้าของร้านออนไลน์ที่ต้องตรวจสอบสลิปการโอนเงินทุกวัน SmsChecker ช่วยตรวจจับอัตโนมัติ ลดข้อผิดพลาด</p>
+                </div>
+
+                {{-- Use Case 3 --}}
+                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+                    <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">ระบบอนุมัติออเดอร์</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">ตรวจสอบยอดชำระจาก SMS ธนาคารอัตโนมัติ อนุมัติออเดอร์ได้ทันทีจากแอพ ลดเวลาตรวจสอบ</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============================================================ --}}
+    {{-- PRICING PREVIEW --}}
+    {{-- ============================================================ --}}
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">แพ็กเกจ</h2>
+                <p class="text-gray-400">เริ่มทดลองฟรี 24 ชั่วโมง จากนั้นเลือกแพ็กเกจที่เหมาะกับคุณ</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                {{-- Monthly --}}
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-blue-500/50 transition-all text-center">
+                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['monthly']['name_th'] }}</h3>
+                    <div class="text-4xl font-black text-white mb-1">
+                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['monthly']['price']) }}
+                    </div>
+                    <p class="text-gray-500 text-sm mb-6">{{ $pricing['monthly']['duration_days'] }} วัน</p>
+                    <ul class="space-y-2 mb-8 text-sm text-left">
+                        @foreach($pricing['monthly']['features'] as $feature)
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            {{ $feature }}
+                        </li>
+                        @endforeach
+                    </ul>
+                    <a href="{{ route('smschecker.pricing') }}" class="block w-full text-center py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors">
+                        เลือกแพ็กเกจนี้
+                    </a>
+                </div>
+
+                {{-- Yearly (Recommended) --}}
+                <div class="relative bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border-2 border-violet-500 hover:border-violet-400 transition-all text-center">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span class="bg-gradient-to-r from-violet-500 to-purple-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">แนะนำ</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['yearly']['name_th'] }}</h3>
+                    <div class="text-4xl font-black text-violet-400 mb-1">
+                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['yearly']['price']) }}
+                    </div>
+                    <p class="text-gray-500 text-sm mb-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
+                    <span class="inline-block text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full mb-6">ประหยัด 48%</span>
+                    <ul class="space-y-2 mb-8 text-sm text-left">
+                        @foreach($pricing['yearly']['features'] as $feature)
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            {{ $feature }}
+                        </li>
+                        @endforeach
+                    </ul>
+                    <a href="{{ route('smschecker.pricing') }}" class="block w-full text-center py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-violet-500/25">
+                        เลือกแพ็กเกจนี้
+                    </a>
+                </div>
+
+                {{-- Lifetime --}}
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-emerald-500/50 transition-all text-center">
+                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['lifetime']['name_th'] }}</h3>
+                    <div class="text-4xl font-black text-emerald-400 mb-1">
+                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['lifetime']['price']) }}
+                    </div>
+                    <p class="text-yellow-400 text-sm mb-6">ไม่มีวันหมดอายุ</p>
+                    <ul class="space-y-2 mb-8 text-sm text-left">
+                        @foreach($pricing['lifetime']['features'] as $feature)
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-yellow-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            {{ $feature }}
+                        </li>
+                        @endforeach
+                    </ul>
+                    <a href="{{ route('smschecker.pricing') }}" class="block w-full text-center py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors">
+                        เลือกแพ็กเกจนี้
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============================================================ --}}
+    {{-- FAQ --}}
+    {{-- ============================================================ --}}
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">คำถามที่พบบ่อย</h2>
+            </div>
+
+            <div class="space-y-4" x-data="{ openFaq: null }">
+                {{-- FAQ 1 --}}
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+                    <button @click="openFaq = openFaq === 1 ? null : 1" class="w-full flex items-center justify-between p-6 text-left">
+                        <span class="font-semibold text-white">SmsChecker คืออะไร?</span>
+                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 1 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 1" x-collapse class="px-6 pb-6">
+                        <p class="text-gray-400 text-sm leading-relaxed">SmsChecker เป็นแอพ Android ที่ตรวจจับ SMS การชำระเงินจากธนาคารไทย 14+ ธนาคาร แยกยอด ชื่อผู้โอน เลขอ้างอิงอัตโนมัติ เหมาะสำหรับร้านค้าออนไลน์ที่ต้องตรวจสอบการชำระเงิน</p>
+                    </div>
+                </div>
+
+                {{-- FAQ 2 --}}
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+                    <button @click="openFaq = openFaq === 2 ? null : 2" class="w-full flex items-center justify-between p-6 text-left">
+                        <span class="font-semibold text-white">ต้อง Root เครื่องไหม?</span>
+                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 2 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 2" x-collapse class="px-6 pb-6">
+                        <p class="text-gray-400 text-sm leading-relaxed">ไม่ต้อง Root เครื่อง SmsChecker ใช้สิทธิ์ RECEIVE_SMS มาตรฐานของ Android แค่ให้สิทธิ์รับ SMS ก็พร้อมใช้งานได้เลย</p>
+                    </div>
+                </div>
+
+                {{-- FAQ 3 --}}
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+                    <button @click="openFaq = openFaq === 3 ? null : 3" class="w-full flex items-center justify-between p-6 text-left">
+                        <span class="font-semibold text-white">ใช้ได้กี่เครื่อง?</span>
+                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 3 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 3" x-collapse class="px-6 pb-6">
+                        <p class="text-gray-400 text-sm leading-relaxed">แพ็กเกจรายเดือนและรายปีใช้ได้ 1 เครื่อง แพ็กเกจตลอดชีพสามารถใช้ได้สูงสุด 3 เครื่องพร้อมกัน</p>
+                    </div>
+                </div>
+
+                {{-- FAQ 4 --}}
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+                    <button @click="openFaq = openFaq === 4 ? null : 4" class="w-full flex items-center justify-between p-6 text-left">
+                        <span class="font-semibold text-white">ชำระเงินอย่างไร?</span>
+                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 4 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 4" x-collapse class="px-6 pb-6">
+                        <p class="text-gray-400 text-sm leading-relaxed">รองรับ PromptPay (สแกน QR Code), โอนเงินผ่านธนาคาร, และชำระผ่าน Wallet บนเว็บไซต์ ชำระผ่าน Wallet จะได้รับส่วนลดเพิ่ม 10%</p>
+                    </div>
+                </div>
+
+                {{-- FAQ 5 --}}
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+                    <button @click="openFaq = openFaq === 5 ? null : 5" class="w-full flex items-center justify-between p-6 text-left">
+                        <span class="font-semibold text-white">ข้อมูลของฉันปลอดภัยไหม?</span>
+                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 5 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 5" x-collapse class="px-6 pb-6">
+                        <p class="text-gray-400 text-sm leading-relaxed">ข้อมูลทั้งหมดถูกเข้ารหัสและเก็บไว้อย่างปลอดภัย ข้อมูลที่ซิงค์ผ่านคลาวด์เป็นข้อมูลเฉพาะของคุณเท่านั้น ไม่มีใครอื่นสามารถเข้าถึงได้</p>
+                    </div>
+                </div>
+
+                {{-- FAQ 6 --}}
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+                    <button @click="openFaq = openFaq === 6 ? null : 6" class="w-full flex items-center justify-between p-6 text-left">
+                        <span class="font-semibold text-white">ทดลองใช้ฟรีได้ไหม?</span>
+                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 6 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 6" x-collapse class="px-6 pb-6">
+                        <p class="text-gray-400 text-sm leading-relaxed">ได้ครับ ทุกคนสามารถทดลองใช้ SmsChecker ฟรี 24 ชั่วโมงเต็มโดยไม่ต้องผูกบัตรเครดิต ดาวน์โหลดแอพแล้วใช้งานได้ทันที</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============================================================ --}}
+    {{-- FINAL CTA --}}
+    {{-- ============================================================ --}}
+    <section class="py-24 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="bg-gradient-to-r from-violet-600/20 to-purple-600/20 backdrop-blur-sm rounded-3xl p-12 border border-violet-500/30">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">พร้อมใช้ SmsChecker แล้วหรือยัง?</h2>
+                <p class="text-gray-300 mb-8 max-w-xl mx-auto">ดาวน์โหลดฟรี ทดลองใช้ 24 ชั่วโมง ไม่ต้องผูกบัตร ไม่ต้อง Root เครื่อง</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="{{ route('smschecker.download') }}"
+                       class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        ดาวน์โหลดแอพ
+                    </a>
+                    <a href="{{ route('smschecker.pricing') }}"
+                       class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
+                        ดูราคาแพ็กเกจ
+                    </a>
+                </div>
+
+                @if($version)
+                <p class="text-gray-500 text-sm mt-6">
+                    เวอร์ชั่นล่าสุด: v{{ $version->version }}
+                    @if($version->release_date)
+                        ({{ $version->release_date->format('d/m/Y') }})
+                    @endif
+                </p>
+                @endif
+            </div>
+        </div>
+    </section>
+
+</div>
+@endsection
