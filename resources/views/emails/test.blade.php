@@ -26,7 +26,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">เวลาส่ง</span>
-            <span class="info-value">{{ now()->addHours(7)->format('d/m/Y H:i:s') }} น.</span>
+            <span class="info-value">{{ now()->timezone('Asia/Bangkok')->format('d/m/Y H:i:s') }} น.</span>
         </div>
         <div class="info-row">
             <span class="info-label">สถานะ</span>

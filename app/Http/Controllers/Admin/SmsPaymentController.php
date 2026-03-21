@@ -466,7 +466,7 @@ class SmsPaymentController extends Controller
         $order->update([
             'sms_verification_status' => 'rejected',
             'payment_status' => 'failed',
-            'notes' => $order->notes . "\n[SMS Rejected] " . $reason,
+            'notes' => ($order->notes ? $order->notes . "\n" : '') . '[SMS Rejected] ' . $reason,
         ]);
 
         if ($order->smsNotification) {

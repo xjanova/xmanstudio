@@ -85,7 +85,7 @@ class EmailSettingController extends Controller
         } catch (\Exception $e) {
             Log::error('Test email failed', ['error' => $e->getMessage()]);
 
-            return redirect()->back()->with('error', 'ส่งอีเมลไม่สำเร็จ: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'ส่งอีเมลไม่สำเร็จ กรุณาตรวจสอบ API Key และการตั้งค่า');
         }
     }
 

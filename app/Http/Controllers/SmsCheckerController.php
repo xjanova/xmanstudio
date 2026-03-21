@@ -232,18 +232,22 @@ class SmsCheckerController extends Controller
 
             $this->generateLicenseForOrder($order, $product, $planInfo, $machineId);
 
-            $affiliateService->recordCommission(
-                $affiliate, $order->total, $order->id, $order->user_id,
-                'smschecker', $order->id, "SmsChecker {$planInfo['name']} License"
-            );
+            if ($affiliate) {
+                $affiliateService->recordCommission(
+                    $affiliate, $order->total, $order->id, $order->user_id,
+                    'smschecker', $order->id, "SmsChecker {$planInfo['name']} License"
+                );
+            }
 
             return redirect()->route('smschecker.payment-success', $order->id);
         }
 
-        $affiliateService->recordCommission(
-            $affiliate, $order->total, $order->id, $order->user_id,
-            'smschecker', $order->id, "SmsChecker {$planInfo['name']} License"
-        );
+        if ($affiliate) {
+            $affiliateService->recordCommission(
+                $affiliate, $order->total, $order->id, $order->user_id,
+                'smschecker', $order->id, "SmsChecker {$planInfo['name']} License"
+            );
+        }
 
         return redirect()->route('smschecker.payment', ['order' => $order->id]);
     }

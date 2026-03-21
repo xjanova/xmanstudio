@@ -275,10 +275,12 @@ class TpingController extends Controller
             $this->generateLicenseForOrder($order, $product, $planInfo, $machineId);
 
             // Record affiliate commission (wallet = instant, so commission pending for admin review)
-            $affiliateService->recordCommission(
-                $affiliate, $order->total, $order->id, $order->user_id,
-                'tping', $order->id, "Tping {$planInfo['name']} License"
-            );
+            if ($affiliate) {
+                $affiliateService->recordCommission(
+                    $affiliate, $order->total, $order->id, $order->user_id,
+                    'tping', $order->id, "Tping {$planInfo['name']} License"
+                );
+            }
 
             // Redirect to success (skip payment page — already paid)
             return redirect()->route('tping.payment-success', $order->id);
@@ -286,10 +288,12 @@ class TpingController extends Controller
 
         // === PromptPay / Bank Transfer: redirect to payment page ===
         // Record affiliate commission (will be pending until order is paid)
-        $affiliateService->recordCommission(
-            $affiliate, $order->total, $order->id, $order->user_id,
-            'tping', $order->id, "Tping {$planInfo['name']} License"
-        );
+        if ($affiliate) {
+            $affiliateService->recordCommission(
+                $affiliate, $order->total, $order->id, $order->user_id,
+                'tping', $order->id, "Tping {$planInfo['name']} License"
+            );
+        }
 
         return redirect()->route('tping.payment', [
             'order' => $order->id,

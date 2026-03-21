@@ -23,7 +23,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">วันที่</span>
-            <span class="info-value">{{ $order->created_at->addHours(7)->format('d/m/Y H:i') }} น.</span>
+            <span class="info-value">{{ $order->created_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') }} น.</span>
         </div>
         <div class="info-row">
             <span class="info-label">สถานะ</span>

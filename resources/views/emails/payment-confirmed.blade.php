@@ -24,7 +24,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">วันที่ชำระ</span>
-            <span class="info-value">{{ ($order->paid_at ?? $order->updated_at)->addHours(7)->format('d/m/Y H:i') }} น.</span>
+            <span class="info-value">{{ ($order->paid_at ?? $order->updated_at)->timezone('Asia/Bangkok')->format('d/m/Y H:i') }} น.</span>
         </div>
         <div class="info-row">
             <span class="info-label">จำนวนเงิน</span>
@@ -67,9 +67,10 @@
 
     {{-- License Keys --}}
     @php
-        $licenseKeys = $order->items->flatMap(fn($item) => $item->product->licenseKeys ?? collect())
-            ->where('order_id', $order->id)
-            ->where('status', 'active');
+        $licenseKeys = \App\Models\LicenseKey::where('order_id', $order->id)
+            ->where('status', 'active')
+            ->with('product')
+            ->get();
     @endphp
 
     @if($licenseKeys->count() > 0)
@@ -86,7 +87,7 @@
             <div class="license-meta">
                 ประเภท: {{ ucfirst($license->license_type) }}
                 @if($license->expires_at)
-                    &bull; หมดอายุ: {{ $license->expires_at->addHours(7)->format('d/m/Y') }}
+                    &bull; หมดอายุ: {{ $license->expires_at->timezone('Asia/Bangkok')->format('d/m/Y') }}
                 @else
                     &bull; ตลอดชีพ
                 @endif
