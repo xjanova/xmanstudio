@@ -32,7 +32,13 @@ class AffiliateTracking
                 // Don't track self-referral
                 if (! auth()->check() || auth()->id() !== $affiliate->user_id) {
                     session(['affiliate_ref' => $ref]);
-                    $affiliate->recordClick();
+
+                    // Rate limit clicks: once per session per affiliate
+                    $clickKey = 'affiliate_clicked_' . $affiliate->id;
+                    if (! session($clickKey)) {
+                        $affiliate->recordClick();
+                        session([$clickKey => true]);
+                    }
                 }
             }
         }

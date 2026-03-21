@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Mail\AffiliateCommissionMail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AffiliateCommission extends Model
 {
@@ -107,6 +110,9 @@ class AffiliateCommission extends Model
         $affiliate->increment('total_paid', $this->commission_amount);
         $affiliate->decrement('total_pending', $this->commission_amount);
 
+        // Send email notification
+        $this->sendNotificationEmail('paid');
+
         return true;
     }
 
@@ -126,7 +132,38 @@ class AffiliateCommission extends Model
 
         $this->affiliate->decrement('total_pending', $this->commission_amount);
 
+        // Send email notification
+        $this->sendNotificationEmail('rejected');
+
         return true;
+    }
+
+    /**
+     * Send email notification to affiliate user.
+     */
+    protected function sendNotificationEmail(string $action): void
+    {
+        if (! PaymentSetting::get('mail_enabled', true)) {
+            return;
+        }
+
+        $email = $this->affiliate->user->email ?? null;
+        if (! $email) {
+            return;
+        }
+
+        try {
+            Mail::to($email)->send(new AffiliateCommissionMail(
+                $this->load('affiliate.user.wallet'),
+                $action
+            ));
+        } catch (\Exception $e) {
+            Log::error('Failed to send affiliate commission email', [
+                'commission_id' => $this->id,
+                'action' => $action,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

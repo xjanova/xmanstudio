@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateCommission;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AffiliateCommissionService
@@ -64,24 +65,28 @@ class AffiliateCommissionService
             return null;
         }
 
-        $commission = AffiliateCommission::create([
-            'affiliate_id' => $affiliate->id,
-            'order_id' => $orderId,
-            'referred_user_id' => $referredUserId,
-            'order_amount' => $paymentAmount,
-            'commission_rate' => $affiliate->commission_rate,
-            'commission_amount' => $commissionAmount,
-            'status' => 'pending',
-            'source_type' => $sourceType,
-            'source_id' => $sourceId ?? $orderId,
-            'source_description' => $sourceDescription,
-        ]);
+        $commission = DB::transaction(function () use ($affiliate, $orderId, $referredUserId, $paymentAmount, $commissionAmount, $sourceType, $sourceId, $sourceDescription) {
+            $commission = AffiliateCommission::create([
+                'affiliate_id' => $affiliate->id,
+                'order_id' => $orderId,
+                'referred_user_id' => $referredUserId,
+                'order_amount' => $paymentAmount,
+                'commission_rate' => $affiliate->commission_rate,
+                'commission_amount' => $commissionAmount,
+                'status' => 'pending',
+                'source_type' => $sourceType,
+                'source_id' => $sourceId ?? $orderId,
+                'source_description' => $sourceDescription,
+            ]);
 
-        // Update affiliate counters
-        $affiliate->increment('total_referrals');
-        $affiliate->increment('total_conversions');
-        $affiliate->increment('total_earned', $commissionAmount);
-        $affiliate->increment('total_pending', $commissionAmount);
+            // Update affiliate counters atomically
+            $affiliate->increment('total_referrals');
+            $affiliate->increment('total_conversions');
+            $affiliate->increment('total_earned', $commissionAmount);
+            $affiliate->increment('total_pending', $commissionAmount);
+
+            return $commission;
+        });
 
         // Clear referral session (prevent double-counting)
         session()->forget('affiliate_ref');
