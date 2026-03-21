@@ -96,7 +96,7 @@
             </div>
             <div class="bg-white/5 border border-white/10 rounded-xl p-5 text-center">
                 <div class="text-3xl mb-2">Auto</div>
-                <h4 class="font-semibold">พิมพ์อัตโนมัติ</h4>
+                <h4 class="font-semibold">ตรวจจับอัตโนมัติ</h4>
                 <p class="text-sm text-indigo-300 mt-1">SMS Detection + Multi-Server</p>
             </div>
         </div>

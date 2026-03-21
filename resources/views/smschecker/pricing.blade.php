@@ -17,7 +17,7 @@
             </div>
 
             <h1 class="text-5xl md:text-6xl font-black text-white mb-6">
-                T<span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-blue-400">ping</span>
+                Sms<span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-blue-400">Checker</span>
             </h1>
 
             <p class="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
