@@ -418,7 +418,7 @@
 </div>
 
 {{-- การตั้งค่า --}}
-<div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') || request()->routeIs('admin.redis-settings*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') || request()->routeIs('admin.redis-settings*') || request()->routeIs('admin.email-settings*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ตั้งค่า</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -439,6 +439,10 @@
         <a href="{{ route('admin.payment-settings.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.payment-settings*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
             ชำระเงิน
+        </a>
+        <a href="{{ route('admin.email-settings.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.email-settings*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            อีเมล (Resend)
         </a>
         <a href="{{ route('admin.custom-code.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.custom-code*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>

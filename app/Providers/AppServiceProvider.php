@@ -10,6 +10,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
+use App\Models\PaymentSetting;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
         $this->registerSmsCheckerEvents();
         $this->registerBladeDirectives();
+        $this->configureMailFromDatabase();
     }
 
     /**
@@ -81,6 +83,31 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Configure the rate limiters for the application.
      */
+    /**
+     * Override mail config with database settings (Resend API key, from address).
+     */
+    protected function configureMailFromDatabase(): void
+    {
+        try {
+            $apiKey = PaymentSetting::get('resend_api_key');
+            if ($apiKey) {
+                config(['services.resend.key' => $apiKey]);
+            }
+
+            $fromAddress = PaymentSetting::get('mail_from_address');
+            if ($fromAddress) {
+                config(['mail.from.address' => $fromAddress]);
+            }
+
+            $fromName = PaymentSetting::get('mail_from_name');
+            if ($fromName) {
+                config(['mail.from.name' => $fromName]);
+            }
+        } catch (\Exception $e) {
+            // Database may not be available during migrations
+        }
+    }
+
     protected function configureRateLimiting(): void
     {
         // Default API rate limiter (required for throttleApi middleware)

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
+use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\Admin\GuideScreenshotController;
 use App\Http\Controllers\Admin\LicenseAnalyticsController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
@@ -558,6 +559,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'updateBank'])->name('payment-settings.bank.update');
     Route::post('/payment-settings/bank/{bankAccount}/toggle', [PaymentSettingController::class, 'toggleBank'])->name('payment-settings.bank.toggle');
     Route::delete('/payment-settings/bank/{bankAccount}', [PaymentSettingController::class, 'destroyBank'])->name('payment-settings.bank.destroy');
+
+    // Email Settings (Resend)
+    Route::get('/email-settings', [EmailSettingController::class, 'index'])->name('email-settings.index');
+    Route::put('/email-settings', [EmailSettingController::class, 'update'])->name('email-settings.update');
+    Route::post('/email-settings/test', [EmailSettingController::class, 'sendTest'])->name('email-settings.test');
 
     // Branding Settings (Logo & Favicon)
     Route::get('/branding', [BrandingSettingsController::class, 'index'])->name('branding.index');
