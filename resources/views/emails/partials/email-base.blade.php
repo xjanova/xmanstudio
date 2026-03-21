@@ -1,10 +1,13 @@
 @php
     $siteLogo = \App\Models\Setting::getValue('site_logo');
     $appName = config('app.name', 'XMANStudio');
-    $appUrl = config('app.url');
+    // Use production URL for email assets (localhost won't work in email clients)
+    $appUrl = \App\Models\PaymentSetting::get('email_site_url', config('app.url'));
     $fromEmail = config('mail.from.address', 'noreply@xman4289.com');
     $primaryColor = '#6366f1';
     $primaryDark = '#4f46e5';
+    // Build logo URL that's accessible from email clients
+    $logoUrl = $siteLogo ? ($appUrl . '/storage/' . $siteLogo) : null;
 @endphp
 <!DOCTYPE html>
 <html lang="th" dir="ltr">
@@ -269,8 +272,8 @@
                     {{-- HEADER --}}
                     <div class="email-header">
                         <div class="email-logo">
-                            @if($siteLogo)
-                                <img src="{{ $appUrl }}/storage/{{ $siteLogo }}" alt="{{ $appName }}" style="max-height: 48px; max-width: 200px;">
+                            @if($logoUrl)
+                                <img src="{{ $logoUrl }}" alt="{{ $appName }}" style="max-height: 48px; max-width: 200px;">
                             @else
                                 <div class="email-logo-text">{{ $appName }}</div>
                             @endif
@@ -286,8 +289,8 @@
                     {{-- FOOTER --}}
                     <div class="email-footer">
                         <div class="footer-logo">
-                            @if($siteLogo)
-                                <img src="{{ $appUrl }}/storage/{{ $siteLogo }}" alt="{{ $appName }}" style="max-height: 32px; filter: brightness(10);">
+                            @if($logoUrl)
+                                <img src="{{ $logoUrl }}" alt="{{ $appName }}" style="max-height: 32px; filter: brightness(10);">
                             @else
                                 <div style="color: #ffffff; font-size: 18px; font-weight: 700;">{{ $appName }}</div>
                             @endif
