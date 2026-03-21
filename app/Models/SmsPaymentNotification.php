@@ -117,7 +117,7 @@ class SmsPaymentNotification extends Model
             // Step 2: ถ้าไม่เจอ active → ลอง match กับที่หมดอายุไม่นาน (grace period)
             // กรณี SMS มาช้า / rate limit block / network delay
             if (! $uniqueAmount) {
-                $graceMinutes = (int) config('smschecker.orphan_match_window', 60);
+                $graceMinutes = (int) config('smschecker.orphan.match_window_minutes', 60);
                 $uniqueAmount = UniquePaymentAmount::where('unique_amount', $this->amount)
                     ->where('status', 'reserved')
                     ->where('expires_at', '<=', now())
@@ -139,7 +139,7 @@ class SmsPaymentNotification extends Model
             // Step 3: ยังไม่เจอ → ลอง match กับ expired status ที่ order ยังเป็น pending
             // (cleanup อาจเปลี่ยน status เป็น 'expired' แล้ว แต่ order อาจยังไม่ถูก cancel)
             if (! $uniqueAmount) {
-                $graceMinutes = (int) config('smschecker.orphan_match_window', 60);
+                $graceMinutes = (int) config('smschecker.orphan.match_window_minutes', 60);
                 $uniqueAmount = UniquePaymentAmount::where('unique_amount', $this->amount)
                     ->where('status', 'expired')
                     ->where('expires_at', '>', now()->subMinutes($graceMinutes))

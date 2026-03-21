@@ -810,7 +810,7 @@ class SmsPaymentController extends Controller
 
         $amount = (float) $amount;
 
-        $graceMinutes = (int) config('smschecker.orphan_match_window', 60);
+        $graceMinutes = (int) config('smschecker.orphan.match_window_minutes', 60);
 
         // Find Order with matching unique_amount (status=reserved → ยังไม่ถูก match)
         // รวม 'matched' ด้วย กรณี notify→attemptMatch() ทำงานก่อน matchOrderByAmount

@@ -202,12 +202,13 @@ class VersionController extends Controller
         $currentVersion = $request->query('current_version', '0.0.0');
         $hasUpdate = version_compare($currentVersion, $latestVersion->version, '<');
 
-        // Build download URL — use the public tping APK download route
+        // Build download URL — use public APK download route (proxy through our server)
         $downloadUrl = '';
         if ($hasUpdate) {
             if ($productSlug === 'tping') {
-                // Tping: proxy download through our server (hides GitHub)
                 $downloadUrl = url('/tping/download/apk');
+            } elseif ($productSlug === 'smschecker') {
+                $downloadUrl = url('/smschecker/download/apk');
             } else {
                 $downloadUrl = route('download.product', [
                     'slug' => $product->slug,
