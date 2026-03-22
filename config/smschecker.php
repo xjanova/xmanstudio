@@ -196,6 +196,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Data Retention & Auto-Cleanup
+    |--------------------------------------------------------------------------
+    |
+    | Settings for automatic cleanup of old data.
+    | The smschecker:cleanup command runs every 5 minutes.
+    |
+    */
+    'retention' => [
+        // Days to keep SMS notifications before marking as expired
+        'notification_days' => env('SMSCHECKER_NOTIFICATION_RETENTION_DAYS', 30),
+
+        // Days to keep bug reports before auto-deleting
+        'bug_report_days' => env('SMSCHECKER_BUG_REPORT_RETENTION_DAYS', 90),
+
+        // Days to keep completed/cancelled orders' unique amounts before purging
+        'completed_amount_days' => env('SMSCHECKER_COMPLETED_AMOUNT_RETENTION_DAYS', 60),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Orphan Transaction Settings
     |--------------------------------------------------------------------------
     |

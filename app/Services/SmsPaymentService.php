@@ -333,12 +333,31 @@ class SmsPaymentService
             ->delete();
 
         // ========================================
-        // Step 3: ล้าง pending notifications เก่า (> 7 วัน)
+        // Step 3: ล้าง pending notifications เก่า
         // ========================================
 
+        $notificationRetentionDays = (int) config('smschecker.retention.notification_days', 30);
         $stats['expired_notifications'] = SmsPaymentNotification::where('status', 'pending')
-            ->where('created_at', '<', now()->subDays(7))
+            ->where('created_at', '<', now()->subDays($notificationRetentionDays))
             ->update(['status' => 'expired']);
+
+        // ========================================
+        // Step 4: ลบ bug reports เก่า
+        // ========================================
+
+        $bugReportRetentionDays = (int) config('smschecker.retention.bug_report_days', 90);
+        $stats['deleted_bug_reports'] = DB::table('bug_reports')
+            ->where('created_at', '<', now()->subDays($bugReportRetentionDays))
+            ->delete();
+
+        // ========================================
+        // Step 5: ลบ completed/expired unique amounts เก่า
+        // ========================================
+
+        $completedAmountDays = (int) config('smschecker.retention.completed_amount_days', 60);
+        $stats['deleted_old_amounts'] = UniquePaymentAmount::whereIn('status', ['used', 'expired'])
+            ->where('created_at', '<', now()->subDays($completedAmountDays))
+            ->delete();
 
         $this->log('info', 'SMS Payment cleanup completed', $stats);
 

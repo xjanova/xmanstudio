@@ -372,7 +372,12 @@ class SmsPaymentController extends Controller
             $orderQuery->whereDate('created_at', '<=', $dateTo);
         }
 
-        $orders = $orderQuery->get();
+        // Limit query scope: default to last 30 days if no date filter
+        if (! $dateFrom && ! $dateTo) {
+            $orderQuery->where('orders.created_at', '>=', now()->subDays(30));
+        }
+
+        $orders = $orderQuery->limit(500)->get();
 
         // === Query Wallet Topups (เติมเงิน) — รวมให้โชว์ในแอพด้วย ===
         $topupQuery = WalletTopup::with(['uniquePaymentAmount'])
@@ -397,7 +402,12 @@ class SmsPaymentController extends Controller
             $topupQuery->whereDate('created_at', '<=', $dateTo);
         }
 
-        $topups = $topupQuery->get();
+        // Limit query scope: default to last 30 days if no date filter
+        if (! $dateFrom && ! $dateTo) {
+            $topupQuery->where('wallet_topups.created_at', '>=', now()->subDays(30));
+        }
+
+        $topups = $topupQuery->limit(500)->get();
 
         // === Merge + Sort + Paginate ===
         $allItems = collect();

@@ -28,7 +28,7 @@ class SmsPaymentController extends Controller
     {
         $activeDevices = SmsCheckerDevice::where('status', 'active')->count();
         $smsToday = SmsPaymentNotification::whereDate('created_at', today())->count();
-        $devices = SmsCheckerDevice::orderBy('created_at', 'desc')->get();
+        $devices = SmsCheckerDevice::orderBy('created_at', 'desc')->paginate(15);
 
         // FCM settings
         $fcmEnabled = Setting::getValue('fcm_enabled', false);

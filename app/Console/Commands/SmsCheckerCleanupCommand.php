@@ -54,14 +54,27 @@ class SmsCheckerCleanupCommand extends Command
                 ->where('used_at', '<', now()->subHours(config('smschecker.nonce_expiry_hours', 24)))
                 ->count();
 
+            $notifDays = (int) config('smschecker.retention.notification_days', 30);
             $oldNotifications = SmsPaymentNotification::where('status', 'pending')
-                ->where('created_at', '<', now()->subDays(7))
+                ->where('created_at', '<', now()->subDays($notifDays))
+                ->count();
+
+            $bugDays = (int) config('smschecker.retention.bug_report_days', 90);
+            $oldBugReports = DB::table('bug_reports')
+                ->where('created_at', '<', now()->subDays($bugDays))
+                ->count();
+
+            $amountDays = (int) config('smschecker.retention.completed_amount_days', 60);
+            $oldAmounts = UniquePaymentAmount::whereIn('status', ['used', 'expired'])
+                ->where('created_at', '<', now()->subDays($amountDays))
                 ->count();
 
             $this->info("📊 Would cancel {$expiredOrders} orders (payment timeout)");
             $this->info("📊 Would expire {$expiredAmounts} unique payment amounts");
             $this->info("📊 Would delete {$oldNonces} old nonces");
-            $this->info("📊 Would expire {$oldNotifications} old pending notifications");
+            $this->info("📊 Would expire {$oldNotifications} old pending notifications (>{$notifDays} days)");
+            $this->info("📊 Would delete {$oldBugReports} old bug reports (>{$bugDays} days)");
+            $this->info("📊 Would delete {$oldAmounts} old completed amounts (>{$amountDays} days)");
 
             return self::SUCCESS;
         }
@@ -70,9 +83,12 @@ class SmsCheckerCleanupCommand extends Command
 
         $this->table(['Item', 'Count'], [
             ['Cancelled Orders (timeout)', $stats['cancelled_orders']],
+            ['Cancelled Topups (timeout)', $stats['cancelled_topups'] ?? 0],
             ['Expired Amounts', $stats['expired_amounts']],
             ['Deleted Nonces', $stats['deleted_nonces']],
             ['Expired Notifications', $stats['expired_notifications']],
+            ['Deleted Bug Reports', $stats['deleted_bug_reports'] ?? 0],
+            ['Deleted Old Amounts', $stats['deleted_old_amounts'] ?? 0],
         ]);
 
         $this->info('');

@@ -376,6 +376,13 @@
                 @endforeach
             </tbody>
         </table>
+
+        {{-- Pagination --}}
+        @if($devices->hasPages())
+        <div class="mt-4 px-4">
+            {{ $devices->links() }}
+        </div>
+        @endif
         @endif
     </div>
 </div>
