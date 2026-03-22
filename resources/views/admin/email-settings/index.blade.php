@@ -83,7 +83,18 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL เว็บไซต์สำหรับอีเมล</label>
                         <input type="url" name="email_site_url" value="{{ $settings['email_site_url'] ?? '' }}" placeholder="https://xman4289.com" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">URL ที่ใช้สำหรับแสดงโลโก้และลิงก์ในอีเมล (ต้องเข้าถึงได้จากอินเทอร์เน็ต)</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">URL ที่ใช้สำหรับลิงก์ในอีเมล (ต้องเข้าถึงได้จากอินเทอร์เน็ต)</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL โลโก้สำหรับอีเมล</label>
+                        <input type="url" name="email_logo_url" value="{{ $settings['email_logo_url'] ?? '' }}" placeholder="https://xman4289.com/storage/branding/logo.png" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">URL เต็มของโลโก้ที่จะแสดงในอีเมล (ถ้าไม่ใส่จะใช้โลโก้จากหน้า Branding อัตโนมัติ)</p>
+                        @if($settings['email_logo_url'] ?? false)
+                            <div class="mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg inline-block">
+                                <img src="{{ $settings['email_logo_url'] }}" alt="Email Logo Preview" class="h-10">
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

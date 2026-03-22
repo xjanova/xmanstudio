@@ -19,6 +19,7 @@ class EmailSettingController extends Controller
             'mail_from_name' => PaymentSetting::get('mail_from_name', config('app.name')),
             'mail_enabled' => PaymentSetting::get('mail_enabled', true),
             'email_site_url' => PaymentSetting::get('email_site_url', config('app.url')),
+            'email_logo_url' => PaymentSetting::get('email_logo_url'),
         ];
 
         return view('admin.email-settings.index', compact('settings'));
@@ -32,6 +33,7 @@ class EmailSettingController extends Controller
             'mail_from_address' => 'nullable|email|max:255',
             'mail_from_name' => 'nullable|string|max:255',
             'email_site_url' => 'nullable|url|max:255',
+            'email_logo_url' => 'nullable|url|max:500',
         ]);
 
         PaymentSetting::set('mail_enabled', $request->boolean('mail_enabled'), [
@@ -73,6 +75,14 @@ class EmailSettingController extends Controller
                 'group' => 'email',
                 'type' => 'string',
                 'label' => 'URL เว็บสำหรับอีเมล',
+            ]);
+        }
+
+        if (! empty($validated['email_logo_url'])) {
+            PaymentSetting::set('email_logo_url', $validated['email_logo_url'], [
+                'group' => 'email',
+                'type' => 'string',
+                'label' => 'URL โลโก้สำหรับอีเมล',
             ]);
         }
 

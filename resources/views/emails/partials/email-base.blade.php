@@ -6,8 +6,9 @@
     $fromEmail = config('mail.from.address', 'noreply@xman4289.com');
     $primaryColor = '#6366f1';
     $primaryDark = '#4f46e5';
-    // Build logo URL that's accessible from email clients
-    $logoUrl = $siteLogo ? ($appUrl . '/storage/' . $siteLogo) : null;
+    // Build logo URL: priority 1) email_logo_url setting, 2) site_logo + email_site_url, 3) null
+    $emailLogoUrl = \App\Models\PaymentSetting::get('email_logo_url');
+    $logoUrl = $emailLogoUrl ?: ($siteLogo ? (rtrim($appUrl, '/') . '/storage/' . $siteLogo) : null);
 @endphp
 <!DOCTYPE html>
 <html lang="th" dir="ltr">
