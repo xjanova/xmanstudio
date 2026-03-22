@@ -564,6 +564,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/email-settings', [EmailSettingController::class, 'index'])->name('email-settings.index');
     Route::put('/email-settings', [EmailSettingController::class, 'update'])->name('email-settings.update');
     Route::post('/email-settings/test', [EmailSettingController::class, 'sendTest'])->name('email-settings.test');
+    Route::get('/email-settings/preview', [EmailSettingController::class, 'previewIndex'])->name('email-settings.preview-index');
+    Route::get('/email-settings/preview/{template}', [EmailSettingController::class, 'preview'])->name('email-settings.preview');
 
     // Branding Settings (Logo & Favicon)
     Route::get('/branding', [BrandingSettingsController::class, 'index'])->name('branding.index');
