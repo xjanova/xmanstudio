@@ -112,9 +112,19 @@ class YouTubeCommentService
                 $allComments[] = $comment;
 
                 // Store replies if any
+                $channelAlreadyReplied = false;
                 if (isset($item['replies']['comments'])) {
+                    // Resolve our channel ID to detect our own replies
+                    $ourChannelId = $this->resolveOurChannelId($video);
+
                     foreach ($item['replies']['comments'] as $reply) {
                         $replySnippet = $reply['snippet'];
+                        $replyAuthorChannelId = $replySnippet['authorChannelId']['value'] ?? null;
+
+                        // Check if this reply is from our channel
+                        if ($ourChannelId && $replyAuthorChannelId === $ourChannelId) {
+                            $channelAlreadyReplied = true;
+                        }
 
                         $replyComment = MetalXComment::updateOrCreate(
                             ['comment_id' => $reply['id']],
@@ -122,7 +132,7 @@ class YouTubeCommentService
                                 'video_id' => $video->id,
                                 'parent_id' => $item['snippet']['topLevelComment']['id'],
                                 'author_name' => $replySnippet['authorDisplayName'],
-                                'author_channel_id' => $replySnippet['authorChannelId']['value'] ?? null,
+                                'author_channel_id' => $replyAuthorChannelId,
                                 'author_profile_image' => $replySnippet['authorProfileImageUrl'] ?? null,
                                 'text' => $replySnippet['textDisplay'],
                                 'like_count' => $replySnippet['likeCount'] ?? 0,
@@ -134,6 +144,11 @@ class YouTubeCommentService
 
                         $allComments[] = $replyComment;
                     }
+                }
+
+                // Mark parent comment as already replied if channel has replied (manually or via bot)
+                if ($channelAlreadyReplied && ! $comment->ai_replied) {
+                    $comment->update(['ai_replied' => true]);
                 }
             }
 
@@ -266,6 +281,21 @@ class YouTubeCommentService
             'tracks' => $items,
             'caption_id' => $captionId,
         ];
+    }
+
+    /**
+     * Resolve our YouTube channel ID for a video (to detect our own replies).
+     */
+    private function resolveOurChannelId(MetalXVideo $video): ?string
+    {
+        $channel = $this->resolveChannel($video);
+
+        if ($channel && $channel->youtube_channel_id) {
+            return $channel->youtube_channel_id;
+        }
+
+        // Fallback to global channel ID setting
+        return $this->channelId;
     }
 
     /**

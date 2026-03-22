@@ -53,30 +53,20 @@ class GenerateAndPostPromoCommentJob implements ShouldQueue
         Log::info("[Metal-X Promo] Generating promo comment for video {$this->video->youtube_id}");
 
         try {
-            // Check daily limit per video
-            $todayCount = MetalXPromoComment::where('video_id', $this->video->id)
-                ->where('created_at', '>=', now()->startOfDay())
-                ->count();
-
-            $dailyLimit = (int) Setting::get('metalx_promo_max_per_video_per_day', 2);
-
-            if ($todayCount >= $dailyLimit) {
-                Log::info("[Metal-X Promo] Daily limit reached for video {$this->video->youtube_id} ({$todayCount}/{$dailyLimit})");
-                MetalXAutomationLog::log('promo_comment', 'skipped', [
-                    'video_id' => $this->video->id,
-                    'details' => ['reason' => 'daily_limit', 'count' => $todayCount, 'limit' => $dailyLimit],
-                ]);
-
-                return;
-            }
-
-            // Check if video already has a non-failed promo today (avoid duplicates)
-            $hasPromoToday = MetalXPromoComment::where('video_id', $this->video->id)
-                ->where('created_at', '>=', now()->startOfDay())
+            // Cooldown: don't re-post promo if video already has one within cooldown period
+            $promoCooldownDays = (int) Setting::get('metalx_promo_cooldown_days', 3);
+            $hasRecentPromo = MetalXPromoComment::where('video_id', $this->video->id)
+                ->where('created_at', '>=', now()->subDays($promoCooldownDays))
                 ->whereIn('status', ['draft', 'scheduled', 'posted'])
                 ->exists();
 
-            if ($hasPromoToday) {
+            if ($hasRecentPromo) {
+                Log::info("[Metal-X Promo] Skipping video {$this->video->youtube_id} — already has promo within {$promoCooldownDays} day cooldown");
+                MetalXAutomationLog::log('promo_comment', 'skipped', [
+                    'video_id' => $this->video->id,
+                    'details' => ['reason' => 'cooldown', 'cooldown_days' => $promoCooldownDays],
+                ]);
+
                 return;
             }
 

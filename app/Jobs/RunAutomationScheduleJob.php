@@ -4,8 +4,10 @@ namespace App\Jobs;
 
 use App\Models\MetalXAutomationLog;
 use App\Models\MetalXAutomationSchedule;
+use App\Models\MetalXChannel;
 use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideo;
+use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -116,9 +118,11 @@ class RunAutomationScheduleJob implements ShouldQueue
         $max = $schedule->max_actions_per_run;
         $dispatched = 0;
 
+        // Resolve our channel IDs to exclude comments we've already replied to
+        $ourChannelIds = $this->getOurChannelIds();
+
         foreach ($videos as $video) {
-            // Reply to ALL unreplied comments (with or without sentiment)
-            // ProcessCommentEngagementJob will analyze sentiment if missing
+            // Reply to comments that haven't been replied to by AI or by channel manually
             $comments = $video->comments()
                 ->topLevel()
                 ->where('ai_replied', false)
@@ -126,6 +130,16 @@ class RunAutomationScheduleJob implements ShouldQueue
                 ->where('is_hidden', false)
                 ->where(function ($q) {
                     $q->where('can_reply', true)->orWhereNull('can_reply');
+                })
+                // Exclude comments that already have a reply from our channel
+                ->when(! empty($ourChannelIds), function ($q) use ($ourChannelIds, $video) {
+                    $q->whereNotIn('comment_id', function ($sub) use ($ourChannelIds, $video) {
+                        $sub->select('parent_id')
+                            ->from('metal_x_comments')
+                            ->where('video_id', $video->id)
+                            ->whereNotNull('parent_id')
+                            ->whereIn('author_channel_id', $ourChannelIds);
+                    });
                 })
                 ->orderByDesc('published_at')
                 ->limit($max - $dispatched)
@@ -224,14 +238,17 @@ class RunAutomationScheduleJob implements ShouldQueue
         $dispatched = 0;
         $requireApproval = $schedule->getSetting('require_approval', true);
 
+        // Cooldown: don't re-post promo on a video that already has one within X days
+        $promoCooldownDays = (int) ($schedule->getSetting('promo_cooldown_days', 3));
+
         foreach ($videos as $video) {
-            // Skip videos that already have a non-failed promo today
-            $hasPromoToday = MetalXPromoComment::where('video_id', $video->id)
-                ->where('created_at', '>=', now()->startOfDay())
+            // Skip videos that already have a non-failed promo within cooldown period
+            $hasRecentPromo = MetalXPromoComment::where('video_id', $video->id)
+                ->where('created_at', '>=', now()->subDays($promoCooldownDays))
                 ->whereIn('status', ['draft', 'scheduled', 'posted'])
                 ->exists();
 
-            if ($hasPromoToday) {
+            if ($hasRecentPromo) {
                 continue;
             }
 
@@ -266,6 +283,24 @@ class RunAutomationScheduleJob implements ShouldQueue
         }
 
         return $query->get();
+    }
+
+    /**
+     * Get all YouTube channel IDs that belong to us (for detecting our own replies).
+     */
+    protected function getOurChannelIds(): array
+    {
+        $ids = MetalXChannel::whereNotNull('youtube_channel_id')
+            ->pluck('youtube_channel_id')
+            ->toArray();
+
+        // Include global channel ID setting
+        $globalChannelId = Setting::get('metalx_channel_id');
+        if ($globalChannelId && ! in_array($globalChannelId, $ids)) {
+            $ids[] = $globalChannelId;
+        }
+
+        return $ids;
     }
 
     public function failed(\Throwable $exception): void
