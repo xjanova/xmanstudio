@@ -198,6 +198,24 @@ class ProductDevice extends Model
     }
 
     /**
+     * Find related devices by DRM ID or Android ID (same physical device, different HWID)
+     */
+    public function findRelatedByDeviceIds(): Collection
+    {
+        return self::where('id', '!=', $this->id)
+            ->where('product_id', $this->product_id)
+            ->where(function ($query) {
+                if ($this->drm_id) {
+                    $query->orWhere('drm_id', $this->drm_id);
+                }
+                if ($this->android_id) {
+                    $query->orWhere('android_id', $this->android_id);
+                }
+            })
+            ->get();
+    }
+
+    /**
      * Check for trial abuse patterns
      */
     public function checkTrialAbuse(): array
@@ -211,19 +229,38 @@ class ProductDevice extends Model
             $reasons[] = "Same hardware found with {$expiredTrials} expired trial(s)";
         }
 
-        // Check 2: Same IP with multiple trials
+        // Check 2: Same DRM ID or Android ID with trial (catches HWID reset after update)
+        $deviceIdRelated = $this->findRelatedByDeviceIds();
+        $deviceIdTrials = $deviceIdRelated->whereIn('status', [self::STATUS_TRIAL, self::STATUS_EXPIRED])->count();
+        if ($deviceIdTrials > 0) {
+            $reasons[] = "Same physical device (DRM/Android ID) found with {$deviceIdTrials} trial(s)";
+
+            // Copy trial info from the related device to prevent reset
+            $existingTrial = $deviceIdRelated->firstWhere('status', self::STATUS_TRIAL)
+                ?? $deviceIdRelated->firstWhere('status', self::STATUS_EXPIRED);
+            if ($existingTrial) {
+                $this->update([
+                    'trial_attempts' => max($this->trial_attempts, $existingTrial->trial_attempts),
+                    'first_trial_at' => $this->first_trial_at ?? $existingTrial->first_trial_at,
+                    'trial_expires_at' => $existingTrial->trial_expires_at,
+                    'status' => $existingTrial->status,
+                ]);
+            }
+        }
+
+        // Check 3: Same IP with multiple trials
         $ipRelated = $this->findRelatedByIp();
         $ipTrials = $ipRelated->whereIn('status', [self::STATUS_TRIAL, self::STATUS_EXPIRED])->count();
         if ($ipTrials >= 2) {
             $reasons[] = "Same IP found with {$ipTrials} trial device(s)";
         }
 
-        // Check 3: Too many trial attempts
+        // Check 4: Too many trial attempts
         if ($this->trial_attempts >= 2) {
             $reasons[] = "Device has {$this->trial_attempts} trial attempts";
         }
 
-        // Check 4: Trial expired recently
+        // Check 5: Trial expired recently
         if ($this->first_trial_at && $this->trial_expires_at) {
             $daysSinceExpiry = $this->trial_expires_at->diffInDays(now());
             if ($this->isTrialExpired() && $daysSinceExpiry < 14) {
