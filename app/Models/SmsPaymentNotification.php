@@ -241,7 +241,16 @@ class SmsPaymentNotification extends Model
             $this->update(['status' => 'matched', 'matched_transaction_id' => $uniqueAmount->transaction_id]);
         }
 
-        event(new PaymentMatched($project, $this));
+        // Note: PaymentMatched event expects Order type, not ProjectOrder
+        // Log instead of firing event to avoid TypeError
+        Log::info('ProjectOrder payment matched', [
+            'project_id' => $project->id,
+            'project_number' => $project->project_number,
+            'notification_id' => $this->id,
+            'paid_amount' => $newPaid,
+            'payment_status' => $paymentStatus,
+            'approval_mode' => $approvalMode,
+        ]);
 
         return true;
     }

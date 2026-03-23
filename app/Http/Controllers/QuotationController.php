@@ -1800,29 +1800,35 @@ class QuotationController extends Controller
             'amount' => 'required|numeric|min:1',
         ]);
 
-        $project = ProjectOrder::where('project_number', $request->project_number)->firstOrFail();
+        // Cancel + generate in transaction with lock to prevent race condition / overpay
+        $result = DB::transaction(function () use ($request) {
+            $project = ProjectOrder::where('project_number', $request->project_number)->lockForUpdate()->firstOrFail();
 
-        // Guard: don't allow payment if already fully paid
-        if (in_array($project->payment_status, ['paid'])) {
-            return response()->json(['error' => 'โครงการนี้ชำระเงินครบแล้ว'], 422);
-        }
+            if ($project->payment_status === 'paid') {
+                return ['error' => 'โครงการนี้ชำระเงินครบแล้ว'];
+            }
 
-        $amount = (float) $request->amount;
+            $amount = round((float) $request->amount, 2);
+            if ($amount > $project->remaining_amount) {
+                $amount = $project->remaining_amount;
+            }
 
-        // Cap amount to remaining
-        if ($amount > $project->remaining_amount) {
-            $amount = $project->remaining_amount;
-        }
-
-        // Cancel + generate in transaction to prevent race condition
-        $uniqueAmount = DB::transaction(function () use ($project, $amount) {
             UniquePaymentAmount::where('transaction_id', $project->id)
                 ->where('transaction_type', 'project_order')
                 ->where('status', 'reserved')
                 ->update(['status' => 'cancelled']);
 
-            return UniquePaymentAmount::generate($amount, $project->id, 'project_order', 30);
+            $uniqueAmount = UniquePaymentAmount::generate($amount, $project->id, 'project_order', 30);
+
+            return ['project' => $project, 'uniqueAmount' => $uniqueAmount];
         });
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], 422);
+        }
+
+        $project = $result['project'];
+        $uniqueAmount = $result['uniqueAmount'];
 
         if (! $uniqueAmount) {
             return response()->json(['error' => 'ไม่สามารถสร้างยอดชำระได้ กรุณาลองใหม่'], 422);
@@ -1868,24 +1874,4 @@ class QuotationController extends Controller
         ]);
     }
 
-    /**
-     * Cancel reserved payment when user leaves the page
-     */
-    public function projectPaymentCancel(Request $request)
-    {
-        $request->validate([
-            'project_number' => 'required|string|max:50',
-        ]);
-
-        $project = ProjectOrder::where('project_number', $request->project_number)->first();
-
-        if ($project) {
-            UniquePaymentAmount::where('transaction_id', $project->id)
-                ->where('transaction_type', 'project_order')
-                ->where('status', 'reserved')
-                ->update(['status' => 'cancelled']);
-        }
-
-        return response()->json(['ok' => true]);
-    }
 }

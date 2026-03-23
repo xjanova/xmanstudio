@@ -266,7 +266,7 @@
 
                     {{-- PromptPay QR Payment Section --}}
                     @if($project->remaining_amount > 0)
-                    <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden" x-data="projectPayment('{{ $project->project_number }}', {{ $project->remaining_amount }}, {{ json_encode($activePayment) }})" x-init="init()">
+                    <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden" x-data="projectPayment('{{ $project->project_number }}', {{ $project->remaining_amount }}, {{ Js::from($activePayment) }})" x-init="init()">
                         <div class="p-6 sm:p-8">
                             <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -434,6 +434,7 @@ function projectPayment(projectNumber, remainingAmount, activePayment) {
         countdown: 0,
         countdownDisplay: '30:00',
         pollInterval: null,
+        pollErrors: 0,
         countdownInterval: null,
         paymentSuccess: false,
         paidDisplay: '0.00',
@@ -459,6 +460,10 @@ function projectPayment(projectNumber, remainingAmount, activePayment) {
             const container = document.getElementById('qrCodeContainer');
             if (!container || !this.qrPayload) return;
             container.innerHTML = '';
+            if (typeof QRCode === 'undefined') {
+                container.innerHTML = '<p class="text-red-400 text-sm">ไม่สามารถโหลด QR Code ได้ กรุณารีเฟรชหน้า</p>';
+                return;
+            }
             new QRCode(container, {
                 text: this.qrPayload,
                 width: 256,
@@ -553,18 +558,21 @@ function projectPayment(projectNumber, remainingAmount, activePayment) {
         async checkStatus() {
             try {
                 const res = await fetch(`/tracking/payment-status/${this.projectNumber}`);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
+                this.pollErrors = 0;
                 if (data.matched) {
                     this.paymentSuccess = true;
                     this.paidDisplay = data.paid_amount;
                     this.remainingDisplay = data.remaining_amount;
                     this.stopPolling();
                     this.stopCountdown();
-
-                    // Update summary amounts on page
                     this.remaining = parseFloat(data.remaining_amount.replace(/,/g, ''));
                 }
-            } catch (e) {}
+            } catch (e) {
+                this.pollErrors++;
+                if (this.pollErrors >= 5) this.stopPolling();
+            }
         },
     };
 }
