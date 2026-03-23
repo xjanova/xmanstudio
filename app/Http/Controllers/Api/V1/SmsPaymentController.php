@@ -145,6 +145,14 @@ class SmsPaymentController extends Controller
 
                     if ($matchedTopup) {
                         $result['data']['order'] = $this->transformWalletTopupForAndroid($matchedTopup);
+                    } else {
+                        // Try ProjectOrder (ชำระค่าโครงการ)
+                        $matchedProject = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])
+                            ->find($notificationRecord->matched_transaction_id);
+
+                        if ($matchedProject) {
+                            $result['data']['order'] = $this->transformProjectOrderForAndroid($matchedProject);
+                        }
                     }
                 }
             }
@@ -1006,7 +1014,54 @@ class SmsPaymentController extends Controller
             }
         }
 
+        // === Query ProjectOrder (ชำระค่าโครงการ) ===
+        $projectOrder = null;
         if (! $order && ! $topup) {
+            $projectOrder = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])
+                ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
+                    $q->where('unique_amount', $amount)
+                        ->whereIn('status', ['reserved', 'used']);
+                })
+                ->whereIn('sms_verification_status', ['pending', 'matched', null])
+                ->whereIn('payment_status', ['unpaid', 'partial', null])
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Fallback: already confirmed
+            if (! $projectOrder) {
+                $projectOrder = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])
+                    ->whereHas('uniquePaymentAmount', function ($q) use ($amount) {
+                        $q->where('unique_amount', $amount)
+                            ->where('status', 'used');
+                    })
+                    ->where('created_at', '>=', now()->subHours(1))
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if ($projectOrder) {
+                    $alreadyMatched = true;
+                }
+            }
+
+            // Fallback 2: expired within grace period
+            if (! $projectOrder) {
+                $projectOrder = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])
+                    ->whereHas('uniquePaymentAmount', function ($q) use ($amount, $graceMinutes) {
+                        $q->where('unique_amount', $amount)
+                            ->whereIn('status', ['expired', 'reserved'])
+                            ->where('expires_at', '>', now()->subMinutes($graceMinutes));
+                    })
+                    ->whereIn('payment_status', ['unpaid', 'partial', null])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+
+            if ($projectOrder) {
+                $alreadyMatched = $alreadyMatched || in_array($projectOrder->sms_verification_status, ['confirmed', 'matched']);
+            }
+        }
+
+        if (! $order && ! $topup && ! $projectOrder) {
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -1156,6 +1211,50 @@ class SmsPaymentController extends Controller
                 }
             }
             $orderData = $this->transformWalletTopupForAndroid($topup);
+        } elseif ($projectOrder) {
+            // Auto-approve ProjectOrder → add to paid_amount
+            $needsProjectApprove = $autoConfirm && ! in_array($projectOrder->payment_status, ['paid']);
+            if ($needsProjectApprove && ! $alreadyMatched) {
+                try {
+                    $uniqueAmt = $projectOrder->uniquePaymentAmount;
+                    $baseAmount = $uniqueAmt ? (float) $uniqueAmt->base_amount : $amount;
+
+                    $newPaid = (float) $projectOrder->paid_amount + $baseAmount;
+                    $remaining = (float) $projectOrder->total_price - $newPaid;
+                    $paymentStatus = $remaining <= 1.00 ? 'paid' : 'partial';
+
+                    if ($paymentStatus === 'paid') {
+                        $newPaid = (float) $projectOrder->total_price;
+                    }
+
+                    $projectOrder->update([
+                        'sms_verification_status' => 'confirmed',
+                        'sms_verified_at' => now(),
+                        'paid_amount' => $newPaid,
+                        'payment_status' => $paymentStatus,
+                    ]);
+
+                    if ($uniqueAmt && $uniqueAmt->status === 'reserved') {
+                        $uniqueAmt->update(['status' => 'used', 'matched_at' => now()]);
+                    }
+
+                    $projectOrder = $projectOrder->fresh(['uniquePaymentAmount', 'smsNotification']);
+
+                    Log::info('SMS Payment: Auto-approved ProjectOrder on match', [
+                        'device_id' => $device->device_id,
+                        'amount' => $amount,
+                        'project_id' => $projectOrder->id,
+                        'paid_amount' => $newPaid,
+                        'payment_status' => $paymentStatus,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('SMS Payment: Auto-approve ProjectOrder failed', [
+                        'project_id' => $projectOrder->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            $orderData = $this->transformProjectOrderForAndroid($projectOrder);
         }
 
         // Update device last_active_at
@@ -1164,8 +1263,8 @@ class SmsPaymentController extends Controller
         Log::info('Order matched by amount', [
             'device_id' => $device->device_id,
             'amount' => $amount,
-            'order_id' => $order?->id ?? $topup?->id,
-            'type' => $order ? 'order' : 'wallet_topup',
+            'order_id' => $order?->id ?? $topup?->id ?? $projectOrder?->id,
+            'type' => $order ? 'order' : ($topup ? 'wallet_topup' : 'project_order'),
             'already_matched' => $alreadyMatched,
         ]);
 

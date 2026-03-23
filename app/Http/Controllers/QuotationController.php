@@ -1859,10 +1859,21 @@ class QuotationController extends Controller
      */
     public function projectPaymentStatus(Request $request, string $projectNumber)
     {
-        $project = ProjectOrder::where('project_number', $projectNumber)->first();
+        $project = ProjectOrder::with('uniquePaymentAmount')
+            ->where('project_number', $projectNumber)
+            ->first();
 
         if (! $project) {
             return response()->json(['error' => 'not_found'], 404);
+        }
+
+        // เช็คทั้ง sms_verification_status และ uniquePaymentAmount.status
+        $matched = $project->sms_verification_status === 'confirmed'
+            || ($project->uniquePaymentAmount && $project->uniquePaymentAmount->status === 'used');
+
+        // ถ้า unique amount ถูก used แต่ project ยังไม่ update → refresh จาก DB
+        if ($matched && $project->sms_verification_status !== 'confirmed') {
+            $project->refresh();
         }
 
         return response()->json([
@@ -1871,7 +1882,7 @@ class QuotationController extends Controller
             'remaining_amount' => number_format($project->remaining_amount, 2),
             'total_price' => number_format((float) $project->total_price, 2),
             'sms_verification_status' => $project->sms_verification_status,
-            'matched' => $project->sms_verification_status === 'confirmed',
+            'matched' => $matched,
         ]);
     }
 }

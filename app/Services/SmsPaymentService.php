@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\ProjectOrder;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
 use App\Models\UniquePaymentAmount;
@@ -111,6 +112,14 @@ class SmsPaymentService
                         $matchedTopupData = $this->transformTopupToRemoteApproval($matchedTopup, $notification);
                         $responseData['order'] = $matchedTopupData;
                         $responseData['matched_order'] = $matchedTopupData;
+                    } else {
+                        // Try ProjectOrder (ชำระค่าโครงการ)
+                        $matchedProject = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])->find($notification->matched_transaction_id);
+                        if ($matchedProject) {
+                            $responseData['transaction_type'] = 'project_order';
+                            $responseData['order'] = $this->transformProjectOrderToRemoteApproval($matchedProject, $notification);
+                            $responseData['matched_order'] = $responseData['order'];
+                        }
                     }
                 }
             }
@@ -492,6 +501,57 @@ class SmsPaymentService
                 'sms_timestamp' => $notification->sms_timestamp,
                 'sender_or_receiver' => $notification->sender_or_receiver ?? '',
             ],
+        ];
+    }
+
+    /**
+     * Transform ProjectOrder to RemoteOrderApproval format for Android app.
+     */
+    private function transformProjectOrderToRemoteApproval(ProjectOrder $project, SmsPaymentNotification $notification): array
+    {
+        $approvalStatus = match (true) {
+            $project->sms_verification_status === 'confirmed' => 'auto_approved',
+            $project->sms_verification_status === 'matched' => 'pending_review',
+            default => 'pending_review',
+        };
+
+        $amount = $project->uniquePaymentAmount
+            ? (float) $project->uniquePaymentAmount->unique_amount
+            : (float) $project->payment_display_amount;
+
+        return [
+            'id' => $project->id,
+            'notification_id' => $notification->id,
+            'matched_transaction_id' => $notification->id,
+            'device_id' => $notification->device_id,
+            'approval_status' => $approvalStatus,
+            'confidence' => 'high',
+            'approved_by' => null,
+            'approved_at' => $project->sms_verified_at?->toIso8601String(),
+            'rejected_at' => null,
+            'rejection_reason' => null,
+            'order_details_json' => [
+                'order_number' => $project->project_number,
+                'product_name' => 'ชำระค่าโครงการ ' . $project->project_number,
+                'product_details' => $project->title ?? 'โครงการ',
+                'quantity' => 1,
+                'website_name' => config('app.name'),
+                'customer_name' => $project->client_name ?? '',
+                'amount' => $amount,
+            ],
+            'server_name' => config('app.name'),
+            'synced_version' => $project->updated_at ? intval($project->updated_at->timestamp * 1000) : 0,
+            'created_at' => $project->created_at?->toIso8601String(),
+            'updated_at' => $project->updated_at?->toIso8601String(),
+            'notification' => [
+                'id' => $notification->id,
+                'bank' => $notification->bank,
+                'type' => $notification->type ?? 'credit',
+                'amount' => sprintf('%.2f', (float) $notification->amount),
+                'sms_timestamp' => $notification->sms_timestamp,
+                'sender_or_receiver' => $notification->sender_or_receiver ?? '',
+            ],
+            '_type' => 'project_order',
         ];
     }
 
