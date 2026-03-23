@@ -368,7 +368,8 @@ class SmsPaymentController extends Controller
         if ($status !== 'all') {
             if ($status === 'pending') {
                 $orderQuery->whereIn('sms_verification_status', ['pending', null])
-                    ->where('payment_status', '!=', 'paid');
+                    ->where('payment_status', '!=', 'paid')
+                    ->whereHas('uniquePaymentAmount', fn ($q) => $q->where('status', 'reserved')->where('expires_at', '>', now()));
             } elseif ($status === 'matched') {
                 $orderQuery->where('sms_verification_status', 'matched');
             } elseif ($status === 'confirmed') {
@@ -398,7 +399,8 @@ class SmsPaymentController extends Controller
         if ($status !== 'all') {
             if ($status === 'pending') {
                 $topupQuery->whereIn('sms_verification_status', ['pending', null])
-                    ->where('status', WalletTopup::STATUS_PENDING);
+                    ->where('status', WalletTopup::STATUS_PENDING)
+                    ->whereHas('uniquePaymentAmount', fn ($q) => $q->where('status', 'reserved')->where('expires_at', '>', now()));
             } elseif ($status === 'matched') {
                 $topupQuery->where('sms_verification_status', 'matched');
             } elseif ($status === 'confirmed') {
