@@ -1764,7 +1764,30 @@ class QuotationController extends Controller
             ->where('project_number', $query)
             ->first();
 
-        return view('tracking', compact('project', 'query'));
+        // Check for active (non-expired) unique payment amount
+        $activePayment = null;
+        if ($project && $project->remaining_amount > 0) {
+            $activeAmount = UniquePaymentAmount::where('transaction_id', $project->id)
+                ->where('transaction_type', 'project_order')
+                ->where('status', 'reserved')
+                ->where('expires_at', '>', now())
+                ->first();
+
+            if ($activeAmount) {
+                $promptPayService = new PromptPayService;
+                $activePayment = [
+                    'unique_amount' => number_format((float) $activeAmount->unique_amount, 2),
+                    'base_amount' => number_format((float) $activeAmount->base_amount, 2),
+                    'qr_payload' => $promptPayService->generateQrPayload((float) $activeAmount->unique_amount),
+                    'expires_at' => $activeAmount->expires_at->toIso8601String(),
+                    'promptpay_name' => $promptPayService->getDisplayInfo()['name'] ?? '',
+                    'promptpay_number' => $promptPayService->getDisplayInfo()['formatted_number'] ?? '',
+                    'seconds_left' => (int) now()->diffInSeconds($activeAmount->expires_at, false),
+                ];
+            }
+        }
+
+        return view('tracking', compact('project', 'query', 'activePayment'));
     }
 
     /**

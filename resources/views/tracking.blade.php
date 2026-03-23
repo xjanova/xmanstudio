@@ -266,7 +266,7 @@
 
                     {{-- PromptPay QR Payment Section --}}
                     @if($project->remaining_amount > 0)
-                    <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden" x-data="projectPayment('{{ $project->project_number }}', {{ $project->remaining_amount }})" x-init="init()">
+                    <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden" x-data="projectPayment('{{ $project->project_number }}', {{ $project->remaining_amount }}, {{ json_encode($activePayment) }})" x-init="init()">
                         <div class="p-6 sm:p-8">
                             <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -420,7 +420,7 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-function projectPayment(projectNumber, remainingAmount) {
+function projectPayment(projectNumber, remainingAmount, activePayment) {
     return {
         projectNumber: projectNumber,
         remaining: remainingAmount,
@@ -439,7 +439,21 @@ function projectPayment(projectNumber, remainingAmount) {
         paidDisplay: '0.00',
         remainingDisplay: '0.00',
 
-        init() {},
+        init() {
+            // If there's an active payment from server, restore it
+            if (activePayment && activePayment.seconds_left > 0) {
+                this.qrPayload = activePayment.qr_payload;
+                this.uniqueAmountDisplay = activePayment.unique_amount;
+                this.promptpayName = activePayment.promptpay_name;
+                this.promptpayNumber = activePayment.promptpay_number;
+                this.payAmount = parseFloat(activePayment.base_amount.replace(/,/g, ''));
+                this.qrVisible = true;
+                this.countdown = activePayment.seconds_left;
+                this.$nextTick(() => this.renderQr());
+                this.startCountdown();
+                this.startPolling();
+            }
+        },
 
         renderQr() {
             const container = document.getElementById('qrCodeContainer');
