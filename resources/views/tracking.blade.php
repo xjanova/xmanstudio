@@ -253,7 +253,7 @@
                                     <span class="text-indigo-200/80">ชำระแล้ว</span>
                                     <span class="text-xl font-bold text-emerald-400">฿{{ number_format($project->paid_amount, 0) }}</span>
                                 </div>
-                                @if($project->remaining_amount > 0)
+                                @if($project->remaining_amount > 1)
                                 <div class="flex justify-between items-center py-3">
                                     <span class="text-indigo-200/80">ยอดค้างชำระ</span>
                                     <span class="text-xl font-bold text-amber-400">฿{{ number_format($project->remaining_amount, 0) }}</span>
@@ -265,7 +265,7 @@
                     @endif
 
                     {{-- PromptPay QR Payment Section --}}
-                    @if($project->remaining_amount > 0)
+                    @if($project->remaining_amount > 1)
                     <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden" x-data="projectPayment('{{ $project->project_number }}', {{ $project->remaining_amount }}, {{ Js::from($activePayment) }})" x-init="init()">
                         <div class="p-6 sm:p-8">
                             <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">

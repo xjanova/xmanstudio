@@ -1804,7 +1804,8 @@ class QuotationController extends Controller
         $result = DB::transaction(function () use ($request) {
             $project = ProjectOrder::where('project_number', $request->project_number)->lockForUpdate()->firstOrFail();
 
-            if ($project->payment_status === 'paid') {
+            // Tolerance 1 baht for decimal suffix
+            if ($project->payment_status === 'paid' || $project->remaining_amount <= 1) {
                 return ['error' => 'โครงการนี้ชำระเงินครบแล้ว'];
             }
 

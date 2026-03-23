@@ -221,7 +221,14 @@ class SmsPaymentNotification extends Model
         }
 
         $newPaid = (float) $project->paid_amount + (float) $uniqueAmount->base_amount;
-        $paymentStatus = $newPaid >= (float) $project->total_price ? 'paid' : 'partial';
+        // Tolerance 1 baht for decimal suffix (unique amount adds 0.01-0.99)
+        $remaining = (float) $project->total_price - $newPaid;
+        $paymentStatus = $remaining <= 1.00 ? 'paid' : 'partial';
+
+        // Cap paid_amount to total_price when fully paid
+        if ($paymentStatus === 'paid') {
+            $newPaid = (float) $project->total_price;
+        }
 
         if ($approvalMode === 'auto') {
             $project->update([
