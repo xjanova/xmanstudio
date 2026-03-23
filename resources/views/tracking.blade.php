@@ -264,6 +264,89 @@
                     </div>
                     @endif
 
+                    {{-- PromptPay QR Payment Section --}}
+                    @if($project->remaining_amount > 0)
+                    <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden" x-data="projectPayment({{ $project->id }}, {{ $project->remaining_amount }})" x-init="init()">
+                        <div class="p-6 sm:p-8">
+                            <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                                ชำระเงินผ่าน PromptPay
+                            </h3>
+
+                            {{-- Payment Success --}}
+                            <div x-show="paymentSuccess" x-cloak class="text-center py-8">
+                                <div class="inline-flex items-center justify-center w-20 h-20 mb-4 rounded-full bg-emerald-500/20 ring-4 ring-emerald-500/30">
+                                    <svg class="w-10 h-10 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <p class="text-2xl font-bold text-emerald-400 mb-2">ชำระเงินสำเร็จ!</p>
+                                <p class="text-indigo-200/80">ยอดชำระ ฿<span x-text="paidDisplay"></span></p>
+                                <p class="text-indigo-200/80 mt-1">คงเหลือ ฿<span x-text="remainingDisplay"></span></p>
+                            </div>
+
+                            {{-- QR Code Area --}}
+                            <div x-show="!paymentSuccess" x-cloak>
+                                {{-- Amount Input --}}
+                                <div x-show="!qrVisible" class="text-center">
+                                    <p class="text-indigo-200/80 mb-4">ยอดค้างชำระ <span class="text-xl font-bold text-amber-400">฿{{ number_format($project->remaining_amount, 2) }}</span></p>
+                                    <div class="max-w-xs mx-auto mb-4">
+                                        <label class="text-sm text-indigo-200/70 mb-1 block">ระบุจำนวนเงินที่ต้องการชำระ (บาท)</label>
+                                        <input type="number" x-model="payAmount" step="0.01" min="1" :max="remaining"
+                                               class="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-white text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 placeholder-indigo-300/40"
+                                               :placeholder="remaining.toFixed(2)">
+                                    </div>
+                                    <button @click="generateQr()" :disabled="loading"
+                                            class="px-8 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-bold rounded-xl hover:from-violet-600 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 flex items-center gap-2 mx-auto">
+                                        <svg x-show="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        <span x-text="loading ? 'กำลังสร้าง...' : 'สร้าง QR Code ชำระเงิน'"></span>
+                                    </button>
+                                </div>
+
+                                {{-- QR Code Display --}}
+                                <div x-show="qrVisible" class="text-center">
+                                    {{-- Amount Warning --}}
+                                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-6">
+                                        <p class="text-amber-300 font-bold text-lg">กรุณาโอนให้ตรง ฿<span x-text="uniqueAmountDisplay"></span></p>
+                                        <p class="text-amber-200/70 text-sm mt-1">ยอดมีทศนิยมเพื่อระบุตัวตนการโอน ห้ามปัดเศษ</p>
+                                    </div>
+
+                                    {{-- QR SVG --}}
+                                    <div class="inline-block bg-white rounded-2xl p-4 mb-4 shadow-2xl">
+                                        <div x-html="qrSvg" class="w-64 h-64 mx-auto"></div>
+                                    </div>
+
+                                    {{-- PromptPay Info --}}
+                                    <div class="mb-4">
+                                        <p class="text-indigo-200/80 text-sm" x-show="promptpayName">
+                                            <span x-text="promptpayName"></span> &middot; <span x-text="promptpayNumber"></span>
+                                        </p>
+                                    </div>
+
+                                    {{-- Countdown Timer --}}
+                                    <div class="mb-6">
+                                        <p class="text-indigo-200/70 text-sm">QR หมดอายุใน</p>
+                                        <p class="text-2xl font-mono font-bold" :class="countdown <= 60 ? 'text-red-400' : 'text-white'" x-text="countdownDisplay"></p>
+                                    </div>
+
+                                    {{-- Waiting Animation --}}
+                                    <div class="flex items-center justify-center gap-2 text-indigo-200/70 mb-4">
+                                        <svg class="w-5 h-5 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        <span>รอรับการโอน...</span>
+                                    </div>
+
+                                    {{-- Regenerate Button --}}
+                                    <button @click="qrVisible = false; stopPolling()" class="text-sm text-indigo-300/70 hover:text-white underline transition-colors">
+                                        เปลี่ยนจำนวนเงิน / สร้าง QR ใหม่
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                 </div>
 
             @else
@@ -330,6 +413,128 @@
     .animate-fade-in-up {
         animation: fade-in-up 0.6s ease-out both;
     }
+    [x-cloak] { display: none !important; }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+function projectPayment(projectId, remainingAmount) {
+    return {
+        projectId: projectId,
+        remaining: remainingAmount,
+        payAmount: remainingAmount,
+        loading: false,
+        qrVisible: false,
+        qrSvg: '',
+        uniqueAmountDisplay: '',
+        promptpayName: '',
+        promptpayNumber: '',
+        countdown: 0,
+        countdownDisplay: '30:00',
+        pollInterval: null,
+        countdownInterval: null,
+        paymentSuccess: false,
+        paidDisplay: '0.00',
+        remainingDisplay: '0.00',
+
+        init() {},
+
+        async generateQr() {
+            if (this.loading) return;
+            const amount = parseFloat(this.payAmount);
+            if (!amount || amount <= 0) return;
+
+            this.loading = true;
+            try {
+                const res = await fetch('{{ route("tracking.payment.init") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ project_id: this.projectId, amount: amount }),
+                });
+                const data = await res.json();
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                this.qrSvg = data.qr_svg;
+                this.uniqueAmountDisplay = data.unique_amount;
+                this.promptpayName = data.promptpay_name;
+                this.promptpayNumber = data.promptpay_number;
+                this.qrVisible = true;
+
+                // Start countdown (30 min)
+                this.countdown = 30 * 60;
+                this.startCountdown();
+                this.startPolling();
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        startCountdown() {
+            this.stopCountdown();
+            this.updateCountdownDisplay();
+            this.countdownInterval = setInterval(() => {
+                this.countdown--;
+                this.updateCountdownDisplay();
+                if (this.countdown <= 0) {
+                    this.stopCountdown();
+                    this.qrVisible = false;
+                    this.stopPolling();
+                }
+            }, 1000);
+        },
+
+        stopCountdown() {
+            if (this.countdownInterval) {
+                clearInterval(this.countdownInterval);
+                this.countdownInterval = null;
+            }
+        },
+
+        updateCountdownDisplay() {
+            const m = Math.floor(this.countdown / 60);
+            const s = this.countdown % 60;
+            this.countdownDisplay = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        },
+
+        startPolling() {
+            this.stopPolling();
+            this.pollInterval = setInterval(() => this.checkStatus(), 5000);
+        },
+
+        stopPolling() {
+            if (this.pollInterval) {
+                clearInterval(this.pollInterval);
+                this.pollInterval = null;
+            }
+        },
+
+        async checkStatus() {
+            try {
+                const res = await fetch(`/tracking/payment-status/${this.projectId}`);
+                const data = await res.json();
+                if (data.matched) {
+                    this.paymentSuccess = true;
+                    this.paidDisplay = data.paid_amount;
+                    this.remainingDisplay = data.remaining_amount;
+                    this.stopPolling();
+                    this.stopCountdown();
+
+                    // Update summary amounts on page
+                    this.remaining = parseFloat(data.remaining_amount.replace(/,/g, ''));
+                }
+            } catch (e) {}
+        },
+    };
+}
+</script>
 @endpush
 @endsection

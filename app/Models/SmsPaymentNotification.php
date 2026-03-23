@@ -155,6 +155,9 @@ class SmsPaymentNotification extends Model
                     } elseif ($uniqueAmount->transaction_type === 'wallet_topup') {
                         $topup = WalletTopup::find($uniqueAmount->transaction_id);
                         $stillPending = $topup && in_array($topup->status, [WalletTopup::STATUS_PENDING, WalletTopup::STATUS_EXPIRED, WalletTopup::STATUS_REJECTED]);
+                    } elseif ($uniqueAmount->transaction_type === 'project_order') {
+                        $project = ProjectOrder::find($uniqueAmount->transaction_id);
+                        $stillPending = $project && in_array($project->payment_status, ['pending', 'partial', null]);
                     }
 
                     if (! $stillPending) {
@@ -191,8 +194,46 @@ class SmsPaymentNotification extends Model
                 return $this->matchWalletTopup($uniqueAmount, $approvalMode);
             }
 
+            if ($uniqueAmount->transaction_type === 'project_order') {
+                return $this->matchProjectOrder($uniqueAmount);
+            }
+
             return false;
         });
+    }
+
+    /**
+     * Match with a ProjectOrder (add to paid_amount)
+     */
+    protected function matchProjectOrder(UniquePaymentAmount $uniqueAmount): bool
+    {
+        $this->status = 'matched';
+        $this->matched_transaction_id = $uniqueAmount->transaction_id;
+        $this->save();
+
+        $project = ProjectOrder::find($uniqueAmount->transaction_id);
+        if (! $project) {
+            return true;
+        }
+
+        if (! in_array($project->payment_status, ['pending', 'partial', null])) {
+            return true;
+        }
+
+        $newPaid = (float) $project->paid_amount + (float) $uniqueAmount->base_amount;
+        $paymentStatus = $newPaid >= (float) $project->total_price ? 'paid' : 'partial';
+
+        $project->update([
+            'sms_notification_id' => $this->id,
+            'sms_verification_status' => 'confirmed',
+            'sms_verified_at' => now(),
+            'paid_amount' => $newPaid,
+            'payment_status' => $paymentStatus,
+        ]);
+
+        $this->update(['status' => 'confirmed']);
+
+        return true;
     }
 
     /**

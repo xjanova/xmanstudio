@@ -7,7 +7,9 @@ use App\Models\ProjectOrder;
 use App\Models\Quotation;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
+use App\Models\UniquePaymentAmount;
 use App\Services\LineNotifyService;
+use App\Services\PromptPayService;
 use App\Services\ThaiPaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -1762,5 +1764,73 @@ class QuotationController extends Controller
             ->first();
 
         return view('tracking', compact('project', 'query'));
+    }
+
+    /**
+     * Generate unique payment amount + QR code for project payment (AJAX)
+     */
+    public function projectPaymentInit(Request $request)
+    {
+        $request->validate([
+            'project_id' => 'required|integer',
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        $project = ProjectOrder::findOrFail($request->project_id);
+        $amount = (float) $request->amount;
+
+        // Cancel any existing reserved unique amounts for this project
+        UniquePaymentAmount::where('transaction_id', $project->id)
+            ->where('transaction_type', 'project_order')
+            ->where('status', 'reserved')
+            ->update(['status' => 'cancelled']);
+
+        // Generate new unique amount
+        $uniqueAmount = UniquePaymentAmount::generate($amount, $project->id, 'project_order', 30);
+
+        if (! $uniqueAmount) {
+            return response()->json(['error' => 'ไม่สามารถสร้างยอดชำระได้ กรุณาลองใหม่'], 422);
+        }
+
+        // Update project with display amount
+        $project->update([
+            'unique_payment_amount_id' => $uniqueAmount->id,
+            'payment_display_amount' => $uniqueAmount->unique_amount,
+        ]);
+
+        // Generate QR code
+        $promptPayService = new PromptPayService;
+        $qrSvg = $promptPayService->generateQrCodeSvg((float) $uniqueAmount->unique_amount);
+        $promptPayInfo = $promptPayService->getDisplayInfo();
+
+        return response()->json([
+            'unique_amount' => number_format((float) $uniqueAmount->unique_amount, 2),
+            'base_amount' => number_format($amount, 2),
+            'expires_at' => $uniqueAmount->expires_at->toIso8601String(),
+            'qr_svg' => $qrSvg,
+            'promptpay_name' => $promptPayInfo['name'] ?? '',
+            'promptpay_number' => $promptPayInfo['formatted_number'] ?? '',
+        ]);
+    }
+
+    /**
+     * Check project payment status (polling endpoint)
+     */
+    public function projectPaymentStatus(Request $request, int $projectId)
+    {
+        $project = ProjectOrder::find($projectId);
+
+        if (! $project) {
+            return response()->json(['error' => 'not_found'], 404);
+        }
+
+        return response()->json([
+            'payment_status' => $project->payment_status,
+            'paid_amount' => number_format((float) $project->paid_amount, 2),
+            'remaining_amount' => number_format($project->remaining_amount, 2),
+            'total_price' => number_format((float) $project->total_price, 2),
+            'sms_verification_status' => $project->sms_verification_status,
+            'matched' => $project->sms_verification_status === 'confirmed',
+        ]);
     }
 }

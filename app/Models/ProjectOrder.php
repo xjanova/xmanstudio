@@ -32,6 +32,11 @@ class ProjectOrder extends Model
         'production_url',
         'admin_notes',
         'customer_notes',
+        'unique_payment_amount_id',
+        'sms_notification_id',
+        'sms_verification_status',
+        'sms_verified_at',
+        'payment_display_amount',
     ];
 
     protected $casts = [
@@ -40,6 +45,8 @@ class ProjectOrder extends Model
         'actual_end_date' => 'date',
         'total_price' => 'decimal:2',
         'paid_amount' => 'decimal:2',
+        'payment_display_amount' => 'decimal:2',
+        'sms_verified_at' => 'datetime',
     ];
 
     /**
@@ -138,6 +145,16 @@ class ProjectOrder extends Model
     public function timeline(): HasMany
     {
         return $this->hasMany(ProjectTimeline::class)->orderBy('event_date');
+    }
+
+    public function uniquePaymentAmount(): BelongsTo
+    {
+        return $this->belongsTo(UniquePaymentAmount::class);
+    }
+
+    public function smsNotification(): BelongsTo
+    {
+        return $this->belongsTo(SmsPaymentNotification::class, 'sms_notification_id');
     }
 
     /**
