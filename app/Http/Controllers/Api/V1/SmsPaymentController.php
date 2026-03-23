@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
 use App\Models\Wallet;
+use App\Models\ProjectOrder;
 use App\Models\WalletTopup;
 use App\Models\WalletTransaction;
 use App\Services\FcmNotificationService;
@@ -409,6 +410,35 @@ class SmsPaymentController extends Controller
 
         $topups = $topupQuery->limit(500)->get();
 
+        // === Query Project Orders (ชำระค่าโครงการ) ===
+        $projectQuery = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])
+            ->whereNotNull('unique_payment_amount_id')
+            ->orderBy('created_at', 'desc');
+
+        if ($status !== 'all') {
+            if ($status === 'pending') {
+                $projectQuery->whereIn('sms_verification_status', ['pending', null])
+                    ->whereIn('payment_status', ['unpaid', 'partial', null]);
+            } elseif ($status === 'matched') {
+                $projectQuery->where('sms_verification_status', 'matched');
+            } elseif ($status === 'confirmed') {
+                $projectQuery->where('sms_verification_status', 'confirmed');
+            }
+        }
+
+        if ($dateFrom) {
+            $projectQuery->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $projectQuery->whereDate('created_at', '<=', $dateTo);
+        }
+
+        if (! $dateFrom && ! $dateTo) {
+            $projectQuery->where('project_orders.created_at', '>=', now()->subDays(30));
+        }
+
+        $projectOrders = $projectQuery->limit(500)->get();
+
         // === Merge + Sort + Paginate ===
         $allItems = collect();
 
@@ -417,6 +447,9 @@ class SmsPaymentController extends Controller
         }
         foreach ($topups as $topup) {
             $allItems->push($this->transformWalletTopupForAndroid($topup));
+        }
+        foreach ($projectOrders as $projectOrder) {
+            $allItems->push($this->transformProjectOrderForAndroid($projectOrder));
         }
 
         // Sort by created_at descending
@@ -590,6 +623,72 @@ class SmsPaymentController extends Controller
             'updated_at' => $topup->updated_at?->toIso8601String(),
             'notification' => $notification,
             '_type' => 'wallet_topup',
+        ];
+    }
+
+    /**
+     * Transform ProjectOrder to Android app format.
+     */
+    private function transformProjectOrderForAndroid(ProjectOrder $project): array
+    {
+        $approvalStatus = match (true) {
+            $project->payment_status === 'paid' => 'auto_approved',
+            $project->sms_verification_status === 'confirmed' => 'auto_approved',
+            $project->sms_verification_status === 'matched' => 'pending_review',
+            $project->sms_verification_status === 'rejected' => 'rejected',
+            default => 'pending_review',
+        };
+
+        $amount = $project->uniquePaymentAmount
+            ? (float) $project->uniquePaymentAmount->unique_amount
+            : (float) $project->total_price;
+
+        $smsNotification = $project->smsNotification ?? null;
+
+        $orderDetails = [
+            'order_number' => $project->project_number,
+            'product_name' => 'โครงการ: ' . $project->project_name,
+            'product_details' => 'ชำระค่าโครงการ ฿' . number_format((float) $project->payment_display_amount ?? $amount, 2),
+            'quantity' => 1,
+            'website_name' => config('app.name'),
+            'customer_name' => $project->user?->name ?? 'ลูกค้า',
+            'amount' => $amount,
+        ];
+
+        $notification = $smsNotification ? [
+            'id' => $smsNotification->id,
+            'bank' => $smsNotification->bank,
+            'type' => $smsNotification->type ?? 'credit',
+            'amount' => sprintf('%.2f', (float) $smsNotification->amount),
+            'sms_timestamp' => $smsNotification->sms_timestamp,
+            'sender_or_receiver' => $smsNotification->sender_or_receiver ?? '',
+        ] : [
+            'id' => $project->id,
+            'bank' => 'PROMPTPAY',
+            'type' => 'credit',
+            'amount' => sprintf('%.2f', $amount),
+            'sms_timestamp' => $project->created_at?->format('Y-m-d H:i:s'),
+            'sender_or_receiver' => $project->user?->name ?? '',
+        ];
+
+        return [
+            'id' => $project->id,
+            'notification_id' => $smsNotification?->id,
+            'matched_transaction_id' => $smsNotification?->id,
+            'device_id' => $smsNotification?->device_id,
+            'approval_status' => $approvalStatus,
+            'confidence' => $smsNotification ? 'high' : 'medium',
+            'approved_by' => null,
+            'approved_at' => $project->sms_verified_at?->toIso8601String(),
+            'rejected_at' => null,
+            'rejection_reason' => null,
+            'order_details_json' => $orderDetails,
+            'server_name' => config('app.name'),
+            'synced_version' => $project->updated_at ? intval($project->updated_at->timestamp * 1000) : 0,
+            'created_at' => $project->created_at?->toIso8601String(),
+            'updated_at' => $project->updated_at?->toIso8601String(),
+            'notification' => $notification,
+            '_type' => 'project_order',
         ];
     }
 
