@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Review;
+use App\Models\Service;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
@@ -18,8 +20,8 @@ class ReviewController extends Controller
         ]);
 
         $morphMap = [
-            'product' => \App\Models\Product::class,
-            'service' => \App\Models\Service::class,
+            'product' => Product::class,
+            'service' => Service::class,
         ];
 
         $type = $morphMap[$request->reviewable_type];

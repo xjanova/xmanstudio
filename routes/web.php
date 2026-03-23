@@ -44,6 +44,7 @@ use App\Http\Controllers\Admin\QuotationController as AdminQuotationController;
 use App\Http\Controllers\Admin\QuotationOptionController;
 use App\Http\Controllers\Admin\RedisSettingsController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
@@ -72,6 +73,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicChatController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\RentalController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SharedWorkflowController;
 use App\Http\Controllers\SmsCheckerController;
@@ -151,7 +153,7 @@ Route::get('/products', [ProductController::class, 'index'])->name('products.ind
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 
 // Reviews (auth required)
-Route::post('/reviews', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
+Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
 
 // Downloads (product downloads with license check)
 Route::get('/download/{slug}', [DownloadController::class, 'downloadPage'])->name('download.page');
@@ -515,11 +517,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/products/{product}/preview', [AdminProductController::class, 'preview'])->name('products.preview');
 
     // Reviews Management
-    Route::get('/reviews', [\App\Http\Controllers\Admin\ReviewController::class, 'index'])->name('reviews.index');
-    Route::patch('/reviews/{review}/approve', [\App\Http\Controllers\Admin\ReviewController::class, 'approve'])->name('reviews.approve');
-    Route::patch('/reviews/{review}/reject', [\App\Http\Controllers\Admin\ReviewController::class, 'reject'])->name('reviews.reject');
-    Route::patch('/reviews/{review}/feature', [\App\Http\Controllers\Admin\ReviewController::class, 'toggleFeatured'])->name('reviews.feature');
-    Route::delete('/reviews/{review}', [\App\Http\Controllers\Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::get('/reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+    Route::patch('/reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
+    Route::patch('/reviews/{review}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
+    Route::patch('/reviews/{review}/feature', [AdminReviewController::class, 'toggleFeatured'])->name('reviews.feature');
+    Route::delete('/reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
 
     // Guide Screenshots Management
     Route::prefix('guide-screenshots')->name('guide-screenshots.')->group(function () {
