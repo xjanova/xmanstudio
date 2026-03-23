@@ -13,6 +13,7 @@ use App\Services\PromptPayService;
 use App\Services\ThaiPaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class QuotationController extends Controller
@@ -1791,7 +1792,7 @@ class QuotationController extends Controller
         }
 
         // Cancel + generate in transaction to prevent race condition
-        $uniqueAmount = \Illuminate\Support\Facades\DB::transaction(function () use ($project, $amount) {
+        $uniqueAmount = DB::transaction(function () use ($project, $amount) {
             UniquePaymentAmount::where('transaction_id', $project->id)
                 ->where('transaction_type', 'project_order')
                 ->where('status', 'reserved')
