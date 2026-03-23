@@ -439,16 +439,7 @@ function projectPayment(projectNumber, remainingAmount) {
         paidDisplay: '0.00',
         remainingDisplay: '0.00',
 
-        init() {
-            // Cancel reserved payment when leaving the page
-            this._beforeUnload = () => this.cancelPayment();
-            window.addEventListener('beforeunload', this._beforeUnload);
-        },
-
-        destroy() {
-            window.removeEventListener('beforeunload', this._beforeUnload);
-            this.cancelPayment();
-        },
+        init() {},
 
         renderQr() {
             const container = document.getElementById('qrCodeContainer');
@@ -464,14 +455,6 @@ function projectPayment(projectNumber, remainingAmount) {
             });
         },
 
-        cancelPayment() {
-            if (!this.qrVisible || this.paymentSuccess) return;
-            // Fire-and-forget cancel via beacon with CSRF
-            const formData = new FormData();
-            formData.append('project_number', this.projectNumber);
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-            navigator.sendBeacon('{{ route("tracking.payment.cancel") }}', formData);
-        },
 
         async generateQr() {
             if (this.loading) return;
