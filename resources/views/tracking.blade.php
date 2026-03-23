@@ -289,6 +289,14 @@
 
                             {{-- QR Code Area --}}
                             <div x-show="!paymentSuccess" x-cloak>
+                                {{-- QR Expired Message --}}
+                                <div x-show="qrExpired && !qrVisible" x-cloak class="text-center mb-6">
+                                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        QR Code หมดอายุแล้ว กรุณาสร้างใหม่
+                                    </div>
+                                </div>
+
                                 {{-- Amount Input --}}
                                 <div x-show="!qrVisible" class="text-center">
                                     <p class="text-indigo-200/80 mb-4">ยอดค้างชำระ <span class="text-xl font-bold text-amber-400">฿{{ number_format($project->remaining_amount, 2) }}</span></p>
@@ -427,6 +435,7 @@ function projectPayment(projectNumber, remainingAmount, activePayment) {
         payAmount: remainingAmount,
         loading: false,
         qrVisible: false,
+        qrExpired: false,
         qrPayload: '',
         uniqueAmountDisplay: '',
         promptpayName: '',
@@ -449,6 +458,7 @@ function projectPayment(projectNumber, remainingAmount, activePayment) {
                 this.promptpayNumber = activePayment.promptpay_number;
                 this.payAmount = parseFloat(activePayment.base_amount.replace(/,/g, ''));
                 this.qrVisible = true;
+                this.qrExpired = false;
                 this.countdown = activePayment.seconds_left;
                 this.$nextTick(() => this.renderQr());
                 this.startCountdown();
@@ -501,6 +511,7 @@ function projectPayment(projectNumber, remainingAmount, activePayment) {
                 this.promptpayName = data.promptpay_name;
                 this.promptpayNumber = data.promptpay_number;
                 this.qrVisible = true;
+                this.qrExpired = false;
 
                 // Render QR code via JS library
                 this.$nextTick(() => this.renderQr());
@@ -525,6 +536,7 @@ function projectPayment(projectNumber, remainingAmount, activePayment) {
                 if (this.countdown <= 0) {
                     this.stopCountdown();
                     this.qrVisible = false;
+                    this.qrExpired = true;
                     this.stopPolling();
                 }
             }, 1000);

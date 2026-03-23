@@ -418,7 +418,8 @@ class SmsPaymentController extends Controller
         if ($status !== 'all') {
             if ($status === 'pending') {
                 $projectQuery->whereIn('sms_verification_status', ['pending', null])
-                    ->whereIn('payment_status', ['unpaid', 'partial', null]);
+                    ->whereIn('payment_status', ['unpaid', 'partial', null])
+                    ->whereHas('uniquePaymentAmount', fn ($q) => $q->where('status', 'reserved')->where('expires_at', '>', now()));
             } elseif ($status === 'matched') {
                 $projectQuery->where('sms_verification_status', 'matched');
             } elseif ($status === 'confirmed') {
