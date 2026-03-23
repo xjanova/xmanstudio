@@ -1845,7 +1845,7 @@ class QuotationController extends Controller
 
         return response()->json([
             'unique_amount' => number_format((float) $uniqueAmount->unique_amount, 2),
-            'base_amount' => number_format($amount, 2),
+            'base_amount' => number_format((float) $uniqueAmount->base_amount, 2),
             'expires_at' => $uniqueAmount->expires_at->toIso8601String(),
             'qr_payload' => $qrPayload,
             'promptpay_name' => $promptPayInfo['name'] ?? '',
