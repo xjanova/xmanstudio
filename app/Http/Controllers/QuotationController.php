@@ -1874,5 +1874,4 @@ class QuotationController extends Controller
             'matched' => $project->sms_verification_status === 'confirmed',
         ]);
     }
-
 }
