@@ -37,7 +37,7 @@
                 <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 rounded-2xl opacity-40 group-hover:opacity-60 blur transition duration-500"></div>
                 <div class="relative flex bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
                     <div class="flex-1 relative">
-                        <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-300/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-300/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                         <input type="text" name="query" value="{{ $query ?? '' }}" required minlength="3"
@@ -52,7 +52,7 @@
                     </button>
                 </div>
             </form>
-            <p class="text-center text-sm text-indigo-300/40 mt-3">ตัวอย่าง: PRJ-20260213-ABCD</p>
+            <p class="text-center text-sm text-indigo-300/70 mt-3">ตัวอย่าง: PRJ-20260213-ABCD</p>
         </div>
 
         {{-- Results --}}
@@ -103,8 +103,8 @@
                             {{-- Progress Bar --}}
                             <div class="mb-6">
                                 <div class="flex justify-between items-center mb-2">
-                                    <span class="text-sm font-medium text-indigo-200/60">ความคืบหน้า</span>
-                                    <span class="text-2xl font-black text-white">{{ $project->progress_percent ?? 0 }}<span class="text-base text-indigo-300/60">%</span></span>
+                                    <span class="text-sm font-medium text-indigo-200/80">ความคืบหน้า</span>
+                                    <span class="text-2xl font-black text-white">{{ $project->progress_percent ?? 0 }}<span class="text-base text-indigo-300/80">%</span></span>
                                 </div>
                                 <div class="w-full h-4 bg-white/5 rounded-full overflow-hidden border border-white/5">
                                     <div class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400 transition-all duration-1000 ease-out relative"
@@ -118,19 +118,19 @@
                             {{-- Quick Stats --}}
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div class="bg-white/5 rounded-xl p-4 border border-white/5">
-                                    <p class="text-xs text-indigo-300/50 font-medium mb-1">เริ่มงาน</p>
+                                    <p class="text-xs text-indigo-300/70 font-medium mb-1">เริ่มงาน</p>
                                     <p class="text-sm font-bold text-white">{{ $project->start_date?->format('d/m/Y') ?? '-' }}</p>
                                 </div>
                                 <div class="bg-white/5 rounded-xl p-4 border border-white/5">
-                                    <p class="text-xs text-indigo-300/50 font-medium mb-1">กำหนดส่ง</p>
+                                    <p class="text-xs text-indigo-300/70 font-medium mb-1">กำหนดส่ง</p>
                                     <p class="text-sm font-bold text-white">{{ $project->expected_end_date?->format('d/m/Y') ?? '-' }}</p>
                                 </div>
                                 <div class="bg-white/5 rounded-xl p-4 border border-white/5">
-                                    <p class="text-xs text-indigo-300/50 font-medium mb-1">มูลค่าโครงการ</p>
+                                    <p class="text-xs text-indigo-300/70 font-medium mb-1">มูลค่าโครงการ</p>
                                     <p class="text-sm font-bold text-emerald-400">฿{{ number_format($project->total_price, 0) }}</p>
                                 </div>
                                 <div class="bg-white/5 rounded-xl p-4 border border-white/5">
-                                    <p class="text-xs text-indigo-300/50 font-medium mb-1">ชำระแล้ว</p>
+                                    <p class="text-xs text-indigo-300/70 font-medium mb-1">ชำระแล้ว</p>
                                     <p class="text-sm font-bold text-cyan-400">฿{{ number_format($project->paid_amount, 0) }}</p>
                                 </div>
                             </div>
@@ -146,7 +146,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                 </svg>
                                 รายการงาน
-                                <span class="text-sm font-normal text-indigo-300/50">({{ $project->features->where('status', 'completed')->count() }}/{{ $project->features->count() }})</span>
+                                <span class="text-sm font-normal text-indigo-300/70">({{ $project->features->where('status', 'completed')->count() }}/{{ $project->features->count() }})</span>
                             </h3>
 
                             <div class="relative">
@@ -189,10 +189,10 @@
                                                 @endif
                                             </div>
                                             @if($feature->description)
-                                            <p class="text-sm text-indigo-200/40 mt-1">{{ Str::limit($feature->description, 100) }}</p>
+                                            <p class="text-sm text-indigo-200/70 mt-1">{{ Str::limit($feature->description, 100) }}</p>
                                             @endif
                                             @if($feature->due_date)
-                                            <p class="text-xs text-indigo-300/30 mt-2 flex items-center gap-1">
+                                            <p class="text-xs text-indigo-300/80 mt-2 flex items-center gap-1">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                                 กำหนด: {{ $feature->due_date->format('d/m/Y') }}
                                             </p>
@@ -224,8 +224,8 @@
                                         @if($update->title)
                                         <p class="font-semibold text-white text-sm">{{ $update->title }}</p>
                                         @endif
-                                        <p class="text-sm text-indigo-200/50">{{ $update->description }}</p>
-                                        <p class="text-xs text-indigo-300/30 mt-1">{{ $update->created_at->diffForHumans() }}</p>
+                                        <p class="text-sm text-indigo-200/80">{{ $update->description }}</p>
+                                        <p class="text-xs text-indigo-300/80 mt-1">{{ $update->created_at->diffForHumans() }}</p>
                                     </div>
                                 </div>
                                 @endforeach
@@ -246,16 +246,16 @@
                             </h3>
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center py-3 border-b border-white/5">
-                                    <span class="text-indigo-200/60">มูลค่าโครงการ</span>
+                                    <span class="text-indigo-200/80">มูลค่าโครงการ</span>
                                     <span class="text-xl font-bold text-white">฿{{ number_format($project->total_price, 0) }}</span>
                                 </div>
                                 <div class="flex justify-between items-center py-3 border-b border-white/5">
-                                    <span class="text-indigo-200/60">ชำระแล้ว</span>
+                                    <span class="text-indigo-200/80">ชำระแล้ว</span>
                                     <span class="text-xl font-bold text-emerald-400">฿{{ number_format($project->paid_amount, 0) }}</span>
                                 </div>
                                 @if($project->remaining_amount > 0)
                                 <div class="flex justify-between items-center py-3">
-                                    <span class="text-indigo-200/60">ยอดค้างชำระ</span>
+                                    <span class="text-indigo-200/80">ยอดค้างชำระ</span>
                                     <span class="text-xl font-bold text-amber-400">฿{{ number_format($project->remaining_amount, 0) }}</span>
                                 </div>
                                 @endif
@@ -270,13 +270,13 @@
                 {{-- Not Found --}}
                 <div class="text-center py-16 animate-fade-in-up">
                     <div class="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-2xl bg-white/5 border border-white/10">
-                        <svg class="w-10 h-10 text-indigo-300/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 text-indigo-300/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
                     <p class="text-xl font-bold text-white mb-2">ไม่พบโครงการ</p>
-                    <p class="text-indigo-200/40">กรุณาตรวจสอบหมายเลขโครงการอีกครั้ง</p>
-                    <p class="text-sm text-indigo-300/30 mt-1">ตัวอย่าง: PRJ-20260213-ABCD</p>
+                    <p class="text-indigo-200/70">กรุณาตรวจสอบหมายเลขโครงการอีกครั้ง</p>
+                    <p class="text-sm text-indigo-300/80 mt-1">ตัวอย่าง: PRJ-20260213-ABCD</p>
                 </div>
             @endif
         @endisset
@@ -291,7 +291,7 @@
                     </svg>
                 </div>
                 <h3 class="font-semibold text-white text-sm">กรอกหมายเลข</h3>
-                <p class="text-xs text-indigo-200/40 mt-1">เช่น PRJ-20260213-ABCD</p>
+                <p class="text-xs text-indigo-200/70 mt-1">เช่น PRJ-20260213-ABCD</p>
             </div>
             <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 text-center hover:bg-white/[0.07] transition-colors group">
                 <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -300,7 +300,7 @@
                     </svg>
                 </div>
                 <h3 class="font-semibold text-white text-sm">ดูความคืบหน้า</h3>
-                <p class="text-xs text-indigo-200/40 mt-1">ไทม์ไลน์ + สถานะงาน</p>
+                <p class="text-xs text-indigo-200/70 mt-1">ไทม์ไลน์ + สถานะงาน</p>
             </div>
             <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 text-center hover:bg-white/[0.07] transition-colors group">
                 <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-cyan-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -309,7 +309,7 @@
                     </svg>
                 </div>
                 <h3 class="font-semibold text-white text-sm">ตรวจสอบยอดชำระ</h3>
-                <p class="text-xs text-indigo-200/40 mt-1">สรุปค่าใช้จ่าย</p>
+                <p class="text-xs text-indigo-200/70 mt-1">สรุปค่าใช้จ่าย</p>
             </div>
         </div>
         @endempty
