@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Review;
 
 class HomeController extends Controller
 {
@@ -18,6 +19,13 @@ class HomeController extends Controller
             ->orderBy('order')
             ->get();
 
-        return view('home', compact('featuredProducts', 'categories'));
+        $featuredReviews = Review::approved()
+            ->featured()
+            ->with(['user', 'reviewable'])
+            ->latest()
+            ->limit(6)
+            ->get();
+
+        return view('home', compact('featuredProducts', 'categories', 'featuredReviews'));
     }
 }

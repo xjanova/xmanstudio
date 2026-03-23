@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Product extends Model
 {
@@ -128,5 +129,22 @@ class Product extends Model
                             ->where('coming_soon_until', '<=', now());
                     });
             });
+    }
+
+    public function reviews(): MorphMany
+    {
+        return $this->morphMany(Review::class, 'reviewable');
+    }
+
+    public function getAverageRatingAttribute(): ?float
+    {
+        $avg = $this->reviews()->approved()->avg('rating');
+
+        return $avg ? round($avg, 1) : null;
+    }
+
+    public function getApprovedReviewsCountAttribute(): int
+    {
+        return $this->reviews()->approved()->count();
     }
 }

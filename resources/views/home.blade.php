@@ -563,6 +563,49 @@
     </div>
 </div>
 
+<!-- Customer Reviews -->
+@if(isset($featuredReviews) && $featuredReviews->isNotEmpty())
+<div class="py-20 bg-white dark:bg-gray-900 relative z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">รีวิวจากลูกค้า</h2>
+            <p class="text-gray-600 dark:text-gray-400">ความคิดเห็นจากลูกค้าที่ใช้บริการของเรา</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach($featuredReviews as $review)
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                {{-- Stars --}}
+                <div class="mb-4">
+                    <x-star-rating :rating="$review->rating" />
+                </div>
+
+                {{-- Comment --}}
+                @if($review->title)
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">{{ $review->title }}</h4>
+                @endif
+                <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{{ Str::limit($review->comment, 200) }}</p>
+
+                {{-- User Info --}}
+                <div class="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    @if($review->user?->avatar)
+                        <img src="{{ $review->user->avatar_url }}" class="w-10 h-10 rounded-full object-cover" alt="{{ $review->user->name }}">
+                    @else
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <span class="text-sm font-bold text-white">{{ mb_substr($review->user?->name ?? '?', 0, 1) }}</span>
+                        </div>
+                    @endif
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $review->user?->name ?? 'ผู้ใช้' }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $review->reviewable_name }} &middot; {{ $review->created_at->diffForHumans() }}</p>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- CTA Section -->
 <div class="relative py-24 overflow-hidden z-30">
     <div class="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-800"></div>

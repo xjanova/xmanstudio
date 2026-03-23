@@ -150,6 +150,9 @@ Route::get('/', function () {
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 
+// Reviews (auth required)
+Route::post('/reviews', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
+
 // Downloads (product downloads with license check)
 Route::get('/download/{slug}', [DownloadController::class, 'downloadPage'])->name('download.page');
 Route::get('/download/{slug}/{version?}', [DownloadController::class, 'download'])->name('download.product')->middleware('auth');
@@ -510,6 +513,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/products/{product}/toggle', [AdminProductController::class, 'toggle'])->name('products.toggle');
     Route::post('/products/{product}/toggle-coming-soon', [AdminProductController::class, 'toggleComingSoon'])->name('products.toggle-coming-soon');
     Route::get('/products/{product}/preview', [AdminProductController::class, 'preview'])->name('products.preview');
+
+    // Reviews Management
+    Route::get('/reviews', [\App\Http\Controllers\Admin\ReviewController::class, 'index'])->name('reviews.index');
+    Route::patch('/reviews/{review}/approve', [\App\Http\Controllers\Admin\ReviewController::class, 'approve'])->name('reviews.approve');
+    Route::patch('/reviews/{review}/reject', [\App\Http\Controllers\Admin\ReviewController::class, 'reject'])->name('reviews.reject');
+    Route::patch('/reviews/{review}/feature', [\App\Http\Controllers\Admin\ReviewController::class, 'toggleFeatured'])->name('reviews.feature');
+    Route::delete('/reviews/{review}', [\App\Http\Controllers\Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
 
     // Guide Screenshots Management
     Route::prefix('guide-screenshots')->name('guide-screenshots.')->group(function () {

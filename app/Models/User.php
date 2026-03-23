@@ -296,4 +296,9 @@ class User extends Authenticatable
             return $role->permissions;
         })->unique('id');
     }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
 }

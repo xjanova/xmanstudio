@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Service extends Model
 {
@@ -160,5 +161,22 @@ class Service extends Model
                             ->where('coming_soon_until', '<=', now());
                     });
             });
+    }
+
+    public function reviews(): MorphMany
+    {
+        return $this->morphMany(Review::class, 'reviewable');
+    }
+
+    public function getAverageRatingAttribute(): ?float
+    {
+        $avg = $this->reviews()->approved()->avg('rating');
+
+        return $avg ? round($avg, 1) : null;
+    }
+
+    public function getApprovedReviewsCountAttribute(): int
+    {
+        return $this->reviews()->approved()->count();
     }
 }
