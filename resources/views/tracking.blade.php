@@ -313,9 +313,9 @@
                                         <p class="text-amber-200/70 text-sm mt-1">ยอดมีทศนิยมเพื่อระบุตัวตนการโอน ห้ามปัดเศษ</p>
                                     </div>
 
-                                    {{-- QR SVG --}}
+                                    {{-- QR Code --}}
                                     <div class="inline-block bg-white rounded-2xl p-4 mb-4 shadow-2xl">
-                                        <div x-html="qrSvg" class="w-64 h-64 mx-auto"></div>
+                                        <div id="qrCodeContainer" class="w-64 h-64 mx-auto flex items-center justify-center"></div>
                                     </div>
 
                                     {{-- PromptPay Info --}}
@@ -418,6 +418,7 @@
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 function projectPayment(projectNumber, remainingAmount) {
     return {
@@ -426,7 +427,7 @@ function projectPayment(projectNumber, remainingAmount) {
         payAmount: remainingAmount,
         loading: false,
         qrVisible: false,
-        qrSvg: '',
+        qrPayload: '',
         uniqueAmountDisplay: '',
         promptpayName: '',
         promptpayNumber: '',
@@ -438,7 +439,39 @@ function projectPayment(projectNumber, remainingAmount) {
         paidDisplay: '0.00',
         remainingDisplay: '0.00',
 
-        init() {},
+        init() {
+            // Cancel reserved payment when leaving the page
+            this._beforeUnload = () => this.cancelPayment();
+            window.addEventListener('beforeunload', this._beforeUnload);
+        },
+
+        destroy() {
+            window.removeEventListener('beforeunload', this._beforeUnload);
+            this.cancelPayment();
+        },
+
+        renderQr() {
+            const container = document.getElementById('qrCodeContainer');
+            if (!container || !this.qrPayload) return;
+            container.innerHTML = '';
+            new QRCode(container, {
+                text: this.qrPayload,
+                width: 256,
+                height: 256,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M,
+            });
+        },
+
+        cancelPayment() {
+            if (!this.qrVisible || this.paymentSuccess) return;
+            // Fire-and-forget cancel via beacon with CSRF
+            const formData = new FormData();
+            formData.append('project_number', this.projectNumber);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            navigator.sendBeacon('{{ route("tracking.payment.cancel") }}', formData);
+        },
 
         async generateQr() {
             if (this.loading) return;
@@ -461,11 +494,14 @@ function projectPayment(projectNumber, remainingAmount) {
                     alert(data.error);
                     return;
                 }
-                this.qrSvg = data.qr_svg;
+                this.qrPayload = data.qr_payload;
                 this.uniqueAmountDisplay = data.unique_amount;
                 this.promptpayName = data.promptpay_name;
                 this.promptpayNumber = data.promptpay_number;
                 this.qrVisible = true;
+
+                // Render QR code via JS library
+                this.$nextTick(() => this.renderQr());
 
                 // Start countdown (30 min)
                 this.countdown = 30 * 60;

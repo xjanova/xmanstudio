@@ -1811,14 +1811,14 @@ class QuotationController extends Controller
         ]);
 
         $promptPayService = new PromptPayService;
-        $qrSvg = $promptPayService->generateQrCodeSvg((float) $uniqueAmount->unique_amount);
+        $qrPayload = $promptPayService->generateQrPayload((float) $uniqueAmount->unique_amount);
         $promptPayInfo = $promptPayService->getDisplayInfo();
 
         return response()->json([
             'unique_amount' => number_format((float) $uniqueAmount->unique_amount, 2),
             'base_amount' => number_format($amount, 2),
             'expires_at' => $uniqueAmount->expires_at->toIso8601String(),
-            'qr_svg' => $qrSvg,
+            'qr_payload' => $qrPayload,
             'promptpay_name' => $promptPayInfo['name'] ?? '',
             'promptpay_number' => $promptPayInfo['formatted_number'] ?? '',
         ]);
@@ -1843,5 +1843,26 @@ class QuotationController extends Controller
             'sms_verification_status' => $project->sms_verification_status,
             'matched' => $project->sms_verification_status === 'confirmed',
         ]);
+    }
+
+    /**
+     * Cancel reserved payment when user leaves the page
+     */
+    public function projectPaymentCancel(Request $request)
+    {
+        $request->validate([
+            'project_number' => 'required|string|max:50',
+        ]);
+
+        $project = ProjectOrder::where('project_number', $request->project_number)->first();
+
+        if ($project) {
+            UniquePaymentAmount::where('transaction_id', $project->id)
+                ->where('transaction_type', 'project_order')
+                ->where('status', 'reserved')
+                ->update(['status' => 'cancelled']);
+        }
+
+        return response()->json(['ok' => true]);
     }
 }
