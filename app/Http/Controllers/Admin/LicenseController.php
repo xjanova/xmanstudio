@@ -314,9 +314,10 @@ class LicenseController extends Controller
         ]);
 
         $previousExpiry = $license->expires_at?->format('Y-m-d H:i:s');
+        $days = (int) $request->days;
         $newExpiry = $license->expires_at
-            ? $license->expires_at->addDays($request->days)
-            : now()->addDays($request->days);
+            ? $license->expires_at->addDays($days)
+            : now()->addDays($days);
 
         $license->update([
             'expires_at' => $newExpiry,
