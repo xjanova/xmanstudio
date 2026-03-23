@@ -27,6 +27,8 @@
          'icon' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
         ['url' => '/support', 'label' => 'ติดต่อ/สั่งซื้อ', 'match' => 'support', 'color' => 'blue-500', 'colorTo' => 'cyan-500',
          'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'],
+        ['url' => '/tracking', 'label' => 'ติดตามงาน', 'match' => 'tracking*', 'color' => 'teal-500', 'colorTo' => 'cyan-500',
+         'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
     ];
 @endphp
 
@@ -65,7 +67,7 @@
 
         {{-- User Section --}}
         @auth
-            <a href="/support/tracking" class="{{ $isPremium ? 'block px-4 py-2.5 text-base font-medium rounded-lg text-indigo-200 hover:bg-white/5 hover:text-white transition-all duration-300' : 'flex items-center gap-3 px-4 py-2.5 text-base font-medium rounded-xl transition-all duration-300 ' . (request()->is('support/tracking*') ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700') }}">
+            <a href="/tracking" class="{{ $isPremium ? 'block px-4 py-2.5 text-base font-medium rounded-lg text-indigo-200 hover:bg-white/5 hover:text-white transition-all duration-300' : 'flex items-center gap-3 px-4 py-2.5 text-base font-medium rounded-xl transition-all duration-300 ' . (request()->is('support/tracking*') ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700') }}">
                 @if(!$isPremium)
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                 @endif
@@ -83,7 +85,7 @@
             </a>
         @endauth
         @guest
-            <a href="/support/tracking" class="{{ $isPremium ? 'block px-4 py-2.5 text-base font-medium rounded-lg text-indigo-200 hover:bg-white/5 hover:text-white transition-all duration-300' : 'flex items-center gap-3 px-4 py-2.5 text-base font-medium rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+            <a href="/tracking" class="{{ $isPremium ? 'block px-4 py-2.5 text-base font-medium rounded-lg text-indigo-200 hover:bg-white/5 hover:text-white transition-all duration-300' : 'flex items-center gap-3 px-4 py-2.5 text-base font-medium rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                 @if(!$isPremium)
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                 @endif

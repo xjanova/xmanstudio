@@ -234,6 +234,10 @@ Route::get('/quotation/services', [QuotationController::class, 'getServices'])->
 Route::get('/support/tracking', [QuotationController::class, 'tracking'])->name('support.tracking');
 Route::get('/support/tracking/search', [QuotationController::class, 'trackingSearch'])->name('support.tracking.search');
 
+// Public project tracking (no login required)
+Route::get('/tracking', [QuotationController::class, 'publicTracking'])->name('tracking');
+Route::get('/tracking/search', [QuotationController::class, 'publicTrackingSearch'])->name('tracking.search');
+
 // About page
 Route::view('/about', 'about')->name('about');
 

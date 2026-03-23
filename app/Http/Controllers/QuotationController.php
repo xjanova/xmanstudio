@@ -1733,4 +1733,34 @@ class QuotationController extends Controller
 
         return view('support.tracking', compact('quotations', 'projects', 'query'));
     }
+
+    /**
+     * Public project tracking page (no login required)
+     */
+    public function publicTracking()
+    {
+        return view('tracking');
+    }
+
+    /**
+     * Search project by project number only (public, limited info)
+     */
+    public function publicTrackingSearch(Request $request)
+    {
+        $request->validate([
+            'query' => 'required|string|min:3|max:50',
+        ]);
+
+        $query = trim($request->query('query', ''));
+
+        $project = ProjectOrder::with([
+            'features' => fn ($q) => $q->orderBy('order'),
+            'timeline' => fn ($q) => $q->orderBy('event_date'),
+            'progress' => fn ($q) => $q->where('is_public', true)->latest()->limit(5),
+        ])
+            ->where('project_number', $query)
+            ->first();
+
+        return view('tracking', compact('project', 'query'));
+    }
 }

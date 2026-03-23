@@ -288,6 +288,9 @@
                         <a href="/support" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('support*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             ติดต่อ/สั่งซื้อ
                         </a>
+                        <a href="/tracking" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('tracking*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
+                            ติดตามงาน
+                        </a>
                     </div>
                 </div>
 
