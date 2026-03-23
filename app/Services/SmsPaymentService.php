@@ -97,29 +97,43 @@ class SmsPaymentService
             ];
 
             if ($matched && $notification->matched_transaction_id) {
-                // Try Order first — ใช้ RemoteOrderApproval format ที่ Android app คาดหวัง
-                // ต้องส่ง approval_status, order_details_json, notification object ครบ
-                $matchedOrder = Order::with(['items.product', 'smsNotification', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
-                if ($matchedOrder) {
-                    $matchedOrderData = $this->transformOrderToRemoteApproval($matchedOrder, $notification);
-                    $responseData['order'] = $matchedOrderData;
-                    $responseData['matched_order'] = $matchedOrderData;
-                } else {
-                    // Try WalletTopup (matched_transaction_id could be a topup id)
+                // ใช้ UniquePaymentAmount.transaction_type เพื่อหาว่า match กับอะไร (ป้องกัน ID ชนข้ามตาราง)
+                $matchedUniqueAmount = UniquePaymentAmount::where('transaction_id', $notification->matched_transaction_id)
+                    ->whereIn('status', ['used', 'reserved'])
+                    ->where('unique_amount', $notification->amount)
+                    ->first();
+
+                $txType = $matchedUniqueAmount?->transaction_type;
+
+                if ($txType === 'order') {
+                    $matchedOrder = Order::with(['items.product', 'smsNotification', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
+                    if ($matchedOrder) {
+                        $matchedOrderData = $this->transformOrderToRemoteApproval($matchedOrder, $notification);
+                        $responseData['order'] = $matchedOrderData;
+                        $responseData['matched_order'] = $matchedOrderData;
+                    }
+                } elseif ($txType === 'wallet_topup') {
                     $matchedTopup = WalletTopup::with(['wallet.user', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
                     if ($matchedTopup) {
                         $responseData['transaction_type'] = 'wallet_topup';
                         $matchedTopupData = $this->transformTopupToRemoteApproval($matchedTopup, $notification);
                         $responseData['order'] = $matchedTopupData;
                         $responseData['matched_order'] = $matchedTopupData;
-                    } else {
-                        // Try ProjectOrder (ชำระค่าโครงการ)
-                        $matchedProject = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])->find($notification->matched_transaction_id);
-                        if ($matchedProject) {
-                            $responseData['transaction_type'] = 'project_order';
-                            $responseData['order'] = $this->transformProjectOrderToRemoteApproval($matchedProject, $notification);
-                            $responseData['matched_order'] = $responseData['order'];
-                        }
+                    }
+                } elseif ($txType === 'project_order') {
+                    $matchedProject = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])->find($notification->matched_transaction_id);
+                    if ($matchedProject) {
+                        $responseData['transaction_type'] = 'project_order';
+                        $responseData['order'] = $this->transformProjectOrderToRemoteApproval($matchedProject, $notification);
+                        $responseData['matched_order'] = $responseData['order'];
+                    }
+                } else {
+                    // Fallback: ลอง Order ก่อน (backward compatibility กรณี UniquePaymentAmount ไม่เจอ)
+                    $matchedOrder = Order::with(['items.product', 'smsNotification', 'uniquePaymentAmount'])->find($notification->matched_transaction_id);
+                    if ($matchedOrder) {
+                        $matchedOrderData = $this->transformOrderToRemoteApproval($matchedOrder, $notification);
+                        $responseData['order'] = $matchedOrderData;
+                        $responseData['matched_order'] = $matchedOrderData;
                     }
                 }
             }

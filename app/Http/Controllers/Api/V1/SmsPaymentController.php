@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\ProjectOrder;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
+use App\Models\UniquePaymentAmount;
 use App\Models\Wallet;
 use App\Models\WalletTopup;
 use App\Models\WalletTransaction;
@@ -129,30 +130,31 @@ class SmsPaymentController extends Controller
         );
 
         // Enrich response with order data when matched (for Android app to update UI immediately)
-        if ($result['success'] && ! empty($result['data']['matched']) && ! empty($result['data']['matched_transaction_id'])) {
+        // ใช้เฉพาะเมื่อ processNotification ไม่ได้ส่ง order data มา (fallback)
+        if ($result['success'] && ! empty($result['data']['matched']) && ! empty($result['data']['matched_transaction_id']) && empty($result['data']['order'])) {
             $notificationRecord = SmsPaymentNotification::find($result['data']['notification_id'] ?? null);
             if ($notificationRecord) {
-                // Try to find the matched order
-                $matchedOrder = Order::with(['smsNotification', 'uniquePaymentAmount'])
-                    ->find($notificationRecord->matched_transaction_id);
+                // ใช้ UniquePaymentAmount.transaction_type เพื่อหาว่า match กับอะไร (ป้องกัน ID ชนข้ามตาราง)
+                $matchedUniqueAmt = UniquePaymentAmount::where('transaction_id', $notificationRecord->matched_transaction_id)
+                    ->whereIn('status', ['used', 'reserved'])
+                    ->first();
 
-                if ($matchedOrder) {
-                    $result['data']['order'] = $this->transformOrderForAndroid($matchedOrder);
-                } else {
-                    // Try WalletTopup
-                    $matchedTopup = WalletTopup::with(['uniquePaymentAmount', 'user'])
-                        ->find($notificationRecord->matched_transaction_id);
+                $txType = $matchedUniqueAmt?->transaction_type ?? 'order';
 
+                if ($txType === 'order') {
+                    $matchedOrder = Order::with(['smsNotification', 'uniquePaymentAmount'])->find($notificationRecord->matched_transaction_id);
+                    if ($matchedOrder) {
+                        $result['data']['order'] = $this->transformOrderForAndroid($matchedOrder);
+                    }
+                } elseif ($txType === 'wallet_topup') {
+                    $matchedTopup = WalletTopup::with(['uniquePaymentAmount', 'user'])->find($notificationRecord->matched_transaction_id);
                     if ($matchedTopup) {
                         $result['data']['order'] = $this->transformWalletTopupForAndroid($matchedTopup);
-                    } else {
-                        // Try ProjectOrder (ชำระค่าโครงการ)
-                        $matchedProject = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])
-                            ->find($notificationRecord->matched_transaction_id);
-
-                        if ($matchedProject) {
-                            $result['data']['order'] = $this->transformProjectOrderForAndroid($matchedProject);
-                        }
+                    }
+                } elseif ($txType === 'project_order') {
+                    $matchedProject = ProjectOrder::with(['uniquePaymentAmount', 'smsNotification'])->find($notificationRecord->matched_transaction_id);
+                    if ($matchedProject) {
+                        $result['data']['order'] = $this->transformProjectOrderForAndroid($matchedProject);
                     }
                 }
             }
@@ -1212,41 +1214,48 @@ class SmsPaymentController extends Controller
             }
             $orderData = $this->transformWalletTopupForAndroid($topup);
         } elseif ($projectOrder) {
-            // Auto-approve ProjectOrder → add to paid_amount
+            // Auto-approve ProjectOrder → add to paid_amount (with lock to prevent double-pay)
             $needsProjectApprove = $autoConfirm && ! in_array($projectOrder->payment_status, ['paid']);
             if ($needsProjectApprove && ! $alreadyMatched) {
                 try {
-                    $uniqueAmt = $projectOrder->uniquePaymentAmount;
-                    $baseAmount = $uniqueAmt ? (float) $uniqueAmt->base_amount : $amount;
+                    DB::transaction(function () use (&$projectOrder, $amount, $device) {
+                        $projectOrder = ProjectOrder::lockForUpdate()->find($projectOrder->id);
+                        if (! $projectOrder || $projectOrder->payment_status === 'paid') {
+                            return;
+                        }
 
-                    $newPaid = (float) $projectOrder->paid_amount + $baseAmount;
-                    $remaining = (float) $projectOrder->total_price - $newPaid;
-                    $paymentStatus = $remaining <= 1.00 ? 'paid' : 'partial';
+                        $uniqueAmt = $projectOrder->uniquePaymentAmount;
+                        $baseAmount = $uniqueAmt ? (float) $uniqueAmt->base_amount : $amount;
 
-                    if ($paymentStatus === 'paid') {
-                        $newPaid = (float) $projectOrder->total_price;
-                    }
+                        $newPaid = (float) $projectOrder->paid_amount + $baseAmount;
+                        $remaining = (float) $projectOrder->total_price - $newPaid;
+                        $paymentStatus = $remaining <= 1.00 ? 'paid' : 'partial';
 
-                    $projectOrder->update([
-                        'sms_verification_status' => 'confirmed',
-                        'sms_verified_at' => now(),
-                        'paid_amount' => $newPaid,
-                        'payment_status' => $paymentStatus,
-                    ]);
+                        if ($paymentStatus === 'paid') {
+                            $newPaid = (float) $projectOrder->total_price;
+                        }
 
-                    if ($uniqueAmt && $uniqueAmt->status === 'reserved') {
-                        $uniqueAmt->update(['status' => 'used', 'matched_at' => now()]);
-                    }
+                        $projectOrder->update([
+                            'sms_verification_status' => 'confirmed',
+                            'sms_verified_at' => now(),
+                            'paid_amount' => $newPaid,
+                            'payment_status' => $paymentStatus,
+                        ]);
+
+                        if ($uniqueAmt && $uniqueAmt->status === 'reserved') {
+                            $uniqueAmt->update(['status' => 'used', 'matched_at' => now()]);
+                        }
+
+                        Log::info('SMS Payment: Auto-approved ProjectOrder on match', [
+                            'device_id' => $device->device_id,
+                            'amount' => $amount,
+                            'project_id' => $projectOrder->id,
+                            'paid_amount' => $newPaid,
+                            'payment_status' => $paymentStatus,
+                        ]);
+                    });
 
                     $projectOrder = $projectOrder->fresh(['uniquePaymentAmount', 'smsNotification']);
-
-                    Log::info('SMS Payment: Auto-approved ProjectOrder on match', [
-                        'device_id' => $device->device_id,
-                        'amount' => $amount,
-                        'project_id' => $projectOrder->id,
-                        'paid_amount' => $newPaid,
-                        'payment_status' => $paymentStatus,
-                    ]);
                 } catch (\Exception $e) {
                     Log::error('SMS Payment: Auto-approve ProjectOrder failed', [
                         'project_id' => $projectOrder->id,
