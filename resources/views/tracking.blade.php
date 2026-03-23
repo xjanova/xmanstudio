@@ -367,32 +367,32 @@
         {{-- Info Cards (show when no search yet) --}}
         @empty($query)
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto animate-fade-in-up">
-            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 text-center hover:bg-white/[0.07] transition-colors group">
-                <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center hover:bg-white/15 transition-colors group">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-indigo-500/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/>
                     </svg>
                 </div>
-                <h3 class="font-semibold text-white text-sm">กรอกหมายเลข</h3>
-                <p class="text-xs text-indigo-200/70 mt-1">เช่น PRJ-20260213-ABCD</p>
+                <h3 class="font-semibold text-white text-base">กรอกหมายเลข</h3>
+                <p class="text-sm text-indigo-100 mt-1">เช่น PRJ-20260213-ABCD</p>
             </div>
-            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 text-center hover:bg-white/[0.07] transition-colors group">
-                <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center hover:bg-white/15 transition-colors group">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-purple-500/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                     </svg>
                 </div>
-                <h3 class="font-semibold text-white text-sm">ดูความคืบหน้า</h3>
-                <p class="text-xs text-indigo-200/70 mt-1">ไทม์ไลน์ + สถานะงาน</p>
+                <h3 class="font-semibold text-white text-base">ดูความคืบหน้า</h3>
+                <p class="text-sm text-indigo-100 mt-1">ไทม์ไลน์ + สถานะงาน</p>
             </div>
-            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 text-center hover:bg-white/[0.07] transition-colors group">
-                <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-cyan-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center hover:bg-white/15 transition-colors group">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-cyan-500/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <h3 class="font-semibold text-white text-sm">ตรวจสอบยอดชำระ</h3>
-                <p class="text-xs text-indigo-200/70 mt-1">สรุปค่าใช้จ่าย</p>
+                <h3 class="font-semibold text-white text-base">ตรวจสอบยอดชำระ</h3>
+                <p class="text-sm text-indigo-100 mt-1">สรุปค่าใช้จ่าย</p>
             </div>
         </div>
         @endempty
