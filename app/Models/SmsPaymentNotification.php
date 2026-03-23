@@ -157,7 +157,7 @@ class SmsPaymentNotification extends Model
                         $stillPending = $topup && in_array($topup->status, [WalletTopup::STATUS_PENDING, WalletTopup::STATUS_EXPIRED, WalletTopup::STATUS_REJECTED]);
                     } elseif ($uniqueAmount->transaction_type === 'project_order') {
                         $project = ProjectOrder::find($uniqueAmount->transaction_id);
-                        $stillPending = $project && in_array($project->payment_status, ['pending', 'partial', null]);
+                        $stillPending = $project && in_array($project->payment_status, ['unpaid', 'partial', null]);
                     }
 
                     if (! $stillPending) {
@@ -195,7 +195,7 @@ class SmsPaymentNotification extends Model
             }
 
             if ($uniqueAmount->transaction_type === 'project_order') {
-                return $this->matchProjectOrder($uniqueAmount);
+                return $this->matchProjectOrder($uniqueAmount, $approvalMode);
             }
 
             return false;
@@ -205,33 +205,43 @@ class SmsPaymentNotification extends Model
     /**
      * Match with a ProjectOrder (add to paid_amount)
      */
-    protected function matchProjectOrder(UniquePaymentAmount $uniqueAmount): bool
+    protected function matchProjectOrder(UniquePaymentAmount $uniqueAmount, string $approvalMode): bool
     {
-        $this->status = 'matched';
-        $this->matched_transaction_id = $uniqueAmount->transaction_id;
-        $this->save();
-
         $project = ProjectOrder::find($uniqueAmount->transaction_id);
         if (! $project) {
+            $this->update(['status' => 'matched', 'matched_transaction_id' => $uniqueAmount->transaction_id]);
+
             return true;
         }
 
-        if (! in_array($project->payment_status, ['pending', 'partial', null])) {
+        if (! in_array($project->payment_status, ['unpaid', 'partial', null])) {
+            $this->update(['status' => 'matched', 'matched_transaction_id' => $uniqueAmount->transaction_id]);
+
             return true;
         }
 
         $newPaid = (float) $project->paid_amount + (float) $uniqueAmount->base_amount;
         $paymentStatus = $newPaid >= (float) $project->total_price ? 'paid' : 'partial';
 
-        $project->update([
-            'sms_notification_id' => $this->id,
-            'sms_verification_status' => 'confirmed',
-            'sms_verified_at' => now(),
-            'paid_amount' => $newPaid,
-            'payment_status' => $paymentStatus,
-        ]);
+        if ($approvalMode === 'auto') {
+            $project->update([
+                'sms_notification_id' => $this->id,
+                'sms_verification_status' => 'confirmed',
+                'sms_verified_at' => now(),
+                'paid_amount' => $newPaid,
+                'payment_status' => $paymentStatus,
+            ]);
+            $this->update(['status' => 'confirmed', 'matched_transaction_id' => $uniqueAmount->transaction_id]);
+        } else {
+            $project->update([
+                'sms_notification_id' => $this->id,
+                'sms_verification_status' => 'matched',
+                'sms_verified_at' => now(),
+            ]);
+            $this->update(['status' => 'matched', 'matched_transaction_id' => $uniqueAmount->transaction_id]);
+        }
 
-        $this->update(['status' => 'confirmed']);
+        event(new PaymentMatched($project, $this));
 
         return true;
     }

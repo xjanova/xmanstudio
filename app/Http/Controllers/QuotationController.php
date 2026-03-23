@@ -1741,7 +1741,7 @@ class QuotationController extends Controller
      */
     public function publicTracking()
     {
-        return view('tracking');
+        return view('tracking', ['query' => null]);
     }
 
     /**
@@ -1772,33 +1772,43 @@ class QuotationController extends Controller
     public function projectPaymentInit(Request $request)
     {
         $request->validate([
-            'project_id' => 'required|integer',
+            'project_number' => 'required|string|max:50',
             'amount' => 'required|numeric|min:1',
         ]);
 
-        $project = ProjectOrder::findOrFail($request->project_id);
+        $project = ProjectOrder::where('project_number', $request->project_number)->firstOrFail();
+
+        // Guard: don't allow payment if already fully paid
+        if (in_array($project->payment_status, ['paid'])) {
+            return response()->json(['error' => 'โครงการนี้ชำระเงินครบแล้ว'], 422);
+        }
+
         $amount = (float) $request->amount;
 
-        // Cancel any existing reserved unique amounts for this project
-        UniquePaymentAmount::where('transaction_id', $project->id)
-            ->where('transaction_type', 'project_order')
-            ->where('status', 'reserved')
-            ->update(['status' => 'cancelled']);
+        // Cap amount to remaining
+        if ($amount > $project->remaining_amount) {
+            $amount = $project->remaining_amount;
+        }
 
-        // Generate new unique amount
-        $uniqueAmount = UniquePaymentAmount::generate($amount, $project->id, 'project_order', 30);
+        // Cancel + generate in transaction to prevent race condition
+        $uniqueAmount = \Illuminate\Support\Facades\DB::transaction(function () use ($project, $amount) {
+            UniquePaymentAmount::where('transaction_id', $project->id)
+                ->where('transaction_type', 'project_order')
+                ->where('status', 'reserved')
+                ->update(['status' => 'cancelled']);
+
+            return UniquePaymentAmount::generate($amount, $project->id, 'project_order', 30);
+        });
 
         if (! $uniqueAmount) {
             return response()->json(['error' => 'ไม่สามารถสร้างยอดชำระได้ กรุณาลองใหม่'], 422);
         }
 
-        // Update project with display amount
         $project->update([
             'unique_payment_amount_id' => $uniqueAmount->id,
             'payment_display_amount' => $uniqueAmount->unique_amount,
         ]);
 
-        // Generate QR code
         $promptPayService = new PromptPayService;
         $qrSvg = $promptPayService->generateQrCodeSvg((float) $uniqueAmount->unique_amount);
         $promptPayInfo = $promptPayService->getDisplayInfo();
@@ -1816,9 +1826,9 @@ class QuotationController extends Controller
     /**
      * Check project payment status (polling endpoint)
      */
-    public function projectPaymentStatus(Request $request, int $projectId)
+    public function projectPaymentStatus(Request $request, string $projectNumber)
     {
-        $project = ProjectOrder::find($projectId);
+        $project = ProjectOrder::where('project_number', $projectNumber)->first();
 
         if (! $project) {
             return response()->json(['error' => 'not_found'], 404);

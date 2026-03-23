@@ -266,7 +266,7 @@
 
                     {{-- PromptPay QR Payment Section --}}
                     @if($project->remaining_amount > 0)
-                    <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden" x-data="projectPayment({{ $project->id }}, {{ $project->remaining_amount }})" x-init="init()">
+                    <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden" x-data="projectPayment('{{ $project->project_number }}', {{ $project->remaining_amount }})" x-init="init()">
                         <div class="p-6 sm:p-8">
                             <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -419,9 +419,9 @@
 
 @push('scripts')
 <script>
-function projectPayment(projectId, remainingAmount) {
+function projectPayment(projectNumber, remainingAmount) {
     return {
-        projectId: projectId,
+        projectNumber: projectNumber,
         remaining: remainingAmount,
         payAmount: remainingAmount,
         loading: false,
@@ -454,7 +454,7 @@ function projectPayment(projectId, remainingAmount) {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ project_id: this.projectId, amount: amount }),
+                    body: JSON.stringify({ project_number: this.projectNumber, amount: amount }),
                 });
                 const data = await res.json();
                 if (data.error) {
@@ -519,7 +519,7 @@ function projectPayment(projectId, remainingAmount) {
 
         async checkStatus() {
             try {
-                const res = await fetch(`/tracking/payment-status/${this.projectId}`);
+                const res = await fetch(`/tracking/payment-status/${this.projectNumber}`);
                 const data = await res.json();
                 if (data.matched) {
                     this.paymentSuccess = true;

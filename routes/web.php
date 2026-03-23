@@ -237,8 +237,8 @@ Route::get('/support/tracking/search', [QuotationController::class, 'trackingSea
 // Public project tracking (no login required)
 Route::get('/tracking', [QuotationController::class, 'publicTracking'])->name('tracking');
 Route::get('/tracking/search', [QuotationController::class, 'publicTrackingSearch'])->name('tracking.search');
-Route::post('/tracking/payment-init', [QuotationController::class, 'projectPaymentInit'])->name('tracking.payment.init');
-Route::get('/tracking/payment-status/{project}', [QuotationController::class, 'projectPaymentStatus'])->name('tracking.payment.status');
+Route::post('/tracking/payment-init', [QuotationController::class, 'projectPaymentInit'])->name('tracking.payment.init')->middleware('throttle:20,1');
+Route::get('/tracking/payment-status/{projectNumber}', [QuotationController::class, 'projectPaymentStatus'])->name('tracking.payment.status')->middleware('throttle:60,1');
 
 // About page
 Route::view('/about', 'about')->name('about');
