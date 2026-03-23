@@ -648,7 +648,7 @@ class SmsPaymentController extends Controller
         $orderDetails = [
             'order_number' => $project->project_number,
             'product_name' => 'โครงการ: ' . $project->project_name,
-            'product_details' => 'ชำระค่าโครงการ ฿' . number_format((float) $project->payment_display_amount ?? $amount, 2),
+            'product_details' => 'ชำระค่าโครงการ ฿' . number_format((float) ($project->payment_display_amount ?? $amount), 2),
             'quantity' => 1,
             'website_name' => config('app.name'),
             'customer_name' => $project->user?->name ?? 'ลูกค้า',
