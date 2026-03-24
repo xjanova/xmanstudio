@@ -67,3 +67,6 @@ coverage/
 *.sqlite
 *.sqlite-journal
 database/*.sqlite
+.claude/worktrees/
+create_personal_access_tokens.sql
+.claude/settings.local.json
