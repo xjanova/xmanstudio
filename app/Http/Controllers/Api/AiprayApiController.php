@@ -88,7 +88,7 @@ class AiprayApiController extends Controller
             );
 
             $path = "aipray_audio/{$filename}";
-            Storage::disk('public')->put($path, $audioBytes);
+            Storage::disk('local')->put($path, $audioBytes);
 
             $sample = AiprayAudioSample::create([
                 'filename' => $filename,
@@ -130,7 +130,7 @@ class AiprayApiController extends Controller
             $query->where('updated_at_token', '>', $syncToken);
         }
 
-        $chants = $query->get()->map(fn($c) => [
+        $chants = $query->limit(500)->get()->map(fn($c) => [
             'id' => $c->chant_id,
             'title' => $c->title_th,
             'title_en' => $c->title_en,
@@ -173,10 +173,14 @@ class AiprayApiController extends Controller
             'update_available' => $isNewer,
             'model_id' => $model->id,
             'version' => $model->version,
-            'size_mb' => round($model->file_size / 1048576, 1),
+            'size_mb' => round(($model->file_size ?? 0) / 1048576, 1),
             'accuracy' => $model->accuracy,
             'url' => $model->onnx_file_path
-                ? url("storage/{$model->onnx_file_path}")
+                ? \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                    'aipray.model.download',
+                    now()->addHours(6),
+                    ['model' => $model->id]
+                )
                 : null,
         ]);
     }
@@ -207,19 +211,45 @@ class AiprayApiController extends Controller
      */
     public function stats(): JsonResponse
     {
+        // Calculate total hours in a database-agnostic way
+        $totalSeconds = 0;
+        AiprayPrayerSession::whereNotNull('end_time')
+            ->whereNotNull('start_time')
+            ->select(['start_time', 'end_time'])
+            ->chunk(500, function ($sessions) use (&$totalSeconds) {
+                foreach ($sessions as $s) {
+                    $start = \Carbon\Carbon::parse($s->start_time);
+                    $end = \Carbon\Carbon::parse($s->end_time);
+                    $totalSeconds += max(0, $end->diffInSeconds($start));
+                }
+            });
+
         return response()->json([
             'total_sessions' => AiprayPrayerSession::count(),
             'total_audio_samples' => AiprayAudioSample::count(),
-            'total_chanting_hours' => round(
-                AiprayPrayerSession::whereNotNull('end_time')
-                    ->selectRaw('SUM(TIMESTAMPDIFF(SECOND, start_time, end_time)) as total')
-                    ->value('total') / 3600,
-                1
-            ),
+            'total_chanting_hours' => round($totalSeconds / 3600, 1),
             'total_users' => AiprayPrayerSession::distinct('device_id')->count('device_id'),
             'active_models' => AiprayAiModel::whereIn('status', ['active', 'deployed'])->count(),
             'contributors' => AiprayAudioSample::distinct('device_info')->count('device_info'),
         ]);
+    }
+
+    /**
+     * GET /api/aipray/models/{model}/download (signed URL)
+     * Securely download the ONNX model file.
+     */
+    public function downloadModel(int $model): \Symfony\Component\HttpFoundation\BinaryFileResponse|JsonResponse
+    {
+        $aiModel = AiprayAiModel::findOrFail($model);
+
+        if (!$aiModel->onnx_file_path || !Storage::disk('local')->exists($aiModel->onnx_file_path)) {
+            return response()->json(['error' => 'Model file not found'], 404);
+        }
+
+        return response()->download(
+            Storage::disk('local')->path($aiModel->onnx_file_path),
+            "aipray-model-{$aiModel->version}.onnx"
+        );
     }
 
     /**
@@ -231,7 +261,7 @@ class AiprayApiController extends Controller
         $secret = $request->header('Authorization');
         $expectedSecret = 'Bearer ' . config('services.aipray_ml.secret');
 
-        if ($secret !== $expectedSecret) {
+        if (!$secret || !$expectedSecret || !hash_equals($expectedSecret, (string) $secret)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 

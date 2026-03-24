@@ -30,10 +30,17 @@ use Illuminate\Support\Facades\Storage;
 // ==================== Metal-X Freepik Image Upload ====================
 // Receives images from Freepik browser automation and saves to Laravel storage
 Route::post('/metal-x/upload-image', function (Request $request) {
+    // Auth: require admin token
+    $token = $request->header('X-Admin-Token');
+    $expectedToken = config('metalx.admin_token', config('app.metal_x_admin_token'));
+    if (! $expectedToken || ! hash_equals($expectedToken, (string) $token)) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
     $request->validate([
         'image' => 'required|string',
-        'filename' => 'required|string',
-        'project_dir' => 'required|string',
+        'filename' => 'required|string|regex:/^[a-zA-Z0-9_\-\.]+$/',
+        'project_dir' => 'required|string|regex:/^[a-zA-Z0-9_\-]+$/',
     ]);
 
     $imageData = base64_decode($request->input('image'));
@@ -41,8 +48,12 @@ Route::post('/metal-x/upload-image', function (Request $request) {
         return response()->json(['error' => 'Invalid base64 image'], 400);
     }
 
-    $dir = 'metal-x/projects/' . $request->input('project_dir');
-    $path = $dir . '/' . $request->input('filename');
+    // Sanitize path components to prevent traversal
+    $projectDir = basename($request->input('project_dir'));
+    $filename = basename($request->input('filename'));
+
+    $dir = 'metal-x/projects/' . $projectDir;
+    $path = $dir . '/' . $filename;
 
     Storage::disk('local')->put($path, $imageData);
 
@@ -57,7 +68,7 @@ Route::post('/metal-x/upload-image', function (Request $request) {
 // Protected by X-Admin-Token header (must match METAL_X_ADMIN_TOKEN env var)
 Route::post('/metal-x/import-url', function (Request $request) {
     $token = $request->header('X-Admin-Token');
-    $expectedToken = config('metalx.admin_token', env('METAL_X_ADMIN_TOKEN'));
+    $expectedToken = config('metalx.admin_token');
     if (! $expectedToken || ! hash_equals($expectedToken, (string) $token)) {
         return response()->json(['error' => 'Unauthorized'], 401);
     }
@@ -411,6 +422,10 @@ Route::prefix('aipray')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/models/latest', [AiprayApiController::class, 'latestModel']);
     Route::get('/chants/community', [AiprayApiController::class, 'communityChants']);
     Route::get('/stats', [AiprayApiController::class, 'stats']);
+    // Signed URL model download
+    Route::get('/models/{model}/download', [AiprayApiController::class, 'downloadModel'])
+        ->name('aipray.model.download')
+        ->middleware('signed');
     // ML service internal callback
     Route::post('/ml/training-callback', [AiprayApiController::class, 'mlCallback']);
 });

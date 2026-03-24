@@ -12,6 +12,11 @@ return [
     */
 
     /**
+     * Admin authentication token for Metal-X API endpoints
+     */
+    'admin_token' => env('METAL_X_ADMIN_TOKEN'),
+
+    /**
      * YouTube API Configuration
      */
     'youtube' => [
