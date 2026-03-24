@@ -101,7 +101,7 @@ class UniquePaymentAmount extends Model
             $keys = array_keys($availableSuffixes);
             $randomIndex = $keys[random_int(0, count($keys) - 1)];
             $suffix = $availableSuffixes[$randomIndex];
-            $uniqueAmount = floor($baseAmount) + ($suffix / 100);
+            $uniqueAmount = round(floor($baseAmount) + ($suffix / 100), 2);
 
             return static::create([
                 'base_amount' => $baseAmount,

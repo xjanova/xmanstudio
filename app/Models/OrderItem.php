@@ -19,6 +19,13 @@ class OrderItem extends Model
         'license_key_id',
     ];
 
+    protected $casts = [
+        'price' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'total' => 'decimal:2',
+        'quantity' => 'integer',
+    ];
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

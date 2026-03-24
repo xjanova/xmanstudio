@@ -207,7 +207,7 @@ class SmsPaymentNotification extends Model
      */
     protected function matchProjectOrder(UniquePaymentAmount $uniqueAmount, string $approvalMode): bool
     {
-        $project = ProjectOrder::find($uniqueAmount->transaction_id);
+        $project = ProjectOrder::lockForUpdate()->find($uniqueAmount->transaction_id);
         if (! $project) {
             $this->update(['status' => 'matched', 'matched_transaction_id' => $uniqueAmount->transaction_id]);
 
@@ -220,7 +220,7 @@ class SmsPaymentNotification extends Model
             return true;
         }
 
-        $newPaid = (float) $project->paid_amount + (float) $uniqueAmount->base_amount;
+        $newPaid = round((float) $project->paid_amount + (float) $uniqueAmount->base_amount, 2);
         // Tolerance 1 baht for decimal suffix (unique amount adds 0.01-0.99)
         $remaining = (float) $project->total_price - $newPaid;
         $paymentStatus = $remaining <= 1.00 ? 'paid' : 'partial';

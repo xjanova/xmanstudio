@@ -349,6 +349,13 @@ function previewMetadata(videoId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                const esc = (text) => {
+                    const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+                    return String(text || '').replace(/[&<>"']/g, m => map[m]);
+                };
+                const tagsHtml = data.metadata.tags
+                    ? data.metadata.tags.map(tag => `<span class="px-2 py-1 bg-purple-200 text-purple-800 text-xs rounded">${esc(tag)}</span>`).join('')
+                    : '-';
                 const content = `
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
@@ -356,25 +363,25 @@ function previewMetadata(videoId) {
                             <div class="space-y-4">
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Title (TH)</label>
-                                    <p class="mt-1 p-3 bg-purple-50 rounded">${data.metadata.title_th || '-'}</p>
+                                    <p class="mt-1 p-3 bg-purple-50 rounded">${esc(data.metadata.title_th) || '-'}</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Description (TH)</label>
-                                    <p class="mt-1 p-3 bg-purple-50 rounded max-h-40 overflow-y-auto">${data.metadata.description_th || '-'}</p>
+                                    <p class="mt-1 p-3 bg-purple-50 rounded max-h-40 overflow-y-auto">${esc(data.metadata.description_th) || '-'}</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Tags</label>
                                     <div class="mt-1 p-3 bg-purple-50 rounded flex flex-wrap gap-1">
-                                        ${data.metadata.tags ? data.metadata.tags.map(tag => `<span class="px-2 py-1 bg-purple-200 text-purple-800 text-xs rounded">${tag}</span>`).join('') : '-'}
+                                        ${tagsHtml}
                                     </div>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Category</label>
-                                    <p class="mt-1 p-3 bg-purple-50 rounded">${data.metadata.category || '-'}</p>
+                                    <p class="mt-1 p-3 bg-purple-50 rounded">${esc(data.metadata.category) || '-'}</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Confidence Score</label>
-                                    <p class="mt-1 p-3 bg-purple-50 rounded font-bold">${data.metadata.confidence_score}%</p>
+                                    <p class="mt-1 p-3 bg-purple-50 rounded font-bold">${esc(data.metadata.confidence_score)}%</p>
                                 </div>
                             </div>
                         </div>
@@ -383,15 +390,15 @@ function previewMetadata(videoId) {
                             <div class="space-y-4">
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Title (TH)</label>
-                                    <p class="mt-1 p-3 bg-gray-50 rounded">${data.current.title_th || 'ไม่มี'}</p>
+                                    <p class="mt-1 p-3 bg-gray-50 rounded">${esc(data.current.title_th) || 'ไม่มี'}</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Description (TH)</label>
-                                    <p class="mt-1 p-3 bg-gray-50 rounded max-h-40 overflow-y-auto">${data.current.description_th || 'ไม่มี'}</p>
+                                    <p class="mt-1 p-3 bg-gray-50 rounded max-h-40 overflow-y-auto">${esc(data.current.description_th) || 'ไม่มี'}</p>
                                 </div>
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Tags</label>
-                                    <p class="mt-1 p-3 bg-gray-50 rounded">${data.current.tags || 'ไม่มี'}</p>
+                                    <p class="mt-1 p-3 bg-gray-50 rounded">${esc(data.current.tags) || 'ไม่มี'}</p>
                                 </div>
                             </div>
                         </div>

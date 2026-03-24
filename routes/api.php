@@ -57,7 +57,7 @@ Route::post('/metal-x/upload-image', function (Request $request) {
 Route::post('/metal-x/import-url', function (Request $request) {
     $token = $request->header('X-Admin-Token');
     $expectedToken = config('metalx.admin_token', env('METAL_X_ADMIN_TOKEN'));
-    if (! $expectedToken || $token !== $expectedToken) {
+    if (! $expectedToken || ! hash_equals($expectedToken, (string) $token)) {
         return response()->json(['error' => 'Unauthorized'], 401);
     }
 
@@ -312,7 +312,7 @@ Route::prefix('v1/stripe')->middleware(['auth:sanctum', 'throttle:30,1'])->group
 Route::prefix('v1/sms-payment')->group(function () {
     // Critical device endpoints - higher rate limit to ensure always works
     // These must succeed even when device is polling aggressively
-    Route::middleware(['smschecker.device', 'throttle:300,1'])->group(function () {
+    Route::middleware(['smschecker.device', 'throttle:60,1'])->group(function () {
         // Register/update device information (includes FCM token)
         Route::post('/register-device', [SmsPaymentController::class, 'registerDevice']);
 

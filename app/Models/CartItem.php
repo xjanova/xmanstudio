@@ -15,6 +15,11 @@ class CartItem extends Model
         'custom_requirements',
     ];
 
+    protected $casts = [
+        'price' => 'decimal:2',
+        'quantity' => 'integer',
+    ];
+
     public function cart(): BelongsTo
     {
         return $this->belongsTo(Cart::class);

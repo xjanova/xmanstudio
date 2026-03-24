@@ -337,24 +337,33 @@ function searchUsers(query) {
                 return;
             }
 
-            let html = '<div class="space-y-2">';
+            const escapeHtml = (text) => {
+                const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+                return String(text || '').replace(/[&<>"']/g, m => map[m]);
+            };
+            const container = document.createElement('div');
+            container.className = 'space-y-2';
             users.forEach(user => {
-                html += `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <div>
-                            <div class="font-medium text-gray-900 dark:text-white">${user.name}</div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">${user.email}</div>
-                            <div class="text-xs text-gray-400 dark:text-gray-500 font-mono">${user.line_uid}</div>
-                        </div>
-                        <button type="button" onclick="addRecipient('${user.line_uid}'); closeUserSelector();"
-                                class="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 text-sm font-medium transition-all">
-                            เลือก
-                        </button>
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700';
+                row.innerHTML = `
+                    <div>
+                        <div class="font-medium text-gray-900 dark:text-white">${escapeHtml(user.name)}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(user.email)}</div>
+                        <div class="text-xs text-gray-400 dark:text-gray-500 font-mono">${escapeHtml(user.line_uid)}</div>
                     </div>
                 `;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 text-sm font-medium transition-all';
+                btn.textContent = 'เลือก';
+                btn.addEventListener('click', () => { addRecipient(user.line_uid); closeUserSelector(); });
+                row.appendChild(btn);
+                container.appendChild(row);
             });
-            html += '</div>';
-            document.getElementById('userSearchResults').innerHTML = html;
+            const resultsEl = document.getElementById('userSearchResults');
+            resultsEl.innerHTML = '';
+            resultsEl.appendChild(container);
         } catch (error) {
             document.getElementById('userSearchResults').innerHTML = '<p class="text-red-500 text-center py-8">เกิดข้อผิดพลาด</p>';
         }
