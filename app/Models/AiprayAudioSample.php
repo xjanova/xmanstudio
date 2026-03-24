@@ -36,9 +36,12 @@ class AiprayAudioSample extends Model
 
     public function getDurationFormattedAttribute(): string
     {
-        if (!$this->duration) return '0:00';
+        if (! $this->duration) {
+            return '0:00';
+        }
         $minutes = floor($this->duration / 60);
         $seconds = floor($this->duration % 60);
+
         return sprintf('%d:%02d', $minutes, $seconds);
     }
 }

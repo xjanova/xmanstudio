@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\AiprayDonation;
 use App\Models\Product;
-use App\Services\PromptPayService;
 
 class AiprayDonationService
 {
@@ -52,14 +51,16 @@ class AiprayDonationService
     public function getPublicDonations(int $limit = 20)
     {
         $product = Product::where('slug', 'aipray')->first();
-        if (!$product) return collect();
+        if (! $product) {
+            return collect();
+        }
 
         return AiprayDonation::where('product_id', $product->id)
             ->publicDisplay()
             ->latest()
             ->limit($limit)
             ->get()
-            ->map(fn($d) => [
+            ->map(fn ($d) => [
                 'name' => $d->display_name,
                 'amount' => $d->amount,
                 'message' => $d->message,
@@ -70,7 +71,9 @@ class AiprayDonationService
     public function getStats(): array
     {
         $product = Product::where('slug', 'aipray')->first();
-        if (!$product) return ['total_amount' => 0, 'total_donors' => 0];
+        if (! $product) {
+            return ['total_amount' => 0, 'total_donors' => 0];
+        }
 
         $donations = AiprayDonation::where('product_id', $product->id)->completed();
 

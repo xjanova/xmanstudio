@@ -14,6 +14,7 @@ class AiprayEvaluationController extends Controller
     {
         $evaluations = AiprayEvaluation::with('aiModel')->latest()->paginate(30);
         $models = AiprayAiModel::whereIn('status', ['active', 'deployed'])->get();
+
         return view('admin.aipray.evaluate.index', compact('evaluations', 'models'));
     }
 
@@ -25,7 +26,7 @@ class AiprayEvaluationController extends Controller
             'model_id' => 'nullable|integer',
         ]);
 
-        $ml = new AiprayMlServiceClient();
+        $ml = new AiprayMlServiceClient;
         $modelId = $request->model_id ? "aipray-{$request->model_id}" : 'default';
 
         if ($request->filled('reference_text')) {
@@ -34,7 +35,7 @@ class AiprayEvaluationController extends Controller
             $result = $ml->transcribeUpload($request->file('audio'), $modelId);
         }
 
-        if (!($result['success'] ?? false)) {
+        if (! ($result['success'] ?? false)) {
             return back()->with('error', 'ประเมินล้มเหลว: ' . ($result['error'] ?? ''));
         }
 
@@ -64,14 +65,14 @@ class AiprayEvaluationController extends Controller
         ]);
 
         $audioBytes = base64_decode($request->audio, true);
-        if (!$audioBytes) {
+        if (! $audioBytes) {
             return response()->json(['error' => 'Invalid audio'], 422);
         }
 
         $tmpFile = tempnam(sys_get_temp_dir(), 'aipray_') . '.wav';
         file_put_contents($tmpFile, $audioBytes);
 
-        $ml = new AiprayMlServiceClient();
+        $ml = new AiprayMlServiceClient;
         $result = $ml->transcribeFile($tmpFile, $request->input('model_id', 'default'));
 
         @unlink($tmpFile);

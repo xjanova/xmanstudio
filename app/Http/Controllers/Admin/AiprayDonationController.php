@@ -12,7 +12,7 @@ class AiprayDonationController extends Controller
     public function index(Request $request)
     {
         $product = Product::where('slug', 'aipray')->first();
-        if (!$product) {
+        if (! $product) {
             return view('admin.aipray.donations.index', [
                 'donations' => collect(),
                 'stats' => ['total' => 0, 'pending' => 0, 'completed' => 0, 'total_amount' => 0],

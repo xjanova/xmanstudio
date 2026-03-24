@@ -13,6 +13,7 @@ class AiprayRecordController extends Controller
     public function index()
     {
         $chants = AiprayChant::active()->orderBy('sort_order')->get();
+
         return view('admin.aipray.record.index', compact('chants'));
     }
 
@@ -27,7 +28,7 @@ class AiprayRecordController extends Controller
         ]);
 
         $audioBytes = base64_decode($request->audio, true);
-        if (!$audioBytes) {
+        if (! $audioBytes) {
             return back()->with('error', 'ข้อมูลเสียงไม่ถูกต้อง');
         }
 

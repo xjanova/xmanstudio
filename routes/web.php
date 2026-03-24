@@ -3,6 +3,14 @@
 use App\Http\Controllers\Admin\AdPlacementController;
 use App\Http\Controllers\Admin\AdsTxtController;
 use App\Http\Controllers\Admin\AiPlaygroundController;
+use App\Http\Controllers\Admin\AiprayChantController;
+use App\Http\Controllers\Admin\AiprayDashboardController;
+use App\Http\Controllers\Admin\AiprayDatasetController;
+use App\Http\Controllers\Admin\AiprayDonationController;
+use App\Http\Controllers\Admin\AiprayEvaluationController;
+use App\Http\Controllers\Admin\AiprayModelController;
+use App\Http\Controllers\Admin\AiprayRecordController;
+use App\Http\Controllers\Admin\AiprayTrainingController;
 use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
@@ -56,6 +64,7 @@ use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowCont
 use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
+use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\AutoTradeXController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChangelogController;
@@ -1082,39 +1091,39 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // ==================== Aipray Training Admin ====================
     Route::prefix('aipray')->name('aipray.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AiprayDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/dataset', [\App\Http\Controllers\Admin\AiprayDatasetController::class, 'index'])->name('dataset.index');
-        Route::get('/dataset/{sample}', [\App\Http\Controllers\Admin\AiprayDatasetController::class, 'show'])->name('dataset.show');
-        Route::put('/dataset/{sample}', [\App\Http\Controllers\Admin\AiprayDatasetController::class, 'update'])->name('dataset.update');
-        Route::delete('/dataset/{sample}', [\App\Http\Controllers\Admin\AiprayDatasetController::class, 'destroy'])->name('dataset.destroy');
-        Route::post('/dataset/bulk-action', [\App\Http\Controllers\Admin\AiprayDatasetController::class, 'bulkAction'])->name('dataset.bulk');
-        Route::get('/record', [\App\Http\Controllers\Admin\AiprayRecordController::class, 'index'])->name('record.index');
-        Route::post('/record/store', [\App\Http\Controllers\Admin\AiprayRecordController::class, 'store'])->name('record.store');
-        Route::get('/training', [\App\Http\Controllers\Admin\AiprayTrainingController::class, 'index'])->name('training.index');
-        Route::post('/training/start', [\App\Http\Controllers\Admin\AiprayTrainingController::class, 'start'])->name('training.start');
-        Route::get('/training/{job}/progress', [\App\Http\Controllers\Admin\AiprayTrainingController::class, 'progress'])->name('training.progress');
-        Route::post('/training/{job}/stop', [\App\Http\Controllers\Admin\AiprayTrainingController::class, 'stop'])->name('training.stop');
-        Route::post('/training/{job}/resume', [\App\Http\Controllers\Admin\AiprayTrainingController::class, 'resume'])->name('training.resume');
-        Route::post('/training/{job}/cancel', [\App\Http\Controllers\Admin\AiprayTrainingController::class, 'cancel'])->name('training.cancel');
-        Route::get('/models', [\App\Http\Controllers\Admin\AiprayModelController::class, 'index'])->name('models.index');
-        Route::get('/models/{model}', [\App\Http\Controllers\Admin\AiprayModelController::class, 'show'])->name('models.show');
-        Route::put('/models/{model}', [\App\Http\Controllers\Admin\AiprayModelController::class, 'update'])->name('models.update');
-        Route::delete('/models/{model}', [\App\Http\Controllers\Admin\AiprayModelController::class, 'destroy'])->name('models.destroy');
-        Route::post('/models/{model}/deploy', [\App\Http\Controllers\Admin\AiprayModelController::class, 'deploy'])->name('models.deploy');
-        Route::post('/models/{model}/export-onnx', [\App\Http\Controllers\Admin\AiprayModelController::class, 'exportOnnx'])->name('models.export');
-        Route::get('/evaluate', [\App\Http\Controllers\Admin\AiprayEvaluationController::class, 'index'])->name('evaluate.index');
-        Route::post('/evaluate', [\App\Http\Controllers\Admin\AiprayEvaluationController::class, 'evaluate'])->name('evaluate.run');
-        Route::post('/evaluate/live-transcribe', [\App\Http\Controllers\Admin\AiprayEvaluationController::class, 'liveTranscribe'])->name('evaluate.live');
-        Route::resource('chants', \App\Http\Controllers\Admin\AiprayChantController::class)->except(['show']);
-        Route::get('/donations', [\App\Http\Controllers\Admin\AiprayDonationController::class, 'index'])->name('donations.index');
-        Route::post('/donations/{donation}/approve', [\App\Http\Controllers\Admin\AiprayDonationController::class, 'approve'])->name('donations.approve');
+        Route::get('/', [AiprayDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dataset', [AiprayDatasetController::class, 'index'])->name('dataset.index');
+        Route::get('/dataset/{sample}', [AiprayDatasetController::class, 'show'])->name('dataset.show');
+        Route::put('/dataset/{sample}', [AiprayDatasetController::class, 'update'])->name('dataset.update');
+        Route::delete('/dataset/{sample}', [AiprayDatasetController::class, 'destroy'])->name('dataset.destroy');
+        Route::post('/dataset/bulk-action', [AiprayDatasetController::class, 'bulkAction'])->name('dataset.bulk');
+        Route::get('/record', [AiprayRecordController::class, 'index'])->name('record.index');
+        Route::post('/record/store', [AiprayRecordController::class, 'store'])->name('record.store');
+        Route::get('/training', [AiprayTrainingController::class, 'index'])->name('training.index');
+        Route::post('/training/start', [AiprayTrainingController::class, 'start'])->name('training.start');
+        Route::get('/training/{job}/progress', [AiprayTrainingController::class, 'progress'])->name('training.progress');
+        Route::post('/training/{job}/stop', [AiprayTrainingController::class, 'stop'])->name('training.stop');
+        Route::post('/training/{job}/resume', [AiprayTrainingController::class, 'resume'])->name('training.resume');
+        Route::post('/training/{job}/cancel', [AiprayTrainingController::class, 'cancel'])->name('training.cancel');
+        Route::get('/models', [AiprayModelController::class, 'index'])->name('models.index');
+        Route::get('/models/{model}', [AiprayModelController::class, 'show'])->name('models.show');
+        Route::put('/models/{model}', [AiprayModelController::class, 'update'])->name('models.update');
+        Route::delete('/models/{model}', [AiprayModelController::class, 'destroy'])->name('models.destroy');
+        Route::post('/models/{model}/deploy', [AiprayModelController::class, 'deploy'])->name('models.deploy');
+        Route::post('/models/{model}/export-onnx', [AiprayModelController::class, 'exportOnnx'])->name('models.export');
+        Route::get('/evaluate', [AiprayEvaluationController::class, 'index'])->name('evaluate.index');
+        Route::post('/evaluate', [AiprayEvaluationController::class, 'evaluate'])->name('evaluate.run');
+        Route::post('/evaluate/live-transcribe', [AiprayEvaluationController::class, 'liveTranscribe'])->name('evaluate.live');
+        Route::resource('chants', AiprayChantController::class)->except(['show']);
+        Route::get('/donations', [AiprayDonationController::class, 'index'])->name('donations.index');
+        Route::post('/donations/{donation}/approve', [AiprayDonationController::class, 'approve'])->name('donations.approve');
     });
 });
 
 // ==================== Aipray Public Pages ====================
 Route::prefix('apps/aipray')->name('aipray.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\AiprayController::class, 'show'])->name('show');
-    Route::get('/donate', [\App\Http\Controllers\AiprayController::class, 'donate'])->name('donate');
-    Route::post('/donate', [\App\Http\Controllers\AiprayController::class, 'storeDonation'])->name('donate.store');
-    Route::post('/donation/confirm', [\App\Http\Controllers\AiprayController::class, 'donationComplete'])->name('donation.confirm');
+    Route::get('/', [AiprayController::class, 'show'])->name('show');
+    Route::get('/donate', [AiprayController::class, 'donate'])->name('donate');
+    Route::post('/donate', [AiprayController::class, 'storeDonation'])->name('donate.store');
+    Route::post('/donation/confirm', [AiprayController::class, 'donationComplete'])->name('donation.confirm');
 });

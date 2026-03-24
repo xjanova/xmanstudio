@@ -31,14 +31,20 @@ class AiprayTrainingJob extends Model
 
     public function getProgressAttribute(): float
     {
-        if ($this->epochs <= 0) return 0;
+        if ($this->epochs <= 0) {
+            return 0;
+        }
+
         return round(($this->current_epoch / $this->epochs) * 100, 1);
     }
 
     public function getElapsedAttribute(): string
     {
-        if (!$this->started_at) return '00:00:00';
+        if (! $this->started_at) {
+            return '00:00:00';
+        }
         $end = $this->completed_at ?? now();
+
         return $this->started_at->diff($end)->format('%H:%I:%S');
     }
 }

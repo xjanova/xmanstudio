@@ -35,7 +35,7 @@ class AiprayController extends Controller
                         break;
                     }
                 }
-                if (!$downloadUrl) {
+                if (! $downloadUrl) {
                     foreach ($release['assets'] ?? [] as $asset) {
                         if (str_ends_with($asset['name'] ?? '', '.apk')) {
                             $downloadUrl = $asset['browser_download_url'] ?? '';

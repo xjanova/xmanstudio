@@ -11,6 +11,7 @@ class AiprayChantController extends Controller
     public function index()
     {
         $chants = AiprayChant::orderBy('sort_order')->paginate(30);
+
         return view('admin.aipray.chants.index', compact('chants'));
     }
 
@@ -68,6 +69,7 @@ class AiprayChantController extends Controller
     public function destroy(AiprayChant $chant)
     {
         $chant->delete();
+
         return redirect()->route('admin.aipray.chants.index')->with('success', 'ลบบทสวดแล้ว');
     }
 }

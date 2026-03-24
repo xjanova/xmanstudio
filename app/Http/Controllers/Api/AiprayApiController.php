@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AiprayAiModel;
 use App\Models\AiprayAudioSample;
 use App\Models\AiprayChant;
-use App\Models\AiprayAiModel;
 use App\Models\AiprayPrayerSession;
 use App\Models\AiprayTrainingJob;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AiprayApiController extends Controller
 {
@@ -112,6 +115,7 @@ class AiprayApiController extends Controller
             return response()->json(['success' => true, 'id' => $sample->id], 201);
         } catch (\Exception $e) {
             Log::error('Aipray audio upload failed: ' . $e->getMessage());
+
             return response()->json(['error' => 'Upload failed'], 500);
         }
     }
@@ -130,7 +134,7 @@ class AiprayApiController extends Controller
             $query->where('updated_at_token', '>', $syncToken);
         }
 
-        $chants = $query->limit(500)->get()->map(fn($c) => [
+        $chants = $query->limit(500)->get()->map(fn ($c) => [
             'id' => $c->chant_id,
             'title' => $c->title_th,
             'title_en' => $c->title_en,
@@ -163,7 +167,7 @@ class AiprayApiController extends Controller
             ->latest()
             ->first();
 
-        if (!$model) {
+        if (! $model) {
             return response()->json(['update_available' => false]);
         }
 
@@ -176,7 +180,7 @@ class AiprayApiController extends Controller
             'size_mb' => round(($model->file_size ?? 0) / 1048576, 1),
             'accuracy' => $model->accuracy,
             'url' => $model->onnx_file_path
-                ? \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                ? URL::temporarySignedRoute(
                     'aipray.model.download',
                     now()->addHours(6),
                     ['model' => $model->id]
@@ -194,7 +198,7 @@ class AiprayApiController extends Controller
         $chants = AiprayChant::community()
             ->orderBy('sort_order')
             ->get()
-            ->map(fn($c) => [
+            ->map(fn ($c) => [
                 'id' => $c->chant_id,
                 'title' => $c->title_th,
                 'category' => $c->category,
@@ -218,8 +222,8 @@ class AiprayApiController extends Controller
             ->select(['start_time', 'end_time'])
             ->chunk(500, function ($sessions) use (&$totalSeconds) {
                 foreach ($sessions as $s) {
-                    $start = \Carbon\Carbon::parse($s->start_time);
-                    $end = \Carbon\Carbon::parse($s->end_time);
+                    $start = Carbon::parse($s->start_time);
+                    $end = Carbon::parse($s->end_time);
                     $totalSeconds += max(0, $end->diffInSeconds($start));
                 }
             });
@@ -238,11 +242,11 @@ class AiprayApiController extends Controller
      * GET /api/aipray/models/{model}/download (signed URL)
      * Securely download the ONNX model file.
      */
-    public function downloadModel(int $model): \Symfony\Component\HttpFoundation\BinaryFileResponse|JsonResponse
+    public function downloadModel(int $model): BinaryFileResponse|JsonResponse
     {
         $aiModel = AiprayAiModel::findOrFail($model);
 
-        if (!$aiModel->onnx_file_path || !Storage::disk('local')->exists($aiModel->onnx_file_path)) {
+        if (! $aiModel->onnx_file_path || ! Storage::disk('local')->exists($aiModel->onnx_file_path)) {
             return response()->json(['error' => 'Model file not found'], 404);
         }
 
@@ -261,7 +265,7 @@ class AiprayApiController extends Controller
         $secret = $request->header('Authorization');
         $expectedSecret = 'Bearer ' . config('services.aipray_ml.secret');
 
-        if (!$secret || !$expectedSecret || !hash_equals($expectedSecret, (string) $secret)) {
+        if (! $secret || ! $expectedSecret || ! hash_equals($expectedSecret, (string) $secret)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -269,7 +273,7 @@ class AiprayApiController extends Controller
         $status = $request->input('status');
 
         $job = AiprayTrainingJob::find($jobId);
-        if (!$job) {
+        if (! $job) {
             return response()->json(['error' => 'Job not found'], 404);
         }
 
@@ -282,9 +286,9 @@ class AiprayApiController extends Controller
             'cer' => $request->input('cer'),
             'accuracy' => $request->input('accuracy'),
             'log' => $request->input('log'),
-        ], fn($v) => $v !== null);
+        ], fn ($v) => $v !== null);
 
-        if ($status === 'running' && !$job->started_at) {
+        if ($status === 'running' && ! $job->started_at) {
             $updates['started_at'] = now();
         }
         if (in_array($status, ['completed', 'failed', 'cancelled'])) {

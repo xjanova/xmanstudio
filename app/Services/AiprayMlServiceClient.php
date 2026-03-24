@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Log;
 class AiprayMlServiceClient
 {
     private string $baseUrl;
+
     private string $secret;
+
     private int $timeout;
 
     public function __construct()
@@ -22,6 +24,7 @@ class AiprayMlServiceClient
     {
         try {
             $response = Http::timeout(5)->get("{$this->baseUrl}/health");
+
             return $response->ok() && ($response->json('status') === 'ok');
         } catch (\Exception $e) {
             return false;
@@ -32,6 +35,7 @@ class AiprayMlServiceClient
     {
         try {
             $response = Http::timeout(5)->get("{$this->baseUrl}/health");
+
             return $response->ok() ? $response->json() : null;
         } catch (\Exception $e) {
             return null;
@@ -68,11 +72,13 @@ class AiprayMlServiceClient
                     'model_id' => $modelId,
                     'language' => 'th',
                 ]);
+
             return $response->ok()
                 ? ['success' => true, 'data' => $response->json()]
                 : ['success' => false, 'error' => 'ML service returned ' . $response->status()];
         } catch (\Exception $e) {
             Log::error('ML transcribe failed: ' . $e->getMessage());
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -87,11 +93,13 @@ class AiprayMlServiceClient
                     'model_id' => $modelId,
                     'language' => 'th',
                 ]);
+
             return $response->ok()
                 ? ['success' => true, 'data' => $response->json()]
                 : ['success' => false, 'error' => 'ML service returned ' . $response->status()];
         } catch (\Exception $e) {
             Log::error('ML transcribe upload failed: ' . $e->getMessage());
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -106,11 +114,13 @@ class AiprayMlServiceClient
                     'reference_text' => $referenceText,
                     'model_id' => $modelId,
                 ]);
+
             return $response->ok()
                 ? ['success' => true, 'data' => $response->json()]
                 : ['success' => false, 'error' => 'ML service returned ' . $response->status()];
         } catch (\Exception $e) {
             Log::error('ML evaluate failed: ' . $e->getMessage());
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -131,7 +141,10 @@ class AiprayMlServiceClient
     public function exportOnnx(string $modelPath, ?string $outputPath = null): array
     {
         $params = ['model_path' => $modelPath];
-        if ($outputPath) $params['output_path'] = $outputPath;
+        if ($outputPath) {
+            $params['output_path'] = $outputPath;
+        }
+
         return $this->post('/models/export-onnx', $params, $this->timeout);
     }
 
@@ -141,11 +154,13 @@ class AiprayMlServiceClient
             $response = Http::timeout(30)
                 ->withToken($this->secret)
                 ->get("{$this->baseUrl}{$path}");
+
             return $response->ok()
                 ? ['success' => true, 'data' => $response->json()]
                 : ['success' => false, 'error' => 'Status ' . $response->status()];
         } catch (\Exception $e) {
             Log::error("ML GET {$path} failed: " . $e->getMessage());
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -156,11 +171,13 @@ class AiprayMlServiceClient
             $response = Http::timeout($timeout ?? 30)
                 ->withToken($this->secret)
                 ->post("{$this->baseUrl}{$path}", $data);
+
             return $response->ok()
                 ? ['success' => true, 'data' => $response->json()]
                 : ['success' => false, 'error' => 'Status ' . $response->status()];
         } catch (\Exception $e) {
             Log::error("ML POST {$path} failed: " . $e->getMessage());
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }

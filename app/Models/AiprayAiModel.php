@@ -33,9 +33,16 @@ class AiprayAiModel extends Model
     public function getFileSizeFormattedAttribute(): string
     {
         $bytes = $this->file_size;
-        if ($bytes >= 1073741824) return number_format($bytes / 1073741824, 1) . ' GB';
-        if ($bytes >= 1048576) return number_format($bytes / 1048576, 1) . ' MB';
-        if ($bytes >= 1024) return number_format($bytes / 1024, 0) . ' KB';
+        if ($bytes >= 1073741824) {
+            return number_format($bytes / 1073741824, 1) . ' GB';
+        }
+        if ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 1) . ' MB';
+        }
+        if ($bytes >= 1024) {
+            return number_format($bytes / 1024, 0) . ' KB';
+        }
+
         return $bytes . ' B';
     }
 }

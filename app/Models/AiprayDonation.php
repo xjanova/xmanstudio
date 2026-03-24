@@ -49,7 +49,10 @@ class AiprayDonation extends Model
 
     public function getDisplayNameAttribute(): string
     {
-        if ($this->is_anonymous) return 'ผู้ไม่ประสงค์ออกนาม';
+        if ($this->is_anonymous) {
+            return 'ผู้ไม่ประสงค์ออกนาม';
+        }
+
         return $this->donor_name ?? 'ผู้ไม่ประสงค์ออกนาม';
     }
 }

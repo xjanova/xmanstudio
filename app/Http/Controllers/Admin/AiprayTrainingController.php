@@ -13,7 +13,7 @@ class AiprayTrainingController extends Controller
     public function index()
     {
         $jobs = AiprayTrainingJob::latest()->paginate(20);
-        $ml = new AiprayMlServiceClient();
+        $ml = new AiprayMlServiceClient;
         $mlHealth = $ml->health();
 
         $stats = [
@@ -54,7 +54,7 @@ class AiprayTrainingController extends Controller
         // Prepare samples for ML service
         $samples = AiprayAudioSample::whereIn('status', ['labeled', 'verified'])
             ->get()
-            ->map(fn($s) => [
+            ->map(fn ($s) => [
                 'chant_id' => $s->chant_id,
                 'line_index' => $s->line_index,
                 'audio_path' => storage_path("app/public/{$s->file_path}"),
@@ -62,7 +62,7 @@ class AiprayTrainingController extends Controller
             ])
             ->toArray();
 
-        $ml = new AiprayMlServiceClient();
+        $ml = new AiprayMlServiceClient;
         $result = $ml->startTraining([
             'job_id' => $job->id,
             'base_model' => $job->base_model,
@@ -77,10 +77,12 @@ class AiprayTrainingController extends Controller
 
         if ($result['success'] ?? false) {
             $job->update(['status' => 'running', 'started_at' => now()]);
+
             return back()->with('success', "เริ่ม Training Job #{$job->id}");
         }
 
         $job->update(['status' => 'failed', 'log' => $result['error'] ?? 'ML service error']);
+
         return back()->with('error', 'ไม่สามารถเริ่ม training ได้: ' . ($result['error'] ?? ''));
     }
 
@@ -103,25 +105,28 @@ class AiprayTrainingController extends Controller
 
     public function stop(AiprayTrainingJob $job)
     {
-        $ml = new AiprayMlServiceClient();
+        $ml = new AiprayMlServiceClient;
         $ml->pauseTraining($job->id);
         $job->update(['status' => 'paused']);
+
         return back()->with('success', 'หยุด Training ชั่วคราว');
     }
 
     public function resume(AiprayTrainingJob $job)
     {
-        $ml = new AiprayMlServiceClient();
+        $ml = new AiprayMlServiceClient;
         $ml->resumeTraining($job->id);
         $job->update(['status' => 'running']);
+
         return back()->with('success', 'เริ่ม Training ต่อ');
     }
 
     public function cancel(AiprayTrainingJob $job)
     {
-        $ml = new AiprayMlServiceClient();
+        $ml = new AiprayMlServiceClient;
         $ml->cancelTraining($job->id);
         $job->update(['status' => 'cancelled', 'completed_at' => now()]);
+
         return back()->with('success', 'ยกเลิก Training แล้ว');
     }
 }

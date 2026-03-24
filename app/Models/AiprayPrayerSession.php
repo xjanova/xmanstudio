@@ -23,14 +23,20 @@ class AiprayPrayerSession extends Model
 
     public function getDurationAttribute(): ?int
     {
-        if (!$this->start_time || !$this->end_time) return null;
+        if (! $this->start_time || ! $this->end_time) {
+            return null;
+        }
+
         return $this->start_time->diffInSeconds($this->end_time);
     }
 
     public function getDurationFormattedAttribute(): string
     {
         $seconds = $this->duration;
-        if (!$seconds) return '0:00';
+        if (! $seconds) {
+            return '0:00';
+        }
+
         return sprintf('%d:%02d', floor($seconds / 60), $seconds % 60);
     }
 }

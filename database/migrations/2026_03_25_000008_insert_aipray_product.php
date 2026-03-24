@@ -37,9 +37,11 @@ return new class extends Migration
         if (DB::getSchemaBuilder()->hasTable('github_settings')) {
             DB::table('github_settings')->insert([
                 'product_id' => $productId,
-                'owner' => 'xjanova',
-                'repo' => 'Aipray',
+                'github_owner' => 'xjanova',
+                'github_repo' => 'Aipray',
+                'github_token' => '',
                 'asset_pattern' => '*.apk',
+                'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

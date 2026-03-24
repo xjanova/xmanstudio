@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AiprayAudioSample;
 use App\Models\AiprayAiModel;
+use App\Models\AiprayAudioSample;
 use App\Models\AiprayDonation;
 use App\Models\AiprayPrayerSession;
 use App\Models\AiprayTrainingJob;
@@ -14,7 +14,7 @@ class AiprayDashboardController extends Controller
 {
     public function index()
     {
-        $ml = new AiprayMlServiceClient();
+        $ml = new AiprayMlServiceClient;
 
         $stats = [
             'total_samples' => AiprayAudioSample::count(),
