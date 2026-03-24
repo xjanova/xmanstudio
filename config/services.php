@@ -68,4 +68,11 @@ return [
         'url' => env('PUZZLE_ML_URL', 'http://127.0.0.1:5050/predict'),
     ],
 
+    // Aipray ML inference service (Python microservice for chant AI)
+    'aipray_ml' => [
+        'url' => env('AIPRAY_ML_SERVICE_URL', 'http://localhost:8100'),
+        'secret' => env('AIPRAY_ML_SERVICE_SECRET', 'ml-service-secret-key'),
+        'timeout' => env('AIPRAY_ML_SERVICE_TIMEOUT', 300),
+    ],
+
 ];

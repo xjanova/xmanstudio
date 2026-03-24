@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AiprayApiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
@@ -400,4 +401,16 @@ Route::prefix('v1/bug-reports')->middleware(['throttle:30,1'])->group(function (
         // Post unposted reports to GitHub
         Route::post('/post-to-github', [BugReportController::class, 'postToGitHub']);
     });
+});
+
+// ==================== Aipray Flutter App API ====================
+Route::prefix('aipray')->middleware(['throttle:60,1'])->group(function () {
+    Route::post('/sessions', [AiprayApiController::class, 'storeSession']);
+    Route::post('/audio/upload', [AiprayApiController::class, 'uploadAudio'])->middleware('throttle:20,1');
+    Route::post('/chants/sync', [AiprayApiController::class, 'syncChants']);
+    Route::get('/models/latest', [AiprayApiController::class, 'latestModel']);
+    Route::get('/chants/community', [AiprayApiController::class, 'communityChants']);
+    Route::get('/stats', [AiprayApiController::class, 'stats']);
+    // ML service internal callback
+    Route::post('/ml/training-callback', [AiprayApiController::class, 'mlCallback']);
 });
