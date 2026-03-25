@@ -220,9 +220,9 @@ class MetalXAnalyticsController extends Controller
         }
 
         // Update video statistics
-        $updated = $this->youtubeService->updateVideoStatistics();
+        $result = $this->youtubeService->updateVideoStatistics();
 
-        return back()->with('success', "Statistics refreshed! {$updated} videos updated.");
+        return back()->with('success', "Statistics refreshed! {$result['updated']} videos updated, {$result['deleted']} deleted.");
     }
 
     /**
