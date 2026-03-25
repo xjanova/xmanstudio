@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
+use App\Http\Controllers\Admin\DonationController;
 use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\Admin\GuideScreenshotController;
 use App\Http\Controllers\Admin\LicenseAnalyticsController;
@@ -1119,6 +1120,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::put('/donations/{donation}/approve', [AiprayDonationController::class, 'approve'])->name('donations.approve');
         Route::put('/donations/{donation}/reject', [AiprayDonationController::class, 'reject'])->name('donations.reject');
     });
+});
+
+// ==================== Admin Donations (Generic) ====================
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/donations', [DonationController::class, 'index'])->name('donations.index');
+    Route::put('/donations/{donation}/approve', [DonationController::class, 'approve'])->name('donations.approve');
+    Route::put('/donations/{donation}/reject', [DonationController::class, 'reject'])->name('donations.reject');
 });
 
 // ==================== Aipray Public Pages ====================

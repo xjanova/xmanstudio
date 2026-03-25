@@ -265,6 +265,15 @@
     </div>
 </div>
 
+{{-- บริจาค --}}
+<div class="pb-2 mb-1 border-b border-white/5 space-y-1">
+    <a href="{{ route('admin.donations.index') }}"
+       class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.donations*') ? $linkActive : $linkInactive }}">
+        <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+        บริจาค
+    </a>
+</div>
+
 {{-- Aipray สวดมนต์ --}}
 <div x-data="{ open: {{ request()->routeIs('admin.aipray.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
@@ -279,10 +288,6 @@
         <a href="{{ route('admin.aipray.chants.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.aipray.chants*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/></svg>
             บทสวดมนต์
-        </a>
-        <a href="{{ route('admin.aipray.donations.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.aipray.donations*') ? $linkActive : $linkInactive }}">
-            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-            บริจาค
         </a>
         <a href="{{ route('admin.aipray.dataset.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.aipray.dataset*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>

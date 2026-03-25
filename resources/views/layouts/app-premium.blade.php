@@ -291,8 +291,8 @@
                         <a href="/tracking" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('tracking*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             ติดตามงาน
                         </a>
-                        <a href="/apps/aipray" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('apps/aipray*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            Aipray
+                        <a href="/apps/aipray/donate" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('apps/aipray*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
+                            บริจาค
                         </a>
                     </div>
                 </div>
