@@ -18,7 +18,7 @@ class AiprayController extends Controller
         $release = null;
         $changelog = '';
         $downloadUrl = '';
-        $version = $product->latestVersion?->version ?? '1.0.0';
+        $version = $product->latestVersion()?->version ?? '1.0.0';
 
         try {
             $response = Http::timeout(10)
