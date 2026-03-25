@@ -1,4 +1,4 @@
-@extends( ?? 'layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'Aipray Training')
 @section('page-title', 'Aipray - Model Training')
