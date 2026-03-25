@@ -1116,7 +1116,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/evaluate/live-transcribe', [AiprayEvaluationController::class, 'liveTranscribe'])->name('evaluate.live');
         Route::resource('chants', AiprayChantController::class)->except(['show']);
         Route::get('/donations', [AiprayDonationController::class, 'index'])->name('donations.index');
-        Route::post('/donations/{donation}/approve', [AiprayDonationController::class, 'approve'])->name('donations.approve');
+        Route::put('/donations/{donation}/approve', [AiprayDonationController::class, 'approve'])->name('donations.approve');
+        Route::put('/donations/{donation}/reject', [AiprayDonationController::class, 'reject'])->name('donations.reject');
     });
 });
 

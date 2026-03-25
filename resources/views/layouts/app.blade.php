@@ -110,6 +110,10 @@
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                             ติดตามงาน
                         </a>
+                        <a href="/apps/aipray" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('apps/aipray*') ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-yellow-500 hover:to-amber-600 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
+                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            Aipray
+                        </a>
                     </div>
                 </div>
 

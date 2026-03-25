@@ -59,13 +59,7 @@ class AiprayDonationService
             ->publicDisplay()
             ->latest()
             ->limit($limit)
-            ->get()
-            ->map(fn ($d) => [
-                'name' => $d->display_name,
-                'amount' => $d->amount,
-                'message' => $d->message,
-                'date' => $d->created_at->diffForHumans(),
-            ]);
+            ->get();
     }
 
     public function getStats(): array

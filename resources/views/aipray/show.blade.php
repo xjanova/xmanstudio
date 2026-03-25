@@ -128,10 +128,10 @@
                     <div class="px-6 py-4 flex items-center justify-between">
                         <div class="flex items-center min-w-0">
                             <div class="w-9 h-9 rounded-full gold-bg-soft flex items-center justify-center flex-shrink-0">
-                                <span class="gold-text text-sm font-bold">{{ mb_substr($donation->name ?? 'ไม่ประสงค์ออกนาม', 0, 1) }}</span>
+                                <span class="gold-text text-sm font-bold">{{ mb_substr($donation->display_name, 0, 1) }}</span>
                             </div>
                             <div class="ml-3 min-w-0">
-                                <p class="text-gray-200 text-sm font-medium truncate">{{ $donation->name ?? 'ไม่ประสงค์ออกนาม' }}</p>
+                                <p class="text-gray-200 text-sm font-medium truncate">{{ $donation->display_name }}</p>
                                 @if(!empty($donation->message))
                                     <p class="text-gray-500 text-xs truncate">{{ $donation->message }}</p>
                                 @endif

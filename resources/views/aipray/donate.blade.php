@@ -118,10 +118,10 @@
             <div class="mb-6">
                 <label for="name" class="block text-sm font-medium text-gray-300 mb-2">ชื่อผู้บริจาค (ไม่จำเป็น)</label>
                 <input type="text"
-                       name="name"
-                       id="name"
-                       value="{{ old('name') }}"
-                       maxlength="100"
+                       name="donor_name"
+                       id="donor_name"
+                       value="{{ old('donor_name') }}"
+                       maxlength="255"
                        placeholder="ชื่อของคุณ"
                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4A647] focus:border-transparent transition-colors">
             </div>
@@ -141,9 +141,9 @@
             <div class="mb-8">
                 <label class="flex items-center cursor-pointer group">
                     <input type="checkbox"
-                           name="anonymous"
+                           name="is_anonymous"
                            value="1"
-                           {{ old('anonymous') ? 'checked' : '' }}
+                           {{ old('is_anonymous') ? 'checked' : '' }}
                            class="w-5 h-5 rounded border-gray-600 bg-gray-700 text-[#D4A647] focus:ring-[#D4A647] focus:ring-offset-gray-800">
                     <span class="ml-3 text-sm text-gray-300 group-hover:text-gray-200 transition-colors">ไม่ประสงค์ออกนาม</span>
                 </label>
@@ -169,10 +169,10 @@
                     <div class="px-6 py-4 flex items-center justify-between">
                         <div class="flex items-center min-w-0">
                             <div class="w-9 h-9 rounded-full gold-bg-soft flex items-center justify-center flex-shrink-0">
-                                <span class="gold-text text-sm font-bold">{{ mb_substr($donation->name ?? 'ไม่', 0, 1) }}</span>
+                                <span class="gold-text text-sm font-bold">{{ mb_substr($donation->display_name, 0, 1) }}</span>
                             </div>
                             <div class="ml-3 min-w-0">
-                                <p class="text-gray-200 text-sm font-medium truncate">{{ $donation->name ?? 'ไม่ประสงค์ออกนาม' }}</p>
+                                <p class="text-gray-200 text-sm font-medium truncate">{{ $donation->display_name }}</p>
                                 @if(!empty($donation->message))
                                     <p class="text-gray-500 text-xs truncate">{{ $donation->message }}</p>
                                 @endif
