@@ -33,7 +33,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Run Evaluation</h3>
 
-            <form action="{{ route('admin.aipray.evaluate.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <form action="{{ route('admin.aipray.evaluate.run') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                 @csrf
 
                 <div>
