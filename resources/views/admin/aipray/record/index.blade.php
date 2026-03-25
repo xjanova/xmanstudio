@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends( ?? 'layouts.admin')
 
 @section('title', 'Aipray Recorder')
 @section('page-title', 'Aipray - Audio Recorder')

@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends( ?? 'layouts.admin')
 
 @section('title', 'Sample Detail')
 @section('page-title', 'Aipray - Sample Detail')

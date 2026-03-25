@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends( ?? 'layouts.admin')
 
 @section('title', 'Aipray Chants')
 @section('page-title', 'Aipray - Chant Management')

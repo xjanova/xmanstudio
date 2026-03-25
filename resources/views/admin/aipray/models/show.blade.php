@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends( ?? 'layouts.admin')
 
 @section('title', 'Model: ' . $model->name)
 @section('page-title', 'Aipray - Model Detail')

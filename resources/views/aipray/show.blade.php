@@ -1,29 +1,22 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Aipray - สวดมนต์อัจฉริยะ | XMAN Studio</title>
-    <meta name="description" content="Aipray - แอปสวดมนต์อัจฉริยะ พร้อม AI ช่วยนำสวด ใช้งานฟรีตลอดไป">
+@extends($publicLayout ?? 'layouts.app')
 
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+@section('title', 'Aipray - สวดมนต์อัจฉริยะ')
+@section('meta_description', 'Aipray - แอปสวดมนต์อัจฉริยะ พร้อม AI ช่วยนำสวด ใช้งานฟรีตลอดไป')
 
-    <style>
-        .gold-gradient { background: linear-gradient(135deg, #D4A647 0%, #F5D78E 50%, #D4A647 100%); }
-        .gold-text { color: #D4A647; }
-        .gold-border { border-color: #D4A647; }
-        .gold-bg { background-color: #D4A647; }
-        .gold-bg-soft { background-color: rgba(212, 166, 71, 0.1); }
-        .gold-bg-hover:hover { background-color: rgba(212, 166, 71, 0.2); }
-    </style>
-</head>
-<body class="bg-gray-900 text-gray-100 font-sans antialiased">
+@push('styles')
+<style>
+    .gold-gradient { background: linear-gradient(135deg, #D4A647 0%, #F5D78E 50%, #D4A647 100%); }
+    .gold-text { color: #D4A647; }
+    .gold-border { border-color: #D4A647; }
+    .gold-bg { background-color: #D4A647; }
+    .gold-bg-soft { background-color: rgba(212, 166, 71, 0.1); }
+    .gold-bg-hover:hover { background-color: rgba(212, 166, 71, 0.2); }
+</style>
+@endpush
 
+@section('content')
     {{-- Hero Section --}}
-    <section class="relative overflow-hidden">
+    <section class="relative overflow-hidden bg-gray-900">
         <div class="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900"></div>
         <div class="relative max-w-4xl mx-auto px-4 py-16 sm:py-24 text-center">
             {{-- App Icon --}}
@@ -32,7 +25,7 @@
             </div>
 
             {{-- Title --}}
-            <h1 class="text-3xl sm:text-5xl font-bold mb-3">
+            <h1 class="text-3xl sm:text-5xl font-bold mb-3 text-white">
                 <span class="gold-text">Aipray</span> - สวดมนต์อัจฉริยะ
             </h1>
             <p class="text-gray-400 text-lg sm:text-xl mb-6">พัฒนาโดย XMAN Studio</p>
@@ -59,8 +52,8 @@
 
     {{-- Features Section --}}
     @if(!empty($product) && !empty($product->features) && is_array($product->features))
-    <section class="max-w-4xl mx-auto px-4 py-16">
-        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12">
+    <section class="max-w-4xl mx-auto px-4 py-16 bg-gray-900">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12 text-white">
             <span class="gold-text">คุณสมบัติ</span>เด่น
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -78,8 +71,8 @@
 
     {{-- Changelog Section --}}
     @if(!empty($changelog))
-    <section class="max-w-4xl mx-auto px-4 py-16">
-        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12">
+    <section class="max-w-4xl mx-auto px-4 py-16 bg-gray-900">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12 text-white">
             <span class="gold-text">บันทึก</span>การเปลี่ยนแปลง
         </h2>
         <div class="bg-gray-800 rounded-2xl p-6 sm:p-8 border border-gray-700">
@@ -93,8 +86,8 @@
     @endif
 
     {{-- Donation Section --}}
-    <section class="max-w-4xl mx-auto px-4 py-16">
-        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-4">
+    <section class="max-w-4xl mx-auto px-4 py-16 bg-gray-900">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-4 text-white">
             <span class="gold-text">สนับสนุน</span>การพัฒนา
         </h2>
         <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
@@ -156,14 +149,4 @@
             </a>
         </div>
     </section>
-
-    {{-- Footer --}}
-    <footer class="border-t border-gray-800 py-12">
-        <div class="max-w-4xl mx-auto px-4 text-center">
-            <p class="gold-text font-semibold text-lg mb-2">ใช้งานฟรีตลอดไป - Free Forever</p>
-            <p class="text-gray-500 text-sm">&copy; {{ date('Y') }} XMAN Studio. All rights reserved.</p>
-        </div>
-    </footer>
-
-</body>
-</html>
+@endsection

@@ -1,26 +1,20 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>บริจาคสนับสนุน Aipray | XMAN Studio</title>
-    <meta name="description" content="บริจาคสนับสนุนการพัฒนา Aipray แอปสวดมนต์อัจฉริยะ">
+@extends($publicLayout ?? 'layouts.app')
 
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+@section('title', 'บริจาคสนับสนุน Aipray')
+@section('meta_description', 'บริจาคสนับสนุนการพัฒนา Aipray แอปสวดมนต์อัจฉริยะ')
 
-    <style>
-        .gold-gradient { background: linear-gradient(135deg, #D4A647 0%, #F5D78E 50%, #D4A647 100%); }
-        .gold-text { color: #D4A647; }
-        .gold-border { border-color: #D4A647; }
-        .gold-bg { background-color: #D4A647; }
-        .gold-bg-soft { background-color: rgba(212, 166, 71, 0.1); }
-    </style>
-</head>
-<body class="bg-gray-900 text-gray-100 font-sans antialiased">
+@push('styles')
+<style>
+    .gold-gradient { background: linear-gradient(135deg, #D4A647 0%, #F5D78E 50%, #D4A647 100%); }
+    .gold-text { color: #D4A647; }
+    .gold-border { border-color: #D4A647; }
+    .gold-bg { background-color: #D4A647; }
+    .gold-bg-soft { background-color: rgba(212, 166, 71, 0.1); }
+</style>
+@endpush
 
+@section('content')
+<div class="bg-gray-900 text-gray-100">
     {{-- Header --}}
     <header class="max-w-2xl mx-auto px-4 pt-10 pb-6 text-center">
         <a href="{{ route('aipray.show') }}" class="inline-flex items-center text-gray-400 hover:gold-text transition-colors mb-8 text-sm">
@@ -116,7 +110,7 @@
 
             {{-- Donor Name --}}
             <div class="mb-6">
-                <label for="name" class="block text-sm font-medium text-gray-300 mb-2">ชื่อผู้บริจาค (ไม่จำเป็น)</label>
+                <label for="donor_name" class="block text-sm font-medium text-gray-300 mb-2">ชื่อผู้บริจาค (ไม่จำเป็น)</label>
                 <input type="text"
                        name="donor_name"
                        id="donor_name"
@@ -188,60 +182,51 @@
         </div>
         @endif
     </main>
+</div>
+@endsection
 
-    {{-- Footer --}}
-    <footer class="border-t border-gray-800 py-8">
-        <div class="max-w-2xl mx-auto px-4 text-center">
-            <p class="gold-text font-semibold mb-1">ใช้งานฟรีตลอดไป - Free Forever</p>
-            <p class="text-gray-500 text-sm">&copy; {{ date('Y') }} XMAN Studio</p>
-        </div>
-    </footer>
+@push('scripts')
+<script>
+    function selectAmount(amount) {
+        document.getElementById('amountInput').value = amount;
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            const isSelected = parseInt(btn.dataset.amount) === amount;
+            btn.classList.toggle('border-[#D4A647]', isSelected);
+            btn.classList.toggle('gold-text', isSelected);
+            btn.classList.toggle('gold-bg-soft', isSelected);
+            btn.classList.toggle('border-gray-600', !isSelected);
+            btn.classList.toggle('text-gray-200', !isSelected);
+        });
+    }
 
-    <script>
-        function selectAmount(amount) {
-            document.getElementById('amountInput').value = amount;
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                const isSelected = parseInt(btn.dataset.amount) === amount;
-                btn.classList.toggle('border-[#D4A647]', isSelected);
-                btn.classList.toggle('gold-text', isSelected);
-                btn.classList.toggle('gold-bg-soft', isSelected);
-                btn.classList.toggle('border-gray-600', !isSelected);
-                btn.classList.toggle('text-gray-200', !isSelected);
-            });
+    document.getElementById('amountInput')?.addEventListener('input', function() {
+        const val = parseInt(this.value);
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            const isSelected = parseInt(btn.dataset.amount) === val;
+            btn.classList.toggle('border-[#D4A647]', isSelected);
+            btn.classList.toggle('gold-text', isSelected);
+            btn.classList.toggle('gold-bg-soft', isSelected);
+            btn.classList.toggle('border-gray-600', !isSelected);
+            btn.classList.toggle('text-gray-200', !isSelected);
+        });
+    });
+
+    document.getElementById('donationForm')?.addEventListener('submit', function(e) {
+        const amount = parseInt(document.getElementById('amountInput').value);
+        if (!amount || amount < 1) {
+            e.preventDefault();
+            alert('กรุณาระบุจำนวนเงินที่ต้องการบริจาค');
+            return false;
         }
+        if (amount > 100000) {
+            e.preventDefault();
+            alert('จำนวนเงินสูงสุด 100,000 บาท');
+            return false;
+        }
+    });
 
-        // Sync preset buttons when custom input changes
-        document.getElementById('amountInput').addEventListener('input', function() {
-            const val = parseInt(this.value);
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                const isSelected = parseInt(btn.dataset.amount) === val;
-                btn.classList.toggle('border-[#D4A647]', isSelected);
-                btn.classList.toggle('gold-text', isSelected);
-                btn.classList.toggle('gold-bg-soft', isSelected);
-                btn.classList.toggle('border-gray-600', !isSelected);
-                btn.classList.toggle('text-gray-200', !isSelected);
-            });
-        });
-
-        // Form validation
-        document.getElementById('donationForm')?.addEventListener('submit', function(e) {
-            const amount = parseInt(document.getElementById('amountInput').value);
-            if (!amount || amount < 1) {
-                e.preventDefault();
-                alert('กรุณาระบุจำนวนเงินที่ต้องการบริจาค');
-                return false;
-            }
-            if (amount > 100000) {
-                e.preventDefault();
-                alert('จำนวนเงินสูงสุด 100,000 บาท');
-                return false;
-            }
-        });
-
-        // Pre-select old value
-        @if(old('amount'))
-            selectAmount({{ (int) old('amount') }});
-        @endif
-    </script>
-</body>
-</html>
+    @if(old('amount'))
+        selectAmount({{ (int) old('amount') }});
+    @endif
+</script>
+@endpush
