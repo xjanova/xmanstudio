@@ -10,26 +10,31 @@ class AiprayDatasetController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AiprayAudioSample::latest();
+        try {
+            $query = AiprayAudioSample::latest();
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-        if ($request->filled('search')) {
-            $query->where('transcript', 'like', '%' . $request->search . '%');
-        }
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+            if ($request->filled('category')) {
+                $query->where('category', $request->category);
+            }
+            if ($request->filled('search')) {
+                $query->where('transcript', 'like', '%' . $request->search . '%');
+            }
 
-        $samples = $query->paginate(30);
+            $samples = $query->paginate(30);
 
-        $stats = [
-            'total' => AiprayAudioSample::count(),
-            'unlabeled' => AiprayAudioSample::where('status', 'unlabeled')->count(),
-            'labeled' => AiprayAudioSample::where('status', 'labeled')->count(),
-            'verified' => AiprayAudioSample::where('status', 'verified')->count(),
-        ];
+            $stats = [
+                'total' => AiprayAudioSample::count(),
+                'unlabeled' => AiprayAudioSample::where('status', 'unlabeled')->count(),
+                'labeled' => AiprayAudioSample::where('status', 'labeled')->count(),
+                'verified' => AiprayAudioSample::where('status', 'verified')->count(),
+            ];
+        } catch (\Exception $e) {
+            $samples = collect();
+            $stats = ['total' => 0, 'unlabeled' => 0, 'labeled' => 0, 'verified' => 0];
+        }
 
         return view('admin.aipray.dataset.index', compact('samples', 'stats'));
     }

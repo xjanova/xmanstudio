@@ -11,7 +11,11 @@ class AiprayModelController extends Controller
 {
     public function index()
     {
-        $models = AiprayAiModel::with('trainingJob')->latest()->paginate(20);
+        try {
+            $models = AiprayAiModel::with('trainingJob')->latest()->paginate(20);
+        } catch (\Exception $e) {
+            $models = collect();
+        }
 
         return view('admin.aipray.models.index', compact('models'));
     }

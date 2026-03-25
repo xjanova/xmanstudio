@@ -63,7 +63,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Start New Training Job</h3>
 
-            <form action="{{ route('admin.aipray.training.store') }}" method="POST" class="space-y-4">
+            <form action="{{ route('admin.aipray.training.start') }}" method="POST" class="space-y-4">
                 @csrf
 
                 <div>

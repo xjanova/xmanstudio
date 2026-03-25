@@ -12,8 +12,13 @@ class AiprayEvaluationController extends Controller
 {
     public function index()
     {
-        $evaluations = AiprayEvaluation::with('aiModel')->latest()->paginate(30);
-        $models = AiprayAiModel::whereIn('status', ['active', 'deployed'])->get();
+        try {
+            $evaluations = AiprayEvaluation::with('aiModel')->latest()->paginate(30);
+            $models = AiprayAiModel::whereIn('status', ['active', 'deployed'])->get();
+        } catch (\Exception $e) {
+            $evaluations = collect();
+            $models = collect();
+        }
 
         return view('admin.aipray.evaluate.index', compact('evaluations', 'models'));
     }

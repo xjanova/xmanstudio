@@ -14,22 +14,44 @@ class AiprayDashboardController extends Controller
 {
     public function index()
     {
-        $ml = new AiprayMlServiceClient;
+        try {
+            $ml = new AiprayMlServiceClient;
+            $mlHealthy = $ml->isHealthy();
+        } catch (\Exception $e) {
+            $mlHealthy = false;
+        }
 
-        $stats = [
-            'total_samples' => AiprayAudioSample::count(),
-            'verified_samples' => AiprayAudioSample::verified()->count(),
-            'total_hours' => round(AiprayAudioSample::sum('duration') / 3600, 1),
-            'total_sessions' => AiprayPrayerSession::count(),
-            'total_models' => AiprayAiModel::count(),
-            'best_accuracy' => AiprayAiModel::max('accuracy'),
-            'active_jobs' => AiprayTrainingJob::where('status', 'running')->count(),
-            'total_donations' => AiprayDonation::completed()->sum('amount'),
-            'ml_healthy' => $ml->isHealthy(),
-        ];
+        try {
+            $stats = [
+                'total_samples' => AiprayAudioSample::count(),
+                'verified_samples' => AiprayAudioSample::verified()->count(),
+                'total_hours' => round(AiprayAudioSample::sum('duration') / 3600, 1),
+                'total_sessions' => AiprayPrayerSession::count(),
+                'total_models' => AiprayAiModel::count(),
+                'best_accuracy' => AiprayAiModel::max('accuracy'),
+                'active_jobs' => AiprayTrainingJob::where('status', 'running')->count(),
+                'total_donations' => AiprayDonation::completed()->sum('amount'),
+                'ml_healthy' => $mlHealthy,
+            ];
+        } catch (\Exception $e) {
+            $stats = [
+                'total_samples' => 0, 'verified_samples' => 0, 'total_hours' => 0,
+                'total_sessions' => 0, 'total_models' => 0, 'best_accuracy' => null,
+                'active_jobs' => 0, 'total_donations' => 0, 'ml_healthy' => false,
+            ];
+        }
 
-        $recentJobs = AiprayTrainingJob::latest()->limit(5)->get();
-        $recentSessions = AiprayPrayerSession::latest()->limit(10)->get();
+        try {
+            $recentJobs = AiprayTrainingJob::latest()->limit(5)->get();
+        } catch (\Exception $e) {
+            $recentJobs = collect();
+        }
+
+        try {
+            $recentSessions = AiprayPrayerSession::latest()->limit(10)->get();
+        } catch (\Exception $e) {
+            $recentSessions = collect();
+        }
 
         return view('admin.aipray.dashboard', compact('stats', 'recentJobs', 'recentSessions'));
     }

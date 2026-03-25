@@ -11,33 +11,42 @@ class AiprayDonationController extends Controller
 {
     public function index(Request $request)
     {
-        $product = Product::where('slug', 'aipray')->first();
+        $emptyStats = ['total_count' => 0, 'pending_count' => 0, 'completed_count' => 0, 'total_amount' => 0, 'this_month_amount' => 0];
+
+        try {
+            $product = Product::where('slug', 'aipray')->first();
+        } catch (\Exception $e) {
+            return view('admin.aipray.donations.index', ['donations' => collect(), 'stats' => $emptyStats]);
+        }
+
         if (! $product) {
-            return view('admin.aipray.donations.index', [
-                'donations' => collect(),
-                'stats' => ['total_count' => 0, 'pending_count' => 0, 'completed_count' => 0, 'total_amount' => 0, 'this_month_amount' => 0],
-            ]);
+            return view('admin.aipray.donations.index', ['donations' => collect(), 'stats' => $emptyStats]);
         }
 
-        $query = AiprayDonation::where('product_id', $product->id)->latest();
+        try {
+            $query = AiprayDonation::where('product_id', $product->id)->latest();
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $donations = $query->paginate(30);
+
+            $stats = [
+                'total_count' => AiprayDonation::where('product_id', $product->id)->count(),
+                'pending_count' => AiprayDonation::where('product_id', $product->id)->pending()->count(),
+                'completed_count' => AiprayDonation::where('product_id', $product->id)->completed()->count(),
+                'total_amount' => AiprayDonation::where('product_id', $product->id)->completed()->sum('amount'),
+                'this_month_amount' => AiprayDonation::where('product_id', $product->id)
+                    ->completed()
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->sum('amount'),
+            ];
+        } catch (\Exception $e) {
+            $donations = collect();
+            $stats = $emptyStats;
         }
-
-        $donations = $query->paginate(30);
-
-        $stats = [
-            'total_count' => AiprayDonation::where('product_id', $product->id)->count(),
-            'pending_count' => AiprayDonation::where('product_id', $product->id)->pending()->count(),
-            'completed_count' => AiprayDonation::where('product_id', $product->id)->completed()->count(),
-            'total_amount' => AiprayDonation::where('product_id', $product->id)->completed()->sum('amount'),
-            'this_month_amount' => AiprayDonation::where('product_id', $product->id)
-                ->completed()
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->sum('amount'),
-        ];
 
         return view('admin.aipray.donations.index', compact('donations', 'stats'));
     }

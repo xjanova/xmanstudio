@@ -12,7 +12,11 @@ class AiprayRecordController extends Controller
 {
     public function index()
     {
-        $chants = AiprayChant::active()->orderBy('sort_order')->get();
+        try {
+            $chants = AiprayChant::active()->orderBy('sort_order')->get();
+        } catch (\Exception $e) {
+            $chants = collect();
+        }
 
         return view('admin.aipray.record.index', compact('chants'));
     }

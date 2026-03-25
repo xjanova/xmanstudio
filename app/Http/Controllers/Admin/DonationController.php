@@ -10,24 +10,31 @@ class DonationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AiprayDonation::with('product')->latest();
+        $emptyStats = ['total_count' => 0, 'pending_count' => 0, 'completed_count' => 0, 'total_amount' => 0, 'this_month_amount' => 0];
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        try {
+            $query = AiprayDonation::with('product')->latest();
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $donations = $query->paginate(30);
+
+            $stats = [
+                'total_count' => AiprayDonation::count(),
+                'pending_count' => AiprayDonation::pending()->count(),
+                'completed_count' => AiprayDonation::completed()->count(),
+                'total_amount' => AiprayDonation::completed()->sum('amount'),
+                'this_month_amount' => AiprayDonation::completed()
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->sum('amount'),
+            ];
+        } catch (\Exception $e) {
+            $donations = collect();
+            $stats = $emptyStats;
         }
-
-        $donations = $query->paginate(30);
-
-        $stats = [
-            'total_count' => AiprayDonation::count(),
-            'pending_count' => AiprayDonation::pending()->count(),
-            'completed_count' => AiprayDonation::completed()->count(),
-            'total_amount' => AiprayDonation::completed()->sum('amount'),
-            'this_month_amount' => AiprayDonation::completed()
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->sum('amount'),
-        ];
 
         return view('admin.donations.index', compact('donations', 'stats'));
     }

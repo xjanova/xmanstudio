@@ -12,15 +12,33 @@ class AiprayTrainingController extends Controller
 {
     public function index()
     {
-        $jobs = AiprayTrainingJob::latest()->paginate(20);
-        $ml = new AiprayMlServiceClient;
-        $mlHealth = $ml->health();
+        try {
+            $jobs = AiprayTrainingJob::latest()->paginate(20);
+        } catch (\Exception $e) {
+            $jobs = collect();
+        }
 
-        $stats = [
-            'total_samples' => AiprayAudioSample::count(),
-            'verified_samples' => AiprayAudioSample::verified()->count(),
-            'total_hours' => round(AiprayAudioSample::sum('duration') / 3600, 1),
-        ];
+        try {
+            $ml = new AiprayMlServiceClient;
+            $healthData = $ml->health();
+            $mlHealth = ($healthData['status'] ?? null) === 'ok' ? 'healthy' : 'offline';
+        } catch (\Exception $e) {
+            $mlHealth = 'offline';
+        }
+
+        try {
+            $stats = [
+                'verified_samples' => AiprayAudioSample::verified()->count(),
+                'total_jobs' => AiprayTrainingJob::count(),
+                'active_jobs' => AiprayTrainingJob::whereIn('status', ['running', 'queued', 'pending'])->count(),
+            ];
+        } catch (\Exception $e) {
+            $stats = [
+                'verified_samples' => 0,
+                'total_jobs' => 0,
+                'active_jobs' => 0,
+            ];
+        }
 
         return view('admin.aipray.training.index', compact('jobs', 'mlHealth', 'stats'));
     }

@@ -10,7 +10,11 @@ class AiprayChantController extends Controller
 {
     public function index()
     {
-        $chants = AiprayChant::orderBy('sort_order')->paginate(30);
+        try {
+            $chants = AiprayChant::orderBy('sort_order')->paginate(30);
+        } catch (\Exception $e) {
+            $chants = collect();
+        }
 
         return view('admin.aipray.chants.index', compact('chants'));
     }
