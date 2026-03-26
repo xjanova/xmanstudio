@@ -144,13 +144,19 @@ class GithubReleaseService
      */
     public function downloadAsset(GithubSetting $githubSetting, string $assetUrl)
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
+        $downloadHeaders = [
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download-Service',
-        ])->withOptions([
-            'stream' => true,
-        ])->get($assetUrl);
+        ];
+        $token = $githubSetting->github_token_decrypted;
+        if (! empty($token)) {
+            $downloadHeaders['Authorization'] = 'Bearer ' . $token;
+        }
+
+        $response = Http::withHeaders($downloadHeaders)
+            ->withOptions([
+                'stream' => true,
+            ])->get($assetUrl);
 
         if (! $response->successful()) {
             throw new \Exception('Could not download asset from GitHub');
@@ -166,13 +172,19 @@ class GithubReleaseService
     {
         $url = "https://api.github.com/repos/{$githubSetting->full_repo_name}/releases/assets/{$assetId}";
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
+        $assetHeaders = [
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download-Service',
-        ])->withOptions([
-            'allow_redirects' => false,
-        ])->get($url);
+        ];
+        $token = $githubSetting->github_token_decrypted;
+        if (! empty($token)) {
+            $assetHeaders['Authorization'] = 'Bearer ' . $token;
+        }
+
+        $response = Http::withHeaders($assetHeaders)
+            ->withOptions([
+                'allow_redirects' => false,
+            ])->get($url);
 
         if ($response->status() === 302) {
             return $response->header('Location');
@@ -242,11 +254,17 @@ class GithubReleaseService
      */
     protected function getHeaders(GithubSetting $githubSetting): array
     {
-        return [
-            'Authorization' => 'Bearer ' . $githubSetting->github_token_decrypted,
+        $headers = [
             'Accept' => 'application/vnd.github.v3+json',
             'User-Agent' => 'XMAN-Studio-Release-Service',
         ];
+
+        $token = $githubSetting->github_token_decrypted;
+        if (! empty($token)) {
+            $headers['Authorization'] = 'Bearer ' . $token;
+        }
+
+        return $headers;
     }
 
     /**
