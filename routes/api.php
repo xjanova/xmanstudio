@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiprayApiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
+use App\Http\Controllers\Api\LocalVpnFileController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\StripeController;
@@ -446,4 +447,11 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
     Route::get('/stun', [LocalVpnRelayController::class, 'stun']);
     Route::post('/signal', [LocalVpnRelayController::class, 'signal']);
     Route::post('/signal/poll', [LocalVpnRelayController::class, 'pollSignals']);
+
+    // File sharing (network-wide registry)
+    Route::post('/files/share', [LocalVpnFileController::class, 'share']);
+    Route::get('/files/{slug}', [LocalVpnFileController::class, 'index']);
+    Route::delete('/files/{fileId}', [LocalVpnFileController::class, 'destroy']);
+    Route::post('/files/seed', [LocalVpnFileController::class, 'registerSeeder']);
+    Route::get('/files/{fileId}/seeders', [LocalVpnFileController::class, 'seeders']);
 });
