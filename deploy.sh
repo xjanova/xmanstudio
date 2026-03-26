@@ -723,6 +723,8 @@ run_always_seeders() {
     ALWAYS_RUN_SEEDERS=(
         "QuotationSeeder"
         "AutoTradeXSeeder"
+        "XmanProductsSeeder"
+        "SmsPaymentCheckerSeeder"
     )
 
     for SEEDER in "${ALWAYS_RUN_SEEDERS[@]}"; do

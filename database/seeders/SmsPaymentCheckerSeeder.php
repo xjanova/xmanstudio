@@ -40,15 +40,15 @@ class SmsPaymentCheckerSeeder extends Seeder
         // 2. Create Product: SMS Payment Checker
         // ============================================
         $product = Product::updateOrCreate(
-            ['slug' => 'sms-payment-checker'],
+            ['slug' => 'smschecker'],
             [
                 'category_id' => $category->id,
-                'name' => 'SMS Payment Checker for WordPress',
-                'slug' => 'sms-payment-checker',
+                'name' => 'SmsChecker',
+                'slug' => 'smschecker',
                 'description' => $this->getFullDescription(),
                 'short_description' => 'ระบบตรวจสอบการชำระเงินผ่าน SMS อัตโนมัติสำหรับ WooCommerce รองรับธนาคารไทย 15+ แห่ง เข้ารหัส AES-256-GCM จับคู่ยอดเงินอัตโนมัติ',
                 'features' => $this->getFeatures(),
-                'price' => 990.00,
+                'price' => 499.00,
                 'image' => null,
                 'images' => [],
                 'sku' => 'SPC-WP-001',
@@ -67,20 +67,20 @@ class SmsPaymentCheckerSeeder extends Seeder
         // ============================================
         $pricingInfo = [
             'monthly' => [
-                'price' => 990.00,
+                'price' => 499.00,
                 'currency' => 'THB',
                 'duration_days' => 30,
                 'license_type' => LicenseKey::TYPE_MONTHLY,
             ],
             'yearly' => [
-                'price' => 9900.00,
+                'price' => 4990.00,
                 'currency' => 'THB',
                 'duration_days' => 365,
                 'license_type' => LicenseKey::TYPE_YEARLY,
                 'savings' => '17%',
             ],
             'lifetime' => [
-                'price' => 29900.00,
+                'price' => 29000.00,
                 'currency' => 'THB',
                 'duration_days' => null,
                 'license_type' => LicenseKey::TYPE_LIFETIME,
@@ -129,13 +129,13 @@ class SmsPaymentCheckerSeeder extends Seeder
         // ============================================
         $this->command->newLine();
         $this->command->info('=== SMS Payment Checker Configuration ===');
-        $this->command->info('Product Slug: sms-payment-checker');
-        $this->command->info('API Base URL: https://xmanstudio.com/api/v1');
+        $this->command->info('Product Slug: smschecker');
+        $this->command->info('API Base URL: https://xman4289.com/api/v1');
         $this->command->newLine();
-        $this->command->info('WordPress Plugin API Endpoints:');
-        $this->command->info('  POST /product/sms-payment-checker/activate    - Activate license');
-        $this->command->info('  POST /product/sms-payment-checker/validate    - Validate license');
-        $this->command->info('  POST /product/sms-payment-checker/deactivate  - Deactivate license');
+        $this->command->info('API Endpoints:');
+        $this->command->info('  POST /product/smschecker/activate    - Activate license');
+        $this->command->info('  POST /product/smschecker/validate    - Validate license');
+        $this->command->info('  POST /product/smschecker/deactivate  - Deactivate license');
         $this->command->newLine();
         $this->command->info('License Types: monthly (30d), yearly (365d), lifetime (forever)');
         $this->command->info('Max Activations: 1 site per license');

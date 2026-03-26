@@ -43,6 +43,8 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             PaymentSeeder::class,
             AdminSeeder::class,
+            XmanProductsSeeder::class,
+            SmsPaymentCheckerSeeder::class,
         ]);
     }
 }
