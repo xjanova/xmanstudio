@@ -121,7 +121,7 @@ class LocalVpnRelayController extends Controller
             $search = str_replace(['%', '_'], ['\\%', '\\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%");
             });
         }
 
@@ -172,7 +172,7 @@ class LocalVpnRelayController extends Controller
         ]);
 
         $license = $this->validateDeviceAuth($request);
-        if (!$license) {
+        if (! $license) {
             return response()->json(['error' => 'Invalid license or device'], 403);
         }
 
@@ -282,7 +282,7 @@ class LocalVpnRelayController extends Controller
         ]);
 
         $license = $this->validateDeviceAuth($request);
-        if (!$license) {
+        if (! $license) {
             return response()->json(['error' => 'Invalid license or device'], 403);
         }
 
@@ -303,7 +303,7 @@ class LocalVpnRelayController extends Controller
         // End active relay sessions
         VpnRelaySession::where(function ($q) use ($member) {
             $q->where('source_member_id', $member->id)
-              ->orWhere('target_member_id', $member->id);
+                ->orWhere('target_member_id', $member->id);
         })->where('is_active', true)->update([
             'is_active' => false,
             'ended_at' => now(),
@@ -338,7 +338,7 @@ class LocalVpnRelayController extends Controller
         ]);
 
         $license = $this->validateDeviceAuth($request);
-        if (!$license) {
+        if (! $license) {
             return response()->json(['error' => 'Invalid license or device'], 403);
         }
 
@@ -429,7 +429,7 @@ class LocalVpnRelayController extends Controller
         // Validate auth using source_machine_id as machine_id
         $request->merge(['machine_id' => $request->input('source_machine_id')]);
         $license = $this->validateDeviceAuth($request);
-        if (!$license) {
+        if (! $license) {
             return response()->json(['error' => 'Invalid license or device'], 403);
         }
 
@@ -523,7 +523,7 @@ class LocalVpnRelayController extends Controller
         ]);
 
         $license = $this->validateDeviceAuth($request);
-        if (!$license) {
+        if (! $license) {
             return response()->json(['error' => 'Invalid license or device'], 403);
         }
 
@@ -556,12 +556,12 @@ class LocalVpnRelayController extends Controller
         $licenseKey = $request->input('license_key');
         $machineId = $request->input('machine_id');
 
-        if (!$licenseKey || !$machineId) {
+        if (! $licenseKey || ! $machineId) {
             return null;
         }
 
         $product = Product::where('slug', 'localvpn')->where('requires_license', true)->first();
-        if (!$product) {
+        if (! $product) {
             return null;
         }
 
@@ -571,7 +571,7 @@ class LocalVpnRelayController extends Controller
             ->where('status', 'active')
             ->first();
 
-        if (!$license || $license->isExpired()) {
+        if (! $license || $license->isExpired()) {
             return null;
         }
 

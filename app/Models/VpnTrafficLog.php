@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class VpnTrafficLog extends Model
 {
     public $timestamps = false;
+
     const UPDATED_AT = null;
 
     protected $fillable = [

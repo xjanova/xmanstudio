@@ -68,7 +68,7 @@ class LocalVpnController extends Controller
             $search = str_replace(['%', '_'], ['\\%', '\\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%");
             });
         }
 
@@ -156,8 +156,8 @@ class LocalVpnController extends Controller
             $search = str_replace(['%', '_'], ['\\%', '\\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->where('display_name', 'like', "%{$search}%")
-                  ->orWhere('virtual_ip', 'like', "%{$search}%")
-                  ->orWhere('public_ip', 'like', "%{$search}%");
+                    ->orWhere('virtual_ip', 'like', "%{$search}%")
+                    ->orWhere('public_ip', 'like', "%{$search}%");
             });
         }
 
@@ -188,7 +188,7 @@ class LocalVpnController extends Controller
         // End any active relay sessions
         VpnRelaySession::where(function ($q) use ($member) {
             $q->where('source_member_id', $member->id)
-              ->orWhere('target_member_id', $member->id);
+                ->orWhere('target_member_id', $member->id);
         })->where('is_active', true)->update([
             'is_active' => false,
             'ended_at' => now(),

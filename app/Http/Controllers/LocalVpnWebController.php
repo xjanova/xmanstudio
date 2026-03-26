@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductVersion;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -118,7 +119,7 @@ class LocalVpnWebController extends Controller
         if ($plan && in_array($plan, ['monthly', 'yearly', 'lifetime'])) {
             $url = route('localvpn.checkout', $plan);
             if ($machineId) {
-                $url .= '?machine_id='.$machineId;
+                $url .= '?machine_id=' . $machineId;
             }
 
             return redirect($url);
@@ -126,7 +127,7 @@ class LocalVpnWebController extends Controller
 
         $url = route('localvpn.pricing');
         if ($machineId) {
-            $url .= '?machine_id='.$machineId;
+            $url .= '?machine_id=' . $machineId;
         }
 
         return redirect($url);
@@ -188,7 +189,7 @@ class LocalVpnWebController extends Controller
         $assetUrl = $productVersion->github_release_url;
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$token,
+            'Authorization' => 'Bearer ' . $token,
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-LocalVPN-Download-Proxy',
         ])->withOptions([
@@ -201,7 +202,7 @@ class LocalVpnWebController extends Controller
             $downloadUrl = $assetUrl;
         }
 
-        $filename = $productVersion->download_filename ?? 'LocalVPN-v'.$productVersion->version.'.apk';
+        $filename = $productVersion->download_filename ?? 'LocalVPN-v' . $productVersion->version . '.apk';
         $fileSize = $productVersion->file_size;
 
         return new StreamedResponse(function () use ($downloadUrl, $token) {
@@ -217,7 +218,7 @@ class LocalVpnWebController extends Controller
 
             if (strpos($downloadUrl, 'github.com') !== false) {
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer '.$token,
+                    'Authorization: Bearer ' . $token,
                     'Accept: application/octet-stream',
                     'User-Agent: XMAN-LocalVPN-Download-Proxy',
                 ]);
@@ -227,7 +228,7 @@ class LocalVpnWebController extends Controller
             curl_close($ch);
         }, 200, [
             'Content-Type' => 'application/vnd.android.package-archive',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Content-Length' => $fileSize,
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
             'Pragma' => 'no-cache',
@@ -255,7 +256,7 @@ class LocalVpnWebController extends Controller
         $walletDiscount = self::WALLET_DISCOUNT_PERCENT;
 
         if (auth()->check()) {
-            $wallet = \App\Models\Wallet::where('user_id', auth()->id())->first();
+            $wallet = Wallet::where('user_id', auth()->id())->first();
             $walletBalance = $wallet ? $wallet->balance : 0;
         }
 
