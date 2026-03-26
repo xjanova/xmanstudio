@@ -225,6 +225,20 @@ Route::prefix('smschecker')->name('smschecker.')->group(function () {
     });
 });
 
+// LocalVPN - Direct purchase from app
+Route::prefix('localvpn')->name('localvpn.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\LocalVpnWebController::class, 'detail'])->name('detail');
+    Route::get('/pricing', [\App\Http\Controllers\LocalVpnWebController::class, 'pricing'])->name('pricing');
+    Route::get('/buy', [\App\Http\Controllers\LocalVpnWebController::class, 'buyRedirect'])->name('buy');
+    Route::get('/download', [\App\Http\Controllers\LocalVpnWebController::class, 'downloadPage'])->name('download');
+    Route::get('/download/apk', [\App\Http\Controllers\LocalVpnWebController::class, 'downloadApk'])->name('download.apk');
+
+    // Require authentication for checkout
+    Route::middleware('auth')->group(function () {
+        Route::get('/checkout/{plan}', [\App\Http\Controllers\LocalVpnWebController::class, 'checkout'])->name('checkout');
+    });
+});
+
 // Services
 Route::get('/services', [ProductController::class, 'services'])->name('services.index');
 Route::get('/services/{slug}', [ProductController::class, 'serviceDetail'])->name('services.show');
@@ -1119,6 +1133,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/donations', [AiprayDonationController::class, 'index'])->name('donations.index');
         Route::put('/donations/{donation}/approve', [AiprayDonationController::class, 'approve'])->name('donations.approve');
         Route::put('/donations/{donation}/reject', [AiprayDonationController::class, 'reject'])->name('donations.reject');
+    });
+
+    // ==================== LocalVPN Management ====================
+    Route::prefix('localvpn')->name('localvpn.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\LocalVpnController::class, 'dashboard'])->name('dashboard');
+        Route::get('/networks', [App\Http\Controllers\Admin\LocalVpnController::class, 'networks'])->name('networks');
+        Route::get('/networks/{network}', [App\Http\Controllers\Admin\LocalVpnController::class, 'showNetwork'])->name('networks.show');
+        Route::post('/networks/{network}/toggle', [App\Http\Controllers\Admin\LocalVpnController::class, 'toggleNetwork'])->name('networks.toggle');
+        Route::delete('/networks/{network}', [App\Http\Controllers\Admin\LocalVpnController::class, 'deleteNetwork'])->name('networks.delete');
+        Route::get('/members', [App\Http\Controllers\Admin\LocalVpnController::class, 'members'])->name('members');
+        Route::post('/members/{member}/kick', [App\Http\Controllers\Admin\LocalVpnController::class, 'kickMember'])->name('members.kick');
+        Route::get('/sessions', [App\Http\Controllers\Admin\LocalVpnController::class, 'sessions'])->name('sessions');
+        Route::get('/traffic', [App\Http\Controllers\Admin\LocalVpnController::class, 'trafficLogs'])->name('traffic');
+        Route::get('/settings', [App\Http\Controllers\Admin\LocalVpnController::class, 'settings'])->name('settings');
+        Route::post('/settings', [App\Http\Controllers\Admin\LocalVpnController::class, 'updateSettings'])->name('settings.update');
     });
 });
 

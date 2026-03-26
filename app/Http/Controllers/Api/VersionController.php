@@ -209,6 +209,8 @@ class VersionController extends Controller
                 $downloadUrl = url('/tping/download/apk');
             } elseif ($productSlug === 'smschecker') {
                 $downloadUrl = url('/smschecker/download/apk');
+            } elseif ($productSlug === 'localvpn') {
+                $downloadUrl = url('/localvpn/download/apk');
             } else {
                 $downloadUrl = route('download.product', [
                     'slug' => $product->slug,

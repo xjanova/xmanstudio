@@ -429,3 +429,15 @@ Route::prefix('aipray')->middleware(['throttle:60,1'])->group(function () {
     // ML service internal callback
     Route::post('/ml/training-callback', [AiprayApiController::class, 'mlCallback']);
 });
+
+// ==================== LocalVPN Relay API ====================
+Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () {
+    Route::post('/networks', [\App\Http\Controllers\Api\LocalVpnRelayController::class, 'createNetwork']);
+    Route::get('/networks', [\App\Http\Controllers\Api\LocalVpnRelayController::class, 'listNetworks']);
+    Route::post('/networks/join', [\App\Http\Controllers\Api\LocalVpnRelayController::class, 'joinNetwork']);
+    Route::post('/networks/leave', [\App\Http\Controllers\Api\LocalVpnRelayController::class, 'leaveNetwork']);
+    Route::post('/heartbeat', [\App\Http\Controllers\Api\LocalVpnRelayController::class, 'heartbeat']);
+    Route::get('/networks/{slug}/members', [\App\Http\Controllers\Api\LocalVpnRelayController::class, 'getMembers']);
+    Route::post('/relay', [\App\Http\Controllers\Api\LocalVpnRelayController::class, 'relayData']);
+    Route::delete('/networks/{slug}', [\App\Http\Controllers\Api\LocalVpnRelayController::class, 'deleteNetwork']);
+});

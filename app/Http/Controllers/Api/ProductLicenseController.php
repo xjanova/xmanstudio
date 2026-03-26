@@ -997,6 +997,11 @@ class ProductLicenseController extends Controller
                 'yearly' => ['original' => 4990, 'currency' => 'THB'],
                 'lifetime' => ['original' => 29000, 'currency' => 'THB'],
             ],
+            'localvpn' => [
+                'monthly' => ['original' => 399, 'currency' => 'THB'],
+                'yearly' => ['original' => 2500, 'currency' => 'THB'],
+                'lifetime' => ['original' => 5000, 'currency' => 'THB'],
+            ],
         ];
 
         return $productPricing[$productSlug] ?? self::DEFAULT_PRICING;
