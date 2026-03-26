@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($adminLayout ?? 'layouts.admin')
 
 @section('title', 'LocalVPN - เครือข่าย')
 @section('page-title', 'LocalVPN - จัดการเครือข่าย')
