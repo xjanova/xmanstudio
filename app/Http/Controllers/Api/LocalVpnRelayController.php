@@ -549,6 +549,123 @@ class LocalVpnRelayController extends Controller
         return response()->json(['success' => true, 'message' => 'Network deleted.']);
     }
 
+    /**
+     * STUN-like endpoint: return the caller's public IP and port.
+     * GET /api/v1/localvpn/stun
+     */
+    public function stun(Request $request): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'ip' => $request->ip(),
+            'port' => $request->server('REMOTE_PORT'),
+            'timestamp' => now()->toISOString(),
+        ]);
+    }
+
+    /**
+     * Send a P2P signaling message to a specific peer.
+     * POST /api/v1/localvpn/signal
+     */
+    public function signal(Request $request): JsonResponse
+    {
+        $request->validate([
+            'slug' => 'required|string',
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+            'target_virtual_ip' => 'required|string',
+            'type' => 'required|string|in:punch_request,punch_response,punch_ack',
+            'payload' => 'nullable|array',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['error' => 'Invalid license or device'], 403);
+        }
+
+        $network = VpnNetwork::where('slug', $request->input('slug'))->active()->first();
+        if (! $network) {
+            return response()->json(['success' => false, 'error' => 'Network not found.'], 404);
+        }
+
+        $sourceMember = VpnNetworkMember::where('network_id', $network->id)
+            ->where('machine_id', $request->input('machine_id'))
+            ->first();
+
+        if (! $sourceMember) {
+            return response()->json(['success' => false, 'error' => 'Not a member.'], 403);
+        }
+
+        $targetMember = VpnNetworkMember::where('network_id', $network->id)
+            ->where('virtual_ip', $request->input('target_virtual_ip'))
+            ->where('is_online', true)
+            ->first();
+
+        if (! $targetMember) {
+            return response()->json(['success' => false, 'error' => 'Target not found or offline.'], 404);
+        }
+
+        // Store signal in cache (TTL 30 seconds)
+        $signalKey = "vpn_signal:{$targetMember->id}";
+        $signals = cache()->get($signalKey, []);
+        $signals[] = [
+            'from_virtual_ip' => $sourceMember->virtual_ip,
+            'from_public_ip' => $sourceMember->public_ip,
+            'from_public_port' => $sourceMember->public_port,
+            'from_display_name' => $sourceMember->display_name,
+            'type' => $request->input('type'),
+            'payload' => $request->input('payload', []),
+            'timestamp' => now()->toISOString(),
+        ];
+
+        // Keep only last 50 signals, TTL 30s
+        $signals = array_slice($signals, -50);
+        cache()->put($signalKey, $signals, 30);
+
+        return response()->json(['success' => true, 'message' => 'Signal sent.']);
+    }
+
+    /**
+     * Poll for pending signaling messages.
+     * POST /api/v1/localvpn/signal/poll
+     */
+    public function pollSignals(Request $request): JsonResponse
+    {
+        $request->validate([
+            'slug' => 'required|string',
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['error' => 'Invalid license or device'], 403);
+        }
+
+        $network = VpnNetwork::where('slug', $request->input('slug'))->active()->first();
+        if (! $network) {
+            return response()->json(['success' => false, 'error' => 'Network not found.'], 404);
+        }
+
+        $member = VpnNetworkMember::where('network_id', $network->id)
+            ->where('machine_id', $request->input('machine_id'))
+            ->first();
+
+        if (! $member) {
+            return response()->json(['success' => false, 'error' => 'Not a member.'], 404);
+        }
+
+        // Fetch and clear signals
+        $signalKey = "vpn_signal:{$member->id}";
+        $signals = cache()->get($signalKey, []);
+        cache()->forget($signalKey);
+
+        return response()->json([
+            'success' => true,
+            'signals' => $signals,
+        ]);
+    }
+
     // ==================== Private Helpers ====================
 
     private function validateDeviceAuth(Request $request): ?LicenseKey

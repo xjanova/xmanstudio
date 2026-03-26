@@ -441,4 +441,9 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
     Route::get('/networks/{slug}/members', [LocalVpnRelayController::class, 'getMembers']);
     Route::post('/relay', [LocalVpnRelayController::class, 'relayData']);
     Route::delete('/networks/{slug}', [LocalVpnRelayController::class, 'deleteNetwork']);
+
+    // P2P signaling
+    Route::get('/stun', [LocalVpnRelayController::class, 'stun']);
+    Route::post('/signal', [LocalVpnRelayController::class, 'signal']);
+    Route::post('/signal/poll', [LocalVpnRelayController::class, 'pollSignals']);
 });
