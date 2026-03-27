@@ -35,15 +35,12 @@ class LocalVpnRelayController extends Controller
             'device_id' => 'nullable|string|max:255',
         ]);
 
-        // Validate license
-        $license = LicenseKey::where('license_key', $request->input('license_key'))
-            ->where('status', 'active')
-            ->first();
-
+        // Validate license + device
+        $license = $this->validateDeviceAuth($request);
         if (! $license) {
             return response()->json([
                 'success' => false,
-                'error' => 'Invalid or inactive license key.',
+                'error' => 'Invalid license or device.',
             ], 403);
         }
 
@@ -409,10 +406,9 @@ class LocalVpnRelayController extends Controller
             ->where('last_heartbeat_at', '<', now()->subSeconds($timeout))
             ->update(['is_online' => false]);
 
-        // Get peer list (all online members except self)
+        // Get peer list (all online members including self)
         $peers = VpnNetworkMember::where('network_id', $network->id)
             ->where('is_online', true)
-            ->where('id', '!=', $member->id)
             ->get()
             ->map(fn ($p) => $this->formatMember($p));
 
@@ -429,6 +425,16 @@ class LocalVpnRelayController extends Controller
      */
     public function getMembers(Request $request, string $slug): JsonResponse
     {
+        $request->validate([
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['error' => 'Invalid license or device'], 403);
+        }
+
         $network = VpnNetwork::where('slug', $slug)->first();
 
         if (! $network) {
@@ -439,12 +445,7 @@ class LocalVpnRelayController extends Controller
             ->orderByDesc('is_online')
             ->orderByDesc('last_heartbeat_at')
             ->get()
-            ->map(fn ($m) => [
-                'display_name' => $m->display_name,
-                'virtual_ip' => $m->virtual_ip,
-                'is_online' => $m->is_online,
-                'joined_at' => $m->joined_at?->toISOString(),
-            ]);
+            ->map(fn ($m) => $this->formatMember($m));
 
         return response()->json([
             'success' => true,
@@ -575,16 +576,18 @@ class LocalVpnRelayController extends Controller
             return response()->json(['success' => false, 'error' => 'Network not found or not owned by you.'], 404);
         }
 
-        // Log deletion before deleting
+        // Delete network first, then log (cascade would delete the log otherwise)
+        $networkId = $network->id;
+        $networkSlug = $network->slug;
+        $network->delete();
+
         VpnTrafficLog::create([
-            'network_id' => $network->id,
+            'network_id' => null, // network is deleted
             'action' => 'network_delete',
+            'details' => json_encode(['slug' => $networkSlug, 'deleted_network_id' => $networkId]),
             'ip_address' => $request->ip(),
-            'metadata' => ['deleted_by' => 'owner'],
             'created_at' => now(),
         ]);
-
-        $network->delete();
 
         return response()->json(['success' => true, 'message' => 'Network deleted.']);
     }
