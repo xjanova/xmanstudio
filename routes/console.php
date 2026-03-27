@@ -95,6 +95,19 @@ Schedule::call(function () {
     ->dailyAt('03:00')
     ->withoutOverlapping();
 
+// Torrent: Mark stale seeders as offline
+// Run every 2 minutes: set is_online=false for seeders not seen in 5 minutes
+Schedule::command('torrent:cleanup-seeders')
+    ->everyTwoMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        Log::info('[Torrent] Stale seeders cleanup completed successfully');
+    })
+    ->onFailure(function () {
+        Log::error('[Torrent] Stale seeders cleanup failed');
+    });
+
 // Metal-X: อัปโหลดวิดีโอ Projects ที่ถึงเวลา
 // รันทุก 5 นาที: ตรวจหา projects ที่ status=rendered และ scheduled_at <= now
 Schedule::call(function () {

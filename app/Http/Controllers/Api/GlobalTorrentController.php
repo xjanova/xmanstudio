@@ -23,6 +23,8 @@ class GlobalTorrentController extends Controller
         $isKycApproved = $this->isKycApproved($machineId);
 
         $query = DB::table('bt_categories')
+            ->select('bt_categories.*')
+            ->selectRaw('(SELECT COUNT(*) FROM bt_files WHERE bt_files.category_id = bt_categories.id AND bt_files.is_active = 1) as file_count')
             ->where('is_active', true)
             ->orderBy('sort_order');
 
@@ -30,14 +32,7 @@ class GlobalTorrentController extends Controller
             $query->where('is_adult', false);
         }
 
-        $categories = $query->get()->map(function ($cat) {
-            $cat->file_count = DB::table('bt_files')
-                ->where('category_id', $cat->id)
-                ->where('is_active', true)
-                ->count();
-
-            return $cat;
-        });
+        $categories = $query->get();
 
         return response()->json([
             'success' => true,
@@ -77,6 +72,8 @@ class GlobalTorrentController extends Controller
         $perPage = 20;
 
         $query = DB::table('bt_files')
+            ->select('bt_files.*')
+            ->selectRaw('(SELECT COUNT(*) FROM bt_file_seeders WHERE bt_file_seeders.bt_file_id = bt_files.id AND bt_file_seeders.is_online = 1) as online_seeders_count')
             ->where('category_id', $category->id)
             ->where('is_active', true);
 
@@ -105,11 +102,6 @@ class GlobalTorrentController extends Controller
         $files = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
         $filesFormatted = $files->map(function ($file) use ($category) {
-            $onlineSeeders = DB::table('bt_file_seeders')
-                ->where('bt_file_id', $file->id)
-                ->where('is_online', true)
-                ->count();
-
             return [
                 'id' => $file->id,
                 'file_hash' => $file->file_hash,
@@ -124,7 +116,7 @@ class GlobalTorrentController extends Controller
                 ],
                 'uploader_display_name' => $file->uploader_display_name,
                 'download_count' => $file->download_count,
-                'online_seeders_count' => $onlineSeeders,
+                'online_seeders_count' => $file->online_seeders_count,
                 'created_at' => $file->created_at,
             ];
         });
@@ -176,9 +168,11 @@ class GlobalTorrentController extends Controller
             ->get()
             ->map(function ($s) {
                 return [
-                    'machine_id' => substr($s->machine_id, 0, 8) . '...',
+                    'machine_id' => $s->machine_id,
                     'display_name' => $s->display_name,
                     'is_online' => (bool) $s->is_online,
+                    'public_ip' => $s->public_ip,
+                    'public_port' => $s->public_port,
                     'last_seen_at' => $s->last_seen_at,
                     'chunks_bitmap' => $s->chunks_bitmap,
                 ];
@@ -230,6 +224,8 @@ class GlobalTorrentController extends Controller
             'thumbnail_data' => 'nullable|string',
             'display_name' => 'nullable|string|max:100',
             'chunk_size' => 'nullable|integer|min:1024|max:65536',
+            'public_ip' => 'nullable|string|max:45',
+            'public_port' => 'nullable|integer',
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -278,7 +274,10 @@ class GlobalTorrentController extends Controller
 
         $now = now();
 
-        $fileId = DB::transaction(function () use ($request, $category, $machineId, $displayName, $fileSize, $chunkSize, $totalChunks, $thumbnailUrl, $now) {
+        $publicIp = $request->input('public_ip');
+        $publicPort = $request->input('public_port');
+
+        $fileId = DB::transaction(function () use ($request, $category, $machineId, $displayName, $fileSize, $chunkSize, $totalChunks, $thumbnailUrl, $publicIp, $publicPort, $now) {
             // Create file record
             $fileId = DB::table('bt_files')->insertGetId([
                 'category_id' => $category->id,
@@ -304,17 +303,19 @@ class GlobalTorrentController extends Controller
                 'display_name' => $displayName,
                 'is_online' => true,
                 'last_seen_at' => $now,
+                'public_ip' => $publicIp,
+                'public_port' => $publicPort,
                 'chunks_bitmap' => 'all',
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
 
-            // Update user stats
+            // Update user stats (don't set updated_at — let heartbeat own it for seed time tracking)
             DB::table('bt_user_stats')->updateOrInsert(
                 ['machine_id' => $machineId],
                 [
                     'display_name' => $displayName,
-                    'updated_at' => $now,
+                    'created_at' => $now,
                 ]
             );
             DB::table('bt_user_stats')
@@ -353,6 +354,8 @@ class GlobalTorrentController extends Controller
             'file_hash' => 'required|string|size:64',
             'chunks_bitmap' => 'nullable|string',
             'display_name' => 'nullable|string|max:100',
+            'public_ip' => 'nullable|string|max:45',
+            'public_port' => 'nullable|integer',
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -372,6 +375,8 @@ class GlobalTorrentController extends Controller
         $machineId = $request->input('machine_id');
         $displayName = $request->input('display_name', substr($machineId, 0, 8));
         $chunksBitmap = $request->input('chunks_bitmap', 'all');
+        $publicIp = $request->input('public_ip');
+        $publicPort = $request->input('public_port');
         $now = now();
 
         // Check if seeder already exists (to avoid inflating download count on re-register)
@@ -380,7 +385,7 @@ class GlobalTorrentController extends Controller
             ->where('machine_id', $machineId)
             ->exists();
 
-        DB::transaction(function () use ($file, $machineId, $displayName, $chunksBitmap, $now, $isNewSeeder) {
+        DB::transaction(function () use ($file, $machineId, $displayName, $chunksBitmap, $publicIp, $publicPort, $now, $isNewSeeder) {
             // Create or update seeder
             DB::table('bt_file_seeders')->updateOrInsert(
                 [
@@ -392,6 +397,9 @@ class GlobalTorrentController extends Controller
                     'is_online' => true,
                     'last_seen_at' => $now,
                     'chunks_bitmap' => $chunksBitmap,
+                    'public_ip' => $publicIp,
+                    'public_port' => $publicPort,
+                    'created_at' => $now,
                     'updated_at' => $now,
                 ]
             );
@@ -401,12 +409,12 @@ class GlobalTorrentController extends Controller
                 // Increment download count
                 DB::table('bt_files')->where('id', $file->id)->increment('download_count');
 
-                // Update user stats
+                // Update user stats (don't set updated_at — let heartbeat own it for seed time tracking)
                 DB::table('bt_user_stats')->updateOrInsert(
                     ['machine_id' => $machineId],
                     [
                         'display_name' => $displayName,
-                        'updated_at' => $now,
+                        'created_at' => $now,
                     ]
                 );
                 DB::table('bt_user_stats')
@@ -490,20 +498,29 @@ class GlobalTorrentController extends Controller
             ]);
 
         // Update seed time: calculate seconds since last heartbeat
-        $stats = DB::table('bt_user_stats')->where('machine_id', $machineId)->first();
-        if ($stats && $stats->updated_at) {
-            $lastUpdate = Carbon::parse($stats->updated_at);
-            $secondsSinceLast = min($now->diffInSeconds($lastUpdate), 300); // Cap at 5 minutes
-            if ($secondsSinceLast > 0 && ! empty($fileIds)) {
-                DB::table('bt_user_stats')
-                    ->where('machine_id', $machineId)
-                    ->increment('seed_time_seconds', $secondsSinceLast);
+        // Use max last_seen_at from this user's seeders (set BEFORE this heartbeat updated them)
+        // to avoid interference from upload/registerSeeder modifying updated_at on user_stats.
+        if (! empty($fileIds)) {
+            $stats = DB::table('bt_user_stats')->where('machine_id', $machineId)->first();
+            if ($stats && $stats->updated_at) {
+                $lastHeartbeat = Carbon::parse($stats->updated_at);
+                $secondsSinceLast = min($now->diffInSeconds($lastHeartbeat), 300); // Cap at 5 minutes
+                if ($secondsSinceLast > 0) {
+                    DB::table('bt_user_stats')
+                        ->where('machine_id', $machineId)
+                        ->increment('seed_time_seconds', $secondsSinceLast);
+                }
             }
         }
 
-        DB::table('bt_user_stats')
-            ->where('machine_id', $machineId)
-            ->update(['updated_at' => $now]);
+        // Update updated_at AFTER seed time calculation so next heartbeat can diff against it
+        DB::table('bt_user_stats')->updateOrInsert(
+            ['machine_id' => $machineId],
+            [
+                'updated_at' => $now,
+                'created_at' => $now,
+            ]
+        );
 
         return response()->json([
             'success' => true,
@@ -544,7 +561,7 @@ class GlobalTorrentController extends Controller
             ->get()
             ->map(function ($s) {
                 return [
-                    'machine_id' => substr($s->machine_id, 0, 8) . '...',
+                    'machine_id' => $s->machine_id,
                     'display_name' => $s->display_name,
                     'public_ip' => $s->public_ip,
                     'public_port' => $s->public_port,
@@ -567,16 +584,16 @@ class GlobalTorrentController extends Controller
     public function leaderboard(Request $request): JsonResponse
     {
         $users = DB::table('bt_user_stats')
+            ->select('bt_user_stats.*')
+            ->selectRaw("(SELECT GROUP_CONCAT(bt_trophies.badge_text SEPARATOR '||') FROM bt_user_trophies JOIN bt_trophies ON bt_user_trophies.trophy_id = bt_trophies.id WHERE bt_user_trophies.machine_id = bt_user_stats.machine_id) as trophy_badges")
             ->orderByDesc('score')
             ->limit(50)
             ->get();
 
         $leaderboard = $users->map(function ($user, $index) {
-            $trophies = DB::table('bt_user_trophies')
-                ->join('bt_trophies', 'bt_user_trophies.trophy_id', '=', 'bt_trophies.id')
-                ->where('bt_user_trophies.machine_id', $user->machine_id)
-                ->pluck('bt_trophies.badge_text')
-                ->toArray();
+            $trophies = $user->trophy_badges
+                ? explode('||', $user->trophy_badges)
+                : [];
 
             return [
                 'rank' => $user->rank_position ?: ($index + 1),
@@ -1068,10 +1085,13 @@ class GlobalTorrentController extends Controller
             $category = DB::table('bt_categories')->where('id', $file->category_id)->first();
         }
 
-        $onlineSeeders = DB::table('bt_file_seeders')
-            ->where('bt_file_id', $file->id)
-            ->where('is_online', true)
-            ->count();
+        // Use precomputed count if available (from subquery), otherwise query
+        $onlineSeeders = property_exists($file, 'online_seeders_count')
+            ? $file->online_seeders_count
+            : DB::table('bt_file_seeders')
+                ->where('bt_file_id', $file->id)
+                ->where('is_online', true)
+                ->count();
 
         return [
             'id' => $file->id,

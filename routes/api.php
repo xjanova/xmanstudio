@@ -465,7 +465,7 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
     Route::post('/torrent/heartbeat', [GlobalTorrentController::class, 'heartbeat']);
     Route::get('/torrent/file/{fileId}/seeders', [GlobalTorrentController::class, 'getSeeders']);
     Route::get('/torrent/leaderboard', [GlobalTorrentController::class, 'leaderboard']);
-    Route::get('/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
+    Route::match(['get', 'post'], '/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
     Route::get('/torrent/trophies', [GlobalTorrentController::class, 'trophies']);
     Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
     Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
