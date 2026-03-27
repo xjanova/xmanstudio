@@ -257,6 +257,26 @@ class LocalVpnRelayController extends Controller
             ], 409);
         }
 
+        // Freemium: check if network owner has a paid license
+        // Free users (no license) are limited to 5 members per network
+        $ownerHasPaidLicense = LicenseKey::where('user_id', $network->owner_user_id)
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->exists();
+
+        if (! $ownerHasPaidLicense) {
+            $currentMemberCount = VpnNetworkMember::where('network_id', $network->id)->count();
+            if ($currentMemberCount >= 5) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Network is limited to 5 members. Owner must upgrade to premium.',
+                ], 403);
+            }
+        }
+
         // Assign virtual IP
         $virtualIp = $network->assignNextVirtualIp();
 

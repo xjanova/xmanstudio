@@ -81,9 +81,10 @@ class GlobalTorrentController extends Controller
             ->where('is_active', true);
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('file_name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+            $escapedSearch = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $query->where(function ($q) use ($escapedSearch) {
+                $q->where('file_name', 'like', "%{$escapedSearch}%")
+                    ->orWhere('description', 'like', "%{$escapedSearch}%");
             });
         }
 
@@ -156,6 +157,17 @@ class GlobalTorrentController extends Controller
         }
 
         $category = DB::table('bt_categories')->where('id', $file->category_id)->first();
+
+        // Check if file is in adult category
+        if ($category && $category->is_adult) {
+            $machineId = request()->query('machine_id');
+            if (! $this->isKycApproved($machineId)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'KYC verification required for adult content.',
+                ], 403);
+            }
+        }
 
         $seeders = DB::table('bt_file_seeders')
             ->where('bt_file_id', $file->id)
@@ -266,50 +278,54 @@ class GlobalTorrentController extends Controller
 
         $now = now();
 
-        // Create file record
-        $fileId = DB::table('bt_files')->insertGetId([
-            'category_id' => $category->id,
-            'uploader_machine_id' => $machineId,
-            'uploader_display_name' => $displayName,
-            'file_hash' => $request->input('file_hash'),
-            'file_name' => $request->input('file_name'),
-            'file_size' => $fileSize,
-            'description' => $request->input('description'),
-            'thumbnail_url' => $thumbnailUrl,
-            'chunk_size' => $chunkSize,
-            'total_chunks' => $totalChunks,
-            'download_count' => 0,
-            'is_active' => true,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-
-        // Register uploader as first seeder
-        DB::table('bt_file_seeders')->insert([
-            'bt_file_id' => $fileId,
-            'machine_id' => $machineId,
-            'display_name' => $displayName,
-            'is_online' => true,
-            'last_seen_at' => $now,
-            'chunks_bitmap' => 'all',
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-
-        // Update user stats
-        DB::table('bt_user_stats')->updateOrInsert(
-            ['machine_id' => $machineId],
-            [
-                'display_name' => $displayName,
+        $fileId = DB::transaction(function () use ($request, $category, $machineId, $displayName, $fileSize, $chunkSize, $totalChunks, $thumbnailUrl, $now) {
+            // Create file record
+            $fileId = DB::table('bt_files')->insertGetId([
+                'category_id' => $category->id,
+                'uploader_machine_id' => $machineId,
+                'uploader_display_name' => $displayName,
+                'file_hash' => $request->input('file_hash'),
+                'file_name' => $request->input('file_name'),
+                'file_size' => $fileSize,
+                'description' => $request->input('description'),
+                'thumbnail_url' => $thumbnailUrl,
+                'chunk_size' => $chunkSize,
+                'total_chunks' => $totalChunks,
+                'download_count' => 0,
+                'is_active' => true,
+                'created_at' => $now,
                 'updated_at' => $now,
-            ]
-        );
-        DB::table('bt_user_stats')
-            ->where('machine_id', $machineId)
-            ->increment('total_files_shared');
-        DB::table('bt_user_stats')
-            ->where('machine_id', $machineId)
-            ->increment('total_uploaded_bytes', $fileSize);
+            ]);
+
+            // Register uploader as first seeder
+            DB::table('bt_file_seeders')->insert([
+                'bt_file_id' => $fileId,
+                'machine_id' => $machineId,
+                'display_name' => $displayName,
+                'is_online' => true,
+                'last_seen_at' => $now,
+                'chunks_bitmap' => 'all',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            // Update user stats
+            DB::table('bt_user_stats')->updateOrInsert(
+                ['machine_id' => $machineId],
+                [
+                    'display_name' => $displayName,
+                    'updated_at' => $now,
+                ]
+            );
+            DB::table('bt_user_stats')
+                ->where('machine_id', $machineId)
+                ->increment('total_files_shared');
+            DB::table('bt_user_stats')
+                ->where('machine_id', $machineId)
+                ->increment('total_uploaded_bytes', $fileSize);
+
+            return $fileId;
+        });
 
         // Recalculate score
         $this->recalculateUserScore($machineId);
@@ -358,44 +374,55 @@ class GlobalTorrentController extends Controller
         $chunksBitmap = $request->input('chunks_bitmap', 'all');
         $now = now();
 
-        // Create or update seeder
-        DB::table('bt_file_seeders')->updateOrInsert(
-            [
-                'bt_file_id' => $file->id,
-                'machine_id' => $machineId,
-            ],
-            [
-                'display_name' => $displayName,
-                'is_online' => true,
-                'last_seen_at' => $now,
-                'chunks_bitmap' => $chunksBitmap,
-                'updated_at' => $now,
-            ]
-        );
-
-        // Increment download count
-        DB::table('bt_files')->where('id', $file->id)->increment('download_count');
-
-        // Update user stats
-        DB::table('bt_user_stats')->updateOrInsert(
-            ['machine_id' => $machineId],
-            [
-                'display_name' => $displayName,
-                'updated_at' => $now,
-            ]
-        );
-        DB::table('bt_user_stats')
+        // Check if seeder already exists (to avoid inflating download count on re-register)
+        $isNewSeeder = ! DB::table('bt_file_seeders')
+            ->where('bt_file_id', $file->id)
             ->where('machine_id', $machineId)
-            ->increment('total_files_downloaded');
-        DB::table('bt_user_stats')
-            ->where('machine_id', $machineId)
-            ->increment('total_downloaded_bytes', $file->file_size);
+            ->exists();
 
-        // Recalculate score
-        $this->recalculateUserScore($machineId);
+        DB::transaction(function () use ($file, $machineId, $displayName, $chunksBitmap, $now, $isNewSeeder) {
+            // Create or update seeder
+            DB::table('bt_file_seeders')->updateOrInsert(
+                [
+                    'bt_file_id' => $file->id,
+                    'machine_id' => $machineId,
+                ],
+                [
+                    'display_name' => $displayName,
+                    'is_online' => true,
+                    'last_seen_at' => $now,
+                    'chunks_bitmap' => $chunksBitmap,
+                    'updated_at' => $now,
+                ]
+            );
 
-        // Check trophies
-        $this->checkAndAwardTrophies($machineId);
+            // Only count download for new seeders
+            if ($isNewSeeder) {
+                // Increment download count
+                DB::table('bt_files')->where('id', $file->id)->increment('download_count');
+
+                // Update user stats
+                DB::table('bt_user_stats')->updateOrInsert(
+                    ['machine_id' => $machineId],
+                    [
+                        'display_name' => $displayName,
+                        'updated_at' => $now,
+                    ]
+                );
+                DB::table('bt_user_stats')
+                    ->where('machine_id', $machineId)
+                    ->increment('total_files_downloaded');
+                DB::table('bt_user_stats')
+                    ->where('machine_id', $machineId)
+                    ->increment('total_downloaded_bytes', $file->file_size);
+            }
+        });
+
+        // Recalculate score & trophies outside transaction (non-critical)
+        if ($isNewSeeder) {
+            $this->recalculateUserScore($machineId);
+            $this->checkAndAwardTrophies($machineId);
+        }
 
         return response()->json([
             'success' => true,
@@ -499,6 +526,17 @@ class GlobalTorrentController extends Controller
             return response()->json(['success' => false, 'error' => 'File not found.'], 404);
         }
 
+        $category = DB::table('bt_categories')->where('id', $file->category_id)->first();
+        if ($category && $category->is_adult) {
+            $machineId = request()->query('machine_id');
+            if (! $this->isKycApproved($machineId)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'KYC verification required.',
+                ], 403);
+            }
+        }
+
         $seeders = DB::table('bt_file_seeders')
             ->where('bt_file_id', $fileId)
             ->where('is_online', true)
@@ -506,7 +544,7 @@ class GlobalTorrentController extends Controller
             ->get()
             ->map(function ($s) {
                 return [
-                    'machine_id' => $s->machine_id,
+                    'machine_id' => substr($s->machine_id, 0, 8) . '...',
                     'display_name' => $s->display_name,
                     'public_ip' => $s->public_ip,
                     'public_port' => $s->public_port,
@@ -674,6 +712,17 @@ class GlobalTorrentController extends Controller
             return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
         }
 
+        // Validate base64 size (max 2MB per image after encoding)
+        $maxBase64Size = 2 * 1024 * 1024 * 1.34; // ~2.68MB base64 for 2MB binary
+        foreach (['id_card_front', 'id_card_back', 'selfie'] as $field) {
+            if ($request->input($field) && strlen($request->input($field)) > $maxBase64Size) {
+                return response()->json([
+                    'success' => false,
+                    'error' => "Image $field exceeds 2MB limit.",
+                ], 413);
+            }
+        }
+
         // Validate age >= 18
         $birthDate = Carbon::parse($request->input('birth_date'));
         if ($birthDate->age < 18) {
@@ -702,19 +751,31 @@ class GlobalTorrentController extends Controller
         // Save images to storage
         $storagePath = 'kyc/' . $machineId;
 
+        $frontData = base64_decode($request->input('id_card_front'), true);
+        if ($frontData === false) {
+            return response()->json(['success' => false, 'error' => 'Invalid base64 data for id_card_front.'], 422);
+        }
         $frontPath = $storagePath . '/id_front_' . time() . '.jpg';
-        Storage::disk('local')->put($frontPath, base64_decode($request->input('id_card_front')));
+        Storage::disk('local')->put($frontPath, $frontData);
 
         $backPath = null;
         if ($request->input('id_card_back')) {
+            $backData = base64_decode($request->input('id_card_back'), true);
+            if ($backData === false) {
+                return response()->json(['success' => false, 'error' => 'Invalid base64 data for id_card_back.'], 422);
+            }
             $backPath = $storagePath . '/id_back_' . time() . '.jpg';
-            Storage::disk('local')->put($backPath, base64_decode($request->input('id_card_back')));
+            Storage::disk('local')->put($backPath, $backData);
         }
 
         $selfiePath = null;
         if ($request->input('selfie')) {
+            $selfieData = base64_decode($request->input('selfie'), true);
+            if ($selfieData === false) {
+                return response()->json(['success' => false, 'error' => 'Invalid base64 data for selfie.'], 422);
+            }
             $selfiePath = $storagePath . '/selfie_' . time() . '.jpg';
-            Storage::disk('local')->put($selfiePath, base64_decode($request->input('selfie')));
+            Storage::disk('local')->put($selfiePath, $selfieData);
         }
 
         $now = now();
@@ -988,15 +1049,14 @@ class GlobalTorrentController extends Controller
      */
     private function recalculateRanks(): void
     {
-        $users = DB::table('bt_user_stats')
-            ->orderByDesc('score')
-            ->pluck('machine_id');
-
-        foreach ($users as $rank => $mid) {
-            DB::table('bt_user_stats')
-                ->where('machine_id', $mid)
-                ->update(['rank_position' => $rank + 1]);
-        }
+        DB::statement('
+            UPDATE bt_user_stats AS s
+            JOIN (
+                SELECT machine_id, ROW_NUMBER() OVER (ORDER BY score DESC) AS new_rank
+                FROM bt_user_stats
+            ) AS r ON s.machine_id = r.machine_id
+            SET s.rank_position = r.new_rank
+        ');
     }
 
     /**
