@@ -135,7 +135,7 @@ class LocalVpnRelayController extends Controller
             }]);
 
         if ($search = $request->get('search')) {
-            $search = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+            $search = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%");
@@ -618,7 +618,8 @@ class LocalVpnRelayController extends Controller
             'license_key' => 'required|string',
             'target_virtual_ip' => 'required|string',
             'type' => 'required|string|in:punch_request,punch_response,punch_ack',
-            'payload' => 'nullable|array',
+            'payload' => 'nullable|array|max:20',
+            'payload.*' => 'nullable|string|max:1000',
         ]);
 
         $license = $this->validateDeviceAuth($request);

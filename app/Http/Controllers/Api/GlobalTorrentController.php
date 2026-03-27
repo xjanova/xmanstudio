@@ -379,51 +379,65 @@ class GlobalTorrentController extends Controller
         $publicPort = $request->input('public_port');
         $now = now();
 
-        // Check if seeder already exists (to avoid inflating download count on re-register)
-        $isNewSeeder = ! DB::table('bt_file_seeders')
-            ->where('bt_file_id', $file->id)
-            ->where('machine_id', $machineId)
-            ->exists();
+        $isNewSeeder = DB::transaction(function () use ($file, $machineId, $displayName, $chunksBitmap, $publicIp, $publicPort, $now) {
+            // Check inside transaction to prevent race condition
+            $existing = DB::table('bt_file_seeders')
+                ->where('bt_file_id', $file->id)
+                ->where('machine_id', $machineId)
+                ->lockForUpdate()
+                ->first();
 
-        DB::transaction(function () use ($file, $machineId, $displayName, $chunksBitmap, $publicIp, $publicPort, $now, $isNewSeeder) {
-            // Create or update seeder
-            DB::table('bt_file_seeders')->updateOrInsert(
-                [
-                    'bt_file_id' => $file->id,
-                    'machine_id' => $machineId,
-                ],
+            if ($existing) {
+                // Update existing seeder
+                DB::table('bt_file_seeders')
+                    ->where('bt_file_id', $file->id)
+                    ->where('machine_id', $machineId)
+                    ->update([
+                        'display_name' => $displayName,
+                        'is_online' => true,
+                        'last_seen_at' => $now,
+                        'chunks_bitmap' => $chunksBitmap,
+                        'public_ip' => $publicIp,
+                        'public_port' => $publicPort,
+                        'updated_at' => $now,
+                    ]);
+
+                return false;
+            }
+
+            // Insert new seeder
+            DB::table('bt_file_seeders')->insert([
+                'bt_file_id' => $file->id,
+                'machine_id' => $machineId,
+                'display_name' => $displayName,
+                'is_online' => true,
+                'last_seen_at' => $now,
+                'chunks_bitmap' => $chunksBitmap,
+                'public_ip' => $publicIp,
+                'public_port' => $publicPort,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            // Increment download count
+            DB::table('bt_files')->where('id', $file->id)->increment('download_count');
+
+            // Update user stats
+            DB::table('bt_user_stats')->updateOrInsert(
+                ['machine_id' => $machineId],
                 [
                     'display_name' => $displayName,
-                    'is_online' => true,
-                    'last_seen_at' => $now,
-                    'chunks_bitmap' => $chunksBitmap,
-                    'public_ip' => $publicIp,
-                    'public_port' => $publicPort,
                     'created_at' => $now,
-                    'updated_at' => $now,
                 ]
             );
+            DB::table('bt_user_stats')
+                ->where('machine_id', $machineId)
+                ->increment('total_files_downloaded');
+            DB::table('bt_user_stats')
+                ->where('machine_id', $machineId)
+                ->increment('total_downloaded_bytes', $file->file_size);
 
-            // Only count download for new seeders
-            if ($isNewSeeder) {
-                // Increment download count
-                DB::table('bt_files')->where('id', $file->id)->increment('download_count');
-
-                // Update user stats (don't set updated_at — let heartbeat own it for seed time tracking)
-                DB::table('bt_user_stats')->updateOrInsert(
-                    ['machine_id' => $machineId],
-                    [
-                        'display_name' => $displayName,
-                        'created_at' => $now,
-                    ]
-                );
-                DB::table('bt_user_stats')
-                    ->where('machine_id', $machineId)
-                    ->increment('total_files_downloaded');
-                DB::table('bt_user_stats')
-                    ->where('machine_id', $machineId)
-                    ->increment('total_downloaded_bytes', $file->file_size);
-            }
+            return true;
         });
 
         // Recalculate score & trophies outside transaction (non-critical)
@@ -768,11 +782,21 @@ class GlobalTorrentController extends Controller
         // Save images to storage
         $storagePath = 'kyc/' . $machineId;
 
+        // Validate and save images with MIME type checking
+        $validMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        $mimeToExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+
         $frontData = base64_decode($request->input('id_card_front'), true);
         if ($frontData === false) {
             return response()->json(['success' => false, 'error' => 'Invalid base64 data for id_card_front.'], 422);
         }
-        $frontPath = $storagePath . '/id_front_' . time() . '.jpg';
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $frontMime = $finfo->buffer($frontData);
+        if (! in_array($frontMime, $validMimeTypes)) {
+            return response()->json(['success' => false, 'error' => 'id_card_front must be a JPEG, PNG, or WebP image.'], 422);
+        }
+        $frontExt = $mimeToExt[$frontMime] ?? 'jpg';
+        $frontPath = $storagePath . '/id_front_' . time() . '.' . $frontExt;
         Storage::disk('local')->put($frontPath, $frontData);
 
         $backPath = null;
@@ -781,7 +805,12 @@ class GlobalTorrentController extends Controller
             if ($backData === false) {
                 return response()->json(['success' => false, 'error' => 'Invalid base64 data for id_card_back.'], 422);
             }
-            $backPath = $storagePath . '/id_back_' . time() . '.jpg';
+            $backMime = $finfo->buffer($backData);
+            if (! in_array($backMime, $validMimeTypes)) {
+                return response()->json(['success' => false, 'error' => 'id_card_back must be a JPEG, PNG, or WebP image.'], 422);
+            }
+            $backExt = $mimeToExt[$backMime] ?? 'jpg';
+            $backPath = $storagePath . '/id_back_' . time() . '.' . $backExt;
             Storage::disk('local')->put($backPath, $backData);
         }
 
@@ -791,7 +820,12 @@ class GlobalTorrentController extends Controller
             if ($selfieData === false) {
                 return response()->json(['success' => false, 'error' => 'Invalid base64 data for selfie.'], 422);
             }
-            $selfiePath = $storagePath . '/selfie_' . time() . '.jpg';
+            $selfieMime = $finfo->buffer($selfieData);
+            if (! in_array($selfieMime, $validMimeTypes)) {
+                return response()->json(['success' => false, 'error' => 'selfie must be a JPEG, PNG, or WebP image.'], 422);
+            }
+            $selfieExt = $mimeToExt[$selfieMime] ?? 'jpg';
+            $selfiePath = $storagePath . '/selfie_' . time() . '.' . $selfieExt;
             Storage::disk('local')->put($selfiePath, $selfieData);
         }
 

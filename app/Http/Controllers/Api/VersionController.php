@@ -266,8 +266,9 @@ class VersionController extends Controller
             $machineMatch = $license->machine_fingerprint === $request->input('machine_id');
         }
 
-        // Bind machine if not yet bound
-        if ($request->filled('machine_id') && ! $license->machine_fingerprint && $license->status === 'active') {
+        // Bind machine if not yet bound — only if license is active and NOT expired
+        if ($request->filled('machine_id') && ! $license->machine_fingerprint
+            && $license->status === 'active' && ! $isExpired) {
             $license->update([
                 'machine_fingerprint' => $request->input('machine_id'),
                 'activated_at' => now(),
