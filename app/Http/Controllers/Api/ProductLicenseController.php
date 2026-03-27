@@ -9,6 +9,7 @@ use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductDevice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * Generic Product License Controller
@@ -748,6 +749,37 @@ class ProductLicenseController extends Controller
         }
 
         if (! $license) {
+            // LocalVPN freemium: auto-create a free license for new devices
+            if ($productSlug === 'localvpn') {
+                $freeLicenseKey = 'FREE-' . strtoupper(Str::random(20));
+                $license = LicenseKey::create([
+                    'product_id' => $product->id,
+                    'license_key' => $freeLicenseKey,
+                    'license_type' => 'free',
+                    'status' => LicenseKey::STATUS_ACTIVE,
+                    'machine_id' => $validated['machine_id'],
+                    'machine_fingerprint' => $validated['machine_id'],
+                    'activated_at' => now(),
+                    'max_activations' => 1,
+                    'activations' => 1,
+                    'drm_id' => $drmId,
+                    'android_id' => $androidId,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'has_license' => true,
+                    'data' => [
+                        'license_key' => $license->license_key,
+                        'license_type' => 'free',
+                        'status' => $license->status,
+                        'expires_at' => null,
+                        'days_remaining' => null,
+                        'features' => $this->getFeaturesByType($productSlug, 'free'),
+                    ],
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'has_license' => false,

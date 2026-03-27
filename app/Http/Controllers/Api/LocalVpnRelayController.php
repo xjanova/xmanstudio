@@ -44,9 +44,14 @@ class LocalVpnRelayController extends Controller
             ], 403);
         }
 
-        // Check network limit per user
+        // Check network limit per user (paid) or per machine (free)
         $maxNetworks = (int) Setting::getValue('localvpn_max_networks_per_user', '5');
-        $userNetworkCount = VpnNetwork::where('owner_user_id', $license->user_id)->count();
+        if ($license->user_id) {
+            $userNetworkCount = VpnNetwork::where('owner_user_id', $license->user_id)->count();
+        } else {
+            // Free users: count by machine_id stored in owner_device_id
+            $userNetworkCount = VpnNetwork::where('owner_device_id', $request->input('machine_id'))->count();
+        }
 
         if ($userNetworkCount >= $maxNetworks) {
             return response()->json([
@@ -73,7 +78,7 @@ class LocalVpnRelayController extends Controller
             'description' => $request->input('description'),
             'password_hash' => $request->input('password') ? Hash::make($request->input('password')) : null,
             'owner_user_id' => $license->user_id,
-            'owner_device_id' => $request->input('device_id'),
+            'owner_device_id' => $request->input('machine_id'),
             'max_members' => min($requestedMax, $maxMembersLimit),
             'is_public' => $request->boolean('is_public', true),
             'virtual_subnet' => $request->input('virtual_subnet', '10.10.0.0/24'),
@@ -255,14 +260,28 @@ class LocalVpnRelayController extends Controller
         }
 
         // Freemium: check if network owner has a paid license
-        // Free users (no license) are limited to 5 members per network
-        $ownerHasPaidLicense = LicenseKey::where('user_id', $network->owner_user_id)
-            ->where('status', 'active')
-            ->where(function ($q) {
-                $q->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            })
-            ->exists();
+        // Free users are limited to 5 members per network
+        $ownerHasPaidLicense = false;
+        if ($network->owner_user_id) {
+            $ownerHasPaidLicense = LicenseKey::where('user_id', $network->owner_user_id)
+                ->where('status', 'active')
+                ->where('license_type', '!=', 'free')
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })
+                ->exists();
+        } else {
+            // Owner has no user_id — check by machine_id via owner_device_id
+            $ownerHasPaidLicense = LicenseKey::where('machine_id', $network->owner_device_id)
+                ->where('status', 'active')
+                ->where('license_type', '!=', 'free')
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })
+                ->exists();
+        }
 
         if (! $ownerHasPaidLicense) {
             $currentMemberCount = VpnNetworkMember::where('network_id', $network->id)->count();
@@ -568,9 +587,13 @@ class LocalVpnRelayController extends Controller
             return response()->json(['error' => 'Invalid license or device'], 403);
         }
 
-        $network = VpnNetwork::where('slug', $slug)
-            ->where('owner_user_id', $license->user_id)
-            ->first();
+        $query = VpnNetwork::where('slug', $slug);
+        if ($license->user_id) {
+            $query->where('owner_user_id', $license->user_id);
+        } else {
+            $query->where('owner_device_id', $request->input('machine_id'));
+        }
+        $network = $query->first();
 
         if (! $network) {
             return response()->json(['success' => false, 'error' => 'Network not found or not owned by you.'], 404);
@@ -743,6 +766,7 @@ class LocalVpnRelayController extends Controller
     {
         return [
             'id' => $member->id,
+            'machine_id' => $member->machine_id,
             'display_name' => $member->display_name,
             'virtual_ip' => $member->virtual_ip,
             'public_ip' => $member->public_ip,
