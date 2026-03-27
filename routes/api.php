@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiprayApiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\LicenseApiController;
+use App\Http\Controllers\Api\GlobalTorrentController;
 use App\Http\Controllers\Api\LocalVpnFileController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
 use App\Http\Controllers\Api\ProductLicenseController;
@@ -454,4 +455,19 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
     Route::delete('/files/{fileId}', [LocalVpnFileController::class, 'destroy']);
     Route::post('/files/seed', [LocalVpnFileController::class, 'registerSeeder']);
     Route::get('/files/{fileId}/seeders', [LocalVpnFileController::class, 'seeders']);
+
+    // Global Torrent
+    Route::get('/torrent/categories', [GlobalTorrentController::class, 'categories']);
+    Route::get('/torrent/files/{categorySlug}', [GlobalTorrentController::class, 'listFiles']);
+    Route::get('/torrent/file/{fileId}', [GlobalTorrentController::class, 'fileDetail']);
+    Route::post('/torrent/upload', [GlobalTorrentController::class, 'uploadFile']);
+    Route::post('/torrent/seed', [GlobalTorrentController::class, 'registerSeeder']);
+    Route::post('/torrent/heartbeat', [GlobalTorrentController::class, 'heartbeat']);
+    Route::get('/torrent/file/{fileId}/seeders', [GlobalTorrentController::class, 'getSeeders']);
+    Route::get('/torrent/leaderboard', [GlobalTorrentController::class, 'leaderboard']);
+    Route::get('/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
+    Route::get('/torrent/trophies', [GlobalTorrentController::class, 'trophies']);
+    Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
+    Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
+    Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
 });
