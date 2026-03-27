@@ -82,9 +82,25 @@ class LocalVpnRelayController extends Controller
             'virtual_subnet' => $request->input('virtual_subnet', '10.10.0.0/24'),
         ]);
 
+        // Auto-join creator as first member
+        $virtualIp = $network->assignNextVirtualIp();
+        $member = VpnNetworkMember::create([
+            'network_id' => $network->id,
+            'device_id' => $request->input('device_id'),
+            'machine_id' => $request->input('machine_id'),
+            'display_name' => $request->input('display_name', 'Owner'),
+            'virtual_ip' => $virtualIp,
+            'public_ip' => $request->ip(),
+            'public_port' => $request->input('public_port'),
+            'is_online' => true,
+            'last_heartbeat_at' => now(),
+            'joined_at' => now(),
+        ]);
+
         // Log creation
         VpnTrafficLog::create([
             'network_id' => $network->id,
+            'member_id' => $member->id,
             'action' => 'network_create',
             'ip_address' => $request->ip(),
             'metadata' => ['license_key' => Str::mask($request->input('license_key'), '*', 4, -4)],
@@ -97,12 +113,16 @@ class LocalVpnRelayController extends Controller
                 'id' => $network->id,
                 'name' => $network->name,
                 'slug' => $network->slug,
+                'description' => $network->description,
                 'virtual_subnet' => $network->virtual_subnet,
                 'max_members' => $network->max_members,
                 'is_public' => $network->is_public,
                 'has_password' => $network->password_hash !== null,
+                'member_count' => 1,
+                'online_count' => 1,
                 'created_at' => $network->created_at->toISOString(),
             ],
+            'member' => $this->formatMember($member),
         ], 201);
     }
 
@@ -133,7 +153,7 @@ class LocalVpnRelayController extends Controller
                 'name' => $n->name,
                 'slug' => $n->slug,
                 'description' => $n->description,
-                'members_count' => $n->members_count,
+                'member_count' => $n->members_count,
                 'online_count' => $n->online_count,
                 'max_members' => $n->max_members,
                 'has_password' => $n->password_hash !== null,
@@ -715,9 +735,13 @@ class LocalVpnRelayController extends Controller
             'id' => $network->id,
             'name' => $network->name,
             'slug' => $network->slug,
+            'description' => $network->description,
             'virtual_subnet' => $network->virtual_subnet,
             'max_members' => $network->max_members,
+            'is_public' => $network->is_public,
             'is_active' => $network->is_active,
+            'member_count' => $network->members()->count(),
+            'online_count' => $network->members()->where('is_online', true)->count(),
         ];
     }
 }
