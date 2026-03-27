@@ -629,7 +629,7 @@ class GlobalTorrentController extends Controller
             return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
         }
 
-        $machineId = $request->query('machine_id');
+        $machineId = $request->input('machine_id');
         $stats = DB::table('bt_user_stats')->where('machine_id', $machineId)->first();
 
         if (! $stats) {
