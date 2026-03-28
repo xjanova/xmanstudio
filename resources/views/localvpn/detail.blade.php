@@ -191,86 +191,69 @@
                     </div>
                 </div>
 
-                {{-- Right: Network illustration (SVG) --}}
-                <div class="relative hidden lg:block">
-                    <div class="relative w-full aspect-square max-w-[480px] mx-auto">
-                        {{-- Outer ring decoration --}}
-                        <div class="absolute inset-[15%] rounded-full border border-cyan-500/10"></div>
-                        <div class="absolute inset-[30%] rounded-full border border-cyan-500/5"></div>
+                {{-- Right: Network illustration --}}
+                <div class="relative hidden lg:flex items-center justify-center">
+                    <div class="relative w-[400px] h-[400px]">
+                        {{-- Orbit ring --}}
+                        <div class="absolute inset-[20%] rounded-full border border-dashed border-cyan-500/10"></div>
 
                         {{-- Central hub --}}
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 float-3">
-                            <div class="absolute inset-0 bg-cyan-500/20 rounded-2xl blur-xl pulse-ring"></div>
-                            <div class="absolute inset-0 bg-cyan-500/10 rounded-2xl blur-xl pulse-ring-delay"></div>
-                            <div class="relative w-full h-full bg-gradient-to-br from-cyan-500/30 to-teal-500/30 backdrop-blur-sm rounded-2xl border border-cyan-500/30 flex items-center justify-center">
-                                <svg class="w-12 h-12 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 float-3">
+                            <div class="absolute -inset-3 bg-cyan-500/15 rounded-full blur-xl pulse-ring"></div>
+                            <div class="w-[72px] h-[72px] bg-gradient-to-br from-cyan-500/30 to-teal-500/30 backdrop-blur-sm rounded-2xl border border-cyan-500/30 flex items-center justify-center">
+                                <svg class="w-9 h-9 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
                             </div>
-                            <span class="block text-xs text-cyan-300 text-center mt-2 font-mono">LAN Hub</span>
+                            <span class="block text-[11px] text-cyan-300 text-center mt-1 font-mono">LAN Hub</span>
                         </div>
 
-                        {{-- Device nodes — spread in circle around center --}}
-                        {{-- Phone 1 (top-center) --}}
-                        <div class="absolute top-[2%] left-1/2 -translate-x-1/2 float-1">
-                            <div class="w-[70px] h-[70px] bg-gradient-to-br from-purple-500/20 to-indigo-500/20 backdrop-blur-sm rounded-xl border border-purple-500/20 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        {{-- 5 nodes — pentagon layout --}}
+                        {{-- Top --}}
+                        <div class="absolute -top-2 left-1/2 -translate-x-1/2 float-1">
+                            <div class="w-[56px] h-[56px] bg-gradient-to-br from-purple-500/25 to-indigo-500/25 backdrop-blur-sm rounded-xl border border-purple-500/25 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-purple-300 text-center mt-1 font-mono">10.10.0.2</span>
+                            <span class="block text-[10px] text-purple-300 text-center mt-0.5 font-mono">10.10.0.2</span>
                         </div>
 
-                        {{-- Laptop (right-top) --}}
-                        <div class="absolute top-[20%] right-[2%] float-2">
-                            <div class="w-[70px] h-[70px] bg-gradient-to-br from-sky-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl border border-sky-500/20 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        {{-- Right --}}
+                        <div class="absolute top-[38%] -right-2 float-2">
+                            <div class="w-[56px] h-[56px] bg-gradient-to-br from-sky-500/25 to-blue-500/25 backdrop-blur-sm rounded-xl border border-sky-500/25 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-sky-300 text-center mt-1 font-mono">10.10.0.3</span>
+                            <span class="block text-[10px] text-sky-300 text-center mt-0.5 font-mono">10.10.0.3</span>
                         </div>
 
-                        {{-- Tablet (right-bottom) --}}
-                        <div class="absolute bottom-[18%] right-[2%] float-4">
-                            <div class="w-[70px] h-[70px] bg-gradient-to-br from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl border border-amber-500/20 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        {{-- Bottom-right --}}
+                        <div class="absolute -bottom-2 right-[15%] float-4">
+                            <div class="w-[56px] h-[56px] bg-gradient-to-br from-amber-500/25 to-orange-500/25 backdrop-blur-sm rounded-xl border border-amber-500/25 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-amber-300 text-center mt-1 font-mono">10.10.0.4</span>
+                            <span class="block text-[10px] text-amber-300 text-center mt-0.5 font-mono">10.10.0.4</span>
                         </div>
 
-                        {{-- Phone 2 (bottom-center) --}}
-                        <div class="absolute bottom-[0%] left-1/2 -translate-x-1/2 float-1">
-                            <div class="w-[70px] h-[70px] bg-gradient-to-br from-emerald-500/20 to-green-500/20 backdrop-blur-sm rounded-xl border border-emerald-500/20 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        {{-- Bottom-left --}}
+                        <div class="absolute -bottom-2 left-[15%] float-1">
+                            <div class="w-[56px] h-[56px] bg-gradient-to-br from-emerald-500/25 to-green-500/25 backdrop-blur-sm rounded-xl border border-emerald-500/25 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-emerald-300 text-center mt-1 font-mono">10.10.0.5</span>
+                            <span class="block text-[10px] text-emerald-300 text-center mt-0.5 font-mono">10.10.0.5</span>
                         </div>
 
-                        {{-- Desktop (left-bottom) --}}
-                        <div class="absolute bottom-[18%] left-[2%] float-2">
-                            <div class="w-[70px] h-[70px] bg-gradient-to-br from-pink-500/20 to-rose-500/20 backdrop-blur-sm rounded-xl border border-pink-500/20 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        {{-- Left (VPN) --}}
+                        <div class="absolute top-[38%] -left-2 float-2">
+                            <div class="w-[56px] h-[56px] bg-gradient-to-br from-rose-500/25 to-pink-500/25 backdrop-blur-sm rounded-xl border border-rose-500/25 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
-                            <span class="block text-xs text-pink-300 text-center mt-1 font-mono">10.10.0.6</span>
+                            <span class="block text-[10px] text-rose-300 text-center mt-0.5 font-mono">VPN 🇯🇵</span>
                         </div>
 
-                        {{-- VPN Globe (left-top) --}}
-                        <div class="absolute top-[20%] left-[2%] float-4">
-                            <div class="w-[70px] h-[70px] bg-gradient-to-br from-rose-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl border border-rose-500/20 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            </div>
-                            <span class="block text-xs text-rose-300 text-center mt-1 font-mono">VPN 🇯🇵</span>
-                        </div>
-
-                        {{-- Connection lines (SVG overlay) --}}
-                        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 520 520" fill="none">
-                            {{-- Center to top --}}
-                            <line x1="260" y1="260" x2="260" y2="45" class="data-line" stroke="rgba(6,182,212,0.2)" stroke-width="1.5"/>
-                            {{-- Center to right-top --}}
-                            <line x1="260" y1="260" x2="480" y2="140" class="data-line" stroke="rgba(6,182,212,0.2)" stroke-width="1.5" style="animation-delay:0.4s"/>
-                            {{-- Center to right-bottom --}}
-                            <line x1="260" y1="260" x2="480" y2="380" class="data-line" stroke="rgba(6,182,212,0.2)" stroke-width="1.5" style="animation-delay:0.8s"/>
-                            {{-- Center to bottom --}}
-                            <line x1="260" y1="260" x2="260" y2="485" class="data-line" stroke="rgba(6,182,212,0.2)" stroke-width="1.5" style="animation-delay:1.2s"/>
-                            {{-- Center to left-bottom --}}
-                            <line x1="260" y1="260" x2="45" y2="380" class="data-line" stroke="rgba(6,182,212,0.2)" stroke-width="1.5" style="animation-delay:1.6s"/>
-                            {{-- Center to VPN (left-top) --}}
-                            <line x1="260" y1="260" x2="45" y2="140" class="data-line" stroke="rgba(244,63,94,0.25)" stroke-width="1.5" style="animation-delay:2s"/>
+                        {{-- Connection lines --}}
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 400" fill="none">
+                            <line x1="200" y1="200" x2="200" y2="25" class="data-line" stroke="rgba(6,182,212,0.15)" stroke-width="1"/>
+                            <line x1="200" y1="200" x2="380" y2="175" class="data-line" stroke="rgba(6,182,212,0.15)" stroke-width="1" style="animation-delay:0.5s"/>
+                            <line x1="200" y1="200" x2="320" y2="375" class="data-line" stroke="rgba(6,182,212,0.15)" stroke-width="1" style="animation-delay:1s"/>
+                            <line x1="200" y1="200" x2="85" y2="375" class="data-line" stroke="rgba(6,182,212,0.15)" stroke-width="1" style="animation-delay:1.5s"/>
+                            <line x1="200" y1="200" x2="20" y2="175" class="data-line" stroke="rgba(244,63,94,0.2)" stroke-width="1" style="animation-delay:2s"/>
                         </svg>
                     </div>
                 </div>
