@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -250,9 +251,32 @@ class LocalVpnWebController extends Controller
     }
 
     /**
+     * Installation guide page.
+     */
+    public function installGuide()
+    {
+        $screenshots = [];
+        $guideDir = 'guide-screenshots/localvpn';
+
+        for ($i = 1; $i <= 6; $i++) {
+            foreach (['png', 'jpg', 'jpeg', 'webp'] as $ext) {
+                $path = "{$guideDir}/step-{$i}.{$ext}";
+                if (Storage::disk('public')->exists($path)) {
+                    $screenshots[$i] = $path;
+                    break;
+                }
+            }
+        }
+
+        return view('localvpn.install-guide', [
+            'screenshots' => $screenshots,
+        ]);
+    }
+
+    /**
      * Checkout page
      */
-    public function checkout(string $plan, Request $request)
+    public function checkout(Request $request, string $plan)
     {
         if (! isset(self::PRICING[$plan])) {
             return redirect()->route('localvpn.pricing');
@@ -365,7 +389,7 @@ class LocalVpnWebController extends Controller
                     'subtotal' => $subtotal,
                     'discount' => $discount,
                     'total' => $finalPrice,
-                    'status' => $isWallet ? 'completed' : 'pending',
+                    'status' => $isWallet ? 'processing' : 'pending',
                     'payment_method' => $validated['payment_method'],
                     'payment_status' => $isWallet ? 'paid' : 'pending',
                     'paid_at' => $isWallet ? now() : null,

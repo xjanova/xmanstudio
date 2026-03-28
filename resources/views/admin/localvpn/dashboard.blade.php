@@ -4,17 +4,7 @@
 @section('page-title', 'LocalVPN - Virtual LAN Relay Server')
 
 @section('content')
-{{-- Navigation Tabs --}}
-<div class="mb-6 border-b border-gray-200">
-    <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="LocalVPN Admin Navigation">
-        <a href="{{ route('admin.localvpn.dashboard') }}" class="whitespace-nowrap border-b-2 border-emerald-500 pb-3 px-1 text-sm font-medium text-emerald-600">Dashboard</a>
-        <a href="{{ route('admin.localvpn.networks') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">เครือข่าย</a>
-        <a href="{{ route('admin.localvpn.members') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">อุปกรณ์</a>
-        <a href="{{ route('admin.localvpn.sessions') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Sessions</a>
-        <a href="{{ route('admin.localvpn.traffic') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Traffic Logs</a>
-        <a href="{{ route('admin.localvpn.settings') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">ตั้งค่า</a>
-    </nav>
-</div>
+@include('admin.localvpn._tabs')
 
 {{-- Header --}}
 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-500 p-8 mb-8 shadow-xl">

@@ -4,17 +4,7 @@
 @section('page-title', 'LocalVPN - ตั้งค่า Relay Server')
 
 @section('content')
-{{-- Navigation Tabs --}}
-<div class="mb-6 border-b border-gray-200">
-    <nav class="-mb-px flex space-x-6 overflow-x-auto">
-        <a href="{{ route('admin.localvpn.dashboard') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Dashboard</a>
-        <a href="{{ route('admin.localvpn.networks') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">เครือข่าย</a>
-        <a href="{{ route('admin.localvpn.members') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">อุปกรณ์</a>
-        <a href="{{ route('admin.localvpn.sessions') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Sessions</a>
-        <a href="{{ route('admin.localvpn.traffic') }}" class="whitespace-nowrap border-b-2 border-transparent pb-3 px-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Traffic Logs</a>
-        <a href="{{ route('admin.localvpn.settings') }}" class="whitespace-nowrap border-b-2 border-emerald-500 pb-3 px-1 text-sm font-medium text-emerald-600">ตั้งค่า</a>
-    </nav>
-</div>
+@include('admin.localvpn._tabs')
 
 {{-- Settings Form --}}
 <div class="max-w-2xl">

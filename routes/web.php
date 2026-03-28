@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\AiprayTrainingController;
 use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BitTorrentController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
 use App\Http\Controllers\Admin\BugReportController as AdminBugReportController;
 use App\Http\Controllers\Admin\ContactSettingsController;
@@ -234,6 +235,7 @@ Route::prefix('localvpn')->name('localvpn.')->group(function () {
     Route::get('/buy', [LocalVpnWebController::class, 'buyRedirect'])->name('buy');
     Route::get('/download', [LocalVpnWebController::class, 'downloadPage'])->name('download');
     Route::get('/download/apk', [LocalVpnWebController::class, 'downloadApk'])->name('download.apk');
+    Route::get('/install-guide', [LocalVpnWebController::class, 'installGuide'])->name('install-guide');
 
     // Require authentication for checkout & payment
     Route::middleware('auth')->group(function () {
@@ -1154,6 +1156,35 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/traffic', [LocalVpnController::class, 'trafficLogs'])->name('traffic');
         Route::get('/settings', [LocalVpnController::class, 'settings'])->name('settings');
         Route::post('/settings', [LocalVpnController::class, 'updateSettings'])->name('settings.update');
+
+        // ==================== BitTorrent Management ====================
+        Route::prefix('torrent')->name('torrent.')->group(function () {
+            Route::get('/', [BitTorrentController::class, 'dashboard'])->name('dashboard');
+
+            // Categories
+            Route::get('/categories', [BitTorrentController::class, 'categories'])->name('categories');
+            Route::post('/categories', [BitTorrentController::class, 'storeCategory'])->name('categories.store');
+            Route::put('/categories/{id}', [BitTorrentController::class, 'updateCategory'])->name('categories.update');
+            Route::delete('/categories/{id}', [BitTorrentController::class, 'deleteCategory'])->name('categories.delete');
+
+            // Files
+            Route::get('/files', [BitTorrentController::class, 'files'])->name('files');
+            Route::get('/files/{id}', [BitTorrentController::class, 'showFile'])->name('files.show');
+            Route::post('/files/{id}/toggle', [BitTorrentController::class, 'toggleFile'])->name('files.toggle');
+            Route::delete('/files/{id}', [BitTorrentController::class, 'deleteFile'])->name('files.delete');
+
+            // KYC
+            Route::get('/kyc', [BitTorrentController::class, 'kycRequests'])->name('kyc');
+            Route::get('/kyc/{id}', [BitTorrentController::class, 'showKyc'])->name('kyc.show');
+            Route::post('/kyc/{id}/approve', [BitTorrentController::class, 'approveKyc'])->name('kyc.approve');
+            Route::post('/kyc/{id}/reject', [BitTorrentController::class, 'rejectKyc'])->name('kyc.reject');
+
+            // Leaderboard & Trophies
+            Route::get('/leaderboard', [BitTorrentController::class, 'leaderboard'])->name('leaderboard');
+            Route::get('/trophies', [BitTorrentController::class, 'trophies'])->name('trophies');
+            Route::post('/trophies', [BitTorrentController::class, 'storeTrophy'])->name('trophies.store');
+            Route::put('/trophies/{id}', [BitTorrentController::class, 'updateTrophy'])->name('trophies.update');
+        });
     });
 });
 
