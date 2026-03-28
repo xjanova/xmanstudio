@@ -32,7 +32,7 @@ class LocalVpnFileController extends Controller
 
         $license = $this->validateDeviceAuth($request);
         if (! $license) {
-            return response()->json(['error' => 'Invalid license or device'], 403);
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
         }
 
         $network = VpnNetwork::where('slug', $request->input('slug'))->active()->first();
@@ -98,7 +98,7 @@ class LocalVpnFileController extends Controller
 
         $license = $this->validateDeviceAuth($request);
         if (! $license) {
-            return response()->json(['error' => 'Invalid license or device'], 403);
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
         }
 
         $network = VpnNetwork::where('slug', $slug)->active()->first();
@@ -135,7 +135,7 @@ class LocalVpnFileController extends Controller
 
         $license = $this->validateDeviceAuth($request);
         if (! $license) {
-            return response()->json(['error' => 'Invalid license or device'], 403);
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
         }
 
         $sharedFile = VpnSharedFile::find($fileId);
@@ -173,7 +173,7 @@ class LocalVpnFileController extends Controller
 
         $license = $this->validateDeviceAuth($request);
         if (! $license) {
-            return response()->json(['error' => 'Invalid license or device'], 403);
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
         }
 
         $network = VpnNetwork::where('slug', $request->input('slug'))->active()->first();
@@ -224,7 +224,7 @@ class LocalVpnFileController extends Controller
 
         $license = $this->validateDeviceAuth($request);
         if (! $license) {
-            return response()->json(['error' => 'Invalid license or device'], 403);
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
         }
 
         $sharedFile = VpnSharedFile::find($fileId);

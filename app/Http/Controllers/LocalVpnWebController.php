@@ -303,7 +303,7 @@ class LocalVpnWebController extends Controller
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
             'payment_method' => 'required|in:promptpay,bank_transfer,wallet',
-            'machine_id' => 'nullable|string|max:64',
+            'machine_id' => 'nullable|string|max:255',
         ]);
 
         $machineId = $validated['machine_id'] ?? session('localvpn_machine_id');

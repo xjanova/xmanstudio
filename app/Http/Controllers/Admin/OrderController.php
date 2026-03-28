@@ -84,8 +84,8 @@ class OrderController extends Controller
             $updateData['paid_at'] = now();
             $updateData['status'] = 'processing';
 
-            // Auto-assign license keys for digital products
-            $this->assignLicenseKeys($order);
+            // Generate license keys for products that require them
+            $this->generateAndBindLicenses($order);
         }
 
         if ($newStatus === 'rejected') {
@@ -128,32 +128,26 @@ class OrderController extends Controller
     }
 
     /**
-     * Assign license keys to order items
+     * Generate license keys for order items and bind machine_id if available.
      */
-    protected function assignLicenseKeys(Order $order): void
+    protected function generateAndBindLicenses(Order $order): void
     {
-        if (! app()->bound(LicenseService::class)) {
-            return;
-        }
-
         $licenseService = app(LicenseService::class);
 
-        foreach ($order->items as $item) {
-            if ($item->license_key_id || ! $item->product) {
-                continue;
-            }
+        // Generate licenses via shared service (handles all product types)
+        $licenseService->generateLicensesForOrder($order);
 
-            // Check if product has available license keys
-            $licenseKey = LicenseKey::where('product_id', $item->product_id)
-                ->where('status', 'available')
-                ->first();
+        // Bind machine_id from order metadata (for LocalVPN and similar products)
+        $metadata = $order->metadata ?? [];
+        $machineId = $metadata['machine_id'] ?? null;
 
-            if ($licenseKey) {
-                $licenseKey->update([
-                    'status' => 'sold',
-                    'sold_at' => now(),
-                ]);
-                $item->update(['license_key_id' => $licenseKey->id]);
+        if ($machineId) {
+            $licenses = LicenseKey::where('order_id', $order->id)
+                ->whereNull('machine_id')
+                ->get();
+
+            foreach ($licenses as $license) {
+                $license->activateOnMachine($machineId, $machineId);
             }
         }
     }
