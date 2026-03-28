@@ -126,6 +126,9 @@ class ProductController extends Controller
         if ($slug === 'smschecker') {
             return redirect()->route('smschecker.detail');
         }
+        if ($slug === 'localvpn') {
+            return redirect()->route('localvpn.detail');
+        }
 
         // Custom views for each product
         $customViews = [
