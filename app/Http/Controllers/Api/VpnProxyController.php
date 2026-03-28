@@ -34,18 +34,20 @@ class VpnProxyController extends Controller
             return response()->json(['success' => false, 'error' => 'machine_id required'], 400);
         }
 
-        // Determine license tier
+        // Determine license tier — find the best active non-expired license
         $isPremium = false;
         $product = Product::where('slug', 'localvpn')->first();
         if ($product) {
             $license = LicenseKey::where('product_id', $product->id)
                 ->where('machine_id', $machineId)
                 ->where('status', 'active')
+                ->whereNotIn('license_type', ['free', 'demo'])
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
                 ->first();
 
-            if ($license && ! in_array($license->license_type, ['free', 'demo'])) {
-                $isPremium = ! $license->isExpired();
-            }
+            $isPremium = $license !== null;
         }
 
         // Fetch and cache server list (VPN Gate + premium custom servers)
