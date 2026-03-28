@@ -178,14 +178,14 @@ class LocalVpnWebController extends Controller
             ->orderByDesc('version')
             ->first();
 
-        if (! $version || ! $version->github_release_url) {
+        if (!$version || ! $version->github_release_url) {
             return redirect()->route('localvpn.download')
                 ->with('error', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
         }
 
         $githubSetting = $product->githubSetting;
 
-        if (! $githubSetting) {
+        if (!$githubSetting) {
             return redirect()->route('localvpn.download')
                 ->with('error', 'ระบบดาวน์โหลดยังไม่พร้อม');
         }
@@ -254,13 +254,13 @@ class LocalVpnWebController extends Controller
      */
     public function checkout(string $plan, Request $request)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (!isset(self::PRICING[$plan])) {
             return redirect()->route('localvpn.pricing');
         }
 
         $product = Product::where('slug', 'localvpn')->first();
 
-        if (! $product) {
+        if (!$product) {
             abort(404, 'Product not found');
         }
 
@@ -294,7 +294,7 @@ class LocalVpnWebController extends Controller
      */
     public function processCheckout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (!isset(self::PRICING[$plan])) {
             abort(404, 'Plan not found');
         }
 
@@ -315,18 +315,19 @@ class LocalVpnWebController extends Controller
         $subtotal = $planInfo['price'];
         $discount = 0;
         $finalPrice = $subtotal;
+        $wallet = null;
 
         if ($isWallet) {
             $discount = (int) floor($subtotal * self::WALLET_DISCOUNT_PERCENT / 100);
             $finalPrice = $subtotal - $discount;
 
-            if (! auth()->check()) {
+            if (!auth()->check()) {
                 return redirect()->back()->with('error', 'กรุณาเข้าสู่ระบบก่อนใช้ Wallet');
             }
 
             $wallet = Wallet::getOrCreateForUser(auth()->id());
 
-            if (! $wallet->hasSufficientBalance($finalPrice)) {
+            if (!$wallet->hasSufficientBalance($finalPrice)) {
                 return redirect()->back()->with(
                     'error',
                     'ยอดเงินใน Wallet ไม่เพียงพอ (คงเหลือ: ฿' . number_format($wallet->balance, 2) .
@@ -364,7 +365,7 @@ class LocalVpnWebController extends Controller
                     'subtotal' => $subtotal,
                     'discount' => $discount,
                     'total' => $finalPrice,
-                    'status' => $isWallet ? 'processing' : 'pending',
+                    'status' => $isWallet ? 'completed' : 'pending',
                     'payment_method' => $validated['payment_method'],
                     'payment_status' => $isWallet ? 'paid' : 'pending',
                     'paid_at' => $isWallet ? now() : null,
@@ -391,7 +392,7 @@ class LocalVpnWebController extends Controller
                     // Re-check balance with lock to prevent race condition
                     $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
 
-                    if (! $wallet || ! $wallet->hasSufficientBalance($finalPrice)) {
+                    if (!$wallet || ! $wallet->hasSufficientBalance($finalPrice)) {
                         throw new \RuntimeException('INSUFFICIENT_BALANCE');
                     }
 
@@ -402,14 +403,14 @@ class LocalVpnWebController extends Controller
                         $order->id
                     );
 
-                    if (! $transaction) {
+                    if (!$transaction) {
                         throw new \RuntimeException('PAYMENT_FAILED');
                     }
 
                     $order->update(['wallet_transaction_id' => $transaction->id]);
 
                     // Idempotency: check if license already exists for this order
-                    if (! LicenseKey::where('order_id', $order->id)->exists()) {
+                    if (!LicenseKey::where('order_id', $order->id)->exists()) {
                         $this->generateLicenseForOrder($order, $product, $planInfo, $machineId);
                     }
                 }
@@ -467,7 +468,7 @@ class LocalVpnWebController extends Controller
             $licenseData = $licenses[0];
             $license = LicenseKey::find($licenseData['id']);
 
-            if (! $license) {
+            if (!$license) {
                 return null;
             }
 
@@ -575,6 +576,10 @@ class LocalVpnWebController extends Controller
 
         if ($order->status !== 'pending') {
             return back()->with('error', 'คำสั่งซื้อนี้ได้รับการดำเนินการแล้ว');
+        }
+
+        if ($order->payment_method === 'wallet') {
+            return back()->with('error', 'คำสั่งซื้อนี้ชำระผ่าน Wallet แล้ว');
         }
 
         $validated = $request->validate([
