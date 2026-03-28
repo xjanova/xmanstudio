@@ -193,7 +193,7 @@
 
                 {{-- Right: Network illustration (SVG) --}}
                 <div class="relative hidden lg:block">
-                    <div class="relative w-full aspect-square max-w-[520px] mx-auto">
+                    <div class="relative w-full aspect-square max-w-[480px] mx-auto">
                         {{-- Outer ring decoration --}}
                         <div class="absolute inset-[15%] rounded-full border border-cyan-500/10"></div>
                         <div class="absolute inset-[30%] rounded-full border border-cyan-500/5"></div>
@@ -205,7 +205,7 @@
                             <div class="relative w-full h-full bg-gradient-to-br from-cyan-500/30 to-teal-500/30 backdrop-blur-sm rounded-2xl border border-cyan-500/30 flex items-center justify-center">
                                 <svg class="w-12 h-12 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
                             </div>
-                            <span class="block text-xs text-cyan-300/60 text-center mt-2 font-mono">LAN Hub</span>
+                            <span class="block text-xs text-cyan-300 text-center mt-2 font-mono">LAN Hub</span>
                         </div>
 
                         {{-- Device nodes — spread in circle around center --}}
@@ -214,7 +214,7 @@
                             <div class="w-[70px] h-[70px] bg-gradient-to-br from-purple-500/20 to-indigo-500/20 backdrop-blur-sm rounded-xl border border-purple-500/20 flex items-center justify-center">
                                 <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-purple-300/70 text-center mt-1 font-mono">10.10.0.2</span>
+                            <span class="block text-xs text-purple-300 text-center mt-1 font-mono">10.10.0.2</span>
                         </div>
 
                         {{-- Laptop (right-top) --}}
@@ -222,7 +222,7 @@
                             <div class="w-[70px] h-[70px] bg-gradient-to-br from-sky-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl border border-sky-500/20 flex items-center justify-center">
                                 <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-sky-300/70 text-center mt-1 font-mono">10.10.0.3</span>
+                            <span class="block text-xs text-sky-300 text-center mt-1 font-mono">10.10.0.3</span>
                         </div>
 
                         {{-- Tablet (right-bottom) --}}
@@ -230,7 +230,7 @@
                             <div class="w-[70px] h-[70px] bg-gradient-to-br from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl border border-amber-500/20 flex items-center justify-center">
                                 <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-amber-300/70 text-center mt-1 font-mono">10.10.0.4</span>
+                            <span class="block text-xs text-amber-300 text-center mt-1 font-mono">10.10.0.4</span>
                         </div>
 
                         {{-- Phone 2 (bottom-center) --}}
@@ -238,7 +238,7 @@
                             <div class="w-[70px] h-[70px] bg-gradient-to-br from-emerald-500/20 to-green-500/20 backdrop-blur-sm rounded-xl border border-emerald-500/20 flex items-center justify-center">
                                 <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-emerald-300/70 text-center mt-1 font-mono">10.10.0.5</span>
+                            <span class="block text-xs text-emerald-300 text-center mt-1 font-mono">10.10.0.5</span>
                         </div>
 
                         {{-- Desktop (left-bottom) --}}
@@ -246,7 +246,7 @@
                             <div class="w-[70px] h-[70px] bg-gradient-to-br from-pink-500/20 to-rose-500/20 backdrop-blur-sm rounded-xl border border-pink-500/20 flex items-center justify-center">
                                 <svg class="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="block text-xs text-pink-300/70 text-center mt-1 font-mono">10.10.0.6</span>
+                            <span class="block text-xs text-pink-300 text-center mt-1 font-mono">10.10.0.6</span>
                         </div>
 
                         {{-- VPN Globe (left-top) --}}
@@ -254,7 +254,7 @@
                             <div class="w-[70px] h-[70px] bg-gradient-to-br from-rose-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl border border-rose-500/20 flex items-center justify-center">
                                 <svg class="w-8 h-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
-                            <span class="block text-xs text-rose-300/70 text-center mt-1 font-mono">VPN 🇯🇵</span>
+                            <span class="block text-xs text-rose-300 text-center mt-1 font-mono">VPN 🇯🇵</span>
                         </div>
 
                         {{-- Connection lines (SVG overlay) --}}
