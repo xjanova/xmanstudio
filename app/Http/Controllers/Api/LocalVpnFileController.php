@@ -90,6 +90,17 @@ class LocalVpnFileController extends Controller
      */
     public function index(Request $request, string $slug): JsonResponse
     {
+        // Validate device auth to prevent unauthenticated access
+        $request->validate([
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['error' => 'Invalid license or device'], 403);
+        }
+
         $network = VpnNetwork::where('slug', $slug)->active()->first();
         if (! $network) {
             return response()->json(['success' => false, 'error' => 'Network not found.'], 404);
@@ -205,6 +216,17 @@ class LocalVpnFileController extends Controller
      */
     public function seeders(Request $request, int $fileId): JsonResponse
     {
+        // Validate device auth to prevent unauthenticated IP disclosure
+        $request->validate([
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['error' => 'Invalid license or device'], 403);
+        }
+
         $sharedFile = VpnSharedFile::find($fileId);
         if (! $sharedFile) {
             return response()->json(['success' => false, 'error' => 'File not found.'], 404);

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 
 class VpnNetwork extends Model
 {
@@ -64,34 +65,41 @@ class VpnNetwork extends Model
 
     /**
      * Assign the next available virtual IP in the subnet.
+     * Uses atomic lock to prevent race conditions on simultaneous joins.
      */
     public function assignNextVirtualIp(): string
     {
-        // Parse subnet: e.g. "10.10.0.0/24"
-        $parts = explode('/', $this->virtual_subnet);
-        $baseIp = $parts[0];
-        $prefix = (int) ($parts[1] ?? 24);
+        $lockKey = "vpn_ip_assign:{$this->id}";
 
-        $baseOctets = explode('.', $baseIp);
-        $baseInt = ip2long($baseIp);
+        return Cache::lock($lockKey, 10)->block(5, function () {
+            // Parse subnet: e.g. "10.10.0.0/24"
+            $parts = explode('/', $this->virtual_subnet);
+            $baseIp = $parts[0];
+            $prefix = (int) ($parts[1] ?? 24);
 
-        // Number of usable hosts: 2^(32 - prefix) - 2 (exclude network & broadcast)
-        $hostBits = 32 - $prefix;
-        $maxHosts = pow(2, $hostBits) - 2;
-
-        // Get all used IPs in this network
-        $usedIps = $this->members()->pluck('virtual_ip')->toArray();
-
-        // Start from .1 (gateway is typically .1, so start from .2)
-        for ($i = 2; $i <= $maxHosts + 1; $i++) {
-            $candidateIp = long2ip($baseInt + $i);
-            if (! in_array($candidateIp, $usedIps)) {
-                return $candidateIp;
+            $baseInt = ip2long($baseIp);
+            if ($baseInt === false) {
+                return '10.10.0.2'; // Safe fallback for invalid subnet
             }
-        }
 
-        // Fallback: return .1 if everything is taken (shouldn't happen with max_members)
-        return long2ip($baseInt + 1);
+            // Number of usable hosts: 2^(32 - prefix) - 2 (exclude network & broadcast)
+            $hostBits = 32 - $prefix;
+            $maxHosts = pow(2, $hostBits) - 2;
+
+            // Get all used IPs in this network
+            $usedIps = $this->members()->pluck('virtual_ip')->toArray();
+
+            // Start from .2 (reserve .1 as gateway)
+            for ($i = 2; $i <= $maxHosts + 1; $i++) {
+                $candidateIp = long2ip($baseInt + $i);
+                if (! in_array($candidateIp, $usedIps)) {
+                    return $candidateIp;
+                }
+            }
+
+            // Fallback: return .1 if everything is taken (shouldn't happen with max_members)
+            return long2ip($baseInt + 1);
+        });
     }
 
     /**

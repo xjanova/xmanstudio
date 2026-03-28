@@ -29,7 +29,7 @@ class LocalVpnRelayController extends Controller
             'password' => 'nullable|string|min:4|max:64',
             'max_members' => 'nullable|integer|min:2|max:254',
             'is_public' => 'nullable|boolean',
-            'virtual_subnet' => 'nullable|string|max:18',
+            'virtual_subnet' => ['nullable', 'string', 'max:18', 'regex:/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$/'],
             'license_key' => 'required|string',
             'machine_id' => 'required|string|max:255',
             'device_id' => 'nullable|string|max:255',
@@ -67,6 +67,16 @@ class LocalVpnRelayController extends Controller
         while (VpnNetwork::where('slug', $slug)->exists()) {
             $slug = $baseSlug . '-' . $counter;
             $counter++;
+        }
+
+        // Validate subnet IP if provided
+        $subnet = $request->input('virtual_subnet', '10.10.0.0/24');
+        $subnetParts = explode('/', $subnet);
+        if (ip2long($subnetParts[0]) === false || (int) ($subnetParts[1] ?? 0) < 16 || (int) ($subnetParts[1] ?? 0) > 30) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid virtual subnet. Use CIDR format like 10.10.0.0/24 (prefix 16-30).',
+            ], 422);
         }
 
         $maxMembersLimit = (int) Setting::getValue('localvpn_max_members_per_network', '10');
@@ -599,16 +609,26 @@ class LocalVpnRelayController extends Controller
             return response()->json(['success' => false, 'error' => 'Network not found or not owned by you.'], 404);
         }
 
-        // Delete network first, then log (cascade would delete the log otherwise)
+        // Log deletion BEFORE deleting (cascade would delete logs otherwise)
+        // After migration fix, network_id is nullable so we set it to null
+        // and store the original network info in metadata for audit trail
         $networkId = $network->id;
         $networkSlug = $network->slug;
+        $networkName = $network->name;
+
+        // Delete network (cascades: members, sessions, existing traffic logs)
         $network->delete();
 
+        // Create audit log with null network_id (network no longer exists)
         VpnTrafficLog::create([
-            'network_id' => null, // network is deleted
+            'network_id' => null,
             'action' => 'network_delete',
-            'details' => json_encode(['slug' => $networkSlug, 'deleted_network_id' => $networkId]),
             'ip_address' => $request->ip(),
+            'metadata' => [
+                'slug' => $networkSlug,
+                'name' => $networkName,
+                'deleted_network_id' => $networkId,
+            ],
             'created_at' => now(),
         ]);
 
