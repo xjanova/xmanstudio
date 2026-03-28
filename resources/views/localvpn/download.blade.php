@@ -85,9 +85,9 @@
         {{-- Features --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div class="bg-white/5 border border-white/10 rounded-xl p-5 text-center">
-                <div class="text-3xl mb-2">24h</div>
-                <h4 class="font-semibold">ทดลองฟรี</h4>
-                <p class="text-sm text-cyan-300 mt-1">ลองใช้งานฟรี 24 ชั่วโมง</p>
+                <div class="text-3xl mb-2">FREE</div>
+                <h4 class="font-semibold">ใช้ฟรีตลอด</h4>
+                <p class="text-sm text-cyan-300 mt-1">สมาชิกในวงสูงสุด 5 คน</p>
             </div>
             <div class="bg-white/5 border border-white/10 rounded-xl p-5 text-center">
                 <div class="text-3xl mb-2">Android</div>
@@ -117,11 +117,11 @@
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="flex-shrink-0 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-xs font-bold text-white">3</span>
-                    <span>เปิดแอพ LocalVPN แล้วเริ่มทดลองใช้ฟรี 24 ชั่วโมง</span>
+                    <span>เปิดแอพ LocalVPN แล้วเริ่มใช้งานฟรีได้ทันที</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="flex-shrink-0 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-xs font-bold text-white">4</span>
-                    <span>ต้องการใช้งานต่อ? <a href="{{ route('localvpn.pricing') }}" class="text-cyan-400 hover:text-cyan-300 underline">ซื้อ License</a></span>
+                    <span>ต้องการสมาชิกในวงมากกว่า 5 คน? <a href="{{ route('localvpn.pricing') }}" class="text-cyan-400 hover:text-cyan-300 underline">อัพเกรด License</a></span>
                 </li>
             </ol>
         </div>

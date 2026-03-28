@@ -381,7 +381,9 @@ class SmsCheckerController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $slipPath = $request->file('payment_slip')->store('payment-slips/smschecker', 'public');
+        $slipPath = app(\App\Services\ImageService::class)->storeAsWebp(
+            $request->file('payment_slip'), 'payment-slips/smschecker',
+        );
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $metadata['payment_slip'] = $slipPath;

@@ -313,7 +313,9 @@ class AutoTradeXController extends Controller
         ]);
 
         // Store the payment slip
-        $slipPath = $request->file('payment_slip')->store('payment-slips/autotradex', 'public');
+        $slipPath = app(\App\Services\ImageService::class)->storeAsWebp(
+            $request->file('payment_slip'), 'payment-slips/autotradex',
+        );
 
         // Update order with payment info
         $metadata = json_decode($order->metadata ?? '{}', true);

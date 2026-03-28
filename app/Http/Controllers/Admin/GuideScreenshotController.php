@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -48,10 +49,10 @@ class GuideScreenshotController extends Controller
         // Delete old screenshot for this step
         $this->deleteStepScreenshot($product, $step);
 
-        // Store new screenshot
-        $ext = $request->file('screenshot')->getClientOriginalExtension();
-        $filename = "step-{$step}.{$ext}";
-        $request->file('screenshot')->storeAs($dir, $filename, 'public');
+        // Store new screenshot as WebP
+        app(ImageService::class)->storeAsWebp(
+            $request->file('screenshot'), $dir, filename: "step-{$step}",
+        );
 
         return back()->with('success', "อัพโหลดรูปขั้นตอนที่ {$step} สำเร็จ");
     }

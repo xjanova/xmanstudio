@@ -38,16 +38,16 @@
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold text-white mb-4">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
-                <p class="text-gray-400">ทดลองใช้ฟรี 24 ชั่วโมง จากนั้นเลือกแพ็กเกจที่ต้องการ</p>
+                <p class="text-gray-400">ใช้ฟรีตลอด หรืออัพเกรดเพื่อปลดล็อกสมาชิกในวง 50 คน</p>
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Trial Card -->
+                <!-- Free Card -->
                 <div class="relative bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 hover:border-gray-600 transition-all">
                     <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-white mb-2">ทดลองใช้</h3>
-                        <div class="text-4xl font-black text-white">ฟรี</div>
-                        <p class="text-gray-500 text-sm mt-1">24 ชั่วโมง</p>
+                        <h3 class="text-xl font-bold text-white mb-2">ฟรี</h3>
+                        <div class="text-4xl font-black text-white">฿0</div>
+                        <p class="text-green-400 text-sm mt-1">ใช้ฟรีตลอด</p>
                     </div>
                     <ul class="space-y-3 mb-6 text-sm">
                         <li class="flex items-center text-gray-300">
@@ -56,15 +56,19 @@
                         </li>
                         <li class="flex items-center text-gray-300">
                             <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            สมาชิกในวงสูงสุด 5 คน
+                        </li>
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                             NAT Traversal
                         </li>
-                        <li class="flex items-center text-gray-500">
-                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                            WireGuard Encryption
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            เข้ารหัส WireGuard
                         </li>
                     </ul>
                     <a href="{{ route('localvpn.download') }}" class="block text-center text-white text-sm py-3 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 rounded-xl transition-all font-medium">
-                        ดาวน์โหลดแอพ
+                        ดาวน์โหลดฟรี
                     </a>
                 </div>
 
@@ -150,8 +154,8 @@
                     <p class="text-gray-400 text-sm">License Key เป็นรหัสสำหรับเปิดใช้งานแอพ LocalVPN หลังจากชำระเงินแล้ว คุณจะได้รับ Key ทางอีเมลเพื่อนำไปกรอกในแอพ</p>
                 </div>
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-                    <h3 class="font-semibold text-white mb-2">ใช้ได้กี่เครื่อง?</h3>
-                    <p class="text-gray-400 text-sm">แพ็กเกจรายเดือนและรายปีใช้ได้ 1 เครื่อง แพ็กเกจตลอดชีพสามารถใช้ได้หลายเครื่อง</p>
+                    <h3 class="font-semibold text-white mb-2">ฟรีกับแพ็กเกจเสียเงินต่างกันอย่างไร?</h3>
+                    <p class="text-gray-400 text-sm">แพ็กเกจฟรีรองรับสมาชิกในวง LAN สูงสุด 5 คน แพ็กเกจเสียเงินรองรับสูงสุด 50 คน พร้อมซัพพอร์ตพรีเมียม</p>
                 </div>
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
                     <h3 class="font-semibold text-white mb-2">ชำระเงินอย่างไร?</h3>

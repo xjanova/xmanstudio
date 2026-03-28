@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -92,15 +93,21 @@ class ProductController extends Controller
         }
 
         // Handle main image
+        $imageService = app(ImageService::class);
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
+            $validated['image'] = $imageService->storeAsWebp(
+                $request->file('image'), 'products', maxWidth: 1200,
+            );
         }
 
         // Handle gallery images
         $galleryPaths = [];
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $galleryPaths[] = $image->store('products/gallery', 'public');
+                $path = $imageService->storeAsWebp($image, 'products/gallery', maxWidth: 1200);
+                if ($path) {
+                    $galleryPaths[] = $path;
+                }
             }
         }
         $validated['images'] = $galleryPaths;
@@ -173,12 +180,11 @@ class ProductController extends Controller
         }
 
         // Handle main image
+        $imageService = app(ImageService::class);
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($product->image && \Storage::disk('public')->exists($product->image)) {
-                \Storage::disk('public')->delete($product->image);
-            }
-            $validated['image'] = $request->file('image')->store('products', 'public');
+            $validated['image'] = $imageService->replaceWithWebp(
+                $request->file('image'), $product->image, 'products', maxWidth: 1200,
+            );
         }
 
         // Handle gallery images
@@ -197,7 +203,10 @@ class ProductController extends Controller
         // Add new gallery images
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $existingImages[] = $image->store('products/gallery', 'public');
+                $path = $imageService->storeAsWebp($image, 'products/gallery', maxWidth: 1200);
+                if ($path) {
+                    $existingImages[] = $path;
+                }
             }
         }
 

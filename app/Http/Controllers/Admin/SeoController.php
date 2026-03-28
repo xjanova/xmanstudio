@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SeoSetting;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -60,13 +61,9 @@ class SeoController extends Controller
 
         // Handle OG image upload
         if ($request->hasFile('og_image')) {
-            // Delete old image
-            if ($setting->og_image) {
-                Storage::disk('public')->delete($setting->og_image);
-            }
-
-            $path = $request->file('og_image')->store('seo', 'public');
-            $data['og_image'] = $path;
+            $data['og_image'] = app(ImageService::class)->replaceWithWebp(
+                $request->file('og_image'), $setting->og_image, 'seo', maxWidth: 1200,
+            );
         }
 
         // Handle structured data

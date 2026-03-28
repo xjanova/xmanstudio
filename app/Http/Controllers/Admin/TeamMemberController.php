@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TeamMember;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -74,7 +75,9 @@ class TeamMemberController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('team', 'public');
+            $validated['image'] = app(ImageService::class)->storeAsWebp(
+                $request->file('image'), 'team', maxWidth: 512,
+            );
         }
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -114,10 +117,9 @@ class TeamMemberController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($teamMember->image) {
-                Storage::disk('public')->delete($teamMember->image);
-            }
-            $validated['image'] = $request->file('image')->store('team', 'public');
+            $validated['image'] = app(ImageService::class)->replaceWithWebp(
+                $request->file('image'), $teamMember->image, 'team', maxWidth: 512,
+            );
         }
 
         $validated['is_active'] = $request->boolean('is_active');

@@ -44,7 +44,7 @@
                     <a href="{{ route('localvpn.download') }}"
                        class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/25 text-lg">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        ดาวน์โหลด ทดลองฟรี 24 ชม.
+                        ดาวน์โหลดฟรี
                     </a>
                     <a href="{{ route('localvpn.pricing') }}"
                        class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
@@ -248,7 +248,7 @@
         <div class="max-w-5xl mx-auto">
             <div class="text-center mb-16">
                 <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">แพ็กเกจ</h2>
-                <p class="text-gray-400">เริ่มทดลองฟรี 24 ชั่วโมง จากนั้นเลือกแพ็กเกจที่เหมาะกับคุณ</p>
+                <p class="text-gray-400">ใช้ฟรีตลอด (สมาชิกในวงสูงสุด 5 คน) หรืออัพเกรดเพื่อรองรับ 50 คน</p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-6">
@@ -387,11 +387,11 @@
                 {{-- FAQ 6 --}}
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
                     <button @click="openFaq = openFaq === 6 ? null : 6" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ทดลองใช้ฟรีได้ไหม?</span>
+                        <span class="font-semibold text-white">ใช้ฟรีได้ไหม?</span>
                         <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 6 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div x-show="openFaq === 6" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">ได้ครับ ทุกคนสามารถทดลองใช้ LocalVPN ฟรี 24 ชั่วโมงเต็มโดยไม่ต้องผูกบัตรเครดิต ดาวน์โหลดแอพแล้วใช้งานได้ทันที</p>
+                        <p class="text-gray-400 text-sm leading-relaxed">ได้ครับ ใช้ LocalVPN ฟรีตลอดไม่มีวันหมดอายุ รองรับสมาชิกในวงสูงสุด 5 คน ดาวน์โหลดแอพแล้วใช้งานได้ทันที อัพเกรดเมื่อต้องการสมาชิกในวงมากกว่า 5 คน</p>
                     </div>
                 </div>
             </div>
@@ -405,7 +405,7 @@
         <div class="max-w-4xl mx-auto text-center">
             <div class="bg-gradient-to-r from-cyan-600/20 to-teal-600/20 backdrop-blur-sm rounded-3xl p-12 border border-cyan-500/30">
                 <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">พร้อมใช้ LocalVPN แล้วหรือยัง?</h2>
-                <p class="text-gray-300 mb-8 max-w-xl mx-auto">ดาวน์โหลดฟรี ทดลองใช้ 24 ชั่วโมง เชื่อมต่ออุปกรณ์ง่ายๆ ไม่ต้องตั้งค่าเครือข่าย</p>
+                <p class="text-gray-300 mb-8 max-w-xl mx-auto">ดาวน์โหลดฟรี ใช้ได้ตลอด เชื่อมต่ออุปกรณ์ง่ายๆ ไม่ต้องตั้งค่าเครือข่าย</p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <a href="{{ route('localvpn.download') }}"
                        class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/25 text-lg">

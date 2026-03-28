@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\QuotationCategory;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -69,10 +70,9 @@ class QuotationCategoryController extends Controller
 
         // Handle image upload
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('quotations/categories', $filename, 'public');
-            $validated['image'] = $path;
+            $validated['image'] = app(ImageService::class)->storeAsWebp(
+                $request->file('image'), 'quotations/categories', maxWidth: 800,
+            );
         }
 
         QuotationCategory::create($validated);
@@ -118,15 +118,9 @@ class QuotationCategoryController extends Controller
 
         // Handle image upload
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($category->image && Storage::disk('public')->exists($category->image)) {
-                Storage::disk('public')->delete($category->image);
-            }
-
-            $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('quotations/categories', $filename, 'public');
-            $validated['image'] = $path;
+            $validated['image'] = app(ImageService::class)->replaceWithWebp(
+                $request->file('image'), $category->image, 'quotations/categories', maxWidth: 800,
+            );
         }
 
         $category->update($validated);

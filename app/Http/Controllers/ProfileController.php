@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\ImageService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
@@ -48,15 +49,18 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        $imageService = app(ImageService::class);
 
-        // Delete old avatar if exists
-        if ($user->avatar) {
-            Storage::disk('public')->delete($user->avatar);
+        $path = $imageService->replaceWithWebp(
+            file: $request->file('avatar'),
+            oldPath: $user->avatar,
+            directory: 'avatars',
+            maxWidth: 512,
+        );
+
+        if ($path) {
+            $user->update(['avatar' => $path]);
         }
-
-        // Store new avatar
-        $path = $request->file('avatar')->store('avatars', 'public');
-        $user->update(['avatar' => $path]);
 
         return Redirect::route('profile.edit')->with('status', 'avatar-updated');
     }

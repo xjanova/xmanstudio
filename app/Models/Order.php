@@ -27,6 +27,7 @@ class Order extends Model
         'payment_slip',
         'status',
         'notes',
+        'metadata',
         'sent_to_line',
         // SMS Payment fields
         'unique_payment_amount_id',
@@ -49,6 +50,7 @@ class Order extends Model
         'sms_verified_at' => 'datetime',
         'payment_display_amount' => 'decimal:2',
         'stripe_metadata' => 'array',
+        'metadata' => 'array',
     ];
 
     public function user(): BelongsTo

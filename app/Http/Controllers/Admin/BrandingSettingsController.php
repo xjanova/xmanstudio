@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -42,26 +43,28 @@ class BrandingSettingsController extends Controller
         }
 
         try {
+            $imageService = app(ImageService::class);
+
             // Handle logo upload
             if ($request->hasFile('logo')) {
                 $oldLogo = Setting::getValue('site_logo');
-                if ($oldLogo) {
-                    Storage::disk('public')->delete($oldLogo);
+                $logoPath = $imageService->replaceWithWebp(
+                    $request->file('logo'), $oldLogo, 'branding', maxWidth: 800,
+                );
+                if ($logoPath) {
+                    Setting::setValue('site_logo', $logoPath, 'string', 'branding', 'เส้นทางของโลโก้เว็บไซต์', true);
                 }
-
-                $logoPath = $request->file('logo')->store('branding', 'public');
-                Setting::setValue('site_logo', $logoPath, 'string', 'branding', 'เส้นทางของโลโก้เว็บไซต์', true);
             }
 
             // Handle favicon upload
             if ($request->hasFile('favicon')) {
                 $oldFavicon = Setting::getValue('site_favicon');
-                if ($oldFavicon) {
-                    Storage::disk('public')->delete($oldFavicon);
+                $faviconPath = $imageService->replaceWithWebp(
+                    $request->file('favicon'), $oldFavicon, 'branding', maxWidth: 256,
+                );
+                if ($faviconPath) {
+                    Setting::setValue('site_favicon', $faviconPath, 'string', 'branding', 'เส้นทางของ favicon', true);
                 }
-
-                $faviconPath = $request->file('favicon')->store('branding', 'public');
-                Setting::setValue('site_favicon', $faviconPath, 'string', 'branding', 'เส้นทางของ favicon', true);
             }
 
             return redirect()

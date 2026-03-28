@@ -235,9 +235,13 @@ Route::prefix('localvpn')->name('localvpn.')->group(function () {
     Route::get('/download', [LocalVpnWebController::class, 'downloadPage'])->name('download');
     Route::get('/download/apk', [LocalVpnWebController::class, 'downloadApk'])->name('download.apk');
 
-    // Require authentication for checkout
+    // Require authentication for checkout & payment
     Route::middleware('auth')->group(function () {
         Route::get('/checkout/{plan}', [LocalVpnWebController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/{plan}', [LocalVpnWebController::class, 'processCheckout'])->name('process');
+        Route::get('/payment/{order}', [LocalVpnWebController::class, 'payment'])->name('payment');
+        Route::post('/payment/{order}/confirm', [LocalVpnWebController::class, 'confirmPayment'])->name('confirm-payment');
+        Route::get('/payment/{order}/success', [LocalVpnWebController::class, 'paymentSuccess'])->name('payment-success');
     });
 });
 

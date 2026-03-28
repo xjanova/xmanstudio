@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -49,8 +50,10 @@ class BannerController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        // Upload image
-        $imagePath = $request->file('image')->store('banners', 'public');
+        // Upload image as WebP
+        $imagePath = app(ImageService::class)->storeAsWebp(
+            $request->file('image'), 'banners', maxWidth: 1920,
+        );
 
         Banner::create([
             'title' => $request->input('title'),
@@ -124,12 +127,9 @@ class BannerController extends Controller
 
         // Upload new image if provided
         if ($request->hasFile('image')) {
-            // Delete old image
-            if ($banner->image) {
-                Storage::disk('public')->delete($banner->image);
-            }
-
-            $data['image'] = $request->file('image')->store('banners', 'public');
+            $data['image'] = app(ImageService::class)->replaceWithWebp(
+                $request->file('image'), $banner->image, 'banners', maxWidth: 1920,
+            );
         }
 
         $banner->update($data);
