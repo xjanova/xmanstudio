@@ -23,7 +23,7 @@ class LocalVpnFileController extends Controller
         $request->validate([
             'slug' => 'required|string',
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
             'file_hash' => 'required|string|size:64',
             'file_name' => 'required|string|max:255',
             'file_size' => 'required|integer|min:1',
@@ -90,11 +90,8 @@ class LocalVpnFileController extends Controller
      */
     public function index(Request $request, string $slug): JsonResponse
     {
-        // Validate device auth to prevent unauthenticated access
-        $request->validate([
-            'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
-        ]);
+        // Accept machine_id from query param, body, or X-Device-Id header (Flutter sends header)
+        $this->mergeDeviceHeaders($request);
 
         $license = $this->validateDeviceAuth($request);
         if (! $license) {
@@ -130,7 +127,7 @@ class LocalVpnFileController extends Controller
     {
         $request->validate([
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -166,7 +163,7 @@ class LocalVpnFileController extends Controller
         $request->validate([
             'slug' => 'required|string',
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
             'file_hash' => 'required|string|size:64',
             'chunks_bitmap' => 'nullable|string',
         ]);
@@ -216,11 +213,8 @@ class LocalVpnFileController extends Controller
      */
     public function seeders(Request $request, int $fileId): JsonResponse
     {
-        // Validate device auth to prevent unauthenticated IP disclosure
-        $request->validate([
-            'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
-        ]);
+        // Accept machine_id from query param, body, or X-Device-Id header (Flutter sends header)
+        $this->mergeDeviceHeaders($request);
 
         $license = $this->validateDeviceAuth($request);
         if (! $license) {
@@ -265,12 +259,26 @@ class LocalVpnFileController extends Controller
 
     // ==================== Private Helpers ====================
 
+    /**
+     * Merge device auth from headers if not in request body/query.
+     * Flutter sends machine_id as X-Device-Id header and license_key as X-License-Key header.
+     */
+    private function mergeDeviceHeaders(Request $request): void
+    {
+        if (! $request->has('machine_id') && $request->header('X-Device-Id')) {
+            $request->merge(['machine_id' => $request->header('X-Device-Id')]);
+        }
+        if (! $request->has('license_key') && $request->header('X-License-Key')) {
+            $request->merge(['license_key' => $request->header('X-License-Key')]);
+        }
+    }
+
     private function validateDeviceAuth(Request $request): ?LicenseKey
     {
         $licenseKey = $request->input('license_key');
         $machineId = $request->input('machine_id');
 
-        if (! $licenseKey || ! $machineId) {
+        if (! $machineId) {
             return null;
         }
 
@@ -279,8 +287,21 @@ class LocalVpnFileController extends Controller
             return null;
         }
 
-        $license = LicenseKey::where('license_key', $licenseKey)
-            ->where('product_id', $product->id)
+        // Try license_key + machine_id first (paid users)
+        if ($licenseKey) {
+            $license = LicenseKey::where('license_key', $licenseKey)
+                ->where('product_id', $product->id)
+                ->where('machine_id', $machineId)
+                ->where('status', 'active')
+                ->first();
+
+            if ($license && ! $license->isExpired()) {
+                return $license;
+            }
+        }
+
+        // Fallback: find any active license for this machine_id (free users)
+        $license = LicenseKey::where('product_id', $product->id)
             ->where('machine_id', $machineId)
             ->where('status', 'active')
             ->first();

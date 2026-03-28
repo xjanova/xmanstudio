@@ -30,7 +30,7 @@ class LocalVpnRelayController extends Controller
             'max_members' => 'nullable|integer|min:2|max:254',
             'is_public' => 'nullable|boolean',
             'virtual_subnet' => ['nullable', 'string', 'max:18', 'regex:/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$/'],
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
             'machine_id' => 'required|string|max:255',
             'device_id' => 'nullable|string|max:255',
         ]);
@@ -203,7 +203,7 @@ class LocalVpnRelayController extends Controller
         $request->validate([
             'slug' => 'required|string',
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
             'device_id' => 'nullable|string|max:255',
             'display_name' => 'required|string|max:100',
             'password' => 'nullable|string',
@@ -352,7 +352,7 @@ class LocalVpnRelayController extends Controller
         $request->validate([
             'slug' => 'required|string',
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -417,7 +417,7 @@ class LocalVpnRelayController extends Controller
         $request->validate([
             'slug' => 'required|string',
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
             'public_ip' => 'nullable|ip',
             'public_port' => 'nullable|integer|min:1|max:65535',
         ]);
@@ -484,7 +484,7 @@ class LocalVpnRelayController extends Controller
     {
         $request->validate([
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -528,7 +528,7 @@ class LocalVpnRelayController extends Controller
         $request->validate([
             'slug' => 'required|string',
             'source_machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
             'target_virtual_ip' => 'required|string',
             'data' => 'required|string|max:65536', // base64 encoded
         ]);
@@ -625,7 +625,7 @@ class LocalVpnRelayController extends Controller
     public function deleteNetwork(Request $request, string $slug): JsonResponse
     {
         $request->validate([
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
             'machine_id' => 'required|string|max:255',
         ]);
 
@@ -695,11 +695,11 @@ class LocalVpnRelayController extends Controller
         $request->validate([
             'slug' => 'required|string',
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
             'target_virtual_ip' => 'required|string',
             'type' => 'required|string|in:punch_request,punch_response,punch_ack',
             'payload' => 'nullable|array|max:20',
-            'payload.*' => 'nullable|string|max:1000',
+            'payload.*' => 'nullable|max:1000',
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -758,7 +758,7 @@ class LocalVpnRelayController extends Controller
         $request->validate([
             'slug' => 'required|string',
             'machine_id' => 'required|string|max:255',
-            'license_key' => 'required|string',
+            'license_key' => 'nullable|string',
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -797,7 +797,7 @@ class LocalVpnRelayController extends Controller
         $licenseKey = $request->input('license_key');
         $machineId = $request->input('machine_id');
 
-        if (! $licenseKey || ! $machineId) {
+        if (! $machineId) {
             return null;
         }
 
@@ -806,8 +806,21 @@ class LocalVpnRelayController extends Controller
             return null;
         }
 
-        $license = LicenseKey::where('license_key', $licenseKey)
-            ->where('product_id', $product->id)
+        // Try license_key + machine_id first (paid users)
+        if ($licenseKey) {
+            $license = LicenseKey::where('license_key', $licenseKey)
+                ->where('product_id', $product->id)
+                ->where('machine_id', $machineId)
+                ->where('status', 'active')
+                ->first();
+
+            if ($license && ! $license->isExpired()) {
+                return $license;
+            }
+        }
+
+        // Fallback: find any active license for this machine_id (free users send empty license_key)
+        $license = LicenseKey::where('product_id', $product->id)
             ->where('machine_id', $machineId)
             ->where('status', 'active')
             ->first();
