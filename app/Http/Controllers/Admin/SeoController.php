@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\SeoSetting;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class SeoController extends Controller
 {

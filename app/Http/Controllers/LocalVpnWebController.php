@@ -11,8 +11,8 @@ use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
-use App\Services\LicenseService;
 use App\Services\ImageService;
+use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -178,14 +178,14 @@ class LocalVpnWebController extends Controller
             ->orderByDesc('version')
             ->first();
 
-        if (!$version || ! $version->github_release_url) {
+        if (! $version || ! $version->github_release_url) {
             return redirect()->route('localvpn.download')
                 ->with('error', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
         }
 
         $githubSetting = $product->githubSetting;
 
-        if (!$githubSetting) {
+        if (! $githubSetting) {
             return redirect()->route('localvpn.download')
                 ->with('error', 'ระบบดาวน์โหลดยังไม่พร้อม');
         }
@@ -254,13 +254,13 @@ class LocalVpnWebController extends Controller
      */
     public function checkout(string $plan, Request $request)
     {
-        if (!isset(self::PRICING[$plan])) {
+        if (! isset(self::PRICING[$plan])) {
             return redirect()->route('localvpn.pricing');
         }
 
         $product = Product::where('slug', 'localvpn')->first();
 
-        if (!$product) {
+        if (! $product) {
             abort(404, 'Product not found');
         }
 
@@ -294,7 +294,7 @@ class LocalVpnWebController extends Controller
      */
     public function processCheckout(Request $request, string $plan)
     {
-        if (!isset(self::PRICING[$plan])) {
+        if (! isset(self::PRICING[$plan])) {
             abort(404, 'Plan not found');
         }
 
@@ -321,13 +321,13 @@ class LocalVpnWebController extends Controller
             $discount = (int) floor($subtotal * self::WALLET_DISCOUNT_PERCENT / 100);
             $finalPrice = $subtotal - $discount;
 
-            if (!auth()->check()) {
+            if (! auth()->check()) {
                 return redirect()->back()->with('error', 'กรุณาเข้าสู่ระบบก่อนใช้ Wallet');
             }
 
             $wallet = Wallet::getOrCreateForUser(auth()->id());
 
-            if (!$wallet->hasSufficientBalance($finalPrice)) {
+            if (! $wallet->hasSufficientBalance($finalPrice)) {
                 return redirect()->back()->with(
                     'error',
                     'ยอดเงินใน Wallet ไม่เพียงพอ (คงเหลือ: ฿' . number_format($wallet->balance, 2) .
@@ -392,7 +392,7 @@ class LocalVpnWebController extends Controller
                     // Re-check balance with lock to prevent race condition
                     $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
 
-                    if (!$wallet || ! $wallet->hasSufficientBalance($finalPrice)) {
+                    if (! $wallet || ! $wallet->hasSufficientBalance($finalPrice)) {
                         throw new \RuntimeException('INSUFFICIENT_BALANCE');
                     }
 
@@ -403,14 +403,14 @@ class LocalVpnWebController extends Controller
                         $order->id
                     );
 
-                    if (!$transaction) {
+                    if (! $transaction) {
                         throw new \RuntimeException('PAYMENT_FAILED');
                     }
 
                     $order->update(['wallet_transaction_id' => $transaction->id]);
 
                     // Idempotency: check if license already exists for this order
-                    if (!LicenseKey::where('order_id', $order->id)->exists()) {
+                    if (! LicenseKey::where('order_id', $order->id)->exists()) {
                         $this->generateLicenseForOrder($order, $product, $planInfo, $machineId);
                     }
                 }
@@ -468,7 +468,7 @@ class LocalVpnWebController extends Controller
             $licenseData = $licenses[0];
             $license = LicenseKey::find($licenseData['id']);
 
-            if (!$license) {
+            if (! $license) {
                 return null;
             }
 

@@ -3,8 +3,8 @@
 use App\Http\Controllers\Api\AiprayApiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
-use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\GlobalTorrentController;
+use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\LocalVpnFileController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
 use App\Http\Controllers\Api\ProductLicenseController;

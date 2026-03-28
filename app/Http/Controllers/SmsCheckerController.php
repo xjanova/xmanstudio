@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
+use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
@@ -381,7 +382,7 @@ class SmsCheckerController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $slipPath = app(\App\Services\ImageService::class)->storeAsWebp(
+        $slipPath = app(ImageService::class)->storeAsWebp(
             $request->file('payment_slip'), 'payment-slips/smschecker',
         );
 

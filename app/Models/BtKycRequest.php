@@ -46,7 +46,7 @@ class BtKycRequest extends Model
      */
     public function isAdult(): bool
     {
-        if (!$this->birth_date) {
+        if (! $this->birth_date) {
             return false;
         }
 

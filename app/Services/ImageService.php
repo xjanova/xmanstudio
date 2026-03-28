@@ -29,7 +29,7 @@ class ImageService
      * @param  string|null  $filename  Custom filename without extension (auto-generated if null)
      * @param  int|null  $maxWidth  Max width to resize (null = no resize)
      * @param  int|null  $quality  WebP quality 1-100 (null = use default)
-     * @return string|null  The stored path, or null on failure
+     * @return string|null The stored path, or null on failure
      */
     public function storeAsWebp(
         UploadedFile $file,
