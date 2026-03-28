@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -47,10 +48,21 @@ class VpnProxyController extends Controller
             }
         }
 
-        // Fetch and cache server list
+        // Fetch and cache server list (VPN Gate + premium custom servers)
         $allServers = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
             return $this->fetchVpnGateServers();
         });
+
+        // Merge premium proxy servers from admin settings
+        $premiumServers = [];
+        if ($isPremium && Setting::getValue('localvpn_premium_proxy_enabled', '0') === '1') {
+            $customJson = Setting::getValue('localvpn_premium_proxy_servers', '[]');
+            $custom = json_decode($customJson, true);
+            if (is_array($custom)) {
+                $premiumServers = $custom;
+                $allServers = array_merge($premiumServers, $allServers);
+            }
+        }
 
         if (empty($allServers)) {
             return response()->json([
@@ -110,6 +122,7 @@ class VpnProxyController extends Controller
             'success' => true,
             'is_premium' => $isPremium,
             'free_countries' => self::FREE_COUNTRIES,
+            'has_premium_servers' => ! empty($premiumServers),
             'countries' => $countries,
             'locked_countries' => $allCountryCodes,
         ]);

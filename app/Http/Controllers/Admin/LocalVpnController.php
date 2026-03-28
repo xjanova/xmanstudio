@@ -252,6 +252,8 @@ class LocalVpnController extends Controller
             'localvpn_heartbeat_interval' => Setting::getValue('localvpn_heartbeat_interval', '30'),
             'localvpn_session_timeout' => Setting::getValue('localvpn_session_timeout', '120'),
             'localvpn_data_relay_limit_mb' => Setting::getValue('localvpn_data_relay_limit_mb', '100'),
+            'localvpn_premium_proxy_enabled' => Setting::getValue('localvpn_premium_proxy_enabled', '0'),
+            'localvpn_premium_proxy_servers' => Setting::getValue('localvpn_premium_proxy_servers', '[]'),
         ];
 
         return view('admin.localvpn.settings', compact('settings'));
@@ -268,6 +270,8 @@ class LocalVpnController extends Controller
             'localvpn_heartbeat_interval' => 'required|integer|min:5|max:300',
             'localvpn_session_timeout' => 'required|integer|min:30|max:3600',
             'localvpn_data_relay_limit_mb' => 'required|integer|min:1|max:10000',
+            'localvpn_premium_proxy_enabled' => 'nullable|boolean',
+            'localvpn_premium_proxy_servers' => 'nullable|json',
         ]);
 
         foreach ($request->only([
@@ -278,6 +282,11 @@ class LocalVpnController extends Controller
             'localvpn_data_relay_limit_mb',
         ]) as $key => $value) {
             Setting::setValue($key, $value);
+        }
+
+        Setting::setValue('localvpn_premium_proxy_enabled', $request->boolean('localvpn_premium_proxy_enabled') ? '1' : '0');
+        if ($request->filled('localvpn_premium_proxy_servers')) {
+            Setting::setValue('localvpn_premium_proxy_servers', $request->input('localvpn_premium_proxy_servers'));
         }
 
         return back()->with('success', 'บันทึกการตั้งค่าเรียบร้อยแล้ว');
