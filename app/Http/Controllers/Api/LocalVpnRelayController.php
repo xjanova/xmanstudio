@@ -825,11 +825,24 @@ class LocalVpnRelayController extends Controller
             ->where('status', 'active')
             ->first();
 
-        if (! $license || $license->isExpired()) {
-            return null;
+        if ($license && ! $license->isExpired()) {
+            return $license;
         }
 
-        return $license;
+        // Self-healing: auto-create free license if none exists for this device.
+        // This handles the case where client's checkMachine() failed (network error)
+        // but user still tries to use the app.
+        return LicenseKey::create([
+            'product_id' => $product->id,
+            'license_key' => 'FREE-' . strtoupper(\Illuminate\Support\Str::random(20)),
+            'license_type' => 'free',
+            'status' => 'active',
+            'machine_id' => $machineId,
+            'machine_fingerprint' => $machineId,
+            'activated_at' => now(),
+            'max_activations' => 1,
+            'activations' => 1,
+        ]);
     }
 
     private function formatMember(VpnNetworkMember $member): array
