@@ -150,9 +150,9 @@
                             @endif
                         </td>
                         <td class="py-3 px-4 font-medium text-gray-900">{{ $uploader->display_name ?? 'N/A' }}</td>
-                        <td class="py-3 px-4 text-right text-gray-600">{{ number_format($uploader->files_count ?? 0) }}</td>
+                        <td class="py-3 px-4 text-right text-gray-600">{{ number_format($uploader->total_files_shared ?? 0) }}</td>
                         <td class="py-3 px-4 text-right text-gray-600">
-                            @php $bytes = $uploader->total_size ?? 0; @endphp
+                            @php $bytes = $uploader->total_uploaded_bytes ?? 0; @endphp
                             @if($bytes >= 1073741824)
                                 {{ number_format($bytes / 1073741824, 2) }} GB
                             @elseif($bytes >= 1048576)

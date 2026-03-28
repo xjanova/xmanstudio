@@ -123,7 +123,7 @@ class LocalVpnRelayController extends Controller
             'member_id' => $member->id,
             'action' => 'network_create',
             'ip_address' => $request->ip(),
-            'metadata' => ['license_key' => Str::mask($request->input('license_key'), '*', 4, -4)],
+            'metadata' => ['license_key' => Str::mask($request->input('license_key', ''), '*', 4, -4)],
             'created_at' => now(),
         ]);
 

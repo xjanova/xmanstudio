@@ -1184,6 +1184,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             Route::get('/trophies', [BitTorrentController::class, 'trophies'])->name('trophies');
             Route::post('/trophies', [BitTorrentController::class, 'storeTrophy'])->name('trophies.store');
             Route::put('/trophies/{id}', [BitTorrentController::class, 'updateTrophy'])->name('trophies.update');
+            Route::post('/trophies/{id}/toggle', [BitTorrentController::class, 'toggleTrophy'])->name('trophies.toggle');
+            Route::delete('/trophies/{id}', [BitTorrentController::class, 'deleteTrophy'])->name('trophies.delete');
         });
     });
 });

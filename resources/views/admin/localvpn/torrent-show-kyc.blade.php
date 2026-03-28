@@ -69,7 +69,7 @@
         </div>
         <div>
             <span class="text-gray-500">ผู้ตรวจ:</span>
-            <p class="text-gray-900 mt-0.5">{{ $kyc->reviewer->name ?? 'N/A' }}</p>
+            <p class="text-gray-900 mt-0.5">{{ $kyc->reviewer?->name ?? 'N/A' }}</p>
         </div>
         @endif
     </div>
@@ -130,29 +130,37 @@
 @if($kyc->status === 'pending')
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4">ตรวจสอบ KYC</h3>
-    <form method="POST" action="{{ route('admin.localvpn.torrent.kyc.review', $kyc) }}">
-        @csrf
-        <div class="mb-4">
-            <label for="admin_note" class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ Admin</label>
-            <textarea name="admin_note" id="admin_note" rows="3" placeholder="เหตุผลในการอนุมัติ/ปฏิเสธ (ไม่บังคับ)..."
-                      class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-violet-500 focus:border-violet-500">{{ old('admin_note') }}</textarea>
-            @error('admin_note')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div class="flex gap-3">
-            <button type="submit" name="action" value="approve"
+    <div class="mb-4">
+        <label for="admin_note_approve" class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ Admin</label>
+    </div>
+    <div class="flex flex-col md:flex-row gap-4">
+        {{-- Approve Form --}}
+        <form method="POST" action="{{ route('admin.localvpn.torrent.kyc.approve', $kyc->id) }}" class="flex-1">
+            @csrf
+            <textarea name="admin_note" id="admin_note_approve" rows="3" placeholder="หมายเหตุ (ไม่บังคับ)..."
+                      class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-violet-500 focus:border-violet-500 mb-3">{{ old('admin_note') }}</textarea>
+            <button type="submit"
                     class="px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm inline-flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 อนุมัติ
             </button>
-            <button type="submit" name="action" value="reject"
+        </form>
+
+        {{-- Reject Form --}}
+        <form method="POST" action="{{ route('admin.localvpn.torrent.kyc.reject', $kyc->id) }}" class="flex-1">
+            @csrf
+            <textarea name="admin_note" id="admin_note_reject" rows="3" required placeholder="เหตุผลในการปฏิเสธ (จำเป็น)..."
+                      class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 mb-3">{{ old('admin_note') }}</textarea>
+            @error('admin_note')
+                <p class="mt-1 text-xs text-red-600 mb-2">{{ $message }}</p>
+            @enderror
+            <button type="submit"
                     class="px-6 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-sm inline-flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 ปฏิเสธ
             </button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 @else
 {{-- Already Reviewed --}}
@@ -175,7 +183,7 @@
         @endif
         <div>
             <span class="text-sm text-gray-500">ตรวจโดย:</span>
-            <span class="text-gray-900 ml-1">{{ $kyc->reviewer->name ?? 'N/A' }}</span>
+            <span class="text-gray-900 ml-1">{{ $kyc->reviewer?->name ?? 'N/A' }}</span>
         </div>
         <div>
             <span class="text-sm text-gray-500">เมื่อ:</span>

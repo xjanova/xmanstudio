@@ -40,9 +40,30 @@
                     <option value="hard" {{ old('difficulty') === 'hard' ? 'selected' : '' }}>Hard</option>
                 </select>
             </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">เงื่อนไข (requirement)</label>
-                <input type="text" name="requirement" placeholder="เช่น seed 100 hours, share 50 files" value="{{ old('requirement') }}"
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                <input type="text" name="slug" required placeholder="เช่น seed-master" value="{{ old('slug') }}"
+                       class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-violet-500 focus:border-violet-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทเงื่อนไข</label>
+                <select name="requirement_type" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-violet-500 focus:border-violet-500">
+                    <option value="">-- เลือก --</option>
+                    <option value="files_shared" {{ old('requirement_type') === 'files_shared' ? 'selected' : '' }}>files_shared</option>
+                    <option value="upload_bytes" {{ old('requirement_type') === 'upload_bytes' ? 'selected' : '' }}>upload_bytes</option>
+                    <option value="download_bytes" {{ old('requirement_type') === 'download_bytes' ? 'selected' : '' }}>download_bytes</option>
+                    <option value="seed_time" {{ old('requirement_type') === 'seed_time' ? 'selected' : '' }}>seed_time</option>
+                    <option value="score" {{ old('requirement_type') === 'score' ? 'selected' : '' }}>score</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ค่าเงื่อนไข</label>
+                <input type="number" name="requirement_value" required min="0" placeholder="เช่น 100" value="{{ old('requirement_value') }}"
+                       class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-violet-500 focus:border-violet-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ลำดับ</label>
+                <input type="number" name="sort_order" required min="0" value="{{ old('sort_order', 0) }}"
                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-violet-500 focus:border-violet-500">
             </div>
             <div class="flex items-end">
@@ -117,9 +138,9 @@
                     <p class="text-sm text-gray-600 mb-2">{{ $trophy->description }}</p>
                 @endif
 
-                @if($trophy->requirement)
+                @if($trophy->requirement_type)
                     <p class="text-xs text-gray-500 mb-3">
-                        <span class="font-medium">เงื่อนไข:</span> {{ $trophy->requirement }}
+                        <span class="font-medium">เงื่อนไข:</span> {{ $trophy->requirement_type }}: {{ $trophy->requirement_value }}
                     </p>
                 @endif
 
@@ -130,7 +151,7 @@
                             {{ $trophy->is_active ? 'ปิด' : 'เปิด' }}
                         </button>
                     </form>
-                    <form method="POST" action="{{ route('admin.localvpn.torrent.trophies.destroy', $trophy) }}"
+                    <form method="POST" action="{{ route('admin.localvpn.torrent.trophies.delete', $trophy) }}"
                           onsubmit="return confirm('ลบถ้วยรางวัล \'{{ $trophy->name }}\'?')" class="inline">
                         @csrf
                         @method('DELETE')

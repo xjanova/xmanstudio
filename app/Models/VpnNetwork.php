@@ -18,6 +18,7 @@ class VpnNetwork extends Model
         'owner_device_id',
         'max_members',
         'is_public',
+        'is_active',
         'virtual_subnet',
     ];
 

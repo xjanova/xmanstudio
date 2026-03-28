@@ -96,7 +96,7 @@
                     <td class="py-3 px-4 text-center text-gray-600">{{ number_format($file->download_count ?? 0) }}</td>
                     <td class="py-3 px-4 text-center">
                         @php
-                            $onlineSeeders = $file->seeders_online ?? 0;
+                            $onlineSeeders = $file->online_seeders_count ?? 0;
                             $totalSeeders = $file->seeders_count ?? 0;
                         @endphp
                         @if($onlineSeeders > 0)
@@ -129,7 +129,7 @@
                                     @endif
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('admin.localvpn.torrent.files.destroy', $file) }}" class="inline"
+                            <form method="POST" action="{{ route('admin.localvpn.torrent.files.delete', $file) }}" class="inline"
                                   onsubmit="return confirm('ลบไฟล์ \'{{ $file->file_name }}\'? การกระทำนี้ไม่สามารถย้อนกลับได้')">
                                 @csrf
                                 @method('DELETE')

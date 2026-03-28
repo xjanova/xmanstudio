@@ -53,9 +53,9 @@
                     </td>
                     <td class="py-3 px-4 font-medium text-gray-900">{{ $user->display_name ?? 'N/A' }}</td>
                     <td class="py-3 px-4 text-right font-bold text-violet-600">{{ number_format($user->score ?? 0) }}</td>
-                    <td class="py-3 px-4 text-center text-gray-600">{{ number_format($user->files_shared ?? 0) }}</td>
+                    <td class="py-3 px-4 text-center text-gray-600">{{ number_format($user->total_files_shared ?? 0) }}</td>
                     <td class="py-3 px-4 text-right text-gray-600 font-mono text-xs">
-                        @php $up = $user->total_uploaded ?? 0; @endphp
+                        @php $up = $user->total_uploaded_bytes ?? 0; @endphp
                         @if($up >= 1073741824)
                             {{ number_format($up / 1073741824, 2) }} GB
                         @elseif($up >= 1048576)
@@ -67,7 +67,7 @@
                         @endif
                     </td>
                     <td class="py-3 px-4 text-right text-gray-600 font-mono text-xs">
-                        @php $dl = $user->total_downloaded ?? 0; @endphp
+                        @php $dl = $user->total_downloaded_bytes ?? 0; @endphp
                         @if($dl >= 1073741824)
                             {{ number_format($dl / 1073741824, 2) }} GB
                         @elseif($dl >= 1048576)
@@ -94,9 +94,9 @@
                         @endif
                     </td>
                     <td class="py-3 px-4 text-center">
-                        @if(($user->trophies_count ?? 0) > 0)
+                        @if(($trophyCounts[$user->machine_id] ?? 0) > 0)
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-800">
-                                {{ $user->trophies_count }}
+                                {{ $trophyCounts[$user->machine_id] ?? 0 }}
                             </span>
                         @else
                             <span class="text-gray-400">0</span>

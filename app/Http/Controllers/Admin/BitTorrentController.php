@@ -160,7 +160,7 @@ class BitTorrentController extends Controller
             ->paginate(20)
             ->appends($request->query());
 
-        $categories = BtCategory::orderBy('sort_order')->pluck('name', 'id');
+        $categories = BtCategory::orderBy('sort_order')->get();
 
         return view('admin.localvpn.torrent-files', compact('files', 'categories'));
     }
@@ -174,7 +174,9 @@ class BitTorrentController extends Controller
             $q->orderByDesc('is_online')->orderByDesc('last_seen_at');
         }])->findOrFail($id);
 
-        return view('admin.localvpn.torrent-show-file', compact('file'));
+        $seeders = $file->seeders;
+
+        return view('admin.localvpn.torrent-show-file', compact('file', 'seeders'));
     }
 
     /**
@@ -222,7 +224,9 @@ class BitTorrentController extends Controller
 
         $pendingCount = BtKycRequest::pending()->count();
 
-        return view('admin.localvpn.torrent-kyc', compact('kycRequests', 'pendingCount'));
+        $submissions = $kycRequests;
+
+        return view('admin.localvpn.torrent-kyc', compact('submissions', 'pendingCount'));
     }
 
     /**
@@ -291,7 +295,9 @@ class BitTorrentController extends Controller
             ->groupBy('machine_id')
             ->pluck('trophies_count', 'machine_id');
 
-        return view('admin.localvpn.torrent-leaderboard', compact('users', 'trophyCounts'));
+        $leaderboard = $users;
+
+        return view('admin.localvpn.torrent-leaderboard', compact('leaderboard', 'trophyCounts'));
     }
 
     /**
@@ -300,7 +306,7 @@ class BitTorrentController extends Controller
     public function trophies(Request $request)
     {
         $trophies = BtTrophy::withCount('userTrophies')
-            ->orderByRaw("FIELD(difficulty, 'easy', 'medium', 'hard')")
+            ->orderByRaw("CASE WHEN difficulty = 'easy' THEN 1 WHEN difficulty = 'medium' THEN 2 WHEN difficulty = 'hard' THEN 3 END")
             ->orderBy('sort_order')
             ->get();
 
@@ -375,5 +381,31 @@ class BitTorrentController extends Controller
         ]);
 
         return back()->with('success', 'อัปเดตถ้วยรางวัลสำเร็จ');
+    }
+
+    /**
+     * Toggle trophy active/inactive.
+     */
+    public function toggleTrophy($id)
+    {
+        $trophy = BtTrophy::findOrFail($id);
+        $trophy->is_active = ! $trophy->is_active;
+        $trophy->save();
+
+        $status = $trophy->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+
+        return redirect()->back()->with('success', "ถ้วยรางวัล \"{$trophy->name}\" ถูก{$status}แล้ว");
+    }
+
+    /**
+     * Delete a trophy.
+     */
+    public function deleteTrophy($id)
+    {
+        $trophy = BtTrophy::findOrFail($id);
+        $name = $trophy->name;
+        $trophy->delete();
+
+        return redirect()->back()->with('success', "ลบถ้วยรางวัล \"{$name}\" สำเร็จ");
     }
 }

@@ -5,6 +5,8 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class BtKycRequest extends Model
 {
@@ -25,6 +27,26 @@ class BtKycRequest extends Model
         'birth_date' => 'date',
         'reviewed_at' => 'datetime',
     ];
+
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function getIdCardFrontUrlAttribute(): ?string
+    {
+        return $this->id_card_front_path ? Storage::url($this->id_card_front_path) : null;
+    }
+
+    public function getIdCardBackUrlAttribute(): ?string
+    {
+        return $this->id_card_back_path ? Storage::url($this->id_card_back_path) : null;
+    }
+
+    public function getSelfieUrlAttribute(): ?string
+    {
+        return $this->selfie_path ? Storage::url($this->selfie_path) : null;
+    }
 
     public function scopePending(Builder $query): Builder
     {

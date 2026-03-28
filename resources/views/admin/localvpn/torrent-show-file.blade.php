@@ -55,7 +55,7 @@
                             {{ $file->is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
                         </button>
                     </form>
-                    <form method="POST" action="{{ route('admin.localvpn.torrent.files.destroy', $file) }}"
+                    <form method="POST" action="{{ route('admin.localvpn.torrent.files.delete', $file) }}"
                           onsubmit="return confirm('ลบไฟล์นี้? การกระทำนี้ไม่สามารถย้อนกลับได้')">
                         @csrf
                         @method('DELETE')
@@ -97,8 +97,8 @@
                     <span class="text-gray-900">{{ number_format($file->download_count ?? 0) }}</span>
                 </div>
                 <div>
-                    <span class="text-gray-500">Info Hash:</span>
-                    <span class="font-mono text-xs text-gray-900">{{ $file->info_hash ?? '-' }}</span>
+                    <span class="text-gray-500">File Hash:</span>
+                    <span class="font-mono text-xs text-gray-900">{{ $file->file_hash ?? '-' }}</span>
                 </div>
                 <div>
                     <span class="text-gray-500">Chunks:</span>
@@ -120,7 +120,7 @@
 {{-- Seeders Table --}}
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-100">
-        <h3 class="text-lg font-semibold text-gray-900">Seeders ({{ count($seeders ?? []) }})</h3>
+        <h3 class="text-lg font-semibold text-gray-900">Seeders ({{ $file->seeders->count() }})</h3>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -136,7 +136,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-                @forelse($seeders ?? [] as $seeder)
+                @forelse($file->seeders as $seeder)
                 <tr class="hover:bg-gray-50">
                     <td class="py-3 px-4 font-mono text-xs text-gray-600">{{ Str::limit($seeder->machine_id, 16) }}</td>
                     <td class="py-3 px-4 font-medium text-gray-900">{{ $seeder->display_name ?? 'N/A' }}</td>
@@ -154,11 +154,20 @@
                     </td>
                     <td class="py-3 px-4 text-gray-500 text-xs">{{ $seeder->last_seen_at?->diffForHumans() ?? '-' }}</td>
                     <td class="py-3 px-4 text-center text-gray-600">
-                        @if(isset($seeder->chunks_owned) && isset($file->total_chunks) && $file->total_chunks > 0)
+                        @php
+                            if ($seeder->chunks_bitmap === 'all') {
+                                $chunksOwned = $file->total_chunks ?? 0;
+                            } elseif (!empty($seeder->chunks_bitmap)) {
+                                $chunksOwned = count(explode(',', $seeder->chunks_bitmap));
+                            } else {
+                                $chunksOwned = 0;
+                            }
+                        @endphp
+                        @if($chunksOwned > 0 && isset($file->total_chunks) && $file->total_chunks > 0)
                             <div class="flex items-center justify-center gap-1">
-                                <span>{{ $seeder->chunks_owned }}/{{ $file->total_chunks }}</span>
+                                <span>{{ $chunksOwned }}/{{ $file->total_chunks }}</span>
                                 <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                    <div class="h-full bg-violet-500 rounded-full" style="width: {{ min(100, ($seeder->chunks_owned / $file->total_chunks) * 100) }}%"></div>
+                                    <div class="h-full bg-violet-500 rounded-full" style="width: {{ min(100, ($chunksOwned / $file->total_chunks) * 100) }}%"></div>
                                 </div>
                             </div>
                         @else
