@@ -498,6 +498,15 @@ class LocalVpnRelayController extends Controller
             return response()->json(['success' => false, 'error' => 'Network not found.'], 404);
         }
 
+        // Verify requester is a member of this network
+        $requester = VpnNetworkMember::where('network_id', $network->id)
+            ->where('machine_id', $request->input('machine_id'))
+            ->first();
+
+        if (! $requester) {
+            return response()->json(['success' => false, 'error' => 'Not a member of this network.'], 403);
+        }
+
         $members = VpnNetworkMember::where('network_id', $network->id)
             ->orderByDesc('is_online')
             ->orderByDesc('last_heartbeat_at')

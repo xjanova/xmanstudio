@@ -171,14 +171,15 @@ class LicenseKey extends Model
             }
         }
 
-        $expiresAt = match ($this->license_type) {
+        // Only calculate expires_at if not already set (preserve purchase-time expiry)
+        $expiresAt = $this->expires_at ?? match ($this->license_type) {
             self::TYPE_DAILY => now()->addDay(),
             self::TYPE_WEEKLY => now()->addDays(7),
             self::TYPE_MONTHLY => now()->addDays(30),
             self::TYPE_YEARLY => now()->addYear(),
             self::TYPE_LIFETIME, self::TYPE_FREE => null,
             self::TYPE_DEMO => now()->addDays(3),
-            default => $this->expires_at,
+            default => null,
         };
 
         $this->update([

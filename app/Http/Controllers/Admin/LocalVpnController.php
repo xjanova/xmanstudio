@@ -24,18 +24,33 @@ class LocalVpnController extends Controller
         $activeSessions = VpnRelaySession::where('is_active', true)->count();
         $totalTrafficBytes = VpnTrafficLog::sum('bytes');
 
-        // Chart data: last 30 days
+        // Chart data: last 30 days (3 aggregated queries instead of 90)
+        $thirtyDaysAgo = now()->subDays(29)->startOfDay();
+
+        $networksByDay = VpnNetwork::where('created_at', '>=', $thirtyDaysAgo)
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('count', 'date');
+
+        $joinsByDay = VpnTrafficLog::where('action', 'join')
+            ->where('created_at', '>=', $thirtyDaysAgo)
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('count', 'date');
+
+        $trafficByDay = VpnTrafficLog::where('created_at', '>=', $thirtyDaysAgo)
+            ->selectRaw('DATE(created_at) as date, COALESCE(SUM(bytes), 0) as total')
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('total', 'date');
+
         $chartData = [];
         for ($i = 29; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();
-            $dayStart = now()->subDays($i)->startOfDay();
-            $dayEnd = now()->subDays($i)->endOfDay();
-
             $chartData[] = [
                 'date' => $date,
-                'networks_created' => VpnNetwork::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
-                'joins' => VpnTrafficLog::where('action', 'join')->whereBetween('created_at', [$dayStart, $dayEnd])->count(),
-                'traffic_bytes' => VpnTrafficLog::whereBetween('created_at', [$dayStart, $dayEnd])->sum('bytes'),
+                'networks_created' => (int) ($networksByDay[$date] ?? 0),
+                'joins' => (int) ($joinsByDay[$date] ?? 0),
+                'traffic_bytes' => (int) ($trafficByDay[$date] ?? 0),
             ];
         }
 
@@ -65,7 +80,7 @@ class LocalVpnController extends Controller
         $query = VpnNetwork::with('owner')->withCount('members');
 
         if ($search = $request->get('search')) {
-            $search = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+            $search = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%");
@@ -162,7 +177,7 @@ class LocalVpnController extends Controller
             ->where('is_online', true);
 
         if ($search = $request->get('search')) {
-            $search = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+            $search = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->where('display_name', 'like', "%{$search}%")
                     ->orWhere('virtual_ip', 'like', "%{$search}%")
@@ -190,7 +205,12 @@ class LocalVpnController extends Controller
             'member_id' => $member->id,
             'action' => 'leave',
             'ip_address' => request()->ip(),
-            'metadata' => ['reason' => 'kicked_by_admin'],
+            'metadata' => [
+                'reason' => 'kicked_by_admin',
+                'display_name' => $member->display_name,
+                'machine_id' => $member->machine_id,
+                'virtual_ip' => $member->virtual_ip,
+            ],
             'created_at' => now(),
         ]);
 
