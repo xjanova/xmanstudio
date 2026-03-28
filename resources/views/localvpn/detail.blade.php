@@ -906,6 +906,8 @@
 </div>
 </div>
 
+@endsection
+
 @push('scripts')
 <script>
 // Scroll reveal animation
@@ -923,4 +925,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
-@endsection
