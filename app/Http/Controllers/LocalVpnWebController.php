@@ -201,7 +201,43 @@ class LocalVpnWebController extends Controller
     {
         $token = $githubSetting->github_token_decrypted;
         $assetUrl = $productVersion->github_release_url;
+        $filename = $productVersion->download_filename ?? 'LocalVPN-v' . $productVersion->version . '.apk';
+        $fileSize = $productVersion->file_size;
 
+        // For public repos without token: use browser_download_url (direct download)
+        // which doesn't require authentication. The github_release_url is an API URL
+        // that needs a token for private repos.
+        if (empty($token)) {
+            // Convert API asset URL to browser download URL, or use direct redirect
+            $browserUrl = $productVersion->browser_download_url
+                ?? "https://github.com/{$githubSetting->github_owner}/{$githubSetting->github_repo}/releases/download/v{$productVersion->version}/{$filename}";
+
+            return new StreamedResponse(function () use ($browserUrl) {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $browserUrl);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'User-Agent: XMAN-LocalVPN-Download-Proxy',
+                ]);
+                curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
+                    echo $data;
+                    flush();
+
+                    return strlen($data);
+                });
+                curl_exec($ch);
+                curl_close($ch);
+            }, 200, [
+                'Content-Type' => 'application/vnd.android.package-archive',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Length' => $fileSize,
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+            ]);
+        }
+
+        // Private repo: use API URL with token to get redirect URL
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $token,
             'Accept' => 'application/octet-stream',
@@ -215,9 +251,6 @@ class LocalVpnWebController extends Controller
         } else {
             $downloadUrl = $assetUrl;
         }
-
-        $filename = $productVersion->download_filename ?? 'LocalVPN-v' . $productVersion->version . '.apk';
-        $fileSize = $productVersion->file_size;
 
         return new StreamedResponse(function () use ($downloadUrl, $token) {
             $ch = curl_init();
