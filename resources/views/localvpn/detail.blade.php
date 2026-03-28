@@ -123,6 +123,7 @@
 </style>
 @endpush
 
+@section('content')
 <div class="hero-bg">
 <div class="grid-overlay">
 
