@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\GlobalTorrentController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\LocalVpnFileController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
+use App\Http\Controllers\Api\VpnProxyController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\StripeController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -470,4 +471,7 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
     Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
     Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
     Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
+
+    // VPN Proxy (country bypass)
+    Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
 });
