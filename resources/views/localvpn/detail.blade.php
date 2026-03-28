@@ -157,14 +157,6 @@
                     <p class="text-gray-400 leading-relaxed text-sm">เลือกประเทศที่ต้องการมุด เปลี่ยน IP ได้ทันที ฟรี 3 ประเทศ Premium ได้ทุกประเทศ</p>
                 </div>
 
-                {{-- Feature 10: VPN Gateway --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-red-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">VPN Gateway <span class="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Premium</span></h3>
-                    <p class="text-gray-400 leading-relaxed text-sm">โฮสต์เปิด VPN พาสมาชิกทั้งวง LAN ออก IP เดียวกัน เหมาะสำหรับเล่นเกมออนไลน์ด้วยกัน</p>
-                </div>
             </div>
         </div>
     </section>
