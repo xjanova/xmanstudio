@@ -12,7 +12,10 @@ use Illuminate\Support\Facades\Http;
 
 class VpnProxyController extends Controller
 {
-    private const VPNGATE_API = 'https://www.vpngate.net/api/iphone/';
+    private const VPNGATE_APIS = [
+        'https://www.vpngate.net/api/iphone/',
+        'http://www.vpngate.net/api/iphone/',
+    ];
 
     private const CACHE_KEY = 'vpngate_servers';
 
@@ -51,9 +54,18 @@ class VpnProxyController extends Controller
         }
 
         // Fetch and cache server list (VPN Gate + premium custom servers)
-        $allServers = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return $this->fetchVpnGateServers();
-        });
+        // Use stale-while-revalidate pattern: keep old cache if fresh fetch fails
+        $allServers = Cache::get(self::CACHE_KEY);
+        if ($allServers === null) {
+            $allServers = $this->fetchVpnGateServers();
+            if (! empty($allServers)) {
+                Cache::put(self::CACHE_KEY, $allServers, self::CACHE_TTL);
+                Cache::put(self::CACHE_KEY . '_stale', $allServers, 86400); // keep stale for 24h
+            } else {
+                // Fresh fetch failed — try stale cache
+                $allServers = Cache::get(self::CACHE_KEY . '_stale', []);
+            }
+        }
 
         // Merge premium proxy servers from admin settings
         $premiumServers = [];
@@ -136,15 +148,25 @@ class VpnProxyController extends Controller
     private function fetchVpnGateServers(): array
     {
         try {
-            $response = Http::timeout(15)
-                ->withHeaders(['User-Agent' => 'LocalVPN-App/1.0'])
-                ->get(self::VPNGATE_API);
+            $csv = null;
+            foreach (self::VPNGATE_APIS as $apiUrl) {
+                try {
+                    $response = Http::timeout(10)
+                        ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'])
+                        ->get($apiUrl);
 
-            if (! $response->successful()) {
-                return [];
+                    if ($response->successful() && strlen($response->body()) > 100) {
+                        $csv = $response->body();
+                        break;
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
             }
 
-            $csv = $response->body();
+            if (! $csv) {
+                return [];
+            }
             $lines = explode("\n", $csv);
             $servers = [];
 
