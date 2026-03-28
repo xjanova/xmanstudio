@@ -129,16 +129,25 @@ class LocalVpnController extends Controller
     {
         $network = VpnNetwork::findOrFail($id);
         $name = $network->name;
+        $slug = $network->slug;
+        $networkId = $network->id;
 
-        // Log the deletion
+        // Delete network first (cascades: members, sessions, existing traffic logs)
+        $network->delete();
+
+        // Create audit log with null network_id (network no longer exists)
         VpnTrafficLog::create([
-            'network_id' => $network->id,
+            'network_id' => null,
             'action' => 'network_delete',
             'ip_address' => request()->ip(),
+            'metadata' => [
+                'slug' => $slug,
+                'name' => $name,
+                'deleted_network_id' => $networkId,
+                'deleted_by' => 'admin',
+            ],
             'created_at' => now(),
         ]);
-
-        $network->delete();
 
         return redirect()->route('admin.localvpn.networks')
             ->with('success', "เครือข่าย \"{$name}\" ถูกลบแล้ว");

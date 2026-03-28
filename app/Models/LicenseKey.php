@@ -56,6 +56,8 @@ class LicenseKey extends Model
 
     const TYPE_LIFETIME = 'lifetime';
 
+    const TYPE_FREE = 'free';
+
     const TYPE_PRODUCT = 'product';
 
     const STATUS_ACTIVE = 'active';
@@ -118,7 +120,8 @@ class LicenseKey extends Model
 
     public function isExpired(): bool
     {
-        if ($this->license_type === self::TYPE_LIFETIME) {
+        // Lifetime and free licenses never expire
+        if (in_array($this->license_type, [self::TYPE_LIFETIME, self::TYPE_FREE])) {
             return false;
         }
         if ($this->expires_at === null) {
@@ -135,7 +138,7 @@ class LicenseKey extends Model
 
     public function daysRemaining(): int
     {
-        if ($this->license_type === self::TYPE_LIFETIME) {
+        if (in_array($this->license_type, [self::TYPE_LIFETIME, self::TYPE_FREE])) {
             return 999999;
         }
         if ($this->expires_at === null) {
@@ -173,7 +176,7 @@ class LicenseKey extends Model
             self::TYPE_WEEKLY => now()->addDays(7),
             self::TYPE_MONTHLY => now()->addDays(30),
             self::TYPE_YEARLY => now()->addYear(),
-            self::TYPE_LIFETIME => null,
+            self::TYPE_LIFETIME, self::TYPE_FREE => null,
             self::TYPE_DEMO => now()->addDays(3),
             default => $this->expires_at,
         };

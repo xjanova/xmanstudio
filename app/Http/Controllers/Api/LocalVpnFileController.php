@@ -232,6 +232,15 @@ class LocalVpnFileController extends Controller
             return response()->json(['success' => false, 'error' => 'File not found.'], 404);
         }
 
+        // Verify requester is a member of the file's network
+        $member = VpnNetworkMember::where('network_id', $sharedFile->network_id)
+            ->where('machine_id', $request->input('machine_id'))
+            ->first();
+
+        if (! $member) {
+            return response()->json(['success' => false, 'error' => 'Not a member of this network.'], 403);
+        }
+
         $seeders = VpnFileSeeder::where('shared_file_id', $fileId)
             ->with('member')
             ->get()

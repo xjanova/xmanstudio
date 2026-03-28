@@ -411,7 +411,10 @@ class LocalVpnWebController extends Controller
 
                     // Idempotency: check if license already exists for this order
                     if (! LicenseKey::where('order_id', $order->id)->exists()) {
-                        $this->generateLicenseForOrder($order, $product, $planInfo, $machineId);
+                        $license = $this->generateLicenseForOrder($order, $product, $planInfo, $machineId);
+                        if (! $license) {
+                            throw new \RuntimeException('LICENSE_GENERATION_FAILED');
+                        }
                     }
                 }
 
@@ -433,6 +436,9 @@ class LocalVpnWebController extends Controller
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'INSUFFICIENT_BALANCE') {
                 return redirect()->back()->with('error', 'ยอดเงินใน Wallet ไม่เพียงพอ กรุณาลองใหม่');
+            }
+            if ($e->getMessage() === 'LICENSE_GENERATION_FAILED') {
+                return redirect()->back()->with('error', 'สร้าง License ไม่สำเร็จ เงินจะคืนอัตโนมัติ กรุณาลองใหม่');
             }
 
             return redirect()->back()->with('error', 'ชำระเงินไม่สำเร็จ กรุณาลองใหม่');

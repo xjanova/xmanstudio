@@ -414,6 +414,15 @@ class LocalVpnRelayController extends Controller
             return response()->json(['success' => false, 'error' => 'Network not found.'], 404);
         }
 
+        // Inform client if network has been deactivated
+        if (! $network->is_active) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Network has been deactivated.',
+                'network_active' => false,
+            ], 403);
+        }
+
         $member = VpnNetworkMember::where('network_id', $network->id)
             ->where('machine_id', $request->input('machine_id'))
             ->first();

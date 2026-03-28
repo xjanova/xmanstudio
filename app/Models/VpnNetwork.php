@@ -71,35 +71,50 @@ class VpnNetwork extends Model
     {
         $lockKey = "vpn_ip_assign:{$this->id}";
 
-        return Cache::lock($lockKey, 10)->block(5, function () {
-            // Parse subnet: e.g. "10.10.0.0/24"
-            $parts = explode('/', $this->virtual_subnet);
-            $baseIp = $parts[0];
-            $prefix = (int) ($parts[1] ?? 24);
+        // Use atomic lock if cache driver supports it, otherwise proceed without lock
+        try {
+            $lock = Cache::lock($lockKey, 10);
+        } catch (\Exception $e) {
+            return $this->resolveNextVirtualIp();
+        }
 
-            $baseInt = ip2long($baseIp);
-            if ($baseInt === false) {
-                return '10.10.0.2'; // Safe fallback for invalid subnet
-            }
-
-            // Number of usable hosts: 2^(32 - prefix) - 2 (exclude network & broadcast)
-            $hostBits = 32 - $prefix;
-            $maxHosts = pow(2, $hostBits) - 2;
-
-            // Get all used IPs in this network
-            $usedIps = $this->members()->pluck('virtual_ip')->toArray();
-
-            // Start from .2 (reserve .1 as gateway)
-            for ($i = 2; $i <= $maxHosts + 1; $i++) {
-                $candidateIp = long2ip($baseInt + $i);
-                if (! in_array($candidateIp, $usedIps)) {
-                    return $candidateIp;
-                }
-            }
-
-            // Fallback: return .1 if everything is taken (shouldn't happen with max_members)
-            return long2ip($baseInt + 1);
+        return $lock->block(5, function () {
+            return $this->resolveNextVirtualIp();
         });
+    }
+
+    /**
+     * Resolve the next available virtual IP from the subnet.
+     */
+    private function resolveNextVirtualIp(): string
+    {
+        // Parse subnet: e.g. "10.10.0.0/24"
+        $parts = explode('/', $this->virtual_subnet);
+        $baseIp = $parts[0];
+        $prefix = (int) ($parts[1] ?? 24);
+
+        $baseInt = ip2long($baseIp);
+        if ($baseInt === false) {
+            return '10.10.0.2'; // Safe fallback for invalid subnet
+        }
+
+        // Number of usable hosts: 2^(32 - prefix) - 2 (exclude network & broadcast)
+        $hostBits = 32 - $prefix;
+        $maxHosts = pow(2, $hostBits) - 2;
+
+        // Get all used IPs in this network
+        $usedIps = $this->members()->pluck('virtual_ip')->toArray();
+
+        // Start from .2 (reserve .1 as gateway)
+        for ($i = 2; $i <= $maxHosts + 1; $i++) {
+            $candidateIp = long2ip($baseInt + $i);
+            if (! in_array($candidateIp, $usedIps)) {
+                return $candidateIp;
+            }
+        }
+
+        // Fallback: return .1 if everything is taken (shouldn't happen with max_members)
+        return long2ip($baseInt + 1);
     }
 
     /**
