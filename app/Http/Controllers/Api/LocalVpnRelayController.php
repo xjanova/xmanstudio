@@ -834,7 +834,7 @@ class LocalVpnRelayController extends Controller
         // but user still tries to use the app.
         return LicenseKey::create([
             'product_id' => $product->id,
-            'license_key' => 'FREE-' . strtoupper(\Illuminate\Support\Str::random(20)),
+            'license_key' => 'FREE-' . strtoupper(Str::random(20)),
             'license_type' => 'free',
             'status' => 'active',
             'machine_id' => $machineId,
