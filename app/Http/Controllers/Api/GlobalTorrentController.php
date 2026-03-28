@@ -884,6 +884,141 @@ class GlobalTorrentController extends Controller
         ]);
     }
 
+    // ==================== Torrent Relay (Server-mediated download) ====================
+
+    /**
+     * Downloader requests chunks from a seeder via server relay.
+     * POST /api/v1/localvpn/torrent/relay/request
+     */
+    public function relayRequest(Request $request): JsonResponse
+    {
+        $request->validate([
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+            'file_hash' => 'required|string|size:64',
+            'chunk_indices' => 'required|array|max:10',
+            'chunk_indices.*' => 'integer|min:0',
+            'target_machine_id' => 'required|string|max:255',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
+        }
+
+        $cacheKey = 'torrent_relay:' . $request->input('target_machine_id');
+        $pending = cache()->get($cacheKey, []);
+
+        foreach ($request->input('chunk_indices') as $idx) {
+            $pending[] = [
+                'file_hash' => $request->input('file_hash'),
+                'chunk_index' => $idx,
+                'requester' => $request->input('machine_id'),
+                'requested_at' => now()->toISOString(),
+            ];
+        }
+
+        cache()->put($cacheKey, $pending, 300); // 5 min TTL
+
+        return response()->json(['success' => true, 'queued' => count($request->input('chunk_indices'))]);
+    }
+
+    /**
+     * Seeder polls for pending chunk requests.
+     * POST /api/v1/localvpn/torrent/relay/poll
+     */
+    public function relayPoll(Request $request): JsonResponse
+    {
+        $request->validate([
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
+        }
+
+        $cacheKey = 'torrent_relay:' . $request->input('machine_id');
+        $pending = cache()->get($cacheKey, []);
+
+        // Take first 5 requests and leave rest
+        $batch = array_splice($pending, 0, 5);
+        cache()->put($cacheKey, $pending, 300);
+
+        return response()->json(['success' => true, 'requests' => $batch]);
+    }
+
+    /**
+     * Seeder uploads a chunk to relay to the requester.
+     * POST /api/v1/localvpn/torrent/relay/chunk
+     */
+    public function relayChunk(Request $request): JsonResponse
+    {
+        $request->validate([
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+            'file_hash' => 'required|string|size:64',
+            'chunk_index' => 'required|integer|min:0',
+            'data' => 'required|string', // base64 chunk data
+            'target_machine_id' => 'required|string|max:255',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
+        }
+
+        // Store chunk in cache for requester to fetch
+        $chunkKey = sprintf(
+            'torrent_chunk:%s:%s:%d',
+            $request->input('target_machine_id'),
+            $request->input('file_hash'),
+            $request->input('chunk_index')
+        );
+
+        cache()->put($chunkKey, $request->input('data'), 120); // 2 min TTL
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Downloader fetches relayed chunks.
+     * POST /api/v1/localvpn/torrent/relay/fetch
+     */
+    public function relayFetch(Request $request): JsonResponse
+    {
+        $request->validate([
+            'machine_id' => 'required|string|max:255',
+            'license_key' => 'required|string',
+            'file_hash' => 'required|string|size:64',
+            'chunk_indices' => 'required|array|max:10',
+            'chunk_indices.*' => 'integer|min:0',
+        ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
+        }
+
+        $chunks = [];
+        foreach ($request->input('chunk_indices') as $idx) {
+            $chunkKey = sprintf(
+                'torrent_chunk:%s:%s:%d',
+                $request->input('machine_id'),
+                $request->input('file_hash'),
+                $idx
+            );
+
+            $data = cache()->pull($chunkKey); // get + delete
+            if ($data) {
+                $chunks[] = ['chunk_index' => $idx, 'data' => $data];
+            }
+        }
+
+        return response()->json(['success' => true, 'chunks' => $chunks]);
+    }
+
     // ==================== Private Helpers ====================
 
     /**

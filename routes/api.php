@@ -472,6 +472,12 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
     Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
     Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
 
+    // Torrent relay (server-mediated P2P download)
+    Route::post('/torrent/relay/request', [GlobalTorrentController::class, 'relayRequest']);
+    Route::post('/torrent/relay/poll', [GlobalTorrentController::class, 'relayPoll']);
+    Route::post('/torrent/relay/chunk', [GlobalTorrentController::class, 'relayChunk']);
+    Route::post('/torrent/relay/fetch', [GlobalTorrentController::class, 'relayFetch']);
+
     // VPN Proxy (country bypass)
     Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
 });
