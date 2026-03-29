@@ -22,7 +22,7 @@ class VpnProxyController extends Controller
 
     private const STALE_TTL = 604800; // 7 days
 
-    private const FREE_COUNTRIES = ['JP', 'US', 'KR'];
+    private const FREE_COUNTRIES = ['TH', 'JP', 'US', 'KR', 'SG', 'IN', 'GB', 'DE', 'AU', 'CA'];
 
     /**
      * GET /api/v1/localvpn/proxy-servers
