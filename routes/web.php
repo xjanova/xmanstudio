@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdPlacementController;
 use App\Http\Controllers\Admin\AdsTxtController;
+use App\Http\Controllers\Admin\AiCrawlController;
 use App\Http\Controllers\Admin\AiPlaygroundController;
 use App\Http\Controllers\Admin\AiprayChantController;
 use App\Http\Controllers\Admin\AiprayDashboardController;
@@ -12,7 +13,6 @@ use App\Http\Controllers\Admin\AiprayModelController;
 use App\Http\Controllers\Admin\AiprayRecordController;
 use App\Http\Controllers\Admin\AiprayTrainingController;
 use App\Http\Controllers\Admin\AiSettingsController;
-use App\Http\Controllers\Admin\AiCrawlController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BitTorrentController;
@@ -97,6 +97,7 @@ use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Http\Controllers\UserThemeController;
 use App\Models\AdsTxtSetting;
+use App\Models\AiCrawlSetting;
 use App\Models\SeoSetting;
 use App\Models\TeamMember;
 use App\Models\User;
@@ -327,7 +328,7 @@ Route::get('/robots.txt', function () {
 
 // LLMs.txt (AI Crawl Control)
 Route::get('/llms.txt', function () {
-    $setting = \App\Models\AiCrawlSetting::getInstance();
+    $setting = AiCrawlSetting::getInstance();
 
     if (! $setting->llms_txt_enabled || empty($setting->llms_txt_content)) {
         abort(404);
