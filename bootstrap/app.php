@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AffiliateTracking;
+use App\Http\Middleware\AiCrawlDetector;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\ThemeMiddleware;
@@ -37,8 +38,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'stripe/webhook',
         ]);
 
-        // Apply theme + affiliate tracking middleware to web routes
+        // Apply theme + affiliate tracking + AI crawl detection middleware to web routes
         $middleware->web(append: [
+            AiCrawlDetector::class,
             ThemeMiddleware::class,
             AffiliateTracking::class,
         ]);

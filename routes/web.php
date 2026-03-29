@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\AiprayModelController;
 use App\Http\Controllers\Admin\AiprayRecordController;
 use App\Http\Controllers\Admin\AiprayTrainingController;
 use App\Http\Controllers\Admin\AiSettingsController;
+use App\Http\Controllers\Admin\AiCrawlController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BitTorrentController;
@@ -323,6 +324,18 @@ Route::get('/robots.txt', function () {
     return response($setting->robots_txt_content, 200)
         ->header('Content-Type', 'text/plain; charset=UTF-8');
 })->name('robots');
+
+// LLMs.txt (AI Crawl Control)
+Route::get('/llms.txt', function () {
+    $setting = \App\Models\AiCrawlSetting::getInstance();
+
+    if (! $setting->llms_txt_enabled || empty($setting->llms_txt_content)) {
+        abort(404);
+    }
+
+    return response($setting->llms_txt_content, 200)
+        ->header('Content-Type', 'text/plain; charset=UTF-8');
+})->name('llms-txt');
 
 // Ads.txt (Google Ads)
 Route::get('/ads.txt', function () {
@@ -890,6 +903,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/seo', [SeoController::class, 'index'])->name('seo.index');
     Route::put('/seo', [SeoController::class, 'update'])->name('seo.update');
     Route::get('/seo/generate-sitemap', [SeoController::class, 'generateSitemap'])->name('seo.generate-sitemap');
+
+    // AI Crawl Control
+    Route::get('/ai-crawl', [AiCrawlController::class, 'index'])->name('ai-crawl.index');
+    Route::get('/ai-crawl/settings', [AiCrawlController::class, 'settings'])->name('ai-crawl.settings');
+    Route::put('/ai-crawl/settings', [AiCrawlController::class, 'updateSettings'])->name('ai-crawl.update-settings');
+    Route::post('/ai-crawl/clear-logs', [AiCrawlController::class, 'clearLogs'])->name('ai-crawl.clear-logs');
+    Route::get('/ai-crawl/export', [AiCrawlController::class, 'exportLogs'])->name('ai-crawl.export');
 
     // Google Ads Placements Management
     Route::get('/ads', [AdPlacementController::class, 'index'])->name('ads.index');
