@@ -14,7 +14,6 @@ class VpnProxyController extends Controller
 {
     private const VPNGATE_APIS = [
         'https://www.vpngate.net/api/iphone/',
-        'http://www.vpngate.net/api/iphone/',
     ];
 
     private const CACHE_KEY = 'vpngate_servers';
@@ -57,14 +56,28 @@ class VpnProxyController extends Controller
 
         // Fetch and cache server list (VPN Gate + premium custom servers)
         // Use stale-while-revalidate pattern: keep old cache if fresh fetch fails
+        // Cache lock prevents thundering herd on concurrent cache miss
         $allServers = Cache::get(self::CACHE_KEY);
         if ($allServers === null) {
-            $allServers = $this->fetchVpnGateServers();
-            if (! empty($allServers)) {
-                Cache::put(self::CACHE_KEY, $allServers, self::CACHE_TTL);
-                Cache::put(self::CACHE_KEY . '_stale', $allServers, self::STALE_TTL);
+            $lock = Cache::lock(self::CACHE_KEY . '_lock', 15);
+            if ($lock->get()) {
+                try {
+                    // Double-check after acquiring lock
+                    $allServers = Cache::get(self::CACHE_KEY);
+                    if ($allServers === null) {
+                        $allServers = $this->fetchVpnGateServers();
+                        if (! empty($allServers)) {
+                            Cache::put(self::CACHE_KEY, $allServers, self::CACHE_TTL);
+                            Cache::put(self::CACHE_KEY . '_stale', $allServers, self::STALE_TTL);
+                        } else {
+                            $allServers = Cache::get(self::CACHE_KEY . '_stale', []);
+                        }
+                    }
+                } finally {
+                    $lock->release();
+                }
             } else {
-                // Fresh fetch failed — try stale cache
+                // Another request is fetching — use stale cache
                 $allServers = Cache::get(self::CACHE_KEY . '_stale', []);
             }
         }
@@ -108,10 +121,15 @@ class VpnProxyController extends Controller
         }
 
         // Sort servers within each country by score (descending)
-        foreach ($grouped as &$country) {
+        foreach ($grouped as $code => &$country) {
+            if (empty($country['servers'])) {
+                unset($grouped[$code]);
+                continue;
+            }
             usort($country['servers'], fn ($a, $b) => $b['score'] <=> $a['score']);
             $country['server_count'] = count($country['servers']);
-            $country['best_speed'] = max(array_column($country['servers'], 'speed'));
+            $speeds = array_column($country['servers'], 'speed');
+            $country['best_speed'] = ! empty($speeds) ? max($speeds) : 0;
         }
         unset($country);
 
