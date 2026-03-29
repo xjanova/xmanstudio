@@ -17,6 +17,7 @@ class VpnNetworkMember extends Model
         'public_ip',
         'public_port',
         'vpn_gateway_country',
+        'vpn_gateway_hostname',
         'is_online',
         'last_heartbeat_at',
         'joined_at',
@@ -67,12 +68,13 @@ class VpnNetworkMember extends Model
     /**
      * Update heartbeat timestamp and optional connection info.
      */
-    public function updateHeartbeat(?string $publicIp = null, ?int $publicPort = null, ?string $vpnGatewayCountry = null): void
+    public function updateHeartbeat(?string $publicIp = null, ?int $publicPort = null, ?string $vpnGatewayCountry = null, ?string $vpnGatewayHostname = null): void
     {
         $data = [
             'is_online' => true,
             'last_heartbeat_at' => now(),
             'vpn_gateway_country' => $vpnGatewayCountry, // null clears VPN gateway status
+            'vpn_gateway_hostname' => $vpnGatewayCountry ? $vpnGatewayHostname : null,
         ];
 
         if ($publicIp !== null) {

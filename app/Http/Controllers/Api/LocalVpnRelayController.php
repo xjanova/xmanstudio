@@ -421,6 +421,7 @@ class LocalVpnRelayController extends Controller
             'public_ip' => 'nullable|ip',
             'public_port' => 'nullable|integer|min:1|max:65535',
             'vpn_gateway_country' => 'nullable|string|size:2',
+            'vpn_gateway_hostname' => 'nullable|string|max:255',
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -455,7 +456,8 @@ class LocalVpnRelayController extends Controller
         $member->updateHeartbeat(
             $request->input('public_ip', $request->ip()),
             $request->input('public_port'),
-            $request->input('vpn_gateway_country')
+            $request->input('vpn_gateway_country'),
+            $request->input('vpn_gateway_hostname')
         );
 
         // Mark stale members as offline
@@ -857,6 +859,7 @@ class LocalVpnRelayController extends Controller
             'public_ip' => $member->public_ip,
             'public_port' => $member->public_port,
             'vpn_gateway_country' => $member->vpn_gateway_country,
+            'vpn_gateway_hostname' => $member->vpn_gateway_hostname,
             'is_online' => $member->is_online,
             'last_heartbeat_at' => $member->last_heartbeat_at?->toISOString(),
             'joined_at' => $member->joined_at?->toISOString(),
