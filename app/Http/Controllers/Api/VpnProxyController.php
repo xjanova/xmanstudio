@@ -124,6 +124,7 @@ class VpnProxyController extends Controller
         foreach ($grouped as $code => &$country) {
             if (empty($country['servers'])) {
                 unset($grouped[$code]);
+
                 continue;
             }
             usort($country['servers'], fn ($a, $b) => $b['score'] <=> $a['score']);
