@@ -21,6 +21,8 @@ class VpnProxyController extends Controller
 
     private const CACHE_TTL = 1800; // 30 minutes
 
+    private const STALE_TTL = 604800; // 7 days
+
     private const FREE_COUNTRIES = ['JP', 'US', 'KR'];
 
     /**
@@ -60,7 +62,7 @@ class VpnProxyController extends Controller
             $allServers = $this->fetchVpnGateServers();
             if (! empty($allServers)) {
                 Cache::put(self::CACHE_KEY, $allServers, self::CACHE_TTL);
-                Cache::put(self::CACHE_KEY . '_stale', $allServers, 86400); // keep stale for 24h
+                Cache::put(self::CACHE_KEY . '_stale', $allServers, self::STALE_TTL);
             } else {
                 // Fresh fetch failed — try stale cache
                 $allServers = Cache::get(self::CACHE_KEY . '_stale', []);
@@ -151,7 +153,7 @@ class VpnProxyController extends Controller
             $csv = null;
             foreach (self::VPNGATE_APIS as $apiUrl) {
                 try {
-                    $response = Http::timeout(10)
+                    $response = Http::timeout(5)->connectTimeout(3)
                         ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'])
                         ->get($apiUrl);
 
