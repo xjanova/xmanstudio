@@ -81,6 +81,7 @@ class GlobalTorrentController extends Controller
             $escapedSearch = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
             $query->where(function ($q) use ($escapedSearch) {
                 $q->where('file_name', 'like', "%{$escapedSearch}%")
+                    ->orWhere('title', 'like', "%{$escapedSearch}%")
                     ->orWhere('description', 'like', "%{$escapedSearch}%");
             });
         }
@@ -106,6 +107,7 @@ class GlobalTorrentController extends Controller
                 'id' => $file->id,
                 'file_hash' => $file->file_hash,
                 'file_name' => $file->file_name,
+                'title' => $file->title ?? $file->file_name,
                 'file_size' => $file->file_size,
                 'description' => $file->description,
                 'thumbnail_url' => $file->thumbnail_url,
@@ -186,6 +188,7 @@ class GlobalTorrentController extends Controller
                 'id' => $file->id,
                 'file_hash' => $file->file_hash,
                 'file_name' => $file->file_name,
+                'title' => $file->title ?? $file->file_name,
                 'file_size' => $file->file_size,
                 'description' => $file->description,
                 'thumbnail_url' => $file->thumbnail_url,
@@ -220,6 +223,7 @@ class GlobalTorrentController extends Controller
             'file_hash' => 'required|string|size:64',
             'file_name' => 'required|string|max:255',
             'file_size' => 'required|integer|min:1',
+            'title' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:2000',
             'thumbnail_data' => 'nullable|string',
             'display_name' => 'nullable|string|max:100',
@@ -285,6 +289,7 @@ class GlobalTorrentController extends Controller
                 'uploader_display_name' => $displayName,
                 'file_hash' => $request->input('file_hash'),
                 'file_name' => $request->input('file_name'),
+                'title' => $request->input('title'),
                 'file_size' => $fileSize,
                 'description' => $request->input('description'),
                 'thumbnail_url' => $thumbnailUrl,
@@ -1266,6 +1271,7 @@ class GlobalTorrentController extends Controller
             'id' => $file->id,
             'file_hash' => $file->file_hash,
             'file_name' => $file->file_name,
+            'title' => $file->title ?? $file->file_name,
             'file_size' => $file->file_size,
             'description' => $file->description,
             'thumbnail_url' => $file->thumbnail_url,
