@@ -108,6 +108,19 @@ Schedule::command('torrent:cleanup-seeders')
         Log::error('[Torrent] Stale seeders cleanup failed');
     });
 
+// VPN Proxy: Health-check VPN Gate servers, cache only reachable ones
+// Run every 10 minutes: TCP-test each server, store healthy list for API
+Schedule::command('vpn:health-check')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        Log::info('[VPN Health Check] Completed successfully');
+    })
+    ->onFailure(function () {
+        Log::error('[VPN Health Check] Failed');
+    });
+
 // Metal-X: อัปโหลดวิดีโอ Projects ที่ถึงเวลา
 // รันทุก 5 นาที: ตรวจหา projects ที่ status=rendered และ scheduled_at <= now
 Schedule::call(function () {

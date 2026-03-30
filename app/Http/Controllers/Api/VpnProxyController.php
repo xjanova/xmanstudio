@@ -18,6 +18,8 @@ class VpnProxyController extends Controller
 
     private const CACHE_KEY = 'vpngate_servers';
 
+    private const HEALTHY_CACHE_KEY = 'vpngate_servers_healthy';
+
     private const CACHE_TTL = 1800; // 30 minutes
 
     private const STALE_TTL = 604800; // 7 days
@@ -54,31 +56,34 @@ class VpnProxyController extends Controller
             $isPremium = $license !== null;
         }
 
-        // Fetch and cache server list (VPN Gate + premium custom servers)
-        // Use stale-while-revalidate pattern: keep old cache if fresh fetch fails
-        // Cache lock prevents thundering herd on concurrent cache miss
-        $allServers = Cache::get(self::CACHE_KEY);
-        if ($allServers === null) {
-            $lock = Cache::lock(self::CACHE_KEY . '_lock', 15);
-            if ($lock->get()) {
-                try {
-                    // Double-check after acquiring lock
-                    $allServers = Cache::get(self::CACHE_KEY);
-                    if ($allServers === null) {
-                        $allServers = $this->fetchVpnGateServers();
-                        if (! empty($allServers)) {
-                            Cache::put(self::CACHE_KEY, $allServers, self::CACHE_TTL);
-                            Cache::put(self::CACHE_KEY . '_stale', $allServers, self::STALE_TTL);
-                        } else {
-                            $allServers = Cache::get(self::CACHE_KEY . '_stale', []);
+        // Prefer health-checked servers (pre-validated by vpn:health-check cron)
+        // Fall back to raw cached servers if health-check hasn't run yet
+        $allServers = Cache::get(self::HEALTHY_CACHE_KEY)
+            ?? Cache::get(self::HEALTHY_CACHE_KEY . '_stale');
+
+        if (empty($allServers)) {
+            // No health-checked servers — fall back to raw VPN Gate list
+            $allServers = Cache::get(self::CACHE_KEY);
+            if ($allServers === null) {
+                $lock = Cache::lock(self::CACHE_KEY . '_lock', 15);
+                if ($lock->get()) {
+                    try {
+                        $allServers = Cache::get(self::CACHE_KEY);
+                        if ($allServers === null) {
+                            $allServers = $this->fetchVpnGateServers();
+                            if (! empty($allServers)) {
+                                Cache::put(self::CACHE_KEY, $allServers, self::CACHE_TTL);
+                                Cache::put(self::CACHE_KEY . '_stale', $allServers, self::STALE_TTL);
+                            } else {
+                                $allServers = Cache::get(self::CACHE_KEY . '_stale', []);
+                            }
                         }
+                    } finally {
+                        $lock->release();
                     }
-                } finally {
-                    $lock->release();
+                } else {
+                    $allServers = Cache::get(self::CACHE_KEY . '_stale', []);
                 }
-            } else {
-                // Another request is fetching — use stale cache
-                $allServers = Cache::get(self::CACHE_KEY . '_stale', []);
             }
         }
 
