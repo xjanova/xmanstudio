@@ -823,30 +823,37 @@ class LocalVpnRelayController extends Controller
             }
         }
 
-        // Fallback: find any active license for this machine_id (free users send empty license_key)
+        // Fallback: find any active non-expired license for this machine_id.
+        // Prioritize paid > free > demo to avoid picking expired demo when free exists.
         $license = LicenseKey::where('product_id', $product->id)
             ->where('machine_id', $machineId)
             ->where('status', 'active')
-            ->first();
+            ->orderByRaw("FIELD(license_type, 'lifetime','yearly','monthly','weekly','daily','free','demo')")
+            ->get()
+            ->first(fn ($l) => ! $l->isExpired());
 
-        if ($license && ! $license->isExpired()) {
+        if ($license) {
             return $license;
         }
 
-        // Self-healing: auto-create free license if none exists for this device.
-        // This handles the case where client's checkMachine() failed (network error)
-        // but user still tries to use the app.
-        return LicenseKey::create([
-            'product_id' => $product->id,
-            'license_key' => 'FREE-' . strtoupper(Str::random(20)),
-            'license_type' => 'free',
-            'status' => 'active',
-            'machine_id' => $machineId,
-            'machine_fingerprint' => $machineId,
-            'activated_at' => now(),
-            'max_activations' => 1,
-            'activations' => 1,
-        ]);
+        // Self-healing: auto-create free license ONLY if none exists at all.
+        // Use firstOrCreate to prevent duplicates from concurrent requests
+        // (e.g., heartbeat every 30s calling validateDeviceAuth).
+        return LicenseKey::firstOrCreate(
+            [
+                'product_id' => $product->id,
+                'machine_id' => $machineId,
+                'license_type' => 'free',
+                'status' => 'active',
+            ],
+            [
+                'license_key' => 'FREE-' . strtoupper(Str::random(20)),
+                'machine_fingerprint' => $machineId,
+                'activated_at' => now(),
+                'max_activations' => 1,
+                'activations' => 1,
+            ]
+        );
     }
 
     private function formatMember(VpnNetworkMember $member): array

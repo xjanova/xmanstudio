@@ -749,22 +749,26 @@ class ProductLicenseController extends Controller
         }
 
         if (! $license) {
-            // LocalVPN freemium: auto-create a free license for new devices
+            // LocalVPN freemium: auto-create a free license for new devices.
+            // Use firstOrCreate to prevent duplicates from concurrent requests.
             if ($productSlug === 'localvpn') {
-                $freeLicenseKey = 'FREE-' . strtoupper(Str::random(20));
-                $license = LicenseKey::create([
-                    'product_id' => $product->id,
-                    'license_key' => $freeLicenseKey,
-                    'license_type' => 'free',
-                    'status' => LicenseKey::STATUS_ACTIVE,
-                    'machine_id' => $validated['machine_id'],
-                    'machine_fingerprint' => $validated['machine_id'],
-                    'activated_at' => now(),
-                    'max_activations' => 1,
-                    'activations' => 1,
-                    'drm_id' => $drmId,
-                    'android_id' => $androidId,
-                ]);
+                $license = LicenseKey::firstOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'machine_id' => $validated['machine_id'],
+                        'license_type' => 'free',
+                        'status' => LicenseKey::STATUS_ACTIVE,
+                    ],
+                    [
+                        'license_key' => 'FREE-' . strtoupper(Str::random(20)),
+                        'machine_fingerprint' => $validated['machine_id'],
+                        'activated_at' => now(),
+                        'max_activations' => 1,
+                        'activations' => 1,
+                        'drm_id' => $drmId,
+                        'android_id' => $androidId,
+                    ]
+                );
 
                 return response()->json([
                     'success' => true,
