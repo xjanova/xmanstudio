@@ -380,6 +380,86 @@
     </div>
 </div>
 
+<!-- Code Academy Featured Banner -->
+<div class="py-20 relative overflow-hidden z-30" style="background: linear-gradient(135deg, #e0f2fe 0%, #f5f0e8 30%, #dbeafe 60%, #fef9ef 100%);">
+    <!-- Decorative shapes -->
+    <div class="absolute w-72 h-72 rounded-full bg-sky-300 opacity-10 -top-20 -left-20" style="animation: float-drift 15s ease-in-out infinite;"></div>
+    <div class="absolute w-48 h-48 rounded-full bg-amber-200 opacity-10 bottom-10 right-10" style="animation: float-drift 20s ease-in-out infinite reverse;"></div>
+    <style>@keyframes float-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-20px)}}</style>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+            <!-- Left: Info -->
+            <div class="flex-1 text-center lg:text-left">
+                <span class="inline-flex items-center gap-2 px-4 py-1.5 bg-sky-100 text-sky-700 text-xs font-bold rounded-full uppercase tracking-wider mb-4">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    Free Resource
+                </span>
+                <h2 class="text-3xl md:text-4xl lg:text-5xl font-black leading-tight" style="background: linear-gradient(135deg, #0c4a6e, #0369a1, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    XMAN Code Academy
+                </h2>
+                <p class="mt-3 text-xl font-semibold text-slate-600">ศูนย์เรียนรู้โค้ดมืออาชีพ</p>
+                <p class="mt-3 text-slate-500 max-w-lg leading-relaxed">
+                    แหล่งรวมตัวอย่างโค้ดคุณภาพสูงกว่า 50+ ตัวอย่าง ครอบคลุม Laravel, PHP, JavaScript, Python, Flutter, SQL, Git, Docker และอีกมากมาย — ฟรีสำหรับทุกคน
+                </p>
+                <div class="mt-6 flex flex-wrap gap-3 justify-center lg:justify-start">
+                    <a href="{{ route('code-academy') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold rounded-xl shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30 transition-all duration-300 hover:-translate-y-0.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        เข้าสู่ Code Academy
+                    </a>
+                    <span class="inline-flex items-center gap-1 px-4 py-3 text-slate-500 text-sm font-medium">
+                        <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        ฟรี 100% ไม่ต้องสมัครสมาชิก
+                    </span>
+                </div>
+            </div>
+
+            <!-- Right: Mini code preview cards -->
+            <div class="flex-1 max-w-md w-full space-y-4">
+                <!-- Mini Card 1 -->
+                <div class="bg-white rounded-xl p-4 shadow-lg shadow-sky-500/5 border border-sky-100 transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+                            <span class="text-white text-xs font-black">L</span>
+                        </div>
+                        <span class="font-bold text-slate-700 text-sm">Laravel — Eloquent Model</span>
+                        <span class="ml-auto text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full">PHP</span>
+                    </div>
+                    <div class="bg-slate-900 rounded-lg p-3 text-xs font-mono text-slate-300 leading-relaxed overflow-hidden" style="max-height: 60px;">
+                        <span style="color:#c084fc">class</span> <span style="color:#67e8f9">Product</span> <span style="color:#c084fc">extends</span> <span style="color:#67e8f9">Model</span> { <span style="color:#c084fc">use</span> <span style="color:#67e8f9">SoftDeletes</span>; ...}
+                    </div>
+                </div>
+                <!-- Mini Card 2 -->
+                <div class="bg-white rounded-xl p-4 shadow-lg shadow-sky-500/5 border border-sky-100 transform hover:-translate-y-1 transition-all duration-300" style="margin-left: 20px;">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+                            <span class="text-slate-900 text-xs font-black">JS</span>
+                        </div>
+                        <span class="font-bold text-slate-700 text-sm">Async / Await</span>
+                        <span class="ml-auto text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">ES6+</span>
+                    </div>
+                    <div class="bg-slate-900 rounded-lg p-3 text-xs font-mono text-slate-300 leading-relaxed overflow-hidden" style="max-height: 60px;">
+                        <span style="color:#c084fc">const</span> data = <span style="color:#c084fc">await</span> <span style="color:#fbbf24">fetch</span>(<span style="color:#86efac">'/api/products'</span>);
+                    </div>
+                </div>
+                <!-- Mini Card 3 -->
+                <div class="bg-white rounded-xl p-4 shadow-lg shadow-sky-500/5 border border-sky-100 transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center">
+                            <span class="text-white text-xs font-black">Py</span>
+                        </div>
+                        <span class="font-bold text-slate-700 text-sm">FastAPI — REST Endpoint</span>
+                        <span class="ml-auto text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Python</span>
+                    </div>
+                    <div class="bg-slate-900 rounded-lg p-3 text-xs font-mono text-slate-300 leading-relaxed overflow-hidden" style="max-height: 60px;">
+                        <span style="color:#c4b5fd">@app.get</span>(<span style="color:#86efac">"/products"</span>) <span style="color:#c084fc">async def</span> <span style="color:#fbbf24">list</span>(): ...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Metal-X Project Music Channel Section -->
 <div class="py-24 bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 relative overflow-hidden z-30">
     <div class="absolute inset-0 opacity-20">

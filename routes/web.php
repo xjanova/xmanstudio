@@ -296,6 +296,9 @@ Route::view('/portfolio', 'portfolio')->name('portfolio');
 // Metal-X Project Music Channel
 Route::get('/metal-x', [MetalXController::class, 'index'])->name('metal-x.index');
 
+// Code Academy — ศูนย์เรียนรู้โค้ดมืออาชีพ
+Route::view('/code-academy', 'code-academy')->name('code-academy');
+
 // Legal pages
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::view('/privacy', 'legal.privacy')->name('privacy');
