@@ -303,6 +303,9 @@
             <button class="cat-nav-item" :class="active === 'lineoa' && 'active'" @click="active = 'lineoa'; document.getElementById('sec-lineoa').scrollIntoView({behavior:'smooth'})">
                 💚 LINE OA
             </button>
+            <button class="cat-nav-item" :class="active === 'appscript' && 'active'" @click="active = 'appscript'; document.getElementById('sec-appscript').scrollIntoView({behavior:'smooth'})">
+                📋 Apps Script + Queue
+            </button>
         </div>
     </div>
 </section>
@@ -3084,6 +3087,752 @@
                 </ul>
             </div>
         </div>
+    </div>
+</section>
+
+{{-- ============================================================ --}}
+{{-- 12. GOOGLE APPS SCRIPT + QUEUE BOOKING + LINE NOTIFICATION --}}
+{{-- ============================================================ --}}
+<section id="sec-appscript">
+    <div class="flex items-center gap-4 mb-8">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 gloss">
+            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M16.148.012h-8.26c-.392 0-.71.318-.71.71v5.39l4.762 1.985 4.92-1.985V.722c0-.392-.318-.71-.71-.71zm.712 6.81l-4.92 2.77-4.762-2.77v5.39l4.762 2.77 4.92-2.77zm-10.394 6.1l4.762 2.77 4.92-2.77v5.39c0 .392-.318.71-.71.71H7.176c-.392 0-.71-.318-.71-.71z"/></svg>
+        </div>
+        <div>
+            <h2 class="text-3xl font-black academy-section-title">Apps Script + ระบบจองคิว + LINE</h2>
+            <p class="text-slate-500 text-sm">ระบบจองคิวออนไลน์ผ่าน Google Forms/Sheets + แจ้งเตือน LINE อัตโนมัติ</p>
+        </div>
+        <span class="academy-badge ml-auto hidden sm:inline-block">Special Case</span>
+    </div>
+
+    <!-- Intro Box -->
+    <div class="academy-card rounded-2xl p-6 mb-6">
+        <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 mb-2">Flow ทั้งระบบ — End-to-End Architecture</h3>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-3">
+                    <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                        <span class="text-xs font-medium text-slate-700">ลูกค้ากรอกฟอร์มจอง<br>(เว็บ / Google Forms)</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0">2</span>
+                        <span class="text-xs font-medium text-slate-700">บันทึกลง Google Sheets<br>(หรือ Database)</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0">3</span>
+                        <span class="text-xs font-medium text-slate-700">Apps Script Trigger<br>ดักจับข้อมูลใหม่</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                        <span class="w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center shrink-0">4</span>
+                        <span class="text-xs font-medium text-slate-700">ส่งแจ้งเตือน LINE<br>(ลูกค้า + แอดมิน)</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg border border-purple-200">
+                        <span class="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center shrink-0">5</span>
+                        <span class="text-xs font-medium text-slate-700">ส่งเตือนก่อนถึงคิว<br>(Cron / Time Trigger)</span>
+                    </div>
+                </div>
+                <p class="mt-3 text-sm text-slate-500">
+                    <strong>เหมาะสำหรับ:</strong> คลินิก, ร้านเสริมสวย, ร้านซ่อม, ร้านอาหาร, สำนักงาน — ทุกธุรกิจที่มีระบบจองคิว
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+
+        <!-- Apps Script 1: LINE Notify from Sheets -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <h3 class="font-bold text-slate-800">Apps Script: แจ้งเตือน LINE เมื่อมีการจอง</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">เมื่อมีข้อมูลใหม่เข้า Google Sheets → ส่ง LINE Notify ทันที / Auto-notify on new booking</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">Google Apps Script — Code.gs</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// =============================================</span>
+<span class="c-comment">// Google Apps Script — ส่งแจ้งเตือน LINE</span>
+<span class="c-comment">// เมื่อมีการจองคิวใหม่จาก Google Forms</span>
+<span class="c-comment">// =============================================</span>
+
+<span class="c-comment">// ⚙️ ตั้งค่า — แก้ไขตรงนี้</span>
+<span class="c-keyword">const</span> <span class="c-const">LINE_NOTIFY_TOKEN</span> <span class="c-op">=</span> <span class="c-string">'YOUR_LINE_NOTIFY_TOKEN'</span>;
+<span class="c-keyword">const</span> <span class="c-const">LINE_NOTIFY_URL</span>   <span class="c-op">=</span> <span class="c-string">'https://notify-api.line.me/api/notify'</span>;
+
+<span class="c-comment">/**
+ * Trigger: ทำงานเมื่อมีการส่ง Google Form
+ * ตั้งค่า: Extensions → Apps Script → Triggers
+ *         → เลือก onFormSubmit → From spreadsheet
+ *         → On form submit
+ */</span>
+<span class="c-keyword">function</span> <span class="c-func">onFormSubmit</span>(<span class="c-var">e</span>) {
+  <span class="c-keyword">const</span> <span class="c-var">values</span>    <span class="c-op">=</span> <span class="c-var">e</span>.<span class="c-prop">values</span>;
+  <span class="c-keyword">const</span> <span class="c-var">timestamp</span> <span class="c-op">=</span> <span class="c-var">values</span>[<span class="c-number">0</span>]; <span class="c-comment">// Timestamp</span>
+  <span class="c-keyword">const</span> <span class="c-var">name</span>      <span class="c-op">=</span> <span class="c-var">values</span>[<span class="c-number">1</span>]; <span class="c-comment">// ชื่อผู้จอง</span>
+  <span class="c-keyword">const</span> <span class="c-var">phone</span>     <span class="c-op">=</span> <span class="c-var">values</span>[<span class="c-number">2</span>]; <span class="c-comment">// เบอร์โทร</span>
+  <span class="c-keyword">const</span> <span class="c-var">service</span>   <span class="c-op">=</span> <span class="c-var">values</span>[<span class="c-number">3</span>]; <span class="c-comment">// บริการที่เลือก</span>
+  <span class="c-keyword">const</span> <span class="c-var">date</span>      <span class="c-op">=</span> <span class="c-var">values</span>[<span class="c-number">4</span>]; <span class="c-comment">// วันที่จอง</span>
+  <span class="c-keyword">const</span> <span class="c-var">time</span>      <span class="c-op">=</span> <span class="c-var">values</span>[<span class="c-number">5</span>]; <span class="c-comment">// เวลาที่จอง</span>
+  <span class="c-keyword">const</span> <span class="c-var">note</span>      <span class="c-op">=</span> <span class="c-var">values</span>[<span class="c-number">6</span>] <span class="c-op">||</span> <span class="c-string">'-'</span>; <span class="c-comment">// หมายเหตุ</span>
+
+  <span class="c-comment">// สร้างหมายเลขคิว</span>
+  <span class="c-keyword">const</span> <span class="c-var">sheet</span>   <span class="c-op">=</span> <span class="c-type">SpreadsheetApp</span>.<span class="c-func">getActiveSheet</span>();
+  <span class="c-keyword">const</span> <span class="c-var">queueNo</span> <span class="c-op">=</span> <span class="c-string">'Q-'</span> <span class="c-op">+</span> <span class="c-type">String</span>(
+    <span class="c-var">sheet</span>.<span class="c-func">getLastRow</span>()
+  ).<span class="c-func">padStart</span>(<span class="c-number">4</span>, <span class="c-string">'0'</span>);
+
+  <span class="c-comment">// เขียนหมายเลขคิวกลับลง Sheet (คอลัมน์ H)</span>
+  <span class="c-var">sheet</span>.<span class="c-func">getRange</span>(
+    <span class="c-var">sheet</span>.<span class="c-func">getLastRow</span>(), <span class="c-number">8</span>
+  ).<span class="c-func">setValue</span>(<span class="c-var">queueNo</span>);
+
+  <span class="c-comment">// สร้างข้อความ LINE</span>
+  <span class="c-keyword">const</span> <span class="c-var">message</span> <span class="c-op">=</span> <span class="c-string">`
+🔔 การจองคิวใหม่!
+
+📋 หมายเลขคิว: ${queueNo}
+👤 ชื่อ: ${name}
+📱 โทร: ${phone}
+💼 บริการ: ${service}
+📅 วันที่: ${date}
+⏰ เวลา: ${time}
+📝 หมายเหตุ: ${note}
+
+⏱️ จองเมื่อ: ${timestamp}`</span>;
+
+  <span class="c-comment">// ส่ง LINE Notify</span>
+  <span class="c-func">sendLineNotify</span>(<span class="c-var">message</span>);
+
+  <span class="c-comment">// (Optional) ส่ง Email ยืนยันให้ลูกค้า</span>
+  <span class="c-keyword">const</span> <span class="c-var">email</span> <span class="c-op">=</span> <span class="c-var">values</span>[<span class="c-number">7</span>]; <span class="c-comment">// ถ้ามีช่อง email</span>
+  <span class="c-keyword">if</span> (<span class="c-var">email</span>) {
+    <span class="c-type">MailApp</span>.<span class="c-func">sendEmail</span>({
+      <span class="c-attr">to</span>: <span class="c-var">email</span>,
+      <span class="c-attr">subject</span>: <span class="c-string">`ยืนยันการจองคิว ${queueNo}`</span>,
+      <span class="c-attr">body</span>: <span class="c-string">`สวัสดีคุณ ${name}\n\n`</span>
+        <span class="c-op">+</span> <span class="c-string">`หมายเลขคิวของคุณคือ: ${queueNo}\n`</span>
+        <span class="c-op">+</span> <span class="c-string">`บริการ: ${service}\n`</span>
+        <span class="c-op">+</span> <span class="c-string">`วันที่: ${date} เวลา ${time}\n\n`</span>
+        <span class="c-op">+</span> <span class="c-string">`ขอบคุณที่ใช้บริการครับ`</span>,
+    });
+  }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Apps Script 2: sendLineNotify function -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <h3 class="font-bold text-slate-800">Apps Script: ฟังก์ชัน sendLineNotify</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ฟังก์ชันหลักสำหรับเรียก LINE Notify API / Core function to call LINE Notify</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">Google Apps Script — LINE Notify</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">/**
+ * ส่งข้อความผ่าน LINE Notify
+ * @param {string} message ข้อความที่จะส่ง
+ * @param {string} [imageUrl] URL รูปภาพ (optional)
+ * @returns {boolean} สำเร็จหรือไม่
+ */</span>
+<span class="c-keyword">function</span> <span class="c-func">sendLineNotify</span>(<span class="c-var">message</span>, <span class="c-var">imageUrl</span>) {
+  <span class="c-keyword">const</span> <span class="c-var">payload</span> <span class="c-op">=</span> { <span class="c-attr">message</span>: <span class="c-var">message</span> };
+
+  <span class="c-keyword">if</span> (<span class="c-var">imageUrl</span>) {
+    <span class="c-var">payload</span>.<span class="c-prop">imageThumbnail</span> <span class="c-op">=</span> <span class="c-var">imageUrl</span>;
+    <span class="c-var">payload</span>.<span class="c-prop">imageFullsize</span>  <span class="c-op">=</span> <span class="c-var">imageUrl</span>;
+  }
+
+  <span class="c-keyword">const</span> <span class="c-var">options</span> <span class="c-op">=</span> {
+    <span class="c-attr">method</span>:  <span class="c-string">'post'</span>,
+    <span class="c-attr">headers</span>: {
+      <span class="c-string">'Authorization'</span>: <span class="c-string">`Bearer ${LINE_NOTIFY_TOKEN}`</span>,
+    },
+    <span class="c-attr">payload</span>: <span class="c-var">payload</span>,
+    <span class="c-attr">muteHttpExceptions</span>: <span class="c-const">true</span>,
+  };
+
+  <span class="c-keyword">try</span> {
+    <span class="c-keyword">const</span> <span class="c-var">response</span> <span class="c-op">=</span> <span class="c-type">UrlFetchApp</span>.<span class="c-func">fetch</span>(
+      <span class="c-const">LINE_NOTIFY_URL</span>, <span class="c-var">options</span>
+    );
+    <span class="c-keyword">const</span> <span class="c-var">code</span> <span class="c-op">=</span> <span class="c-var">response</span>.<span class="c-func">getResponseCode</span>();
+
+    <span class="c-keyword">if</span> (<span class="c-var">code</span> <span class="c-op">!==</span> <span class="c-number">200</span>) {
+      <span class="c-type">Logger</span>.<span class="c-func">log</span>(
+        <span class="c-string">`LINE Error: ${code} - ${response.getContentText()}`</span>
+      );
+      <span class="c-keyword">return</span> <span class="c-const">false</span>;
+    }
+
+    <span class="c-type">Logger</span>.<span class="c-func">log</span>(<span class="c-string">'LINE Notify ส่งสำเร็จ'</span>);
+    <span class="c-keyword">return</span> <span class="c-const">true</span>;
+  } <span class="c-keyword">catch</span> (<span class="c-var">error</span>) {
+    <span class="c-type">Logger</span>.<span class="c-func">log</span>(<span class="c-string">`LINE Error: ${error.message}`</span>);
+    <span class="c-keyword">return</span> <span class="c-const">false</span>;
+  }
+}
+
+<span class="c-comment">/**
+ * ส่งข้อความผ่าน LINE Messaging API (Push)
+ * สำหรับส่งหาลูกค้ารายคนที่รู้ userId
+ */</span>
+<span class="c-keyword">function</span> <span class="c-func">sendLinePush</span>(<span class="c-var">userId</span>, <span class="c-var">message</span>) {
+  <span class="c-keyword">const</span> <span class="c-const">ACCESS_TOKEN</span> <span class="c-op">=</span>
+    <span class="c-string">'YOUR_CHANNEL_ACCESS_TOKEN'</span>;
+
+  <span class="c-keyword">const</span> <span class="c-var">payload</span> <span class="c-op">=</span> {
+    <span class="c-attr">to</span>: <span class="c-var">userId</span>,
+    <span class="c-attr">messages</span>: [
+      { <span class="c-attr">type</span>: <span class="c-string">'text'</span>, <span class="c-attr">text</span>: <span class="c-var">message</span> }
+    ],
+  };
+
+  <span class="c-type">UrlFetchApp</span>.<span class="c-func">fetch</span>(
+    <span class="c-string">'https://api.line.me/v2/bot/message/push'</span>,
+    {
+      <span class="c-attr">method</span>:      <span class="c-string">'post'</span>,
+      <span class="c-attr">contentType</span>: <span class="c-string">'application/json'</span>,
+      <span class="c-attr">headers</span>: {
+        <span class="c-string">'Authorization'</span>: <span class="c-string">`Bearer ${ACCESS_TOKEN}`</span>
+      },
+      <span class="c-attr">payload</span>: <span class="c-type">JSON</span>.<span class="c-func">stringify</span>(<span class="c-var">payload</span>),
+    }
+  );
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Apps Script 3: Reminder Before Queue -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <h3 class="font-bold text-slate-800">Apps Script: เตือนก่อนถึงคิว</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Time Trigger ส่งเตือนลูกค้าก่อนถึงเวลานัด / Auto-reminder before appointment</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">Google Apps Script — Reminder</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">/**
+ * ส่งเตือนคิวที่จะมาถึงใน 1 ชั่วโมง
+ * ตั้ง Time-driven trigger: ทุก 30 นาที
+ *
+ * Triggers → Add Trigger:
+ *   Function: checkUpcomingQueues
+ *   Event: Time-driven → Minutes timer → 30 min
+ */</span>
+<span class="c-keyword">function</span> <span class="c-func">checkUpcomingQueues</span>() {
+  <span class="c-keyword">const</span> <span class="c-var">sheet</span> <span class="c-op">=</span> <span class="c-type">SpreadsheetApp</span>
+    .<span class="c-func">getActiveSpreadsheet</span>()
+    .<span class="c-func">getSheetByName</span>(<span class="c-string">'การจอง'</span>);
+  <span class="c-keyword">const</span> <span class="c-var">data</span>  <span class="c-op">=</span> <span class="c-var">sheet</span>.<span class="c-func">getDataRange</span>().<span class="c-func">getValues</span>();
+  <span class="c-keyword">const</span> <span class="c-var">now</span>   <span class="c-op">=</span> <span class="c-keyword">new</span> <span class="c-type">Date</span>();
+
+  <span class="c-comment">// เริ่มจากแถว 2 (ข้ามหัวตาราง)</span>
+  <span class="c-keyword">for</span> (<span class="c-keyword">let</span> <span class="c-var">i</span> <span class="c-op">=</span> <span class="c-number">1</span>; <span class="c-var">i</span> <span class="c-op"><</span> <span class="c-var">data</span>.<span class="c-prop">length</span>; <span class="c-var">i</span><span class="c-op">++</span>) {
+    <span class="c-keyword">const</span> <span class="c-var">row</span>        <span class="c-op">=</span> <span class="c-var">data</span>[<span class="c-var">i</span>];
+    <span class="c-keyword">const</span> <span class="c-var">name</span>       <span class="c-op">=</span> <span class="c-var">row</span>[<span class="c-number">1</span>]; <span class="c-comment">// ชื่อ</span>
+    <span class="c-keyword">const</span> <span class="c-var">phone</span>      <span class="c-op">=</span> <span class="c-var">row</span>[<span class="c-number">2</span>]; <span class="c-comment">// เบอร์</span>
+    <span class="c-keyword">const</span> <span class="c-var">service</span>    <span class="c-op">=</span> <span class="c-var">row</span>[<span class="c-number">3</span>]; <span class="c-comment">// บริการ</span>
+    <span class="c-keyword">const</span> <span class="c-var">dateStr</span>    <span class="c-op">=</span> <span class="c-var">row</span>[<span class="c-number">4</span>]; <span class="c-comment">// วันที่</span>
+    <span class="c-keyword">const</span> <span class="c-var">timeStr</span>    <span class="c-op">=</span> <span class="c-var">row</span>[<span class="c-number">5</span>]; <span class="c-comment">// เวลา</span>
+    <span class="c-keyword">const</span> <span class="c-var">queueNo</span>   <span class="c-op">=</span> <span class="c-var">row</span>[<span class="c-number">7</span>]; <span class="c-comment">// หมายเลขคิว</span>
+    <span class="c-keyword">const</span> <span class="c-var">reminded</span>  <span class="c-op">=</span> <span class="c-var">row</span>[<span class="c-number">8</span>]; <span class="c-comment">// เคยเตือนแล้ว?</span>
+
+    <span class="c-keyword">if</span> (<span class="c-var">reminded</span> <span class="c-op">===</span> <span class="c-string">'✅'</span>) <span class="c-keyword">continue</span>; <span class="c-comment">// ข้าม</span>
+
+    <span class="c-comment">// รวมวันที่+เวลา</span>
+    <span class="c-keyword">const</span> <span class="c-var">appointmentDate</span> <span class="c-op">=</span> <span class="c-func">parseDateTime</span>(
+      <span class="c-var">dateStr</span>, <span class="c-var">timeStr</span>
+    );
+    <span class="c-keyword">if</span> (<span class="c-op">!</span><span class="c-var">appointmentDate</span>) <span class="c-keyword">continue</span>;
+
+    <span class="c-comment">// คำนวณเวลาที่เหลือ (นาที)</span>
+    <span class="c-keyword">const</span> <span class="c-var">diffMs</span>  <span class="c-op">=</span> <span class="c-var">appointmentDate</span> <span class="c-op">-</span> <span class="c-var">now</span>;
+    <span class="c-keyword">const</span> <span class="c-var">diffMin</span> <span class="c-op">=</span> <span class="c-var">diffMs</span> <span class="c-op">/</span> <span class="c-number">60000</span>;
+
+    <span class="c-comment">// เตือนเมื่อเหลืออีก 30-90 นาที</span>
+    <span class="c-keyword">if</span> (<span class="c-var">diffMin</span> <span class="c-op">></span> <span class="c-number">30</span> <span class="c-op">&&</span> <span class="c-var">diffMin</span> <span class="c-op"><=</span> <span class="c-number">90</span>) {
+      <span class="c-keyword">const</span> <span class="c-var">msg</span> <span class="c-op">=</span> <span class="c-string">`
+⏰ แจ้งเตือนคิวของคุณ!
+
+📋 คิว: ${queueNo}
+👤 คุณ ${name}
+💼 บริการ: ${service}
+📅 ${dateStr} เวลา ${timeStr}
+
+🕐 อีกประมาณ ${Math.round(diffMin)} นาที
+กรุณามาถึงก่อนเวลา 10 นาทีครับ 🙏`</span>;
+
+      <span class="c-func">sendLineNotify</span>(<span class="c-var">msg</span>);
+
+      <span class="c-comment">// บันทึกว่าเตือนแล้ว (คอลัมน์ I)</span>
+      <span class="c-var">sheet</span>.<span class="c-func">getRange</span>(<span class="c-var">i</span> <span class="c-op">+</span> <span class="c-number">1</span>, <span class="c-number">9</span>).<span class="c-func">setValue</span>(<span class="c-string">'✅'</span>);
+    }
+  }
+}
+
+<span class="c-comment">/**
+ * Parse วันที่ + เวลา → Date object
+ * รองรับ: "31/03/2026", "14:30"
+ */</span>
+<span class="c-keyword">function</span> <span class="c-func">parseDateTime</span>(<span class="c-var">dateStr</span>, <span class="c-var">timeStr</span>) {
+  <span class="c-keyword">try</span> {
+    <span class="c-keyword">const</span> [<span class="c-var">d</span>, <span class="c-var">m</span>, <span class="c-var">y</span>] <span class="c-op">=</span> <span class="c-type">String</span>(<span class="c-var">dateStr</span>).<span class="c-func">split</span>(<span class="c-string">'/'</span>);
+    <span class="c-keyword">const</span> [<span class="c-var">h</span>, <span class="c-var">min</span>] <span class="c-op">=</span> <span class="c-type">String</span>(<span class="c-var">timeStr</span>).<span class="c-func">split</span>(<span class="c-string">':'</span>);
+    <span class="c-keyword">return new</span> <span class="c-type">Date</span>(<span class="c-var">y</span>, <span class="c-var">m</span> <span class="c-op">-</span> <span class="c-number">1</span>, <span class="c-var">d</span>, <span class="c-var">h</span>, <span class="c-var">min</span>);
+  } <span class="c-keyword">catch</span> (<span class="c-var">e</span>) {
+    <span class="c-keyword">return</span> <span class="c-const">null</span>;
+  }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Apps Script 4: Daily Summary Report -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <h3 class="font-bold text-slate-800">Apps Script: รายงานสรุปรายวัน</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ส่งสรุปการจองวันถัดไปให้ Admin ทุกเช้า / Daily booking summary for admin</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">Google Apps Script — Daily Report</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">/**
+ * สรุปการจองของวันถัดไป
+ * ตั้ง Trigger: Time-driven → Day timer → 8am-9am
+ */</span>
+<span class="c-keyword">function</span> <span class="c-func">sendDailySummary</span>() {
+  <span class="c-keyword">const</span> <span class="c-var">sheet</span>    <span class="c-op">=</span> <span class="c-type">SpreadsheetApp</span>
+    .<span class="c-func">getActiveSpreadsheet</span>()
+    .<span class="c-func">getSheetByName</span>(<span class="c-string">'การจอง'</span>);
+  <span class="c-keyword">const</span> <span class="c-var">data</span>     <span class="c-op">=</span> <span class="c-var">sheet</span>.<span class="c-func">getDataRange</span>().<span class="c-func">getValues</span>();
+  <span class="c-keyword">const</span> <span class="c-var">tomorrow</span> <span class="c-op">=</span> <span class="c-keyword">new</span> <span class="c-type">Date</span>();
+  <span class="c-var">tomorrow</span>.<span class="c-func">setDate</span>(<span class="c-var">tomorrow</span>.<span class="c-func">getDate</span>() <span class="c-op">+</span> <span class="c-number">1</span>);
+
+  <span class="c-keyword">const</span> <span class="c-var">tmrStr</span> <span class="c-op">=</span> <span class="c-type">Utilities</span>.<span class="c-func">formatDate</span>(
+    <span class="c-var">tomorrow</span>,
+    <span class="c-string">'Asia/Bangkok'</span>,
+    <span class="c-string">'dd/MM/yyyy'</span>
+  );
+
+  <span class="c-comment">// กรองเฉพาะจองของพรุ่งนี้</span>
+  <span class="c-keyword">const</span> <span class="c-var">bookings</span> <span class="c-op">=</span> <span class="c-var">data</span>.<span class="c-func">filter</span>((<span class="c-var">row</span>, <span class="c-var">i</span>) <span class="c-op">=></span>
+    <span class="c-var">i</span> <span class="c-op">></span> <span class="c-number">0</span> <span class="c-op">&&</span> <span class="c-func">formatDate</span>(<span class="c-var">row</span>[<span class="c-number">4</span>]) <span class="c-op">===</span> <span class="c-var">tmrStr</span>
+  );
+
+  <span class="c-keyword">if</span> (<span class="c-var">bookings</span>.<span class="c-prop">length</span> <span class="c-op">===</span> <span class="c-number">0</span>) {
+    <span class="c-func">sendLineNotify</span>(
+      <span class="c-string">`\n📅 สรุปวันพรุ่งนี้ (${tmrStr})\n\n`</span>
+      <span class="c-op">+</span> <span class="c-string">`✨ ไม่มีการจอง — วันว่าง!`</span>
+    );
+    <span class="c-keyword">return</span>;
+  }
+
+  <span class="c-comment">// จัดเรียงตามเวลา</span>
+  <span class="c-var">bookings</span>.<span class="c-func">sort</span>((<span class="c-var">a</span>, <span class="c-var">b</span>) <span class="c-op">=></span>
+    <span class="c-type">String</span>(<span class="c-var">a</span>[<span class="c-number">5</span>]).<span class="c-func">localeCompare</span>(<span class="c-type">String</span>(<span class="c-var">b</span>[<span class="c-number">5</span>]))
+  );
+
+  <span class="c-comment">// สร้างข้อความ</span>
+  <span class="c-keyword">let</span> <span class="c-var">msg</span> <span class="c-op">=</span> <span class="c-string">`\n📅 สรุปวันพรุ่งนี้ (${tmrStr})`</span>
+    <span class="c-op">+</span> <span class="c-string">`\n📊 ทั้งหมด ${bookings.length} คิว\n`</span>;
+
+  <span class="c-var">bookings</span>.<span class="c-func">forEach</span>((<span class="c-var">row</span>, <span class="c-var">idx</span>) <span class="c-op">=></span> {
+    <span class="c-var">msg</span> <span class="c-op">+=</span> <span class="c-string">`\n${idx + 1}. ⏰ ${row[5]}`</span>
+      <span class="c-op">+</span> <span class="c-string">` | 👤 ${row[1]}`</span>
+      <span class="c-op">+</span> <span class="c-string">` | 💼 ${row[3]}`</span>;
+  });
+
+  <span class="c-func">sendLineNotify</span>(<span class="c-var">msg</span>);
+}
+
+<span class="c-comment">// Helper: format Date object เป็น dd/MM/yyyy</span>
+<span class="c-keyword">function</span> <span class="c-func">formatDate</span>(<span class="c-var">date</span>) {
+  <span class="c-keyword">if</span> (<span class="c-var">date</span> <span class="c-keyword">instanceof</span> <span class="c-type">Date</span>) {
+    <span class="c-keyword">return</span> <span class="c-type">Utilities</span>.<span class="c-func">formatDate</span>(
+      <span class="c-var">date</span>, <span class="c-string">'Asia/Bangkok'</span>, <span class="c-string">'dd/MM/yyyy'</span>
+    );
+  }
+  <span class="c-keyword">return</span> <span class="c-type">String</span>(<span class="c-var">date</span>);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Apps Script 5: Queue Management -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <h3 class="font-bold text-slate-800">Apps Script: Web App สำหรับจัดการคิว</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Deploy เป็น Web App ให้เว็บไซต์เรียกได้ / Web endpoint for queue management</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">Google Apps Script — Web App API</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">/**
+ * Deploy → Manage deployments → New → Web app
+ * Execute as: Me
+ * Who has access: Anyone
+ *
+ * เว็บไซต์สามารถเรียก POST ไปที่ URL นี้
+ * เพื่อจองคิวโดยไม่ต้องผ่าน Google Forms
+ */</span>
+<span class="c-keyword">function</span> <span class="c-func">doPost</span>(<span class="c-var">e</span>) {
+  <span class="c-keyword">try</span> {
+    <span class="c-keyword">const</span> <span class="c-var">data</span> <span class="c-op">=</span> <span class="c-type">JSON</span>.<span class="c-func">parse</span>(<span class="c-var">e</span>.<span class="c-prop">postData</span>.<span class="c-prop">contents</span>);
+
+    <span class="c-keyword">const</span> <span class="c-var">sheet</span> <span class="c-op">=</span> <span class="c-type">SpreadsheetApp</span>
+      .<span class="c-func">getActiveSpreadsheet</span>()
+      .<span class="c-func">getSheetByName</span>(<span class="c-string">'การจอง'</span>);
+
+    <span class="c-comment">// สร้างหมายเลขคิว</span>
+    <span class="c-keyword">const</span> <span class="c-var">queueNo</span> <span class="c-op">=</span> <span class="c-string">'Q-'</span> <span class="c-op">+</span> <span class="c-type">String</span>(
+      <span class="c-var">sheet</span>.<span class="c-func">getLastRow</span>() <span class="c-op">+</span> <span class="c-number">1</span>
+    ).<span class="c-func">padStart</span>(<span class="c-number">4</span>, <span class="c-string">'0'</span>);
+
+    <span class="c-comment">// เขียนลง Sheet</span>
+    <span class="c-var">sheet</span>.<span class="c-func">appendRow</span>([
+      <span class="c-keyword">new</span> <span class="c-type">Date</span>(),      <span class="c-comment">// Timestamp</span>
+      <span class="c-var">data</span>.<span class="c-prop">name</span>,       <span class="c-comment">// ชื่อ</span>
+      <span class="c-var">data</span>.<span class="c-prop">phone</span>,      <span class="c-comment">// เบอร์โทร</span>
+      <span class="c-var">data</span>.<span class="c-prop">service</span>,    <span class="c-comment">// บริการ</span>
+      <span class="c-var">data</span>.<span class="c-prop">date</span>,       <span class="c-comment">// วันที่</span>
+      <span class="c-var">data</span>.<span class="c-prop">time</span>,       <span class="c-comment">// เวลา</span>
+      <span class="c-var">data</span>.<span class="c-prop">note</span> <span class="c-op">||</span> <span class="c-string">''</span>, <span class="c-comment">// หมายเหตุ</span>
+      <span class="c-var">queueNo</span>,        <span class="c-comment">// หมายเลขคิว</span>
+    ]);
+
+    <span class="c-comment">// แจ้งเตือน LINE</span>
+    <span class="c-func">sendLineNotify</span>(<span class="c-string">`
+🔔 จองคิวใหม่จากเว็บไซต์!
+
+📋 คิว: ${queueNo}
+👤 ${data.name}
+📱 ${data.phone}
+💼 ${data.service}
+📅 ${data.date} ⏰ ${data.time}`</span>);
+
+    <span class="c-comment">// ส่งกลับ JSON</span>
+    <span class="c-keyword">return</span> <span class="c-type">ContentService</span>
+      .<span class="c-func">createTextOutput</span>(<span class="c-type">JSON</span>.<span class="c-func">stringify</span>({
+        <span class="c-attr">success</span>: <span class="c-const">true</span>,
+        <span class="c-attr">queueNo</span>: <span class="c-var">queueNo</span>,
+        <span class="c-attr">message</span>: <span class="c-string">'จองคิวสำเร็จ'</span>,
+      }))
+      .<span class="c-func">setMimeType</span>(
+        <span class="c-type">ContentService</span>.<span class="c-prop">MimeType</span>.<span class="c-const">JSON</span>
+      );
+
+  } <span class="c-keyword">catch</span> (<span class="c-var">error</span>) {
+    <span class="c-keyword">return</span> <span class="c-type">ContentService</span>
+      .<span class="c-func">createTextOutput</span>(<span class="c-type">JSON</span>.<span class="c-func">stringify</span>({
+        <span class="c-attr">success</span>: <span class="c-const">false</span>,
+        <span class="c-attr">message</span>: <span class="c-var">error</span>.<span class="c-prop">message</span>,
+      }))
+      .<span class="c-func">setMimeType</span>(
+        <span class="c-type">ContentService</span>.<span class="c-prop">MimeType</span>.<span class="c-const">JSON</span>
+      );
+  }
+}
+
+<span class="c-comment">// GET — ดูคิวของวันนี้ (JSON)</span>
+<span class="c-keyword">function</span> <span class="c-func">doGet</span>(<span class="c-var">e</span>) {
+  <span class="c-keyword">const</span> <span class="c-var">date</span> <span class="c-op">=</span> <span class="c-var">e</span>.<span class="c-prop">parameter</span>.<span class="c-prop">date</span>
+    <span class="c-op">||</span> <span class="c-type">Utilities</span>.<span class="c-func">formatDate</span>(
+      <span class="c-keyword">new</span> <span class="c-type">Date</span>(), <span class="c-string">'Asia/Bangkok'</span>, <span class="c-string">'dd/MM/yyyy'</span>
+    );
+
+  <span class="c-keyword">const</span> <span class="c-var">sheet</span> <span class="c-op">=</span> <span class="c-type">SpreadsheetApp</span>
+    .<span class="c-func">getActiveSpreadsheet</span>()
+    .<span class="c-func">getSheetByName</span>(<span class="c-string">'การจอง'</span>);
+  <span class="c-keyword">const</span> <span class="c-var">data</span> <span class="c-op">=</span> <span class="c-var">sheet</span>.<span class="c-func">getDataRange</span>().<span class="c-func">getValues</span>();
+
+  <span class="c-keyword">const</span> <span class="c-var">queues</span> <span class="c-op">=</span> <span class="c-var">data</span>
+    .<span class="c-func">filter</span>((<span class="c-var">r</span>, <span class="c-var">i</span>) <span class="c-op">=></span>
+      <span class="c-var">i</span> <span class="c-op">></span> <span class="c-number">0</span> <span class="c-op">&&</span> <span class="c-func">formatDate</span>(<span class="c-var">r</span>[<span class="c-number">4</span>]) <span class="c-op">===</span> <span class="c-var">date</span>
+    )
+    .<span class="c-func">map</span>(<span class="c-var">r</span> <span class="c-op">=></span> ({
+      <span class="c-attr">queue</span>:   <span class="c-var">r</span>[<span class="c-number">7</span>],
+      <span class="c-attr">name</span>:    <span class="c-var">r</span>[<span class="c-number">1</span>],
+      <span class="c-attr">service</span>: <span class="c-var">r</span>[<span class="c-number">3</span>],
+      <span class="c-attr">time</span>:    <span class="c-var">r</span>[<span class="c-number">5</span>],
+    }));
+
+  <span class="c-keyword">return</span> <span class="c-type">ContentService</span>
+    .<span class="c-func">createTextOutput</span>(<span class="c-type">JSON</span>.<span class="c-func">stringify</span>({
+      <span class="c-attr">date</span>, <span class="c-attr">total</span>: <span class="c-var">queues</span>.<span class="c-prop">length</span>, <span class="c-attr">queues</span>,
+    }))
+    .<span class="c-func">setMimeType</span>(
+      <span class="c-type">ContentService</span>.<span class="c-prop">MimeType</span>.<span class="c-const">JSON</span>
+    );
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Apps Script 6: Laravel ↔ Apps Script -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <h3 class="font-bold text-slate-800">Laravel: เรียก Apps Script Web App</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ส่งข้อมูลจองจาก Laravel ไปยัง Google Sheets ผ่าน Apps Script / Connect Laravel to Sheets</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Services/QueueBookingService.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-tag">&lt;?php</span>
+
+<span class="c-keyword">namespace</span> <span class="c-type">App\Services</span>;
+
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Support\Facades\Http</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Support\Facades\Log</span>;
+
+<span class="c-keyword">class</span> <span class="c-type">QueueBookingService</span>
+{
+    <span class="c-keyword">private</span> <span class="c-type">string</span> <span class="c-var">$appsScriptUrl</span>;
+
+    <span class="c-keyword">public function</span> <span class="c-func">__construct</span>()
+    {
+        <span class="c-comment">// URL ของ Apps Script Web App</span>
+        <span class="c-var">$this</span>-><span class="c-prop">appsScriptUrl</span> <span class="c-op">=</span> <span class="c-func">config</span>(
+            <span class="c-string">'services.google.apps_script_url'</span>
+        );
+    }
+
+    <span class="c-comment">/**
+     * จองคิวจากเว็บไซต์
+     * → ส่งไป Google Sheets + แจ้ง LINE อัตโนมัติ
+     */</span>
+    <span class="c-keyword">public function</span> <span class="c-func">createBooking</span>(<span class="c-type">array</span> <span class="c-var">$data</span>): <span class="c-type">array</span>
+    {
+        <span class="c-var">$response</span> <span class="c-op">=</span> <span class="c-type">Http</span>::<span class="c-func">timeout</span>(<span class="c-number">15</span>)
+            -><span class="c-func">post</span>(<span class="c-var">$this</span>-><span class="c-prop">appsScriptUrl</span>, [
+                <span class="c-string">'name'</span>    <span class="c-op">=></span> <span class="c-var">$data</span>[<span class="c-string">'name'</span>],
+                <span class="c-string">'phone'</span>   <span class="c-op">=></span> <span class="c-var">$data</span>[<span class="c-string">'phone'</span>],
+                <span class="c-string">'service'</span> <span class="c-op">=></span> <span class="c-var">$data</span>[<span class="c-string">'service'</span>],
+                <span class="c-string">'date'</span>    <span class="c-op">=></span> <span class="c-var">$data</span>[<span class="c-string">'date'</span>],
+                <span class="c-string">'time'</span>    <span class="c-op">=></span> <span class="c-var">$data</span>[<span class="c-string">'time'</span>],
+                <span class="c-string">'note'</span>    <span class="c-op">=></span> <span class="c-var">$data</span>[<span class="c-string">'note'</span>] <span class="c-op">??</span> <span class="c-string">''</span>,
+            ]);
+
+        <span class="c-keyword">if</span> (<span class="c-var">$response</span>-><span class="c-func">failed</span>()) {
+            <span class="c-type">Log</span>::<span class="c-func">error</span>(<span class="c-string">'Queue booking failed'</span>, [
+                <span class="c-string">'status'</span> <span class="c-op">=></span> <span class="c-var">$response</span>-><span class="c-func">status</span>(),
+            ]);
+
+            <span class="c-keyword">return</span> [
+                <span class="c-string">'success'</span> <span class="c-op">=></span> <span class="c-const">false</span>,
+                <span class="c-string">'message'</span> <span class="c-op">=></span> <span class="c-string">'จองคิวไม่สำเร็จ กรุณาลองใหม่'</span>,
+            ];
+        }
+
+        <span class="c-keyword">return</span> <span class="c-var">$response</span>-><span class="c-func">json</span>();
+    }
+
+    <span class="c-comment">/**
+     * ดึงคิววันนี้ (สำหรับแสดงผลบนเว็บ)
+     */</span>
+    <span class="c-keyword">public function</span> <span class="c-func">getTodayQueues</span>(): <span class="c-type">array</span>
+    {
+        <span class="c-var">$today</span> <span class="c-op">=</span> <span class="c-func">now</span>()-><span class="c-func">format</span>(<span class="c-string">'d/m/Y'</span>);
+
+        <span class="c-var">$response</span> <span class="c-op">=</span> <span class="c-type">Http</span>::<span class="c-func">timeout</span>(<span class="c-number">10</span>)
+            -><span class="c-func">get</span>(<span class="c-var">$this</span>-><span class="c-prop">appsScriptUrl</span>, [
+                <span class="c-string">'date'</span> <span class="c-op">=></span> <span class="c-var">$today</span>,
+            ]);
+
+        <span class="c-keyword">return</span> <span class="c-var">$response</span>-><span class="c-func">successful</span>()
+            ? <span class="c-var">$response</span>-><span class="c-func">json</span>()
+            : [<span class="c-string">'total'</span> <span class="c-op">=></span> <span class="c-number">0</span>, <span class="c-string">'queues'</span> <span class="c-op">=></span> []];
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Apps Script 7: Laravel Controller -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <h3 class="font-bold text-slate-800">Laravel: Controller + Blade ฟอร์มจองคิว</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">หน้าเว็บจองคิวที่เชื่อมกับ Apps Script / Web booking form connected to Sheets</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — QueueBookingController.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-keyword">class</span> <span class="c-type">QueueBookingController</span> <span class="c-keyword">extends</span> <span class="c-type">Controller</span>
+{
+    <span class="c-keyword">public function</span> <span class="c-func">__construct</span>(
+        <span class="c-keyword">private readonly</span> <span class="c-type">QueueBookingService</span> <span class="c-var">$booking</span>,
+        <span class="c-keyword">private readonly</span> <span class="c-type">LineService</span> <span class="c-var">$line</span>,
+    ) {}
+
+    <span class="c-comment">// หน้าฟอร์มจองคิว</span>
+    <span class="c-keyword">public function</span> <span class="c-func">create</span>()
+    {
+        <span class="c-var">$todayQueues</span> <span class="c-op">=</span> <span class="c-var">$this</span>-><span class="c-prop">booking</span>-><span class="c-func">getTodayQueues</span>();
+
+        <span class="c-keyword">return</span> <span class="c-func">view</span>(<span class="c-string">'queue.create'</span>, [
+            <span class="c-string">'todayTotal'</span> <span class="c-op">=></span> <span class="c-var">$todayQueues</span>[<span class="c-string">'total'</span>],
+        ]);
+    }
+
+    <span class="c-comment">// บันทึกการจอง</span>
+    <span class="c-keyword">public function</span> <span class="c-func">store</span>(<span class="c-type">Request</span> <span class="c-var">$request</span>)
+    {
+        <span class="c-var">$validated</span> <span class="c-op">=</span> <span class="c-var">$request</span>-><span class="c-func">validate</span>([
+            <span class="c-string">'name'</span>    <span class="c-op">=></span> <span class="c-string">'required|string|max:100'</span>,
+            <span class="c-string">'phone'</span>   <span class="c-op">=></span> <span class="c-string">'required|string|max:20'</span>,
+            <span class="c-string">'service'</span> <span class="c-op">=></span> <span class="c-string">'required|string'</span>,
+            <span class="c-string">'date'</span>    <span class="c-op">=></span> <span class="c-string">'required|date|after:today'</span>,
+            <span class="c-string">'time'</span>    <span class="c-op">=></span> <span class="c-string">'required|string'</span>,
+            <span class="c-string">'note'</span>    <span class="c-op">=></span> <span class="c-string">'nullable|string|max:500'</span>,
+        ]);
+
+        <span class="c-comment">// ส่งไป Google Sheets (ผ่าน Apps Script)</span>
+        <span class="c-var">$result</span> <span class="c-op">=</span> <span class="c-var">$this</span>-><span class="c-prop">booking</span>-><span class="c-func">createBooking</span>(<span class="c-var">$validated</span>);
+
+        <span class="c-keyword">if</span> (<span class="c-op">!</span><span class="c-var">$result</span>[<span class="c-string">'success'</span>]) {
+            <span class="c-keyword">return</span> <span class="c-func">back</span>()
+                -><span class="c-func">withErrors</span>([<span class="c-string">'error'</span> <span class="c-op">=></span> <span class="c-var">$result</span>[<span class="c-string">'message'</span>]])
+                -><span class="c-func">withInput</span>();
+        }
+
+        <span class="c-comment">// (Optional) ส่ง LINE Push ตรงถึงลูกค้า</span>
+        <span class="c-comment">// ถ้าลูกค้าเชื่อม LINE กับ Account</span>
+        <span class="c-keyword">if</span> (<span class="c-func">auth</span>()-><span class="c-func">user</span>()?-><span class="c-prop">line_user_id</span>) {
+            <span class="c-var">$this</span>-><span class="c-prop">line</span>-><span class="c-func">pushMessage</span>(
+                <span class="c-func">auth</span>()-><span class="c-func">user</span>()-><span class="c-prop">line_user_id</span>,
+                [[
+                    <span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                    <span class="c-string">'text'</span> <span class="c-op">=></span> <span class="c-string">"✅ จองคิวสำเร็จ!\n\n"</span>
+                        . <span class="c-string">"📋 คิว: {$result['queueNo']}\n"</span>
+                        . <span class="c-string">"💼 {$validated['service']}\n"</span>
+                        . <span class="c-string">"📅 {$validated['date']}\n"</span>
+                        . <span class="c-string">"⏰ {$validated['time']}\n\n"</span>
+                        . <span class="c-string">"เราจะแจ้งเตือนก่อนถึงคิวครับ 🔔"</span>,
+                ]],
+            );
+        }
+
+        <span class="c-keyword">return</span> <span class="c-func">redirect</span>()
+            -><span class="c-func">route</span>(<span class="c-string">'queue.success'</span>)
+            -><span class="c-func">with</span>(<span class="c-string">'queueNo'</span>, <span class="c-var">$result</span>[<span class="c-string">'queueNo'</span>]);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Apps Script 8: Setup Guide -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <h3 class="font-bold text-slate-800">วิธีตั้งค่า — Step-by-Step Setup</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ตั้งค่าระบบทั้งหมดจากศูนย์ ทำตามได้เลย / Complete setup guide from scratch</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">Setup Guide — Step by Step</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">╔══════════════════════════════════════════╗</span>
+<span class="c-comment">║  ขั้นตอนที่ 1: ขอ LINE Notify Token      ║</span>
+<span class="c-comment">╚══════════════════════════════════════════╝</span>
+
+<span class="c-number">1.</span> ไปที่ <span class="c-string">https://notify-bot.line.me/</span>
+<span class="c-number">2.</span> Login ด้วย LINE Account
+<span class="c-number">3.</span> My Page → Generate Token
+<span class="c-number">4.</span> เลือกห้องแชทที่จะรับแจ้งเตือน
+   <span class="c-comment">   - "1-on-1 chat" = ส่งมาหาตัวเอง</span>
+   <span class="c-comment">   - เลือก Group = ส่งเข้ากลุ่ม</span>
+<span class="c-number">5.</span> Copy Token เก็บไว้
+
+<span class="c-comment">╔══════════════════════════════════════════╗</span>
+<span class="c-comment">║  ขั้นตอนที่ 2: สร้าง Google Sheets        ║</span>
+<span class="c-comment">╚══════════════════════════════════════════╝</span>
+
+<span class="c-number">1.</span> สร้าง Google Sheets ใหม่
+<span class="c-number">2.</span> ตั้งชื่อ Sheet = <span class="c-string">"การจอง"</span>
+<span class="c-number">3.</span> สร้างหัวตาราง Row 1:
+   <span class="c-const">A: Timestamp</span>
+   <span class="c-const">B: ชื่อ</span>
+   <span class="c-const">C: เบอร์โทร</span>
+   <span class="c-const">D: บริการ</span>
+   <span class="c-const">E: วันที่</span>
+   <span class="c-const">F: เวลา</span>
+   <span class="c-const">G: หมายเหตุ</span>
+   <span class="c-const">H: หมายเลขคิว</span>
+   <span class="c-const">I: แจ้งเตือน</span>
+
+<span class="c-comment">╔══════════════════════════════════════════╗</span>
+<span class="c-comment">║  ขั้นตอนที่ 3: เพิ่ม Apps Script          ║</span>
+<span class="c-comment">╚══════════════════════════════════════════╝</span>
+
+<span class="c-number">1.</span> Extensions → Apps Script
+<span class="c-number">2.</span> ลบโค้ดเดิม → วาง Code.gs จากด้านบน
+<span class="c-number">3.</span> แก้ <span class="c-var">LINE_NOTIFY_TOKEN</span> = Token ของคุณ
+<span class="c-number">4.</span> กด Save (Ctrl+S)
+
+<span class="c-comment">╔══════════════════════════════════════════╗</span>
+<span class="c-comment">║  ขั้นตอนที่ 4: ตั้ง Trigger               ║</span>
+<span class="c-comment">╚══════════════════════════════════════════╝</span>
+
+<span class="c-number">1.</span> คลิก ⏰ (Triggers) ที่เมนูซ้าย
+<span class="c-number">2.</span> + Add Trigger:
+   <span class="c-const">Function</span>: onFormSubmit
+   <span class="c-const">Event source</span>: From spreadsheet
+   <span class="c-const">Event type</span>: On form submit
+<span class="c-number">3.</span> + Add Trigger อีกตัว:
+   <span class="c-const">Function</span>: checkUpcomingQueues
+   <span class="c-const">Event source</span>: Time-driven
+   <span class="c-const">Type</span>: Minutes timer → 30 minutes
+<span class="c-number">4.</span> + Add Trigger อีกตัว:
+   <span class="c-const">Function</span>: sendDailySummary
+   <span class="c-const">Event source</span>: Time-driven
+   <span class="c-const">Type</span>: Day timer → 8am to 9am
+
+<span class="c-comment">╔══════════════════════════════════════════╗</span>
+<span class="c-comment">║  ขั้นตอนที่ 5: (Optional) Deploy Web App ║</span>
+<span class="c-comment">╚══════════════════════════════════════════╝</span>
+
+<span class="c-number">1.</span> Deploy → New deployment
+<span class="c-number">2.</span> Type: Web app
+<span class="c-number">3.</span> Execute as: Me
+<span class="c-number">4.</span> Who has access: Anyone
+<span class="c-number">5.</span> Copy URL → ใส่ใน Laravel .env:
+   <span class="c-attr">GOOGLE_APPS_SCRIPT_URL</span>=<span class="c-string">https://script.google.com/...</span>
+
+<span class="c-comment">╔══════════════════════════════════════════╗</span>
+<span class="c-comment">║  ทดสอบ: ส่ง Google Form → ดู LINE! 🎉     ║</span>
+<span class="c-comment">╚══════════════════════════════════════════╝</span></code></pre>
+            </div>
+        </div>
+
     </div>
 </section>
 
