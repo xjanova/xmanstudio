@@ -6,6 +6,7 @@
 @section('content')
 @push('styles')
 <style>
+
     /* ===== Code Academy Theme: Light Blue + Cream ===== */
     .academy-gradient { background: linear-gradient(135deg, #e0f2fe 0%, #f5f0e8 30%, #dbeafe 60%, #fef9ef 100%); }
     .academy-hero { background: linear-gradient(135deg, #0369a1 0%, #0284c7 25%, #38bdf8 50%, #7dd3fc 75%, #bae6fd 100%); }
@@ -192,153 +193,195 @@
         .code-block { break-inside: avoid; }
         .academy-hero, .cat-scroll { display: none; }
     }
+
+    /* ===== Encyclopedia Sidebar ===== */
+    .enc-sidebar {
+        width: 280px;
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(145deg, #ffffff, #fefce8);
+        border: 1px solid rgba(186, 230, 253, 0.5);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(14, 116, 144, 0.06);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #bae6fd transparent;
+    }
+    .enc-sidebar::-webkit-scrollbar { width: 4px; }
+    .enc-sidebar::-webkit-scrollbar-track { background: transparent; }
+    .enc-sidebar::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 2px; }
+    .enc-sidebar-cat {
+        padding: 10px 16px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 10px;
+        margin: 2px 8px;
+        color: #334155;
+    }
+    .enc-sidebar-cat:hover { background: linear-gradient(135deg, #e0f2fe, #f0f9ff); color: #0369a1; }
+    .enc-sidebar-cat.active { background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: white; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25); }
+    .enc-sidebar-topic {
+        padding: 6px 16px 6px 42px;
+        font-size: 0.8rem;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.15s;
+        border-radius: 6px;
+        margin: 1px 8px;
+    }
+    .enc-sidebar-topic:hover { background: #e0f2fe; color: #0369a1; }
+    .enc-accordion {
+        border: 1px solid rgba(186, 230, 253, 0.6);
+        border-radius: 16px;
+        overflow: hidden;
+        background: linear-gradient(145deg, #ffffff, #f8fafc, #fefce8);
+        box-shadow: 0 4px 24px rgba(14, 116, 144, 0.06);
+        transition: all 0.3s;
+    }
+    .enc-accordion:hover { box-shadow: 0 8px 32px rgba(14, 116, 144, 0.12); border-color: rgba(56, 189, 248, 0.4); }
+    .enc-accordion-header {
+        padding: 16px 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: background 0.2s;
+    }
+    .enc-accordion-header:hover { background: rgba(224, 242, 254, 0.3); }
+    .enc-accordion-body { padding: 0 20px 20px; }
+    @media (max-width: 1024px) {
+        .enc-sidebar { position: fixed; top: 0; left: 0; z-index: 50; height: 100vh; border-radius: 0 16px 16px 0; transition: transform 0.3s ease; }
+    }
+    .enc-search {
+        background: white;
+        border: 1px solid rgba(186, 230, 253, 0.5);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        width: 100%;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .enc-search:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15); }
 </style>
 @endpush
 
-<!-- ===== HERO SECTION ===== -->
-<section class="academy-hero relative overflow-hidden py-20 lg:py-28">
-    <!-- Decorative shapes -->
-    <div class="float-shape w-64 h-64 bg-white top-10 left-10" style="animation-delay: 0s;"></div>
-    <div class="float-shape w-48 h-48 bg-yellow-200 top-40 right-20" style="animation-delay: -5s;"></div>
-    <div class="float-shape w-32 h-32 bg-cyan-200 bottom-10 left-1/3" style="animation-delay: -10s;"></div>
-    <div class="float-shape w-56 h-56 bg-white bottom-0 right-10" style="animation-delay: -15s;"></div>
-
-    <!-- Grid pattern overlay -->
-    <div class="absolute inset-0 opacity-[0.04]" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;1&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
-
+<!-- ===== COMPACT HERO ===== -->
+<section class="academy-hero relative overflow-hidden py-10 lg:py-12">
+    <div class="float-shape w-48 h-48 bg-white top-5 left-10" style="animation-delay: 0s;"></div>
+    <div class="float-shape w-32 h-32 bg-yellow-200 top-20 right-20" style="animation-delay: -5s;"></div>
+    <div class="float-shape w-40 h-40 bg-cyan-200 bottom-0 right-10" style="animation-delay: -10s;"></div>
+    <div class="absolute inset-0 opacity-[0.04]" style="background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%221%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
     <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)">
-        <!-- Badge -->
         <div :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'" style="transition: all 0.5s ease 0.1s;">
             <span class="inline-flex items-center gap-2 px-5 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-white text-sm font-semibold">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                 Professional Code Reference
             </span>
         </div>
-
-        <!-- Title -->
-        <h1 class="mt-8 text-4xl md:text-5xl lg:text-7xl font-black text-white leading-tight"
-            :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease 0.2s;">
-            XMAN Code Academy
-        </h1>
-        <p class="mt-2 text-xl md:text-2xl font-semibold text-sky-100"
-           :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease 0.3s;">
-            ศูนย์เรียนรู้โค้ดมืออาชีพ
-        </p>
-
-        <!-- Description -->
-        <p class="mt-6 text-lg text-sky-100/80 max-w-2xl mx-auto leading-relaxed"
-           :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease 0.4s;">
-            แหล่งรวมความรู้และตัวอย่างโค้ดคุณภาพสูง ครอบคลุมทุกภาษาและเฟรมเวิร์กยอดนิยม<br>
-            <span class="text-white/60">Comprehensive code examples covering all popular languages & frameworks</span>
-        </p>
-
-        <!-- Stats -->
-        <div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
-             :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease 0.5s;">
-            <div class="stat-card rounded-xl px-4 py-3">
-                <div class="text-2xl font-black text-sky-700">10+</div>
-                <div class="text-xs font-semibold text-slate-500">หมวดหมู่ / Categories</div>
-            </div>
-            <div class="stat-card rounded-xl px-4 py-3">
-                <div class="text-2xl font-black text-sky-700">50+</div>
-                <div class="text-xs font-semibold text-slate-500">ตัวอย่างโค้ด / Examples</div>
-            </div>
-            <div class="stat-card rounded-xl px-4 py-3">
-                <div class="text-2xl font-black text-sky-700">8+</div>
-                <div class="text-xs font-semibold text-slate-500">ภาษา / Languages</div>
-            </div>
-            <div class="stat-card rounded-xl px-4 py-3">
-                <div class="text-2xl font-black text-sky-700">Free</div>
-                <div class="text-xs font-semibold text-slate-500">ฟรีทั้งหมด / All Free</div>
-            </div>
-        </div>
-
-        <!-- Scroll hint -->
-        <div class="mt-12" :class="loaded ? 'opacity-100' : 'opacity-0'" style="transition: opacity 0.6s ease 0.7s;">
-            <a href="#categories" class="inline-flex flex-col items-center text-white/60 hover:text-white transition-colors">
-                <span class="text-xs font-medium mb-2">เลื่อนลงเพื่อดูทั้งหมด</span>
-                <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-            </a>
+        <h1 class="mt-6 text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight" :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease 0.2s;">XMAN Code Academy</h1>
+        <p class="mt-2 text-lg md:text-xl font-semibold text-sky-100" :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease 0.3s;">ศูนย์เรียนรู้โค้ดมืออาชีพ</p>
+        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto" :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease 0.4s;">
+            <div class="stat-card rounded-xl px-3 py-2"><div class="text-xl font-black text-sky-700">10+</div><div class="text-xs font-semibold text-slate-500">หมวดหมู่</div></div>
+            <div class="stat-card rounded-xl px-3 py-2"><div class="text-xl font-black text-sky-700">50+</div><div class="text-xs font-semibold text-slate-500">ตัวอย่างโค้ด</div></div>
+            <div class="stat-card rounded-xl px-3 py-2"><div class="text-xl font-black text-sky-700">8+</div><div class="text-xs font-semibold text-slate-500">ภาษา</div></div>
+            <div class="stat-card rounded-xl px-3 py-2"><div class="text-xl font-black text-sky-700">Free</div><div class="text-xs font-semibold text-slate-500">ฟรีทั้งหมด</div></div>
         </div>
     </div>
 </section>
 
-<!-- ===== CATEGORY NAVIGATION ===== -->
-<section id="categories" class="academy-gradient sticky top-0 z-40 border-b border-sky-200/50 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="cat-scroll flex gap-3 overflow-x-auto pb-2" x-data="{ active: 'all' }">
-            <button class="cat-nav-item" :class="active === 'all' && 'active'" @click="active = 'all'; document.getElementById('sec-laravel').scrollIntoView({behavior:'smooth'})">
-                📚 ทั้งหมด / All
-            </button>
-            <button class="cat-nav-item" :class="active === 'laravel' && 'active'" @click="active = 'laravel'; document.getElementById('sec-laravel').scrollIntoView({behavior:'smooth'})">
-                🔴 Laravel
-            </button>
-            <button class="cat-nav-item" :class="active === 'php' && 'active'" @click="active = 'php'; document.getElementById('sec-php').scrollIntoView({behavior:'smooth'})">
-                🐘 PHP
-            </button>
-            <button class="cat-nav-item" :class="active === 'js' && 'active'" @click="active = 'js'; document.getElementById('sec-js').scrollIntoView({behavior:'smooth'})">
-                💛 JavaScript
-            </button>
-            <button class="cat-nav-item" :class="active === 'tailwind' && 'active'" @click="active = 'tailwind'; document.getElementById('sec-tailwind').scrollIntoView({behavior:'smooth'})">
-                🎨 Tailwind CSS
-            </button>
-            <button class="cat-nav-item" :class="active === 'python' && 'active'" @click="active = 'python'; document.getElementById('sec-python').scrollIntoView({behavior:'smooth'})">
-                🐍 Python
-            </button>
-            <button class="cat-nav-item" :class="active === 'flutter' && 'active'" @click="active = 'flutter'; document.getElementById('sec-flutter').scrollIntoView({behavior:'smooth'})">
-                🦋 Flutter / Dart
-            </button>
-            <button class="cat-nav-item" :class="active === 'sql' && 'active'" @click="active = 'sql'; document.getElementById('sec-sql').scrollIntoView({behavior:'smooth'})">
-                🗄️ SQL / Database
-            </button>
-            <button class="cat-nav-item" :class="active === 'git' && 'active'" @click="active = 'git'; document.getElementById('sec-git').scrollIntoView({behavior:'smooth'})">
-                🔀 Git
-            </button>
-            <button class="cat-nav-item" :class="active === 'api' && 'active'" @click="active = 'api'; document.getElementById('sec-api').scrollIntoView({behavior:'smooth'})">
-                🌐 REST API
-            </button>
-            <button class="cat-nav-item" :class="active === 'docker' && 'active'" @click="active = 'docker'; document.getElementById('sec-docker').scrollIntoView({behavior:'smooth'})">
-                🐳 Docker
-            </button>
-            <button class="cat-nav-item" :class="active === 'lineoa' && 'active'" @click="active = 'lineoa'; document.getElementById('sec-lineoa').scrollIntoView({behavior:'smooth'})">
-                💚 LINE OA
-            </button>
-            <button class="cat-nav-item" :class="active === 'appscript' && 'active'" @click="active = 'appscript'; document.getElementById('sec-appscript').scrollIntoView({behavior:'smooth'})">
-                📋 Apps Script + Queue
-            </button>
+<!-- ===== MAIN ENCYCLOPEDIA LAYOUT ===== -->
+<div x-data="academy()" class="academy-gradient min-h-screen">
+<div class="max-w-[1400px] mx-auto px-4 flex gap-6 py-8 relative">
+
+    <!-- Mobile sidebar toggle -->
+    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden fixed bottom-6 left-6 z-[55] w-12 h-12 rounded-full bg-sky-500 text-white shadow-lg shadow-sky-500/30 flex items-center justify-center hover:bg-sky-600 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+
+    <!-- Overlay for mobile -->
+    <div x-show="sidebarOpen" x-transition:enter="transition-opacity ease-out duration-200" x-transition:leave="transition-opacity ease-in duration-150" @click="sidebarOpen = false" class="lg:hidden fixed inset-0 bg-black/30 z-40" style="display:none;"></div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="enc-sidebar shrink-0 p-4 sticky top-4 self-start hidden lg:block" :class="sidebarOpen ? 'translate-x-0 !block' : '-translate-x-full lg:translate-x-0'">
+        <button @click="sidebarOpen = false" class="lg:hidden absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="mb-4">
+            <input type="text" x-model="search" placeholder="&#x1F50D; ค้นหาหัวข้อ..." class="enc-search">
         </div>
-    </div>
-</section>
+        <nav class="space-y-1">
+            <template x-for="cat in filteredCategories" :key="cat.id">
+                <div>
+                    <button @click="selectCat(cat.id)" class="enc-sidebar-cat" :class="activeCat === cat.id && 'active'">
+                        <span class="flex items-center gap-2">
+                            <span x-text="cat.icon"></span>
+                            <span x-text="cat.name"></span>
+                            <span class="text-xs opacity-60" x-text="'(' + cat.count + ')'"></span>
+                        </span>
+                        <svg class="w-4 h-4 shrink-0 transition-transform duration-300" :class="activeCat === cat.id && 'rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                    <div x-show="activeCat === cat.id" x-collapse>
+                        <template x-for="topic in cat.topics" :key="topic">
+                            <div class="enc-sidebar-topic" x-text="topic"></div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </nav>
+    </aside>
 
-<!-- ===== MAIN CONTENT ===== -->
-<div class="academy-gradient min-h-screen">
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20">
+    <!-- ===== CONTENT AREA ===== -->
+    <main class="flex-1 min-w-0">
+        <!-- Breadcrumb -->
+        <div class="mb-6 flex items-center gap-2 text-sm text-slate-500">
+            <a href="/" class="hover:text-sky-600 transition-colors">Home</a>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <span>Code Academy</span>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <span class="text-sky-600 font-semibold" x-text="getCategoryName()"></span>
+        </div>
 
-{{-- ============================================================ --}}
-{{-- 1. LARAVEL --}}
-{{-- ============================================================ --}}
-<section id="sec-laravel">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg shadow-red-500/20 gloss">
+
+{{-- LARAVEL --}}
+<div x-show="activeCat === 'laravel'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg shadow-red-500/20 gloss">
             <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M23.642 5.43a.364.364 0 01.014.1v5.149c0 .135-.073.26-.189.326l-4.323 2.49v4.934a.378.378 0 01-.188.326L9.93 23.949a.316.316 0 01-.066.027c-.008.002-.016.008-.024.01a.348.348 0 01-.192 0c-.011-.002-.02-.008-.03-.012a.26.26 0 01-.064-.023L.533 18.755a.376.376 0 01-.189-.326V2.974c0-.033.005-.066.014-.098.003-.012.01-.02.014-.032a.369.369 0 01.023-.058c.004-.013.015-.022.023-.033l.033-.045c.012-.01.025-.018.037-.027.014-.012.027-.024.041-.034h.001L5.044.05a.375.375 0 01.375 0L9.933 2.697h.001c.015.01.027.021.04.033.013.01.026.018.038.028l.032.045c.01.011.02.021.025.033a.253.253 0 01.022.058c.006.011.012.021.015.033.008.032.013.065.013.098v9.652l3.76-2.164V5.527c0-.033.004-.066.013-.098.003-.01.009-.021.013-.032a.487.487 0 01.024-.059c.007-.012.018-.021.025-.033.01-.015.021-.03.033-.043.012-.012.025-.02.037-.028.014-.013.028-.024.042-.034h.001l4.513-2.647a.375.375 0 01.375 0l4.513 2.647c.016.01.027.021.042.031.012.01.025.019.036.03.013.014.024.028.034.044.008.012.019.021.024.033a.42.42 0 01.024.06c.006.01.012.02.013.03zm-.74 5.032V5.862l-1.58.908-2.18 1.254v4.6zm-4.514 7.75v-4.6l-2.147 1.225-6.88 3.924v4.652zM1.093 3.624v14.588l8.273 4.761v-4.648l-4.322-2.445-.002-.003h-.002c-.015-.01-.027-.023-.04-.033-.013-.01-.027-.02-.037-.032l-.001-.002c-.013-.013-.022-.028-.033-.043-.01-.013-.021-.023-.028-.037v-.002c-.01-.015-.016-.032-.023-.048-.006-.013-.014-.025-.018-.038-.006-.02-.008-.042-.011-.063-.003-.014-.008-.025-.008-.039V6.085l-2.18-1.253zM5.23.81L1.47 3.02l3.76 2.21 3.758-2.21zm2.14 13.476l2.18-1.253V3.624l-1.58.91-2.178 1.253v9.409zM14.555 3.37l-3.758 2.21 3.758 2.21 3.759-2.21zm-.376 4.745l-2.18-1.254-1.58-.908v4.6l2.18 1.254 1.58.907zm-8.19 10.14l5.524-3.152 2.756-1.572-3.756-2.21-4.322 2.49-3.96 2.28z"/></svg>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">Laravel</h2>
+            <h2 class="text-2xl font-black academy-section-title">Laravel</h2>
             <p class="text-slate-500 text-sm">PHP Framework ยอดนิยมอันดับ 1 / #1 PHP Framework</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Essential</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- Laravel: Eloquent Model -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 class="font-bold text-slate-800">Eloquent Model — การสร้างโมเดล</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">โมเดล Eloquent สำหรับจัดการฐานข้อมูลอย่างมืออาชีพ / Professional Eloquent model with relationships</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- Eloquent Model — การสร้างโมเดล -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Eloquent Model — การสร้างโมเดล</h3>
+                        <p class="text-sm text-slate-500">โมเดล Eloquent สำหรับจัดการฐานข้อมูลอย่างมืออาชีพ / Professional Eloquent model with relationships</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Models/Product.php</span>
@@ -392,16 +435,29 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Laravel: Controller -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 class="font-bold text-slate-800">Controller — CRUD Operations</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Resource Controller พร้อม Validation / Full CRUD with validation & authorization</p>
-            <div class="code-block">
+        <!-- Controller — CRUD Operations -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Controller — CRUD Operations</h3>
+                        <p class="text-sm text-slate-500">Resource Controller พร้อม Validation / Full CRUD with validation & authorization</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — ProductController.php</span>
@@ -446,16 +502,29 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Laravel: Migration -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 class="font-bold text-slate-800">Migration — การสร้างตาราง</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">สร้างและจัดการโครงสร้างฐานข้อมูล / Database schema management</p>
-            <div class="code-block">
+        <!-- Migration — การสร้างตาราง -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Migration — การสร้างตาราง</h3>
+                        <p class="text-sm text-slate-500">สร้างและจัดการโครงสร้างฐานข้อมูล / Database schema management</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP — migration</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — migration</span>
@@ -485,16 +554,29 @@
     }
 };</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Laravel: Middleware -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 class="font-bold text-slate-800">Middleware — ตรวจสอบสิทธิ์</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Custom Middleware สำหรับจัดการ Request / Request filtering & authentication</p>
-            <div class="code-block">
+        <!-- Middleware — ตรวจสอบสิทธิ์ -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Middleware — ตรวจสอบสิทธิ์</h3>
+                        <p class="text-sm text-slate-500">Custom Middleware สำหรับจัดการ Request / Request filtering & authentication</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP — Middleware</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — Middleware</span>
@@ -519,16 +601,29 @@
         <span class="c-type">Route</span>::<span class="c-func">resource</span>(<span class="c-string">'products'</span>, <span class="c-type">AdminProductController</span>::<span class="c-keyword">class</span>);
     });</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Laravel: Blade Template -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 class="font-bold text-slate-800">Blade Template — เทมเพลตเอนจิน</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Blade templating พร้อม Components / Templating with reusable components</p>
-            <div class="code-block">
+        <!-- Blade Template — เทมเพลตเอนจิน -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Blade Template — เทมเพลตเอนจิน</h3>
+                        <p class="text-sm text-slate-500">Blade templating พร้อม Components / Templating with reusable components</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Blade</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Blade — products/index.blade.php</span>
@@ -565,16 +660,29 @@
 <span class="c-decorator">@endsection</span></code></pre>
 @endverbatim
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Laravel: API Resource -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 class="font-bold text-slate-800">API Resource — จัดรูปแบบ JSON</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">API Resource สำหรับส่งข้อมูล JSON / Transform models to JSON responses</p>
-            <div class="code-block">
+        <!-- API Resource — จัดรูปแบบ JSON -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">API Resource — จัดรูปแบบ JSON</h3>
+                        <p class="text-sm text-slate-500">API Resource สำหรับส่งข้อมูล JSON / Transform models to JSON responses</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — ProductResource.php</span>
@@ -599,35 +707,49 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 2. PHP --}}
-{{-- ============================================================ --}}
-<section id="sec-php">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- PHP --}}
+<div x-show="activeCat === 'php'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 gloss">
             <span class="text-white text-2xl font-black">P</span>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">PHP</h2>
+            <h2 class="text-2xl font-black academy-section-title">PHP</h2>
             <p class="text-slate-500 text-sm">ภาษาพื้นฐานสำหรับ Web Development / Server-side scripting language</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Fundamental</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- PHP: OOP -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                <h3 class="font-bold text-slate-800">OOP — Class & Interface</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">การเขียน Object-Oriented PHP อย่างมืออาชีพ / Professional OOP patterns</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- OOP — Class & Interface -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">OOP — Class & Interface</h3>
+                        <p class="text-sm text-slate-500">การเขียน Object-Oriented PHP อย่างมืออาชีพ / Professional OOP patterns</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP</span>
@@ -666,16 +788,29 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- PHP: Array Functions -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                <h3 class="font-bold text-slate-800">Array Functions — ฟังก์ชันอาเรย์</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ฟังก์ชันอาเรย์ที่ใช้บ่อยที่สุด / Most common array operations</p>
-            <div class="code-block">
+        <!-- Array Functions — ฟังก์ชันอาเรย์ -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Array Functions — ฟังก์ชันอาเรย์</h3>
+                        <p class="text-sm text-slate-500">ฟังก์ชันอาเรย์ที่ใช้บ่อยที่สุด / Most common array operations</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP</span>
@@ -709,16 +844,29 @@
 <span class="c-comment">// Spread operator (PHP 8+)</span>
 <span class="c-var">$merged</span> <span class="c-op">=</span> [<span class="c-op">...</span><span class="c-var">$names</span>, <span class="c-string">'สมปอง'</span>, <span class="c-string">'สมใจ'</span>];</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- PHP: Enum -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                <h3 class="font-bold text-slate-800">Enum (PHP 8.1+) — ค่าคงที่แบบมีโครงสร้าง</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Backed Enum สำหรับสถานะต่างๆ / Type-safe enumerations</p>
-            <div class="code-block">
+        <!-- Enum (PHP 8.1+) — ค่าคงที่แบบมีโครงสร้าง -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Enum (PHP 8.1+) — ค่าคงที่แบบมีโครงสร้าง</h3>
+                        <p class="text-sm text-slate-500">Backed Enum สำหรับสถานะต่างๆ / Type-safe enumerations</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP</span>
@@ -757,16 +905,29 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- PHP: Error Handling -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                <h3 class="font-bold text-slate-800">Error Handling — การจัดการข้อผิดพลาด</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Try-catch, Custom Exception / Robust error handling patterns</p>
-            <div class="code-block">
+        <!-- Error Handling — การจัดการข้อผิดพลาด -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Error Handling — การจัดการข้อผิดพลาด</h3>
+                        <p class="text-sm text-slate-500">Try-catch, Custom Exception / Robust error handling patterns</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP</span>
@@ -808,35 +969,49 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 3. JAVASCRIPT --}}
-{{-- ============================================================ --}}
-<section id="sec-js">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- JS --}}
+<div x-show="activeCat === 'js'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/20 gloss">
             <span class="text-slate-900 text-2xl font-black">JS</span>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">JavaScript</h2>
+            <h2 class="text-2xl font-black academy-section-title">JavaScript</h2>
             <p class="text-slate-500 text-sm">ภาษาสำหรับ Web ทั้ง Frontend & Backend / The language of the web</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Must Know</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- JS: Modern ES6+ -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                <h3 class="font-bold text-slate-800">ES6+ Modern Syntax</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ไวยากรณ์สมัยใหม่ที่ต้องรู้ / Essential modern JavaScript features</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- ES6+ Modern Syntax -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">ES6+ Modern Syntax</h3>
+                        <p class="text-sm text-slate-500">ไวยากรณ์สมัยใหม่ที่ต้องรู้ / Essential modern JavaScript features</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">JavaScript</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">JavaScript</span>
@@ -868,16 +1043,29 @@
     <span class="c-keyword">return</span> <span class="c-var">this</span>.<span class="c-prop">price</span> <span class="c-op">*</span> <span class="c-number">1.07</span>; <span class="c-comment">// รวม VAT 7%</span>
 }};</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- JS: Async/Await -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                <h3 class="font-bold text-slate-800">Async / Await — การทำงานแบบ Asynchronous</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Promise, async/await, error handling / Asynchronous programming patterns</p>
-            <div class="code-block">
+        <!-- Async / Await — การทำงานแบบ Asynchronous -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Async / Await — การทำงานแบบ Asynchronous</h3>
+                        <p class="text-sm text-slate-500">Promise, async/await, error handling / Asynchronous programming patterns</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">JavaScript</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">JavaScript</span>
@@ -921,16 +1109,29 @@
     <span class="c-keyword">else</span> <span class="c-var">console</span>.<span class="c-func">warn</span>(<span class="c-var">r</span>.<span class="c-prop">reason</span>);
 });</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- JS: DOM Manipulation -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                <h3 class="font-bold text-slate-800">DOM — จัดการ HTML ด้วย JS</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">สร้าง, แก้ไข, ลบ Element / Practical DOM manipulation</p>
-            <div class="code-block">
+        <!-- DOM — จัดการ HTML ด้วย JS -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">DOM — จัดการ HTML ด้วย JS</h3>
+                        <p class="text-sm text-slate-500">สร้าง, แก้ไข, ลบ Element / Practical DOM manipulation</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">JavaScript</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">JavaScript</span>
@@ -964,16 +1165,29 @@
     <span class="c-func">debounce</span>((<span class="c-var">e</span>) <span class="c-op">=></span> <span class="c-func">searchProducts</span>(<span class="c-var">e</span>.<span class="c-prop">target</span>.<span class="c-prop">value</span>))
 );</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- JS: Alpine.js -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                <h3 class="font-bold text-slate-800">Alpine.js — Lightweight Interactivity</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">เฟรมเวิร์กเบาๆ คู่หู Tailwind / Perfect companion for Tailwind CSS</p>
-            <div class="code-block">
+        <!-- Alpine.js — Lightweight Interactivity -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Alpine.js — Lightweight Interactivity</h3>
+                        <p class="text-sm text-slate-500">เฟรมเวิร์กเบาๆ คู่หู Tailwind / Perfect companion for Tailwind CSS</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">HTML — Alpine.js</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">HTML — Alpine.js</span>
@@ -1012,35 +1226,49 @@
     <span class="c-tag">&lt;/template&gt;</span>
 <span class="c-tag">&lt;/div&gt;</span></code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 4. TAILWIND CSS --}}
-{{-- ============================================================ --}}
-<section id="sec-tailwind">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-sky-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- TAILWIND --}}
+<div x-show="activeCat === 'tailwind'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-sky-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 gloss">
             <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.337 6.182 14.976 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.337 13.382 8.976 12 6.001 12z"/></svg>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">Tailwind CSS</h2>
+            <h2 class="text-2xl font-black academy-section-title">Tailwind CSS</h2>
             <p class="text-slate-500 text-sm">Utility-First CSS Framework / เขียน CSS ด้วย Class</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Design</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- Tailwind: Responsive Card -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
-                <h3 class="font-bold text-slate-800">Responsive Card — การ์ดแบบ Responsive</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ออกแบบการ์ดที่สวยงามทุกหน้าจอ / Beautiful cards for all screen sizes</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- Responsive Card — การ์ดแบบ Responsive -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-cyan-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Responsive Card — การ์ดแบบ Responsive</h3>
+                        <p class="text-sm text-slate-500">ออกแบบการ์ดที่สวยงามทุกหน้าจอ / Beautiful cards for all screen sizes</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">HTML — Tailwind</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">HTML — Tailwind</span>
@@ -1092,16 +1320,29 @@
     <span class="c-tag">&lt;/div&gt;</span>
 <span class="c-tag">&lt;/div&gt;</span></code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Tailwind: Flexbox & Grid -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
-                <h3 class="font-bold text-slate-800">Flexbox & Grid Layout</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">จัดวาง Layout แบบมืออาชีพ / Professional layout patterns</p>
-            <div class="code-block">
+        <!-- Flexbox & Grid Layout -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-cyan-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Flexbox & Grid Layout</h3>
+                        <p class="text-sm text-slate-500">จัดวาง Layout แบบมืออาชีพ / Professional layout patterns</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">HTML — Tailwind</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">HTML — Tailwind</span>
@@ -1141,35 +1382,49 @@
     <span class="c-tag">&lt;/main&gt;</span>
 <span class="c-tag">&lt;/div&gt;</span></code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 5. PYTHON --}}
-{{-- ============================================================ --}}
-<section id="sec-python">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center shadow-lg shadow-blue-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- PYTHON --}}
+<div x-show="activeCat === 'python'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center shadow-lg shadow-blue-500/20 gloss">
             <span class="text-white text-2xl font-black">Py</span>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">Python</h2>
+            <h2 class="text-2xl font-black academy-section-title">Python</h2>
             <p class="text-slate-500 text-sm">ภาษายอดนิยมสำหรับ AI, Data Science & Automation</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Popular</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- Python: Class & Dataclass -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <h3 class="font-bold text-slate-800">Dataclass & Type Hints</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">โค้ด Python สมัยใหม่ที่อ่านง่าย / Modern Python with type safety</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- Dataclass & Type Hints -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Dataclass & Type Hints</h3>
+                        <p class="text-sm text-slate-500">โค้ด Python สมัยใหม่ที่อ่านง่าย / Modern Python with type safety</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Python</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Python</span>
@@ -1212,16 +1467,29 @@
     <span class="c-attr">tags</span><span class="c-op">=</span>[<span class="c-string">"deploy"</span>, <span class="c-string">"production"</span>],
 )</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Python: FastAPI -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <h3 class="font-bold text-slate-800">FastAPI — สร้าง API สมัยใหม่</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">REST API ด้วย FastAPI + Pydantic / High-performance async API</p>
-            <div class="code-block">
+        <!-- FastAPI — สร้าง API สมัยใหม่ -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">FastAPI — สร้าง API สมัยใหม่</h3>
+                        <p class="text-sm text-slate-500">REST API ด้วย FastAPI + Pydantic / High-performance async API</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Python — FastAPI</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Python — FastAPI</span>
@@ -1263,35 +1531,49 @@
     <span class="c-keyword">await</span> <span class="c-var">db</span>.<span class="c-func">commit</span>()
     <span class="c-keyword">return</span> <span class="c-var">product</span></code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 6. FLUTTER / DART --}}
-{{-- ============================================================ --}}
-<section id="sec-flutter">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- FLUTTER --}}
+<div x-show="activeCat === 'flutter'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20 gloss">
             <span class="text-white text-xl font-black">FL</span>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">Flutter / Dart</h2>
+            <h2 class="text-2xl font-black academy-section-title">Flutter / Dart</h2>
             <p class="text-slate-500 text-sm">สร้างแอป Cross-Platform จากโค้ดเดียว / One codebase, all platforms</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Mobile</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- Flutter: StatefulWidget -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
-                <h3 class="font-bold text-slate-800">StatefulWidget — หน้าจอแบบมี State</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Widget ที่มีสถานะเปลี่ยนแปลงได้ / Interactive widgets with state management</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- StatefulWidget — หน้าจอแบบมี State -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">StatefulWidget — หน้าจอแบบมี State</h3>
+                        <p class="text-sm text-slate-500">Widget ที่มีสถานะเปลี่ยนแปลงได้ / Interactive widgets with state management</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Dart — Flutter</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Dart — Flutter</span>
@@ -1343,16 +1625,29 @@
   }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Flutter: API Service -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
-                <h3 class="font-bold text-slate-800">API Service — เชื่อมต่อ Backend</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Http client สำหรับเรียก REST API / Clean API service pattern</p>
-            <div class="code-block">
+        <!-- API Service — เชื่อมต่อ Backend -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">API Service — เชื่อมต่อ Backend</h3>
+                        <p class="text-sm text-slate-500">Http client สำหรับเรียก REST API / Clean API service pattern</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Dart — Flutter</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Dart — Flutter</span>
@@ -1396,35 +1691,49 @@
   }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 7. SQL / DATABASE --}}
-{{-- ============================================================ --}}
-<section id="sec-sql">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- SQL --}}
+<div x-show="activeCat === 'sql'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 gloss">
             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">SQL / Database</h2>
+            <h2 class="text-2xl font-black academy-section-title">SQL / Database</h2>
             <p class="text-slate-500 text-sm">ภาษาจัดการฐานข้อมูล / Database management & optimization</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Core</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- SQL: CRUD -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <h3 class="font-bold text-slate-800">CRUD Operations — คำสั่งพื้นฐาน</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">SELECT, INSERT, UPDATE, DELETE / Essential SQL commands</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- CRUD Operations — คำสั่งพื้นฐาน -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">CRUD Operations — คำสั่งพื้นฐาน</h3>
+                        <p class="text-sm text-slate-500">SELECT, INSERT, UPDATE, DELETE / Essential SQL commands</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">SQL</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">SQL</span>
@@ -1461,16 +1770,29 @@
 <span class="c-keyword">WHERE</span> <span class="c-prop">category_id</span> <span class="c-op">=</span> <span class="c-number">5</span>
   <span class="c-keyword">AND</span> <span class="c-prop">is_active</span> <span class="c-op">=</span> <span class="c-number">1</span>;</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- SQL: Optimization -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <h3 class="font-bold text-slate-800">Index & Optimization — เพิ่มความเร็ว</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">สร้าง Index, Subquery, CTE / Performance optimization techniques</p>
-            <div class="code-block">
+        <!-- Index & Optimization — เพิ่มความเร็ว -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Index & Optimization — เพิ่มความเร็ว</h3>
+                        <p class="text-sm text-slate-500">สร้าง Index, Subquery, CTE / Performance optimization techniques</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">SQL</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">SQL</span>
@@ -1505,35 +1827,49 @@
 <span class="c-keyword">ORDER BY</span> <span class="c-attr">sales_rank</span>
 <span class="c-keyword">LIMIT</span> <span class="c-number">10</span>;</code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 8. GIT --}}
-{{-- ============================================================ --}}
-<section id="sec-git">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- GIT --}}
+<div x-show="activeCat === 'git'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20 gloss">
             <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M23.546 10.93L13.067.452c-.604-.603-1.582-.603-2.188 0L8.708 2.627l2.76 2.76c.645-.215 1.379-.07 1.889.441.516.515.658 1.258.438 1.9l2.66 2.66c.643-.222 1.387-.078 1.9.435.721.72.721 1.884 0 2.604-.72.719-1.886.719-2.605 0-.538-.536-.674-1.337-.404-1.996L12.86 8.955v6.525c.176.086.342.203.488.348.713.721.713 1.883 0 2.6-.719.721-1.889.721-2.609 0-.719-.719-.719-1.879 0-2.598.182-.18.387-.316.605-.406V8.835c-.217-.091-.424-.222-.6-.401-.545-.545-.676-1.342-.396-2.009L7.636 3.7.45 10.881c-.6.605-.6 1.584 0 2.189l10.48 10.477c.604.604 1.582.604 2.186 0l10.43-10.43c.605-.603.605-1.582 0-2.187"/></svg>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">Git</h2>
+            <h2 class="text-2xl font-black academy-section-title">Git</h2>
             <p class="text-slate-500 text-sm">ระบบจัดการเวอร์ชัน / Version control system</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Essential</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- Git: Essential Commands -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-                <h3 class="font-bold text-slate-800">Essential Commands — คำสั่งที่ใช้ทุกวัน</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">คำสั่ง Git ที่ต้องรู้ / Daily Git workflow commands</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- Essential Commands — คำสั่งที่ใช้ทุกวัน -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-orange-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Essential Commands — คำสั่งที่ใช้ทุกวัน</h3>
+                        <p class="text-sm text-slate-500">คำสั่ง Git ที่ต้องรู้ / Daily Git workflow commands</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Bash — Git</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Bash — Git</span>
@@ -1571,16 +1907,29 @@
 <span class="c-comment"># ดูประวัติแบบสวยงาม</span>
 <span class="c-func">git</span> log --oneline --graph --all -<span class="c-number">20</span></code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Git: Advanced -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-                <h3 class="font-bold text-slate-800">Advanced Git — เทคนิคขั้นสูง</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Cherry-pick, Bisect, Reflog / Pro-level Git techniques</p>
-            <div class="code-block">
+        <!-- Advanced Git — เทคนิคขั้นสูง -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-orange-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Advanced Git — เทคนิคขั้นสูง</h3>
+                        <p class="text-sm text-slate-500">Cherry-pick, Bisect, Reflog / Pro-level Git techniques</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Bash — Git</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Bash — Git</span>
@@ -1611,35 +1960,49 @@
 <span class="c-func">git</span> clean -fd --dry-run  <span class="c-comment"># ดูก่อนลบ</span>
 <span class="c-func">git</span> clean -fd            <span class="c-comment"># ลบจริง</span></code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 9. REST API --}}
-{{-- ============================================================ --}}
-<section id="sec-api">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- API --}}
+<div x-show="activeCat === 'api'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/20 gloss">
             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">REST API Design</h2>
+            <h2 class="text-2xl font-black academy-section-title">REST API Design</h2>
             <p class="text-slate-500 text-sm">ออกแบบ API ที่ดี / Professional API design patterns</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Backend</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- API: Design Patterns -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-violet-500"></span>
-                <h3 class="font-bold text-slate-800">API Endpoints — ออกแบบ URL</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">RESTful URL patterns & HTTP methods / Standard API design</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- API Endpoints — ออกแบบ URL -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-violet-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">API Endpoints — ออกแบบ URL</h3>
+                        <p class="text-sm text-slate-500">RESTful URL patterns & HTTP methods / Standard API design</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">REST API Design</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">REST API Design</span>
@@ -1678,16 +2041,29 @@
   }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- API: Error Handling -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-violet-500"></span>
-                <h3 class="font-bold text-slate-800">Error Handling — จัดการ Error</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">HTTP Status Codes & Error Response / Proper error responses</p>
-            <div class="code-block">
+        <!-- Error Handling — จัดการ Error -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-violet-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Error Handling — จัดการ Error</h3>
+                        <p class="text-sm text-slate-500">HTTP Status Codes & Error Response / Proper error responses</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">JSON — API Errors</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">JSON — API Errors</span>
@@ -1736,35 +2112,49 @@
   }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 10. DOCKER --}}
-{{-- ============================================================ --}}
-<section id="sec-docker">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center shadow-lg shadow-sky-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- DOCKER --}}
+<div x-show="activeCat === 'docker'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center shadow-lg shadow-sky-500/20 gloss">
             <span class="text-white text-xl font-black">🐳</span>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">Docker</h2>
+            <h2 class="text-2xl font-black academy-section-title">Docker</h2>
             <p class="text-slate-500 text-sm">Containerization & Deployment / คอนเทนเนอร์สำหรับ Deploy</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">DevOps</span>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- Docker: Dockerfile -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-sky-600"></span>
-                <h3 class="font-bold text-slate-800">Dockerfile — สร้าง Image</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Multi-stage build สำหรับ Laravel / Optimized production image</p>
-            <div class="code-block">
+    
+    <div class="space-y-4">
+        <!-- Dockerfile — สร้าง Image -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-sky-600 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Dockerfile — สร้าง Image</h3>
+                        <p class="text-sm text-slate-500">Multi-stage build สำหรับ Laravel / Optimized production image</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Dockerfile</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Dockerfile</span>
@@ -1809,16 +2199,29 @@
 <span class="c-keyword">EXPOSE</span> <span class="c-number">9000</span>
 <span class="c-keyword">CMD</span> [<span class="c-string">"php-fpm"</span>]</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Docker: docker-compose -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-sky-600"></span>
-                <h3 class="font-bold text-slate-800">Docker Compose — จัดการหลาย Container</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">App + DB + Redis + Nginx / Full stack orchestration</p>
-            <div class="code-block">
+        <!-- Docker Compose — จัดการหลาย Container -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-sky-600 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Docker Compose — จัดการหลาย Container</h3>
+                        <p class="text-sm text-slate-500">App + DB + Redis + Nginx / Full stack orchestration</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">YAML</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">YAML — docker-compose.yml</span>
@@ -1864,26 +2267,32 @@
 <span class="c-attr">volumes</span>:
   <span class="c-attr">mysql_data</span>:</code></pre>
             </div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- ============================================================ --}}
-{{-- 11. LINE OA — MESSAGING API & NOTIFICATIONS --}}
-{{-- ============================================================ --}}
-<section id="sec-lineoa">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20 gloss">
+    </div>
+</div>
+
+
+{{-- LINEOA --}}
+<div x-show="activeCat === 'lineoa'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20 gloss">
             <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.271.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">LINE OA — Messaging API</h2>
+            <h2 class="text-2xl font-black academy-section-title">LINE OA — Messaging API</h2>
             <p class="text-slate-500 text-sm">เชื่อมต่อ LINE Official Account กับ Laravel / LINE Notification & Chatbot Integration</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Thailand Essential</span>
     </div>
 
-    <!-- Intro Box -->
+
+    <div class="space-y-4">
+
+<!-- Intro Box -->
     <div class="academy-card rounded-2xl p-6 mb-6">
         <div class="flex items-start gap-4">
             <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0 mt-1">
@@ -1916,16 +2325,25 @@
         </div>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- LINE OA 1: Environment Setup -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Step 1 — ตั้งค่า Environment</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ตั้งค่า Channel Access Token & Channel Secret จาก LINE Developers Console</p>
-            <div class="code-block">
+        <!-- Step 1 — ตั้งค่า Environment -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Step 1 — ตั้งค่า Environment</h3>
+                        <p class="text-sm text-slate-500">ตั้งค่า Channel Access Token & Channel Secret จาก LINE Developers Console</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">.env</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">.env</span>
@@ -1950,7 +2368,7 @@
 <span class="c-attr">LINE_LOGIN_CHANNEL_SECRET</span><span class="c-op">=</span><span class="c-string">your_login_channel_secret</span>
 <span class="c-attr">LINE_LOGIN_CALLBACK_URL</span><span class="c-op">=</span><span class="c-string">https://yoursite.com/auth/line/callback</span></code></pre>
             </div>
-            <div class="mt-4 code-block">
+                    <div class="mt-4 code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — config/services.php</span>
@@ -1963,16 +2381,29 @@
     <span class="c-string">'api_endpoint'</span>         <span class="c-op">=></span> <span class="c-string">'https://api.line.me/v2/bot'</span>,
 ],</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 2: Service Class -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Step 2 — LineService Class (หลัก)</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Service หลักสำหรับส่งข้อความทุกประเภท / Core LINE messaging service</p>
-            <div class="code-block">
+        <!-- Step 2 — LineService Class (หลัก) -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Step 2 — LineService Class (หลัก)</h3>
+                        <p class="text-sm text-slate-500">Service หลักสำหรับส่งข้อความทุกประเภท / Core LINE messaging service</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Services/LineService.php</span>
@@ -2104,16 +2535,29 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 3: Webhook Controller -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Step 3 — Webhook Controller (รับข้อความ)</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">รับ Event จาก LINE (ข้อความ, follow, unfollow, postback) / Handle LINE webhook events</p>
-            <div class="code-block">
+        <!-- Step 3 — Webhook Controller (รับข้อความ) -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Step 3 — Webhook Controller (รับข้อความ)</h3>
+                        <p class="text-sm text-slate-500">รับ Event จาก LINE (ข้อความ, follow, unfollow, postback) / Handle LINE webhook events</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Http/Controllers/LineWebhookController.php</span>
@@ -2249,16 +2693,29 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 4: Route & Middleware -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Step 4 — Route & CSRF Exemption</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ลงทะเบียน Route และยกเว้น CSRF สำหรับ Webhook / Register webhook route</p>
-            <div class="code-block">
+        <!-- Step 4 — Route & CSRF Exemption -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Step 4 — Route & CSRF Exemption</h3>
+                        <p class="text-sm text-slate-500">ลงทะเบียน Route และยกเว้น CSRF สำหรับ Webhook / Register webhook route</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — routes/api.php</span>
@@ -2273,7 +2730,7 @@
     [<span class="c-type">LineWebhookController</span>::<span class="c-keyword">class</span>, <span class="c-string">'handle'</span>]
 )-><span class="c-func">name</span>(<span class="c-string">'webhook.line'</span>);</code></pre>
             </div>
-            <div class="mt-4 code-block">
+                    <div class="mt-4 code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — bootstrap/app.php (Laravel 11)</span>
@@ -2301,7 +2758,7 @@
     <span class="c-string">'webhook/line'</span>,
 ];</code></pre>
             </div>
-            <div class="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <div class="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
                 <div class="flex items-start gap-2">
                     <span class="text-amber-500 text-lg">⚠️</span>
                     <div class="text-sm text-amber-800">
@@ -2310,17 +2767,29 @@
                         สำหรับทดสอบในเครื่อง ใช้ <strong>ngrok</strong>: <code class="bg-amber-100 px-1 rounded">ngrok http 8000</code>
                     </div>
                 </div>
+                </div>
             </div>
         </div>
 
-        <!-- LINE OA 5: Text Message Types -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Message Types — ประเภทข้อความ</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Text, Image, Sticker, Quick Reply / All message types you can send</p>
-            <div class="code-block">
+        <!-- Message Types — ประเภทข้อความ -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Message Types — ประเภทข้อความ</h3>
+                        <p class="text-sm text-slate-500">Text, Image, Sticker, Quick Reply / All message types you can send</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — Message Objects</span>
@@ -2402,16 +2871,29 @@
     ],
 ];</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 6: Flex Message -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Flex Message — ข้อความสวยงาม (ใบเสร็จ)</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">สร้าง Flex Message สำหรับแจ้งเตือนคำสั่งซื้อ / Beautiful order notification</p>
-            <div class="code-block">
+        <!-- Flex Message — ข้อความสวยงาม (ใบเสร็จ) -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Flex Message — ข้อความสวยงาม (ใบเสร็จ)</h3>
+                        <p class="text-sm text-slate-500">สร้าง Flex Message สำหรับแจ้งเตือนคำสั่งซื้อ / Beautiful order notification</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — Flex Message Builder</span>
@@ -2548,16 +3030,29 @@
     ];
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 7: Laravel Notification -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Laravel Notification Channel</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ใช้ระบบ Notification ของ Laravel ส่งผ่าน LINE / Integrate with Laravel's notification system</p>
-            <div class="code-block">
+        <!-- Laravel Notification Channel -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Laravel Notification Channel</h3>
+                        <p class="text-sm text-slate-500">ใช้ระบบ Notification ของ Laravel ส่งผ่าน LINE / Integrate with Laravel's notification system</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Notifications/OrderPaidNotification.php</span>
@@ -2600,7 +3095,7 @@
     }
 }</code></pre>
             </div>
-            <div class="mt-4 code-block">
+                    <div class="mt-4 code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Channels/LineChannel.php</span>
@@ -2637,7 +3132,7 @@
     }
 }</code></pre>
             </div>
-            <div class="mt-4 code-block">
+                    <div class="mt-4 code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Models/User.php (เพิ่ม method)</span>
@@ -2652,16 +3147,29 @@
 <span class="c-comment">// การใช้งาน</span>
 <span class="c-var">$user</span>-><span class="c-func">notify</span>(<span class="c-keyword">new</span> <span class="c-type">OrderPaidNotification</span>(<span class="c-var">$order</span>));</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 8: Rich Menu -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Rich Menu — เมนูด้านล่าง</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">สร้างเมนูแบบกดได้ด้านล่างแชท / Create interactive bottom menu</p>
-            <div class="code-block">
+        <!-- Rich Menu — เมนูด้านล่าง -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Rich Menu — เมนูด้านล่าง</h3>
+                        <p class="text-sm text-slate-500">สร้างเมนูแบบกดได้ด้านล่างแชท / Create interactive bottom menu</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — Rich Menu API</span>
@@ -2754,16 +3262,29 @@
         )-><span class="c-func">successful</span>();
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 9: Event-Driven Notifications -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Event Listener — แจ้งเตือนอัตโนมัติ</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ส่งแจ้งเตือนอัตโนมัติเมื่อมี Event เกิดขึ้น / Auto-notify on business events</p>
-            <div class="code-block">
+        <!-- Event Listener — แจ้งเตือนอัตโนมัติ -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Event Listener — แจ้งเตือนอัตโนมัติ</h3>
+                        <p class="text-sm text-slate-500">ส่งแจ้งเตือนอัตโนมัติเมื่อมี Event เกิดขึ้น / Auto-notify on business events</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Listeners/SendLineOrderNotification.php</span>
@@ -2819,7 +3340,7 @@
     }
 }</code></pre>
             </div>
-            <div class="mt-4 code-block">
+                    <div class="mt-4 code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Providers/EventServiceProvider.php</span>
@@ -2840,16 +3361,29 @@
     ],
 ];</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 10: LINE Notify (Simple Alternative) -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">LINE Notify — ทางเลือกง่ายๆ</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ส่งแจ้งเตือนง่ายๆ ด้วย LINE Notify (ไม่ต้องมี OA) / Simple notification alternative</p>
-            <div class="code-block">
+        <!-- LINE Notify — ทางเลือกง่ายๆ -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">LINE Notify — ทางเลือกง่ายๆ</h3>
+                        <p class="text-sm text-slate-500">ส่งแจ้งเตือนง่ายๆ ด้วย LINE Notify (ไม่ต้องมี OA) / Simple notification alternative</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — LINE Notify (ง่ายมาก!)</span>
@@ -2914,16 +3448,29 @@
     <span class="c-attr">stickerId</span>: <span class="c-string">'1988'</span>,
 );</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 11: Artisan Command -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Artisan Command — ส่งแจ้งเตือนผ่าน CLI</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">สร้างคำสั่ง Artisan สำหรับส่ง LINE จาก Terminal / CLI command for LINE notifications</p>
-            <div class="code-block">
+        <!-- Artisan Command — ส่งแจ้งเตือนผ่าน CLI -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Artisan Command — ส่งแจ้งเตือนผ่าน CLI</h3>
+                        <p class="text-sm text-slate-500">สร้างคำสั่ง Artisan สำหรับส่ง LINE จาก Terminal / CLI command for LINE notifications</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Console/Commands/LineBroadcast.php</span>
@@ -2970,16 +3517,29 @@
 <span class="c-comment">// php artisan line:broadcast "สวัสดีปีใหม่!"</span>
 <span class="c-comment">// ======================================</span></code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- LINE OA 12: Scheduled Notifications -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                <h3 class="font-bold text-slate-800">Scheduled — แจ้งเตือนตามเวลา</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ตั้งเวลาส่งแจ้งเตือนอัตโนมัติ (License หมดอายุ, รายงานรายวัน) / Scheduled auto-notifications</p>
-            <div class="code-block">
+        <!-- Scheduled — แจ้งเตือนตามเวลา -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Scheduled — แจ้งเตือนตามเวลา</h3>
+                        <p class="text-sm text-slate-500">ตั้งเวลาส่งแจ้งเตือนอัตโนมัติ (License หมดอายุ, รายงานรายวัน) / Scheduled auto-notifications</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Console/Commands/LineExpiryReminder.php</span>
@@ -3026,7 +3586,7 @@
     }
 }</code></pre>
             </div>
-            <div class="mt-4 code-block">
+                    <div class="mt-4 code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — routes/console.php (Laravel 11)</span>
@@ -3046,6 +3606,8 @@
 <span class="c-comment">// อย่าลืม! ตั้ง cron บน server:</span>
 <span class="c-comment">// * * * * * cd /path && php artisan schedule:run</span>
 <span class="c-comment">// ======================================</span></code></pre>
+            </div>
+                </div>
             </div>
         </div>
 
@@ -3090,24 +3652,28 @@
             </div>
         </div>
     </div>
-</section>
+</div>
+</div>
 
-{{-- ============================================================ --}}
-{{-- 12. GOOGLE APPS SCRIPT + QUEUE BOOKING + LINE NOTIFICATION --}}
-{{-- ============================================================ --}}
-<section id="sec-appscript">
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 gloss">
+
+{{-- APPSCRIPT --}}
+<div x-show="activeCat === 'appscript'" style="display:none;" x-cloak>
+
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 gloss">
             <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M16.148.012h-8.26c-.392 0-.71.318-.71.71v5.39l4.762 1.985 4.92-1.985V.722c0-.392-.318-.71-.71-.71zm.712 6.81l-4.92 2.77-4.762-2.77v5.39l4.762 2.77 4.92-2.77zm-10.394 6.1l4.762 2.77 4.92-2.77v5.39c0 .392-.318.71-.71.71H7.176c-.392 0-.71-.318-.71-.71z"/></svg>
         </div>
         <div>
-            <h2 class="text-3xl font-black academy-section-title">Apps Script + ระบบจองคิว + LINE</h2>
+            <h2 class="text-2xl font-black academy-section-title">Apps Script + ระบบจองคิว + LINE</h2>
             <p class="text-slate-500 text-sm">ระบบจองคิวออนไลน์ผ่าน Google Forms/Sheets + แจ้งเตือน LINE อัตโนมัติ</p>
         </div>
         <span class="academy-badge ml-auto hidden sm:inline-block">Special Case</span>
     </div>
 
-    <!-- Intro Box -->
+
+    <div class="space-y-4">
+
+<!-- Intro Box -->
     <div class="academy-card rounded-2xl p-6 mb-6">
         <div class="flex items-start gap-4">
             <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0 mt-1">
@@ -3144,16 +3710,25 @@
         </div>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <!-- Apps Script 1: LINE Notify from Sheets -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <h3 class="font-bold text-slate-800">Apps Script: แจ้งเตือน LINE เมื่อมีการจอง</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">เมื่อมีข้อมูลใหม่เข้า Google Sheets → ส่ง LINE Notify ทันที / Auto-notify on new booking</p>
-            <div class="code-block">
+        <!-- Apps Script: แจ้งเตือน LINE เมื่อมีการจอง -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Apps Script: แจ้งเตือน LINE เมื่อมีการจอง</h3>
+                        <p class="text-sm text-slate-500">เมื่อมีข้อมูลใหม่เข้า Google Sheets → ส่ง LINE Notify ทันที / Auto-notify on new booking</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Google Apps Script</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Google Apps Script — Code.gs</span>
@@ -3227,16 +3802,29 @@
   }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Apps Script 2: sendLineNotify function -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <h3 class="font-bold text-slate-800">Apps Script: ฟังก์ชัน sendLineNotify</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ฟังก์ชันหลักสำหรับเรียก LINE Notify API / Core function to call LINE Notify</p>
-            <div class="code-block">
+        <!-- Apps Script: ฟังก์ชัน sendLineNotify -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Apps Script: ฟังก์ชัน sendLineNotify</h3>
+                        <p class="text-sm text-slate-500">ฟังก์ชันหลักสำหรับเรียก LINE Notify API / Core function to call LINE Notify</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Google Apps Script</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Google Apps Script — LINE Notify</span>
@@ -3314,16 +3902,29 @@
   );
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Apps Script 3: Reminder Before Queue -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <h3 class="font-bold text-slate-800">Apps Script: เตือนก่อนถึงคิว</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Time Trigger ส่งเตือนลูกค้าก่อนถึงเวลานัด / Auto-reminder before appointment</p>
-            <div class="code-block">
+        <!-- Apps Script: เตือนก่อนถึงคิว -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Apps Script: เตือนก่อนถึงคิว</h3>
+                        <p class="text-sm text-slate-500">Time Trigger ส่งเตือนลูกค้าก่อนถึงเวลานัด / Auto-reminder before appointment</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Google Apps Script</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Google Apps Script — Reminder</span>
@@ -3402,16 +4003,29 @@
   }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Apps Script 4: Daily Summary Report -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <h3 class="font-bold text-slate-800">Apps Script: รายงานสรุปรายวัน</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ส่งสรุปการจองวันถัดไปให้ Admin ทุกเช้า / Daily booking summary for admin</p>
-            <div class="code-block">
+        <!-- Apps Script: รายงานสรุปรายวัน -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Apps Script: รายงานสรุปรายวัน</h3>
+                        <p class="text-sm text-slate-500">ส่งสรุปการจองวันถัดไปให้ Admin ทุกเช้า / Daily booking summary for admin</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Google Apps Script</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Google Apps Script — Daily Report</span>
@@ -3476,16 +4090,29 @@
   <span class="c-keyword">return</span> <span class="c-type">String</span>(<span class="c-var">date</span>);
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Apps Script 5: Queue Management -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <h3 class="font-bold text-slate-800">Apps Script: Web App สำหรับจัดการคิว</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Deploy เป็น Web App ให้เว็บไซต์เรียกได้ / Web endpoint for queue management</p>
-            <div class="code-block">
+        <!-- Apps Script: Web App สำหรับจัดการคิว -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Apps Script: Web App สำหรับจัดการคิว</h3>
+                        <p class="text-sm text-slate-500">Deploy เป็น Web App ให้เว็บไซต์เรียกได้ / Web endpoint for queue management</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Google Apps Script</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Google Apps Script — Web App API</span>
@@ -3589,16 +4216,29 @@
     );
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Apps Script 6: Laravel ↔ Apps Script -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 class="font-bold text-slate-800">Laravel: เรียก Apps Script Web App</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ส่งข้อมูลจองจาก Laravel ไปยัง Google Sheets ผ่าน Apps Script / Connect Laravel to Sheets</p>
-            <div class="code-block">
+        <!-- Laravel: เรียก Apps Script Web App -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Laravel: เรียก Apps Script Web App</h3>
+                        <p class="text-sm text-slate-500">ส่งข้อมูลจองจาก Laravel ไปยัง Google Sheets ผ่าน Apps Script / Connect Laravel to Sheets</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — app/Services/QueueBookingService.php</span>
@@ -3671,16 +4311,29 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Apps Script 7: Laravel Controller -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 class="font-bold text-slate-800">Laravel: Controller + Blade ฟอร์มจองคิว</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">หน้าเว็บจองคิวที่เชื่อมกับ Apps Script / Web booking form connected to Sheets</p>
-            <div class="code-block">
+        <!-- Laravel: Controller + Blade ฟอร์มจองคิว -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Laravel: Controller + Blade ฟอร์มจองคิว</h3>
+                        <p class="text-sm text-slate-500">หน้าเว็บจองคิวที่เชื่อมกับ Apps Script / Web booking form connected to Sheets</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">PHP</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">PHP — QueueBookingController.php</span>
@@ -3747,16 +4400,29 @@
     }
 }</code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Apps Script 8: Setup Guide -->
-        <div class="academy-card rounded-2xl p-6 gloss">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                <h3 class="font-bold text-slate-800">วิธีตั้งค่า — Step-by-Step Setup</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">ตั้งค่าระบบทั้งหมดจากศูนย์ ทำตามได้เลย / Complete setup guide from scratch</p>
-            <div class="code-block">
+        <!-- วิธีตั้งค่า — Step-by-Step Setup -->
+        <div class="enc-accordion" x-data="{open: false}">
+            <button @click="open = !open" class="enc-accordion-header w-full text-left">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                    <div>
+                        <h3 class="font-bold text-slate-800">วิธีตั้งค่า — Step-by-Step Setup</h3>
+                        <p class="text-sm text-slate-500">ตั้งค่าระบบทั้งหมดจากศูนย์ ทำตามได้เลย / Complete setup guide from scratch</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-mono text-sky-600 bg-sky-50 px-2 py-1 rounded">Setup Guide</span>
+                    <span x-show="!open" class="text-slate-400 text-sm">&#x1F512;</span>
+                    <svg :class="open && 'rotate-180'" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+            <div x-show="open" x-collapse style="display:none;">
+                <div class="enc-accordion-body">
+                    <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-dots"><span></span><span></span><span></span></div>
                     <span class="code-block-lang">Setup Guide — Step by Step</span>
@@ -3833,23 +4499,26 @@
 <span class="c-comment">║  ทดสอบ: ส่ง Google Form → ดู LINE! 🎉     ║</span>
 <span class="c-comment">╚══════════════════════════════════════════╝</span></code></pre>
             </div>
+                </div>
+            </div>
         </div>
 
     </div>
-</section>
+</div>
 
-</div>{{-- end max-w-7xl --}}
+    </main>
+</div>
 
-<!-- ===== BACK TO TOP ===== -->
-<div class="text-center py-12 academy-gradient">
-    <a href="#categories" class="inline-flex items-center gap-2 px-6 py-3 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-sky-700 font-semibold border border-sky-200">
+<!-- ===== BACK TO TOP + FOOTER ===== -->
+<div class="text-center py-8 academy-gradient">
+    <button @click="window.scrollTo({top: 0, behavior: 'smooth'})" class="inline-flex items-center gap-2 px-6 py-3 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-sky-700 font-semibold border border-sky-200">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
         กลับด้านบน / Back to Top
-    </a>
+    </button>
     <p class="mt-6 text-slate-400 text-sm">XMAN Code Academy &copy; {{ date('Y') }} — แหล่งเรียนรู้โค้ดมืออาชีพ</p>
 </div>
 
-</div>{{-- end academy-gradient --}}
+</div>
 
 @push('scripts')
 <script>
@@ -3869,6 +4538,45 @@ function copyCode(btn) {
             btn.style.color = '';
         }, 2000);
     });
+}
+
+function academy() {
+    return {
+        activeCat: 'laravel',
+        sidebarOpen: false,
+        search: '',
+        categories: [
+            { id: 'laravel', name: 'Laravel', icon: '\uD83D\uDD34', count: 6, topics: ['Eloquent Model', 'Controller CRUD', 'Migration', 'Middleware', 'Blade Template', 'API Resource'] },
+            { id: 'php', name: 'PHP', icon: '\uD83D\uDC18', count: 4, topics: ['OOP \u2014 Class & Interface', 'Array Functions', 'Enum (PHP 8.1+)', 'Error Handling'] },
+            { id: 'js', name: 'JavaScript', icon: '\uD83D\uDC9B', count: 4, topics: ['ES6+ Modern Syntax', 'Async / Await', 'DOM Manipulation', 'Alpine.js'] },
+            { id: 'tailwind', name: 'Tailwind CSS', icon: '\uD83C\uDFA8', count: 2, topics: ['Responsive Card', 'Flexbox & Grid Layout'] },
+            { id: 'python', name: 'Python', icon: '\uD83D\uDC0D', count: 2, topics: ['Dataclass & Type Hints', 'FastAPI'] },
+            { id: 'flutter', name: 'Flutter / Dart', icon: '\uD83E\uDD8B', count: 2, topics: ['StatefulWidget', 'API Service'] },
+            { id: 'sql', name: 'SQL / Database', icon: '\uD83D\uDDC4\uFE0F', count: 2, topics: ['CRUD & Joins', 'Index & Optimization'] },
+            { id: 'git', name: 'Git', icon: '\uD83D\uDD00', count: 2, topics: ['Essential Commands', 'Advanced Git'] },
+            { id: 'api', name: 'REST API', icon: '\uD83C\uDF10', count: 2, topics: ['Endpoint Design', 'Error Handling'] },
+            { id: 'docker', name: 'Docker', icon: '\uD83D\uDC33', count: 2, topics: ['Dockerfile', 'Docker Compose'] },
+            { id: 'lineoa', name: 'LINE OA', icon: '\uD83D\uDC9A', count: 13, topics: ['Overview Steps', 'Environment Setup', 'LineService Class', 'Webhook Controller', 'Routes & CSRF', 'Message Types', 'Flex Message', 'Notification Channel', 'Rich Menu', 'Event Listener', 'LINE Notify', 'Artisan Command', 'Scheduled Notifications'] },
+            { id: 'appscript', name: 'Apps Script + Queue', icon: '\uD83D\uDCCB', count: 9, topics: ['System Architecture', 'Form Submit Trigger', 'LINE Notify Function', 'Queue Reminder', 'Daily Summary', 'Web App API', 'Laravel Service', 'Laravel Controller', 'Setup Guide'] },
+        ],
+        get filteredCategories() {
+            if (!this.search) return this.categories;
+            const s = this.search.toLowerCase();
+            return this.categories.filter(c =>
+                c.name.toLowerCase().includes(s) ||
+                c.topics.some(t => t.toLowerCase().includes(s))
+            );
+        },
+        selectCat(cat) {
+            this.activeCat = cat;
+            this.sidebarOpen = false;
+            window.scrollTo({ top: document.querySelector('.enc-sidebar')?.offsetTop - 20 || 0, behavior: 'smooth' });
+        },
+        getCategoryName() {
+            const cat = this.categories.find(c => c.id === this.activeCat);
+            return cat ? cat.name : '';
+        }
+    }
 }
 </script>
 @endpush
