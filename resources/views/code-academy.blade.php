@@ -300,6 +300,9 @@
             <button class="cat-nav-item" :class="active === 'docker' && 'active'" @click="active = 'docker'; document.getElementById('sec-docker').scrollIntoView({behavior:'smooth'})">
                 🐳 Docker
             </button>
+            <button class="cat-nav-item" :class="active === 'lineoa' && 'active'" @click="active = 'lineoa'; document.getElementById('sec-lineoa').scrollIntoView({behavior:'smooth'})">
+                💚 LINE OA
+            </button>
         </div>
     </div>
 </section>
@@ -1855,6 +1858,1230 @@
 
 <span class="c-attr">volumes</span>:
   <span class="c-attr">mysql_data</span>:</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- ============================================================ --}}
+{{-- 11. LINE OA — MESSAGING API & NOTIFICATIONS --}}
+{{-- ============================================================ --}}
+<section id="sec-lineoa">
+    <div class="flex items-center gap-4 mb-8">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20 gloss">
+            <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.271.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+        </div>
+        <div>
+            <h2 class="text-3xl font-black academy-section-title">LINE OA — Messaging API</h2>
+            <p class="text-slate-500 text-sm">เชื่อมต่อ LINE Official Account กับ Laravel / LINE Notification & Chatbot Integration</p>
+        </div>
+        <span class="academy-badge ml-auto hidden sm:inline-block">Thailand Essential</span>
+    </div>
+
+    <!-- Intro Box -->
+    <div class="academy-card rounded-2xl p-6 mb-6">
+        <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0 mt-1">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 mb-2">ขั้นตอนภาพรวม — Overview Steps</h3>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+                    <div class="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                        <span class="w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">1</span>
+                        <span class="text-sm font-medium text-slate-700">สร้าง LINE OA + Messaging API Channel</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                        <span class="w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">2</span>
+                        <span class="text-sm font-medium text-slate-700">ตั้งค่า .env + สร้าง Service Class</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                        <span class="w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">3</span>
+                        <span class="text-sm font-medium text-slate-700">สร้าง Webhook รับข้อความ</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                        <span class="w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">4</span>
+                        <span class="text-sm font-medium text-slate-700">ส่งแจ้งเตือนอัตโนมัติ (Push / Flex)</span>
+                    </div>
+                </div>
+                <p class="mt-3 text-sm text-slate-500">
+                    <strong>ต้องมี:</strong> LINE Official Account (ฟรี), LINE Developers Console, Laravel 10+, PHP 8.1+, HTTPS domain (สำหรับ Webhook)
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+
+        <!-- LINE OA 1: Environment Setup -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Step 1 — ตั้งค่า Environment</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ตั้งค่า Channel Access Token & Channel Secret จาก LINE Developers Console</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">.env</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment"># =============================================</span>
+<span class="c-comment"># LINE OA — Messaging API Configuration</span>
+<span class="c-comment"># =============================================</span>
+<span class="c-comment"># ได้จาก https://developers.line.biz/console/</span>
+<span class="c-comment"># → เลือก Provider → เลือก Channel</span>
+<span class="c-comment"># =============================================</span>
+
+<span class="c-comment"># Channel Secret (Basic settings tab)</span>
+<span class="c-attr">LINE_CHANNEL_SECRET</span><span class="c-op">=</span><span class="c-string">your_channel_secret_here</span>
+
+<span class="c-comment"># Channel Access Token (Messaging API tab)</span>
+<span class="c-comment"># กด "Issue" เพื่อสร้าง Long-lived token</span>
+<span class="c-attr">LINE_CHANNEL_ACCESS_TOKEN</span><span class="c-op">=</span><span class="c-string">your_channel_access_token_here</span>
+
+<span class="c-comment"># (Optional) สำหรับ LINE Login</span>
+<span class="c-attr">LINE_LOGIN_CHANNEL_ID</span><span class="c-op">=</span><span class="c-string">your_login_channel_id</span>
+<span class="c-attr">LINE_LOGIN_CHANNEL_SECRET</span><span class="c-op">=</span><span class="c-string">your_login_channel_secret</span>
+<span class="c-attr">LINE_LOGIN_CALLBACK_URL</span><span class="c-op">=</span><span class="c-string">https://yoursite.com/auth/line/callback</span></code></pre>
+            </div>
+            <div class="mt-4 code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — config/services.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// เพิ่มใน config/services.php</span>
+<span class="c-string">'line'</span> <span class="c-op">=></span> [
+    <span class="c-string">'channel_secret'</span>       <span class="c-op">=></span> <span class="c-func">env</span>(<span class="c-string">'LINE_CHANNEL_SECRET'</span>),
+    <span class="c-string">'channel_access_token'</span> <span class="c-op">=></span> <span class="c-func">env</span>(<span class="c-string">'LINE_CHANNEL_ACCESS_TOKEN'</span>),
+    <span class="c-string">'api_endpoint'</span>         <span class="c-op">=></span> <span class="c-string">'https://api.line.me/v2/bot'</span>,
+],</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 2: Service Class -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Step 2 — LineService Class (หลัก)</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Service หลักสำหรับส่งข้อความทุกประเภท / Core LINE messaging service</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Services/LineService.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-tag">&lt;?php</span>
+
+<span class="c-keyword">namespace</span> <span class="c-type">App\Services</span>;
+
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Support\Facades\Http</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Support\Facades\Log</span>;
+
+<span class="c-keyword">class</span> <span class="c-type">LineService</span>
+{
+    <span class="c-keyword">private</span> <span class="c-type">string</span> <span class="c-var">$accessToken</span>;
+    <span class="c-keyword">private</span> <span class="c-type">string</span> <span class="c-var">$channelSecret</span>;
+    <span class="c-keyword">private</span> <span class="c-type">string</span> <span class="c-var">$apiBase</span>;
+
+    <span class="c-keyword">public function</span> <span class="c-func">__construct</span>()
+    {
+        <span class="c-var">$this</span>-><span class="c-prop">accessToken</span>   <span class="c-op">=</span> <span class="c-func">config</span>(<span class="c-string">'services.line.channel_access_token'</span>);
+        <span class="c-var">$this</span>-><span class="c-prop">channelSecret</span> <span class="c-op">=</span> <span class="c-func">config</span>(<span class="c-string">'services.line.channel_secret'</span>);
+        <span class="c-var">$this</span>-><span class="c-prop">apiBase</span>       <span class="c-op">=</span> <span class="c-func">config</span>(<span class="c-string">'services.line.api_endpoint'</span>);
+    }
+
+    <span class="c-comment">// ======================================</span>
+    <span class="c-comment">// Push Message — ส่งข้อความหาคนเฉพาะเจาะจง</span>
+    <span class="c-comment">// ======================================</span>
+    <span class="c-keyword">public function</span> <span class="c-func">pushMessage</span>(
+        <span class="c-type">string</span> <span class="c-var">$userId</span>,
+        <span class="c-type">array</span>  <span class="c-var">$messages</span>,
+    ): <span class="c-type">bool</span> {
+        <span class="c-keyword">return</span> <span class="c-var">$this</span>-><span class="c-func">sendRequest</span>(<span class="c-string">'/message/push'</span>, [
+            <span class="c-string">'to'</span>       <span class="c-op">=></span> <span class="c-var">$userId</span>,
+            <span class="c-string">'messages'</span> <span class="c-op">=></span> <span class="c-var">$messages</span>,
+        ]);
+    }
+
+    <span class="c-comment">// ======================================</span>
+    <span class="c-comment">// Reply Message — ตอบกลับจาก Webhook</span>
+    <span class="c-comment">// ======================================</span>
+    <span class="c-keyword">public function</span> <span class="c-func">replyMessage</span>(
+        <span class="c-type">string</span> <span class="c-var">$replyToken</span>,
+        <span class="c-type">array</span>  <span class="c-var">$messages</span>,
+    ): <span class="c-type">bool</span> {
+        <span class="c-keyword">return</span> <span class="c-var">$this</span>-><span class="c-func">sendRequest</span>(<span class="c-string">'/message/reply'</span>, [
+            <span class="c-string">'replyToken'</span> <span class="c-op">=></span> <span class="c-var">$replyToken</span>,
+            <span class="c-string">'messages'</span>   <span class="c-op">=></span> <span class="c-var">$messages</span>,
+        ]);
+    }
+
+    <span class="c-comment">// ======================================</span>
+    <span class="c-comment">// Multicast — ส่งหาหลายคนพร้อมกัน</span>
+    <span class="c-comment">// (สูงสุด 500 userId ต่อครั้ง)</span>
+    <span class="c-comment">// ======================================</span>
+    <span class="c-keyword">public function</span> <span class="c-func">multicast</span>(
+        <span class="c-type">array</span> <span class="c-var">$userIds</span>,
+        <span class="c-type">array</span> <span class="c-var">$messages</span>,
+    ): <span class="c-type">bool</span> {
+        <span class="c-keyword">return</span> <span class="c-var">$this</span>-><span class="c-func">sendRequest</span>(<span class="c-string">'/message/multicast'</span>, [
+            <span class="c-string">'to'</span>       <span class="c-op">=></span> <span class="c-var">$userIds</span>,
+            <span class="c-string">'messages'</span> <span class="c-op">=></span> <span class="c-var">$messages</span>,
+        ]);
+    }
+
+    <span class="c-comment">// ======================================</span>
+    <span class="c-comment">// Broadcast — ส่งหาทุกคนที่ add เพื่อน</span>
+    <span class="c-comment">// ======================================</span>
+    <span class="c-keyword">public function</span> <span class="c-func">broadcast</span>(<span class="c-type">array</span> <span class="c-var">$messages</span>): <span class="c-type">bool</span>
+    {
+        <span class="c-keyword">return</span> <span class="c-var">$this</span>-><span class="c-func">sendRequest</span>(<span class="c-string">'/message/broadcast'</span>, [
+            <span class="c-string">'messages'</span> <span class="c-op">=></span> <span class="c-var">$messages</span>,
+        ]);
+    }
+
+    <span class="c-comment">// ======================================</span>
+    <span class="c-comment">// ดึงข้อมูลโปรไฟล์ผู้ใช้</span>
+    <span class="c-comment">// ======================================</span>
+    <span class="c-keyword">public function</span> <span class="c-func">getProfile</span>(<span class="c-type">string</span> <span class="c-var">$userId</span>): ?<span class="c-type">array</span>
+    {
+        <span class="c-var">$response</span> <span class="c-op">=</span> <span class="c-type">Http</span>::<span class="c-func">withToken</span>(<span class="c-var">$this</span>-><span class="c-prop">accessToken</span>)
+            -><span class="c-func">get</span>(<span class="c-string">"{$this->apiBase}/profile/{$userId}"</span>);
+
+        <span class="c-keyword">return</span> <span class="c-var">$response</span>-><span class="c-func">successful</span>()
+            ? <span class="c-var">$response</span>-><span class="c-func">json</span>()
+            : <span class="c-const">null</span>;
+    }
+
+    <span class="c-comment">// ======================================</span>
+    <span class="c-comment">// ตรวจสอบ Signature จาก Webhook</span>
+    <span class="c-comment">// (สำคัญมาก! ป้องกัน Spoofing)</span>
+    <span class="c-comment">// ======================================</span>
+    <span class="c-keyword">public function</span> <span class="c-func">validateSignature</span>(
+        <span class="c-type">string</span> <span class="c-var">$body</span>,
+        <span class="c-type">string</span> <span class="c-var">$signature</span>,
+    ): <span class="c-type">bool</span> {
+        <span class="c-var">$hash</span> <span class="c-op">=</span> <span class="c-func">hash_hmac</span>(
+            <span class="c-string">'sha256'</span>,
+            <span class="c-var">$body</span>,
+            <span class="c-var">$this</span>-><span class="c-prop">channelSecret</span>,
+            <span class="c-const">true</span>
+        );
+
+        <span class="c-keyword">return</span> <span class="c-func">hash_equals</span>(
+            <span class="c-var">$signature</span>,
+            <span class="c-func">base64_encode</span>(<span class="c-var">$hash</span>)
+        );
+    }
+
+    <span class="c-comment">// ======================================</span>
+    <span class="c-comment">// Private: ส่ง HTTP Request ไป LINE API</span>
+    <span class="c-comment">// ======================================</span>
+    <span class="c-keyword">private function</span> <span class="c-func">sendRequest</span>(
+        <span class="c-type">string</span> <span class="c-var">$endpoint</span>,
+        <span class="c-type">array</span>  <span class="c-var">$data</span>,
+    ): <span class="c-type">bool</span> {
+        <span class="c-var">$response</span> <span class="c-op">=</span> <span class="c-type">Http</span>::<span class="c-func">withToken</span>(<span class="c-var">$this</span>-><span class="c-prop">accessToken</span>)
+            -><span class="c-func">post</span>(<span class="c-var">$this</span>-><span class="c-prop">apiBase</span> . <span class="c-var">$endpoint</span>, <span class="c-var">$data</span>);
+
+        <span class="c-keyword">if</span> (<span class="c-var">$response</span>-><span class="c-func">failed</span>()) {
+            <span class="c-type">Log</span>::<span class="c-func">error</span>(<span class="c-string">'LINE API Error'</span>, [
+                <span class="c-string">'endpoint'</span> <span class="c-op">=></span> <span class="c-var">$endpoint</span>,
+                <span class="c-string">'status'</span>   <span class="c-op">=></span> <span class="c-var">$response</span>-><span class="c-func">status</span>(),
+                <span class="c-string">'body'</span>     <span class="c-op">=></span> <span class="c-var">$response</span>-><span class="c-func">json</span>(),
+            ]);
+        }
+
+        <span class="c-keyword">return</span> <span class="c-var">$response</span>-><span class="c-func">successful</span>();
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 3: Webhook Controller -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Step 3 — Webhook Controller (รับข้อความ)</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">รับ Event จาก LINE (ข้อความ, follow, unfollow, postback) / Handle LINE webhook events</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Http/Controllers/LineWebhookController.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-tag">&lt;?php</span>
+
+<span class="c-keyword">namespace</span> <span class="c-type">App\Http\Controllers</span>;
+
+<span class="c-keyword">use</span> <span class="c-type">App\Services\LineService</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Http\Request</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Http\JsonResponse</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Support\Facades\Log</span>;
+
+<span class="c-keyword">class</span> <span class="c-type">LineWebhookController</span> <span class="c-keyword">extends</span> <span class="c-type">Controller</span>
+{
+    <span class="c-keyword">public function</span> <span class="c-func">__construct</span>(
+        <span class="c-keyword">private readonly</span> <span class="c-type">LineService</span> <span class="c-var">$line</span>,
+    ) {}
+
+    <span class="c-keyword">public function</span> <span class="c-func">handle</span>(<span class="c-type">Request</span> <span class="c-var">$request</span>): <span class="c-type">JsonResponse</span>
+    {
+        <span class="c-comment">// 1) ตรวจสอบ Signature (ป้องกัน Spoofing)</span>
+        <span class="c-var">$signature</span> <span class="c-op">=</span> <span class="c-var">$request</span>-><span class="c-func">header</span>(<span class="c-string">'X-Line-Signature'</span>, <span class="c-string">''</span>);
+        <span class="c-var">$body</span>      <span class="c-op">=</span> <span class="c-var">$request</span>-><span class="c-func">getContent</span>();
+
+        <span class="c-keyword">if</span> (<span class="c-op">!</span><span class="c-var">$this</span>-><span class="c-prop">line</span>-><span class="c-func">validateSignature</span>(<span class="c-var">$body</span>, <span class="c-var">$signature</span>)) {
+            <span class="c-type">Log</span>::<span class="c-func">warning</span>(<span class="c-string">'LINE Webhook: Invalid signature'</span>);
+            <span class="c-keyword">return</span> <span class="c-func">response</span>()-><span class="c-func">json</span>([<span class="c-string">'error'</span> <span class="c-op">=></span> <span class="c-string">'Invalid'</span>], <span class="c-number">403</span>);
+        }
+
+        <span class="c-comment">// 2) วนลูปรับ Event ทั้งหมด</span>
+        <span class="c-var">$events</span> <span class="c-op">=</span> <span class="c-var">$request</span>-><span class="c-func">input</span>(<span class="c-string">'events'</span>, []);
+
+        <span class="c-keyword">foreach</span> (<span class="c-var">$events</span> <span class="c-keyword">as</span> <span class="c-var">$event</span>) {
+            <span class="c-keyword">match</span> (<span class="c-var">$event</span>[<span class="c-string">'type'</span>]) {
+                <span class="c-string">'message'</span>  <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">handleMessage</span>(<span class="c-var">$event</span>),
+                <span class="c-string">'follow'</span>   <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">handleFollow</span>(<span class="c-var">$event</span>),
+                <span class="c-string">'unfollow'</span> <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">handleUnfollow</span>(<span class="c-var">$event</span>),
+                <span class="c-string">'postback'</span> <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">handlePostback</span>(<span class="c-var">$event</span>),
+                <span class="c-keyword">default</span>    <span class="c-op">=></span> <span class="c-type">Log</span>::<span class="c-func">info</span>(<span class="c-string">'LINE event: '</span> . <span class="c-var">$event</span>[<span class="c-string">'type'</span>]),
+            };
+        }
+
+        <span class="c-keyword">return</span> <span class="c-func">response</span>()-><span class="c-func">json</span>([<span class="c-string">'status'</span> <span class="c-op">=></span> <span class="c-string">'ok'</span>]);
+    }
+
+    <span class="c-comment">// =============================</span>
+    <span class="c-comment">// จัดการข้อความที่ส่งเข้ามา</span>
+    <span class="c-comment">// =============================</span>
+    <span class="c-keyword">private function</span> <span class="c-func">handleMessage</span>(<span class="c-type">array</span> <span class="c-var">$event</span>): <span class="c-type">void</span>
+    {
+        <span class="c-var">$replyToken</span> <span class="c-op">=</span> <span class="c-var">$event</span>[<span class="c-string">'replyToken'</span>];
+        <span class="c-var">$userId</span>     <span class="c-op">=</span> <span class="c-var">$event</span>[<span class="c-string">'source'</span>][<span class="c-string">'userId'</span>];
+        <span class="c-var">$msgType</span>    <span class="c-op">=</span> <span class="c-var">$event</span>[<span class="c-string">'message'</span>][<span class="c-string">'type'</span>];
+        <span class="c-var">$text</span>       <span class="c-op">=</span> <span class="c-var">$event</span>[<span class="c-string">'message'</span>][<span class="c-string">'text'</span>] <span class="c-op">??</span> <span class="c-string">''</span>;
+
+        <span class="c-comment">// ตอบตามคำสั่ง</span>
+        <span class="c-var">$reply</span> <span class="c-op">=</span> <span class="c-keyword">match</span> (<span class="c-func">mb_strtolower</span>(<span class="c-func">trim</span>(<span class="c-var">$text</span>))) {
+            <span class="c-string">'สวัสดี'</span>, <span class="c-string">'hello'</span> <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">textMsg</span>(
+                <span class="c-string">'สวัสดีครับ! 👋 ยินดีต้อนรับสู่ XMAN Studio'</span>
+            ),
+            <span class="c-string">'เมนู'</span>, <span class="c-string">'menu'</span> <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">menuMessage</span>(),
+            <span class="c-string">'ราคา'</span>, <span class="c-string">'price'</span> <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">textMsg</span>(
+                <span class="c-string">"💰 ราคาบริการ\n\n"</span>
+                . <span class="c-string">"🔹 เว็บไซต์ เริ่มต้น 15,000฿\n"</span>
+                . <span class="c-string">"🔹 แอปมือถือ เริ่มต้น 30,000฿\n"</span>
+                . <span class="c-string">"🔹 ระบบ AI เริ่มต้น 50,000฿\n\n"</span>
+                . <span class="c-string">"📞 ติดต่อเพิ่มเติม: พิมพ์ 'ติดต่อ'"</span>
+            ),
+            <span class="c-string">'ติดต่อ'</span>, <span class="c-string">'contact'</span> <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">textMsg</span>(
+                <span class="c-string">"📞 ช่องทางติดต่อ\n\n"</span>
+                . <span class="c-string">"🌐 เว็บ: xman.studio\n"</span>
+                . <span class="c-string">"📧 อีเมล: hello@xman.studio"</span>
+            ),
+            <span class="c-keyword">default</span> <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">textMsg</span>(
+                <span class="c-string">"ขอบคุณสำหรับข้อความครับ 🙏\n"</span>
+                . <span class="c-string">"พิมพ์ 'เมนู' เพื่อดูรายการคำสั่ง"</span>
+            ),
+        };
+
+        <span class="c-var">$this</span>-><span class="c-prop">line</span>-><span class="c-func">replyMessage</span>(<span class="c-var">$replyToken</span>, [<span class="c-var">$reply</span>]);
+    }
+
+    <span class="c-comment">// มีคนเพิ่มเพื่อน (follow)</span>
+    <span class="c-keyword">private function</span> <span class="c-func">handleFollow</span>(<span class="c-type">array</span> <span class="c-var">$event</span>): <span class="c-type">void</span>
+    {
+        <span class="c-var">$userId</span> <span class="c-op">=</span> <span class="c-var">$event</span>[<span class="c-string">'source'</span>][<span class="c-string">'userId'</span>];
+        <span class="c-var">$profile</span> <span class="c-op">=</span> <span class="c-var">$this</span>-><span class="c-prop">line</span>-><span class="c-func">getProfile</span>(<span class="c-var">$userId</span>);
+
+        <span class="c-comment">// บันทึกลง Database</span>
+        <span class="c-type">LineFollower</span>::<span class="c-func">updateOrCreate</span>(
+            [<span class="c-string">'line_user_id'</span> <span class="c-op">=></span> <span class="c-var">$userId</span>],
+            [
+                <span class="c-string">'display_name'</span> <span class="c-op">=></span> <span class="c-var">$profile</span>[<span class="c-string">'displayName'</span>] <span class="c-op">??</span> <span class="c-const">null</span>,
+                <span class="c-string">'picture_url'</span>  <span class="c-op">=></span> <span class="c-var">$profile</span>[<span class="c-string">'pictureUrl'</span>] <span class="c-op">??</span> <span class="c-const">null</span>,
+                <span class="c-string">'status'</span>       <span class="c-op">=></span> <span class="c-string">'active'</span>,
+            ],
+        );
+
+        <span class="c-comment">// ส่งข้อความต้อนรับ</span>
+        <span class="c-var">$this</span>-><span class="c-prop">line</span>-><span class="c-func">replyMessage</span>(<span class="c-var">$event</span>[<span class="c-string">'replyToken'</span>], [
+            <span class="c-var">$this</span>-><span class="c-func">textMsg</span>(
+                <span class="c-string">"🎉 ยินดีต้อนรับสู่ XMAN Studio!\n\n"</span>
+                . <span class="c-string">"พิมพ์ 'เมนู' เพื่อดูสิ่งที่เราทำได้"</span>
+            ),
+        ]);
+    }
+
+    <span class="c-comment">// มีคน unfollow</span>
+    <span class="c-keyword">private function</span> <span class="c-func">handleUnfollow</span>(<span class="c-type">array</span> <span class="c-var">$event</span>): <span class="c-type">void</span>
+    {
+        <span class="c-type">LineFollower</span>::<span class="c-func">where</span>(<span class="c-string">'line_user_id'</span>, <span class="c-var">$event</span>[<span class="c-string">'source'</span>][<span class="c-string">'userId'</span>])
+            -><span class="c-func">update</span>([<span class="c-string">'status'</span> <span class="c-op">=></span> <span class="c-string">'inactive'</span>]);
+    }
+
+    <span class="c-comment">// Postback จาก Flex Message / Rich Menu</span>
+    <span class="c-keyword">private function</span> <span class="c-func">handlePostback</span>(<span class="c-type">array</span> <span class="c-var">$event</span>): <span class="c-type">void</span>
+    {
+        <span class="c-func">parse_str</span>(<span class="c-var">$event</span>[<span class="c-string">'postback'</span>][<span class="c-string">'data'</span>], <span class="c-var">$params</span>);
+
+        <span class="c-keyword">match</span> (<span class="c-var">$params</span>[<span class="c-string">'action'</span>] <span class="c-op">??</span> <span class="c-string">''</span>) {
+            <span class="c-string">'view_order'</span>  <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">sendOrderDetail</span>(<span class="c-var">$event</span>, <span class="c-var">$params</span>),
+            <span class="c-string">'track'</span>       <span class="c-op">=></span> <span class="c-var">$this</span>-><span class="c-func">sendTrackingInfo</span>(<span class="c-var">$event</span>, <span class="c-var">$params</span>),
+            <span class="c-keyword">default</span>       <span class="c-op">=></span> <span class="c-const">null</span>,
+        };
+    }
+
+    <span class="c-comment">// Helper: สร้าง Text Message Object</span>
+    <span class="c-keyword">private function</span> <span class="c-func">textMsg</span>(<span class="c-type">string</span> <span class="c-var">$text</span>): <span class="c-type">array</span>
+    {
+        <span class="c-keyword">return</span> [<span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'text'</span>, <span class="c-string">'text'</span> <span class="c-op">=></span> <span class="c-var">$text</span>];
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 4: Route & Middleware -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Step 4 — Route & CSRF Exemption</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ลงทะเบียน Route และยกเว้น CSRF สำหรับ Webhook / Register webhook route</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — routes/api.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// routes/api.php</span>
+<span class="c-comment">// API routes จะไม่มี CSRF token อยู่แล้ว</span>
+<span class="c-keyword">use</span> <span class="c-type">App\Http\Controllers\LineWebhookController</span>;
+
+<span class="c-type">Route</span>::<span class="c-func">post</span>(
+    <span class="c-string">'/webhook/line'</span>,
+    [<span class="c-type">LineWebhookController</span>::<span class="c-keyword">class</span>, <span class="c-string">'handle'</span>]
+)-><span class="c-func">name</span>(<span class="c-string">'webhook.line'</span>);</code></pre>
+            </div>
+            <div class="mt-4 code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — bootstrap/app.php (Laravel 11)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// ถ้าใช้ routes/web.php แทน api.php</span>
+<span class="c-comment">// ต้องยกเว้น CSRF สำหรับ Webhook URL</span>
+<span class="c-comment">// ======================================</span>
+
+<span class="c-comment">// Laravel 11 — bootstrap/app.php</span>
+-><span class="c-func">withMiddleware</span>(<span class="c-keyword">function</span> (<span class="c-type">Middleware</span> <span class="c-var">$middleware</span>) {
+    <span class="c-var">$middleware</span>-><span class="c-func">validateCsrfTokens</span>(
+        <span class="c-attr">except</span>: [
+            <span class="c-string">'webhook/line'</span>,
+            <span class="c-string">'webhook/*'</span>,  <span class="c-comment">// หรือยกเว้นทั้งหมด</span>
+        ]
+    );
+})
+
+<span class="c-comment">// ======================================</span>
+<span class="c-comment">// Laravel 10 — app/Http/Middleware/</span>
+<span class="c-comment">//               VerifyCsrfToken.php</span>
+<span class="c-comment">// ======================================</span>
+<span class="c-keyword">protected</span> <span class="c-var">$except</span> <span class="c-op">=</span> [
+    <span class="c-string">'webhook/line'</span>,
+];</code></pre>
+            </div>
+            <div class="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                <div class="flex items-start gap-2">
+                    <span class="text-amber-500 text-lg">⚠️</span>
+                    <div class="text-sm text-amber-800">
+                        <strong>สำคัญ!</strong> Webhook URL ที่ตั้งใน LINE Developers Console ต้องเป็น HTTPS<br>
+                        ตัวอย่าง: <code class="bg-amber-100 px-1 rounded">https://yoursite.com/api/webhook/line</code><br>
+                        สำหรับทดสอบในเครื่อง ใช้ <strong>ngrok</strong>: <code class="bg-amber-100 px-1 rounded">ngrok http 8000</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LINE OA 5: Text Message Types -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Message Types — ประเภทข้อความ</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Text, Image, Sticker, Quick Reply / All message types you can send</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — Message Objects</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// ======================================</span>
+<span class="c-comment">// 1) Text Message — ข้อความธรรมดา</span>
+<span class="c-comment">// ======================================</span>
+<span class="c-var">$textMsg</span> <span class="c-op">=</span> [
+    <span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'text'</span>,
+    <span class="c-string">'text'</span> <span class="c-op">=></span> <span class="c-string">'สวัสดีครับ! 🎉'</span>,
+];
+
+<span class="c-comment">// ======================================</span>
+<span class="c-comment">// 2) Text + Emoji</span>
+<span class="c-comment">// ======================================</span>
+<span class="c-var">$emojiMsg</span> <span class="c-op">=</span> [
+    <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'text'</span>,
+    <span class="c-string">'text'</span>   <span class="c-op">=></span> <span class="c-string">'$ สั่งซื้อสำเร็จ $ ขอบคุณครับ'</span>,
+    <span class="c-string">'emojis'</span> <span class="c-op">=></span> [
+        [<span class="c-string">'index'</span> <span class="c-op">=></span> <span class="c-number">0</span>, <span class="c-string">'productId'</span> <span class="c-op">=></span> <span class="c-string">'5ac1bfd5040ab15980c9b435'</span>,
+         <span class="c-string">'emojiId'</span> <span class="c-op">=></span> <span class="c-string">'001'</span>],
+        [<span class="c-string">'index'</span> <span class="c-op">=></span> <span class="c-number">12</span>, <span class="c-string">'productId'</span> <span class="c-op">=></span> <span class="c-string">'5ac1bfd5040ab15980c9b435'</span>,
+         <span class="c-string">'emojiId'</span> <span class="c-op">=></span> <span class="c-string">'002'</span>],
+    ],
+];
+
+<span class="c-comment">// ======================================</span>
+<span class="c-comment">// 3) Image Message — ส่งรูปภาพ</span>
+<span class="c-comment">// ======================================</span>
+<span class="c-var">$imageMsg</span> <span class="c-op">=</span> [
+    <span class="c-string">'type'</span>               <span class="c-op">=></span> <span class="c-string">'image'</span>,
+    <span class="c-string">'originalContentUrl'</span> <span class="c-op">=></span> <span class="c-string">'https://yoursite.com/img/promo.jpg'</span>,
+    <span class="c-string">'previewImageUrl'</span>    <span class="c-op">=></span> <span class="c-string">'https://yoursite.com/img/promo-sm.jpg'</span>,
+];
+
+<span class="c-comment">// ======================================</span>
+<span class="c-comment">// 4) Sticker Message — สติกเกอร์</span>
+<span class="c-comment">// ======================================</span>
+<span class="c-var">$stickerMsg</span> <span class="c-op">=</span> [
+    <span class="c-string">'type'</span>      <span class="c-op">=></span> <span class="c-string">'sticker'</span>,
+    <span class="c-string">'packageId'</span> <span class="c-op">=></span> <span class="c-string">'446'</span>,
+    <span class="c-string">'stickerId'</span> <span class="c-op">=></span> <span class="c-string">'1988'</span>,
+];
+
+<span class="c-comment">// ======================================</span>
+<span class="c-comment">// 5) Quick Reply — ปุ่มตอบด่วน</span>
+<span class="c-comment">// ======================================</span>
+<span class="c-var">$quickReply</span> <span class="c-op">=</span> [
+    <span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'text'</span>,
+    <span class="c-string">'text'</span> <span class="c-op">=></span> <span class="c-string">'เลือกสิ่งที่ต้องการ:'</span>,
+    <span class="c-string">'quickReply'</span> <span class="c-op">=></span> [
+        <span class="c-string">'items'</span> <span class="c-op">=></span> [
+            [
+                <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'action'</span>,
+                <span class="c-string">'action'</span> <span class="c-op">=></span> [
+                    <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'message'</span>,
+                    <span class="c-string">'label'</span> <span class="c-op">=></span> <span class="c-string">'💰 ดูราคา'</span>,
+                    <span class="c-string">'text'</span>  <span class="c-op">=></span> <span class="c-string">'ราคา'</span>,
+                ],
+            ],
+            [
+                <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'action'</span>,
+                <span class="c-string">'action'</span> <span class="c-op">=></span> [
+                    <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'message'</span>,
+                    <span class="c-string">'label'</span> <span class="c-op">=></span> <span class="c-string">'📞 ติดต่อ'</span>,
+                    <span class="c-string">'text'</span>  <span class="c-op">=></span> <span class="c-string">'ติดต่อ'</span>,
+                ],
+            ],
+            [
+                <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'action'</span>,
+                <span class="c-string">'action'</span> <span class="c-op">=></span> [
+                    <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'uri'</span>,
+                    <span class="c-string">'label'</span> <span class="c-op">=></span> <span class="c-string">'🌐 เว็บไซต์'</span>,
+                    <span class="c-string">'uri'</span>   <span class="c-op">=></span> <span class="c-string">'https://xman.studio'</span>,
+                ],
+            ],
+        ],
+    ],
+];</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 6: Flex Message -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Flex Message — ข้อความสวยงาม (ใบเสร็จ)</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">สร้าง Flex Message สำหรับแจ้งเตือนคำสั่งซื้อ / Beautiful order notification</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — Flex Message Builder</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// สร้าง Flex Message ใบเสร็จคำสั่งซื้อ</span>
+<span class="c-keyword">public function</span> <span class="c-func">orderReceiptFlex</span>(<span class="c-type">Order</span> <span class="c-var">$order</span>): <span class="c-type">array</span>
+{
+    <span class="c-comment">// รายการสินค้า</span>
+    <span class="c-var">$items</span> <span class="c-op">=</span> <span class="c-var">$order</span>-><span class="c-prop">items</span>-><span class="c-func">map</span>(<span class="c-keyword">fn</span> (<span class="c-var">$item</span>) <span class="c-op">=></span> [
+        <span class="c-string">'type'</span>     <span class="c-op">=></span> <span class="c-string">'box'</span>,
+        <span class="c-string">'layout'</span>   <span class="c-op">=></span> <span class="c-string">'horizontal'</span>,
+        <span class="c-string">'contents'</span> <span class="c-op">=></span> [
+            [
+                <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                <span class="c-string">'text'</span>   <span class="c-op">=></span> <span class="c-var">$item</span>-><span class="c-prop">name</span>,
+                <span class="c-string">'size'</span>   <span class="c-op">=></span> <span class="c-string">'sm'</span>,
+                <span class="c-string">'color'</span>  <span class="c-op">=></span> <span class="c-string">'#555555'</span>,
+                <span class="c-string">'flex'</span>   <span class="c-op">=></span> <span class="c-number">0</span>,
+            ],
+            [
+                <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                <span class="c-string">'text'</span>  <span class="c-op">=></span> <span class="c-string">"฿"</span> . <span class="c-func">number_format</span>(<span class="c-var">$item</span>-><span class="c-prop">price</span>, <span class="c-number">2</span>),
+                <span class="c-string">'size'</span>  <span class="c-op">=></span> <span class="c-string">'sm'</span>,
+                <span class="c-string">'color'</span> <span class="c-op">=></span> <span class="c-string">'#111111'</span>,
+                <span class="c-string">'align'</span> <span class="c-op">=></span> <span class="c-string">'end'</span>,
+            ],
+        ],
+    ])-><span class="c-func">toArray</span>();
+
+    <span class="c-keyword">return</span> [
+        <span class="c-string">'type'</span>    <span class="c-op">=></span> <span class="c-string">'flex'</span>,
+        <span class="c-string">'altText'</span> <span class="c-op">=></span> <span class="c-string">"ใบเสร็จ #{$order->order_number}"</span>,
+        <span class="c-string">'contents'</span> <span class="c-op">=></span> [
+            <span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'bubble'</span>,
+            <span class="c-string">'size'</span> <span class="c-op">=></span> <span class="c-string">'mega'</span>,
+
+            <span class="c-comment">// === Header ===</span>
+            <span class="c-string">'header'</span> <span class="c-op">=></span> [
+                <span class="c-string">'type'</span>            <span class="c-op">=></span> <span class="c-string">'box'</span>,
+                <span class="c-string">'layout'</span>          <span class="c-op">=></span> <span class="c-string">'vertical'</span>,
+                <span class="c-string">'backgroundColor'</span> <span class="c-op">=></span> <span class="c-string">'#0ea5e9'</span>,
+                <span class="c-string">'paddingAll'</span>      <span class="c-op">=></span> <span class="c-string">'20px'</span>,
+                <span class="c-string">'contents'</span>        <span class="c-op">=></span> [
+                    [
+                        <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                        <span class="c-string">'text'</span>   <span class="c-op">=></span> <span class="c-string">'XMAN STUDIO'</span>,
+                        <span class="c-string">'color'</span>  <span class="c-op">=></span> <span class="c-string">'#ffffff'</span>,
+                        <span class="c-string">'size'</span>   <span class="c-op">=></span> <span class="c-string">'lg'</span>,
+                        <span class="c-string">'weight'</span> <span class="c-op">=></span> <span class="c-string">'bold'</span>,
+                    ],
+                    [
+                        <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                        <span class="c-string">'text'</span>  <span class="c-op">=></span> <span class="c-string">'ใบเสร็จรับเงิน'</span>,
+                        <span class="c-string">'color'</span> <span class="c-op">=></span> <span class="c-string">'#ffffffcc'</span>,
+                        <span class="c-string">'size'</span>  <span class="c-op">=></span> <span class="c-string">'xs'</span>,
+                    ],
+                ],
+            ],
+
+            <span class="c-comment">// === Body (รายการสินค้า) ===</span>
+            <span class="c-string">'body'</span> <span class="c-op">=></span> [
+                <span class="c-string">'type'</span>     <span class="c-op">=></span> <span class="c-string">'box'</span>,
+                <span class="c-string">'layout'</span>   <span class="c-op">=></span> <span class="c-string">'vertical'</span>,
+                <span class="c-string">'contents'</span> <span class="c-op">=></span> [
+                    [
+                        <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                        <span class="c-string">'text'</span>   <span class="c-op">=></span> <span class="c-string">"Order #{$order->order_number}"</span>,
+                        <span class="c-string">'weight'</span> <span class="c-op">=></span> <span class="c-string">'bold'</span>,
+                        <span class="c-string">'size'</span>   <span class="c-op">=></span> <span class="c-string">'xl'</span>,
+                    ],
+                    [<span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'separator'</span>, <span class="c-string">'margin'</span> <span class="c-op">=></span> <span class="c-string">'lg'</span>],
+
+                    <span class="c-comment">// รายการสินค้า</span>
+                    [
+                        <span class="c-string">'type'</span>     <span class="c-op">=></span> <span class="c-string">'box'</span>,
+                        <span class="c-string">'layout'</span>   <span class="c-op">=></span> <span class="c-string">'vertical'</span>,
+                        <span class="c-string">'margin'</span>   <span class="c-op">=></span> <span class="c-string">'lg'</span>,
+                        <span class="c-string">'spacing'</span>  <span class="c-op">=></span> <span class="c-string">'sm'</span>,
+                        <span class="c-string">'contents'</span> <span class="c-op">=></span> <span class="c-var">$items</span>,
+                    ],
+
+                    [<span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'separator'</span>, <span class="c-string">'margin'</span> <span class="c-op">=></span> <span class="c-string">'lg'</span>],
+
+                    <span class="c-comment">// ยอมรวม</span>
+                    [
+                        <span class="c-string">'type'</span>     <span class="c-op">=></span> <span class="c-string">'box'</span>,
+                        <span class="c-string">'layout'</span>   <span class="c-op">=></span> <span class="c-string">'horizontal'</span>,
+                        <span class="c-string">'margin'</span>   <span class="c-op">=></span> <span class="c-string">'lg'</span>,
+                        <span class="c-string">'contents'</span> <span class="c-op">=></span> [
+                            [
+                                <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                                <span class="c-string">'text'</span>   <span class="c-op">=></span> <span class="c-string">'รวมทั้งหมด'</span>,
+                                <span class="c-string">'size'</span>   <span class="c-op">=></span> <span class="c-string">'md'</span>,
+                                <span class="c-string">'weight'</span> <span class="c-op">=></span> <span class="c-string">'bold'</span>,
+                            ],
+                            [
+                                <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                                <span class="c-string">'text'</span>   <span class="c-op">=></span> <span class="c-string">"฿"</span> . <span class="c-func">number_format</span>(
+                                    <span class="c-var">$order</span>-><span class="c-prop">total</span>, <span class="c-number">2</span>
+                                ),
+                                <span class="c-string">'size'</span>   <span class="c-op">=></span> <span class="c-string">'lg'</span>,
+                                <span class="c-string">'weight'</span> <span class="c-op">=></span> <span class="c-string">'bold'</span>,
+                                <span class="c-string">'color'</span>  <span class="c-op">=></span> <span class="c-string">'#0ea5e9'</span>,
+                                <span class="c-string">'align'</span>  <span class="c-op">=></span> <span class="c-string">'end'</span>,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+
+            <span class="c-comment">// === Footer (ปุ่มกด) ===</span>
+            <span class="c-string">'footer'</span> <span class="c-op">=></span> [
+                <span class="c-string">'type'</span>     <span class="c-op">=></span> <span class="c-string">'box'</span>,
+                <span class="c-string">'layout'</span>   <span class="c-op">=></span> <span class="c-string">'vertical'</span>,
+                <span class="c-string">'spacing'</span>  <span class="c-op">=></span> <span class="c-string">'sm'</span>,
+                <span class="c-string">'contents'</span> <span class="c-op">=></span> [
+                    [
+                        <span class="c-string">'type'</span>   <span class="c-op">=></span> <span class="c-string">'button'</span>,
+                        <span class="c-string">'style'</span>  <span class="c-op">=></span> <span class="c-string">'primary'</span>,
+                        <span class="c-string">'color'</span>  <span class="c-op">=></span> <span class="c-string">'#0ea5e9'</span>,
+                        <span class="c-string">'action'</span> <span class="c-op">=></span> [
+                            <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'uri'</span>,
+                            <span class="c-string">'label'</span> <span class="c-op">=></span> <span class="c-string">'ดูรายละเอียดคำสั่งซื้อ'</span>,
+                            <span class="c-string">'uri'</span>   <span class="c-op">=></span> <span class="c-func">route</span>(
+                                <span class="c-string">'orders.show'</span>,
+                                <span class="c-var">$order</span>
+                            ),
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 7: Laravel Notification -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Laravel Notification Channel</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ใช้ระบบ Notification ของ Laravel ส่งผ่าน LINE / Integrate with Laravel's notification system</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Notifications/OrderPaidNotification.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-tag">&lt;?php</span>
+
+<span class="c-keyword">namespace</span> <span class="c-type">App\Notifications</span>;
+
+<span class="c-keyword">use</span> <span class="c-type">App\Channels\LineChannel</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Notifications\Notification</span>;
+
+<span class="c-keyword">class</span> <span class="c-type">OrderPaidNotification</span> <span class="c-keyword">extends</span> <span class="c-type">Notification</span>
+{
+    <span class="c-keyword">public function</span> <span class="c-func">__construct</span>(
+        <span class="c-keyword">public readonly</span> <span class="c-type">Order</span> <span class="c-var">$order</span>,
+    ) {}
+
+    <span class="c-comment">// กำหนดช่องทางส่ง</span>
+    <span class="c-keyword">public function</span> <span class="c-func">via</span>(<span class="c-var">$notifiable</span>): <span class="c-type">array</span>
+    {
+        <span class="c-keyword">return</span> [<span class="c-string">'mail'</span>, <span class="c-type">LineChannel</span>::<span class="c-keyword">class</span>];
+    }
+
+    <span class="c-comment">// ข้อความสำหรับ LINE</span>
+    <span class="c-keyword">public function</span> <span class="c-func">toLine</span>(<span class="c-var">$notifiable</span>): <span class="c-type">array</span>
+    {
+        <span class="c-keyword">return</span> [
+            [
+                <span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                <span class="c-string">'text'</span> <span class="c-op">=></span> <span class="c-string">"✅ ชำระเงินสำเร็จ!\n\n"</span>
+                    . <span class="c-string">"📦 คำสั่งซื้อ: #{$this->order->order_number}\n"</span>
+                    . <span class="c-string">"💰 ยอดชำระ: ฿"</span> . <span class="c-func">number_format</span>(
+                        <span class="c-var">$this</span>-><span class="c-prop">order</span>-><span class="c-prop">total</span>, <span class="c-number">2</span>
+                    ) . <span class="c-string">"\n"</span>
+                    . <span class="c-string">"📅 วันที่: "</span> . <span class="c-func">now</span>()-><span class="c-func">format</span>(<span class="c-string">'d/m/Y H:i'</span>)
+                    . <span class="c-string">"\n\nขอบคุณที่ใช้บริการครับ 🙏"</span>,
+            ],
+        ];
+    }
+}</code></pre>
+            </div>
+            <div class="mt-4 code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Channels/LineChannel.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-tag">&lt;?php</span>
+
+<span class="c-keyword">namespace</span> <span class="c-type">App\Channels</span>;
+
+<span class="c-keyword">use</span> <span class="c-type">App\Services\LineService</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Notifications\Notification</span>;
+
+<span class="c-keyword">class</span> <span class="c-type">LineChannel</span>
+{
+    <span class="c-keyword">public function</span> <span class="c-func">__construct</span>(
+        <span class="c-keyword">private readonly</span> <span class="c-type">LineService</span> <span class="c-var">$line</span>,
+    ) {}
+
+    <span class="c-keyword">public function</span> <span class="c-func">send</span>(
+        <span class="c-var">$notifiable</span>,
+        <span class="c-type">Notification</span> <span class="c-var">$notification</span>,
+    ): <span class="c-type">void</span> {
+        <span class="c-comment">// ดึง LINE User ID จาก Model</span>
+        <span class="c-var">$lineUserId</span> <span class="c-op">=</span> <span class="c-var">$notifiable</span>-><span class="c-func">routeNotificationFor</span>(
+            <span class="c-string">'line'</span>
+        );
+
+        <span class="c-keyword">if</span> (<span class="c-op">!</span><span class="c-var">$lineUserId</span>) {
+            <span class="c-keyword">return</span>;
+        }
+
+        <span class="c-var">$messages</span> <span class="c-op">=</span> <span class="c-var">$notification</span>-><span class="c-func">toLine</span>(<span class="c-var">$notifiable</span>);
+        <span class="c-var">$this</span>-><span class="c-prop">line</span>-><span class="c-func">pushMessage</span>(<span class="c-var">$lineUserId</span>, <span class="c-var">$messages</span>);
+    }
+}</code></pre>
+            </div>
+            <div class="mt-4 code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Models/User.php (เพิ่ม method)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// เพิ่มใน User Model</span>
+<span class="c-keyword">public function</span> <span class="c-func">routeNotificationForLine</span>(): ?<span class="c-type">string</span>
+{
+    <span class="c-keyword">return</span> <span class="c-var">$this</span>-><span class="c-prop">line_user_id</span>; <span class="c-comment">// คอลัมน์ในตาราง users</span>
+}
+
+<span class="c-comment">// การใช้งาน</span>
+<span class="c-var">$user</span>-><span class="c-func">notify</span>(<span class="c-keyword">new</span> <span class="c-type">OrderPaidNotification</span>(<span class="c-var">$order</span>));</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 8: Rich Menu -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Rich Menu — เมนูด้านล่าง</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">สร้างเมนูแบบกดได้ด้านล่างแชท / Create interactive bottom menu</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — Rich Menu API</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// ======================================</span>
+<span class="c-comment">// สร้าง Rich Menu (ทำครั้งเดียว)</span>
+<span class="c-comment">// ======================================</span>
+<span class="c-keyword">public function</span> <span class="c-func">createRichMenu</span>(): ?<span class="c-type">string</span>
+{
+    <span class="c-var">$response</span> <span class="c-op">=</span> <span class="c-type">Http</span>::<span class="c-func">withToken</span>(<span class="c-var">$this</span>-><span class="c-prop">accessToken</span>)
+        -><span class="c-func">post</span>(<span class="c-string">'{$this->apiBase}/richmenu'</span>, [
+            <span class="c-string">'size'</span> <span class="c-op">=></span> [
+                <span class="c-string">'width'</span>  <span class="c-op">=></span> <span class="c-number">2500</span>,
+                <span class="c-string">'height'</span> <span class="c-op">=></span> <span class="c-number">1686</span>, <span class="c-comment">// หรือ 843</span>
+            ],
+            <span class="c-string">'selected'</span>    <span class="c-op">=></span> <span class="c-const">true</span>,
+            <span class="c-string">'name'</span>        <span class="c-op">=></span> <span class="c-string">'Main Menu'</span>,
+            <span class="c-string">'chatBarText'</span> <span class="c-op">=></span> <span class="c-string">'เมนูหลัก'</span>,
+            <span class="c-string">'areas'</span> <span class="c-op">=></span> [
+                <span class="c-comment">// ปุ่มซ้ายบน — ดูสินค้า</span>
+                [
+                    <span class="c-string">'bounds'</span> <span class="c-op">=></span> [
+                        <span class="c-string">'x'</span> <span class="c-op">=></span> <span class="c-number">0</span>, <span class="c-string">'y'</span> <span class="c-op">=></span> <span class="c-number">0</span>,
+                        <span class="c-string">'width'</span> <span class="c-op">=></span> <span class="c-number">833</span>, <span class="c-string">'height'</span> <span class="c-op">=></span> <span class="c-number">843</span>,
+                    ],
+                    <span class="c-string">'action'</span> <span class="c-op">=></span> [
+                        <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'uri'</span>,
+                        <span class="c-string">'uri'</span>   <span class="c-op">=></span> <span class="c-string">'https://yoursite.com/products'</span>,
+                        <span class="c-string">'label'</span> <span class="c-op">=></span> <span class="c-string">'ดูสินค้า'</span>,
+                    ],
+                ],
+                <span class="c-comment">// ปุ่มกลางบน — ดูราคา</span>
+                [
+                    <span class="c-string">'bounds'</span> <span class="c-op">=></span> [
+                        <span class="c-string">'x'</span> <span class="c-op">=></span> <span class="c-number">833</span>, <span class="c-string">'y'</span> <span class="c-op">=></span> <span class="c-number">0</span>,
+                        <span class="c-string">'width'</span> <span class="c-op">=></span> <span class="c-number">834</span>, <span class="c-string">'height'</span> <span class="c-op">=></span> <span class="c-number">843</span>,
+                    ],
+                    <span class="c-string">'action'</span> <span class="c-op">=></span> [
+                        <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'message'</span>,
+                        <span class="c-string">'text'</span>  <span class="c-op">=></span> <span class="c-string">'ราคา'</span>,
+                        <span class="c-string">'label'</span> <span class="c-op">=></span> <span class="c-string">'ดูราคา'</span>,
+                    ],
+                ],
+                <span class="c-comment">// ปุ่มขวาบน — ติดต่อเรา</span>
+                [
+                    <span class="c-string">'bounds'</span> <span class="c-op">=></span> [
+                        <span class="c-string">'x'</span> <span class="c-op">=></span> <span class="c-number">1667</span>, <span class="c-string">'y'</span> <span class="c-op">=></span> <span class="c-number">0</span>,
+                        <span class="c-string">'width'</span> <span class="c-op">=></span> <span class="c-number">833</span>, <span class="c-string">'height'</span> <span class="c-op">=></span> <span class="c-number">843</span>,
+                    ],
+                    <span class="c-string">'action'</span> <span class="c-op">=></span> [
+                        <span class="c-string">'type'</span>  <span class="c-op">=></span> <span class="c-string">'message'</span>,
+                        <span class="c-string">'text'</span>  <span class="c-op">=></span> <span class="c-string">'ติดต่อ'</span>,
+                        <span class="c-string">'label'</span> <span class="c-op">=></span> <span class="c-string">'ติดต่อเรา'</span>,
+                    ],
+                ],
+            ],
+        ]);
+
+    <span class="c-keyword">return</span> <span class="c-var">$response</span>-><span class="c-func">json</span>(<span class="c-string">'richMenuId'</span>);
+}
+
+<span class="c-comment">// อัพโหลดรูป Rich Menu (2500x1686 px)</span>
+<span class="c-keyword">public function</span> <span class="c-func">uploadRichMenuImage</span>(
+    <span class="c-type">string</span> <span class="c-var">$richMenuId</span>,
+    <span class="c-type">string</span> <span class="c-var">$imagePath</span>,
+): <span class="c-type">bool</span> {
+    <span class="c-var">$response</span> <span class="c-op">=</span> <span class="c-type">Http</span>::<span class="c-func">withToken</span>(<span class="c-var">$this</span>-><span class="c-prop">accessToken</span>)
+        -><span class="c-func">withHeaders</span>([
+            <span class="c-string">'Content-Type'</span> <span class="c-op">=></span> <span class="c-string">'image/png'</span>,
+        ])
+        -><span class="c-func">withBody</span>(
+            <span class="c-func">file_get_contents</span>(<span class="c-var">$imagePath</span>), <span class="c-string">'image/png'</span>
+        )
+        -><span class="c-func">post</span>(
+            <span class="c-string">"https://api-data.line.me/v2/bot/richmenu"</span>
+            . <span class="c-string">"/{$richMenuId}/content"</span>
+        );
+
+    <span class="c-keyword">return</span> <span class="c-var">$response</span>-><span class="c-func">successful</span>();
+}
+
+<span class="c-comment">// ตั้งเป็น Default สำหรับทุกคน</span>
+<span class="c-keyword">public function</span> <span class="c-func">setDefaultRichMenu</span>(
+    <span class="c-type">string</span> <span class="c-var">$richMenuId</span>,
+): <span class="c-type">bool</span> {
+    <span class="c-keyword">return</span> <span class="c-type">Http</span>::<span class="c-func">withToken</span>(<span class="c-var">$this</span>-><span class="c-prop">accessToken</span>)
+        -><span class="c-func">post</span>(
+            <span class="c-string">"{$this->apiBase}/user/all/richmenu/{$richMenuId}"</span>
+        )-><span class="c-func">successful</span>();
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 9: Event-Driven Notifications -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Event Listener — แจ้งเตือนอัตโนมัติ</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ส่งแจ้งเตือนอัตโนมัติเมื่อมี Event เกิดขึ้น / Auto-notify on business events</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Listeners/SendLineOrderNotification.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-tag">&lt;?php</span>
+
+<span class="c-keyword">namespace</span> <span class="c-type">App\Listeners</span>;
+
+<span class="c-keyword">use</span> <span class="c-type">App\Events\OrderPaid</span>;
+<span class="c-keyword">use</span> <span class="c-type">App\Services\LineService</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Contracts\Queue\ShouldQueue</span>;
+
+<span class="c-comment">// ใช้ Queue เพื่อไม่ให้ block ผู้ใช้</span>
+<span class="c-keyword">class</span> <span class="c-type">SendLineOrderNotification</span>
+    <span class="c-keyword">implements</span> <span class="c-type">ShouldQueue</span>
+{
+    <span class="c-keyword">public</span> <span class="c-type">int</span> <span class="c-var">$tries</span> <span class="c-op">=</span> <span class="c-number">3</span>;
+    <span class="c-keyword">public</span> <span class="c-type">int</span> <span class="c-var">$backoff</span> <span class="c-op">=</span> <span class="c-number">10</span>; <span class="c-comment">// วินาที</span>
+
+    <span class="c-keyword">public function</span> <span class="c-func">__construct</span>(
+        <span class="c-keyword">private readonly</span> <span class="c-type">LineService</span> <span class="c-var">$line</span>,
+    ) {}
+
+    <span class="c-keyword">public function</span> <span class="c-func">handle</span>(<span class="c-type">OrderPaid</span> <span class="c-var">$event</span>): <span class="c-type">void</span>
+    {
+        <span class="c-var">$order</span> <span class="c-op">=</span> <span class="c-var">$event</span>-><span class="c-prop">order</span>;
+        <span class="c-var">$user</span>  <span class="c-op">=</span> <span class="c-var">$order</span>-><span class="c-prop">user</span>;
+
+        <span class="c-comment">// ส่งแจ้งลูกค้า</span>
+        <span class="c-keyword">if</span> (<span class="c-var">$user</span>-><span class="c-prop">line_user_id</span>) {
+            <span class="c-var">$this</span>-><span class="c-prop">line</span>-><span class="c-func">pushMessage</span>(
+                <span class="c-var">$user</span>-><span class="c-prop">line_user_id</span>,
+                [<span class="c-var">$this</span>-><span class="c-func">orderReceiptFlex</span>(<span class="c-var">$order</span>)]
+            );
+        }
+
+        <span class="c-comment">// ส่งแจ้ง Admin (Broadcast กลุ่ม admin)</span>
+        <span class="c-var">$adminLineId</span> <span class="c-op">=</span> <span class="c-func">config</span>(<span class="c-string">'services.line.admin_user_id'</span>);
+        <span class="c-keyword">if</span> (<span class="c-var">$adminLineId</span>) {
+            <span class="c-var">$this</span>-><span class="c-prop">line</span>-><span class="c-func">pushMessage</span>(<span class="c-var">$adminLineId</span>, [
+                [
+                    <span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                    <span class="c-string">'text'</span> <span class="c-op">=></span> <span class="c-string">"🔔 คำสั่งซื้อใหม่!\n\n"</span>
+                        . <span class="c-string">"📦 #{$order->order_number}\n"</span>
+                        . <span class="c-string">"👤 {$user->name}\n"</span>
+                        . <span class="c-string">"💰 ฿"</span> . <span class="c-func">number_format</span>(
+                            <span class="c-var">$order</span>-><span class="c-prop">total</span>, <span class="c-number">2</span>
+                        ),
+                ],
+            ]);
+        }
+    }
+}</code></pre>
+            </div>
+            <div class="mt-4 code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Providers/EventServiceProvider.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// ลงทะเบียน Event → Listener</span>
+<span class="c-keyword">protected</span> <span class="c-var">$listen</span> <span class="c-op">=</span> [
+    <span class="c-type">OrderPaid</span>::<span class="c-keyword">class</span> <span class="c-op">=></span> [
+        <span class="c-type">SendLineOrderNotification</span>::<span class="c-keyword">class</span>,
+        <span class="c-type">SendEmailReceipt</span>::<span class="c-keyword">class</span>,
+        <span class="c-type">UpdateInventory</span>::<span class="c-keyword">class</span>,
+    ],
+    <span class="c-type">OrderShipped</span>::<span class="c-keyword">class</span> <span class="c-op">=></span> [
+        <span class="c-type">SendLineShippingNotification</span>::<span class="c-keyword">class</span>,
+    ],
+    <span class="c-type">LicenseActivated</span>::<span class="c-keyword">class</span> <span class="c-op">=></span> [
+        <span class="c-type">SendLineLicenseInfo</span>::<span class="c-keyword">class</span>,
+    ],
+];</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 10: LINE Notify (Simple Alternative) -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">LINE Notify — ทางเลือกง่ายๆ</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ส่งแจ้งเตือนง่ายๆ ด้วย LINE Notify (ไม่ต้องมี OA) / Simple notification alternative</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — LINE Notify (ง่ายมาก!)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// ======================================</span>
+<span class="c-comment">// LINE Notify — ส่งแจ้งเตือนแบบง่ายที่สุด</span>
+<span class="c-comment">// ขอ Token: https://notify-bot.line.me/</span>
+<span class="c-comment">// ======================================</span>
+
+<span class="c-comment">// .env</span>
+<span class="c-comment">// LINE_NOTIFY_TOKEN=your_token_here</span>
+
+<span class="c-keyword">class</span> <span class="c-type">LineNotifyService</span>
+{
+    <span class="c-keyword">private const</span> <span class="c-const">API_URL</span> <span class="c-op">=</span>
+        <span class="c-string">'https://notify-api.line.me/api/notify'</span>;
+
+    <span class="c-keyword">public function</span> <span class="c-func">send</span>(
+        <span class="c-type">string</span>  <span class="c-var">$message</span>,
+        ?<span class="c-type">string</span> <span class="c-var">$imageUrl</span> <span class="c-op">=</span> <span class="c-const">null</span>,
+        ?<span class="c-type">string</span> <span class="c-var">$stickerPackageId</span> <span class="c-op">=</span> <span class="c-const">null</span>,
+        ?<span class="c-type">string</span> <span class="c-var">$stickerId</span> <span class="c-op">=</span> <span class="c-const">null</span>,
+    ): <span class="c-type">bool</span> {
+        <span class="c-var">$data</span> <span class="c-op">=</span> [<span class="c-string">'message'</span> <span class="c-op">=></span> <span class="c-var">$message</span>];
+
+        <span class="c-keyword">if</span> (<span class="c-var">$imageUrl</span>) {
+            <span class="c-var">$data</span>[<span class="c-string">'imageThumbnail'</span>] <span class="c-op">=</span> <span class="c-var">$imageUrl</span>;
+            <span class="c-var">$data</span>[<span class="c-string">'imageFullsize'</span>]  <span class="c-op">=</span> <span class="c-var">$imageUrl</span>;
+        }
+
+        <span class="c-keyword">if</span> (<span class="c-var">$stickerPackageId</span> <span class="c-op">&&</span> <span class="c-var">$stickerId</span>) {
+            <span class="c-var">$data</span>[<span class="c-string">'stickerPackageId'</span>] <span class="c-op">=</span> <span class="c-var">$stickerPackageId</span>;
+            <span class="c-var">$data</span>[<span class="c-string">'stickerId'</span>]        <span class="c-op">=</span> <span class="c-var">$stickerId</span>;
+        }
+
+        <span class="c-keyword">return</span> <span class="c-type">Http</span>::<span class="c-func">asForm</span>()
+            -><span class="c-func">withToken</span>(<span class="c-func">config</span>(<span class="c-string">'services.line.notify_token'</span>))
+            -><span class="c-func">post</span>(<span class="c-keyword">self</span>::<span class="c-const">API_URL</span>, <span class="c-var">$data</span>)
+            -><span class="c-func">successful</span>();
+    }
+}
+
+<span class="c-comment">// ======================================</span>
+<span class="c-comment">// ตัวอย่างการใช้งาน</span>
+<span class="c-comment">// ======================================</span>
+<span class="c-var">$notify</span> <span class="c-op">=</span> <span class="c-func">app</span>(<span class="c-type">LineNotifyService</span>::<span class="c-keyword">class</span>);
+
+<span class="c-comment">// แจ้งข้อความธรรมดา</span>
+<span class="c-var">$notify</span>-><span class="c-func">send</span>(<span class="c-string">"\n🛒 คำสั่งซื้อใหม่ #1234\n💰 ฿5,990"</span>);
+
+<span class="c-comment">// แจ้งพร้อมรูปภาพ</span>
+<span class="c-var">$notify</span>-><span class="c-func">send</span>(
+    <span class="c-string">"\n📦 สินค้าจัดส่งแล้ว"</span>,
+    <span class="c-attr">imageUrl</span>: <span class="c-string">'https://yoursite.com/tracking.jpg'</span>,
+);
+
+<span class="c-comment">// แจ้งพร้อมสติกเกอร์</span>
+<span class="c-var">$notify</span>-><span class="c-func">send</span>(
+    <span class="c-string">"\n✅ ชำระเงินเรียบร้อย"</span>,
+    <span class="c-attr">stickerPackageId</span>: <span class="c-string">'446'</span>,
+    <span class="c-attr">stickerId</span>: <span class="c-string">'1988'</span>,
+);</code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 11: Artisan Command -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Artisan Command — ส่งแจ้งเตือนผ่าน CLI</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">สร้างคำสั่ง Artisan สำหรับส่ง LINE จาก Terminal / CLI command for LINE notifications</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Console/Commands/LineBroadcast.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-tag">&lt;?php</span>
+
+<span class="c-keyword">namespace</span> <span class="c-type">App\Console\Commands</span>;
+
+<span class="c-keyword">use</span> <span class="c-type">App\Services\LineService</span>;
+<span class="c-keyword">use</span> <span class="c-type">Illuminate\Console\Command</span>;
+
+<span class="c-keyword">class</span> <span class="c-type">LineBroadcast</span> <span class="c-keyword">extends</span> <span class="c-type">Command</span>
+{
+    <span class="c-keyword">protected</span> <span class="c-var">$signature</span> <span class="c-op">=</span>
+        <span class="c-string">'line:broadcast {message : ข้อความที่จะส่ง}'</span>;
+
+    <span class="c-keyword">protected</span> <span class="c-var">$description</span> <span class="c-op">=</span>
+        <span class="c-string">'ส่งข้อความ LINE ถึงผู้ติดตามทุกคน'</span>;
+
+    <span class="c-keyword">public function</span> <span class="c-func">handle</span>(<span class="c-type">LineService</span> <span class="c-var">$line</span>): <span class="c-type">int</span>
+    {
+        <span class="c-var">$message</span> <span class="c-op">=</span> <span class="c-var">$this</span>-><span class="c-func">argument</span>(<span class="c-string">'message'</span>);
+
+        <span class="c-keyword">if</span> (<span class="c-op">!</span><span class="c-var">$this</span>-><span class="c-func">confirm</span>(<span class="c-string">"ส่ง: \"{$message}\" ?"</span>)) {
+            <span class="c-var">$this</span>-><span class="c-func">info</span>(<span class="c-string">'ยกเลิก'</span>);
+            <span class="c-keyword">return</span> <span class="c-number">0</span>;
+        }
+
+        <span class="c-var">$success</span> <span class="c-op">=</span> <span class="c-var">$line</span>-><span class="c-func">broadcast</span>([
+            [<span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'text'</span>, <span class="c-string">'text'</span> <span class="c-op">=></span> <span class="c-var">$message</span>],
+        ]);
+
+        <span class="c-var">$success</span>
+            ? <span class="c-var">$this</span>-><span class="c-func">info</span>(<span class="c-string">'✅ ส่งเรียบร้อย!'</span>)
+            : <span class="c-var">$this</span>-><span class="c-func">error</span>(<span class="c-string">'❌ ส่งไม่สำเร็จ'</span>);
+
+        <span class="c-keyword">return</span> <span class="c-var">$success</span> ? <span class="c-number">0</span> : <span class="c-number">1</span>;
+    }
+}
+
+<span class="c-comment">// ======================================</span>
+<span class="c-comment">// ใช้งาน:</span>
+<span class="c-comment">// php artisan line:broadcast "สวัสดีปีใหม่!"</span>
+<span class="c-comment">// ======================================</span></code></pre>
+            </div>
+        </div>
+
+        <!-- LINE OA 12: Scheduled Notifications -->
+        <div class="academy-card rounded-2xl p-6 gloss">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <h3 class="font-bold text-slate-800">Scheduled — แจ้งเตือนตามเวลา</h3>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">ตั้งเวลาส่งแจ้งเตือนอัตโนมัติ (License หมดอายุ, รายงานรายวัน) / Scheduled auto-notifications</p>
+            <div class="code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — app/Console/Commands/LineExpiryReminder.php</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-keyword">class</span> <span class="c-type">LineExpiryReminder</span> <span class="c-keyword">extends</span> <span class="c-type">Command</span>
+{
+    <span class="c-keyword">protected</span> <span class="c-var">$signature</span> <span class="c-op">=</span> <span class="c-string">'line:expiry-reminder'</span>;
+    <span class="c-keyword">protected</span> <span class="c-var">$description</span> <span class="c-op">=</span> <span class="c-string">'แจ้ง License ใกล้หมดอายุ'</span>;
+
+    <span class="c-keyword">public function</span> <span class="c-func">handle</span>(<span class="c-type">LineService</span> <span class="c-var">$line</span>): <span class="c-type">int</span>
+    {
+        <span class="c-comment">// หา License ที่จะหมดอายุใน 7 วัน</span>
+        <span class="c-var">$expiring</span> <span class="c-op">=</span> <span class="c-type">License</span>::<span class="c-func">with</span>(<span class="c-string">'user'</span>)
+            -><span class="c-func">where</span>(<span class="c-string">'status'</span>, <span class="c-string">'active'</span>)
+            -><span class="c-func">whereBetween</span>(<span class="c-string">'expires_at'</span>, [
+                <span class="c-func">now</span>(),
+                <span class="c-func">now</span>()-><span class="c-func">addDays</span>(<span class="c-number">7</span>),
+            ])
+            -><span class="c-func">get</span>();
+
+        <span class="c-keyword">foreach</span> (<span class="c-var">$expiring</span> <span class="c-keyword">as</span> <span class="c-var">$license</span>) {
+            <span class="c-var">$user</span> <span class="c-op">=</span> <span class="c-var">$license</span>-><span class="c-prop">user</span>;
+            <span class="c-keyword">if</span> (<span class="c-op">!</span><span class="c-var">$user</span>-><span class="c-prop">line_user_id</span>) <span class="c-keyword">continue</span>;
+
+            <span class="c-var">$days</span> <span class="c-op">=</span> <span class="c-func">now</span>()-><span class="c-func">diffInDays</span>(<span class="c-var">$license</span>-><span class="c-prop">expires_at</span>);
+
+            <span class="c-var">$line</span>-><span class="c-func">pushMessage</span>(<span class="c-var">$user</span>-><span class="c-prop">line_user_id</span>, [
+                [
+                    <span class="c-string">'type'</span> <span class="c-op">=></span> <span class="c-string">'text'</span>,
+                    <span class="c-string">'text'</span> <span class="c-op">=></span> <span class="c-string">"⏰ แจ้งเตือน License ใกล้หมดอายุ\n\n"</span>
+                        . <span class="c-string">"🔑 {$license->product->name}\n"</span>
+                        . <span class="c-string">"📅 หมดอายุอีก {$days} วัน\n"</span>
+                        . <span class="c-string">"({$license->expires_at->format('d/m/Y')})\n\n"</span>
+                        . <span class="c-string">"ต่ออายุได้ที่ xman.studio/licenses"</span>,
+                ],
+            ]);
+
+            <span class="c-var">$this</span>-><span class="c-func">info</span>(<span class="c-string">"ส่งถึง {$user->name}"</span>);
+        }
+
+        <span class="c-var">$this</span>-><span class="c-func">info</span>(<span class="c-string">"ส่งทั้งหมด {$expiring->count()} คน"</span>);
+        <span class="c-keyword">return</span> <span class="c-number">0</span>;
+    }
+}</code></pre>
+            </div>
+            <div class="mt-4 code-block">
+                <div class="code-block-header">
+                    <div class="code-block-dots"><span></span><span></span><span></span></div>
+                    <span class="code-block-lang">PHP — routes/console.php (Laravel 11)</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+<pre><code><span class="c-comment">// ตั้งเวลาให้ทำงานทุกวันตอน 9 โมงเช้า</span>
+<span class="c-type">Schedule</span>::<span class="c-func">command</span>(<span class="c-string">'line:expiry-reminder'</span>)
+    -><span class="c-func">dailyAt</span>(<span class="c-string">'09:00'</span>)
+    -><span class="c-func">timezone</span>(<span class="c-string">'Asia/Bangkok'</span>);
+
+<span class="c-comment">// รายงานยอดขายรายวันให้ Admin</span>
+<span class="c-type">Schedule</span>::<span class="c-func">command</span>(<span class="c-string">'line:daily-report'</span>)
+    -><span class="c-func">dailyAt</span>(<span class="c-string">'20:00'</span>)
+    -><span class="c-func">timezone</span>(<span class="c-string">'Asia/Bangkok'</span>);
+
+<span class="c-comment">// ======================================</span>
+<span class="c-comment">// อย่าลืม! ตั้ง cron บน server:</span>
+<span class="c-comment">// * * * * * cd /path && php artisan schedule:run</span>
+<span class="c-comment">// ======================================</span></code></pre>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Summary Reference Box -->
+    <div class="mt-6 academy-card rounded-2xl p-6">
+        <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            สรุป: เลือกใช้วิธีไหนดี? / Which approach to use?
+        </h3>
+        <div class="grid sm:grid-cols-3 gap-4">
+            <div class="p-4 bg-green-50 rounded-xl border border-green-200">
+                <div class="font-bold text-green-800 mb-1">LINE Notify</div>
+                <div class="text-sm text-green-700 mb-2">ง่ายที่สุด, ใช้ได้เลย</div>
+                <ul class="text-xs text-green-600 space-y-1">
+                    <li>- แจ้งเตือนทีมงาน</li>
+                    <li>- Server monitoring</li>
+                    <li>- ไม่ต้องมี OA</li>
+                    <li>- ส่งได้ 1,000 ครั้ง/ชม.</li>
+                </ul>
+            </div>
+            <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <div class="font-bold text-blue-800 mb-1">Messaging API (Push)</div>
+                <div class="text-sm text-blue-700 mb-2">ยืดหยุ่น, หลายฟีเจอร์</div>
+                <ul class="text-xs text-blue-600 space-y-1">
+                    <li>- แจ้งลูกค้ารายคน</li>
+                    <li>- Flex Message สวยๆ</li>
+                    <li>- Rich Menu</li>
+                    <li>- Push 500 msg/req</li>
+                </ul>
+            </div>
+            <div class="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                <div class="font-bold text-purple-800 mb-1">Webhook (Reply)</div>
+                <div class="text-sm text-purple-700 mb-2">Chatbot, Auto-reply</div>
+                <ul class="text-xs text-purple-600 space-y-1">
+                    <li>- ตอบกลับอัตโนมัติ</li>
+                    <li>- Chatbot สั่งงานได้</li>
+                    <li>- ฟรี! ไม่จำกัดจำนวน</li>
+                    <li>- ต้องมี HTTPS domain</li>
+                </ul>
             </div>
         </div>
     </div>
