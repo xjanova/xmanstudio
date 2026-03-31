@@ -558,7 +558,7 @@
 
     <span class="c-comment">&lt;!-- Pagination --&gt;</span>
     <span class="c-tag">&lt;div</span> <span class="c-attr">class</span>=<span class="c-string">"mt-8"</span><span class="c-tag">&gt;</span>
-        {{ <span class="c-var">$products</span>-><span class="c-func">links</span>() }}
+        @{{ <span class="c-var">$products</span>-><span class="c-func">links</span>() }}
     <span class="c-tag">&lt;/div&gt;</span>
 <span class="c-tag">&lt;/div&gt;</span>
 <span class="c-decorator">@@endsection</span></code></pre>
