@@ -275,7 +275,8 @@
     <div class="float-shape w-48 h-48 bg-white top-5 left-10" style="animation-delay: 0s;"></div>
     <div class="float-shape w-32 h-32 bg-yellow-200 top-20 right-20" style="animation-delay: -5s;"></div>
     <div class="float-shape w-40 h-40 bg-cyan-200 bottom-0 right-10" style="animation-delay: -10s;"></div>
-    <div class="absolute inset-0 opacity-[0.04]" style="background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%221%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    <!-- Fade to content area -->
+    <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e0f2fe] to-transparent"></div>
     <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)">
         <div :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'" style="transition: all 0.5s ease 0.1s;">
             <span class="inline-flex items-center gap-2 px-5 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-white text-sm font-semibold">
