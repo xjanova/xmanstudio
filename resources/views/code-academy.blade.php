@@ -276,7 +276,7 @@
     <div class="float-shape w-32 h-32 bg-yellow-200 top-20 right-20" style="animation-delay: -5s;"></div>
     <div class="float-shape w-40 h-40 bg-cyan-200 bottom-0 right-10" style="animation-delay: -10s;"></div>
     <!-- Fade to content area -->
-    <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e0f2fe] to-transparent"></div>
+    <div class="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#e0f2fe] via-[#bae6fd]/50 to-transparent"></div>
     <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)">
         <div :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'" style="transition: all 0.5s ease 0.1s;">
             <span class="inline-flex items-center gap-2 px-5 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-white text-sm font-semibold">
