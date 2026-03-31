@@ -143,6 +143,61 @@ $seo->site_title;
 - Custom tracking code (Google Analytics, Facebook Pixel, etc.) is injected via `Setting::getValue('custom_code_head')` in layouts.
 - Theme selection between standard and premium layouts is handled dynamically.
 
+## Code Academy — Code Example Rules (CRITICAL)
+
+The file `resources/views/code-academy.blade.php` displays syntax-highlighted code examples. Since it's a Blade template, raw code in `<pre><code>` blocks can conflict with Blade's parser. **Follow these rules strictly:**
+
+### Blade-conflicting syntax inside `<pre><code>` blocks:
+
+| Syntax | Risk | Solution |
+|--------|------|----------|
+| `{{ $var }}` | Blade parses as PHP echo → crash | Wrap block in `@verbatim`...`@endverbatim` |
+| `{!! $var !!}` | Blade parses as raw echo → crash | Wrap block in `@verbatim`...`@endverbatim` |
+| `@extends`, `@section`, `@if`, `@foreach`, etc. | Blade parses as directives | Wrap block in `@verbatim`...`@endverbatim` |
+| `@click`, `@submit` (Alpine.js) | Safe — Blade ignores unknown `@` directives | No action needed |
+| HTML tags `<div>`, `<?php` | Must be encoded | Use `&lt;` `&gt;` via `<span>` tags |
+
+### Pattern for code blocks WITH Blade syntax:
+
+```blade
+@verbatim
+<pre><code><span class="c-decorator">@extends</span>(<span class="c-string">'layouts.app'</span>)
+<span class="c-decorator">@section</span>(<span class="c-string">'content'</span>)
+    {{ <span class="c-var">$data</span> }}
+<span class="c-decorator">@endsection</span></code></pre>
+@endverbatim
+```
+
+- Inside `@verbatim`: use `@section` directly (NOT `@@section`)
+- Inside `@verbatim`: use `{{ }}` directly (NOT `@{{ }}`)
+- Place `@verbatim` on the line BEFORE `<pre><code>` and `@endverbatim` on the line AFTER `</code></pre>`
+- Only wrap blocks that actually contain Blade syntax — pure PHP/JS/Python/SQL blocks don't need it
+
+### Pattern for code blocks WITHOUT Blade syntax (most blocks):
+
+```blade
+<pre><code><span class="c-keyword">class</span> <span class="c-type">Example</span>
+{
+    <span class="c-comment">// regular code</span>
+}</code></pre>
+```
+
+### Syntax highlighting CSS classes:
+
+| Class | Usage | Color |
+|-------|-------|-------|
+| `c-keyword` | Language keywords (class, function, return, if) | Purple |
+| `c-type` | Types/classes (String, int, Controller) | Cyan |
+| `c-func` | Function/method names | Yellow |
+| `c-string` | String literals | Green |
+| `c-var` | Variables ($var, this) | Light blue |
+| `c-comment` | Comments | Gray |
+| `c-op` | Operators (=, =>, ->) | Pink |
+| `c-num` | Numbers | Orange |
+| `c-tag` | HTML tags | Red |
+| `c-attr` | HTML attributes | Orange |
+| `c-decorator` | Decorators/annotations (@extends, @app.route) | Yellow |
+
 ## Pre-flight Checks (MUST follow before writing code)
 
 - **Routes:** Before using `route('name')` in Blade templates, always read `routes/web.php` first to verify the exact route name exists.

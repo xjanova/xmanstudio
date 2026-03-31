@@ -534,34 +534,36 @@
                     <span class="code-block-lang">Blade — products/index.blade.php</span>
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                 </div>
-<pre><code><span class="c-decorator">@@extends</span>(<span class="c-string">'layouts.app'</span>)
-<span class="c-decorator">@@section</span>(<span class="c-string">'title'</span>, <span class="c-string">'สินค้าทั้งหมด'</span>)
+@verbatim
+<pre><code><span class="c-decorator">@extends</span>(<span class="c-string">'layouts.app'</span>)
+<span class="c-decorator">@section</span>(<span class="c-string">'title'</span>, <span class="c-string">'สินค้าทั้งหมด'</span>)
 
-<span class="c-decorator">@@section</span>(<span class="c-string">'content'</span>)
+<span class="c-decorator">@section</span>(<span class="c-string">'content'</span>)
 <span class="c-tag">&lt;div</span> <span class="c-attr">class</span>=<span class="c-string">"max-w-7xl mx-auto px-4 py-8"</span><span class="c-tag">&gt;</span>
     <span class="c-tag">&lt;h1</span> <span class="c-attr">class</span>=<span class="c-string">"text-3xl font-bold mb-6"</span><span class="c-tag">&gt;</span>
         สินค้าทั้งหมด
     <span class="c-tag">&lt;/h1&gt;</span>
 
     <span class="c-tag">&lt;div</span> <span class="c-attr">class</span>=<span class="c-string">"grid md:grid-cols-3 gap-6"</span><span class="c-tag">&gt;</span>
-        <span class="c-decorator">@@forelse</span>(<span class="c-var">$products</span> <span class="c-keyword">as</span> <span class="c-var">$product</span>)
+        <span class="c-decorator">@forelse</span>(<span class="c-var">$products</span> <span class="c-keyword">as</span> <span class="c-var">$product</span>)
             <span class="c-tag">&lt;x-product-card</span>
                 <span class="c-attr">:product</span>=<span class="c-string">"$product"</span>
                 <span class="c-attr">:show-price</span>=<span class="c-string">"true"</span>
             <span class="c-tag">/&gt;</span>
-        <span class="c-decorator">@@empty</span>
+        <span class="c-decorator">@empty</span>
             <span class="c-tag">&lt;p</span> <span class="c-attr">class</span>=<span class="c-string">"text-gray-500 col-span-3"</span><span class="c-tag">&gt;</span>
                 ยังไม่มีสินค้า
             <span class="c-tag">&lt;/p&gt;</span>
-        <span class="c-decorator">@@endforelse</span>
+        <span class="c-decorator">@endforelse</span>
     <span class="c-tag">&lt;/div&gt;</span>
 
     <span class="c-comment">&lt;!-- Pagination --&gt;</span>
     <span class="c-tag">&lt;div</span> <span class="c-attr">class</span>=<span class="c-string">"mt-8"</span><span class="c-tag">&gt;</span>
-        @{{ <span class="c-var">$products</span>-><span class="c-func">links</span>() }}
+        {{ <span class="c-var">$products</span>-><span class="c-func">links</span>() }}
     <span class="c-tag">&lt;/div&gt;</span>
 <span class="c-tag">&lt;/div&gt;</span>
-<span class="c-decorator">@@endsection</span></code></pre>
+<span class="c-decorator">@endsection</span></code></pre>
+@endverbatim
             </div>
         </div>
 
