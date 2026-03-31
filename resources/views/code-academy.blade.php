@@ -38,15 +38,15 @@
         background-clip: text;
     }
     .code-block {
-        background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
-        border: 1px solid rgba(56, 189, 248, 0.2);
+        background: linear-gradient(145deg, #f8fafc 0%, #f0f9ff 50%, #fefce8 100%);
+        border: 1px solid rgba(148, 197, 253, 0.45);
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(56, 189, 248, 0.1);
+        box-shadow: 0 4px 20px rgba(14, 116, 144, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
     .code-block-header {
-        background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
-        border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+        background: linear-gradient(90deg, #e0f2fe 0%, #f0f9ff 50%, #fef9ef 100%);
+        border-bottom: 1px solid rgba(148, 197, 253, 0.35);
         padding: 10px 16px;
         display: flex;
         align-items: center;
@@ -61,11 +61,11 @@
         height: 12px;
         border-radius: 50%;
     }
-    .code-block-dots span:nth-child(1) { background: #ef4444; }
-    .code-block-dots span:nth-child(2) { background: #eab308; }
-    .code-block-dots span:nth-child(3) { background: #22c55e; }
+    .code-block-dots span:nth-child(1) { background: #f87171; }
+    .code-block-dots span:nth-child(2) { background: #fbbf24; }
+    .code-block-dots span:nth-child(3) { background: #34d399; }
     .code-block-lang {
-        color: #94a3b8;
+        color: #0369a1;
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -77,24 +77,24 @@
         font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
         font-size: 0.85rem;
         line-height: 1.7;
-        color: #e2e8f0;
+        color: #1e293b;
         margin: 0;
     }
-    /* Syntax Colors */
-    .c-keyword { color: #c084fc; font-weight: 600; }   /* purple - keywords */
-    .c-type { color: #67e8f9; }                          /* cyan - types/classes */
-    .c-func { color: #fbbf24; }                          /* amber - functions */
-    .c-string { color: #86efac; }                        /* green - strings */
-    .c-number { color: #fb923c; }                        /* orange - numbers */
-    .c-comment { color: #64748b; font-style: italic; }   /* gray - comments */
-    .c-var { color: #f472b6; }                           /* pink - variables */
-    .c-attr { color: #93c5fd; }                          /* blue - attributes */
-    .c-tag { color: #f87171; }                           /* red - HTML tags */
-    .c-op { color: #94a3b8; }                            /* gray - operators */
-    .c-prop { color: #a5f3fc; }                          /* light cyan - properties */
-    .c-decorator { color: #c4b5fd; }                     /* light purple - decorators */
-    .c-builtin { color: #fca5a5; }                       /* light red - built-in */
-    .c-const { color: #5eead4; }                         /* teal - constants */
+    /* Syntax Colors — Light Theme */
+    .c-keyword { color: #7c3aed; font-weight: 600; }   /* purple - keywords */
+    .c-type { color: #0891b2; }                          /* teal - types/classes */
+    .c-func { color: #b45309; }                          /* amber - functions */
+    .c-string { color: #15803d; }                        /* green - strings */
+    .c-number { color: #c2410c; }                        /* orange - numbers */
+    .c-comment { color: #94a3b8; font-style: italic; }   /* gray - comments */
+    .c-var { color: #be185d; }                           /* pink - variables */
+    .c-attr { color: #1d4ed8; }                          /* blue - attributes */
+    .c-tag { color: #dc2626; }                           /* red - HTML tags */
+    .c-op { color: #64748b; }                            /* gray - operators */
+    .c-prop { color: #0e7490; }                          /* cyan - properties */
+    .c-decorator { color: #7c3aed; }                     /* purple - decorators */
+    .c-builtin { color: #e11d48; }                       /* rose - built-in */
+    .c-const { color: #0d9488; }                         /* teal - constants */
 
     /* Category Navigation */
     .cat-nav-item {
@@ -149,9 +149,9 @@
 
     /* Copy button */
     .copy-btn {
-        background: rgba(56, 189, 248, 0.15);
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        color: #7dd3fc;
+        background: rgba(14, 165, 233, 0.1);
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        color: #0369a1;
         padding: 4px 12px;
         border-radius: 6px;
         font-size: 0.7rem;
@@ -160,8 +160,8 @@
         transition: all 0.2s;
     }
     .copy-btn:hover {
-        background: rgba(56, 189, 248, 0.3);
-        color: #bae6fd;
+        background: rgba(14, 165, 233, 0.2);
+        color: #0c4a6e;
     }
 
     /* Floating shapes */
