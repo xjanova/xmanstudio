@@ -111,6 +111,8 @@ jobs:
 
             echo "=== Pulling latest code ==="
             git pull origin main --ff-only 2>&1 || echo "WARNING: git pull failed"
+            php artisan route:clear 2>/dev/null || true
+            php artisan config:clear 2>/dev/null || true
 
             case "$ACTION" in
               setup-wireguard)
