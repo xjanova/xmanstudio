@@ -200,6 +200,18 @@ jobs:
                 do_sudo cat /etc/sudoers.d/wireguard 2>/dev/null || echo "No wireguard sudoers file"
 
                 echo ""
+                echo "=== PHP sudo wg test ==="
+                php artisan tinker --execute="
+                  \$r = \Illuminate\Support\Facades\Process::run('sudo wg show');
+                  echo 'Exit: '.\$r->exitCode().PHP_EOL;
+                  echo 'Out: '.\$r->output().PHP_EOL;
+                  echo 'Err: '.\$r->errorOutput().PHP_EOL;
+                " 2>/dev/null || echo "Tinker test failed"
+
+                echo "=== Shell sudo wg test ==="
+                sudo wg show 2>&1 || echo "Shell sudo wg failed"
+
+                echo ""
                 echo "=== WireGuard Installation ==="
                 which wg 2>/dev/null && echo "wg binary: $(which wg)" || echo "wg binary: NOT FOUND"
                 dpkg -l wireguard 2>/dev/null | grep -E "^ii" || echo "wireguard package: NOT INSTALLED"
