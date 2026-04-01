@@ -83,11 +83,18 @@ jobs:
             # Sudo wrapper: use SUDO_PASS if available
             do_sudo() {
               if [ -n "$SUDO_PASS" ]; then
-                echo "$SUDO_PASS" | sudo -S "$@" 2>&1 | grep -v '^\[sudo\]'
+                printf '%s\n' "$SUDO_PASS" | sudo -S "$@" 2>&1 | grep -v '^\[sudo\]'
               else
                 sudo "$@" 2>&1
               fi
             }
+
+            # Debug: check if SUDO_PASS is set (don't print value)
+            if [ -n "$SUDO_PASS" ]; then
+              echo "SUDO_PASS: set (${#SUDO_PASS} chars)"
+            else
+              echo "SUDO_PASS: NOT SET"
+            fi
 
             # Project directory (use DEPLOY_PATH secret, fallback to common paths)
             PROJECT_DIR="${DEPLOY_PATH:-/var/www/xmanstudio}"
