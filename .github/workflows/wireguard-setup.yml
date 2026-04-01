@@ -122,17 +122,39 @@ jobs:
                 ;;
 
               wireguard-status)
-                echo "=== WireGuard Status ==="
-                sudo wg show 2>/dev/null || echo "WireGuard not running or sudo unavailable"
+                echo "=== System Info ==="
+                echo "User: $(whoami)"
+                echo "Groups: $(groups)"
+                echo "Sudo: $(sudo -n true 2>&1 && echo 'passwordless' || echo 'requires password')"
 
                 echo ""
-                echo "=== systemctl status ==="
-                sudo systemctl status wg-quick@wg0 --no-pager 2>/dev/null || true
+                echo "=== WireGuard Installation ==="
+                which wg 2>/dev/null && echo "wg binary: $(which wg)" || echo "wg binary: NOT FOUND"
+                dpkg -l wireguard 2>/dev/null | grep -E "^ii" || echo "wireguard package: NOT INSTALLED"
+                ls -la /etc/wireguard/ 2>/dev/null || echo "/etc/wireguard/: NOT FOUND or no access"
+
+                echo ""
+                echo "=== WireGuard Live Status ==="
+                sudo wg show 2>/dev/null || echo "Cannot run wg show (sudo required)"
+
+                echo ""
+                echo "=== Network Interfaces ==="
+                ip link show 2>/dev/null | grep -E "wg|tun" || echo "No WireGuard/tun interfaces found"
+                ip addr show wg0 2>/dev/null || echo "wg0 interface: NOT FOUND"
+
+                echo ""
+                echo "=== IP Forwarding ==="
+                cat /proc/sys/net/ipv4/ip_forward 2>/dev/null || echo "Cannot read"
+
+                echo ""
+                echo "=== Firewall (port 51820) ==="
+                sudo iptables -L -n 2>/dev/null | grep -i "51820" || echo "No iptables rules for 51820 (or sudo unavailable)"
 
                 echo ""
                 echo "=== Database servers ==="
                 php artisan tinker --execute="
                   \$servers = \App\Models\WireguardServer::all();
+                  if (\$servers->isEmpty()) { echo \"No servers in database\n\"; }
                   foreach (\$servers as \$s) {
                     echo \"{$s->name} ({$s->country_code}) - {$s->endpoint} - Active: \" . (\$s->is_active ? 'Y' : 'N') . \" Healthy: \" . (\$s->is_healthy ? 'Y' : 'N') . \" Clients: \" . \$s->clients()->count() . \"/{$s->max_clients}\n\";
                   }
