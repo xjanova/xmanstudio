@@ -83,9 +83,9 @@ jobs:
             # Sudo wrapper: use SUDO_PASS if available
             do_sudo() {
               if [ -n "$SUDO_PASS" ]; then
-                printf '%s\n' "$SUDO_PASS" | sudo -S "$@" 2>&1 | grep -v '^\[sudo\]'
+                echo "$SUDO_PASS" | sudo -S -p '' "$@"
               else
-                sudo "$@" 2>&1
+                sudo "$@"
               fi
             }
 
