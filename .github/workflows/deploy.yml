@@ -71,7 +71,8 @@ jobs:
             --exclude='storage/framework/cache/*' \
             --exclude='storage/framework/sessions/*' \
             --exclude='storage/framework/views/*' \
-            .
+            --exclude='deployment.tar.gz' \
+            . || [ $? -eq 1 ]
 
       - name: Deploy via SSH
         uses: appleboy/scp-action@v1

@@ -59,7 +59,7 @@ class WireguardSetupCommand extends Command
         $publicKey = $this->option('public-key');
 
         if ($privateKey && $publicKey) {
-            $this->info("Using provided key pair.");
+            $this->info('Using provided key pair.');
             $this->info("Public Key: {$publicKey}");
         } else {
             $this->info('Generating WireGuard key pair...');
