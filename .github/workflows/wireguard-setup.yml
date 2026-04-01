@@ -83,10 +83,16 @@ jobs:
             # Setup SUDO_ASKPASS so sudo -A can get password without pipe
             if [ -n "$SUDO_PASS" ]; then
               SUDO_ASKPASS_SCRIPT=$(mktemp /tmp/askpass.XXXXXX)
-              printf '#!/bin/sh\necho "%s"\n' "$SUDO_PASS" > "$SUDO_ASKPASS_SCRIPT"
+              cat > "$SUDO_ASKPASS_SCRIPT" <<ASKEOF
+#!/bin/sh
+echo '$SUDO_PASS'
+ASKEOF
               chmod 700 "$SUDO_ASKPASS_SCRIPT"
               export SUDO_ASKPASS="$SUDO_ASKPASS_SCRIPT"
-              echo "SUDO_PASS: set (${#SUDO_PASS} chars), ASKPASS ready"
+              # Verify askpass works
+              ASKPASS_OUT=$("$SUDO_ASKPASS_SCRIPT")
+              echo "SUDO_PASS: set (${#SUDO_PASS} chars), ASKPASS output: ${#ASKPASS_OUT} chars"
+              echo "First char test: $(echo "$SUDO_PASS" | cut -c1 | od -An -tx1 | tr -d ' ')"
             else
               echo "SUDO_PASS: NOT SET"
             fi
