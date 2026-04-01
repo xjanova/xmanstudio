@@ -121,9 +121,19 @@ jobs:
 
                 echo "=== Setting up sudoers for wg commands ==="
                 CURRENT_USER=$(whoami)
-                echo "${CURRENT_USER} ALL=(root) NOPASSWD: /usr/bin/wg, /usr/bin/wg-quick" | do_sudo tee "/etc/sudoers.d/wireguard-${CURRENT_USER}"
-                do_sudo chmod 440 "/etc/sudoers.d/wireguard-${CURRENT_USER}"
-                echo "Sudoers rule added for ${CURRENT_USER}"
+                PHP_USER=$(php -r "echo exec('whoami');" 2>/dev/null || echo "unknown")
+                echo "SSH user: ${CURRENT_USER}, PHP user: ${PHP_USER}"
+                WG_SUDOERS="/etc/sudoers.d/wireguard"
+                printf '%s ALL=(root) NOPASSWD: /usr/bin/wg, /usr/bin/wg-quick\n' "${CURRENT_USER}" > /tmp/wg_sudoers
+                if [ "${PHP_USER}" != "${CURRENT_USER}" ] && [ "${PHP_USER}" != "unknown" ]; then
+                  printf '%s ALL=(root) NOPASSWD: /usr/bin/wg, /usr/bin/wg-quick\n' "${PHP_USER}" >> /tmp/wg_sudoers
+                fi
+                printf 'www-data ALL=(root) NOPASSWD: /usr/bin/wg, /usr/bin/wg-quick\n' >> /tmp/wg_sudoers
+                do_sudo cp /tmp/wg_sudoers "$WG_SUDOERS"
+                do_sudo chmod 440 "$WG_SUDOERS"
+                rm -f /tmp/wg_sudoers
+                echo "Sudoers rules:"
+                do_sudo cat "$WG_SUDOERS"
 
                 echo "=== Installing WireGuard ==="
                 do_sudo apt-get update -qq && do_sudo apt-get install -y -qq wireguard || echo "WARNING: Could not install WireGuard"
@@ -183,8 +193,11 @@ jobs:
 
               wireguard-status)
                 echo "=== System Info ==="
-                echo "User: $(whoami)"
+                echo "SSH User: $(whoami)"
+                echo "PHP User: $(php -r "echo exec('whoami');" 2>/dev/null)"
                 echo "Groups: $(groups)"
+                echo "Sudoers wg rules:"
+                do_sudo cat /etc/sudoers.d/wireguard 2>/dev/null || echo "No wireguard sudoers file"
 
                 echo ""
                 echo "=== WireGuard Installation ==="
