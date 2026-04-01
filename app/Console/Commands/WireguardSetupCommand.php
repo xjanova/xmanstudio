@@ -57,8 +57,9 @@ class WireguardSetupCommand extends Command
         $publicKey = $keyPair['public_key'];
         $this->info("Public Key: {$publicKey}");
 
-        // Step 3: Create WireGuard config
+        // Step 3: Create WireGuard config (requires sudo — continue on failure)
         $this->info('Creating WireGuard configuration...');
+        $systemSetupOk = true;
 
         $config = "[Interface]\n";
         $config .= "Address = {$address}\n";
@@ -70,46 +71,42 @@ class WireguardSetupCommand extends Command
         $configPath = "/etc/wireguard/{$interface}.conf";
         $result = Process::run('echo ' . escapeshellarg($config) . " | sudo tee {$configPath}");
         if (! $result->successful()) {
-            $this->error('Failed to write WireGuard config: ' . $result->errorOutput());
-
-            return self::FAILURE;
+            $this->warn('Could not write WireGuard config (sudo may require password).');
+            $this->warn('System setup skipped — DB record will still be created.');
+            $systemSetupOk = false;
+        } else {
+            Process::run("sudo chmod 600 {$configPath}");
+            $this->info("Config written to {$configPath}");
         }
 
-        // Set proper permissions on the config file
-        Process::run("sudo chmod 600 {$configPath}");
+        if ($systemSetupOk) {
+            // Step 4: Enable IP forwarding
+            $this->info('Enabling IP forwarding...');
+            Process::run('sudo sysctl -w net.ipv4.ip_forward=1');
+            Process::run("sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf");
+            $checkResult = Process::run("grep -c '^net.ipv4.ip_forward=1' /etc/sysctl.conf");
+            if (trim($checkResult->output()) === '0') {
+                Process::run("echo 'net.ipv4.ip_forward=1' | sudo tee -a /etc/sysctl.conf");
+            }
+            Process::run('sudo sysctl -p');
+            $this->info('IP forwarding enabled.');
 
-        $this->info("Config written to {$configPath}");
+            // Step 5: Start and enable WireGuard service
+            $this->info('Starting WireGuard service...');
+            $result = Process::run("sudo systemctl enable wg-quick@{$interface} && sudo systemctl start wg-quick@{$interface}");
+            if (! $result->successful()) {
+                $this->warn('Service start had issues: ' . $result->errorOutput());
+                $this->info('Trying wg-quick up...');
+                Process::run("sudo wg-quick up {$interface}");
+            }
 
-        // Step 4: Enable IP forwarding
-        $this->info('Enabling IP forwarding...');
-        Process::run('sudo sysctl -w net.ipv4.ip_forward=1');
-        Process::run("sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf");
-        // Ensure it exists even if there's no commented line
-        $checkResult = Process::run("grep -c '^net.ipv4.ip_forward=1' /etc/sysctl.conf");
-        if (trim($checkResult->output()) === '0') {
-            Process::run("echo 'net.ipv4.ip_forward=1' | sudo tee -a /etc/sysctl.conf");
+            $verifyResult = Process::run("sudo wg show {$interface}");
+            if (! $verifyResult->successful()) {
+                $this->warn('WireGuard interface is not up. Check: sudo journalctl -u wg-quick@' . $interface);
+            } else {
+                $this->info('WireGuard service is running.');
+            }
         }
-        Process::run('sudo sysctl -p');
-        $this->info('IP forwarding enabled.');
-
-        // Step 5: Start and enable WireGuard service
-        $this->info('Starting WireGuard service...');
-        $result = Process::run("sudo systemctl enable wg-quick@{$interface} && sudo systemctl start wg-quick@{$interface}");
-        if (! $result->successful()) {
-            $this->warn('Service start had issues: ' . $result->errorOutput());
-            // Try bringing up with wg-quick directly
-            $this->info('Trying wg-quick up...');
-            Process::run("sudo wg-quick up {$interface}");
-        }
-
-        // Verify the interface is up
-        $verifyResult = Process::run("sudo wg show {$interface}");
-        if (! $verifyResult->successful()) {
-            $this->error('WireGuard interface is not up. Check logs with: sudo journalctl -u wg-quick@' . $interface);
-
-            return self::FAILURE;
-        }
-        $this->info('WireGuard service is running.');
 
         // Step 6: Detect public IP for endpoint
         $this->info('Detecting public IP...');

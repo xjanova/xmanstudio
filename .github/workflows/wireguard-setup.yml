@@ -54,15 +54,15 @@ jobs:
       - name: Execute via SSH
         uses: appleboy/ssh-action@v1
         env:
-          INPUT_ACTION: ${{ inputs.action }}
-          INPUT_SERVER_NAME: ${{ inputs.server_name }}
-          INPUT_COUNTRY_CODE: ${{ inputs.country_code }}
-          INPUT_COUNTRY_NAME: ${{ inputs.country_name }}
-          INPUT_PORT: ${{ inputs.port }}
-          INPUT_INTERFACE: ${{ inputs.interface }}
-          INPUT_ADDRESS: ${{ inputs.address }}
-          INPUT_MAX_CLIENTS: ${{ inputs.max_clients }}
-          INPUT_NET_INTERFACE: ${{ inputs.net_interface }}
+          WG_ACTION: ${{ inputs.action }}
+          WG_SERVER_NAME: ${{ inputs.server_name }}
+          WG_COUNTRY_CODE: ${{ inputs.country_code }}
+          WG_COUNTRY_NAME: ${{ inputs.country_name }}
+          WG_PORT: ${{ inputs.port }}
+          WG_INTERFACE: ${{ inputs.interface }}
+          WG_ADDRESS: ${{ inputs.address }}
+          WG_MAX_CLIENTS: ${{ inputs.max_clients }}
+          WG_NET_INTERFACE: ${{ inputs.net_interface }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -70,9 +70,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           command_timeout: 5m
-          envs: INPUT_ACTION,INPUT_SERVER_NAME,INPUT_COUNTRY_CODE,INPUT_COUNTRY_NAME,INPUT_PORT,INPUT_INTERFACE,INPUT_ADDRESS,INPUT_MAX_CLIENTS,INPUT_NET_INTERFACE,DEPLOY_PATH
+          envs: WG_ACTION,WG_SERVER_NAME,WG_COUNTRY_CODE,WG_COUNTRY_NAME,WG_PORT,WG_INTERFACE,WG_ADDRESS,WG_MAX_CLIENTS,WG_NET_INTERFACE,DEPLOY_PATH
           script: |
-            ACTION="${INPUT_ACTION}"
+            ACTION="${WG_ACTION}"
             echo "=============================="
             echo "Action: $ACTION"
             echo "Time: $(date)"
@@ -96,39 +96,38 @@ jobs:
             case "$ACTION" in
               setup-wireguard)
                 echo "=== Installing WireGuard ==="
-                sudo apt update
-                sudo apt install -y wireguard
+                sudo apt update && sudo apt install -y wireguard || echo "WARNING: Could not install WireGuard (sudo may require password)"
 
                 echo "=== Enabling IP forwarding ==="
-                sudo sysctl -w net.ipv4.ip_forward=1
-                sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
-                grep -q '^net.ipv4.ip_forward=1' /etc/sysctl.conf || echo 'net.ipv4.ip_forward=1' | sudo tee -a /etc/sysctl.conf
-                sudo sysctl -p
+                sudo sysctl -w net.ipv4.ip_forward=1 || echo "WARNING: Could not enable IP forwarding"
+                sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf 2>/dev/null || true
+                grep -q '^net.ipv4.ip_forward=1' /etc/sysctl.conf 2>/dev/null || echo 'net.ipv4.ip_forward=1' | sudo tee -a /etc/sysctl.conf 2>/dev/null || true
+                sudo sysctl -p 2>/dev/null || true
 
                 echo "=== Running artisan wireguard:setup ==="
                 php artisan wireguard:setup \
-                  --name="${INPUT_SERVER_NAME}" \
-                  --country="${INPUT_COUNTRY_CODE}" \
-                  --country-name="${INPUT_COUNTRY_NAME}" \
-                  --port="${INPUT_PORT}" \
-                  --interface="${INPUT_INTERFACE}" \
-                  --address="${INPUT_ADDRESS}" \
-                  --max-clients="${INPUT_MAX_CLIENTS}" \
-                  --net-interface="${INPUT_NET_INTERFACE}" \
+                  --name="${WG_SERVER_NAME}" \
+                  --country="${WG_COUNTRY_CODE}" \
+                  --country-name="${WG_COUNTRY_NAME}" \
+                  --port="${WG_PORT}" \
+                  --interface="${WG_INTERFACE}" \
+                  --address="${WG_ADDRESS}" \
+                  --max-clients="${WG_MAX_CLIENTS}" \
+                  --net-interface="${WG_NET_INTERFACE}" \
                   --skip-install
 
                 echo "=== Verifying ==="
-                sudo wg show "${INPUT_INTERFACE}" || echo "WARNING: Interface not showing"
+                sudo wg show "${WG_INTERFACE}" 2>/dev/null || echo "WARNING: Interface not showing (WireGuard may need manual setup)"
                 echo "=== DONE ==="
                 ;;
 
               wireguard-status)
                 echo "=== WireGuard Status ==="
-                sudo wg show || echo "WireGuard not running"
+                sudo wg show 2>/dev/null || echo "WireGuard not running or sudo unavailable"
 
                 echo ""
                 echo "=== systemctl status ==="
-                sudo systemctl status wg-quick@wg0 --no-pager || true
+                sudo systemctl status wg-quick@wg0 --no-pager 2>/dev/null || true
 
                 echo ""
                 echo "=== Database servers ==="
@@ -143,7 +142,7 @@ jobs:
 
               wireguard-restart)
                 echo "=== Restarting WireGuard ==="
-                IFACE="${INPUT_INTERFACE:-wg0}"
+                IFACE="${WG_INTERFACE:-wg0}"
                 sudo systemctl restart "wg-quick@${IFACE}"
                 sleep 2
                 sudo wg show "${IFACE}" || echo "WARNING: Interface not showing after restart"
@@ -153,14 +152,14 @@ jobs:
               add-server)
                 echo "=== Adding WireGuard server via artisan ==="
                 php artisan wireguard:setup \
-                  --name="${INPUT_SERVER_NAME}" \
-                  --country="${INPUT_COUNTRY_CODE}" \
-                  --country-name="${INPUT_COUNTRY_NAME}" \
-                  --port="${INPUT_PORT}" \
-                  --interface="${INPUT_INTERFACE}" \
-                  --address="${INPUT_ADDRESS}" \
-                  --max-clients="${INPUT_MAX_CLIENTS}" \
-                  --net-interface="${INPUT_NET_INTERFACE}"
+                  --name="${WG_SERVER_NAME}" \
+                  --country="${WG_COUNTRY_CODE}" \
+                  --country-name="${WG_COUNTRY_NAME}" \
+                  --port="${WG_PORT}" \
+                  --interface="${WG_INTERFACE}" \
+                  --address="${WG_ADDRESS}" \
+                  --max-clients="${WG_MAX_CLIENTS}" \
+                  --net-interface="${WG_NET_INTERFACE}"
                 echo "=== DONE ==="
                 ;;
 
