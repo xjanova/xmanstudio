@@ -80,21 +80,25 @@ jobs:
             echo "User: $(whoami)"
             echo "=============================="
 
-            # Sudo wrapper: use SUDO_PASS if available
+            # Setup SUDO_ASKPASS so sudo -A can get password without pipe
+            if [ -n "$SUDO_PASS" ]; then
+              SUDO_ASKPASS_SCRIPT=$(mktemp /tmp/askpass.XXXXXX)
+              printf '#!/bin/sh\necho "%s"\n' "$SUDO_PASS" > "$SUDO_ASKPASS_SCRIPT"
+              chmod 700 "$SUDO_ASKPASS_SCRIPT"
+              export SUDO_ASKPASS="$SUDO_ASKPASS_SCRIPT"
+              echo "SUDO_PASS: set (${#SUDO_PASS} chars), ASKPASS ready"
+            else
+              echo "SUDO_PASS: NOT SET"
+            fi
+
+            # Sudo wrapper: use -A (askpass) if available
             do_sudo() {
-              if [ -n "$SUDO_PASS" ]; then
-                echo "$SUDO_PASS" | sudo -S -p '' "$@"
+              if [ -n "$SUDO_ASKPASS" ]; then
+                sudo -A "$@"
               else
                 sudo "$@"
               fi
             }
-
-            # Debug: check if SUDO_PASS is set (don't print value)
-            if [ -n "$SUDO_PASS" ]; then
-              echo "SUDO_PASS: set (${#SUDO_PASS} chars)"
-            else
-              echo "SUDO_PASS: NOT SET"
-            fi
 
             # Project directory (use DEPLOY_PATH secret, fallback to common paths)
             PROJECT_DIR="${DEPLOY_PATH:-/var/www/xmanstudio}"
@@ -221,3 +225,6 @@ jobs:
                 exit 1
                 ;;
             esac
+
+            # Cleanup askpass script
+            [ -n "$SUDO_ASKPASS_SCRIPT" ] && rm -f "$SUDO_ASKPASS_SCRIPT"
