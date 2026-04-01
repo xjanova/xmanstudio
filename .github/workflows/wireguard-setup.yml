@@ -63,13 +63,14 @@ jobs:
           INPUT_ADDRESS: ${{ inputs.address }}
           INPUT_MAX_CLIENTS: ${{ inputs.max_clients }}
           INPUT_NET_INTERFACE: ${{ inputs.net_interface }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           command_timeout: 5m
-          envs: INPUT_ACTION,INPUT_SERVER_NAME,INPUT_COUNTRY_CODE,INPUT_COUNTRY_NAME,INPUT_PORT,INPUT_INTERFACE,INPUT_ADDRESS,INPUT_MAX_CLIENTS,INPUT_NET_INTERFACE
+          envs: INPUT_ACTION,INPUT_SERVER_NAME,INPUT_COUNTRY_CODE,INPUT_COUNTRY_NAME,INPUT_PORT,INPUT_INTERFACE,INPUT_ADDRESS,INPUT_MAX_CLIENTS,INPUT_NET_INTERFACE,DEPLOY_PATH
           script: |
             ACTION="${INPUT_ACTION}"
             echo "=============================="
@@ -78,8 +79,18 @@ jobs:
             echo "User: $(whoami)"
             echo "=============================="
 
-            # Project directory
-            PROJECT_DIR="/var/www/xmanstudio"
+            # Project directory (use DEPLOY_PATH secret, fallback to common paths)
+            PROJECT_DIR="${DEPLOY_PATH:-/var/www/xmanstudio}"
+            if [ ! -d "$PROJECT_DIR" ]; then
+              # Try common DirectAdmin path
+              for p in /home/*/domains/*/public_html /var/www/html; do
+                if [ -f "$p/artisan" ]; then
+                  PROJECT_DIR="$p"
+                  break
+                fi
+              done
+            fi
+            echo "Project dir: $PROJECT_DIR"
             cd "$PROJECT_DIR" || { echo "ERROR: Project directory not found"; exit 1; }
 
             case "$ACTION" in
