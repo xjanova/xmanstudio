@@ -117,6 +117,12 @@ jobs:
                 echo "=== Testing sudo ==="
                 do_sudo whoami || { echo "ERROR: Cannot run as root"; exit 1; }
 
+                echo "=== Setting up sudoers for wg commands ==="
+                CURRENT_USER=$(whoami)
+                echo "${CURRENT_USER} ALL=(root) NOPASSWD: /usr/bin/wg, /usr/bin/wg-quick" | do_sudo tee "/etc/sudoers.d/wireguard-${CURRENT_USER}"
+                do_sudo chmod 440 "/etc/sudoers.d/wireguard-${CURRENT_USER}"
+                echo "Sudoers rule added for ${CURRENT_USER}"
+
                 echo "=== Installing WireGuard ==="
                 do_sudo apt-get update -qq && do_sudo apt-get install -y -qq wireguard || echo "WARNING: Could not install WireGuard"
 
