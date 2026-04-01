@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\WireguardClient;
 use App\Models\WireguardServer;
+use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 
@@ -12,7 +13,7 @@ class WireguardService
     /**
      * Run a command with sudo, using SUDO_PASS env var if available.
      */
-    private function sudoRun(string $command, int $timeout = 60): \Illuminate\Contracts\Process\ProcessResult
+    private function sudoRun(string $command, int $timeout = 60): ProcessResult
     {
         $sudoPass = env('SUDO_PASS');
         if ($sudoPass) {
