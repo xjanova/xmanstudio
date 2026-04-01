@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\WireguardClient;
 use App\Models\WireguardServer;
 use App\Services\WireguardService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -111,7 +112,7 @@ class WireguardHealthCheckCommand extends Command
      * Parse WireGuard handshake time string to a Carbon instance.
      * WireGuard outputs times like "1 minute, 23 seconds ago" or a Unix timestamp.
      */
-    private function parseHandshakeTime(?string $handshakeStr): ?\Carbon\Carbon
+    private function parseHandshakeTime(?string $handshakeStr): ?Carbon
     {
         if (empty($handshakeStr) || $handshakeStr === '(none)') {
             return null;
@@ -136,7 +137,7 @@ class WireguardHealthCheckCommand extends Command
 
         // If it's a Unix timestamp
         if (is_numeric($handshakeStr)) {
-            return \Carbon\Carbon::createFromTimestamp((int) $handshakeStr);
+            return Carbon::createFromTimestamp((int) $handshakeStr);
         }
 
         return null;

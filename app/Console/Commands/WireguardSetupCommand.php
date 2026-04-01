@@ -68,7 +68,7 @@ class WireguardSetupCommand extends Command
         $config .= "PostDown = iptables -D FORWARD -i {$interface} -j ACCEPT; iptables -t nat -D POSTROUTING -o {$netInterface} -j MASQUERADE\n";
 
         $configPath = "/etc/wireguard/{$interface}.conf";
-        $result = Process::run("echo " . escapeshellarg($config) . " | sudo tee {$configPath}");
+        $result = Process::run('echo ' . escapeshellarg($config) . " | sudo tee {$configPath}");
         if (! $result->successful()) {
             $this->error('Failed to write WireGuard config: ' . $result->errorOutput());
 

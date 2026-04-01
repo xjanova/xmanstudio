@@ -8,7 +8,6 @@ use App\Models\VpnNetwork;
 use App\Models\VpnNetworkMember;
 use App\Models\VpnRelaySession;
 use App\Models\VpnTrafficLog;
-use App\Models\WireguardClient;
 use App\Models\WireguardServer;
 use Illuminate\Http\Request;
 
