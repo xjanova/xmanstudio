@@ -83,9 +83,9 @@ jobs:
             # Sudo wrapper: use SUDO_PASS if available
             do_sudo() {
               if [ -n "$SUDO_PASS" ]; then
-                echo "$SUDO_PASS" | sudo -S "$@" 2>/dev/null
+                echo "$SUDO_PASS" | sudo -S "$@" 2>&1 | grep -v '^\[sudo\]'
               else
-                sudo "$@" 2>/dev/null
+                sudo "$@" 2>&1
               fi
             }
 
@@ -104,8 +104,14 @@ jobs:
 
             case "$ACTION" in
               setup-wireguard)
+                echo "=== Testing sudo ==="
+                do_sudo whoami
+
                 echo "=== Installing WireGuard ==="
-                do_sudo apt update && do_sudo apt install -y wireguard || echo "WARNING: Could not install WireGuard"
+                do_sudo apt-get update -qq && do_sudo apt-get install -y -qq wireguard || echo "WARNING: Could not install WireGuard"
+
+                echo "=== Creating /etc/wireguard ==="
+                do_sudo mkdir -p /etc/wireguard
 
                 echo "=== Enabling IP forwarding ==="
                 do_sudo sysctl -w net.ipv4.ip_forward=1 || echo "WARNING: Could not enable IP forwarding"
@@ -113,8 +119,14 @@ jobs:
                 grep -q '^net.ipv4.ip_forward=1' /etc/sysctl.conf 2>/dev/null || echo 'net.ipv4.ip_forward=1' | do_sudo tee -a /etc/sysctl.conf || true
                 do_sudo sysctl -p || true
 
+                echo "=== Removing existing DB record (if any) ==="
+                php artisan tinker --execute="
+                  \App\Models\WireguardServer::where('name', '${WG_SERVER_NAME}')->delete();
+                  echo \"Cleaned up existing records\n\";
+                " 2>/dev/null || true
+
                 echo "=== Running artisan wireguard:setup ==="
-                php artisan wireguard:setup \
+                SUDO_PASS="${SUDO_PASS}" php artisan wireguard:setup \
                   --name="${WG_SERVER_NAME}" \
                   --country="${WG_COUNTRY_CODE}" \
                   --country-name="${WG_COUNTRY_NAME}" \
