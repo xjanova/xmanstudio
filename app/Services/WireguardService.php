@@ -10,6 +10,19 @@ use Illuminate\Support\Facades\Process;
 class WireguardService
 {
     /**
+     * Run a command with sudo, using SUDO_PASS env var if available.
+     */
+    private function sudoRun(string $command, int $timeout = 60): \Illuminate\Contracts\Process\ProcessResult
+    {
+        $sudoPass = env('SUDO_PASS');
+        if ($sudoPass) {
+            return Process::timeout($timeout)->input($sudoPass . "\n")->run("sudo -S {$command}");
+        }
+
+        return Process::timeout($timeout)->run("sudo {$command}");
+    }
+
+    /**
      * Generate a WireGuard key pair using libsodium (Curve25519).
      *
      * WireGuard uses Curve25519 for key exchange, which is the same as
@@ -164,14 +177,14 @@ class WireguardService
     {
         $interface = $server->getInterfaceName();
         $command = sprintf(
-            'sudo wg set %s peer %s allowed-ips %s/32',
+            'wg set %s peer %s allowed-ips %s/32',
             escapeshellarg($interface),
             escapeshellarg($publicKey),
             escapeshellarg($assignedIp)
         );
 
         try {
-            $result = Process::run($command);
+            $result = $this->sudoRun($command);
 
             if (! $result->successful()) {
                 Log::error("[WireGuard] Failed to add peer to {$server->name}: {$result->errorOutput()}");
@@ -196,13 +209,13 @@ class WireguardService
     {
         $interface = $server->getInterfaceName();
         $command = sprintf(
-            'sudo wg set %s peer %s remove',
+            'wg set %s peer %s remove',
             escapeshellarg($interface),
             escapeshellarg($publicKey)
         );
 
         try {
-            $result = Process::run($command);
+            $result = $this->sudoRun($command);
 
             if (! $result->successful()) {
                 Log::error("[WireGuard] Failed to remove peer from {$server->name}: {$result->errorOutput()}");
@@ -230,7 +243,7 @@ class WireguardService
         $interface = $server->getInterfaceName();
 
         try {
-            $result = Process::run(sprintf('sudo wg show %s', escapeshellarg($interface)));
+            $result = $this->sudoRun(sprintf('wg show %s', escapeshellarg($interface)));
 
             if (! $result->successful()) {
                 return [

@@ -23,6 +23,19 @@ class WireguardSetupCommand extends Command
 
     protected $description = 'Install and configure WireGuard VPN on this server';
 
+    /**
+     * Run a command with sudo, using SUDO_PASS env var if available.
+     */
+    private function sudoRun(string $command, int $timeout = 60): \Illuminate\Contracts\Process\ProcessResult
+    {
+        $sudoPass = env('SUDO_PASS');
+        if ($sudoPass) {
+            return Process::timeout($timeout)->input($sudoPass . "\n")->run("sudo -S {$command}");
+        }
+
+        return Process::timeout($timeout)->run("sudo {$command}");
+    }
+
     public function handle(WireguardService $wireguardService): int
     {
         $name = $this->option('name');
@@ -55,7 +68,7 @@ class WireguardSetupCommand extends Command
         // Step 1: Install WireGuard
         if (! $this->option('skip-install')) {
             $this->info('Installing WireGuard...');
-            $result = Process::timeout(120)->run('sudo apt update && sudo apt install -y wireguard');
+            $result = $this->sudoRun('apt update && sudo apt install -y wireguard', 120);
             if (! $result->successful()) {
                 $this->error('Failed to install WireGuard: ' . $result->errorOutput());
 
@@ -83,38 +96,38 @@ class WireguardSetupCommand extends Command
         $config .= "PostDown = iptables -D FORWARD -i {$interface} -j ACCEPT; iptables -t nat -D POSTROUTING -o {$netInterface} -j MASQUERADE\n";
 
         $configPath = "/etc/wireguard/{$interface}.conf";
-        $result = Process::run('echo ' . escapeshellarg($config) . " | sudo tee {$configPath}");
+        $result = $this->sudoRun("tee {$configPath} <<'WGEOF'\n{$config}\nWGEOF");
         if (! $result->successful()) {
-            $this->warn('Could not write WireGuard config (sudo may require password).');
+            $this->warn('Could not write WireGuard config (sudo issue).');
             $this->warn('System setup skipped — DB record will still be created.');
             $systemSetupOk = false;
         } else {
-            Process::run("sudo chmod 600 {$configPath}");
+            $this->sudoRun("chmod 600 {$configPath}");
             $this->info("Config written to {$configPath}");
         }
 
         if ($systemSetupOk) {
             // Step 4: Enable IP forwarding
             $this->info('Enabling IP forwarding...');
-            Process::run('sudo sysctl -w net.ipv4.ip_forward=1');
-            Process::run("sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf");
+            $this->sudoRun('sysctl -w net.ipv4.ip_forward=1');
+            $this->sudoRun("sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf");
             $checkResult = Process::run("grep -c '^net.ipv4.ip_forward=1' /etc/sysctl.conf");
             if (trim($checkResult->output()) === '0') {
-                Process::run("echo 'net.ipv4.ip_forward=1' | sudo tee -a /etc/sysctl.conf");
+                $this->sudoRun("bash -c \"echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf\"");
             }
-            Process::run('sudo sysctl -p');
+            $this->sudoRun('sysctl -p');
             $this->info('IP forwarding enabled.');
 
             // Step 5: Start and enable WireGuard service
             $this->info('Starting WireGuard service...');
-            $result = Process::run("sudo systemctl enable wg-quick@{$interface} && sudo systemctl start wg-quick@{$interface}");
+            $result = $this->sudoRun("systemctl enable wg-quick@{$interface} && sudo systemctl start wg-quick@{$interface}");
             if (! $result->successful()) {
                 $this->warn('Service start had issues: ' . $result->errorOutput());
                 $this->info('Trying wg-quick up...');
-                Process::run("sudo wg-quick up {$interface}");
+                $this->sudoRun("wg-quick up {$interface}");
             }
 
-            $verifyResult = Process::run("sudo wg show {$interface}");
+            $verifyResult = $this->sudoRun("wg show {$interface}");
             if (! $verifyResult->successful()) {
                 $this->warn('WireGuard interface is not up. Check: sudo journalctl -u wg-quick@' . $interface);
             } else {

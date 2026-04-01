@@ -64,13 +64,14 @@ jobs:
           WG_MAX_CLIENTS: ${{ inputs.max_clients }}
           WG_NET_INTERFACE: ${{ inputs.net_interface }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          SUDO_PASS: ${{ secrets.SUDO_PASS }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           command_timeout: 5m
-          envs: WG_ACTION,WG_SERVER_NAME,WG_COUNTRY_CODE,WG_COUNTRY_NAME,WG_PORT,WG_INTERFACE,WG_ADDRESS,WG_MAX_CLIENTS,WG_NET_INTERFACE,DEPLOY_PATH
+          envs: WG_ACTION,WG_SERVER_NAME,WG_COUNTRY_CODE,WG_COUNTRY_NAME,WG_PORT,WG_INTERFACE,WG_ADDRESS,WG_MAX_CLIENTS,WG_NET_INTERFACE,DEPLOY_PATH,SUDO_PASS
           script: |
             ACTION="${WG_ACTION}"
             echo "=============================="
@@ -79,10 +80,18 @@ jobs:
             echo "User: $(whoami)"
             echo "=============================="
 
+            # Sudo wrapper: use SUDO_PASS if available
+            do_sudo() {
+              if [ -n "$SUDO_PASS" ]; then
+                echo "$SUDO_PASS" | sudo -S "$@" 2>/dev/null
+              else
+                sudo "$@" 2>/dev/null
+              fi
+            }
+
             # Project directory (use DEPLOY_PATH secret, fallback to common paths)
             PROJECT_DIR="${DEPLOY_PATH:-/var/www/xmanstudio}"
             if [ ! -d "$PROJECT_DIR" ]; then
-              # Try common DirectAdmin path
               for p in /home/*/domains/*/public_html /var/www/html; do
                 if [ -f "$p/artisan" ]; then
                   PROJECT_DIR="$p"
@@ -96,13 +105,13 @@ jobs:
             case "$ACTION" in
               setup-wireguard)
                 echo "=== Installing WireGuard ==="
-                sudo apt update && sudo apt install -y wireguard || echo "WARNING: Could not install WireGuard (sudo may require password)"
+                do_sudo apt update && do_sudo apt install -y wireguard || echo "WARNING: Could not install WireGuard"
 
                 echo "=== Enabling IP forwarding ==="
-                sudo sysctl -w net.ipv4.ip_forward=1 || echo "WARNING: Could not enable IP forwarding"
-                sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf 2>/dev/null || true
-                grep -q '^net.ipv4.ip_forward=1' /etc/sysctl.conf 2>/dev/null || echo 'net.ipv4.ip_forward=1' | sudo tee -a /etc/sysctl.conf 2>/dev/null || true
-                sudo sysctl -p 2>/dev/null || true
+                do_sudo sysctl -w net.ipv4.ip_forward=1 || echo "WARNING: Could not enable IP forwarding"
+                do_sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf || true
+                grep -q '^net.ipv4.ip_forward=1' /etc/sysctl.conf 2>/dev/null || echo 'net.ipv4.ip_forward=1' | do_sudo tee -a /etc/sysctl.conf || true
+                do_sudo sysctl -p || true
 
                 echo "=== Running artisan wireguard:setup ==="
                 php artisan wireguard:setup \
@@ -117,7 +126,7 @@ jobs:
                   --skip-install
 
                 echo "=== Verifying ==="
-                sudo wg show "${WG_INTERFACE}" 2>/dev/null || echo "WARNING: Interface not showing (WireGuard may need manual setup)"
+                do_sudo wg show "${WG_INTERFACE}" || echo "WARNING: Interface not showing"
                 echo "=== DONE ==="
                 ;;
 
@@ -125,17 +134,16 @@ jobs:
                 echo "=== System Info ==="
                 echo "User: $(whoami)"
                 echo "Groups: $(groups)"
-                echo "Sudo: $(sudo -n true 2>&1 && echo 'passwordless' || echo 'requires password')"
 
                 echo ""
                 echo "=== WireGuard Installation ==="
                 which wg 2>/dev/null && echo "wg binary: $(which wg)" || echo "wg binary: NOT FOUND"
                 dpkg -l wireguard 2>/dev/null | grep -E "^ii" || echo "wireguard package: NOT INSTALLED"
-                ls -la /etc/wireguard/ 2>/dev/null || echo "/etc/wireguard/: NOT FOUND or no access"
+                do_sudo ls -la /etc/wireguard/ || echo "/etc/wireguard/: NOT FOUND"
 
                 echo ""
                 echo "=== WireGuard Live Status ==="
-                sudo wg show 2>/dev/null || echo "Cannot run wg show (sudo required)"
+                do_sudo wg show || echo "Cannot run wg show"
 
                 echo ""
                 echo "=== Network Interfaces ==="
@@ -148,7 +156,11 @@ jobs:
 
                 echo ""
                 echo "=== Firewall (port 51820) ==="
-                sudo iptables -L -n 2>/dev/null | grep -i "51820" || echo "No iptables rules for 51820 (or sudo unavailable)"
+                do_sudo iptables -L -n 2>/dev/null | grep -i "51820" || echo "No iptables rules for 51820"
+
+                echo ""
+                echo "=== systemctl status ==="
+                do_sudo systemctl status wg-quick@wg0 --no-pager || true
 
                 echo ""
                 echo "=== Database servers ==="
@@ -156,7 +168,7 @@ jobs:
                   \$servers = \App\Models\WireguardServer::all();
                   if (\$servers->isEmpty()) { echo \"No servers in database\n\"; }
                   foreach (\$servers as \$s) {
-                    echo \"{$s->name} ({$s->country_code}) - {$s->endpoint} - Active: \" . (\$s->is_active ? 'Y' : 'N') . \" Healthy: \" . (\$s->is_healthy ? 'Y' : 'N') . \" Clients: \" . \$s->clients()->count() . \"/{$s->max_clients}\n\";
+                    echo \$s->name . ' (' . \$s->country_code . ') - ' . \$s->endpoint . ' - Active: ' . (\$s->is_active ? 'Y' : 'N') . ' Healthy: ' . (\$s->is_healthy ? 'Y' : 'N') . ' Clients: ' . \$s->clients()->count() . '/' . \$s->max_clients . \"\n\";
                   }
                 " 2>/dev/null || true
                 echo "=== DONE ==="
@@ -165,9 +177,9 @@ jobs:
               wireguard-restart)
                 echo "=== Restarting WireGuard ==="
                 IFACE="${WG_INTERFACE:-wg0}"
-                sudo systemctl restart "wg-quick@${IFACE}"
+                do_sudo systemctl restart "wg-quick@${IFACE}"
                 sleep 2
-                sudo wg show "${IFACE}" || echo "WARNING: Interface not showing after restart"
+                do_sudo wg show "${IFACE}" || echo "WARNING: Interface not showing after restart"
                 echo "=== DONE ==="
                 ;;
 
