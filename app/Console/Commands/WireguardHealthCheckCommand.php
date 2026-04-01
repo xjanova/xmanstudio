@@ -87,7 +87,9 @@ class WireguardHealthCheckCommand extends Command
 
                     if ($isStale) {
                         $stalePeers++;
-                        $this->line("  Marked stale: {$client->assigned_ip} (last handshake: {$handshakeAt})");
+                        // Remove stale peer from WireGuard interface
+                        $wireguardService->removePeerFromServer($server, $client->public_key);
+                        $this->line("  Removed stale peer: {$client->assigned_ip} (last handshake: {$handshakeAt})");
                     }
                 } else {
                     // Peer not in live wg show output — might have been removed or never connected

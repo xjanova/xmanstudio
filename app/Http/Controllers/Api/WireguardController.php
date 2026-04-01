@@ -45,6 +45,28 @@ class WireguardController extends Controller
         $countryCode = $request->input('country_code');
         $serverId = $request->input('server_id');
 
+        // Enforce country restriction for free users
+        $freeCountries = ['TH', 'JP', 'US', 'KR', 'SG', 'IN', 'GB', 'DE', 'AU', 'CA'];
+
+        // If a specific server ID is given, verify access
+        if ($serverId && ! $isPremium) {
+            $targetServer = WireguardServer::find($serverId);
+            if ($targetServer && ! in_array($targetServer->country_code, $freeCountries)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Premium subscription required for this server.',
+                ], 403);
+            }
+        }
+
+        // If a country code is specified, verify access
+        if ($countryCode && ! $isPremium && ! in_array(strtoupper($countryCode), $freeCountries)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Premium subscription required for this country.',
+            ], 403);
+        }
+
         // If a country code is specified but no server ID, find server in that country
         if ($countryCode && ! $serverId) {
             $server = $this->wireguard->findBestServer($countryCode, $isPremium);
@@ -136,7 +158,16 @@ class WireguardController extends Controller
     {
         $request->validate([
             'machine_id' => 'required|string|max:255',
+            'license_key' => 'nullable|string|max:255',
         ]);
+
+        $license = $this->validateDeviceAuth($request);
+        if (! $license) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid license or device.',
+            ], 403);
+        }
 
         $machineId = $request->input('machine_id');
 

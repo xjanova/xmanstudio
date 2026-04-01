@@ -102,9 +102,9 @@ class WireguardServer extends Model
             return 100.0;
         }
 
-        $clientCount = $this->clients()->count();
+        $connectedCount = $this->clients()->where('is_connected', true)->count();
 
-        return round(($clientCount / $this->max_clients) * 100, 1);
+        return round(($connectedCount / $this->max_clients) * 100, 1);
     }
 
     /**
@@ -112,7 +112,7 @@ class WireguardServer extends Model
      */
     public function isAtCapacity(): bool
     {
-        return $this->clients()->count() >= $this->max_clients;
+        return $this->clients()->where('is_connected', true)->count() >= $this->max_clients;
     }
 
     /**

@@ -486,5 +486,9 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
     Route::post('/wireguard/register', [WireguardController::class, 'register']);
     Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
     Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
+});
+
+// WireGuard admin status (requires authentication)
+Route::prefix('v1/localvpn')->middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
     Route::get('/wireguard/status', [WireguardController::class, 'status']);
 });

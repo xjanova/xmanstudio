@@ -82,6 +82,11 @@ class WireguardService
                 $this->removePeerFromServer($server, $client->public_key);
                 $client->update(['public_key' => $clientPublicKey]);
                 // Add new peer
+                if (! $this->addPeerToServer($server, $clientPublicKey, $client->assigned_ip)) {
+                    return ['success' => false, 'error' => 'Failed to add peer to server'];
+                }
+            } else {
+                // Re-add peer in case it was removed (e.g., after server restart)
                 $this->addPeerToServer($server, $clientPublicKey, $client->assigned_ip);
             }
 
@@ -93,7 +98,7 @@ class WireguardService
             return $this->buildClientResponse($client, $server);
         }
 
-        // Check capacity
+        // Check capacity (only count connected clients)
         if ($server->isAtCapacity()) {
             // Try another server
             $server = $this->findBestServer();
@@ -108,6 +113,11 @@ class WireguardService
             return ['success' => false, 'error' => 'No available IP addresses on server'];
         }
 
+        // Add peer to WireGuard interface first
+        if (! $this->addPeerToServer($server, $clientPublicKey, $assignedIp)) {
+            return ['success' => false, 'error' => 'Failed to configure peer on server'];
+        }
+
         // Create client record
         $client = WireguardClient::create([
             'server_id' => $server->id,
@@ -117,9 +127,6 @@ class WireguardService
             'is_connected' => true,
             'connected_at' => now(),
         ]);
-
-        // Add peer to WireGuard interface
-        $this->addPeerToServer($server, $clientPublicKey, $assignedIp);
 
         return $this->buildClientResponse($client, $server);
     }
@@ -223,7 +230,7 @@ class WireguardService
         $interface = $server->getInterfaceName();
 
         try {
-            $result = Process::run("sudo wg show {$interface}");
+            $result = Process::run(sprintf('sudo wg show %s', escapeshellarg($interface)));
 
             if (! $result->successful()) {
                 return [

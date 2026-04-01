@@ -35,6 +35,20 @@ class WireguardSetupCommand extends Command
         $maxClients = (int) $this->option('max-clients');
         $netInterface = $this->option('net-interface');
 
+        // Check for duplicate server
+        $existing = WireguardServer::where('name', $name)
+            ->orWhere(function ($q) use ($address, $port) {
+                $q->where('address', $address)->where('listen_port', $port);
+            })
+            ->first();
+
+        if ($existing) {
+            $this->warn("Server already exists: {$existing->name} (ID: {$existing->id})");
+            $this->warn('Use a different name/address/port, or delete the existing record first.');
+
+            return self::FAILURE;
+        }
+
         $this->info("Setting up WireGuard server: {$name}");
         $this->info("Interface: {$interface}, Port: {$port}, Address: {$address}");
 
