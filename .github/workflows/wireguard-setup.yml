@@ -80,27 +80,19 @@ jobs:
             echo "User: $(whoami)"
             echo "=============================="
 
-            # Setup SUDO_ASKPASS so sudo -A can get password without pipe
+            # SUDO_PASS is the root password, use su -c instead of sudo
             if [ -n "$SUDO_PASS" ]; then
-              SUDO_ASKPASS_SCRIPT=$(mktemp /tmp/askpass.XXXXXX)
-              printf '#!/bin/sh\necho "%s"\n' "$SUDO_PASS" > "$SUDO_ASKPASS_SCRIPT"
-              chmod 700 "$SUDO_ASKPASS_SCRIPT"
-              export SUDO_ASKPASS="$SUDO_ASKPASS_SCRIPT"
-              # Verify askpass output
-              ASKPASS_OUT=$("$SUDO_ASKPASS_SCRIPT")
-              echo "SUDO_PASS: ${#SUDO_PASS} chars, ASKPASS: ${#ASKPASS_OUT} chars"
-              echo "Pass hex: $(echo -n "$SUDO_PASS" | xxd -p | head -c 40)"
-              echo "Askpass hex: $(echo -n "$ASKPASS_OUT" | xxd -p | head -c 40)"
+              echo "ROOT_PASS: set (${#SUDO_PASS} chars)"
             else
-              echo "SUDO_PASS: NOT SET"
+              echo "ROOT_PASS: NOT SET"
             fi
 
-            # Sudo wrapper: use -A (askpass) if available
+            # Run command as root using su -c with root password
             do_sudo() {
-              if [ -n "$SUDO_ASKPASS" ]; then
-                sudo -A "$@"
+              if [ -n "$SUDO_PASS" ]; then
+                echo "$SUDO_PASS" | su -c "$*" root 2>&1
               else
-                sudo "$@"
+                sudo "$@" 2>&1
               fi
             }
 
@@ -230,5 +222,3 @@ jobs:
                 ;;
             esac
 
-            # Cleanup askpass script
-            [ -n "$SUDO_ASKPASS_SCRIPT" ] && rm -f "$SUDO_ASKPASS_SCRIPT"

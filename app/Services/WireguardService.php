@@ -15,9 +15,9 @@ class WireguardService
      */
     private function sudoRun(string $command, int $timeout = 60): ProcessResult
     {
-        $sudoPass = env('SUDO_PASS');
-        if ($sudoPass) {
-            return Process::timeout($timeout)->input($sudoPass . "\n")->run("sudo -S {$command}");
+        $rootPass = env('SUDO_PASS');
+        if ($rootPass) {
+            return Process::timeout($timeout)->input($rootPass . "\n")->run("su -c " . escapeshellarg($command) . " root");
         }
 
         return Process::timeout($timeout)->run("sudo {$command}");
