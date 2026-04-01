@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\SmsPaymentController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\VpnProxyController;
+use App\Http\Controllers\Api\WireguardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -480,4 +481,10 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
 
     // VPN Proxy (country bypass)
     Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
+
+    // WireGuard VPN
+    Route::post('/wireguard/register', [WireguardController::class, 'register']);
+    Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
+    Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
+    Route::get('/wireguard/status', [WireguardController::class, 'status']);
 });

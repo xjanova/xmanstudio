@@ -109,9 +109,9 @@ Schedule::command('torrent:cleanup-seeders')
     });
 
 // VPN Proxy: Health-check VPN Gate servers, cache only reachable ones
-// Run every 10 minutes: TCP-test each server, store healthy list for API
+// Run every 30 minutes: TCP-test each server, store healthy list for API
 Schedule::command('vpn:health-check')
-    ->everyTenMinutes()
+    ->everyThirtyMinutes()
     ->withoutOverlapping()
     ->runInBackground()
     ->onSuccess(function () {
@@ -119,6 +119,18 @@ Schedule::command('vpn:health-check')
     })
     ->onFailure(function () {
         Log::error('[VPN Health Check] Failed');
+    });
+
+// WireGuard: Health-check WireGuard servers and update peer status
+Schedule::command('wireguard:health-check')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        Log::info('[WireGuard Health Check] Completed successfully');
+    })
+    ->onFailure(function () {
+        Log::error('[WireGuard Health Check] Failed');
     });
 
 // Metal-X: อัปโหลดวิดีโอ Projects ที่ถึงเวลา

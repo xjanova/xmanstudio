@@ -8,6 +8,8 @@ use App\Models\VpnNetwork;
 use App\Models\VpnNetworkMember;
 use App\Models\VpnRelaySession;
 use App\Models\VpnTrafficLog;
+use App\Models\WireguardClient;
+use App\Models\WireguardServer;
 use Illuminate\Http\Request;
 
 class LocalVpnController extends Controller
@@ -60,6 +62,21 @@ class LocalVpnController extends Controller
             ->limit(20)
             ->get();
 
+        // WireGuard stats
+        $wgServers = WireguardServer::withCount([
+            'clients',
+            'clients as active_clients_count' => function ($q) {
+                $q->where('is_connected', true);
+            },
+        ])->get();
+
+        $wgTotalServers = $wgServers->count();
+        $wgActiveServers = $wgServers->where('is_active', true)->count();
+        $wgHealthyServers = $wgServers->where('is_active', true)->where('is_healthy', true)->count();
+        $wgTotalPeers = $wgServers->sum('clients_count');
+        $wgActivePeers = $wgServers->sum('active_clients_count');
+        $wgServiceActive = $wgActiveServers > 0;
+
         return view('admin.localvpn.dashboard', compact(
             'totalNetworks',
             'activeNetworks',
@@ -68,7 +85,14 @@ class LocalVpnController extends Controller
             'activeSessions',
             'totalTrafficBytes',
             'chartData',
-            'recentActivity'
+            'recentActivity',
+            'wgServers',
+            'wgTotalServers',
+            'wgActiveServers',
+            'wgHealthyServers',
+            'wgTotalPeers',
+            'wgActivePeers',
+            'wgServiceActive'
         ));
     }
 

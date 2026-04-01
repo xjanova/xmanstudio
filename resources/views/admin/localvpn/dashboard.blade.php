@@ -123,6 +123,152 @@
     </div>
 </div>
 
+{{-- WireGuard VPN Section --}}
+<div class="mb-8">
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-500 p-6 mb-6 shadow-xl">
+        <div class="absolute inset-0 bg-grid-white/10"></div>
+        <div class="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+        <div class="relative flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-white">WireGuard VPN</h2>
+                </div>
+                <p class="text-indigo-100 text-sm">Encrypted tunnel VPN service</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <div class="inline-flex items-center px-3 py-2 bg-white/20 backdrop-blur-sm text-white font-medium rounded-xl border border-white/25 text-sm">
+                    @if($wgServiceActive)
+                        <span class="w-2.5 h-2.5 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                        <span>Active</span>
+                    @else
+                        <span class="w-2.5 h-2.5 bg-red-400 rounded-full mr-2"></span>
+                        <span>Inactive</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- WireGuard Stats --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="rounded-2xl bg-white p-5 shadow-lg border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Servers</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $wgActiveServers }}<span class="text-sm text-gray-400">/{{ $wgTotalServers }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow-lg border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Healthy</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $wgHealthyServers }}<span class="text-sm text-gray-400">/{{ $wgActiveServers }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow-lg border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Total Peers</p>
+                    <p class="text-xl font-bold text-gray-900">{{ number_format($wgTotalPeers) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow-lg border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-lg">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Active Peers</p>
+                    <p class="text-xl font-bold text-gray-900">{{ number_format($wgActivePeers) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- WireGuard Server List --}}
+    @if($wgServers->isNotEmpty())
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">WireGuard Servers</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 text-gray-600 font-medium">Server</th>
+                        <th class="text-left py-3 px-4 text-gray-600 font-medium">Country</th>
+                        <th class="text-left py-3 px-4 text-gray-600 font-medium">Endpoint</th>
+                        <th class="text-center py-3 px-4 text-gray-600 font-medium">Status</th>
+                        <th class="text-center py-3 px-4 text-gray-600 font-medium">Health</th>
+                        <th class="text-right py-3 px-4 text-gray-600 font-medium">Peers</th>
+                        <th class="text-right py-3 px-4 text-gray-600 font-medium">Load</th>
+                        <th class="text-left py-3 px-4 text-gray-600 font-medium">Last Check</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($wgServers as $wgServer)
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 font-medium text-gray-900">{{ $wgServer->name }}</td>
+                        <td class="py-3 px-4 text-gray-600">{{ $wgServer->country_name }} ({{ $wgServer->country_code }})</td>
+                        <td class="py-3 px-4 text-gray-500 font-mono text-xs">{{ $wgServer->endpoint }}</td>
+                        <td class="py-3 px-4 text-center">
+                            @if($wgServer->is_active)
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                            @else
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>
+                            @endif
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            @if($wgServer->is_healthy)
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Healthy</span>
+                            @else
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Unhealthy</span>
+                            @endif
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <span class="font-medium">{{ $wgServer->active_clients_count }}</span>
+                            <span class="text-gray-400">/ {{ $wgServer->clients_count }}</span>
+                            <span class="text-gray-300">/ {{ $wgServer->max_clients }}</span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            @php $load = $wgServer->max_clients > 0 ? round(($wgServer->clients_count / $wgServer->max_clients) * 100, 1) : 0; @endphp
+                            <div class="flex items-center justify-end gap-2">
+                                <div class="w-16 bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full {{ $load > 80 ? 'bg-red-500' : ($load > 50 ? 'bg-yellow-500' : 'bg-green-500') }}" style="width: {{ min($load, 100) }}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-500">{{ $load }}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-gray-500 text-xs">
+                            {{ $wgServer->last_health_check_at?->diffForHumans() ?? 'Never' }}
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+</div>
+
 {{-- Chart Area --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
