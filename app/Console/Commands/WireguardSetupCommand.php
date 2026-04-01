@@ -69,7 +69,7 @@ class WireguardSetupCommand extends Command
         // Step 1: Install WireGuard
         if (! $this->option('skip-install')) {
             $this->info('Installing WireGuard...');
-            $result = $this->sudoRun('apt update && sudo apt install -y wireguard', 120);
+            $result = $this->sudoRun('apt update && apt install -y wireguard', 120);
             if (! $result->successful()) {
                 $this->error('Failed to install WireGuard: ' . $result->errorOutput());
 
@@ -97,13 +97,16 @@ class WireguardSetupCommand extends Command
         $config .= "PostDown = iptables -D FORWARD -i {$interface} -j ACCEPT; iptables -t nat -D POSTROUTING -o {$netInterface} -j MASQUERADE\n";
 
         $configPath = "/etc/wireguard/{$interface}.conf";
-        $result = $this->sudoRun("tee {$configPath} <<'WGEOF'\n{$config}\nWGEOF");
+        // Write config to temp file first, then copy as root (avoids heredoc in su -c)
+        $tmpFile = tempnam(sys_get_temp_dir(), 'wg_');
+        file_put_contents($tmpFile, $config);
+        $result = $this->sudoRun("cp {$tmpFile} {$configPath} && chmod 600 {$configPath}");
+        @unlink($tmpFile);
         if (! $result->successful()) {
             $this->warn('Could not write WireGuard config (sudo issue).');
             $this->warn('System setup skipped — DB record will still be created.');
             $systemSetupOk = false;
         } else {
-            $this->sudoRun("chmod 600 {$configPath}");
             $this->info("Config written to {$configPath}");
         }
 
@@ -121,7 +124,7 @@ class WireguardSetupCommand extends Command
 
             // Step 5: Start and enable WireGuard service
             $this->info('Starting WireGuard service...');
-            $result = $this->sudoRun("systemctl enable wg-quick@{$interface} && sudo systemctl start wg-quick@{$interface}");
+            $result = $this->sudoRun("systemctl enable wg-quick@{$interface} && systemctl start wg-quick@{$interface}");
             if (! $result->successful()) {
                 $this->warn('Service start had issues: ' . $result->errorOutput());
                 $this->info('Trying wg-quick up...');
