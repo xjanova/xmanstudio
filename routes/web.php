@@ -296,6 +296,9 @@ Route::view('/portfolio', 'portfolio')->name('portfolio');
 // Metal-X Project Music Channel
 Route::get('/metal-x', [MetalXController::class, 'index'])->name('metal-x.index');
 
+// AI AutoTrade — บริการพัฒนาระบบเทรดอัตโนมัติด้วย AI
+Route::view('/ai-autotrade', 'ai-autotrade')->name('ai-autotrade');
+
 // Code Academy — ศูนย์เรียนรู้โค้ดมืออาชีพ
 Route::view('/code-academy', 'code-academy')->name('code-academy');
 
