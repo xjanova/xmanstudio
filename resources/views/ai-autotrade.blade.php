@@ -134,7 +134,7 @@
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
                     </div>
                     <h3 class="text-2xl font-bold text-blue-400 mb-3">Stock Market</h3>
-                    <p class="text-gray-400 mb-4">ตลาดหุ้น — วิเคราะห์หุ้นทั้ง SET, NASDAQ, NYSE ด้วย AI ที่รวม Technical Analysis, Sentiment Analysis จาก News &amp; Social Media เพื่อจับจังหวะเข้าออก</p>
+                    <p class="text-gray-400 mb-4">ตลาดหุ้น — วิเคราะห์หุ้นทั้ง SET, NASDAQ, NYSE ด้วย AI ที่รวม Technical Analysis, Sentiment Analysis จาก News, Social Media เพื่อจับจังหวะเข้าออก</p>
                     <div class="flex flex-wrap gap-2">
                         <span class="px-3 py-1 text-xs font-medium bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">SET Index</span>
                         <span class="px-3 py-1 text-xs font-medium bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">US Stocks</span>
@@ -194,7 +194,7 @@
                         </div>
                         <div>
                             <h3 class="text-xl font-bold mb-2">Sentiment Analysis</h3>
-                            <p class="text-gray-400">วิเคราะห์อารมณ์ตลาดจากข่าว Social Media และข้อมูลเศรษฐกิจ Real-time เพื่อจับจังหวะ Fear &amp; Greed ของตลาดได้ก่อนคนอื่น</p>
+                            <p class="text-gray-400">วิเคราะห์อารมณ์ตลาดจากข่าว Social Media และข้อมูลเศรษฐกิจ Real-time เพื่อจับจังหวะ Fear/Greed ของตลาดได้ก่อนคนอื่น</p>
                         </div>
                     </div>
                 </div>
@@ -219,7 +219,7 @@
                             <svg class="w-7 h-7 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/></svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold mb-2">Backtesting &amp; Optimization</h3>
+                            <h3 class="text-xl font-bold mb-2">Backtesting / Optimization</h3>
                             <p class="text-gray-400">ทดสอบระบบกับข้อมูลย้อนหลังหลายปี ปรับแต่ง Parameters ด้วย Genetic Algorithm เพื่อหา Setting ที่ดีที่สุดก่อนเทรดจริง</p>
                         </div>
                     </div>
@@ -232,8 +232,8 @@
                             <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold mb-2">Real-time Alert &amp; Dashboard</h3>
-                            <p class="text-gray-400">แจ้งเตือนทุกการเทรดผ่าน LINE / Telegram / Email พร้อม Dashboard แสดง Performance, P&amp;L, Drawdown แบบ Real-time</p>
+                            <h3 class="text-xl font-bold mb-2">Real-time Alert / Dashboard</h3>
+                            <p class="text-gray-400">แจ้งเตือนทุกการเทรดผ่าน LINE / Telegram / Email พร้อม Dashboard แสดง Performance, P/L, Drawdown แบบ Real-time</p>
                         </div>
                     </div>
                 </div>
@@ -257,7 +257,7 @@
                 <div class="flex gap-6 items-start">
                     <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-2xl font-black shadow-lg shadow-emerald-500/30">1</div>
                     <div class="flex-1 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
-                        <h3 class="text-lg font-bold mb-2">ปรึกษา &amp; วิเคราะห์ความต้องการ</h3>
+                        <h3 class="text-lg font-bold mb-2">ปรึกษาและวิเคราะห์ความต้องการ</h3>
                         <p class="text-gray-400">พูดคุยเพื่อเข้าใจ Style การเทรด ตลาดที่สนใจ ระดับความเสี่ยงที่ยอมรับได้ และเป้าหมายผลตอบแทน</p>
                     </div>
                 </div>
@@ -275,7 +275,7 @@
                 <div class="flex gap-6 items-start">
                     <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-2xl font-black shadow-lg shadow-blue-500/30">3</div>
                     <div class="flex-1 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
-                        <h3 class="text-lg font-bold mb-2">ทดสอบ Demo &amp; ปรับแต่ง</h3>
+                        <h3 class="text-lg font-bold mb-2">ทดสอบ Demo และปรับแต่ง</h3>
                         <p class="text-gray-400">รันระบบบน Demo Account เพื่อทดสอบ Performance จริงในตลาด Live ปรับแต่ง Parameter จนลูกค้าพอใจ</p>
                     </div>
                 </div>
@@ -284,7 +284,7 @@
                 <div class="flex gap-6 items-start">
                     <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-2xl font-black shadow-lg shadow-purple-500/30">4</div>
                     <div class="flex-1 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
-                        <h3 class="text-lg font-bold mb-2">Go Live &amp; ดูแลต่อเนื่อง</h3>
+                        <h3 class="text-lg font-bold mb-2">Go Live และดูแลต่อเนื่อง</h3>
                         <p class="text-gray-400">ติดตั้งระบบบน Account จริง พร้อมการดูแลและอัปเดต AI Model ต่อเนื่อง Monitor Performance 24/7</p>
                     </div>
                 </div>
