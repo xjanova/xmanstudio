@@ -80,7 +80,7 @@ class CluadeXWebController extends Controller
 
             if (auth()->check()) {
                 $hasPurchased = $product->orderItems()
-                    ->whereHas('order', fn($q) => $q->where('user_id', auth()->id())->where('status', 'completed'))
+                    ->whereHas('order', fn ($q) => $q->where('user_id', auth()->id())->where('status', 'completed'))
                     ->exists();
             }
         }
