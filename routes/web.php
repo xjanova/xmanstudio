@@ -75,6 +75,7 @@ use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\Customer\AffiliateController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
+use App\Http\Controllers\CluadeXWebController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\HomeController;
@@ -247,6 +248,13 @@ Route::prefix('localvpn')->name('localvpn.')->group(function () {
         Route::post('/payment/{order}/confirm', [LocalVpnWebController::class, 'confirmPayment'])->name('confirm-payment');
         Route::get('/payment/{order}/success', [LocalVpnWebController::class, 'paymentSuccess'])->name('payment-success');
     });
+});
+
+// CluadeX - AI Coding Assistant
+Route::prefix('cluadex')->name('cluadex.')->group(function () {
+    Route::get('/', [CluadeXWebController::class, 'detail'])->name('detail');
+    Route::get('/pricing', [CluadeXWebController::class, 'pricing'])->name('pricing');
+    Route::get('/download', [CluadeXWebController::class, 'downloadPage'])->name('download');
 });
 
 // Services
