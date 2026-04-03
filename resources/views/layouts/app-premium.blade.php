@@ -273,9 +273,6 @@
                         <a href="/" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('/') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             หน้าหลัก
                         </a>
-                        <a href="/ai-autotrade" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('ai-autotrade*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            AI AutoTrade
-                        </a>
                         <a href="/services" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('services*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             บริการ
                         </a>

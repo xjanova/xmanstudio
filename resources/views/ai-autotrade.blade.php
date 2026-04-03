@@ -4,13 +4,13 @@
 @section('meta_description', 'บริการพัฒนาระบบ AI AutoTrade สำหรับเทรดทอง น้ำมัน หุ้น อัตโนมัติ วิเคราะห์ตลาดด้วย AI ขั้นสูง ผลตอบแทนสูง ความเสี่ยงต่ำ พัฒนาโดยทีมผู้เชี่ยวชาญ XMAN STUDIO')
 
 @section('content')
-<div class="min-h-screen bg-gray-950 text-white overflow-hidden">
+<div class="text-white" style="background-color: #030712;">
 
     {{-- Hero Section --}}
-    <section class="relative min-h-screen flex items-center justify-center pt-20 pb-16">
+    <section class="relative flex items-center justify-center pt-20 pb-16" style="min-height: 100vh;">
         {{-- Animated Background --}}
         <div class="absolute inset-0">
-            <div class="absolute inset-0 bg-gradient-to-br from-gray-950 via-emerald-950/30 to-gray-950"></div>
+            <div class="absolute inset-0" style="background: linear-gradient(to bottom right, #030712, rgba(6,78,59,0.3), #030712);"></div>
             {{-- Grid pattern --}}
             <div class="absolute inset-0 opacity-[0.03]" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%2310b981&quot; fill-opacity=&quot;1&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
             {{-- Animated gradient orbs --}}
@@ -90,7 +90,7 @@
 
     {{-- Markets Section --}}
     <section class="relative py-24">
-        <div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900"></div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-4">Supported Markets</h2>
@@ -147,7 +147,7 @@
 
     {{-- Why Our AI is Different --}}
     <section id="features" class="relative py-24">
-        <div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-emerald-950/10 to-gray-950"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-gray-900 via-emerald-900/20 to-gray-900"></div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-4">Why Choose Us</h2>
@@ -161,7 +161,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {{-- Feature 1 --}}
-                <div class="group relative p-8 bg-white/[0.02] rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
+                <div class="group relative p-8 bg-white/5 rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
                     <div class="flex items-start gap-5">
                         <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center border border-emerald-500/20">
                             <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>
@@ -174,7 +174,7 @@
                 </div>
 
                 {{-- Feature 2 --}}
-                <div class="group relative p-8 bg-white/[0.02] rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
+                <div class="group relative p-8 bg-white/5 rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
                     <div class="flex items-start gap-5">
                         <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 flex items-center justify-center border border-amber-500/20">
                             <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z"/></svg>
@@ -187,7 +187,7 @@
                 </div>
 
                 {{-- Feature 3 --}}
-                <div class="group relative p-8 bg-white/[0.02] rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
+                <div class="group relative p-8 bg-white/5 rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
                     <div class="flex items-start gap-5">
                         <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 flex items-center justify-center border border-blue-500/20">
                             <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>
@@ -200,7 +200,7 @@
                 </div>
 
                 {{-- Feature 4 --}}
-                <div class="group relative p-8 bg-white/[0.02] rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
+                <div class="group relative p-8 bg-white/5 rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
                     <div class="flex items-start gap-5">
                         <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center border border-purple-500/20">
                             <svg class="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
@@ -213,7 +213,7 @@
                 </div>
 
                 {{-- Feature 5 --}}
-                <div class="group relative p-8 bg-white/[0.02] rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
+                <div class="group relative p-8 bg-white/5 rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
                     <div class="flex items-start gap-5">
                         <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500/20 to-rose-500/5 flex items-center justify-center border border-rose-500/20">
                             <svg class="w-7 h-7 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/></svg>
@@ -226,7 +226,7 @@
                 </div>
 
                 {{-- Feature 6 --}}
-                <div class="group relative p-8 bg-white/[0.02] rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
+                <div class="group relative p-8 bg-white/5 rounded-3xl border border-white/5 hover:border-emerald-500/20 transition-all duration-500">
                     <div class="flex items-start gap-5">
                         <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center border border-cyan-500/20">
                             <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
@@ -243,7 +243,7 @@
 
     {{-- How It Works --}}
     <section class="relative py-24">
-        <div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900"></div>
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-4">How It Works</h2>
@@ -256,7 +256,7 @@
                 {{-- Step 1 --}}
                 <div class="flex gap-6 items-start">
                     <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-2xl font-black shadow-lg shadow-emerald-500/30">1</div>
-                    <div class="flex-1 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
+                    <div class="flex-1 p-6 bg-white/5 rounded-2xl border border-white/5">
                         <h3 class="text-lg font-bold mb-2">ปรึกษาและวิเคราะห์ความต้องการ</h3>
                         <p class="text-gray-400">พูดคุยเพื่อเข้าใจ Style การเทรด ตลาดที่สนใจ ระดับความเสี่ยงที่ยอมรับได้ และเป้าหมายผลตอบแทน</p>
                     </div>
@@ -265,7 +265,7 @@
                 {{-- Step 2 --}}
                 <div class="flex gap-6 items-start">
                     <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-2xl font-black shadow-lg shadow-amber-500/30">2</div>
-                    <div class="flex-1 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
+                    <div class="flex-1 p-6 bg-white/5 rounded-2xl border border-white/5">
                         <h3 class="text-lg font-bold mb-2">พัฒนา AI Model เฉพาะทาง</h3>
                         <p class="text-gray-400">สร้างและ Train โมเดล AI เฉพาะสำหรับตลาดที่ต้องการ ทดสอบด้วยข้อมูลย้อนหลัง ปรับแต่งจนได้ Performance ที่น่าพอใจ</p>
                     </div>
@@ -274,7 +274,7 @@
                 {{-- Step 3 --}}
                 <div class="flex gap-6 items-start">
                     <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-2xl font-black shadow-lg shadow-blue-500/30">3</div>
-                    <div class="flex-1 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
+                    <div class="flex-1 p-6 bg-white/5 rounded-2xl border border-white/5">
                         <h3 class="text-lg font-bold mb-2">ทดสอบ Demo และปรับแต่ง</h3>
                         <p class="text-gray-400">รันระบบบน Demo Account เพื่อทดสอบ Performance จริงในตลาด Live ปรับแต่ง Parameter จนลูกค้าพอใจ</p>
                     </div>
@@ -283,7 +283,7 @@
                 {{-- Step 4 --}}
                 <div class="flex gap-6 items-start">
                     <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-2xl font-black shadow-lg shadow-purple-500/30">4</div>
-                    <div class="flex-1 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
+                    <div class="flex-1 p-6 bg-white/5 rounded-2xl border border-white/5">
                         <h3 class="text-lg font-bold mb-2">Go Live และดูแลต่อเนื่อง</h3>
                         <p class="text-gray-400">ติดตั้งระบบบน Account จริง พร้อมการดูแลและอัปเดต AI Model ต่อเนื่อง Monitor Performance 24/7</p>
                     </div>
@@ -294,7 +294,7 @@
 
     {{-- Comparison Section --}}
     <section class="relative py-24">
-        <div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-emerald-950/10 to-gray-950"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-gray-900 via-emerald-900/20 to-gray-900"></div>
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-4">Comparison</h2>
@@ -353,7 +353,7 @@
 
     {{-- Disclaimer + CTA --}}
     <section class="relative py-24">
-        <div class="absolute inset-0 bg-gradient-to-b from-gray-950 to-gray-900"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-800"></div>
         <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             {{-- CTA Card --}}
             <div class="relative p-10 sm:p-14 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 overflow-hidden">
@@ -381,7 +381,7 @@
                     </div>
 
                     {{-- Disclaimer --}}
-                    <div class="mt-10 p-4 bg-white/[0.02] rounded-xl border border-white/5">
+                    <div class="mt-10 p-4 bg-white/5 rounded-xl border border-white/5">
                         <p class="text-xs text-gray-500 leading-relaxed">
                             <strong class="text-gray-400">คำเตือน:</strong> การลงทุนมีความเสี่ยง ผลตอบแทนในอดีตไม่ได้เป็นเครื่องรับประกันผลตอบแทนในอนาคต
                             ผู้ลงทุนควรศึกษาข้อมูลและพิจารณาความเสี่ยงอย่างรอบคอบก่อนตัดสินใจลงทุน
