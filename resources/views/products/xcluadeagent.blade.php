@@ -455,7 +455,11 @@
                 </div>
             @endif
 
-            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            @php
+                $checkIcon = '<svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+                $crossIcon = '<svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>';
+            @endphp
+            <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
                 <!-- Free Plan -->
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-gray-600 transition-all">
                     <div class="text-center mb-6">
@@ -464,66 +468,34 @@
                         <p class="text-gray-500 text-sm mt-1">ดาวน์โหลดได้เลย</p>
                     </div>
                     <ul class="space-y-3 mb-8 text-sm">
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            ฟีเจอร์พื้นฐานครบ
-                        </li>
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            22+ Local Models
-                        </li>
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            ภาษาไทย/อังกฤษ
-                        </li>
-                        <li class="flex items-center text-gray-500">
-                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                            Agent Tools เต็ม
-                        </li>
-                        <li class="flex items-center text-gray-500">
-                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                            ซัพพอร์ตพรีเมียม
-                        </li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ฟีเจอร์พื้นฐานครบ</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 22+ Local Models</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ภาษาไทย/อังกฤษ</li>
+                        <li class="flex items-center text-gray-500">{!! $crossIcon !!} Agent Tools เต็ม</li>
+                        <li class="flex items-center text-gray-500">{!! $crossIcon !!} ซัพพอร์ตพรีเมียม</li>
                     </ul>
                     <a href="{{ route('download.page', $product->slug) }}"
-                       class="block w-full text-center py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all">
+                       class="block w-full text-center py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all">
                         ดาวน์โหลดฟรี
                     </a>
                 </div>
 
-                <!-- License Plan -->
+                <!-- Yearly Plan -->
                 <div class="relative bg-gradient-to-br from-violet-500/10 to-purple-500/10 backdrop-blur-sm rounded-2xl p-8 border-2 border-violet-500/50 hover:border-violet-400 transition-all">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2">
                         <span class="px-4 py-1 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-bold rounded-full shadow-lg">แนะนำ</span>
                     </div>
                     <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-white mb-2">License</h3>
-                        <div class="text-4xl font-black text-white">฿{{ number_format($product->price, 0) }}</div>
-                        @if($product->original_price && $product->original_price > $product->price)
-                            <p class="text-gray-500 text-sm mt-1 line-through">฿{{ number_format($product->original_price, 0) }}</p>
-                        @endif
+                        <h3 class="text-xl font-bold text-white mb-2">รายปี</h3>
+                        <div class="text-4xl font-black text-white">฿199</div>
+                        <p class="text-gray-500 text-sm mt-1">365 วัน</p>
                     </div>
                     <ul class="space-y-3 mb-8 text-sm">
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            ฟีเจอร์ทั้งหมด + Agent Tools
-                        </li>
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            5 AI Providers
-                        </li>
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            28 Agent Tools
-                        </li>
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            ซัพพอร์ตพรีเมียม
-                        </li>
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            อัปเดตฟรีตลอดอายุ License
-                        </li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ฟีเจอร์ทั้งหมด</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 5 AI Providers</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 28 Agent Tools</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ซัพพอร์ตพรีเมียม</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} อัปเดตฟรี 1 ปี</li>
                     </ul>
                     @if(auth()->check() && $hasPurchased)
                         <a href="{{ route('customer.downloads') }}"
@@ -534,9 +506,44 @@
                         <form action="{{ route('cart.add', $product) }}" method="POST">
                             @csrf
                             <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="license_type" value="yearly">
+                            <input type="hidden" name="price" value="199">
                             <button type="submit"
                                     class="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25">
-                                ซื้อ License - ฿{{ number_format($product->price, 0) }}
+                                ซื้อ License รายปี - ฿199
+                            </button>
+                        </form>
+                    @endif
+                </div>
+
+                <!-- Lifetime Plan -->
+                <div class="bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/30 hover:border-amber-400 transition-all">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-white mb-2">ตลอดชีพ</h3>
+                        <div class="text-4xl font-black text-white">฿1,999</div>
+                        <p class="text-amber-400 text-sm mt-1">ไม่มีวันหมดอายุ</p>
+                    </div>
+                    <ul class="space-y-3 mb-8 text-sm">
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ฟีเจอร์ทั้งหมด</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 5 AI Providers</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 28 Agent Tools</li>
+                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ซัพพอร์ตพรีเมียม</li>
+                        <li class="flex items-center text-amber-300">{!! $checkIcon !!} อัปเดตฟรีตลอดชีพ</li>
+                    </ul>
+                    @if(auth()->check() && $hasPurchased)
+                        <a href="{{ route('customer.downloads') }}"
+                           class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25">
+                            ดาวน์โหลดเลย
+                        </a>
+                    @else
+                        <form action="{{ route('cart.add', $product) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="license_type" value="lifetime">
+                            <input type="hidden" name="price" value="1999">
+                            <button type="submit"
+                                    class="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-500/25">
+                                ซื้อ License ตลอดชีพ - ฿1,999
                             </button>
                         </form>
                     @endif
