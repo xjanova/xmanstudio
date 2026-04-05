@@ -4,6 +4,73 @@
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-gray-900 via-violet-900 to-gray-900">
+    {{-- License Status Banner --}}
+    @if(isset($userLicense) && $userLicense)
+        @if($userLicense->isValid())
+            @php $daysLeft = $userLicense->daysRemaining(); @endphp
+            @if($daysLeft <= 7 && $userLicense->license_type !== 'lifetime')
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                    <div class="bg-amber-500/20 border border-amber-500/50 text-amber-300 px-6 py-4 rounded-xl backdrop-blur-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <p class="font-semibold">License ใกล้หมดอายุ!</p>
+                                    <p class="text-sm text-amber-200">เหลืออีก {{ $daysLeft }} วัน ({{ $userLicense->expires_at->format('d/m/Y') }})</p>
+                                </div>
+                            </div>
+                            <a href="{{ route('customer.licenses.show', $userLicense) }}" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                ต่ออายุ License
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                    <div class="bg-green-500/20 border border-green-500/50 text-green-300 px-6 py-4 rounded-xl backdrop-blur-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <p class="font-semibold">คุณมี License สำหรับผลิตภัณฑ์นี้แล้ว!</p>
+                                    <p class="text-sm text-green-200">
+                                        {{ $userLicense->license_type === 'lifetime' ? 'ใบอนุญาตตลอดชีพ' : 'หมดอายุ: ' . $userLicense->expires_at->format('d/m/Y') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ route('customer.licenses.show', $userLicense) }}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                ดู License ของฉัน
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @elseif($userLicense->isExpired())
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                <div class="bg-red-500/20 border border-red-500/50 text-red-300 px-6 py-4 rounded-xl backdrop-blur-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold">License หมดอายุแล้ว</p>
+                                <p class="text-sm text-red-200">หมดอายุเมื่อ {{ $userLicense->expires_at->format('d/m/Y') }}</p>
+                            </div>
+                        </div>
+                        <a href="#pricing" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                            ซื้อ License ใหม่
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
+
     <!-- Hero Section -->
     <section class="relative py-20 overflow-hidden">
         <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%238B5CF6\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
@@ -54,17 +121,21 @@
                                     ดาวน์โหลด
                                 </a>
                             @else
-                                <a href="{{ route('products.index') }}"
-                                   class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                                    ดูแพคเกจ
+                                <a href="#pricing"
+                                   class="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
+                                    ซื้อ License
                                 </a>
                             @endif
                         @else
-                            <a href="{{ route('products.index') }}"
-                               class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                                ดูแพคเกจ
+                            <a href="#pricing"
+                               class="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
+                                ซื้อ License
                             </a>
                         @endauth
+                        <a href="#features"
+                           class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
+                            ดูฟีเจอร์
+                        </a>
                     </div>
                 </div>
 
@@ -144,7 +215,7 @@
     </section>
 
     <!-- Features Section -->
-    <section class="py-16">
+    <section id="features" class="py-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold text-white text-center mb-12">ฟีเจอร์หลัก</h2>
 
@@ -382,32 +453,101 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl font-bold text-white mb-4">เริ่มต้นใช้งาน XcluadeAgent</h2>
-            <p class="text-gray-400 mb-8">ดาวน์โหลดฟรี และให้ AI ช่วยจัดการ Git Workflow ของคุณ</p>
+    <!-- Pricing & Purchase Section -->
+    <section id="pricing" class="py-16 bg-gray-900/50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-white text-center mb-4">เริ่มต้นใช้งาน XcluadeAgent</h2>
+            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">เลือกแพ็กเกจ License ที่เหมาะกับความต้องการของคุณ</p>
 
-            <div class="flex flex-wrap justify-center gap-4">
-                @auth
-                    @if($hasPurchased)
-                        <a href="{{ route('customer.downloads') }}"
-                           class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                            ดาวน์โหลดเลย
-                        </a>
-                    @else
-                        <a href="{{ route('products.index') }}"
-                           class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                            ดูแพคเกจ
-                        </a>
-                    @endif
-                @else
-                    <a href="{{ route('products.index') }}"
-                       class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                        ดูแพคเกจ
-                    </a>
-                @endauth
+            @if(session('success'))
+                <div class="mb-6 bg-green-500/20 border border-green-500/50 text-green-300 px-4 py-3 rounded-xl backdrop-blur-sm text-center">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            <div class="max-w-lg mx-auto">
+                <div class="bg-gradient-to-br from-violet-500/10 to-purple-500/10 rounded-2xl p-8 border border-violet-500/30 backdrop-blur-sm">
+                    <div class="text-center mb-6">
+                        <div class="inline-flex items-center px-3 py-1 bg-violet-500/20 rounded-full text-violet-300 text-sm mb-4">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                            </svg>
+                            License Key
+                        </div>
+                        <div class="text-4xl font-black text-white mb-2">
+                            ฿{{ number_format($product->price, 0) }}
+                        </div>
+                        @if($product->original_price && $product->original_price > $product->price)
+                            <div class="text-gray-500 line-through text-lg">฿{{ number_format($product->original_price, 0) }}</div>
+                        @endif
+                    </div>
+
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            Auto-Sync GitHub Repositories
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            Claude AI Commit Messages
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            Real-time Change Detection
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            System Tray Background Service
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-300">
+                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            อัปเดตฟรีตลอดอายุ License
+                        </li>
+                    </ul>
+
+                    <div class="pt-6 border-t border-violet-500/20">
+                        @if(auth()->check() && $hasPurchased)
+                            <a href="{{ route('customer.downloads') }}"
+                               class="block w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-center font-bold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-green-500/25">
+                                ดาวน์โหลดเลย
+                            </a>
+                        @else
+                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit"
+                                        class="w-full py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-violet-500/25">
+                                    ซื้อ License - ฿{{ number_format($product->price, 0) }}
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
             </div>
+
+            <p class="text-gray-500 text-sm text-center mt-6">
+                รองรับการชำระเงินผ่าน PromptPay, โอนธนาคาร, Stripe และ Wallet
+            </p>
         </div>
     </section>
 </div>
