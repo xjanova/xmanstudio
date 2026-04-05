@@ -106,6 +106,11 @@ class LicenseService
             $generated = true;
         }
 
+        // Mark order as completed when licenses are generated
+        if ($generated) {
+            $order->update(['status' => 'completed']);
+        }
+
         if ($generated && $order->customer_email && PaymentSetting::get('mail_enabled', true)) {
             try {
                 Mail::to($order->customer_email)
