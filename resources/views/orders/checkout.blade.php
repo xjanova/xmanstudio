@@ -104,7 +104,7 @@
                         @endauth
 
                         <!-- Other Payment Methods -->
-                        @php $firstActive = !isset($wallet) || $wallet->balance <= 0; @endphp
+                        @php $firstActive = true; @endphp
                         @foreach($paymentMethods as $method)
                             @if($method['is_active'])
                                 <label class="flex items-center p-4 border-2 rounded-xl cursor-pointer hover:border-primary-500 transition payment-method-option {{ $firstActive ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-600' }}"

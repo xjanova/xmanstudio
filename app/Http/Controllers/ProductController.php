@@ -135,6 +135,7 @@ class ProductController extends Controller
             'autotradex' => 'products.autotradex',
             'spiderx' => 'products.spiderx',
             'xcluadeagent' => 'products.xcluadeagent',
+            'cluadex-ai-coding-assistant' => 'products.xcluadeagent',
             'phonex-manager' => 'products.phonexmanager',
             'live-x-shop-pro' => 'products.livexshoppro',
             'winxtools' => 'products.winxtools',
