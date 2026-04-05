@@ -249,7 +249,7 @@ class OrderController extends Controller
                     'product_name' => $cartItem->product->name,
                     'quantity' => $cartItem->quantity,
                     'price' => $cartItem->price,
-                    'total' => $cartItem->price * $cartItem->quantity,
+                    'subtotal' => $cartItem->price * $cartItem->quantity,
                     'custom_requirements' => $cartItem->custom_requirements,
                 ]);
             }

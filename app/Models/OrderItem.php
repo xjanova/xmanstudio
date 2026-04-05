@@ -14,7 +14,6 @@ class OrderItem extends Model
         'price',
         'quantity',
         'subtotal',
-        'total',
         'custom_requirements',
         'license_key_id',
     ];
@@ -22,7 +21,6 @@ class OrderItem extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
-        'total' => 'decimal:2',
         'quantity' => 'integer',
     ];
 
