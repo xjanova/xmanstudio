@@ -1,6 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
 
-@section('title', 'XcluadeAgent - GitHub Sync with AI | XMAN Studio')
+@section('title', $product->name . ' | XMAN Studio')
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-gray-900 via-violet-900 to-gray-900">
@@ -91,50 +91,38 @@
                 <div>
                     <div class="inline-flex items-center px-4 py-2 bg-violet-500/20 rounded-full text-violet-300 text-sm mb-6 backdrop-blur-sm border border-violet-500/30">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
                         </svg>
-                        AI-Powered GitHub Sync
+                        AI Coding Assistant
                     </div>
 
                     <h1 class="text-5xl md:text-6xl font-black text-white mb-6">
-                        Xcluade<span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400">Agent</span>
+                        Cluade<span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400">X</span>
                     </h1>
 
                     <p class="text-xl text-gray-300 mb-8">
-                        Windows Desktop Service สำหรับ Sync Local Folders กับ GitHub Repositories พร้อม AI Assistant จาก Claude ช่วยจัดการโค้ดอัตโนมัติ
+                        {{ $product->short_description ?: 'ผู้ช่วยเขียนโค้ด AI ระดับมืออาชีพ ทำงานบนเครื่องคุณ ข้อมูลเป็นส่วนตัว 100% รองรับ 5 AI Providers, 28 Agent Tools, 22+ Local Models' }}
                     </p>
 
                     <!-- Key Features Tags -->
                     <div class="flex flex-wrap gap-3 mb-8">
-                        <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm border border-violet-500/30">Claude AI</span>
-                        <span class="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm border border-purple-500/30">GitHub Sync</span>
-                        <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm border border-blue-500/30">Auto Commit</span>
-                        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm border border-indigo-500/30">Windows Service</span>
+                        <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm border border-violet-500/30">5 AI Providers</span>
+                        <span class="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm border border-purple-500/30">28 Agent Tools</span>
+                        <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm border border-blue-500/30">22+ Local Models</span>
+                        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm border border-indigo-500/30">Windows Desktop</span>
                     </div>
 
                     <!-- CTA Buttons -->
                     <div class="flex flex-wrap gap-4">
-                        @auth
-                            @if($hasPurchased)
-                                <a href="{{ route('customer.downloads') }}"
-                                   class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                                    ดาวน์โหลด
-                                </a>
-                            @else
-                                <a href="#pricing"
-                                   class="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
-                                    ซื้อ License
-                                </a>
-                            @endif
-                        @else
-                            <a href="#pricing"
-                               class="px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
-                                ซื้อ License
-                            </a>
-                        @endauth
-                        <a href="#features"
-                           class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
-                            ดูฟีเจอร์
+                        <a href="{{ route('download.page', $product->slug) }}"
+                           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            ดาวน์โหลดฟรี
+                        </a>
+                        <a href="#pricing"
+                           class="inline-flex items-center px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                            ดูราคา
                         </a>
                     </div>
                 </div>
@@ -164,7 +152,7 @@
     <section class="py-16 bg-gray-900/50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold text-white text-center mb-4">สถาปัตยกรรมระบบ</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">พัฒนาด้วย Clean Architecture บน .NET 8 WPF รองรับการทำงานเบื้องหลังแบบ Background Service</p>
+            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">พัฒนาด้วย Clean Architecture รองรับ AI Providers หลายตัว ทำงานบนเครื่องคุณ 100%</p>
 
             <div class="grid md:grid-cols-4 gap-6">
                 <!-- Presentation Layer -->
@@ -292,8 +280,8 @@
     <!-- AI Features -->
     <section class="py-16 bg-gray-900/50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-4">Claude AI Integration</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">ใช้พลัง Claude AI จาก Anthropic ช่วยจัดการ Git Workflow อย่างชาญฉลาด</p>
+            <h2 class="text-3xl font-bold text-white text-center mb-4">AI Integration</h2>
+            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">รองรับหลาย AI Providers ช่วยเขียนโค้ดอย่างชาญฉลาด</p>
 
             <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <div class="bg-gradient-to-br from-violet-500/10 to-purple-500/10 rounded-xl p-6 border border-violet-500/30">
@@ -455,9 +443,11 @@
 
     <!-- Pricing & Purchase Section -->
     <section id="pricing" class="py-16 bg-gray-900/50">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-4">เริ่มต้นใช้งาน XcluadeAgent</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">เลือกแพ็กเกจ License ที่เหมาะกับความต้องการของคุณ</p>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-white mb-4">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
+                <p class="text-gray-400">ดาวน์โหลดฟรี หรือซื้อ License เพื่อปลดล็อคฟีเจอร์เต็มรูปแบบ</p>
+            </div>
 
             @if(session('success'))
                 <div class="mb-6 bg-green-500/20 border border-green-500/50 text-green-300 px-4 py-3 rounded-xl backdrop-blur-sm text-center">
@@ -465,87 +455,95 @@
                 </div>
             @endif
 
-            <div class="max-w-lg mx-auto">
-                <div class="bg-gradient-to-br from-violet-500/10 to-purple-500/10 rounded-2xl p-8 border border-violet-500/30 backdrop-blur-sm">
+            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+                <!-- Free Plan -->
+                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-gray-600 transition-all">
                     <div class="text-center mb-6">
-                        <div class="inline-flex items-center px-3 py-1 bg-violet-500/20 rounded-full text-violet-300 text-sm mb-4">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                            </svg>
-                            License Key
-                        </div>
-                        <div class="text-4xl font-black text-white mb-2">
-                            ฿{{ number_format($product->price, 0) }}
-                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">ฟรี</h3>
+                        <div class="text-4xl font-black text-white">฿0</div>
+                        <p class="text-gray-500 text-sm mt-1">ดาวน์โหลดได้เลย</p>
+                    </div>
+                    <ul class="space-y-3 mb-8 text-sm">
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            ฟีเจอร์พื้นฐานครบ
+                        </li>
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            22+ Local Models
+                        </li>
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            ภาษาไทย/อังกฤษ
+                        </li>
+                        <li class="flex items-center text-gray-500">
+                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                            Agent Tools เต็ม
+                        </li>
+                        <li class="flex items-center text-gray-500">
+                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                            ซัพพอร์ตพรีเมียม
+                        </li>
+                    </ul>
+                    <a href="{{ route('download.page', $product->slug) }}"
+                       class="block w-full text-center py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all">
+                        ดาวน์โหลดฟรี
+                    </a>
+                </div>
+
+                <!-- License Plan -->
+                <div class="relative bg-gradient-to-br from-violet-500/10 to-purple-500/10 backdrop-blur-sm rounded-2xl p-8 border-2 border-violet-500/50 hover:border-violet-400 transition-all">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span class="px-4 py-1 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-bold rounded-full shadow-lg">แนะนำ</span>
+                    </div>
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-white mb-2">License</h3>
+                        <div class="text-4xl font-black text-white">฿{{ number_format($product->price, 0) }}</div>
                         @if($product->original_price && $product->original_price > $product->price)
-                            <div class="text-gray-500 line-through text-lg">฿{{ number_format($product->original_price, 0) }}</div>
+                            <p class="text-gray-500 text-sm mt-1 line-through">฿{{ number_format($product->original_price, 0) }}</p>
                         @endif
                     </div>
-
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            Auto-Sync GitHub Repositories
+                    <ul class="space-y-3 mb-8 text-sm">
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            ฟีเจอร์ทั้งหมด + Agent Tools
                         </li>
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            Claude AI Commit Messages
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            5 AI Providers
                         </li>
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            Real-time Change Detection
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            28 Agent Tools
                         </li>
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            System Tray Background Service
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            ซัพพอร์ตพรีเมียม
                         </li>
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <div class="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
+                        <li class="flex items-center text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                             อัปเดตฟรีตลอดอายุ License
                         </li>
                     </ul>
-
-                    <div class="pt-6 border-t border-violet-500/20">
-                        @if(auth()->check() && $hasPurchased)
-                            <a href="{{ route('customer.downloads') }}"
-                               class="block w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-center font-bold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-green-500/25">
-                                ดาวน์โหลดเลย
-                            </a>
-                        @else
-                            <form action="{{ route('cart.add', $product) }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="quantity" value="1">
-                                <button type="submit"
-                                        class="w-full py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-violet-500/25">
-                                    ซื้อ License - ฿{{ number_format($product->price, 0) }}
-                                </button>
-                            </form>
-                        @endif
-                    </div>
+                    @if(auth()->check() && $hasPurchased)
+                        <a href="{{ route('customer.downloads') }}"
+                           class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25">
+                            ดาวน์โหลดเลย
+                        </a>
+                    @else
+                        <form action="{{ route('cart.add', $product) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit"
+                                    class="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25">
+                                ซื้อ License - ฿{{ number_format($product->price, 0) }}
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
 
-            <p class="text-gray-500 text-sm text-center mt-6">
+            <p class="text-gray-500 text-sm text-center mt-8">
                 รองรับการชำระเงินผ่าน PromptPay, โอนธนาคาร, Stripe และ Wallet
             </p>
         </div>
