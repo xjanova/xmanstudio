@@ -333,9 +333,17 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Dispatch event for SMS checker broadcast
-            if ($order->usesSmsPayment()) {
-                event(new NewOrderCreated($order->load('uniquePaymentAmount')));
+            // Dispatch event for SMS checker broadcast (wrapped separately so broadcast
+            // failures don't show error to user — the order is already committed)
+            try {
+                if ($order->usesSmsPayment()) {
+                    event(new NewOrderCreated($order->load('uniquePaymentAmount')));
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to broadcast NewOrderCreated event', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
 
             // Redirect based on payment method
