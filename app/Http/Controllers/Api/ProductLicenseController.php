@@ -69,6 +69,7 @@ class ProductLicenseController extends Controller
             'hardware_hash' => 'nullable|string|max:64',
             'drm_id' => 'nullable|string|max:128',
             'android_id' => 'nullable|string|max:64',
+            'force_rebind' => 'nullable|string',
         ]);
 
         $deviceData = [
@@ -378,6 +379,7 @@ class ProductLicenseController extends Controller
             'app_version' => 'nullable|string|max:50',
             'drm_id' => 'nullable|string|max:128',
             'android_id' => 'nullable|string|max:64',
+            'force_rebind' => 'nullable|string',
         ]);
 
         $licenseKey = strtoupper(trim($validated['license_key']));
@@ -455,12 +457,40 @@ class ProductLicenseController extends Controller
                         'machine_id' => $validated['machine_id'],
                     ]);
             } else {
-                // DIFFERENT device — BLOCK activation, must contact admin
-                return response()->json([
-                    'success' => false,
-                    'error_code' => 'ALREADY_ACTIVATED_OTHER_DEVICE',
-                    'message' => 'License นี้ถูกใช้งานบนเครื่องอื่นแล้ว กรุณาติดต่อแอดมินเพื่อย้ายเครื่อง',
-                ], 403);
+                // DIFFERENT device - check if force_rebind is requested
+                $forceRebind = filter_var($validated['force_rebind'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                if (! $forceRebind) {
+                    return response()->json([
+                        'success' => false,
+                        'error_code' => 'ALREADY_ACTIVATED_OTHER_DEVICE',
+                        'message' => 'License นี้ถูกใช้งานบนเครื่องอื่นแล้ว',
+                    ], 403);
+                }
+
+                // Force rebind - deactivate old device, activate on new
+                $isRebind = true;
+                $previousMachineId = $license->machine_id;
+
+                $license->update([
+                    'machine_id' => null,
+                    'machine_fingerprint' => null,
+                    'activations' => max(0, $license->activations - 1),
+                ]);
+
+                ProductDevice::where('product_id', $product->id)
+                    ->where('machine_id', $previousMachineId)
+                    ->update(['status' => ProductDevice::STATUS_EXPIRED]);
+
+                LicenseActivity::log(
+                    $license,
+                    LicenseActivity::ACTION_MACHINE_RESET,
+                    LicenseActivity::ACTOR_API,
+                    null,
+                    $validated['machine_id'],
+                    'Force rebind: ย้ายเครื่องโดยผู้ใช้',
+                    ['previous_machine_id' => $previousMachineId]
+                );
             }
         }
 
@@ -635,6 +665,7 @@ class ProductLicenseController extends Controller
             'machine_id' => 'required|string|min:32|max:64',
             'drm_id' => 'nullable|string|max:128',
             'android_id' => 'nullable|string|max:64',
+            'force_rebind' => 'nullable|string',
         ]);
 
         $drmId = $validated['drm_id'] ?? null;
