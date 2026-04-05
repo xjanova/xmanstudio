@@ -365,13 +365,19 @@ class OrderController extends Controller
             Log::error('Order creation failed', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
+                'file' => $e->getFile() . ':' . $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            // Return generic error message to user (don't expose internal details)
+            // Show detailed error to admins for debugging, generic message to others
+            $errorMessage = 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง';
+            if (auth()->check() && auth()->user()->isAdmin()) {
+                $errorMessage .= ' [Debug: ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine() . ']';
+            }
+
             return redirect()
                 ->back()
-                ->with('error', 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง');
+                ->with('error', $errorMessage);
         }
     }
 
