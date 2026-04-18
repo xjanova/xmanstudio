@@ -83,11 +83,14 @@ class ThemeService
      */
     public static function getUserTheme(): ?string
     {
-        if (Auth::check()) {
-            return Auth::user()->getPreferredTheme();
+        if (! Auth::check()) {
+            return null;
         }
 
-        return null;
+        $theme = Auth::user()->getPreferredTheme();
+
+        // Self-heal if the stored preference is no longer a registered theme.
+        return ($theme && self::isValidTheme($theme)) ? $theme : null;
     }
 
     /**
