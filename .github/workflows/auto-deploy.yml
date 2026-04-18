@@ -105,6 +105,19 @@ jobs:
             echo "🗃️ Running migrations..."
             php artisan migrate --force 2>&1 || echo "⚠️ Migration warnings (non-fatal)"
 
+            # Build front-end assets (Vite) so public_html/build/ has the
+            # fresh CSS/JS hashes. Skipped if node is not on PATH.
+            if command -v npm >/dev/null 2>&1; then
+              echo "🎨 Building front-end assets..."
+              npm ci --no-audit --no-fund 2>&1 | tail -20 || {
+                echo "⚠️ npm ci failed, falling back to npm install"
+                npm install --no-audit --no-fund 2>&1 | tail -20
+              }
+              npm run build 2>&1 | tail -20 || echo "⚠️ npm run build failed — production will keep old bundle"
+            else
+              echo "⚠️ npm not found on PATH — skipping asset build (manifest.json will be stale)"
+            fi
+
             # Clear and rebuild caches (CRITICAL for new routes)
             echo "⚡ Optimizing application..."
             php artisan config:clear
