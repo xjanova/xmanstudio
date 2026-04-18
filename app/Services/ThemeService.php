@@ -28,6 +28,14 @@ class ThemeService
             'icon' => 'sparkles',
             'gradient' => 'from-indigo-500 to-purple-600',
         ],
+        'studio' => [
+            'name' => 'Studio',
+            'description' => 'ธีม Design System ต้นฉบับ — Rainbow wordmark, Golden fireflies, Brand-pure',
+            'preview' => '/images/themes/studio-preview.png',
+            'features' => ['Rainbow Wordmark', 'Golden Fireflies', 'Brand-Pure'],
+            'icon' => 'palette',
+            'gradient' => 'from-blue-400 via-purple-500 to-pink-500',
+        ],
     ];
 
     /**
@@ -148,6 +156,7 @@ class ThemeService
 
         return match ($theme) {
             'premium' => 'layouts.app-premium',
+            'studio' => 'layouts.app-studio',
             default => 'layouts.app',
         };
     }

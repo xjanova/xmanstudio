@@ -154,8 +154,15 @@
                                 peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
                                 hover:shadow-2xl hover:border-indigo-400 hover:-translate-y-1 transform">
 
+                        @php
+                            $cardPreviewBg = match($themeKey) {
+                                'premium' => 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900',
+                                'studio' => 'bg-gradient-to-br from-blue-50 via-white to-pink-50 dark:from-gray-950 dark:via-black dark:to-gray-950',
+                                default => 'bg-gradient-to-br from-gray-100 via-white to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-500',
+                            };
+                        @endphp
                         <!-- Theme Preview -->
-                        <div class="relative h-36 {{ $themeKey === 'premium' ? 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900' : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-500' }} overflow-hidden">
+                        <div class="relative h-36 {{ $cardPreviewBg }} overflow-hidden">
                             @if($themeKey === 'classic')
                                 <!-- Classic Theme Preview -->
                                 <div class="absolute inset-0 flex p-3">
@@ -170,6 +177,35 @@
                                         <div class="h-12 bg-white dark:bg-gray-600 rounded"></div>
                                     </div>
                                 </div>
+                            @elseif($themeKey === 'studio')
+                                <!-- Studio Theme Preview — rainbow wordmark + golden fireflies -->
+                                <div class="absolute inset-0 flex flex-col p-3">
+                                    <div class="flex items-center gap-1.5 mb-1.5">
+                                        <div class="h-4 w-20 rounded" style="background: linear-gradient(to right, #60a5fa, #a855f7, #ec4899);"></div>
+                                        <div class="flex-1 flex gap-0.5 justify-end">
+                                            <span class="h-1.5 w-5 rounded-full bg-gradient-to-r from-emerald-500 to-green-500"></span>
+                                            <span class="h-1.5 w-5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500"></span>
+                                            <span class="h-1.5 w-5 rounded-full bg-gradient-to-r from-orange-500 to-red-500"></span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1 flex-1">
+                                        <div class="bg-white dark:bg-gray-800 rounded p-1 flex flex-col">
+                                            <div class="h-3 rounded" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);"></div>
+                                            <div class="mt-0.5 h-0.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                                        </div>
+                                        <div class="bg-white dark:bg-gray-800 rounded p-1 flex flex-col">
+                                            <div class="h-3 rounded" style="background: linear-gradient(135deg, #a855f7, #ec4899);"></div>
+                                            <div class="mt-0.5 h-0.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                                        </div>
+                                        <div class="bg-white dark:bg-gray-800 rounded p-1 flex flex-col">
+                                            <div class="h-3 rounded" style="background: linear-gradient(135deg, #22c55e, #16a34a);"></div>
+                                            <div class="mt-0.5 h-0.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Golden fireflies -->
+                                <span class="absolute top-2 right-8 w-1 h-1 rounded-full" style="background:#ffd700;box-shadow:0 0 4px 2px #ffd700,0 0 8px 4px rgba(255,215,0,.5);animation:pulse-slow 3s infinite;"></span>
+                                <span class="absolute bottom-5 left-6 w-1 h-1 rounded-full" style="background:#ffd700;box-shadow:0 0 4px 2px #ffd700,0 0 8px 4px rgba(255,215,0,.5);animation:pulse-slow 2.5s infinite;"></span>
                             @else
                                 <!-- Premium Theme Preview -->
                                 <div class="absolute inset-0 flex p-3">
@@ -212,6 +248,13 @@
                                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                                         </svg>
                                         Premium
+                                    </span>
+                                </div>
+                            @elseif($themeKey === 'studio')
+                                <div class="absolute top-3 left-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-white shadow" style="background: linear-gradient(to right, #60a5fa, #a855f7, #ec4899);">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4z"/></svg>
+                                        Studio
                                     </span>
                                 </div>
                             @endif

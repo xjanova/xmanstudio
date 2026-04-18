@@ -29,7 +29,7 @@ class ThemeController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'theme' => 'required|string|in:classic,premium',
+            'theme' => ['required', 'string', 'in:' . implode(',', array_keys(ThemeService::THEMES))],
         ]);
 
         $theme = $request->input('theme');
