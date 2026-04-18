@@ -70,3 +70,9 @@ database/*.sqlite
 .claude/worktrees/
 create_personal_access_tokens.sql
 .claude/settings.local.json
+
+# ==========================================================================
+# Design-system handoff artifacts (source bundles, not part of the app)
+# ==========================================================================
+/XMAN Studio Design System-handoff.zip
+/design-system-source/

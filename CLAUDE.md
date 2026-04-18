@@ -4,6 +4,21 @@
 
 XMAN Studio is a comprehensive business management platform built with **Laravel 11** for selling digital products, managing software licenses, rental packages, and Metal-X YouTube channel content. The site is primarily in **Thai** (th) with English fallback.
 
+## CRITICAL: Cross-Project Relationship with AIXMAN
+
+**This database is shared with AIXMAN (ai.xman4289.com) — an AI generation platform.**
+
+- **AIXMAN repo:** https://github.com/xjanova/aixman (Next.js 15)
+- **AIXMAN tables (prefixed `ai_`):** `ai_settings`, `ai_providers`, `ai_account_pools`, `ai_models`, `ai_credit_packages`, `ai_user_credits`, `ai_credit_transactions`, `ai_generations`, `ai_templates`, `ai_styles`, `ai_favorites`, `ai_usage_logs`
+- **Shared tables read by AIXMAN:** `users`, `wallets`
+
+### Integration Points:
+1. **Auth:** AIXMAN uses the same `users` table. Users log in with same email/password
+2. **Credit Purchase:** When a user buys AI credits through xmanstudio checkout, call AIXMAN webhook `POST https://ai.xman4289.com/api/webhooks/xman-credit` with `{ userId, packageId, orderId, credits, bonusCredits }` and header `x-webhook-secret`
+3. **Package Pricing:** Read from `ai_credit_packages` table (or `GET https://ai.xman4289.com/api/packages`) for up-to-date pricing
+4. **Affiliate:** AI credit package orders should use the standard affiliate commission system. The package price from `ai_credit_packages.price_thb` is the order amount for commission calculation
+5. **Checkout Route:** AIXMAN links to `https://xman4289.com/checkout/ai-credits/{packageSlug}?ref=ai` — this route needs to be created in xmanstudio to handle AI credit purchases
+
 ## Tech Stack
 
 - **Backend:** PHP 8.2+, Laravel 11
