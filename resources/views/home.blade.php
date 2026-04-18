@@ -1,38 +1,776 @@
-@extends('layouts.retro', ['activeNav' => 'home'])
+@extends($publicLayout ?? 'layouts.app')
 
-@section('title', 'XMAN Studio — Digital Craft Division · Est. MMXVIII')
-@section('description', 'XMAN Studio — Blockchain, AI, Web & Mobile development. Bangkok · Est. MMXVIII')
+@section('title', 'XMAN Studio - IT Solutions & Software Development ครบวงจร')
 
 @section('content')
-    @include('partials.retro-hero')
-
-    {{-- Ticker --}}
-    <div style="border-top:1px solid rgba(212,175,55,.3);border-bottom:1px solid rgba(212,175,55,.3);background:linear-gradient(180deg,rgba(212,175,55,.04),transparent);overflow:hidden;padding:14px 0;">
-        <div style="display:flex;gap:32px;white-space:nowrap;animation:retro-ticker 40s linear infinite;">
-            @for($r = 0; $r < 3; $r++)
-                @foreach(['BLOCKCHAIN','◆','WEB','◆','MOBILE','◆','AI & ML','◆','IOT','◆','CONSULTING','◆','METAL-X RECORDS','◆','EST · MMXVIII','◆'] as $t)
-                    <span style="font-family:var(--font-ui);font-size:12px;letter-spacing:.3em;color:{{ $t === '◆' ? 'var(--tron-gold)' : 'var(--fg-2)' }};">{{ $t }}</span>
-                @endforeach
-            @endfor
+<!-- Sale Promotion Banner -->
+<div class="relative z-50 overflow-hidden bg-gradient-to-r from-red-600 via-pink-600 to-red-600" style="background-size: 200% 100%; animation: sale-bg-shift 3s ease infinite;">
+    <div class="absolute inset-0 opacity-20">
+        <div class="absolute inset-0" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px);"></div>
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-center py-3 gap-3 flex-wrap">
+            <span class="inline-flex items-center gap-2 text-white font-bold text-sm md:text-base">
+                <span class="flex items-center justify-center w-7 h-7 bg-yellow-400 text-red-600 rounded-full text-xs font-black animate-bounce">%</span>
+                <span class="tracking-wide">มหกรรมลดราคา</span>
+            </span>
+            <span class="px-4 py-1 bg-yellow-400 text-red-700 font-black text-lg md:text-2xl rounded-lg shadow-lg" style="animation: sale-pulse 1.5s ease-in-out infinite;">
+                50-70% OFF
+            </span>
+            <a href="/services" class="inline-flex items-center gap-1 px-4 py-1.5 bg-white text-red-600 font-bold text-sm rounded-full hover:bg-yellow-100 transition-colors shadow-md">
+                ดูบริการทั้งหมด
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
         </div>
-        <style>@keyframes retro-ticker{from{transform:translateX(0)}to{transform:translateX(-33.333%)}}</style>
+    </div>
+</div>
+<style>
+    @keyframes sale-bg-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes sale-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+</style>
+
+<!-- Hero Section with Fireflies -->
+<div class="relative h-screen overflow-hidden bg-gradient-to-b from-gray-950 via-black to-gray-950" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)" style="contain: layout style paint;">
+    <!-- Static Starfield Background (lightweight CSS only) -->
+    <div class="absolute inset-0 hero-starfield"></div>
+
+    <!-- Hero Fireflies Container -->
+    <div id="hero-fireflies" class="absolute inset-0 pointer-events-none" style="will-change: transform;"></div>
+
+    <!-- Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/40 z-10"></div>
+
+    <!-- Central Content -->
+    <div class="relative z-20 h-full flex items-center justify-center">
+        <div class="text-center max-w-5xl mx-auto px-4"
+             :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'"
+             style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
+            <!-- Badge -->
+            <div class="mb-6"
+                 :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'"
+                 style="transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;">
+                <span class="inline-flex items-center px-6 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white/90 text-sm font-medium">
+                    <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                    IT Solutions ครบวงจร
+                </span>
+            </div>
+
+            <!-- Main Title / Logo -->
+            @php
+                $heroLogo = \App\Models\Setting::getValue('site_logo');
+            @endphp
+            <h1 class="mb-8">
+                @if($heroLogo)
+                    <div :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
+                         style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;">
+                        <img src="{{ asset('storage/' . $heroLogo) }}" alt="XMAN STUDIO" class="mx-auto h-28 md:h-40 lg:h-52 w-auto drop-shadow-2xl">
+                    </div>
+                @else
+                    <span class="block text-5xl md:text-7xl lg:text-9xl font-black text-white tracking-tight hyperdrive-title"
+                          :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
+                          style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;">
+                        XMAN
+                    </span>
+                    <span class="block text-4xl md:text-6xl lg:text-8xl font-black bg-gradient-to-r from-primary-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mt-2"
+                          :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
+                          style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s; background-size: 200% 200%; animation: gradient-shift 5s ease infinite;">
+                        STUDIO
+                    </span>
+                @endif
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-lg md:text-2xl lg:text-3xl text-white/80 font-light max-w-3xl mx-auto mb-12 leading-relaxed"
+               :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+               style="transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.5s;">
+                สร้างสรรค์นวัตกรรมดิจิทัล<br class="hidden md:block">
+                <span class="text-primary-400">Blockchain</span> •
+                <span class="text-purple-400">AI</span> •
+                <span class="text-pink-400">Web & Mobile</span> •
+                <span class="text-cyan-400">IoT</span> •
+                <span class="text-red-400">Music AI</span>
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-wrap justify-center gap-4 md:gap-6"
+                 :class="loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                 style="transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.6s;">
+                <a href="/support" class="group relative inline-flex items-center px-8 py-4 bg-white text-gray-900 font-bold rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-white/25 hover:scale-105">
+                    <span class="relative z-10">เริ่มโปรเจคของคุณ</span>
+                    <svg class="w-5 h-5 ml-2 relative z-10 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                    <div class="absolute inset-0 bg-gradient-to-r from-primary-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <span class="absolute inset-0 z-10 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 font-bold">
+                        เริ่มโปรเจคของคุณ
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </span>
+                </a>
+                <a href="#services" class="inline-flex items-center px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-2xl backdrop-blur-sm transition-all duration-500 hover:bg-white/10 hover:border-white/60 hover:scale-105">
+                    สำรวจบริการ
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
     </div>
 
-    @include('partials.retro-services')
-
-    @include('partials.retro-metalx')
-
-    {{-- Manifesto seal block --}}
-    <section style="padding:100px 32px;background:linear-gradient(180deg,var(--tron-void),var(--tron-navy));border-top:1px solid rgba(212,175,55,.25);border-bottom:1px solid rgba(212,175,55,.25);">
-        <div style="max-width:820px;margin:0 auto;text-align:center;">
-            <div class="tron-seal-ring" style="width:90px;height:90px;border-radius:50%;margin:0 auto 32px;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-                <span style="font-family:var(--font-display);font-size:14px;color:var(--tron-gold);line-height:1;">EST</span>
-                <span style="font-family:var(--font-display);font-size:22px;color:var(--tron-gold);line-height:1;">MMXVIII</span>
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30">
+        <div class="flex flex-col items-center text-white/60 animate-bounce">
+            <span class="text-sm mb-2 tracking-widest uppercase">Scroll</span>
+            <div class="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
+                <div class="w-1.5 h-3 bg-white/60 rounded-full animate-scroll-down"></div>
             </div>
-            <p style="font-family:var(--font-serif);font-size:28px;line-height:1.4;font-style:italic;color:var(--fg-1);margin:0 0 24px;">
-                "งานฝีมือไม่ได้เร็วเสมอไป — แต่ทุกบรรทัดของโค้ด ทุกพิกเซลของดีไซน์ เราสลักชื่อไว้"
-            </p>
-            <div style="font-family:var(--font-ui);font-size:11px;letter-spacing:.3em;color:var(--tron-gold);text-transform:uppercase;">— XMAN STUDIO · BANGKOK —</div>
         </div>
-    </section>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="relative z-30 bg-gray-50 dark:bg-gray-900">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 -mt-20">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center" x-data="{ count: 0 }" x-init="setTimeout(() => { let interval = setInterval(() => { if(count < 150) count += 3; else { count = 150; clearInterval(interval); } }, 30) }, 500)">
+                <div class="text-4xl md:text-5xl font-bold text-primary-600" x-text="count + '+'">0+</div>
+                <div class="text-gray-600 dark:text-gray-300 mt-2">โปรเจคสำเร็จ</div>
+            </div>
+            <div class="text-center" x-data="{ count: 0 }" x-init="setTimeout(() => { let interval = setInterval(() => { if(count < 50) count += 1; else clearInterval(interval); }, 50) }, 700)">
+                <div class="text-4xl md:text-5xl font-bold text-primary-600" x-text="count + '+'">0+</div>
+                <div class="text-gray-600 dark:text-gray-300 mt-2">ลูกค้าพึงพอใจ</div>
+            </div>
+            <div class="text-center" x-data="{ count: 0 }" x-init="setTimeout(() => { let interval = setInterval(() => { if(count < 8) count += 1; else clearInterval(interval); }, 200) }, 900)">
+                <div class="text-4xl md:text-5xl font-bold text-primary-600" x-text="count + '+'">0+</div>
+                <div class="text-gray-600 dark:text-gray-300 mt-2">ปีประสบการณ์</div>
+            </div>
+            <div class="text-center" x-data="{ count: 0 }" x-init="setTimeout(() => { let interval = setInterval(() => { if(count < 24) count += 1; else clearInterval(interval); }, 80) }, 1100)">
+                <div class="text-4xl md:text-5xl font-bold text-primary-600" x-text="count + '/7'">0/7</div>
+                <div class="text-gray-600 dark:text-gray-300 mt-2">บริการตลอด 24 ชม.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Services Section -->
+<div id="services" class="py-24 bg-gray-50 dark:bg-gray-900 relative z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <span class="inline-block px-4 py-1.5 bg-blue-100 dark:bg-primary-900/30 text-blue-700 dark:text-primary-400 text-sm font-semibold rounded-full mb-4">บริการของเรา</span>
+            <h2 class="text-3xl md:text-5xl font-black text-gray-900 dark:text-white mb-6 tracking-tight">
+                โซลูชั่นที่ตอบโจทย์ <span class="ds-grad-text-bp">ทุกความต้องการ</span>
+            </h2>
+            <p class="max-w-2xl mx-auto text-xl text-gray-600 dark:text-gray-300">
+                บริการครบวงจรจากทีมผู้เชี่ยวชาญ พร้อมเทคโนโลยีล่าสุด
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Service Card 1 -->
+            <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div class="aspect-video overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=600&h=400&fit=crop"
+                         alt="Blockchain Development"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="absolute top-4 right-4">
+                    <span class="px-3 py-1 bg-primary-600 text-white text-xs font-semibold rounded-full">ยอดนิยม</span>
+                </div>
+                <div class="p-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center mb-4 -mt-12 relative z-10 shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Blockchain Development</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">พัฒนาโซลูชั่น Blockchain, Smart Contracts, DeFi และ NFT Marketplace</p>
+                    <a href="/services" class="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700">
+                        ดูรายละเอียด
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Service Card 2 -->
+            <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div class="aspect-video overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop"
+                         alt="Web Development"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="p-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center mb-4 -mt-12 relative z-10 shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Web Development</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">ออกแบบและพัฒนาเว็บไซต์สมัยใหม่ Responsive รองรับทุกอุปกรณ์</p>
+                    <a href="/services" class="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700">
+                        ดูรายละเอียด
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Service Card 3 -->
+            <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div class="aspect-video overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&h=400&fit=crop"
+                         alt="Mobile App Development"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="p-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center mb-4 -mt-12 relative z-10 shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Mobile Application</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">พัฒนาแอพ iOS และ Android ด้วย Flutter และ React Native</p>
+                    <a href="/services" class="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700">
+                        ดูรายละเอียด
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Service Card 4 -->
+            <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div class="aspect-video overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop"
+                         alt="AI Services"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="absolute top-4 right-4">
+                    <span class="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded-full">ใหม่</span>
+                </div>
+                <div class="p-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-4 -mt-12 relative z-10 shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">AI Solutions</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">วีดีโอ AI, เพลง AI, Chatbot และบริการ Generative AI</p>
+                    <a href="/services" class="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700">
+                        ดูรายละเอียด
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Service Card 5 -->
+            <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div class="aspect-video overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=600&h=400&fit=crop"
+                         alt="IoT Solutions"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="p-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mb-4 -mt-12 relative z-10 shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">IoT Solutions</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">ออกแบบและพัฒนาระบบ Internet of Things ครบวงจร</p>
+                    <a href="/services" class="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700">
+                        ดูรายละเอียด
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Service Card 6 -->
+            <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div class="aspect-video overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&h=400&fit=crop"
+                         alt="Network & IT Security"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="p-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-rose-700 rounded-xl flex items-center justify-center mb-4 -mt-12 relative z-10 shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Network & IT Security</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">ออกแบบ ติดตั้งระบบ Network, Firewall และทดสอบเจาะระบบ</p>
+                    <a href="/services" class="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700">
+                        ดูรายละเอียด
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Service Card 7 - Custom Software -->
+            <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div class="aspect-video overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=600&h=400&fit=crop"
+                         alt="Custom Software"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="p-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center mb-4 -mt-12 relative z-10 shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Custom Software</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">พัฒนาซอฟต์แวร์เฉพาะ ERP, CRM และระบบจัดการสินค้าคงคลัง</p>
+                    <a href="/services" class="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700">
+                        ดูรายละเอียด
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Service Card 8 - Flutter Development -->
+            <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                <div class="aspect-video overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&h=400&fit=crop"
+                         alt="Flutter Development"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="absolute top-4 right-4">
+                    <span class="px-3 py-1 bg-sky-500 text-white text-xs font-semibold rounded-full">Flutter</span>
+                </div>
+                <div class="p-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center mb-4 -mt-12 relative z-10 shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Flutter & Android Studio</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">พัฒนาแอพ Cross-platform ด้วย Flutter และอบรมการใช้งาน</p>
+                    <a href="/services" class="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700">
+                        ดูรายละเอียด
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-12">
+            <a href="/services" class="inline-flex items-center px-8 py-4 bg-primary-600 text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary-700 hover:shadow-xl hover:shadow-primary-600/20">
+                ดูบริการทั้งหมด
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Code Academy Featured Banner -->
+<div class="py-20 relative overflow-hidden z-30" style="background: linear-gradient(135deg, #e0f2fe 0%, #f5f0e8 30%, #dbeafe 60%, #fef9ef 100%);">
+    <!-- Decorative shapes -->
+    <div class="absolute w-72 h-72 rounded-full bg-sky-300 opacity-10 -top-20 -left-20" style="animation: float-drift 15s ease-in-out infinite;"></div>
+    <div class="absolute w-48 h-48 rounded-full bg-amber-200 opacity-10 bottom-10 right-10" style="animation: float-drift 20s ease-in-out infinite reverse;"></div>
+    <style>@keyframes float-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-20px)}}</style>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+            <!-- Left: Info -->
+            <div class="flex-1 text-center lg:text-left">
+                <span class="inline-flex items-center gap-2 px-4 py-1.5 bg-sky-100 text-sky-700 text-xs font-bold rounded-full uppercase tracking-wider mb-4">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    Free Resource
+                </span>
+                <h2 class="text-3xl md:text-4xl lg:text-5xl font-black leading-tight" style="background: linear-gradient(135deg, #0c4a6e, #0369a1, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    XMAN Code Academy
+                </h2>
+                <p class="mt-3 text-xl font-semibold text-slate-600">ศูนย์เรียนรู้โค้ดมืออาชีพ</p>
+                <p class="mt-3 text-slate-500 max-w-lg leading-relaxed">
+                    แหล่งรวมตัวอย่างโค้ดคุณภาพสูงกว่า 50+ ตัวอย่าง ครอบคลุม Laravel, PHP, JavaScript, Python, Flutter, SQL, Git, Docker และอีกมากมาย — ฟรีสำหรับทุกคน
+                </p>
+                <div class="mt-6 flex flex-wrap gap-3 justify-center lg:justify-start">
+                    <a href="{{ route('code-academy') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold rounded-xl shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30 transition-all duration-300 hover:-translate-y-0.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        เข้าสู่ Code Academy
+                    </a>
+                    <span class="inline-flex items-center gap-1 px-4 py-3 text-slate-500 text-sm font-medium">
+                        <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        ฟรี 100% ไม่ต้องสมัครสมาชิก
+                    </span>
+                </div>
+            </div>
+
+            <!-- Right: Mini code preview cards -->
+            <div class="flex-1 max-w-md w-full space-y-4">
+                <!-- Mini Card 1 -->
+                <div class="bg-white rounded-xl p-4 shadow-lg shadow-sky-500/5 border border-sky-100 transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+                            <span class="text-white text-xs font-black">L</span>
+                        </div>
+                        <span class="font-bold text-slate-700 text-sm">Laravel — Eloquent Model</span>
+                        <span class="ml-auto text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full">PHP</span>
+                    </div>
+                    <div class="bg-slate-900 rounded-lg p-3 text-xs font-mono text-slate-300 leading-relaxed overflow-hidden" style="max-height: 60px;">
+                        <span style="color:#c084fc">class</span> <span style="color:#67e8f9">Product</span> <span style="color:#c084fc">extends</span> <span style="color:#67e8f9">Model</span> { <span style="color:#c084fc">use</span> <span style="color:#67e8f9">SoftDeletes</span>; ...}
+                    </div>
+                </div>
+                <!-- Mini Card 2 -->
+                <div class="bg-white rounded-xl p-4 shadow-lg shadow-sky-500/5 border border-sky-100 transform hover:-translate-y-1 transition-all duration-300" style="margin-left: 20px;">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+                            <span class="text-slate-900 text-xs font-black">JS</span>
+                        </div>
+                        <span class="font-bold text-slate-700 text-sm">Async / Await</span>
+                        <span class="ml-auto text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">ES6+</span>
+                    </div>
+                    <div class="bg-slate-900 rounded-lg p-3 text-xs font-mono text-slate-300 leading-relaxed overflow-hidden" style="max-height: 60px;">
+                        <span style="color:#c084fc">const</span> data = <span style="color:#c084fc">await</span> <span style="color:#fbbf24">fetch</span>(<span style="color:#86efac">'/api/products'</span>);
+                    </div>
+                </div>
+                <!-- Mini Card 3 -->
+                <div class="bg-white rounded-xl p-4 shadow-lg shadow-sky-500/5 border border-sky-100 transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center">
+                            <span class="text-white text-xs font-black">Py</span>
+                        </div>
+                        <span class="font-bold text-slate-700 text-sm">FastAPI — REST Endpoint</span>
+                        <span class="ml-auto text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Python</span>
+                    </div>
+                    <div class="bg-slate-900 rounded-lg p-3 text-xs font-mono text-slate-300 leading-relaxed overflow-hidden" style="max-height: 60px;">
+                        <span style="color:#c4b5fd">@app.get</span>(<span style="color:#86efac">"/products"</span>) <span style="color:#c084fc">async def</span> <span style="color:#fbbf24">list</span>(): ...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metal-X Project Music Channel Section -->
+<div class="py-24 bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 relative overflow-hidden z-30">
+    <div class="absolute inset-0 opacity-20">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bS0yMCAwYzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00eiIvPjwvZz48L2c+PC9zdmc+')]"></div>
+    </div>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <div class="inline-flex items-center px-6 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white/90 text-sm font-medium mb-6">
+                <span class="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+                Music Channel
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black text-white mb-4">
+                <span class="bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                    Metal-X Project
+                </span>
+            </h2>
+            <p class="text-xl text-gray-200 max-w-2xl mx-auto">
+                สำรวจผลงานเพลงและ Music Video จากทีมผู้เชี่ยวชาญของเรา
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+            <!-- YouTube Channel Card -->
+            <div class="group relative bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-red-500/20">
+                <div class="aspect-video bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
+                    <svg class="w-24 h-24 text-white/90" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold text-white mb-2">YouTube Channel</h3>
+                    <p class="text-gray-200 mb-4">ติดตามผลงานเพลงและ Music Video ล่าสุดของเรา</p>
+                    <a href="https://www.youtube.com/@Metal-XProject" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center text-red-400 hover:text-red-300 font-semibold transition-colors">
+                        เยี่ยมชมช่อง YouTube
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Team & Portfolio Card -->
+            <div class="group relative bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/20">
+                <div class="aspect-video bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                    <svg class="w-24 h-24 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold text-white mb-2">ทีมงาน & ผลงาน</h3>
+                    <p class="text-gray-200 mb-4">พบกับทีมมืออาชีพและผลงานเพลงทั้งหมดของเรา</p>
+                    <a href="{{ route('metal-x.index') }}"
+                       class="inline-flex items-center text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+                        ดูทีมงานและผลงาน
+                        <svg class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a href="{{ route('metal-x.index') }}"
+               class="inline-flex items-center px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg">
+                <svg class="w-6 h-6 mr-2 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                </svg>
+                สำรวจ Metal-X Project
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Why Choose Us Section -->
+<div class="py-24 bg-white dark:bg-gray-800 relative z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+            <div class="relative">
+                <div class="absolute -inset-4 bg-gradient-to-r from-primary-600 to-purple-600 rounded-2xl opacity-20 blur-2xl"></div>
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop"
+                     alt="Our Team"
+                     class="relative rounded-2xl shadow-2xl">
+                <div class="absolute -bottom-8 -right-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex -space-x-3">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full border-2 border-white" alt="">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full border-2 border-white" alt="">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full border-2 border-white" alt="">
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-900 dark:text-white">ทีมผู้เชี่ยวชาญ</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-300">15+ นักพัฒนามืออาชีพ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <span class="inline-block px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-sm font-semibold rounded-full mb-4">ทำไมต้องเลือกเรา</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-6">
+                    พาร์ทเนอร์ด้านเทคโนโลยี<br>ที่คุณไว้วางใจได้
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+                    เราเป็นทีมนักพัฒนามืออาชีพที่มีประสบการณ์กว่า 8 ปี ในการพัฒนาซอฟต์แวร์และโซลูชั่น IT ให้กับองค์กรชั้นนำ
+                </p>
+                <div class="space-y-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white">คุณภาพระดับสากล</h4>
+                            <p class="text-gray-600 dark:text-gray-300">พัฒนาตามมาตรฐาน International Best Practice</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white">ส่งมอบตรงเวลา</h4>
+                            <p class="text-gray-600 dark:text-gray-300">บริหารโปรเจคด้วยระบบ Agile ส่งมอบงานตามกำหนด</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white">ซัพพอร์ตตลอด 24/7</h4>
+                            <p class="text-gray-600 dark:text-gray-300">ทีมซัพพอร์ตพร้อมช่วยเหลือทุกเวลา</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Technology Stack -->
+<div class="py-20 bg-gray-900 dark:bg-black relative z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-white mb-4">เทคโนโลยีที่เราใช้</h2>
+            <p class="text-gray-400">พัฒนาด้วยเทคโนโลยีล่าสุดและเป็นที่ยอมรับในอุตสาหกรรม</p>
+        </div>
+        <div class="grid grid-cols-3 md:grid-cols-6 gap-8">
+            <div class="flex flex-col items-center p-6 bg-white/5 rounded-xl backdrop-blur hover:bg-white/10 transition-colors">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" class="w-12 h-12 mb-3" alt="React">
+                <span class="text-sm text-gray-300">React</span>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-white/5 rounded-xl backdrop-blur hover:bg-white/10 transition-colors">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg" class="w-12 h-12 mb-3" alt="Flutter">
+                <span class="text-sm text-gray-300">Flutter</span>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-white/5 rounded-xl backdrop-blur hover:bg-white/10 transition-colors">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg" class="w-12 h-12 mb-3" alt="Laravel">
+                <span class="text-sm text-gray-300">Laravel</span>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-white/5 rounded-xl backdrop-blur hover:bg-white/10 transition-colors">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" class="w-12 h-12 mb-3" alt="Node.js">
+                <span class="text-sm text-gray-300">Node.js</span>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-white/5 rounded-xl backdrop-blur hover:bg-white/10 transition-colors">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" class="w-12 h-12 mb-3" alt="Python">
+                <span class="text-sm text-gray-300">Python</span>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-white/5 rounded-xl backdrop-blur hover:bg-white/10 transition-colors">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg" class="w-12 h-12 mb-3 invert" alt="AWS">
+                <span class="text-sm text-gray-300">AWS</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Reviews -->
+@if(isset($featuredReviews) && $featuredReviews->isNotEmpty())
+<div class="py-20 bg-white dark:bg-gray-900 relative z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">รีวิวจากลูกค้า</h2>
+            <p class="text-gray-600 dark:text-gray-400">ความคิดเห็นจากลูกค้าที่ใช้บริการของเรา</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach($featuredReviews as $review)
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                {{-- Stars --}}
+                <div class="mb-4">
+                    <x-star-rating :rating="$review->rating" />
+                </div>
+
+                {{-- Comment --}}
+                @if($review->title)
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">{{ $review->title }}</h4>
+                @endif
+                <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{{ Str::limit($review->comment, 200) }}</p>
+
+                {{-- User Info --}}
+                <div class="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    @if($review->user?->avatar)
+                        <img src="{{ $review->user->avatar_url }}" class="w-10 h-10 rounded-full object-cover" alt="{{ $review->user->name }}">
+                    @else
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <span class="text-sm font-bold text-white">{{ mb_substr($review->user?->name ?? '?', 0, 1) }}</span>
+                        </div>
+                    @endif
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $review->user?->name ?? 'ผู้ใช้' }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $review->reviewable_name }} &middot; {{ $review->created_at->diffForHumans() }}</p>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- CTA Section -->
+<div class="relative py-24 overflow-hidden z-30">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-800"></div>
+    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920')] bg-cover bg-center opacity-10"></div>
+    <div class="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6">
+            พร้อมที่จะเริ่มโปรเจคของคุณ?
+        </h2>
+        <p class="text-xl text-primary-100 mb-10">
+            ปรึกษาเราฟรี! ทีมผู้เชี่ยวชาญพร้อมให้คำแนะนำและวางแผนโปรเจคให้คุณ
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="/support" class="inline-flex items-center px-8 py-4 bg-white text-primary-700 font-bold rounded-xl transition-all duration-300 hover:bg-gray-100 hover:shadow-2xl hover:scale-105">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                ติดต่อเรา
+            </a>
+            <a href="/products" class="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl transition-all duration-300 hover:bg-white/10">
+                ดูผลิตภัณฑ์
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
+<!-- Hero Firefly Styles -->
+<style>
+    .hero-starfield {
+        background-image:
+            radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.7), transparent),
+            radial-gradient(1.5px 1.5px at 25% 50%, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1px 1px at 40% 15%, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1.5px 1.5px at 55% 70%, rgba(255,255,255,0.4), transparent),
+            radial-gradient(1px 1px at 70% 35%, rgba(255,255,255,0.7), transparent),
+            radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1.5px 1.5px at 15% 80%, rgba(255,255,255,0.3), transparent),
+            radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1.5px 1.5px at 35% 45%, rgba(255,255,255,0.4), transparent),
+            radial-gradient(1px 1px at 5% 55%, rgba(200,220,255,0.5), transparent),
+            radial-gradient(1px 1px at 80% 85%, rgba(200,220,255,0.4), transparent),
+            radial-gradient(1px 1px at 50% 5%, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1px 1px at 95% 45%, rgba(255,255,255,0.5), transparent);
+    }
+    .hero-firefly-wrap { position: absolute; will-change: transform; backface-visibility: hidden; }
+    .hero-firefly-dot { border-radius: 50%; will-change: opacity; backface-visibility: hidden; }
+    .hero-firefly-dot.hf-gold { background: #ffd700; box-shadow: 0 0 4px 2px #ffd700, 0 0 10px 4px rgba(255,215,0,0.4); }
+    .hero-firefly-dot.hf-blue { background: #60a5fa; box-shadow: 0 0 4px 2px #60a5fa, 0 0 10px 4px rgba(96,165,250,0.4); }
+    .hero-firefly-dot.hf-purple { background: #c084fc; box-shadow: 0 0 4px 2px #c084fc, 0 0 10px 4px rgba(192,132,252,0.4); }
+    .hero-firefly-dot.hf-cyan { background: #22d3ee; box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px rgba(34,211,238,0.4); }
+    .hero-firefly-dot.hf-pink { background: #f472b6; box-shadow: 0 0 4px 2px #f472b6, 0 0 10px 4px rgba(244,114,182,0.4); }
+</style>
 @endsection
+
+@push('scripts')
+<script>
+(function() {
+    const container = document.getElementById('hero-fireflies');
+    if (!container) return;
+
+    const colors = ['hf-gold', 'hf-blue', 'hf-purple', 'hf-cyan', 'hf-pink'];
+
+    for (let i = 0; i < 25; i++) {
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const size = 2 + Math.random() * 3;
+        const floatDur = 6 + Math.random() * 8;
+        const glowDur = 2 + Math.random() * 3;
+        const delay = Math.random() * 10;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        const wrap = document.createElement('div');
+        wrap.className = 'hero-firefly-wrap';
+        wrap.style.cssText = `left:${x}%;top:${y}%;animation:firefly-float ${floatDur}s ease-in-out infinite;animation-delay:${delay}s;`;
+
+        const dot = document.createElement('div');
+        dot.className = `hero-firefly-dot ${color}`;
+        dot.style.cssText = `width:${size}px;height:${size}px;animation:firefly-glow ${glowDur}s ease-in-out infinite alternate;animation-delay:${delay + 0.5}s;`;
+
+        wrap.appendChild(dot);
+        container.appendChild(wrap);
+    }
+})();
+</script>
+@endpush
+
