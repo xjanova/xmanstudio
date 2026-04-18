@@ -263,7 +263,7 @@
                                 {{-- Logo only - same as classic theme --}}
                                 <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
                             @else
-                                <span class="text-2xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent hover:from-indigo-100 hover:to-purple-100 transition-colors">
+                                <span class="ds-wordmark text-2xl font-black">
                                     XMAN STUDIO
                                 </span>
                             @endif
@@ -367,7 +367,7 @@
                         {{-- Logo only - same as classic theme --}}
                         <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-12 w-auto mb-4">
                     @else
-                        <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">XMAN STUDIO</h3>
+                        <h3 class="ds-wordmark text-2xl font-black mb-4">XMAN STUDIO</h3>
                     @endif
                     <p class="text-indigo-300/60 mb-4">ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ</p>
                     <!-- Social Links -->

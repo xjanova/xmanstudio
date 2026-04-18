@@ -157,12 +157,12 @@
 <div id="services" class="py-24 bg-gray-50 dark:bg-gray-900 relative z-30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <span class="inline-block px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-sm font-semibold rounded-full mb-4">บริการของเรา</span>
-            <h2 class="text-3xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
-                โซลูชั่น IT ครบวงจร
+            <span class="inline-block px-4 py-1.5 bg-blue-100 dark:bg-primary-900/30 text-blue-700 dark:text-primary-400 text-sm font-semibold rounded-full mb-4">บริการของเรา</span>
+            <h2 class="text-3xl md:text-5xl font-black text-gray-900 dark:text-white mb-6 tracking-tight">
+                โซลูชั่นที่ตอบโจทย์ <span class="ds-grad-text-bp">ทุกความต้องการ</span>
             </h2>
             <p class="max-w-2xl mx-auto text-xl text-gray-600 dark:text-gray-300">
-                ให้บริการด้านเทคโนโลยีสารสนเทศแบบครบวงจร ด้วยทีมงานมืออาชีพ
+                บริการครบวงจรจากทีมผู้เชี่ยวชาญ พร้อมเทคโนโลยีล่าสุด
             </p>
         </div>
 

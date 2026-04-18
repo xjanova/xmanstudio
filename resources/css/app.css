@@ -455,3 +455,68 @@
 .z-15 {
     z-index: 15;
 }
+
+/* ==========================================================================
+   XMAN Design System Tokens
+   Source: design-system-source/project/colors_and_type.css
+   Use these for documented cross-page consistency (ds-* classes).
+   ========================================================================== */
+:root {
+    /* Signature gradients */
+    --ds-grad-xman-text: linear-gradient(to right, #60a5fa, #a855f7, #ec4899);
+    --ds-grad-hero: linear-gradient(to bottom, #030712 0%, #000 50%, #030712 100%);
+    --ds-grad-metal-x: linear-gradient(135deg, #4c1d95 0%, #831843 50%, #7f1d1d 100%);
+    --ds-grad-sale: linear-gradient(90deg, #dc2626 0%, #db2777 50%, #dc2626 100%);
+    --ds-grad-academy: linear-gradient(135deg, #e0f2fe 0%, #f5f0e8 30%, #dbeafe 60%, #fef9ef 100%);
+
+    /* Firefly gold */
+    --ds-firefly: #ffd700;
+
+    /* Colored-glow shadows (buttons/cards) */
+    --ds-shadow-glow-blue: 0 10px 25px -5px rgb(37 99 235 / 0.3);
+    --ds-shadow-glow-red:  0 10px 25px -5px rgb(239 68 68 / 0.3);
+    --ds-shadow-glow-sky:  0 10px 25px -5px rgb(14 165 233 / 0.25);
+}
+
+/* Rainbow wordmark text (blue → purple → pink, animated) */
+.ds-wordmark {
+    background: var(--ds-grad-xman-text);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    letter-spacing: -0.02em;
+    animation: ds-grad-shift 5s ease infinite;
+}
+
+/* Gradient text accent (e.g., inline emphasized span in a headline) */
+.ds-grad-text {
+    background: var(--ds-grad-xman-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* Blue→purple emphasis text (signature for section headings) */
+.ds-grad-text-bp {
+    background: linear-gradient(to right, #2563eb, #a855f7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+@keyframes ds-grad-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+}
+
+/* Eyebrow label */
+.ds-eyebrow {
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
