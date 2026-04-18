@@ -157,7 +157,7 @@
                         @php
                             $cardPreviewBg = match($themeKey) {
                                 'premium' => 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900',
-                                'studio' => 'bg-gradient-to-br from-blue-50 via-white to-pink-50 dark:from-gray-950 dark:via-black dark:to-gray-950',
+                                'retro' => 'bg-gradient-to-br from-slate-950 via-sky-950 to-slate-950',
                                 default => 'bg-gradient-to-br from-gray-100 via-white to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-500',
                             };
                         @endphp
@@ -177,35 +177,28 @@
                                         <div class="h-12 bg-white dark:bg-gray-600 rounded"></div>
                                     </div>
                                 </div>
-                            @elseif($themeKey === 'studio')
-                                <!-- Studio Theme Preview — rainbow wordmark + golden fireflies -->
+                            @elseif($themeKey === 'retro')
+                                <!-- Retro Tron Preview — cyan grid + gold -->
+                                <div class="absolute inset-0" style="background-image:linear-gradient(rgba(0,229,255,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.15) 1px,transparent 1px);background-size:20px 20px;"></div>
                                 <div class="absolute inset-0 flex flex-col p-3">
                                     <div class="flex items-center gap-1.5 mb-1.5">
-                                        <div class="h-4 w-20 rounded" style="background: linear-gradient(to right, #60a5fa, #a855f7, #ec4899);"></div>
+                                        <div class="h-4 w-16 rounded-sm" style="background:linear-gradient(90deg,#d4af37,#f5d76e,#d4af37);"></div>
                                         <div class="flex-1 flex gap-0.5 justify-end">
-                                            <span class="h-1.5 w-5 rounded-full bg-gradient-to-r from-emerald-500 to-green-500"></span>
-                                            <span class="h-1.5 w-5 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500"></span>
-                                            <span class="h-1.5 w-5 rounded-full bg-gradient-to-r from-orange-500 to-red-500"></span>
+                                            <span class="h-1 w-4" style="background:#00e5ff;"></span>
+                                            <span class="h-1 w-4" style="background:#ffb300;"></span>
+                                            <span class="h-1 w-4" style="background:#ff2d95;"></span>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-3 gap-1 flex-1">
-                                        <div class="bg-white dark:bg-gray-800 rounded p-1 flex flex-col">
-                                            <div class="h-3 rounded" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);"></div>
-                                            <div class="mt-0.5 h-0.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                                        </div>
-                                        <div class="bg-white dark:bg-gray-800 rounded p-1 flex flex-col">
-                                            <div class="h-3 rounded" style="background: linear-gradient(135deg, #a855f7, #ec4899);"></div>
-                                            <div class="mt-0.5 h-0.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                                        </div>
-                                        <div class="bg-white dark:bg-gray-800 rounded p-1 flex flex-col">
-                                            <div class="h-3 rounded" style="background: linear-gradient(135deg, #22c55e, #16a34a);"></div>
-                                            <div class="mt-0.5 h-0.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                                        </div>
+                                    <div class="flex-1 flex items-center justify-center">
+                                        <div class="h-2 w-16 rounded-sm" style="background:linear-gradient(90deg,#d4af37,#f5d76e);"></div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1">
+                                        <div class="h-4 rounded-sm border" style="border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.1);"></div>
+                                        <div class="h-4 rounded-sm border" style="border-color:rgba(212,175,55,.4);background:rgba(212,175,55,.1);"></div>
+                                        <div class="h-4 rounded-sm border" style="border-color:rgba(255,45,149,.4);background:rgba(255,45,149,.1);"></div>
                                     </div>
                                 </div>
-                                <!-- Golden fireflies -->
-                                <span class="absolute top-2 right-8 w-1 h-1 rounded-full" style="background:#ffd700;box-shadow:0 0 4px 2px #ffd700,0 0 8px 4px rgba(255,215,0,.5);animation:pulse-slow 3s infinite;"></span>
-                                <span class="absolute bottom-5 left-6 w-1 h-1 rounded-full" style="background:#ffd700;box-shadow:0 0 4px 2px #ffd700,0 0 8px 4px rgba(255,215,0,.5);animation:pulse-slow 2.5s infinite;"></span>
+                                <span class="absolute top-0 left-0 right-0 h-px" style="background:linear-gradient(90deg,transparent,#00e5ff,transparent);"></span>
                             @else
                                 <!-- Premium Theme Preview -->
                                 <div class="absolute inset-0 flex p-3">
@@ -250,11 +243,11 @@
                                         Premium
                                     </span>
                                 </div>
-                            @elseif($themeKey === 'studio')
+                            @elseif($themeKey === 'retro')
                                 <div class="absolute top-3 left-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-white shadow" style="background: linear-gradient(to right, #60a5fa, #a855f7, #ec4899);">
-                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4z"/></svg>
-                                        Studio
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-bold" style="background:#030711;color:#00e5ff;border:1px solid rgba(0,229,255,.5);box-shadow:0 0 8px rgba(0,229,255,.3);font-family:'IBM Plex Mono',monospace;letter-spacing:.15em;">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+                                        TRON
                                     </span>
                                 </div>
                             @endif

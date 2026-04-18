@@ -28,13 +28,13 @@ class ThemeService
             'icon' => 'sparkles',
             'gradient' => 'from-indigo-500 to-purple-600',
         ],
-        'studio' => [
-            'name' => 'Studio',
-            'description' => 'ธีม Design System ต้นฉบับ — Rainbow wordmark, Golden fireflies, Brand-pure',
-            'preview' => '/images/themes/studio-preview.png',
-            'features' => ['Rainbow Wordmark', 'Golden Fireflies', 'Brand-Pure'],
-            'icon' => 'palette',
-            'gradient' => 'from-blue-400 via-purple-500 to-pink-500',
+        'retro' => [
+            'name' => 'Retro Tron',
+            'description' => 'ธีม Tron/Retro-Futurism — เขียว-ฟ้าอิเล็กทริก ทองโฟยล์ พื้นหลังนาวี กริดสไตล์ยุค 80s',
+            'preview' => '/images/themes/retro-preview.png',
+            'features' => ['Electric Cyan', 'Gold Foil', 'Parallax Grid'],
+            'icon' => 'bolt',
+            'gradient' => 'from-cyan-400 via-yellow-400 to-amber-500',
         ],
     ];
 
@@ -154,9 +154,11 @@ class ThemeService
     {
         $theme = self::getCurrentTheme();
 
+        // Retro intentionally falls through to layouts.app for non-home
+        // pages — the retro experience is scoped to the home page (home-retro)
+        // which extends layouts.retro directly.
         return match ($theme) {
             'premium' => 'layouts.app-premium',
-            'studio' => 'layouts.app-studio',
             default => 'layouts.app',
         };
     }

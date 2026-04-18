@@ -126,7 +126,7 @@
                         @php
                             $previewBg = match($themeKey) {
                                 'premium' => 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900',
-                                'studio' => 'bg-gradient-to-br from-blue-50 via-white to-pink-50 dark:from-gray-950 dark:via-black dark:to-gray-950',
+                                'retro' => 'bg-gradient-to-br from-slate-950 via-sky-950 to-slate-950',
                                 default => 'bg-gradient-to-br from-gray-100 via-white to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-500',
                             };
                         @endphp
@@ -145,36 +145,32 @@
                                         <div class="h-20 bg-white dark:bg-gray-600 rounded shadow-sm"></div>
                                     </div>
                                 </div>
-                            @elseif($themeKey === 'studio')
-                                <!-- Studio Theme Preview — rainbow wordmark + golden fireflies -->
+                            @elseif($themeKey === 'retro')
+                                <!-- Retro Tron Theme Preview — cyan grid + gold foil -->
+                                <div class="absolute inset-0" style="background-image:linear-gradient(rgba(0,229,255,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.15) 1px,transparent 1px);background-size:24px 24px;background-position:0 0;"></div>
                                 <div class="absolute inset-0 flex flex-col p-4">
                                     <div class="flex items-center gap-2 mb-2">
-                                        <div class="h-5 w-28 rounded" style="background: linear-gradient(to right, #60a5fa, #a855f7, #ec4899);"></div>
+                                        <div class="h-5 w-24 rounded-sm" style="background:linear-gradient(90deg,#d4af37,#f5d76e,#d4af37);box-shadow:0 0 8px rgba(212,175,55,.5);"></div>
                                         <div class="flex-1 flex gap-1 justify-end">
-                                            <span class="h-2 w-8 rounded-full bg-gradient-to-r from-emerald-500 to-green-500"></span>
-                                            <span class="h-2 w-8 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500"></span>
-                                            <span class="h-2 w-8 rounded-full bg-gradient-to-r from-orange-500 to-red-500"></span>
+                                            <span class="h-1.5 w-6" style="background:#00e5ff;box-shadow:0 0 4px #00e5ff;"></span>
+                                            <span class="h-1.5 w-6" style="background:#ffb300;box-shadow:0 0 4px #ffb300;"></span>
+                                            <span class="h-1.5 w-6" style="background:#ff2d95;box-shadow:0 0 4px #ff2d95;"></span>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-3 gap-2 flex-1">
-                                        <div class="bg-white dark:bg-gray-800 rounded shadow-sm p-1.5">
-                                            <div class="h-6 rounded" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);"></div>
-                                            <div class="mt-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                                    <div class="flex-1 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <div class="h-3 w-20 mx-auto rounded-sm mb-1" style="background:linear-gradient(90deg,#d4af37,#f5d76e);"></div>
+                                            <div class="h-2 w-28 mx-auto rounded-sm" style="background:rgba(0,229,255,.4);"></div>
                                         </div>
-                                        <div class="bg-white dark:bg-gray-800 rounded shadow-sm p-1.5">
-                                            <div class="h-6 rounded" style="background: linear-gradient(135deg, #a855f7, #ec4899);"></div>
-                                            <div class="mt-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                                        </div>
-                                        <div class="bg-white dark:bg-gray-800 rounded shadow-sm p-1.5">
-                                            <div class="h-6 rounded" style="background: linear-gradient(135deg, #22c55e, #16a34a);"></div>
-                                            <div class="mt-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1.5">
+                                        <div class="h-6 rounded-sm border" style="border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.08);"></div>
+                                        <div class="h-6 rounded-sm border" style="border-color:rgba(212,175,55,.3);background:rgba(212,175,55,.08);"></div>
+                                        <div class="h-6 rounded-sm border" style="border-color:rgba(255,45,149,.3);background:rgba(255,45,149,.08);"></div>
                                     </div>
                                 </div>
-                                <!-- Golden fireflies -->
-                                <span class="absolute top-3 right-8 w-1.5 h-1.5 rounded-full" style="background:#ffd700;box-shadow:0 0 6px 2px #ffd700,0 0 12px 4px rgba(255,215,0,.5);animation:pulse-slow 3s infinite;"></span>
-                                <span class="absolute bottom-10 left-10 w-1.5 h-1.5 rounded-full" style="background:#ffd700;box-shadow:0 0 6px 2px #ffd700,0 0 12px 4px rgba(255,215,0,.5);animation:pulse-slow 2.5s infinite;"></span>
-                                <span class="absolute top-20 left-28 w-1 h-1 rounded-full" style="background:#ffd700;box-shadow:0 0 4px 2px #ffd700,0 0 10px 4px rgba(255,215,0,.4);animation:pulse-slow 4s infinite;"></span>
+                                <!-- Scanline -->
+                                <span class="absolute top-0 left-0 right-0 h-px" style="background:linear-gradient(90deg,transparent,#00e5ff,transparent);"></span>
                             @else
                                 <!-- Premium Theme Preview -->
                                 <div class="absolute inset-0 flex p-4">
@@ -220,11 +216,11 @@
                                         Premium
                                     </span>
                                 </div>
-                            @elseif($themeKey === 'studio')
+                            @elseif($themeKey === 'retro')
                                 <div class="absolute top-4 left-4">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow-lg" style="background: linear-gradient(to right, #60a5fa, #a855f7, #ec4899);">
-                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
-                                        Studio
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-sm text-xs font-bold" style="background:#030711;color:#00e5ff;border:1px solid rgba(0,229,255,.5);box-shadow:0 0 10px rgba(0,229,255,.3);font-family:'IBM Plex Mono',monospace;letter-spacing:.15em;">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+                                        TRON
                                     </span>
                                 </div>
                             @endif
@@ -262,18 +258,18 @@
                                         <svg class="w-3.5 h-3.5 mr-1.5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
                                         Light Mode
                                     </span>
-                                @elseif($themeKey === 'studio')
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 transition-colors hover:bg-blue-200 dark:hover:bg-blue-800/50">
-                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4z"/></svg>
-                                        Rainbow Wordmark
+                                @elseif($themeKey === 'retro')
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 transition-colors hover:bg-cyan-200 dark:hover:bg-cyan-800/50">
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+                                        Electric Cyan
                                     </span>
                                     <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 transition-colors hover:bg-amber-200 dark:hover:bg-amber-800/50">
-                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
-                                        Golden Fireflies
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/></svg>
+                                        Gold Foil
                                     </span>
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300 transition-colors hover:bg-pink-200 dark:hover:bg-pink-800/50">
-                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                        Brand-Pure
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-cyan-300 transition-colors hover:bg-slate-700">
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                                        Parallax Grid
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 transition-colors hover:bg-indigo-200 dark:hover:bg-indigo-800/50">
