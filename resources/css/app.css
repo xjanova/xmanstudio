@@ -12,11 +12,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ==========================================================================
-   Retro Tron theme — scoped to .retro-theme (activated on /retro layout)
-   ========================================================================== */
-@import './retro-theme.css';
-
-/* ==========================================================================
    Theme Configuration (Tailwind CSS v4)
    - Colors, animations, and fonts are defined in tailwind.config.js
    - @config directive loads the configuration
@@ -525,3 +520,12 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
+
+/* ==========================================================================
+   Retro Tron theme — MUST be imported LAST so it cascades over Tailwind v4
+   preflight which otherwise resets color/background on h1/h2/h3.
+   retro-overrides.css uses !important to win specificity battles on
+   .tron-gold-foil / .tron-body / .tron-seal-ring / .tron-btn.
+   ========================================================================== */
+@import './retro-theme.css';
+@import './retro-overrides.css';
