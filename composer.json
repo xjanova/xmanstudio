@@ -91,6 +91,11 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "audit": {
+            "ignore": {
+                "PKSA-5jz8-6tcw-pbk4": "PHPUnit argument-injection CVE (GHSA-qrr6-mg7r-m243) disclosed 2026-04-18. Affected <=12.5.21 — no backport to the 10.5.x line we use. Re-evaluate once 10.5.64+ is released or when we migrate to PHPUnit 12.x."
+            }
         }
     },
     "minimum-stability": "stable",
