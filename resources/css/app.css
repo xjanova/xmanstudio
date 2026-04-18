@@ -12,6 +12,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ==========================================================================
+   Retro Tron theme — scoped to .retro-theme (activated on /retro layout)
+   ========================================================================== */
+@import './retro-theme.css';
+
+/* ==========================================================================
    Theme Configuration (Tailwind CSS v4)
    - Colors, animations, and fonts are defined in tailwind.config.js
    - @config directive loads the configuration
