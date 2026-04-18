@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
-use App\Services\ThemeService;
 
 class HomeController extends Controller
 {
@@ -27,8 +26,6 @@ class HomeController extends Controller
             ->limit(6)
             ->get();
 
-        $view = ThemeService::getCurrentTheme() === 'retro' ? 'home-retro' : 'home';
-
-        return view($view, compact('featuredProducts', 'categories', 'featuredReviews'));
+        return view('home', compact('featuredProducts', 'categories', 'featuredReviews'));
     }
 }

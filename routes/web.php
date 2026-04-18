@@ -164,11 +164,6 @@ Route::get('/', function () {
     return app(HomeController::class)->index();
 })->name('home');
 
-// Retro theme preview (design-system handoff)
-Route::get('/retro', function () {
-    return view('home-retro');
-})->name('home.retro');
-
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');

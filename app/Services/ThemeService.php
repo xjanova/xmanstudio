@@ -165,9 +165,9 @@ class ThemeService
     {
         $theme = self::getCurrentTheme();
 
-        // Retro intentionally falls through to layouts.app for non-home
-        // pages — the retro experience is scoped to the home page (home-retro)
-        // which extends layouts.retro directly.
+        // Retro falls through to layouts.app for non-home pages.
+        // home.blade.php extends layouts.retro directly regardless of
+        // the current theme — retro is the permanent home surface now.
         return match ($theme) {
             'premium' => 'layouts.app-premium',
             default => 'layouts.app',

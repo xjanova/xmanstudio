@@ -75,4 +75,11 @@ create_personal_access_tokens.sql
 # Design-system handoff artifacts (source bundles, not part of the app)
 # ==========================================================================
 /XMAN Studio Design System-handoff.zip
+/XMAN Studio Design System.zip
+/XMAN Studio Design System2.zip
 /design-system-source/
+/retro-handoff-source/
+/retro2-handoff-source/
+
+# Local backup files (use git history for recovery, not .backup suffix)
+*.backup
