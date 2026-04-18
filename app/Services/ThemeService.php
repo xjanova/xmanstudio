@@ -48,9 +48,17 @@ class ThemeService
      */
     public static function getSiteDefaultTheme(): string
     {
-        return Cache::remember('site_theme', 3600, function () {
+        $theme = Cache::remember('site_theme', 3600, function () {
             return Setting::getValue('site_theme', self::DEFAULT_THEME);
         });
+
+        // Self-heal if the stored theme key is no longer in THEMES
+        // (e.g. a theme was retired between deploys).
+        if (! self::isValidTheme($theme)) {
+            return self::DEFAULT_THEME;
+        }
+
+        return $theme;
     }
 
     /**
