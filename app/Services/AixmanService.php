@@ -30,37 +30,37 @@ class AixmanService
      */
     private const DEFAULT_PACKAGES = [
         [
-            'slug'           => 'starter',
-            'name'           => 'ผู้เริ่มฝัน',
-            'price_thb'      => 0,
-            'note'           => 'ฟรีตลอดชีพ',
-            'credits'        => 50,
-            'bonus_credits'  => 0,
-            'features'       => ['50 งาน/เดือน', 'ความละเอียด 1K', 'ชุมชนสาธารณะ', 'รุ่น loom-mini'],
-            'is_popular'     => false,
-            'hue'            => 160,
+            'slug' => 'starter',
+            'name' => 'ผู้เริ่มฝัน',
+            'price_thb' => 0,
+            'note' => 'ฟรีตลอดชีพ',
+            'credits' => 50,
+            'bonus_credits' => 0,
+            'features' => ['50 งาน/เดือน', 'ความละเอียด 1K', 'ชุมชนสาธารณะ', 'รุ่น loom-mini'],
+            'is_popular' => false,
+            'hue' => 160,
         ],
         [
-            'slug'           => 'weaver',
-            'name'           => 'นักทอ',
-            'price_thb'      => 490,
-            'note'           => '/ เดือน',
-            'credits'        => 5000,
-            'bonus_credits'  => 500,
-            'features'       => ['ไม่จำกัดจำนวน', '8K resolution', 'ปราสาทส่วนตัว 500 ชิ้น', 'รุ่น loom-v4.2', 'Video สูงสุด 30 วินาที'],
-            'is_popular'     => true,
-            'hue'            => 220,
+            'slug' => 'weaver',
+            'name' => 'นักทอ',
+            'price_thb' => 490,
+            'note' => '/ เดือน',
+            'credits' => 5000,
+            'bonus_credits' => 500,
+            'features' => ['ไม่จำกัดจำนวน', '8K resolution', 'ปราสาทส่วนตัว 500 ชิ้น', 'รุ่น loom-v4.2', 'Video สูงสุด 30 วินาที'],
+            'is_popular' => true,
+            'hue' => 220,
         ],
         [
-            'slug'           => 'studio',
-            'name'           => 'สตูดิโอ',
-            'price_thb'      => 2490,
-            'note'           => '/ เดือน',
-            'credits'        => 30000,
-            'bonus_credits'  => 5000,
-            'features'       => ['ทุกอย่างใน นักทอ', 'API + webhooks', 'ทีมสูงสุด 10 คน', 'รุ่น loom-pro', 'Commercial license', 'Priority queue'],
-            'is_popular'     => false,
-            'hue'            => 280,
+            'slug' => 'studio',
+            'name' => 'สตูดิโอ',
+            'price_thb' => 2490,
+            'note' => '/ เดือน',
+            'credits' => 30000,
+            'bonus_credits' => 5000,
+            'features' => ['ทุกอย่างใน นักทอ', 'API + webhooks', 'ทีมสูงสุด 10 คน', 'รุ่น loom-pro', 'Commercial license', 'Priority queue'],
+            'is_popular' => false,
+            'hue' => 280,
         ],
     ];
 
@@ -112,10 +112,10 @@ class AixmanService
             $resetAt = $row->reset_at ?? null;
 
             return [
-                'balance'         => (int) ($row->balance ?? 0),
-                'monthly_cap'     => (int) ($row->monthly_cap ?? 0),
+                'balance' => (int) ($row->balance ?? 0),
+                'monthly_cap' => (int) ($row->monthly_cap ?? 0),
                 'used_this_month' => (int) ($row->used_this_month ?? 0),
-                'reset_in_days'   => $resetAt ? max(0, (int) ceil((strtotime($resetAt) - time()) / 86400)) : 0,
+                'reset_in_days' => $resetAt ? max(0, (int) ceil((strtotime($resetAt) - time()) / 86400)) : 0,
             ];
         } catch (\Throwable $e) {
             Log::warning('AixmanService::getUserCredits failed', ['error' => $e->getMessage()]);
@@ -149,10 +149,10 @@ class AixmanService
                 ->toArray();
 
             return [
-                'total'      => $total,
-                'this_week'  => $thisWeek,
+                'total' => $total,
+                'this_week' => $thisWeek,
                 'this_month' => $thisMonth,
-                'by_mode'    => array_map('intval', $byMode),
+                'by_mode' => array_map('intval', $byMode),
             ];
         } catch (\Throwable $e) {
             Log::warning('AixmanService::getUserGenerationStats failed', ['error' => $e->getMessage()]);
@@ -211,11 +211,11 @@ class AixmanService
                 ->timeout((int) config('services.aixman.timeout', 10))
                 ->retry(2, 500, throw: false)
                 ->post($url, [
-                    'userId'        => $userId,
-                    'packageId'     => $packageSlug,
-                    'orderId'       => (string) $orderId,
-                    'credits'       => $credits,
-                    'bonusCredits'  => $bonusCredits,
+                    'userId' => $userId,
+                    'packageId' => $packageSlug,
+                    'orderId' => (string) $orderId,
+                    'credits' => $credits,
+                    'bonusCredits' => $bonusCredits,
                 ]);
 
             if ($resp->successful()) {
@@ -269,7 +269,7 @@ class AixmanService
             $base = rtrim((string) config('services.aixman.api_base'), '/');
             if ($base) {
                 $resp = Http::timeout((int) config('services.aixman.timeout', 10))
-                    ->get($base.'/api/packages');
+                    ->get($base . '/api/packages');
                 if ($resp->successful() && is_array($data = $resp->json('packages') ?? $resp->json())) {
                     return array_map([$this, 'normalisePackage'], $data);
                 }
@@ -301,18 +301,18 @@ class AixmanService
         $isPopular = (bool) ($row['is_popular'] ?? $row['isPopular'] ?? $row['isFeatured'] ?? false);
 
         // Default colour-palette mapping by sort order or slug, so the design stays consistent
-        $hueMap = ['trial'=>140, 'starter'=>160, 'weaver'=>200, 'creator'=>220, 'pro'=>260, 'studio'=>280, 'enterprise'=>300];
+        $hueMap = ['trial' => 140, 'starter' => 160, 'weaver' => 200, 'creator' => 220, 'pro' => 260, 'studio' => 280, 'enterprise' => 300];
 
         return [
-            'slug'          => $slug,
-            'name'          => (string) ($row['name'] ?? $row['title'] ?? ''),
-            'price_thb'     => (int) ($row['price_thb'] ?? $row['priceThb'] ?? $row['price'] ?? 0),
-            'note'          => (string) ($row['note'] ?? ($isPopular ? 'แนะนำ' : 'ครั้งเดียว')),
-            'credits'       => (int) ($row['credits'] ?? 0),
+            'slug' => $slug,
+            'name' => (string) ($row['name'] ?? $row['title'] ?? ''),
+            'price_thb' => (int) ($row['price_thb'] ?? $row['priceThb'] ?? $row['price'] ?? 0),
+            'note' => (string) ($row['note'] ?? ($isPopular ? 'แนะนำ' : 'ครั้งเดียว')),
+            'credits' => (int) ($row['credits'] ?? 0),
             'bonus_credits' => (int) ($row['bonus_credits'] ?? $row['bonusCredits'] ?? 0),
-            'features'      => array_values(array_map('strval', (array) $features)),
-            'is_popular'    => $isPopular,
-            'hue'           => (int) ($row['hue'] ?? $hueMap[$slug] ?? 220),
+            'features' => array_values(array_map('strval', (array) $features)),
+            'is_popular' => $isPopular,
+            'hue' => (int) ($row['hue'] ?? $hueMap[$slug] ?? 220),
         ];
     }
 

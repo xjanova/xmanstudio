@@ -6,6 +6,7 @@ use App\Models\BankAccount;
 use App\Models\Order;
 use App\Services\AffiliateCommissionService;
 use App\Services\AixmanService;
+use App\Services\ImageService;
 use App\Services\ThaiPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -44,7 +45,7 @@ class AiCreditCheckoutController extends Controller
 
         return view('xdreamer.checkout', [
             'package' => $package,
-            'page'    => '',
+            'page' => '',
         ]);
     }
 
@@ -59,7 +60,7 @@ class AiCreditCheckoutController extends Controller
         }
 
         $validated = $request->validate([
-            'customer_name'  => 'required|string|max:255',
+            'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
             'payment_method' => 'required|in:promptpay,bank_transfer',
@@ -67,36 +68,36 @@ class AiCreditCheckoutController extends Controller
 
         $price = (int) $package['price_thb'];
         $metadata = [
-            'source'         => 'xdreamer',
-            'package_slug'   => $package['slug'],
-            'package_name'   => $package['name'],
-            'credits'        => (int) ($package['credits'] ?? 0),
-            'bonus_credits'  => (int) ($package['bonus_credits'] ?? 0),
-            'ref'            => session('ai_credit_ref'),
+            'source' => 'xdreamer',
+            'package_slug' => $package['slug'],
+            'package_name' => $package['name'],
+            'credits' => (int) ($package['credits'] ?? 0),
+            'bonus_credits' => (int) ($package['bonus_credits'] ?? 0),
+            'ref' => session('ai_credit_ref'),
         ];
 
         $order = Order::create([
-            'user_id'         => auth()->id(),
-            'order_number'    => $this->generateOrderNumber(),
-            'customer_name'   => $validated['customer_name'],
-            'customer_email'  => $validated['customer_email'],
-            'customer_phone'  => $validated['customer_phone'],
-            'subtotal'        => $price,
-            'discount'        => 0,
-            'total'           => $price,
-            'status'          => 'pending',
-            'payment_method'  => $validated['payment_method'],
-            'notes'           => "AI Credits · {$package['name']} · {$metadata['credits']} credits"
+            'user_id' => auth()->id(),
+            'order_number' => $this->generateOrderNumber(),
+            'customer_name' => $validated['customer_name'],
+            'customer_email' => $validated['customer_email'],
+            'customer_phone' => $validated['customer_phone'],
+            'subtotal' => $price,
+            'discount' => 0,
+            'total' => $price,
+            'status' => 'pending',
+            'payment_method' => $validated['payment_method'],
+            'notes' => "AI Credits · {$package['name']} · {$metadata['credits']} credits"
                 . ($metadata['bonus_credits'] ? " +{$metadata['bonus_credits']} bonus" : ''),
-            'metadata'        => json_encode($metadata),
+            'metadata' => json_encode($metadata),
         ]);
 
         $order->items()->create([
-            'product_id'   => null, // virtual product — no row in products table
-            'product_name' => 'AI Credits · '.$package['name'],
-            'quantity'     => 1,
-            'price'        => $price,
-            'subtotal'     => $price,
+            'product_id' => null, // virtual product — no row in products table
+            'product_name' => 'AI Credits · ' . $package['name'],
+            'quantity' => 1,
+            'price' => $price,
+            'subtotal' => $price,
         ]);
 
         // Affiliate commission (standard pipeline, per CLAUDE.md)
@@ -104,7 +105,7 @@ class AiCreditCheckoutController extends Controller
         $affiliate = $affiliateService->resolveAffiliate(auth()->id());
         if ($affiliate) {
             $order->update([
-                'affiliate_id'  => $affiliate->id,
+                'affiliate_id' => $affiliate->id,
                 'referral_code' => $affiliate->referral_code,
             ]);
             $affiliateService->recordCommission(
@@ -142,10 +143,10 @@ class AiCreditCheckoutController extends Controller
         }
 
         return view('xdreamer.payment', [
-            'order'        => $order,
-            'paymentInfo'  => $paymentInfo,
+            'order' => $order,
+            'paymentInfo' => $paymentInfo,
             'bankAccounts' => $bankAccounts,
-            'page'         => '',
+            'page' => '',
         ]);
     }
 
@@ -162,10 +163,10 @@ class AiCreditCheckoutController extends Controller
 
         $validated = $request->validate([
             'payment_slip' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-            'notes'        => 'nullable|string|max:500',
+            'notes' => 'nullable|string|max:500',
         ]);
 
-        $slipPath = app(\App\Services\ImageService::class)
+        $slipPath = app(ImageService::class)
             ->storeAsWebp($request->file('payment_slip'), 'payment-slips/ai-credits');
 
         $metadata = $order->metadata ?: [];
@@ -177,7 +178,7 @@ class AiCreditCheckoutController extends Controller
         $metadata['payment_notes'] = $validated['notes'] ?? null;
 
         $order->update([
-            'status'   => 'processing',
+            'status' => 'processing',
             'metadata' => json_encode($metadata),
         ]);
 
@@ -216,9 +217,9 @@ class AiCreditCheckoutController extends Controller
         }
 
         return view('xdreamer.success', [
-            'order'    => $order,
+            'order' => $order,
             'metadata' => $metadata,
-            'page'     => '',
+            'page' => '',
         ]);
     }
 
@@ -242,6 +243,6 @@ class AiCreditCheckoutController extends Controller
 
     private function generateOrderNumber(): string
     {
-        return 'AIC-'.now()->format('ymd').'-'.strtoupper(Str::random(5));
+        return 'AIC-' . now()->format('ymd') . '-' . strtoupper(Str::random(5));
     }
 }

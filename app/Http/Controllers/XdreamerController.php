@@ -18,7 +18,7 @@ class XdreamerController extends Controller
     public function home()
     {
         return view('xdreamer.home', [
-            'page'     => 'home',
+            'page' => 'home',
             'packages' => $this->aixman->getPackages(),
         ]);
     }
@@ -29,7 +29,7 @@ class XdreamerController extends Controller
         $credits = $userId ? $this->aixman->getUserCredits($userId) : null;
 
         return view('xdreamer.studio', [
-            'page'    => 'studio',
+            'page' => 'studio',
             'credits' => $credits,
         ]);
     }
@@ -41,16 +41,16 @@ class XdreamerController extends Controller
         $stats = $userId ? $this->aixman->getUserGenerationStats($userId) : null;
 
         return view('xdreamer.dashboard', [
-            'page'    => 'dashboard',
+            'page' => 'dashboard',
             'credits' => $credits,
-            'stats'   => $stats,
+            'stats' => $stats,
         ]);
     }
 
     public function gallery()
     {
         return view('xdreamer.gallery', [
-            'page'        => 'gallery',
+            'page' => 'gallery',
             'generations' => $this->aixman->getPublicGenerations(24),
         ]);
     }

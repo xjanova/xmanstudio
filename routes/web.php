@@ -68,6 +68,7 @@ use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowCont
 use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
+use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\AutoTradeXController;
 use App\Http\Controllers\CartController;
@@ -97,6 +98,7 @@ use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Http\Controllers\UserThemeController;
+use App\Http\Controllers\XdreamerController;
 use App\Models\AdsTxtSetting;
 use App\Models\AiCrawlSetting;
 use App\Models\SeoSetting;
@@ -309,10 +311,10 @@ Route::view('/ai-autotrade', 'ai-autotrade')->name('ai-autotrade');
 
 // X-DREAMER — AI generation platform (links to ai.xman4289.com / AIXMAN integration)
 Route::prefix('xdreamer')->name('xdreamer.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\XdreamerController::class, 'home'])->name('home');
-    Route::get('/studio', [\App\Http\Controllers\XdreamerController::class, 'studio'])->name('studio');
-    Route::get('/dashboard', [\App\Http\Controllers\XdreamerController::class, 'dashboard'])->name('dashboard');
-    Route::get('/gallery', [\App\Http\Controllers\XdreamerController::class, 'gallery'])->name('gallery');
+    Route::get('/', [XdreamerController::class, 'home'])->name('home');
+    Route::get('/studio', [XdreamerController::class, 'studio'])->name('studio');
+    Route::get('/dashboard', [XdreamerController::class, 'dashboard'])->name('dashboard');
+    Route::get('/gallery', [XdreamerController::class, 'gallery'])->name('gallery');
     Route::view('/docs', 'xdreamer.docs', ['page' => 'docs'])->name('docs');
     Route::view('/about', 'xdreamer.about', ['page' => 'about'])->name('about');
     Route::view('/login', 'xdreamer.auth', ['mode' => 'login', 'page' => 'login'])->name('login');
@@ -323,11 +325,11 @@ Route::prefix('xdreamer')->name('xdreamer.')->group(function () {
 // Per CLAUDE.md: AIXMAN links to https://xman4289.com/checkout/ai-credits/{packageSlug}?ref=ai
 Route::prefix('checkout/ai-credits')->name('xdreamer.checkout.')->group(function () {
     Route::middleware('auth')->group(function () {
-        Route::get('/{slug}', [\App\Http\Controllers\AiCreditCheckoutController::class, 'checkout'])->name('show');
-        Route::post('/{slug}', [\App\Http\Controllers\AiCreditCheckoutController::class, 'processCheckout'])->name('process');
-        Route::get('/payment/{order}', [\App\Http\Controllers\AiCreditCheckoutController::class, 'payment'])->name('payment');
-        Route::post('/payment/{order}/confirm', [\App\Http\Controllers\AiCreditCheckoutController::class, 'confirmPayment'])->name('confirm');
-        Route::get('/payment/{order}/success', [\App\Http\Controllers\AiCreditCheckoutController::class, 'success'])->name('success');
+        Route::get('/{slug}', [AiCreditCheckoutController::class, 'checkout'])->name('show');
+        Route::post('/{slug}', [AiCreditCheckoutController::class, 'processCheckout'])->name('process');
+        Route::get('/payment/{order}', [AiCreditCheckoutController::class, 'payment'])->name('payment');
+        Route::post('/payment/{order}/confirm', [AiCreditCheckoutController::class, 'confirmPayment'])->name('confirm');
+        Route::get('/payment/{order}/success', [AiCreditCheckoutController::class, 'success'])->name('success');
     });
 });
 
