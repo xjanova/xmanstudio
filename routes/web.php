@@ -307,6 +307,18 @@ Route::get('/metal-x', [MetalXController::class, 'index'])->name('metal-x.index'
 // AI AutoTrade — บริการพัฒนาระบบเทรดอัตโนมัติด้วย AI
 Route::view('/ai-autotrade', 'ai-autotrade')->name('ai-autotrade');
 
+// X-DREAMER — AI generation platform (links to ai.xman4289.com / AIXMAN integration)
+Route::prefix('xdreamer')->name('xdreamer.')->group(function () {
+    Route::view('/', 'xdreamer.home')->name('home');
+    Route::view('/studio', 'xdreamer.studio')->name('studio');
+    Route::view('/dashboard', 'xdreamer.dashboard')->name('dashboard');
+    Route::view('/gallery', 'xdreamer.gallery')->name('gallery');
+    Route::view('/docs', 'xdreamer.docs')->name('docs');
+    Route::view('/about', 'xdreamer.about')->name('about');
+    Route::view('/login', 'xdreamer.auth', ['mode' => 'login'])->name('login');
+    Route::view('/signup', 'xdreamer.auth', ['mode' => 'signup'])->name('signup');
+});
+
 // Code Academy — ศูนย์เรียนรู้โค้ดมืออาชีพ
 Route::view('/code-academy', 'code-academy')->name('code-academy');
 
