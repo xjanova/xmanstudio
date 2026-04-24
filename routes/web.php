@@ -309,14 +309,26 @@ Route::view('/ai-autotrade', 'ai-autotrade')->name('ai-autotrade');
 
 // X-DREAMER — AI generation platform (links to ai.xman4289.com / AIXMAN integration)
 Route::prefix('xdreamer')->name('xdreamer.')->group(function () {
-    Route::view('/', 'xdreamer.home')->name('home');
-    Route::view('/studio', 'xdreamer.studio')->name('studio');
-    Route::view('/dashboard', 'xdreamer.dashboard')->name('dashboard');
-    Route::view('/gallery', 'xdreamer.gallery')->name('gallery');
-    Route::view('/docs', 'xdreamer.docs')->name('docs');
-    Route::view('/about', 'xdreamer.about')->name('about');
-    Route::view('/login', 'xdreamer.auth', ['mode' => 'login'])->name('login');
-    Route::view('/signup', 'xdreamer.auth', ['mode' => 'signup'])->name('signup');
+    Route::get('/', [\App\Http\Controllers\XdreamerController::class, 'home'])->name('home');
+    Route::get('/studio', [\App\Http\Controllers\XdreamerController::class, 'studio'])->name('studio');
+    Route::get('/dashboard', [\App\Http\Controllers\XdreamerController::class, 'dashboard'])->name('dashboard');
+    Route::get('/gallery', [\App\Http\Controllers\XdreamerController::class, 'gallery'])->name('gallery');
+    Route::view('/docs', 'xdreamer.docs', ['page' => 'docs'])->name('docs');
+    Route::view('/about', 'xdreamer.about', ['page' => 'about'])->name('about');
+    Route::view('/login', 'xdreamer.auth', ['mode' => 'login', 'page' => 'login'])->name('login');
+    Route::view('/signup', 'xdreamer.auth', ['mode' => 'signup', 'page' => 'signup'])->name('signup');
+});
+
+// AI Credits checkout (entry from xdreamer pricing OR ai.xman4289.com link)
+// Per CLAUDE.md: AIXMAN links to https://xman4289.com/checkout/ai-credits/{packageSlug}?ref=ai
+Route::prefix('checkout/ai-credits')->name('xdreamer.checkout.')->group(function () {
+    Route::middleware('auth')->group(function () {
+        Route::get('/{slug}', [\App\Http\Controllers\AiCreditCheckoutController::class, 'checkout'])->name('show');
+        Route::post('/{slug}', [\App\Http\Controllers\AiCreditCheckoutController::class, 'processCheckout'])->name('process');
+        Route::get('/payment/{order}', [\App\Http\Controllers\AiCreditCheckoutController::class, 'payment'])->name('payment');
+        Route::post('/payment/{order}/confirm', [\App\Http\Controllers\AiCreditCheckoutController::class, 'confirmPayment'])->name('confirm');
+        Route::get('/payment/{order}/success', [\App\Http\Controllers\AiCreditCheckoutController::class, 'success'])->name('success');
+    });
 });
 
 // Code Academy — ศูนย์เรียนรู้โค้ดมืออาชีพ

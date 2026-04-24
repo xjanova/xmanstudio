@@ -4,21 +4,42 @@
 
 @php
     $hueShift = 70;
-    $page = 'gallery';
-    $titles = ['ปราสาทหมอกจันทรา','Dream Loop','เส้นใยดวงดาว','Whisper Loom','มโนทัศน์มรกต','Violet Study'];
-    $authors = ['นภาลัย','kairos','Theo','จิตรา','nine','arc_ot'];
-    $modes = ['image','video','audio','3d'];
-    $ratios = [1.2, 0.8, 1.4, 1, 1.3, 0.9];
-    $items = [];
-    for ($i = 0; $i < 24; $i++) {
-        $items[] = [
-            'title' => $titles[$i % 6] . ' #' . ($i + 1),
-            'author' => $authors[$i % 6],
-            'hue' => ($i * 37) % 360,
-            'likes' => 50 + ($i * 73) % 1950,
-            'mode' => $modes[$i % 4],
-            'ratio' => $ratios[$i % 6],
-        ];
+    // $generations from XdreamerController — live AIXMAN data (empty if no AIXMAN tables)
+    $generations = $generations ?? [];
+
+    if (! empty($generations)) {
+        // Map live data → template shape
+        $ratios = [1.2, 0.8, 1.4, 1, 1.3, 0.9];
+        $items = [];
+        foreach ($generations as $i => $g) {
+            $items[] = [
+                'title' => $g['title'] ?? 'Untitled #'.($g['id'] ?? $i+1),
+                'author' => 'user_'.($g['user_id'] ?? '?'),
+                'hue' => crc32((string) ($g['id'] ?? $i)) % 360,
+                'likes' => (int) ($g['likes_count'] ?? 0),
+                'mode' => (string) ($g['mode'] ?? 'image'),
+                'ratio' => $ratios[$i % 6],
+                'thumb_url' => $g['thumb_url'] ?? null,
+            ];
+        }
+    } else {
+        // Placeholder community feed (when AIXMAN not connected)
+        $titles = ['ปราสาทหมอกจันทรา','Dream Loop','เส้นใยดวงดาว','Whisper Loom','มโนทัศน์มรกต','Violet Study'];
+        $authors = ['นภาลัย','kairos','Theo','จิตรา','nine','arc_ot'];
+        $modes = ['image','video','audio','3d'];
+        $ratios = [1.2, 0.8, 1.4, 1, 1.3, 0.9];
+        $items = [];
+        for ($i = 0; $i < 24; $i++) {
+            $items[] = [
+                'title' => $titles[$i % 6] . ' #' . ($i + 1),
+                'author' => $authors[$i % 6],
+                'hue' => ($i * 37) % 360,
+                'likes' => 50 + ($i * 73) % 1950,
+                'mode' => $modes[$i % 4],
+                'ratio' => $ratios[$i % 6],
+                'thumb_url' => null,
+            ];
+        }
     }
 @endphp
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\RentalPayment;
 use App\Models\WalletTopup;
+use App\Services\AixmanService;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\StripeService;
@@ -93,6 +94,9 @@ class StripeWebhookController extends Controller
 
         // Generate licenses
         $this->generateLicensesForOrder($order);
+
+        // If this is an AI Credits order, notify AIXMAN
+        $this->maybeNotifyAixman($order);
 
         // Notify admin via LINE
         try {
@@ -199,5 +203,40 @@ class StripeWebhookController extends Controller
     protected function generateLicensesForOrder(Order $order): void
     {
         app(LicenseService::class)->generateLicensesForOrder($order);
+    }
+
+    /**
+     * If the order is an AI Credits order (xdreamer source), notify AIXMAN
+     * so credits get topped up. Idempotent: marks `aixman_notified_at` in metadata.
+     */
+    protected function maybeNotifyAixman(Order $order): void
+    {
+        $metadata = is_array($order->metadata)
+            ? $order->metadata
+            : (json_decode($order->metadata ?? '{}', true) ?: []);
+
+        if (($metadata['source'] ?? null) !== 'xdreamer') {
+            return;
+        }
+        if (! empty($metadata['aixman_notified_at'])) {
+            return;
+        }
+        if (! $order->user_id) {
+            Log::warning('AIXMAN webhook skipped — guest order has no user_id', ['order_id' => $order->id]);
+
+            return;
+        }
+
+        $ok = app(AixmanService::class)->notifyCreditPurchase(
+            (int) $order->user_id,
+            (string) ($metadata['package_slug'] ?? ''),
+            (int) $order->id,
+            (int) ($metadata['credits'] ?? 0),
+            (int) ($metadata['bonus_credits'] ?? 0),
+        );
+        if ($ok) {
+            $metadata['aixman_notified_at'] = now()->toISOString();
+            $order->update(['metadata' => json_encode($metadata)]);
+        }
     }
 }

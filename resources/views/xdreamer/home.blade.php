@@ -39,11 +39,17 @@
         ['n'=>'03','t'=>'ปรับผืนผ้า','d'=>'ลากเส้นใยเพื่อปรับอารมณ์ สี องค์ประกอบ ได้แบบ live','hue'=>240],
         ['n'=>'04','t'=>'ส่งต่อความฝัน','d'=>'Export 8K, แชร์ในชุมชน, หรือเก็บในปราสาทส่วนตัว','hue'=>280],
     ];
-    $tiers = [
-        ['name'=>'ผู้เริ่มฝัน','price'=>'ฟรี','note'=>'ตลอดชีพ','feats'=>['50 งาน/เดือน','ความละเอียด 1K','ชุมชนสาธารณะ','รุ่น loom-mini'],'hue'=>160,'pop'=>false],
-        ['name'=>'นักทอ','price'=>'฿490','note'=>'/ เดือน','feats'=>['ไม่จำกัดจำนวน','8K resolution','ปราสาทส่วนตัว 500 ชิ้น','รุ่น loom-v4.2','Video สูงสุด 30 วินาที'],'hue'=>220,'pop'=>true],
-        ['name'=>'สตูดิโอ','price'=>'฿2,490','note'=>'/ เดือน','feats'=>['ทุกอย่างใน นักทอ','API + webhooks','ทีมสูงสุด 10 คน','รุ่น loom-pro','Commercial license','Priority queue'],'hue'=>280,'pop'=>false],
-    ];
+    // $packages comes from XdreamerController (live AIXMAN data with fallback)
+    // — normalise into $tiers shape for the existing template loop
+    $tiers = collect($packages ?? [])->map(fn ($p) => [
+        'slug'  => $p['slug'] ?? null,
+        'name'  => $p['name'],
+        'price' => ((int) $p['price_thb']) === 0 ? 'ฟรี' : '฿'.number_format((int) $p['price_thb']),
+        'note'  => $p['note'] ?? '/ เดือน',
+        'feats' => $p['features'] ?? [],
+        'hue'   => (int) ($p['hue'] ?? 220),
+        'pop'   => (bool) ($p['is_popular'] ?? false),
+    ])->all();
 @endphp
 
 @push('styles')
@@ -446,12 +452,20 @@
                 </li>
                 @endforeach
             </ul>
-            <a href="{{ route('xdreamer.signup') }}"
+            @php
+                // Free tier → signup; paid tier → checkout (auth-gated, redirects to login if needed)
+                $isFree = ! $t['slug'] || $t['price'] === 'ฟรี';
+                $tierUrl = $isFree
+                    ? route('xdreamer.signup')
+                    : route('xdreamer.checkout.show', $t['slug']);
+                $tierLabel = $isFree ? 'เริ่มฟรี' : ($t['pop'] ? 'เริ่มทอเลย' : 'เลือกแผนนี้');
+            @endphp
+            <a href="{{ $tierUrl }}"
                style="display:block;text-align:center;width:100%;padding:14px;border-radius:12px;
                 background:{{ $t['pop'] ? "linear-gradient(135deg, hsl($h,70%,50%), hsl(".($h+40).",70%,60%))" : 'rgba(255,255,255,0.05)' }};
                 color:#fff;border:{{ $t['pop'] ? 'none' : '1px solid rgba(255,255,255,0.15)' }};
                 font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;">
-                {{ $t['pop'] ? 'เริ่มทอเลย' : 'เลือกแผนนี้' }}
+                {{ $tierLabel }}
             </a>
         </div>
         @endforeach

@@ -75,4 +75,14 @@ return [
         'timeout' => env('AIPRAY_ML_SERVICE_TIMEOUT', 300),
     ],
 
+    // AIXMAN — AI generation platform (ai.xman4289.com, Next.js, shared DB)
+    // See CLAUDE.md "Cross-Project Relationship with AIXMAN" section.
+    'aixman' => [
+        'api_base'       => env('AIXMAN_API_BASE', 'https://ai.xman4289.com'),
+        'webhook_url'    => env('AIXMAN_WEBHOOK_URL', 'https://ai.xman4289.com/api/webhooks/xman-credit'),
+        'webhook_secret' => env('AIXMAN_WEBHOOK_SECRET'),
+        'timeout'        => env('AIXMAN_TIMEOUT', 10),
+        'cache_ttl'      => env('AIXMAN_CACHE_TTL', 600), // 10 min
+    ],
+
 ];
