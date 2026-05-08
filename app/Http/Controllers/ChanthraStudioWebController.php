@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductVersion;
-use Illuminate\Http\Request;
 
 /**
  * Chanthra Studio Web Controller
@@ -17,6 +16,7 @@ use Illuminate\Http\Request;
 class ChanthraStudioWebController extends Controller
 {
     private const PRODUCT_SLUG = 'chanthra-studio';
+
     private const GITHUB_REPO = 'https://github.com/xjanova/chanthra-studio';
 
     private const PRICING = [
