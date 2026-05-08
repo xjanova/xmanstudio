@@ -74,6 +74,7 @@ use App\Http\Controllers\AutoTradeXController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\CluadeXWebController;
+use App\Http\Controllers\ChanthraStudioWebController;
 use App\Http\Controllers\Customer\AffiliateController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
@@ -257,6 +258,14 @@ Route::prefix('cluadex')->name('cluadex.')->group(function () {
     Route::get('/', [CluadeXWebController::class, 'detail'])->name('detail');
     Route::get('/pricing', [CluadeXWebController::class, 'pricing'])->name('pricing');
     Route::get('/download', [CluadeXWebController::class, 'downloadPage'])->name('download');
+});
+
+// Chanthra Studio - AI video atelier (Windows desktop)
+Route::prefix('chanthra-studio')->name('chanthra-studio.')->group(function () {
+    Route::get('/', [ChanthraStudioWebController::class, 'detail'])->name('detail');
+    Route::get('/manual', [ChanthraStudioWebController::class, 'manual'])->name('manual');
+    Route::get('/pricing', [ChanthraStudioWebController::class, 'pricing'])->name('pricing');
+    Route::get('/download', [ChanthraStudioWebController::class, 'downloadPage'])->name('download');
 });
 
 // Services
