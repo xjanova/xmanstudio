@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'คู่มือการใช้งาน Chanthra Studio | XMAN Studio')
 
