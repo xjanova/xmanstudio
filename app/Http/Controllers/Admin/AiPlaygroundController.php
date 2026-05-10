@@ -21,10 +21,13 @@ class AiPlaygroundController extends Controller
     /**
      * Show the AI Playground page.
      */
-    public function index()
+    public function index(Request $request)
     {
         $providerInfo = $this->chatService->getProviderInfo();
         $isConfigured = $this->chatService->isConfigured();
+        // Verify against the live provider so the badge reflects reality, not just
+        // "the key field is non-empty". Cached for 5 minutes; ?refresh=1 forces a fresh probe.
+        $connection = $this->chatService->verifyConnection($request->boolean('refresh'));
         $settings = [
             'ai_bot_name' => Setting::getValue('ai_bot_name', 'AI Assistant'),
             'ai_system_prompt' => Setting::getValue('ai_system_prompt', ''),
@@ -33,7 +36,7 @@ class AiPlaygroundController extends Controller
             'ai_response_style' => Setting::getValue('ai_response_style', 'professional'),
         ];
 
-        return view('admin.ai-playground.index', compact('providerInfo', 'isConfigured', 'settings'));
+        return view('admin.ai-playground.index', compact('providerInfo', 'isConfigured', 'connection', 'settings'));
     }
 
     /**

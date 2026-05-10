@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
+use App\Services\AiChatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -175,6 +176,10 @@ class MetalXSettingsController extends Controller
         // Hero Video
         Setting::setValue('metalx_hero_video_mode', $validated['metalx_hero_video_mode'] ?? 'featured', 'string', 'metalx');
         Setting::setValue('metalx_hero_video_id', $validated['metalx_hero_video_id'] ?? '', 'string', 'metalx');
+
+        // Shared keys (groq/openai/claude) may have been touched here, so the
+        // AI Chat status cache must be invalidated too.
+        AiChatService::clearStatusCache();
 
         return redirect()->route('admin.metal-x.settings')
             ->with('success', 'บันทึกการตั้งค่าสำเร็จ!');

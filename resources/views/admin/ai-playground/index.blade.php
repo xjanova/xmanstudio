@@ -30,17 +30,39 @@
     </div>
 
     {{-- Provider Info Bar --}}
+    @php
+        $connOk = ($connection['ok'] ?? false);
+        $connError = $connection['error'] ?? null;
+        $connTested = $connection['tested_at'] ?? null;
+        $connCached = $connection['cached'] ?? false;
+        if (! $isConfigured) {
+            $statusLabel = 'ยังไม่ได้ตั้งค่า';
+            $statusColor = 'red';
+        } elseif ($connOk) {
+            $statusLabel = 'เชื่อมต่อสำเร็จ พร้อมใช้งานจริง';
+            $statusColor = 'green';
+        } else {
+            $statusLabel = 'ตั้งค่าแล้วแต่เชื่อมต่อไม่ได้';
+            $statusColor = 'amber';
+        }
+    @endphp
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-4 border border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <div class="flex items-center space-x-2">
-                    @if($isConfigured)
+                    @if($statusColor === 'green')
                         <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
-                        <span class="text-sm font-medium text-green-600 dark:text-green-400">พร้อมใช้งาน</span>
+                        <span class="text-sm font-medium text-green-600 dark:text-green-400">{{ $statusLabel }}</span>
+                    @elseif($statusColor === 'amber')
+                        <span class="w-3 h-3 bg-amber-400 rounded-full"></span>
+                        <span class="text-sm font-medium text-amber-600 dark:text-amber-400">{{ $statusLabel }}</span>
                     @else
                         <span class="w-3 h-3 bg-red-400 rounded-full"></span>
-                        <span class="text-sm font-medium text-red-600 dark:text-red-400">ยังไม่ได้ตั้งค่า</span>
+                        <span class="text-sm font-medium text-red-600 dark:text-red-400">{{ $statusLabel }}</span>
                     @endif
+                    <a href="{{ route('admin.ai-playground.index', ['refresh' => 1]) }}"
+                       class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 underline ml-1"
+                       title="ทดสอบเชื่อมต่อใหม่ (ข้าม cache 5 นาที)">ทดสอบใหม่</a>
                 </div>
                 <span class="text-gray-300 dark:text-gray-600">|</span>
                 <div class="flex items-center space-x-2">
@@ -66,6 +88,23 @@
                 </button>
             </div>
         </div>
+
+        @if($isConfigured && ! $connOk && $connError)
+            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                <div class="flex items-start space-x-2 text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg px-3 py-2">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z"/></svg>
+                    <div class="flex-1">
+                        <p class="font-medium">{{ $connError }}</p>
+                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                            ตรวจสอบ <a href="{{ route('admin.ai-settings.index') }}" class="underline">หน้า AI Settings</a> ว่าใส่ key ถูกต้อง และเลือก model ที่ key นี้รองรับ
+                            @if($connTested)
+                                <span class="text-gray-400 dark:text-gray-500">· ทดสอบล่าสุด {{ \Carbon\Carbon::parse($connTested)->diffForHumans() }}{{ $connCached ? ' (ผลจาก cache)' : '' }}</span>
+                            @endif
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         {{-- System Prompt Override (collapsible) --}}
         <div id="system-prompt-panel" class="hidden mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
@@ -94,8 +133,10 @@
                 <div class="max-w-[75%]">
                     <p class="text-xs text-gray-400 mb-1">{{ $settings['ai_bot_name'] }} <span class="text-gray-300">&bull;</span> {{ $providerInfo['provider_name'] }}</p>
                     <div class="bg-gray-50 dark:bg-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                        @if($isConfigured)
+                        @if($isConfigured && $connOk)
                             สวัสดีครับ! ผม <strong>{{ $settings['ai_bot_name'] }}</strong> พร้อมให้บริการแล้ว ลองพิมพ์ข้อความเพื่อทดสอบการสนทนาได้เลยครับ
+                        @elseif($isConfigured && ! $connOk)
+                            <span class="text-amber-600 dark:text-amber-400">ตั้งค่า {{ $providerInfo['provider_name'] }} แล้ว แต่เรียก API ไม่ผ่าน — {{ $connError ?: 'ไม่ทราบสาเหตุ' }} กรุณาตรวจสอบ <a href="{{ route('admin.ai-settings.index') }}" class="underline font-medium">หน้า AI Settings</a> ก่อนทดสอบครับ</span>
                         @else
                             <span class="text-red-500">AI ยังไม่ได้ตั้งค่า กรุณาไปที่ <a href="{{ route('admin.ai-settings.index') }}" class="underline font-medium">ตั้งค่า AI</a> เพื่อเลือก Provider และใส่ API Key ก่อนครับ</span>
                         @endif
@@ -129,12 +170,12 @@
                     <textarea id="chat-input" rows="1"
                         class="w-full px-4 py-3 pr-12 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none transition-all"
                         placeholder="พิมพ์ข้อความ... (Enter = ส่ง, Shift+Enter = ขึ้นบรรทัดใหม่)"
-                        @if(!$isConfigured) disabled @endif
+                        @if(! $isConfigured || ! $connOk) disabled @endif
                         style="max-height: 120px;"></textarea>
                 </div>
                 <button type="submit" id="send-btn"
                     class="flex-shrink-0 w-11 h-11 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    @if(!$isConfigured) disabled @endif>
+                    @if(! $isConfigured || ! $connOk) disabled @endif>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                     </svg>

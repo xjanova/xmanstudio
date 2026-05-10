@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\AiChatService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -189,6 +190,10 @@ class AiSettingsController extends Controller
         Setting::setValue('ai_auto_reply_line', $request->boolean('ai_auto_reply_line'), 'boolean', 'ai');
         Setting::setValue('ai_auto_translate', $request->boolean('ai_auto_translate'), 'boolean', 'ai');
         Setting::setValue('ai_sentiment_analysis', $request->boolean('ai_sentiment_analysis'), 'boolean', 'ai');
+
+        // Drop the cached "พร้อมใช้งาน" status so the next page load re-probes the
+        // provider with the new key/model instead of trusting a 5-minute-stale result.
+        AiChatService::clearStatusCache();
 
         return redirect()->route('admin.ai-settings.index')
             ->with('success', 'บันทึกการตั้งค่า AI เรียบร้อยแล้ว');

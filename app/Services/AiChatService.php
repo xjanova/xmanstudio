@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\AIServiceException;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -468,5 +469,199 @@ class AiChatService
             'model' => $this->model,
             'configured' => $this->isConfigured(),
         ];
+    }
+
+    /**
+     * Live-check that the configured provider/key/model can actually serve a request.
+     * Returns ['ok' => bool, 'error' => ?string, 'tested_at' => iso8601, 'cached' => bool].
+     *
+     * Result is cached for 5 minutes per (provider, key, model) tuple so the AI
+     * Playground page does not pay a 1-3s API round trip on every render. Callers
+     * that need a fresh check (e.g. right after the admin saves a new key) can
+     * call self::clearStatusCache() or pass $forceFresh = true.
+     */
+    public function verifyConnection(bool $forceFresh = false): array
+    {
+        if (! $this->isConfigured()) {
+            return [
+                'ok' => false,
+                'error' => 'ยังไม่ได้ตั้งค่า API Key หรือ Model',
+                'tested_at' => now()->toIso8601String(),
+                'cached' => false,
+            ];
+        }
+
+        $cacheKey = self::statusCacheKey($this->provider, $this->apiKey, $this->model);
+
+        if (! $forceFresh) {
+            $cached = Cache::get($cacheKey);
+            if (is_array($cached)) {
+                $cached['cached'] = true;
+
+                return $cached;
+            }
+        }
+
+        $result = $this->probeProvider();
+        $result['tested_at'] = now()->toIso8601String();
+        $result['cached'] = false;
+
+        Cache::put($cacheKey, $result, now()->addMinutes(5));
+
+        return $result;
+    }
+
+    /**
+     * Invalidate every cached connection-status entry. Call this from the
+     * settings update controllers so the next page render reflects reality
+     * instead of a stale "พร้อมใช้งาน" badge from before the new key was saved.
+     */
+    public static function clearStatusCache(): void
+    {
+        // We cannot enumerate cache entries by prefix (driver-dependent), so we
+        // bump a monotonically-increasing version counter that is part of every
+        // key. Old (cached) entries become orphans and expire on their own TTL.
+        // Cache::increment is atomic on file/redis/memcached drivers.
+        if (Cache::get('ai_chat_status_version') === null) {
+            Cache::forever('ai_chat_status_version', 2);
+
+            return;
+        }
+        Cache::increment('ai_chat_status_version');
+    }
+
+    protected static function statusCacheKey(string $provider, ?string $apiKey, string $model): string
+    {
+        // Bumping ai_chat_status_version (via clearStatusCache()) atomically
+        // invalidates the whole namespace by changing the prefix every key uses.
+        $version = Cache::get('ai_chat_status_version');
+        if ($version === null) {
+            Cache::forever('ai_chat_status_version', 1);
+            $version = 1;
+        }
+        $fingerprint = md5(($apiKey ?? '') . '|' . $model);
+
+        return "ai_chat_status:v{$version}:{$provider}:{$fingerprint}";
+    }
+
+    /**
+     * Hit a cheap, no-quota endpoint for the configured provider.
+     * Returns ['ok' => bool, 'error' => ?string].
+     */
+    protected function probeProvider(): array
+    {
+        try {
+            return match ($this->provider) {
+                'openai' => $this->probeBearerEndpoint('https://api.openai.com/v1/models', 'OpenAI'),
+                'claude' => $this->probeClaude(),
+                'gemini' => $this->probeGemini(),
+                'groq' => $this->probeBearerEndpoint('https://api.groq.com/openai/v1/models', 'Groq'),
+                'ollama' => $this->probeOllama(),
+                default => ['ok' => false, 'error' => 'Provider ไม่รองรับ: ' . $this->provider],
+            };
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => 'เชื่อมต่อไม่สำเร็จ: ' . $e->getMessage()];
+        }
+    }
+
+    protected function probeBearerEndpoint(string $url, string $providerLabel): array
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+        ])->timeout(10)->get($url);
+
+        if ($response->successful()) {
+            return $this->validateModelAvailable($response->json('data', []), $providerLabel);
+        }
+
+        return ['ok' => false, 'error' => $providerLabel . ': ' . $this->describeHttpError($response)];
+    }
+
+    protected function probeClaude(): array
+    {
+        $response = Http::withHeaders([
+            'x-api-key' => $this->apiKey,
+            'anthropic-version' => '2023-06-01',
+        ])->timeout(10)->get('https://api.anthropic.com/v1/models');
+
+        if ($response->successful()) {
+            return $this->validateModelAvailable($response->json('data', []), 'Claude');
+        }
+
+        return ['ok' => false, 'error' => 'Claude: ' . $this->describeHttpError($response)];
+    }
+
+    protected function probeGemini(): array
+    {
+        $response = Http::timeout(10)
+            ->get('https://generativelanguage.googleapis.com/v1beta/models?key=' . urlencode($this->apiKey));
+
+        if ($response->successful()) {
+            $models = $response->json('models', []);
+            $names = array_map(fn ($m) => str_replace('models/', '', $m['name'] ?? ''), $models);
+
+            if (! empty($this->model) && ! in_array($this->model, $names, true)) {
+                return [
+                    'ok' => false,
+                    'error' => "Gemini: Model '{$this->model}' ไม่อยู่ในรายการที่ใช้ได้สำหรับ key นี้ — เลือก model อื่นในหน้า AI Settings",
+                ];
+            }
+
+            return ['ok' => true, 'error' => null];
+        }
+
+        return ['ok' => false, 'error' => 'Gemini: ' . $this->describeHttpError($response)];
+    }
+
+    protected function probeOllama(): array
+    {
+        $host = Setting::get('ollama_host', 'http://localhost:11434');
+        $response = Http::timeout(5)->get(rtrim($host, '/') . '/api/tags');
+
+        if (! $response->successful()) {
+            return ['ok' => false, 'error' => 'Ollama: ไม่ตอบสนองที่ ' . $host];
+        }
+
+        $names = array_map(fn ($m) => $m['name'] ?? '', $response->json('models', []));
+        if (! empty($this->model) && ! in_array($this->model, $names, true)) {
+            return ['ok' => false, 'error' => "Ollama: ยังไม่มีโมเดล '{$this->model}' บน host นี้ (รัน `ollama pull {$this->model}`)"];
+        }
+
+        return ['ok' => true, 'error' => null];
+    }
+
+    protected function validateModelAvailable(array $models, string $providerLabel): array
+    {
+        if (empty($this->model)) {
+            return ['ok' => true, 'error' => null];
+        }
+
+        $names = array_map(fn ($m) => $m['id'] ?? ($m['name'] ?? ''), $models);
+        if (! in_array($this->model, $names, true)) {
+            return [
+                'ok' => false,
+                'error' => "{$providerLabel}: Model '{$this->model}' ไม่อยู่ในรายการที่ใช้ได้สำหรับ key นี้",
+            ];
+        }
+
+        return ['ok' => true, 'error' => null];
+    }
+
+    protected function describeHttpError($response): string
+    {
+        $status = $response->status();
+        $msg = $response->json('error.message') ?? $response->json('message') ?? null;
+
+        if ($status === 401 || $status === 403) {
+            return "API key ไม่ผ่านการตรวจสอบ (HTTP {$status})" . ($msg ? " — {$msg}" : '');
+        }
+        if ($status === 429) {
+            return 'เกิน quota / rate limit (HTTP 429)' . ($msg ? " — {$msg}" : '');
+        }
+        if ($status >= 500) {
+            return "ฝั่งผู้ให้บริการขัดข้อง (HTTP {$status})";
+        }
+
+        return "HTTP {$status}" . ($msg ? " — {$msg}" : '');
     }
 }
