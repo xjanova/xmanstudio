@@ -342,9 +342,9 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                    <input type="password" name="groq_api_key" value="{{ $settings['groq_api_key'] ? '••••••••' : '' }}" placeholder="gsk_..."
+                    <input type="password" name="groq_api_key" value="" placeholder="{{ ! empty($settings['groq_api_key']) ? '••••••••••••••••' : 'gsk_...' }}" autocomplete="off"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://console.groq.com/keys" target="_blank" class="text-orange-600 hover:underline">console.groq.com</a></p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://console.groq.com/keys" target="_blank" class="text-orange-600 hover:underline">console.groq.com</a> {{ ! empty($settings['groq_api_key']) ? '· (เว้นว่างเพื่อใช้ key เดิม)' : '' }}</p>
                 </div>
 
                 <div>

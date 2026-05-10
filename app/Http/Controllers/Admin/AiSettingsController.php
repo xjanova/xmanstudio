@@ -119,28 +119,28 @@ class AiSettingsController extends Controller
         ]);
 
         // OpenAI Settings
-        if ($request->filled('openai_api_key')) {
+        if ($this->isRealApiKey($request->openai_api_key)) {
             Setting::setValue('openai_api_key', $request->openai_api_key, 'string', 'ai');
         }
         Setting::setValue('openai_model', $request->openai_model, 'string', 'ai');
         Setting::setValue('openai_enabled', $request->boolean('openai_enabled'), 'boolean', 'ai');
 
         // Claude Settings
-        if ($request->filled('claude_api_key')) {
+        if ($this->isRealApiKey($request->claude_api_key)) {
             Setting::setValue('claude_api_key', $request->claude_api_key, 'string', 'ai');
         }
         Setting::setValue('claude_model', $request->claude_model, 'string', 'ai');
         Setting::setValue('claude_enabled', $request->boolean('claude_enabled'), 'boolean', 'ai');
 
         // Gemini Settings
-        if ($request->filled('gemini_api_key')) {
+        if ($this->isRealApiKey($request->gemini_api_key)) {
             Setting::setValue('gemini_api_key', $request->gemini_api_key, 'string', 'ai');
         }
         Setting::setValue('gemini_model', $request->gemini_model, 'string', 'ai');
         Setting::setValue('gemini_enabled', $request->boolean('gemini_enabled'), 'boolean', 'ai');
 
         // Groq Settings
-        if ($request->filled('groq_api_key')) {
+        if ($this->isRealApiKey($request->groq_api_key)) {
             Setting::setValue('groq_api_key', $request->groq_api_key, 'string', 'ai');
         }
         Setting::setValue('groq_model', $request->groq_model, 'string', 'ai');
@@ -388,6 +388,31 @@ class AiSettingsController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'models' => [], 'error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Check whether a submitted API-key value is a real key (not the masked placeholder
+     * the form may render to indicate "key already set"). Prevents overwriting a saved
+     * key with a string of bullet characters when admin re-saves the settings page.
+     */
+    private function isRealApiKey(?string $value): bool
+    {
+        if ($value === null || $value === '') {
+            return false;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        // Reject any value that consists only of bullet/mask characters (the form
+        // shows '••••••••' as a placeholder when a key is already saved).
+        if (preg_match('/^[\x{2022}\x{25CF}\x{00B7}\*\s]+$/u', $trimmed)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
