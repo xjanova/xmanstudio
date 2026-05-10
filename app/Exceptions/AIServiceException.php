@@ -22,6 +22,12 @@ class AIServiceException extends Exception
 
     protected $quotaExceeded = false;
 
+    /**
+     * Raw upstream-error detail (e.g. "Gemini HTTP 401: API key not valid.").
+     * Safe to show in admin tooling, never in public chat responses.
+     */
+    protected ?string $detail = null;
+
     public function __construct(
         string $provider,
         string $message = '',
@@ -276,5 +282,26 @@ class AIServiceException extends Exception
     public function getContext(): array
     {
         return $this->context;
+    }
+
+    /**
+     * Attach the raw upstream-error detail. Returns $this for chaining.
+     */
+    public function withDetail(?string $detail): self
+    {
+        $this->detail = $detail;
+        if ($detail !== null && $detail !== '') {
+            $this->context['detail'] = $detail;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get the raw upstream-error detail (admin-only — may contain provider message).
+     */
+    public function getDetail(): ?string
+    {
+        return $this->detail;
     }
 }

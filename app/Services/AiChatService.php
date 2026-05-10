@@ -107,11 +107,63 @@ class AiChatService
                 'model' => $this->model,
             ];
         } catch (AIServiceException $e) {
+            // Drop the playground "พร้อมใช้งาน" cache so the admin sees the broken
+            // status on the next page render instead of a stale green badge.
+            self::clearStatusCache();
+            Log::warning("AiChatService [{$this->provider}] failed: " . $e->getMessage(), $e->getContext());
             throw $e;
-        } catch (\Exception $e) {
-            Log::error("AiChatService error [{$this->provider}]: " . $e->getMessage());
-            throw AIServiceException::serviceUnavailable($this->provider);
+        } catch (\Throwable $e) {
+            self::clearStatusCache();
+            Log::error("AiChatService [{$this->provider}] unexpected error: " . $e->getMessage(), [
+                'exception' => get_class($e),
+            ]);
+            throw AIServiceException::networkError($this->provider, $e->getMessage());
         }
+    }
+
+    /**
+     * Translate an upstream HTTP error response into a typed AIServiceException.
+     * Lets callers throw the right factory (invalidApiKey / rateLimitExceeded /
+     * modelNotFound / serviceUnavailable) instead of a plain Exception that
+     * collapses to a generic 503 message.
+     */
+    protected function classifyHttpError($response, string $providerLabel): AIServiceException
+    {
+        $status = $response->status();
+        $message = $response->json('error.message')
+            ?? $response->json('error.0.message')
+            ?? $response->json('message')
+            ?? trim((string) $response->body());
+
+        // Trim body when no parsed message is available (avoid 5KB stack-traces in logs).
+        if (mb_strlen($message) > 500) {
+            $message = mb_substr($message, 0, 500) . '…';
+        }
+
+        $detail = "{$providerLabel} HTTP {$status}" . ($message !== '' ? ": {$message}" : '');
+
+        if ($status === 401 || $status === 403) {
+            $exception = AIServiceException::invalidApiKey($this->provider);
+        } elseif ($status === 429) {
+            $isQuota = $message !== '' && preg_match('/quota|billing|exceeded your current/i', $message);
+            $exception = $isQuota
+                ? AIServiceException::quotaExceeded($this->provider)
+                : AIServiceException::rateLimitExceeded($this->provider, (int) ($response->header('Retry-After') ?: 60));
+        } elseif ($status === 404 && stripos($message, 'model') !== false) {
+            $exception = AIServiceException::modelNotFound($this->provider, $this->model);
+        } elseif ($status === 400 && preg_match('/safety|content|policy|blocked/i', $message)) {
+            $exception = AIServiceException::contentPolicyViolation($this->provider, $message);
+        } elseif ($status >= 500) {
+            $exception = AIServiceException::serviceUnavailable($this->provider);
+        } else {
+            $exception = AIServiceException::invalidResponse($this->provider, $detail);
+        }
+
+        // Carry the raw upstream detail so admin-facing surfaces (Playground,
+        // logs) can show *what actually broke* instead of a generic message.
+        $exception->withDetail($detail);
+
+        return $exception;
     }
 
     /**
@@ -155,8 +207,7 @@ class AiChatService
         ]);
 
         if (! $response->successful()) {
-            $error = $response->json('error.message', $response->body());
-            throw new \Exception("OpenAI: {$error}");
+            throw $this->classifyHttpError($response, 'OpenAI');
         }
 
         return $response->json('choices.0.message.content', '');
@@ -196,8 +247,7 @@ class AiChatService
         ])->timeout(60)->post('https://api.anthropic.com/v1/messages', $payload);
 
         if (! $response->successful()) {
-            $error = $response->json('error.message', $response->body());
-            throw new \Exception("Claude: {$error}");
+            throw $this->classifyHttpError($response, 'Claude');
         }
 
         return $response->json('content.0.text', '');
@@ -242,8 +292,7 @@ class AiChatService
         );
 
         if (! $response->successful()) {
-            $error = $response->json('error.message', $response->body());
-            throw new \Exception("Gemini: {$error}");
+            throw $this->classifyHttpError($response, 'Gemini');
         }
 
         return $response->json('candidates.0.content.parts.0.text', '');
@@ -280,8 +329,7 @@ class AiChatService
         ]);
 
         if (! $response->successful()) {
-            $error = $response->json('error.message', $response->body());
-            throw new \Exception("Groq: {$error}");
+            throw $this->classifyHttpError($response, 'Groq');
         }
 
         return $response->json('choices.0.message.content', '');
@@ -320,7 +368,7 @@ class AiChatService
         ]);
 
         if (! $response->successful()) {
-            throw new \Exception('Ollama: ' . $response->body());
+            throw $this->classifyHttpError($response, 'Ollama');
         }
 
         return $response->json('message.content', '');

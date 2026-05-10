@@ -66,9 +66,18 @@ class AiPlaygroundController extends Controller
 
             return response()->json($result);
         } catch (AIServiceException $e) {
+            // Admin tool — surface the upstream detail so the operator can see
+            // exactly what Gemini/OpenAI/Claude/etc. said (e.g. "API key not valid").
+            // Public chat (PublicChatController) intentionally only shows
+            // getUserMessage() to avoid leaking provider internals to end users.
+            $detail = $e->getDetail();
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getUserMessage(),
+                'message' => $detail ?: $e->getUserMessage(),
+                'user_message' => $e->getUserMessage(),
+                'provider' => $e->getProvider(),
+                'detail' => $detail,
             ], 422);
         } catch (\Exception $e) {
             Log::error('AI Playground error: ' . $e->getMessage());
