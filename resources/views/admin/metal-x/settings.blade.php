@@ -3,6 +3,21 @@
 @section('title', 'ตั้งค่า Metal-X')
 @section('page-title', 'ตั้งค่า Metal-X Channel')
 
+@php
+    // Compact "มี Key / ยังไม่มี" indicator next to each password-input label so the
+    // admin can see at a glance which secrets are already saved (the input itself is
+    // intentionally rendered with value="" to avoid double-encryption / leaking).
+    $keyBadge = function (bool $hasKey) {
+        if ($hasKey) {
+            return '<span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" title="มี Key บันทึกอยู่แล้ว — เว้น input ว่างไว้เพื่อใช้ค่าเดิม">'
+                . '<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>'
+                . 'มี Key</span>';
+        }
+
+        return '<span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400" title="ยังไม่ได้ใส่ Key">ยังไม่มี</span>';
+    };
+@endphp
+
 @section('content')
 <div class="max-w-4xl">
     <form action="{{ route('admin.metal-x.settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
@@ -69,11 +84,13 @@
             </div>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">YouTube Data API Key</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        YouTube Data API Key {!! $keyBadge(! empty($settings['youtube_api_key'])) !!}
+                    </label>
                     <input type="password" name="youtube_api_key" value="" autocomplete="off"
-                           placeholder="{{ ! empty($settings['youtube_api_key']) ? '••••••••••••••••' : 'AIza...' }}"
+                           placeholder="{{ ! empty($settings['youtube_api_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'AIza...' }}"
                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">สำหรับอ่านข้อมูลวิดีโอ/ช่อง (read-only) {{ ! empty($settings['youtube_api_key']) ? '· (เว้นว่างเพื่อใช้ key เดิม)' : '' }}</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">สำหรับอ่านข้อมูลวิดีโอ/ช่อง (read-only)</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Channel ID</label>
@@ -82,16 +99,20 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OAuth Client ID</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            OAuth Client ID {!! $keyBadge(! empty($settings['youtube_client_id'])) !!}
+                        </label>
                         <input type="password" name="youtube_client_id" value="" autocomplete="off"
-                               placeholder="{{ ! empty($settings['youtube_client_id']) ? '••••••••••••••••' : 'xxxx.apps.googleusercontent.com' }}"
+                               placeholder="{{ ! empty($settings['youtube_client_id']) ? '••••••••••••••••  (มี ค่าเดิมเก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'xxxx.apps.googleusercontent.com' }}"
                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">สำหรับเชื่อมต่อช่อง (OAuth2) และอัปโหลดวิดีโอ {{ ! empty($settings['youtube_client_id']) ? '· (เว้นว่างเพื่อใช้ค่าเดิม)' : '' }}</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">สำหรับเชื่อมต่อช่อง (OAuth2) และอัปโหลดวิดีโอ</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OAuth Client Secret</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            OAuth Client Secret {!! $keyBadge(! empty($settings['youtube_client_secret'])) !!}
+                        </label>
                         <input type="password" name="youtube_client_secret" value="" autocomplete="off"
-                               placeholder="{{ ! empty($settings['youtube_client_secret']) ? '••••••••••••••••' : 'GOCSPX-...' }}"
+                               placeholder="{{ ! empty($settings['youtube_client_secret']) ? '••••••••••••••••  (มี secret เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'GOCSPX-...' }}"
                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                     </div>
                 </div>
@@ -124,13 +145,12 @@
                 {{-- API Mode Fields --}}
                 <div x-show="sunoMode === 'api'" x-transition class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno API Key</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Suno API Key {!! $keyBadge(! empty($settings['suno_api_key'])) !!}
+                        </label>
                         <input type="password" name="suno_api_key" value="" autocomplete="off"
-                               placeholder="{{ ! empty($settings['suno_api_key']) ? '••••••••••••••••' : 'your-suno-api-key' }}"
+                               placeholder="{{ ! empty($settings['suno_api_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'your-suno-api-key' }}"
                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                        @if(! empty($settings['suno_api_key']))
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">เว้นว่างเพื่อใช้ key เดิม</p>
-                        @endif
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suno API Base URL</label>
@@ -185,23 +205,29 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Groq API Key</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Groq API Key {!! $keyBadge(! empty($settings['groq_api_key'])) !!}
+                    </label>
                     <input type="password" name="groq_api_key" value="" autocomplete="off"
-                           placeholder="{{ ! empty($settings['groq_api_key']) ? '••••••••••••••••' : 'gsk_...' }}"
+                           placeholder="{{ ! empty($settings['groq_api_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'gsk_...' }}"
                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">สมัครฟรีที่ <a href="https://console.groq.com" target="_blank" class="underline text-indigo-600 dark:text-indigo-400">console.groq.com</a> {{ ! empty($settings['groq_api_key']) ? '· (เว้นว่างเพื่อใช้ key เดิม · key นี้ใช้ร่วมกับหน้า AI Settings)' : '' }}</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">สมัครฟรีที่ <a href="https://console.groq.com" target="_blank" class="underline text-indigo-600 dark:text-indigo-400">console.groq.com</a> · key นี้ใช้ร่วมกับหน้า AI Settings</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OpenAI API Key</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            OpenAI API Key {!! $keyBadge(! empty($settings['metalx_openai_key'])) !!}
+                        </label>
                         <input type="password" name="metalx_openai_key" value="" autocomplete="off"
-                               placeholder="{{ ! empty($settings['metalx_openai_key']) ? '••••••••••••••••' : 'sk-...' }}"
+                               placeholder="{{ ! empty($settings['metalx_openai_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'sk-...' }}"
                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Claude API Key</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Claude API Key {!! $keyBadge(! empty($settings['metalx_claude_key'])) !!}
+                        </label>
                         <input type="password" name="metalx_claude_key" value="" autocomplete="off"
-                               placeholder="{{ ! empty($settings['metalx_claude_key']) ? '••••••••••••••••' : 'sk-ant-...' }}"
+                               placeholder="{{ ! empty($settings['metalx_claude_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'sk-ant-...' }}"
                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                     </div>
                 </div>

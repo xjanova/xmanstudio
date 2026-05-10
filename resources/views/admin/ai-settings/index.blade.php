@@ -22,6 +22,22 @@
 </style>
 @endpush
 
+@php
+    // Reusable badge for "API key saved" / "no key yet" indicator next to each
+    // provider title and label. Keeps the markup short and consistent.
+    $keyBadge = function (bool $hasKey) {
+        if ($hasKey) {
+            return '<span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" title="มี API Key บันทึกอยู่แล้ว — เว้น input ว่างไว้เพื่อใช้ค่าเดิม">'
+                . '<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>'
+                . 'มี API Key</span>';
+        }
+
+        return '<span class="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400" title="ยังไม่ได้ใส่ API Key">'
+            . '<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z"/></svg>'
+            . 'ยังไม่มี Key</span>';
+    };
+@endphp
+
 @section('content')
 <div class="space-y-6">
     <!-- Premium Header Banner -->
@@ -200,6 +216,7 @@
                     <span class="text-white font-bold text-sm">AI</span>
                 </div>
                 OpenAI Settings
+                {!! $keyBadge(! empty($settings['openai_api_key'])) !!}
             </h3>
 
             <div class="space-y-4">
@@ -215,8 +232,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                    <input type="password" name="openai_api_key" value="" placeholder="{{ !empty($settings['openai_api_key']) ? '••••••••••••••••' : 'sk-...' }}" autocomplete="off"
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        API Key {!! $keyBadge(! empty($settings['openai_api_key'])) !!}
+                    </label>
+                    <input type="password" name="openai_api_key" value="" placeholder="{{ ! empty($settings['openai_api_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'sk-...' }}" autocomplete="off"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://platform.openai.com/api-keys" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">platform.openai.com</a></p>
                 </div>
@@ -243,6 +262,7 @@
                 </div>
                 Google Gemini Settings
                 <span class="ml-2 px-2.5 py-1 text-xs bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full shadow">ฟรี!</span>
+                {!! $keyBadge(! empty($settings['gemini_api_key'])) !!}
             </h3>
 
             <div class="space-y-4">
@@ -258,8 +278,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                    <input type="password" name="gemini_api_key" value="" placeholder="{{ !empty($settings['gemini_api_key']) ? '••••••••••••••••' : 'AIza...' }}" autocomplete="off"
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        API Key {!! $keyBadge(! empty($settings['gemini_api_key'])) !!}
+                    </label>
+                    <input type="password" name="gemini_api_key" value="" placeholder="{{ ! empty($settings['gemini_api_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'AIza...' }}" autocomplete="off"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ฟรีได้ที่ <a href="https://aistudio.google.com/apikey" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">aistudio.google.com</a> (ฟรี 15 requests/นาที)</p>
                 </div>
@@ -285,6 +307,7 @@
                     <span class="text-white font-bold text-sm">C</span>
                 </div>
                 Claude (Anthropic) Settings
+                {!! $keyBadge(! empty($settings['claude_api_key'])) !!}
             </h3>
 
             <div class="space-y-4">
@@ -300,8 +323,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                    <input type="password" name="claude_api_key" value="" placeholder="{{ !empty($settings['claude_api_key']) ? '••••••••••••••••' : 'sk-ant-...' }}" autocomplete="off"
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        API Key {!! $keyBadge(! empty($settings['claude_api_key'])) !!}
+                    </label>
+                    <input type="password" name="claude_api_key" value="" placeholder="{{ ! empty($settings['claude_api_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'sk-ant-...' }}" autocomplete="off"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://console.anthropic.com/" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">console.anthropic.com</a></p>
                 </div>
@@ -326,6 +351,7 @@
                 </div>
                 Groq Settings
                 <span class="ml-2 px-2.5 py-1 text-xs bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full shadow">เร็วมาก!</span>
+                {!! $keyBadge(! empty($settings['groq_api_key'])) !!}
             </h3>
 
             <div class="space-y-4">
@@ -341,10 +367,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                    <input type="password" name="groq_api_key" value="" placeholder="{{ ! empty($settings['groq_api_key']) ? '••••••••••••••••' : 'gsk_...' }}" autocomplete="off"
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        API Key {!! $keyBadge(! empty($settings['groq_api_key'])) !!}
+                    </label>
+                    <input type="password" name="groq_api_key" value="" placeholder="{{ ! empty($settings['groq_api_key']) ? '••••••••••••••••  (มี key เก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'gsk_...' }}" autocomplete="off"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://console.groq.com/keys" target="_blank" class="text-orange-600 hover:underline">console.groq.com</a> {{ ! empty($settings['groq_api_key']) ? '· (เว้นว่างเพื่อใช้ key เดิม)' : '' }}</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">รับ API Key ได้ที่ <a href="https://console.groq.com/keys" target="_blank" class="text-orange-600 hover:underline">console.groq.com</a></p>
                 </div>
 
                 <div>
