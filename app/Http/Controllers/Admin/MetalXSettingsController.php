@@ -127,23 +127,41 @@ class MetalXSettingsController extends Controller
         Setting::setValue('metalx_channel_url', $validated['channel_url'], 'string', 'metalx');
         Setting::setValue('metalx_channel_id', $validated['channel_id'] ?? '', 'string', 'metalx');
 
-        // YouTube API
-        Setting::setValue('youtube_api_key', $validated['youtube_api_key'] ?? '', 'string', 'metalx');
-        Setting::setValue('youtube_client_id', $validated['youtube_client_id'] ?? '', 'string', 'metalx');
-        Setting::setValue('youtube_client_secret', $validated['youtube_client_secret'] ?? '', 'string', 'metalx');
+        // YouTube API — only overwrite if a fresh key was actually entered
+        // (input renders value="" + masked placeholder; empty submission means "keep existing").
+        if ($this->isRealApiKey($validated['youtube_api_key'] ?? null)) {
+            Setting::setValue('youtube_api_key', $validated['youtube_api_key'], 'string', 'metalx');
+        }
+        if ($this->isRealApiKey($validated['youtube_client_id'] ?? null)) {
+            Setting::setValue('youtube_client_id', $validated['youtube_client_id'], 'string', 'metalx');
+        }
+        if ($this->isRealApiKey($validated['youtube_client_secret'] ?? null)) {
+            Setting::setValue('youtube_client_secret', $validated['youtube_client_secret'], 'string', 'metalx');
+        }
 
         // Suno
         Setting::setValue('suno_mode', $validated['suno_mode'] ?? 'api', 'string', 'metalx');
-        Setting::setValue('suno_api_key', $validated['suno_api_key'] ?? '', 'string', 'metalx');
+        if ($this->isRealApiKey($validated['suno_api_key'] ?? null)) {
+            Setting::setValue('suno_api_key', $validated['suno_api_key'], 'string', 'metalx');
+        }
         Setting::setValue('suno_base_url', $validated['suno_base_url'] ?? 'https://apibox.erweima.ai', 'string', 'metalx');
         Setting::setValue('suno_email', $validated['suno_email'] ?? '', 'string', 'metalx');
         Setting::setValue('suno_create_url', $validated['suno_create_url'] ?? 'https://suno.com/create', 'string', 'metalx');
 
-        // AI Provider
+        // AI Provider — keys are SHARED with the AI Chat settings page (see AiSettingsController),
+        // so we must only overwrite when the admin actually enters a new key. Otherwise re-saving
+        // Metal-X settings would wipe the AI Chat keys (issue: chat stops working after a
+        // routine Metal-X save).
         Setting::setValue('metalx_ai_provider', $validated['metalx_ai_provider'] ?? 'groq', 'string', 'metalx');
-        Setting::setValue('groq_api_key', $validated['groq_api_key'] ?? '', 'string', 'metalx');
-        Setting::setValue('ai_openai_key', $validated['metalx_openai_key'] ?? '', 'string', 'metalx');
-        Setting::setValue('ai_claude_key', $validated['metalx_claude_key'] ?? '', 'string', 'metalx');
+        if ($this->isRealApiKey($validated['groq_api_key'] ?? null)) {
+            Setting::setValue('groq_api_key', $validated['groq_api_key'], 'string', 'metalx');
+        }
+        if ($this->isRealApiKey($validated['metalx_openai_key'] ?? null)) {
+            Setting::setValue('ai_openai_key', $validated['metalx_openai_key'], 'string', 'metalx');
+        }
+        if ($this->isRealApiKey($validated['metalx_claude_key'] ?? null)) {
+            Setting::setValue('ai_claude_key', $validated['metalx_claude_key'], 'string', 'metalx');
+        }
 
         // FFmpeg
         Setting::setValue('ffmpeg_binary', $validated['ffmpeg_binary'] ?? 'ffmpeg', 'string', 'metalx');
@@ -160,5 +178,24 @@ class MetalXSettingsController extends Controller
 
         return redirect()->route('admin.metal-x.settings')
             ->with('success', 'บันทึกการตั้งค่าสำเร็จ!');
+    }
+
+    /**
+     * Treat blank input or a string of bullet/mask characters as "no change".
+     * The form deliberately renders value="" with a masked placeholder so that
+     * re-saving the page does not double-encrypt or wipe an existing API key.
+     */
+    private function isRealApiKey(?string $value): bool
+    {
+        if ($value === null || $value === '') {
+            return false;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        return ! preg_match('/^[\x{2022}\x{25CF}\x{00B7}\*\s]+$/u', $trimmed);
     }
 }
