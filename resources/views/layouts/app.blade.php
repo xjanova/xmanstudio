@@ -45,6 +45,9 @@
     @if($customHeadCode)
         {!! $customHeadCode !!}
     @endif
+
+    <!-- Google AdSense (site verification + ads) -->
+    <x-adsense-head />
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <!-- Custom Body Start Code (Tracking noscript) -->

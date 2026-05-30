@@ -29,6 +29,9 @@
     @php $customHeadCode = \App\Models\Setting::getValue('custom_code_head', ''); @endphp
     @if($customHeadCode){!! $customHeadCode !!}@endif
 
+    {{-- Google AdSense (site verification + ads) --}}
+    <x-adsense-head />
+
     <style>
         html, body {
             margin:0;padding:0;background:#030612;color:#f1f5f9;

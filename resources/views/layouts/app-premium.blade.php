@@ -232,6 +232,9 @@
     @if($customHeadCode)
         {!! $customHeadCode !!}
     @endif
+
+    <!-- Google AdSense (site verification + ads) -->
+    <x-adsense-head />
 </head>
 <body class="min-h-screen premium-scrollbar">
     <!-- Custom Body Start Code (Tracking noscript) -->

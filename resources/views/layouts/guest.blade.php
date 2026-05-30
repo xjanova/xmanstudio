@@ -22,6 +22,9 @@
         @if($customHeadCode)
             {!! $customHeadCode !!}
         @endif
+
+        <!-- Google AdSense (site verification + ads) -->
+        <x-adsense-head />
     </head>
     <body class="font-sans text-gray-900 antialiased">
         <!-- Custom Body Start Code (Tracking noscript) -->

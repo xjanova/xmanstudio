@@ -105,6 +105,59 @@
         @csrf
         @method('PUT')
 
+        <!-- AdSense Verification Script -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center mr-4 shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">สคริปต์ยืนยันตัวตน AdSense</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            ใส่โค้ดยืนยัน (<code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs">&lt;script&gt;</code> + <code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs">&lt;meta&gt;</code>) ลงในทุกหน้าสาธารณะอัตโนมัติ
+                        </p>
+                    </div>
+                </div>
+                @if($adsenseEnabled && !empty($adsenseClientId))
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow">
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Active
+                    </span>
+                @endif
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-3 sm:items-end">
+                <div class="sm:col-span-2">
+                    <label for="adsense_client_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">AdSense Publisher ID</label>
+                    <input
+                        type="text"
+                        id="adsense_client_id"
+                        name="adsense_client_id"
+                        value="{{ old('adsense_client_id', $adsenseClientId) }}"
+                        placeholder="ca-pub-1012362923849759"
+                        class="w-full font-mono text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                    >
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">รูปแบบ <code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">ca-pub-XXXXXXXXXXXXXXXX</code> (หาได้จาก AdSense &rarr; Account &rarr; Account information) เว้นว่างเพื่อปิด</p>
+                </div>
+                <div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="adsense_enabled" value="1" class="sr-only peer" {{ old('adsense_enabled', $adsenseEnabled) ? 'checked' : '' }}>
+                        <div class="w-14 h-7 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-green-500"></div>
+                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-white">แสดงสคริปต์</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-xs text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800">
+                <strong>หมายเหตุ:</strong> โค้ดนี้ใช้สำหรับ <em>ยืนยันความเป็นเจ้าของเว็บไซต์</em> และเริ่มแสดงโฆษณา (Auto ads) — สคริปต์จะถูกฝังในหน้าสาธารณะทั้งหมด ส่วนไฟล์ ads.txt ด้านล่างจำเป็นต่อการอนุมัติและจ่ายเงิน
+            </div>
+        </div>
+
         <!-- Enable/Disable Toggle -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700">
             <div class="flex items-center justify-between">
