@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'การสมัครสมาชิก')
-@section('page-title', 'การสมัครสมาชิก')
-@section('page-description', 'จัดการแพ็คเกจและการสมัครสมาชิกของคุณ')
+@section('page-title')<x-bi th="การสมัครสมาชิก" en="Subscriptions" />@endsection
+@section('page-description')<x-bi th="จัดการแพ็คเกจและการสมัครสมาชิกของคุณ" en="Manage your packages and subscriptions" />@endsection
 
 @section('content')
 <!-- Premium Header Banner -->
@@ -18,15 +18,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
                 </div>
-                การสมัครสมาชิก
+                <x-bi th="การสมัครสมาชิก" en="Subscriptions" layout="stack" />
             </h1>
-            <p class="mt-2 text-white/80 text-sm sm:text-base">จัดการแพ็คเกจสมาชิกและติดตามการต่ออายุ</p>
+            <p class="mt-2 text-white/80 text-sm sm:text-base"><x-bi th="จัดการแพ็คเกจสมาชิกและติดตามการต่ออายุ" en="Manage your membership packages and track renewals" /></p>
         </div>
         <a href="{{ route('rental.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all font-medium shadow-lg">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
-            สมัครสมาชิกใหม่
+            <x-bi th="สมัครสมาชิกใหม่" en="New Subscription" />
         </a>
     </div>
 </div>
@@ -36,7 +36,7 @@
     <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ใช้งานอยู่</p>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="ใช้งานอยู่" en="Active" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ $stats['active'] }}</p>
             </div>
             <div class="p-3 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
@@ -50,7 +50,7 @@
     <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">หมดอายุ</p>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="หมดอายุ" en="Expired" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-600 dark:text-gray-400 mt-1">{{ $stats['expired'] }}</p>
             </div>
             <div class="p-3 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
@@ -64,7 +64,7 @@
     <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ยอดใช้จ่ายรวม</p>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="ยอดใช้จ่ายรวม" en="Total Spent" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">฿{{ number_format($stats['total_spent']) }}</p>
             </div>
             <div class="p-3 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
@@ -81,11 +81,11 @@
     <form action="" method="GET" class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-start sm:items-center">
         <div class="flex-1 sm:flex-none">
             <select name="status" class="w-full sm:w-auto rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-cyan-500 focus:border-cyan-500 shadow-sm">
-                <option value="all">สถานะทั้งหมด</option>
-                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>ใช้งานอยู่</option>
-                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>รอดำเนินการ</option>
-                <option value="expired" {{ request('status') === 'expired' ? 'selected' : '' }}>หมดอายุ</option>
-                <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>ยกเลิก</option>
+                <option value="all">สถานะทั้งหมด / All Status</option>
+                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>ใช้งานอยู่ / Active</option>
+                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>รอดำเนินการ / Pending</option>
+                <option value="expired" {{ request('status') === 'expired' ? 'selected' : '' }}>หมดอายุ / Expired</option>
+                <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>ยกเลิก / Cancelled</option>
             </select>
         </div>
 
@@ -95,12 +95,12 @@
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    กรอง
+                    <x-bi th="กรอง" en="Filter" />
                 </span>
             </button>
             @if(request()->hasAny(['status']))
             <a href="{{ route('customer.subscriptions') }}" class="px-5 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium transition-all">
-                ล้าง
+                <x-bi th="ล้าง" en="Clear" />
             </a>
             @endif
         </div>
@@ -130,11 +130,11 @@
                                 'suspended' => 'from-orange-400 to-red-400',
                             ];
                             $statusLabels = [
-                                'active' => 'ใช้งานอยู่',
-                                'pending' => 'รอดำเนินการ',
-                                'expired' => 'หมดอายุ',
-                                'cancelled' => 'ยกเลิก',
-                                'suspended' => 'ระงับชั่วคราว',
+                                'active' => 'ใช้งานอยู่ / Active',
+                                'pending' => 'รอดำเนินการ / Pending',
+                                'expired' => 'หมดอายุ / Expired',
+                                'cancelled' => 'ยกเลิก / Cancelled',
+                                'suspended' => 'ระงับชั่วคราว / Suspended',
                             ];
                         @endphp
                         <span class="px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r {{ $statusGradients[$subscription->status] ?? 'from-gray-400 to-gray-500' }} text-white shadow-sm">
@@ -145,7 +145,7 @@
                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
-                            ต่ออายุอัตโนมัติ
+                            <x-bi th="ต่ออายุอัตโนมัติ" en="Auto-Renew" />
                         </span>
                         @endif
                     </div>
@@ -166,7 +166,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                         </div>
-                        <span>เริ่มใช้งาน:</span>
+                        <span><x-bi th="เริ่มใช้งาน:" en="Started:" /></span>
                         <span class="font-medium text-gray-900 dark:text-white ml-1">{{ $subscription->starts_at?->format('d/m/Y') ?? '-' }}</span>
                     </div>
                     <div class="flex items-center text-gray-500 dark:text-gray-400">
@@ -175,7 +175,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </div>
-                        <span>หมดอายุ:</span>
+                        <span><x-bi th="หมดอายุ:" en="Expires:" /></span>
                         <span class="font-medium {{ $subscription->expires_at?->isPast() ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white' }} ml-1">
                             {{ $subscription->expires_at?->format('d/m/Y') ?? '-' }}
                             @if($subscription->expires_at && !$subscription->expires_at->isPast())
@@ -192,7 +192,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                         </svg>
-                        ดูรายละเอียด
+                        <x-bi k="common.view_details" />
                     </a>
                     @if($subscription->status === 'active' && $subscription->expires_at?->diffInDays() < 30)
                     <a href="{{ route('rental.checkout', $subscription->rentalPackage) }}"
@@ -200,7 +200,7 @@
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
-                        ต่ออายุ
+                        <x-bi th="ต่ออายุ" en="Renew" />
                     </a>
                     @endif
                 </div>
@@ -214,13 +214,13 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">ยังไม่มีการสมัครสมาชิก</h3>
-        <p class="text-gray-500 dark:text-gray-400 mt-2">เริ่มต้นใช้งานด้วยการสมัครแพ็คเกจที่เหมาะกับคุณ</p>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="ยังไม่มีการสมัครสมาชิก" en="No subscriptions yet" /></h3>
+        <p class="text-gray-500 dark:text-gray-400 mt-2"><x-bi th="เริ่มต้นใช้งานด้วยการสมัครแพ็คเกจที่เหมาะกับคุณ" en="Get started by subscribing to a package that suits you" /></p>
         <a href="{{ route('rental.index') }}" class="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl hover:from-cyan-700 hover:to-blue-700 font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
-            ดูแพ็คเกจทั้งหมด
+            <x-bi th="ดูแพ็คเกจทั้งหมด" en="View All Packages" />
         </a>
     </div>
     @endforelse

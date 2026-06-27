@@ -59,26 +59,26 @@
                     </div>
                     <h1 class="text-xl sm:text-2xl font-bold text-white mb-2">{{ $ticket->subject }}</h1>
                     <p class="text-purple-100 text-sm">
-                        สร้างเมื่อ {{ $ticket->created_at->format('d/m/Y H:i') }}
+                        <x-bi th="สร้างเมื่อ" en="Created" /> {{ $ticket->created_at->format('d/m/Y H:i') }}
                         @if($ticket->order)
-                            &bull; คำสั่งซื้อ #{{ $ticket->order->order_number }}
+                            &bull; <x-bi th="คำสั่งซื้อ" en="Order" /> #{{ $ticket->order->order_number }}
                         @endif
                     </p>
                 </div>
 
                 <div class="flex items-center gap-2">
                     @if($ticket->isOpen())
-                        <form action="{{ route('customer.support.close', $ticket) }}" method="POST" onsubmit="return confirm('ต้องการปิด Ticket นี้หรือไม่?')">
+                        <form action="{{ route('customer.support.close', $ticket) }}" method="POST" onsubmit="return confirm('ต้องการปิด Ticket นี้หรือไม่? / Close this ticket?')">
                             @csrf
                             <button type="submit" class="px-5 py-2.5 text-white bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-semibold">
-                                ปิด Ticket
+                                <x-bi th="ปิด Ticket" en="Close Ticket" />
                             </button>
                         </form>
                     @else
                         <form action="{{ route('customer.support.reopen', $ticket) }}" method="POST">
                             @csrf
                             <button type="submit" class="px-5 py-2.5 text-white bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-semibold">
-                                เปิด Ticket ใหม่
+                                <x-bi th="เปิด Ticket ใหม่" en="Reopen Ticket" />
                             </button>
                         </form>
                     @endif
@@ -147,7 +147,7 @@
                             <span class="font-semibold text-gray-900 dark:text-white">{{ $reply->user->name ?? 'Unknown' }}</span>
                             @if($reply->isFromStaff())
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow">
-                                    ทีมสนับสนุน
+                                    <x-bi th="ทีมสนับสนุน" en="Support Team" />
                                 </span>
                             @endif
                             <span class="text-sm text-gray-500 dark:text-gray-400">{{ $reply->created_at->diffForHumans() }}</span>
@@ -185,7 +185,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                     </svg>
                 </div>
-                ตอบกลับ
+                <x-bi th="ตอบกลับ" en="Reply" />
             </h3>
             <form action="{{ route('customer.support.reply', $ticket) }}" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -193,7 +193,7 @@
                     <div>
                         <textarea name="message" rows="4"
                                   class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all @error('message') border-red-500 @enderror"
-                                  placeholder="พิมพ์ข้อความของคุณ...">{{ old('message') }}</textarea>
+                                  placeholder="พิมพ์ข้อความของคุณ... / Type your message...">{{ old('message') }}</textarea>
                         @error('message')
                             <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
@@ -205,7 +205,7 @@
                                 <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                                 </svg>
-                                แนบไฟล์
+                                <x-bi th="แนบไฟล์" en="Attach File" />
                                 <input id="reply_attachments" name="attachments[]" type="file" class="sr-only" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip">
                             </label>
                             <span id="reply-file-count" class="ml-2 text-sm text-gray-500 dark:text-gray-400"></span>
@@ -215,7 +215,7 @@
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                 </svg>
-                                ส่งข้อความ
+                                <x-bi th="ส่งข้อความ" en="Send Message" />
                             </span>
                         </button>
                     </div>
@@ -230,8 +230,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Ticket ปิดแล้ว</h3>
-        <p class="mt-2 text-gray-500 dark:text-gray-400">หากต้องการสอบถามเพิ่มเติม กดปุ่ม "เปิด Ticket ใหม่" ด้านบน</p>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="Ticket ปิดแล้ว" en="Ticket Closed" /></h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400"><x-bi th="หากต้องการสอบถามเพิ่มเติม กดปุ่ม &quot;เปิด Ticket ใหม่&quot; ด้านบน" en="To ask more questions, click the &quot;Reopen Ticket&quot; button above." /></p>
     </div>
     @endif
 
@@ -241,7 +241,7 @@
             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            กลับไปรายการ Ticket
+            <x-bi th="กลับไปรายการ Ticket" en="Back to Ticket List" />
         </a>
     </div>
 </div>
@@ -250,7 +250,7 @@
 <script>
 document.getElementById('reply_attachments')?.addEventListener('change', function(e) {
     const count = e.target.files.length;
-    document.getElementById('reply-file-count').textContent = count > 0 ? `${count} ไฟล์` : '';
+    document.getElementById('reply-file-count').textContent = count > 0 ? `${count} ไฟล์ / file(s)` : '';
 });
 </script>
 @endpush

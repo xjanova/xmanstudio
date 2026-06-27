@@ -274,28 +274,28 @@
                     </div>
                     <div class="hidden lg:ml-8 lg:flex lg:items-center lg:space-x-1">
                         <a href="/" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('/') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            หน้าหลัก
+                            <x-bi th="หน้าหลัก" en="Home" layout="stack" />
                         </a>
                         <a href="/services" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('services*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            บริการ
+                            <x-bi th="บริการ" en="Services" layout="stack" />
                         </a>
                         <a href="/products" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('products*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            ผลิตภัณฑ์
+                            <x-bi th="ผลิตภัณฑ์" en="Products" layout="stack" />
                         </a>
                         <a href="/rental" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('rental*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            เช่าบริการ
+                            <x-bi th="เช่าบริการ" en="Rentals" layout="stack" />
                         </a>
                         <a href="/portfolio" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('portfolio*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            ผลงาน
+                            <x-bi th="ผลงาน" en="Portfolio" layout="stack" />
                         </a>
                         <a href="/support" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('support*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            ติดต่อ/สั่งซื้อ
+                            <x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" layout="stack" />
                         </a>
                         <a href="/tracking" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('tracking*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            ติดตามงาน
+                            <x-bi th="ติดตามงาน" en="Track Order" layout="stack" />
                         </a>
                         <a href="/apps/aipray/donate" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('apps/aipray*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            บริจาค
+                            <x-bi th="บริจาค" en="Donate" layout="stack" />
                         </a>
                     </div>
                 </div>
@@ -372,7 +372,7 @@
                     @else
                         <h3 class="ds-wordmark text-2xl font-black mb-4">XMAN STUDIO</h3>
                     @endif
-                    <p class="text-indigo-300/60 mb-4">ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ</p>
+                    <p class="text-indigo-300/60 mb-4"><x-bi th="ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ" en="Your end-to-end IT Solutions experts — software development and information technology services." /></p>
                     <!-- Social Links -->
                     <div class="flex space-x-4">
                         <a href="https://youtube.com/@metal-xproject" target="_blank" class="p-2 text-indigo-400 hover:text-red-400 hover:bg-white/5 rounded-lg transition-all duration-300">
@@ -395,11 +395,11 @@
 
                 <!-- Services -->
                 <div>
-                    <h4 class="text-lg font-semibold text-white mb-4">บริการ</h4>
+                    <h4 class="text-lg font-semibold text-white mb-4"><x-bi th="บริการ" en="Services" /></h4>
                     <ul class="space-y-2">
                         <li><a href="/services" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">Blockchain Development</a></li>
-                        <li><a href="/services" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">พัฒนาเว็บไซต์</a></li>
-                        <li><a href="/services" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">แอพพลิเคชัน</a></li>
+                        <li><a href="/services" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="พัฒนาเว็บไซต์" en="Web Development" /></a></li>
+                        <li><a href="/services" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="แอพพลิเคชัน" en="Applications" /></a></li>
                         <li><a href="/services" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">AI Services</a></li>
                         <li><a href="/services" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">IoT Solutions</a></li>
                         <li><a href="/ai-autotrade" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">AI AutoTrade</a></li>
@@ -408,26 +408,26 @@
 
                 <!-- Help -->
                 <div>
-                    <h4 class="text-lg font-semibold text-white mb-4">ช่วยเหลือ</h4>
+                    <h4 class="text-lg font-semibold text-white mb-4"><x-bi th="ช่วยเหลือ" en="Help" /></h4>
                     <ul class="space-y-2">
-                        <li><a href="/about" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">เกี่ยวกับเรา</a></li>
-                        <li><a href="/team" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">ทีมงานและผู้บริหาร</a></li>
-                        <li><a href="/support" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">ติดต่อ/สั่งซื้อ</a></li>
-                        <li><a href="/rental" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">เช่าบริการ</a></li>
-                        <li><a href="/products" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">ผลิตภัณฑ์</a></li>
-                        <li><a href="/portfolio" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">ผลงาน</a></li>
+                        <li><a href="/about" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เกี่ยวกับเรา" en="About Us" /></a></li>
+                        <li><a href="/team" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ทีมงานและผู้บริหาร" en="Team & Management" /></a></li>
+                        <li><a href="/support" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" /></a></li>
+                        <li><a href="/rental" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เช่าบริการ" en="Rentals" /></a></li>
+                        <li><a href="/products" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ผลิตภัณฑ์" en="Products" /></a></li>
+                        <li><a href="/portfolio" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ผลงาน" en="Portfolio" /></a></li>
                     </ul>
 
-                    <h4 class="text-lg font-semibold text-white mb-4 mt-6">กฎหมาย</h4>
+                    <h4 class="text-lg font-semibold text-white mb-4 mt-6"><x-bi th="กฎหมาย" en="Legal" /></h4>
                     <ul class="space-y-2">
-                        <li><a href="/privacy" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">นโยบายความเป็นส่วนตัว</a></li>
-                        <li><a href="/terms" class="text-indigo-300/60 hover:text-indigo-200 transition-colors">ข้อกำหนดการใช้งาน</a></li>
+                        <li><a href="/privacy" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="นโยบายความเป็นส่วนตัว" en="Privacy Policy" /></a></li>
+                        <li><a href="/terms" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ข้อกำหนดการใช้งาน" en="Terms of Service" /></a></li>
                     </ul>
                 </div>
 
                 <!-- Contact -->
                 <div>
-                    <h4 class="text-lg font-semibold text-white mb-4">ติดต่อเรา</h4>
+                    <h4 class="text-lg font-semibold text-white mb-4"><x-bi th="ติดต่อเรา" en="Contact Us" /></h4>
                     @php
                         $footerPhone = \App\Models\Setting::getValue('contact_phone', '080-6038278');
                         $footerPhoneName = \App\Models\Setting::getValue('contact_phone_name', 'คุณกรณิภา');
@@ -480,9 +480,9 @@
                         <p class="text-indigo-400/40 text-xs mt-1">IT Solutions & Software Development</p>
                     </div>
                     <div class="flex flex-wrap justify-center space-x-4 md:space-x-6 mt-4 md:mt-0">
-                        <a href="/privacy" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors">นโยบายความเป็นส่วนตัว</a>
-                        <a href="/terms" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors">ข้อกำหนดการใช้งาน</a>
-                        <a href="/support" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors">ติดต่อเรา</a>
+                        <a href="/privacy" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors"><x-bi th="นโยบายความเป็นส่วนตัว" en="Privacy Policy" /></a>
+                        <a href="/terms" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors"><x-bi th="ข้อกำหนดการใช้งาน" en="Terms of Service" /></a>
+                        <a href="/support" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors"><x-bi th="ติดต่อเรา" en="Contact Us" /></a>
                     </div>
                 </div>
             </div>

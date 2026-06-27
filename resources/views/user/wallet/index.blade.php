@@ -13,22 +13,22 @@
                         <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                         </svg>
-                        กระเป๋าเงิน
+                        <x-bi th="กระเป๋าเงิน" en="Wallet" />
                     </h1>
-                    <p class="mt-1 text-purple-100">จัดการยอดเงินและธุรกรรมของคุณ</p>
+                    <p class="mt-1 text-purple-100"><x-bi th="จัดการยอดเงินและธุรกรรมของคุณ" en="Manage your balance and transactions" /></p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <a href="{{ route('user.wallet.topup') }}" class="inline-flex items-center px-5 py-2.5 bg-white text-purple-600 font-semibold rounded-xl shadow-lg hover:bg-purple-50 transition-all duration-200">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
-                        เติมเงิน
+                        <x-bi th="เติมเงิน" en="Top Up" />
                     </a>
                     <a href="{{ route('user.wallet.transactions') }}" class="inline-flex items-center px-5 py-2.5 bg-purple-500/30 text-white font-semibold rounded-xl hover:bg-purple-500/40 transition-all duration-200 backdrop-blur-sm">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        ประวัติธุรกรรม
+                        <x-bi th="ประวัติธุรกรรม" en="Transaction History" />
                     </a>
                 </div>
             </div>
@@ -48,7 +48,7 @@
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                     </svg>
-                                    ยอดเงินคงเหลือ
+                                    <x-bi th="ยอดเงินคงเหลือ" en="Available Balance" />
                                 </div>
                                 <div class="text-4xl sm:text-5xl font-bold text-white">
                                     ฿{{ number_format($wallet->balance, 2) }}
@@ -65,12 +65,12 @@
                     </div>
                     <div class="bg-black/10 px-6 sm:px-8 py-4">
                         <div class="flex items-center justify-between text-purple-100 text-sm">
-                            <span>อัพเดทล่าสุด: {{ now()->format('d/m/Y H:i') }}</span>
+                            <span><x-bi th="อัพเดทล่าสุด" en="Last updated" />: {{ now()->format('d/m/Y H:i') }}</span>
                             <span class="flex items-center text-green-300">
                                 <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                 </svg>
-                                พร้อมใช้งาน
+                                <x-bi th="พร้อมใช้งาน" en="Available" />
                             </span>
                         </div>
                     </div>
@@ -84,7 +84,7 @@
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            รายการรอตรวจสอบ
+                            <x-bi th="รายการรอตรวจสอบ" en="Pending Review" />
                             <span class="ml-2 px-2.5 py-0.5 bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-100 text-xs font-medium rounded-full">
                                 {{ $pendingTopups->count() }}
                             </span>
@@ -107,7 +107,7 @@
                                         </p>
                                         @if($topup->payment_display_amount)
                                         <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                                            โอนเงิน: ฿{{ number_format($topup->payment_display_amount, 2) }}
+                                            <x-bi th="โอนเงิน" en="Transfer" />: ฿{{ number_format($topup->payment_display_amount, 2) }}
                                         </p>
                                         @endif
                                     </div>
@@ -117,7 +117,7 @@
                                         +฿{{ number_format($topup->total_amount, 2) }}
                                     </span>
                                     <span class="px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-                                        ดูรายละเอียด &rarr;
+                                        <x-bi th="ดูรายละเอียด" en="View Details" /> &rarr;
                                     </span>
                                 </div>
                             </div>
@@ -134,10 +134,10 @@
                             <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
-                            ประวัติล่าสุด
+                            <x-bi th="ประวัติล่าสุด" en="Recent History" />
                         </h3>
                         <a href="{{ route('user.wallet.transactions') }}" class="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors duration-200">
-                            ดูทั้งหมด &rarr;
+                            <x-bi th="ดูทั้งหมด" en="View All" /> &rarr;
                         </a>
                     </div>
                     <div class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -178,8 +178,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                                 </svg>
                             </div>
-                            <p class="text-gray-500 dark:text-gray-400 font-medium">ยังไม่มีประวัติธุรกรรม</p>
-                            <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">เริ่มเติมเงินเพื่อใช้งาน Wallet</p>
+                            <p class="text-gray-500 dark:text-gray-400 font-medium"><x-bi th="ยังไม่มีประวัติธุรกรรม" en="No transactions yet" /></p>
+                            <p class="text-sm text-gray-400 dark:text-gray-500 mt-1"><x-bi th="เริ่มเติมเงินเพื่อใช้งาน Wallet" en="Top up to start using your Wallet" /></p>
                         </div>
                         @endforelse
                     </div>
@@ -195,7 +195,7 @@
                             <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                             </svg>
-                            สรุปยอด
+                            <x-bi th="สรุปยอด" en="Summary" />
                         </h3>
                     </div>
                     <div class="p-6 space-y-4">
@@ -207,7 +207,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                     </svg>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">เติมเงินรวม</span>
+                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400"><x-bi th="เติมเงินรวม" en="Total Deposited" /></span>
                             </div>
                             <span class="text-lg font-bold text-green-600 dark:text-green-400">฿{{ number_format($wallet->total_deposited, 2) }}</span>
                         </div>
@@ -220,7 +220,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">ใช้จ่ายรวม</span>
+                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400"><x-bi th="ใช้จ่ายรวม" en="Total Spent" /></span>
                             </div>
                             <span class="text-lg font-bold text-red-600 dark:text-red-400">฿{{ number_format($wallet->total_spent, 2) }}</span>
                         </div>
@@ -233,7 +233,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                                     </svg>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">คืนเงินรวม</span>
+                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400"><x-bi th="คืนเงินรวม" en="Total Refunded" /></span>
                             </div>
                             <span class="text-lg font-bold text-blue-600 dark:text-blue-400">฿{{ number_format($wallet->total_refunded, 2) }}</span>
                         </div>
@@ -247,32 +247,32 @@
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            เกี่ยวกับ Wallet
+                            <x-bi th="เกี่ยวกับ Wallet" en="About Wallet" />
                         </h3>
                         <ul class="space-y-3">
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="text-sm text-purple-800 dark:text-purple-200">ชำระเงินสะดวกรวดเร็ว</span>
+                                <span class="text-sm text-purple-800 dark:text-purple-200"><x-bi th="ชำระเงินสะดวกรวดเร็ว" en="Fast and convenient payments" /></span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="text-sm text-purple-800 dark:text-purple-200">รับโบนัสเพิ่มเมื่อเติมเงิน</span>
+                                <span class="text-sm text-purple-800 dark:text-purple-200"><x-bi th="รับโบนัสเพิ่มเมื่อเติมเงิน" en="Earn bonus credits when you top up" /></span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="text-sm text-purple-800 dark:text-purple-200">ดูประวัติธุรกรรมได้ตลอด</span>
+                                <span class="text-sm text-purple-800 dark:text-purple-200"><x-bi th="ดูประวัติธุรกรรมได้ตลอด" en="View your transaction history anytime" /></span>
                             </li>
                             <li class="flex items-start">
                                 <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span class="text-sm text-purple-800 dark:text-purple-200">ปลอดภัย ไม่มีค่าธรรมเนียม</span>
+                                <span class="text-sm text-purple-800 dark:text-purple-200"><x-bi th="ปลอดภัย ไม่มีค่าธรรมเนียม" en="Secure with no fees" /></span>
                             </li>
                         </ul>
                     </div>
@@ -281,7 +281,7 @@
                 <!-- Quick Actions -->
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">ทางลัด</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="ทางลัด" en="Quick Actions" /></h3>
                     </div>
                     <div class="p-4 space-y-2">
                         <a href="{{ route('user.wallet.topup') }}" class="flex items-center p-3 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200 group">
@@ -291,8 +291,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium text-gray-900 dark:text-white">เติมเงิน</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">เพิ่มยอดเงินในกระเป๋า</p>
+                                <p class="font-medium text-gray-900 dark:text-white"><x-bi th="เติมเงิน" en="Top Up" /></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="เพิ่มยอดเงินในกระเป๋า" en="Add funds to your wallet" /></p>
                             </div>
                         </a>
                         <a href="{{ route('user.wallet.transactions') }}" class="flex items-center p-3 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200 group">
@@ -302,8 +302,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium text-gray-900 dark:text-white">ประวัติธุรกรรม</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">ดูรายละเอียดทั้งหมด</p>
+                                <p class="font-medium text-gray-900 dark:text-white"><x-bi th="ประวัติธุรกรรม" en="Transaction History" /></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="ดูรายละเอียดทั้งหมด" en="View all details" /></p>
                             </div>
                         </a>
                     </div>

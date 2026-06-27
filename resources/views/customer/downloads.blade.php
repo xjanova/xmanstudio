@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'ดาวน์โหลด')
-@section('page-title', 'ศูนย์ดาวน์โหลด')
-@section('page-description', 'ดาวน์โหลดซอฟต์แวร์และทรัพยากรสำหรับใบอนุญาตและการสมัครสมาชิกของคุณ')
+@section('page-title')<x-bi th="ศูนย์ดาวน์โหลด" en="Download Center" />@endsection
+@section('page-description')<x-bi th="ดาวน์โหลดซอฟต์แวร์และทรัพยากรสำหรับใบอนุญาตและการสมัครสมาชิกของคุณ" en="Download software and resources for your licenses and subscriptions" />@endsection
 
 @section('content')
 <!-- Premium Header Banner -->
@@ -18,9 +18,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
                 </div>
-                ศูนย์ดาวน์โหลด
+                <x-bi th="ศูนย์ดาวน์โหลด" en="Download Center" layout="stack" />
             </h1>
-            <p class="mt-2 text-white/80 text-sm sm:text-base">ดาวน์โหลดซอฟต์แวร์และทรัพยากรทั้งหมดของคุณ</p>
+            <p class="mt-2 text-white/80 text-sm sm:text-base"><x-bi th="ดาวน์โหลดซอฟต์แวร์และทรัพยากรทั้งหมดของคุณ" en="Download all your software and resources" /></p>
         </div>
     </div>
 </div>
@@ -34,7 +34,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
             </svg>
         </div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white">ซอฟต์แวร์ที่มีใบอนุญาต</h2>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white"><x-bi th="ซอฟต์แวร์ที่มีใบอนุญาต" en="Licensed Software" /></h2>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach($licensedProducts as $product)
@@ -57,11 +57,11 @@
 
                 <div class="mt-4 space-y-2 text-sm">
                     <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span class="text-gray-500 dark:text-gray-400">เวอร์ชัน:</span>
+                        <span class="text-gray-500 dark:text-gray-400"><x-bi th="เวอร์ชัน" en="Version" />:</span>
                         <span class="font-semibold text-gray-900 dark:text-white px-2 py-0.5 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded">{{ $product->version ?? '1.0.0' }}</span>
                     </div>
                     <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span class="text-gray-500 dark:text-gray-400">แพลตฟอร์ม:</span>
+                        <span class="text-gray-500 dark:text-gray-400"><x-bi th="แพลตฟอร์ม" en="Platform" />:</span>
                         <span class="font-semibold text-gray-900 dark:text-white">{{ $product->platform ?? 'Windows' }}</span>
                     </div>
                 </div>
@@ -73,21 +73,21 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
-                        ดาวน์โหลดเวอร์ชันล่าสุด
+                        <x-bi th="ดาวน์โหลดเวอร์ชันล่าสุด" en="Download Latest Version" />
                     </a>
                     <a href="{{ route('products.show', 'autotradex') }}"
                        class="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center font-medium transition-all">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                         </svg>
-                        คู่มือการใช้งาน
+                        <x-bi th="คู่มือการใช้งาน" en="User Guide" />
                     </a>
                     @else
                     <button class="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 flex items-center justify-center font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
-                        ดาวน์โหลด
+                        <x-bi th="ดาวน์โหลด" en="Download" />
                     </button>
                     @endif
                 </div>
@@ -107,7 +107,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
         </div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white">ทรัพยากรจากการสมัครสมาชิก</h2>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white"><x-bi th="ทรัพยากรจากการสมัครสมาชิก" en="Subscription Resources" /></h2>
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
         <div class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -127,14 +127,14 @@
                                     <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
-                                    หมดอายุ: {{ $rental->expires_at->format('d/m/Y') }}
+                                    <x-bi th="หมดอายุ" en="Expires" />: {{ $rental->expires_at->format('d/m/Y') }}
                                 </span>
                                 <span class="text-gray-400 dark:text-gray-500">({{ $rental->expires_at->diffForHumans() }})</span>
                             </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="px-3 py-1.5 bg-gradient-to-r from-emerald-400 to-green-500 text-white text-xs font-semibold rounded-full shadow-sm">ใช้งานอยู่</span>
+                        <span class="px-3 py-1.5 bg-gradient-to-r from-emerald-400 to-green-500 text-white text-xs font-semibold rounded-full shadow-sm"><x-bi k="common.status_active" /></span>
                     </div>
                 </div>
 
@@ -143,7 +143,7 @@
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                         </svg>
-                        เอกสาร
+                        <x-bi th="เอกสาร" en="Documentation" />
                     </button>
                     <button class="inline-flex items-center px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium transition-all">
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,20 +167,20 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
         </svg>
     </div>
-    <h3 class="text-xl font-bold text-gray-900 dark:text-white">ไม่มีไฟล์ดาวน์โหลด</h3>
-    <p class="text-gray-500 dark:text-gray-400 mt-2">ซื้อผลิตภัณฑ์หรือสมัครสมาชิกแพ็คเกจเพื่อเข้าถึงการดาวน์โหลด</p>
+    <h3 class="text-xl font-bold text-gray-900 dark:text-white"><x-bi th="ไม่มีไฟล์ดาวน์โหลด" en="No Downloads Available" /></h3>
+    <p class="text-gray-500 dark:text-gray-400 mt-2"><x-bi th="ซื้อผลิตภัณฑ์หรือสมัครสมาชิกแพ็คเกจเพื่อเข้าถึงการดาวน์โหลด" en="Purchase a product or subscribe to a package to access downloads" /></p>
     <div class="mt-8 flex flex-col sm:flex-row justify-center gap-3">
         <a href="{{ route('products.index') }}" class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
-            ดูผลิตภัณฑ์
+            <x-bi th="ดูผลิตภัณฑ์" en="View Products" />
         </a>
         <a href="{{ route('rental.index') }}" class="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-all">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
-            ดูแพ็คเกจสมาชิก
+            <x-bi th="ดูแพ็คเกจสมาชิก" en="View Subscription Packages" />
         </a>
     </div>
 </div>
@@ -198,31 +198,31 @@
             </svg>
         </div>
         <div>
-            <h3 class="font-bold text-white text-lg">คำแนะนำการดาวน์โหลด</h3>
+            <h3 class="font-bold text-white text-lg"><x-bi th="คำแนะนำการดาวน์โหลด" en="Download Guidelines" /></h3>
             <ul class="mt-4 space-y-3 text-sm text-white/90">
                 <li class="flex items-start">
                     <svg class="w-5 h-5 mr-2 mt-0.5 text-emerald-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
-                    ดาวน์โหลดได้เฉพาะใบอนุญาตและการสมัครสมาชิกที่ยังใช้งานอยู่
+                    <x-bi th="ดาวน์โหลดได้เฉพาะใบอนุญาตและการสมัครสมาชิกที่ยังใช้งานอยู่" en="Downloads are available only for active licenses and subscriptions" />
                 </li>
                 <li class="flex items-start">
                     <svg class="w-5 h-5 mr-2 mt-0.5 text-emerald-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
-                    ตรวจสอบให้แน่ใจว่าดาวน์โหลดเวอร์ชันที่ถูกต้องสำหรับระบบปฏิบัติการของคุณ
+                    <x-bi th="ตรวจสอบให้แน่ใจว่าดาวน์โหลดเวอร์ชันที่ถูกต้องสำหรับระบบปฏิบัติการของคุณ" en="Make sure you download the correct version for your operating system" />
                 </li>
                 <li class="flex items-start">
                     <svg class="w-5 h-5 mr-2 mt-0.5 text-emerald-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
-                    เตรียม License Key ของคุณไว้สำหรับการเปิดใช้งานซอฟต์แวร์
+                    <x-bi th="เตรียม License Key ของคุณไว้สำหรับการเปิดใช้งานซอฟต์แวร์" en="Have your License Key ready to activate the software" />
                 </li>
                 <li class="flex items-start">
                     <svg class="w-5 h-5 mr-2 mt-0.5 text-emerald-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
-                    หากมีปัญหาการดาวน์โหลด กรุณาติดต่อฝ่ายสนับสนุน
+                    <x-bi th="หากมีปัญหาการดาวน์โหลด กรุณาติดต่อฝ่ายสนับสนุน" en="If you have any download issues, please contact support" />
                 </li>
             </ul>
         </div>

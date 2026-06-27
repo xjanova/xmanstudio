@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'แดชบอร์ด')
-@section('page-title', 'แดชบอร์ด')
-@section('page-description', 'ภาพรวมบัญชีของคุณ')
+@section('page-title')<x-bi th="แดชบอร์ด" en="Dashboard" />@endsection
+@section('page-description')<x-bi th="ภาพรวมบัญชีของคุณ" en="Your account overview" />@endsection
 
 @section('content')
 <!-- Premium Welcome Banner -->
@@ -27,12 +27,12 @@
                     @endif
                 </div>
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">สวัสดี, {{ $user->name }}!</h1>
-                    <p class="text-indigo-100 text-sm sm:text-base">ยินดีต้อนรับกลับมา มาดูกันว่ามีอะไรใหม่บ้าง</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">สวัสดี / Hi, {{ $user->name }}!</h1>
+                    <p class="text-indigo-100 text-sm sm:text-base"><x-bi th="ยินดีต้อนรับกลับมา มาดูกันว่ามีอะไรใหม่บ้าง" en="Welcome back. Let's see what's new." /></p>
                 </div>
             </div>
             <div class="hidden lg:block text-right">
-                <p class="text-white/70 text-sm">วันที่</p>
+                <p class="text-white/70 text-sm"><x-bi th="วันที่" en="Date" /></p>
                 <p class="text-white font-semibold text-lg">{{ now()->locale('th')->translatedFormat('d M Y') }}</p>
             </div>
         </div>
@@ -52,10 +52,10 @@
                     </svg>
                 </div>
             </div>
-            <h3 class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1">สมาชิกใช้งาน</h3>
+            <h3 class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1"><x-bi th="สมาชิกใช้งาน" en="Active Subscriptions" /></h3>
             <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ $stats['active_subscriptions'] }}</p>
             <a href="{{ route('customer.subscriptions') }}" class="mt-3 inline-flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium group-hover:translate-x-1 transition-transform">
-                ดูทั้งหมด
+                <x-bi th="ดูทั้งหมด" en="View all" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
@@ -74,10 +74,10 @@
                     </svg>
                 </div>
             </div>
-            <h3 class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1">ใบอนุญาต</h3>
+            <h3 class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1"><x-bi th="ใบอนุญาต" en="Licenses" /></h3>
             <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ $stats['active_licenses'] }}</p>
             <a href="{{ route('customer.licenses') }}" class="mt-3 inline-flex items-center text-sm text-emerald-600 hover:text-emerald-700 font-medium group-hover:translate-x-1 transition-transform">
-                ดูทั้งหมด
+                <x-bi th="ดูทั้งหมด" en="View all" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
@@ -96,10 +96,10 @@
                     </svg>
                 </div>
             </div>
-            <h3 class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1">คำสั่งซื้อ</h3>
+            <h3 class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1"><x-bi th="คำสั่งซื้อ" en="Orders" /></h3>
             <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ $stats['total_orders'] }}</p>
             <a href="{{ route('customer.orders') }}" class="mt-3 inline-flex items-center text-sm text-purple-600 hover:text-purple-700 font-medium group-hover:translate-x-1 transition-transform">
-                ดูทั้งหมด
+                <x-bi th="ดูทั้งหมด" en="View all" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
@@ -118,10 +118,10 @@
                     </svg>
                 </div>
             </div>
-            <h3 class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1">Ticket เปิดอยู่</h3>
+            <h3 class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium mb-1"><x-bi th="Ticket เปิดอยู่" en="Open Tickets" /></h3>
             <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ $stats['open_tickets'] }}</p>
             <a href="{{ route('customer.support.index') }}" class="mt-3 inline-flex items-center text-sm text-orange-600 hover:text-orange-700 font-medium group-hover:translate-x-1 transition-transform">
-                ดูทั้งหมด
+                <x-bi th="ดูทั้งหมด" en="View all" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
@@ -142,14 +142,14 @@
             </div>
         </div>
         <div class="ml-4 flex-1">
-            <h3 class="text-base font-bold text-red-700 dark:text-red-300">License หมดอายุแล้ว!</h3>
+            <h3 class="text-base font-bold text-red-700 dark:text-red-300"><x-bi th="License หมดอายุแล้ว!" en="License Expired!" /></h3>
             <div class="mt-3 space-y-2">
                 @foreach($expiredLicenses as $license)
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-xl p-4">
                     <div>
                         <p class="font-semibold text-gray-900 dark:text-white">{{ $license->product?->name ?? 'Software License' }}</p>
                         <p class="text-sm text-red-600 dark:text-red-400">
-                            หมดอายุเมื่อ {{ $license->expires_at->format('d/m/Y') }} ({{ $license->expires_at->diffForHumans() }})
+                            <x-bi th="หมดอายุเมื่อ" en="Expired on" /> {{ $license->expires_at->format('d/m/Y') }} ({{ $license->expires_at->diffForHumans() }})
                         </p>
                     </div>
                     <a href="{{ route('products.show', $license->product?->slug ?? 'products') }}"
@@ -157,7 +157,7 @@
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
-                        ต่ออายุ
+                        <x-bi th="ต่ออายุ" en="Renew" />
                     </a>
                 </div>
                 @endforeach
@@ -179,7 +179,7 @@
             </div>
         </div>
         <div class="ml-4 flex-1">
-            <h3 class="text-base font-bold text-amber-700 dark:text-amber-300">License ใกล้หมดอายุ</h3>
+            <h3 class="text-base font-bold text-amber-700 dark:text-amber-300"><x-bi th="License ใกล้หมดอายุ" en="License Expiring Soon" /></h3>
             <div class="mt-3 space-y-2">
                 @foreach($expiringLicenses as $license)
                 @php $daysLeft = max(0, (int) now()->diffInDays($license->expires_at, false)); @endphp
@@ -187,7 +187,7 @@
                     <div>
                         <p class="font-semibold text-gray-900 dark:text-white">{{ $license->product?->name ?? 'Software License' }}</p>
                         <p class="text-sm text-amber-600 dark:text-amber-400">
-                            เหลืออีก {{ $daysLeft }} วัน ({{ $license->expires_at->format('d/m/Y') }})
+                            <x-bi th="เหลืออีก" en="Remaining" /> {{ $daysLeft }} <x-bi th="วัน" en="days" /> ({{ $license->expires_at->format('d/m/Y') }})
                         </p>
                     </div>
                     <a href="{{ route('products.show', $license->product?->slug ?? 'products') }}"
@@ -195,7 +195,7 @@
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
-                        ต่ออายุ
+                        <x-bi th="ต่ออายุ" en="Renew" />
                     </a>
                 </div>
                 @endforeach
@@ -217,14 +217,14 @@
             </div>
         </div>
         <div class="ml-4 flex-1">
-            <h3 class="text-base font-bold text-yellow-700 dark:text-yellow-300">การสมัครสมาชิกใกล้หมดอายุ</h3>
+            <h3 class="text-base font-bold text-yellow-700 dark:text-yellow-300"><x-bi th="การสมัครสมาชิกใกล้หมดอายุ" en="Subscription Expiring Soon" /></h3>
             <div class="mt-3 space-y-2">
                 @foreach($expiringSoon as $rental)
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-xl p-4">
                     <div>
                         <p class="font-semibold text-gray-900 dark:text-white">{{ $rental->rentalPackage->display_name }}</p>
                         <p class="text-sm text-yellow-600 dark:text-yellow-400">
-                            หมดอายุ {{ $rental->expires_at->diffForHumans() }} ({{ $rental->expires_at->format('d/m/Y') }})
+                            <x-bi th="หมดอายุ" en="Expires" /> {{ $rental->expires_at->diffForHumans() }} ({{ $rental->expires_at->format('d/m/Y') }})
                         </p>
                     </div>
                     <a href="{{ route('customer.subscriptions.show', $rental) }}"
@@ -232,7 +232,7 @@
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
-                        ต่ออายุ
+                        <x-bi th="ต่ออายุ" en="Renew" />
                     </a>
                 </div>
                 @endforeach
@@ -247,11 +247,11 @@
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden animate-fade-in" style="animation-delay: 0.4s;">
         <div class="px-5 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <div>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">การสมัครสมาชิกที่ใช้งานอยู่</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400">แพ็คเกจที่คุณกำลังใช้งาน</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white"><x-bi th="การสมัครสมาชิกที่ใช้งานอยู่" en="Active Subscriptions" /></h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400"><x-bi th="แพ็คเกจที่คุณกำลังใช้งาน" en="Packages you are currently using" /></p>
             </div>
             <a href="{{ route('customer.subscriptions') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 font-medium flex items-center">
-                ดูทั้งหมด
+                <x-bi th="ดูทั้งหมด" en="View all" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
@@ -270,13 +270,13 @@
                         <div class="min-w-0">
                             <h4 class="font-semibold text-gray-900 dark:text-white truncate">{{ $rental->rentalPackage->display_name }}</h4>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
-                                หมดอายุ: {{ $rental->expires_at->format('d/m/Y') }}
+                                <x-bi th="หมดอายุ:" en="Expires:" /> {{ $rental->expires_at->format('d/m/Y') }}
                                 <span class="text-gray-400 dark:text-gray-500">({{ $rental->expires_at->diffForHumans() }})</span>
                             </p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="px-3 py-1 bg-gradient-to-r from-emerald-400 to-green-500 text-white text-xs font-semibold rounded-full shadow">ใช้งานอยู่</span>
+                        <span class="px-3 py-1 bg-gradient-to-r from-emerald-400 to-green-500 text-white text-xs font-semibold rounded-full shadow"><x-bi th="ใช้งานอยู่" en="Active" /></span>
                         <svg class="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
@@ -290,13 +290,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                     </svg>
                 </div>
-                <p class="text-gray-600 dark:text-gray-300 font-medium">ยังไม่มีการสมัครสมาชิก</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">เริ่มต้นใช้งานด้วยการสมัครแพ็คเกจ</p>
+                <p class="text-gray-600 dark:text-gray-300 font-medium"><x-bi th="ยังไม่มีการสมัครสมาชิก" en="No subscriptions yet" /></p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="เริ่มต้นใช้งานด้วยการสมัครแพ็คเกจ" en="Get started by subscribing to a package" /></p>
                 <a href="{{ route('rental.index') }}" class="mt-4 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
-                    ดูแพ็คเกจ
+                    <x-bi th="ดูแพ็คเกจ" en="View packages" />
                 </a>
             </div>
             @endforelse
@@ -307,11 +307,11 @@
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden animate-fade-in" style="animation-delay: 0.5s;">
         <div class="px-5 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <div>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">ใบอนุญาตที่ใช้งานอยู่</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400">License ซอฟต์แวร์ของคุณ</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white"><x-bi th="ใบอนุญาตที่ใช้งานอยู่" en="Active Licenses" /></h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400"><x-bi th="License ซอฟต์แวร์ของคุณ" en="Your software licenses" /></p>
             </div>
             <a href="{{ route('customer.licenses') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 font-medium flex items-center">
-                ดูทั้งหมด
+                <x-bi th="ดูทั้งหมด" en="View all" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
@@ -331,7 +331,7 @@
                             <h4 class="font-semibold text-gray-900 dark:text-white truncate">{{ $license->product?->name ?? 'Software License' }}</h4>
                             <div class="flex items-center mt-1">
                                 <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded font-mono">{{ Str::limit($license->license_key, 20) }}</code>
-                                <button onclick="event.preventDefault(); copyToClipboard('{{ $license->license_key }}', 'คัดลอก License Key แล้ว!')" class="ml-2 p-1 text-gray-400 hover:text-indigo-600 transition-colors" title="คัดลอก">
+                                <button onclick="event.preventDefault(); copyToClipboard('{{ $license->license_key }}', 'คัดลอก License Key แล้ว! / License Key copied!')" class="ml-2 p-1 text-gray-400 hover:text-indigo-600 transition-colors" title="คัดลอก / Copy">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                     </svg>
@@ -346,10 +346,10 @@
                             {{ $license->license_type === 'monthly' ? 'bg-gradient-to-r from-gray-400 to-gray-600 text-white' : '' }}
                             {{ $license->license_type === 'demo' ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white' : '' }}
                         ">
-                            {{ $license->license_type === 'lifetime' ? 'ตลอดชีพ' : '' }}
-                            {{ $license->license_type === 'yearly' ? 'รายปี' : '' }}
-                            {{ $license->license_type === 'monthly' ? 'รายเดือน' : '' }}
-                            {{ $license->license_type === 'demo' ? 'ทดลอง' : '' }}
+                            {{ $license->license_type === 'lifetime' ? 'ตลอดชีพ / Lifetime' : '' }}
+                            {{ $license->license_type === 'yearly' ? 'รายปี / Yearly' : '' }}
+                            {{ $license->license_type === 'monthly' ? 'รายเดือน / Monthly' : '' }}
+                            {{ $license->license_type === 'demo' ? 'ทดลอง / Demo' : '' }}
                         </span>
                         <svg class="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -364,13 +364,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                     </svg>
                 </div>
-                <p class="text-gray-600 dark:text-gray-300 font-medium">ยังไม่มีใบอนุญาต</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ซื้อผลิตภัณฑ์เพื่อรับใบอนุญาต</p>
+                <p class="text-gray-600 dark:text-gray-300 font-medium"><x-bi th="ยังไม่มีใบอนุญาต" en="No licenses yet" /></p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="ซื้อผลิตภัณฑ์เพื่อรับใบอนุญาต" en="Purchase a product to get a license" /></p>
                 <a href="{{ route('products.index') }}" class="mt-4 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
-                    ดูผลิตภัณฑ์
+                    <x-bi th="ดูผลิตภัณฑ์" en="View products" />
                 </a>
             </div>
             @endforelse
@@ -384,7 +384,7 @@
         <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
         </svg>
-        ทางลัด
+        <x-bi th="ทางลัด" en="Quick Actions" />
     </h3>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <a href="{{ route('rental.index') }}" class="group flex flex-col items-center p-4 sm:p-5 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/50 dark:hover:to-purple-900/50 transition-all border border-indigo-200/50 dark:border-indigo-700/50 hover:border-indigo-300 dark:hover:border-indigo-600 transform hover:scale-105 hover:shadow-lg">
@@ -393,7 +393,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
             </div>
-            <span class="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300 text-center">สมัครสมาชิกใหม่</span>
+            <span class="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300 text-center"><x-bi th="สมัครสมาชิกใหม่" en="New Subscription" layout="stack" /></span>
         </a>
 
         <a href="{{ route('customer.downloads') }}" class="group flex flex-col items-center p-4 sm:p-5 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 rounded-2xl hover:from-blue-100 hover:to-cyan-100 dark:hover:from-blue-900/50 dark:hover:to-cyan-900/50 transition-all border border-blue-200/50 dark:border-blue-700/50 hover:border-blue-300 dark:hover:border-blue-600 transform hover:scale-105 hover:shadow-lg">
@@ -402,7 +402,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
             </div>
-            <span class="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300 text-center">ดาวน์โหลด</span>
+            <span class="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300 text-center"><x-bi th="ดาวน์โหลด" en="Downloads" layout="stack" /></span>
         </a>
 
         <a href="{{ route('customer.support.create') }}" class="group flex flex-col items-center p-4 sm:p-5 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/30 dark:to-amber-900/30 rounded-2xl hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-900/50 dark:hover:to-amber-900/50 transition-all border border-orange-200/50 dark:border-orange-700/50 hover:border-orange-300 dark:hover:border-orange-600 transform hover:scale-105 hover:shadow-lg">
@@ -411,7 +411,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <span class="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300 text-center">ขอความช่วยเหลือ</span>
+            <span class="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300 text-center"><x-bi th="ขอความช่วยเหลือ" en="Get Support" layout="stack" /></span>
         </a>
 
         <a href="{{ route('profile.edit') }}" class="group flex flex-col items-center p-4 sm:p-5 bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 rounded-2xl hover:from-gray-100 hover:to-slate-100 dark:hover:from-gray-700/50 dark:hover:to-slate-700/50 transition-all border border-gray-200/50 dark:border-gray-600/50 hover:border-gray-300 dark:hover:border-gray-500 transform hover:scale-105 hover:shadow-lg">
@@ -421,7 +421,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </div>
-            <span class="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300 text-center">ตั้งค่าบัญชี</span>
+            <span class="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300 text-center"><x-bi th="ตั้งค่าบัญชี" en="Account Settings" layout="stack" /></span>
         </a>
     </div>
 </div>

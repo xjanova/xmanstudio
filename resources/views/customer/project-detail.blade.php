@@ -2,7 +2,7 @@
 
 @section('title', $project->project_name)
 @section('page-title', $project->project_name)
-@section('page-description', 'ติดตามความคืบหน้าโครงการของคุณ')
+@section('page-description')<x-bi th="ติดตามความคืบหน้าโครงการของคุณ" en="Track your project progress" />@endsection
 
 @push('styles')
 <style>
@@ -29,7 +29,7 @@
     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
     </svg>
-    กลับไปรายการโครงการ
+    <x-bi th="กลับไปรายการโครงการ" en="Back to projects" />
 </a>
 
 <!-- Premium Project Header -->
@@ -71,7 +71,7 @@
         <!-- Progress Bar -->
         <div class="mb-6">
             <div class="flex justify-between text-sm text-white mb-2">
-                <span class="font-medium">ความคืบหน้าโดยรวม</span>
+                <span class="font-medium"><x-bi th="ความคืบหน้าโดยรวม" en="Overall progress" /></span>
                 <span class="font-bold text-lg">{{ $project->progress_percent }}%</span>
             </div>
             <div class="w-full bg-white/20 rounded-full h-4 backdrop-blur-sm">
@@ -86,25 +86,25 @@
         <!-- Quick Stats -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="text-center p-4 bg-white/10 backdrop-blur-sm rounded-xl">
-                <p class="text-sm text-blue-200 mb-1">ฟีเจอร์เสร็จ</p>
+                <p class="text-sm text-blue-200 mb-1"><x-bi th="ฟีเจอร์เสร็จ" en="Features done" /></p>
                 <p class="text-2xl font-bold text-white">{{ $project->completed_features_count }}/{{ $project->total_features_count }}</p>
             </div>
             <div class="text-center p-4 bg-white/10 backdrop-blur-sm rounded-xl">
-                <p class="text-sm text-blue-200 mb-1">วันเริ่มงาน</p>
+                <p class="text-sm text-blue-200 mb-1"><x-bi th="วันเริ่มงาน" en="Start date" /></p>
                 <p class="text-lg font-semibold text-white">{{ $project->start_date?->format('d/m/Y') ?? '-' }}</p>
             </div>
             <div class="text-center p-4 {{ $project->isOverdue() ? 'bg-red-500/30' : 'bg-white/10' }} backdrop-blur-sm rounded-xl">
-                <p class="text-sm {{ $project->isOverdue() ? 'text-red-200' : 'text-blue-200' }} mb-1">กำหนดส่ง</p>
+                <p class="text-sm {{ $project->isOverdue() ? 'text-red-200' : 'text-blue-200' }} mb-1"><x-bi th="กำหนดส่ง" en="Due date" /></p>
                 <p class="text-lg font-semibold text-white">
                     {{ $project->expected_end_date?->format('d/m/Y') ?? '-' }}
                     @if($project->isOverdue())
-                        <span class="block text-xs text-red-200">(เกินกำหนด)</span>
+                        <span class="block text-xs text-red-200"><x-bi th="(เกินกำหนด)" en="(Overdue)" /></span>
                     @endif
                 </p>
             </div>
             <div class="text-center p-4 bg-white/10 backdrop-blur-sm rounded-xl">
-                <p class="text-sm text-blue-200 mb-1">มูลค่าโครงการ</p>
-                <p class="text-lg font-semibold text-white">{{ number_format($project->total_price, 0) }} บาท</p>
+                <p class="text-sm text-blue-200 mb-1"><x-bi th="มูลค่าโครงการ" en="Project value" /></p>
+                <p class="text-lg font-semibold text-white">{{ number_format($project->total_price, 0) }} <x-bi th="บาท" en="THB" /></p>
             </div>
         </div>
     </div>
@@ -121,7 +121,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                     </svg>
                 </div>
-                ฟีเจอร์/ไมล์สโตน
+                <x-bi th="ฟีเจอร์/ไมล์สโตน" en="Features / Milestones" />
             </h2>
 
             @if($project->features->count() > 0)
@@ -160,12 +160,12 @@
                                         </span>
                                         @if($feature->due_date)
                                             <span class="{{ $feature->isOverdue() ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500 dark:text-gray-400' }}">
-                                                กำหนด: {{ $feature->due_date->format('d/m/Y') }}
+                                                <x-bi th="กำหนด:" en="Due:" /> {{ $feature->due_date->format('d/m/Y') }}
                                             </span>
                                         @endif
                                         @if($feature->completed_at)
                                             <span class="text-green-600 dark:text-green-400">
-                                                เสร็จเมื่อ: {{ $feature->completed_at->format('d/m/Y') }}
+                                                <x-bi th="เสร็จเมื่อ:" en="Completed:" /> {{ $feature->completed_at->format('d/m/Y') }}
                                             </span>
                                         @endif
                                     </div>
@@ -181,7 +181,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
-                    <p class="text-gray-500 dark:text-gray-400">ยังไม่มีฟีเจอร์</p>
+                    <p class="text-gray-500 dark:text-gray-400"><x-bi th="ยังไม่มีฟีเจอร์" en="No features yet" /></p>
                 </div>
             @endif
         </div>
@@ -194,7 +194,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                 </div>
-                รายงานความคืบหน้า
+                <x-bi th="รายงานความคืบหน้า" en="Progress updates" />
             </h2>
 
             @if($project->progress->count() > 0)
@@ -250,7 +250,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                     </div>
-                    <p class="text-gray-500 dark:text-gray-400">ยังไม่มีรายงานความคืบหน้า</p>
+                    <p class="text-gray-500 dark:text-gray-400"><x-bi th="ยังไม่มีรายงานความคืบหน้า" en="No progress updates yet" /></p>
                 </div>
             @endif
         </div>
@@ -266,7 +266,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                 </div>
-                ทีมผู้รับผิดชอบ
+                <x-bi th="ทีมผู้รับผิดชอบ" en="Project team" />
             </h3>
 
             @if($project->members->count() > 0)
@@ -280,7 +280,7 @@
                                 <div class="font-medium text-gray-900 dark:text-white flex items-center gap-1">
                                     {{ $member->name }}
                                     @if($member->is_lead)
-                                        <span class="text-yellow-500 text-xs" title="หัวหน้าโครงการ">(Lead)</span>
+                                        <span class="text-yellow-500 text-xs" title="หัวหน้าโครงการ / Project lead">(Lead)</span>
                                     @endif
                                 </div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400">{{ $member->role_label }}</div>
@@ -289,7 +289,7 @@
                     @endforeach
                 </div>
             @else
-                <p class="text-gray-500 dark:text-gray-400 text-sm">ยังไม่ได้กำหนดทีมงาน</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm"><x-bi th="ยังไม่ได้กำหนดทีมงาน" en="No team assigned yet" /></p>
             @endif
         </div>
 
@@ -301,7 +301,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                ไทม์ไลน์
+                <x-bi th="ไทม์ไลน์" en="Timeline" />
             </h3>
 
             @if($project->timeline->count() > 0)
@@ -333,7 +333,7 @@
                     </div>
                 </div>
             @else
-                <p class="text-gray-500 dark:text-gray-400 text-sm">ยังไม่มีเหตุการณ์</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm"><x-bi th="ยังไม่มีเหตุการณ์" en="No events yet" /></p>
             @endif
         </div>
 
@@ -344,7 +344,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    หมายเหตุจากทีมงาน
+                    <x-bi th="หมายเหตุจากทีมงาน" en="Notes from the team" />
                 </h3>
                 <p class="text-blue-800 dark:text-blue-200">{{ $project->customer_notes }}</p>
             </div>
@@ -359,7 +359,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
                         </svg>
                     </div>
-                    ลิงก์
+                    <x-bi th="ลิงก์" en="Links" />
                 </h3>
                 <div class="space-y-2">
                     @if($project->staging_url)
@@ -368,7 +368,7 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
-                            เว็บไซต์ทดสอบ (Staging)
+                            <x-bi th="เว็บไซต์ทดสอบ (Staging)" en="Staging site" />
                         </a>
                     @endif
                     @if($project->production_url)
@@ -377,7 +377,7 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
                             </svg>
-                            เว็บไซต์จริง (Production)
+                            <x-bi th="เว็บไซต์จริง (Production)" en="Production site" />
                         </a>
                     @endif
                 </div>
@@ -391,13 +391,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <h4 class="font-semibold text-gray-900 dark:text-white mb-1">มีคำถาม?</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">ติดต่อทีมงานได้ทันที</p>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-1"><x-bi th="มีคำถาม?" en="Have a question?" /></h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4"><x-bi th="ติดต่อทีมงานได้ทันที" en="Contact our team anytime" /></p>
             <a href="{{ route('customer.support.create') }}" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm font-semibold rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all shadow-lg">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                 </svg>
-                ติดต่อซัพพอร์ต
+                <x-bi th="ติดต่อซัพพอร์ต" en="Contact support" class="text-white" />
             </a>
         </div>
     </div>

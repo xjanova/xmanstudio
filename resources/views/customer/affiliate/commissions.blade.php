@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'ประวัติคอมมิชชั่น')
-@section('page-title', 'ประวัติคอมมิชชั่น')
-@section('page-description', 'รายการค่าแนะนำทั้งหมดของคุณ')
+@section('page-title')<x-bi th="ประวัติคอมมิชชั่น" en="Commission History" />@endsection
+@section('page-description')<x-bi th="รายการค่าแนะนำทั้งหมดของคุณ" en="All your referral commissions" />@endsection
 
 @section('content')
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -10,16 +10,16 @@
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
-        กลับไป Dashboard
+        <x-bi th="กลับไป Dashboard" en="Back to Dashboard" />
     </a>
 
     {{-- Filter --}}
     <form method="GET" class="flex items-center gap-2">
         <select name="status" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-pink-500" onchange="this.form.submit()">
-            <option value="">ทั้งหมด</option>
-            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>รอตรวจสอบ</option>
-            <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>จ่ายแล้ว</option>
-            <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>ปฏิเสธ</option>
+            <option value="">ทั้งหมด / All</option>
+            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>รอตรวจสอบ / Pending</option>
+            <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>จ่ายแล้ว / Paid</option>
+            <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>ปฏิเสธ / Rejected</option>
         </select>
     </form>
 </div>
@@ -30,14 +30,14 @@
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">วันที่</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">คำสั่งซื้อ</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ผู้ซื้อ</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">ยอดสั่งซื้อ</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">อัตรา</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">คอมมิชชั่น</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">สถานะ</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">จ่ายเมื่อ</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><x-bi th="วันที่" en="Date" /></th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><x-bi th="คำสั่งซื้อ" en="Order" /></th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><x-bi th="ผู้ซื้อ" en="Buyer" /></th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"><x-bi th="ยอดสั่งซื้อ" en="Order Amount" /></th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"><x-bi th="อัตรา" en="Rate" /></th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"><x-bi th="คอมมิชชั่น" en="Commission" /></th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"><x-bi th="สถานะ" en="Status" /></th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><x-bi th="จ่ายเมื่อ" en="Paid On" /></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -68,7 +68,7 @@
         </div>
     @else
         <div class="text-center py-12 text-gray-500">
-            <p>ไม่พบรายการคอมมิชชั่น</p>
+            <p><x-bi th="ไม่พบรายการคอมมิชชั่น" en="No commissions found" /></p>
         </div>
     @endif
 </div>

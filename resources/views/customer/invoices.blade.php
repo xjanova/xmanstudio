@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'ใบแจ้งหนี้')
-@section('page-title', 'ใบแจ้งหนี้')
-@section('page-description', 'ดูและดาวน์โหลดใบแจ้งหนี้ทั้งหมดของคุณ')
+@section('page-title')<x-bi th="ใบแจ้งหนี้" en="Invoices" />@endsection
+@section('page-description')<x-bi th="ดูและดาวน์โหลดใบแจ้งหนี้ทั้งหมดของคุณ" en="View and download all your invoices" />@endsection
 
 @section('content')
 <!-- Premium Header Banner -->
@@ -18,9 +18,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                 </div>
-                ใบแจ้งหนี้
+                <x-bi th="ใบแจ้งหนี้" en="Invoices" layout="stack" />
             </h1>
-            <p class="mt-2 text-white/80 text-sm sm:text-base">ดูและดาวน์โหลดใบแจ้งหนี้ทั้งหมดของคุณ</p>
+            <p class="mt-2 text-white/80 text-sm sm:text-base"><x-bi th="ดูและดาวน์โหลดใบแจ้งหนี้ทั้งหมดของคุณ" en="View and download all your invoices" /></p>
         </div>
     </div>
 </div>
@@ -31,11 +31,11 @@
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750">
                 <tr>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">เลขที่ใบแจ้งหนี้</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">วันที่</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">รายละเอียด</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">ยอดรวม</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">สถานะ</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi th="เลขที่ใบแจ้งหนี้" en="Invoice No." /></th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi k="common.date" /></th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi k="common.details" /></th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi th="ยอดรวม" en="Total" /></th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi k="common.status" /></th>
                     <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"></th>
                 </tr>
             </thead>
@@ -49,14 +49,14 @@
                         'void' => 'from-red-400 to-rose-500',
                     ];
                     $statusLabels = [
-                        'paid' => 'ชำระแล้ว',
-                        'sent' => 'ส่งแล้ว',
-                        'draft' => 'แบบร่าง',
-                        'void' => 'ยกเลิก',
+                        'paid' => 'ชำระแล้ว / Paid',
+                        'sent' => 'ส่งแล้ว / Sent',
+                        'draft' => 'แบบร่าง / Draft',
+                        'void' => 'ยกเลิก / Void',
                     ];
                     $typeLabels = [
-                        'rental' => 'การเช่า',
-                        'order' => 'คำสั่งซื้อ',
+                        'rental' => 'การเช่า / Rental',
+                        'order' => 'คำสั่งซื้อ / Order',
                     ];
                 @endphp
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
@@ -78,7 +78,7 @@
                     </td>
                     <td class="px-6 py-4">
                         <div class="text-sm text-gray-900 dark:text-white">
-                            {{ $invoice->userRental?->rentalPackage?->display_name ?? 'การสมัครสมาชิก' }}
+                            {{ $invoice->userRental?->rentalPackage?->display_name ?? 'การสมัครสมาชิก / Subscription' }}
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -99,7 +99,7 @@
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
-                            ดาวน์โหลด PDF
+                            <x-bi th="ดาวน์โหลด PDF" en="Download PDF" />
                         </button>
                     </td>
                 </tr>
@@ -111,8 +111,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </div>
-                        <p class="text-lg font-semibold text-gray-900 dark:text-white">ยังไม่มีใบแจ้งหนี้</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ใบแจ้งหนี้ของคุณจะปรากฏที่นี่หลังจากทำการซื้อ</p>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="ยังไม่มีใบแจ้งหนี้" en="No invoices yet" /></p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="ใบแจ้งหนี้ของคุณจะปรากฏที่นี่หลังจากทำการซื้อ" en="Your invoices will appear here after a purchase" /></p>
                     </td>
                 </tr>
                 @endforelse
@@ -155,7 +155,7 @@
                         {{ $invoice->created_at->format('d/m/Y') }}
                     </p>
                     <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 ml-8">
-                        {{ $invoice->userRental?->rentalPackage?->display_name ?? 'การสมัครสมาชิก' }}
+                        {{ $invoice->userRental?->rentalPackage?->display_name ?? 'การสมัครสมาชิก / Subscription' }}
                     </p>
                     <div class="mt-3 ml-8 flex items-center justify-between">
                         <span class="text-lg font-bold text-gray-900 dark:text-white">฿{{ number_format($invoice->total ?? 0) }}</span>
@@ -163,7 +163,7 @@
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
-                            ดาวน์โหลด
+                            <x-bi k="common.download" />
                         </button>
                     </div>
                 </div>
@@ -176,8 +176,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
             </div>
-            <p class="text-lg font-medium text-gray-900 dark:text-white">ยังไม่มีใบแจ้งหนี้</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ใบแจ้งหนี้ของคุณจะปรากฏที่นี่หลังจากทำการซื้อ</p>
+            <p class="text-lg font-medium text-gray-900 dark:text-white"><x-bi th="ยังไม่มีใบแจ้งหนี้" en="No invoices yet" /></p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="ใบแจ้งหนี้ของคุณจะปรากฏที่นี่หลังจากทำการซื้อ" en="Your invoices will appear here after a purchase" /></p>
         </div>
         @endforelse
     </div>

@@ -87,35 +87,35 @@
                     <div class="hidden lg:ml-6 lg:flex lg:space-x-0.5 xl:ml-8 xl:space-x-1 lg:items-center">
                         <a href="/" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('/') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-green-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-green-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>
-                            หน้าหลัก
+                            <x-bi th="หน้าหลัก" en="Home" layout="stack" />
                         </a>
                         <a href="/services" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('services*') ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-yellow-400 hover:to-amber-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            บริการ
+                            <x-bi th="บริการ" en="Services" layout="stack" />
                         </a>
                         <a href="/products" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('products*') ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                            ผลิตภัณฑ์
+                            <x-bi th="ผลิตภัณฑ์" en="Products" layout="stack" />
                         </a>
                         <a href="/rental" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('rental*') ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-rose-500 hover:text-white hover:shadow-lg hover:shadow-pink-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                            เช่าบริการ
+                            <x-bi th="เช่าบริการ" en="Rentals" layout="stack" />
                         </a>
                         <a href="/portfolio" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('portfolio*') ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-violet-500 hover:text-white hover:shadow-lg hover:shadow-purple-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            ผลงาน
+                            <x-bi th="ผลงาน" en="Portfolio" layout="stack" />
                         </a>
                         <a href="/support" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('support') ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                            ติดต่อ/สั่งซื้อ
+                            <x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" layout="stack" />
                         </a>
                         <a href="/tracking" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('tracking*') ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-teal-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-teal-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                            ติดตามงาน
+                            <x-bi th="ติดตามงาน" en="Order Tracking" layout="stack" />
                         </a>
                         <a href="/apps/aipray/donate" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('apps/aipray*') ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-yellow-500 hover:to-amber-600 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                            บริจาค
+                            <x-bi th="บริจาค" en="Donate" layout="stack" />
                         </a>
                     </div>
                 </div>
@@ -191,7 +191,7 @@
                     @else
                         <h3 class="ds-wordmark text-2xl font-black mb-4">XMAN STUDIO</h3>
                     @endif
-                    <p class="text-gray-400 mb-4">ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ</p>
+                    <p class="text-gray-400 mb-4"><x-bi th="ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ" en="Your end-to-end IT Solutions specialist for software development and information technology services." /></p>
                     <!-- Social Links -->
                     <div class="flex space-x-4">
                         <a href="https://www.facebook.com/xmanenterprise/" target="_blank" class="text-gray-400 hover:text-blue-500 transition-colors">
@@ -214,11 +214,11 @@
 
                 <!-- Services -->
                 <div>
-                    <h4 class="text-lg font-semibold mb-4">บริการ</h4>
+                    <h4 class="text-lg font-semibold mb-4"><x-bi th="บริการ" en="Services" /></h4>
                     <ul class="space-y-2 text-gray-400">
                         <li><a href="/services" class="hover:text-white transition-colors">Blockchain Development</a></li>
-                        <li><a href="/services" class="hover:text-white transition-colors">พัฒนาเว็บไซต์</a></li>
-                        <li><a href="/services" class="hover:text-white transition-colors">แอพพลิเคชัน</a></li>
+                        <li><a href="/services" class="hover:text-white transition-colors"><x-bi th="พัฒนาเว็บไซต์" en="Web Development" /></a></li>
+                        <li><a href="/services" class="hover:text-white transition-colors"><x-bi th="แอพพลิเคชัน" en="Applications" /></a></li>
                         <li><a href="/services" class="hover:text-white transition-colors">AI Services</a></li>
                         <li><a href="/services" class="hover:text-white transition-colors">IoT Solutions</a></li>
                         <li><a href="/ai-autotrade" class="hover:text-white transition-colors">AI AutoTrade</a></li>
@@ -227,26 +227,26 @@
 
                 <!-- Help -->
                 <div>
-                    <h4 class="text-lg font-semibold mb-4">ช่วยเหลือ</h4>
+                    <h4 class="text-lg font-semibold mb-4"><x-bi th="ช่วยเหลือ" en="Help" /></h4>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="/about" class="hover:text-white transition-colors">เกี่ยวกับเรา</a></li>
-                        <li><a href="/team" class="hover:text-white transition-colors">ทีมงานและผู้บริหาร</a></li>
-                        <li><a href="/support" class="hover:text-white transition-colors">ติดต่อ/สั่งซื้อ</a></li>
-                        <li><a href="/rental" class="hover:text-white transition-colors">เช่าบริการ</a></li>
-                        <li><a href="/products" class="hover:text-white transition-colors">ผลิตภัณฑ์</a></li>
-                        <li><a href="/portfolio" class="hover:text-white transition-colors">ผลงาน</a></li>
+                        <li><a href="/about" class="hover:text-white transition-colors"><x-bi th="เกี่ยวกับเรา" en="About Us" /></a></li>
+                        <li><a href="/team" class="hover:text-white transition-colors"><x-bi th="ทีมงานและผู้บริหาร" en="Team & Management" /></a></li>
+                        <li><a href="/support" class="hover:text-white transition-colors"><x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" /></a></li>
+                        <li><a href="/rental" class="hover:text-white transition-colors"><x-bi th="เช่าบริการ" en="Rentals" /></a></li>
+                        <li><a href="/products" class="hover:text-white transition-colors"><x-bi th="ผลิตภัณฑ์" en="Products" /></a></li>
+                        <li><a href="/portfolio" class="hover:text-white transition-colors"><x-bi th="ผลงาน" en="Portfolio" /></a></li>
                     </ul>
 
-                    <h4 class="text-lg font-semibold mb-4 mt-6">กฎหมาย</h4>
+                    <h4 class="text-lg font-semibold mb-4 mt-6"><x-bi th="กฎหมาย" en="Legal" /></h4>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="/privacy" class="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</a></li>
-                        <li><a href="/terms" class="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</a></li>
+                        <li><a href="/privacy" class="hover:text-white transition-colors"><x-bi th="นโยบายความเป็นส่วนตัว" en="Privacy Policy" /></a></li>
+                        <li><a href="/terms" class="hover:text-white transition-colors"><x-bi th="ข้อกำหนดการใช้งาน" en="Terms of Use" /></a></li>
                     </ul>
                 </div>
 
                 <!-- Contact -->
                 <div>
-                    <h4 class="text-lg font-semibold mb-4">ติดต่อเรา</h4>
+                    <h4 class="text-lg font-semibold mb-4"><x-bi th="ติดต่อเรา" en="Contact Us" /></h4>
                     @php
                         $footerPhone = \App\Models\Setting::getValue('contact_phone', '080-6038278');
                         $footerPhoneName = \App\Models\Setting::getValue('contact_phone_name', 'คุณกรณิภา');
@@ -299,9 +299,9 @@
                         <p class="text-gray-500 text-xs mt-1">IT Solutions & Software Development</p>
                     </div>
                     <div class="flex flex-wrap justify-center space-x-4 md:space-x-6 mt-4 md:mt-0">
-                        <a href="/privacy" class="text-gray-400 hover:text-white text-sm transition-colors">นโยบายความเป็นส่วนตัว</a>
-                        <a href="/terms" class="text-gray-400 hover:text-white text-sm transition-colors">ข้อกำหนดการใช้งาน</a>
-                        <a href="/support" class="text-gray-400 hover:text-white text-sm transition-colors">ติดต่อเรา</a>
+                        <a href="/privacy" class="text-gray-400 hover:text-white text-sm transition-colors"><x-bi th="นโยบายความเป็นส่วนตัว" en="Privacy Policy" /></a>
+                        <a href="/terms" class="text-gray-400 hover:text-white text-sm transition-colors"><x-bi th="ข้อกำหนดการใช้งาน" en="Terms of Use" /></a>
+                        <a href="/support" class="text-gray-400 hover:text-white text-sm transition-colors"><x-bi th="ติดต่อเรา" en="Contact Us" /></a>
                     </div>
                 </div>
             </div>

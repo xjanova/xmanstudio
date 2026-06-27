@@ -8,11 +8,11 @@
         <!-- Actions -->
         <div class="mb-6 flex justify-between items-center">
             <a href="{{ route('rental.status') }}" class="text-primary-600 hover:underline">
-                &larr; กลับ
+                &larr; <x-bi k="common.back" />
             </a>
             <button onclick="window.print()"
                     class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
-                พิมพ์ใบเสร็จ
+                <x-bi th="พิมพ์ใบเสร็จ" en="Print Invoice" />
             </button>
         </div>
 
@@ -34,13 +34,13 @@
                 <!-- Info Grid -->
                 <div class="grid grid-cols-2 gap-8 py-6 border-b border-gray-200">
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">ออกให้</h3>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2"><x-bi th="ออกให้" en="Billed To" /></h3>
                         <p class="text-gray-900 font-semibold">{{ $invoice->user->name }}</p>
                         <p class="text-gray-600">{{ $invoice->user->email }}</p>
                         @if($invoice->company_name)
                             <p class="text-gray-600 mt-2">{{ $invoice->company_name }}</p>
                             @if($invoice->tax_id)
-                                <p class="text-gray-600">เลขประจำตัวผู้เสียภาษี: {{ $invoice->tax_id }}</p>
+                                <p class="text-gray-600"><x-bi th="เลขประจำตัวผู้เสียภาษี" en="Tax ID" />: {{ $invoice->tax_id }}</p>
                             @endif
                             @if($invoice->company_address)
                                 <p class="text-gray-600">{{ $invoice->company_address }}</p>
@@ -49,12 +49,12 @@
                     </div>
                     <div class="text-right">
                         <div class="mb-4">
-                            <p class="text-sm text-gray-500">วันที่ออก</p>
+                            <p class="text-sm text-gray-500"><x-bi th="วันที่ออก" en="Issue Date" /></p>
                             <p class="text-gray-900">{{ $invoice->issue_date->format('d/m/Y') }}</p>
                         </div>
                         @if($invoice->paid_at)
                             <div>
-                                <p class="text-sm text-gray-500">วันที่ชำระ</p>
+                                <p class="text-sm text-gray-500"><x-bi th="วันที่ชำระ" en="Paid Date" /></p>
                                 <p class="text-gray-900">{{ $invoice->paid_at->format('d/m/Y') }}</p>
                             </div>
                         @endif
@@ -66,10 +66,10 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="border-b border-gray-200">
-                                <th class="py-3 text-left text-sm font-semibold text-gray-900">รายการ</th>
-                                <th class="py-3 text-right text-sm font-semibold text-gray-900">จำนวน</th>
-                                <th class="py-3 text-right text-sm font-semibold text-gray-900">ราคา/หน่วย</th>
-                                <th class="py-3 text-right text-sm font-semibold text-gray-900">รวม</th>
+                                <th class="py-3 text-left text-sm font-semibold text-gray-900"><x-bi th="รายการ" en="Description" /></th>
+                                <th class="py-3 text-right text-sm font-semibold text-gray-900"><x-bi th="จำนวน" en="Qty" /></th>
+                                <th class="py-3 text-right text-sm font-semibold text-gray-900"><x-bi th="ราคา/หน่วย" en="Unit Price" /></th>
+                                <th class="py-3 text-right text-sm font-semibold text-gray-900"><x-bi th="รวม" en="Amount" /></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -90,26 +90,26 @@
                     <div class="flex justify-end">
                         <div class="w-64 space-y-2">
                             <div class="flex justify-between text-gray-600">
-                                <span>ยอดรวม</span>
+                                <span><x-bi th="ยอดรวม" en="Subtotal" /></span>
                                 <span>฿{{ number_format($invoice->subtotal, 2) }}</span>
                             </div>
 
                             @if($invoice->discount > 0)
                                 <div class="flex justify-between text-gray-600">
-                                    <span>ส่วนลด</span>
+                                    <span><x-bi th="ส่วนลด" en="Discount" /></span>
                                     <span class="text-red-600">-฿{{ number_format($invoice->discount, 2) }}</span>
                                 </div>
                             @endif
 
                             @if($invoice->vat > 0)
                                 <div class="flex justify-between text-gray-600">
-                                    <span>ภาษีมูลค่าเพิ่ม (7%)</span>
+                                    <span><x-bi th="ภาษีมูลค่าเพิ่ม" en="VAT" /> (7%)</span>
                                     <span>฿{{ number_format($invoice->vat, 2) }}</span>
                                 </div>
                             @endif
 
                             <div class="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
-                                <span>รวมทั้งสิ้น</span>
+                                <span><x-bi th="รวมทั้งสิ้น" en="Total" /></span>
                                 <span>฿{{ number_format($invoice->total, 2) }}</span>
                             </div>
                         </div>
@@ -120,11 +120,11 @@
                 <div class="mt-8 text-center">
                     @if($invoice->status === 'paid')
                         <span class="inline-flex px-6 py-2 rounded-full text-lg font-semibold bg-green-100 text-green-700">
-                            ชำระแล้ว
+                            <x-bi th="ชำระแล้ว" en="Paid" />
                         </span>
                     @elseif($invoice->status === 'void')
                         <span class="inline-flex px-6 py-2 rounded-full text-lg font-semibold bg-red-100 text-red-700">
-                            ยกเลิก
+                            <x-bi th="ยกเลิก" en="Void" />
                         </span>
                     @endif
                 </div>

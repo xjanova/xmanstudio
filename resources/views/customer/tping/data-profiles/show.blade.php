@@ -2,14 +2,14 @@
 
 @section('title', $profile->name . ' - Tping Data Profile')
 @section('page-title', $profile->name)
-@section('page-description', 'รายละเอียด Data Profile')
+@section('page-description')<x-bi th="รายละเอียด Data Profile" en="Data Profile details" />@endsection
 
 @section('content')
 <!-- Back Link -->
 <div class="mb-6">
     <a href="{{ route('customer.tping.data-profiles.index') }}" class="inline-flex items-center text-sm text-gray-500 hover:text-emerald-600 transition-colors">
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        กลับไปรายการ Data Profile
+        <x-bi th="กลับไปรายการ Data Profile" en="Back to Data Profiles" />
     </a>
 </div>
 
@@ -29,25 +29,25 @@
             <h2 class="text-xl font-bold text-gray-900">{{ $profile->name }}</h2>
             @if($profile->category)
                 <p class="text-sm text-gray-500 mt-1">
-                    หมวดหมู่:
+                    <x-bi th="หมวดหมู่" en="Category" />:
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                         {{ $profile->category }}
                     </span>
                 </p>
             @endif
             <p class="text-xs text-gray-400 mt-1">
-                สร้างเมื่อ {{ $profile->created_at->format('d/m/Y H:i') }}
-                &middot; อัปเดตเมื่อ {{ $profile->updated_at->diffForHumans() }}
+                <x-bi th="สร้างเมื่อ" en="Created" /> {{ $profile->created_at->format('d/m/Y H:i') }}
+                &middot; <x-bi th="อัปเดตเมื่อ" en="Updated" /> {{ $profile->updated_at->diffForHumans() }}
             </p>
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('customer.tping.data-profiles.edit', $profile) }}" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-all">
-                แก้ไข
+                <x-bi k="common.edit" />
             </a>
-            <form method="POST" action="{{ route('customer.tping.data-profiles.destroy', $profile) }}" onsubmit="return confirm('ลบ profile นี้?')" class="inline">
+            <form method="POST" action="{{ route('customer.tping.data-profiles.destroy', $profile) }}" onsubmit="return confirm('ลบ profile นี้? / Delete this profile?')" class="inline">
                 @csrf @method('DELETE')
                 <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-medium hover:bg-red-100 transition-all">
-                    ลบ
+                    <x-bi k="common.delete" />
                 </button>
             </form>
         </div>
@@ -56,10 +56,10 @@
 
 <!-- Fields Data -->
 <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-    <h3 class="text-lg font-bold text-gray-900 mb-4">ข้อมูล ({{ count($fields) }} fields)</h3>
+    <h3 class="text-lg font-bold text-gray-900 mb-4"><x-bi th="ข้อมูล" en="Data" /> ({{ count($fields) }} fields)</h3>
 
     @if(empty($fields))
-        <p class="text-gray-400 text-center py-8">ไม่มีข้อมูล</p>
+        <p class="text-gray-400 text-center py-8"><x-bi th="ไม่มีข้อมูล" en="No data" /></p>
     @else
         <div class="space-y-2">
             @foreach($fields as $key => $value)

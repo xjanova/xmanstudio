@@ -1,7 +1,7 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'คำสั่งซื้อ #' . ($order->order_number ?? $order->id))
-@section('page-title', 'รายละเอียดคำสั่งซื้อ')
+@section('page-title')<x-bi th="รายละเอียดคำสั่งซื้อ" en="Order Details" />@endsection
 
 @section('content')
 <div class="mb-6">
@@ -9,7 +9,7 @@
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
-        กลับไปหน้าประวัติคำสั่งซื้อ
+        <x-bi th="กลับไปหน้าประวัติคำสั่งซื้อ" en="Back to order history" />
     </a>
 </div>
 
@@ -24,7 +24,7 @@
 
                 <div class="relative flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-bold text-white">คำสั่งซื้อ #{{ $order->order_number ?? $order->id }}</h2>
+                        <h2 class="text-xl font-bold text-white"><x-bi th="คำสั่งซื้อ" en="Order" /> #{{ $order->order_number ?? $order->id }}</h2>
                         <p class="text-white/80 mt-1">{{ $order->created_at->format('d/m/Y H:i') }} น.</p>
                     </div>
                     @php
@@ -35,10 +35,10 @@
                             'cancelled' => 'bg-gradient-to-r from-red-400 to-rose-500 text-white',
                         ];
                         $statusLabels = [
-                            'completed' => 'สำเร็จ',
-                            'pending' => 'รอดำเนินการ',
-                            'processing' => 'กำลังดำเนินการ',
-                            'cancelled' => 'ยกเลิก',
+                            'completed' => 'สำเร็จ / Completed',
+                            'pending' => 'รอดำเนินการ / Pending',
+                            'processing' => 'กำลังดำเนินการ / Processing',
+                            'cancelled' => 'ยกเลิก / Cancelled',
                         ];
                     @endphp
                     <span class="px-4 py-1.5 text-sm font-semibold rounded-full shadow {{ $statusGradients[$order->status] ?? 'bg-white/20 text-white' }}">
@@ -49,7 +49,7 @@
 
             <!-- Order Items -->
             <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">รายการสินค้า</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"><x-bi th="รายการสินค้า" en="Order Items" /></h3>
                 <div class="space-y-4">
                     @foreach($order->items as $item)
                     <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
@@ -65,8 +65,8 @@
                                 </div>
                             @endif
                             <div class="min-w-0">
-                                <p class="font-semibold text-gray-900 dark:text-white truncate">{{ $item->product_name ?? $item->product?->name ?? 'สินค้า' }}</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ number_format($item->price, 2) }} บาท x {{ $item->quantity }}</p>
+                                <p class="font-semibold text-gray-900 dark:text-white truncate">{{ $item->product_name ?? $item->product?->name ?? 'สินค้า / Product' }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ number_format($item->price, 2) }} <x-bi th="บาท" en="THB" /> x {{ $item->quantity }}</p>
                                 @if($item->custom_requirements)
                                     @php $reqs = json_decode($item->custom_requirements, true); @endphp
                                     @if(is_array($reqs) && isset($reqs['license_type']))
@@ -78,7 +78,7 @@
                             </div>
                         </div>
                         <p class="font-bold text-gray-900 dark:text-white flex-shrink-0 ml-4">
-                            {{ number_format(($item->total ?? $item->price * $item->quantity), 2) }} บาท
+                            {{ number_format(($item->total ?? $item->price * $item->quantity), 2) }} <x-bi th="บาท" en="THB" />
                         </p>
                     </div>
                     @endforeach
@@ -94,21 +94,21 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
                 </div>
-                ข้อมูลการชำระเงิน
+                <x-bi th="ข้อมูลการชำระเงิน" en="Payment Information" />
             </h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                    <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">ช่องทางการชำระเงิน</label>
+                    <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi k="common.payment_method" /></label>
                     <p class="text-gray-900 dark:text-white font-medium">{{ ucfirst($order->payment_method ?? '-') }}</p>
                 </div>
                 <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                    <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">สถานะการชำระเงิน</label>
+                    <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi th="สถานะการชำระเงิน" en="Payment Status" /></label>
                     @php
                         $paymentStatusLabels = [
-                            'paid' => ['สำเร็จ', 'text-green-600 dark:text-green-400'],
-                            'pending' => ['รอชำระเงิน', 'text-yellow-600 dark:text-yellow-400'],
-                            'failed' => ['ล้มเหลว', 'text-red-600 dark:text-red-400'],
-                            'refunded' => ['คืนเงินแล้ว', 'text-blue-600 dark:text-blue-400'],
+                            'paid' => ['สำเร็จ / Paid', 'text-green-600 dark:text-green-400'],
+                            'pending' => ['รอชำระเงิน / Pending', 'text-yellow-600 dark:text-yellow-400'],
+                            'failed' => ['ล้มเหลว / Failed', 'text-red-600 dark:text-red-400'],
+                            'refunded' => ['คืนเงินแล้ว / Refunded', 'text-blue-600 dark:text-blue-400'],
                         ];
                         $ps = $paymentStatusLabels[$order->payment_status] ?? [ucfirst($order->payment_status ?? 'pending'), 'text-gray-600 dark:text-gray-400'];
                     @endphp
@@ -116,13 +116,13 @@
                 </div>
                 @if($order->paid_at)
                 <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                    <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">ชำระเมื่อ</label>
+                    <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi th="ชำระเมื่อ" en="Paid On" /></label>
                     <p class="text-gray-900 dark:text-white font-medium">{{ $order->paid_at->format('d/m/Y H:i') }} น.</p>
                 </div>
                 @endif
                 @if($order->coupon_code)
                 <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                    <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">คูปอง</label>
+                    <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi th="คูปอง" en="Coupon" /></label>
                     <p class="text-gray-900 dark:text-white font-medium">{{ $order->coupon_code }}</p>
                 </div>
                 @endif
@@ -138,7 +138,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
                 </div>
-                หมายเหตุ
+                <x-bi th="หมายเหตุ" en="Notes" />
             </h3>
             <p class="text-gray-600 dark:text-gray-400">{{ $order->notes }}</p>
         </div>
@@ -149,62 +149,62 @@
     <div class="space-y-6">
         <!-- Price Summary -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">สรุปยอด</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"><x-bi th="สรุปยอด" en="Order Summary" /></h3>
             <div class="space-y-3">
                 <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>ยอดรวมสินค้า</span>
-                    <span>{{ number_format($order->subtotal ?? $order->total, 2) }} บาท</span>
+                    <span><x-bi th="ยอดรวมสินค้า" en="Subtotal" /></span>
+                    <span>{{ number_format($order->subtotal ?? $order->total, 2) }} <x-bi th="บาท" en="THB" /></span>
                 </div>
                 @if($order->discount && $order->discount > 0)
                 <div class="flex justify-between text-green-600 dark:text-green-400">
-                    <span>ส่วนลด</span>
-                    <span>-{{ number_format($order->discount, 2) }} บาท</span>
+                    <span><x-bi th="ส่วนลด" en="Discount" /></span>
+                    <span>-{{ number_format($order->discount, 2) }} <x-bi th="บาท" en="THB" /></span>
                 </div>
                 @endif
                 @if($order->tax && $order->tax > 0)
                 <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>ภาษี</span>
-                    <span>{{ number_format($order->tax, 2) }} บาท</span>
+                    <span><x-bi th="ภาษี" en="Tax" /></span>
+                    <span>{{ number_format($order->tax, 2) }} <x-bi th="บาท" en="THB" /></span>
                 </div>
                 @endif
                 <div class="border-t border-gray-200 dark:border-gray-700 pt-3 flex justify-between">
-                    <span class="text-lg font-bold text-gray-900 dark:text-white">ยอดรวมทั้งหมด</span>
-                    <span class="text-lg font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">{{ number_format($order->total ?? 0, 2) }} บาท</span>
+                    <span class="text-lg font-bold text-gray-900 dark:text-white"><x-bi th="ยอดรวมทั้งหมด" en="Total" /></span>
+                    <span class="text-lg font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">{{ number_format($order->total ?? 0, 2) }} <x-bi th="บาท" en="THB" /></span>
                 </div>
             </div>
         </div>
 
         <!-- Order Info -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">ข้อมูลคำสั่งซื้อ</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"><x-bi th="ข้อมูลคำสั่งซื้อ" en="Order Information" /></h3>
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">เลขที่คำสั่งซื้อ</span>
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi k="common.order_number" /></span>
                     <span class="font-semibold text-gray-900 dark:text-white">#{{ $order->order_number ?? $order->id }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">วันที่สั่งซื้อ</span>
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi th="วันที่สั่งซื้อ" en="Order Date" /></span>
                     <span class="text-gray-900 dark:text-white">{{ $order->created_at->format('d/m/Y') }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">เวลา</span>
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi th="เวลา" en="Time" /></span>
                     <span class="text-gray-900 dark:text-white">{{ $order->created_at->format('H:i') }} น.</span>
                 </div>
                 @if($order->customer_name)
                 <div class="flex justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">ชื่อลูกค้า</span>
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi th="ชื่อลูกค้า" en="Customer Name" /></span>
                     <span class="text-gray-900 dark:text-white">{{ $order->customer_name }}</span>
                 </div>
                 @endif
                 @if($order->customer_email)
                 <div class="flex justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">อีเมล</span>
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi k="common.email" /></span>
                     <span class="text-gray-900 dark:text-white">{{ $order->customer_email }}</span>
                 </div>
                 @endif
                 @if($order->customer_phone)
                 <div class="flex justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">โทรศัพท์</span>
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi k="common.phone" /></span>
                     <span class="text-gray-900 dark:text-white">{{ $order->customer_phone }}</span>
                 </div>
                 @endif
@@ -218,12 +218,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2">มีปัญหาเกี่ยวกับคำสั่งซื้อ?</h3>
+            <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2"><x-bi th="มีปัญหาเกี่ยวกับคำสั่งซื้อ?" en="Have a question about your order?" /></h3>
             <p class="text-sm text-blue-800 dark:text-blue-200 mb-3">
-                หากมีข้อสงสัยหรือปัญหาเกี่ยวกับคำสั่งซื้อนี้ ติดต่อทีมสนับสนุนของเราได้เลย
+                <x-bi th="หากมีข้อสงสัยหรือปัญหาเกี่ยวกับคำสั่งซื้อนี้ ติดต่อทีมสนับสนุนของเราได้เลย" en="If you have any questions or issues with this order, feel free to contact our support team." />
             </p>
             <a href="{{ route('support.index') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold flex items-center transition-colors">
-                ติดต่อเรา
+                <x-bi th="ติดต่อเรา" en="Contact Us" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>

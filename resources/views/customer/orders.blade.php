@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'ประวัติคำสั่งซื้อ')
-@section('page-title', 'ประวัติคำสั่งซื้อ')
-@section('page-description', 'ดูประวัติการสั่งซื้อทั้งหมดของคุณ')
+@section('page-title')<x-bi th="ประวัติคำสั่งซื้อ" en="Order History" />@endsection
+@section('page-description')<x-bi th="ดูประวัติการสั่งซื้อทั้งหมดของคุณ" en="View all your order history" />@endsection
 
 @section('content')
 <!-- Premium Header Banner -->
@@ -18,15 +18,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
                 </div>
-                ประวัติคำสั่งซื้อ
+                <x-bi th="ประวัติคำสั่งซื้อ" en="Order History" />
             </h1>
-            <p class="mt-2 text-white/80 text-sm sm:text-base">ดูและติดตามคำสั่งซื้อทั้งหมดของคุณ</p>
+            <p class="mt-2 text-white/80 text-sm sm:text-base"><x-bi th="ดูและติดตามคำสั่งซื้อทั้งหมดของคุณ" en="View and track all your orders" /></p>
         </div>
         <div class="flex items-center gap-2">
             <div class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-sm font-medium">
-                <span class="opacity-80">รวม</span>
+                <span class="opacity-80"><x-bi th="รวม" en="Total" /></span>
                 <span class="ml-1 text-lg font-bold">{{ $stats['total_orders'] }}</span>
-                <span class="opacity-80 ml-1">คำสั่งซื้อ</span>
+                <span class="opacity-80 ml-1"><x-bi th="คำสั่งซื้อ" en="orders" /></span>
             </div>
         </div>
     </div>
@@ -37,7 +37,7 @@
     <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">คำสั่งซื้อทั้งหมด</p>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="คำสั่งซื้อทั้งหมด" en="Total Orders" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ $stats['total_orders'] }}</p>
             </div>
             <div class="p-3 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
@@ -51,7 +51,7 @@
     <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">สำเร็จ</p>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="สำเร็จ" en="Completed" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ $stats['completed'] }}</p>
             </div>
             <div class="p-3 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
@@ -65,7 +65,7 @@
     <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ยอดใช้จ่ายรวม</p>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="ยอดใช้จ่ายรวม" en="Total Spent" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-orange-600 dark:text-orange-400 mt-1">฿{{ number_format($stats['total_spent']) }}</p>
             </div>
             <div class="p-3 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
@@ -82,11 +82,11 @@
     <form action="" method="GET" class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
         <div class="flex-1 sm:flex-none">
             <select name="status" class="w-full sm:w-auto rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-orange-500 focus:border-orange-500 shadow-sm">
-                <option value="all">สถานะทั้งหมด</option>
-                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>รอดำเนินการ</option>
-                <option value="processing" {{ request('status') === 'processing' ? 'selected' : '' }}>กำลังดำเนินการ</option>
-                <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>สำเร็จ</option>
-                <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>ยกเลิก</option>
+                <option value="all">สถานะทั้งหมด / All Status</option>
+                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>รอดำเนินการ / Pending</option>
+                <option value="processing" {{ request('status') === 'processing' ? 'selected' : '' }}>กำลังดำเนินการ / Processing</option>
+                <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>สำเร็จ / Completed</option>
+                <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>ยกเลิก / Cancelled</option>
             </select>
         </div>
 
@@ -96,12 +96,12 @@
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    กรอง
+                    <x-bi th="กรอง" en="Filter" />
                 </span>
             </button>
             @if(request()->hasAny(['status']))
             <a href="{{ route('customer.orders') }}" class="px-5 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium transition-all">
-                ล้าง
+                <x-bi th="ล้าง" en="Clear" />
             </a>
             @endif
         </div>
@@ -115,11 +115,11 @@
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750">
                 <tr>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">เลขที่คำสั่งซื้อ</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">วันที่</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">รายการ</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">ยอดรวม</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">สถานะ</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi th="เลขที่คำสั่งซื้อ" en="Order Number" /></th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi th="วันที่" en="Date" /></th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi th="รายการ" en="Items" /></th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi th="ยอดรวม" en="Total" /></th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"><x-bi th="สถานะ" en="Status" /></th>
                     <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"></th>
                 </tr>
             </thead>
@@ -133,10 +133,10 @@
                         'cancelled' => 'from-red-400 to-rose-500',
                     ];
                     $statusLabels = [
-                        'completed' => 'สำเร็จ',
-                        'pending' => 'รอดำเนินการ',
-                        'processing' => 'กำลังดำเนินการ',
-                        'cancelled' => 'ยกเลิก',
+                        'completed' => 'สำเร็จ / Completed',
+                        'pending' => 'รอดำเนินการ / Pending',
+                        'processing' => 'กำลังดำเนินการ / Processing',
+                        'cancelled' => 'ยกเลิก / Cancelled',
                     ];
                 @endphp
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
@@ -159,7 +159,7 @@
                             @if($order->items->count() > 0)
                                 <span class="font-medium">{{ $order->items->first()->product?->name ?? 'Product' }}</span>
                                 @if($order->items->count() > 1)
-                                    <span class="text-gray-500 dark:text-gray-400">และอีก {{ $order->items->count() - 1 }} รายการ</span>
+                                    <span class="text-gray-500 dark:text-gray-400"><x-bi th="และอีก" en="and" /> {{ $order->items->count() - 1 }} <x-bi th="รายการ" en="more" /></span>
                                 @endif
                             @else
                                 <span class="text-gray-400 dark:text-gray-500">-</span>
@@ -176,7 +176,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <a href="{{ route('customer.orders.show', $order) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                            ดูรายละเอียด
+                            <x-bi k="common.view_details" />
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
@@ -191,13 +191,13 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                             </svg>
                         </div>
-                        <p class="text-lg font-semibold text-gray-900 dark:text-white">ยังไม่มีคำสั่งซื้อ</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ประวัติคำสั่งซื้อของคุณจะปรากฏที่นี่</p>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="ยังไม่มีคำสั่งซื้อ" en="No orders yet" /></p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="ประวัติคำสั่งซื้อของคุณจะปรากฏที่นี่" en="Your order history will appear here" /></p>
                         <a href="{{ route('products.index') }}" class="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-medium rounded-xl hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                             </svg>
-                            ดูผลิตภัณฑ์
+                            <x-bi th="ดูผลิตภัณฑ์" en="Browse Products" />
                         </a>
                     </td>
                 </tr>
@@ -217,10 +217,10 @@
                 'cancelled' => 'from-red-400 to-rose-500',
             ];
             $statusLabels = [
-                'completed' => 'สำเร็จ',
-                'pending' => 'รอดำเนินการ',
-                'processing' => 'กำลังดำเนินการ',
-                'cancelled' => 'ยกเลิก',
+                'completed' => 'สำเร็จ / Completed',
+                'pending' => 'รอดำเนินการ / Pending',
+                'processing' => 'กำลังดำเนินการ / Processing',
+                'cancelled' => 'ยกเลิก / Cancelled',
             ];
         @endphp
         <a href="{{ route('customer.orders.show', $order) }}" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
@@ -257,10 +257,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                 </svg>
             </div>
-            <p class="text-lg font-medium text-gray-900 dark:text-white">ยังไม่มีคำสั่งซื้อ</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ประวัติคำสั่งซื้อของคุณจะปรากฏที่นี่</p>
+            <p class="text-lg font-medium text-gray-900 dark:text-white"><x-bi th="ยังไม่มีคำสั่งซื้อ" en="No orders yet" /></p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="ประวัติคำสั่งซื้อของคุณจะปรากฏที่นี่" en="Your order history will appear here" /></p>
             <a href="{{ route('products.index') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-medium rounded-xl hover:from-orange-600 hover:to-red-600 transition-all shadow-lg">
-                ดูผลิตภัณฑ์
+                <x-bi th="ดูผลิตภัณฑ์" en="Browse Products" />
             </a>
         </div>
         @endforelse

@@ -8,9 +8,9 @@
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                คำสั่งซื้อของฉัน
+                <x-bi th="คำสั่งซื้อของฉัน" en="My Orders" />
             </h1>
-            <p class="mt-2 text-gray-500 dark:text-gray-400">ประวัติการสั่งซื้อและสถานะคำสั่งซื้อทั้งหมด</p>
+            <p class="mt-2 text-gray-500 dark:text-gray-400"><x-bi th="ประวัติการสั่งซื้อและสถานะคำสั่งซื้อทั้งหมด" en="Your full order history and status" /></p>
         </div>
 
         @if($orders->isEmpty())
@@ -20,14 +20,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">ยังไม่มีคำสั่งซื้อ</h3>
-                <p class="text-gray-500 dark:text-gray-400 mb-6">เริ่มต้นช้อปปิ้งเลย!</p>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2"><x-bi th="ยังไม่มีคำสั่งซื้อ" en="No orders yet" /></h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-6"><x-bi th="เริ่มต้นช้อปปิ้งเลย!" en="Start shopping now!" /></p>
                 <a href="{{ route('products.index') }}"
                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition shadow-lg">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
-                    เลือกซื้อสินค้า
+                    <x-bi th="เลือกซื้อสินค้า" en="Browse Products" />
                 </a>
             </div>
         @else
@@ -38,18 +38,18 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        รายการคำสั่งซื้อ
-                        <span class="ml-2 px-2 py-0.5 text-xs bg-white/20 rounded-full">{{ $orders->total() }} รายการ</span>
+                        <x-bi th="รายการคำสั่งซื้อ" en="Order List" class="text-white" />
+                        <span class="ml-2 px-2 py-0.5 text-xs bg-white/20 rounded-full">{{ $orders->total() }} <x-bi th="รายการ" en="items" /></span>
                     </h2>
                 </div>
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700/50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">เลขที่</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">วันที่</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ชำระผ่าน</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ยอดรวม</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">สถานะ</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="เลขที่" en="No." /></th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.date" /></th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="ชำระผ่าน" en="Paid via" /></th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="ยอดรวม" en="Total" /></th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.status" /></th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
                         </tr>
                     </thead>
@@ -59,7 +59,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="font-mono font-medium text-gray-900 dark:text-white">{{ $order->order_number }}</span>
                                     @if($order->coupon_code)
-                                        <span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300" title="ใช้คูปอง">
+                                        <span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300" title="ใช้คูปอง / Coupon applied">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                                             </svg>
@@ -83,7 +83,7 @@
                                         </span>
                                     @elseif($order->payment_method === 'bank_transfer')
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                            โอนเงิน
+                                            <x-bi th="โอนเงิน" en="Bank Transfer" />
                                         </span>
                                     @else
                                         <span class="text-gray-500 dark:text-gray-400 text-sm">{{ $order->payment_method ?? '-' }}</span>
@@ -103,10 +103,10 @@
                                         @elseif($order->status === 'cancelled') bg-gradient-to-r from-red-500 to-rose-500 text-white
                                         @else bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 @endif">
                                         @switch($order->status)
-                                            @case('pending') รอชำระเงิน @break
-                                            @case('processing') กำลังดำเนินการ @break
-                                            @case('completed') เสร็จสมบูรณ์ @break
-                                            @case('cancelled') ยกเลิก @break
+                                            @case('pending') <x-bi th="รอชำระเงิน" en="Pending Payment" class="text-white" /> @break
+                                            @case('processing') <x-bi th="กำลังดำเนินการ" en="Processing" class="text-white" /> @break
+                                            @case('completed') <x-bi th="เสร็จสมบูรณ์" en="Completed" class="text-white" /> @break
+                                            @case('cancelled') <x-bi th="ยกเลิก" en="Cancelled" class="text-white" /> @break
                                             @default {{ $order->status }}
                                         @endswitch
                                     </span>
@@ -114,7 +114,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     <a href="{{ route('orders.show', $order) }}"
                                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition">
-                                        ดูรายละเอียด
+                                        <x-bi k="common.view_details" />
                                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                         </svg>
@@ -140,10 +140,10 @@
                                     @elseif($order->status === 'cancelled') bg-gradient-to-r from-red-500 to-rose-500 text-white
                                     @else bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 @endif">
                                     @switch($order->status)
-                                        @case('pending') รอชำระเงิน @break
-                                        @case('processing') กำลังดำเนินการ @break
-                                        @case('completed') เสร็จสมบูรณ์ @break
-                                        @case('cancelled') ยกเลิก @break
+                                        @case('pending') <x-bi th="รอชำระเงิน" en="Pending Payment" class="text-white" /> @break
+                                        @case('processing') <x-bi th="กำลังดำเนินการ" en="Processing" class="text-white" /> @break
+                                        @case('completed') <x-bi th="เสร็จสมบูรณ์" en="Completed" class="text-white" /> @break
+                                        @case('cancelled') <x-bi th="ยกเลิก" en="Cancelled" class="text-white" /> @break
                                         @default {{ $order->status }}
                                     @endswitch
                                 </span>
@@ -169,7 +169,7 @@
                                 </div>
                                 <a href="{{ route('orders.show', $order) }}"
                                    class="inline-flex items-center px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition">
-                                    ดูรายละเอียด
+                                    <x-bi k="common.view_details" class="text-white" />
                                 </a>
                             </div>
                             @if($order->coupon_code)
@@ -178,7 +178,7 @@
                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                                         </svg>
-                                        ใช้คูปอง: {{ $order->coupon_code }}
+                                        <x-bi th="ใช้คูปอง" en="Coupon" />: {{ $order->coupon_code }}
                                     </span>
                                 </div>
                             @endif

@@ -20,7 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bilingual (TH + EN) global helpers: bi(), bi_th(), bi_en().
+        require_once app_path('helpers.php');
     }
 
     /**

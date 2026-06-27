@@ -8,18 +8,18 @@
         <!-- Breadcrumb -->
         <nav class="mb-8">
             <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                <li><a href="{{ route('rental.index') }}" class="hover:text-primary-600">แพ็กเกจ</a></li>
+                <li><a href="{{ route('rental.index') }}" class="hover:text-primary-600"><x-bi th="แพ็กเกจ" en="Packages" /></a></li>
                 <li><span>/</span></li>
-                <li class="text-gray-900">ชำระเงิน</li>
+                <li class="text-gray-900"><x-bi k="common.payment" /></li>
             </ol>
         </nav>
 
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div class="p-8">
                 <div class="text-center mb-8">
-                    <h1 class="text-2xl font-bold text-gray-900">ชำระเงิน</h1>
+                    <h1 class="text-2xl font-bold text-gray-900"><x-bi k="common.payment" /></h1>
                     <p class="mt-2 text-gray-600">
-                        แพ็กเกจ: <span class="font-semibold">{{ $payment->userRental->rentalPackage->display_name }}</span>
+                        <x-bi th="แพ็กเกจ" en="Package" />: <span class="font-semibold">{{ $payment->userRental->rentalPackage->display_name }}</span>
                     </p>
                     <p class="text-3xl font-bold text-primary-600 mt-4">
                         ฿{{ number_format($payment->amount) }}
@@ -34,21 +34,21 @@
                                  class="w-64 h-64 mx-auto">
                         </div>
                         <p class="mt-4 text-gray-600">
-                            สแกน QR Code ด้วยแอปธนาคารของคุณ
+                            <x-bi th="สแกน QR Code ด้วยแอปธนาคารของคุณ" en="Scan the QR code with your banking app" />
                         </p>
                         <p class="text-sm text-gray-500">
                             {{ $paymentInfo['promptpay_type_label'] ?? 'พร้อมเพย์' }}: {{ $paymentInfo['promptpay_number'] ?? '-' }}
                         </p>
                         @if(!empty($paymentInfo['promptpay_name']))
                             <p class="text-sm text-gray-500">
-                                ชื่อบัญชี: {{ $paymentInfo['promptpay_name'] }}
+                                <x-bi th="ชื่อบัญชี" en="Account Name" />: {{ $paymentInfo['promptpay_name'] }}
                             </p>
                         @endif
                     </div>
                 @elseif($payment->payment_method === 'bank_transfer')
                     <!-- Bank Transfer Info -->
                     <div class="space-y-4">
-                        <h3 class="text-lg font-semibold text-gray-900">บัญชีธนาคาร</h3>
+                        <h3 class="text-lg font-semibold text-gray-900"><x-bi th="บัญชีธนาคาร" en="Bank Account" /></h3>
                         @foreach($paymentInfo['bank_accounts'] ?? [] as $bank)
                             <div class="p-4 bg-gray-50 rounded-lg">
                                 <div class="flex items-center">
@@ -68,15 +68,15 @@
                     @if(isset($stripeFeeInfo) && $stripeFeeInfo['fee'] > 0)
                     <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-gray-500 dark:text-gray-400">ยอดแพ็กเกจ</span>
+                            <span class="text-gray-500 dark:text-gray-400"><x-bi th="ยอดแพ็กเกจ" en="Package Amount" /></span>
                             <span class="text-gray-900 dark:text-white">฿{{ number_format($payment->amount, 2) }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500 dark:text-gray-400">ค่าธรรมเนียม Stripe ({{ $stripeFeeInfo['fee_display'] }})</span>
+                            <span class="text-gray-500 dark:text-gray-400"><x-bi th="ค่าธรรมเนียม Stripe" en="Stripe Fee" /> ({{ $stripeFeeInfo['fee_display'] }})</span>
                             <span class="text-amber-600 dark:text-amber-400">+฿{{ number_format($stripeFeeInfo['fee'], 2) }}</span>
                         </div>
                         <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
-                            <span class="font-semibold text-gray-700 dark:text-gray-200">ยอดที่ต้องชำระ</span>
+                            <span class="font-semibold text-gray-700 dark:text-gray-200"><x-bi th="ยอดที่ต้องชำระ" en="Amount Due" /></span>
                             <span class="font-bold text-indigo-600 dark:text-indigo-400 text-lg">฿{{ number_format($stripeFeeInfo['total'], 2) }}</span>
                         </div>
                     </div>
@@ -92,7 +92,7 @@
                 <!-- Upload Slip Form (hide for Stripe) -->
                 @if($payment->payment_method !== 'stripe')
                 <div class="mt-8 pt-8 border-t border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">แจ้งชำระเงิน</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4"><x-bi th="แจ้งชำระเงิน" en="Notify Payment" /></h3>
 
                     <form action="{{ route('rental.upload-slip', $payment->uuid ?? $payment) }}" method="POST" enctype="multipart/form-data">
                         @csrf
@@ -100,26 +100,26 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    อัพโหลดสลิปการโอนเงิน <span class="text-red-500">*</span>
+                                    <x-bi th="อัพโหลดสลิปการโอนเงิน" en="Upload Transfer Slip" /> <span class="text-red-500">*</span>
                                 </label>
                                 <input type="file" name="slip" accept="image/*" required
                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                <p class="mt-1 text-sm text-gray-500">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB</p>
+                                <p class="mt-1 text-sm text-gray-500"><x-bi th="รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB" en="Supports JPG, PNG files up to 5MB" /></p>
                                 @error('slip')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ (ถ้ามี)</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2"><x-bi th="หมายเหตุ (ถ้ามี)" en="Notes (optional)" /></label>
                                 <textarea name="notes" rows="2"
                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                                          placeholder="ข้อมูลเพิ่มเติม..."></textarea>
+                                          placeholder="ข้อมูลเพิ่มเติม... / Additional information..."></textarea>
                             </div>
 
                             <button type="submit"
                                     class="w-full py-4 px-6 rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors font-semibold">
-                                แจ้งชำระเงิน
+                                <x-bi th="แจ้งชำระเงิน" en="Notify Payment" />
                             </button>
                         </div>
                     </form>
@@ -133,11 +133,11 @@
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                         </svg>
                         <div class="ml-3">
-                            <h4 class="text-sm font-semibold text-yellow-800">หมายเหตุ</h4>
+                            <h4 class="text-sm font-semibold text-yellow-800"><x-bi th="หมายเหตุ" en="Note" /></h4>
                             <ul class="mt-1 text-sm text-yellow-700 list-disc list-inside">
-                                <li>กรุณาชำระเงินภายใน 24 ชั่วโมง</li>
-                                <li>หมายเลขอ้างอิง: {{ $payment->payment_reference }}</li>
-                                <li>หากมีข้อสงสัย ติดต่อ Line OA: @xmanstudio</li>
+                                <li><x-bi th="กรุณาชำระเงินภายใน 24 ชั่วโมง" en="Please complete payment within 24 hours" /></li>
+                                <li><x-bi th="หมายเลขอ้างอิง" en="Reference Number" />: {{ $payment->payment_reference }}</li>
+                                <li><x-bi th="หากมีข้อสงสัย ติดต่อ Line OA" en="For inquiries, contact Line OA" />: @xmanstudio</li>
                             </ul>
                         </div>
                     </div>

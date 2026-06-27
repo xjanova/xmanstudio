@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'ตั้งค่าธีม')
-@section('page-title', 'ตั้งค่าธีม')
-@section('page-description', 'เลือกธีมที่ต้องการใช้งานสำหรับบัญชีของคุณ')
+@section('page-title')<x-bi th="ตั้งค่าธีม" en="Theme Settings" />@endsection
+@section('page-description')<x-bi th="เลือกธีมที่ต้องการใช้งานสำหรับบัญชีของคุณ" en="Choose the theme you want to use for your account" />@endsection
 
 @section('content')
 <div class="max-w-4xl mx-auto">
@@ -24,9 +24,9 @@
                         <svg class="w-8 h-8 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
                         </svg>
-                        ปรับแต่งธีม
+                        <x-bi th="ปรับแต่งธีม" en="Customize Theme" />
                     </h1>
-                    <p class="text-white/80 text-lg">เลือกธีมที่เหมาะกับสไตล์การใช้งานของคุณ</p>
+                    <p class="text-white/80 text-lg"><x-bi th="เลือกธีมที่เหมาะกับสไตล์การใช้งานของคุณ" en="Choose a theme that fits your style" /></p>
                 </div>
                 <div class="hidden lg:block">
                     <div class="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center shadow-xl">
@@ -55,13 +55,13 @@
                     @endif
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">ธีมที่ใช้งานอยู่</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white"><x-bi th="ธีมที่ใช้งานอยู่" en="Active Theme" /></h2>
                     <p class="text-gray-500 dark:text-gray-400">
                         <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $themes[$currentTheme]['name'] }}</span>
                         @if($userTheme)
-                            <span class="text-xs ml-2 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 rounded-full">เลือกเอง</span>
+                            <span class="text-xs ml-2 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 rounded-full"><x-bi th="เลือกเอง" en="Custom" /></span>
                         @else
-                            <span class="text-xs ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full">ค่าเริ่มต้นของระบบ</span>
+                            <span class="text-xs ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full"><x-bi th="ค่าเริ่มต้นของระบบ" en="System Default" /></span>
                         @endif
                     </p>
                 </div>
@@ -78,7 +78,7 @@
             <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
             </svg>
-            เลือกธีม
+            <x-bi th="เลือกธีม" en="Choose Theme" />
         </h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -113,7 +113,7 @@
                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    เลือกอยู่
+                                    <x-bi th="เลือกอยู่" en="Selected" />
                                 </span>
                             </div>
                         @endif
@@ -121,15 +121,15 @@
 
                     <!-- Theme Info -->
                     <div class="p-4">
-                        <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-1">ใช้ค่าเริ่มต้น</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">ใช้ธีม {{ $themes[$siteDefaultTheme]['name'] }} ตามการตั้งค่าของระบบ</p>
+                        <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-1"><x-bi th="ใช้ค่าเริ่มต้น" en="Use Default" /></h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3"><x-bi th="ใช้ธีม" en="Use the" /> {{ $themes[$siteDefaultTheme]['name'] }} <x-bi th="ตามการตั้งค่าของระบบ" en="theme per system settings" /></p>
 
                         <div class="flex flex-wrap gap-2">
                             <span class="inline-flex items-center px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                                 <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                 </svg>
-                                อัปเดตอัตโนมัติ
+                                <x-bi th="อัปเดตอัตโนมัติ" en="Auto Update" />
                             </span>
                         </div>
                     </div>
@@ -229,7 +229,7 @@
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                         </svg>
-                                        เลือกอยู่
+                                        <x-bi th="เลือกอยู่" en="Selected" />
                                     </span>
                                 </div>
                             @endif
@@ -303,7 +303,7 @@
                 </svg>
                 <div>
                     <p class="text-sm text-indigo-700 dark:text-indigo-300">
-                        <strong>หมายเหตุ:</strong> ธีมที่คุณเลือกจะมีผลกับหน้า Dashboard และหน้าต่างๆ ของบัญชีคุณเท่านั้น การเปลี่ยนธีมจะมีผลทันทีหลังจากบันทึก
+                        <strong><x-bi th="หมายเหตุ:" en="Note:" /></strong> <x-bi th="ธีมที่คุณเลือกจะมีผลกับหน้า Dashboard และหน้าต่างๆ ของบัญชีคุณเท่านั้น การเปลี่ยนธีมจะมีผลทันทีหลังจากบันทึก" en="The theme you select applies only to your Dashboard and account pages. Theme changes take effect immediately after saving." />
                     </p>
                 </div>
             </div>
@@ -316,7 +316,7 @@
                 <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                บันทึกการเปลี่ยนแปลง
+                <x-bi th="บันทึกการเปลี่ยนแปลง" en="Save Changes" />
             </button>
         </div>
     </form>

@@ -319,10 +319,10 @@
 
                 <!-- Title -->
                 <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
-                    ยินดีต้อนรับกลับ
+                    <x-bi th="ยินดีต้อนรับกลับ" en="Welcome Back" />
                 </h2>
                 <p class="text-center text-gray-600 mb-8">
-                    เข้าสู่ระบบเพื่อดำเนินการต่อ
+                    <x-bi th="เข้าสู่ระบบเพื่อดำเนินการต่อ" en="Sign in to continue" />
                 </p>
 
                 <!-- Session Status -->
@@ -343,7 +343,7 @@
                                name="email"
                                id="email"
                                class="input-field @error('email') border-red-500 @enderror"
-                               placeholder="อีเมล"
+                               placeholder="{{ bi('common.email') }}"
                                value="{{ old('email') }}"
                                required
                                autofocus
@@ -366,7 +366,7 @@
                                name="password"
                                id="password"
                                class="input-field @error('password') border-red-500 @enderror"
-                               placeholder="รหัสผ่าน"
+                               placeholder="{{ bi('common.password') }}"
                                required
                                autocomplete="current-password">
                         <svg class="input-icon w-5 h-5" fill="none" stroke="currentColor"
@@ -388,14 +388,14 @@
                                    name="remember"
                                    class="w-4 h-4 text-purple-600 border-gray-300
                                           rounded focus:ring-purple-500">
-                            <span class="ml-2 text-sm text-gray-600">จดจำฉันไว้</span>
+                            <span class="ml-2 text-sm text-gray-600"><x-bi k="common.remember_me" /></span>
                         </label>
 
                         @if (Route::has('password.request'))
                             <a href="{{ route('password.request') }}"
                                class="text-sm text-purple-600 hover:text-purple-700
                                       hover:underline transition">
-                                ลืมรหัสผ่าน?
+                                <x-bi k="common.forgot_password" />
                             </a>
                         @endif
                     </div>
@@ -404,7 +404,7 @@
 
                     <!-- Submit Button -->
                     <button type="submit" class="w-full gradient-button">
-                        เข้าสู่ระบบ
+                        <x-bi k="common.login" />
                     </button>
                 </form>
 
@@ -416,7 +416,7 @@
                             <div class="w-full border-t border-gray-300"></div>
                         </div>
                         <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-gray-500">หรือเข้าสู่ระบบด้วย</span>
+                            <span class="px-2 bg-white text-gray-500"><x-bi th="หรือเข้าสู่ระบบด้วย" en="Or sign in with" /></span>
                         </div>
                     </div>
 
@@ -427,7 +427,7 @@
                             <svg class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
                             </svg>
-                            เข้าสู่ระบบด้วย LINE
+                            <x-bi th="เข้าสู่ระบบด้วย LINE" en="Sign in with LINE" />
                         </a>
                     </div>
                 </div>
@@ -436,9 +436,9 @@
                 <!-- Register Link -->
                 @if (Route::has('register'))
                 <div class="mt-6 text-center">
-                    <span class="text-sm text-gray-600">ยังไม่มีบัญชี?</span>
+                    <span class="text-sm text-gray-600"><x-bi k="common.no_account" /></span>
                     <a href="{{ route('register') }}" class="text-sm text-purple-600 hover:text-purple-700 hover:underline transition font-medium ml-1">
-                        สมัครสมาชิก
+                        <x-bi k="common.register" />
                     </a>
                 </div>
                 @endif
@@ -447,7 +447,7 @@
                 <div class="mt-4 text-center">
                     <a href="/" class="text-sm text-gray-600 hover:text-purple-600
                                        transition">
-                        ← กลับหน้าหลัก
+                        ← <x-bi th="กลับหน้าหลัก" en="Back to Home" />
                     </a>
                 </div>
             </div>

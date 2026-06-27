@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'ลูกทีม Affiliate')
-@section('page-title', 'ลูกทีมของคุณ')
-@section('page-description', 'สมาชิกที่สมัครผ่านลิงก์แนะนำของคุณ')
+@section('page-title')<x-bi th="ลูกทีมของคุณ" en="Your Downline" />@endsection
+@section('page-description')<x-bi th="สมาชิกที่สมัครผ่านลิงก์แนะนำของคุณ" en="Members who signed up through your referral link" />@endsection
 
 @section('content')
 <div class="space-y-6">
@@ -12,22 +12,22 @@
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            กลับ Dashboard
+            <x-bi th="กลับ Dashboard" en="Back to Dashboard" />
         </a>
-        <p class="text-sm text-gray-500">ลูกทีมทั้งหมด {{ $children->total() }} คน</p>
+        <p class="text-sm text-gray-500"><x-bi th="ลูกทีมทั้งหมด" en="Total downline" /> {{ $children->total() }} <x-bi th="คน" en="members" /></p>
     </div>
 
     <!-- Stats Summary -->
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <p class="text-xs text-gray-500">ลูกทีมตรง</p>
+            <p class="text-xs text-gray-500"><x-bi th="ลูกทีมตรง" en="Direct Downline" /></p>
             <p class="text-xl font-bold text-indigo-600">{{ $children->total() }}</p>
         </div>
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <p class="text-xs text-gray-500">ลิ้งค์เชิญ</p>
+            <p class="text-xs text-gray-500"><x-bi th="ลิ้งค์เชิญ" en="Referral Link" /></p>
             <div class="flex items-center gap-2 mt-1">
                 <code class="text-xs bg-gray-50 px-2 py-1 rounded truncate flex-1">{{ $affiliate->referral_url }}</code>
-                <button onclick="copyToClipboard('{{ $affiliate->referral_url }}', 'คัดลอกแล้ว!')" class="p-1 hover:bg-gray-100 rounded transition-colors flex-shrink-0">
+                <button onclick="copyToClipboard('{{ $affiliate->referral_url }}', 'คัดลอกแล้ว! / Copied!')" class="p-1 hover:bg-gray-100 rounded transition-colors flex-shrink-0">
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                     </svg>
@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <p class="text-xs text-gray-500">ค่าคอมมิชชั่น</p>
+            <p class="text-xs text-gray-500"><x-bi th="ค่าคอมมิชชั่น" en="Commission Rate" /></p>
             <p class="text-xl font-bold text-green-600">{{ number_format($affiliate->commission_rate) }}%</p>
         </div>
     </div>
@@ -43,7 +43,7 @@
     <!-- Downline Table -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100">
-            <h3 class="font-semibold text-gray-900">ลูกทีมตรง</h3>
+            <h3 class="font-semibold text-gray-900"><x-bi th="ลูกทีมตรง" en="Direct Downline" /></h3>
         </div>
 
         @if($children->count() > 0)
@@ -51,12 +51,12 @@
                 <table class="w-full">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ชื่อ</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">โค้ด</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">สถานะ</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">รายได้</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">ลูกทีม</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">วันที่สมัคร</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><x-bi th="ชื่อ" en="Name" /></th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><x-bi th="โค้ด" en="Code" /></th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"><x-bi th="สถานะ" en="Status" /></th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"><x-bi th="รายได้" en="Earnings" /></th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"><x-bi th="ลูกทีม" en="Downline" /></th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"><x-bi th="วันที่สมัคร" en="Joined Date" /></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -97,8 +97,8 @@
                 <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                <p>ยังไม่มีลูกทีม</p>
-                <p class="text-sm mt-1">แชร์ลิงก์แนะนำของคุณเพื่อเริ่มสร้างทีม</p>
+                <p><x-bi th="ยังไม่มีลูกทีม" en="No downline yet" /></p>
+                <p class="text-sm mt-1"><x-bi th="แชร์ลิงก์แนะนำของคุณเพื่อเริ่มสร้างทีม" en="Share your referral link to start building your team" /></p>
             </div>
         @endif
     </div>

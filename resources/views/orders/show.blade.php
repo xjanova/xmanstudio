@@ -13,10 +13,10 @@
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                         </svg>
-                        กลับไปรายการคำสั่งซื้อ
+                        <x-bi th="กลับไปรายการคำสั่งซื้อ" en="Back to orders" />
                     </a>
                     <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                        คำสั่งซื้อ #{{ $order->order_number }}
+                        <x-bi th="คำสั่งซื้อ" en="Order" /> #{{ $order->order_number }}
                     </h1>
                 </div>
                 <span class="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-full shadow-sm
@@ -30,25 +30,25 @@
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            รอชำระเงิน
+                            <x-bi th="รอชำระเงิน" en="Awaiting payment" />
                             @break
                         @case('processing')
                             <svg class="w-4 h-4 mr-1.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
-                            กำลังดำเนินการ
+                            <x-bi th="กำลังดำเนินการ" en="Processing" />
                             @break
                         @case('completed')
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            เสร็จสมบูรณ์
+                            <x-bi th="เสร็จสมบูรณ์" en="Completed" />
                             @break
                         @case('cancelled')
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
-                            ยกเลิก
+                            <x-bi th="ยกเลิก" en="Cancelled" />
                             @break
                         @default
                             {{ $order->status }}
@@ -78,31 +78,31 @@
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                             </svg>
-                            รายการสินค้า
+                            <x-bi th="รายการสินค้า" en="Items" class="text-white" />
                         </h2>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">สินค้า</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ราคา</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">จำนวน</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">รวม</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="สินค้า" en="Product" /></th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.price" /></th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.quantity" /></th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="รวม" en="Total" /></th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach($order->items as $item)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                                         <td class="px-6 py-4">
-                                            <div class="font-medium text-gray-900 dark:text-white">{{ $item->product->name ?? $item->product_name ?? 'สินค้าถูกลบ' }}</div>
+                                            <div class="font-medium text-gray-900 dark:text-white">{{ $item->product->name ?? $item->product_name ?? 'สินค้าถูกลบ / Product removed' }}</div>
                                             @if($item->custom_requirements)
                                                 <div class="mt-3 border border-blue-200 dark:border-blue-700 rounded-lg overflow-hidden">
                                                     <div class="bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 flex items-center">
                                                         <svg class="w-4 h-4 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                                         </svg>
-                                                        <span class="font-medium text-white text-sm">รายละเอียดที่ต้องการ</span>
+                                                        <span class="font-medium text-white text-sm"><x-bi th="รายละเอียดที่ต้องการ" en="Requirements" class="text-white" /></span>
                                                     </div>
                                                     <div class="bg-blue-50 dark:bg-blue-900/20 p-4">
                                                         <x-page-builder-render :content="$item->custom_requirements" />
@@ -124,19 +124,19 @@
                             </tbody>
                             <tfoot class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
-                                    <td colspan="3" class="px-6 py-3 text-right text-sm text-gray-500 dark:text-gray-400">ยอดรวมสินค้า</td>
+                                    <td colspan="3" class="px-6 py-3 text-right text-sm text-gray-500 dark:text-gray-400"><x-bi k="common.subtotal" /></td>
                                     <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">฿{{ number_format($order->subtotal, 2) }}</td>
                                 </tr>
                                 @if($order->tax > 0)
                                 <tr>
-                                    <td colspan="3" class="px-6 py-3 text-right text-sm text-gray-500 dark:text-gray-400">ภาษีมูลค่าเพิ่ม (7%)</td>
+                                    <td colspan="3" class="px-6 py-3 text-right text-sm text-gray-500 dark:text-gray-400"><x-bi th="ภาษีมูลค่าเพิ่ม (7%)" en="VAT (7%)" /></td>
                                     <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">฿{{ number_format($order->tax, 2) }}</td>
                                 </tr>
                                 @endif
                                 @if($order->discount > 0)
                                 <tr class="bg-green-50 dark:bg-green-900/20">
                                     <td colspan="3" class="px-6 py-3 text-right text-sm text-green-600 dark:text-green-400 font-medium">
-                                        ส่วนลด
+                                        <x-bi k="common.discount" />
                                         @if($order->coupon_code)
                                             <span class="ml-1 px-2 py-0.5 bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300 rounded-full text-xs font-mono">{{ $order->coupon_code }}</span>
                                         @endif
@@ -145,7 +145,7 @@
                                 </tr>
                                 @endif
                                 <tr class="border-t-2 border-gray-200 dark:border-gray-600">
-                                    <td colspan="3" class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">ยอดรวมทั้งหมด</td>
+                                    <td colspan="3" class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white"><x-bi th="ยอดรวมทั้งหมด" en="Grand total" /></td>
                                     <td class="px-6 py-4 font-bold text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">฿{{ number_format($order->total, 2) }}</td>
                                 </tr>
                             </tfoot>
@@ -172,7 +172,7 @@
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $license->product->name ?? 'Product' }}</div>
                                         <div class="font-mono font-bold text-lg text-gray-900 dark:text-white">{{ $license->license_key }}</div>
                                         <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                            {{ $license->license_type === 'lifetime' ? 'ตลอดชีพ' : 'หมดอายุ: ' . ($license->expires_at ? $license->expires_at->format('d/m/Y') : '-') }}
+                                            {{ $license->license_type === 'lifetime' ? 'ตลอดชีพ / Lifetime' : 'หมดอายุ / Expires: ' . ($license->expires_at ? $license->expires_at->format('d/m/Y') : '-') }}
                                         </div>
                                     </div>
                                     <button onclick="copyToClipboard('{{ $license->license_key }}')"
@@ -180,7 +180,7 @@
                                         <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
                                         </svg>
-                                        คัดลอก
+                                        <x-bi k="common.copy" class="text-white" />
                                     </button>
                                 </div>
                             @endforeach
@@ -190,7 +190,7 @@
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                 </svg>
-                                ดาวน์โหลด License Keys เป็นไฟล์
+                                <x-bi th="ดาวน์โหลด License Keys เป็นไฟล์" en="Download License Keys as file" />
                             </a>
                         </div>
                     </div>
@@ -204,7 +204,7 @@
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                ข้อมูลการชำระเงิน
+                                <x-bi th="ข้อมูลการชำระเงิน" en="Payment information" class="text-white" />
                             </h2>
                         </div>
                         <div class="p-6">
@@ -220,9 +220,9 @@
                                                 </svg>
                                             </div>
                                             <div class="flex-1">
-                                                <h3 class="font-semibold text-blue-800 dark:text-blue-200">ระบบตรวจสอบอัตโนมัติ</h3>
+                                                <h3 class="font-semibold text-blue-800 dark:text-blue-200"><x-bi th="ระบบตรวจสอบอัตโนมัติ" en="Automatic verification system" /></h3>
                                                 <p class="text-sm text-blue-700 dark:text-blue-300">
-                                                    กรุณาโอนเงินภายใน <span class="font-bold" id="countdown">{{ $order->uniquePaymentAmount->expires_at->diffForHumans() }}</span>
+                                                    <x-bi th="กรุณาโอนเงินภายใน" en="Please transfer within" /> <span class="font-bold" id="countdown">{{ $order->uniquePaymentAmount->expires_at->diffForHumans() }}</span>
                                                 </p>
                                             </div>
                                         </div>
@@ -230,18 +230,18 @@
 
                                     <!-- Unique Amount Display -->
                                     <div class="text-center">
-                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">โอนเงินจำนวน</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2"><x-bi th="โอนเงินจำนวน" en="Transfer amount" /></p>
                                         <div class="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl p-6 border-2 border-green-300 dark:border-green-700">
                                             <p class="text-5xl font-bold text-green-600 dark:text-green-400">
                                                 {{ number_format($order->uniquePaymentAmount->unique_amount, 2) }}
                                             </p>
-                                            <p class="text-green-700 dark:text-green-300 mt-2">บาท</p>
+                                            <p class="text-green-700 dark:text-green-300 mt-2"><x-bi th="บาท" en="THB" /></p>
                                         </div>
                                         <p class="text-xs text-amber-600 dark:text-amber-400 mt-3 flex items-center justify-center">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                             </svg>
-                                            โอนตรงตามยอดนี้ ระบบจะตรวจสอบอัตโนมัติ
+                                            <x-bi th="โอนตรงตามยอดนี้ ระบบจะตรวจสอบอัตโนมัติ" en="Transfer this exact amount and the system will verify automatically" />
                                         </p>
                                     </div>
                                 </div>
@@ -255,8 +255,8 @@
                                             </svg>
                                         </div>
                                         <div class="flex-1">
-                                            <h3 class="font-semibold text-red-800 dark:text-red-200">บิลนี้ถูกยกเลิกแล้ว</h3>
-                                            <p class="text-sm text-red-700 dark:text-red-300">หมดเวลาชำระเงิน กรุณาสร้างคำสั่งซื้อใหม่</p>
+                                            <h3 class="font-semibold text-red-800 dark:text-red-200"><x-bi th="บิลนี้ถูกยกเลิกแล้ว" en="This bill has been cancelled" /></h3>
+                                            <p class="text-sm text-red-700 dark:text-red-300"><x-bi th="หมดเวลาชำระเงิน กรุณาสร้างคำสั่งซื้อใหม่" en="Payment time has expired. Please create a new order." /></p>
                                         </div>
                                     </div>
                                 </div>
@@ -264,16 +264,16 @@
 
                             @if($order->payment_method === 'promptpay' && isset($paymentInfo['qr_image_url']))
                                 <div class="text-center">
-                                    <p class="text-gray-600 dark:text-gray-400 mb-4">สแกน QR Code ด้วยแอปธนาคารเพื่อชำระเงิน</p>
+                                    <p class="text-gray-600 dark:text-gray-400 mb-4"><x-bi th="สแกน QR Code ด้วยแอปธนาคารเพื่อชำระเงิน" en="Scan the QR code with your banking app to pay" /></p>
                                     <div class="inline-block p-4 bg-white border-2 border-blue-200 dark:border-blue-700 rounded-2xl shadow-lg">
                                         <img src="{{ $paymentInfo['qr_image_url'] }}" alt="PromptPay QR Code" class="w-64 h-64">
                                     </div>
                                     <div class="mt-4">
                                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $paymentInfo['promptpay_type_label'] ?? 'พร้อมเพย์' }}: {{ $paymentInfo['promptpay_number'] ?? 'N/A' }}
+                                            {{ $paymentInfo['promptpay_type_label'] ?? 'พร้อมเพย์ / PromptPay' }}: {{ $paymentInfo['promptpay_number'] ?? 'N/A' }}
                                         </p>
                                         @if(!empty($paymentInfo['promptpay_name']))
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">ชื่อบัญชี: {{ $paymentInfo['promptpay_name'] }}</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400"><x-bi th="ชื่อบัญชี" en="Account name" />: {{ $paymentInfo['promptpay_name'] }}</p>
                                         @endif
                                         <p class="mt-2 text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">฿{{ number_format($order->total, 2) }}</p>
                                     </div>
@@ -282,13 +282,13 @@
                                             <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
-                                            อ้างอิง: {{ $order->order_number }}
+                                            <x-bi th="อ้างอิง" en="Reference" />: {{ $order->order_number }}
                                         </p>
                                     </div>
                                 </div>
                             @elseif($order->payment_method === 'bank_transfer')
                                 <div class="space-y-4">
-                                    <p class="text-gray-600 dark:text-gray-400">โปรดโอนเงินไปยังบัญชีด้านล่าง:</p>
+                                    <p class="text-gray-600 dark:text-gray-400"><x-bi th="โปรดโอนเงินไปยังบัญชีด้านล่าง:" en="Please transfer to the account below:" /></p>
                                     @if(isset($bankAccounts) && $bankAccounts->count() > 0)
                                         @foreach($bankAccounts as $bank)
                                             <div class="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl border border-gray-200 dark:border-gray-600">
@@ -301,7 +301,7 @@
                                                     <div>
                                                         <p class="font-semibold text-gray-900 dark:text-white">{{ $bank->bank_name }}</p>
                                                         @if($bank->branch)
-                                                            <p class="text-xs text-gray-500 dark:text-gray-400">สาขา: {{ $bank->branch }}</p>
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="สาขา" en="Branch" />: {{ $bank->branch }}</p>
                                                         @endif
                                                     </div>
                                                 </div>
@@ -324,7 +324,7 @@
                                                     <div>
                                                         <p class="font-semibold text-gray-900 dark:text-white">{{ $bank['bank'] }}</p>
                                                         @if(isset($bank['branch']))
-                                                            <p class="text-xs text-gray-500 dark:text-gray-400">สาขา: {{ $bank['branch'] }}</p>
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="สาขา" en="Branch" />: {{ $bank['branch'] }}</p>
                                                         @endif
                                                     </div>
                                                 </div>
@@ -359,7 +359,7 @@
 
                                     @if(!$order->usesSmsPayment() || !$order->uniquePaymentAmount || $order->uniquePaymentAmount->isExpired())
                                     <div class="text-center pt-4 border-t dark:border-gray-700">
-                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">ยอดที่ต้องชำระ</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1"><x-bi th="ยอดที่ต้องชำระ" en="Amount due" /></p>
                                         <p class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">฿{{ number_format($order->total, 2) }}</p>
                                     </div>
                                     @endif
@@ -370,9 +370,9 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
                                             @if($order->usesSmsPayment() && $order->uniquePaymentAmount && !$order->uniquePaymentAmount->isExpired())
-                                                โอนตรงตามยอดที่แสดง ระบบจะตรวจสอบและยืนยันให้อัตโนมัติ
+                                                <x-bi th="โอนตรงตามยอดที่แสดง ระบบจะตรวจสอบและยืนยันให้อัตโนมัติ" en="Transfer the exact amount shown and the system will verify and confirm automatically" />
                                             @else
-                                                กรุณาระบุเลขที่คำสั่งซื้อ <strong>{{ $order->order_number }}</strong> ในช่องหมายเหตุ
+                                                <x-bi th="กรุณาระบุเลขที่คำสั่งซื้อ" en="Please include order number" /> <strong>{{ $order->order_number }}</strong> <x-bi th="ในช่องหมายเหตุ" en="in the note field" />
                                             @endif
                                         </p>
                                     </div>
@@ -381,15 +381,15 @@
                                 @if(isset($stripeFeeInfo) && $stripeFeeInfo['fee'] > 0)
                                 <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-2 text-sm">
                                     <div class="flex justify-between">
-                                        <span class="text-gray-500 dark:text-gray-400">ยอดสินค้า</span>
+                                        <span class="text-gray-500 dark:text-gray-400"><x-bi th="ยอดสินค้า" en="Item total" /></span>
                                         <span class="text-gray-900 dark:text-white">฿{{ number_format($order->total, 2) }}</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span class="text-gray-500 dark:text-gray-400">ค่าธรรมเนียม Stripe ({{ $stripeFeeInfo['fee_display'] }})</span>
+                                        <span class="text-gray-500 dark:text-gray-400"><x-bi th="ค่าธรรมเนียม Stripe" en="Stripe fee" /> ({{ $stripeFeeInfo['fee_display'] }})</span>
                                         <span class="text-amber-600 dark:text-amber-400">+฿{{ number_format($stripeFeeInfo['fee'], 2) }}</span>
                                     </div>
                                     <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
-                                        <span class="font-semibold text-gray-700 dark:text-gray-200">ยอดที่ต้องชำระ</span>
+                                        <span class="font-semibold text-gray-700 dark:text-gray-200"><x-bi th="ยอดที่ต้องชำระ" en="Amount due" /></span>
                                         <span class="font-bold text-indigo-600 dark:text-indigo-400 text-lg">฿{{ number_format($stripeFeeInfo['total'], 2) }}</span>
                                     </div>
                                 </div>
@@ -405,7 +405,7 @@
                                     <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
-                                    <p class="text-gray-500 dark:text-gray-400">ข้อมูลการชำระเงินไม่พร้อมใช้งาน</p>
+                                    <p class="text-gray-500 dark:text-gray-400"><x-bi th="ข้อมูลการชำระเงินไม่พร้อมใช้งาน" en="Payment information unavailable" /></p>
                                     <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2">฿{{ number_format($order->total, 2) }}</p>
                                 </div>
                             @endif
@@ -413,18 +413,18 @@
                             <!-- Upload Payment Slip (only show for bank_transfer/promptpay non-SMS orders) -->
                             @if(!$order->usesSmsPayment() && $order->payment_method !== 'stripe')
                             <div class="mt-6 pt-6 border-t dark:border-gray-700">
-                                <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3">แนบหลักฐานการชำระเงิน</h3>
+                                <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3"><x-bi th="แนบหลักฐานการชำระเงิน" en="Attach payment proof" /></h3>
                                 <form action="{{ route('orders.confirm-payment', $order) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <div class="space-y-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">อัพโหลดสลิปโอนเงิน</label>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"><x-bi k="common.upload_slip" /></label>
                                             <input type="file" name="payment_slip" accept="image/*" required
                                                    class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800">
                                         </div>
                                         <button type="submit"
                                                 class="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition shadow-lg">
-                                            ยืนยันการชำระเงิน
+                                            <x-bi th="ยืนยันการชำระเงิน" en="Confirm payment" class="text-white" />
                                         </button>
                                     </div>
                                 </form>
@@ -435,7 +435,7 @@
                                     <svg class="w-5 h-5 text-blue-500 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                     </svg>
-                                    <span class="text-sm text-blue-700 dark:text-blue-300">รอระบบตรวจสอบการโอนเงินอัตโนมัติ...</span>
+                                    <span class="text-sm text-blue-700 dark:text-blue-300"><x-bi th="รอระบบตรวจสอบการโอนเงินอัตโนมัติ..." en="Waiting for automatic transfer verification..." /></span>
                                 </div>
                             </div>
                             @endif
@@ -449,8 +449,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">กำลังตรวจสอบการชำระเงิน</h3>
-                            <p class="text-gray-500 dark:text-gray-400 mt-2">เราได้รับหลักฐานการชำระเงินแล้ว และกำลังดำเนินการตรวจสอบ</p>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="กำลังตรวจสอบการชำระเงิน" en="Verifying payment" /></h3>
+                            <p class="text-gray-500 dark:text-gray-400 mt-2"><x-bi th="เราได้รับหลักฐานการชำระเงินแล้ว และกำลังดำเนินการตรวจสอบ" en="We have received your payment proof and are verifying it." /></p>
                             @if($order->payment_slip)
                                 <div class="mt-4">
                                     <img src="{{ asset('storage/' . $order->payment_slip) }}" alt="Payment Slip" class="max-w-xs mx-auto rounded-xl shadow-lg">
@@ -466,10 +466,10 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">ชำระเงินสำเร็จ</h3>
-                            <p class="text-gray-500 dark:text-gray-400 mt-2">ขอบคุณสำหรับการชำระเงิน คำสั่งซื้อของคุณกำลังดำเนินการ</p>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="ชำระเงินสำเร็จ" en="Payment successful" /></h3>
+                            <p class="text-gray-500 dark:text-gray-400 mt-2"><x-bi th="ขอบคุณสำหรับการชำระเงิน คำสั่งซื้อของคุณกำลังดำเนินการ" en="Thank you for your payment. Your order is being processed." /></p>
                             @if($order->paid_at)
-                                <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">ชำระเมื่อ: {{ $order->paid_at->format('d/m/Y H:i') }}</p>
+                                <p class="text-sm text-gray-400 dark:text-gray-500 mt-2"><x-bi th="ชำระเมื่อ" en="Paid at" />: {{ $order->paid_at->format('d/m/Y H:i') }}</p>
                             @endif
                         </div>
                     </div>
@@ -483,34 +483,34 @@
                         <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        ข้อมูลคำสั่งซื้อ
+                        <x-bi th="ข้อมูลคำสั่งซื้อ" en="Order information" />
                     </h2>
 
                     <dl class="space-y-3">
                         <div class="flex justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">เลขที่คำสั่งซื้อ</dt>
+                            <dt class="text-gray-500 dark:text-gray-400"><x-bi k="common.order_number" /></dt>
                             <dd class="font-mono text-gray-900 dark:text-white">{{ $order->order_number }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">วันที่สั่งซื้อ</dt>
+                            <dt class="text-gray-500 dark:text-gray-400"><x-bi th="วันที่สั่งซื้อ" en="Order date" /></dt>
                             <dd class="text-gray-900 dark:text-white">{{ $order->created_at->format('d/m/Y H:i') }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">ชื่อผู้สั่ง</dt>
+                            <dt class="text-gray-500 dark:text-gray-400"><x-bi th="ชื่อผู้สั่ง" en="Customer name" /></dt>
                             <dd class="text-gray-900 dark:text-white">{{ $order->customer_name }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">อีเมล</dt>
+                            <dt class="text-gray-500 dark:text-gray-400"><x-bi k="common.email" /></dt>
                             <dd class="text-gray-900 dark:text-white text-sm break-all">{{ $order->customer_email }}</dd>
                         </div>
                         @if($order->customer_phone)
                         <div class="flex justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">โทรศัพท์</dt>
+                            <dt class="text-gray-500 dark:text-gray-400"><x-bi k="common.phone" /></dt>
                             <dd class="text-gray-900 dark:text-white">{{ $order->customer_phone }}</dd>
                         </div>
                         @endif
                         <div class="flex justify-between items-center">
-                            <dt class="text-gray-500 dark:text-gray-400">วิธีชำระเงิน</dt>
+                            <dt class="text-gray-500 dark:text-gray-400"><x-bi k="common.payment_method" /></dt>
                             <dd class="text-gray-900 dark:text-white">
                                 @if($order->payment_method === 'wallet')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
@@ -525,7 +525,7 @@
                                     </span>
                                 @elseif($order->payment_method === 'bank_transfer')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                                        โอนเงิน
+                                        <x-bi th="โอนเงิน" en="Bank transfer" />
                                     </span>
                                 @else
                                     {{ $order->payment_method }}
@@ -534,7 +534,7 @@
                         </div>
                         @if($order->coupon_code)
                         <div class="flex justify-between items-center pt-2 border-t dark:border-gray-700">
-                            <dt class="text-gray-500 dark:text-gray-400">คูปองที่ใช้</dt>
+                            <dt class="text-gray-500 dark:text-gray-400"><x-bi th="คูปองที่ใช้" en="Coupon used" /></dt>
                             <dd>
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-mono">
                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -549,7 +549,7 @@
 
                     @if($order->notes)
                         <div class="mt-4 pt-4 border-t dark:border-gray-700">
-                            <dt class="text-gray-500 dark:text-gray-400 mb-1 text-sm">หมายเหตุ</dt>
+                            <dt class="text-gray-500 dark:text-gray-400 mb-1 text-sm"><x-bi th="หมายเหตุ" en="Note" /></dt>
                             <dd class="text-gray-900 dark:text-white text-sm bg-gray-50 dark:bg-gray-700 rounded-lg p-3">{{ $order->notes }}</dd>
                         </div>
                     @endif
@@ -560,35 +560,35 @@
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            ดาวน์โหลดใบเสร็จ
+                            <x-bi th="ดาวน์โหลดใบเสร็จ" en="Download receipt" class="text-white" />
                         </a>
                     @endif
 
                     <!-- Payment Status Badge -->
                     <div class="mt-4 pt-4 border-t dark:border-gray-700">
                         <div class="text-center">
-                            <span class="text-xs text-gray-500 dark:text-gray-400">สถานะการชำระเงิน</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="สถานะการชำระเงิน" en="Payment status" /></span>
                             <div class="mt-1">
                                 @if($order->payment_status === 'paid')
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
-                                        ชำระแล้ว
+                                        <x-bi k="common.status_paid" />
                                     </span>
                                 @elseif($order->payment_status === 'verifying')
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
                                         <svg class="w-4 h-4 mr-1 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
-                                        กำลังตรวจสอบ
+                                        <x-bi th="กำลังตรวจสอบ" en="Verifying" />
                                     </span>
                                 @elseif($order->payment_status === 'pending')
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
-                                        รอชำระเงิน
+                                        <x-bi th="รอชำระเงิน" en="Awaiting payment" />
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
@@ -611,7 +611,7 @@ function copyToClipboard(text) {
         // Create toast notification
         const toast = document.createElement('div');
         toast.className = 'fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in';
-        toast.textContent = 'คัดลอก License Key แล้ว';
+        toast.textContent = 'คัดลอก License Key แล้ว / License Key copied';
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 2000);
     });
@@ -643,7 +643,7 @@ function copyToClipboard(text) {
             } else if (isPaid || isProcessing || isMatched) {
                 polling = false;
                 // Show success toast before redirect
-                var statusMsg = isPaid ? 'ชำระเงินสำเร็จ!' : 'ตรวจพบการโอนเงิน กำลังยืนยัน...';
+                var statusMsg = isPaid ? 'ชำระเงินสำเร็จ! / Payment successful!' : 'ตรวจพบการโอนเงิน กำลังยืนยัน... / Transfer detected, confirming...';
                 var toast = document.createElement('div');
                 toast.className = 'fixed inset-0 flex items-center justify-center z-50 bg-black/50';
                 toast.innerHTML = '<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 text-center max-w-sm mx-4">' +
@@ -651,7 +651,7 @@ function copyToClipboard(text) {
                     '<svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' +
                     '</div>' +
                     '<h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">' + statusMsg + '</h3>' +
-                    '<p class="text-gray-500 dark:text-gray-400">กำลังโหลดหน้ายืนยัน...</p>' +
+                    '<p class="text-gray-500 dark:text-gray-400">กำลังโหลดหน้ายืนยัน... / Loading confirmation...</p>' +
                     '</div>';
                 document.body.appendChild(toast);
                 // Redirect after brief delay
@@ -687,7 +687,7 @@ function copyToClipboard(text) {
             // หมดเวลา — reload เพื่อแสดงสถานะหมดอายุ
             // แต่ polling ยังทำงานอยู่แยกต่างหาก
             if (countdownEl) {
-                countdownEl.textContent = 'หมดเวลาแล้ว';
+                countdownEl.textContent = 'หมดเวลาแล้ว / Time expired';
                 countdownEl.classList.add('text-red-600');
             }
             setTimeout(function() { location.reload(); }, 2000);
@@ -698,7 +698,7 @@ function copyToClipboard(text) {
         const seconds = Math.floor((diff % 60000) / 1000);
 
         if (countdownEl) {
-            countdownEl.textContent = minutes + ' นาที ' + seconds + ' วินาที';
+            countdownEl.textContent = minutes + ' นาที / min ' + seconds + ' วินาที / sec';
         }
     }
 

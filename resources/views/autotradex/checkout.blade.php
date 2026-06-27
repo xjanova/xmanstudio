@@ -10,7 +10,7 @@
             <ol class="flex items-center space-x-2 text-sm text-gray-500">
                 <li><a href="{{ route('autotradex.pricing') }}" class="hover:text-primary-600">AutoTradeX</a></li>
                 <li><span>/</span></li>
-                <li class="text-gray-900">ชำระเงิน</li>
+                <li class="text-gray-900"><x-bi th="ชำระเงิน" en="Payment" /></li>
             </ol>
         </nav>
 
@@ -18,7 +18,7 @@
             <div class="md:flex">
                 <!-- Order Summary -->
                 <div class="md:w-1/3 bg-gradient-to-br from-purple-900 to-gray-900 p-8 text-white">
-                    <h2 class="text-lg font-semibold mb-6">สรุปคำสั่งซื้อ</h2>
+                    <h2 class="text-lg font-semibold mb-6"><x-bi k="common.order_summary" /></h2>
 
                     {{-- Early Bird Badge --}}
                     @if(isset($earlyBird) && $earlyBird['eligible'])
@@ -45,18 +45,18 @@
 
                         <div class="py-4 border-t border-white/20">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-300">แพ็กเกจ</span>
+                                <span class="text-gray-300"><x-bi th="แพ็กเกจ" en="Package" /></span>
                                 <span class="font-semibold">{{ $planInfo['name_th'] }}</span>
                             </div>
                             @if($planInfo['duration_days'])
                                 <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-400">ระยะเวลา</span>
-                                    <span class="text-gray-300">{{ $planInfo['duration_days'] }} วัน</span>
+                                    <span class="text-gray-400"><x-bi th="ระยะเวลา" en="Duration" /></span>
+                                    <span class="text-gray-300">{{ $planInfo['duration_days'] }} <x-bi th="วัน" en="days" /></span>
                                 </div>
                             @else
                                 <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-400">ระยะเวลา</span>
-                                    <span class="text-yellow-400">ตลอดชีพ</span>
+                                    <span class="text-gray-400"><x-bi th="ระยะเวลา" en="Duration" /></span>
+                                    <span class="text-yellow-400"><x-bi th="ตลอดชีพ" en="Lifetime" /></span>
                                 </div>
                             @endif
                         </div>
@@ -64,20 +64,20 @@
                         <div class="py-4 border-t border-white/20">
                             @if(isset($planInfo['discount_amount']) && $planInfo['discount_amount'] > 0)
                                 <div class="flex items-center justify-between text-sm mb-2">
-                                    <span class="text-gray-400">ราคาปกติ</span>
+                                    <span class="text-gray-400"><x-bi th="ราคาปกติ" en="Regular price" /></span>
                                     <span class="text-gray-400 line-through">฿{{ number_format($planInfo['original_price']) }}</span>
                                 </div>
                                 <div class="flex items-center justify-between text-sm mb-2">
-                                    <span class="text-green-400">ส่วนลด Early Bird</span>
+                                    <span class="text-green-400"><x-bi th="ส่วนลด" en="Discount" /> Early Bird</span>
                                     <span class="text-green-400">-฿{{ number_format($planInfo['discount_amount']) }}</span>
                                 </div>
                                 <div class="flex items-center justify-between pt-2 border-t border-white/10">
-                                    <span class="font-semibold">รวมทั้งสิ้น</span>
+                                    <span class="font-semibold"><x-bi th="รวมทั้งสิ้น" en="Total" /></span>
                                     <span class="text-3xl font-black text-green-400">฿{{ number_format($planInfo['discounted_price']) }}</span>
                                 </div>
                             @else
                                 <div class="flex items-center justify-between">
-                                    <span class="font-semibold">รวมทั้งสิ้น</span>
+                                    <span class="font-semibold"><x-bi th="รวมทั้งสิ้น" en="Total" /></span>
                                     <span class="text-3xl font-black">฿{{ number_format($planInfo['price'] ?? $planInfo['original_price']) }}</span>
                                 </div>
                             @endif
@@ -86,7 +86,7 @@
 
                     <!-- Features -->
                     <div class="mt-6 pt-6 border-t border-white/20">
-                        <h4 class="text-sm font-semibold text-gray-300 mb-3">รวมในแพ็กเกจนี้:</h4>
+                        <h4 class="text-sm font-semibold text-gray-300 mb-3"><x-bi th="รวมในแพ็กเกจนี้:" en="Included in this package:" /></h4>
                         <ul class="space-y-2 text-sm">
                             @if($plan === 'monthly')
                                 <li class="flex items-center"><svg class="w-4 h-4 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Live Trading</li>
@@ -98,8 +98,8 @@
                                 <li class="flex items-center"><svg class="w-4 h-4 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Advanced Arbitrage</li>
                                 <li class="flex items-center"><svg class="w-4 h-4 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Priority Support</li>
                             @else
-                                <li class="flex items-center"><svg class="w-4 h-4 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> ทุกฟีเจอร์</li>
-                                <li class="flex items-center"><svg class="w-4 h-4 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> 6 Exchanges ทั้งหมด</li>
+                                <li class="flex items-center"><svg class="w-4 h-4 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> <x-bi th="ทุกฟีเจอร์" en="All features" /></li>
+                                <li class="flex items-center"><svg class="w-4 h-4 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> <x-bi th="6 Exchanges ทั้งหมด" en="All 6 Exchanges" /></li>
                                 <li class="flex items-center"><svg class="w-4 h-4 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Lifetime Updates</li>
                             @endif
                         </ul>
@@ -108,7 +108,7 @@
 
                 <!-- Checkout Form -->
                 <div class="md:w-2/3 p-8">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">ข้อมูลการชำระเงิน</h2>
+                    <h2 class="text-xl font-bold text-gray-900 mb-6"><x-bi th="ข้อมูลการชำระเงิน" en="Payment Information" /></h2>
 
                     <form action="{{ route('autotradex.process', $plan) }}" method="POST">
                         @csrf
@@ -131,18 +131,18 @@
                         <!-- Customer Info -->
                         <div class="space-y-4 mb-8">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1"><x-bi k="common.full_name" /> <span class="text-red-500">*</span></label>
                                 <input type="text" name="customer_name" value="{{ old('customer_name', auth()->user()->name ?? '') }}" required
                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1"><x-bi k="common.email" /> <span class="text-red-500">*</span></label>
                                 <input type="email" name="customer_email" value="{{ old('customer_email', auth()->user()->email ?? '') }}" required
                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                                <p class="text-xs text-gray-500 mt-1">License Key จะส่งไปยังอีเมลนี้</p>
+                                <p class="text-xs text-gray-500 mt-1"><x-bi th="License Key จะส่งไปยังอีเมลนี้" en="The License Key will be sent to this email" /></p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1"><x-bi k="common.phone" /> <span class="text-red-500">*</span></label>
                                 <input type="tel" name="customer_phone" value="{{ old('customer_phone') }}" required
                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                             </div>
@@ -150,7 +150,7 @@
 
                         <!-- Payment Method -->
                         <div class="mb-8">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">เลือกวิธีชำระเงิน</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4"><x-bi th="เลือกวิธีชำระเงิน" en="Choose a payment method" /></h3>
 
                             <div class="space-y-3">
                                 <label class="block cursor-pointer">
@@ -162,8 +162,8 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="font-semibold text-gray-900">พร้อมเพย์ (PromptPay)</p>
-                                            <p class="text-sm text-gray-500">สแกน QR Code เพื่อชำระเงิน</p>
+                                            <p class="font-semibold text-gray-900"><x-bi th="พร้อมเพย์" en="PromptPay" /></p>
+                                            <p class="text-sm text-gray-500"><x-bi th="สแกน QR Code เพื่อชำระเงิน" en="Scan the QR Code to pay" /></p>
                                         </div>
                                     </div>
                                 </label>
@@ -177,8 +177,8 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="font-semibold text-gray-900">โอนเงินธนาคาร</p>
-                                            <p class="text-sm text-gray-500">โอนเงินแล้วแนบสลิป</p>
+                                            <p class="font-semibold text-gray-900"><x-bi th="โอนเงินธนาคาร" en="Bank Transfer" /></p>
+                                            <p class="text-sm text-gray-500"><x-bi th="โอนเงินแล้วแนบสลิป" en="Transfer and attach the slip" /></p>
                                         </div>
                                     </div>
                                 </label>
@@ -188,16 +188,16 @@
                         <button type="submit"
                                 class="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg rounded-xl transition-all">
                             @if(isset($planInfo['discount_amount']) && $planInfo['discount_amount'] > 0)
-                                ดำเนินการชำระเงิน ฿{{ number_format($planInfo['discounted_price']) }}
+                                <x-bi th="ดำเนินการชำระเงิน" en="Proceed to payment" /> ฿{{ number_format($planInfo['discounted_price']) }}
                                 <span class="text-sm font-normal line-through text-white/60 ml-2">฿{{ number_format($planInfo['original_price']) }}</span>
                             @else
-                                ดำเนินการชำระเงิน ฿{{ number_format($planInfo['price'] ?? $planInfo['original_price']) }}
+                                <x-bi th="ดำเนินการชำระเงิน" en="Proceed to payment" /> ฿{{ number_format($planInfo['price'] ?? $planInfo['original_price']) }}
                             @endif
                         </button>
 
                         <p class="mt-4 text-sm text-gray-500 text-center">
-                            การดำเนินการต่อถือว่าคุณยอมรับ
-                            <a href="/terms" class="text-purple-600 hover:underline">ข้อกำหนดการใช้งาน</a>
+                            <x-bi th="การดำเนินการต่อถือว่าคุณยอมรับ" en="By continuing, you agree to the" />
+                            <a href="/terms" class="text-purple-600 hover:underline"><x-bi th="ข้อกำหนดการใช้งาน" en="Terms of Service" /></a>
                         </p>
                     </form>
                 </div>

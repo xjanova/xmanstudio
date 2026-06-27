@@ -288,7 +288,7 @@
                     @endphp
                     @if ($siteLogo)
                         <img src="{{ asset('storage/' . $siteLogo) }}"
-                             alt="Logo"
+                             alt="โลโก้ / Logo"
                              class="logo-image">
                     @else
                         <div class="logo-image flex items-center justify-center">
@@ -305,10 +305,10 @@
 
                 <!-- Title -->
                 <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">
-                    สมัครสมาชิก
+                    <x-bi th="สมัครสมาชิก" en="Sign Up" />
                 </h2>
                 <p class="text-center text-gray-600 mb-6">
-                    สร้างบัญชีใหม่เพื่อเข้าใช้งาน
+                    <x-bi th="สร้างบัญชีใหม่เพื่อเข้าใช้งาน" en="Create a new account to get started" />
                 </p>
 
                 <!-- Register Form -->
@@ -317,12 +317,12 @@
 
                     <!-- Name Input -->
                     <div class="input-group">
-                        <label for="name" class="input-label">ชื่อ</label>
+                        <label for="name" class="input-label"><x-bi th="ชื่อ" en="Name" /></label>
                         <input type="text"
                                name="name"
                                id="name"
                                class="input-field @error('name') border-red-500 @enderror"
-                               placeholder="ชื่อของคุณ"
+                               placeholder="ชื่อของคุณ / Your name"
                                value="{{ old('name') }}"
                                required
                                autofocus
@@ -340,7 +340,7 @@
 
                     <!-- Email Input -->
                     <div class="input-group">
-                        <label for="email" class="input-label">อีเมล</label>
+                        <label for="email" class="input-label"><x-bi k="common.email" /></label>
                         <input type="email"
                                name="email"
                                id="email"
@@ -363,12 +363,12 @@
 
                     <!-- Password Input -->
                     <div class="input-group">
-                        <label for="password" class="input-label">รหัสผ่าน</label>
+                        <label for="password" class="input-label"><x-bi k="common.password" /></label>
                         <input type="password"
                                name="password"
                                id="password"
                                class="input-field @error('password') border-red-500 @enderror"
-                               placeholder="รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)"
+                               placeholder="รหัสผ่าน (อย่างน้อย 8 ตัวอักษร) / Password (at least 8 characters)"
                                required
                                autocomplete="new-password">
                         <svg class="input-icon w-5 h-5" fill="none" stroke="currentColor"
@@ -385,12 +385,12 @@
 
                     <!-- Confirm Password Input -->
                     <div class="input-group">
-                        <label for="password_confirmation" class="input-label">ยืนยันรหัสผ่าน</label>
+                        <label for="password_confirmation" class="input-label"><x-bi k="common.confirm_password" /></label>
                         <input type="password"
                                name="password_confirmation"
                                id="password_confirmation"
                                class="input-field"
-                               placeholder="ใส่รหัสผ่านอีกครั้ง"
+                               placeholder="ใส่รหัสผ่านอีกครั้ง / Re-enter your password"
                                required
                                autocomplete="new-password">
                         <svg class="input-icon w-5 h-5" fill="none" stroke="currentColor"
@@ -405,7 +405,7 @@
 
                     <!-- Submit Button -->
                     <button type="submit" class="w-full gradient-button">
-                        สมัครสมาชิก
+                        <x-bi th="สมัครสมาชิก" en="Sign Up" />
                     </button>
                 </form>
 
@@ -417,7 +417,7 @@
                             <div class="w-full border-t border-gray-300"></div>
                         </div>
                         <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-gray-500">หรือสมัครด้วย</span>
+                            <span class="px-2 bg-white text-gray-500"><x-bi th="หรือสมัครด้วย" en="Or sign up with" /></span>
                         </div>
                     </div>
 
@@ -428,7 +428,7 @@
                             <svg class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
                             </svg>
-                            สมัครด้วย LINE
+                            <x-bi th="สมัครด้วย LINE" en="Sign up with LINE" />
                         </a>
                     </div>
                 </div>
@@ -436,9 +436,9 @@
 
                 <!-- Login Link -->
                 <div class="mt-6 text-center">
-                    <span class="text-sm text-gray-600">มีบัญชีอยู่แล้ว?</span>
+                    <span class="text-sm text-gray-600"><x-bi th="มีบัญชีอยู่แล้ว?" en="Already have an account?" /></span>
                     <a href="{{ route('login') }}" class="text-sm text-purple-600 hover:text-purple-700 hover:underline transition font-medium ml-1">
-                        เข้าสู่ระบบ
+                        <x-bi k="common.login" />
                     </a>
                 </div>
 
@@ -446,7 +446,7 @@
                 <div class="mt-4 text-center">
                     <a href="/" class="text-sm text-gray-600 hover:text-purple-600
                                        transition">
-                        ← กลับหน้าหลัก
+                        ← <x-bi th="กลับหน้าหลัก" en="Back to home" />
                     </a>
                 </div>
             </div>

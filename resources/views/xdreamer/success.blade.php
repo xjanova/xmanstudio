@@ -12,9 +12,9 @@
 
     <h1 style="font-size:clamp(36px, 5vw, 56px);font-weight:200;color:#fff;letter-spacing:-0.02em;margin:0;">
         @if($order->status === 'processing')
-            ขอบคุณ — <span class="xdr-italic-th" style="font-style:italic;color:hsl({{ $h }},80%,75%);">รอการตรวจสอบ</span>
+            ขอบคุณ — <span class="xdr-italic-th" style="font-style:italic;color:hsl({{ $h }},80%,75%);">รอการตรวจสอบ / Pending review</span>
         @else
-            <span class="xdr-italic-th" style="font-style:italic;color:hsl({{ $h }},80%,75%);">เริ่มทอ</span>ความฝันได้เลย
+            <span class="xdr-italic-th" style="font-style:italic;color:hsl({{ $h }},80%,75%);">เริ่มทอ</span>ความฝันได้เลย / Start weaving your dreams
         @endif
     </h1>
 
@@ -22,29 +22,30 @@
         @if($order->status === 'processing')
             เราได้รับสลิปของคุณแล้ว — ทีมงานจะตรวจสอบภายใน 30 นาที
             จากนั้นเครดิตจะถูกเพิ่มให้กับบัญชี AIXMAN ของคุณโดยอัตโนมัติ
+            <br><span style="opacity:0.7;">We have received your slip — our team will verify it within 30 minutes, then your credits will be added to your AIXMAN account automatically.</span>
         @else
-            เครดิต {{ number_format((int)($metadata['credits'] ?? 0)) }}
-            @if(($metadata['bonus_credits'] ?? 0) > 0)+ {{ number_format($metadata['bonus_credits']) }} โบนัส@endif
-            ถูกเพิ่มในบัญชีของคุณแล้ว
+            เครดิต / Credits {{ number_format((int)($metadata['credits'] ?? 0)) }}
+            @if(($metadata['bonus_credits'] ?? 0) > 0)+ {{ number_format($metadata['bonus_credits']) }} โบนัส / bonus@endif
+            ถูกเพิ่มในบัญชีของคุณแล้ว / have been added to your account
         @endif
     </p>
 
     <div style="margin-top:32px;padding:20px;border-radius:16px;background:rgba(15,23,42,0.5);border:1px solid rgba(255,255,255,0.06);text-align:left;">
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px 24px;font-size:13px;">
             <div>
-                <div style="color:#64748b;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;">หมายเลขคำสั่งซื้อ</div>
+                <div style="color:#64748b;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;"><x-bi k="common.order_number" /></div>
                 <div style="color:#fff;font-family:ui-monospace,monospace;margin-top:2px;">{{ $order->order_number }}</div>
             </div>
             <div>
-                <div style="color:#64748b;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;">ยอดชำระ</div>
+                <div style="color:#64748b;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;"><x-bi th="ยอดชำระ" en="Amount paid" /></div>
                 <div style="color:#fff;margin-top:2px;">฿{{ number_format($order->total) }}</div>
             </div>
             <div>
-                <div style="color:#64748b;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;">แพ็กเกจ</div>
+                <div style="color:#64748b;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;"><x-bi th="แพ็กเกจ" en="Package" /></div>
                 <div style="color:#fff;margin-top:2px;">{{ $metadata['package_name'] ?? '-' }}</div>
             </div>
             <div>
-                <div style="color:#64748b;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;">สถานะ</div>
+                <div style="color:#64748b;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;"><x-bi k="common.status" /></div>
                 <div style="color:hsl({{ $h }},80%,75%);margin-top:2px;text-transform:capitalize;">{{ $order->status }}</div>
             </div>
         </div>
@@ -56,12 +57,12 @@
             background:linear-gradient(135deg, hsl({{ $h }},70%,50%), hsl({{ $h+40 }},70%,60%));
             color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;
             box-shadow:0 12px 30px -10px hsla({{ $h }},80%,50%,0.7);">
-            ไปที่ AIXMAN →
+            ไปที่ AIXMAN / Go to AIXMAN →
         </a>
         <a href="{{ route('xdreamer.dashboard') }}" style="
             padding:14px 24px;border-radius:12px;background:rgba(255,255,255,0.05);color:#fff;
             border:1px solid rgba(255,255,255,0.15);font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;">
-            ดู Dashboard
+            ดู Dashboard / View Dashboard
         </a>
     </div>
 </div>

@@ -10,32 +10,32 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div class="mb-4 md:mb-0">
                     <nav class="flex items-center text-purple-200 text-sm mb-2">
-                        <a href="{{ route('user.wallet.index') }}" class="hover:text-white transition-colors duration-200">กระเป๋าเงิน</a>
+                        <a href="{{ route('user.wallet.index') }}" class="hover:text-white transition-colors duration-200"><x-bi th="กระเป๋าเงิน" en="Wallet" /></a>
                         <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
-                        <span class="text-white">ประวัติธุรกรรม</span>
+                        <span class="text-white"><x-bi th="ประวัติธุรกรรม" en="Transaction History" /></span>
                     </nav>
                     <h1 class="text-3xl font-bold text-white flex items-center">
                         <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        ประวัติธุรกรรม
+                        <x-bi th="ประวัติธุรกรรม" en="Transaction History" />
                     </h1>
-                    <p class="mt-1 text-purple-100">ยอดคงเหลือ: <span class="font-bold text-white text-xl">฿{{ number_format($wallet->balance, 2) }}</span></p>
+                    <p class="mt-1 text-purple-100"><x-bi th="ยอดคงเหลือ" en="Balance" />: <span class="font-bold text-white text-xl">฿{{ number_format($wallet->balance, 2) }}</span></p>
                 </div>
                 <div class="flex gap-3">
                     <a href="{{ route('user.wallet.topup') }}" class="inline-flex items-center px-5 py-2.5 bg-white text-purple-600 font-semibold rounded-xl shadow-lg hover:bg-purple-50 transition-all duration-200">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
-                        เติมเงิน
+                        <x-bi th="เติมเงิน" en="Top Up" />
                     </a>
                     <a href="{{ route('user.wallet.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all duration-200 backdrop-blur-sm">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                         </svg>
-                        กลับ
+                        <x-bi k="common.back" />
                     </a>
                 </div>
             </div>
@@ -53,7 +53,7 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">รายรับ</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400"><x-bi th="รายรับ" en="Income" /></p>
                         <p class="text-xl font-bold text-green-600 dark:text-green-400">฿{{ number_format($wallet->total_deposited, 2) }}</p>
                     </div>
                 </div>
@@ -66,7 +66,7 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">รายจ่าย</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400"><x-bi th="รายจ่าย" en="Expenses" /></p>
                         <p class="text-xl font-bold text-red-600 dark:text-red-400">฿{{ number_format($wallet->total_spent, 2) }}</p>
                     </div>
                 </div>
@@ -79,7 +79,7 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">ยอดคงเหลือ</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400"><x-bi th="ยอดคงเหลือ" en="Balance" /></p>
                         <p class="text-xl font-bold text-purple-600 dark:text-purple-400">฿{{ number_format($wallet->balance, 2) }}</p>
                     </div>
                 </div>
@@ -93,9 +93,9 @@
                     <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
-                    รายการทั้งหมด
+                    <x-bi th="รายการทั้งหมด" en="All Transactions" />
                     <span class="ml-2 px-2.5 py-0.5 bg-purple-200 dark:bg-purple-700 text-purple-800 dark:text-purple-100 text-xs font-medium rounded-full">
-                        {{ $transactions->total() }} รายการ
+                        {{ $transactions->total() }} <x-bi th="รายการ" en="items" />
                     </span>
                 </h3>
             </div>
@@ -127,7 +127,7 @@
                                         @else
                                             bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300
                                         @endif">
-                                        {{ $transaction->isCredit() ? 'เข้า' : 'ออก' }}
+                                        @if($transaction->isCredit())<x-bi th="เข้า" en="In" />@else<x-bi th="ออก" en="Out" />@endif
                                     </span>
                                 </div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ $transaction->description }}</p>
@@ -149,7 +149,7 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    ยอดคงเหลือ: <span class="font-medium text-gray-700 dark:text-gray-300">฿{{ number_format($transaction->balance_after, 2) }}</span>
+                                    <x-bi th="ยอดคงเหลือ" en="Balance" />: <span class="font-medium text-gray-700 dark:text-gray-300">฿{{ number_format($transaction->balance_after, 2) }}</span>
                                 </p>
                             </div>
                         </div>
@@ -162,13 +162,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">ยังไม่มีประวัติธุรกรรม</h3>
-                    <p class="text-gray-500 dark:text-gray-400 mb-6">เริ่มเติมเงินเพื่อใช้งาน Wallet ของคุณ</p>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2"><x-bi th="ยังไม่มีประวัติธุรกรรม" en="No transaction history yet" /></h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6"><x-bi th="เริ่มเติมเงินเพื่อใช้งาน Wallet ของคุณ" en="Top up to start using your Wallet" /></p>
                     <a href="{{ route('user.wallet.topup') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
-                        เติมเงินเลย
+                        <x-bi th="เติมเงินเลย" en="Top Up Now" />
                     </a>
                 </div>
                 @endforelse
@@ -178,7 +178,7 @@
             <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                        แสดง {{ $transactions->firstItem() ?? 0 }} - {{ $transactions->lastItem() ?? 0 }} จาก {{ $transactions->total() }} รายการ
+                        <x-bi th="แสดง" en="Showing" /> {{ $transactions->firstItem() ?? 0 }} - {{ $transactions->lastItem() ?? 0 }} <x-bi th="จาก" en="of" /> {{ $transactions->total() }} <x-bi th="รายการ" en="items" />
                     </p>
                     <div class="flex items-center gap-2">
                         @if($transactions->onFirstPage())

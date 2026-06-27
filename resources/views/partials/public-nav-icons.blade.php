@@ -206,7 +206,7 @@
     </button>
     <div x-show="open" @click.away="open = false" x-cloak class="{{ $notifDropdown }}">
         <div class="{{ $notifHeader }}">
-            <h3 class="{{ $notifHeaderText }}">การแจ้งเตือน</h3>
+            <h3 class="{{ $notifHeaderText }}"><x-bi th="การแจ้งเตือน" en="Notifications" /></h3>
         </div>
         <div class="max-h-80 overflow-y-auto {{ $isPremium ? 'premium-scrollbar' : '' }}">
             @foreach($expiredLicenses as $license)
@@ -218,9 +218,9 @@
                             </svg>
                         </div>
                         <div class="ml-3 flex-1">
-                            <p class="{{ $expiredText }}">License หมดอายุแล้ว!</p>
+                            <p class="{{ $expiredText }}"><x-bi th="License หมดอายุแล้ว!" en="License expired!" /></p>
                             <p class="{{ $expiredSubText }}">{{ $license->product->name ?? 'Product' }}</p>
-                            <p class="{{ $expiredNote }}">กรุณาต่ออายุเพื่อใช้งานต่อ</p>
+                            <p class="{{ $expiredNote }}"><x-bi th="กรุณาต่ออายุเพื่อใช้งานต่อ" en="Please renew to continue using" /></p>
                         </div>
                     </div>
                 </a>
@@ -236,9 +236,9 @@
                             </svg>
                         </div>
                         <div class="ml-3 flex-1">
-                            <p class="{{ $expiringText }}">License ใกล้หมดอายุ!</p>
+                            <p class="{{ $expiringText }}"><x-bi th="License ใกล้หมดอายุ!" en="License expiring soon!" /></p>
                             <p class="{{ $expiringSubText }}">{{ $license->product->name ?? 'Product' }}</p>
-                            <p class="{{ $expiringNote }}">เหลืออีก {{ $daysLeft }} วัน</p>
+                            <p class="{{ $expiringNote }}"><x-bi :th="'เหลืออีก ' . $daysLeft . ' วัน'" :en="$daysLeft . ' days left'" /></p>
                         </div>
                     </div>
                 </a>
@@ -246,7 +246,7 @@
 
             @forelse(auth()->user()->notifications()->take(5)->get() as $notification)
                 <a href="{{ $notification->data['url'] ?? '#' }}" class="{{ $notifItem }} {{ $notification->read_at ? '' : $notifUnread }}">
-                    <p class="{{ $notifText }}">{{ $notification->data['message'] ?? 'การแจ้งเตือนใหม่' }}</p>
+                    <p class="{{ $notifText }}">{{ $notification->data['message'] ?? 'การแจ้งเตือนใหม่ / New notification' }}</p>
                     <p class="{{ $notifTime }}">{{ $notification->created_at->diffForHumans() }}</p>
                 </a>
             @empty
@@ -255,16 +255,16 @@
                     <svg class="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
-                    <p class="text-sm">ไม่มีการแจ้งเตือน</p>
+                    <p class="text-sm"><x-bi th="ไม่มีการแจ้งเตือน" en="No notifications" /></p>
                 </div>
                 @endif
             @endforelse
         </div>
         @if(auth()->user()->notifications()->count() > 0 || $licenseAlertCount > 0)
         <div class="{{ $notifFooter }}">
-            <a href="{{ route('customer.dashboard') }}" class="{{ $notifViewAll }}">ดูทั้งหมด</a>
+            <a href="{{ route('customer.dashboard') }}" class="{{ $notifViewAll }}"><x-bi th="ดูทั้งหมด" en="View all" /></a>
             @if($licenseAlertCount > 0)
-            <a href="{{ route('products.index') }}" class="{{ $notifViewLicense }}">ดู License</a>
+            <a href="{{ route('products.index') }}" class="{{ $notifViewLicense }}"><x-bi th="ดู License" en="View License" /></a>
             @endif
         </div>
         @endif
@@ -322,16 +322,16 @@
                 @if(Auth::user()->isAdmin())
                 <a href="/admin/rentals" class="{{ $menuItem }}">
                     <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    Admin Panel
+                    <x-bi th="แผงควบคุมผู้ดูแล" en="Admin Panel" />
                 </a>
                 @endif
                 <a href="{{ route('customer.dashboard') }}" class="{{ $menuItem }}">
                     <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    บัญชีของฉัน
+                    <x-bi th="บัญชีของฉัน" en="My Account" />
                 </a>
                 <a href="/support/tracking" class="{{ $menuItem }} {{ request()->is('support/tracking*') ? ($isPremium ? 'bg-white/5' : 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400') : '' }}">
                     <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                    ติดตามงาน
+                    <x-bi th="ติดตามงาน" en="Track Order" />
                 </a>
             </div>
 
@@ -342,7 +342,7 @@
                     @csrf
                     <button type="submit" class="{{ $logoutBtn }}">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        ออกจากระบบ
+                        <x-bi k="common.logout" />
                     </button>
                 </form>
             </div>
@@ -358,7 +358,7 @@
             @if(!$isPremium)
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
             @endif
-            สมัครสมาชิก
+            <x-bi k="common.register" />
         </a>
         @endif
         @if(Route::has('login'))
@@ -366,7 +366,7 @@
             @if(!$isPremium)
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
             @endif
-            เข้าสู่ระบบ
+            <x-bi k="common.login" />
         </a>
         @endif
     @if(!$isPremium)

@@ -522,6 +522,39 @@
 }
 
 /* ==========================================================================
+   Bilingual labels (TH + EN shown together) — used by <x-bi> component.
+   Color is inherited from the parent so it adapts to nav gradients, dark
+   mode, footers, etc. The English half is rendered smaller and slightly
+   muted via opacity (theme-agnostic).
+   ========================================================================== */
+.bi-inline {
+    display: inline;
+}
+
+.bi-inline .bi-en {
+    font-size: 0.82em;
+    font-weight: 400;
+    opacity: 0.72;
+}
+
+.bi-inline .bi-sep {
+    margin: 0 0.18em;
+    opacity: 0.45;
+}
+
+.bi-stack {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1.12;
+}
+
+.bi-stack .bi-en {
+    font-size: 0.72em;
+    font-weight: 400;
+    opacity: 0.72;
+}
+
+/* ==========================================================================
    Retro Tron theme — MUST be imported LAST so it cascades over Tailwind v4
    preflight which otherwise resets color/background on h1/h2/h3.
    retro-overrides.css uses !important to win specificity battles on

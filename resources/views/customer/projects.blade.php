@@ -1,8 +1,8 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'โครงการของฉัน')
-@section('page-title', 'โครงการของฉัน')
-@section('page-description', 'ติดตามความคืบหน้าโครงการทั้งหมดของคุณ')
+@section('page-title', 'โครงการของฉัน / My Projects')
+@section('page-description', 'ติดตามความคืบหน้าโครงการทั้งหมดของคุณ / Track the progress of all your projects')
 
 @section('content')
 <!-- Premium Header Banner -->
@@ -18,15 +18,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
                 </div>
-                โครงการของฉัน
+                <x-bi th="โครงการของฉัน" en="My Projects" layout="stack" />
             </h1>
-            <p class="mt-2 text-white/80 text-sm sm:text-base">ติดตามความคืบหน้าและจัดการโครงการทั้งหมดของคุณ</p>
+            <p class="mt-2 text-white/80 text-sm sm:text-base"><x-bi th="ติดตามความคืบหน้าและจัดการโครงการทั้งหมดของคุณ" en="Track progress and manage all your projects" /></p>
         </div>
         <a href="{{ route('support.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all font-medium shadow-lg">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
-            ขอใบเสนอราคา
+            <x-bi th="ขอใบเสนอราคา" en="Request a Quote" />
         </a>
     </div>
 </div>
@@ -41,7 +41,7 @@
                 </svg>
             </div>
             <div class="text-right">
-                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">โครงการทั้งหมด</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="โครงการทั้งหมด" en="Total Projects" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
             </div>
         </div>
@@ -55,7 +55,7 @@
                 </svg>
             </div>
             <div class="text-right">
-                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">กำลังดำเนินการ</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="กำลังดำเนินการ" en="In Progress" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ $stats['active'] }}</p>
             </div>
         </div>
@@ -69,7 +69,7 @@
                 </svg>
             </div>
             <div class="text-right">
-                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">เสร็จสิ้น</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400"><x-bi th="เสร็จสิ้น" en="Completed" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ $stats['completed'] }}</p>
             </div>
         </div>
@@ -82,7 +82,7 @@
         <div class="flex-1 min-w-[200px]">
             <select name="status" onchange="this.form.submit()"
                     class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-purple-500 focus:border-purple-500 shadow-sm">
-                <option value="all">ทุกสถานะ</option>
+                <option value="all">ทุกสถานะ / All Statuses</option>
                 @foreach(\App\Models\ProjectOrder::STATUS_LABELS as $value => $label)
                     <option value="{{ $value }}" {{ request('status') === $value ? 'selected' : '' }}>
                         {{ $label }}
@@ -137,7 +137,7 @@
                     <!-- Progress Bar -->
                     <div class="mt-4 ml-11">
                         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            <span>ความคืบหน้า</span>
+                            <span><x-bi th="ความคืบหน้า" en="Progress" /></span>
                             <span class="font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">{{ $project->progress_percent }}%</span>
                         </div>
                         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
@@ -156,16 +156,16 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                             </svg>
                             <span class="font-bold text-gray-900 dark:text-white">{{ $project->completed_features_count }}</span>/<span>{{ $project->total_features_count }}</span>
-                            <span class="ml-1">ฟีเจอร์</span>
+                            <span class="ml-1"><x-bi th="ฟีเจอร์" en="Features" /></span>
                         </span>
                         @if($project->expected_end_date)
                             <span class="flex items-center {{ $project->isOverdue() ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500 dark:text-gray-400' }}">
                                 <svg class="w-4 h-4 mr-1.5 {{ $project->isOverdue() ? 'text-red-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
-                                กำหนดส่ง: {{ $project->expected_end_date->format('d/m/Y') }}
+                                <x-bi th="กำหนดส่ง:" en="Due:" /> {{ $project->expected_end_date->format('d/m/Y') }}
                                 @if($project->isOverdue())
-                                    <span class="ml-1 px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-xs">(เกินกำหนด)</span>
+                                    <span class="ml-1 px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-xs"><x-bi th="(เกินกำหนด)" en="(Overdue)" /></span>
                                 @endif
                             </span>
                         @endif
@@ -188,13 +188,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                 </svg>
             </div>
-            <p class="text-lg font-bold text-gray-900 dark:text-white">ยังไม่มีโครงการ</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">เมื่อคุณมีโครงการ จะแสดงที่นี่</p>
+            <p class="text-lg font-bold text-gray-900 dark:text-white"><x-bi th="ยังไม่มีโครงการ" en="No projects yet" /></p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2"><x-bi th="เมื่อคุณมีโครงการ จะแสดงที่นี่" en="Your projects will appear here once you have any" /></p>
             <a href="{{ route('support.index') }}" class="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
-                ขอใบเสนอราคา
+                <x-bi th="ขอใบเสนอราคา" en="Request a Quote" />
             </a>
         </div>
     @endforelse

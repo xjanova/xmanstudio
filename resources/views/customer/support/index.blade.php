@@ -41,14 +41,14 @@
                         </div>
                         <h1 class="text-3xl font-bold text-white">Support Tickets</h1>
                     </div>
-                    <p class="text-purple-100 text-lg">จัดการ Ticket และติดตามสถานะการช่วยเหลือ</p>
+                    <p class="text-purple-100 text-lg"><x-bi th="จัดการ Ticket และติดตามสถานะการช่วยเหลือ" en="Manage tickets and track support status" /></p>
                 </div>
                 <a href="{{ route('customer.support.create') }}"
                    class="inline-flex items-center px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all font-semibold shadow-lg">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    สร้าง Ticket ใหม่
+                    <x-bi th="สร้าง Ticket ใหม่" en="New Ticket" />
                 </a>
             </div>
         </div>
@@ -59,14 +59,14 @@
         <form action="{{ route('customer.support.index') }}" method="GET" class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[200px]">
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="ค้นหาหมายเลข Ticket หรือหัวข้อ..."
+                       placeholder="ค้นหาหมายเลข Ticket หรือหัวข้อ... / Search by ticket number or subject..."
                        class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all">
             </div>
             <div class="w-40">
                 <select name="status" class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all">
-                    <option value="">สถานะทั้งหมด</option>
-                    <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>เปิดอยู่</option>
-                    <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>ปิดแล้ว</option>
+                    <option value="">สถานะทั้งหมด / All Statuses</option>
+                    <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>เปิดอยู่ / Open</option>
+                    <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>ปิดแล้ว / Closed</option>
                     @foreach($statuses as $value => $label)
                         <option value="{{ $value }}" {{ request('status') === $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
@@ -74,14 +74,14 @@
             </div>
             <div class="w-40">
                 <select name="category" class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all">
-                    <option value="">หมวดหมู่ทั้งหมด</option>
+                    <option value="">หมวดหมู่ทั้งหมด / All Categories</option>
                     @foreach($categories as $value => $label)
                         <option value="{{ $value }}" {{ request('category') === $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
             <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 font-medium shadow-lg transition-all">
-                ค้นหา
+                <x-bi th="ค้นหา" en="Search" />
             </button>
         </form>
     </div>
@@ -115,11 +115,11 @@
                             <span class="text-sm font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{{ $ticket->ticket_number }}</span>
                             @if($ticket->priority === 'urgent')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gradient-to-r from-red-500 to-rose-600 text-white shadow">
-                                    เร่งด่วน
+                                    <x-bi th="เร่งด่วน" en="Urgent" />
                                 </span>
                             @elseif($ticket->priority === 'high')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gradient-to-r from-orange-400 to-amber-500 text-white shadow">
-                                    สำคัญ
+                                    <x-bi th="สำคัญ" en="High" />
                                 </span>
                             @endif
                         </div>
@@ -134,7 +134,7 @@
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                                     </svg>
-                                    {{ $ticket->replies_count }} ข้อความ
+                                    {{ $ticket->replies_count }} <x-bi th="ข้อความ" en="replies" />
                                 </span>
                             @endif
                         </div>
@@ -156,15 +156,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">ยังไม่มี Support Ticket</h3>
-            <p class="mt-2 text-gray-500 dark:text-gray-400">มีคำถามหรือต้องการความช่วยเหลือ? สร้าง Ticket ใหม่เลย</p>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="ยังไม่มี Support Ticket" en="No support tickets yet" /></h3>
+            <p class="mt-2 text-gray-500 dark:text-gray-400"><x-bi th="มีคำถามหรือต้องการความช่วยเหลือ? สร้าง Ticket ใหม่เลย" en="Have a question or need help? Create a new ticket" /></p>
             <div class="mt-6">
                 <a href="{{ route('customer.support.create') }}"
                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 font-semibold shadow-lg transition-all">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    สร้าง Ticket ใหม่
+                    <x-bi th="สร้าง Ticket ใหม่" en="New Ticket" />
                 </a>
             </div>
         </div>

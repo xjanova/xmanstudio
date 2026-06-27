@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">ตะกร้าสินค้า</h1>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8"><x-bi th="ตะกร้าสินค้า" en="Shopping Cart" /></h1>
 
     @if(session('success'))
         <div class="mb-6 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded">
@@ -17,11 +17,11 @@
             <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
-            <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">ตะกร้าว่างเปล่า</h2>
-            <p class="text-gray-500 dark:text-gray-400 mb-6">ยังไม่มีสินค้าในตะกร้า เลือกซื้อสินค้าได้เลย</p>
+            <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4"><x-bi th="ตะกร้าว่างเปล่า" en="Your cart is empty" /></h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-6"><x-bi th="ยังไม่มีสินค้าในตะกร้า เลือกซื้อสินค้าได้เลย" en="No items in your cart yet. Start shopping now." /></p>
             <a href="{{ route('products.index') }}"
                class="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
-                ดูสินค้าทั้งหมด
+                <x-bi th="ดูสินค้าทั้งหมด" en="View All Products" />
             </a>
         </div>
     @else
@@ -32,10 +32,10 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700/50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">สินค้า</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ราคา</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">จำนวน</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">รวม</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="สินค้า" en="Product" /></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.price" /></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.quantity" /></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="รวม" en="Total" /></th>
                                 <th class="px-6 py-3"></th>
                             </tr>
                         </thead>
@@ -60,7 +60,7 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                        {{ number_format($item->price, 2) }} บาท
+                                        {{ number_format($item->price, 2) }} บาท / THB
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <form action="{{ route('cart.update', $item) }}" method="POST" class="flex items-center">
@@ -72,7 +72,7 @@
                                         </form>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-white">
-                                        {{ number_format($item->price * $item->quantity, 2) }} บาท
+                                        {{ number_format($item->price * $item->quantity, 2) }} บาท / THB
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <form action="{{ route('cart.remove', $item) }}" method="POST">
@@ -93,13 +93,13 @@
 
                 <div class="mt-4 flex justify-between">
                     <a href="{{ route('products.index') }}" class="text-primary-600 dark:text-primary-400 hover:underline">
-                        &larr; เลือกสินค้าเพิ่ม
+                        &larr; <x-bi th="เลือกสินค้าเพิ่ม" en="Continue Shopping" />
                     </a>
                     <form action="{{ route('cart.index') }}" method="POST">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="text-red-600 dark:text-red-400 hover:underline">
-                            ล้างตะกร้า
+                            <x-bi th="ล้างตะกร้า" en="Clear Cart" />
                         </button>
                     </form>
                 </div>
@@ -108,22 +108,22 @@
             <!-- Order Summary -->
             <div class="lg:col-span-1">
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 sticky top-24">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">สรุปคำสั่งซื้อ</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"><x-bi k="common.order_summary" /></h2>
 
                     <div class="space-y-3 mb-6">
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                            <span>รวมสินค้า ({{ $cart->items->sum('quantity') }} ชิ้น)</span>
-                            <span>{{ number_format($cart->total, 2) }} บาท</span>
+                            <span><x-bi th="รวมสินค้า" en="Subtotal" /> ({{ $cart->items->sum('quantity') }} <x-bi th="ชิ้น" en="items" />)</span>
+                            <span>{{ number_format($cart->total, 2) }} บาท / THB</span>
                         </div>
                         <div class="border-t dark:border-gray-700 pt-3 flex justify-between text-lg font-bold text-gray-900 dark:text-white">
-                            <span>ยอดรวมทั้งหมด</span>
-                            <span>{{ number_format($cart->total, 2) }} บาท</span>
+                            <span><x-bi th="ยอดรวมทั้งหมด" en="Grand Total" /></span>
+                            <span>{{ number_format($cart->total, 2) }} บาท / THB</span>
                         </div>
                     </div>
 
                     <a href="{{ route('orders.checkout') }}"
                        class="block w-full text-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold">
-                        ดำเนินการสั่งซื้อ
+                        <x-bi th="ดำเนินการสั่งซื้อ" en="Proceed to Checkout" />
                     </a>
                 </div>
             </div>

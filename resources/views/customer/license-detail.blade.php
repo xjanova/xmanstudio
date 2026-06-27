@@ -209,11 +209,11 @@
                 </div>
                 Scan to Activate
             </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">สแกน QR Code ในแอพเพื่อกรอก License Key อัตโนมัติ</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4"><x-bi th="สแกน QR Code ในแอพเพื่อกรอก License Key อัตโนมัติ" en="Scan the QR code in the app to fill the License Key automatically" /></p>
             <div class="bg-white p-3 rounded-xl inline-block shadow-inner border border-gray-200">
                 <div id="license-qrcode"></div>
             </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">เปิดแอพ Tping → กดสแกน QR Code</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-3"><x-bi th="เปิดแอพ Tping → กดสแกน QR Code" en="Open the Tping app → tap Scan QR Code" /></p>
         </div>
 
         <!-- Quick Actions -->

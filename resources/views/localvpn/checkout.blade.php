@@ -10,7 +10,7 @@
             <ol class="flex items-center space-x-2 text-sm text-gray-500">
                 <li><a href="{{ route('localvpn.pricing') }}" class="hover:text-cyan-600">LocalVPN</a></li>
                 <li><span>/</span></li>
-                <li class="text-gray-900">ชำระเงิน</li>
+                <li class="text-gray-900"><x-bi th="ชำระเงิน" en="Checkout" /></li>
             </ol>
         </nav>
 
@@ -18,7 +18,7 @@
             <div class="md:flex">
                 <!-- Order Summary -->
                 <div class="md:w-1/3 bg-gradient-to-br from-cyan-900 to-gray-900 p-8 text-white">
-                    <h2 class="text-lg font-semibold mb-6">สรุปคำสั่งซื้อ</h2>
+                    <h2 class="text-lg font-semibold mb-6"><x-bi k="common.order_summary" /></h2>
 
                     <div class="space-y-4">
                         <div>
@@ -26,23 +26,23 @@
                                 <span class="text-2xl mr-2">🌐</span>
                                 <h3 class="font-bold text-xl">LocalVPN</h3>
                             </div>
-                            <p class="text-gray-300 text-sm">สร้างวง LAN เสมือนผ่านอินเทอร์เน็ต</p>
+                            <p class="text-gray-300 text-sm"><x-bi th="สร้างวง LAN เสมือนผ่านอินเทอร์เน็ต" en="Create a virtual LAN over the internet" /></p>
                         </div>
 
                         <div class="py-4 border-t border-white/20">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-300">แพ็กเกจ</span>
+                                <span class="text-gray-300"><x-bi th="แพ็กเกจ" en="Package" /></span>
                                 <span class="font-semibold">{{ $planInfo['name_th'] }}</span>
                             </div>
                             @if($planInfo['duration_days'])
                                 <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-400">ระยะเวลา</span>
-                                    <span class="text-gray-300">{{ $planInfo['duration_days'] }} วัน</span>
+                                    <span class="text-gray-400"><x-bi th="ระยะเวลา" en="Duration" /></span>
+                                    <span class="text-gray-300">{{ $planInfo['duration_days'] }} <x-bi th="วัน" en="days" /></span>
                                 </div>
                             @else
                                 <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-400">ระยะเวลา</span>
-                                    <span class="text-yellow-400">ตลอดชีพ</span>
+                                    <span class="text-gray-400"><x-bi th="ระยะเวลา" en="Duration" /></span>
+                                    <span class="text-yellow-400"><x-bi th="ตลอดชีพ" en="Lifetime" /></span>
                                 </div>
                             @endif
                         </div>
@@ -50,20 +50,20 @@
                         <!-- Price display (updates via JS when wallet selected) -->
                         <div class="py-4 border-t border-white/20">
                             <div id="price-normal" class="flex items-center justify-between">
-                                <span class="font-semibold">รวมทั้งสิ้น</span>
+                                <span class="font-semibold"><x-bi th="รวมทั้งสิ้น" en="Total" /></span>
                                 <span class="text-3xl font-black">฿{{ number_format($planInfo['price']) }}</span>
                             </div>
                             <div id="price-wallet" class="hidden">
                                 <div class="flex items-center justify-between mb-1">
-                                    <span class="text-gray-400">ราคาปกติ</span>
+                                    <span class="text-gray-400"><x-bi th="ราคาปกติ" en="Regular price" /></span>
                                     <span class="text-gray-400 line-through">฿{{ number_format($planInfo['price']) }}</span>
                                 </div>
                                 <div class="flex items-center justify-between mb-1">
-                                    <span class="text-green-400">ส่วนลด Wallet {{ $walletDiscountPercent }}%</span>
+                                    <span class="text-green-400"><x-bi th="ส่วนลด Wallet" en="Wallet discount" /> {{ $walletDiscountPercent }}%</span>
                                     <span class="text-green-400">-฿{{ number_format($walletDiscount) }}</span>
                                 </div>
                                 <div class="flex items-center justify-between pt-2 border-t border-white/20">
-                                    <span class="font-semibold">จ่ายจริง</span>
+                                    <span class="font-semibold"><x-bi th="จ่ายจริง" en="You pay" /></span>
                                     <span class="text-3xl font-black text-green-400">฿{{ number_format($walletPrice) }}</span>
                                 </div>
                             </div>
@@ -72,7 +72,7 @@
 
                     <!-- Features -->
                     <div class="mt-6 pt-6 border-t border-white/20">
-                        <h4 class="text-sm font-semibold text-gray-300 mb-3">รวมในแพ็กเกจนี้:</h4>
+                        <h4 class="text-sm font-semibold text-gray-300 mb-3"><x-bi th="รวมในแพ็กเกจนี้:" en="Included in this package:" /></h4>
                         <ul class="space-y-2 text-sm">
                             @foreach($planInfo['features'] as $feature)
                             <li class="flex items-center">
@@ -86,7 +86,7 @@
 
                 <!-- Checkout Form -->
                 <div class="md:w-2/3 p-8">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">ข้อมูลการชำระเงิน</h2>
+                    <h2 class="text-xl font-bold text-gray-900 mb-6"><x-bi th="ข้อมูลการชำระเงิน" en="Payment Details" /></h2>
 
                     <form action="{{ route('localvpn.process', $plan) }}" method="POST" id="checkoutForm">
                         @csrf
@@ -114,18 +114,18 @@
                         <!-- Customer Info -->
                         <div class="space-y-4 mb-8">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1"><x-bi k="common.full_name" /> <span class="text-red-500">*</span></label>
                                 <input type="text" name="customer_name" value="{{ old('customer_name', auth()->user()->name ?? '') }}" required
                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1"><x-bi k="common.email" /> <span class="text-red-500">*</span></label>
                                 <input type="email" name="customer_email" value="{{ old('customer_email', auth()->user()->email ?? '') }}" required
                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
-                                <p class="text-xs text-gray-500 mt-1">License Key จะส่งไปยังอีเมลนี้</p>
+                                <p class="text-xs text-gray-500 mt-1"><x-bi th="License Key จะส่งไปยังอีเมลนี้" en="The License Key will be sent to this email" /></p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1"><x-bi k="common.phone" /> <span class="text-red-500">*</span></label>
                                 <input type="tel" name="customer_phone" value="{{ old('customer_phone') }}" required
                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
                             </div>
@@ -133,7 +133,7 @@
 
                         <!-- Payment Method -->
                         <div class="mb-8">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">เลือกวิธีชำระเงิน</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4"><x-bi th="เลือกวิธีชำระเงิน" en="Select Payment Method" /></h3>
 
                             <div class="space-y-3">
                                 {{-- Wallet Payment Option --}}
@@ -154,13 +154,13 @@
                                                     <p class="font-semibold text-gray-900">Wallet</p>
                                                     <span class="text-lg font-bold text-purple-600">฿{{ number_format($wallet->balance, 2) }}</span>
                                                 </div>
-                                                <p class="text-sm text-gray-500">หักจาก Wallet ทันที • ได้ License เลย</p>
+                                                <p class="text-sm text-gray-500"><x-bi th="หักจาก Wallet ทันที • ได้ License เลย" en="Deducted from Wallet instantly • License issued immediately" /></p>
                                             </div>
                                         </div>
                                         {{-- Discount badge --}}
                                         <div class="mt-3 flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                                            <span class="text-sm text-green-700 font-medium">🎉 ส่วนลด {{ $walletDiscountPercent }}% เมื่อชำระด้วย Wallet</span>
-                                            <span class="text-sm font-bold text-green-700">ประหยัด ฿{{ number_format($walletDiscount) }}</span>
+                                            <span class="text-sm text-green-700 font-medium">🎉 <x-bi th="ส่วนลด" en="Discount" /> {{ $walletDiscountPercent }}% <x-bi th="เมื่อชำระด้วย Wallet" en="when paying with Wallet" /></span>
+                                            <span class="text-sm font-bold text-green-700"><x-bi th="ประหยัด" en="Save" /> ฿{{ number_format($walletDiscount) }}</span>
                                         </div>
                                     </div>
                                 </label>
@@ -168,8 +168,8 @@
                                 {{-- Insufficient balance warning --}}
                                 <div id="wallet-warning" class="hidden p-3 bg-red-50 border border-red-200 rounded-xl">
                                     <p class="text-sm text-red-600">
-                                        ⚠️ ยอดเงินใน Wallet ไม่เพียงพอ (ต้องการ ฿{{ number_format($walletPrice) }})
-                                        <a href="{{ route('user.wallet.topup') }}" class="underline font-medium">เติมเงิน</a>
+                                        ⚠️ <x-bi th="ยอดเงินใน Wallet ไม่เพียงพอ" en="Insufficient Wallet balance" /> (<x-bi th="ต้องการ" en="Required" /> ฿{{ number_format($walletPrice) }})
+                                        <a href="{{ route('user.wallet.topup') }}" class="underline font-medium"><x-bi th="เติมเงิน" en="Top up" /></a>
                                     </p>
                                 </div>
                                 @endif
@@ -186,8 +186,8 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="font-semibold text-gray-900">พร้อมเพย์ (PromptPay)</p>
-                                            <p class="text-sm text-gray-500">สแกน QR Code เพื่อชำระเงิน</p>
+                                            <p class="font-semibold text-gray-900"><x-bi th="พร้อมเพย์ (PromptPay)" en="PromptPay" /></p>
+                                            <p class="text-sm text-gray-500"><x-bi th="สแกน QR Code เพื่อชำระเงิน" en="Scan the QR Code to pay" /></p>
                                         </div>
                                     </div>
                                 </label>
@@ -203,8 +203,8 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="font-semibold text-gray-900">โอนเงินธนาคาร</p>
-                                            <p class="text-sm text-gray-500">โอนเงินแล้วแนบสลิป</p>
+                                            <p class="font-semibold text-gray-900"><x-bi th="โอนเงินธนาคาร" en="Bank Transfer" /></p>
+                                            <p class="text-sm text-gray-500"><x-bi th="โอนเงินแล้วแนบสลิป" en="Transfer then attach the slip" /></p>
                                         </div>
                                     </div>
                                 </label>
@@ -213,13 +213,13 @@
 
                         <button type="submit" id="submitBtn"
                                 class="w-full py-4 px-6 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white font-bold text-lg rounded-xl transition-all">
-                            <span id="btn-text-normal">ดำเนินการชำระเงิน ฿{{ number_format($planInfo['price']) }}</span>
-                            <span id="btn-text-wallet" class="hidden">ชำระด้วย Wallet ฿{{ number_format($walletPrice) }}</span>
+                            <span id="btn-text-normal"><x-bi th="ดำเนินการชำระเงิน" en="Proceed to Payment" /> ฿{{ number_format($planInfo['price']) }}</span>
+                            <span id="btn-text-wallet" class="hidden"><x-bi th="ชำระด้วย Wallet" en="Pay with Wallet" /> ฿{{ number_format($walletPrice) }}</span>
                         </button>
 
                         <p class="mt-4 text-sm text-gray-500 text-center">
-                            การดำเนินการต่อถือว่าคุณยอมรับ
-                            <a href="/terms" class="text-cyan-600 hover:underline">ข้อกำหนดการใช้งาน</a>
+                            <x-bi th="การดำเนินการต่อถือว่าคุณยอมรับ" en="By continuing, you agree to the" />
+                            <a href="/terms" class="text-cyan-600 hover:underline"><x-bi th="ข้อกำหนดการใช้งาน" en="Terms of Service" /></a>
                         </p>
                     </form>
                 </div>

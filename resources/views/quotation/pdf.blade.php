@@ -396,15 +396,15 @@
                 <td style="width: 48%; vertical-align: top; padding: 20px; background: #f8fafc; border-radius: 8px;">
                     <div class="info-title">รายละเอียดใบเสนอราคา / Quote Details</div>
                     <div class="info-content">
-                        <strong>วันที่:</strong> {{ $quotation['quote_date'] }}<br>
-                        <strong>ใช้ได้ถึง:</strong> {{ $quotation['valid_until'] }}<br>
+                        <strong>วันที่ / Date:</strong> {{ $quotation['quote_date'] }}<br>
+                        <strong>ใช้ได้ถึง / Valid Until:</strong> {{ $quotation['valid_until'] }}<br>
                         <strong>Timeline:</strong>
                         @if($quotation['timeline'] === 'urgent')
-                            <span style="color: #dc2626;">เร่งด่วน</span>
+                            <span style="color: #dc2626;">เร่งด่วน / Urgent</span>
                         @elseif($quotation['timeline'] === 'normal')
-                            ปกติ (2-3 เดือน)
+                            ปกติ (2-3 เดือน) / Normal (2-3 months)
                         @else
-                            ยืดหยุ่น
+                            ยืดหยุ่น / Flexible
                         @endif
                     </div>
                 </td>
@@ -423,8 +423,8 @@
                 <tr>
                     <th style="width: 5%;">#</th>
                     <th style="width: 60%;">รายการ / Description</th>
-                    <th style="width: 15%;">ประเภท</th>
-                    <th style="width: 20%;">ราคา (บาท)</th>
+                    <th style="width: 15%;">ประเภท / Type</th>
+                    <th style="width: 20%;">ราคา (บาท) / Price (THB)</th>
                 </tr>
             </thead>
             <tbody>
@@ -437,9 +437,9 @@
                     </td>
                     <td>
                         @if($item['type'] === 'service')
-                            <span style="color: #0ea5e9;">บริการหลัก</span>
+                            <span style="color: #0ea5e9;">บริการหลัก / Main</span>
                         @else
-                            <span style="color: #10b981;">เสริม</span>
+                            <span style="color: #10b981;">เสริม / Add-on</span>
                         @endif
                     </td>
                     <td>{{ number_format($item['price'], 2) }}</td>
@@ -451,7 +451,7 @@
         <!-- Project Description -->
         @if($quotation['project_description'])
         <div style="margin-bottom: 25px; padding: 15px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-            <div style="font-weight: bold; color: #1e40af; margin-bottom: 8px;">รายละเอียดโปรเจค</div>
+            <div style="font-weight: bold; color: #1e40af; margin-bottom: 8px;">รายละเอียดโปรเจค / Project Details</div>
             <div style="font-size: 13px; color: #1e3a8a;">{{ $quotation['project_description'] }}</div>
         </div>
         @endif
@@ -461,7 +461,7 @@
         @php $filteredDetails = collect($quotation['option_details'])->filter(fn($v) => !empty($v)); @endphp
         @if($filteredDetails->isNotEmpty())
         <div style="margin-bottom: 25px; padding: 15px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
-            <div style="font-weight: bold; color: #166534; margin-bottom: 10px;">รายละเอียดออฟชั่นเพิ่มเติม</div>
+            <div style="font-weight: bold; color: #166534; margin-bottom: 10px;">รายละเอียดออฟชั่นเพิ่มเติม / Additional Options</div>
             <table style="width: 100%; font-size: 12px; color: #14532d;">
                 @foreach($filteredDetails as $key => $value)
                 @php
@@ -489,13 +489,13 @@
         <div class="summary-section">
             <div class="summary-notes">
                 <div class="notes-box">
-                    <div class="notes-title">หมายเหตุ</div>
+                    <div class="notes-title">หมายเหตุ / Notes</div>
                     <div class="notes-content">
-                        - ราคานี้ยังไม่รวม VAT 7%<br>
-                        - ราคาอาจเปลี่ยนแปลงตามขอบเขตงานจริง<br>
-                        - ใบเสนอราคานี้มีอายุ 30 วัน
+                        - ราคานี้ยังไม่รวม VAT 7% / Prices exclude 7% VAT<br>
+                        - ราคาอาจเปลี่ยนแปลงตามขอบเขตงานจริง / Prices may change based on actual scope of work<br>
+                        - ใบเสนอราคานี้มีอายุ 30 วัน / This quotation is valid for 30 days
                         @if($quotation['discount_percent'] > 0)
-                        <br>- ได้รับส่วนลดพิเศษ {{ $quotation['discount_percent'] }}%
+                        <br>- ได้รับส่วนลดพิเศษ / Special discount applied {{ $quotation['discount_percent'] }}%
                         @endif
                     </div>
                 </div>
@@ -503,23 +503,23 @@
             <div class="summary-totals">
                 <table class="totals-table">
                     <tr>
-                        <td class="label">รวมก่อนส่วนลด</td>
+                        <td class="label">รวมก่อนส่วนลด / Subtotal</td>
                         <td class="value">{{ number_format($quotation['subtotal'], 2) }}</td>
                     </tr>
                     @if($quotation['discount'] > 0)
                     <tr class="discount">
-                        <td class="label">ส่วนลด ({{ $quotation['discount_percent'] }}%)</td>
+                        <td class="label">ส่วนลด / Discount ({{ $quotation['discount_percent'] }}%)</td>
                         <td class="value">-{{ number_format($quotation['discount'], 2) }}</td>
                     </tr>
                     @endif
                     @if($quotation['rush_fee'] > 0)
                     <tr class="rush-fee">
-                        <td class="label">ค่าเร่งด่วน (+25%)</td>
+                        <td class="label">ค่าเร่งด่วน / Rush Fee (+25%)</td>
                         <td class="value">+{{ number_format($quotation['rush_fee'], 2) }}</td>
                     </tr>
                     @endif
                     <tr>
-                        <td class="label">รวมก่อน VAT</td>
+                        <td class="label">รวมก่อน VAT / Total before VAT</td>
                         <td class="value">{{ number_format($quotation['total_before_vat'], 2) }}</td>
                     </tr>
                     <tr>
@@ -527,7 +527,7 @@
                         <td class="value">{{ number_format($quotation['vat'], 2) }}</td>
                     </tr>
                     <tr class="grand-total">
-                        <td>รวมทั้งสิ้น</td>
+                        <td>รวมทั้งสิ้น / Grand Total</td>
                         <td style="text-align: right;">{{ number_format($quotation['grand_total'], 2) }} บาท</td>
                     </tr>
                 </table>
@@ -536,20 +536,20 @@
 
         <!-- Terms -->
         <div class="terms">
-            <div class="terms-title">เงื่อนไขและข้อกำหนด</div>
+            <div class="terms-title">เงื่อนไขและข้อกำหนด / Terms &amp; Conditions</div>
             <ul>
-                <li>ชำระเงินงวดแรก 50% ก่อนเริ่มงาน งวดที่สอง 50% เมื่องานเสร็จสมบูรณ์</li>
-                <li>ระยะเวลาการทำงานเริ่มนับหลังจากได้รับการยืนยันและชำระเงินงวดแรก</li>
-                <li>ลูกค้าจะได้รับการ Revise ไม่เกิน 3 ครั้ง หากเกินจะคิดค่าใช้จ่ายเพิ่มเติม</li>
-                <li>ราคานี้ไม่รวมค่า Hosting, Domain และค่าบริการ Third-party อื่นๆ</li>
-                <li>บริษัทสงวนสิทธิ์ในการเปลี่ยนแปลงราคาหากขอบเขตงานเปลี่ยนแปลง</li>
+                <li>ชำระเงินงวดแรก 50% ก่อนเริ่มงาน งวดที่สอง 50% เมื่องานเสร็จสมบูรณ์ / First installment 50% before starting work, second installment 50% upon completion</li>
+                <li>ระยะเวลาการทำงานเริ่มนับหลังจากได้รับการยืนยันและชำระเงินงวดแรก / The project timeline begins after confirmation and payment of the first installment</li>
+                <li>ลูกค้าจะได้รับการ Revise ไม่เกิน 3 ครั้ง หากเกินจะคิดค่าใช้จ่ายเพิ่มเติม / Up to 3 revisions are included; additional revisions incur extra charges</li>
+                <li>ราคานี้ไม่รวมค่า Hosting, Domain และค่าบริการ Third-party อื่นๆ / Prices exclude Hosting, Domain and other third-party service fees</li>
+                <li>บริษัทสงวนสิทธิ์ในการเปลี่ยนแปลงราคาหากขอบเขตงานเปลี่ยนแปลง / The company reserves the right to change prices if the scope of work changes</li>
             </ul>
         </div>
 
         <!-- Footer -->
         <div class="footer">
             <div class="validity">
-                ใบเสนอราคานี้มีผลถึงวันที่ <strong>{{ $quotation['valid_until'] }}</strong>
+                ใบเสนอราคานี้มีผลถึงวันที่ / This quotation is valid until <strong>{{ $quotation['valid_until'] }}</strong>
             </div>
 
             <table class="signature-section">

@@ -13,9 +13,9 @@
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                ชำระเงิน
+                <x-bi k="common.payment" class="text-white" />
             </h1>
-            <p class="mt-2 text-white/80">ตรวจสอบรายการและยืนยันการสั่งซื้อ</p>
+            <p class="mt-2 text-white/80"><x-bi th="ตรวจสอบรายการและยืนยันการสั่งซื้อ" en="Review your items and confirm your order" /></p>
         </div>
     </div>
 
@@ -40,22 +40,22 @@
                         <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
-                        ข้อมูลผู้สั่งซื้อ
+                        <x-bi th="ข้อมูลผู้สั่งซื้อ" en="Customer Information" />
                     </h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"><x-bi k="common.full_name" /> <span class="text-red-500">*</span></label>
                             <input type="text" name="customer_name" value="{{ old('customer_name', auth()->user()->name ?? '') }}" required
                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">อีเมล <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"><x-bi k="common.email" /> <span class="text-red-500">*</span></label>
                             <input type="email" name="customer_email" value="{{ old('customer_email', auth()->user()->email ?? '') }}" required
                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition">
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">เบอร์โทรศัพท์</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"><x-bi k="common.phone" /></label>
                             <input type="tel" name="customer_phone" value="{{ old('customer_phone') }}"
                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition">
                         </div>
@@ -68,7 +68,7 @@
                         <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                         </svg>
-                        วิธีการชำระเงิน
+                        <x-bi k="common.payment_method" />
                     </h2>
 
                     <div class="space-y-3">
@@ -90,12 +90,12 @@
                                             </div>
                                             <div>
                                                 <span class="font-semibold text-gray-900 dark:text-white">Wallet</span>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400">ชำระด้วยยอดเงินใน Wallet</p>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400"><x-bi th="ชำระด้วยยอดเงินใน Wallet" en="Pay with your wallet balance" /></p>
                                             </div>
                                         </div>
                                         <div class="text-right">
                                             <span class="text-lg font-bold text-purple-600 dark:text-purple-400">฿{{ number_format($wallet->balance, 2) }}</span>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">ยอดคงเหลือ</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="ยอดคงเหลือ" en="Balance" /></p>
                                         </div>
                                     </div>
                                 </div>
@@ -132,7 +132,7 @@
                                                 <span class="font-semibold text-gray-900 dark:text-white">{{ $method['name'] }}</span>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ $method['description'] }}</p>
                                                 @if(!empty($method['fee_display']))
-                                                <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">ค่าธรรมเนียม {{ $method['fee_display'] }}</p>
+                                                <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5"><x-bi th="ค่าธรรมเนียม" en="Fee" /> {{ $method['fee_display'] }}</p>
                                                 @endif
                                             </div>
                                         </div>
@@ -150,9 +150,9 @@
                         <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
-                        หมายเหตุ
+                        <x-bi th="หมายเหตุ" en="Notes" />
                     </h2>
-                    <textarea name="notes" rows="3" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"
+                    <textarea name="notes" rows="3" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี) / Additional notes (optional)"
                               class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition">{{ old('notes') }}</textarea>
                 </div>
             </div>
@@ -164,7 +164,7 @@
                         <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        รายการสั่งซื้อ
+                        <x-bi th="รายการสั่งซื้อ" en="Order Summary" />
                     </h2>
 
                     <!-- Cart Items -->
@@ -186,7 +186,7 @@
                             <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                             </svg>
-                            โค้ดส่วนลด
+                            <x-bi th="โค้ดส่วนลด" en="Discount Code" />
                         </label>
 
                         @if($appliedCoupon ?? false)
@@ -209,11 +209,11 @@
                         @else
                             <!-- Coupon Input -->
                             <div class="flex gap-2">
-                                <input type="text" id="couponInput" placeholder="ใส่โค้ดส่วนลด"
+                                <input type="text" id="couponInput" placeholder="ใส่โค้ดส่วนลด / Enter discount code"
                                        class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:bg-gray-700 dark:text-white uppercase">
                                 <button type="button" onclick="applyCoupon()"
                                         class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 text-sm font-medium transition">
-                                    ใช้
+                                    <x-bi th="ใช้" en="Apply" />
                                 </button>
                             </div>
                             <p id="couponError" class="mt-2 text-sm text-red-500 hidden"></p>
@@ -232,7 +232,7 @@
 
                     <div class="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-500 dark:text-gray-400">ยอดสินค้า</span>
+                            <span class="text-gray-500 dark:text-gray-400"><x-bi k="common.subtotal" /></span>
                             <span class="text-gray-700 dark:text-gray-300">฿{{ number_format($subtotal, 2) }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
@@ -245,13 +245,13 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                                 </svg>
-                                ส่วนลด
+                                <x-bi k="common.discount" />
                             </span>
                             <span class="text-green-600 dark:text-green-400 font-semibold">-฿{{ number_format($discount, 2) }}</span>
                         </div>
                         @endif
                         <div class="flex justify-between text-xl font-bold text-gray-900 dark:text-white pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <span>ยอดรวมทั้งหมด</span>
+                            <span><x-bi k="common.total" /></span>
                             <span class="text-primary-600 dark:text-primary-400" id="totalAmount">฿{{ number_format($total, 2) }}</span>
                         </div>
                     </div>
@@ -264,10 +264,10 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                     </svg>
-                                    ยอด Wallet ไม่เพียงพอ
+                                    <x-bi th="ยอด Wallet ไม่เพียงพอ" en="Insufficient wallet balance" />
                                 </p>
                                 <a href="{{ route('user.wallet.topup') }}" class="mt-2 inline-block text-sm text-red-700 dark:text-red-300 underline hover:no-underline">
-                                    เติมเงิน Wallet →
+                                    <x-bi th="เติมเงิน Wallet" en="Top up wallet" /> →
                                 </a>
                             </div>
                         @endif
@@ -282,13 +282,13 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            ยืนยันสั่งซื้อ
+                            <x-bi th="ยืนยันสั่งซื้อ" en="Confirm Order" />
                         </span>
                     </button>
 
                     <p class="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
-                        เมื่อกดยืนยัน ถือว่าคุณยอมรับ
-                        <a href="{{ route('terms') }}" class="text-primary-600 hover:underline">ข้อตกลงและเงื่อนไข</a>
+                        <x-bi th="เมื่อกดยืนยัน ถือว่าคุณยอมรับ" en="By confirming, you agree to our" />
+                        <a href="{{ route('terms') }}" class="text-primary-600 hover:underline"><x-bi th="ข้อตกลงและเงื่อนไข" en="Terms & Conditions" /></a>
                     </p>
                 </div>
             </div>
@@ -352,7 +352,7 @@ function applyCoupon() {
     const successEl = document.getElementById('couponSuccess');
 
     if (!code) {
-        errorEl.textContent = 'กรุณาใส่โค้ดส่วนลด';
+        errorEl.textContent = 'กรุณาใส่โค้ดส่วนลด / Please enter a discount code';
         errorEl.classList.remove('hidden');
         successEl.classList.add('hidden');
         return;

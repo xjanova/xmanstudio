@@ -2,7 +2,7 @@
 
 @section('title', 'Tping Data Profiles')
 @section('page-title', 'Tping Data Profiles')
-@section('page-description', 'จัดการ Data Profile ที่ซิงค์จากแอพ Tping')
+@section('page-description')<x-bi th="จัดการ Data Profile ที่ซิงค์จากแอพ Tping" en="Manage Data Profiles synced from the Tping app" />@endsection
 
 @section('content')
 <!-- Tabs -->
@@ -32,11 +32,11 @@
                 </div>
                 Tping Data Profiles
             </h1>
-            <p class="mt-2 text-white/80 text-sm sm:text-base">จัดการข้อมูลที่ซิงค์จากแอพ Tping ของคุณ</p>
+            <p class="mt-2 text-white/80 text-sm sm:text-base"><x-bi th="จัดการข้อมูลที่ซิงค์จากแอพ Tping ของคุณ" en="Manage your data synced from the Tping app" /></p>
         </div>
         <div class="flex items-center gap-2">
             <div class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white text-sm font-medium">
-                <span class="opacity-80">รวม</span>
+                <span class="opacity-80"><x-bi th="รวม" en="Total" /></span>
                 <span class="ml-1 text-lg font-bold">{{ $stats['total'] }}</span>
                 <span class="opacity-80 ml-1">profile</span>
             </div>
@@ -58,7 +58,7 @@
     <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 border border-gray-100">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">Profile ทั้งหมด</p>
+                <p class="text-sm font-medium text-gray-500"><x-bi th="Profile ทั้งหมด" en="Total Profiles" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{{ $stats['total'] }}</p>
             </div>
             <div class="p-3 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
@@ -72,7 +72,7 @@
     <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 border border-gray-100">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500">หมวดหมู่</p>
+                <p class="text-sm font-medium text-gray-500"><x-bi th="หมวดหมู่" en="Categories" /></p>
                 <p class="text-2xl sm:text-3xl font-bold text-amber-600 mt-1">{{ $stats['categories'] }}</p>
             </div>
             <div class="p-3 bg-gradient-to-br from-amber-400 to-orange-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
@@ -102,23 +102,23 @@
 <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6 border border-gray-100">
     <form method="GET" class="flex flex-col sm:flex-row gap-3">
         <div class="flex-1">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="ค้นหา profile..."
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="ค้นหา profile... / Search profiles..."
                    class="w-full rounded-xl border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
         </div>
         @if(count($categories) > 0)
         <select name="category" class="rounded-xl border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
-            <option value="">ทุกหมวดหมู่</option>
+            <option value="">ทุกหมวดหมู่ / All categories</option>
             @foreach($categories as $cat)
                 <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
             @endforeach
         </select>
         @endif
         <button type="submit" class="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all">
-            ค้นหา
+            <x-bi th="ค้นหา" en="Search" />
         </button>
         @if(request('search') || request('category'))
         <a href="{{ route('customer.tping.data-profiles.index') }}" class="px-6 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-all text-center">
-            ล้าง
+            <x-bi th="ล้าง" en="Clear" />
         </a>
         @endif
     </form>
@@ -131,19 +131,19 @@
             <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
             </svg>
-            <p class="text-gray-500 text-lg font-medium">ยังไม่มี Data Profile</p>
-            <p class="text-gray-400 text-sm mt-1">ซิงค์ข้อมูลจากแอพ Tping เพื่อดูที่นี่</p>
+            <p class="text-gray-500 text-lg font-medium"><x-bi th="ยังไม่มี Data Profile" en="No Data Profiles yet" /></p>
+            <p class="text-gray-400 text-sm mt-1"><x-bi th="ซิงค์ข้อมูลจากแอพ Tping เพื่อดูที่นี่" en="Sync data from the Tping app to see it here" /></p>
         </div>
     @else
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
-                        <th class="px-6 py-4 text-left font-semibold text-gray-600">ชื่อ</th>
-                        <th class="px-6 py-4 text-left font-semibold text-gray-600">หมวดหมู่</th>
-                        <th class="px-6 py-4 text-center font-semibold text-gray-600">ข้อมูล</th>
-                        <th class="px-6 py-4 text-left font-semibold text-gray-600">อัปเดต</th>
-                        <th class="px-6 py-4 text-center font-semibold text-gray-600">จัดการ</th>
+                        <th class="px-6 py-4 text-left font-semibold text-gray-600"><x-bi th="ชื่อ" en="Name" /></th>
+                        <th class="px-6 py-4 text-left font-semibold text-gray-600"><x-bi th="หมวดหมู่" en="Category" /></th>
+                        <th class="px-6 py-4 text-center font-semibold text-gray-600"><x-bi th="ข้อมูล" en="Fields" /></th>
+                        <th class="px-6 py-4 text-left font-semibold text-gray-600"><x-bi th="อัปเดต" en="Updated" /></th>
+                        <th class="px-6 py-4 text-center font-semibold text-gray-600"><x-bi th="จัดการ" en="Manage" /></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -176,15 +176,15 @@
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-1">
-                                    <a href="{{ route('customer.tping.data-profiles.show', $profile) }}" class="p-2 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-all" title="ดูรายละเอียด">
+                                    <a href="{{ route('customer.tping.data-profiles.show', $profile) }}" class="p-2 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-all" title="ดูรายละเอียด / View details">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </a>
-                                    <a href="{{ route('customer.tping.data-profiles.edit', $profile) }}" class="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-all" title="แก้ไข">
+                                    <a href="{{ route('customer.tping.data-profiles.edit', $profile) }}" class="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-all" title="แก้ไข / Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </a>
-                                    <form method="POST" action="{{ route('customer.tping.data-profiles.destroy', $profile) }}" onsubmit="return confirm('ลบ profile นี้?')" class="inline">
+                                    <form method="POST" action="{{ route('customer.tping.data-profiles.destroy', $profile) }}" onsubmit="return confirm('ลบ profile นี้? / Delete this profile?')" class="inline">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all" title="ลบ">
+                                        <button type="submit" class="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all" title="ลบ / Delete">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </button>
                                     </form>

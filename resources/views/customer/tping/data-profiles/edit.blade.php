@@ -1,26 +1,26 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'แก้ไข ' . $profile->name)
-@section('page-title', 'แก้ไข Data Profile')
+@section('page-title')<x-bi th="แก้ไข Data Profile" en="Edit Data Profile" />@endsection
 
 @section('content')
 <!-- Back Link -->
 <div class="mb-6">
     <a href="{{ route('customer.tping.data-profiles.show', $profile) }}" class="inline-flex items-center text-sm text-gray-500 hover:text-emerald-600 transition-colors">
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        กลับไปรายละเอียด
+        <x-bi th="กลับไปรายละเอียด" en="Back to details" />
     </a>
 </div>
 
 <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 max-w-3xl">
-    <h2 class="text-xl font-bold text-gray-900 mb-6">แก้ไข Data Profile</h2>
+    <h2 class="text-xl font-bold text-gray-900 mb-6"><x-bi th="แก้ไข Data Profile" en="Edit Data Profile" /></h2>
 
     <form method="POST" action="{{ route('customer.tping.data-profiles.update', $profile) }}" class="space-y-5" id="profileForm">
         @csrf
         @method('PUT')
 
         <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">ชื่อ Profile</label>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1"><x-bi th="ชื่อ Profile" en="Profile Name" /></label>
             <input type="text" name="name" id="name" value="{{ old('name', $profile->name) }}" required
                    class="w-full rounded-xl border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
             @error('name')
@@ -29,18 +29,18 @@
         </div>
 
         <div>
-            <label for="category" class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
+            <label for="category" class="block text-sm font-medium text-gray-700 mb-1"><x-bi th="หมวดหมู่" en="Category" /></label>
             <input type="text" name="category" id="category" value="{{ old('category', $profile->category) }}"
                    class="w-full rounded-xl border-gray-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                   placeholder="เช่น ข้อมูลส่วนตัว, ที่อยู่">
+                   placeholder="เช่น ข้อมูลส่วนตัว, ที่อยู่ / e.g. Personal Info, Address">
         </div>
 
         <!-- Dynamic Fields -->
         <div>
             <div class="flex items-center justify-between mb-3">
-                <label class="block text-sm font-medium text-gray-700">ข้อมูล (Fields)</label>
+                <label class="block text-sm font-medium text-gray-700"><x-bi th="ข้อมูล (Fields)" en="Data (Fields)" /></label>
                 <button type="button" onclick="addField()" class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-medium hover:bg-emerald-100 transition-all">
-                    + เพิ่ม Field
+                    + <x-bi th="เพิ่ม Field" en="Add Field" />
                 </button>
             </div>
             <div id="fieldsContainer" class="space-y-2">
@@ -55,17 +55,17 @@
                         </button>
                     </div>
                 @empty
-                    <p class="text-gray-400 text-sm text-center py-4" id="emptyMessage">ไม่มีข้อมูล กดเพิ่ม Field เพื่อเริ่ม</p>
+                    <p class="text-gray-400 text-sm text-center py-4" id="emptyMessage"><x-bi th="ไม่มีข้อมูล กดเพิ่ม Field เพื่อเริ่ม" en="No data yet. Click Add Field to start." /></p>
                 @endforelse
             </div>
         </div>
 
         <div class="flex items-center gap-3 pt-2">
             <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all">
-                บันทึกการเปลี่ยนแปลง
+                <x-bi th="บันทึกการเปลี่ยนแปลง" en="Save Changes" />
             </button>
             <a href="{{ route('customer.tping.data-profiles.show', $profile) }}" class="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-all">
-                ยกเลิก
+                <x-bi k="common.cancel" />
             </a>
         </div>
     </form>

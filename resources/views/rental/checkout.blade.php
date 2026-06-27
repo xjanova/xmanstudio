@@ -8,9 +8,9 @@
         <!-- Breadcrumb -->
         <nav class="mb-8">
             <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                <li><a href="{{ route('rental.index') }}" class="hover:text-primary-600">แพ็กเกจ</a></li>
+                <li><a href="{{ route('rental.index') }}" class="hover:text-primary-600"><x-bi th="แพ็กเกจ" en="Packages" /></a></li>
                 <li><span>/</span></li>
-                <li class="text-gray-900">ชำระเงิน</li>
+                <li class="text-gray-900"><x-bi th="ชำระเงิน" en="Payment" /></li>
             </ol>
         </nav>
 
@@ -24,7 +24,7 @@
             <div class="md:flex">
                 <!-- Order Summary -->
                 <div class="md:w-1/3 bg-gray-50 p-8">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-6">สรุปคำสั่งซื้อ</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-6"><x-bi k="common.order_summary" /></h2>
 
                     <div class="space-y-4">
                         <div>
@@ -34,26 +34,26 @@
 
                         <div class="pt-4 border-t border-gray-200">
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">ราคาปกติ</span>
+                                <span class="text-gray-600"><x-bi th="ราคาปกติ" en="Regular price" /></span>
                                 <span class="text-gray-900">฿{{ number_format($package->original_price ?? $package->price) }}</span>
                             </div>
 
                             @if($package->original_price && $package->original_price > $package->price)
                                 <div class="flex justify-between text-sm mt-2">
-                                    <span class="text-gray-600">ส่วนลด</span>
+                                    <span class="text-gray-600"><x-bi k="common.discount" /></span>
                                     <span class="text-red-600">-฿{{ number_format($package->original_price - $package->price) }}</span>
                                 </div>
                             @endif
 
                             <div id="promoDiscount" class="flex justify-between text-sm mt-2 hidden">
-                                <span class="text-gray-600">โค้ดส่วนลด</span>
+                                <span class="text-gray-600"><x-bi th="โค้ดส่วนลด" en="Promo code" /></span>
                                 <span class="text-red-600" id="promoDiscountAmount"></span>
                             </div>
                         </div>
 
                         <div class="pt-4 border-t border-gray-200">
                             <div class="flex justify-between">
-                                <span class="font-semibold text-gray-900">รวมทั้งสิ้น</span>
+                                <span class="font-semibold text-gray-900"><x-bi th="รวมทั้งสิ้น" en="Total" /></span>
                                 <span class="text-2xl font-bold text-primary-600" id="totalAmount">฿{{ number_format($package->price) }}</span>
                             </div>
                         </div>
@@ -61,14 +61,14 @@
 
                     <!-- Promo Code -->
                     <div class="mt-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">มีโค้ดส่วนลด?</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><x-bi th="มีโค้ดส่วนลด?" en="Have a promo code?" /></label>
                         <div class="flex space-x-2">
                             <input type="text" id="promoCode"
                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                                   placeholder="กรอกโค้ด">
+                                   placeholder="กรอกโค้ด / Enter code">
                             <button type="button" onclick="applyPromoCode()"
                                     class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                                ใช้
+                                <x-bi th="ใช้" en="Apply" />
                             </button>
                         </div>
                         <p id="promoMessage" class="mt-2 text-sm hidden"></p>
@@ -77,7 +77,7 @@
 
                 <!-- Payment Methods -->
                 <div class="md:w-2/3 p-8">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-6">เลือกวิธีชำระเงิน</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-6"><x-bi th="เลือกวิธีชำระเงิน" en="Select payment method" /></h2>
 
                     <form action="{{ route('rental.process') }}" method="POST" id="checkoutForm">
                         @csrf
@@ -95,8 +95,8 @@
                                         </svg>
                                     </div>
                                     <div class="ml-4">
-                                        <p class="font-semibold text-gray-900">พร้อมเพย์ (PromptPay)</p>
-                                        <p class="text-sm text-gray-500">สแกน QR Code เพื่อชำระเงิน</p>
+                                        <p class="font-semibold text-gray-900"><x-bi th="พร้อมเพย์" en="PromptPay" /></p>
+                                        <p class="text-sm text-gray-500"><x-bi th="สแกน QR Code เพื่อชำระเงิน" en="Scan QR code to pay" /></p>
                                     </div>
                                 </div>
                             </label>
@@ -111,8 +111,8 @@
                                         </svg>
                                     </div>
                                     <div class="ml-4">
-                                        <p class="font-semibold text-gray-900">โอนเงินธนาคาร</p>
-                                        <p class="text-sm text-gray-500">โอนเงินแล้วแนบสลิป</p>
+                                        <p class="font-semibold text-gray-900"><x-bi th="โอนเงินธนาคาร" en="Bank transfer" /></p>
+                                        <p class="text-sm text-gray-500"><x-bi th="โอนเงินแล้วแนบสลิป" en="Transfer then attach the slip" /></p>
                                     </div>
                                 </div>
                             </label>
@@ -128,7 +128,7 @@
                                             </svg>
                                         </div>
                                         <div class="ml-4">
-                                            <p class="font-semibold text-gray-900">บัตรเครดิต/เดบิต</p>
+                                            <p class="font-semibold text-gray-900"><x-bi th="บัตรเครดิต/เดบิต" en="Credit/Debit card" /></p>
                                             <p class="text-sm text-gray-500">Visa, Mastercard, JCB</p>
                                         </div>
                                     </div>
@@ -152,9 +152,9 @@
                                         </div>
                                         <div class="ml-4">
                                             <p class="font-semibold text-gray-900">Stripe</p>
-                                            <p class="text-sm text-gray-500">บัตรเครดิต/เดบิต และวิธีอื่นๆ</p>
+                                            <p class="text-sm text-gray-500"><x-bi th="บัตรเครดิต/เดบิต และวิธีอื่นๆ" en="Credit/Debit cards and more" /></p>
                                             @if($stripeFeeDisplay)
-                                            <p class="text-xs text-amber-600 mt-0.5">ค่าธรรมเนียม {{ $stripeFeeDisplay }}</p>
+                                            <p class="text-xs text-amber-600 mt-0.5"><x-bi th="ค่าธรรมเนียม" en="Fee" /> {{ $stripeFeeDisplay }}</p>
                                             @endif
                                         </div>
                                     </div>
@@ -165,15 +165,15 @@
                         <div class="mt-8">
                             <button type="submit"
                                     class="w-full py-4 px-6 rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors font-semibold text-lg">
-                                ดำเนินการชำระเงิน
+                                <x-bi k="common.proceed_to_payment" />
                             </button>
                         </div>
 
                         <p class="mt-4 text-sm text-gray-500 text-center">
-                            การดำเนินการต่อถือว่าคุณยอมรับ
-                            <a href="/terms" class="text-primary-600 hover:underline">ข้อกำหนดการใช้งาน</a>
-                            และ
-                            <a href="/privacy" class="text-primary-600 hover:underline">นโยบายความเป็นส่วนตัว</a>
+                            <x-bi th="การดำเนินการต่อถือว่าคุณยอมรับ" en="By continuing, you agree to our" />
+                            <a href="/terms" class="text-primary-600 hover:underline"><x-bi th="ข้อกำหนดการใช้งาน" en="Terms of Service" /></a>
+                            <x-bi th="และ" en="and" />
+                            <a href="/privacy" class="text-primary-600 hover:underline"><x-bi th="นโยบายความเป็นส่วนตัว" en="Privacy Policy" /></a>
                         </p>
                     </form>
                 </div>

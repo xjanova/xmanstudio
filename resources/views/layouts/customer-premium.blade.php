@@ -290,12 +290,12 @@
                         </div>
                     @endif
                 </a>
-                <p class="text-sm text-indigo-400/60 mt-2">ศูนย์จัดการบัญชีสมาชิก</p>
+                <p class="text-sm text-indigo-400/60 mt-2"><x-bi th="ศูนย์จัดการบัญชีสมาชิก" en="Member Account Center" /></p>
             </div>
 
             <!-- Navigation -->
             <nav class="flex-1 p-4 space-y-1 overflow-y-auto premium-scrollbar">
-                <p class="px-4 py-2 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider">เมนูหลัก</p>
+                <p class="px-4 py-2 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider"><x-bi th="เมนูหลัก" en="Main Menu" /></p>
 
                 <a href="{{ route('customer.dashboard') }}"
                    class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.dashboard') ? 'active bg-white/10' : '' }}">
@@ -304,7 +304,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">แดชบอร์ด</span>
+                    <span class="text-indigo-100"><x-bi k="common.dashboard" /></span>
                 </a>
 
                 <a href="{{ route('customer.licenses') }}"
@@ -314,7 +314,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ใบอนุญาต</span>
+                    <span class="text-indigo-100"><x-bi th="ใบอนุญาต" en="Licenses" /></span>
                 </a>
 
                 <a href="{{ route('customer.subscriptions') }}"
@@ -324,7 +324,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">การสมัครสมาชิก</span>
+                    <span class="text-indigo-100"><x-bi th="การสมัครสมาชิก" en="Subscriptions" /></span>
                 </a>
 
                 <a href="{{ route('user.wallet.index') }}"
@@ -334,10 +334,10 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">กระเป๋าเงิน</span>
+                    <span class="text-indigo-100"><x-bi k="common.wallet" /></span>
                 </a>
 
-                <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider">ธุรกรรม</p>
+                <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider"><x-bi th="ธุรกรรม" en="Transactions" /></p>
 
                 <a href="{{ route('customer.orders') }}"
                    class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.orders*') ? 'active bg-white/10' : '' }}">
@@ -346,7 +346,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">คำสั่งซื้อ</span>
+                    <span class="text-indigo-100"><x-bi th="คำสั่งซื้อ" en="Orders" /></span>
                 </a>
 
                 <a href="{{ route('customer.invoices') }}"
@@ -356,7 +356,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ใบแจ้งหนี้</span>
+                    <span class="text-indigo-100"><x-bi th="ใบแจ้งหนี้" en="Invoices" /></span>
                 </a>
 
                 <a href="{{ route('customer.downloads') }}"
@@ -366,7 +366,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ดาวน์โหลด</span>
+                    <span class="text-indigo-100"><x-bi k="common.download" /></span>
                 </a>
 
                 <a href="{{ route('customer.projects') }}"
@@ -376,7 +376,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">โครงการของฉัน</span>
+                    <span class="text-indigo-100"><x-bi th="โครงการของฉัน" en="My Projects" /></span>
                 </a>
 
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider">My Cloud</p>
@@ -391,7 +391,7 @@
                     <span class="text-indigo-100">TPING</span>
                 </a>
 
-                <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider">รายได้</p>
+                <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider"><x-bi th="รายได้" en="Earnings" /></p>
 
                 <a href="{{ route('customer.affiliate.dashboard') }}"
                    class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.affiliate.dashboard') || request()->routeIs('customer.affiliate.commissions') ? 'active bg-white/10' : '' }}">
@@ -409,10 +409,10 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ลูกทีม</span>
+                    <span class="text-indigo-100"><x-bi th="ลูกทีม" en="Downline" /></span>
                 </a>
 
-                <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider">ช่วยเหลือ</p>
+                <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider"><x-bi th="ช่วยเหลือ" en="Help" /></p>
 
                 <a href="{{ route('customer.support.index') }}"
                    class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.support*') ? 'active bg-white/10' : '' }}">
@@ -421,7 +421,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ติดต่อสนับสนุน</span>
+                    <span class="text-indigo-100"><x-bi th="ติดต่อสนับสนุน" en="Contact Support" /></span>
                 </a>
 
                 <a href="{{ route('profile.edit') }}"
@@ -431,7 +431,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">โปรไฟล์</span>
+                    <span class="text-indigo-100"><x-bi k="common.profile" /></span>
                 </a>
 
                 <a href="{{ route('customer.settings.theme') }}"
@@ -441,7 +441,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ธีม</span>
+                    <span class="text-indigo-100"><x-bi th="ธีม" en="Theme" /></span>
                 </a>
             </nav>
 
@@ -460,7 +460,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-xs text-emerald-400/70">ยอดเงินคงเหลือ</p>
+                                <p class="text-xs text-emerald-400/70"><x-bi th="ยอดเงินคงเหลือ" en="Balance" /></p>
                                 <p class="text-lg font-bold text-emerald-300 group-hover:text-emerald-200">฿{{ number_format($sidebarBalance, 2) }}</p>
                             </div>
                         </div>
@@ -490,7 +490,7 @@
                     </div>
                     <form action="{{ route('logout') }}" method="POST" class="ml-2">
                         @csrf
-                        <button type="submit" class="p-2 text-indigo-300/60 hover:text-red-400 transition-colors" title="ออกจากระบบ">
+                        <button type="submit" class="p-2 text-indigo-300/60 hover:text-red-400 transition-colors" title="ออกจากระบบ / Logout">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
@@ -513,7 +513,7 @@
                             </svg>
                         </button>
                         <div>
-                            <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">@yield('page-title', 'แดชบอร์ด')</h1>
+                            <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">@yield('page-title', 'แดชบอร์ด / Dashboard')</h1>
                             <p class="text-sm text-indigo-300/60 hidden sm:block">@yield('page-description', '')</p>
                         </div>
                     </div>
@@ -525,7 +525,7 @@
                                 $userWallet = \App\Models\Wallet::where('user_id', auth()->id())->first();
                                 $walletBalance = $userWallet ? $userWallet->balance : 0;
                             @endphp
-                            <a href="{{ route('user.wallet.index') }}" class="flex items-center px-3 py-2 text-sm font-medium bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 border border-emerald-500/30 rounded-lg transition-all group" title="กระเป๋าเงิน">
+                            <a href="{{ route('user.wallet.index') }}" class="flex items-center px-3 py-2 text-sm font-medium bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 border border-emerald-500/30 rounded-lg transition-all group" title="{{ bi('common.wallet') }}">
                                 <svg class="w-4 h-4 text-emerald-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                 </svg>
@@ -533,7 +533,7 @@
                             </a>
                         @endauth
 
-                        <a href="/" class="p-2 text-indigo-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="หน้าแรก">
+                        <a href="/" class="p-2 text-indigo-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="{{ bi('common.home') }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                             </svg>
@@ -542,7 +542,7 @@
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            ขอความช่วยเหลือ
+                            <x-bi th="ขอความช่วยเหลือ" en="Get Help" />
                         </a>
                     </div>
                 </div>
@@ -584,13 +584,13 @@
             <footer class="bg-gray-900/50 border-t border-indigo-500/20 py-3 px-6 flex-shrink-0">
                 <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-indigo-300/60">
                     <div class="flex items-center space-x-2">
-                        <span>&copy; {{ date('Y') }} XMAN Studio. สงวนลิขสิทธิ์</span>
+                        <span>&copy; {{ date('Y') }} XMAN Studio. <x-bi th="สงวนลิขสิทธิ์" en="All rights reserved" /></span>
                         <span class="hidden sm:inline">|</span>
                         <span class="hidden sm:inline">MIT License</span>
                     </div>
                     <div class="flex items-center space-x-4 mt-1 sm:mt-0">
                         <span class="text-indigo-400/50">Version {{ trim(file_get_contents(base_path('VERSION'))) }}</span>
-                        <a href="{{ route('customer.support.create') }}" class="hover:text-indigo-200 transition-colors">ติดต่อเรา</a>
+                        <a href="{{ route('customer.support.create') }}" class="hover:text-indigo-200 transition-colors"><x-bi th="ติดต่อเรา" en="Contact Us" /></a>
                     </div>
                 </div>
             </footer>
@@ -640,7 +640,7 @@
                         <svg class="w-5 h-5 text-emerald-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                         </svg>
-                        <span class="text-xs text-emerald-400/70">ยอดเงิน:</span>
+                        <span class="text-xs text-emerald-400/70"><x-bi th="ยอดเงิน" en="Balance" />:</span>
                     </div>
                     <span class="text-emerald-300 font-bold">฿{{ number_format($mobileBalance, 2) }}</span>
                 </a>
@@ -654,7 +654,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">แดชบอร์ด</span>
+                    <span class="text-indigo-100"><x-bi k="common.dashboard" /></span>
                 </a>
 
                 <a href="{{ route('customer.licenses') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.licenses*') ? 'active bg-white/10' : '' }}">
@@ -663,7 +663,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ใบอนุญาต</span>
+                    <span class="text-indigo-100"><x-bi th="ใบอนุญาต" en="Licenses" /></span>
                 </a>
 
                 <a href="{{ route('customer.subscriptions') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.subscriptions*') ? 'active bg-white/10' : '' }}">
@@ -672,7 +672,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">การสมัครสมาชิก</span>
+                    <span class="text-indigo-100"><x-bi th="การสมัครสมาชิก" en="Subscriptions" /></span>
                 </a>
 
                 <a href="{{ route('user.wallet.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('user.wallet*') ? 'active bg-white/10' : '' }}">
@@ -681,11 +681,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">กระเป๋าเงิน</span>
+                    <span class="text-indigo-100"><x-bi k="common.wallet" /></span>
                 </a>
 
                 <div class="pt-2 pb-1">
-                    <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase">ธุรกรรม</p>
+                    <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase"><x-bi th="ธุรกรรม" en="Transactions" /></p>
                 </div>
 
                 <a href="{{ route('customer.orders') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.orders*') ? 'active bg-white/10' : '' }}">
@@ -694,7 +694,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">คำสั่งซื้อ</span>
+                    <span class="text-indigo-100"><x-bi th="คำสั่งซื้อ" en="Orders" /></span>
                 </a>
 
                 <a href="{{ route('customer.invoices') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.invoices') ? 'active bg-white/10' : '' }}">
@@ -703,7 +703,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ใบแจ้งหนี้</span>
+                    <span class="text-indigo-100"><x-bi th="ใบแจ้งหนี้" en="Invoices" /></span>
                 </a>
 
                 <a href="{{ route('customer.downloads') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.downloads') ? 'active bg-white/10' : '' }}">
@@ -712,7 +712,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ดาวน์โหลด</span>
+                    <span class="text-indigo-100"><x-bi k="common.download" /></span>
                 </a>
 
                 <a href="{{ route('customer.projects') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.projects*') ? 'active bg-white/10' : '' }}">
@@ -721,7 +721,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">โครงการของฉัน</span>
+                    <span class="text-indigo-100"><x-bi th="โครงการของฉัน" en="My Projects" /></span>
                 </a>
 
                 <div class="pt-2 pb-1">
@@ -738,7 +738,7 @@
                 </a>
 
                 <div class="pt-2 pb-1">
-                    <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase">รายได้</p>
+                    <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase"><x-bi th="รายได้" en="Earnings" /></p>
                 </div>
 
                 <a href="{{ route('customer.affiliate.dashboard') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.affiliate.dashboard') || request()->routeIs('customer.affiliate.commissions') ? 'active bg-white\10' : '' }}">
@@ -755,11 +755,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ลูกทีม</span>
+                    <span class="text-indigo-100"><x-bi th="ลูกทีม" en="Downline" /></span>
                 </a>
 
                 <div class="pt-2 pb-1">
-                    <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase">ช่วยเหลือ</p>
+                    <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase"><x-bi th="ช่วยเหลือ" en="Help" /></p>
                 </div>
 
                 <a href="{{ route('customer.support.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.support*') ? 'active bg-white/10' : '' }}">
@@ -768,7 +768,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ติดต่อสนับสนุน</span>
+                    <span class="text-indigo-100"><x-bi th="ติดต่อสนับสนุน" en="Contact Support" /></span>
                 </a>
 
                 <a href="{{ route('profile.edit') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('profile.*') ? 'active bg-white/10' : '' }}">
@@ -777,7 +777,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">โปรไฟล์</span>
+                    <span class="text-indigo-100"><x-bi k="common.profile" /></span>
                 </a>
                 <a href="{{ route('customer.settings.theme') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.settings.theme*') ? 'active bg-white/10' : '' }}">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center mr-3 shadow-lg">
@@ -785,7 +785,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
                         </svg>
                     </div>
-                    <span class="text-indigo-100">ธีม</span>
+                    <span class="text-indigo-100"><x-bi th="ธีม" en="Theme" /></span>
                 </a>
             </nav>
 
@@ -797,7 +797,7 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                         </svg>
-                        ออกจากระบบ
+                        <x-bi k="common.logout" />
                     </button>
                 </form>
             </div>
@@ -841,11 +841,11 @@
         }
 
         // Copy to Clipboard with Toast
-        function copyToClipboard(text, successMessage = 'คัดลอกเรียบร้อยแล้ว!') {
+        function copyToClipboard(text, successMessage = 'คัดลอกเรียบร้อยแล้ว! / Copied!') {
             navigator.clipboard.writeText(text).then(function() {
                 showToast(successMessage, 'success');
             }).catch(function() {
-                showToast('ไม่สามารถคัดลอกได้', 'error');
+                showToast('ไม่สามารถคัดลอกได้ / Unable to copy', 'error');
             });
         }
 

@@ -1,7 +1,7 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'รายละเอียดการสมัคร - ' . ($rental->rentalPackage->display_name ?? 'Subscription'))
-@section('page-title', 'รายละเอียดการสมัคร')
+@section('page-title', 'รายละเอียดการสมัคร / Subscription Details')
 
 @push('styles')
 <style>
@@ -28,7 +28,7 @@
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
-        กลับไปรายการสมัครสมาชิก
+        <x-bi th="กลับไปรายการสมัครสมาชิก" en="Back to subscriptions" />
     </a>
 </div>
 
@@ -46,11 +46,11 @@
                     'suspended' => 'from-orange-500 via-red-500 to-rose-500',
                 ];
                 $statusLabels = [
-                    'active' => 'ใช้งานอยู่',
-                    'pending' => 'รอชำระเงิน',
-                    'expired' => 'หมดอายุ',
-                    'cancelled' => 'ยกเลิกแล้ว',
-                    'suspended' => 'ระงับชั่วคราว',
+                    'active' => 'ใช้งานอยู่ / Active',
+                    'pending' => 'รอชำระเงิน / Pending Payment',
+                    'expired' => 'หมดอายุ / Expired',
+                    'cancelled' => 'ยกเลิกแล้ว / Cancelled',
+                    'suspended' => 'ระงับชั่วคราว / Suspended',
                 ];
             @endphp
             <div class="relative overflow-hidden bg-gradient-to-r {{ $headerGradients[$rental->status] ?? 'from-blue-600 via-cyan-600 to-teal-600' }} p-6">
@@ -72,23 +72,23 @@
                 <!-- Subscription Details Grid -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">แพ็คเกจ</label>
+                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi th="แพ็คเกจ" en="Package" /></label>
                         <p class="text-gray-900 dark:text-white font-medium">{{ $rental->rentalPackage->display_name ?? '-' }}</p>
                     </div>
 
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">ราคา</label>
+                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi k="common.price" /></label>
                         <p class="text-gray-900 dark:text-white font-medium">฿{{ number_format($rental->rentalPackage->price ?? 0) }}</p>
                         <span class="text-xs text-gray-500 dark:text-gray-400">{{ $rental->rentalPackage->duration_text ?? '' }}</span>
                     </div>
 
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">วันที่เริ่มใช้งาน</label>
+                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi th="วันที่เริ่มใช้งาน" en="Start Date" /></label>
                         <p class="text-gray-900 dark:text-white font-medium">{{ $rental->starts_at?->format('d/m/Y H:i') ?? '-' }}</p>
                     </div>
 
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">วันหมดอายุ</label>
+                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi th="วันหมดอายุ" en="Expiry Date" /></label>
                         @if($rental->expires_at)
                             <p class="{{ $rental->expires_at->isPast() ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white' }} font-medium">
                                 {{ $rental->expires_at->format('d/m/Y H:i') }}
@@ -96,7 +96,7 @@
                             @if(!$rental->expires_at->isPast())
                                 <span class="text-xs text-gray-500 dark:text-gray-400">({{ $rental->expires_at->diffForHumans() }})</span>
                             @else
-                                <span class="text-xs text-red-500 dark:text-red-400">(หมดอายุแล้ว)</span>
+                                <span class="text-xs text-red-500 dark:text-red-400">(<x-bi th="หมดอายุแล้ว" en="Expired" />)</span>
                             @endif
                         @else
                             <p class="text-gray-900 dark:text-white font-medium">-</p>
@@ -104,10 +104,10 @@
                     </div>
 
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">วันที่เหลือ</label>
+                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi th="วันที่เหลือ" en="Days Remaining" /></label>
                         <p class="text-gray-900 dark:text-white font-medium">
                             @if($rental->is_active)
-                                <span class="text-emerald-600 dark:text-emerald-400">{{ $rental->days_remaining }} วัน</span>
+                                <span class="text-emerald-600 dark:text-emerald-400">{{ $rental->days_remaining }} <x-bi th="วัน" en="days" /></span>
                             @else
                                 <span class="text-gray-500">-</span>
                             @endif
@@ -115,17 +115,17 @@
                     </div>
 
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">ต่ออายุอัตโนมัติ</label>
+                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1"><x-bi th="ต่ออายุอัตโนมัติ" en="Auto-renew" /></label>
                         <p class="font-medium">
                             @if($rental->auto_renew)
                                 <span class="px-2.5 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-xs font-medium inline-flex items-center shadow-sm">
                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                     </svg>
-                                    เปิดใช้งาน
+                                    <x-bi th="เปิดใช้งาน" en="Enabled" />
                                 </span>
                             @else
-                                <span class="text-gray-500 dark:text-gray-400">ปิด</span>
+                                <span class="text-gray-500 dark:text-gray-400"><x-bi th="ปิด" en="Off" /></span>
                             @endif
                         </p>
                     </div>
@@ -134,11 +134,11 @@
                 @if($rental->amount_paid)
                 <div class="mt-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-cyan-200 dark:border-cyan-700">
                     <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-cyan-800 dark:text-cyan-200">ยอดชำระ</span>
+                        <span class="text-sm font-medium text-cyan-800 dark:text-cyan-200"><x-bi th="ยอดชำระ" en="Amount Paid" /></span>
                         <span class="text-lg font-bold text-cyan-700 dark:text-cyan-300">฿{{ number_format($rental->amount_paid, 2) }}</span>
                     </div>
                     @if($rental->payment_method)
-                    <p class="text-xs text-cyan-600 dark:text-cyan-400 mt-1">ผ่าน {{ $rental->payment_method }}</p>
+                    <p class="text-xs text-cyan-600 dark:text-cyan-400 mt-1"><x-bi th="ผ่าน" en="via" /> {{ $rental->payment_method }}</p>
                     @endif
                 </div>
                 @endif
@@ -154,16 +154,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                 </div>
-                ประวัติการชำระเงิน
+                <x-bi th="ประวัติการชำระเงิน" en="Payment History" />
             </h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-800/50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">วันที่</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">จำนวน</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ช่องทาง</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">สถานะ</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.date" /></th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.amount" /></th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="ช่องทาง" en="Method" /></th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.status" /></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -203,17 +203,17 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                 </div>
-                ใบเสร็จ / ใบแจ้งหนี้
+                <x-bi th="ใบเสร็จ / ใบแจ้งหนี้" en="Invoices" />
             </h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-800/50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">เลขที่</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ประเภท</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">จำนวน</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">วันที่</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">สถานะ</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="เลขที่" en="No." /></th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi th="ประเภท" en="Type" /></th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.amount" /></th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.date" /></th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><x-bi k="common.status" /></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -255,16 +255,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400">ใช้งานได้</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">เหลืออีก {{ $rental->days_remaining }} วัน</p>
+                <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400"><x-bi th="ใช้งานได้" en="Active" /></h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="เหลืออีก" en="Remaining" /> {{ $rental->days_remaining }} <x-bi th="วัน" en="days" /></p>
             @elseif($rental->status === 'pending')
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-4 shadow-xl">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-yellow-600 dark:text-yellow-400">รอชำระเงิน</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">กรุณาชำระเงินเพื่อเปิดใช้งาน</p>
+                <h3 class="text-lg font-bold text-yellow-600 dark:text-yellow-400"><x-bi th="รอชำระเงิน" en="Pending Payment" /></h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="กรุณาชำระเงินเพื่อเปิดใช้งาน" en="Please complete payment to activate" /></p>
             @else
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full mb-4 shadow-xl">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,7 +273,7 @@
                 </div>
                 <h3 class="text-lg font-bold text-gray-600 dark:text-gray-400">{{ $statusLabels[$rental->status] ?? ucfirst($rental->status) }}</h3>
                 @if($rental->expires_at)
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">หมดอายุ {{ $rental->expires_at->format('d/m/Y') }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="หมดอายุ" en="Expired" /> {{ $rental->expires_at->format('d/m/Y') }}</p>
                 @endif
             @endif
         </div>
@@ -286,7 +286,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
                 </div>
-                ดำเนินการ
+                <x-bi th="ดำเนินการ" en="Quick Actions" />
             </h3>
             <div class="space-y-3">
                 @if($rental->rentalPackage && ($rental->is_expired || ($rental->is_active && $rental->days_remaining < 30)))
@@ -295,7 +295,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
-                    ต่ออายุสมาชิก
+                    <x-bi th="ต่ออายุสมาชิก" en="Renew Subscription" />
                 </a>
                 @endif
 
@@ -304,7 +304,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                    ใบเสร็จทั้งหมด
+                    <x-bi th="ใบเสร็จทั้งหมด" en="All Invoices" />
                 </a>
 
                 <a href="{{ route('customer.support.create') }}"
@@ -312,7 +312,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
                     </svg>
-                    ติดต่อ Support
+                    <x-bi th="ติดต่อ Support" en="Contact Support" />
                 </a>
             </div>
         </div>
@@ -324,12 +324,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2">ต้องการความช่วยเหลือ?</h3>
+            <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2"><x-bi th="ต้องการความช่วยเหลือ?" en="Need help?" /></h3>
             <p class="text-sm text-blue-800 dark:text-blue-200 mb-3">
-                หากมีปัญหาเกี่ยวกับการสมัครสมาชิก ทีมงานพร้อมช่วยเหลือ
+                <x-bi th="หากมีปัญหาเกี่ยวกับการสมัครสมาชิก ทีมงานพร้อมช่วยเหลือ" en="If you have any issues with your subscription, our team is ready to help." />
             </p>
             <a href="{{ route('customer.support.create') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold flex items-center transition-colors">
-                เปิด Ticket
+                <x-bi th="เปิด Ticket" en="Open a Ticket" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>

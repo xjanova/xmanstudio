@@ -1,7 +1,7 @@
 @extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'สร้าง Support Ticket')
-@section('page-title', 'สร้าง Support Ticket')
+@section('page-title')<x-bi th="สร้าง Support Ticket" en="Create Support Ticket" />@endsection
 
 @push('styles')
 <style>
@@ -37,9 +37,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                 </div>
-                <h1 class="text-3xl font-bold text-white">สร้าง Support Ticket</h1>
+                <h1 class="text-3xl font-bold text-white"><x-bi th="สร้าง Support Ticket" en="Create Support Ticket" layout="stack" /></h1>
             </div>
-            <p class="text-teal-100 text-lg">กรอกรายละเอียดเพื่อสร้าง Ticket ใหม่ ทีมงานจะตอบกลับโดยเร็วที่สุด</p>
+            <p class="text-teal-100 text-lg"><x-bi th="กรอกรายละเอียดเพื่อสร้าง Ticket ใหม่ ทีมงานจะตอบกลับโดยเร็วที่สุด" en="Fill in the details to open a new ticket. Our team will respond as soon as possible." /></p>
         </div>
     </div>
 
@@ -51,11 +51,11 @@
             {{-- Subject --}}
             <div>
                 <label for="subject" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    หัวข้อ <span class="text-red-500">*</span>
+                    <x-bi th="หัวข้อ" en="Subject" /> <span class="text-red-500">*</span>
                 </label>
                 <input type="text" name="subject" id="subject" value="{{ old('subject') }}"
                        class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-teal-500 focus:ring-teal-500 transition-all @error('subject') border-red-500 @enderror"
-                       placeholder="อธิบายปัญหาหรือคำถามของคุณ">
+                       placeholder="อธิบายปัญหาหรือคำถามของคุณ / Describe your issue or question">
                 @error('subject')
                     <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
@@ -65,7 +65,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="category" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        หมวดหมู่ <span class="text-red-500">*</span>
+                        <x-bi th="หมวดหมู่" en="Category" /> <span class="text-red-500">*</span>
                     </label>
                     <select name="category" id="category"
                             class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-teal-500 focus:ring-teal-500 transition-all @error('category') border-red-500 @enderror">
@@ -80,7 +80,7 @@
 
                 <div>
                     <label for="priority" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        ความสำคัญ <span class="text-red-500">*</span>
+                        <x-bi th="ความสำคัญ" en="Priority" /> <span class="text-red-500">*</span>
                     </label>
                     <select name="priority" id="priority"
                             class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-teal-500 focus:ring-teal-500 transition-all @error('priority') border-red-500 @enderror">
@@ -98,14 +98,14 @@
             @if($orders->isNotEmpty())
             <div>
                 <label for="order_id" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    เกี่ยวข้องกับคำสั่งซื้อ (ถ้ามี)
+                    <x-bi th="เกี่ยวข้องกับคำสั่งซื้อ (ถ้ามี)" en="Related order (optional)" />
                 </label>
                 <select name="order_id" id="order_id"
                         class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-teal-500 focus:ring-teal-500 transition-all">
-                    <option value="">- ไม่เกี่ยวข้องกับคำสั่งซื้อ -</option>
+                    <option value="">- ไม่เกี่ยวข้องกับคำสั่งซื้อ / Not related to an order -</option>
                     @foreach($orders as $order)
                         <option value="{{ $order->id }}" {{ old('order_id', $preselectedOrder) == $order->id ? 'selected' : '' }}>
-                            #{{ $order->order_number }} - {{ number_format($order->total_amount) }} บาท ({{ $order->created_at->format('d/m/Y') }})
+                            #{{ $order->order_number }} - {{ number_format($order->total_amount) }} บาท / THB ({{ $order->created_at->format('d/m/Y') }})
                         </option>
                     @endforeach
                 </select>
@@ -115,11 +115,11 @@
             {{-- Message --}}
             <div>
                 <label for="message" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    รายละเอียด <span class="text-red-500">*</span>
+                    <x-bi th="รายละเอียด" en="Details" /> <span class="text-red-500">*</span>
                 </label>
                 <textarea name="message" id="message" rows="6"
                           class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-teal-500 focus:ring-teal-500 transition-all @error('message') border-red-500 @enderror"
-                          placeholder="อธิบายปัญหาหรือคำถามของคุณอย่างละเอียด รวมถึงข้อความ error (ถ้ามี)">{{ old('message') }}</textarea>
+                          placeholder="อธิบายปัญหาหรือคำถามของคุณอย่างละเอียด รวมถึงข้อความ error (ถ้ามี) / Describe your issue or question in detail, including any error messages">{{ old('message') }}</textarea>
                 @error('message')
                     <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
@@ -127,7 +127,7 @@
 
             {{-- Attachments --}}
             <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ไฟล์แนบ</label>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><x-bi th="ไฟล์แนบ" en="Attachments" /></label>
                 <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-xl hover:border-teal-500 dark:hover:border-teal-400 transition-colors bg-gray-50 dark:bg-gray-700/50">
                     <div class="space-y-1 text-center">
                         <div class="w-16 h-16 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 flex items-center justify-center mx-auto mb-3">
@@ -137,12 +137,12 @@
                         </div>
                         <div class="flex text-sm text-gray-600 dark:text-gray-400">
                             <label for="attachments" class="relative cursor-pointer rounded-md font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500">
-                                <span>อัพโหลดไฟล์</span>
+                                <span><x-bi th="อัพโหลดไฟล์" en="Upload a file" /></span>
                                 <input id="attachments" name="attachments[]" type="file" class="sr-only" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip">
                             </label>
-                            <p class="pl-1">หรือลากไฟล์มาวาง</p>
+                            <p class="pl-1"><x-bi th="หรือลากไฟล์มาวาง" en="or drag and drop" /></p>
                         </div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, GIF, PDF, DOC, ZIP ไม่เกิน 10MB</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="PNG, JPG, GIF, PDF, DOC, ZIP ไม่เกิน 10MB" en="PNG, JPG, GIF, PDF, DOC, ZIP up to 10MB" /></p>
                     </div>
                 </div>
                 <div id="file-list" class="mt-3 space-y-2"></div>
@@ -156,14 +156,14 @@
 
             <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <a href="{{ route('customer.support.index') }}" class="px-5 py-2.5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors">
-                    ยกเลิก
+                    <x-bi k="common.cancel" />
                 </a>
                 <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-xl hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 font-semibold shadow-lg transition-all">
                     <span class="flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        สร้าง Ticket
+                        <x-bi th="สร้าง Ticket" en="Create Ticket" />
                     </span>
                 </button>
             </div>

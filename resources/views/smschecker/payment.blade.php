@@ -10,7 +10,7 @@
             <ol class="flex items-center space-x-2 text-sm text-gray-400">
                 <li><a href="{{ route('smschecker.pricing') }}" class="hover:text-violet-400">SmsChecker</a></li>
                 <li><span>/</span></li>
-                <li class="text-white">ชำระเงิน</li>
+                <li class="text-white"><x-bi th="ชำระเงิน" en="Payment" /></li>
             </ol>
         </nav>
 
@@ -23,15 +23,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <h1 class="text-2xl font-bold text-white">ชำระเงิน</h1>
+                    <h1 class="text-2xl font-bold text-white"><x-bi th="ชำระเงิน" en="Payment" /></h1>
                     <p class="mt-2 text-gray-400">
-                        แพ็กเกจ: <span class="font-semibold text-violet-400">SmsChecker {{ $planInfo['name'] }}</span>
+                        <x-bi th="แพ็กเกจ" en="Package" />: <span class="font-semibold text-violet-400">SmsChecker {{ $planInfo['name'] }}</span>
                     </p>
                     <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-blue-400 mt-4">
                         ฿{{ number_format($order->total) }}
                     </p>
                     <p class="text-sm text-gray-500 mt-1">
-                        หมายเลขคำสั่งซื้อ: #{{ $order->id }}
+                        <x-bi k="common.order_number" />: #{{ $order->id }}
                     </p>
                 </div>
 
@@ -43,21 +43,21 @@
                                  class="w-64 h-64 mx-auto object-contain">
                         </div>
                         <p class="mt-4 text-gray-300">
-                            สแกน QR Code ด้วยแอปธนาคารของคุณ
+                            <x-bi th="สแกน QR Code ด้วยแอปธนาคารของคุณ" en="Scan the QR code with your banking app" />
                         </p>
                         <p class="text-sm text-gray-500">
-                            {{ $paymentInfo['promptpay_type_label'] ?? 'พร้อมเพย์' }}: {{ $paymentInfo['promptpay_number'] ?? '-' }}
+                            {{ $paymentInfo['promptpay_type_label'] ?? 'พร้อมเพย์ / PromptPay' }}: {{ $paymentInfo['promptpay_number'] ?? '-' }}
                         </p>
                         @if(!empty($paymentInfo['promptpay_name']))
                             <p class="text-sm text-gray-500">
-                                ชื่อบัญชี: {{ $paymentInfo['promptpay_name'] }}
+                                <x-bi th="ชื่อบัญชี" en="Account Name" />: {{ $paymentInfo['promptpay_name'] }}
                             </p>
                         @endif
                     </div>
                 @elseif($order->payment_method === 'bank_transfer' && $bankAccounts && $bankAccounts->count() > 0)
                     <!-- Bank Transfer Info -->
                     <div class="space-y-4">
-                        <h3 class="text-lg font-semibold text-white">บัญชีธนาคาร</h3>
+                        <h3 class="text-lg font-semibold text-white"><x-bi th="บัญชีธนาคาร" en="Bank Account" /></h3>
                         @foreach($bankAccounts as $bank)
                             <div class="p-4 bg-gray-700/50 rounded-xl border border-gray-600">
                                 <div class="flex items-center">
@@ -79,13 +79,13 @@
                     </div>
                 @else
                     <div class="text-center py-8">
-                        <p class="text-gray-400">ข้อมูลการชำระเงินไม่พร้อมใช้งาน</p>
+                        <p class="text-gray-400"><x-bi th="ข้อมูลการชำระเงินไม่พร้อมใช้งาน" en="Payment information is not available" /></p>
                     </div>
                 @endif
 
                 <!-- Upload Slip Form -->
                 <div class="mt-8 pt-8 border-t border-gray-700">
-                    <h3 class="text-lg font-semibold text-white mb-4">แจ้งชำระเงิน</h3>
+                    <h3 class="text-lg font-semibold text-white mb-4"><x-bi th="แจ้งชำระเงิน" en="Confirm Payment" /></h3>
 
                     <form action="{{ route('smschecker.confirm-payment', $order->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
@@ -103,23 +103,23 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    อัพโหลดสลิปการโอนเงิน <span class="text-red-400">*</span>
+                                    <x-bi th="อัพโหลดสลิปการโอนเงิน" en="Upload Transfer Slip" /> <span class="text-red-400">*</span>
                                 </label>
                                 <input type="file" name="payment_slip" accept="image/*" required
                                        class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent">
-                                <p class="mt-1 text-sm text-gray-500">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB</p>
+                                <p class="mt-1 text-sm text-gray-500"><x-bi th="รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB" en="Supports JPG, PNG files up to 5MB" /></p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">หมายเหตุ (ถ้ามี)</label>
+                                <label class="block text-sm font-medium text-gray-300 mb-2"><x-bi th="หมายเหตุ (ถ้ามี)" en="Note (optional)" /></label>
                                 <textarea name="notes" rows="2"
                                           class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                                          placeholder="ข้อมูลเพิ่มเติม..."></textarea>
+                                          placeholder="ข้อมูลเพิ่มเติม / Additional information..."></textarea>
                             </div>
 
                             <button type="submit"
                                     class="w-full py-4 px-6 rounded-xl text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 transition-colors font-bold text-lg">
-                                แจ้งชำระเงิน
+                                <x-bi th="แจ้งชำระเงิน" en="Confirm Payment" />
                             </button>
                         </div>
                     </form>
@@ -132,12 +132,12 @@
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                         </svg>
                         <div class="ml-3">
-                            <h4 class="text-sm font-semibold text-yellow-400">หมายเหตุ</h4>
+                            <h4 class="text-sm font-semibold text-yellow-400"><x-bi th="หมายเหตุ" en="Note" /></h4>
                             <ul class="mt-1 text-sm text-gray-300 list-disc list-inside space-y-1">
-                                <li>กรุณาชำระเงินภายใน 24 ชั่วโมง</li>
-                                <li>License Key จะส่งไปยังอีเมล: <span class="text-violet-400">{{ $order->customer_email }}</span></li>
-                                <li>หลังตรวจสอบยอดเงินแล้ว จะได้รับ License ภายใน 1-24 ชม.</li>
-                                <li>หากมีข้อสงสัย ติดต่อ Line OA: @xmanstudio</li>
+                                <li><x-bi th="กรุณาชำระเงินภายใน 24 ชั่วโมง" en="Please complete payment within 24 hours" /></li>
+                                <li><x-bi th="License Key จะส่งไปยังอีเมล" en="The License Key will be sent to the email" />: <span class="text-violet-400">{{ $order->customer_email }}</span></li>
+                                <li><x-bi th="หลังตรวจสอบยอดเงินแล้ว จะได้รับ License ภายใน 1-24 ชม." en="After payment is verified, you will receive the License within 1-24 hours" /></li>
+                                <li><x-bi th="หากมีข้อสงสัย ติดต่อ Line OA" en="If you have any questions, contact Line OA" />: @xmanstudio</li>
                             </ul>
                         </div>
                     </div>
@@ -145,37 +145,37 @@
 
                 <!-- Order Details -->
                 <div class="mt-6 p-4 bg-gray-700/30 rounded-xl">
-                    <h4 class="text-sm font-semibold text-gray-300 mb-3">รายละเอียดคำสั่งซื้อ</h4>
+                    <h4 class="text-sm font-semibold text-gray-300 mb-3"><x-bi th="รายละเอียดคำสั่งซื้อ" en="Order Details" /></h4>
                     <dl class="space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <dt class="text-gray-500">ชื่อลูกค้า</dt>
+                            <dt class="text-gray-500"><x-bi th="ชื่อลูกค้า" en="Customer Name" /></dt>
                             <dd class="text-white">{{ $order->customer_name }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-gray-500">อีเมล</dt>
+                            <dt class="text-gray-500"><x-bi k="common.email" /></dt>
                             <dd class="text-white">{{ $order->customer_email }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-gray-500">โทรศัพท์</dt>
+                            <dt class="text-gray-500"><x-bi k="common.phone" /></dt>
                             <dd class="text-white">{{ $order->customer_phone }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-gray-500">แพ็กเกจ</dt>
+                            <dt class="text-gray-500"><x-bi th="แพ็กเกจ" en="Package" /></dt>
                             <dd class="text-violet-400 font-semibold">SmsChecker {{ $planInfo['name'] }}</dd>
                         </div>
                         @if($planInfo['duration_days'])
                             <div class="flex justify-between">
-                                <dt class="text-gray-500">ระยะเวลา</dt>
-                                <dd class="text-white">{{ $planInfo['duration_days'] }} วัน</dd>
+                                <dt class="text-gray-500"><x-bi th="ระยะเวลา" en="Duration" /></dt>
+                                <dd class="text-white">{{ $planInfo['duration_days'] }} <x-bi th="วัน" en="days" /></dd>
                             </div>
                         @else
                             <div class="flex justify-between">
-                                <dt class="text-gray-500">ระยะเวลา</dt>
-                                <dd class="text-yellow-400">ตลอดชีพ</dd>
+                                <dt class="text-gray-500"><x-bi th="ระยะเวลา" en="Duration" /></dt>
+                                <dd class="text-yellow-400"><x-bi th="ตลอดชีพ" en="Lifetime" /></dd>
                             </div>
                         @endif
                         <div class="flex justify-between pt-2 border-t border-gray-600">
-                            <dt class="text-gray-400 font-semibold">ยอดรวม</dt>
+                            <dt class="text-gray-400 font-semibold"><x-bi k="common.total" /></dt>
                             <dd class="text-white font-bold">฿{{ number_format($order->total) }}</dd>
                         </div>
                     </dl>
