@@ -94,7 +94,10 @@
         },
         "audit": {
             "ignore": {
-                "PKSA-5jz8-6tcw-pbk4": "PHPUnit argument-injection CVE (GHSA-qrr6-mg7r-m243) disclosed 2026-04-18. Affected <=12.5.21 — no backport to the 10.5.x line we use. Re-evaluate once 10.5.64+ is released or when we migrate to PHPUnit 12.x."
+                "PKSA-5jz8-6tcw-pbk4": "PHPUnit argument-injection CVE (GHSA-qrr6-mg7r-m243) disclosed 2026-04-18. Affected <=12.5.21 — no backport to the 10.5.x line we use. Re-evaluate once 10.5.64+ is released or when we migrate to PHPUnit 12.x.",
+                "PKSA-3r5d-mb8f-1qw9": "Laravel CRLF injection in default email validation rule (GHSA-5vg9-5847-vvmq), high, disclosed 2026-06-17. Fixed only in Laravel 12.60.0+ — no backport to the 11.x branch we use (latest is 11.54.0). Temporary ignore to unblock deploys; tracked for the Laravel 11 -> 12 upgrade.",
+                "PKSA-mdq4-51ck-6kdq": "Same root issue as PKSA-3r5d-mb8f-1qw9 — Laravel CRLF injection in default email rule (CVE-2026-48019). Fixed only in Laravel 12.60.0+, no 11.x backport. Temporary ignore; remove after Laravel 12 upgrade.",
+                "PKSA-m5cs-t1y6-qpcs": "Laravel temporary signed URL path confusion, medium, disclosed 2026-06-17. Fixed only in Laravel 12.61.1+ — no backport to 11.x. Temporary ignore; remove after Laravel 12 upgrade."
             }
         }
     },
