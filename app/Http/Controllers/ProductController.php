@@ -139,6 +139,7 @@ class ProductController extends Controller
             'phonex-manager' => 'products.phonexmanager',
             'live-x-shop-pro' => 'products.livexshoppro',
             'winxtools' => 'products.winxtools',
+            'winx-tools' => 'products.winxtools',
             'postxagent' => 'products.postxagent',
             'gpusharx' => 'products.gpusharx',
             'skidrow-killer' => 'products.skidrowkiller',

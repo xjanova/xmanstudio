@@ -650,7 +650,7 @@ class XmanProductsSeeder extends Seeder
                     'System Tray Integration',
                     'Self-contained Portable Build',
                 ],
-                'price' => 990.00,
+                'price' => 199.00,
                 'image' => null,
                 'images' => [],
                 'requires_license' => true,
