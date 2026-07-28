@@ -162,7 +162,7 @@
 
                 <div class="flex items-start">
                     <input type="checkbox" name="auto_sync" id="github_auto_sync" value="1"
-                           {{ $product->githubSetting?->auto_sync ?? true ? 'checked' : '' }}
+                           {{ $product->githubSetting?->auto_sync ? 'checked' : '' }}
                            class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
                     <label for="github_auto_sync" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
                         Auto sync จาก GitHub
@@ -170,6 +170,12 @@
                             ดึง release ล่าสุดเองทุก 10 นาที — ถ้าปิด ต้องกดปุ่ม "Sync จาก GitHub" เอง
                             (ปิดไว้ = แอปลูกค้าจะไม่เห็นเวอร์ชันใหม่จนกว่าจะกด)
                         </span>
+                        @if(! $product->githubSetting?->auto_sync)
+                            <span class="block text-xs text-amber-600 dark:text-amber-500 mt-1">
+                                เปิดเฉพาะผลิตภัณฑ์ที่ sync จาก GitHub ได้จริงแล้ว —
+                                ลอง "ทดสอบการเชื่อมต่อ" + กด "Sync จาก GitHub" ให้ผ่านสักครั้งก่อนติ๊ก
+                            </span>
+                        @endif
                     </label>
                 </div>
 
