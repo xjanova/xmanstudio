@@ -79,10 +79,9 @@ class SmsCheckerController extends Controller
 
         $version = null;
         if ($product) {
-            $version = ProductVersion::where('product_id', $product->id)
-                ->where('is_active', true)
-                ->orderByDesc('version')
-                ->first();
+            // ใช้เกณฑ์เดียวกับ API เช็คอัพเดท (Product::latestVersion) —
+            // เดิม orderByDesc('version') เป็น string sort ทำให้ "2.0.99" ชนะ "2.0.176" ได้
+            $version = $product->latestVersion();
         }
 
         return view('smschecker.detail', [
@@ -450,10 +449,9 @@ class SmsCheckerController extends Controller
 
         $version = null;
         if ($product) {
-            $version = ProductVersion::where('product_id', $product->id)
-                ->where('is_active', true)
-                ->orderByDesc('version')
-                ->first();
+            // ใช้เกณฑ์เดียวกับ API เช็คอัพเดท (Product::latestVersion) —
+            // เดิม orderByDesc('version') เป็น string sort ทำให้ "2.0.99" ชนะ "2.0.176" ได้
+            $version = $product->latestVersion();
         }
 
         return view('smschecker.download', [
@@ -465,10 +463,9 @@ class SmsCheckerController extends Controller
     public function downloadApk()
     {
         $product = Product::where('slug', 'smschecker')->firstOrFail();
-        $version = ProductVersion::where('product_id', $product->id)
-            ->where('is_active', true)
-            ->orderByDesc('version')
-            ->first();
+        // ต้องตรงกับเวอร์ชันที่ API เช็คอัพเดทโฆษณาไว้เป๊ะ ไม่งั้นจะบอกลูกค้าว่ามี 2.0.176
+        // แต่เสิร์ฟไฟล์เก่ากว่า → ติดตั้งไม่ได้เพราะ Android กัน downgrade
+        $version = $product->latestVersion();
 
         if (! $version || ! $version->github_release_url) {
             return redirect()->route('smschecker.download')

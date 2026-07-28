@@ -7,6 +7,7 @@ use App\Models\LicenseKey;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class VersionController extends Controller
 {
@@ -218,6 +219,17 @@ class VersionController extends Controller
                 ]);
             }
         }
+
+        // 2026-07-27 — เดิม endpoint นี้ไม่ log อะไรเลย เวลาลูกค้าแจ้ง "แอปไม่อัพเดท"
+        // จึงไล่ย้อนหลังไม่ได้ว่าเครื่องนั้นเคยเช็คไหม ส่ง version อะไรมา ตอบว่าอะไรกลับไป
+        Log::info('product update check', [
+            'product' => $productSlug,
+            'current_version' => $currentVersion,
+            'latest_version' => $latestVersion->version,
+            'has_update' => $hasUpdate,
+            'ua' => $request->userAgent(),
+            'ip' => $request->ip(),
+        ]);
 
         return response()->json([
             'has_update' => $hasUpdate,
