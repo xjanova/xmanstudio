@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use App\Services\GithubReleaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -178,7 +179,7 @@ class VersionController extends Controller
      *
      * Returns flat JSON: { has_update, latest_version, download_url, changelog }
      */
-    public function checkUpdate(Request $request, string $productSlug): JsonResponse
+    public function checkUpdate(Request $request, string $productSlug, GithubReleaseService $github): JsonResponse
     {
         $product = Product::where('slug', $productSlug)->first();
 
@@ -189,7 +190,10 @@ class VersionController extends Controller
             ], 404);
         }
 
-        $latestVersion = $product->latestVersion();
+        // 2026-07-28 — read-through แบบ NetWix: ถ้า GitHub มี tag ใหม่กว่าที่ DB รู้
+        // จะดึงเข้ามาให้เลยในคำขอนี้ (cache 5 นาที) เว็บจึงตรงกับ GitHub เองเสมอ
+        // ไม่ต้องรอ cron และไม่ต้องมีใครกดปุ่ม Sync
+        $latestVersion = $github->latestVersionFresh($product);
 
         if (! $latestVersion) {
             return response()->json([

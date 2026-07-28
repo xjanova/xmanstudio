@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
+use App\Services\GithubReleaseService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
@@ -73,15 +74,15 @@ class SmsCheckerController extends Controller
         ],
     ];
 
-    public function detail()
+    public function detail(GithubReleaseService $github)
     {
         $product = Product::where('slug', 'smschecker')->first();
 
         $version = null;
         if ($product) {
-            // ใช้เกณฑ์เดียวกับ API เช็คอัพเดท (Product::latestVersion) —
+            // แหล่งความจริงเดียวกับ API เช็คอัพเดท + ตามทัน GitHub เอง (read-through)
             // เดิม orderByDesc('version') เป็น string sort ทำให้ "2.0.99" ชนะ "2.0.176" ได้
-            $version = $product->latestVersion();
+            $version = $github->latestVersionFresh($product);
         }
 
         return view('smschecker.detail', [
@@ -443,15 +444,14 @@ class SmsCheckerController extends Controller
         return redirect($url);
     }
 
-    public function downloadPage()
+    public function downloadPage(GithubReleaseService $github)
     {
         $product = Product::where('slug', 'smschecker')->first();
 
         $version = null;
         if ($product) {
-            // ใช้เกณฑ์เดียวกับ API เช็คอัพเดท (Product::latestVersion) —
-            // เดิม orderByDesc('version') เป็น string sort ทำให้ "2.0.99" ชนะ "2.0.176" ได้
-            $version = $product->latestVersion();
+            // แหล่งความจริงเดียวกับ API เช็คอัพเดท + ตามทัน GitHub เอง (read-through)
+            $version = $github->latestVersionFresh($product);
         }
 
         return view('smschecker.download', [
@@ -460,12 +460,12 @@ class SmsCheckerController extends Controller
         ]);
     }
 
-    public function downloadApk()
+    public function downloadApk(GithubReleaseService $github)
     {
         $product = Product::where('slug', 'smschecker')->firstOrFail();
         // ต้องตรงกับเวอร์ชันที่ API เช็คอัพเดทโฆษณาไว้เป๊ะ ไม่งั้นจะบอกลูกค้าว่ามี 2.0.176
         // แต่เสิร์ฟไฟล์เก่ากว่า → ติดตั้งไม่ได้เพราะ Android กัน downgrade
-        $version = $product->latestVersion();
+        $version = $github->latestVersionFresh($product);
 
         if (! $version || ! $version->github_release_url) {
             return redirect()->route('smschecker.download')

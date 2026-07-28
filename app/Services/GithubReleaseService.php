@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\GithubSetting;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -15,6 +16,9 @@ class GithubReleaseService
      */
     /** Maximum number of versions to keep per product */
     public const MAX_VERSIONS_KEEP = 5;
+
+    /** ถาม GitHub ซ้ำได้เร็วสุดทุกกี่นาที (freshness check ใน latestVersionFresh) */
+    public const FRESH_TTL_MINUTES = 5;
 
     public function syncLatestRelease(Product $product): ?ProductVersion
     {
@@ -35,7 +39,86 @@ class GithubReleaseService
         // Cleanup: keep only the latest N versions, delete the rest
         $this->cleanupOldVersions($product);
 
+        // เพิ่ง sync สด ๆ → ล้าง cache freshness ทิ้ง ไม่งั้นรอบหน้าจะเชื่อค่าเก่า
+        Cache::forget($this->freshCacheKey($product));
+
         return $version;
+    }
+
+    /**
+     * cache key เดียวสำหรับ freshness check — ทุกที่ที่อ่าน/ล้าง ต้องผ่าน method นี้เท่านั้น
+     *
+     * เคส tpix.online (2026-06-19) เจ็บมาแล้ว: หน้าเว็บอ่าน `chain_releases_<md5>`
+     * แต่ webhook ไปล้าง `chain_releases` เฉย ๆ → webhook ไม่เคย bust cache ได้เลย
+     */
+    public function freshCacheKey(Product $product): string
+    {
+        return "product:release:fresh:{$product->id}";
+    }
+
+    /**
+     * เวอร์ชันล่าสุดที่ "การันตีว่าตรงกับ GitHub" — แบบเดียวกับ NetWix AppRelease::latest()
+     *
+     * ต่างจาก Product::latestVersion() ตรงที่ตัวนี้จะแอบถาม GitHub ให้ด้วย (cache 5 นาที)
+     * ถ้าพบว่า GitHub มี tag ใหม่กว่าที่ DB รู้ จะ sync เข้ามาทันทีในคำขอนั้นเลย
+     * → ต่อให้ cron ตาย เว็บก็ยังตรงกับ GitHub ภายใน 5 นาที ไม่ต้องมีใครกดปุ่ม
+     *
+     * ⚠️ ห้าม cache ความล้มเหลว — เคส tpix.online cache ค่า null ไว้ 30 นาที
+     * ทำให้ GitHub สะดุดแวบเดียวแล้วหน้าดาวน์โหลดว่างยาว 30 นาที
+     * ที่นี่ถ้าถาม GitHub ไม่สำเร็จ จะคืนค่าจาก DB และ "ไม่" เขียน cache
+     * รอบถัดไปจึงลองใหม่ทันที
+     */
+    public function latestVersionFresh(Product $product): ?ProductVersion
+    {
+        $current = $product->latestVersion();
+        $githubSetting = $product->githubSetting;
+
+        if (! $githubSetting || ! $githubSetting->is_active) {
+            return $current;
+        }
+
+        $key = $this->freshCacheKey($product);
+
+        // ยังอยู่ในช่วง cache = เพิ่งถาม GitHub ไป ไม่ต้องถามซ้ำทุก request
+        if (Cache::has($key)) {
+            return $current;
+        }
+
+        $release = $this->fetchLatestRelease($githubSetting);
+        $tag = $release['tag_name'] ?? null;
+
+        if (! $tag) {
+            // ล้มเหลว (fetchLatestRelease log ไว้แล้ว) — ไม่เขียน cache, คืนของเดิมไปก่อน
+            return $current;
+        }
+
+        // สำเร็จเท่านั้นถึงเขียน cache
+        Cache::put($key, $tag, now()->addMinutes(self::FRESH_TTL_MINUTES));
+
+        $remote = ltrim($tag, 'vV');
+
+        if ($current && $current->version === $remote) {
+            return $current;
+        }
+
+        try {
+            $synced = $this->syncLatestRelease($product);
+
+            Log::info('product release auto-synced on read', [
+                'product' => $product->slug,
+                'from' => $current?->version,
+                'to' => $synced?->version,
+            ]);
+
+            return $synced ?? $product->refresh()->latestVersion();
+        } catch (\Exception $e) {
+            Log::warning('read-through release sync failed', [
+                'product' => $product->slug,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $current;
+        }
     }
 
     /**
