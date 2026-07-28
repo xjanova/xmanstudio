@@ -47,6 +47,7 @@ class ProductVersionController extends Controller
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['auto_sync'] = $request->boolean('auto_sync');
 
         $githubSetting = $product->githubSetting;
 

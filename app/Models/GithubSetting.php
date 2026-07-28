@@ -18,10 +18,12 @@ class GithubSetting extends Model
         'github_token',
         'asset_pattern',
         'is_active',
+        'auto_sync',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'auto_sync' => 'boolean',
     ];
 
     protected $hidden = [

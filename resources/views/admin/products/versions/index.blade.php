@@ -160,6 +160,19 @@
                     <label for="github_active" class="ml-2 text-sm text-gray-700 dark:text-gray-300">เปิดใช้งาน</label>
                 </div>
 
+                <div class="flex items-start">
+                    <input type="checkbox" name="auto_sync" id="github_auto_sync" value="1"
+                           {{ $product->githubSetting?->auto_sync ?? true ? 'checked' : '' }}
+                           class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                    <label for="github_auto_sync" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        Auto sync จาก GitHub
+                        <span class="block text-xs text-gray-500 dark:text-gray-400">
+                            ดึง release ล่าสุดเองทุก 10 นาที — ถ้าปิด ต้องกดปุ่ม "Sync จาก GitHub" เอง
+                            (ปิดไว้ = แอปลูกค้าจะไม่เห็นเวอร์ชันใหม่จนกว่าจะกด)
+                        </span>
+                    </label>
+                </div>
+
                 <div class="flex gap-2">
                     <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-xl hover:from-gray-800 hover:to-black transition-all shadow-lg">
                         บันทึก Settings

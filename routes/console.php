@@ -35,6 +35,17 @@ Schedule::command('smschecker:cleanup')
         Log::error('[SMS Checker] Cleanup failed');
     });
 
+// Product Releases: ดึง release ล่าสุดจาก GitHub เข้า product_versions
+// 2026-07-28 — เดิมต้องกดปุ่ม Sync ในหน้า admin เอง ถ้าลืมกด API เช็คอัพเดทจะ
+// โฆษณาเวอร์ชันเก่าค้างไว้ แอปลูกค้าเลยตอบ "ไม่มีอัพเดท" ทั้งที่ GitHub มีของใหม่แล้ว
+Schedule::command('products:sync-releases')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Product Releases] Sync failed');
+    });
+
 // Bug Reports: ลบ Bug Reports เก่าอัตโนมัติตามจำนวนวันที่ตั้งค่าไว้
 // รันทุกวันตอนตี 2
 Schedule::command('bugreports:cleanup')
