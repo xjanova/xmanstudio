@@ -27,10 +27,14 @@ class HomeController extends Controller
             ->limit(6)
             ->get();
 
-        // Retro theme gets its own Tron-styled landing page; classic/premium
+        // Retro and Nova each get their own landing page; classic/premium
         // keep the original marketing home (sale banner, services grid,
         // Metal-X, tech stack, reviews, CTA).
-        $view = ThemeService::getCurrentTheme() === 'retro' ? 'home-retro' : 'home';
+        $view = match (ThemeService::getCurrentTheme()) {
+            'retro' => 'home-retro',
+            'nova' => 'home-nova',
+            default => 'home',
+        };
 
         return view($view, compact('featuredProducts', 'categories', 'featuredReviews'));
     }

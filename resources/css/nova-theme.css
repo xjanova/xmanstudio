@@ -1,0 +1,1148 @@
+/* ==========================================================================
+   NOVA THEME — "XMAN Nova" deep-space / 3D star-system landing theme
+   --------------------------------------------------------------------------
+   Scoped to the Nova home page (layouts/nova.blade.php + home-nova.blade.php).
+   Everything here is namespaced under .nova-body / .nova-* so it cannot leak
+   into layouts.app / layouts.app-premium / layouts.retro.
+
+   Design language: near-black void, aurora gradients (violet → cyan → magenta),
+   a warm "nova core" gold at the star, glass panels, and hairline borders.
+   ========================================================================== */
+
+.nova-body {
+    /* --- Surfaces ------------------------------------------------------- */
+    --nv-void: #04050d;          /* deepest background */
+    --nv-abyss: #070a18;         /* section background */
+    --nv-panel: rgba(18, 24, 48, 0.55);
+    --nv-panel-hi: rgba(28, 36, 68, 0.72);
+    --nv-line: rgba(140, 170, 255, 0.14);
+    --nv-line-hi: rgba(160, 190, 255, 0.30);
+
+    /* --- Aurora accents ------------------------------------------------- */
+    --nv-cyan: #22d3ee;
+    --nv-violet: #8b5cf6;
+    --nv-magenta: #e879f9;
+    --nv-mint: #34d399;
+    --nv-core: #ffd479;          /* nova core gold — reserved for the star */
+    --nv-danger: #fb7185;
+
+    /* --- Foreground ----------------------------------------------------- */
+    --nv-fg-1: #eaf0ff;
+    --nv-fg-2: #a8b4d4;
+    --nv-fg-3: #6b7799;
+
+    /* --- Type ----------------------------------------------------------- */
+    --nv-font: 'Noto Sans Thai', 'Inter', system-ui, -apple-system, sans-serif;
+    --nv-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+    /* --- Motion --------------------------------------------------------- */
+    --nv-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --nv-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+    margin: 0;
+    background: var(--nv-void);
+    color: var(--nv-fg-1);
+    font-family: var(--nv-font);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* Gradient text used for headings */
+.nova-grad {
+    background: linear-gradient(110deg, var(--nv-cyan), var(--nv-violet) 45%, var(--nv-magenta));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.nova-grad-core {
+    background: linear-gradient(110deg, var(--nv-core), #fff3d0 50%, var(--nv-core));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* ==========================================================================
+   Canvas backdrop
+   ========================================================================== */
+
+.nova-canvas-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.nova-canvas-layer canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Vignette so content always stays readable over the canvas.
+   NOTE: `ellipse` is stated explicitly — an unsupported/implicit radial
+   shape can paint nothing at all rather than degrading to "no vignette". */
+.nova-vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 120% 90% at 50% 45%, transparent 0%, rgba(4, 5, 13, 0.35) 55%, rgba(4, 5, 13, 0.88) 100%);
+}
+
+/* ==========================================================================
+   Star menu — the primary navigation
+   --------------------------------------------------------------------------
+   Progressive enhancement contract:
+     • Without JS the menu is a plain, always-visible list of real <a> links
+       (.nova-nav is statically laid out). Navigation never depends on JS.
+     • html.nova-js switches it to the 3D orbital presentation.
+   ========================================================================== */
+
+/* No-JS / baseline: a readable horizontal link bar pinned to the top.
+   The flex container is .nova-nav__ring, NOT .nova-nav — the links are
+   nested inside the ring, so laying out .nova-nav itself would leave them
+   stacked in a single column. */
+.nova-nav {
+    position: relative;
+    z-index: 40;
+    padding: 14px 20px;
+    background: rgba(4, 5, 13, 0.9);
+    border-bottom: 1px solid var(--nv-line);
+}
+
+.nova-nav__ring {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.nova-nav__link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.25;
+    padding: 7px 15px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--nv-fg-2);
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    transition: color 0.25s var(--nv-ease), border-color 0.25s var(--nv-ease), background 0.25s var(--nv-ease);
+}
+
+.nova-nav__link:hover,
+.nova-nav__link:focus-visible {
+    color: var(--nv-fg-1);
+    border-color: var(--nv-line-hi);
+    background: rgba(139, 92, 246, 0.12);
+}
+
+/* --- Enhanced (JS on): the orbital star menu ---------------------------- */
+
+.nova-js .nova-nav {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: block;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    /* Closed state: the overlay must not eat clicks on the page beneath. */
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.45s var(--nv-ease), visibility 0s linear 0.45s;
+}
+
+.nova-js .nova-nav[data-open='true'] {
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.45s var(--nv-ease), visibility 0s linear 0s;
+}
+
+/* Dim + blur the page behind the open menu */
+/* The base colour alone must make the page behind recede — backdrop-filter is
+   an enhancement, not a dependency (it is unsupported or disabled often
+   enough that relying on it leaves the hero text competing with the menu). */
+.nova-nav__scrim {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 85% 85% at 50% 50%, rgba(4, 6, 16, 0.88), rgba(2, 3, 8, 0.97));
+    backdrop-filter: blur(16px) saturate(0.7);
+    -webkit-backdrop-filter: blur(16px) saturate(0.7);
+}
+
+.nova-js .nova-nav__scrim {
+    display: block;
+}
+
+/* The ring that holds the orbital items */
+.nova-js .nova-nav__ring {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nova-js .nova-nav__link {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 128px;
+    padding: 14px 10px;
+    margin: 0;
+    text-align: center;
+    font-size: 13px;
+    border-radius: 18px;
+    border: 1px solid var(--nv-line);
+    background: var(--nv-panel);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+    /* --nv-tx/--nv-ty are written per-item by the layout; --nv-s is animated
+       open/closed so items fly out of the star. */
+    --nv-tx: 0px;
+    --nv-ty: 0px;
+    --nv-s: 0.2;
+    transform: translate(-50%, -50%) translate(calc(var(--nv-tx) * var(--nv-s)), calc(var(--nv-ty) * var(--nv-s))) scale(var(--nv-s));
+    opacity: 0;
+    transition:
+        transform 0.55s var(--nv-ease),
+        opacity 0.4s var(--nv-ease),
+        border-color 0.25s var(--nv-ease),
+        background 0.25s var(--nv-ease);
+}
+
+.nova-js .nova-nav[data-open='true'] .nova-nav__link {
+    --nv-s: 1;
+    opacity: 1;
+}
+
+.nova-js .nova-nav__link:hover,
+.nova-js .nova-nav__link:focus-visible {
+    border-color: var(--nv-accent, var(--nv-cyan));
+    background: var(--nv-panel-hi);
+    box-shadow: 0 0 0 1px var(--nv-accent, var(--nv-cyan)), 0 12px 50px rgba(0, 0, 0, 0.6),
+        0 0 32px -6px var(--nv-accent, var(--nv-cyan));
+}
+
+.nova-nav__icon {
+    display: block;
+    width: 26px;
+    height: 26px;
+    margin-bottom: 4px;
+    color: var(--nv-accent, var(--nv-cyan));
+}
+
+.nova-nav__th {
+    display: block;
+    font-weight: 700;
+    color: var(--nv-fg-1);
+    line-height: 1.25;
+}
+
+.nova-nav__en {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--nv-fg-3);
+}
+
+/* Only show the icon/EN sub-label in the enhanced orbital view — the plain
+   no-JS bar stays a compact text list. */
+.nova-nav__icon,
+.nova-js .nova-nav__en {
+    display: none;
+}
+
+.nova-js .nova-nav__icon {
+    display: block;
+}
+
+.nova-js .nova-nav__en {
+    display: block;
+}
+
+/* Close hint inside the open menu */
+.nova-nav__close {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: 8%;
+    transform: translateX(-50%);
+    padding: 10px 22px;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--nv-fg-3);
+    background: transparent;
+    border: 1px solid var(--nv-line);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.25s var(--nv-ease), border-color 0.25s var(--nv-ease);
+}
+
+.nova-js .nova-nav__close {
+    display: block;
+}
+
+.nova-nav__close:hover,
+.nova-nav__close:focus-visible {
+    color: var(--nv-fg-1);
+    border-color: var(--nv-line-hi);
+}
+
+/* --- Grid fallback when a ring cannot fit -------------------------------
+   Eight 128px chips cannot orbit a 390px-wide viewport (they clip both
+   edges and overlap each other), and a landscape phone is too SHORT for a
+   ring even when it is wide enough. So the script measures the real chip
+   and adds .is-grid whenever the ring would not fit on either axis; the
+   same chips then lay out as a centred two-column grid.
+
+   The open/close scale+fade still plays, so the menu keeps reading as
+   "launched from the star" — only the polar placement is dropped. The JS
+   radius maths goes inert here because `transform` stops consuming
+   --nv-tx / --nv-ty.
+
+   The media query repeats the rules so the grid is already correct on the
+   very first paint, before layout() has measured anything. */
+@media (max-width: 620px) {
+    .nova-js .nova-nav__ring {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-content: center;
+        gap: 12px;
+        padding: 0 18px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nova-js .nova-nav__link {
+        position: static;
+        left: auto;
+        top: auto;
+        width: auto;
+        padding: 16px 10px;
+        transform: scale(var(--nv-s));
+    }
+
+    .nova-js .nova-nav__ring::after {
+        content: '';
+        grid-column: 1 / -1;
+        height: 64px;
+    }
+}
+
+.nova-js .nova-nav.is-grid .nova-nav__ring {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: center;
+    gap: 12px;
+    padding: 0 18px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.nova-js .nova-nav.is-grid .nova-nav__link {
+    position: static;
+    left: auto;
+    top: auto;
+    width: auto;
+    padding: 16px 10px;
+    transform: scale(var(--nv-s));
+}
+
+/* Keep the last row clear of the close button. */
+.nova-js .nova-nav.is-grid .nova-nav__ring::after {
+    content: '';
+    grid-column: 1 / -1;
+    height: 64px;
+}
+
+/* Four columns is plenty on a short-but-wide viewport (landscape phone). */
+@media (min-width: 700px) and (max-height: 520px) {
+    .nova-js .nova-nav.is-grid .nova-nav__ring {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* ==========================================================================
+   The XMAN star trigger
+   ========================================================================== */
+
+/* Hidden until JS proves it can drive the menu. */
+.nova-star {
+    display: none;
+}
+
+.nova-js .nova-star {
+    display: grid;
+    place-items: center;
+    position: relative;
+    width: 210px;
+    height: 210px;
+    margin: 0 auto;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 768px) {
+    .nova-js .nova-star {
+        width: 280px;
+        height: 280px;
+    }
+}
+
+/* Rotating aurora halo */
+.nova-star__halo {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        var(--nv-cyan),
+        var(--nv-violet),
+        var(--nv-magenta),
+        var(--nv-core),
+        var(--nv-cyan)
+    );
+    filter: blur(26px);
+    opacity: 0.45;
+    animation: nova-spin 18s linear infinite;
+}
+
+/* Pulsing outer rings that read as "clickable" */
+.nova-star__ring {
+    position: absolute;
+    inset: 12%;
+    border-radius: 50%;
+    border: 1px solid rgba(160, 200, 255, 0.35);
+    animation: nova-pulse-ring 3.2s var(--nv-ease-in-out) infinite;
+}
+
+/* Offset the second ring so the two pulses alternate. Sibling combinator,
+   not :nth-of-type(2) — the halo is also a <span>, so nth-of-type would
+   count it and delay the FIRST ring instead. */
+.nova-star__ring + .nova-star__ring {
+    animation-delay: 1.6s;
+}
+
+/* Glass core holding the logo */
+.nova-star__core {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 62%;
+    height: 62%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse 100% 100% at 50% 35%, rgba(40, 52, 96, 0.9), rgba(8, 11, 26, 0.96));
+    border: 1px solid var(--nv-line-hi);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 20px 70px rgba(0, 0, 0, 0.7);
+    transition: transform 0.5s var(--nv-ease), box-shadow 0.5s var(--nv-ease);
+}
+
+.nova-star:hover .nova-star__core,
+.nova-star:focus-visible .nova-star__core {
+    transform: scale(1.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 60px -10px var(--nv-core),
+        0 20px 80px rgba(0, 0, 0, 0.75);
+}
+
+.nova-star__logo {
+    width: 76%;
+    height: auto;
+    filter: drop-shadow(0 4px 22px rgba(0, 0, 0, 0.8));
+    pointer-events: none;
+}
+
+/* Wordmark fallback when no logo is configured */
+.nova-star__word {
+    font-size: clamp(20px, 4.6vw, 34px);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* "click me" affordance — the menu is not discoverable without it */
+.nova-star__hint {
+    position: absolute;
+    left: 50%;
+    bottom: -34px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--nv-fg-3);
+    animation: nova-breathe 2.6s var(--nv-ease-in-out) infinite;
+}
+
+.nova-star[aria-expanded='true'] .nova-star__hint {
+    opacity: 0;
+}
+
+@keyframes nova-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes nova-pulse-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.55;
+    }
+    70% {
+        transform: scale(1.35);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1.35);
+        opacity: 0;
+    }
+}
+
+@keyframes nova-breathe {
+    0%,
+    100% {
+        opacity: 0.45;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* ==========================================================================
+   Layout primitives
+   ========================================================================== */
+
+.nova-main {
+    position: relative;
+    z-index: 10;
+}
+
+.nova-shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.nova-section {
+    position: relative;
+    padding: 96px 0;
+}
+
+.nova-section--tight {
+    padding: 64px 0;
+}
+
+/* A soft aurora wash behind a section */
+.nova-section__glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 70% 55% at 50% 0%, rgba(139, 92, 246, 0.16), transparent 70%);
+}
+
+.nova-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--nv-fg-2);
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid var(--nv-line);
+    border-radius: 999px;
+}
+
+.nova-eyebrow__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--nv-mint);
+    box-shadow: 0 0 10px var(--nv-mint);
+    animation: nova-breathe 2s var(--nv-ease-in-out) infinite;
+}
+
+.nova-h2 {
+    margin: 18px 0 14px;
+    font-size: clamp(28px, 4.4vw, 46px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.nova-lede {
+    max-width: 640px;
+    margin: 0 auto;
+    font-size: clamp(15px, 1.6vw, 18px);
+    line-height: 1.7;
+    color: var(--nv-fg-2);
+}
+
+.nova-head {
+    text-align: center;
+    margin-bottom: 56px;
+}
+
+/* ==========================================================================
+   Cards
+   ========================================================================== */
+
+.nova-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* Explicit two-up so the four platform cards form a balanced 2x2 instead of
+   auto-fitting to 3 + 1 on a wide container. */
+.nova-grid--2 {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 860px) {
+    .nova-grid--2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.nova-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 26px;
+    border-radius: 20px;
+    border: 1px solid var(--nv-line);
+    background: var(--nv-panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.45s var(--nv-ease), border-color 0.35s var(--nv-ease),
+        box-shadow 0.45s var(--nv-ease);
+}
+
+/* Accent sheen that sweeps in on hover */
+.nova-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(ellipse 60% 60% at 50% 0%, var(--nv-accent, var(--nv-cyan)), transparent 70%);
+    transition: opacity 0.45s var(--nv-ease);
+}
+
+.nova-card:hover,
+.nova-card:focus-visible {
+    transform: translateY(-6px);
+    border-color: var(--nv-accent, var(--nv-cyan));
+    box-shadow: 0 24px 70px -20px rgba(0, 0, 0, 0.9), 0 0 40px -18px var(--nv-accent, var(--nv-cyan));
+}
+
+.nova-card:hover::after,
+.nova-card:focus-visible::after {
+    opacity: 0.1;
+}
+
+.nova-card__icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 18px;
+    border-radius: 15px;
+    color: #fff;
+    background: linear-gradient(140deg, var(--nv-accent, var(--nv-cyan)), rgba(10, 14, 32, 0.5));
+    border: 1px solid var(--nv-line-hi);
+    box-shadow: 0 10px 30px -12px var(--nv-accent, var(--nv-cyan));
+}
+
+.nova-card__icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.nova-card__title {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--nv-fg-1);
+}
+
+.nova-card__en {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--nv-fg-3);
+}
+
+.nova-card__body {
+    flex: 1;
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--nv-fg-2);
+}
+
+.nova-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--nv-accent, var(--nv-cyan));
+}
+
+.nova-card__cta svg {
+    width: 15px;
+    height: 15px;
+    transition: transform 0.35s var(--nv-ease);
+}
+
+.nova-card:hover .nova-card__cta svg {
+    transform: translateX(5px);
+}
+
+/* Corner badge (ยอดนิยม / ใหม่ / เร็วๆ นี้) */
+.nova-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+    padding: 4px 11px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    color: #04050d;
+    background: var(--nv-accent, var(--nv-cyan));
+}
+
+.nova-badge--soon {
+    color: var(--nv-fg-1);
+    background: rgba(107, 119, 153, 0.35);
+    border: 1px solid var(--nv-line-hi);
+}
+
+/* Media thumb on product cards */
+.nova-card__thumb {
+    position: relative;
+    margin: -26px -26px 18px;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: linear-gradient(140deg, rgba(139, 92, 246, 0.22), rgba(34, 211, 238, 0.12));
+}
+
+.nova-card__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--nv-ease);
+}
+
+.nova-card:hover .nova-card__thumb img {
+    transform: scale(1.07);
+}
+
+/* Fade the thumb into the card body so there is no hard raster edge. */
+.nova-card__thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, var(--nv-void));
+    opacity: 0.85;
+}
+
+.nova-card__thumb-fallback {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: rgba(234, 240, 255, 0.5);
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+}
+
+.nova-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--nv-core);
+}
+
+.nova-price__unit {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--nv-fg-3);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.nova-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 30px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.35s var(--nv-ease), box-shadow 0.35s var(--nv-ease),
+        background 0.35s var(--nv-ease), border-color 0.35s var(--nv-ease);
+}
+
+.nova-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.nova-btn--primary {
+    color: #04050d;
+    background: linear-gradient(110deg, var(--nv-cyan), var(--nv-violet) 55%, var(--nv-magenta));
+    box-shadow: 0 14px 44px -14px var(--nv-violet);
+}
+
+.nova-btn--primary:hover,
+.nova-btn--primary:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 60px -14px var(--nv-violet);
+}
+
+.nova-btn--ghost {
+    color: var(--nv-fg-1);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--nv-line-hi);
+}
+
+.nova-btn--ghost:hover,
+.nova-btn--ghost:focus-visible {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.09);
+    border-color: var(--nv-cyan);
+}
+
+/* ==========================================================================
+   Stats
+   ========================================================================== */
+
+.nova-stats {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 30px;
+    border-radius: 24px;
+    border: 1px solid var(--nv-line);
+    background: var(--nv-panel);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+@media (min-width: 860px) {
+    .nova-stats {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.nova-stat {
+    text-align: center;
+}
+
+.nova-stat__num {
+    font-size: clamp(30px, 4.6vw, 46px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.nova-stat__label {
+    margin-top: 10px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--nv-fg-2);
+}
+
+/* ==========================================================================
+   Tech stack marquee
+   ========================================================================== */
+
+.nova-marquee {
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.nova-marquee__track {
+    display: flex;
+    gap: 16px;
+    width: max-content;
+    animation: nova-marquee 38s linear infinite;
+}
+
+.nova-marquee:hover .nova-marquee__track {
+    animation-play-state: paused;
+}
+
+@keyframes nova-marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.nova-tech {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    padding: 12px 20px;
+    border-radius: 14px;
+    border: 1px solid var(--nv-line);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--nv-fg-2);
+    white-space: nowrap;
+}
+
+.nova-tech img {
+    width: 24px;
+    height: 24px;
+}
+
+/* ==========================================================================
+   Reviews
+   ========================================================================== */
+
+.nova-review__stars {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 14px;
+    color: var(--nv-core);
+}
+
+.nova-review__stars svg {
+    width: 15px;
+    height: 15px;
+}
+
+.nova-review__who {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--nv-line);
+}
+
+.nova-review__avatar {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(140deg, var(--nv-violet), var(--nv-magenta));
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.nova-footer {
+    position: relative;
+    z-index: 10;
+    padding: 64px 0 40px;
+    border-top: 1px solid var(--nv-line);
+    background: linear-gradient(180deg, transparent, rgba(6, 8, 22, 0.9));
+}
+
+.nova-footer__grid {
+    display: grid;
+    gap: 34px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-bottom: 40px;
+}
+
+.nova-footer__title {
+    margin: 0 0 14px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--nv-fg-3);
+}
+
+.nova-footer__links {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.nova-footer__links a {
+    font-size: 14px;
+    color: var(--nv-fg-2);
+    text-decoration: none;
+    transition: color 0.25s var(--nv-ease);
+}
+
+.nova-footer__links a:hover,
+.nova-footer__links a:focus-visible {
+    color: var(--nv-cyan);
+}
+
+.nova-footer__base {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-top: 26px;
+    /* Keep the fixed corner star from sitting on top of these links. */
+    padding-right: 76px;
+    border-top: 1px solid var(--nv-line);
+    font-size: 12px;
+    color: var(--nv-fg-3);
+}
+
+@media (max-width: 620px) {
+    .nova-footer__base {
+        padding-right: 0;
+        padding-bottom: 68px;
+    }
+}
+
+/* ==========================================================================
+   Reveal-on-scroll
+   --------------------------------------------------------------------------
+   Scoped to html.nova-js — the class is set by the theme's own script, so a
+   blocked/failed script leaves every .nova-reveal fully visible instead of
+   serving a blank page. A timeout backstop in the script also force-reveals
+   everything if the IntersectionObserver never fires.
+   ========================================================================== */
+
+.nova-js .nova-reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.7s var(--nv-ease), transform 0.7s var(--nv-ease);
+}
+
+.nova-js .nova-reveal.is-in {
+    opacity: 1;
+    transform: none;
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+.nova-skip {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 12px 20px;
+    background: var(--nv-cyan);
+    color: #04050d;
+    font-weight: 700;
+    border-radius: 0 0 10px 0;
+}
+
+.nova-skip:focus {
+    left: 0;
+}
+
+.nova-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.nova-body :focus-visible {
+    outline: 2px solid var(--nv-cyan);
+    outline-offset: 3px;
+}
+
+/* --- Reduced motion -----------------------------------------------------
+   Zero BOTH duration and delay. Zeroing duration alone still leaves
+   staggered elements invisible for the length of their delay, which hands a
+   reader who asked for less motion a page that arrives in pieces. */
+@media (prefers-reduced-motion: reduce) {
+    .nova-body *,
+    .nova-body *::before,
+    .nova-body *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        transition-delay: 0s !important;
+        scroll-behavior: auto !important;
+    }
+
+    .nova-js .nova-reveal {
+        opacity: 1;
+        transform: none;
+    }
+
+    .nova-star__halo,
+    .nova-star__ring {
+        animation: none;
+    }
+}

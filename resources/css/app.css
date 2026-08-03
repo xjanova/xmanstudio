@@ -562,3 +562,11 @@
    ========================================================================== */
 @import './retro-theme.css';
 @import './retro-overrides.css';
+
+/* ==========================================================================
+   Nova theme — deep-space / 3D star-system home page. Imported last for the
+   same reason as retro: it must cascade over Tailwind v4 preflight. Every
+   rule is namespaced under .nova-body / .nova-* so it cannot leak into the
+   classic, premium, or retro layouts.
+   ========================================================================== */
+@import './nova-theme.css';

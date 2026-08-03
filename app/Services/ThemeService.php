@@ -36,6 +36,14 @@ class ThemeService
             'icon' => 'bolt',
             'gradient' => 'from-cyan-400 via-yellow-400 to-amber-500',
         ],
+        'nova' => [
+            'name' => 'Nova 3D',
+            'description' => 'ธีมอวกาศล้ำยุค — พื้นหลังดาว 3D วาดสด เมนูวงโคจรเปิดจากดาว XMAN ออโรร่าม่วง-ฟ้า-ชมพู',
+            'preview' => '/images/themes/nova-preview.png',
+            'features' => ['3D Starfield', 'Star Menu', 'Aurora Glass'],
+            'icon' => 'sparkles',
+            'gradient' => 'from-cyan-400 via-violet-500 to-fuchsia-500',
+        ],
     ];
 
     /**
@@ -165,11 +173,11 @@ class ThemeService
     {
         $theme = self::getCurrentTheme();
 
-        // Retro intentionally falls through to layouts.app for non-home
-        // pages — the retro experience is scoped to the home page
-        // (home-retro.blade.php) which extends layouts.retro directly.
-        // HomeController branches on the current theme and renders either
-        // home.blade.php (classic/premium) or home-retro.blade.php (retro).
+        // Retro and Nova intentionally fall through to layouts.app for
+        // non-home pages — both experiences are scoped to the home page
+        // (home-retro.blade.php / home-nova.blade.php), which extend
+        // layouts.retro and layouts.nova directly. HomeController branches on
+        // the current theme to pick the matching home view.
         return match ($theme) {
             'premium' => 'layouts.app-premium',
             default => 'layouts.app',

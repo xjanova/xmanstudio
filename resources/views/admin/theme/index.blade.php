@@ -127,6 +127,7 @@
                             $previewBg = match($themeKey) {
                                 'premium' => 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900',
                                 'retro' => 'bg-gradient-to-br from-slate-950 via-sky-950 to-slate-950',
+                                'nova' => 'bg-gradient-to-br from-[#04050d] via-[#0b1030] to-[#04050d]',
                                 default => 'bg-gradient-to-br from-gray-100 via-white to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-500',
                             };
                         @endphp
@@ -171,6 +172,26 @@
                                 </div>
                                 <!-- Scanline -->
                                 <span class="absolute top-0 left-0 right-0 h-px" style="background:linear-gradient(90deg,transparent,#00e5ff,transparent);"></span>
+                            @elseif($themeKey === 'nova')
+                                <!-- Nova 3D Theme Preview — star field + orbital menu -->
+                                <div class="absolute inset-0" style="background-image:radial-gradient(1px 1px at 18% 24%,rgba(255,255,255,.7),transparent),radial-gradient(1px 1px at 72% 18%,rgba(139,92,246,.8),transparent),radial-gradient(1px 1px at 34% 74%,rgba(34,211,238,.7),transparent),radial-gradient(1.5px 1.5px at 84% 66%,rgba(232,121,249,.6),transparent),radial-gradient(1px 1px at 56% 44%,rgba(255,255,255,.5),transparent),radial-gradient(1px 1px at 10% 60%,rgba(52,211,153,.6),transparent);"></div>
+                                <div class="absolute inset-0" style="background:radial-gradient(ellipse 60% 55% at 50% 50%,rgba(139,92,246,.28),transparent 70%);"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <!-- Orbital ring -->
+                                    <div class="relative" style="width:132px;height:132px;">
+                                        <span class="absolute inset-0 rounded-full" style="border:1px dashed rgba(160,190,255,.28);"></span>
+                                        @foreach([[50,0,'#22d3ee'],[100,25,'#8b5cf6'],[100,75,'#e879f9'],[50,100,'#34d399'],[0,75,'#ffd479'],[0,25,'#38bdf8']] as [$px,$py,$pc])
+                                            <span class="absolute rounded-md"
+                                                  style="left:{{ $px }}%;top:{{ $py }}%;width:22px;height:14px;margin:-7px 0 0 -11px;background:rgba(18,24,48,.9);border:1px solid {{ $pc }};box-shadow:0 0 8px -2px {{ $pc }};"></span>
+                                        @endforeach
+                                        <!-- Core star -->
+                                        <span class="absolute rounded-full" style="left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;background:conic-gradient(from 0deg,#22d3ee,#8b5cf6,#e879f9,#ffd479,#22d3ee);filter:blur(7px);opacity:.75;"></span>
+                                        <span class="absolute rounded-full grid place-items-center"
+                                              style="left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;background:radial-gradient(ellipse 100% 100% at 50% 30%,rgba(40,52,96,.95),rgba(6,9,22,.98));border:1px solid rgba(160,190,255,.4);">
+                                            <span class="text-[11px] font-black" style="color:#ffd479;">X</span>
+                                        </span>
+                                    </div>
+                                </div>
                             @else
                                 <!-- Premium Theme Preview -->
                                 <div class="absolute inset-0 flex p-4">
