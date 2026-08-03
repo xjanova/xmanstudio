@@ -13,14 +13,12 @@ class ThemeController extends Controller
      */
     public function index()
     {
-        // Use getSiteDefaultTheme() to show actual site default, not user's personal preference
+        // The theme is site-wide and admin-controlled; there is no per-user
+        // override to reconcile against.
         $currentTheme = ThemeService::getSiteDefaultTheme();
         $themes = ThemeService::getAvailableThemes();
 
-        // Get admin's personal theme for info display
-        $adminPersonalTheme = ThemeService::getUserTheme();
-
-        return view('admin.theme.index', compact('currentTheme', 'themes', 'adminPersonalTheme'));
+        return view('admin.theme.index', compact('currentTheme', 'themes'));
     }
 
     /**

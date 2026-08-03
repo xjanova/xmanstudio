@@ -98,7 +98,6 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
-use App\Http\Controllers\UserThemeController;
 use App\Http\Controllers\XdreamerController;
 use App\Models\AdsTxtSetting;
 use App\Models\AiCrawlSetting;
@@ -468,9 +467,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/support/{ticket}/close', [SupportTicketController::class, 'close'])->name('support.close');
         Route::post('/support/{ticket}/reopen', [SupportTicketController::class, 'reopen'])->name('support.reopen');
 
-        // Theme Settings
-        Route::get('/settings/theme', [UserThemeController::class, 'index'])->name('settings.theme');
-        Route::put('/settings/theme', [UserThemeController::class, 'update'])->name('settings.theme.update');
+        // Theme is site-wide and admin-controlled (/admin/theme) — there is
+        // no per-user theme setting.
 
         // Tping Workflows
         Route::prefix('tping-workflows')->name('tping.workflows.')->group(function () {

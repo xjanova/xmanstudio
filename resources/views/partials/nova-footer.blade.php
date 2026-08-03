@@ -56,8 +56,11 @@
                         <li><a href="{{ route('customer.licenses') }}">ไลเซนส์ / Licenses</a></li>
                         <li><a href="{{ route('customer.orders') }}">คำสั่งซื้อ / Orders</a></li>
                         <li><a href="{{ route('user.wallet.index') }}">กระเป๋าเงิน / Wallet</a></li>
-                        {{-- affiliate.register is POST-only; dashboard is the GET entry point. --}}
-                        <li><a href="{{ route('affiliate.dashboard') }}">ตัวแทนจำหน่าย / Affiliate</a></li>
+                        {{-- customer.affiliate.register is POST-only; dashboard is the GET entry
+                             point. Note the group is nested under the `customer.` prefix, so the
+                             name is customer.affiliate.dashboard — plain affiliate.dashboard is
+                             the ADMIN side and does not exist here. --}}
+                        <li><a href="{{ route('customer.affiliate.dashboard') }}">ตัวแทนจำหน่าย / Affiliate</a></li>
                     @else
                         <li><a href="{{ route('login') }}">เข้าสู่ระบบ / Log in</a></li>
                         <li><a href="{{ route('register') }}">สมัครสมาชิก / Register</a></li>

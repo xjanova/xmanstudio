@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Setting;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 class ThemeService
@@ -70,35 +69,17 @@ class ThemeService
     }
 
     /**
-     * Get current theme (respecting user preference)
+     * Get current theme.
+     *
+     * The theme is admin-controlled and site-wide: every visitor, logged in
+     * or not, sees whatever is set at /admin/theme. There is deliberately no
+     * per-user override — a personal `preferred_theme` used to win here,
+     * which meant an admin who had once picked a personal theme kept seeing
+     * it and thought the site-wide switch had silently failed.
      */
     public static function getCurrentTheme(): string
     {
-        // Check if user is logged in and has a preferred theme
-        if (Auth::check()) {
-            $userTheme = Auth::user()->getPreferredTheme();
-            if ($userTheme && self::isValidTheme($userTheme)) {
-                return $userTheme;
-            }
-        }
-
-        // Fall back to site default theme
         return self::getSiteDefaultTheme();
-    }
-
-    /**
-     * Get user's preferred theme or null if using site default
-     */
-    public static function getUserTheme(): ?string
-    {
-        if (! Auth::check()) {
-            return null;
-        }
-
-        $theme = Auth::user()->getPreferredTheme();
-
-        // Self-heal if the stored preference is no longer a registered theme.
-        return ($theme && self::isValidTheme($theme)) ? $theme : null;
     }
 
     /**
