@@ -49,7 +49,7 @@ class AnalyticsController extends Controller
     private function getOverviewStats(Carbon $startDate): array
     {
         // Revenue from payments
-        $revenue = RentalPayment::where('status', 'approved')
+        $revenue = RentalPayment::completed()
             ->where('created_at', '>=', $startDate)
             ->sum('amount');
 
@@ -64,7 +64,7 @@ class AnalyticsController extends Controller
         $periodDays = now()->diffInDays($startDate);
         $previousStart = $startDate->copy()->subDays($periodDays);
 
-        $previousRevenue = RentalPayment::where('status', 'approved')
+        $previousRevenue = RentalPayment::completed()
             ->whereBetween('created_at', [$previousStart, $startDate])
             ->sum('amount');
         $previousOrderRevenue = Order::where('status', 'completed')
@@ -132,7 +132,7 @@ class AnalyticsController extends Controller
         }
 
         // Rental payments
-        $rentalRevenue = RentalPayment::where('status', 'approved')
+        $rentalRevenue = RentalPayment::completed()
             ->where('created_at', '>=', $startDate)
             ->select(DB::raw("DATE_FORMAT(created_at, '{$format}') as period"), DB::raw('SUM(amount) as total'))
             ->groupBy('period')
