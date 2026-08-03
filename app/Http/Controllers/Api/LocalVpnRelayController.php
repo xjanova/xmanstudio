@@ -10,6 +10,7 @@ use App\Models\VpnNetwork;
 use App\Models\VpnNetworkMember;
 use App\Models\VpnRelaySession;
 use App\Models\VpnTrafficLog;
+use App\Support\SqlDialect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -825,10 +826,12 @@ class LocalVpnRelayController extends Controller
 
         // Fallback: find any active non-expired license for this machine_id.
         // Prioritize paid > free > demo to avoid picking expired demo when free exists.
+        $typeOrder = ['lifetime', 'yearly', 'monthly', 'weekly', 'daily', 'free', 'demo'];
+
         $license = LicenseKey::where('product_id', $product->id)
             ->where('machine_id', $machineId)
             ->where('status', 'active')
-            ->orderByRaw("FIELD(license_type, 'lifetime','yearly','monthly','weekly','daily','free','demo')")
+            ->orderByRaw(SqlDialect::field('license_type', $typeOrder), $typeOrder)
             ->get()
             ->first(fn ($l) => ! $l->isExpired());
 

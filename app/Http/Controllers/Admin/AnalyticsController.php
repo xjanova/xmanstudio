@@ -8,6 +8,7 @@ use App\Models\RentalPayment;
 use App\Models\SupportTicket;
 use App\Models\User;
 use App\Models\UserRental;
+use App\Support\SqlDialect;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -131,21 +132,32 @@ class AnalyticsController extends Controller
             $labelFormat = 'm/Y';
         }
 
-        // Rental payments
-        $rentalRevenue = RentalPayment::where('status', 'approved')
-            ->where('created_at', '>=', $startDate)
-            ->select(DB::raw("DATE_FORMAT(created_at, '{$format}') as period"), DB::raw('SUM(amount) as total'))
-            ->groupBy('period')
-            ->pluck('total', 'period')
-            ->toArray();
+        // Group by calendar day in SQL — DATE() is the one date function MySQL
+        // and SQLite agree on — then fold the days into chart buckets in PHP
+        // using the same format() call that builds the labels below, so the
+        // keys are guaranteed to match.
+        //
+        // The previous DATE_FORMAT() passed PHP format strings ('Y-m-d'), but
+        // MySQL only substitutes '%'-prefixed specifiers, so it returned the
+        // literal text "Y-m-d" for every row. Every lookup missed and the chart
+        // rendered as all zeros on MySQL as well as erroring on SQLite.
+        $rentalRevenue = $this->sumByPeriod(
+            RentalPayment::where('status', 'approved')
+                ->where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as day, SUM(amount) as total')
+                ->groupBy('day')
+                ->pluck('total', 'day'),
+            $format
+        );
 
-        // Order revenue
-        $orderRevenue = Order::where('status', 'completed')
-            ->where('created_at', '>=', $startDate)
-            ->select(DB::raw("DATE_FORMAT(created_at, '{$format}') as period"), DB::raw('SUM(total) as total'))
-            ->groupBy('period')
-            ->pluck('total', 'period')
-            ->toArray();
+        $orderRevenue = $this->sumByPeriod(
+            Order::where('status', 'completed')
+                ->where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as day, SUM(total) as total')
+                ->groupBy('day')
+                ->pluck('total', 'day'),
+            $format
+        );
 
         // Merge and create chart data
         $labels = [];
@@ -185,6 +197,25 @@ class AnalyticsController extends Controller
                 ],
             ],
         ];
+    }
+
+    /**
+     * Fold per-day totals into the chart's bucket keys.
+     *
+     * @param  Collection<string, mixed>  $dailyTotals  keyed by 'Y-m-d'
+     * @param  string  $format  PHP date() format, same one used for the labels
+     * @return array<string, float>
+     */
+    private function sumByPeriod(Collection $dailyTotals, string $format): array
+    {
+        $buckets = [];
+
+        foreach ($dailyTotals as $day => $total) {
+            $key = Carbon::parse($day)->format($format);
+            $buckets[$key] = ($buckets[$key] ?? 0) + (float) $total;
+        }
+
+        return $buckets;
     }
 
     /**
@@ -269,7 +300,7 @@ class AnalyticsController extends Controller
         // Average response time (in hours)
         $avgResponseTime = SupportTicket::whereNotNull('responded_at')
             ->where('created_at', '>=', $startDate)
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, responded_at)) as avg_hours')
+            ->selectRaw('AVG(' . SqlDialect::hoursBetween('created_at', 'responded_at') . ') as avg_hours')
             ->value('avg_hours');
 
         return [

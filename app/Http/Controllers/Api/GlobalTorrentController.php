@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use App\Support\SqlDialect;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -604,7 +605,7 @@ class GlobalTorrentController extends Controller
     {
         $users = DB::table('bt_user_stats')
             ->select('bt_user_stats.*')
-            ->selectRaw("(SELECT GROUP_CONCAT(bt_trophies.badge_text SEPARATOR '||') FROM bt_user_trophies JOIN bt_trophies ON bt_user_trophies.trophy_id = bt_trophies.id WHERE bt_user_trophies.machine_id = bt_user_stats.machine_id) as trophy_badges")
+            ->selectRaw('(SELECT ' . SqlDialect::groupConcat('bt_trophies.badge_text', '||') . ' FROM bt_user_trophies JOIN bt_trophies ON bt_user_trophies.trophy_id = bt_trophies.id WHERE bt_user_trophies.machine_id = bt_user_stats.machine_id) as trophy_badges')
             ->orderByDesc('score')
             ->limit(50)
             ->get();

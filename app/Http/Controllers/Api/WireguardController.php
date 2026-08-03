@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\WireguardClient;
 use App\Models\WireguardServer;
 use App\Services\WireguardService;
+use App\Support\SqlDialect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -260,10 +261,12 @@ class WireguardController extends Controller
         }
 
         // Fallback: find any active non-expired license for this machine_id
+        $typeOrder = ['lifetime', 'yearly', 'monthly', 'weekly', 'daily', 'free', 'demo'];
+
         $license = LicenseKey::where('product_id', $product->id)
             ->where('machine_id', $machineId)
             ->where('status', 'active')
-            ->orderByRaw("FIELD(license_type, 'lifetime','yearly','monthly','weekly','daily','free','demo')")
+            ->orderByRaw(SqlDialect::field('license_type', $typeOrder), $typeOrder)
             ->get()
             ->first(fn ($l) => ! $l->isExpired());
 

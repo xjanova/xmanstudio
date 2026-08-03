@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PuzzleDebugImage;
+use App\Support\SqlDialect;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -61,7 +62,7 @@ class PuzzleDebugController extends Controller
 
         // With-images count (records that have debug images vs feedback-only)
         $withImages = PuzzleDebugImage::whereNotNull('image_paths')
-            ->whereRaw('JSON_LENGTH(image_paths) > 0')
+            ->whereRaw(SqlDialect::jsonLength('image_paths') . ' > 0')
             ->count();
 
         // Error distribution for human-labeled data
@@ -156,7 +157,7 @@ class PuzzleDebugController extends Controller
             ->where('labeled_by', 'human')
             ->whereNotNull('gap_x')
             ->selectRaw('AVG(actual_gap_x - gap_x) as avg_correction')
-            ->selectRaw('STDDEV(actual_gap_x - gap_x) as std_correction')
+            ->selectRaw(SqlDialect::variancePop('actual_gap_x - gap_x') . ' as var_correction')
             ->selectRaw('COUNT(*) as samples')
             ->selectRaw('AVG(ABS(actual_gap_x - gap_x)) as avg_error')
             ->selectRaw('SUM(CASE WHEN ABS(actual_gap_x - gap_x) <= 20 THEN 1 ELSE 0 END) as within_20px')
@@ -190,7 +191,8 @@ class PuzzleDebugController extends Controller
 
         $model = [
             'correction' => round($global->avg_correction ?? 0, 1),
-            'std_dev' => round($global->std_correction ?? 0, 1),
+            // sqrt() in PHP: SQLite has no SQRT() in the PHP-bundled build
+            'std_dev' => round(sqrt(max(0.0, (float) ($global->var_correction ?? 0))), 1),
             'samples' => $global->samples ?? 0,
             'avg_error' => round($global->avg_error ?? 0, 1),
             'accuracy_pct' => ($global->samples ?? 0) > 0

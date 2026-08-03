@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\User;
+use App\Support\SqlDialect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -64,8 +65,11 @@ class SupportTicketController extends Controller
         }
 
         // Default sort by priority and date
-        $query->orderByRaw("FIELD(priority, 'urgent', 'high', 'medium', 'low')")
-            ->orderByRaw("FIELD(status, 'open', 'in_progress', 'waiting_reply', 'resolved', 'closed')")
+        $priorityOrder = ['urgent', 'high', 'medium', 'low'];
+        $statusOrder = ['open', 'in_progress', 'waiting_reply', 'resolved', 'closed'];
+
+        $query->orderByRaw(SqlDialect::field('priority', $priorityOrder), $priorityOrder)
+            ->orderByRaw(SqlDialect::field('status', $statusOrder), $statusOrder)
             ->orderBy('created_at', 'desc');
 
         $tickets = $query->paginate(20);
