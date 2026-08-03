@@ -53,8 +53,11 @@ class ProductController extends Controller
                 });
         }
 
-        // Sort: available products first, then coming soon
-        $query->orderByRaw('CASE WHEN is_coming_soon = 1 AND (coming_soon_until IS NULL OR coming_soon_until > NOW()) THEN 1 ELSE 0 END ASC')
+        // Sort: available products first, then coming soon.
+        // Bind now() rather than calling SQL NOW(): NOW() does not exist on
+        // SQLite, and on MySQL it returns server-local time while timestamps are
+        // stored in UTC — so it also disagreed with the now() filters above.
+        $query->orderByRaw('CASE WHEN is_coming_soon = 1 AND (coming_soon_until IS NULL OR coming_soon_until > ?) THEN 1 ELSE 0 END ASC', [now()])
             ->orderBy('name');
 
         $products = $query->paginate(12)->withQueryString();

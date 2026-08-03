@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\AffiliateCommission;
+use App\Support\SqlDialect;
 use Illuminate\Http\Request;
 
 /**
@@ -40,7 +41,7 @@ class AffiliateController extends Controller
             // Monthly stats (last 6 months)
             $monthlyStats = AffiliateCommission::where('affiliate_id', $affiliate->id)
                 ->where('created_at', '>=', now()->subMonths(6))
-                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month")
+                ->selectRaw(SqlDialect::dateFormat('created_at', '%Y-%m') . ' as month')
                 ->selectRaw('COUNT(*) as total_orders')
                 ->selectRaw('SUM(commission_amount) as total_commission')
                 ->selectRaw("SUM(CASE WHEN status = 'paid' THEN commission_amount ELSE 0 END) as paid_amount")
