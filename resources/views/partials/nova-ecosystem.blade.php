@@ -57,12 +57,12 @@
                     และค้นหาแบบ semantic ให้ผู้ช่วย AI ของคุณจำบริบทได้ข้ามเซสชัน
                 </p>
                 <div class="nova-eco__links">
-                    <a href="https://product.xman4289.com" target="_blank" rel="noopener noreferrer"
+                    <a href="{{ config('app.product_site_url') }}" target="_blank" rel="noopener noreferrer"
                        class="nova-btn nova-btn--primary nova-btn--sm">
                         ดูรายละเอียด / Learn more
                         @include('partials.nova-icon', ['name' => 'external'])
                     </a>
-                    <span class="nova-eco__sub" style="color:var(--nv-fg-3);">product.xman4289.com</span>
+                    <span class="nova-eco__sub" style="color:var(--nv-fg-3);">{{ parse_url(config('app.product_site_url'), PHP_URL_HOST) }}</span>
                 </div>
             </article>
 

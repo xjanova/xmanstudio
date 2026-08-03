@@ -23,7 +23,7 @@
                     $nav = [
                         ['home',      'HOME',     '#00e5ff', url('/')],
                         ['services',  'SERVICES', '#d4af37', url('/services')],
-                        ['products',  'PROGRAMS', '#ff2d95', url('/products')],
+                        ['products',  'PROGRAMS', '#ff2d95', config('app.product_site_url')],
                         ['rental',    'LEASE',    '#7c4dff', url('/rental')],
                         ['portfolio', 'ARCHIVES', '#4dd0e1', url('/portfolio')],
                         ['support',   'CONTACT',  '#4ade80', url('/support')],

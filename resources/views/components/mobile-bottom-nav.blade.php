@@ -263,7 +263,7 @@
         </button>
         @else
         {{-- If AI chat disabled, show products instead --}}
-        <a href="/products" class="mobile-nav-item nav-products {{ request()->is('products*') ? 'active' : '' }}">
+        <a href="{{ config('app.product_site_url') }}" class="mobile-nav-item nav-products {{ request()->is('products*') ? 'active' : '' }}">
             <span class="mobile-nav-dot"></span>
             <span class="mobile-nav-icon">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
