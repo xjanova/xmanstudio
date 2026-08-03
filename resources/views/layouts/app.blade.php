@@ -93,7 +93,7 @@
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             <x-bi th="บริการ" en="Services" layout="stack" />
                         </a>
-                        <a href="/products" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('products*') ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/30' }}">
+                        <a href="{{ config('app.product_site_url') }}" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('products*') ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/30' }}">
                             <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                             <x-bi th="ผลิตภัณฑ์" en="Products" layout="stack" />
                         </a>
@@ -233,7 +233,7 @@
                         <li><a href="/team" class="hover:text-white transition-colors"><x-bi th="ทีมงานและผู้บริหาร" en="Team & Management" /></a></li>
                         <li><a href="/support" class="hover:text-white transition-colors"><x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" /></a></li>
                         <li><a href="/rental" class="hover:text-white transition-colors"><x-bi th="เช่าบริการ" en="Rentals" /></a></li>
-                        <li><a href="/products" class="hover:text-white transition-colors"><x-bi th="ผลิตภัณฑ์" en="Products" /></a></li>
+                        <li><a href="{{ config('app.product_site_url') }}" class="hover:text-white transition-colors"><x-bi th="ผลิตภัณฑ์" en="Products" /></a></li>
                         <li><a href="/portfolio" class="hover:text-white transition-colors"><x-bi th="ผลงาน" en="Portfolio" /></a></li>
                     </ul>
 

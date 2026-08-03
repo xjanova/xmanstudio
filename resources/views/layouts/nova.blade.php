@@ -19,7 +19,7 @@
     $novaMenu = [
         ['th' => 'หน้าหลัก',    'en' => 'Home',      'href' => url('/'),                  'accent' => '#22d3ee', 'icon' => 'home'],
         ['th' => 'บริการ',      'en' => 'Services',  'href' => route('services.index'),   'accent' => '#8b5cf6', 'icon' => 'grid'],
-        ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'href' => route('products.index'),   'accent' => '#e879f9', 'icon' => 'cube'],
+        ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'href' => config('app.product_site_url'), 'accent' => '#e879f9', 'icon' => 'cube'],
         ['th' => 'เช่าใช้งาน',  'en' => 'Rental',    'href' => route('rental.index'),     'accent' => '#34d399', 'icon' => 'clock'],
         ['th' => 'สร้างภาพ AI', 'en' => 'XDreamer',  'href' => route('xdreamer.home'),    'accent' => '#f472b6', 'icon' => 'spark'],
         ['th' => 'เรียนโค้ด',   'en' => 'Academy',   'href' => route('code-academy'),     'accent' => '#38bdf8', 'icon' => 'book'],

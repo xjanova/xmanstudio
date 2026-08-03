@@ -130,6 +130,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Product Site URL
+    |--------------------------------------------------------------------------
+    |
+    | The public product/selling site. The "Products" item in every theme's
+    | navigation and footer points here. The internal /products catalogue is
+    | still live and still drives cart, checkout and licensing — it is simply
+    | no longer the destination the top-level menu advertises.
+    |
+    */
+
+    'product_site_url' => env('PRODUCT_SITE_URL', 'https://product.xman4289.com'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Maintenance Mode Driver
     |--------------------------------------------------------------------------
     |

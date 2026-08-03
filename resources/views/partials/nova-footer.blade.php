@@ -19,7 +19,7 @@
                 <h2 class="nova-footer__title">บริการ / Services</h2>
                 <ul class="nova-footer__links">
                     <li><a href="{{ route('services.index') }}">บริการทั้งหมด / All services</a></li>
-                    <li><a href="{{ route('products.index') }}">ผลิตภัณฑ์ / Products</a></li>
+                    <li><a href="{{ config('app.product_site_url') }}">ผลิตภัณฑ์ / Products</a></li>
                     <li><a href="{{ route('rental.index') }}">เช่าใช้งาน / Rental</a></li>
                     <li><a href="{{ route('quotation.services') }}">ขอใบเสนอราคา / Get a quote</a></li>
                     <li><a href="{{ route('portfolio') }}">ผลงาน / Portfolio</a></li>
@@ -33,7 +33,7 @@
                     <li><a href="{{ route('xdreamer.gallery') }}">XDreamer Gallery</a></li>
                     <li><a href="{{ route('code-academy') }}">Code Academy</a></li>
                     <li><a href="{{ route('metal-x.index') }}">Metal-X Project</a></li>
-                    <li><a href="https://product.xman4289.com" target="_blank" rel="noopener noreferrer">BrainX</a></li>
+                    <li><a href="{{ config('app.product_site_url') }}" target="_blank" rel="noopener noreferrer">BrainX</a></li>
                 </ul>
             </div>
 
