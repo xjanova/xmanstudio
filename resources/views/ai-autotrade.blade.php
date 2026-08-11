@@ -26,6 +26,7 @@
         {{-- Animated Background --}}
         <div class="absolute inset-0">
             <div class="absolute inset-0" style="background: linear-gradient(to bottom right, #030712, rgba(6,78,59,0.3), #030712);"></div>
+            <x-page-art art="card-autotradex" :opacity="34" :scrim="false" />
             {{-- Dot pattern --}}
             <div class="absolute inset-0" style="opacity: 0.04; background-image: radial-gradient(circle, #10b981 1px, transparent 1px); background-size: 40px 40px;"></div>
             {{-- Animated gradient orbs --}}

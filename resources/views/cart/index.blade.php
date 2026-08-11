@@ -3,8 +3,16 @@
 @section('title', 'ตะกร้าสินค้า - XMAN Studio')
 
 @section('content')
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white py-14">
+    <x-page-art art="hero-cart" :opacity="42" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight"><x-bi th="ตะกร้าสินค้า" en="Shopping Cart" /></h1>
+        <p class="mt-2 text-gray-400">ตรวจสอบรายการก่อนชำระเงิน / Review your items before checkout</p>
+    </div>
+</section>
+
 <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8"><x-bi th="ตะกร้าสินค้า" en="Shopping Cart" /></h1>
 
     @if(session('success'))
         <div class="mb-6 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded">

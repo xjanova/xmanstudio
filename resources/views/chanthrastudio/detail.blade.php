@@ -88,7 +88,8 @@
 
     {{-- ═══════════ HERO ═══════════ --}}
     <section class="relative overflow-hidden pt-16 pb-32">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <x-page-art art="card-chanthra" :opacity="38" />
+        <div class="relative max-w-7xl mx-auto px-6 lg:px-8">
             {{-- Breadcrumb back to product index — matches winxtools/tping pattern --}}
             <nav class="mb-10">
                 <a href="{{ route('products.index') }}" class="font-mono text-xs inline-flex items-center transition" style="color: var(--text-3);" onmouseover="this.style.color='var(--gold-hi)'" onmouseout="this.style.color='var(--text-3)'">

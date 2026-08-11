@@ -7,6 +7,7 @@
 
     {{-- ═══════ HERO SECTION ═══════ --}}
     <section class="relative py-20 overflow-hidden">
+        <x-page-art art="card-cluadex" :opacity="40" />
         {{-- Background pattern --}}
         <div class="absolute inset-0 opacity-10">
             <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(99,102,241,0.3) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(6,182,212,0.2) 0%, transparent 50%);"></div>

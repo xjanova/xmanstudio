@@ -10,6 +10,7 @@
     {{-- HERO SECTION --}}
     {{-- ============================================================ --}}
     <section class="relative py-24 lg:py-32 overflow-hidden">
+        <x-page-art art="card-tping" :opacity="40" />
         {{-- Background decoration --}}
         <div class="absolute inset-0 opacity-10">
             <div class="absolute inset-0" style="background-image: radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.4) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.4) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.2) 0%, transparent 70%);"></div>

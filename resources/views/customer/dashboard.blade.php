@@ -7,6 +7,7 @@
 @section('content')
 <!-- Premium Welcome Banner -->
 <div class="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl mb-8 animate-fade-in">
+    <x-page-art art="hero-dashboard" :opacity="28" :scrim="false" />
     <div class="absolute inset-0 bg-black/10"></div>
 
     <!-- Animated Background Blobs -->

@@ -131,6 +131,7 @@
     {{-- HERO SECTION — animated network illustration --}}
     {{-- ============================================================ --}}
     <section class="relative min-h-[90vh] flex items-center py-20 lg:py-28 overflow-hidden">
+        <x-page-art art="card-localvpn" :opacity="38" />
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
