@@ -17,14 +17,14 @@
 
     // Orbital menu items. `accent` drives the per-item glow via --nv-accent.
     $novaMenu = [
-        ['th' => 'หน้าหลัก',    'en' => 'Home',      'href' => url('/'),                  'accent' => '#22d3ee', 'icon' => 'home'],
-        ['th' => 'บริการ',      'en' => 'Services',  'href' => route('services.index'),   'accent' => '#8b5cf6', 'icon' => 'grid'],
-        ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'href' => config('app.product_site_url'), 'accent' => '#e879f9', 'icon' => 'cube'],
-        ['th' => 'เช่าใช้งาน',  'en' => 'Rental',    'href' => route('rental.index'),     'accent' => '#34d399', 'icon' => 'clock'],
-        ['th' => 'สร้างภาพ AI', 'en' => 'XDreamer',  'href' => route('xdreamer.home'),    'accent' => '#f472b6', 'icon' => 'spark'],
-        ['th' => 'เรียนโค้ด',   'en' => 'Academy',   'href' => route('code-academy'),     'accent' => '#38bdf8', 'icon' => 'book'],
-        ['th' => 'เพลง',        'en' => 'Metal-X',   'href' => route('metal-x.index'),    'accent' => '#fb7185', 'icon' => 'play'],
-        ['th' => 'ติดต่อเรา',   'en' => 'Contact',   'href' => route('support.index'),    'accent' => '#ffd479', 'icon' => 'chat'],
+        ['th' => 'หน้าหลัก',    'en' => 'Home',      'href' => url('/'),                  'accent' => '#22d3ee', 'icon' => 'home',  'art' => 'home'],
+        ['th' => 'บริการ',      'en' => 'Services',  'href' => route('services.index'),   'accent' => '#8b5cf6', 'icon' => 'grid',  'art' => 'services'],
+        ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'href' => config('app.product_site_url'), 'accent' => '#e879f9', 'icon' => 'cube',  'art' => 'products'],
+        ['th' => 'เช่าใช้งาน',  'en' => 'Rental',    'href' => route('rental.index'),     'accent' => '#34d399', 'icon' => 'clock', 'art' => 'rental'],
+        ['th' => 'สร้างภาพ AI', 'en' => 'XDreamer',  'href' => route('xdreamer.home'),    'accent' => '#f472b6', 'icon' => 'spark', 'art' => 'xdreamer'],
+        ['th' => 'เรียนโค้ด',   'en' => 'Academy',   'href' => route('code-academy'),     'accent' => '#38bdf8', 'icon' => 'book',  'art' => 'academy'],
+        ['th' => 'เพลง',        'en' => 'Metal-X',   'href' => route('metal-x.index'),    'accent' => '#fb7185', 'icon' => 'play',  'art' => 'metalx'],
+        ['th' => 'ติดต่อเรา',   'en' => 'Contact',   'href' => route('support.index'),    'accent' => '#ffd479', 'icon' => 'chat',  'art' => 'contact'],
     ];
 @endphp
 <!DOCTYPE html>
@@ -97,6 +97,15 @@
                    class="nova-nav__link"
                    style="--nv-accent: {{ $item['accent'] }};"
                    data-nova-orbit="{{ $i }}">
+                    {{-- Artwork tile, shown only in the orbital (JS) menu — it
+                         replaces the glyph that used to sit there. The no-JS bar
+                         stays a plain text list. width/height are set so the chip
+                         measures the same before the image loads: layout() picks
+                         the ring radius from offsetHeight the moment it opens. --}}
+                    <span class="nova-nav__thumb" aria-hidden="true">
+                        <img src="{{ asset('artwork/menu/' . $item['art'] . '.webp') }}"
+                             alt="" width="208" height="116" decoding="async">
+                    </span>
                     <span class="nova-nav__icon" aria-hidden="true">
                         @include('partials.nova-icon', ['name' => $item['icon']])
                     </span>
