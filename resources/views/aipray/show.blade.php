@@ -18,6 +18,7 @@
     {{-- Hero Section --}}
     <section class="relative overflow-hidden bg-gray-900">
         <div class="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900"></div>
+        <x-page-art art="hero-donate" :opacity="34" :scrim="false" />
         <div class="relative max-w-4xl mx-auto px-4 py-16 sm:py-24 text-center">
             {{-- App Icon --}}
             <div class="mx-auto w-24 h-24 sm:w-32 sm:h-32 rounded-3xl gold-gradient flex items-center justify-center shadow-2xl mb-8">

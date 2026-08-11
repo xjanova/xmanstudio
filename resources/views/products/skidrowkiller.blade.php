@@ -15,6 +15,7 @@
 
     <!-- Hero Section -->
     <section class="relative py-16 lg:py-24 overflow-hidden">
+        <x-page-art art="card-skidrow" :opacity="38" />
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Breadcrumb -->
             <nav class="mb-8 animate-fade-in">
@@ -242,8 +243,8 @@
                             <div class="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-red-500/50 rounded-tl-2xl"></div>
                             <div class="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-orange-500/50 rounded-br-2xl"></div>
 
-                            @if($product->image)
-                                <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                            @if($product->artwork_url)
+                                <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}"
                                      class="w-full rounded-xl shadow-2xl" id="main-image">
                             @else
                                 <div class="w-full aspect-video bg-gray-800/50 rounded-xl flex items-center justify-center">
@@ -261,10 +262,10 @@
                     {{-- Screenshots Gallery --}}
                     @if($product->images && is_array($product->images) && count($product->images) > 0)
                         <div class="grid grid-cols-4 gap-3 mt-4">
-                            @if($product->image)
+                            @if($product->artwork_url)
                                 <div class="bg-gray-800/50 rounded-lg p-1 border-2 border-red-500 cursor-pointer transform hover:scale-105 transition-all"
-                                     onclick="document.getElementById('main-image').src='{{ Storage::url($product->image) }}'">
-                                    <img src="{{ Storage::url($product->image) }}" alt="Main"
+                                     onclick="document.getElementById('main-image').src='{{ $product->artwork_url }}'">
+                                    <img src="{{ $product->artwork_url }}" alt="Main"
                                          class="w-full rounded-lg aspect-video object-cover">
                                 </div>
                             @endif

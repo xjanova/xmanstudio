@@ -92,8 +92,8 @@
                     <div class="bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 rounded-2xl p-6 backdrop-blur-sm border border-indigo-500/30">
                         <div class="aspect-video bg-gray-800 rounded-xl flex items-center justify-center overflow-hidden">
                             {{-- TODO: Replace with actual screenshot --}}
-                            @if($product->image)
-                                <img src="{{ Storage::url($product->image) }}" alt="CluadeX" class="w-full h-full object-cover">
+                            @if($product->artwork_url)
+                                <img src="{{ $product->artwork_url }}" alt="CluadeX" class="w-full h-full object-cover">
                             @else
                                 <div class="text-center p-8">
                                     <div class="text-8xl mb-4">🤖</div>

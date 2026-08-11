@@ -143,8 +143,9 @@
                            class="group relative bg-gray-800/50 rounded-2xl overflow-hidden border border-gray-700 hover:border-primary-500/50 transition-all duration-300 hover:transform hover:scale-[1.02] hover:shadow-xl hover:shadow-primary-500/10 backdrop-blur-sm block">
                             <!-- Product Image -->
                             <div class="relative aspect-video overflow-hidden">
-                                @if($product->image)
-                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                                @if($product->artwork_url)
+                                    <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}"
+                                         loading="lazy" decoding="async"
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 @else
                                     <div class="w-full h-full bg-gradient-to-br from-primary-500/20 to-purple-500/20 flex items-center justify-center">

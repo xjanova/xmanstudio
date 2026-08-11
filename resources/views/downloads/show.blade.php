@@ -3,8 +3,9 @@
 @section('title', 'ดาวน์โหลด ' . $product->name)
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-20">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="relative overflow-hidden min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-20">
+    <x-page-art art="hero-downloads" :opacity="30" />
+    <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Back Link -->
         <nav class="mb-8">
             <a href="{{ route('products.show', $product->slug) }}" class="text-primary-400 hover:text-primary-300 flex items-center">

@@ -7,6 +7,7 @@
 @section('content')
 <!-- Premium Header Banner -->
 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-600 via-gray-700 to-zinc-800 p-6 sm:p-8 mb-8 shadow-xl">
+    <x-page-art art="hero-payment" :opacity="26" :scrim="false" />
     <div class="absolute inset-0 bg-black/10"></div>
     <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-blob"></div>
     <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-gray-400/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>

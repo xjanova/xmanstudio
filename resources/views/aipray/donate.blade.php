@@ -16,7 +16,9 @@
 @section('content')
 <div class="bg-gray-900 text-gray-100">
     {{-- Header --}}
-    <header class="max-w-2xl mx-auto px-4 pt-10 pb-6 text-center">
+    <header class="relative overflow-hidden px-4 pt-10 pb-6 text-center">
+        <x-page-art art="hero-donate" :opacity="34" />
+        <div class="relative max-w-2xl mx-auto">
         <a href="{{ route('aipray.show') }}" class="inline-flex items-center text-gray-400 hover:gold-text transition-colors mb-8 text-sm">
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             กลับหน้า Aipray
@@ -28,6 +30,7 @@
             บริจาคสนับสนุน <span class="gold-text">Aipray</span>
         </h1>
         <p class="text-gray-400">ทุกบาทช่วยให้เราพัฒนาแอปสวดมนต์ให้ดียิ่งขึ้น</p>
+        </div>
     </header>
 
     <main class="max-w-2xl mx-auto px-4 pb-16">

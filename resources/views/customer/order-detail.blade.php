@@ -54,8 +54,8 @@
                     @foreach($order->items as $item)
                     <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
                         <div class="flex items-center min-w-0">
-                            @if($item->product && $item->product->image)
-                                <img src="{{ Storage::url($item->product->image) }}" alt="{{ $item->product_name ?? $item->product->name }}"
+                            @if($item->product && $item->product->artwork_url)
+                                <img src="{{ $item->product->artwork_url }}" alt="{{ $item->product_name ?? $item->product->name }}"
                                      class="w-14 h-14 rounded-xl object-cover mr-4 flex-shrink-0">
                             @else
                                 <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mr-4 flex-shrink-0 shadow">

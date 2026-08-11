@@ -7,6 +7,7 @@
 @section('content')
 <!-- Premium Header Banner -->
 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 p-6 sm:p-8 mb-8 shadow-xl">
+    <x-page-art art="hero-downloads" :opacity="26" :scrim="false" />
     <div class="absolute inset-0 bg-black/10"></div>
     <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-blob"></div>
     <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-300/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
@@ -39,8 +40,8 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach($licensedProducts as $product)
         <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:-translate-y-1">
-            @if($product->image)
-            <img src="{{ $product->image }}" alt="{{ $product->name }}" class="w-full h-40 object-cover">
+            @if($product->artwork_url)
+            <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}" class="w-full h-40 object-cover">
             @else
             <div class="w-full h-40 bg-gradient-to-br from-purple-500 via-indigo-500 to-blue-600 flex items-center justify-center relative overflow-hidden">
                 <div class="absolute inset-0 bg-black/10"></div>

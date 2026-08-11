@@ -64,8 +64,8 @@
                 <div class="relative">
                     <div class="bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl p-8 backdrop-blur-sm border border-purple-500/30">
                         <div class="aspect-video bg-gray-800 rounded-xl flex items-center justify-center overflow-hidden">
-                            @if($product->image)
-                                <img src="{{ Storage::url($product->image) }}" alt="AutoTradeX" class="w-full h-full object-cover">
+                            @if($product->artwork_url)
+                                <img src="{{ $product->artwork_url }}" alt="AutoTradeX" class="w-full h-full object-cover">
                             @else
                                 <div class="text-center">
                                     <svg class="w-24 h-24 mx-auto text-purple-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

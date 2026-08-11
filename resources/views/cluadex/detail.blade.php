@@ -67,8 +67,8 @@
                 {{-- Right: Preview --}}
                 <div class="relative">
                     <div class="bg-gradient-to-br from-indigo-500/10 to-cyan-500/10 rounded-2xl p-4 backdrop-blur-sm border border-indigo-500/20">
-                        @if($product && $product->image)
-                            <img src="{{ Storage::url($product->image) }}" alt="CluadeX" class="w-full rounded-xl shadow-2xl">
+                        @if($product && $product->artwork_url)
+                            <img src="{{ $product->artwork_url }}" alt="CluadeX" class="w-full rounded-xl shadow-2xl">
                         @else
                             {{-- TODO: Replace with actual app screenshot --}}
                             <div class="aspect-video bg-gray-800/80 rounded-xl flex items-center justify-center border border-gray-700">

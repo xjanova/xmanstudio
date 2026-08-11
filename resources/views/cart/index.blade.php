@@ -52,8 +52,8 @@
                                 <tr>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center">
-                                            @if($item->product->image)
-                                                <img src="{{ Storage::url($item->product->image) }}" alt="{{ $item->product->name }}"
+                                            @if($item->product->artwork_url)
+                                                <img src="{{ $item->product->artwork_url }}" alt="{{ $item->product->name }}"
                                                      class="w-16 h-16 rounded-lg object-cover mr-4">
                                             @else
                                                 <div class="w-16 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-4">

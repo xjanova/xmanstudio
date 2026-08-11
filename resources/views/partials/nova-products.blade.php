@@ -36,8 +36,8 @@
                     @endif
 
                     <span class="nova-card__thumb">
-                        @if($product->image)
-                            <img src="{{ Storage::url($product->image) }}"
+                        @if($product->artwork_url)
+                            <img src="{{ $product->artwork_url }}"
                                  alt="{{ $product->name }}"
                                  loading="lazy" decoding="async">
                         @else

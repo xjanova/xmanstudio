@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -146,5 +147,38 @@ class Product extends Model
     public function getApprovedReviewsCountAttribute(): int
     {
         return $this->reviews()->approved()->count();
+    }
+
+    /**
+     * Image to show on product cards and hero sections.
+     *
+     * Falls back to the in-house artwork set (public_html/artwork/product/<slug>.webp)
+     * when the product has no uploaded image, so a card never renders as the bare
+     * generic placeholder icon. Returns null only when neither exists.
+     *
+     * The per-request static cache keeps this to one directory scan even when a
+     * listing renders dozens of products.
+     */
+    public function getArtworkUrlAttribute(): ?string
+    {
+        if ($this->image) {
+            return Storage::url($this->image);
+        }
+
+        static $available = null;
+
+        if ($available === null) {
+            $dir = public_path('artwork/product');
+            $available = is_dir($dir)
+                ? array_flip(array_map(
+                    fn ($f) => pathinfo($f, PATHINFO_FILENAME),
+                    glob($dir . '/*.webp') ?: []
+                ))
+                : [];
+        }
+
+        return isset($available[$this->slug])
+            ? asset('artwork/product/' . $this->slug . '.webp')
+            : null;
     }
 }

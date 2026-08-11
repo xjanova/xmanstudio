@@ -3,6 +3,15 @@
 @section('title', 'ชำระเงิน - XMAN Studio')
 
 @section('content')
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white py-14">
+    <x-page-art art="hero-payment" :opacity="40" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">ชำระเงิน / Checkout</h1>
+        <p class="mt-2 text-gray-400">ตรวจสอบคำสั่งซื้อและชำระเงินอย่างปลอดภัย / Review your order and pay securely</p>
+    </div>
+</section>
+
 <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
     <!-- Premium Header -->
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-500 to-teal-500 p-6 sm:p-8 mb-8 shadow-xl">

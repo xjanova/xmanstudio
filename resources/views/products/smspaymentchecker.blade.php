@@ -14,6 +14,7 @@
 
     <!-- Hero Section -->
     <section class="relative py-16 lg:py-24 overflow-hidden">
+        <x-page-art art="card-smschecker" :opacity="38" />
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Breadcrumb -->
             <nav class="mb-8">
@@ -151,8 +152,8 @@
                 <!-- Right: Product Image -->
                 <div class="relative">
                     <div class="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-2xl p-4 backdrop-blur-sm border border-emerald-500/30">
-                        @if($product->image)
-                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="w-full rounded-xl shadow-2xl">
+                        @if($product->artwork_url)
+                            <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}" class="w-full rounded-xl shadow-2xl">
                         @else
                             <div class="w-full aspect-video bg-gray-800 rounded-xl flex items-center justify-center">
                                 <div class="text-center p-8">

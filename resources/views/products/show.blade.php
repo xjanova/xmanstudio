@@ -119,8 +119,8 @@
                 <!-- Left: Product Images -->
                 <div class="space-y-4">
                     <div class="bg-gradient-to-br from-primary-500/20 to-purple-500/20 rounded-2xl p-4 backdrop-blur-sm border border-primary-500/30">
-                        @if($product->image)
-                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                        @if($product->artwork_url)
+                            <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}"
                                  class="w-full rounded-xl shadow-2xl" id="main-image">
                         @else
                             <div class="w-full aspect-video bg-gray-800 rounded-xl flex items-center justify-center">
@@ -137,10 +137,10 @@
                     {{-- Screenshots Gallery --}}
                     @if($product->images && is_array($product->images) && count($product->images) > 0)
                         <div class="grid grid-cols-4 gap-3">
-                            @if($product->image)
+                            @if($product->artwork_url)
                                 <div class="bg-gray-800/50 rounded-lg p-1 border-2 border-primary-500 cursor-pointer"
-                                     onclick="document.getElementById('main-image').src='{{ Storage::url($product->image) }}'">
-                                    <img src="{{ Storage::url($product->image) }}" alt="Main"
+                                     onclick="document.getElementById('main-image').src='{{ $product->artwork_url }}'">
+                                    <img src="{{ $product->artwork_url }}" alt="Main"
                                          class="w-full rounded-lg aspect-video object-cover">
                                 </div>
                             @endif
