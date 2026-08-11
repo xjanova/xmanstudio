@@ -23,6 +23,9 @@
 
             {{-- XDreamer --}}
             <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#f472b6;">
+                <span class="nova-card__media" aria-hidden="true">
+                    <img src="{{ asset('artwork/card-xdreamer.webp') }}" alt="" loading="lazy" decoding="async">
+                </span>
                 <span class="nova-badge">AI</span>
                 <span class="nova-card__icon" aria-hidden="true">
                     @include('partials.nova-icon', ['name' => 'spark'])
@@ -46,6 +49,9 @@
 
             {{-- BrainX --}}
             <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#8b5cf6;">
+                <span class="nova-card__media" aria-hidden="true">
+                    <img src="{{ asset('artwork/card-brainx.webp') }}" alt="" loading="lazy" decoding="async">
+                </span>
                 <span class="nova-badge">ใหม่</span>
                 <span class="nova-card__icon" aria-hidden="true">
                     @include('partials.nova-icon', ['name' => 'brain'])
@@ -68,6 +74,9 @@
 
             {{-- Metal-X --}}
             <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#fb7185;">
+                <span class="nova-card__media" aria-hidden="true">
+                    <img src="{{ asset('artwork/hero-metalx.webp') }}" alt="" loading="lazy" decoding="async">
+                </span>
                 <span class="nova-card__icon" aria-hidden="true">
                     @include('partials.nova-icon', ['name' => 'play'])
                 </span>
@@ -89,6 +98,9 @@
 
             {{-- Code Academy --}}
             <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#38bdf8;">
+                <span class="nova-card__media" aria-hidden="true">
+                    <img src="{{ asset('artwork/hero-academy.webp') }}" alt="" loading="lazy" decoding="async">
+                </span>
                 <span class="nova-badge">ฟรี</span>
                 <span class="nova-card__icon" aria-hidden="true">
                     @include('partials.nova-icon', ['name' => 'book'])

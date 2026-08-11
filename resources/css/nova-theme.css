@@ -691,6 +691,67 @@
     height: 24px;
 }
 
+/* ── Card media ──────────────────────────────────────────────────────────
+   Artwork banner that bleeds to the card edge. The card carries 26px of
+   padding, so negative margins pull the image back out to the border; the
+   ::after gradient melts its lower edge into the panel so it reads as part
+   of the card rather than a picture pasted on top. The card already has
+   overflow:hidden, so no corner radius is needed here.
+   Transitions are covered by the global prefers-reduced-motion block. */
+.nova-card__media {
+    display: block;
+    position: relative;
+    margin: -26px -26px 0;
+    height: 138px;
+    overflow: hidden;
+}
+
+.nova-card__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.03);
+    transition: transform 0.7s var(--nv-ease);
+}
+
+.nova-card:hover .nova-card__media img,
+.nova-card:focus-visible .nova-card__media img {
+    transform: scale(1.1);
+}
+
+.nova-card__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(6, 9, 22, 0) 28%, rgba(10, 14, 32, 0.72) 76%, rgba(12, 17, 38, 0.97) 100%);
+}
+
+/* Accent hairline along the seam between artwork and card body */
+.nova-card__media::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--nv-accent, var(--nv-cyan)), transparent);
+    opacity: 0.6;
+}
+
+/* With artwork present the accent tile straddles the seam instead of
+   sitting in an empty band above the title. */
+.nova-card__media ~ .nova-card__icon {
+    position: relative;
+    z-index: 1;
+    margin-top: -42px;
+}
+
+@media (max-width: 640px) {
+    .nova-card__media { height: 118px; }
+}
+
 .nova-card__title {
     margin: 0 0 8px;
     font-size: 18px;
