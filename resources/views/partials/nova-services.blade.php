@@ -47,8 +47,9 @@
 @endphp
 
 <section id="nova-services" class="nova-section">
+    <x-page-art art="hero-services" :opacity="26" :scrim="false" />
     <div class="nova-section__glow" aria-hidden="true"></div>
-    <div class="nova-shell">
+    <div class="nova-shell" style="position:relative;z-index:1;">
         <header class="nova-head nova-reveal">
             <span class="nova-eyebrow">
                 <span class="nova-eyebrow__dot"></span>

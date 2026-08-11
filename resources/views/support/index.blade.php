@@ -5,7 +5,7 @@
 @section('content')
 <!-- Hero Section -->
 <section class="relative bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 text-white py-20 overflow-hidden">
-    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1551434678-e076c223a692?w=1920')] bg-cover bg-center opacity-10"></div>
+    <x-page-art art="hero-support" :opacity="45" />
     <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <span class="inline-block px-4 py-2 bg-primary-600/30 text-primary-300 text-sm font-semibold rounded-full mb-6 backdrop-blur-sm border border-primary-500/30">

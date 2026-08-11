@@ -31,6 +31,9 @@
 
 <!-- Hero Section with Fireflies -->
 <div class="relative h-screen overflow-hidden bg-gradient-to-b from-gray-950 via-black to-gray-950" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)" style="contain: layout style paint;">
+    <!-- Generated backdrop artwork -->
+    <x-page-art art="hero-home" :opacity="55" :scrim="false" />
+
     <!-- Static Starfield Background (lightweight CSS only) -->
     <div class="absolute inset-0 hero-starfield"></div>
 
@@ -170,7 +173,7 @@
             <!-- Service Card 1 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=600&h=400&fit=crop"
+                    <img src="{{ asset('artwork/card-blockchain.webp') }}" loading="lazy" decoding="async"
                          alt="Blockchain Development"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
@@ -197,7 +200,7 @@
             <!-- Service Card 2 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop"
+                    <img src="{{ asset('artwork/card-web.webp') }}" loading="lazy" decoding="async"
                          alt="Web Development"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
@@ -221,7 +224,7 @@
             <!-- Service Card 3 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&h=400&fit=crop"
+                    <img src="{{ asset('artwork/card-mobile.webp') }}" loading="lazy" decoding="async"
                          alt="Mobile App Development"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
@@ -245,7 +248,7 @@
             <!-- Service Card 4 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop"
+                    <img src="{{ asset('artwork/card-ai.webp') }}" loading="lazy" decoding="async"
                          alt="AI Services"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
@@ -272,7 +275,7 @@
             <!-- Service Card 5 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=600&h=400&fit=crop"
+                    <img src="{{ asset('artwork/card-iot.webp') }}" loading="lazy" decoding="async"
                          alt="IoT Solutions"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
@@ -296,7 +299,7 @@
             <!-- Service Card 6 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&h=400&fit=crop"
+                    <img src="{{ asset('artwork/card-security.webp') }}" loading="lazy" decoding="async"
                          alt="Network & IT Security"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
@@ -320,7 +323,7 @@
             <!-- Service Card 7 - Custom Software -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=600&h=400&fit=crop"
+                    <img src="{{ asset('artwork/card-software.webp') }}" loading="lazy" decoding="async"
                          alt="Custom Software"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
@@ -344,7 +347,7 @@
             <!-- Service Card 8 - Flutter Development -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&h=400&fit=crop"
+                    <img src="{{ asset('artwork/card-flutter.webp') }}" loading="lazy" decoding="async"
                          alt="Flutter Development"
                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
@@ -542,15 +545,20 @@
         <div class="grid lg:grid-cols-2 gap-16 items-center">
             <div class="relative">
                 <div class="absolute -inset-4 bg-gradient-to-r from-primary-600 to-purple-600 rounded-2xl opacity-20 blur-2xl"></div>
-                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop"
-                     alt="Our Team"
+                <img src="{{ asset('artwork/card-studio.webp') }}"
+                     alt="สตูดิโอพัฒนาซอฟต์แวร์ของ XMAN Studio"
+                     loading="lazy" decoding="async"
                      class="relative rounded-2xl shadow-2xl">
                 <div class="absolute -bottom-8 -right-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
                     <div class="flex items-center space-x-4">
                         <div class="flex -space-x-3">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full border-2 border-white" alt="">
-                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full border-2 border-white" alt="">
-                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full border-2 border-white" alt="">
+                            @foreach(['from-cyan-400 to-blue-600', 'from-violet-500 to-purple-700', 'from-fuchsia-500 to-pink-600'] as $avatarGradient)
+                                <div class="w-12 h-12 rounded-full border-2 border-white dark:border-gray-800 bg-gradient-to-br {{ $avatarGradient }} flex items-center justify-center shadow-lg" aria-hidden="true">
+                                    <svg class="w-6 h-6 text-white/90" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                </div>
+                            @endforeach
                         </div>
                         <div>
                             <div class="font-bold text-gray-900 dark:text-white">ทีมผู้เชี่ยวชาญ</div>
@@ -689,7 +697,7 @@
 <!-- CTA Section -->
 <div class="relative py-24 overflow-hidden z-30">
     <div class="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-800"></div>
-    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920')] bg-cover bg-center opacity-10"></div>
+    <x-page-art art="hero-network" :opacity="25" :scrim="false" />
     <div class="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6">
             พร้อมที่จะเริ่มโปรเจคของคุณ?

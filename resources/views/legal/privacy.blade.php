@@ -5,8 +5,9 @@
 @section('content')
 <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-16">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="relative overflow-hidden bg-gradient-to-r from-gray-900 to-gray-800 text-white py-16">
+        <x-page-art art="hero-legal" :opacity="38" />
+        <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 class="text-4xl font-bold mb-4">นโยบายความเป็นส่วนตัว</h1>
             <p class="text-gray-300">Privacy Policy</p>
             <p class="text-sm text-gray-400 mt-4">ปรับปรุงล่าสุด: {{ now()->format('d F Y') }}</p>

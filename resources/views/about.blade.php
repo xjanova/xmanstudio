@@ -5,7 +5,7 @@
 @section('content')
 <!-- Hero Section -->
 <section class="relative bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 text-white py-24 overflow-hidden">
-    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920')] bg-cover bg-center opacity-10"></div>
+    <x-page-art art="hero-about" :opacity="45" />
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <span class="inline-block px-4 py-2 bg-primary-600/30 text-primary-300 text-sm font-semibold rounded-full mb-6 backdrop-blur-sm border border-primary-500/30">
             About Us
@@ -55,7 +55,7 @@
 
             <div class="relative">
                 <div class="absolute -inset-4 bg-gradient-to-r from-primary-600 to-purple-600 rounded-2xl opacity-20 blur-2xl"></div>
-                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop" alt="Our Team" class="relative rounded-2xl shadow-2xl">
+                <img src="{{ asset('artwork/card-studio.webp') }}" alt="สตูดิโอพัฒนาซอฟต์แวร์ของ XMAN Studio" loading="lazy" decoding="async" class="relative rounded-2xl shadow-2xl">
             </div>
         </div>
     </div>

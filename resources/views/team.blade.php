@@ -6,6 +6,7 @@
 @section('content')
 <!-- Hero Section -->
 <section class="relative bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white py-28 overflow-hidden">
+    <x-page-art art="hero-team" :opacity="42" />
     <div class="absolute inset-0">
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-900/30 via-transparent to-transparent"></div>
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent"></div>

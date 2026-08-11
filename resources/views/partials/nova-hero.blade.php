@@ -6,6 +6,7 @@
 @endphp
 
 <section id="nova-hero" class="nova-hero">
+    <x-page-art art="hero-home" :opacity="42" :scrim="false" />
     <div class="nova-shell nova-hero__inner">
 
         <span class="nova-eyebrow nova-reveal">
@@ -76,6 +77,8 @@
         padding: 60px 0 80px;
     }
     .nova-hero__inner {
+        position: relative;
+        z-index: 1;
         display: flex;
         flex-direction: column;
         align-items: center;

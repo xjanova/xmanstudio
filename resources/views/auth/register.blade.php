@@ -268,6 +268,7 @@
 <body class="antialiased">
     <!-- Space Warp Drive Background -->
     <div class="warp-container">
+        <x-page-art art="hero-home" :opacity="35" :scrim="false" />
         <div class="nebula"></div>
         <div class="stars-static"></div>
         <div class="warp-streaks warp-streaks-1"></div>

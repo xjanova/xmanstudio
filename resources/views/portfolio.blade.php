@@ -5,7 +5,7 @@
 @section('content')
 <!-- Hero Section -->
 <section class="relative bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 text-white py-20 overflow-hidden">
-    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1920')] bg-cover bg-center opacity-10"></div>
+    <x-page-art art="hero-portfolio" :opacity="45" />
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <span class="inline-block px-4 py-2 bg-primary-600/30 text-primary-300 text-sm font-semibold rounded-full mb-6 backdrop-blur-sm border border-primary-500/30">
             Portfolio
@@ -44,7 +44,7 @@
             <!-- Project 1 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=600&h=400&fit=crop" alt="DeFi Platform" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <img src="{{ asset('artwork/card-blockchain.webp') }}" loading="lazy" decoding="async" alt="DeFi Platform" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
@@ -62,7 +62,7 @@
             <!-- Project 2 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop" alt="E-commerce" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <img src="{{ asset('artwork/card-web.webp') }}" loading="lazy" decoding="async" alt="E-commerce" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
                 <div class="p-6">
                     <span class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs rounded-full mb-2">Web</span>
@@ -74,7 +74,7 @@
             <!-- Project 3 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&h=400&fit=crop" alt="Mobile App" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <img src="{{ asset('artwork/card-mobile.webp') }}" loading="lazy" decoding="async" alt="Mobile App" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
                 <div class="p-6">
                     <span class="inline-block px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded-full mb-2">Mobile</span>
@@ -86,7 +86,7 @@
             <!-- Project 4 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop" alt="AI Chatbot" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <img src="{{ asset('artwork/card-ai.webp') }}" loading="lazy" decoding="async" alt="AI Chatbot" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
                 <div class="p-6">
                     <span class="inline-block px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs rounded-full mb-2">AI</span>
@@ -98,7 +98,7 @@
             <!-- Project 5 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&h=400&fit=crop" alt="NFT Marketplace" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <img src="{{ asset('artwork/card-design.webp') }}" loading="lazy" decoding="async" alt="NFT Marketplace" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
                 <div class="p-6">
                     <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs rounded-full mb-2">Blockchain</span>
@@ -110,7 +110,7 @@
             <!-- Project 6 -->
             <div class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
                 <div class="aspect-video overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=600&h=400&fit=crop" alt="IoT Dashboard" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <img src="{{ asset('artwork/card-iot.webp') }}" loading="lazy" decoding="async" alt="IoT Dashboard" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                 </div>
                 <div class="p-6">
                     <span class="inline-block px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs rounded-full mb-2">IoT</span>

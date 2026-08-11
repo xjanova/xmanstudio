@@ -278,6 +278,8 @@
 <body class="antialiased">
     <!-- Space Warp Drive Background -->
     <div class="warp-container">
+        <!-- Generated backdrop artwork -->
+        <x-page-art art="hero-home" :opacity="35" :scrim="false" />
         <!-- Nebula/Galaxy Clouds -->
         <div class="nebula"></div>
         <!-- Static Stars -->

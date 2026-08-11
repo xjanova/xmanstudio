@@ -5,8 +5,9 @@
 
 @section('content')
 <!-- Hero Section -->
-<div class="bg-gradient-to-r from-primary-600 to-primary-800 py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+<div class="relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-800 py-16">
+    <x-page-art art="hero-rental" :opacity="28" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 class="text-4xl font-extrabold text-white sm:text-5xl">
             แพ็กเกจเช่าใช้งาน
         </h1>

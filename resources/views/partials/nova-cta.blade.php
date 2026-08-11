@@ -1,7 +1,8 @@
 {{-- Nova closing CTA. --}}
 <section class="nova-section nova-cta">
+    <x-page-art art="hero-network" :opacity="30" :scrim="false" />
     <div class="nova-cta__aura" aria-hidden="true"></div>
-    <div class="nova-shell" style="text-align:center;position:relative;">
+    <div class="nova-shell" style="text-align:center;position:relative;z-index:1;">
         <h2 class="nova-h2 nova-reveal" style="font-size:clamp(28px,5vw,52px);">
             พร้อมที่จะเริ่ม<span class="nova-grad">โปรเจคของคุณ</span>?
         </h2>

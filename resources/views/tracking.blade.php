@@ -7,6 +7,7 @@
 <div class="min-h-screen relative overflow-hidden">
     {{-- Animated Background --}}
     <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950">
+        <x-page-art art="hero-tracking" :opacity="38" :scrim="false" />
         <div class="absolute inset-0 opacity-30">
             <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
             <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>

@@ -25,7 +25,7 @@
             'badge_bg' => 'bg-purple-100',
             'badge_text' => 'text-purple-700',
             'button' => 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700',
-            'image' => 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop',
+            'image' => asset('artwork/card-blockchain.webp'),
         ],
         'web' => [
             'gradient' => 'from-blue-600 via-sky-600 to-cyan-600',
@@ -36,7 +36,7 @@
             'badge_bg' => 'bg-blue-100',
             'badge_text' => 'text-blue-700',
             'button' => 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700',
-            'image' => 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&auto=format&fit=crop',
+            'image' => asset('artwork/card-web.webp'),
         ],
         'mobile' => [
             'gradient' => 'from-green-600 via-emerald-600 to-teal-600',
@@ -47,7 +47,7 @@
             'badge_bg' => 'bg-green-100',
             'badge_text' => 'text-green-700',
             'button' => 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700',
-            'image' => 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&auto=format&fit=crop',
+            'image' => asset('artwork/card-mobile.webp'),
         ],
         'ai' => [
             'gradient' => 'from-indigo-600 via-purple-600 to-pink-600',
@@ -58,7 +58,7 @@
             'badge_bg' => 'bg-indigo-100',
             'badge_text' => 'text-indigo-700',
             'button' => 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700',
-            'image' => 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop',
+            'image' => asset('artwork/card-ai.webp'),
         ],
         'iot' => [
             'gradient' => 'from-orange-600 via-amber-600 to-yellow-600',
@@ -69,7 +69,7 @@
             'badge_bg' => 'bg-orange-100',
             'badge_text' => 'text-orange-700',
             'button' => 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700',
-            'image' => 'https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=800&auto=format&fit=crop',
+            'image' => asset('artwork/card-iot.webp'),
         ],
         'security' => [
             'gradient' => 'from-red-600 via-rose-600 to-pink-600',
@@ -80,7 +80,7 @@
             'badge_bg' => 'bg-red-100',
             'badge_text' => 'text-red-700',
             'button' => 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700',
-            'image' => 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop',
+            'image' => asset('artwork/card-security.webp'),
         ],
         'software' => [
             'gradient' => 'from-teal-600 via-cyan-600 to-sky-600',
@@ -91,7 +91,7 @@
             'badge_bg' => 'bg-teal-100',
             'badge_text' => 'text-teal-700',
             'button' => 'bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700',
-            'image' => 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop',
+            'image' => asset('artwork/card-software.webp'),
         ],
         'flutter' => [
             'gradient' => 'from-cyan-600 via-blue-600 to-indigo-600',
@@ -102,7 +102,7 @@
             'badge_bg' => 'bg-cyan-100',
             'badge_text' => 'text-cyan-700',
             'button' => 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700',
-            'image' => 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&auto=format&fit=crop',
+            'image' => asset('artwork/card-flutter.webp'),
         ],
     ];
 
@@ -116,9 +116,28 @@
         'badge_bg' => 'bg-gray-100',
         'badge_text' => 'text-gray-700',
         'button' => 'bg-gradient-to-r from-gray-600 to-slate-600 hover:from-gray-700 hover:to-slate-700',
-        'image' => 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop',
+        'image' => asset('artwork/hero-network.webp'),
     ];
 @endphp
+
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white py-20 md:py-24">
+    <x-page-art art="hero-services" :opacity="50" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <span class="inline-flex items-center px-4 py-2 bg-primary-600/20 text-primary-300 text-sm font-semibold rounded-full mb-6 backdrop-blur-sm border border-primary-500/20">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            Our Services
+        </span>
+        <h1 class="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight">
+            บริการ<span class="bg-gradient-to-r from-primary-400 to-purple-400 bg-clip-text text-transparent">ของเรา</span>
+        </h1>
+        <p class="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            บริการ IT ครบวงจร ตั้งแต่ Blockchain, AI, Web &amp; Mobile ไปจนถึงระบบ IoT และความปลอดภัย
+        </p>
+    </div>
+</section>
 
 <!-- Featured: AI Chatbot Section -->
 <section class="py-16 bg-white dark:bg-gray-900">
@@ -338,6 +357,7 @@
                             <div class="relative h-48 overflow-hidden">
                                 <img src="{{ $categoryImage }}"
                                      alt="{{ $category->display_name }}"
+                                     loading="lazy" decoding="async"
                                      class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                                 <div class="absolute inset-0 bg-gradient-to-br {{ $style['gradient'] }} opacity-70 group-hover:opacity-60 transition-opacity"></div>
 

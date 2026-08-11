@@ -4,13 +4,25 @@
 @section('meta_description', 'ประวัติการอัปเดตและการเปลี่ยนแปลงทั้งหมดของ XMAN Studio')
 
 @section('content')
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white py-20">
+    <x-page-art art="hero-changelog" :opacity="45" />
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <span class="inline-flex items-center px-4 py-2 bg-primary-600/20 text-primary-300 text-sm font-semibold rounded-full mb-6 backdrop-blur-sm border border-primary-500/20">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Changelog
+        </span>
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
+            ประวัติ<span class="bg-gradient-to-r from-primary-400 to-purple-400 bg-clip-text text-transparent">การอัปเดต</span>
+        </h1>
+        <p class="text-lg text-gray-400 max-w-2xl mx-auto">ประวัติการอัปเดตและการเปลี่ยนแปลงทั้งหมดของ XMAN Studio</p>
+    </div>
+</section>
+
 <div class="min-h-screen py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-3">Changelog</h1>
-            <p class="text-lg text-gray-500 dark:text-gray-400">ประวัติการอัปเดตและการเปลี่ยนแปลงทั้งหมด</p>
-        </div>
 
         @if(empty($versions))
             <div class="text-center py-16">

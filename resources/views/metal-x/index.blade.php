@@ -220,6 +220,11 @@
                     allow="autoplay; encrypted-media"
                     allowfullscreen></iframe>
             </div>
+        @else
+            {{-- No hero video configured: fall back to artwork so the hero is never empty --}}
+            <div class="absolute inset-0 z-0">
+                <x-page-art art="hero-metalx" :opacity="70" :scrim="false" />
+            </div>
         @endif
 
         {{-- Gradient overlays --}}
