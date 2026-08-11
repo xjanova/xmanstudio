@@ -6,7 +6,21 @@
 @endphp
 
 <section id="nova-hero" class="nova-hero">
-    <x-page-art art="hero-home" :opacity="42" :scrim="false" />
+    {{-- Still artwork stays as the base layer: it is what shows if the video is
+         blocked, still loading, or suppressed by prefers-reduced-motion. --}}
+    <x-page-art art="hero-home" :opacity="26" :scrim="false" />
+
+    {{-- Motion layer. Generated from the still above as its start frame, so the
+         two line up. Held semi-transparent on purpose so the 3D starfield
+         canvas behind it keeps showing through rather than being covered. --}}
+    <div class="nova-hero__video" aria-hidden="true">
+        <video autoplay muted loop playsinline preload="metadata"
+               poster="{{ asset('artwork/video/hero-loop-poster.webp') }}">
+            <source src="{{ asset('artwork/video/hero-loop.webm') }}" type="video/webm">
+            <source src="{{ asset('artwork/video/hero-loop.mp4') }}" type="video/mp4">
+        </video>
+    </div>
+
     <div class="nova-shell nova-hero__inner">
 
         <span class="nova-eyebrow nova-reveal">
@@ -76,6 +90,31 @@
         justify-content: center;
         padding: 60px 0 80px;
     }
+    /* Motion backdrop. Sits above the still artwork but below the content.
+       opacity is what actually lets the starfield canvas read through — the
+       canvas is painted outside this stacking context, so `screen` alone would
+       not reveal it. `screen` is layered on top only to knock the video's own
+       blacks back so it reads as light rather than a flat film. */
+    .nova-hero__video {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+        opacity: 0.5;
+        mix-blend-mode: screen;
+    }
+    .nova-hero__video video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    /* Motion is decorative — drop it entirely and keep the still underneath. */
+    @media (prefers-reduced-motion: reduce) {
+        .nova-hero__video { display: none; }
+    }
+
     .nova-hero__inner {
         position: relative;
         z-index: 1;
