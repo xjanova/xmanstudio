@@ -12,7 +12,20 @@
 
     {{-- Motion layer. Generated from the still above as its start frame, so the
          two line up. Held semi-transparent on purpose so the 3D starfield
-         canvas behind it keeps showing through rather than being covered. --}}
+         canvas behind it keeps showing through rather than being covered.
+
+         The file is a PALINDROME: the 5s clip followed by itself reversed, so
+         plain loop playback ping-pongs forward/back forever with no visible cut
+         at the wrap. Doing it in the file rather than in JS is deliberate —
+         negative playbackRate is not usable in Chrome. If this clip is ever
+         regenerated, rebuild the palindrome too or the loop will jump:
+
+           ffmpeg -i raw.mp4 -filter_complex \
+             "[0:v]split[a][b];[b]reverse,select='between(n\,1\,N-2)',\
+              setpts=N/FRAME_RATE/TB[r];[a][r]concat=n=2:v=1[v]" -map "[v]" -an ...
+
+         Trimming the reversed copy's first and last frame is what removes the
+         duplicated frame at the turnaround and at the loop point. --}}
     <div class="nova-hero__video" aria-hidden="true">
         <video autoplay muted loop playsinline preload="metadata"
                poster="{{ asset('artwork/video/hero-loop-poster.webp') }}">
