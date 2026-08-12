@@ -66,8 +66,17 @@ class TeamMember extends Model
         }
 
         $file = 'artwork/team/' . Str::slug($this->name) . '.webp';
+        $path = public_path($file);
 
-        return is_file(public_path($file)) ? asset($file) : null;
+        if (! is_file($path)) {
+            return null;
+        }
+
+        // Cloudflare caches these for 4 hours, so replacing a portrait left the
+        // old face on the live site long after the deploy finished. The mtime
+        // changes whenever the file does, which busts that cache immediately
+        // while still letting an unchanged portrait stay cached.
+        return asset($file) . '?v=' . filemtime($path);
     }
 
     public function getSkillsArrayAttribute(): array
