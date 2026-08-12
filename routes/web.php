@@ -70,6 +70,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
+use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChangelogController;
@@ -156,6 +157,17 @@ Route::get('/auth/device-login/{token}', function (string $token) {
 
     return redirect('/my-account/tping-workflows');
 })->name('auth.device-login');
+
+// "Sign in with XMAN ID" for the X-DREAMER app — the mirror of device-login
+// above: that one spends an API token to make a web session, this one spends a
+// web session to make a code the app can redeem.
+//
+// `auth` is doing the real work. Already signed in and the browser bounces
+// straight back to the app; not signed in and Laravel sends them to /login and
+// returns them here afterwards; no account and /login already offers register.
+Route::get('/auth/xdreamer/authorize', [XdreamerSsoController::class, 'authorize'])
+    ->middleware('auth')
+    ->name('auth.xdreamer.authorize');
 
 // Home (with setup check)
 Route::get('/', function () {

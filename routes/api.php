@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\VpnProxyController;
 use App\Http\Controllers\Api\WireguardController;
+use App\Http\Controllers\Auth\XdreamerSsoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -198,6 +199,12 @@ Route::prefix('v1/auth')->middleware(['throttle:10,1'])->group(function () {
         Route::get('/user', [AuthController::class, 'user']);
         Route::post('/web-login-token', [AuthController::class, 'webLoginToken']);
     });
+
+    // Server-to-server: aixman redeems an authorization code minted by
+    // /auth/xdreamer/authorize. Authenticated by a shared secret header rather
+    // than a user token — there is no user session on the calling side, only
+    // the code and its PKCE verifier.
+    Route::post('/sso/exchange', [XdreamerSsoController::class, 'exchange']);
 });
 
 // ==================== Generic Product License API Routes ====================
