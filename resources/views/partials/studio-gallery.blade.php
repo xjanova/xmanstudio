@@ -6,19 +6,32 @@
     lightbox depends on JS, and that is an enhancement, never the only way to
     see a picture.
 
-    Two files per shot: `<name>.webp` at 640px feeds the grid (lazy-loaded,
-    ~430KB for the whole set) and `<name>-full.webp` at 1400px is fetched only
-    when someone actually opens the lightbox.
+    Two files per shot: `<name>.webp` feeds the grid (640px square or 800x450
+    wide, lazy-loaded — ~876KB if every one of the 17 ends up on screen) and
+    `<name>-full.webp` is fetched only when someone actually opens the lightbox.
 --}}
 @php
+    // `wide` = ภาพ 16:9 กินสองคอลัมน์ ที่เหลือเป็นจัตุรัส ที่ต้องมีสองแบบเพราะ
+    // ภาพชุดหลังเจนออกมาเป็น 16:9 การครอบให้เป็นจัตุรัสจะตัดคนที่ยืนอยู่ริมเฟรม
+    // ออกไป (เช่นใบประชุมลูกค้าที่คนนั่งกระจายเต็มโต๊ะ)
     $studioShots = [
-        ['f' => 'building', 'th' => 'ที่ทำงานของเรา',      'en' => 'The studio',       'desc' => 'อาคารสำนักงานย่านกรุงเทพฯ ที่ทีมงานทั้งหมดทำงานอยู่'],
-        ['f' => 'lobby',    'th' => 'ล็อบบี้ต้อนรับ',       'en' => 'Reception',        'desc' => 'จุดแรกที่ลูกค้าเดินเข้ามาคุยงานกับเรา'],
-        ['f' => 'floor',    'th' => 'ฟลอร์ทำงานหลัก',      'en' => 'The main floor',   'desc' => 'โต๊ะทำงานเรียงยาว จอคู่ทุกที่นั่ง และวิวเมืองนอกหน้าต่าง'],
-        ['f' => 'pair',     'th' => 'จับคู่เขียนโค้ด',       'en' => 'Pair programming', 'desc' => 'งานยากๆ เรานั่งดูจอเดียวกัน แก้ไปด้วยกัน เร็วกว่าต่างคนต่างทำ'],
-        ['f' => 'standup',  'th' => 'ประชุมเช้า',           'en' => 'Morning stand-up', 'desc' => 'ทุกเช้าคุยกันสั้นๆ ว่าใครติดอะไร จะได้ไม่มีใครค้างอยู่คนเดียว'],
-        ['f' => 'designer', 'th' => 'ออกแบบหน้าจอ',        'en' => 'Design',           'desc' => 'วาง wireframe และชุดสีให้จบก่อน แล้วค่อยส่งต่อให้ทีมพัฒนา'],
-        ['f' => 'server',   'th' => 'ห้องเซิร์ฟเวอร์',       'en' => 'Server room',      'desc' => 'เครื่องและเครือข่ายที่เราดูแลเอง ไม่ได้ฝากใครทั้งหมด'],
+        ['f' => 'building', 'wide' => false, 'th' => 'ที่ทำงานของเรา',      'en' => 'The studio',       'desc' => 'อาคารสำนักงานย่านกรุงเทพฯ ที่ทีมงานทั้งหมดทำงานอยู่'],
+        ['f' => 'lobby',    'wide' => false, 'th' => 'ล็อบบี้ต้อนรับ',       'en' => 'Reception',        'desc' => 'จุดแรกที่ลูกค้าเดินเข้ามาคุยงานกับเรา'],
+        ['f' => 'floor',    'wide' => false, 'th' => 'ฟลอร์ทำงานหลัก',      'en' => 'The main floor',   'desc' => 'โต๊ะทำงานเรียงยาว จอคู่ทุกที่นั่ง และวิวเมืองนอกหน้าต่าง'],
+        ['f' => 'window',   'wide' => true,  'th' => 'มุมสงบริมหน้าต่าง',    'en' => 'Quiet corner',     'desc' => 'งานที่ต้องคิดยาวๆ หลายคนย้ายมานั่งตรงนี้'],
+        ['f' => 'pair',     'wide' => false, 'th' => 'จับคู่เขียนโค้ด',       'en' => 'Pair programming', 'desc' => 'งานยากๆ เรานั่งดูจอเดียวกัน แก้ไปด้วยกัน เร็วกว่าต่างคนต่างทำ'],
+        ['f' => 'desk',     'wide' => true,  'th' => 'โต๊ะทำงานจริง',        'en' => 'At the keyboard',  'desc' => 'ที่ที่งานส่วนใหญ่เกิดขึ้นจริง ไม่ใช่ในห้องประชุม'],
+        ['f' => 'designer', 'wide' => false, 'th' => 'ออกแบบหน้าจอ',        'en' => 'Design',           'desc' => 'วาง wireframe และชุดสีให้จบก่อน แล้วค่อยส่งต่อให้ทีมพัฒนา'],
+        ['f' => 'qa',       'wide' => false, 'th' => 'ทดสอบก่อนส่ง',         'en' => 'QA',               'desc' => 'ไล่เทสต์ทีละเครื่องทีละรุ่น ก่อนปล่อยให้ผู้ใช้จริงเจอ'],
+        ['f' => 'mobile',   'wide' => true,  'th' => 'เทสต์บนเครื่องจริง',    'en' => 'Device testing',   'desc' => 'ต่อสายเทสต์บนมือถือจริง ไม่เชื่อแค่ emulator'],
+        ['f' => 'standup',  'wide' => false, 'th' => 'ประชุมเช้า',           'en' => 'Morning stand-up', 'desc' => 'ทุกเช้าคุยกันสั้นๆ ว่าใครติดอะไร จะได้ไม่มีใครค้างอยู่คนเดียว'],
+        ['f' => 'workshop', 'wide' => true,  'th' => 'อบรมภายใน',           'en' => 'Workshop',         'desc' => 'แบ่งความรู้กันในทีมสม่ำเสมอ ของใหม่มาเร็ว ต้องตามให้ทัน'],
+        ['f' => 'pantry',   'wide' => true,  'th' => 'พักกินกาแฟ',           'en' => 'Coffee break',     'desc' => 'ไอเดียดีๆ หลายอันเกิดตรงนี้มากกว่าในห้องประชุม'],
+        ['f' => 'client',   'wide' => true,  'th' => 'คุยงานกับลูกค้า',       'en' => 'Client review',    'desc' => 'นำเสนอความคืบหน้าเป็นระยะ ไม่ใช่หายไปแล้วโผล่ตอนจบ'],
+        ['f' => 'call',     'wide' => true,  'th' => 'ประชุมออนไลน์',        'en' => 'Remote call',      'desc' => 'ลูกค้าต่างจังหวัดหรือต่างประเทศก็คุยกันได้ทุกสัปดาห์'],
+        ['f' => 'handover', 'wide' => true,  'th' => 'ส่งมอบงาน',            'en' => 'Handover',         'desc' => 'จบโปรเจคแล้วยังดูแลต่อ ไม่ใช่ส่งของเสร็จแล้วหายไป'],
+        ['f' => 'server',   'wide' => false, 'th' => 'ห้องเซิร์ฟเวอร์',       'en' => 'Server room',      'desc' => 'เครื่องและเครือข่ายที่เราดูแลเอง ไม่ได้ฝากใครทั้งหมด'],
+        ['f' => 'tech',     'wide' => true,  'th' => 'ดูแลระบบหลังบ้าน',     'en' => 'Operations',       'desc' => 'เดินสาย ตั้งเครื่อง และเฝ้าระบบเองทั้งหมด'],
     ];
 
     // Cloudflare holds these for 4 hours, so swapping a photo for a different
@@ -57,25 +70,28 @@
             <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Inside XMAN Studio</span>
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">พาชมที่ทำงานของเรา</h2>
             <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                ตั้งแต่หน้าตึกไปจนถึงโต๊ะทำงานและห้องเซิร์ฟเวอร์ — กดที่รูปเพื่อดูขนาดเต็ม
+                ตั้งแต่หน้าตึก โต๊ะทำงาน ห้องประชุม ไปจนถึงห้องเซิร์ฟเวอร์ — กดที่รูปเพื่อดูขนาดเต็ม
                 <span class="block text-base text-gray-500 dark:text-gray-400 mt-1">Tap any photo to view it larger</span>
             </p>
         </div>
 
-        {{-- แถวแรกให้รูปตึกกินพื้นที่ 2x2 จะได้ไม่ใช่กริดสี่เหลี่ยมเรียงกันจืดๆ --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {{-- ตึกกินพื้นที่ 2x2 เป็นใบเด่น ภาพ 16:9 กินสองคอลัมน์ ที่เหลือจัตุรัส
+             ใช้ grid-flow-dense ให้เบราว์เซอร์ถมช่องว่างที่เหลือเอง --}}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 grid-flow-row-dense">
             @foreach($studioShots as $shot)
                 <button type="button"
                         @click="show({{ $loop->index }})"
                         class="group relative block overflow-hidden rounded-2xl ring-1 ring-gray-200 dark:ring-white/10 text-left
                                focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 tm-reveal
-                               {{ $loop->first ? 'col-span-2 row-span-2' : '' }}"
+                               {{ $loop->first ? 'col-span-2 row-span-2' : ($shot['wide'] ? 'col-span-2' : '') }}"
                         style="transition-delay: {{ min($loop->index, 6) * 0.07 }}s;"
                         aria-label="ดูรูป {{ $shot['th'] }} ขนาดเต็ม">
                     <img src="{{ $shot['thumb'] }}"
                          alt="{{ $shot['th'] }} — {{ $shot['en'] }}"
-                         width="640" height="640" loading="lazy" decoding="async"
-                         class="w-full h-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105">
+                         width="{{ $shot['wide'] ? 800 : 640 }}" height="{{ $shot['wide'] ? 450 : 640 }}"
+                         loading="lazy" decoding="async"
+                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105
+                                {{ $shot['wide'] ? 'aspect-video' : 'aspect-square' }}">
                     <span class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent"></span>
                     <span class="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
                         <span class="block font-bold text-white {{ $loop->first ? 'text-lg sm:text-xl' : 'text-sm sm:text-base' }}">{{ $shot['th'] }}</span>
