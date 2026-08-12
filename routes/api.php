@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\LocalVpnRelayController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\StripeController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\Api\V1\BugReportController;
 use App\Http\Controllers\Api\V1\DataProfileController;
 use App\Http\Controllers\Api\V1\PuzzleDebugController;
@@ -198,6 +199,12 @@ Route::prefix('v1/auth')->middleware(['throttle:10,1'])->group(function () {
         Route::get('/user', [AuthController::class, 'user']);
         Route::post('/web-login-token', [AuthController::class, 'webLoginToken']);
     });
+
+    // Server-to-server: aixman redeems an authorization code minted by
+    // /auth/xdreamer/authorize. Authenticated by a shared secret header rather
+    // than a user token — there is no user session on the calling side, only
+    // the code and its PKCE verifier.
+    Route::post('/sso/exchange', [XdreamerSsoController::class, 'exchange']);
 });
 
 // ==================== Generic Product License API Routes ====================

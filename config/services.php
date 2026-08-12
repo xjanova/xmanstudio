@@ -83,6 +83,19 @@ return [
         'webhook_secret' => env('AIXMAN_WEBHOOK_SECRET'),
         'timeout' => env('AIXMAN_TIMEOUT', 10),
         'cache_ttl' => env('AIXMAN_CACHE_TTL', 600), // 10 min
+
+        // "Sign in with XMAN ID" for the X-DREAMER mobile app.
+        // aixman holds this secret and is the only caller allowed to redeem an
+        // authorization code. Without it the exchange endpoint answers 503, so
+        // a half-configured deploy fails closed rather than open.
+        'sso_secret' => env('XDREAMER_SSO_SECRET'),
+
+        // Exact-match allowlist. Anything not listed here cannot be handed a
+        // code, which is what stops this being an open redirector.
+        'sso_redirect_uris' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('XDREAMER_SSO_REDIRECT_URIS', 'xdreamer://auth/callback'))
+        ))),
     ],
 
 ];
