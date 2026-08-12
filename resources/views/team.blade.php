@@ -372,23 +372,25 @@
         <div class="text-center mb-14 tm-reveal">
             <span class="inline-block px-3 py-1 bg-primary-500/15 text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Inside the work</span>
             <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">บรรยากาศงานที่เราทำ</h2>
-            <p class="text-lg text-gray-400 max-w-2xl mx-auto">โค้ด สถาปัตยกรรมระบบ และโครงสร้างพื้นฐาน — สามด้านที่อยู่เบื้องหลังทุกโปรเจคที่ส่งมอบ</p>
+            <p class="text-lg text-gray-400 max-w-2xl mx-auto">วันทำงานปกติของทีม — ประชุมเช้า จับคู่เขียนโค้ด และออกแบบหน้าจอ</p>
         </div>
 
         @php
+            // ใช้รูปชุด studio/ ซึ่งเป็นภาพคนจริงในออฟฟิศ แทนภาพกราฟิก space-* เดิม
+            // ที่ไปซ้ำกับหน้า /about ด้วย
             $workSpaces = [
-                ['art' => 'space-studio',   'th' => 'ลงมือเขียน',        'en' => 'Build',        'desc' => 'พัฒนา ทดสอบ และรีวิวโค้ดกันทุกบรรทัดก่อนส่งขึ้นจริง'],
-                ['art' => 'space-planning', 'th' => 'ออกแบบระบบ',       'en' => 'Architect',    'desc' => 'วางสถาปัตยกรรมและ flow ให้จบตั้งแต่ต้น ก่อนเริ่มเขียนบรรทัดแรก'],
-                ['art' => 'space-infra',    'th' => 'ดูแลโครงสร้าง',    'en' => 'Operate',      'desc' => 'เซิร์ฟเวอร์ เครือข่าย และการมอนิเตอร์หลังบ้านที่ทำให้ระบบไม่ล่ม'],
+                ['art' => 'studio/standup',  'th' => 'ประชุมเช้า',        'en' => 'Stand-up',   'desc' => 'คุยกันสั้นๆ ทุกเช้าว่าใครติดอะไร จะได้ไม่มีใครค้างอยู่คนเดียว'],
+                ['art' => 'studio/pair',     'th' => 'จับคู่เขียนโค้ด',    'en' => 'Build',      'desc' => 'งานยากๆ นั่งดูจอเดียวกัน แก้ไปด้วยกัน เร็วกว่าต่างคนต่างทำ'],
+                ['art' => 'studio/designer', 'th' => 'ออกแบบหน้าจอ',     'en' => 'Design',     'desc' => 'วาง wireframe และชุดสีให้จบก่อน แล้วค่อยส่งต่อให้ทีมพัฒนา'],
             ];
         @endphp
 
         <div class="grid md:grid-cols-3 gap-6">
             @foreach($workSpaces as $space)
                 <figure class="group relative rounded-2xl overflow-hidden ring-1 ring-white/10 tm-reveal" style="transition-delay: {{ $loop->index * 0.1 }}s;">
-                    <img src="{{ asset('artwork/' . $space['art'] . '.webp') }}" alt=""
-                         width="1400" height="787" loading="lazy" decoding="async"
-                         class="w-full aspect-[16/10] object-cover transition-transform duration-700 group-hover:scale-105">
+                    <img src="{{ asset('artwork/' . $space['art'] . '.webp') }}" alt="{{ $space['th'] }}"
+                         width="640" height="640" loading="lazy" decoding="async"
+                         class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105">
                     <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent"></div>
                     <figcaption class="absolute bottom-0 left-0 right-0 p-5">
                         <span class="block text-xs font-bold uppercase tracking-[0.2em] text-primary-300 mb-1">{{ $space['en'] }}</span>

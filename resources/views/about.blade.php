@@ -192,41 +192,9 @@
     </div>
 </section>
 
-<!-- What the work looks like -->
-<section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
-    <x-page-art art="team-journey" :opacity="10" :scrim="false" />
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-14 tm-reveal">
-            <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">The craft</span>
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">งานของเราหน้าตาเป็นแบบไหน</h2>
-            <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">เขียนโค้ด วางสถาปัตยกรรม และดูแลโครงสร้างพื้นฐาน — สามอย่างนี้อยู่เบื้องหลังทุกงานที่ส่งมอบ</p>
-        </div>
-
-        @php
-            $aboutCraft = [
-                ['art' => 'space-planning', 'th' => 'วางระบบก่อนลงมือ', 'desc' => 'ออกแบบโครงสร้างข้อมูลและ flow ให้จบก่อน จะได้ไม่ต้องรื้อกลางทาง'],
-                ['art' => 'space-studio',   'th' => 'พัฒนาและทดสอบ',    'desc' => 'ทยอยส่งให้ดูเป็นช่วงๆ แก้ไปพร้อมกัน ไม่หายไปแล้วโผล่ตอนจบ'],
-                ['art' => 'space-infra',    'th' => 'ดูแลหลังส่งมอบ',   'desc' => 'เซิร์ฟเวอร์ ความปลอดภัย และการมอนิเตอร์ที่ทำให้ระบบอยู่ได้ยาว'],
-            ];
-        @endphp
-
-        <div class="grid md:grid-cols-3 gap-6">
-            @foreach($aboutCraft as $item)
-                <figure class="group relative rounded-2xl overflow-hidden ring-1 ring-gray-200 dark:ring-white/10 tm-reveal"
-                        style="transition-delay: {{ $loop->index * 0.1 }}s;">
-                    <img src="{{ asset('artwork/' . $item['art'] . '.webp') }}" alt=""
-                         width="1400" height="787" loading="lazy" decoding="async"
-                         class="w-full aspect-[16/10] object-cover transition-transform duration-700 group-hover:scale-105">
-                    <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/45 to-transparent"></div>
-                    <figcaption class="absolute bottom-0 left-0 right-0 p-5">
-                        <span class="block text-lg font-bold text-white mb-1">{{ $item['th'] }}</span>
-                        <span class="block text-sm text-gray-300 leading-relaxed">{{ $item['desc'] }}</span>
-                    </figcaption>
-                </figure>
-            @endforeach
-        </div>
-    </div>
-</section>
+{{-- แกลลอรีรูปถ่ายจริงของที่ทำงาน แทนชุดภาพ space-* เดิมที่เป็นภาพกราฟิก
+     และซ้ำกับหน้า /team อยู่ --}}
+@include('partials.studio-gallery')
 <!-- CTA Section -->
 <section class="relative overflow-hidden py-20 bg-gradient-to-r from-primary-600 to-purple-700">
     <x-page-art art="team-cta" :opacity="20" :scrim="false" />
