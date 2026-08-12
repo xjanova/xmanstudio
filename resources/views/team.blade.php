@@ -31,7 +31,7 @@
 <!-- Company Story -->
 <section class="py-20 bg-white dark:bg-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div class="grid lg:grid-cols-2 gap-16 items-center tm-reveal">
             <div>
                 <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Our Story</span>
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
@@ -82,16 +82,17 @@
 
 <!-- Leadership Section (from database) -->
 @if($leaders->isNotEmpty())
-<section class="py-20 bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
+<section class="relative overflow-hidden py-20 bg-gray-50 dark:bg-gray-900">
+    <x-page-art art="team-leadership" :opacity="14" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 tm-reveal">
             <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Leadership</span>
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">ผู้บริหาร</h2>
             <p class="text-lg text-gray-600 dark:text-gray-300">ผู้นำที่ขับเคลื่อน XMAN Enterprise ให้ก้าวไปข้างหน้า</p>
         </div>
 
         @foreach($leaders as $leader)
-        <div class="max-w-4xl mx-auto {{ !$loop->last ? 'mb-12' : '' }}">
+        <div class="max-w-4xl mx-auto tm-reveal" style="transition-delay: {{ $loop->index * 0.12 }}s; {{ !$loop->last ? "margin-bottom:3rem;" : "" }}">
             <div class="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden">
                 <div class="absolute top-0 left-0 right-0 h-48 bg-gradient-to-r from-primary-600 via-primary-700 to-purple-700"></div>
                 <div class="absolute top-0 left-0 right-0 h-48 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22%23fff%22%20fill-opacity%3D%220.05%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M0%2040L40%200H20L0%2020M40%2040V20L20%2040%22/%3E%3C/g%3E%3C/svg%3E')]"></div>
@@ -100,8 +101,8 @@
                     <!-- Avatar -->
                     <div class="mx-auto w-36 h-36 rounded-full bg-gradient-to-br from-primary-400 to-purple-600 p-1 shadow-2xl mb-6">
                         <div class="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-5xl font-bold text-primary-600 dark:text-primary-400 overflow-hidden">
-                            @if($leader->image)
-                                <img src="{{ asset('storage/' . $leader->image) }}" alt="{{ $leader->name }}" class="w-full h-full object-cover rounded-full">
+                            @if($leader->photo_url)
+                                <img src="{{ $leader->photo_url }}" alt="{{ $leader->name }}" class="w-full h-full object-cover rounded-full">
                             @else
                                 <svg class="w-20 h-20 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -202,8 +203,8 @@
                 @php $gradient = $gradients[$loop->index % count($gradients)]; @endphp
                 <div class="group bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-8 text-center hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-transparent hover:border-primary-200 dark:hover:border-primary-800">
                     <div class="mx-auto w-24 h-24 rounded-full bg-gradient-to-br {{ $gradient }} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform overflow-hidden">
-                        @if($member->image)
-                            <img src="{{ asset('storage/' . $member->image) }}" alt="{{ $member->name }}" class="w-full h-full object-cover">
+                        @if($member->photo_url)
+                            <img src="{{ $member->photo_url }}" alt="{{ $member->name }}" class="w-full h-full object-cover">
                         @else
                             <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -364,4 +365,60 @@
         </div>
     </div>
 </section>
+
+<style>
+    /* Reveal-on-scroll.
+       The hidden state is scoped to .tm-js, which the script below adds only
+       after it has parsed. A bare `.tm-reveal{opacity:0}` plus an
+       IntersectionObserver is how the BrainX selling page once blanked itself
+       when its script failed to run — never leave content hidden by CSS alone. */
+    .tm-js .tm-reveal {
+        opacity: 0;
+        transform: translateY(22px);
+        transition: opacity .7s cubic-bezier(.22, 1, .36, 1),
+                    transform .7s cubic-bezier(.22, 1, .36, 1);
+        will-change: opacity, transform;
+    }
+    .tm-js .tm-reveal.is-in { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .tm-js .tm-reveal {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+        }
+    }
+</style>
+
+<script>
+(function () {
+    var root = document.documentElement;
+    var els = document.querySelectorAll('.tm-reveal');
+    if (!els.length) return;
+
+    function showAll() {
+        for (var i = 0; i < els.length; i++) els[i].classList.add('is-in');
+    }
+
+    // Opt in to the hidden state only now that this script is definitely running.
+    root.classList.add('tm-js');
+
+    if (!('IntersectionObserver' in window)) { showAll(); return; }
+
+    var io = new IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) {
+                entries[i].target.classList.add('is-in');
+                io.unobserve(entries[i].target);
+            }
+        }
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+    for (var i = 0; i < els.length; i++) io.observe(els[i]);
+
+    // Backstop: if the observer never fires (bfcache restore, odd viewport,
+    // zero-height container) the page must not stay blank.
+    setTimeout(showAll, 2500);
+})();
+</script>
 @endsection

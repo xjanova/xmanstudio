@@ -1,0 +1,339 @@
+/* ==========================================================================
+   Public top-bar mega menu
+   Markup: resources/views/partials/public-nav-mega.blade.php
+
+   Everything is namespaced .xm-mega* so it cannot leak into the retro/nova
+   themes, and it is imported at the BOTTOM of app.css so it cascades over
+   Tailwind's preflight (same reason as the theme files above it).
+   ========================================================================== */
+
+[x-cloak] { display: none !important; }
+
+/* The breakpoint lives here, NOT as `hidden lg:block` in the markup.
+   This file is @imported at the bottom of app.css, outside every @layer, and an
+   unlayered declaration beats any layered one regardless of specificity — so
+   Tailwind's `.hidden` / `.lg:block` (inside @layer utilities) would lose to
+   `.xm-mega{display:flex}` and the desktop strip would render on phones.
+   Moving the file into @layer components does not work either: utilities
+   outrank components, so `lg:block` would then clobber `display:flex`. */
+.xm-mega { display: none; }
+
+@media (min-width: 64rem) {
+    .xm-mega {
+        position: relative;
+        display: flex;
+        flex: 1 1 auto;
+        min-width: 0;
+        align-items: center;
+        margin: 0 1rem;
+    }
+}
+
+/* ── Idle strip ─────────────────────────────────────────────────────────── */
+
+.xm-mega__strip {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    /* the row ends softly instead of clipping a chip in half */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 5%, #000 82%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 5%, #000 82%, transparent 100%);
+}
+
+.xm-mega__track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    animation: xm-marquee 34s linear infinite;
+}
+
+/* Spacing lives on the chip, NOT as `gap` on the track. With `gap`, 16 chips
+   have only 15 gaps, so half the track width is 8 chips + 7.5 gaps — half a
+   gap short of one full copy, and the loop nudges sideways every 34s. Giving
+   each chip its own trailing margin makes the track exactly 2x one copy, so
+   -50% lands precisely on the seam. */
+.xm-mega__chip { margin-right: 0.35rem; }
+
+/* Two copies sit end to end, so -50% lands exactly on the seam. */
+@keyframes xm-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+.xm-mega__strip.is-parked .xm-mega__track { animation-play-state: paused; }
+
+.xm-mega__chip {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+    white-space: nowrap;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.75rem;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+}
+.xm-mega__chip:hover { transform: translateY(-1px); }
+
+.xm-mega__chip-th {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: rgb(55 65 81);
+}
+.xm-mega__chip-en {
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(107 114 128);
+}
+.dark .xm-mega__chip-th { color: rgb(229 231 235); }
+.dark .xm-mega__chip-en { color: rgb(148 163 184); }
+
+.xm-mega__chip:hover {
+    background: linear-gradient(120deg, rgba(34, 211, 238, 0.14), rgba(139, 92, 246, 0.14));
+    border-color: rgba(139, 92, 246, 0.35);
+}
+
+/* The affordance: without it a moving strip just looks decorative. */
+.xm-mega__hint {
+    position: absolute;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    border-radius: 999px;
+    color: rgb(109 40 217);
+    background: rgba(139, 92, 246, 0.12);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    animation: xm-hint-nudge 2.6s ease-in-out infinite;
+}
+.dark .xm-mega__hint { color: rgb(196 181 253); }
+.xm-mega__hint svg { width: 0.75rem; height: 0.75rem; }
+.xm-mega__hint.is-hidden { opacity: 0; transform: translateY(-4px); pointer-events: none; }
+
+@keyframes xm-hint-nudge {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-2px); }
+}
+
+/* ── Expanded panel ─────────────────────────────────────────────────────── */
+
+/* Fixed rather than absolute: the nav's max-w-7xl container would otherwise
+   clip the panel, and the bar is sticky at top:0 with a fixed 4rem row. */
+.xm-mega__panel {
+    position: fixed;
+    top: 4rem;
+    left: 0;
+    right: 0;
+    z-index: 60;
+    overflow: hidden;
+    border-top: 1px solid rgba(139, 92, 246, 0.18);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.18);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 24px 60px -24px rgba(15, 23, 42, 0.45);
+}
+.dark .xm-mega__panel {
+    background: rgba(12, 17, 38, 0.94);
+    box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.85);
+}
+
+/* The "จางๆ เท่ห์ๆ" wash — artwork at low opacity, faded at both edges so the
+   panel never shows a seam of its own. */
+.xm-mega__art {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url('/artwork/hero-network.webp');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.06;
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+    mask-image: linear-gradient(to bottom, #000, transparent);
+}
+.dark .xm-mega__art { opacity: 0.16; }
+
+.xm-mega__inner {
+    position: relative;
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 1.75rem;
+    display: grid;
+    grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.75rem;
+}
+@media (max-width: 1180px) {
+    .xm-mega__inner { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+    .xm-mega__zone--products { display: none; }
+}
+
+.xm-mega__title {
+    margin: 0 0 0.85rem;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgb(109 40 217);
+}
+.dark .xm-mega__title { color: rgb(167 139 250); }
+.xm-mega__title span { font-weight: 500; opacity: 0.6; }
+
+/* Zone 1 — destination cards */
+/* 9 destinations -> a clean 3x3 rather than 4+4+1. */
+.xm-mega__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+@media (max-width: 1180px) { .xm-mega__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.xm-mega__card {
+    display: block;
+    border-radius: 0.85rem;
+    overflow: hidden;
+    text-decoration: none;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(255, 255, 255, 0.6);
+    transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+}
+.dark .xm-mega__card { background: rgba(255, 255, 255, 0.04); border-color: rgba(148, 163, 184, 0.16); }
+.xm-mega__card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(139, 92, 246, 0.55);
+    box-shadow: 0 12px 28px -14px rgba(139, 92, 246, 0.7);
+}
+
+.xm-mega__card-media { display: block; aspect-ratio: 16 / 9; overflow: hidden; }
+.xm-mega__card-media img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.5s ease;
+}
+.xm-mega__card:hover .xm-mega__card-media img { transform: scale(1.07); }
+
+.xm-mega__card-body { display: block; padding: 0.5rem 0.6rem 0.6rem; }
+.xm-mega__card-th { display: block; font-size: 0.8125rem; font-weight: 700; color: rgb(31 41 55); }
+.xm-mega__card-desc { display: block; font-size: 0.6875rem; color: rgb(107 114 128); }
+.dark .xm-mega__card-th { color: rgb(243 244 246); }
+.dark .xm-mega__card-desc { color: rgb(148 163 184); }
+
+/* Zone 2 — wallet / cart / history */
+.xm-mega__stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.75rem;
+    text-decoration: none;
+    color: #fff;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.xm-mega__stat:hover { transform: translateY(-2px); }
+.xm-mega__stat--wallet { background: linear-gradient(120deg, #7c3aed, #4f46e5); box-shadow: 0 10px 24px -14px #7c3aed; }
+.xm-mega__stat--cart   { background: linear-gradient(120deg, #0891b2, #2563eb); box-shadow: 0 10px 24px -14px #0891b2; }
+.xm-mega__stat-label { font-size: 0.6875rem; opacity: 0.85; }
+.xm-mega__stat-value { font-size: 1.05rem; font-weight: 800; }
+.xm-mega__stat-value small { font-size: 0.625rem; font-weight: 500; opacity: 0.8; }
+
+.xm-mega__links { display: flex; flex-direction: column; gap: 0.1rem; margin-top: 0.6rem; }
+.xm-mega__links a {
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: rgb(55 65 81);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.xm-mega__links a span { font-weight: 400; font-size: 0.6875rem; opacity: 0.6; }
+.dark .xm-mega__links a { color: rgb(209 213 219); }
+.xm-mega__links a:hover { background: rgba(139, 92, 246, 0.12); color: rgb(109 40 217); }
+.dark .xm-mega__links a:hover { color: rgb(196 181 253); }
+
+.xm-mega__guest { font-size: 0.75rem; line-height: 1.6; color: rgb(107 114 128); margin: 0 0 0.6rem; }
+.dark .xm-mega__guest { color: rgb(148 163 184); }
+.xm-mega__guest span { opacity: 0.75; }
+
+.xm-mega__auth { display: flex; gap: 0.4rem; margin-top: 0.7rem; }
+.xm-mega__btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: rgb(55 65 81);
+}
+.dark .xm-mega__btn { color: rgb(226 232 240); }
+.xm-mega__btn--primary {
+    border-color: transparent;
+    color: #fff;
+    background: linear-gradient(120deg, #22d3ee, #8b5cf6);
+}
+
+/* Zone 3 — featured products */
+.xm-mega__product {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem;
+    margin-bottom: 0.4rem;
+    border-radius: 0.7rem;
+    text-decoration: none;
+    transition: background 0.25s ease;
+}
+.xm-mega__product:hover { background: rgba(139, 92, 246, 0.1); }
+.xm-mega__product-media {
+    flex: 0 0 auto;
+    width: 3.75rem;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.45rem;
+    overflow: hidden;
+    background: rgba(139, 92, 246, 0.15);
+}
+.xm-mega__product-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.xm-mega__product-body { min-width: 0; }
+.xm-mega__product-name {
+    display: block; font-size: 0.75rem; font-weight: 700; color: rgb(31 41 55);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dark .xm-mega__product-name { color: rgb(243 244 246); }
+.xm-mega__product-price { display: block; font-size: 0.6875rem; font-weight: 600; color: rgb(109 40 217); }
+.dark .xm-mega__product-price { color: rgb(167 139 250); }
+
+.xm-mega__more {
+    display: inline-block;
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: rgb(109 40 217);
+}
+.dark .xm-mega__more { color: rgb(167 139 250); }
+
+/* ── Panel transition ───────────────────────────────────────────────────── */
+.xm-mega__panel--in  { transition: opacity 0.26s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1); }
+.xm-mega__panel--out { transition: opacity 0.18s ease, transform 0.18s ease; }
+.xm-mega__panel--from { opacity: 0; transform: translateY(-10px); }
+.xm-mega__panel--to   { opacity: 1; transform: translateY(0); }
+
+/* Motion is the affordance here, so keep the panel but stop the marquee and
+   the nudge — a permanently scrolling bar is exactly what this setting is for. */
+@media (prefers-reduced-motion: reduce) {
+    .xm-mega__track { animation: none; }
+    .xm-mega__hint { animation: none; }
+    .xm-mega__panel--in,
+    .xm-mega__panel--out { transition-duration: 0.001ms; }
+}

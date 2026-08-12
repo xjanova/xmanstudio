@@ -135,7 +135,8 @@
 {{-- Wallet Balance --}}
 @auth
 @php
-    $userWallet = \App\Models\Wallet::getOrCreateForUser(auth()->id());
+    // $navWallet is resolved once by the layout; fall back for standalone use.
+    $userWallet = $navWallet ?? \App\Models\Wallet::getOrCreateForUser(auth()->id());
 @endphp
 <a href="{{ route('user.wallet.index') }}" class="hidden sm:flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 transition-all shadow-sm">
     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,14 +148,13 @@
 
 {{-- Cart --}}
 @php
-    $cartCount = 0;
+    // Authenticated count comes from the layout ($navCartCount) to avoid running
+    // the same aggregate twice per page; guests still need the session lookup.
     if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+        $cartCount = $navCartCount ?? (\App\Models\Cart::where('user_id', auth()->id())->first()?->items()->sum('quantity') ?? 0);
     } else {
         $cart = \App\Models\Cart::where('session_id', session()->getId())->first();
-    }
-    if ($cart) {
-        $cartCount = $cart->items()->sum('quantity');
+        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
     }
 @endphp
 <a href="/cart" class="relative {{ $iconBtn }}">

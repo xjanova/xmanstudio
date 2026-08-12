@@ -67,9 +67,16 @@
     <!-- Navigation -->
     <nav class="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            @php
+                // Resolved once and handed to both nav partials — each used to run
+                // its own wallet lookup and cart aggregate, on every page render.
+                $navWallet = auth()->check() ? \App\Models\Wallet::getOrCreateForUser(auth()->id()) : null;
+                $navCart = auth()->check() ? \App\Models\Cart::where('user_id', auth()->id())->first() : null;
+                $navCartCount = $navCart ? $navCart->items()->sum('quantity') : 0;
+            @endphp
             <div class="flex justify-between h-16">
                 <!-- Logo & Desktop Menu -->
-                <div class="flex">
+                <div class="flex items-center min-w-0 flex-1">
                     <div class="flex-shrink-0 flex items-center">
                         @php
                             $siteLogo = \App\Models\Setting::getValue('site_logo');
@@ -84,40 +91,7 @@
                             @endif
                         </a>
                     </div>
-                    <div class="hidden lg:ml-6 lg:flex lg:space-x-0.5 xl:ml-8 xl:space-x-1 lg:items-center">
-                        <a href="/" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('/') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-green-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-green-500/30' }}">
-                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>
-                            <x-bi th="หน้าหลัก" en="Home" layout="stack" />
-                        </a>
-                        <a href="/services" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('services*') ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-yellow-400 hover:to-amber-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
-                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <x-bi th="บริการ" en="Services" layout="stack" />
-                        </a>
-                        <a href="{{ config('app.product_site_url') }}" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('products*') ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white hover:shadow-lg hover:shadow-orange-500/30' }}">
-                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                            <x-bi th="ผลิตภัณฑ์" en="Products" layout="stack" />
-                        </a>
-                        <a href="/rental" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('rental*') ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-rose-500 hover:text-white hover:shadow-lg hover:shadow-pink-500/30' }}">
-                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                            <x-bi th="เช่าบริการ" en="Rentals" layout="stack" />
-                        </a>
-                        <a href="/portfolio" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('portfolio*') ? 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-violet-500 hover:text-white hover:shadow-lg hover:shadow-purple-500/30' }}">
-                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            <x-bi th="ผลงาน" en="Portfolio" layout="stack" />
-                        </a>
-                        <a href="/support" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('support') ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-blue-500/30' }}">
-                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                            <x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" layout="stack" />
-                        </a>
-                        <a href="/tracking" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('tracking*') ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-teal-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-teal-500/30' }}">
-                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                            <x-bi th="ติดตามงาน" en="Order Tracking" layout="stack" />
-                        </a>
-                        <a href="/apps/aipray/donate" class="group flex items-center xl:gap-1.5 px-2 xl:px-3 py-2 text-sm font-medium transition-all duration-300 rounded-xl {{ request()->is('apps/aipray*') ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-yellow-500 hover:to-amber-600 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
-                            <svg class="w-4 h-4 hidden xl:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                            <x-bi th="บริจาค" en="Donate" layout="stack" />
-                        </a>
-                    </div>
+                    @include("partials.public-nav-mega")
                 </div>
 
                 <!-- Right Side Icons (shared partial) -->
