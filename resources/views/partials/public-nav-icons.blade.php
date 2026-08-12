@@ -375,13 +375,24 @@
 @endauth
 
 {{-- Mobile Menu Button --}}
-<button id="mobileMenuBtn" type="button" class="{{ $mobileBtn }}" aria-label="Toggle menu" aria-expanded="false">
-    <svg id="hamburgerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-    </svg>
+<button id="mobileMenuBtn" type="button" class="{{ $mobileBtn }}" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobileMenu">
     @if($isPremium)
-    <svg id="closeIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-    </svg>
+        {{-- Premium swaps whole icons; its layout script owns these two ids. --}}
+        <svg id="hamburgerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <svg id="closeIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    @else
+        {{-- Three separate bars rather than one 3-stroke path, so each can be
+             rotated on its own into an X. The Tailwind utilities alone already
+             draw a correct hamburger — mobile-menu.css only adds the motion,
+             so the button still looks right if that stylesheet is missing. --}}
+        <span class="mm-bars flex w-6 flex-col gap-1" aria-hidden="true">
+            <span class="block h-0.5 w-full rounded-full bg-current"></span>
+            <span class="block h-0.5 w-full rounded-full bg-current"></span>
+            <span class="block h-0.5 w-full rounded-full bg-current"></span>
+        </span>
     @endif
 </button>

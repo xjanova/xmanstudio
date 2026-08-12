@@ -1,0 +1,123 @@
+/* ==========================================================================
+   Mobile menu motion (classic layout only)
+
+   The markup in partials/public-nav-mobile.blade.php ships with Tailwind's
+   `hidden` on #mobileMenu, and layouts/app.blade.php used to just toggle that
+   class — the panel appeared and vanished with no transition at all.
+
+   Everything here is scoped to `.mm-ready`, a class the layout script adds
+   only once it is running. Two reasons that matters:
+
+   1. Fail-safe. If the script never runs, `hidden` is never removed, so the
+      panel stays shut instead of sitting permanently open under the bar.
+   2. Cascade layers. This file is @imported outside `@layer`, so an
+      unscoped `#mobileMenu { display: … }` would beat Tailwind's LAYERED
+      `.hidden` / `.lg:hidden` no matter what — an ID rule against a class is
+      not even close. That is exactly how the mega-nav shipped broken once.
+      Same reason the desktop cut-off below is written as a media query here
+      rather than relying on `lg:hidden` in the markup.
+
+   Premium's own layout script never adds `.mm-ready`, and its button renders
+   two swapped SVGs instead of `.mm-bars`, so none of this reaches that theme.
+   ========================================================================== */
+
+/* Collapsed. grid-template-rows 0fr→1fr animates to the content's real height,
+   so nothing here has to guess a max-height that later gets outgrown. */
+#mobileMenu.mm-ready {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        grid-template-rows 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.26s ease,
+        visibility 0.38s;
+}
+
+/* The 0fr row only actually clips its child if that child can shrink. */
+#mobileMenu.mm-ready > div {
+    min-height: 0;
+    overflow: hidden;
+    transition: padding 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A zero-height row still leaves the inner `py-3` and the wrapper's `border-t`
+   on screen — under border-box, padding and border never shrink below their
+   declared size — which left a dead 25px strip under the bar while closed.
+   Zeroing them on the CLOSED state rather than restoring them on the open one
+   means the open panel keeps whatever spacing public-nav-mobile.blade.php
+   declares, instead of this file hardcoding a copy of it that can drift. */
+#mobileMenu.mm-ready:not(.is-open) {
+    border-top-width: 0;
+}
+
+#mobileMenu.mm-ready:not(.is-open) > div {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#mobileMenu.mm-ready.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Desktop: the panel is a phone affordance only. See note 2 above for why this
+   is a media query and not `lg:hidden`. Keep in sync with mega-nav.css. */
+@media (min-width: 64rem) {
+    #mobileMenu.mm-ready {
+        display: none;
+    }
+}
+
+/* Rows fan in behind the panel rather than all arriving flat together.
+   --i is set per row by the layout script. */
+#mobileMenu.mm-ready > div > * {
+    opacity: 0;
+    transform: translateY(-8px);
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#mobileMenu.mm-ready.is-open > div > * {
+    opacity: 1;
+    transform: none;
+    /* Delay on open only — on close everything should leave at once, or the
+       panel finishes collapsing while the last rows are still fading. */
+    transition-delay: calc(var(--i, 0) * 26ms + 50ms);
+}
+
+/* Hamburger → X. Bars sit 2px tall with a 4px gap, so each outer bar travels
+   6px to meet the middle one. */
+#mobileMenuBtn .mm-bars > span {
+    transform-origin: center;
+    transition:
+        transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.18s ease;
+}
+
+#mobileMenuBtn.is-open .mm-bars > span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+#mobileMenuBtn.is-open .mm-bars > span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0.2);
+}
+
+#mobileMenuBtn.is-open .mm-bars > span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #mobileMenu.mm-ready,
+    #mobileMenu.mm-ready > div > *,
+    #mobileMenuBtn .mm-bars > span {
+        transition: none;
+    }
+
+    #mobileMenu.mm-ready.is-open > div > * {
+        transition-delay: 0s;
+    }
+}

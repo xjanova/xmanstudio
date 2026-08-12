@@ -291,12 +291,48 @@
             localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
         });
 
-        // Mobile Menu Toggle
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        mobileMenuBtn?.addEventListener('click', () => {
-            mobileMenu?.classList.toggle('hidden');
-        });
+        // Mobile Menu Toggle — see resources/css/mobile-menu.css.
+        // This is the only place the classic menu is opened; adding a second
+        // listener elsewhere would toggle it twice per click and cancel out.
+        (function () {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (!mobileMenuBtn || !mobileMenu) return;
+
+            // Hand the collapsed state over from Tailwind's `hidden` to the
+            // animatable one. Done here, inside the script, so a script that
+            // never runs leaves the panel shut rather than stuck open.
+            mobileMenu.classList.remove('hidden');
+            mobileMenu.classList.add('mm-ready');
+
+            const rows = mobileMenu.querySelectorAll(':scope > div > *');
+            rows.forEach((row, i) => row.style.setProperty('--i', i));
+
+            let open = false;
+            const setOpen = (next) => {
+                if (next === open) return;
+                open = next;
+                mobileMenu.classList.toggle('is-open', open);
+                mobileMenuBtn.classList.toggle('is-open', open);
+                mobileMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            };
+
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setOpen(!open);
+            });
+            document.addEventListener('click', (e) => {
+                if (open && !mobileMenu.contains(e.target)) setOpen(false);
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') setOpen(false);
+            });
+            // Rotating to landscape can cross the lg breakpoint, which hides the
+            // panel by CSS while the button still claims aria-expanded="true".
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 1024) setOpen(false);
+            });
+        })();
 
         // Toast Notification Function
         window.showToast = function(message, type = 'info', duration = 5000) {
