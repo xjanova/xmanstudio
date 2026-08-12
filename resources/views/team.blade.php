@@ -365,6 +365,82 @@
     </div>
 </section>
 
+<!-- Inside the work — atmosphere gallery -->
+<section class="relative overflow-hidden py-20 bg-gray-950">
+    <x-page-art art="team-craft" :opacity="16" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14 tm-reveal">
+            <span class="inline-block px-3 py-1 bg-primary-500/15 text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Inside the work</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">บรรยากาศงานที่เราทำ</h2>
+            <p class="text-lg text-gray-400 max-w-2xl mx-auto">โค้ด สถาปัตยกรรมระบบ และโครงสร้างพื้นฐาน — สามด้านที่อยู่เบื้องหลังทุกโปรเจคที่ส่งมอบ</p>
+        </div>
+
+        @php
+            $workSpaces = [
+                ['art' => 'space-studio',   'th' => 'ลงมือเขียน',        'en' => 'Build',        'desc' => 'พัฒนา ทดสอบ และรีวิวโค้ดกันทุกบรรทัดก่อนส่งขึ้นจริง'],
+                ['art' => 'space-planning', 'th' => 'ออกแบบระบบ',       'en' => 'Architect',    'desc' => 'วางสถาปัตยกรรมและ flow ให้จบตั้งแต่ต้น ก่อนเริ่มเขียนบรรทัดแรก'],
+                ['art' => 'space-infra',    'th' => 'ดูแลโครงสร้าง',    'en' => 'Operate',      'desc' => 'เซิร์ฟเวอร์ เครือข่าย และการมอนิเตอร์หลังบ้านที่ทำให้ระบบไม่ล่ม'],
+            ];
+        @endphp
+
+        <div class="grid md:grid-cols-3 gap-6">
+            @foreach($workSpaces as $space)
+                <figure class="group relative rounded-2xl overflow-hidden ring-1 ring-white/10 tm-reveal" style="transition-delay: {{ $loop->index * 0.1 }}s;">
+                    <img src="{{ asset('artwork/' . $space['art'] . '.webp') }}" alt=""
+                         width="1400" height="787" loading="lazy" decoding="async"
+                         class="w-full aspect-[16/10] object-cover transition-transform duration-700 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent"></div>
+                    <figcaption class="absolute bottom-0 left-0 right-0 p-5">
+                        <span class="block text-xs font-bold uppercase tracking-[0.2em] text-primary-300 mb-1">{{ $space['en'] }}</span>
+                        <span class="block text-lg font-bold text-white mb-1">{{ $space['th'] }}</span>
+                        <span class="block text-sm text-gray-300 leading-relaxed">{{ $space['desc'] }}</span>
+                    </figcaption>
+                </figure>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<!-- How a project runs -->
+<section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
+    <x-page-art art="team-journey" :opacity="10" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 tm-reveal">
+            <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">How we work</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">โปรเจคหนึ่งเดินยังไง</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">ตั้งแต่คุยกันครั้งแรกจนถึงหลังส่งมอบ — ทุกขั้นมีคนรับผิดชอบและมีของให้ดู</p>
+        </div>
+
+        @php
+            $projectSteps = [
+                ['art' => 'proc-discover', 'no' => '01', 'th' => 'คุยและวางขอบเขต', 'en' => 'Discover', 'desc' => 'เก็บโจทย์จริงจากหน้างาน สรุปขอบเขต ระยะเวลา และราคาให้ชัดก่อนเริ่ม'],
+                ['art' => 'proc-design',   'no' => '02', 'th' => 'ออกแบบระบบ',      'en' => 'Design',   'desc' => 'วางโครงสร้างข้อมูลและหน้าจอ ให้เห็นภาพก่อนลงมือเขียนจริง'],
+                ['art' => 'proc-build',    'no' => '03', 'th' => 'พัฒนาและทดสอบ',   'en' => 'Build',    'desc' => 'ทยอยส่งให้ดูเป็นช่วงๆ แก้ไปพร้อมกัน ไม่ใช่หายไปแล้วโผล่มาตอนจบ'],
+                ['art' => 'proc-ship',     'no' => '04', 'th' => 'ส่งมอบและดูแลต่อ', 'en' => 'Ship',     'desc' => 'ขึ้นระบบจริง ส่งคู่มือ และดูแลต่อเนื่องผ่านระบบติดตามงานของเรา'],
+            ];
+        @endphp
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            @foreach($projectSteps as $step)
+                @php $stepArt = 'artwork/' . $step['art'] . '.webp'; @endphp
+                <div class="group relative tm-reveal" style="transition-delay: {{ $loop->index * 0.1 }}s;">
+                    <div class="relative rounded-2xl overflow-hidden mb-4 ring-1 ring-gray-200 dark:ring-white/10 bg-gray-900">
+                        @if(file_exists(public_path($stepArt)))
+                            <img src="{{ asset($stepArt) }}" alt="" width="720" height="405" loading="lazy" decoding="async"
+                                 class="w-full aspect-video object-cover transition-transform duration-700 group-hover:scale-105">
+                        @else
+                            <div class="w-full aspect-video bg-gradient-to-br from-primary-600/40 to-purple-700/40"></div>
+                        @endif
+                        <span class="absolute top-3 left-3 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gray-950/70 backdrop-blur text-primary-300 text-sm font-black ring-1 ring-white/15">{{ $step['no'] }}</span>
+                    </div>
+                    <span class="block text-xs font-bold uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400 mb-1">{{ $step['en'] }}</span>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1.5">{{ $step['th'] }}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ $step['desc'] }}</p>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
 <!-- CTA Section -->
 <section class="py-20 bg-gradient-to-r from-gray-900 via-primary-900 to-gray-900 relative overflow-hidden">
     <x-page-art art="team-cta" :opacity="22" :scrim="false" />
@@ -408,59 +484,7 @@
     }
     .tm-hero-video video { display: block; width: 100%; height: 100%; object-fit: cover; }
     @media (prefers-reduced-motion: reduce) { .tm-hero-video { display: none; } }
-
-    /* Reveal-on-scroll.
-       The hidden state is scoped to .tm-js, which the script below adds only
-       after it has parsed. A bare `.tm-reveal{opacity:0}` plus an
-       IntersectionObserver is how the BrainX selling page once blanked itself
-       when its script failed to run — never leave content hidden by CSS alone. */
-    .tm-js .tm-reveal {
-        opacity: 0;
-        transform: translateY(22px);
-        transition: opacity .7s cubic-bezier(.22, 1, .36, 1),
-                    transform .7s cubic-bezier(.22, 1, .36, 1);
-        will-change: opacity, transform;
-    }
-    .tm-js .tm-reveal.is-in { opacity: 1; transform: none; }
-
-    @media (prefers-reduced-motion: reduce) {
-        .tm-js .tm-reveal {
-            opacity: 1 !important;
-            transform: none !important;
-            transition: none !important;
-        }
-    }
 </style>
 
-<script>
-(function () {
-    var root = document.documentElement;
-    var els = document.querySelectorAll('.tm-reveal');
-    if (!els.length) return;
-
-    function showAll() {
-        for (var i = 0; i < els.length; i++) els[i].classList.add('is-in');
-    }
-
-    // Opt in to the hidden state only now that this script is definitely running.
-    root.classList.add('tm-js');
-
-    if (!('IntersectionObserver' in window)) { showAll(); return; }
-
-    var io = new IntersectionObserver(function (entries) {
-        for (var i = 0; i < entries.length; i++) {
-            if (entries[i].isIntersecting) {
-                entries[i].target.classList.add('is-in');
-                io.unobserve(entries[i].target);
-            }
-        }
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-
-    for (var i = 0; i < els.length; i++) io.observe(els[i]);
-
-    // Backstop: if the observer never fires (bfcache restore, odd viewport,
-    // zero-height container) the page must not stay blank.
-    setTimeout(showAll, 2500);
-})();
-</script>
+@include('partials.reveal-on-scroll')
 @endsection

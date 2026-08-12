@@ -18,9 +18,10 @@
 </section>
 
 <!-- About Content -->
-<section class="py-20 bg-white dark:bg-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid lg:grid-cols-2 gap-16 items-center">
+<section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
+    <x-page-art art="team-craft" :opacity="10" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-16 items-center tm-reveal">
             <div>
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
                     พัฒนาเทคโนโลยี<br>
@@ -62,14 +63,15 @@
 </section>
 
 <!-- Our Values -->
-<section class="py-20 bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
+<section class="relative overflow-hidden py-20 bg-gray-50 dark:bg-gray-900">
+    <x-page-art art="team-culture" :opacity="12" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 tm-reveal">
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">ค่านิยมของเรา</h2>
             <p class="text-lg text-gray-600 dark:text-gray-300">หลักการที่เรายึดมั่นในการทำงาน</p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
+        <div class="grid md:grid-cols-3 gap-8 tm-reveal">
             <div class="p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg text-center">
                 <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,9 +106,10 @@
 </section>
 
 <!-- Services Overview -->
-<section class="py-20 bg-white dark:bg-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
+<section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
+    <x-page-art art="hero-services" :opacity="10" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 tm-reveal">
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">บริการของเรา</h2>
             <p class="text-lg text-gray-600 dark:text-gray-300">เราให้บริการครบวงจรด้านเทคโนโลยีสารสนเทศ</p>
         </div>
@@ -156,9 +159,78 @@
     </div>
 </section>
 
+<!-- Numbers -->
+<section class="relative overflow-hidden py-20 bg-gray-950">
+    <x-page-art art="hero-network" :opacity="20" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14 tm-reveal">
+            <span class="inline-block px-3 py-1 bg-primary-500/15 text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">By the numbers</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">ตัวเลขที่เดินมาด้วยกัน</h2>
+            <p class="text-lg text-gray-400">สะสมจากงานจริงตลอดเส้นทางที่ผ่านมา</p>
+        </div>
+
+        @php
+            $aboutStats = [
+                ['n' => 8,   'suffix' => '+',   'th' => 'ปีประสบการณ์',   'en' => 'Years'],
+                ['n' => 150, 'suffix' => '+',   'th' => 'โปรเจคสำเร็จ',   'en' => 'Projects'],
+                ['n' => 50,  'suffix' => '+',   'th' => 'ลูกค้าพึงพอใจ',  'en' => 'Clients'],
+                ['n' => 24,  'suffix' => '/7',  'th' => 'ดูแลต่อเนื่อง',  'en' => 'Support'],
+            ];
+        @endphp
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            @foreach($aboutStats as $stat)
+                <div class="relative rounded-2xl p-7 text-center bg-white/[0.04] ring-1 ring-white/10 backdrop-blur tm-reveal"
+                     style="transition-delay: {{ $loop->index * 0.08 }}s;">
+                    <div class="text-4xl md:text-5xl font-black mb-2 bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent"
+                         data-count="{{ $stat['n'] }}" data-count-suffix="{{ $stat['suffix'] }}">{{ $stat['n'] }}{{ $stat['suffix'] }}</div>
+                    <div class="text-sm font-semibold text-gray-200">{{ $stat['th'] }}</div>
+                    <div class="text-[0.65rem] uppercase tracking-[0.2em] text-gray-500 mt-0.5">{{ $stat['en'] }}</div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<!-- What the work looks like -->
+<section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
+    <x-page-art art="team-journey" :opacity="10" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14 tm-reveal">
+            <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">The craft</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">งานของเราหน้าตาเป็นแบบไหน</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">เขียนโค้ด วางสถาปัตยกรรม และดูแลโครงสร้างพื้นฐาน — สามอย่างนี้อยู่เบื้องหลังทุกงานที่ส่งมอบ</p>
+        </div>
+
+        @php
+            $aboutCraft = [
+                ['art' => 'space-planning', 'th' => 'วางระบบก่อนลงมือ', 'desc' => 'ออกแบบโครงสร้างข้อมูลและ flow ให้จบก่อน จะได้ไม่ต้องรื้อกลางทาง'],
+                ['art' => 'space-studio',   'th' => 'พัฒนาและทดสอบ',    'desc' => 'ทยอยส่งให้ดูเป็นช่วงๆ แก้ไปพร้อมกัน ไม่หายไปแล้วโผล่ตอนจบ'],
+                ['art' => 'space-infra',    'th' => 'ดูแลหลังส่งมอบ',   'desc' => 'เซิร์ฟเวอร์ ความปลอดภัย และการมอนิเตอร์ที่ทำให้ระบบอยู่ได้ยาว'],
+            ];
+        @endphp
+
+        <div class="grid md:grid-cols-3 gap-6">
+            @foreach($aboutCraft as $item)
+                <figure class="group relative rounded-2xl overflow-hidden ring-1 ring-gray-200 dark:ring-white/10 tm-reveal"
+                        style="transition-delay: {{ $loop->index * 0.1 }}s;">
+                    <img src="{{ asset('artwork/' . $item['art'] . '.webp') }}" alt=""
+                         width="1400" height="787" loading="lazy" decoding="async"
+                         class="w-full aspect-[16/10] object-cover transition-transform duration-700 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/45 to-transparent"></div>
+                    <figcaption class="absolute bottom-0 left-0 right-0 p-5">
+                        <span class="block text-lg font-bold text-white mb-1">{{ $item['th'] }}</span>
+                        <span class="block text-sm text-gray-300 leading-relaxed">{{ $item['desc'] }}</span>
+                    </figcaption>
+                </figure>
+            @endforeach
+        </div>
+    </div>
+</section>
 <!-- CTA Section -->
-<section class="py-20 bg-gradient-to-r from-primary-600 to-purple-700">
-    <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+<section class="relative overflow-hidden py-20 bg-gradient-to-r from-primary-600 to-purple-700">
+    <x-page-art art="team-cta" :opacity="20" :scrim="false" />
+    <div class="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">พร้อมเริ่มโปรเจคของคุณ?</h2>
         <p class="text-xl text-primary-100 mb-8">ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี!</p>
         <div class="flex flex-wrap justify-center gap-4">
@@ -177,4 +249,6 @@
         </div>
     </div>
 </section>
+
+@include('partials.reveal-on-scroll')
 @endsection
