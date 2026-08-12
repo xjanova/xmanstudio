@@ -6,7 +6,20 @@
 @section('content')
 <!-- Hero Section -->
 <section class="relative bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white py-28 overflow-hidden">
-    <x-page-art art="hero-team" :opacity="42" />
+    <x-page-art art="hero-team" :opacity="26" fade="bottom" />
+
+    {{-- Motion layer, generated from the still above as its start frame so the
+         two line up. Same palindrome trick as the home hero: the file is the
+         clip followed by itself reversed, so plain `loop` ping-pongs with no
+         cut at the wrap. Held semi-transparent so the still keeps reading
+         through, and dropped entirely under prefers-reduced-motion. --}}
+    <div class="tm-hero-video" aria-hidden="true">
+        <video autoplay muted loop playsinline preload="metadata"
+               poster="{{ asset('artwork/video/team-loop-poster.webp') }}">
+            <source src="{{ asset('artwork/video/team-loop.webm') }}" type="video/webm">
+            <source src="{{ asset('artwork/video/team-loop.mp4') }}" type="video/mp4">
+        </video>
+    </div>
     <div class="absolute inset-0">
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-900/30 via-transparent to-transparent"></div>
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent"></div>
@@ -29,8 +42,9 @@
 </section>
 
 <!-- Company Story -->
-<section class="py-20 bg-white dark:bg-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
+    <x-page-art art="team-craft" :opacity="10" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid lg:grid-cols-2 gap-16 items-center tm-reveal">
             <div>
                 <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Our Story</span>
@@ -177,7 +191,7 @@
 
 <!-- Team Members (from database) -->
 @if($members->isNotEmpty())
-<section class="py-20 bg-white dark:bg-gray-800">
+<section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Team</span>
@@ -255,8 +269,9 @@
 @endif
 
 <!-- Technology Stack -->
-<section class="py-20 bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="relative overflow-hidden py-20 bg-gray-50 dark:bg-gray-900">
+    <x-page-art art="team-tech" :opacity="12" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Tech Stack</span>
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">เทคโนโลยีที่เราใช้</h2>
@@ -265,26 +280,32 @@
 
         <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
             @php
+                // Real vendor marks from devicon (same CDN the Nova home page uses)
+                // instead of the two-letter text placeholders that were here before.
+                // `invert` flags the marks that are dark-on-transparent and would
+                // otherwise disappear against the dark theme.
                 $techStacks = [
-                    ['name' => 'Laravel', 'color' => 'from-red-500 to-red-700'],
-                    ['name' => 'React', 'color' => 'from-cyan-400 to-cyan-600'],
-                    ['name' => 'Flutter', 'color' => 'from-blue-400 to-blue-600'],
-                    ['name' => 'Node.js', 'color' => 'from-green-500 to-green-700'],
-                    ['name' => 'Python', 'color' => 'from-yellow-400 to-yellow-600'],
-                    ['name' => 'AWS', 'color' => 'from-orange-400 to-orange-600'],
-                    ['name' => 'Blockchain', 'color' => 'from-purple-500 to-purple-700'],
-                    ['name' => 'AI/ML', 'color' => 'from-pink-500 to-rose-600'],
-                    ['name' => 'Docker', 'color' => 'from-blue-500 to-blue-700'],
-                    ['name' => 'MySQL', 'color' => 'from-teal-500 to-teal-700'],
-                    ['name' => 'Tailwind', 'color' => 'from-sky-400 to-sky-600'],
-                    ['name' => 'Git', 'color' => 'from-gray-600 to-gray-800'],
+                    ['name' => 'Laravel',  'icon' => 'laravel/laravel-original'],
+                    ['name' => 'React',    'icon' => 'react/react-original'],
+                    ['name' => 'Flutter',  'icon' => 'flutter/flutter-original'],
+                    ['name' => 'Node.js',  'icon' => 'nodejs/nodejs-original'],
+                    ['name' => 'Python',   'icon' => 'python/python-original'],
+                    ['name' => 'PHP',      'icon' => 'php/php-original'],
+                    ['name' => 'AWS',      'icon' => 'amazonwebservices/amazonwebservices-original-wordmark', 'invert' => true],
+                    ['name' => 'Solidity', 'icon' => 'solidity/solidity-original', 'invert' => true],
+                    ['name' => 'TensorFlow', 'icon' => 'tensorflow/tensorflow-original'],
+                    ['name' => 'Docker',   'icon' => 'docker/docker-original'],
+                    ['name' => 'MySQL',    'icon' => 'mysql/mysql-original'],
+                    ['name' => 'Tailwind', 'icon' => 'tailwindcss/tailwindcss-original'],
                 ];
             @endphp
 
             @foreach($techStacks as $tech)
-                <div class="group flex flex-col items-center">
-                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br {{ $tech['color'] }} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform mb-3">
-                        <span class="text-white font-bold text-xs md:text-sm">{{ substr($tech['name'], 0, 2) }}</span>
+                <div class="group flex flex-col items-center tm-reveal" style="transition-delay: {{ $loop->index * 0.04 }}s;">
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white dark:bg-white/5 ring-1 ring-gray-200 dark:ring-white/10 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:ring-primary-400 transition-all duration-300 mb-3 p-3.5">
+                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/{{ $tech['icon'] }}.svg"
+                             alt="{{ $tech['name'] }}" loading="lazy" decoding="async"
+                             class="w-full h-full object-contain{{ ($tech['invert'] ?? false) ? ' dark:invert' : '' }}">
                     </div>
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $tech['name'] }}</span>
                 </div>
@@ -294,8 +315,9 @@
 </section>
 
 <!-- Work Culture / Values -->
-<section class="py-20 bg-white dark:bg-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
+    <x-page-art art="team-culture" :opacity="12" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="inline-block px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-bold uppercase tracking-wider rounded-full mb-4">Culture</span>
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">วัฒนธรรมการทำงาน</h2>
@@ -345,6 +367,7 @@
 
 <!-- CTA Section -->
 <section class="py-20 bg-gradient-to-r from-gray-900 via-primary-900 to-gray-900 relative overflow-hidden">
+    <x-page-art art="team-cta" :opacity="22" :scrim="false" />
     <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23fff%22%20fill-opacity%3D%220.03%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
     <div class="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">อยากร่วมงานกับเรา?</h2>
@@ -367,6 +390,25 @@
 </section>
 
 <style>
+    /* Hero motion layer. Sits above the still artwork but below the content
+       (the hero's text container is `relative`, this is not). opacity is what
+       lets the still read through; `screen` knocks back the clip's own blacks
+       so it reads as light rather than a flat film. Fades out at the bottom to
+       match the still's fade="bottom" mask, so the hero does not end on a line. */
+    .tm-hero-video {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+        opacity: .45;
+        mix-blend-mode: screen;
+        -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, rgba(0, 0, 0, .55) 80%, transparent 100%);
+        mask-image: linear-gradient(to bottom, #000 0%, #000 55%, rgba(0, 0, 0, .55) 80%, transparent 100%);
+    }
+    .tm-hero-video video { display: block; width: 100%; height: 100%; object-fit: cover; }
+    @media (prefers-reduced-motion: reduce) { .tm-hero-video { display: none; } }
+
     /* Reveal-on-scroll.
        The hidden state is scoped to .tm-js, which the script below adds only
        after it has parsed. A bare `.tm-reveal{opacity:0}` plus an
