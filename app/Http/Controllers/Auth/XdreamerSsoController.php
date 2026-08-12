@@ -60,7 +60,7 @@ class XdreamerSsoController extends Controller
         $code = bin2hex(random_bytes(32));
 
         Cache::put(
-            self::CACHE_PREFIX.$code,
+            self::CACHE_PREFIX . $code,
             [
                 'user_id' => $request->user()->id,
                 'code_challenge' => $validated['code_challenge'],
@@ -70,7 +70,7 @@ class XdreamerSsoController extends Controller
         );
 
         $separator = str_contains($redirectUri, '?') ? '&' : '?';
-        $target = $redirectUri.$separator.http_build_query([
+        $target = $redirectUri . $separator . http_build_query([
             'code' => $code,
             'state' => $validated['state'],
         ]);
@@ -107,7 +107,7 @@ class XdreamerSsoController extends Controller
         // Pull, not get: a code is spent the moment it is looked at, whether or
         // not the verifier turns out to match. A wrong verifier does not get a
         // second attempt at the same code.
-        $entry = Cache::pull(self::CACHE_PREFIX.$validated['code']);
+        $entry = Cache::pull(self::CACHE_PREFIX . $validated['code']);
 
         if (! is_array($entry)) {
             return response()->json(['success' => false, 'message' => 'Code is invalid or expired'], 400);
