@@ -20,6 +20,21 @@
         ['f' => 'designer', 'th' => 'ออกแบบหน้าจอ',        'en' => 'Design',           'desc' => 'วาง wireframe และชุดสีให้จบก่อน แล้วค่อยส่งต่อให้ทีมพัฒนา'],
         ['f' => 'server',   'th' => 'ห้องเซิร์ฟเวอร์',       'en' => 'Server room',      'desc' => 'เครื่องและเครือข่ายที่เราดูแลเอง ไม่ได้ฝากใครทั้งหมด'],
     ];
+
+    // Cloudflare holds these for 4 hours, so swapping a photo for a different
+    // one under the same filename left the old picture live long after the
+    // deploy finished — that is exactly what happened when the daytime shot of
+    // the building was replaced with the night one. mtime only moves when the
+    // file actually changes, so unchanged photos stay cached as before.
+    $studioShots = array_map(function ($shot) {
+        foreach (['thumb' => '', 'full' => '-full'] as $key => $suffix) {
+            $file = 'artwork/studio/' . $shot['f'] . $suffix . '.webp';
+            $path = public_path($file);
+            $shot[$key] = asset($file) . (is_file($path) ? '?v=' . filemtime($path) : '');
+        }
+
+        return $shot;
+    }, $studioShots);
 @endphp
 
 <section class="relative overflow-hidden py-20 bg-white dark:bg-gray-800">
@@ -57,7 +72,7 @@
                                {{ $loop->first ? 'col-span-2 row-span-2' : '' }}"
                         style="transition-delay: {{ min($loop->index, 6) * 0.07 }}s;"
                         aria-label="ดูรูป {{ $shot['th'] }} ขนาดเต็ม">
-                    <img src="{{ asset('artwork/studio/' . $shot['f'] . '.webp') }}"
+                    <img src="{{ $shot['thumb'] }}"
                          alt="{{ $shot['th'] }} — {{ $shot['en'] }}"
                          width="640" height="640" loading="lazy" decoding="async"
                          class="w-full h-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105">
@@ -105,7 +120,7 @@
 
             <figure class="max-w-4xl w-full">
                 {{-- ผูก src กับ i ตรงๆ ภาพใหญ่จึงถูกโหลดตอนเปิดเท่านั้น --}}
-                <img :src="'{{ asset('artwork/studio') }}/' + shots[i].f + '-full.webp'"
+                <img :src="shots[i].full"
                      :alt="shots[i].th + ' — ' + shots[i].en"
                      class="w-full rounded-2xl shadow-2xl">
                 <figcaption class="mt-4 text-center">

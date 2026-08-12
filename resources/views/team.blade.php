@@ -383,12 +383,22 @@
                 ['art' => 'studio/pair',     'th' => 'จับคู่เขียนโค้ด',    'en' => 'Build',      'desc' => 'งานยากๆ นั่งดูจอเดียวกัน แก้ไปด้วยกัน เร็วกว่าต่างคนต่างทำ'],
                 ['art' => 'studio/designer', 'th' => 'ออกแบบหน้าจอ',     'en' => 'Design',     'desc' => 'วาง wireframe และชุดสีให้จบก่อน แล้วค่อยส่งต่อให้ทีมพัฒนา'],
             ];
+
+            // ?v=mtime กัน Cloudflare ค้างรูปเก่าไว้ 4 ชม. หลังเปลี่ยนไฟล์
+            // ดูเหตุผลเต็มใน partials/studio-gallery.blade.php
+            $workSpaces = array_map(function ($space) {
+                $file = 'artwork/' . $space['art'] . '.webp';
+                $path = public_path($file);
+                $space['src'] = asset($file) . (is_file($path) ? '?v=' . filemtime($path) : '');
+
+                return $space;
+            }, $workSpaces);
         @endphp
 
         <div class="grid md:grid-cols-3 gap-6">
             @foreach($workSpaces as $space)
                 <figure class="group relative rounded-2xl overflow-hidden ring-1 ring-white/10 tm-reveal" style="transition-delay: {{ $loop->index * 0.1 }}s;">
-                    <img src="{{ asset('artwork/' . $space['art'] . '.webp') }}" alt="{{ $space['th'] }}"
+                    <img src="{{ $space['src'] }}" alt="{{ $space['th'] }}"
                          width="640" height="640" loading="lazy" decoding="async"
                          class="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105">
                     <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent"></div>
