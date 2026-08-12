@@ -8,7 +8,7 @@
 <section id="nova-hero" class="nova-hero">
     {{-- Still artwork stays as the base layer: it is what shows if the video is
          blocked, still loading, or suppressed by prefers-reduced-motion. --}}
-    <x-page-art art="hero-home" :opacity="26" :scrim="false" />
+    <x-page-art art="hero-home" :opacity="26" :scrim="false" fade="bottom" />
 
     {{-- Motion layer. Generated from the still above as its start frame, so the
          two line up. Held semi-transparent on purpose so the 3D starfield
@@ -116,6 +116,11 @@
         pointer-events: none;
         opacity: 0.5;
         mix-blend-mode: screen;
+        /* Matches the fade="bottom" mask on the still layer beneath, so the two
+           end together instead of drawing a bright line across the page where
+           the hero stops. Top is left at full strength — nothing sits above it. */
+        -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, rgba(0, 0, 0, 0.55) 80%, transparent 100%);
+        mask-image: linear-gradient(to bottom, #000 0%, #000 55%, rgba(0, 0, 0, 0.55) 80%, transparent 100%);
     }
     .nova-hero__video video {
         display: block;
