@@ -23,8 +23,9 @@
 @endif
 
 <!-- Hero Section -->
-<section class="py-16" style="background: linear-gradient(135deg, {{ $service->color ?? '#0ea5e9' }}, {{ $service->color ?? '#0ea5e9' }}99)">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="relative overflow-hidden py-16" style="background: linear-gradient(135deg, {{ $service->color ?? '#0ea5e9' }}, {{ $service->color ?? '#0ea5e9' }}99)">
+    <x-page-art art="hero-services" :opacity="25" :scrim="false" fade="bottom" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav class="mb-8">
             <a href="{{ route('services') }}" class="text-white/80 hover:text-white">&larr; กลับไปรายการบริการ</a>
         </nav>
@@ -98,8 +99,9 @@
 
 <!-- Features Section -->
 @if($service->features && count($service->features) > 0)
-<section class="py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="relative overflow-hidden py-16">
+    <x-page-art art="proc-build" :opacity="10" :scrim="false" />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl font-bold text-gray-900 text-center mb-12">สิ่งที่คุณจะได้รับ</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -122,8 +124,9 @@
 
 <!-- Details Section -->
 @if($service->details)
-<section class="py-16 bg-gray-50">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="relative overflow-hidden py-16 bg-gray-50">
+    <x-page-art art="space-planning" :opacity="8" :scrim="false" />
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl font-bold text-gray-900 text-center mb-8">รายละเอียดบริการ</h2>
         <div class="prose prose-lg max-w-none">
             {!! nl2br(e($service->details)) !!}
@@ -133,8 +136,9 @@
 @endif
 
 <!-- CTA Section -->
-<section class="py-16">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+<section class="relative overflow-hidden py-16">
+    <x-page-art art="team-cta" :opacity="12" :scrim="false" fade="top" />
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl font-bold text-gray-900 mb-4">พร้อมเริ่มต้นแล้วหรือยัง?</h2>
         <p class="text-lg text-gray-600 mb-8">
             ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี และใบเสนอราคาที่ออกแบบมาเฉพาะสำหรับธุรกิจของคุณ

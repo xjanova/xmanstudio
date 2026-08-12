@@ -5,7 +5,14 @@
 @section('content')
 <div class="bg-gray-50 min-h-screen py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">สถานะการเช่า</h1>
+        <!-- Page header -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 px-6 py-8 mb-8">
+            <x-page-art art="hero-rental" :opacity="15" :scrim="false" fade="bottom" />
+            <div class="relative">
+                <h1 class="text-3xl font-bold text-white"><x-bi th="สถานะการเช่า" en="Rental Status" /></h1>
+                <p class="mt-1 text-gray-300"><x-bi th="แพ็กเกจปัจจุบัน ประวัติการเช่า และการชำระเงิน" en="Current package, rental history and payments" /></p>
+            </div>
+        </div>
 
         @if(session('success'))
             <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">

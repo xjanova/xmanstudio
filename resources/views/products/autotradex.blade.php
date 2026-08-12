@@ -7,6 +7,7 @@
     <!-- Hero Section -->
     <section class="relative py-20 overflow-hidden">
         <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%239C92AC\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+        <x-page-art art="card-autotradex" :opacity="35" fade="bottom" />
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Breadcrumb -->
@@ -82,8 +83,9 @@
     </section>
 
     <!-- Features Section -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden py-16 bg-gray-900/50">
+        <x-page-art art="hero-network" :opacity="10" :scrim="false" />
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold text-white text-center mb-12">ฟีเจอร์หลัก</h2>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -191,8 +193,9 @@
     </section>
 
     <!-- License Registration -->
-    <section class="py-16 bg-gray-900/50" id="license">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden py-16 bg-gray-900/50" id="license">
+        <x-page-art art="hero-licenses" :opacity="10" :scrim="false" />
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold text-white text-center mb-4">การลงทะเบียน License</h2>
             <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">ขั้นตอนการเปิดใช้งาน AutoTradeX</p>
 
@@ -315,8 +318,9 @@
     </section>
 
     <!-- Download Section -->
-    <section class="py-16 bg-gray-900/50" id="download">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <section class="relative overflow-hidden py-16 bg-gray-900/50" id="download">
+        <x-page-art art="hero-downloads" :opacity="12" :scrim="false" />
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl font-bold text-white mb-4">ดาวน์โหลด AutoTradeX</h2>
             <p class="text-gray-400 mb-8 max-w-2xl mx-auto">ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นใช้งานได้ทันที</p>
 
@@ -379,8 +383,9 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="py-16">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <section class="relative overflow-hidden py-16">
+        <x-page-art art="team-cta" :opacity="16" :scrim="false" fade="top" />
+        <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl font-bold text-white mb-4">พร้อมเริ่มต้นใช้งาน?</h2>
             <p class="text-gray-400 mb-8">เริ่มต้นด้วย Trial 7 วันฟรี หรือเลือกแพ็กเกจที่เหมาะกับคุณ</p>
 

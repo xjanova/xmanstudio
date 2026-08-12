@@ -5,8 +5,9 @@
 @section('content')
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Gradient Header Banner -->
-    <div class="bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 dark:from-purple-700 dark:via-purple-600 dark:to-indigo-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 dark:from-purple-700 dark:via-purple-600 dark:to-indigo-700">
+        <x-page-art art="hero-payment" :opacity="14" :scrim="false" fade="bottom" />
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div class="mb-4 md:mb-0">
                     <h1 class="text-3xl font-bold text-white flex items-center">

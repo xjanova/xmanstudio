@@ -19,6 +19,7 @@
 
 <!-- Header Banner -->
 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 p-6 sm:p-8 mb-8 shadow-xl">
+    <x-page-art art="card-tping" :opacity="15" :scrim="false" />
     <div class="absolute inset-0 bg-black/10"></div>
     <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
     <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-cyan-300/20 rounded-full blur-3xl"></div>

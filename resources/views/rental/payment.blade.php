@@ -5,19 +5,26 @@
 @section('content')
 <div class="bg-gray-50 min-h-screen py-12">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Breadcrumb -->
-        <nav class="mb-8">
-            <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                <li><a href="{{ route('rental.index') }}" class="hover:text-primary-600"><x-bi th="แพ็กเกจ" en="Packages" /></a></li>
-                <li><span>/</span></li>
-                <li class="text-gray-900"><x-bi k="common.payment" /></li>
-            </ol>
-        </nav>
+        <!-- Page header -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 px-6 py-8 mb-8">
+            <x-page-art art="hero-payment" :opacity="14" :scrim="false" fade="bottom" />
+            <div class="relative">
+                <!-- Breadcrumb -->
+                <nav class="mb-3">
+                    <ol class="flex items-center space-x-2 text-sm text-gray-300">
+                        <li><a href="{{ route('rental.index') }}" class="hover:text-white"><x-bi th="แพ็กเกจ" en="Packages" /></a></li>
+                        <li><span>/</span></li>
+                        <li class="text-white"><x-bi k="common.payment" /></li>
+                    </ol>
+                </nav>
+                <h1 class="text-2xl md:text-3xl font-bold text-white"><x-bi th="ชำระเงินแพ็กเกจเช่า" en="Rental Payment" /></h1>
+            </div>
+        </div>
 
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div class="p-8">
                 <div class="text-center mb-8">
-                    <h1 class="text-2xl font-bold text-gray-900"><x-bi k="common.payment" /></h1>
+                    <h2 class="text-2xl font-bold text-gray-900"><x-bi k="common.payment" /></h2>
                     <p class="mt-2 text-gray-600">
                         <x-bi th="แพ็กเกจ" en="Package" />: <span class="font-semibold">{{ $payment->userRental->rentalPackage->display_name }}</span>
                     </p>

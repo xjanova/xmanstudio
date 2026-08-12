@@ -7,14 +7,17 @@
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <!-- Header -->
-        <div class="text-center mb-10">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg mb-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                </svg>
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-slate-900 to-indigo-950 px-6 py-10 text-center mb-10">
+            <x-page-art art="hero-tracking" :opacity="15" :scrim="false" fade="bottom" />
+            <div class="relative">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-white"><x-bi th="ติดตามใบสั่งงาน" en="Track Your Order" /></h1>
+                <p class="mt-2 text-gray-300"><x-bi th="ค้นหาด้วยเลขที่ใบเสนอราคา, เลขโครงการ หรืออีเมล" en="Search by quotation number, project number or email" /></p>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">ติดตามใบสั่งงาน</h1>
-            <p class="mt-2 text-gray-600 dark:text-gray-400">ค้นหาด้วยเลขที่ใบเสนอราคา, เลขโครงการ หรืออีเมล</p>
         </div>
 
         <!-- Search Form -->

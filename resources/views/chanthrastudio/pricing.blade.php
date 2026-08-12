@@ -44,8 +44,11 @@
 @endpush
 
 @section('content')
-<div class="pricing-page py-20">
-    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+<div class="pricing-page relative overflow-hidden py-20">
+    <div class="absolute inset-x-0 top-0 h-[360px] pointer-events-none">
+        <x-page-art art="card-chanthra" :opacity="26" :scrim="false" fade="bottom" />
+    </div>
+    <div class="relative max-w-6xl mx-auto px-6 lg:px-8">
         <div class="text-center mb-16">
             <a href="{{ route('chanthra-studio.detail') }}" class="font-mono text-xs" style="color: var(--text-3);">← chanthra studio</a>
             <h1 class="font-display italic text-6xl mt-4" style="color: var(--text-1);">เลือกแพ็กเกจ</h1>
@@ -83,11 +86,14 @@
             @endforeach
         </div>
 
-        <div class="text-center mt-16 max-w-2xl mx-auto">
-            <p class="font-display italic text-2xl mb-2" style="color: var(--gold-hi);">ยังไม่แน่ใจ?</p>
-            <p class="text-sm" style="color: var(--text-2);">
-                <a href="{{ route('chanthra-studio.manual') }}" class="underline" style="color: var(--gold);">อ่านคู่มือ</a> ก่อนตัดสินใจ · ทุกแพ็กเกจรวม auto-update และ priority bug fix
-            </p>
+        <div class="relative overflow-hidden rounded-2xl mt-16 max-w-2xl mx-auto px-6 py-10">
+            <x-page-art art="team-cta" :opacity="14" :scrim="false" />
+            <div class="relative text-center">
+                <p class="font-display italic text-2xl mb-2" style="color: var(--gold-hi);">ยังไม่แน่ใจ?</p>
+                <p class="text-sm" style="color: var(--text-2);">
+                    <a href="{{ route('chanthra-studio.manual') }}" class="underline" style="color: var(--gold);">อ่านคู่มือ</a> ก่อนตัดสินใจ · ทุกแพ็กเกจรวม auto-update และ priority bug fix
+                </p>
+            </div>
         </div>
     </div>
 </div>

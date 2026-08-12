@@ -26,6 +26,7 @@
 <div class="space-y-6">
     <!-- Premium Header Banner -->
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-8 shadow-2xl">
+        <x-page-art art="hero-support" :opacity="20" :scrim="false" />
         <div class="absolute top-0 left-0 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
         <div class="absolute top-0 right-0 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
         <div class="absolute -bottom-8 left-20 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
@@ -150,15 +151,16 @@
             </div>
         </a>
         @empty
-        <div class="p-12 text-center">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center mx-auto mb-4">
+        <div class="relative overflow-hidden p-12 text-center">
+            <x-page-art art="team-cta" :opacity="8" :scrim="false" />
+            <div class="relative w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center mx-auto mb-4">
                 <svg class="h-10 w-10 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="ยังไม่มี Support Ticket" en="No support tickets yet" /></h3>
-            <p class="mt-2 text-gray-500 dark:text-gray-400"><x-bi th="มีคำถามหรือต้องการความช่วยเหลือ? สร้าง Ticket ใหม่เลย" en="Have a question or need help? Create a new ticket" /></p>
-            <div class="mt-6">
+            <h3 class="relative text-lg font-semibold text-gray-900 dark:text-white"><x-bi th="ยังไม่มี Support Ticket" en="No support tickets yet" /></h3>
+            <p class="relative mt-2 text-gray-500 dark:text-gray-400"><x-bi th="มีคำถามหรือต้องการความช่วยเหลือ? สร้าง Ticket ใหม่เลย" en="Have a question or need help? Create a new ticket" /></p>
+            <div class="relative mt-6">
                 <a href="{{ route('customer.support.create') }}"
                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 font-semibold shadow-lg transition-all">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -6,11 +6,14 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                <x-bi th="คำสั่งซื้อของฉัน" en="My Orders" />
-            </h1>
-            <p class="mt-2 text-gray-500 dark:text-gray-400"><x-bi th="ประวัติการสั่งซื้อและสถานะคำสั่งซื้อทั้งหมด" en="Your full order history and status" /></p>
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-slate-900 to-indigo-950 px-6 py-8 mb-8">
+            <x-page-art art="hero-cart" :opacity="15" :scrim="false" fade="bottom" />
+            <div class="relative">
+                <h1 class="text-3xl font-bold text-white">
+                    <x-bi th="คำสั่งซื้อของฉัน" en="My Orders" />
+                </h1>
+                <p class="mt-2 text-gray-300"><x-bi th="ประวัติการสั่งซื้อและสถานะคำสั่งซื้อทั้งหมด" en="Your full order history and status" /></p>
+            </div>
         </div>
 
         @if($orders->isEmpty())

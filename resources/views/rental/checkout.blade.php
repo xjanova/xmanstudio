@@ -5,14 +5,22 @@
 @section('content')
 <div class="bg-gray-50 min-h-screen py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Breadcrumb -->
-        <nav class="mb-8">
-            <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                <li><a href="{{ route('rental.index') }}" class="hover:text-primary-600"><x-bi th="แพ็กเกจ" en="Packages" /></a></li>
-                <li><span>/</span></li>
-                <li class="text-gray-900"><x-bi th="ชำระเงิน" en="Payment" /></li>
-            </ol>
-        </nav>
+        <!-- Page header -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 px-6 py-8 mb-8">
+            <x-page-art art="hero-payment" :opacity="14" :scrim="false" fade="bottom" />
+            <div class="relative">
+                <!-- Breadcrumb -->
+                <nav class="mb-3">
+                    <ol class="flex items-center space-x-2 text-sm text-gray-300">
+                        <li><a href="{{ route('rental.index') }}" class="hover:text-white"><x-bi th="แพ็กเกจ" en="Packages" /></a></li>
+                        <li><span>/</span></li>
+                        <li class="text-white"><x-bi th="ชำระเงิน" en="Payment" /></li>
+                    </ol>
+                </nav>
+                <h1 class="text-2xl md:text-3xl font-bold text-white"><x-bi th="ยืนยันการสั่งซื้อ" en="Checkout" /></h1>
+                <p class="mt-1 text-gray-300">{{ $package->display_name }}</p>
+            </div>
+        </div>
 
         @if(session('error'))
             <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">

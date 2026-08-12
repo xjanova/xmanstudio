@@ -34,6 +34,8 @@
 
 <!-- Premium Project Header -->
 <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-6 sm:p-8 shadow-2xl mb-6">
+    {{-- Artwork fades out toward the bottom so the progress bar and the project-value figures stay easy to read. --}}
+    <x-page-art art="hero-projects" :opacity="12" fade="bottom" :scrim="false" />
     <div class="absolute top-0 left-0 w-72 h-72 bg-violet-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
     <div class="absolute top-0 right-0 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
     <div class="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>

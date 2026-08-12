@@ -6,16 +6,17 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
-        <div class="mb-8">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-slate-900 to-indigo-950 px-6 py-8 mb-8">
+            <x-page-art art="hero-payment" :opacity="14" :scrim="false" fade="bottom" />
+            <div class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <a href="{{ route('orders.index') }}" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-2">
+                    <a href="{{ route('orders.index') }}" class="inline-flex items-center text-sm text-gray-300 hover:text-white mb-2">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                         </svg>
                         <x-bi th="กลับไปรายการคำสั่งซื้อ" en="Back to orders" />
                     </a>
-                    <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <h1 class="text-3xl font-bold text-white">
                         <x-bi th="คำสั่งซื้อ" en="Order" /> #{{ $order->order_number }}
                     </h1>
                 </div>

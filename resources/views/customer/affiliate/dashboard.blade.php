@@ -48,6 +48,7 @@
     {{-- Affiliate Dashboard --}}
     {{-- Header Banner --}}
     <div class="bg-gradient-to-r from-pink-600 via-rose-600 to-red-500 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
+        <x-page-art art="hero-affiliate" :opacity="14" :scrim="false" />
         <div class="absolute inset-0 opacity-10">
             <div class="absolute -right-8 -top-8 w-40 h-40 bg-white rounded-full"></div>
             <div class="absolute right-20 bottom-0 w-24 h-24 bg-white rounded-full"></div>

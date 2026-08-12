@@ -10,6 +10,8 @@
             <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(139, 92, 246, 0.3) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.3) 0%, transparent 50%);"></div>
         </div>
 
+        <x-page-art art="card-tping" :opacity="40" fade="bottom" />
+
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div class="inline-flex items-center px-4 py-2 bg-violet-500/20 rounded-full text-violet-300 text-sm mb-6 backdrop-blur-sm border border-violet-500/30">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
@@ -34,8 +36,9 @@
     </section>
 
     <!-- Pricing Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
+    <section class="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <x-page-art art="space-planning" :opacity="10" :scrim="false" />
+        <div class="relative max-w-7xl mx-auto">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold text-white mb-4">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
                 <p class="text-gray-400">ทดลองใช้ฟรี 24 ชั่วโมง จากนั้นเลือกแพ็กเกจที่ต้องการ</p>
@@ -141,8 +144,9 @@
     </section>
 
     <!-- FAQ Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto">
+    <section class="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <x-page-art art="hero-support" :opacity="10" :scrim="false" />
+        <div class="relative max-w-3xl mx-auto">
             <h2 class="text-2xl font-bold text-white text-center mb-8">คำถามที่พบบ่อย</h2>
             <div class="space-y-4">
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">

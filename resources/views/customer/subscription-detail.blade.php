@@ -54,6 +54,7 @@
                 ];
             @endphp
             <div class="relative overflow-hidden bg-gradient-to-r {{ $headerGradients[$rental->status] ?? 'from-blue-600 via-cyan-600 to-teal-600' }} p-6">
+                <x-page-art art="hero-rental" :opacity="12" :scrim="false" />
                 <div class="absolute top-0 left-0 w-72 h-72 bg-white/10 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-blob"></div>
                 <div class="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-blob animation-delay-2000"></div>
 

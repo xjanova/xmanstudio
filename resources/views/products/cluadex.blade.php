@@ -7,6 +7,7 @@
     <!-- Hero Section -->
     <section class="relative py-20 overflow-hidden">
         <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%236366F1&quot; fill-opacity=&quot;0.05&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+        <x-page-art art="card-cluadex" :opacity="35" fade="bottom" />
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Breadcrumb -->
@@ -186,8 +187,9 @@
     </section>
 
     <!-- Features Grid -->
-    <section class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden py-16">
+        <x-page-art art="team-tech" :opacity="10" :scrim="false" />
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-black text-white text-center mb-4">ฟีเจอร์ทั้งหมด</h2>
             <p class="text-gray-400 text-center mb-12">ทุกอย่างที่คุณต้องการในการเขียนโค้ดด้วย AI</p>
 
@@ -221,8 +223,9 @@
     </section>
 
     <!-- Screenshots Gallery -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden py-16 bg-gray-900/50">
+        <x-page-art art="space-studio" :opacity="10" :scrim="false" />
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-black text-white text-center mb-4">หน้าจอโปรแกรม</h2>
             <p class="text-gray-400 text-center mb-12">ดีไซน์สวยงามด้วย Catppuccin Mocha Theme</p>
 
@@ -259,8 +262,9 @@
     </section>
 
     <!-- Supported Models -->
-    <section class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden py-16">
+        <x-page-art art="hero-network" :opacity="10" :scrim="false" />
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-black text-white text-center mb-4">รองรับ 22+ โมเดล AI</h2>
             <p class="text-gray-400 text-center mb-12">โมเดลคัดสรรพร้อม star rating ตามคุณภาพ</p>
 
@@ -440,8 +444,9 @@
     </section>
 
     <!-- Final CTA -->
-    <section class="py-20">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <section class="relative overflow-hidden py-20">
+        <x-page-art art="team-cta" :opacity="16" :scrim="false" fade="top" />
+        <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-4xl font-black text-white mb-4">พร้อมเขียนโค้ดกับ AI แล้วหรือยัง?</h2>
             <p class="text-xl text-gray-400 mb-8">ดาวน์โหลดฟรี ใช้ฟรี ไม่มีค่าใช้จ่าย</p>
             <a href="https://github.com/xjanova/cluadeX/releases/latest"

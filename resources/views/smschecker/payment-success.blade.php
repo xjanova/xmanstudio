@@ -7,20 +7,26 @@
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-700">
             <div class="p-8 text-center">
-                <!-- Success Icon -->
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-green-500/20 rounded-full mb-6">
-                    <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                </div>
+                <!-- Success Header -->
+                <div class="relative overflow-hidden -mx-8 -mt-8 px-8 pt-8 pb-4">
+                    <x-page-art art="hero-licenses" :opacity="15" fade="bottom" :scrim="false" />
+                    <div class="relative">
+                        <!-- Success Icon -->
+                        <div class="inline-flex items-center justify-center w-20 h-20 bg-green-500/20 rounded-full mb-6">
+                            <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
 
-                <h1 class="text-3xl font-bold text-white mb-4">
-                    @if(isset($licenses) && $licenses->count() > 0)
-                        <x-bi th="ชำระเงินสำเร็จ!" en="Payment Successful!" layout="stack" />
-                    @else
-                        <x-bi th="ขอบคุณสำหรับการสั่งซื้อ!" en="Thank You for Your Order!" layout="stack" />
-                    @endif
-                </h1>
+                        <h1 class="text-3xl font-bold text-white mb-0">
+                            @if(isset($licenses) && $licenses->count() > 0)
+                                <x-bi th="ชำระเงินสำเร็จ!" en="Payment Successful!" layout="stack" />
+                            @else
+                                <x-bi th="ขอบคุณสำหรับการสั่งซื้อ!" en="Thank You for Your Order!" layout="stack" />
+                            @endif
+                        </h1>
+                    </div>
+                </div>
 
                 {{-- === WALLET PAYMENT: Show License Key immediately === --}}
                 @if(isset($licenses) && $licenses->count() > 0)

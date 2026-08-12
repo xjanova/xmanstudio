@@ -6,13 +6,16 @@
 <div class="min-h-screen bg-gray-50 py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Breadcrumb -->
-        <nav class="mb-8">
-            <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                <li><a href="{{ route('localvpn.pricing') }}" class="hover:text-cyan-600">LocalVPN</a></li>
-                <li><span>/</span></li>
-                <li class="text-gray-900"><x-bi th="ชำระเงิน" en="Checkout" /></li>
-            </ol>
-        </nav>
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-cyan-900 to-gray-900 px-6 py-6 mb-8">
+            <x-page-art art="hero-cart" :opacity="14" :scrim="false" fade="bottom" />
+            <nav class="relative">
+                <ol class="flex items-center space-x-2 text-sm text-gray-300">
+                    <li><a href="{{ route('localvpn.pricing') }}" class="hover:text-cyan-300">LocalVPN</a></li>
+                    <li><span>/</span></li>
+                    <li class="text-white font-semibold"><x-bi th="ชำระเงิน" en="Checkout" /></li>
+                </ol>
+            </nav>
+        </div>
 
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div class="md:flex">

@@ -182,8 +182,13 @@
 @endpush
 
 @section('content')
-<div class="manual-page">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-24">
+{{-- No overflow-hidden here: it would create a scroll container and kill the
+     lg:sticky table of contents below. The art band clips itself. --}}
+<div class="manual-page relative">
+    <div class="absolute inset-x-0 top-0 h-[420px] overflow-hidden pointer-events-none">
+        <x-page-art art="card-chanthra" :opacity="22" :scrim="false" fade="bottom" />
+    </div>
+    <div class="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-24">
         <div class="grid lg:grid-cols-[260px,1fr] gap-12">
 
             {{-- ═══════════ TABLE OF CONTENTS ═══════════ --}}

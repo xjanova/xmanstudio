@@ -6,13 +6,16 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900 py-12">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Breadcrumb -->
-        <nav class="mb-8">
-            <ol class="flex items-center space-x-2 text-sm text-gray-400">
-                <li><a href="{{ route('smschecker.pricing') }}" class="hover:text-violet-400">SmsChecker</a></li>
-                <li><span>/</span></li>
-                <li class="text-white"><x-bi th="ชำระเงิน" en="Payment" /></li>
-            </ol>
-        </nav>
+        <div class="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/40 px-6 py-6 mb-8">
+            <x-page-art art="hero-payment" :opacity="14" fade="bottom" :scrim="false" />
+            <nav class="relative">
+                <ol class="flex items-center space-x-2 text-sm text-gray-400">
+                    <li><a href="{{ route('smschecker.pricing') }}" class="hover:text-violet-400">SmsChecker</a></li>
+                    <li><span>/</span></li>
+                    <li class="text-white font-semibold"><x-bi th="ชำระเงิน" en="Payment" /></li>
+                </ol>
+            </nav>
+        </div>
 
         <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-700">
             <div class="p-8">

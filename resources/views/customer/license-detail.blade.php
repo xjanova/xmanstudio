@@ -38,6 +38,7 @@
         <!-- License Card with Premium Header -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
             <div class="relative overflow-hidden bg-gradient-to-r from-purple-600 via-violet-600 to-pink-600 p-6">
+                <x-page-art art="hero-licenses" :opacity="14" :scrim="false" />
                 <div class="absolute top-0 left-0 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-blob"></div>
                 <div class="absolute top-0 right-0 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-blob animation-delay-2000"></div>
                 <div class="absolute -bottom-8 left-20 w-72 h-72 bg-violet-400 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-blob animation-delay-4000"></div>

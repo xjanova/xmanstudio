@@ -6,7 +6,9 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-16">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="text-center mb-12">
+        <div class="relative overflow-hidden rounded-3xl mb-12 px-6 py-10">
+            <x-page-art art="card-autotradex" :opacity="12" :scrim="false" />
+            <div class="relative text-center">
             <nav class="mb-8">
                 <a href="{{ route('products.show', 'autotradex') }}" class="text-purple-400 hover:text-purple-300 flex items-center justify-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,6 +31,7 @@
             <p class="text-gray-400 text-lg">
                 สำหรับลูกค้า Lifetime - เปลี่ยนเครื่องคอมพิวเตอร์ใหม่
             </p>
+            </div>
         </div>
 
         <!-- Info Box -->

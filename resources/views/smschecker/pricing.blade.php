@@ -6,6 +6,7 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900">
     <!-- Hero Section -->
     <section class="relative py-20 overflow-hidden">
+        <x-page-art art="card-smschecker" :opacity="35" fade="bottom" />
         <div class="absolute inset-0 opacity-10">
             <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(139, 92, 246, 0.3) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.3) 0%, transparent 50%);"></div>
         </div>
@@ -141,8 +142,9 @@
     </section>
 
     <!-- FAQ Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto">
+    <section class="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <x-page-art art="hero-support" :opacity="12" :scrim="false" />
+        <div class="relative max-w-3xl mx-auto">
             <h2 class="text-2xl font-bold text-white text-center mb-8">คำถามที่พบบ่อย</h2>
             <div class="space-y-4">
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">

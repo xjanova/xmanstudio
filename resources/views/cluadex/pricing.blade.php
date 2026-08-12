@@ -3,8 +3,11 @@
 @section('title', 'CluadeX Pro - แพ็กเกจราคา | XMAN Studio')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-950 to-gray-900 py-20">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="relative overflow-hidden min-h-screen bg-gradient-to-br from-gray-900 via-indigo-950 to-gray-900 py-20">
+    <div class="absolute inset-x-0 top-0 h-[380px] pointer-events-none">
+        <x-page-art art="card-cluadex" :opacity="28" :scrim="false" fade="bottom" />
+    </div>
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div class="text-center mb-16">
             <a href="{{ route('cluadex.detail') }}" class="text-indigo-400 hover:text-indigo-300 text-sm mb-6 inline-flex items-center gap-1">
@@ -56,11 +59,14 @@
             @endforeach
         </div>
 
-        <div class="text-center mt-12">
-            <p class="text-gray-500 text-sm">ทุกแพ็กเกจรวม: อัพเดทอัตโนมัติ, Bug Report, ซัพพอร์ตจาก XMAN Studio</p>
-            <a href="https://github.com/xjanova/cluadeX/releases/latest" class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1">
-                หรือ ดาวน์โหลดเวอร์ชันฟรี →
-            </a>
+        <div class="relative overflow-hidden rounded-2xl mt-12 px-6 py-10">
+            <x-page-art art="team-cta" :opacity="14" :scrim="false" />
+            <div class="relative text-center">
+                <p class="text-gray-500 text-sm">ทุกแพ็กเกจรวม: อัพเดทอัตโนมัติ, Bug Report, ซัพพอร์ตจาก XMAN Studio</p>
+                <a href="https://github.com/xjanova/cluadeX/releases/latest" class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1">
+                    หรือ ดาวน์โหลดเวอร์ชันฟรี →
+                </a>
+            </div>
         </div>
     </div>
 </div>

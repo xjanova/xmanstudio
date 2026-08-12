@@ -6,7 +6,9 @@
 <div class="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-900 text-white">
 
     {{-- Hero --}}
-    <div class="max-w-5xl mx-auto px-4 pt-12 pb-8 text-center">
+    <div class="relative overflow-hidden">
+    <x-page-art art="hero-downloads" :opacity="32" fade="bottom" />
+    <div class="relative max-w-5xl mx-auto px-4 pt-12 pb-8 text-center">
         <a href="{{ route('localvpn.download') }}" class="inline-flex items-center text-teal-300 hover:text-white text-sm mb-6 transition-colors">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             กลับหน้าดาวน์โหลด
@@ -32,6 +34,7 @@
                 ฟรี 24 ชม.
             </span>
         </div>
+    </div>
     </div>
 
     {{-- Steps --}}
@@ -404,12 +407,13 @@
         </div>
 
         {{-- Troubleshooting FAQ --}}
-        <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-8 mb-8">
-            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+        <div class="relative overflow-hidden bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-8 mb-8">
+            <x-page-art art="hero-support" :opacity="10" :scrim="false" />
+            <h2 class="relative text-xl font-bold mb-6 flex items-center gap-2">
                 <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 แก้ปัญหาที่พบบ่อย
             </h2>
-            <div class="space-y-4" x-data="{ open: null }">
+            <div class="relative space-y-4" x-data="{ open: null }">
                 {{-- FAQ items --}}
                 @php
                 $faqs = [

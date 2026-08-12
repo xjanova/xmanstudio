@@ -5,14 +5,23 @@
 @section('content')
 <div class="min-h-screen bg-gray-50 py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Breadcrumb -->
-        <nav class="mb-8">
-            <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                <li><a href="{{ route('tping.pricing') }}" class="hover:text-violet-600">Tping</a></li>
-                <li><span>/</span></li>
-                <li class="text-gray-900"><x-bi k="common.payment" /></li>
-            </ol>
-        </nav>
+        <!-- Page Header -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900 px-6 py-7 mb-8">
+            <x-page-art art="card-tping" :opacity="14" fade="bottom" :scrim="false" />
+            <div class="relative">
+                <!-- Breadcrumb -->
+                <nav>
+                    <ol class="flex items-center space-x-2 text-sm text-gray-400">
+                        <li><a href="{{ route('tping.pricing') }}" class="hover:text-violet-300 transition-colors">Tping</a></li>
+                        <li><span>/</span></li>
+                        <li class="text-white"><x-bi k="common.payment" /></li>
+                    </ol>
+                </nav>
+                <h1 class="mt-3 text-2xl font-bold text-white">
+                    <x-bi th="สั่งซื้อ Tping" en="Tping Checkout" />
+                </h1>
+            </div>
+        </div>
 
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div class="md:flex">

@@ -3,8 +3,12 @@
 @section('title', 'ชำระเงิน - LocalVPN')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-cyan-900 to-gray-900 py-12">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="relative min-h-screen bg-gradient-to-br from-gray-900 via-cyan-900 to-gray-900 py-12 overflow-hidden">
+    {{-- Decorative header band only — never behind the QR / bank numbers / slip form --}}
+    <div class="absolute inset-x-0 top-0 h-40 pointer-events-none">
+        <x-page-art art="hero-payment" :opacity="14" :scrim="false" fade="bottom" />
+    </div>
+    <div class="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Breadcrumb -->
         <nav class="mb-8">
             <ol class="flex items-center space-x-2 text-sm text-gray-400">

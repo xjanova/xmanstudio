@@ -19,6 +19,7 @@
         <!-- Order Header Card -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
             <div class="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-6">
+                <x-page-art art="hero-cart" :opacity="12" :scrim="false" />
                 <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-blob"></div>
                 <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-orange-300/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
 

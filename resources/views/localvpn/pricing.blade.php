@@ -9,6 +9,7 @@
         <div class="absolute inset-0 opacity-10">
             <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25% 25%, rgba(6, 182, 212, 0.3) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(20, 184, 166, 0.3) 0%, transparent 50%);"></div>
         </div>
+        <x-page-art art="hero-network" :opacity="38" fade="bottom" />
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div class="inline-flex items-center px-4 py-2 bg-cyan-500/20 rounded-full text-cyan-300 text-sm mb-6 backdrop-blur-sm border border-cyan-500/30">
@@ -34,8 +35,9 @@
     </section>
 
     <!-- Pricing Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
+    <section class="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <x-page-art art="card-localvpn" :opacity="10" :scrim="false" />
+        <div class="relative max-w-7xl mx-auto">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold text-white mb-4">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
                 <p class="text-gray-400">ใช้ฟรีตลอด หรืออัพเกรดเพื่อปลดล็อกสมาชิกในวง 50 คน</p>
@@ -149,8 +151,9 @@
     </section>
 
     <!-- FAQ Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto">
+    <section class="relative py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <x-page-art art="hero-support" :opacity="12" :scrim="false" />
+        <div class="relative max-w-3xl mx-auto">
             <h2 class="text-2xl font-bold text-white text-center mb-8">คำถามที่พบบ่อย</h2>
             <div class="space-y-4">
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
