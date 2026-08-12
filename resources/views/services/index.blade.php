@@ -3,16 +3,6 @@
 @section('title', 'บริการของเรา - XMAN Studio')
 
 @section('content')
-<!-- Hero Section -->
-<section class="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">บริการของเรา</h1>
-        <p class="text-xl text-primary-100 max-w-2xl mx-auto">
-            IT Solutions ครบวงจร ตอบโจทย์ทุกความต้องการทางธุรกิจ
-        </p>
-    </div>
-</section>
-
 @php
     // Category specific styling - unique colors and images
     $categoryStyles = [

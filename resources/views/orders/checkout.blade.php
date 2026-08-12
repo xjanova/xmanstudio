@@ -12,21 +12,10 @@
     </div>
 </section>
 
+{{-- The hero above already carries the page title. A second "Premium Header"
+     card used to sit here saying the same thing, which read as the page
+     announcing itself twice. --}}
 <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-    <!-- Premium Header -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-500 to-teal-500 p-6 sm:p-8 mb-8 shadow-xl">
-        <div class="absolute inset-0 bg-black/10"></div>
-        <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-        <div class="relative">
-            <h1 class="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <x-bi k="common.payment" class="text-white" />
-            </h1>
-            <p class="mt-2 text-white/80"><x-bi th="ตรวจสอบรายการและยืนยันการสั่งซื้อ" en="Review your items and confirm your order" /></p>
-        </div>
-    </div>
 
     @if($errors->any())
         <div class="mb-6 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl">
