@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\AIServiceException;
 use App\Models\Setting;
+use App\Support\OpenAiCompat;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -199,12 +200,10 @@ class AiChatService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,
             'Content-Type' => 'application/json',
-        ])->timeout(60)->post('https://api.openai.com/v1/chat/completions', [
+        ])->timeout(60)->post('https://api.openai.com/v1/chat/completions', array_merge([
             'model' => $this->model,
             'messages' => $apiMessages,
-            'temperature' => $this->temperature,
-            'max_tokens' => $this->maxTokens,
-        ]);
+        ], OpenAiCompat::tuningParams($this->model, $this->maxTokens, $this->temperature)));
 
         if (! $response->successful()) {
             throw $this->classifyHttpError($response, 'OpenAI');

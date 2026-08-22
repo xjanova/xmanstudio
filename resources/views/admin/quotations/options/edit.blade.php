@@ -104,6 +104,19 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        ไอคอน (Emoji)
+                        <span class="text-xs font-normal text-gray-500 dark:text-gray-400">— ใช้กับบริการเสริม ถ้าเว้นว่างจะใช้ไอคอนของหมวด</span>
+                    </label>
+                    <input type="text" name="icon" value="{{ old('icon', $option->icon) }}"
+                           placeholder="⚡ 🛡️ 🔧"
+                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 dark:bg-gray-700 dark:text-white transition-all @error('icon') border-red-500 @enderror">
+                    @error('icon')
+                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Key (ภาษาอังกฤษ ตัวพิมพ์เล็ก ไม่มีช่องว่าง) <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="key" value="{{ old('key', $option->key) }}" required

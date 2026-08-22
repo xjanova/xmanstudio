@@ -76,6 +76,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\ChanthraStudioWebController;
 use App\Http\Controllers\CluadeXWebController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AffiliateController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
@@ -292,6 +293,12 @@ Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.a
 Route::patch('/cart/update/{item}', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/cart/remove/{item}', [CartController::class, 'remove'])->name('cart.remove');
 Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+
+// Contact us — plain message to the team, separate from the quotation builder
+Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
+Route::post('/contact', [ContactController::class, 'send'])
+    ->name('contact.send')
+    ->middleware(['throttle:5,1', 'turnstile:contact']);
 
 // Support & Quotation
 Route::get('/support', [QuotationController::class, 'index'])->name('support.index');

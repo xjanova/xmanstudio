@@ -18,6 +18,7 @@ class TurnstileSettingsController extends Controller
             'turnstile_register' => Setting::getValue('turnstile_register', false),
             'turnstile_checkout' => Setting::getValue('turnstile_checkout', false),
             'turnstile_support' => Setting::getValue('turnstile_support', false),
+            'turnstile_contact' => Setting::getValue('turnstile_contact', false),
         ];
 
         return view('admin.turnstile.index', compact('settings'));
@@ -37,6 +38,7 @@ class TurnstileSettingsController extends Controller
             'turnstile_register',
             'turnstile_checkout',
             'turnstile_support',
+            'turnstile_contact',
         ];
 
         foreach ($booleanFields as $field) {

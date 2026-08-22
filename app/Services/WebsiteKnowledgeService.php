@@ -83,6 +83,7 @@ class WebsiteKnowledgeService
             if ($useServices) {
                 $parts[] = $this->getAllServices();
                 $parts[] = $this->getAllQuotationCategories();
+                $parts[] = $this->getAllQuotationAddons();
             }
 
             if ($useProducts) {
@@ -366,7 +367,12 @@ class WebsiteKnowledgeService
 
     protected function getAllQuotationCategories(): string
     {
-        $items = QuotationCategory::where('is_active', true)->with(['options' => fn ($q) => $q->where('is_active', true)])->get();
+        // Services only — add-on groups carry no discount and are listed
+        // separately by getAllQuotationAddons() at their full price.
+        $items = QuotationCategory::where('is_active', true)
+            ->services()
+            ->with(['options' => fn ($q) => $q->where('is_active', true)])
+            ->get();
         if ($items->isEmpty()) {
             return '';
         }
@@ -389,6 +395,35 @@ class WebsiteKnowledgeService
                     $price = '';
                 }
                 $lines[] = "  - {$optName}: {$optDesc}" . ($price ? " ({$price})" : '');
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Optional extras (support, delivery, hosting, design, SEO).
+     *
+     * Quoted at full price: the 50/70% promotion applies to the main service
+     * packages only, so these must never be run through that discount.
+     */
+    protected function getAllQuotationAddons(): string
+    {
+        $items = QuotationCategory::where('is_active', true)
+            ->addons()
+            ->with(['options' => fn ($q) => $q->where('is_active', true)])
+            ->get();
+        if ($items->isEmpty()) {
+            return '';
+        }
+
+        $lines = ['[บริการเสริม] (ราคาเต็ม ไม่เข้าร่วมโปรโมชั่นลดราคา)'];
+        foreach ($items as $cat) {
+            $lines[] = 'หมวดเสริม: ' . ($cat->name_th ?: $cat->name);
+            foreach ($cat->options as $opt) {
+                $optName = $opt->name_th ?: $opt->name;
+                $price = $opt->price ? ' (' . number_format($opt->price) . ' บาท)' : '';
+                $lines[] = "  - {$optName}{$price}";
             }
         }
 

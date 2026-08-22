@@ -7,8 +7,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class QuotationCategory extends Model
 {
+    /** Main service category shown in the quotation builder's service grid. */
+    public const TYPE_SERVICE = 'service';
+
+    /** Optional extras group (support, delivery, hosting, design, SEO). */
+    public const TYPE_ADDON = 'addon';
+
     protected $fillable = [
         'key',
+        'type',
         'name',
         'name_th',
         'icon',
@@ -56,6 +63,22 @@ class QuotationCategory extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('order');
+    }
+
+    /**
+     * Scope to main service categories only (excludes add-on groups)
+     */
+    public function scopeServices($query)
+    {
+        return $query->where('type', self::TYPE_SERVICE);
+    }
+
+    /**
+     * Scope to add-on groups only (support, delivery, hosting, design, SEO)
+     */
+    public function scopeAddons($query)
+    {
+        return $query->where('type', self::TYPE_ADDON);
     }
 
     /**

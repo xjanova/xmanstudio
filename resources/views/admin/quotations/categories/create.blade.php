@@ -107,6 +107,20 @@
                     @enderror
                 </div>
 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        ประเภทหมวด <span class="text-red-500">*</span>
+                    </label>
+                    <select name="type" required
+                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 dark:bg-gray-700 dark:text-white transition-all @error('type') border-red-500 @enderror">
+                        <option value="service" @selected(old('type', 'service') === 'service')>บริการหลัก — เลือกได้ 1 หมวด และเข้าร่วมโปรลดราคา</option>
+                        <option value="addon" @selected(old('type') === 'addon')>บริการเสริม — ติ๊กเพิ่มได้หลายรายการ ราคาเต็ม</option>
+                    </select>
+                    @error('type')
+                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">คำอธิบาย (EN)</label>
                     <textarea name="description" rows="2"

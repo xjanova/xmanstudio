@@ -159,6 +159,7 @@ class ProductController extends Controller
     public function services()
     {
         $categories = QuotationCategory::with('activeOptions')
+            ->services()
             ->active()
             ->ordered()
             ->get();

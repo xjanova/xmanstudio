@@ -22,6 +22,7 @@
                     <li><a href="{{ config('app.product_site_url') }}">ผลิตภัณฑ์ / Products</a></li>
                     <li><a href="{{ route('rental.index') }}">เช่าใช้งาน / Rental</a></li>
                     <li><a href="{{ route('support.index') }}">ขอใบเสนอราคา / Get a quote</a></li>
+                    <li><a href="{{ route('contact.show') }}">ติดต่อเรา / Contact us</a></li>
                     <li><a href="{{ route('portfolio') }}">ผลงาน / Portfolio</a></li>
                 </ul>
             </div>

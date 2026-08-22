@@ -12,6 +12,7 @@ class QuotationOption extends Model
         'key',
         'name',
         'name_th',
+        'icon',
         'description',
         'description_th',
         'features',

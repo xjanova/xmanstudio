@@ -11,7 +11,7 @@
             <span style="color:var(--nv-fg-3);">Free consultation — we scope it with you before anything is billed.</span>
         </p>
         <div class="nova-reveal" style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;">
-            <a href="{{ route('support.index') }}" class="nova-btn nova-btn--primary">
+            <a href="{{ route('contact.show') }}" class="nova-btn nova-btn--primary">
                 @include('partials.nova-icon', ['name' => 'chat'])
                 ติดต่อเรา / Contact us
             </a>

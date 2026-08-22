@@ -1164,6 +1164,14 @@ class QuotationController extends Controller
     /**
      * Additional options available for all services
      */
+    /** Per-request memo for addonGroups(). */
+    protected ?array $addonGroupsCache = null;
+
+    /**
+     * Fallback add-on groups, used only when no addon categories exist in the
+     * database. The live data lives in quotation_categories (type = 'addon')
+     * so admins can edit prices without a deploy — see addonGroups().
+     */
     protected array $additionalOptions = [
         'support' => [
             'name' => 'Support & Maintenance',
@@ -1233,11 +1241,64 @@ class QuotationController extends Controller
     ];
 
     /**
+     * Add-on groups, read from the database so admins can edit them.
+     *
+     * Returns the same shape as $additionalOptions — a group keyed by its
+     * category key, holding name/name_th/icon plus an options map — so every
+     * caller (form, preview, PDF, JSON endpoint) stays unchanged. Falls back to
+     * the hard-coded array when the addon categories have not been seeded yet,
+     * matching how index() falls back to $servicePackages.
+     */
+    protected function addonGroups(): array
+    {
+        // Resolved once per request: the form, the preview and the totals all
+        // ask for this within a single call.
+        if ($this->addonGroupsCache !== null) {
+            return $this->addonGroupsCache;
+        }
+
+        $groups = [];
+
+        $categories = QuotationCategory::with('activeOptions')
+            ->addons()
+            ->active()
+            ->ordered()
+            ->get();
+
+        foreach ($categories as $category) {
+            $options = [];
+            foreach ($category->activeOptions as $option) {
+                $options[$option->key] = [
+                    'name' => $option->name,
+                    'name_th' => $option->name_th ?? $option->name,
+                    'price' => (float) $option->price,
+                    'icon' => $option->icon,
+                ];
+            }
+
+            // Skip an empty group rather than rendering a headed box with nothing in it.
+            if ($options === []) {
+                continue;
+            }
+
+            $groups[$category->key] = [
+                'name' => $category->name,
+                'name_th' => $category->name_th ?? $category->name,
+                'icon' => $category->icon,
+                'options' => $options,
+            ];
+        }
+
+        return $this->addonGroupsCache = ($groups !== [] ? $groups : $this->additionalOptions);
+    }
+
+    /**
      * Show the quotation form
      */
     public function index()
     {
         $categories = QuotationCategory::with('activeOptions')
+            ->services()
             ->active()
             ->ordered()
             ->get();
@@ -1290,7 +1351,7 @@ class QuotationController extends Controller
 
         return view('support.index', [
             'services' => $formattedCategories,
-            'additionalOptions' => $this->additionalOptions ?? [],
+            'additionalOptions' => $this->addonGroups(),
             'optionDetailConfig' => $this->optionDetailConfig,
             'serviceOptionDetailConfig' => $this->serviceOptionDetailConfig,
         ]);
@@ -1425,8 +1486,9 @@ class QuotationController extends Controller
     {
         $keys = array_keys($this->servicePackages);
 
-        // Also include database category keys
-        $dbKeys = QuotationCategory::active()->pluck('key')->toArray();
+        // Also include database category keys. Add-on groups are excluded on
+        // purpose: they are extras, never a valid main service_type.
+        $dbKeys = QuotationCategory::services()->active()->pluck('key')->toArray();
 
         return array_unique(array_merge($keys, $dbKeys));
     }
@@ -1467,6 +1529,7 @@ class QuotationController extends Controller
 
         // Fallback to database
         $category = QuotationCategory::where('key', $serviceType)
+            ->services()
             ->where('is_active', true)
             ->with('activeOptions')
             ->first();
@@ -1532,7 +1595,7 @@ class QuotationController extends Controller
 
         // Flatten all additional options
         $allAdditionalOptions = [];
-        foreach ($this->additionalOptions as $category) {
+        foreach ($this->addonGroups() as $category) {
             foreach ($category['options'] as $key => $option) {
                 $allAdditionalOptions[$key] = $option;
             }
@@ -1630,6 +1693,7 @@ class QuotationController extends Controller
     public function getServices()
     {
         $categories = QuotationCategory::with('activeOptions')
+            ->services()
             ->active()
             ->ordered()
             ->get();
@@ -1660,7 +1724,7 @@ class QuotationController extends Controller
 
         return response()->json([
             'services' => $formattedCategories,
-            'additional_options' => $this->additionalOptions ?? [],
+            'additional_options' => $this->addonGroups(),
         ]);
     }
 
@@ -1671,6 +1735,7 @@ class QuotationController extends Controller
     {
         // Find category
         $category = QuotationCategory::where('key', $categoryKey)
+            ->services()
             ->where('is_active', true)
             ->first();
 

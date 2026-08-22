@@ -100,7 +100,12 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ $category->name }}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $category->name }}</span>
+                                @if($category->type === 'addon')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400">บริการเสริม</span>
+                                @endif
+                            </div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">{{ $category->name_th }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
