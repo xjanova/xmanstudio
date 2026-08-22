@@ -4,10 +4,12 @@
     $appUrl = \App\Models\PaymentSetting::get('email_site_url', config('app.url'));
     $fromEmail = config('mail.from.address', 'noreply@xman4289.com');
 
-    // The site logo is dark-on-light artwork, so it disappears on this dark
-    // template. Only an explicitly-set email logo (which an admin can point at a
-    // light-on-dark file) is used as an image — otherwise we draw the wordmark.
-    $logoUrl = \App\Models\PaymentSetting::get('email_logo_url');
+    // The logo carries a white stroke around every letter, so it reads cleanly
+    // on this dark ground and needs no separate dark-mode file. Priority:
+    // 1) email_logo_url override, 2) the site logo, 3) the text wordmark.
+    $siteLogo = \App\Models\Setting::getValue('site_logo');
+    $emailLogoUrl = \App\Models\PaymentSetting::get('email_logo_url');
+    $logoUrl = $emailLogoUrl ?: ($siteLogo ? rtrim($appUrl, '/') . '/storage/' . $siteLogo : null);
 @endphp
 <!DOCTYPE html>
 <html lang="th" dir="ltr">
@@ -75,7 +77,7 @@
             border-bottom: 1px solid #1c2545;
         }
         .email-logo { margin-bottom: 22px; }
-        .email-logo img { max-height: 44px; max-width: 200px; }
+        .email-logo img { width: 260px; max-width: 78%; height: auto; }
         .email-logo-text {
             font-size: 22px;
             font-weight: 700;
@@ -270,7 +272,7 @@
             border-top: 1px solid #1c2545;
         }
         .footer-logo { margin-bottom: 12px; }
-        .footer-logo img { max-height: 30px; }
+        .footer-logo img { width: 150px; max-width: 55%; height: auto; }
         .footer-text { font-size: 13px; color: #a8b4d4; }
         .footer-text a { color: #22d3ee; text-decoration: none; }
         .footer-divider {
@@ -302,7 +304,7 @@
                     <div class="email-header" style="padding: 40px 40px 32px; text-align: center; background-color: #0a0f22; border-bottom: 1px solid #1c2545;">
                         <div class="email-logo" style="margin-bottom: 22px;">
                             @if($logoUrl)
-                                <img src="{{ $logoUrl }}" alt="{{ $appName }}" style="max-height: 44px; max-width: 200px;">
+                                <img src="{{ $logoUrl }}" alt="{{ $appName }}" width="260" style="width: 260px; max-width: 78%; height: auto;">
                             @else
                                 <div class="email-logo-text" style="font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #eaf0ff;">
                                     <span class="nv-x" style="color: #22d3ee;">X</span>MAN STUDIO
@@ -322,7 +324,7 @@
                     <div class="email-footer" style="padding: 30px 40px 34px; text-align: center; background-color: #04050d; border-top: 1px solid #1c2545;">
                         <div class="footer-logo" style="margin-bottom: 12px;">
                             @if($logoUrl)
-                                <img src="{{ $logoUrl }}" alt="{{ $appName }}" style="max-height: 30px;">
+                                <img src="{{ $logoUrl }}" alt="{{ $appName }}" width="150" style="width: 150px; max-width: 55%; height: auto;">
                             @else
                                 <div style="color: #eaf0ff; font-size: 15px; font-weight: 700; letter-spacing: 2px;">
                                     <span style="color: #22d3ee;">X</span>MAN STUDIO
