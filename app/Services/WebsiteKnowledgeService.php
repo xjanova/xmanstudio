@@ -167,7 +167,7 @@ class WebsiteKnowledgeService
             } else {
                 $price = '';
             }
-            $features = is_array($item->features_th) ? implode(', ', $item->features_th) : (is_array($item->features) ? implode(', ', $item->features) : '');
+            $features = $this->featureList($item->features_th) ?: $this->featureList($item->features);
             $lines[] = "- {$name}: {$desc}" . ($price ? " ({$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
         }
 
@@ -190,7 +190,7 @@ class WebsiteKnowledgeService
         $lines = ['[สินค้า/ซอฟต์แวร์]'];
         foreach ($items as $item) {
             $price = $item->price ? number_format($item->price) . ' บาท' : 'สอบถามราคา';
-            $features = is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '';
+            $features = $this->featureList($item->features);
             $lines[] = "- {$item->name}: " . ($item->short_description ?: $item->description) . " (ราคา: {$price})" . ($features ? " | ฟีเจอร์: {$features}" : '');
         }
 
@@ -215,7 +215,7 @@ class WebsiteKnowledgeService
             $name = $item->name_th ?: $item->name;
             $desc = $item->description_th ?: $item->description;
             $price = number_format($item->price) . ' บาท';
-            $features = is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '';
+            $features = $this->featureList($item->features);
             $lines[] = "- {$name}: {$desc} (ราคา: {$price})" . ($features ? " | รวม: {$features}" : '');
         }
 
@@ -255,7 +255,7 @@ class WebsiteKnowledgeService
             } else {
                 $price = '';
             }
-            $features = is_array($item->features_th) ? implode(', ', array_slice($item->features_th, 0, 5)) : (is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '');
+            $features = $this->featureList($item->features_th) ?: $this->featureList($item->features);
             $lines[] = "- {$name}" . ($category ? " (หมวด: {$category})" : '') . ": {$desc}" . ($price ? " ({$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
         }
 
@@ -363,7 +363,7 @@ class WebsiteKnowledgeService
         foreach ($items as $item) {
             $name = $item->name_th ?: $item->name;
             $price = number_format($item->price) . ' บาท';
-            $features = is_array($item->features) ? implode(', ', array_slice($item->features, 0, 5)) : '';
+            $features = $this->featureList($item->features);
             $lines[] = "- {$name}: {$price}" . ($features ? " | รวม: {$features}" : '');
         }
 
@@ -412,6 +412,41 @@ class WebsiteKnowledgeService
      * Quoted at full price: the 50/70% promotion applies to the main service
      * packages only, so these must never be run through that discount.
      */
+    /**
+     * Flatten a features array into a short comma-separated list.
+     *
+     * `features` is JSON and arrives in two shapes: a plain list of strings, or
+     * a list of {icon, title, description} objects. imploding the second shape
+     * raises "Array to string conversion", which 500s the whole chat endpoint —
+     * so pull the label out of each entry instead of imploding blindly.
+     */
+    protected function featureList(mixed $features, int $limit = 5): string
+    {
+        if (! is_array($features)) {
+            return '';
+        }
+
+        $labels = [];
+
+        foreach (array_slice($features, 0, $limit) as $feature) {
+            if (is_scalar($feature)) {
+                $labels[] = (string) $feature;
+
+                continue;
+            }
+
+            if (is_array($feature)) {
+                $label = $feature['title'] ?? $feature['name'] ?? $feature['label'] ?? null;
+
+                if (is_scalar($label) && (string) $label !== '') {
+                    $labels[] = (string) $label;
+                }
+            }
+        }
+
+        return implode(', ', $labels);
+    }
+
     protected function getAllQuotationAddons(): string
     {
         $items = QuotationCategory::where('is_active', true)
