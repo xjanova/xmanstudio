@@ -10,7 +10,7 @@
 
 @section('body')
     <p class="greeting">มีข้อความใหม่จากฟอร์ม <strong>ติดต่อเรา</strong></p>
-    <p style="color: #4b5563; font-size: 14px; margin-bottom: 20px;">
+    <p style="color: #a8b4d4; font-size: 14px; margin-bottom: 20px;">
         กด Reply ได้เลย อีเมลจะตอบกลับไปหาผู้ส่งโดยตรง
     </p>
 
@@ -40,6 +40,6 @@
     {{-- Message --}}
     <div class="card">
         <div class="card-title">ข้อความ</div>
-        <div style="color: #1f2937; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">{{ $body }}</div>
+        <div style="color: #eaf0ff; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">{{ $body }}</div>
     </div>
 @endsection

@@ -241,9 +241,14 @@ class WebsiteKnowledgeService
             $desc = $item->description_th ?: $item->description;
             $catKey = $item->category ? $item->category->key : '';
             $category = $item->category ? ($item->category->name_th ?: $item->category->name) : '';
+            // Add-ons are billed at full price — only the main service packages
+            // carry the promotion, so never run an add-on through the discount.
+            $isAddon = $item->category && $item->category->type === QuotationCategory::TYPE_ADDON;
             $discount = str_starts_with($catKey, 'web') ? 0.50 : 0.70;
             $discountLabel = str_starts_with($catKey, 'web') ? 'ลด 50%' : 'ลด 70%';
-            if ($item->price) {
+            if ($item->price && $isAddon) {
+                $price = 'บริการเสริม ราคา ' . number_format($item->price) . ' บาท (ไม่เข้าร่วมโปรโมชั่น)';
+            } elseif ($item->price) {
                 $originalPrice = number_format($item->price);
                 $salePrice = number_format($item->price * (1 - $discount));
                 $price = "ราคาปกติ {$originalPrice} บาท → SALE {$discountLabel} เหลือ {$salePrice} บาท";

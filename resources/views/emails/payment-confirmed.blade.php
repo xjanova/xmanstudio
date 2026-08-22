@@ -11,7 +11,7 @@
 
 @section('body')
     <p class="greeting">สวัสดีคุณ <strong>{{ $order->user->name ?? $order->customer_name ?? 'ลูกค้า' }}</strong></p>
-    <p style="color: #4b5563; font-size: 14px; margin-bottom: 20px;">
+    <p style="color: #a8b4d4; font-size: 14px; margin-bottom: 20px;">
         เรายืนยันการรับชำระเงินเรียบร้อยแล้ว ขอบคุณที่ไว้วางใจใช้บริการของเรา
     </p>
 
@@ -28,7 +28,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">จำนวนเงิน</span>
-            <span class="info-value" style="color: #10b981; font-size: 18px;">฿{{ number_format($order->total, 2) }}</span>
+            <span class="info-value" style="color: #34d399; font-size: 18px;">฿{{ number_format($order->total, 2) }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">วิธีการชำระ</span>
@@ -76,11 +76,11 @@
     @if($licenseKeys->count() > 0)
     <div class="license-box">
         <h3>License Key ของคุณ</h3>
-        <p style="font-size: 13px; color: #4b5563; margin-bottom: 16px;">กรุณาเก็บรักษา License Key เหล่านี้ไว้อย่างดี</p>
+        <p style="font-size: 13px; color: #a8b4d4; margin-bottom: 16px;">กรุณาเก็บรักษา License Key เหล่านี้ไว้อย่างดี</p>
 
         @foreach($licenseKeys as $license)
         <div style="margin: 12px 0;">
-            <div style="font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px;">
+            <div style="font-size: 13px; font-weight: 600; color: #a8b4d4; margin-bottom: 4px;">
                 {{ $license->product->name ?? 'ผลิตภัณฑ์' }}
             </div>
             <div class="license-key-display">{{ $license->license_key }}</div>
@@ -110,7 +110,7 @@
     </div>
 
     @if($licenseKeys->count() > 0)
-    <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; font-size: 13px; color: #6b7280; margin-top: 24px; text-align: center;">
+    <div style="background: #131a33; padding: 16px; border-radius: 8px; font-size: 13px; color: #8f9cc0; margin-top: 24px; text-align: center;">
         ใบเสร็จรับเงินแนบมาพร้อมอีเมลนี้ หรือดาวน์โหลดได้ที่หน้าบัญชีของคุณ
     </div>
     @endif

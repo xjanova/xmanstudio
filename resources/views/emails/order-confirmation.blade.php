@@ -10,7 +10,7 @@
 
 @section('body')
     <p class="greeting">สวัสดีคุณ <strong>{{ $order->user->name ?? $order->customer_name ?? 'ลูกค้า' }}</strong></p>
-    <p style="color: #4b5563; font-size: 14px; margin-bottom: 20px;">
+    <p style="color: #a8b4d4; font-size: 14px; margin-bottom: 20px;">
         ขอบคุณที่สั่งซื้อสินค้ากับเรา คำสั่งซื้อของคุณได้รับการบันทึกเรียบร้อยแล้ว
     </p>
 
@@ -67,12 +67,12 @@
         <tfoot>
             @if($order->tax > 0)
             <tr>
-                <td colspan="2" style="text-align: right; color: #6b7280;">ยอดรวมสินค้า</td>
-                <td style="text-align: right; color: #6b7280;">฿{{ number_format($order->subtotal, 2) }}</td>
+                <td colspan="2" style="text-align: right; color: #8f9cc0;">ยอดรวมสินค้า</td>
+                <td style="text-align: right; color: #8f9cc0;">฿{{ number_format($order->subtotal, 2) }}</td>
             </tr>
             <tr>
-                <td colspan="2" style="text-align: right; color: #6b7280;">ภาษี VAT 7%</td>
-                <td style="text-align: right; color: #6b7280;">฿{{ number_format($order->tax, 2) }}</td>
+                <td colspan="2" style="text-align: right; color: #8f9cc0;">ภาษี VAT 7%</td>
+                <td style="text-align: right; color: #8f9cc0;">฿{{ number_format($order->tax, 2) }}</td>
             </tr>
             @endif
             <tr class="total-row">
@@ -85,7 +85,7 @@
     @if($order->payment_status === 'pending')
     <div class="warning-box">
         <strong>รอดำเนินการชำระเงิน</strong><br>
-        <span style="color: #92400e;">กรุณาชำระเงินจำนวน <strong>฿{{ number_format($order->total, 2) }}</strong> ตามวิธีการที่เลือกไว้</span>
+        <span style="color: #f3d7ae;">กรุณาชำระเงินจำนวน <strong>฿{{ number_format($order->total, 2) }}</strong> ตามวิธีการที่เลือกไว้</span>
     </div>
     @endif
 

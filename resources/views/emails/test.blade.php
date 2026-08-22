@@ -10,7 +10,7 @@
 
 @section('body')
     <p class="greeting">สวัสดีครับ <strong>Admin</strong></p>
-    <p style="color: #4b5563; font-size: 14px; margin-bottom: 20px;">
+    <p style="color: #a8b4d4; font-size: 14px; margin-bottom: 20px;">
         อีเมลนี้เป็นการทดสอบว่าระบบส่งอีเมลทำงานได้ปกติ
     </p>
 
@@ -30,13 +30,13 @@
         </div>
         <div class="info-row">
             <span class="info-label">สถานะ</span>
-            <span class="info-value" style="color: #10b981;">ส่งสำเร็จ</span>
+            <span class="info-value" style="color: #34d399;">ส่งสำเร็จ</span>
         </div>
     </div>
 
-    <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; text-align: center; margin-top: 20px;">
+    <div style="background: #0f2f26; border: 1px solid #86efac; border-radius: 8px; padding: 16px; text-align: center; margin-top: 20px;">
         <span style="font-size: 24px;">&#10003;</span>
-        <p style="font-size: 14px; color: #166534; margin-top: 8px; font-weight: 600;">
+        <p style="font-size: 14px; color: #34d399; margin-top: 8px; font-weight: 600;">
             ระบบอีเมลทำงานปกติ
         </p>
     </div>
