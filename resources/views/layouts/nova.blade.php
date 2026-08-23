@@ -21,7 +21,7 @@
         ['th' => 'บริการ',      'en' => 'Services',  'href' => route('services.index'),   'accent' => '#8b5cf6', 'icon' => 'grid',  'art' => 'services'],
         ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'href' => config('app.product_site_url'), 'accent' => '#e879f9', 'icon' => 'cube',  'art' => 'products'],
         ['th' => 'เช่าใช้งาน',  'en' => 'Rental',    'href' => route('rental.index'),     'accent' => '#34d399', 'icon' => 'clock', 'art' => 'rental'],
-        ['th' => 'สร้างภาพ AI', 'en' => 'XDreamer',  'href' => route('xdreamer.home'),    'accent' => '#f472b6', 'icon' => 'spark', 'art' => 'xdreamer'],
+        ['th' => 'สร้างภาพ AI', 'en' => 'XDreamer',  'href' => config('services.aixman.site_url'), 'accent' => '#f472b6', 'icon' => 'spark', 'art' => 'xdreamer'],
         ['th' => 'เรียนโค้ด',   'en' => 'Academy',   'href' => route('code-academy'),     'accent' => '#38bdf8', 'icon' => 'book',  'art' => 'academy'],
         ['th' => 'เพลง',        'en' => 'Metal-X',   'href' => route('metal-x.index'),    'accent' => '#fb7185', 'icon' => 'play',  'art' => 'metalx'],
         ['th' => 'ติดต่อเรา',   'en' => 'Contact',   'href' => route('support.index'),    'accent' => '#ffd479', 'icon' => 'chat',  'art' => 'contact'],

@@ -36,14 +36,19 @@
                     สร้างภาพและวิดีโอด้วย AI ผ่านสตูดิโอออนไลน์ของเรา
                     เลือกสไตล์ ปรับแต่ง และดาวน์โหลดได้ทันที พร้อมแกลเลอรีผลงานจากผู้ใช้จริง
                 </p>
+                {{-- X-DREAMER ไม่ได้อยู่บน xman4289.com — มันคือเว็บแยกบนซับโดเมน
+                     ai.xman4289.com (AIXMAN, Next.js) ทุกลิงก์จึงต้องออกไปข้างนอก
+                     ไม่ใช่ route('xdreamer.*') ที่เป็นหน้า mirror ในเว็บนี้
+                     path ที่มีจริงบนซับโดเมน: /, /generate, /gallery, /pricing --}}
                 <div class="nova-eco__links">
-                    <a href="{{ route('xdreamer.home') }}" class="nova-btn nova-btn--primary nova-btn--sm">
+                    <a href="{{ config('services.aixman.site_url') }}" target="_blank" rel="noopener noreferrer"
+                       class="nova-btn nova-btn--primary nova-btn--sm">
                         เข้าใช้งาน / Launch
-                        @include('partials.nova-icon', ['name' => 'arrow'])
+                        @include('partials.nova-icon', ['name' => 'external'])
                     </a>
-                    <a href="{{ route('xdreamer.studio') }}" class="nova-eco__sub">สตูดิโอ / Studio</a>
-                    <a href="{{ route('xdreamer.gallery') }}" class="nova-eco__sub">แกลเลอรี / Gallery</a>
-                    <a href="{{ route('xdreamer.docs') }}" class="nova-eco__sub">คู่มือ / Docs</a>
+                    <a href="{{ config('services.aixman.site_url') }}/generate" target="_blank" rel="noopener noreferrer" class="nova-eco__sub">สตูดิโอ / Studio</a>
+                    <a href="{{ config('services.aixman.site_url') }}/gallery" target="_blank" rel="noopener noreferrer" class="nova-eco__sub">แกลเลอรี / Gallery</a>
+                    <a href="{{ config('services.aixman.site_url') }}/pricing" target="_blank" rel="noopener noreferrer" class="nova-eco__sub">ราคา / Pricing</a>
                 </div>
             </article>
 

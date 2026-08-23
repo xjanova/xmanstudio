@@ -30,8 +30,8 @@
             <div>
                 <h2 class="nova-footer__title">แพลตฟอร์ม / Platforms</h2>
                 <ul class="nova-footer__links">
-                    <li><a href="{{ route('xdreamer.home') }}">XDreamer AI Studio</a></li>
-                    <li><a href="{{ route('xdreamer.gallery') }}">XDreamer Gallery</a></li>
+                    <li><a href="{{ config('services.aixman.site_url') }}" target="_blank" rel="noopener noreferrer">XDreamer AI Studio</a></li>
+                    <li><a href="{{ config('services.aixman.site_url') }}/gallery" target="_blank" rel="noopener noreferrer">XDreamer Gallery</a></li>
                     <li><a href="{{ route('code-academy') }}">Code Academy</a></li>
                     <li><a href="{{ route('metal-x.index') }}">Metal-X Project</a></li>
                     <li><a href="{{ config('app.product_site_url') }}" target="_blank" rel="noopener noreferrer">BrainX</a></li>

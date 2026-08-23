@@ -79,6 +79,11 @@ return [
     // See CLAUDE.md "Cross-Project Relationship with AIXMAN" section.
     'aixman' => [
         'api_base' => env('AIXMAN_API_BASE', 'https://ai.xman4289.com'),
+
+        // Public site URL for X-DREAMER. Every outbound link from xmanstudio
+        // (nav, ecosystem card, footer) must point here, not at the local
+        // /xdreamer/* mirror pages.
+        'site_url' => env('AIXMAN_SITE_URL', 'https://ai.xman4289.com'),
         'webhook_url' => env('AIXMAN_WEBHOOK_URL', 'https://ai.xman4289.com/api/webhooks/xman-credit'),
         'webhook_secret' => env('AIXMAN_WEBHOOK_SECRET'),
         'timeout' => env('AIXMAN_TIMEOUT', 10),
