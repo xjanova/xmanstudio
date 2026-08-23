@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th" data-lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BrainX Wiki — ทุกฟีเจอร์ ทำไมถึงเหนือกว่า และคุณได้อะไร | XMAN Studio</title>
+<meta name="description" content="สารานุกรม BrainX — ทุกความสามารถ เหตุผลที่เหนือกว่าเครื่องมืออื่น และประโยชน์ที่คุณได้จริง. Every BrainX capability, why it beats the alternative, and what it buys you.">
+<meta name="theme-color" content="#05060f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css?v=202608031327">
+<link rel="stylesheet" href="/assets/css/wiki.css?v=202608031327">
+</head>
+<body class="wiki">
+<canvas id="bg-galaxy" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div class="scroll-rail" aria-hidden="true"><i id="scroll-rail-fill"></i></div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="/">
+    <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="brand-name">BrainX</span>
+    <span class="brand-by">WIKI</span>
+  </a>
+  <nav class="nav-links">
+    <a href="/brainx.html" data-th="กลับหน้าสินค้า" data-en="Product page">กลับหน้าสินค้า</a>
+    <a href="#compare" data-th="เทียบกับเจ้าอื่น" data-en="Compare">เทียบกับเจ้าอื่น</a>
+  </nav>
+  <div class="nav-right">
+    <button class="lang" id="lang-toggle" type="button" aria-label="Switch language">
+      <span class="lang-th">TH</span><span class="lang-sep"></span><span class="lang-en">EN</span>
+    </button>
+    <a class="btn btn-sm btn-primary" href="/brainx.html#trial" data-th="ทดลองฟรี 1 เดือน" data-en="Free for 1 month">ทดลองฟรี 1 เดือน</a>
+  </div>
+</header>
+
+<main>
+<section class="wiki-hero">
+  <div class="wrap">
+    <span class="kicker" data-th="สารานุกรม" data-en="The wiki">สารานุกรม</span>
+    <h1 data-th="ทุกความสามารถ ทำไมถึงเหนือกว่า และคุณได้อะไร"
+        data-en="Every capability, why it wins, and what you get">ทุกความสามารถ ทำไมถึงเหนือกว่า และคุณได้อะไร</h1>
+    <p class="lede"
+       data-th="ไม่ใช่รายการฟีเจอร์แบบขายของ แต่ละหัวข้อบอกสามอย่าง: มันคืออะไร · ทำไมวิธีของเราดีกว่าทางเลือกอื่น · แล้วคุณได้อะไรจากมันจริง ๆ"
+       data-en="Not a bullet list. Every entry says three things: what it is, why our approach beats the alternative, and what you actually get out of it.">
+      ไม่ใช่รายการฟีเจอร์แบบขายของ แต่ละหัวข้อบอกสามอย่าง: มันคืออะไร · ทำไมวิธีของเราดีกว่าทางเลือกอื่น · แล้วคุณได้อะไรจากมันจริง ๆ
+    </p>
+  </div>
+</section>
+
+<div class="wiki-body wrap">
+  <aside class="toc" id="toc"></aside>
+  <div class="wiki-main" id="wiki-main"></div>
+</div>
+
+<!-- ══ COMPARISON ══ -->
+<section class="sec" id="compare">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="เทียบตรง ๆ" data-en="Straight comparison">เทียบตรง ๆ</span>
+      <h2 data-th="เทียบกับสิ่งที่คุณน่าจะใช้อยู่ตอนนี้" data-en="Against what you are probably using now">เทียบกับสิ่งที่คุณน่าจะใช้อยู่ตอนนี้</h2>
+      <p class="sec-lede"
+         data-th="เราไม่ได้บอกว่าเครื่องมืออื่นแย่ — Obsidian เป็นโปรแกรมที่ดีมาก แต่มันไม่ได้ถูกออกแบบมาให้ AI ทำงานร่วมกับความรู้ของคุณ และนั่นคือช่องว่างที่ BrainX เกิดมาเพื่ออุด"
+         data-en="We are not saying the others are bad — Obsidian is excellent. It was simply never designed for AI agents to work inside your knowledge, and that gap is why BrainX exists.">
+        เราไม่ได้บอกว่าเครื่องมืออื่นแย่ — Obsidian เป็นโปรแกรมที่ดีมาก แต่มันไม่ได้ถูกออกแบบมาให้ AI ทำงานร่วมกับความรู้ของคุณ และนั่นคือช่องว่างที่ BrainX เกิดมาเพื่ออุด
+      </p>
+    </div>
+    <div class="table-scroll reveal">
+      <table class="cmp" id="cmp"></table>
+    </div>
+  </div>
+</section>
+
+<section class="sec cta">
+  <div class="wrap">
+    <div class="cta-card reveal">
+      <div class="cta-glow" aria-hidden="true"></div>
+      <h2 data-th="อ่านจบแล้ว ลองของจริงเลย" data-en="Read enough? Try the real thing.">อ่านจบแล้ว ลองของจริงเลย</h2>
+      <p data-th="ใช้ฟรี 1 เดือน เพียงลงทะเบียนด้วยเบอร์มือถือ ไม่ต้องผูกบัตร" data-en="One month free. Register with your phone number — no card required.">ใช้ฟรี 1 เดือน เพียงลงทะเบียนด้วยเบอร์มือถือ ไม่ต้องผูกบัตร</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/brainx.html#trial"><span data-th="เริ่มทดลองใช้" data-en="Start free trial">เริ่มทดลองใช้</span></a>
+        <a class="btn btn-ghost" href="/brainx.html#pricing" data-th="ดูราคา" data-en="See pricing">ดูราคา</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div><div class="brand" style="pointer-events:none">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="brand-name">BrainX</span></div>
+      <p class="foot-note" data-th="ผลิตภัณฑ์โดย XMAN Studio" data-en="A product of XMAN Studio">ผลิตภัณฑ์โดย XMAN Studio</p></div>
+    <div class="foot-links"><a href="/">XMAN Studio</a><a href="/brainx.html">BrainX</a></div>
+  </div>
+</footer>
+
+<script src="/assets/js/wiki-data.js?v=202608031327" defer></script>
+<script src="/assets/js/wiki.js?v=202608031327" defer></script>
+</body>
+</html>

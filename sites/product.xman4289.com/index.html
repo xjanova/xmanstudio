@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th" data-lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>XMAN STUDIO — Software that thinks with you</title>
+<meta name="description" content="ผลิตภัณฑ์ซอฟต์แวร์ทั้งหมดของ XMAN Studio — AI, automation, security, mobile tools และ e-commerce. Every product XMAN Studio builds, in one place.">
+<meta name="theme-color" content="#04050d">
+<meta property="og:title" content="XMAN STUDIO — Software that thinks with you">
+<meta property="og:description" content="Sixteen products, one studio. Pick a world to enter.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css?v=202608230944">
+<link rel="stylesheet" href="/assets/css/home.css?v=202608230944">
+</head>
+<body class="home">
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="/">
+    <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="brand-name">XMAN</span>
+    <span class="brand-by">STUDIO</span>
+  </a>
+  <div class="nav-right">
+    <button class="lang" id="lang-toggle" type="button" aria-label="Switch language">
+      <span class="lang-th">TH</span><span class="lang-sep"></span><span class="lang-en">EN</span>
+    </button>
+    <a class="btn btn-sm btn-ghost" href="#grid" data-th="ดูทั้งหมด" data-en="See all">ดูทั้งหมด</a>
+  </div>
+</header>
+
+<!-- ══ THE SYSTEM ══ -->
+<section class="system" id="system">
+  <div class="sys-copy">
+    <div class="eyebrow">
+      <span class="dot"></span>
+      <span data-th="16 ผลิตภัณฑ์ · หนึ่งสตูดิโอ" data-en="16 products · one studio">16 ผลิตภัณฑ์ · หนึ่งสตูดิโอ</span>
+    </div>
+    <h1>
+      <span class="h1-line" data-th="ซอฟต์แวร์ที่เรา" data-en="Software we build">ซอฟต์แวร์ที่เรา</span>
+      <span class="h1-line grad" data-th="สร้างและดูแลเอง" data-en="and maintain ourselves">สร้างและดูแลเอง</span>
+    </h1>
+    <p class="lede"
+       data-th="ทุกดวงที่โคจรอยู่คือผลิตภัณฑ์จริงที่เราเขียนเอง ดูแลเอง และใช้เองทุกวัน — เลือกดวงที่สนใจเพื่อเข้าไปดู"
+       data-en="Every body in orbit is a real product we wrote, maintain and use every day. Pick one to go in.">
+      ทุกดวงที่โคจรอยู่คือผลิตภัณฑ์จริงที่เราเขียนเอง ดูแลเอง และใช้เองทุกวัน — เลือกดวงที่สนใจเพื่อเข้าไปดู
+    </p>
+    <p class="hint-line" data-th="ลากเพื่อหมุน · เลื่อนเพื่อซูม · คลิกดวงเพื่อเข้าไป" data-en="Drag to turn · scroll to zoom · click a body to enter">ลากเพื่อหมุน · เลื่อนเพื่อซูม · คลิกดวงเพื่อเข้าไป</p>
+  </div>
+
+  <div class="orbit-wrap">
+    <canvas id="orbit" aria-label="XMAN Studio products in orbit"></canvas>
+    <div class="tip" id="tip" hidden>
+      <b id="tip-n"></b><span id="tip-d"></span>
+      <em id="tip-go" data-th="คลิกเพื่อเข้าไปดู" data-en="click to enter">คลิกเพื่อเข้าไปดู</em>
+    </div>
+  </div>
+</section>
+
+<!-- ══ GRID FALLBACK / FULL LIST ══ -->
+<section class="sec" id="grid">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="ทั้งหมด" data-en="Everything">ทั้งหมด</span>
+      <h2 data-th="ผลิตภัณฑ์ทุกตัวของเรา" data-en="Every product we make">ผลิตภัณฑ์ทุกตัวของเรา</h2>
+      <p class="sec-lede" data-th="ราคาจริง สถานะจริง — บางตัวยังไม่เปิดขาย เราบอกตรง ๆ" data-en="Real prices, real status. Some are not out yet and we say so.">ราคาจริง สถานะจริง — บางตัวยังไม่เปิดขาย เราบอกตรง ๆ</p>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="prod-grid" id="prod-grid"></div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <div class="brand" style="pointer-events:none">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="brand-name">XMAN STUDIO</span>
+      </div>
+      <p class="foot-note" data-th="พัฒนาในประเทศไทย · ดูแลเองทุกบรรทัด" data-en="Built in Thailand · every line maintained in-house">พัฒนาในประเทศไทย · ดูแลเองทุกบรรทัด</p>
+    </div>
+    <div class="foot-links">
+      <a href="/brainx.html">BrainX</a>
+      <a href="https://xman4289.com" target="_blank" rel="noopener">xman4289.com</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/js/products.js?v=202608230944" defer></script>
+<script src="/assets/js/home.js?v=202608230944" defer></script>
+</body>
+</html>

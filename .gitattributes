@@ -40,3 +40,8 @@
 *.woff2 binary
 *.ttf binary
 *.eot binary
+
+# Static sub-domain sites in sites/ are deployed to a Linux web root as-is —
+# these must stay LF or a manual scp would ship CRLF into production.
+*.html text eol=lf
+.htaccess text eol=lf

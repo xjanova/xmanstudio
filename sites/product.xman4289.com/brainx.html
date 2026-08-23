@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="th" data-lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BrainX — Neural Knowledge Engine | XMAN Studio</title>
+<meta name="description" content="BrainX turns your notes into a living knowledge graph you can fly through, and puts every AI agent you use on one bus. สมองที่สองที่มองเห็นได้ — โดย XMAN Studio">
+<meta name="theme-color" content="#05060f">
+<meta property="og:title" content="BrainX — Neural Knowledge Engine">
+<meta property="og:description" content="A second brain you can fly through. One bus for every agent you use.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/assets/img/hero-hud.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css?v=202608031327">
+<link rel="stylesheet" href="/assets/css/pricing.css?v=202608031327">
+</head>
+<body>
+
+<!-- ══ ambient background layers ══ -->
+<canvas id="bg-galaxy" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div class="scroll-rail" aria-hidden="true"><i id="scroll-rail-fill"></i></div>
+
+<!-- ══ NAV ══ -->
+<header class="nav" id="nav">
+  <a class="brand" href="/">
+    <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="brand-name">BrainX</span>
+    <span class="brand-by">XMAN&nbsp;STUDIO</span>
+  </a>
+  <nav class="nav-links">
+    <a href="#what"   data-th="ภาพรวม"     data-en="Overview">ภาพรวม</a>
+    <a href="#hud"    data-th="หน้าจอจริง"  data-en="Live UI">หน้าจอจริง</a>
+    <a href="#how"    data-th="วิธีทำงาน"   data-en="How it works">วิธีทำงาน</a>
+    <a href="#features" data-th="ฟีเจอร์"   data-en="Features">ฟีเจอร์</a>
+    <a href="/wiki.html" data-th="สารานุกรม" data-en="Wiki">สารานุกรม</a>
+    <a href="#pricing" data-th="ราคา" data-en="Pricing">ราคา</a>
+  </nav>
+  <div class="nav-right">
+    <button class="lang" id="lang-toggle" type="button" aria-label="Switch language">
+      <span class="lang-th">TH</span><span class="lang-sep"></span><span class="lang-en">EN</span>
+    </button>
+    <a class="btn btn-sm" href="#get" data-th="ขอทดลองใช้" data-en="Get access">ขอทดลองใช้</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="wrap hero-inner">
+    <div class="eyebrow reveal">
+      <span class="dot"></span>
+      <span data-th="XMAN STUDIO · ผลิตภัณฑ์เรือธง" data-en="XMAN STUDIO · FLAGSHIP">XMAN STUDIO · ผลิตภัณฑ์เรือธง</span>
+    </div>
+
+    <h1 class="reveal" data-d="1">
+      <span class="h1-line" data-th="สมองที่สอง" data-en="A second brain">สมองที่สอง</span>
+      <span class="h1-line grad" data-th="ที่คุณบินเข้าไปดูได้" data-en="you can fly through">ที่คุณบินเข้าไปดูได้</span>
+    </h1>
+
+    <p class="lede reveal" data-d="2"
+       data-th="BrainX เปลี่ยนโน้ตของคุณให้เป็นกราฟความรู้ที่มีชีวิต — มองเห็นเป็นกาแล็กซี ค้นได้ด้วยความหมาย และเปิดให้ AI ทุกตัวที่คุณใช้เข้ามาทำงานบนสมองก้อนเดียวกัน ทุกอย่างรันบนเครื่องคุณเอง"
+       data-en="BrainX turns your notes into a living knowledge graph — rendered as a galaxy you can fly through, searchable by meaning, and open to every AI agent you use through one shared bus. All of it runs on your own machine.">
+      BrainX เปลี่ยนโน้ตของคุณให้เป็นกราฟความรู้ที่มีชีวิต — มองเห็นเป็นกาแล็กซี ค้นได้ด้วยความหมาย และเปิดให้ AI ทุกตัวที่คุณใช้เข้ามาทำงานบนสมองก้อนเดียวกัน ทุกอย่างรันบนเครื่องคุณเอง
+    </p>
+
+    <div class="hero-cta reveal" data-d="3">
+      <a class="btn btn-primary" href="#trial">
+        <span data-th="เริ่มใช้งาน" data-en="Start now">เริ่มใช้งาน</span>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a class="btn btn-ghost" href="#hud" data-th="ดูหน้าจอจริง" data-en="See the real UI">ดูหน้าจอจริง</a>
+    </div>
+
+    <ul class="hero-stats reveal" data-d="4">
+      <li><b data-count="1204">0</b><span data-th="โน้ตในกราฟ" data-en="notes indexed">โน้ตในกราฟ</span></li>
+      <li><b data-count="1.5" data-suffix="M">0</b><span data-th="คำที่อ่านแล้ว" data-en="words read">คำที่อ่านแล้ว</span></li>
+      <li><b data-count="8458">0</b><span data-th="เส้นเชื่อม" data-en="links">เส้นเชื่อม</span></li>
+      <li><b data-count="16">0</b><span data-th="กาแล็กซีความรู้" data-en="galaxies">กาแล็กซีความรู้</span></li>
+    </ul>
+  </div>
+
+  <!-- real screenshot, feathered into the page — no visible frame -->
+  <figure class="hero-shot reveal" data-d="5">
+    <div class="shot-mask">
+      <img src="/assets/img/hero-hud.jpg" alt="BrainX Universe HUD — live knowledge galaxy with floating readouts" loading="eager" decoding="async">
+    </div>
+    <figcaption data-th="ภาพจริงจากโปรแกรม ไม่ใช่ภาพจำลอง" data-en="Real screenshot. Not a mockup.">ภาพจริงจากโปรแกรม ไม่ใช่ภาพจำลอง</figcaption>
+  </figure>
+</section>
+
+<!-- ══ MARQUEE ══ -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>KNOWLEDGE GRAPH</span><i>◆</i><span>SEMANTIC SEARCH</span><i>◆</i><span>AGENT BUS</span><i>◆</i>
+    <span>MCP HUB</span><i>◆</i><span>LOCAL FIRST</span><i>◆</i><span>UNITY BRIDGE</span><i>◆</i>
+    <span>LIVE 3D UNIVERSE</span><i>◆</i><span>SELF-GARDENING</span><i>◆</i>
+    <span>KNOWLEDGE GRAPH</span><i>◆</i><span>SEMANTIC SEARCH</span><i>◆</i><span>AGENT BUS</span><i>◆</i>
+    <span>MCP HUB</span><i>◆</i><span>LOCAL FIRST</span><i>◆</i><span>UNITY BRIDGE</span><i>◆</i>
+    <span>LIVE 3D UNIVERSE</span><i>◆</i><span>SELF-GARDENING</span><i>◆</i>
+  </div>
+</div>
+
+<!-- ══ PROBLEM ══ -->
+<section class="sec sec-art" id="what"><div class="art-bg right" aria-hidden="true"><img src="/assets/img/ai-brain.jpg" alt="" loading="lazy" decoding="async"></div>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="ปัญหา" data-en="The problem">ปัญหา</span>
+      <h2 data-th="คุณไม่ได้ขาดข้อมูล คุณขาดวิธีมองเห็นมัน"
+          data-en="You are not short of information. You are short of a way to see it.">คุณไม่ได้ขาดข้อมูล คุณขาดวิธีมองเห็นมัน</h2>
+      <p class="sec-lede"
+         data-th="โน้ตหลายพันไฟล์ แชทกับ AI อีกนับไม่ถ้วน เอกสารกระจายอยู่ห้าที่ — ความรู้มีอยู่จริง แต่ไม่มีใครหาเจอตอนที่ต้องใช้ BrainX แก้ที่รากของปัญหา ไม่ใช่ที่ช่องค้นหา"
+         data-en="Thousands of notes. Countless AI chats. Documents in five places. The knowledge exists — it just cannot be found at the moment you need it. BrainX fixes that at the root, not at the search box.">
+        โน้ตหลายพันไฟล์ แชทกับ AI อีกนับไม่ถ้วน เอกสารกระจายอยู่ห้าที่ — ความรู้มีอยู่จริง แต่ไม่มีใครหาเจอตอนที่ต้องใช้ BrainX แก้ที่รากของปัญหา ไม่ใช่ที่ช่องค้นหา
+      </p>
+    </div>
+
+    <div class="pillars">
+      <article class="pillar reveal" data-d="1">
+        <div class="pillar-ico" data-ico="graph"></div>
+        <h3 data-th="เห็นทั้งก้อน" data-en="See the whole thing">เห็นทั้งก้อน</h3>
+        <p data-th="ทุกโน้ตคือดาว ทุกลิงก์คือเส้นแรง หมวดความรู้จับตัวกันเป็นกาแล็กซี คุณเห็นโครงสร้างความคิดตัวเองทั้งหมดในหน้าจอเดียว"
+           data-en="Every note is a star, every link a force, every subject a galaxy. You see the whole shape of what you know in one screen.">ทุกโน้ตคือดาว ทุกลิงก์คือเส้นแรง หมวดความรู้จับตัวกันเป็นกาแล็กซี คุณเห็นโครงสร้างความคิดตัวเองทั้งหมดในหน้าจอเดียว</p>
+      </article>
+      <article class="pillar reveal" data-d="2">
+        <div class="pillar-ico" data-ico="search"></div>
+        <h3 data-th="ค้นด้วยความหมาย" data-en="Search by meaning">ค้นด้วยความหมาย</h3>
+        <p data-th="ไม่ต้องจำคำเป๊ะ ระบบค้นแบบ hybrid รวมความหมายกับคำสำคัญเข้าด้วยกัน ถามเป็นภาษาไทยธรรมดาก็เจอโน้ตที่ไม่มีคำนั้นอยู่เลย"
+           data-en="No need to remember the exact words. Hybrid search fuses meaning with keywords, so a plain question finds the note that never used your phrasing.">ไม่ต้องจำคำเป๊ะ ระบบค้นแบบ hybrid รวมความหมายกับคำสำคัญเข้าด้วยกัน ถามเป็นภาษาไทยธรรมดาก็เจอโน้ตที่ไม่มีคำนั้นอยู่เลย</p>
+      </article>
+      <article class="pillar reveal" data-d="3">
+        <div class="pillar-ico" data-ico="bus"></div>
+        <h3 data-th="AI ทุกตัวใช้สมองก้อนเดียวกัน" data-en="One brain, every agent">AI ทุกตัวใช้สมองก้อนเดียวกัน</h3>
+        <p data-th="Claude, Codex, CluadeX และเครื่องมืออื่นต่อเข้ามาที่ BrainX ผ่าน MCP อ่านและเขียนความรู้ก้อนเดียวกัน คุยข้ามยี่ห้อกันได้ และทุกการเรียกถูกบันทึกไว้"
+           data-en="Claude, Codex, CluadeX and others connect to BrainX over MCP, reading and writing the same knowledge, talking across vendors — and every call is journalled.">Claude, Codex, CluadeX และเครื่องมืออื่นต่อเข้ามาที่ BrainX ผ่าน MCP อ่านและเขียนความรู้ก้อนเดียวกัน คุยข้ามยี่ห้อกันได้ และทุกการเรียกถูกบันทึกไว้</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ══ LIVE UI / BENTO ══ -->
+<section class="sec sec-tight" id="hud">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="หน้าจอจริง" data-en="The real thing">หน้าจอจริง</span>
+      <h2 data-th="ทุกภาพด้านล่างนี้ ถ่ายจากโปรแกรมที่กำลังรันอยู่จริง"
+          data-en="Every image below is captured from the running application.">ทุกภาพด้านล่างนี้ ถ่ายจากโปรแกรมที่กำลังรันอยู่จริง</h2>
+      <p class="sec-lede"
+         data-th="ไม่มี mockup ไม่มีภาพวาด — หน้าจอเดียวที่แสดงทุกอย่างพร้อมกัน และทุกการ์ดลากย้าย ยืดขยาย และรีเซ็ตได้ตามใจ"
+         data-en="No mockups, no illustrations. One screen showing everything at once — and every card can be dragged, resized and reset at will.">ไม่มี mockup ไม่มีภาพวาด — หน้าจอเดียวที่แสดงทุกอย่างพร้อมกัน และทุกการ์ดลากย้าย ยืดขยาย และรีเซ็ตได้ตามใจ</p>
+    </div>
+
+    <div class="bento">
+      <figure class="bento-cell b-lg reveal">
+        <div class="cell-img"><img src="/assets/img/crop-galaxy.jpg" alt="Knowledge galaxy" loading="lazy" decoding="async"></div>
+        <figcaption>
+          <b data-th="จักรวาลความรู้" data-en="The knowledge universe">จักรวาลความรู้</b>
+          <span data-th="1,204 โน้ต · 8,458 เส้นเชื่อม · 16 กาแล็กซี เรนเดอร์แบบเรียลไทม์ หมุน ซูม คลิกดาวเพื่อกระโดดเข้าโน้ต" data-en="1,204 notes · 8,458 links · 16 galaxies, rendered live. Orbit, zoom, click a star to open the note.">1,204 โน้ต · 8,458 เส้นเชื่อม · 16 กาแล็กซี เรนเดอร์แบบเรียลไทม์ หมุน ซูม คลิกดาวเพื่อกระโดดเข้าโน้ต</span>
+        </figcaption>
+      </figure>
+
+      <figure class="bento-cell reveal" data-d="1">
+        <div class="cell-img"><img src="/assets/img/crop-agentbus.jpg" alt="Agent Bus solar system" loading="lazy" decoding="async"></div>
+        <figcaption>
+          <b data-th="Agent Bus" data-en="Agent Bus">Agent Bus</b>
+          <span data-th="สมองคือดาวฤกษ์ เอเจนต์แต่ละตัวคือดาวเคราะห์ในวงโคจรของตัวเอง ทราฟฟิกวิ่งเป็นเม็ดแสง" data-en="The brain is the star; each agent a planet on its own orbit. Traffic flies as motes of light.">สมองคือดาวฤกษ์ เอเจนต์แต่ละตัวคือดาวเคราะห์ในวงโคจรของตัวเอง ทราฟฟิกวิ่งเป็นเม็ดแสง</span>
+        </figcaption>
+      </figure>
+
+      <figure class="bento-cell reveal" data-d="2">
+        <div class="cell-img"><img src="/assets/img/crop-expertise.jpg" alt="Expertise profile" loading="lazy" decoding="async"></div>
+        <figcaption>
+          <b data-th="โปรไฟล์ความเชี่ยวชาญ" data-en="Expertise profile">โปรไฟล์ความเชี่ยวชาญ</b>
+          <span data-th="วัดจากสิ่งที่คุณเขียนจริง ไม่ใช่สิ่งที่คุณคิดว่าคุณเก่ง" data-en="Measured from what you actually wrote — not what you think you know.">วัดจากสิ่งที่คุณเขียนจริง ไม่ใช่สิ่งที่คุณคิดว่าคุณเก่ง</span>
+        </figcaption>
+      </figure>
+
+      <figure class="bento-cell reveal" data-d="3">
+        <div class="cell-img"><img src="/assets/img/crop-system.jpg" alt="System telemetry" loading="lazy" decoding="async"></div>
+        <figcaption>
+          <b data-th="สุขภาพเครื่อง" data-en="Machine health">สุขภาพเครื่อง</b>
+          <span data-th="GPU · CPU · VRAM · RAM · ที่เก็บ · ดัชนี — อ่านจากของจริงทุกสองวินาที" data-en="GPU · CPU · VRAM · RAM · storage · index — measured live, every two seconds.">GPU · CPU · VRAM · RAM · ที่เก็บ · ดัชนี — อ่านจากของจริงทุกสองวินาที</span>
+        </figcaption>
+      </figure>
+
+      <figure class="bento-cell reveal" data-d="4">
+        <div class="cell-img"><img src="/assets/img/crop-activity.jpg" alt="Live activity feed" loading="lazy" decoding="async"></div>
+        <figcaption>
+          <b data-th="ฟีดสด" data-en="Live feed">ฟีดสด</b>
+          <span data-th="เห็นทุกครั้งที่เอเจนต์อ่านหรือเขียนสมองของคุณ พร้อมชื่อคนทำ" data-en="Every read and write against your brain, with the name of who did it.">เห็นทุกครั้งที่เอเจนต์อ่านหรือเขียนสมองของคุณ พร้อมชื่อคนทำ</span>
+        </figcaption>
+      </figure>
+
+      <figure class="bento-cell reveal" data-d="5">
+        <div class="cell-img"><img src="/assets/img/crop-usage.jpg" alt="MCP and token usage" loading="lazy" decoding="async"></div>
+        <figcaption>
+          <b data-th="ต้นทุนที่วัดได้" data-en="Cost you can measure">ต้นทุนที่วัดได้</b>
+          <span data-th="จำนวนการเรียก MCP และโควตาที่ใช้ไป บอกตรง ๆ ว่าหมดไปกับอะไร" data-en="MCP call volume and quota burn — told plainly, including what it went on.">จำนวนการเรียก MCP และโควตาที่ใช้ไป บอกตรง ๆ ว่าหมดไปกับอะไร</span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ══ HOW ══ -->
+<section class="sec" id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="วิธีทำงาน" data-en="How it works">วิธีทำงาน</span>
+      <h2 data-th="สี่ขั้น จากโฟลเดอร์โน้ต สู่สมองที่ใช้งานได้"
+          data-en="Four steps, from a folder of notes to a brain that works.">สี่ขั้น จากโฟลเดอร์โน้ต สู่สมองที่ใช้งานได้</h2>
+    </div>
+    <ol class="steps">
+      <li class="step reveal" data-d="1"><span class="step-n">01</span>
+        <h3 data-th="ชี้ไปที่โน้ตของคุณ" data-en="Point it at your notes">ชี้ไปที่โน้ตของคุณ</h3>
+        <p data-th="รองรับ Markdown และ Obsidian vault ที่มีอยู่แล้ว ไม่ต้องย้ายไฟล์ ไม่ต้องเปลี่ยนวิธีเขียน ไฟล์ยังเป็นของคุณบนดิสก์ของคุณ"
+           data-en="Works with plain Markdown and an existing Obsidian vault. Nothing moves, nothing changes format. The files stay yours, on your disk.">รองรับ Markdown และ Obsidian vault ที่มีอยู่แล้ว ไม่ต้องย้ายไฟล์ ไม่ต้องเปลี่ยนวิธีเขียน ไฟล์ยังเป็นของคุณบนดิสก์ของคุณ</p></li>
+      <li class="step reveal" data-d="2"><span class="step-n">02</span>
+        <h3 data-th="อ่านและสร้างกราฟ" data-en="It reads and builds the graph">อ่านและสร้างกราฟ</h3>
+        <p data-th="แยกหัวข้อ จับ wiki-link จัดหมวดอัตโนมัติ แล้ววางทุกโน้ตลงในปริภูมิสามมิติด้วยฟิสิกส์แรงดึงดูด โน้ตที่เกี่ยวกันจะจับกลุ่มกันเอง"
+           data-en="It parses headings, follows wiki-links, classifies subjects, then lays every note out in 3D with a force simulation. Related notes cluster themselves.">แยกหัวข้อ จับ wiki-link จัดหมวดอัตโนมัติ แล้ววางทุกโน้ตลงในปริภูมิสามมิติด้วยฟิสิกส์แรงดึงดูด โน้ตที่เกี่ยวกันจะจับกลุ่มกันเอง</p></li>
+      <li class="step reveal" data-d="3"><span class="step-n">03</span>
+        <h3 data-th="ต่อ AI เข้ากับสมอง" data-en="Plug your agents in">ต่อ AI เข้ากับสมอง</h3>
+        <p data-th="BrainX เปิดเป็น MCP server เครื่องมืออย่าง Claude Code หรือ CluadeX ต่อเข้ามาแล้วค้น อ่าน เขียน และเชื่อมโน้ตได้ทันที โดยไม่ต้องคัดลอกวางอีกต่อไป"
+           data-en="BrainX exposes itself as an MCP server. Claude Code, CluadeX and others connect and can immediately search, read, write and link — no more copy-paste.">BrainX เปิดเป็น MCP server เครื่องมืออย่าง Claude Code หรือ CluadeX ต่อเข้ามาแล้วค้น อ่าน เขียน และเชื่อมโน้ตได้ทันที โดยไม่ต้องคัดลอกวางอีกต่อไป</p></li>
+      <li class="step reveal" data-d="4"><span class="step-n">04</span>
+        <h3 data-th="ดูแลตัวเองตอนคุณไม่อยู่" data-en="It tends itself while you are away">ดูแลตัวเองตอนคุณไม่อยู่</h3>
+        <p data-th="ตัวสวนอัตโนมัติจะอบ embedding ที่ค้าง ตรวจลิงก์เสีย หาโน้ตที่ขัดแย้งกันเอง และเขียนรายงานสุขภาพสมองไว้ให้ — ทำงานตอนเครื่องว่าง"
+           data-en="The gardener re-bakes stale embeddings, audits broken links, finds notes that contradict each other and writes a health report — all while the machine is idle.">ตัวสวนอัตโนมัติจะอบ embedding ที่ค้าง ตรวจลิงก์เสีย หาโน้ตที่ขัดแย้งกันเอง และเขียนรายงานสุขภาพสมองไว้ให้ — ทำงานตอนเครื่องว่าง</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══ AGENT BUS (AI art blended) ══ -->
+<section class="sec sec-art" id="bus">
+  <div class="art-bg" aria-hidden="true"><img src="/assets/img/ai-bus.jpg" alt="" loading="lazy" decoding="async"></div>
+  <div class="wrap art-inner">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="Agent Bus" data-en="Agent Bus">Agent Bus</span>
+      <h2 data-th="ให้ AI คนละยี่ห้อ ทำงานร่วมกันบนสมองก้อนเดียว"
+          data-en="Different vendors' AI, working together on one brain.">ให้ AI คนละยี่ห้อ ทำงานร่วมกันบนสมองก้อนเดียว</h2>
+      <p class="sec-lede"
+         data-th="Claude กับ Codex คุยกันไม่ได้โดยตรง — แต่คุยผ่านสมองได้ BrainX ทำหน้าที่เป็นคนกลาง เก็บข้อความ สถานะออนไลน์ และประวัติการทำงานของทุกตัวไว้ที่เดียว"
+         data-en="Claude and Codex cannot talk to each other. Through the brain, they can. BrainX is the middleman that holds the messages, the presence and the history in one place.">Claude กับ Codex คุยกันไม่ได้โดยตรง — แต่คุยผ่านสมองได้ BrainX ทำหน้าที่เป็นคนกลาง เก็บข้อความ สถานะออนไลน์ และประวัติการทำงานของทุกตัวไว้ที่เดียว</p>
+    </div>
+    <div class="chips">
+      <span class="chip reveal" data-d="1"><i style="--c:#e8825a"></i>Claude</span>
+      <span class="chip reveal" data-d="2"><i style="--c:#19a385"></i>Codex</span>
+      <span class="chip reveal" data-d="3"><i style="--c:#8b7cf6"></i>CluadeX</span>
+      <span class="chip reveal" data-d="4"><i style="--c:#c9cfd6"></i>Unity</span>
+      <span class="chip reveal" data-d="5"><i style="--c:#4fb3e8"></i>Unreal</span>
+      <span class="chip chip-ghost reveal" data-d="6" data-th="+ ตัวถัดไปของคุณ" data-en="+ your next one">+ ตัวถัดไปของคุณ</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ MCP HUB (AI art blended) ══ -->
+<section class="sec sec-art alt" id="hub">
+  <div class="art-bg right" aria-hidden="true"><img src="/assets/img/ai-bridge.jpg" alt="" loading="lazy" decoding="async"></div>
+  <div class="wrap art-inner">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="MCP Hub" data-en="MCP Hub">MCP Hub</span>
+      <h2 data-th="สมองที่ยื่นมือออกไปคุมโปรแกรมอื่นได้"
+          data-en="A brain that reaches out and drives other software.">สมองที่ยื่นมือออกไปคุมโปรแกรมอื่นได้</h2>
+      <p class="sec-lede"
+         data-th="BrainX ไม่ได้เป็นแค่ปลายทาง แต่เป็นฮับที่ต่อออกไปยังเครื่องมืออื่น เช่น Unity Editor — เอเจนต์ที่ต่อกับสมองอยู่แล้วจะได้เครื่องมือเพิ่มทันทีโดยไม่ต้องตั้งค่าเพิ่ม และทุกคำสั่งถูกบันทึกลงสมอง"
+         data-en="BrainX is not just an endpoint — it is a hub that bridges outward to other tools such as the Unity Editor. Any agent already wired to the brain gains those tools with no extra config, and every call is journalled into the brain.">BrainX ไม่ได้เป็นแค่ปลายทาง แต่เป็นฮับที่ต่อออกไปยังเครื่องมืออื่น เช่น Unity Editor — เอเจนต์ที่ต่อกับสมองอยู่แล้วจะได้เครื่องมือเพิ่มทันทีโดยไม่ต้องตั้งค่าเพิ่ม และทุกคำสั่งถูกบันทึกลงสมอง</p>
+      <div class="proof reveal" data-d="2">
+        <div class="proof-n">47</div>
+        <div class="proof-t">
+          <b data-th="เครื่องมือ Unity ที่สั่งได้จากสมอง" data-en="Unity tools callable from the brain">เครื่องมือ Unity ที่สั่งได้จากสมอง</b>
+          <span data-th="สร้างซีน เขียนสคริปต์ C# ใส่ฟิสิกส์ กดเล่น จนถึงกด build เป็นไฟล์ .exe — สั่งจบได้จากบทสนทนาเดียว" data-en="Build a scene, write C#, add physics, enter play mode, ship an .exe — all from one conversation.">สร้างซีน เขียนสคริปต์ C# ใส่ฟิสิกส์ กดเล่น จนถึงกด build เป็นไฟล์ .exe — สั่งจบได้จากบทสนทนาเดียว</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══ -->
+<section class="sec" id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="ฟีเจอร์" data-en="Features">ฟีเจอร์</span>
+      <h2 data-th="ทุกอย่างที่อยู่ในกล่อง" data-en="Everything in the box">ทุกอย่างที่อยู่ในกล่อง</h2>
+    </div>
+    <div class="feat-grid" id="feat-grid"></div>
+  </div>
+</section>
+
+<!-- ══ ENCYCLOPEDIA ══ -->
+<section class="sec" id="codex">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="สารานุกรม" data-en="Encyclopedia">สารานุกรม</span>
+      <h2 data-th="อยากรู้ลึกแค่ไหน กดอ่านได้จากหน้าแรกเลย"
+          data-en="However deep you want to go — open it right here.">อยากรู้ลึกแค่ไหน กดอ่านได้จากหน้าแรกเลย</h2>
+      <p class="sec-lede"
+         data-th="ไม่ต้องออกจากหน้านี้ ไม่ต้องโหลดคู่มือ ทุกหัวข้อกดเปิดอ่านได้ทันที"
+         data-en="No leaving this page, no PDF to download. Every topic opens in place.">ไม่ต้องออกจากหน้านี้ ไม่ต้องโหลดคู่มือ ทุกหัวข้อกดเปิดอ่านได้ทันที</p>
+    </div>
+    <div class="codex" id="codex-list"></div>
+  </div>
+</section>
+
+<!-- ══ STUDIO PRODUCTS ══ -->
+<section class="sec" id="studio">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker" data-th="XMAN STUDIO" data-en="XMAN STUDIO">XMAN STUDIO</span>
+      <h2 data-th="ไม่ได้มีแค่ BrainX" data-en="BrainX is not the only one">ไม่ได้มีแค่ BrainX</h2>
+      <p class="sec-lede"
+         data-th="ซอฟต์แวร์ทั้งหมดที่เราสร้างและดูแลเอง ตั้งแต่บอทเทรด ไปจนถึงเครื่องมือช่างมือถือและปลั๊กอินร้านค้า"
+         data-en="Everything we build and maintain ourselves — from trading bots to phone-service tooling and storefront plugins.">ซอฟต์แวร์ทั้งหมดที่เราสร้างและดูแลเอง ตั้งแต่บอทเทรด ไปจนถึงเครื่องมือช่างมือถือและปลั๊กอินร้านค้า</p>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="prod-grid" id="prod-grid"></div>
+  </div>
+</section>
+
+<!-- ══ TRIAL ══ -->
+<section class="sec" id="trial">
+  <div class="wrap">
+    <div class="trial-card reveal">
+      <div class="cta-glow" aria-hidden="true"></div>
+      <div class="trial-copy">
+        <span class="kicker" data-th="ทดลองใช้" data-en="Free trial">ทดลองใช้</span>
+        <h2 data-th="ใช้ฟรีเต็มระบบ 1 เดือน" data-en="One month free. The whole thing.">ใช้ฟรีเต็มระบบ 1 เดือน</h2>
+        <p data-th="ลงทะเบียนด้วยเบอร์มือถือ เราส่งรหัสยืนยันไปให้ทาง SMS ไม่ต้องผูกบัตรเครดิต ไม่ตัดเงินอัตโนมัติเมื่อครบกำหนด"
+           data-en="Register with your phone number and we text you a verification code. No credit card, and nothing charges itself when the month ends.">
+          ลงทะเบียนด้วยเบอร์มือถือ เราส่งรหัสยืนยันไปให้ทาง SMS ไม่ต้องผูกบัตรเครดิต ไม่ตัดเงินอัตโนมัติเมื่อครบกำหนด</p>
+        <ul class="trial-list">
+          <li data-th="ทุกฟีเจอร์ ไม่มีตัวไหนถูกล็อก" data-en="Every feature. Nothing is locked.">ทุกฟีเจอร์ ไม่มีตัวไหนถูกล็อก</li>
+          <li data-th="โน้ตไม่จำกัดจำนวน" data-en="Unlimited notes">โน้ตไม่จำกัดจำนวน</li>
+          <li data-th="ต่อ AI ได้ทุกตัวที่รองรับ MCP" data-en="Connect any MCP-capable agent">ต่อ AI ได้ทุกตัวที่รองรับ MCP</li>
+          <li data-th="ครบเดือนแล้วข้อมูลยังเป็นของคุณ ไฟล์อยู่บนเครื่องคุณเสมอ" data-en="When it ends your data is still yours — the files never left your machine">ครบเดือนแล้วข้อมูลยังเป็นของคุณ ไฟล์อยู่บนเครื่องคุณเสมอ</li>
+        </ul>
+      </div>
+
+      <form class="signup" id="signup" novalidate>
+        <div class="su-step" data-step="1">
+          <label for="su-phone" data-th="เบอร์มือถือ" data-en="Mobile number">เบอร์มือถือ</label>
+          <div class="su-row">
+            <select id="su-cc" aria-label="Country code">
+              <option value="+66" selected>🇹🇭 +66</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+61">🇦🇺 +61</option>
+              <option value="+65">🇸🇬 +65</option>
+              <option value="+81">🇯🇵 +81</option>
+              <option value="+49">🇩🇪 +49</option>
+            </select>
+            <input id="su-phone" type="tel" inputmode="numeric" autocomplete="tel-national"
+                   placeholder="081 234 5678" required>
+          </div>
+          <label class="su-ref" for="su-ref">
+            <span data-th="รหัสผู้แนะนำ (ถ้ามี)" data-en="Referral code (optional)">รหัสผู้แนะนำ (ถ้ามี)</span>
+            <input id="su-ref" type="text" autocomplete="off" placeholder="XMAN-XXXX">
+          </label>
+          <button class="btn btn-primary su-go" type="submit">
+            <span data-th="ส่งรหัสยืนยัน" data-en="Send code">ส่งรหัสยืนยัน</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="su-step" data-step="2" hidden>
+          <label data-th="กรอกรหัส 6 หลักที่ส่งไปทาง SMS" data-en="Enter the 6-digit code we sent">กรอกรหัส 6 หลักที่ส่งไปทาง SMS</label>
+          <div class="otp" id="otp">
+            <input inputmode="numeric" maxlength="1" aria-label="1"><input inputmode="numeric" maxlength="1" aria-label="2">
+            <input inputmode="numeric" maxlength="1" aria-label="3"><input inputmode="numeric" maxlength="1" aria-label="4">
+            <input inputmode="numeric" maxlength="1" aria-label="5"><input inputmode="numeric" maxlength="1" aria-label="6">
+          </div>
+          <p class="su-sent" id="su-sent"></p>
+          <button class="btn btn-primary su-go" type="button" id="su-verify" data-th="ยืนยันและเริ่มใช้งาน" data-en="Verify and start">ยืนยันและเริ่มใช้งาน</button>
+          <button class="su-back" type="button" id="su-back" data-th="แก้เบอร์" data-en="Change number">แก้เบอร์</button>
+        </div>
+
+        <div class="su-step su-done" data-step="3" hidden>
+          <div class="su-tick" aria-hidden="true">✓</div>
+          <b data-th="ลงทะเบียนไว้แล้ว" data-en="You are on the list">ลงทะเบียนไว้แล้ว</b>
+          <p id="su-msg"></p>
+        </div>
+
+        <p class="su-note" id="su-note"
+           data-th="ระบบยืนยันตัวตนจริงกำลังเชื่อมกับระบบสมาชิกของ XMAN Studio — ตอนนี้แบบฟอร์มจะเก็บคำขอไว้ให้ก่อน แล้วเราจะติดต่อกลับ"
+           data-en="Live verification is being wired into the XMAN Studio member system. For now this records your request and we come back to you.">
+          ระบบยืนยันตัวตนจริงกำลังเชื่อมกับระบบสมาชิกของ XMAN Studio — ตอนนี้แบบฟอร์มจะเก็บคำขอไว้ให้ก่อน แล้วเราจะติดต่อกลับ</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRICING ══ -->
+<section class="sec" id="pricing">
+  <div class="wrap">
+    <div class="sec-head reveal" style="text-align:center;margin-inline:auto">
+      <span class="kicker" data-th="ราคา" data-en="Pricing">ราคา</span>
+      <h2 data-th="จ่ายครั้งเดียวก็ได้ ไม่ต้องผูกรายเดือนตลอดชีวิต" data-en="Buy it once. You do not have to rent it forever.">จ่ายครั้งเดียวก็ได้ ไม่ต้องผูกรายเดือนตลอดชีวิต</h2>
+      <p class="sec-lede" style="margin-inline:auto"
+         data-th="ราคาเดียวกันทั่วโลก · ไลเซนส์ผูกกับเครื่อง · อัปเดตฟรีตลอดอายุไลเซนส์"
+         data-en="One price worldwide · licensed per machine · updates included for the life of the licence">ราคาเดียวกันทั่วโลก · ไลเซนส์ผูกกับเครื่อง · อัปเดตฟรีตลอดอายุไลเซนส์</p>
+    </div>
+
+    <div class="plans">
+      <article class="plan reveal">
+        <span class="plan-n" data-th="รายเดือน" data-en="Monthly">รายเดือน</span>
+        <div class="plan-p"><b>$19</b><i data-th="/ เดือน" data-en="/ month">/ เดือน</i></div>
+        <p data-th="เหมาะกับคนที่อยากลองยาว ๆ ก่อนตัดสินใจ ยกเลิกเมื่อไรก็ได้" data-en="For trying it properly before committing. Cancel any time.">เหมาะกับคนที่อยากลองยาว ๆ ก่อนตัดสินใจ ยกเลิกเมื่อไรก็ได้</p>
+        <ul><li data-th="ทุกฟีเจอร์" data-en="Every feature">ทุกฟีเจอร์</li>
+            <li data-th="อัปเดตระหว่างที่ยังใช้อยู่" data-en="Updates while active">อัปเดตระหว่างที่ยังใช้อยู่</li>
+            <li data-th="1 เครื่อง" data-en="1 machine">1 เครื่อง</li></ul>
+        <a class="btn btn-ghost" href="#trial" data-th="เริ่มจากทดลองฟรี" data-en="Start with the free month">เริ่มจากทดลองฟรี</a>
+      </article>
+
+      <article class="plan plan-best reveal" data-d="1">
+        <span class="plan-flag" data-th="คุ้มที่สุด" data-en="Best value">คุ้มที่สุด</span>
+        <span class="plan-n" data-th="รายปี" data-en="Yearly">รายปี</span>
+        <div class="plan-p"><b>$99</b><i data-th="/ ปี" data-en="/ year">/ ปี</i></div>
+        <p class="plan-save" data-th="ถูกกว่ารายเดือน 57% — เท่ากับจ่าย $8.25 ต่อเดือน" data-en="57% below monthly — works out at $8.25 a month">ถูกกว่ารายเดือน 57% — เท่ากับจ่าย $8.25 ต่อเดือน</p>
+        <ul><li data-th="ทุกฟีเจอร์" data-en="Every feature">ทุกฟีเจอร์</li>
+            <li data-th="อัปเดตทั้งปี" data-en="A year of updates">อัปเดตทั้งปี</li>
+            <li data-th="2 เครื่อง" data-en="2 machines">2 เครื่อง</li>
+            <li data-th="ซัพพอร์ตทางอีเมล" data-en="Email support">ซัพพอร์ตทางอีเมล</li></ul>
+        <a class="btn btn-primary" href="#trial" data-th="เริ่มจากทดลองฟรี" data-en="Start with the free month">เริ่มจากทดลองฟรี</a>
+      </article>
+
+      <article class="plan plan-life reveal" data-d="2">
+        <span class="plan-n" data-th="ตลอดชีพ" data-en="Lifetime">ตลอดชีพ</span>
+        <div class="plan-p"><s>$999</s><b>$599</b></div>
+        <p class="plan-save hot" data-th="ลด 40% เพียงแนะนำเพื่อน 1 คนที่สมัครรายเดือน" data-en="40% off when one friend you refer subscribes monthly">ลด 40% เพียงแนะนำเพื่อน 1 คนที่สมัครรายเดือน</p>
+        <ul><li data-th="ทุกฟีเจอร์ ตลอดไป" data-en="Every feature, forever">ทุกฟีเจอร์ ตลอดไป</li>
+            <li data-th="อัปเดตตลอดชีพ" data-en="Updates for life">อัปเดตตลอดชีพ</li>
+            <li data-th="3 เครื่อง" data-en="3 machines">3 เครื่อง</li>
+            <li data-th="ซัพพอร์ตแบบมีลำดับความสำคัญ" data-en="Priority support">ซัพพอร์ตแบบมีลำดับความสำคัญ</li></ul>
+        <a class="btn btn-ghost" href="#refer" data-th="ดูวิธีรับส่วนลด" data-en="How to unlock it">ดูวิธีรับส่วนลด</a>
+      </article>
+    </div>
+
+    <!-- referral -->
+    <div class="refer reveal" id="refer">
+      <div class="refer-l">
+        <span class="kicker" data-th="โปรแนะนำเพื่อน" data-en="Referral offer">โปรแนะนำเพื่อน</span>
+        <h3 data-th="แนะนำเพื่อน 1 คน ลดทันที 40%" data-en="Refer one friend, take 40% off">แนะนำเพื่อน 1 คน ลดทันที 40%</h3>
+        <p data-th="เมื่อเพื่อนที่ใช้รหัสแนะนำของคุณสมัครแพ็กเกจรายเดือน คุณจะได้ส่วนลด 40% สำหรับไลเซนส์ตลอดชีพทันที — จาก $999 เหลือ $599 ส่วนลดนี้เป็นของคุณถาวร ไม่มีวันหมดอายุ"
+           data-en="When a friend uses your code and subscribes monthly, your lifetime licence drops 40% — from $999 to $599. The discount is yours permanently and does not expire.">
+          เมื่อเพื่อนที่ใช้รหัสแนะนำของคุณสมัครแพ็กเกจรายเดือน คุณจะได้ส่วนลด 40% สำหรับไลเซนส์ตลอดชีพทันที — จาก $999 เหลือ $599 ส่วนลดนี้เป็นของคุณถาวร ไม่มีวันหมดอายุ</p>
+      </div>
+      <ol class="refer-steps">
+        <li><span>1</span><b data-th="ลงทะเบียนรับรหัสของคุณ" data-en="Register to get your code">ลงทะเบียนรับรหัสของคุณ</b></li>
+        <li><span>2</span><b data-th="เพื่อนสมัครรายเดือนด้วยรหัสนั้น" data-en="A friend subscribes monthly with it">เพื่อนสมัครรายเดือนด้วยรหัสนั้น</b></li>
+        <li><span>3</span><b data-th="ส่วนลด 40% เปิดใช้ทันที" data-en="Your 40% unlocks immediately">ส่วนลด 40% เปิดใช้ทันที</b></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ══ -->
+<section class="sec cta" id="get">
+  <div class="wrap">
+    <div class="cta-card reveal">
+      <div class="cta-glow" aria-hidden="true"></div>
+      <span class="kicker" data-th="เริ่มต้น" data-en="Get started">เริ่มต้น</span>
+      <h2 data-th="เอาความรู้ที่คุณสะสมมาทั้งชีวิต มาทำให้มันใช้งานได้จริง"
+          data-en="Take everything you have ever written, and make it usable.">เอาความรู้ที่คุณสะสมมาทั้งชีวิต มาทำให้มันใช้งานได้จริง</h2>
+      <p data-th="BrainX ทำงานบนเครื่องคุณ ข้อมูลไม่ออกจากเครื่อง ไม่มีการสมัครสมาชิกรายเดือนเพื่อจะเข้าถึงโน้ตของตัวเอง"
+         data-en="BrainX runs on your machine. Your data never leaves it. No subscription just to reach your own notes.">BrainX ทำงานบนเครื่องคุณ ข้อมูลไม่ออกจากเครื่อง ไม่มีการสมัครสมาชิกรายเดือนเพื่อจะเข้าถึงโน้ตของตัวเอง</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://xman4289.com" target="_blank" rel="noopener">
+          <span data-th="ติดต่อขอใช้งาน" data-en="Request access">ติดต่อขอใช้งาน</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="https://xman4289.com" target="_blank" rel="noopener" data-th="ดูสินค้าทั้งหมด" data-en="Browse all products">ดูสินค้าทั้งหมด</a>
+      </div>
+      <p class="fineprint" data-th="Windows 10/11 · ต้องมี .NET runtime · รองรับการ์ดจอทั่วไป · ภาษาไทยและอังกฤษ"
+         data-en="Windows 10/11 · .NET runtime required · runs on ordinary GPUs · Thai and English">Windows 10/11 · ต้องมี .NET runtime · รองรับการ์ดจอทั่วไป · ภาษาไทยและอังกฤษ</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <div class="brand" style="pointer-events:none">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="brand-name">BrainX</span>
+      </div>
+      <p class="foot-note" data-th="ผลิตภัณฑ์โดย XMAN Studio · พัฒนาในประเทศไทย" data-en="A product of XMAN Studio · Built in Thailand">ผลิตภัณฑ์โดย XMAN Studio · พัฒนาในประเทศไทย</p>
+    </div>
+    <div class="foot-links">
+      <a href="https://xman4289.com" target="_blank" rel="noopener">xman4289.com</a>
+      <a href="#top" data-th="กลับขึ้นบน" data-en="Back to top">กลับขึ้นบน</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/js/site.js?v=202608031327" defer></script>
+<script src="/assets/js/signup.js?v=202608031327" defer></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+/* BrainX wiki — a reference you can actually read, not a feature wall. */
+
+.wiki-hero{padding:clamp(56px,9vh,110px) 0 clamp(28px,4vw,52px);position:relative;z-index:2}
+.wiki-hero h1{font-size:clamp(30px,4.4vw,58px);max-width:16ch;
+  text-shadow:0 2px 40px rgba(3,4,12,.9)}
+.wiki-hero .lede{margin-left:0;max-width:640px}
+
+.wiki-body{display:grid;grid-template-columns:246px minmax(0,1fr);
+  gap:clamp(24px,4vw,64px);align-items:start;position:relative;z-index:2;
+  padding-bottom:clamp(40px,6vw,80px)}
+
+/* ── TOC ─────────────────────────────────────────────────── */
+.toc{position:sticky;top:78px;max-height:calc(100vh - 100px);overflow-y:auto;
+  scrollbar-width:thin;padding-right:6px}
+.toc::-webkit-scrollbar{width:3px}
+.toc::-webkit-scrollbar-thumb{background:rgba(108,240,255,.25);border-radius:3px}
+.toc-in{display:flex;flex-direction:column;gap:1px;border-left:1px solid var(--line);padding-left:14px}
+.toc a{display:block;padding:5px 0;font-size:13px;color:var(--ink-3);
+  transition:color .25s,transform .25s;line-height:1.4}
+.toc a:hover{color:var(--ink)}
+.toc-g{font-family:var(--mono);font-size:10px!important;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--cy)!important;margin-top:18px;padding-bottom:3px!important}
+.toc-g:first-child{margin-top:0}
+.toc a.on{color:var(--ink)!important;transform:translateX(3px)}
+.toc a.on::before{content:"";position:absolute;margin-left:-15px;width:2px;height:17px;
+  background:var(--cy);box-shadow:0 0 10px var(--cy)}
+
+/* ── entries ─────────────────────────────────────────────── */
+.wg{margin-bottom:clamp(38px,5vw,70px);scroll-margin-top:90px}
+.wg-h{font-size:clamp(20px,2.3vw,28px);padding-bottom:14px;margin-bottom:22px;
+  border-bottom:1px solid var(--line)}
+.we{padding:24px 26px;margin-bottom:14px;border:1px solid var(--line);border-radius:18px;
+  background:var(--glass);backdrop-filter:blur(10px);scroll-margin-top:90px;
+  transition:border-color .4s,transform .4s var(--ease)}
+.we:hover{border-color:rgba(108,240,255,.28);transform:translateY(-3px)}
+.we h3{font-size:18px;margin:0 0 16px}
+.we-row{display:grid;grid-template-columns:112px minmax(0,1fr);gap:16px;
+  padding:9px 0;align-items:start}
+.we-row + .we-row{border-top:1px dashed rgba(140,150,220,.12)}
+.we-tag{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);padding-top:3px}
+.we-row p{margin:0;color:var(--ink-2);font-size:14.5px;line-height:1.65}
+.we-edge .we-tag{color:var(--cy)}
+.we-edge p{color:#cfd6f5}
+.we-gain .we-tag{color:var(--gr)}
+.we-gain p{color:#d6f0e0}
+
+/* ── comparison ──────────────────────────────────────────── */
+.table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:18px;
+  background:rgba(10,12,26,.5)}
+.cmp{width:100%;border-collapse:collapse;min-width:720px;font-size:14px}
+.cmp th,.cmp td{padding:13px 16px;text-align:center;border-bottom:1px solid rgba(140,150,220,.1)}
+.cmp thead th{font-family:var(--sans);font-weight:600;font-size:13px;color:var(--ink-2);
+  background:rgba(255,255,255,.03);position:sticky;top:0}
+.cmp th.me{color:var(--cy)}
+.cmp td.f{text-align:left;color:var(--ink);font-size:14px}
+.cmp td.y{color:var(--gr);font-size:17px;font-weight:700}
+.cmp td.n{color:var(--ink-3)}
+.cmp td.p{color:var(--ink-2);font-size:12px}
+.cmp tbody tr:hover{background:rgba(108,240,255,.04)}
+.cmp td[data-me]{background:rgba(108,240,255,.055)}
+
+@media (max-width:900px){
+  .wiki-body{grid-template-columns:1fr}
+  .toc{position:static;max-height:none;margin-bottom:24px}
+  .toc-in{flex-direction:row;flex-wrap:wrap;gap:8px;border-left:0;padding-left:0}
+  .toc .toc-i{display:none}
+  .toc-g{margin-top:0!important;padding:7px 13px!important;border:1px solid var(--line);border-radius:999px}
+  .we-row{grid-template-columns:1fr;gap:5px}
+}

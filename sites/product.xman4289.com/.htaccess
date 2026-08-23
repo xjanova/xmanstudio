@@ -1,0 +1,10 @@
+# HTML is the map to everything else — it must never be served stale, or a
+# cached page keeps pointing at asset versions that have already moved on.
+<FilesMatch "\.(html)$">
+  Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+</FilesMatch>
+# Assets are requested with a ?v= stamp that changes on every deploy, so the
+# URL itself is the cache key and a long TTL is safe.
+<FilesMatch "\.(css|js|jpg|jpeg|png|svg|webp|woff2)$">
+  Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>

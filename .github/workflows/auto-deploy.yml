@@ -133,6 +133,32 @@ jobs:
             chmod -R 775 storage bootstrap/cache 2>/dev/null || true
             chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 
+            # ===== Static sub-domain sites (sites/) =====
+            # Plain HTML/CSS/JS with no build step, living on their own
+            # sub-domains. The repo is the source of truth; each web root is
+            # only a copy, so a hand-edit on the server is silently reverted
+            # here — which is the point. Folder name IS the domain name.
+            # No --delete: a file removed from the repo stays on the server and
+            # has to be removed by hand, so nothing dropped by accident takes
+            # a live page down with it.
+            # Non-fatal, like the ML step: a static page must never be able to
+            # fail a Laravel deploy. Read the log, do not trust the green tick.
+            echo "🛰️  Syncing static sites..."
+            for SITE_SRC in "${DEPLOY_PATH}"/sites/*/; do
+              [ -d "$SITE_SRC" ] || continue
+              SITE_NAME=$(basename "$SITE_SRC")
+              SITE_DEST="/home/admin/domains/${SITE_NAME}/public_html"
+              if [ ! -d "$SITE_DEST" ]; then
+                echo "  ⚠️  ${SITE_NAME}: ${SITE_DEST} not found — skipped"
+                continue
+              fi
+              if rsync -a --exclude 'cgi-bin' "$SITE_SRC" "${SITE_DEST}/"; then
+                echo "  ✓ ${SITE_NAME}"
+              else
+                echo "  ⚠️  ${SITE_NAME}: rsync failed (non-fatal)"
+              fi
+            done
+
             # ===== ML Service (Puzzle Solver) =====
             # Non-fatal: ML service is optional, deploy continues even if it fails
             echo "🧠 Setting up ML service..."
