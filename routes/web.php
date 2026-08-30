@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\AiprayRecordController;
 use App\Http\Controllers\Admin\AiprayTrainingController;
 use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\AvatarPackController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BitTorrentController;
 use App\Http\Controllers\Admin\BrandingSettingsController;
@@ -652,6 +653,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/logs', [ProductVersionController::class, 'downloadLogs'])->name('logs');
         Route::post('/{version}/toggle', [ProductVersionController::class, 'toggleVersion'])->name('toggle');
         Route::delete('/{version}', [ProductVersionController::class, 'destroyVersion'])->name('destroy');
+    });
+
+    // GigGok Avatar Packs
+    //
+    // A pack spans a product, a pack record and a version. These routes wrap
+    // all three so adding an outfit is one form, not three screens.
+    Route::prefix('packs')->name('packs.')->group(function () {
+        Route::get('/', [AvatarPackController::class, 'index'])->name('index');
+        Route::get('/create', [AvatarPackController::class, 'create'])->name('create');
+        Route::post('/', [AvatarPackController::class, 'store'])->name('store');
+        Route::get('/{pack}/edit', [AvatarPackController::class, 'edit'])->name('edit');
+        Route::put('/{pack}', [AvatarPackController::class, 'update'])->name('update');
+        Route::post('/{pack}/file', [AvatarPackController::class, 'uploadFile'])->name('file');
+        Route::post('/{pack}/toggle', [AvatarPackController::class, 'toggle'])->name('toggle');
+        Route::delete('/{pack}', [AvatarPackController::class, 'destroy'])->name('destroy');
     });
 
     // License Management

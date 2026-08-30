@@ -87,7 +87,7 @@
 </div>
 
 {{-- ผลิตภัณฑ์ --}}
-<div x-data="{ open: {{ request()->routeIs('admin.products.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.packs.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ผลิตภัณฑ์</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -100,6 +100,10 @@
         <a href="{{ route('admin.products.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.products.index') || request()->routeIs('admin.products.create') || request()->routeIs('admin.products.edit') || request()->routeIs('admin.products.versions*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             รายการผลิตภัณฑ์
+        </a>
+        <a href="{{ route('admin.packs.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.packs.*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10l8 4 8-4V7l-8-4-8 4zm8 4v10m0-10L4 7m8 4l8-4"/></svg>
+            ชุดตัวมายด์
         </a>
     </div>
 </div>

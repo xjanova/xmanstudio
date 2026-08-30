@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\GlobalTorrentController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\LocalVpnFileController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
+use App\Http\Controllers\Api\PackController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\StripeController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -498,4 +499,30 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () 
 // WireGuard admin status (requires authentication)
 Route::prefix('v1/localvpn')->middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
     Route::get('/wireguard/status', [WireguardController::class, 'status']);
+});
+
+// ==================== GigGok Avatar Pack Store ====================
+// Used by the GigGok Android app to list, own and download avatar packs.
+// Contract: docs/pack-store.md in the app repo.
+//
+// The app authenticates with its own license key as a bearer token - it has
+// no login screen. /packs is public so someone who has bought nothing can
+// still see what is for sale.
+
+Route::prefix('packs')->middleware(['throttle:60,1'])->group(function () {
+    // Public catalogue
+    Route::get('/', [PackController::class, 'index']);
+
+    // What this license's owner has bought (bearer = license key)
+    Route::get('/mine', [PackController::class, 'mine']);
+
+    // Ask for a download link (bearer = license key)
+    Route::post('/{pack}/download', [PackController::class, 'download']);
+
+    // The file itself. Signed and short-lived: an unsigned or stale link is
+    // rejected by the framework before it reaches the controller, so a link
+    // that leaks is worthless minutes later.
+    Route::get('/file/{version}', [PackController::class, 'file'])
+        ->middleware('signed')
+        ->name('packs.file');
 });

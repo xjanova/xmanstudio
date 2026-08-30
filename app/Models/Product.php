@@ -67,6 +67,11 @@ class Product extends Model
         return $this->hasOne(GithubSetting::class);
     }
 
+    public function avatarPack(): HasOne
+    {
+        return $this->hasOne(AvatarPack::class);
+    }
+
     /**
      * Get the latest active version
      */
