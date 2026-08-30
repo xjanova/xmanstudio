@@ -83,6 +83,34 @@ is accepted — the app unwraps that itself.
 Only the newest upload stays active. The app has no version picker, so an
 older version left active would be a coin flip over which file ships.
 
+## Buying
+
+`GET /shop/{pack}` is the link the app opens in a browser. It looks the pack
+up by pack id and **redirects to the normal product page** — deliberately a
+redirect rather than a second storefront, because the product page already
+has the cart, coupons, every payment method, and the license issuing that
+follows a completed order. A parallel page would be a second thing to keep
+correct and would silently miss every fix the real one gets.
+
+No login is required to reach it. Someone arriving from the app has not
+signed in yet, and bouncing them to a login page before they can see the
+price loses the sale. Checkout itself is behind `auth`, as it always was.
+
+Paying happens on the web rather than in the app because GigGok ships through
+GitHub Releases, not Play — Play's billing rules apply to apps on Play. If it
+ever goes on Play this needs rethinking, not just moving a button.
+
+### 🔴 A pack license never expires
+
+`LicenseService::generateLicensesForOrder()` defaults to a **yearly** license.
+On a pack that would take something the customer bought outright off their
+device a year later: it drops out of `owned[]` the moment it expires, and
+nothing anywhere explains why.
+
+So a product with an `avatar_packs` row gets `lifetime` instead. An explicit
+`license_type` in the order item's `custom_requirements` still wins, and
+every non-pack product is untouched.
+
 ## Storage
 
 `config('packs.disk')`, default `local` — i.e. `storage/app`, not the web
@@ -112,3 +140,7 @@ pack, unknown pack, free pack, unsigned link, expired link).
 zip id check. These also stand in for a Blade compile check: a view that will
 not compile, or a `route()` name that does not exist, fails there rather than
 the first time an admin opens the page.
+
+`tests/Feature/PackPurchaseTest.php` — the buy link, the lifetime license,
+and the whole round trip: pay, license issued, the app reports the pack as
+owned, the download works.

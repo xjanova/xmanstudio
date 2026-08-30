@@ -88,6 +88,7 @@ use App\Http\Controllers\LocalVpnWebController;
 use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PackShopController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicChatController;
@@ -183,6 +184,10 @@ Route::get('/', function () {
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
+
+// GigGok avatar packs - the buy link the app opens in a browser.
+// It knows packs by pack id, the store knows them by product slug.
+Route::get('/shop/{pack}', [PackShopController::class, 'show'])->name('shop.pack');
 
 // Reviews (auth required)
 Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
