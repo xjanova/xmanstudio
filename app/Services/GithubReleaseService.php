@@ -373,7 +373,7 @@ class GithubReleaseService
      * ⚠️ ยัง Log::error ทุกครั้งที่ token ถูกปฏิเสธ — fallback ต้องไม่กลายเป็นการซุกปัญหา
      *    ไว้เงียบ ๆ จนไม่มีใครรู้ว่าต้องไปเปลี่ยน token (นั่นคือวิธีที่ของพังยาว ๆ)
      *
-     * @param  callable(bool $withToken): \Illuminate\Http\Client\Response  $send
+     * @param  callable  $send  รับ bool $withToken คืน Response — เรียกซ้ำได้ทั้งแบบใส่และไม่ใส่ token
      */
     protected function githubRequest(GithubSetting $githubSetting, callable $send)
     {
