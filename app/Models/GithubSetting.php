@@ -40,9 +40,15 @@ class GithubSetting extends Model
      */
     public function setGithubTokenAttribute($value): void
     {
-        if (! empty($value)) {
-            $this->attributes['github_token'] = Crypt::encryptString($value);
-        }
+        // 2026-08-31: เดิม `if (! empty($value))` = เขียนค่าว่างทับไม่ได้เลย
+        // ⇒ token ที่ถูก revoke ค้างอยู่ในฐานข้อมูลตลอดกาล ลบทางหน้า admin ไม่ได้
+        //   (cluadex เจอมาแล้ว GitHub ตอบ 401 ทั้งที่ repo เป็น public)
+        //
+        // การกันไม่ให้ฟอร์มลบ token โดยไม่ตั้งใจ เป็นหน้าที่ของ controller ที่เช็ค
+        // ค่า '********' (= "ไม่แตะของเดิม") ไม่ใช่หน้าที่ของ mutator ที่จะเมินคำสั่งเงียบ ๆ
+        //
+        // เก็บเป็นสตริงว่าง ไม่ใช่ null เพราะคอลัมน์เป็น NOT NULL
+        $this->attributes['github_token'] = empty($value) ? '' : Crypt::encryptString($value);
     }
 
     /**

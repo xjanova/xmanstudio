@@ -142,7 +142,13 @@
                     <input type="password" name="github_token" value="{{ $product->githubSetting ? '********' : '' }}"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all"
                            placeholder="ghp_xxxxxxxxxxxx">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">สร้างที่: GitHub → Settings → Developer settings → Personal access tokens</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        สร้างที่: GitHub → Settings → Developer settings → Personal access tokens<br>
+                        <span class="text-gray-400 dark:text-gray-500">
+                            repo สาธารณะไม่ต้องใส่ token ก็ได้ · ปล่อย <code>********</code> ไว้ = ไม่แก้ของเดิม ·
+                            <strong>ล้างช่องนี้ให้ว่างแล้วบันทึก = ลบ token ทิ้ง</strong> (ใช้ตอน token หมดอายุ)
+                        </span>
+                    </p>
                 </div>
 
                 <div>
