@@ -165,10 +165,10 @@ class GithubReleaseService
      */
     public function fetchAllReleases(GithubSetting $githubSetting, int $perPage = 10): array
     {
-        $response = Http::withHeaders($this->getHeaders($githubSetting))
+        $response = $this->githubRequest($githubSetting, fn (bool $withToken) => Http::withHeaders($this->getHeaders($githubSetting, $withToken))
             ->get($githubSetting->releases_api_url, [
                 'per_page' => $perPage,
-            ]);
+            ]));
 
         if (! $response->successful()) {
             Log::error('GitHub API Error', [
@@ -188,8 +188,8 @@ class GithubReleaseService
      */
     public function fetchLatestRelease(GithubSetting $githubSetting): ?array
     {
-        $response = Http::withHeaders($this->getHeaders($githubSetting))
-            ->get($githubSetting->latest_release_api_url);
+        $response = $this->githubRequest($githubSetting, fn (bool $withToken) => Http::withHeaders($this->getHeaders($githubSetting, $withToken))
+            ->get($githubSetting->latest_release_api_url));
 
         if (! $response->successful()) {
             Log::error('GitHub API Error - Latest Release', [
@@ -211,8 +211,8 @@ class GithubReleaseService
     {
         $url = "https://api.github.com/repos/{$githubSetting->full_repo_name}/releases/tags/{$tag}";
 
-        $response = Http::withHeaders($this->getHeaders($githubSetting))
-            ->get($url);
+        $response = $this->githubRequest($githubSetting, fn (bool $withToken) => Http::withHeaders($this->getHeaders($githubSetting, $withToken))
+            ->get($url));
 
         if (! $response->successful()) {
             return null;
@@ -227,19 +227,24 @@ class GithubReleaseService
      */
     public function downloadAsset(GithubSetting $githubSetting, string $assetUrl)
     {
-        $downloadHeaders = [
-            'Accept' => 'application/octet-stream',
-            'User-Agent' => 'XMAN-Studio-Download-Service',
-        ];
-        $token = $githubSetting->github_token_decrypted;
-        if (! empty($token)) {
-            $downloadHeaders['Authorization'] = 'Bearer ' . $token;
-        }
+        // token ตายแล้วต้องไม่ทำให้ลูกค้าโหลดไฟล์ไม่ได้ — ใช้ทางถอยเดียวกับตอนอ่าน release
+        $buildHeaders = function (bool $withToken) use ($githubSetting): array {
+            $headers = [
+                'Accept' => 'application/octet-stream',
+                'User-Agent' => 'XMAN-Studio-Download-Service',
+            ];
+            $token = $withToken ? $githubSetting->github_token_decrypted : null;
+            if (! empty($token)) {
+                $headers['Authorization'] = 'Bearer ' . $token;
+            }
 
-        $response = Http::withHeaders($downloadHeaders)
+            return $headers;
+        };
+
+        $response = $this->githubRequest($githubSetting, fn (bool $withToken) => Http::withHeaders($buildHeaders($withToken))
             ->withOptions([
                 'stream' => true,
-            ])->get($assetUrl);
+            ])->get($assetUrl));
 
         if (! $response->successful()) {
             throw new \Exception('Could not download asset from GitHub');
@@ -255,19 +260,23 @@ class GithubReleaseService
     {
         $url = "https://api.github.com/repos/{$githubSetting->full_repo_name}/releases/assets/{$assetId}";
 
-        $assetHeaders = [
-            'Accept' => 'application/octet-stream',
-            'User-Agent' => 'XMAN-Studio-Download-Service',
-        ];
-        $token = $githubSetting->github_token_decrypted;
-        if (! empty($token)) {
-            $assetHeaders['Authorization'] = 'Bearer ' . $token;
-        }
+        $buildHeaders = function (bool $withToken) use ($githubSetting): array {
+            $headers = [
+                'Accept' => 'application/octet-stream',
+                'User-Agent' => 'XMAN-Studio-Download-Service',
+            ];
+            $token = $withToken ? $githubSetting->github_token_decrypted : null;
+            if (! empty($token)) {
+                $headers['Authorization'] = 'Bearer ' . $token;
+            }
 
-        $response = Http::withHeaders($assetHeaders)
+            return $headers;
+        };
+
+        $response = $this->githubRequest($githubSetting, fn (bool $withToken) => Http::withHeaders($buildHeaders($withToken))
             ->withOptions([
                 'allow_redirects' => false,
-            ])->get($url);
+            ])->get($url));
 
         if ($response->status() === 302) {
             return $response->header('Location');
@@ -335,19 +344,74 @@ class GithubReleaseService
     /**
      * Get HTTP headers for GitHub API requests
      */
-    protected function getHeaders(GithubSetting $githubSetting): array
+    protected function getHeaders(GithubSetting $githubSetting, bool $withToken = true): array
     {
         $headers = [
             'Accept' => 'application/vnd.github.v3+json',
             'User-Agent' => 'XMAN-Studio-Release-Service',
         ];
 
-        $token = $githubSetting->github_token_decrypted;
+        $token = $withToken ? $githubSetting->github_token_decrypted : null;
         if (! empty($token)) {
             $headers['Authorization'] = 'Bearer ' . $token;
         }
 
         return $headers;
+    }
+
+    /**
+     * ยิง GitHub API แล้วกู้สถานการณ์เองเมื่อ token ที่เก็บไว้ตายแล้ว
+     *
+     * 2026-08-31 — cluadex เงียบไป 26 วัน เพราะ PAT (`ghp_…`) ในฐานข้อมูลถูก revoke
+     * GitHub ตอบ **401 Bad credentials** ทั้งที่ repo เป็น public ที่ใครก็อ่านได้
+     * ⇒ token ที่ตายแล้ว "แย่กว่า" การไม่มี token เลย
+     * ซ้ำร้ายหน้า admin ลบ token ทิ้งไม่ได้ (ช่องนี้ validate เป็น required) = ตันสนิท
+     *
+     * repo สาธารณะอ่าน release ได้โดยไม่ต้องล็อกอิน จึงถอยไปยิงซ้ำแบบไม่ใส่ token
+     * repo ส่วนตัวจะได้ 404 อยู่ดี ไม่มีอะไรเสียหาย แค่ได้ข้อความ error ที่ตรงกว่าเดิม
+     *
+     * ⚠️ ยัง Log::error ทุกครั้งที่ token ถูกปฏิเสธ — fallback ต้องไม่กลายเป็นการซุกปัญหา
+     *    ไว้เงียบ ๆ จนไม่มีใครรู้ว่าต้องไปเปลี่ยน token (นั่นคือวิธีที่ของพังยาว ๆ)
+     *
+     * @param  callable  $send  รับ bool $withToken คืน Response — เรียกซ้ำได้ทั้งแบบใส่และไม่ใส่ token
+     */
+    protected function githubRequest(GithubSetting $githubSetting, callable $send)
+    {
+        $response = $send(true);
+
+        if (empty($githubSetting->github_token_decrypted) || ! $this->tokenRejected($response)) {
+            return $response;
+        }
+
+        Log::error('GitHub ปฏิเสธ token ที่เก็บไว้ — ยิงซ้ำแบบไม่ใช้ token', [
+            'status' => $response->status(),
+            'repo' => $githubSetting->full_repo_name,
+            'ต้องทำ' => 'ลบหรือเปลี่ยน GitHub token ของผลิตภัณฑ์นี้ในหน้า admin',
+        ]);
+
+        return $send(false);
+    }
+
+    /**
+     * แยก "token ใช้ไม่ได้" ออกจาก "โดนจำกัดจำนวนครั้ง"
+     *
+     * 401 = Bad credentials ชัดเจน · 403 เป็นได้ทั้งสองอย่าง
+     * ถ้าเป็น rate limit ห้ามยิงซ้ำแบบไม่ล็อกอินเด็ดขาด — โควตาไม่ล็อกอินคือ 60 ครั้ง/ชม.
+     * เทียบกับ 5,000 ครั้ง/ชม. ตอนมี token ⇒ ยิ่งซ้ำยิ่งแย่
+     */
+    protected function tokenRejected($response): bool
+    {
+        $status = $response->status();
+
+        if ($status === 401) {
+            return true;
+        }
+
+        if ($status !== 403) {
+            return false;
+        }
+
+        return $response->header('x-ratelimit-remaining') !== '0';
     }
 
     /**

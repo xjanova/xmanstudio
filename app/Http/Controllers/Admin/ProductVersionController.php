@@ -42,23 +42,34 @@ class ProductVersionController extends Controller
         $validated = $request->validate([
             'github_owner' => 'required|string|max:100',
             'github_repo' => 'required|string|max:100',
-            'github_token' => 'required|string',
+            // 2026-08-31: เดิมเป็น required → **ลบ token ที่หมดอายุทิ้งไม่ได้เลย**
+            // cluadex เก็บ PAT ที่ถูก revoke ไว้ GitHub ตอบ 401 ทุกครั้งทั้งที่ repo เป็น public
+            // เจ้าของแก้เองผ่านหน้า admin ไม่ได้ ต้องไปแก้ที่ฐานข้อมูล ⇒ เปิดให้เว้นว่างได้
+            'github_token' => 'nullable|string',
             'asset_pattern' => 'required|string|max:100',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active', true);
+        // ⚠️ ห้ามใส่ default true — checkbox ที่ไม่ติ๊กจะ "ไม่ถูกส่งมา" เลย
+        //    `boolean('is_active', true)` จึงอ่านได้ true เสมอ = ปิด "เปิดใช้งาน" ไม่ได้จริง
+        //    (auto_sync ด้านล่างเขียนถูกอยู่แล้ว ไม่มี default)
+        $validated['is_active'] = $request->boolean('is_active');
         $validated['auto_sync'] = $request->boolean('auto_sync');
 
         $githubSetting = $product->githubSetting;
 
         if ($githubSetting) {
-            // Only update token if a new one is provided
-            if ($request->filled('github_token') && $request->github_token !== '********') {
-                $githubSetting->github_token = $validated['github_token'];
+            $submitted = $request->input('github_token');
+
+            // '********' = ค่าที่ฟอร์มใส่มาแทนของเดิม แปลว่า "ไม่แตะ token"
+            // มีค่าอื่น = เปลี่ยนเป็นค่าใหม่ · เว้นว่าง = ตั้งใจลบทิ้ง
+            if ($submitted !== '********') {
+                $githubSetting->github_token = $submitted;
             }
             unset($validated['github_token']);
             $githubSetting->update($validated);
         } else {
+            // คอลัมน์เป็น NOT NULL — ตั้งค่าใหม่โดยไม่กรอก token ต้องได้สตริงว่าง ไม่ใช่ค่าหาย
+            $validated['github_token'] ??= '';
             $product->githubSetting()->create($validated);
         }
 
