@@ -240,6 +240,42 @@ class PackStoreTest extends TestCase
             ->assertJsonStructure(['url', 'sha256', 'expiresIn']);
     }
 
+    /**
+     * The case a fresh install actually hits.
+     *
+     * The app ships with an empty license key and has no login screen, so
+     * the very first thing a new user does is ask for a free pack with no
+     * credentials at all. The test above still sent a license, which meant
+     * "free" was only ever proven for people who already had one.
+     */
+    public function test_a_free_pack_downloads_with_no_license_at_all(): void
+    {
+        $this->makePack('mind-default', 0);
+
+        $res = $this->postJson('/api/packs/mind-default/download')
+            ->assertOk()
+            ->assertJsonStructure(['url', 'sha256', 'expiresIn']);
+
+        // The link has to actually serve the file, not just look like a link.
+        $this->get($res->json('url'))->assertOk();
+
+        // Logged as a real download even though nobody can be named for it.
+        $this->assertDatabaseCount('download_logs', 1);
+        $this->assertDatabaseHas('download_logs', [
+            'user_id' => null,
+            'license_key_id' => null,
+        ]);
+    }
+
+    public function test_a_paid_pack_still_needs_a_license_when_free_ones_do_not(): void
+    {
+        $this->makePack('nana-office', 149);
+
+        // Same call shape as the free case above - only the price differs,
+        // so this pins that opening up free packs did not open up paid ones.
+        $this->postJson('/api/packs/nana-office/download')->assertStatus(401);
+    }
+
     public function test_a_purchased_pack_returns_a_working_signed_link(): void
     {
         $pack = $this->makePack('nana-office');

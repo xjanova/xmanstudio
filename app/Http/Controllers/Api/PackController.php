@@ -73,15 +73,16 @@ class PackController extends Controller
      * 403 and 404 are kept distinct on purpose: "this pack does not exist"
      * and "it exists but you have not bought it" need different words in
      * front of the user, and the app cannot tell them apart from one code.
+     *
+     * The pack is resolved BEFORE the license is demanded, because a free
+     * pack must not need one. A fresh install has no license at all - the
+     * app ships with an empty key and has no login screen - so checking the
+     * license first made "free" mean "free to people who already bought
+     * something else", which is not what the catalogue advertises. Paid
+     * packs are unaffected: they still fail closed below.
      */
     public function download(Request $request, string $pack): JsonResponse
     {
-        $license = $this->resolveLicense($request);
-
-        if (! $license) {
-            return response()->json(['error' => 'Invalid or expired license'], 401);
-        }
-
         $avatarPack = AvatarPack::active()->where('pack_id', $pack)->first();
 
         if (! $avatarPack || ! $avatarPack->product?->is_active) {
@@ -89,11 +90,22 @@ class PackController extends Controller
         }
 
         $free = (float) $avatarPack->product->price <= 0;
-        $owned = $license->user_id
-            && in_array($pack, $this->ownedPackIds($license->user_id), true);
+        $license = $this->resolveLicense($request);
 
-        if (! $free && ! $owned) {
-            return response()->json(['error' => 'Pack not purchased'], 403);
+        // Existence is already public through GET /api/packs, so answering
+        // 404 before authenticating leaks nothing that the catalogue does
+        // not hand out to anyone who asks.
+        if (! $free) {
+            if (! $license) {
+                return response()->json(['error' => 'Invalid or expired license'], 401);
+            }
+
+            $owned = $license->user_id
+                && in_array($pack, $this->ownedPackIds($license->user_id), true);
+
+            if (! $owned) {
+                return response()->json(['error' => 'Pack not purchased'], 403);
+            }
         }
 
         $version = $avatarPack->product->latestVersion();
@@ -104,9 +116,12 @@ class PackController extends Controller
 
         $minutes = (int) config('packs.download_link_minutes', 10);
 
+        // Both columns are nullable, which is what makes an anonymous free
+        // download loggable at all. Null here means "nobody we can name",
+        // not "we failed to record it" - the row still counts the download.
         DownloadLog::create([
-            'user_id' => $license->user_id,
-            'license_key_id' => $license->id,
+            'user_id' => $license?->user_id,
+            'license_key_id' => $license?->id,
             'product_version_id' => $version->id,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
