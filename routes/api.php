@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AiprayApiController;
+use App\Http\Controllers\Api\AppAiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\GlobalTorrentController;
@@ -525,4 +526,18 @@ Route::prefix('packs')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/file/{version}', [PackController::class, 'file'])
         ->middleware('signed')
         ->name('packs.file');
+});
+
+// ==================== GigGok AI proxy ====================
+// The app talks to this instead of holding our OpenAI key. See
+// AppAiController for why shipping the key to the app - encrypted or not -
+// protects nothing.
+//
+// Shaped like OpenAI's /v1/chat/completions so the app's existing client
+// works unchanged by pointing at a different base URL.
+//
+// Throttled per IP as a first wall; the real ceiling is the per-license daily
+// cap in AppAiUsage, which survives restarts and cache clears.
+Route::prefix('ai/v1')->middleware(['throttle:30,1'])->group(function () {
+    Route::post('/chat/completions', [AppAiController::class, 'chatCompletions']);
 });
