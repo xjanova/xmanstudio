@@ -11,12 +11,17 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $featuredProducts = Product::where('is_active', true)
+        // onWebsite(): avatar packs are sold inside the GigGok app and would
+        // otherwise show up here as "newest products", since they are the most
+        // recently created rows in the table.
+        $featuredProducts = Product::onWebsite()
+            ->where('is_active', true)
             ->orderBy('created_at', 'desc')
             ->take(6)
             ->get();
 
-        $categories = Category::where('is_active', true)
+        $categories = Category::onWebsite()
+            ->where('is_active', true)
             ->orderBy('order')
             ->get();
 

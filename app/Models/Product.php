@@ -122,6 +122,27 @@ class Product extends Model
     }
 
     /**
+     * Products a website visitor may see listed.
+     *
+     * Excludes anything in an app-only category (see Category::APP_ONLY_SLUGS).
+     * Apply this to every public LISTING - catalogue, homepage, related
+     * products, category menus - not to a direct product page, which the app
+     * links to when someone buys a pack.
+     *
+     * Written with the query builder rather than a join so it composes with
+     * whatever the caller already built, and so it behaves the same on the
+     * sqlite used in dev and the MySQL used in production.
+     */
+    public function scopeOnWebsite($query)
+    {
+        return $query->whereNotIn('category_id', function ($sub) {
+            $sub->select('id')
+                ->from('categories')
+                ->whereIn('slug', Category::APP_ONLY_SLUGS);
+        });
+    }
+
+    /**
      * Scope for available products (active and not coming soon)
      */
     public function scopeAvailable($query)

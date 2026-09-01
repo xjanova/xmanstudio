@@ -15,7 +15,11 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with('category')
+        // onWebsite() first so nothing below can widen it back: the category
+        // filter takes a slug straight from the query string, and without this
+        // ?category=giggok-packs would list the app's packs on the website.
+        $query = Product::onWebsite()
+            ->with('category')
             ->where('is_active', true);
 
         // Search by name or description
@@ -62,7 +66,8 @@ class ProductController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
-        $categories = Category::where('is_active', true)
+        $categories = Category::onWebsite()
+            ->where('is_active', true)
             ->orderBy('order')
             ->get();
 
@@ -96,7 +101,11 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        $relatedProducts = Product::where('category_id', $product->category_id)
+        // The page itself stays reachable for a pack - that is where the app
+        // sends a buyer - but its sidebar must not become a back door into
+        // browsing the rest of them.
+        $relatedProducts = Product::onWebsite()
+            ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
             ->take(4)

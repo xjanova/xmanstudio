@@ -27,8 +27,13 @@ class AvatarPackController extends Controller
 {
     /**
      * Slug of the category packs are filed under. Created on first use.
+     *
+     * Taken from Category::APP_ONLY_SLUGS rather than written out again: that
+     * list is what keeps packs off the public website, and a second copy of
+     * the string here would let the two drift apart silently - packs would
+     * quietly reappear in the catalogue with nothing failing to show it.
      */
-    protected const CATEGORY_SLUG = 'giggok-packs';
+    protected const CATEGORY_SLUG = Category::APP_ONLY_SLUGS[0];
 
     public function index()
     {
