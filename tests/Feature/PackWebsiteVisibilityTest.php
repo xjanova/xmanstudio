@@ -6,7 +6,9 @@ use App\Models\AvatarPack;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\ThemeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /**
@@ -37,6 +39,29 @@ class PackWebsiteVisibilityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // 🔴 The nav mega menu caches its product list under one fixed key for
+        // 10 minutes, and the cache store is NOT rolled back between tests the
+        // way the database is. Whichever test in the process renders a public
+        // page first fills that key - usually before any pack exists - and
+        // every assertion after it then reads that stale list and passes no
+        // matter what the code does.
+        //
+        // This is not hypothetical: the first version of this file passed while
+        // the pack was live in the nav on the real site.
+        Cache::flush();
+
+        // 🔴 Pin the theme, because the theme picks the LAYOUT and only one
+        // layout carries the nav mega menu.
+        //
+        // ThemeService::DEFAULT_THEME is 'premium', which renders
+        // layouts.app-premium - and that layout has no mega menu at all. A
+        // fresh test database has no site_theme row, so every test here was
+        // silently exercising a different page from the one production serves,
+        // where the theme resolves to layouts.app and the menu IS rendered.
+        // That is how the pack stayed live in the nav with this file green.
+        ThemeService::setTheme('classic');
+        Cache::forget('site_theme');
 
         // Without an admin the homepage redirects to the setup wizard, so the
         // two homepage assertions below would pass on a 302 without ever
@@ -91,6 +116,17 @@ class PackWebsiteVisibilityTest extends TestCase
         // The ordinary product must still be there - proving the filter removed
         // the packs rather than emptying the page.
         $res->assertSee('Skidrow Killer', false);
+    }
+
+    public function test_the_nav_mega_menu_does_not_feature_a_pack(): void
+    {
+        // The menu shows "latest 3" and renders on every public page, so a pack
+        // there is the most visible leak of all - and the one that actually
+        // happened. Any public page will do; the partial is in the layout.
+        $this->get('/products')
+            ->assertOk()
+            ->assertDontSee('pack-mind01', false)
+            ->assertDontSee('น้องมายด์เริ่มต้น', false);
     }
 
     public function test_the_homepage_does_not_list_a_pack(): void

@@ -31,8 +31,13 @@
     ];
 
     // Cached: this renders on every public page load.
+    //
+    // onWebsite() matters more here than anywhere else: this is "latest 3" and
+    // avatar packs are the newest rows in the table, so without it the app's
+    // packs take over the nav on EVERY public page. The cache also means a
+    // wrong entry sticks around for 10 minutes after the data is fixed.
     $megaProducts = \Illuminate\Support\Facades\Cache::remember('nav_mega_products', 600, function () {
-        return \App\Models\Product::available()->latest()->take(3)->get(['id', 'name', 'slug', 'image', 'price']);
+        return \App\Models\Product::onWebsite()->available()->latest()->take(3)->get(['id', 'name', 'slug', 'image', 'price']);
     });
 @endphp
 
