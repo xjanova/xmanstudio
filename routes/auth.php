@@ -41,13 +41,21 @@ Route::middleware('guest')->group(function () {
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
+    // Rate limited per IP on top of the broker's own per-address throttle: that
+    // one only stops repeats for the *same* email, so without this an attacker
+    // can walk an address list unchecked. Turnstile is the same protection the
+    // other public POSTs already carry.
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware(['throttle:5,1', 'turnstile:password'])
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
 
+    // Guessing a 64-char token is hopeless, but an unlimited POST here is still
+    // free CPU for whoever wants to spend our bcrypt budget.
     Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('password.store');
 });
 

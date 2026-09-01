@@ -30,16 +30,27 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $status = Password::sendResetLink($request->only('email'));
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        // Deliberately identical wording whatever the broker says.
+        //
+        // Laravel's default reports INVALID_USER ("We can't find a user with
+        // that email address") separately from RESET_LINK_SENT, which turns
+        // this public form into a membership oracle: anyone can walk a list of
+        // addresses and learn which ones hold accounts here. The route is rate
+        // limited, but a limit slows enumeration down — it does not stop it.
+        //
+        // THROTTLED is folded in for the same reason: "you asked too recently"
+        // only makes sense about an address that exists, so surfacing it would
+        // give the answer back a second way.
+        if (in_array($status, [Password::RESET_LINK_SENT, Password::INVALID_USER, Password::RESET_THROTTLED], true)) {
+            return back()->with('status', __('passwords.sent'));
+        }
+
+        // Anything else is a genuine failure on our side (mail transport down,
+        // broker misconfigured) — the user needs to know it did not work.
+        return back()
+            ->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)]);
     }
 }

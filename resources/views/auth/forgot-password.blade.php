@@ -16,6 +16,10 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
+        <div class="mt-4">
+            <x-turnstile section="password" />
+        </div>
+
         <div class="flex items-center justify-end mt-4">
             <x-primary-button>
                 <x-bi th="ส่งลิงก์รีเซ็ตรหัสผ่านทางอีเมล" en="Email Password Reset Link" />

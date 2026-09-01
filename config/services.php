@@ -89,17 +89,29 @@ return [
         'timeout' => env('AIXMAN_TIMEOUT', 10),
         'cache_ttl' => env('AIXMAN_CACHE_TTL', 600), // 10 min
 
-        // "Sign in with XMAN ID" for the X-DREAMER mobile app.
-        // aixman holds this secret and is the only caller allowed to redeem an
-        // authorization code. Without it the exchange endpoint answers 503, so
-        // a half-configured deploy fails closed rather than open.
+        // "Sign in with XMAN ID" — used by the X-DREAMER mobile app and by
+        // ai.xman4289.com's web login.
+        //
+        // aixman holds this secret (as XMAN_SSO_SECRET in its own .env — same
+        // value, different variable name) and is the only caller allowed to
+        // redeem an authorization code. Without it the exchange endpoint answers
+        // 503, so a half-configured deploy fails closed rather than open.
         'sso_secret' => env('XDREAMER_SSO_SECRET'),
 
         // Exact-match allowlist. Anything not listed here cannot be handed a
         // code, which is what stops this being an open redirector.
+        //
+        // Two entries by default: the mobile app's custom URL scheme, and the
+        // web callback on aixman. The web one must match
+        // `ssoRedirectUri()` in aixman's src/lib/xman-sso.ts character for
+        // character — a trailing slash on either side breaks sign-in with a
+        // bare 400.
         'sso_redirect_uris' => array_values(array_filter(array_map(
             'trim',
-            explode(',', (string) env('XDREAMER_SSO_REDIRECT_URIS', 'xdreamer://auth/callback'))
+            explode(',', (string) env(
+                'XDREAMER_SSO_REDIRECT_URIS',
+                'xdreamer://auth/callback,https://ai.xman4289.com/api/auth/xman/callback'
+            ))
         ))),
     ],
 
