@@ -30,6 +30,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Models the app is allowed to ask for
+    |--------------------------------------------------------------------------
+    |
+    | The app has a model picker, but the bill for whatever it picks is ours,
+    | and models differ in price by more than an order of magnitude. So a
+    | request may only choose from this list.
+    |
+    | EMPTY (the default) means the app's choice is ignored entirely and the
+    | model configured at /admin/ai-settings is used. That is the safe default:
+    | opening this up is a deliberate act, not something that happens because
+    | nobody set it.
+    |
+    | Comma separated, e.g. APP_AI_ALLOWED_MODELS="gpt-4o-mini,gpt-4.1-mini"
+    |
+    */
+    'allowed_models' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('APP_AI_ALLOWED_MODELS', ''))
+    ))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Master switch
     |--------------------------------------------------------------------------
     |

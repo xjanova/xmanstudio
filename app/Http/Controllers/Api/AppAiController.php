@@ -101,7 +101,7 @@ class AppAiController extends Controller
 
         $result = ['success' => false, 'message' => null];
         try {
-            $result = $this->chat->chat($turns, $system);
+            $result = $this->chat->chat($turns, $system, $this->allowedModel($data['model'] ?? null));
         } catch (\Throwable $e) {
             // Never hand an upstream error text to the app: it can carry the
             // provider name, our model choice, and sometimes fragments of the
@@ -146,6 +146,30 @@ class AppAiController extends Controller
             // mistaken for OpenAI billing units.
             'giggok_quota' => ['used' => $used + 1, 'limit' => $limit],
         ]);
+    }
+
+    /**
+     * The model this request may actually use, or null to keep ours.
+     *
+     * The app has a free model picker, but we pay for whatever it picks and
+     * models differ in price by more than an order of magnitude - so a request
+     * only gets its choice if an admin has explicitly listed that model.
+     *
+     * An empty allowlist (the default) ignores the request silently rather than
+     * refusing it: the app already tells the user "if the service does not
+     * offer the model you picked, ours is used instead", and failing the whole
+     * message over a model preference would be a worse trade.
+     */
+    protected function allowedModel(?string $requested): ?string
+    {
+        $requested = trim((string) $requested);
+        $allowed = (array) config('appai.allowed_models', []);
+
+        if ($requested === '' || $allowed === []) {
+            return null;
+        }
+
+        return in_array($requested, $allowed, true) ? $requested : null;
     }
 
     /**

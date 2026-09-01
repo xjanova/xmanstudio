@@ -8,6 +8,7 @@ use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\AiChatService;
+use App\Services\InputSanitizerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Testing\TestResponse;
@@ -82,6 +83,8 @@ class AppAiProxyTest extends TestCase
 
             public ?string $seenSystem = null;
 
+            public ?string $seenModel = null;
+
             public function __construct(public string $answer, public bool $ok)
             {
                 // Deliberately not calling parent::__construct - it reads
@@ -93,21 +96,30 @@ class AppAiProxyTest extends TestCase
                 return true;
             }
 
-            public function chat(array $messages, ?string $systemPrompt = null): array
+            public function chat(array $messages, ?string $systemPrompt = null, ?string $modelOverride = null): array
             {
                 $this->seenMessages = $messages;
                 $this->seenSystem = $systemPrompt;
+                $this->seenModel = $modelOverride;
 
                 return [
                     'success' => $this->ok,
                     'message' => $this->ok ? $this->answer : null,
                     'provider' => 'openai',
-                    'model' => 'gpt-4o-mini',
+                    'model' => $modelOverride ?: 'gpt-4o-mini',
                 ];
             }
         };
 
         $this->app->instance(AiChatService::class, $fake);
+    }
+
+    protected function askWithModel(string $key, string $model): TestResponse
+    {
+        return $this->withToken($key)->postJson('/api/ai/v1/chat/completions', [
+            'model' => $model,
+            'messages' => [['role' => 'user', 'content' => 'hi']],
+        ]);
     }
 
     protected function ask(?string $key, array $messages = []): TestResponse
@@ -254,6 +266,61 @@ class AppAiProxyTest extends TestCase
         $this->ask($this->makeLicense()->license_key)->assertStatus(503);
     }
 
+    public function test_a_requested_model_is_ignored_when_no_allowlist_is_set(): void
+    {
+        // The default. We pay for whatever gets picked, so opening this up has
+        // to be a deliberate act, not the state you land in by not configuring.
+        $this->fakeAi();
+        config(['appai.allowed_models' => []]);
+
+        $this->askWithModel($this->makeLicense()->license_key, 'gpt-4o')->assertOk();
+
+        $this->assertNull($this->app->make(AiChatService::class)->seenModel);
+    }
+
+    public function test_a_requested_model_is_used_when_it_is_on_the_allowlist(): void
+    {
+        $this->fakeAi();
+        config(['appai.allowed_models' => ['gpt-4o-mini', 'gpt-4.1-mini']]);
+
+        $res = $this->askWithModel($this->makeLicense()->license_key, 'gpt-4.1-mini')->assertOk();
+
+        $this->assertSame('gpt-4.1-mini', $this->app->make(AiChatService::class)->seenModel);
+        // The answer reports what actually replied, not what was asked for.
+        $res->assertJsonPath('model', 'gpt-4.1-mini');
+    }
+
+    public function test_a_model_off_the_allowlist_falls_back_instead_of_failing(): void
+    {
+        $this->fakeAi();
+        config(['appai.allowed_models' => ['gpt-4o-mini']]);
+
+        // Refusing the whole message over a model preference would be a worse
+        // trade than answering with ours - the app already says this can happen.
+        $res = $this->askWithModel($this->makeLicense()->license_key, 'o3-pro')->assertOk();
+
+        $this->assertNull($this->app->make(AiChatService::class)->seenModel);
+        $res->assertJsonPath('model', 'gpt-4o-mini');
+    }
+
+    public function test_an_override_does_not_leak_into_later_calls(): void
+    {
+        // AiChatService can be resolved as a shared instance. If an override
+        // stuck, the website's own chat widget - which never asked for one -
+        // would quietly start using the app user's model.
+        $service = new AiChatService(new InputSanitizerService);
+
+        $before = (fn () => $this->model)->call($service);
+        try {
+            $service->chat([['role' => 'user', 'content' => 'hi']], 'sys', 'some-other-model');
+        } catch (\Throwable) {
+            // Reaching the network is not the point; restoring state is.
+        }
+        $after = (fn () => $this->model)->call($service);
+
+        $this->assertSame($before, $after);
+    }
+
     public function test_upstream_failure_details_are_not_handed_to_the_app(): void
     {
         // The app prints error.message straight onto the settings screen, so
@@ -267,7 +334,7 @@ class AppAiProxyTest extends TestCase
                 return true;
             }
 
-            public function chat(array $messages, ?string $systemPrompt = null): array
+            public function chat(array $messages, ?string $systemPrompt = null, ?string $modelOverride = null): array
             {
                 throw new \RuntimeException('sk-proj-LEAKED-KEY upstream said no');
             }

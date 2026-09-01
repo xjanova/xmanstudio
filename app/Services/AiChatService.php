@@ -78,7 +78,33 @@ class AiChatService
      * @param  ?string  $systemPrompt  Override system prompt (optional)
      * @return array {success, message, provider, model}
      */
-    public function chat(array $messages, ?string $systemPrompt = null): array
+    /**
+     * @param  string|null  $modelOverride  Use this model instead of the configured
+     *                                      one for this call only. The GigGok app
+     *                                      lets a user pick a model; the caller is
+     *                                      responsible for deciding whether that
+     *                                      pick is allowed (see config/appai.php).
+     */
+    public function chat(array $messages, ?string $systemPrompt = null, ?string $modelOverride = null): array
+    {
+        // Restored in the finally below. This service can be resolved as a
+        // shared instance, so leaving a per-call model set on it would silently
+        // change the model for everything that used it afterwards - including
+        // the website's own chat widget, which never asked for an override.
+        $configuredModel = $this->model;
+
+        if ($modelOverride !== null && trim($modelOverride) !== '') {
+            $this->model = trim($modelOverride);
+        }
+
+        try {
+            return $this->chatWithCurrentModel($messages, $systemPrompt);
+        } finally {
+            $this->model = $configuredModel;
+        }
+    }
+
+    protected function chatWithCurrentModel(array $messages, ?string $systemPrompt = null): array
     {
         $systemPrompt = $this->buildSystemPrompt($systemPrompt);
 
