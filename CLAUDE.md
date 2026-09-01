@@ -18,6 +18,11 @@ XMAN Studio is a comprehensive business management platform built with **Laravel
 3. **Package Pricing:** Read from `ai_credit_packages` table (or `GET https://ai.xman4289.com/api/packages`) for up-to-date pricing
 4. **Affiliate:** AI credit package orders should use the standard affiliate commission system. The package price from `ai_credit_packages.price_thb` is the order amount for commission calculation
 5. **Checkout Route:** AIXMAN links to `https://xman4289.com/checkout/ai-credits/{packageSlug}?ref=ai` — this route needs to be created in xmanstudio to handle AI credit purchases
+6. **"Sign in with XMAN ID" (SSO):** xmanstudio is the identity provider for both the X-DREAMER mobile app and ai.xman4289.com's web login. PKCE + shared secret:
+   - `GET /auth/xdreamer/authorize` (behind `auth`) mints a 5-minute single-use code into the cache and redirects to a `redirect_uri` that must be on the `services.aixman.sso_redirect_uris` exact-match allowlist
+   - `POST /api/v1/auth/sso/exchange` trades code + PKCE verifier for the user, authenticated by the `X-Sso-Secret` header
+   - **The secret lives under two different names:** `XDREAMER_SSO_SECRET` here, `XMAN_SSO_SECRET` in aixman's `.env`. Same value. If either is missing the exchange answers **503 and SSO is silently dead** — this is exactly how it sat unnoticed in production until 2026-09-01
+   - The web `redirect_uri` (`https://ai.xman4289.com/api/auth/xman/callback`) must match aixman's `ssoRedirectUri()` in `src/lib/xman-sso.ts` character for character; a stray trailing slash fails with a bare 400
 
 ## Tech Stack
 
