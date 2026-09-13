@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Alerts\SecurityAlerts;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +20,7 @@ class AdminMiddleware
         }
 
         if (! auth()->user()->isAdmin()) {
+            SecurityAlerts::forbidden(auth()->user(), $request->path(), $request->ip());
             abort(403, 'ไม่มีสิทธิ์เข้าถึงหน้านี้');
         }
 

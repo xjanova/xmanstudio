@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContactMessageMail;
 use App\Models\Setting;
+use App\Support\Alerts\BusinessAlerts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -46,7 +47,12 @@ class ContactController extends Controller
 
         $recipient = $this->recipient();
 
+        // The form stores nothing, so the Telegram card is sent whatever happens to the e-mail — if
+        // the mail fails, the card is the only place the message still exists.
+        $alert = fn (bool $mailed) => BusinessAlerts::contactMessage($validated, $mailed, $request->ip());
+
         if (! $recipient) {
+            $alert(false);
             // Never drop the lead just because no inbox is configured — record it
             // so it can be recovered, and point the visitor at a channel that works.
             Log::error('Contact form has no recipient configured', [
@@ -77,11 +83,14 @@ class ContactController extends Controller
                 'subject' => $validated['subject'],
                 'message' => $validated['message'],
             ]);
+            $alert(false);
 
             return back()
                 ->withInput()
                 ->with('contact_error', 'ส่งข้อความไม่สำเร็จ กรุณาลองใหม่อีกครั้ง หรือติดต่อผ่านช่องทางด้านล่าง / Could not send your message, please try again or use a channel below.');
         }
+
+        $alert(true);
 
         return redirect()
             ->route('contact.show')

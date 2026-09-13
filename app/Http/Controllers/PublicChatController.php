@@ -6,6 +6,8 @@ use App\Exceptions\AIServiceException;
 use App\Models\Setting;
 use App\Services\AiChatService;
 use App\Services\WebsiteKnowledgeService;
+use App\Support\AdminAlerts;
+use App\Support\Alerts\BusinessAlerts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -60,6 +62,11 @@ class PublicChatController extends Controller
             // Get current page context
             $currentPath = $request->input('current_path', '/');
             $pageTitle = $request->input('page_title', '');
+
+            // A visitor who leaves a phone/e-mail/LINE id, or asks for a person, is handed to the
+            // team on Telegram with the conversation so far — before the AI call, so a failing AI
+            // provider cannot cost the lead.
+            BusinessAlerts::aiChatLead($messages, (string) $currentPath, $request->ip());
 
             // Search website content based on user's question (respects toggle settings)
             $searchResults = $this->knowledgeService->search($userQuery);
@@ -284,6 +291,12 @@ class PublicChatController extends Controller
         // === CURRENT PAGE CONTEXT ===
         if (! empty($pageContext)) {
             $parts[] = $pageContext;
+        }
+
+        // === HANDOFF TO A PERSON === Only promised while it is real: the lead reaches the team's
+        // Telegram only when contact alerts are switched on (BusinessAlerts::aiChatLead).
+        if (AdminAlerts::wants('contact')) {
+            $parts[] = '=== ส่งต่อให้ทีมงาน === ถ้าผู้ใช้อยากคุยกับแอดมิน/ทีมงาน สนใจสั่งซื้อ หรือต้องการจ้างงาน ให้ขอชื่อ และเบอร์โทรหรือ LINE ID หรืออีเมล แล้วบอกว่าจะส่งต่อให้ทีมงานติดต่อกลับโดยเร็วที่สุด เมื่อผู้ใช้พิมพ์ช่องทางติดต่อมาแล้ว ให้ขอบคุณและยืนยันว่าส่งต่อให้ทีมงานเรียบร้อยแล้วค่ะ';
         }
 
         // === SMART QUESTION ANALYSIS ===

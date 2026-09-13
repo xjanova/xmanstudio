@@ -181,17 +181,7 @@ class RentalController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $payment->update([
-            'status' => RentalPayment::STATUS_FAILED,
-            'admin_notes' => $request->reason,
-        ]);
-
-        if ($payment->userRental) {
-            $payment->userRental->update([
-                'status' => UserRental::STATUS_CANCELLED,
-                'notes' => 'การชำระเงินถูกปฏิเสธ: ' . $request->reason,
-            ]);
-        }
+        $this->rentalService->rejectPayment($payment, $request->reason);
 
         return back()->with('success', 'ปฏิเสธการชำระเงินแล้ว');
     }

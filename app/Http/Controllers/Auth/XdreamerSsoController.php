@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Alerts\Alert;
+use App\Support\Alerts\SecurityAlerts;
+use App\Support\Alerts\SystemAlerts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -90,12 +93,18 @@ class XdreamerSsoController extends Controller
         $secret = (string) config('services.aixman.sso_secret');
 
         if ($secret === '') {
+            // Fails closed — and, until this alert, silently: every SSO login dies right here.
+            SystemAlerts::ssoNotConfigured();
+
             return response()->json(['success' => false, 'message' => 'SSO is not configured'], 503);
         }
 
         // hash_equals, not ===, so a wrong secret does not leak its length or
         // its matching prefix through response timing.
         if (! hash_equals($secret, (string) $request->header('X-Sso-Secret'))) {
+            // Someone guessing, or aixman's XMAN_SSO_SECRET drifted from ours: logins fail either way.
+            SecurityAlerts::forged('XMAN ID SSO', 'ขอแลกโค้ดด้วย secret ที่ไม่ถูกต้อง', $request->ip(), [], Alert::WARNING);
+
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 

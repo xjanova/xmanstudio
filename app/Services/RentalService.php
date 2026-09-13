@@ -292,6 +292,25 @@ class RentalService
     }
 
     /**
+     * Reject a payment and cancel the rental it was for. Shared by the admin rental page and the
+     * admin Telegram bot's reject button.
+     */
+    public function rejectPayment(RentalPayment $payment, string $reason): void
+    {
+        $payment->update([
+            'status' => RentalPayment::STATUS_FAILED,
+            'admin_notes' => $reason,
+        ]);
+
+        if ($payment->userRental) {
+            $payment->userRental->update([
+                'status' => UserRental::STATUS_CANCELLED,
+                'notes' => 'การชำระเงินถูกปฏิเสธ: ' . $reason,
+            ]);
+        }
+    }
+
+    /**
      * Cancel a pending rental
      */
     public function cancelRental(UserRental $rental, ?string $reason = null): array

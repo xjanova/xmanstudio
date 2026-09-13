@@ -9,6 +9,7 @@ use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideoProject;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
@@ -34,6 +35,35 @@ Schedule::command('smschecker:cleanup')
     ->onFailure(function () {
         Log::error('[SMS Checker] Cleanup failed');
     });
+
+// Admin Telegram alerts (/admin/alerts). All of these self-gate when Telegram is not set up, so they
+// are always safe to schedule. Overlap locks expire in minutes, not the default 24 hours: a run
+// killed by a deploy or a reboot must not silence the watchdog for a day.
+// Every minute: the scheduler's heartbeat, written by the scheduler itself — page views read it
+// back (WatchScheduler), because a dead cron cannot report itself.
+Schedule::call(fn () => Cache::forever('scheduler:heartbeat', now()->timestamp))
+    ->name('alerts-heartbeat')
+    ->everyMinute();
+
+// Every 5 min: a stuck queue, jobs that failed for good, disk space.
+Schedule::command('alerts:watchdog')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground();
+
+// Hourly: new members as one card (not one ping per signup), plus anything the per-category hourly
+// ceilings folded away.
+Schedule::command('alerts:digest')
+    ->hourly()
+    ->withoutOverlapping(30)
+    ->runInBackground();
+
+// 09:00 Thai time: yesterday on one card — sales with a 7-day chart, best sellers, what is waiting.
+Schedule::command('alerts:daily-report')
+    ->dailyAt('09:00')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping(30)
+    ->runInBackground();
 
 // Product Releases: ดึง release ล่าสุดจาก GitHub เข้า product_versions
 // 2026-07-28 — เดิมต้องกดปุ่ม Sync ในหน้า admin เอง ถ้าลืมกด API เช็คอัพเดทจะ

@@ -17,6 +17,7 @@ use App\Models\WalletTransaction;
 use App\Services\FcmNotificationService;
 use App\Services\LicenseService;
 use App\Services\SmsPaymentService;
+use App\Support\Alerts\SecurityAlerts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -85,6 +86,9 @@ class SmsPaymentController extends Controller
                 'device_id' => $device->device_id,
                 'ip' => $request->ip(),
             ]);
+            // A valid device API key with a wrong HMAC: someone holds the key but not the secret —
+            // exactly what a forged "money received" SMS looks like.
+            SecurityAlerts::forged('SMS Payment', 'ลายเซ็น HMAC ไม่ถูกต้อง', $request->ip(), ['เครื่อง' => (string) $device->device_id]);
 
             return response()->json([
                 'success' => false,
@@ -1759,6 +1763,7 @@ class SmsPaymentController extends Controller
                 'device_id' => $device->device_id,
                 'ip' => $request->ip(),
             ]);
+            SecurityAlerts::forged('SMS Payment', 'คำสั่งอนุมัติ/ปฏิเสธที่ลายเซ็นไม่ถูกต้อง', $request->ip(), ['เครื่อง' => (string) $device->device_id]);
 
             return response()->json([
                 'success' => false,

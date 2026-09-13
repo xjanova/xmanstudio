@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\VpnProxyController;
 use App\Http\Controllers\Api\WireguardController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
+use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +35,15 @@ use Illuminate\Support\Facades\Storage;
 | Here is where you can register API routes for your application.
 |
 */
+
+// ==================== Admin Telegram bot ====================
+// Commands and button presses from the admin alert chat. Authenticated by the secret Telegram
+// echoes back in X-Telegram-Bot-Api-Secret-Token (set on /admin/alerts), not by the URL.
+// No per-IP throttle: every update arrives from Telegram's handful of IPs, so a stranger spamming
+// the bot would throttle the admin's own button presses. The controller limits per sender instead.
+Route::post('/telegram/webhook', TelegramWebhookController::class)
+    ->withoutMiddleware('throttle:api')
+    ->name('telegram.webhook');
 
 // ==================== Metal-X Freepik Image Upload ====================
 // Receives images from Freepik browser automation and saves to Laravel storage

@@ -8,6 +8,8 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\ThemeMiddleware;
 use App\Http\Middleware\VerifySmsCheckerDevice;
 use App\Http\Middleware\VerifyTurnstile;
+use App\Http\Middleware\WatchScheduler;
+use App\Support\Alerts\ErrorAlert;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -43,6 +45,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
             AiCrawlDetector::class,
             ThemeMiddleware::class,
             AffiliateTracking::class,
+            // Dead man's switch for the cron — checked after the response is sent.
+            WatchScheduler::class,
         ]);
 
         // Trust proxies for load balancers
@@ -52,6 +56,16 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // A failed validation flashes the submitted form into the session so it can be refilled —
+        // including a pasted bot token, which would then sit in plaintext in the session store.
+        $exceptions->dontFlash(['telegram_bot_token']);
+
+        // Tell the owner in Telegram when something throws (a 500, a dying command) — throttled
+        // hard and sent after the response. Returns nothing, so normal logging still happens.
+        $exceptions->report(function (Throwable $e): void {
+            ErrorAlert::report($e);
+        });
+
         // Handle API exceptions - return JSON responses
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*') || $request->wantsJson()) {

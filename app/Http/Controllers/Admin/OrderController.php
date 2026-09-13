@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\LicenseKey;
 use App\Models\Order;
-use App\Services\LicenseService;
+use App\Services\OrderPaymentService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -78,26 +77,13 @@ class OrderController extends Controller
         $newStatus = $request->payment_status;
         $note = $request->admin_note;
 
-        $updateData = ['payment_status' => $newStatus];
-
-        if ($newStatus === 'paid') {
-            $updateData['paid_at'] = now();
-            $updateData['status'] = 'processing';
-
-            // Generate license keys for products that require them
-            $this->generateAndBindLicenses($order);
-        }
-
-        if ($newStatus === 'rejected') {
-            $updateData['status'] = 'cancelled';
-        }
-
-        if ($note) {
-            $updateData['notes'] = ($order->notes ? $order->notes . "\n" : '')
-                . '[Admin] ' . $note . ' — ' . now()->format('d/m/Y H:i');
-        }
-
-        $order->update($updateData);
+        // Shared with the Telegram bot's approve/reject buttons, so both do exactly the same thing.
+        $payments = app(OrderPaymentService::class);
+        match ($newStatus) {
+            'paid' => $payments->approve($order, $note),
+            'rejected' => $payments->reject($order, $note),
+            default => $payments->setStatus($order, $newStatus, $note),
+        };
 
         $statusLabels = [
             'paid' => 'อนุมัติการชำระเงิน',
@@ -125,30 +111,5 @@ class OrderController extends Controller
         return redirect()
             ->back()
             ->with('success', 'อัปเดตสถานะคำสั่งซื้อ #' . $order->order_number . ' สำเร็จ');
-    }
-
-    /**
-     * Generate license keys for order items and bind machine_id if available.
-     */
-    protected function generateAndBindLicenses(Order $order): void
-    {
-        $licenseService = app(LicenseService::class);
-
-        // Generate licenses via shared service (handles all product types)
-        $licenseService->generateLicensesForOrder($order);
-
-        // Bind machine_id from order metadata (for LocalVPN and similar products)
-        $metadata = $order->metadata ?? [];
-        $machineId = $metadata['machine_id'] ?? null;
-
-        if ($machineId) {
-            $licenses = LicenseKey::where('order_id', $order->id)
-                ->whereNull('machine_id')
-                ->get();
-
-            foreach ($licenses as $license) {
-                $license->activateOnMachine($machineId, $machineId);
-            }
-        }
     }
 }

@@ -64,6 +64,7 @@ use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SmsPaymentController as AdminSmsPaymentController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\TeamMemberController;
+use App\Http\Controllers\Admin\TelegramAlertController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowController;
 use App\Http\Controllers\Admin\TurnstileSettingsController;
@@ -735,6 +736,25 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Contact Settings
     Route::get('/contact-settings', [ContactSettingsController::class, 'index'])->name('contact-settings.index');
     Route::put('/contact-settings', [ContactSettingsController::class, 'update'])->name('contact-settings.update');
+
+    // Admin alerts to Telegram — cards for orders, customer contact and break-in attempts, plus the
+    // bot's commands and approve/reject buttons ("แจ้งเตือน Telegram").
+    Route::get('/alerts', [TelegramAlertController::class, 'index'])->name('alerts.index');
+    Route::get('/alerts/preview/{level}.png', [TelegramAlertController::class, 'preview'])
+        ->whereIn('level', ['order', 'contact', 'security', 'daily'])->name('alerts.preview');
+    Route::put('/alerts/telegram', [TelegramAlertController::class, 'updateTelegram'])->name('alerts.telegram.update');
+    Route::post('/alerts/telegram/detect', [TelegramAlertController::class, 'detectChats'])->name('alerts.telegram.detect');
+    Route::post('/alerts/telegram/chat', [TelegramAlertController::class, 'useChat'])->name('alerts.telegram.chat');
+    Route::post('/alerts/telegram/test', [TelegramAlertController::class, 'test'])->name('alerts.telegram.test');
+    Route::delete('/alerts/telegram/token', [TelegramAlertController::class, 'forgetToken'])->name('alerts.telegram.forget');
+    Route::put('/alerts/categories', [TelegramAlertController::class, 'updateCategories'])->name('alerts.categories');
+    Route::post('/alerts/webhook', [TelegramAlertController::class, 'enableWebhook'])->name('alerts.webhook.enable');
+    Route::delete('/alerts/webhook', [TelegramAlertController::class, 'disableWebhook'])->name('alerts.webhook.disable');
+    Route::post('/alerts/link', [TelegramAlertController::class, 'linkMe'])->name('alerts.link');
+    Route::delete('/alerts/admins/{telegramId}', [TelegramAlertController::class, 'unlink'])
+        ->where('telegramId', '[0-9]{1,20}')->name('alerts.unlink');
+    Route::post('/alerts/topics', [TelegramAlertController::class, 'createTopics'])->name('alerts.topics.create');
+    Route::delete('/alerts/topics', [TelegramAlertController::class, 'clearTopics'])->name('alerts.topics.clear');
 
     // Turnstile Settings
     Route::get('/turnstile', [TurnstileSettingsController::class, 'index'])->name('turnstile.index');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\Alerts\SecurityAlerts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -44,6 +45,9 @@ class SetupController extends Controller
     {
         // Prevent if setup already completed
         if (! self::isSetupRequired()) {
+            // Posting the first-run form on an installed site is an attempt to mint a new admin.
+            SecurityAlerts::setupRerun($request->ip());
+
             return redirect()->route('home')->with('error', 'ระบบได้รับการตั้งค่าแล้ว');
         }
 

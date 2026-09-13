@@ -502,7 +502,7 @@
 </div>
 
 {{-- การตั้งค่า --}}
-<div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ai-crawl*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') || request()->routeIs('admin.redis-settings*') || request()->routeIs('admin.email-settings*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ai-crawl*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') || request()->routeIs('admin.redis-settings*') || request()->routeIs('admin.email-settings*') || request()->routeIs('admin.alerts*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ตั้งค่า</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -527,6 +527,10 @@
         <a href="{{ route('admin.email-settings.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.email-settings*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             อีเมล (Resend)
+        </a>
+        <a href="{{ route('admin.alerts.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.alerts*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" viewBox="0 0 24 24" fill="currentColor"><path d="M21.4 4.1 2.9 11.2c-1.3.5-1.3 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.1.9.8.9.5 0 .7-.2 1-.5l2.3-2.2 4.8 3.5c.9.5 1.5.2 1.7-.8l3.2-15c.3-1.3-.5-1.9-1.6-1.4ZM8.9 13.9l9.6-6.1c.5-.3.9-.1.5.2l-8.2 7.4-.3 3.4-1.6-4.9Z"/></svg>
+            แจ้งเตือน Telegram
         </a>
         <a href="{{ route('admin.custom-code.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.custom-code*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>

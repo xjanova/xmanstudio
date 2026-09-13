@@ -43,7 +43,17 @@ class Setting extends Model
         'stripe_secret_key',
         'paypal_secret',
         'turnstile_secret_key',
+        // Admin alerts over Telegram: whoever holds the token can impersonate the bot, and whoever
+        // holds the webhook secret can feed the bot fake admin commands.
+        'telegram_bot_token',
+        'telegram_webhook_secret',
     ];
+
+    /** @return array<int,string> keys stored encrypted — also what alert redaction hunts for */
+    public static function encryptedKeys(): array
+    {
+        return static::$encryptedKeys;
+    }
 
     /**
      * Get setting value by key

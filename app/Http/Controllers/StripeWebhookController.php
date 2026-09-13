@@ -9,6 +9,8 @@ use App\Services\AixmanService;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\StripeService;
+use App\Support\Alerts\Alert;
+use App\Support\Alerts\SecurityAlerts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
@@ -28,6 +30,9 @@ class StripeWebhookController extends Controller
             Log::warning('Stripe webhook signature verification failed', [
                 'error' => $e->getMessage(),
             ]);
+            // Either a forged "payment succeeded", or our webhook secret no longer matches Stripe's —
+            // in which case real card payments are being dropped too.
+            SecurityAlerts::forged('Stripe webhook', 'ลายเซ็นไม่ถูกต้อง', $request->ip(), [], Alert::WARNING);
 
             return response('Invalid signature', 400);
         } catch (\Exception $e) {

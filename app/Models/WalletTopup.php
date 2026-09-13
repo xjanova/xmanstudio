@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class WalletTopup extends Model
@@ -129,31 +130,36 @@ class WalletTopup extends Model
      */
     public function approve(int $approvedBy = 0): bool
     {
-        if ($this->status !== self::STATUS_PENDING) {
-            return false;
-        }
+        // The "still pending?" check and the deposit happen under the row's lock. Top-ups are
+        // approved from the admin page, the Telegram bot, the SMS matcher and Stripe; two of them at
+        // the same moment both saw "pending" on their own copy and deposited twice.
+        return DB::transaction(function () use ($approvedBy) {
+            if (! $this->claimPending()) {
+                return false;
+            }
 
-        $this->update([
-            'status' => self::STATUS_APPROVED,
-            'approved_by' => $approvedBy > 0 ? $approvedBy : null,
-            'approved_at' => now(),
-        ]);
+            $this->update([
+                'status' => self::STATUS_APPROVED,
+                'approved_by' => $approvedBy > 0 ? $approvedBy : null,
+                'approved_at' => now(),
+            ]);
 
-        // Add money to wallet
-        $this->wallet->deposit(
-            $this->total_amount,
-            "เติมเงิน #{$this->topup_id}",
-            $this->payment_method,
-            $this->topup_id, // Use topup_id as reference instead of removed payment_reference
-            $approvedBy,
-            [
-                'topup_id' => $this->id,
-                'amount' => $this->amount,
-                'bonus' => $this->bonus_amount,
-            ]
-        );
+            // Add money to wallet
+            $this->wallet->deposit(
+                $this->total_amount,
+                "เติมเงิน #{$this->topup_id}",
+                $this->payment_method,
+                $this->topup_id, // Use topup_id as reference instead of removed payment_reference
+                $approvedBy,
+                [
+                    'topup_id' => $this->id,
+                    'amount' => $this->amount,
+                    'bonus' => $this->bonus_amount,
+                ]
+            );
 
-        return true;
+            return true;
+        });
     }
 
     /**
@@ -161,18 +167,34 @@ class WalletTopup extends Model
      */
     public function reject(int $approvedBy, string $reason): bool
     {
-        if ($this->status !== self::STATUS_PENDING) {
-            return false;
+        return DB::transaction(function () use ($approvedBy, $reason) {
+            if (! $this->claimPending()) {
+                return false;
+            }
+
+            $this->update([
+                'status' => self::STATUS_REJECTED,
+                'approved_by' => $approvedBy,
+                'approved_at' => now(),
+                'reject_reason' => $reason,
+            ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Lock this row for the current transaction and re-read it; true when it is still pending.
+     * Whoever gets the lock second waits, then sees the first one's decision.
+     */
+    private function claimPending(): bool
+    {
+        $locked = static::whereKey($this->getKey())->lockForUpdate()->first();
+        if ($locked) {
+            $this->setRawAttributes($locked->getAttributes(), true);
         }
 
-        $this->update([
-            'status' => self::STATUS_REJECTED,
-            'approved_by' => $approvedBy,
-            'approved_at' => now(),
-            'reject_reason' => $reason,
-        ]);
-
-        return true;
+        return $locked !== null && $this->status === self::STATUS_PENDING;
     }
 
     /**

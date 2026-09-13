@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\SmsCheckerDevice;
+use App\Support\Alerts\SecurityAlerts;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -35,6 +36,7 @@ class VerifySmsCheckerDevice
                 'ip' => $request->ip(),
                 'api_key_prefix' => substr($apiKey, 0, 8) . '...',
             ]);
+            SecurityAlerts::probe('SMS Payment API', 'มีคนใช้ API key ที่ไม่มีอยู่จริง', $request->ip());
 
             return response()->json([
                 'success' => false,
@@ -48,6 +50,7 @@ class VerifySmsCheckerDevice
                 'status' => $device->status,
                 'ip' => $request->ip(),
             ]);
+            SecurityAlerts::probe('SMS Payment API', 'เครื่องที่ถูกปิดใช้งาน (' . $device->status . ') ยังพยายามส่งข้อมูล', $request->ip());
 
             return response()->json([
                 'success' => false,
