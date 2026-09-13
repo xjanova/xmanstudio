@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SeoSetting;
 use App\Models\Setting;
+use App\Support\FontFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -249,31 +250,35 @@ class OgImageController extends Controller
         return true;
     }
 
+    /**
+     * The font to draw with: bundled Sarabun, else the system's DejaVu (Latin only).
+     *
+     * Every candidate must be a REAL font — see [App\Support\FontFile]. This used to accept anything
+     * that existed, and the bundled "Sarabun" files were saved web pages, so the DejaVu fallback
+     * below was never reached and every OG image dropped to GD's 9px bitmap font.
+     *
+     * NB GD does no Thai shaping: a Thai title draws legibly, but a tone mark over an upper vowel
+     * collides with it (ที่ looks like ที). Titles here are the site name today; if they become
+     * Thai, see NetWix's ThaiShaper + PUA font for the fix.
+     */
     private function resolveFont(string $sarabunName, string $dejavuName): ?string
     {
         $storagePath = storage_path('fonts/' . $sarabunName);
         $tempPath = sys_get_temp_dir() . '/' . $sarabunName;
 
-        if (is_file($storagePath) && (! is_file($tempPath) || filemtime($storagePath) > filemtime($tempPath))) {
+        // Only a real font is worth copying. A temp copy that is not one — left behind by the old
+        // exists-only check — is overwritten as soon as the storage file is fixed.
+        if (FontFile::isReal($storagePath) && (! FontFile::isReal($tempPath) || filemtime($storagePath) > filemtime($tempPath))) {
             @copy($storagePath, $tempPath);
         }
 
-        $candidates = [
+        return FontFile::firstReal([
             $tempPath,
-            realpath($storagePath) ?: null,
             $storagePath,
             base_path('storage/fonts/' . $sarabunName),
             '/usr/share/fonts/truetype/dejavu/' . $dejavuName,
             '/usr/share/fonts/dejavu/' . $dejavuName,
-        ];
-
-        foreach ($candidates as $path) {
-            if ($path && is_file($path) && is_readable($path)) {
-                return $path;
-            }
-        }
-
-        return null;
+        ]);
     }
 
     private function drawBottomBar($img, int $width, int $height): void
