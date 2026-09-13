@@ -611,15 +611,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/rentals/packages', [AdminRentalController::class, 'storePackage'])->name('rentals.packages.store');
     Route::get('/rentals/packages/{package}/edit', [AdminRentalController::class, 'editPackage'])->name('rentals.packages.edit');
     Route::put('/rentals/packages/{package}', [AdminRentalController::class, 'updatePackage'])->name('rentals.packages.update');
-    Route::delete('/rentals/packages/{package}', [AdminRentalController::class, 'destroyPackage'])->name('rentals.packages.destroy');
     Route::post('/rentals/packages/{package}/toggle', [AdminRentalController::class, 'togglePackage'])->name('rentals.packages.toggle');
     Route::get('/rentals/reports', [AdminRentalController::class, 'reports'])->name('rentals.reports');
+    // Confirm / refuse a rental payment — the buttons on admin.rentals.payments. (These used to be
+    // /payments/{payment}/approve → a controller method that never existed, while the page posted to
+    // URLs no route answered, so no rental payment could be confirmed from the website.)
+    Route::post('/rentals/payments/{payment}/verify', [AdminRentalController::class, 'verifyPayment'])->name('rentals.payments.verify');
+    Route::post('/rentals/payments/{payment}/reject', [AdminRentalController::class, 'rejectPayment'])->name('rentals.payments.reject');
     Route::get('/rentals/{rental}', [AdminRentalController::class, 'show'])->name('rentals.show');
     Route::post('/rentals/{rental}/extend', [AdminRentalController::class, 'extend'])->name('rentals.extend');
     Route::post('/rentals/{rental}/suspend', [AdminRentalController::class, 'suspend'])->name('rentals.suspend');
-    Route::post('/rentals/{rental}/activate', [AdminRentalController::class, 'activate'])->name('rentals.activate');
-    Route::post('/payments/{payment}/approve', [AdminRentalController::class, 'approvePayment'])->name('payments.approve');
-    Route::post('/payments/{payment}/reject', [AdminRentalController::class, 'rejectPayment'])->name('payments.reject');
+    Route::post('/rentals/{rental}/activate', [AdminRentalController::class, 'reactivate'])->name('rentals.reactivate');
 
     // Service Management
     Route::resource('services', AdminServiceController::class);

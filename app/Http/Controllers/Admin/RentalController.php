@@ -158,6 +158,10 @@ class RentalController extends Controller
      */
     public function verifyPayment(Request $request, RentalPayment $payment)
     {
+        $request->validate([
+            'notes' => 'nullable|string|max:500',
+        ]);
+
         $result = $this->rentalService->verifyBankTransfer(
             $payment,
             auth()->id(),
@@ -181,7 +185,9 @@ class RentalController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $this->rentalService->rejectPayment($payment, $request->reason);
+        if (! $this->rentalService->rejectPayment($payment, $request->reason)) {
+            return back()->with('error', 'รายการนี้ถูกดำเนินการไปแล้ว ปฏิเสธไม่ได้');
+        }
 
         return back()->with('success', 'ปฏิเสธการชำระเงินแล้ว');
     }

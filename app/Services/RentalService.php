@@ -262,6 +262,20 @@ class RentalService
 
         DB::beginTransaction();
         try {
+            // Re-check under the row's lock: two admins, or an admin and the Telegram bot, can both
+            // have seen "pending" above — the second must not activate the rental and issue a
+            // receipt again.
+            $locked = RentalPayment::whereKey($payment->getKey())->lockForUpdate()->first();
+            if (! $locked || ! in_array($locked->status, [RentalPayment::STATUS_PENDING, RentalPayment::STATUS_PROCESSING])) {
+                DB::rollBack();
+
+                return [
+                    'success' => false,
+                    'error' => 'รายการนี้ถูกดำเนินการไปแล้ว',
+                ];
+            }
+            $payment->setRawAttributes($locked->getAttributes(), true);
+
             $payment->verify($adminId, $notes);
 
             // Create receipt
@@ -294,20 +308,35 @@ class RentalService
     /**
      * Reject a payment and cancel the rental it was for. Shared by the admin rental page and the
      * admin Telegram bot's reject button.
+     *
+     * Only a payment still waiting (pending/processing) can be rejected: rejecting a completed one
+     * would cancel a rental the customer has paid for and is using.
+     *
+     * @return bool false when the payment was no longer waiting (nothing changed)
      */
-    public function rejectPayment(RentalPayment $payment, string $reason): void
+    public function rejectPayment(RentalPayment $payment, string $reason): bool
     {
-        $payment->update([
-            'status' => RentalPayment::STATUS_FAILED,
-            'admin_notes' => $reason,
-        ]);
+        return DB::transaction(function () use ($payment, $reason) {
+            $locked = RentalPayment::whereKey($payment->getKey())->lockForUpdate()->first();
+            if (! $locked || ! in_array($locked->status, [RentalPayment::STATUS_PENDING, RentalPayment::STATUS_PROCESSING])) {
+                return false;
+            }
+            $payment->setRawAttributes($locked->getAttributes(), true);
 
-        if ($payment->userRental) {
-            $payment->userRental->update([
-                'status' => UserRental::STATUS_CANCELLED,
-                'notes' => 'การชำระเงินถูกปฏิเสธ: ' . $reason,
+            $payment->update([
+                'status' => RentalPayment::STATUS_FAILED,
+                'admin_notes' => $reason,
             ]);
-        }
+
+            if ($payment->userRental) {
+                $payment->userRental->update([
+                    'status' => UserRental::STATUS_CANCELLED,
+                    'notes' => 'การชำระเงินถูกปฏิเสธ: ' . $reason,
+                ]);
+            }
+
+            return true;
+        });
     }
 
     /**

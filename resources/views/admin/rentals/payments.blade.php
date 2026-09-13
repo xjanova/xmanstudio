@@ -324,8 +324,13 @@
 
 @push('scripts')
 <script>
+    // Built from the named routes, so a renamed or moved route breaks the page loudly instead of
+    // posting to a URL nothing answers (which is how these buttons were dead for months).
+    const verifyUrlTemplate = @json(route('admin.rentals.payments.verify', ['payment' => '__PAYMENT__']));
+    const rejectUrlTemplate = @json(route('admin.rentals.payments.reject', ['payment' => '__PAYMENT__']));
+
     function showVerifyModal(paymentId) {
-        document.getElementById('verifyForm').action = `/admin/rentals/payments/${paymentId}/verify`;
+        document.getElementById('verifyForm').action = verifyUrlTemplate.replace('__PAYMENT__', encodeURIComponent(paymentId));
         document.getElementById('verifyModal').classList.remove('hidden');
         document.getElementById('verifyModal').classList.add('flex');
     }
@@ -336,7 +341,7 @@
     }
 
     function showRejectModal(paymentId) {
-        document.getElementById('rejectForm').action = `/admin/rentals/payments/${paymentId}/reject`;
+        document.getElementById('rejectForm').action = rejectUrlTemplate.replace('__PAYMENT__', encodeURIComponent(paymentId));
         document.getElementById('rejectModal').classList.remove('hidden');
         document.getElementById('rejectModal').classList.add('flex');
     }

@@ -335,8 +335,10 @@ final class BotActions
 
                     return;
                 }
-            } else {
-                $service->rejectPayment($payment, self::REJECT_REASON);
+            } elseif (! $service->rejectPayment($payment, self::REJECT_REASON)) {
+                $result = [false, 'รายการ ' . $payment->payment_reference . ' ถูกดำเนินการไปแล้ว'];
+
+                return;
             }
             $result = [true, ($approve ? '✅ ยืนยันค่าเช่า ' : '❌ ปฏิเสธ ') . $payment->payment_reference . ' แล้ว'];
         });
