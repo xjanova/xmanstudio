@@ -6,7 +6,9 @@ use App\Events\NewOrderCreated;
 use App\Events\PaymentMatched;
 use App\Listeners\SendNewOrderFcmNotification;
 use App\Listeners\SendPaymentMatchedNotification;
+use App\Models\Order;
 use App\Models\PaymentSetting;
+use App\Observers\AiCreditOrderObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -33,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
         $this->registerSmsCheckerEvents();
         $this->registerBladeDirectives();
         $this->configureMailFromDatabase();
+
+        // A paid AI-credit order gets its credits on AIXMAN whichever way it was paid — admin
+        // approval, the SMS matcher, the Telegram bot — not only via the success page or Stripe.
+        Order::observe(AiCreditOrderObserver::class);
     }
 
     /**

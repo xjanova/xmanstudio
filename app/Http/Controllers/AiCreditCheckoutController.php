@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BankAccount;
 use App\Models\Order;
 use App\Services\AffiliateCommissionService;
+use App\Services\AiCreditDelivery;
 use App\Services\AixmanService;
 use App\Services\ImageService;
 use App\Services\ThaiPaymentService;
@@ -196,29 +197,15 @@ class AiCreditCheckoutController extends Controller
             abort(404);
         }
 
-        $metadata = is_array($order->metadata)
-            ? $order->metadata
-            : (json_decode($order->metadata ?? '{}', true) ?: []);
-
-        // If order is paid and we haven't notified AIXMAN yet, do so now.
-        $alreadyNotified = ! empty($metadata['aixman_notified_at']);
-        if ($order->payment_status === 'paid' && ! $alreadyNotified && $order->user_id) {
-            $ok = $this->aixman->notifyCreditPurchase(
-                (int) $order->user_id,
-                (string) ($metadata['package_slug'] ?? ''),
-                (int) $order->id,
-                (int) ($metadata['credits'] ?? 0),
-                (int) ($metadata['bonus_credits'] ?? 0),
-            );
-            if ($ok) {
-                $metadata['aixman_notified_at'] = now()->toISOString();
-                $order->update(['metadata' => json_encode($metadata)]);
-            }
+        // If the order is paid and its credits have not reached AIXMAN yet, send them now — the
+        // customer is looking at this page. Once-only across every path (see AiCreditDelivery).
+        if (AiCreditDelivery::isOwed($order)) {
+            app(AiCreditDelivery::class)->deliver($order);
         }
 
         return view('xdreamer.success', [
             'order' => $order,
-            'metadata' => $metadata,
+            'metadata' => AiCreditDelivery::metadata($order),
             'page' => '',
         ]);
     }
