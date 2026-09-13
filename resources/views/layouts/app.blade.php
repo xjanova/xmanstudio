@@ -12,16 +12,8 @@
         :image="View::yieldContent('og_image', '')"
     />
 
-    <!-- Favicon -->
-    @php
-        $siteFavicon = \App\Models\Setting::getValue('site_favicon');
-    @endphp
-    @if($siteFavicon)
-        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
-        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
-    @else
-        <link rel="icon" type="image/x-icon" href="{{ asset('public_html/favicon.ico') }}">
-    @endif
+    {{-- Favicon: square sizes cut from the Branding upload --}}
+    @include('partials.favicon')
 
     <!-- Preconnect to Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

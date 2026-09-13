@@ -6,16 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin') - XMAN Studio Admin</title>
 
-    <!-- Favicon -->
-    @php
-        $siteFavicon = \App\Models\Setting::getValue('site_favicon');
-    @endphp
-    @if($siteFavicon)
-        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
-        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
-    @else
-        <link rel="icon" type="image/x-icon" href="{{ asset('public_html/favicon.ico') }}">
-    @endif
+    {{-- Favicon: square sizes cut from the Branding upload --}}
+    @include('partials.favicon')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 

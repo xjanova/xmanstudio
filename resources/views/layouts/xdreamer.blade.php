@@ -12,13 +12,8 @@
         :image="View::yieldContent('og_image', '')"
     />
 
-    {{-- Favicon --}}
-    @php $siteFavicon = \App\Models\Setting::getValue('site_favicon'); @endphp
-    @if($siteFavicon)
-        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $siteFavicon) }}">
-    @else
-        <link rel="icon" type="image/png" href="{{ asset('images/xdreamer/logo.png') }}">
-    @endif
+    {{-- Favicon: square sizes cut from the Branding upload; X-DREAMER's own logo until there is one --}}
+    @include('partials.favicon', ['fallback' => asset('images/xdreamer/logo.png')])
 
     {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">

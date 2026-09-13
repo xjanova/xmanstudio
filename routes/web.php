@@ -83,6 +83,7 @@ use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
+use App\Http\Controllers\FaviconController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocalVpnWebController;
 use App\Http\Controllers\MetalXController;
@@ -134,6 +135,13 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name
 Route::get('/og-image', [OgImageController::class, 'generate'])->name('og-image.generate');
 Route::get('/og-image/default', [OgImageController::class, 'defaultImage'])->name('og-image.default');
 Route::get('/og-image/site', [OgImageController::class, 'siteImage'])->name('og-image.site');
+
+// Site icon, cut square from the Branding upload. /favicon.ico used to be Laravel's empty
+// placeholder, so browsers and Google kept the WordPress icon they had cached for this domain.
+Route::get('/favicon.ico', [FaviconController::class, 'ico'])->name('favicon.ico');
+Route::get('/favicon-{size}.png', [FaviconController::class, 'png'])
+    ->whereIn('size', array_map('strval', FaviconController::PNG_SIZES))->name('favicon.png');
+Route::get('/apple-touch-icon.png', [FaviconController::class, 'appleTouch'])->name('favicon.apple');
 
 // Public AI Chat
 Route::post('/ai-chat', [PublicChatController::class, 'chat'])

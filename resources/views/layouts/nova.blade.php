@@ -13,7 +13,6 @@
 --}}
 @php
     $novaLogo = \App\Models\Setting::getValue('site_logo');
-    $novaFavicon = \App\Models\Setting::getValue('site_favicon');
 
     // Orbital menu items. `accent` drives the per-item glow via --nv-accent.
     $novaMenu = [
@@ -41,12 +40,8 @@
         :image="View::yieldContent('og_image', '')"
     />
 
-    @if($novaFavicon)
-        <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . $novaFavicon) }}">
-        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('storage/' . $novaFavicon) }}">
-    @else
-        <link rel="icon" type="image/x-icon" href="{{ asset('public_html/favicon.ico') }}">
-    @endif
+    {{-- Favicon: square sizes cut from the Branding upload --}}
+    @include('partials.favicon')
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
