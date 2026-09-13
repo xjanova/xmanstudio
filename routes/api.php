@@ -364,9 +364,10 @@ Route::prefix('v1/sms-payment')->group(function () {
         // Debug report from Android app (temporary)
         Route::post('/debug-report', [SmsPaymentController::class, 'debugReport']);
 
-        // Debug: ตรวจสอบปัญหา topup approve
-        Route::get('/debug-topup', [SmsPaymentController::class, 'debugTopup']);
-        Route::post('/debug-topup-approve', [SmsPaymentController::class, 'debugTopupApprove']);
+        // debug-topup / debug-topup-approve were removed 2026-09-13: added for one incident in
+        // February, never called by the app, and the approve one could reset ANY top-up to
+        // pending and approve it again — crediting a wallet as often as it was called, with only
+        // a device API key. Top-up diagnostics live behind admin login: admin.wallets.topups.debug.
     });
 
     // Standard device endpoints - normal rate limit

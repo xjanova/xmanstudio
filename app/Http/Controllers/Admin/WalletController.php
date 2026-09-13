@@ -244,23 +244,11 @@ class WalletController extends Controller
         if ($topup->wallet) {
             $debug['approve_simulation']['wallet_check'] = 'PASS — wallet exists (id=' . $topup->wallet->id . ')';
 
-            // ลอง approve จริงๆ ถ้า ?do_approve=1
-            if (request()->has('do_approve') && $topup->status === WalletTopup::STATUS_PENDING) {
-                try {
-                    $result = $topup->approve(0); // system approve
-                    $topup->refresh();
-                    $debug['approve_result'] = [
-                        'success' => $result,
-                        'new_status' => $topup->status,
-                        'wallet_balance_after' => $topup->wallet->fresh()->balance,
-                    ];
-                } catch (\Exception $e) {
-                    $debug['approve_exception'] = [
-                        'message' => $e->getMessage(),
-                        'file' => $e->getFile() . ':' . $e->getLine(),
-                        'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 10),
-                    ];
-                }
+            // This page is read-only. It used to approve the top-up on `?do_approve=1` — a GET that
+            // credits a wallet, which any page can make a signed-in admin's browser open (CSRF), and
+            // recorded as "system" rather than the admin. Approve with the POST button instead.
+            if ($topup->status === WalletTopup::STATUS_PENDING) {
+                $debug['approve_simulation']['how_to_approve'] = 'POST ' . route('admin.wallets.topups.approve', $topup);
             }
         } else {
             $debug['approve_simulation']['wallet_check'] = 'FAIL — wallet is NULL!';

@@ -13,7 +13,6 @@ use App\Models\SmsPaymentNotification;
 use App\Models\UniquePaymentAmount;
 use App\Models\Wallet;
 use App\Models\WalletTopup;
-use App\Models\WalletTransaction;
 use App\Services\FcmNotificationService;
 use App\Services\LicenseService;
 use App\Services\SmsPaymentService;
@@ -2110,13 +2109,16 @@ class SmsPaymentController extends Controller
         $device = $request->attributes->get('sms_checker_device');
         $deviceId = $device instanceof SmsCheckerDevice ? $device->device_id : 'unknown';
 
-        // Log EVERYTHING the app sends us
+        // Log what the app sends us — minus its credentials. The app sends this on every sync
+        // cycle, and logging X-Api-Key here wrote the device's key into laravel.log thousands of
+        // times: anyone who could read the log could act as the SmsChecker phone.
         Log::info('📱 APP DEBUG REPORT', [
             'device_id' => $deviceId,
             'ip' => $request->ip(),
             'all_data' => $request->all(),
             'all_headers' => collect($request->headers->all())->except([
                 'cookie', 'host', 'connection',
+                'x-api-key', 'authorization', 'x-signature', 'x-nonce', 'php-auth-pw',
             ])->toArray(),
         ]);
 
@@ -2132,257 +2134,6 @@ class SmsPaymentController extends Controller
             'device_fcm_token_on_server' => $device instanceof SmsCheckerDevice
                 ? ($device->fcm_token ? 'present (len=' . strlen($device->fcm_token) . ')' : 'NULL')
                 : 'N/A',
-        ]);
-    }
-
-    /**
-     * Debug endpoint: ตรวจสอบว่าทำไม WalletTopup.approve() ไม่ทำงาน
-     *
-     * GET /api/v1/sms-payment/debug-topup?topup_id=15
-     */
-    public function debugTopup(Request $request): JsonResponse
-    {
-        $device = $request->attributes->get('sms_checker_device');
-        if (! $device instanceof SmsCheckerDevice) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
-
-        $topupId = $request->input('topup_id');
-        $debug = ['timestamp' => now()->toDateTimeString()];
-
-        // ดึง topup ล่าสุดทั้งหมดที่เป็น pending
-        $pendingTopups = WalletTopup::where('status', WalletTopup::STATUS_PENDING)
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get(['id', 'wallet_id', 'user_id', 'topup_id', 'amount', 'total_amount', 'status',
-                'sms_verification_status', 'sms_notification_id', 'unique_payment_amount_id',
-                'payment_display_amount', 'created_at', 'expires_at']);
-        $debug['pending_topups'] = $pendingTopups->toArray();
-
-        // ถ้ามี topup_id ให้ debug เจาะลึก
-        if ($topupId) {
-            $topup = WalletTopup::find($topupId);
-            if ($topup) {
-                $debug['target_topup'] = [
-                    'id' => $topup->id,
-                    'topup_id' => $topup->topup_id,
-                    'wallet_id' => $topup->wallet_id,
-                    'user_id' => $topup->user_id,
-                    'amount' => $topup->amount,
-                    'total_amount' => $topup->total_amount,
-                    'status' => $topup->status,
-                    'sms_verification_status' => $topup->sms_verification_status,
-                    'sms_notification_id' => $topup->sms_notification_id,
-                    'unique_payment_amount_id' => $topup->unique_payment_amount_id,
-                    'payment_display_amount' => $topup->payment_display_amount,
-                    'created_at' => $topup->created_at?->toDateTimeString(),
-                    'expires_at' => $topup->expires_at?->toDateTimeString(),
-                ];
-
-                // เช็ค wallet
-                $wallet = $topup->wallet;
-                $debug['wallet'] = $wallet ? [
-                    'id' => $wallet->id,
-                    'user_id' => $wallet->user_id,
-                    'balance' => $wallet->balance,
-                    'is_active' => $wallet->is_active,
-                ] : 'NULL — wallet ไม่มี! นี่คือสาเหตุที่ approve() fail!';
-
-                // เช็ค unique payment amount
-                $uniqueAmount = $topup->uniquePaymentAmount;
-                $debug['unique_payment_amount'] = $uniqueAmount ? [
-                    'id' => $uniqueAmount->id,
-                    'unique_amount' => $uniqueAmount->unique_amount,
-                    'status' => $uniqueAmount->status,
-                    'expires_at' => $uniqueAmount->expires_at?->toDateTimeString(),
-                    'matched_at' => $uniqueAmount->matched_at?->toDateTimeString(),
-                ] : 'NULL';
-
-                // เช็ค SMS notification
-                if ($topup->sms_notification_id) {
-                    $smsNotif = SmsPaymentNotification::find($topup->sms_notification_id);
-                    $debug['sms_notification'] = $smsNotif ? [
-                        'id' => $smsNotif->id,
-                        'status' => $smsNotif->status,
-                        'amount' => $smsNotif->amount,
-                        'bank' => $smsNotif->bank,
-                        'type' => $smsNotif->type,
-                    ] : 'NULL';
-                }
-
-                // ลอง approve เพื่อดูว่าจะ fail ตรงไหน
-                $debug['approve_simulation'] = [];
-                $debug['approve_simulation']['status_check'] = $topup->status === WalletTopup::STATUS_PENDING
-                    ? 'PASS — status is pending'
-                    : 'FAIL — status is "' . $topup->status . '" (not pending)';
-
-                if ($wallet) {
-                    $debug['approve_simulation']['wallet_exists'] = 'PASS';
-                    $debug['approve_simulation']['total_amount'] = $topup->total_amount;
-                    $debug['approve_simulation']['total_amount_type'] = gettype($topup->total_amount);
-                    $debug['approve_simulation']['total_amount_raw'] = $topup->getRawOriginal('total_amount');
-
-                    // ลอง deposit ใน dry-run mode (ไม่ทำจริง)
-                    try {
-                        $debug['approve_simulation']['deposit_preview'] = [
-                            'amount' => (float) $topup->total_amount,
-                            'description' => "เติมเงิน #{$topup->topup_id}",
-                            'payment_method' => $topup->payment_method,
-                            'payment_reference' => $topup->topup_id,
-                            'wallet_balance_before' => $wallet->balance,
-                        ];
-                    } catch (\Exception $e) {
-                        $debug['approve_simulation']['deposit_preview_error'] = $e->getMessage();
-                    }
-                } else {
-                    $debug['approve_simulation']['wallet_exists'] = 'FAIL — wallet is NULL! This is why approve() fails!';
-                    $debug['approve_simulation']['wallet_id_on_topup'] = $topup->wallet_id;
-
-                    // ลองหา wallet ด้วย user_id
-                    $walletByUser = Wallet::where('user_id', $topup->user_id)->first();
-                    $debug['approve_simulation']['wallet_by_user_id'] = $walletByUser ? [
-                        'id' => $walletByUser->id,
-                        'balance' => $walletByUser->balance,
-                        'is_active' => $walletByUser->is_active,
-                    ] : 'NULL — ไม่มี wallet เลย!';
-                }
-
-                // เช็ค WalletTransaction ที่เกี่ยวข้อง
-                $transactions = WalletTransaction::where(function ($q) use ($topup) {
-                    $q->where('payment_reference', $topup->topup_id)
-                        ->orWhere('description', 'like', "%{$topup->topup_id}%");
-                })->get(['id', 'type', 'amount', 'description', 'created_at']);
-                $debug['related_transactions'] = $transactions->toArray();
-
-                // เช็ค approval_mode
-                $debug['device_approval_mode'] = $device->getApprovalMode();
-                $debug['auto_confirm_config'] = config('smschecker.auto_confirm_matched', true);
-            } else {
-                $debug['target_topup'] = 'NOT FOUND';
-            }
-        }
-
-        // เช็ค recent SMS notifications ที่ matched
-        $recentSms = SmsPaymentNotification::whereIn('status', ['matched', 'confirmed'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get(['id', 'status', 'amount', 'bank', 'type', 'matched_transaction_id', 'created_at']);
-        $debug['recent_matched_sms'] = $recentSms->toArray();
-
-        // เช็ค Laravel error log (last few lines)
-        try {
-            $logFile = storage_path('logs/laravel.log');
-            if (file_exists($logFile)) {
-                $lines = file($logFile);
-                $relevantLines = [];
-                $keywords = ['approve', 'topup', 'wallet', 'matchWalletTopup', 'deposit'];
-                foreach (array_slice($lines, -200) as $line) {
-                    foreach ($keywords as $keyword) {
-                        if (stripos($line, $keyword) !== false) {
-                            $relevantLines[] = trim($line);
-                            break;
-                        }
-                    }
-                }
-                $debug['recent_log_entries'] = array_slice($relevantLines, -20);
-            }
-        } catch (\Exception $e) {
-            $debug['log_error'] = $e->getMessage();
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $debug,
-        ]);
-    }
-
-    /**
-     * Debug: ลอง approve topup ด้วยมือ + logging ละเอียด
-     *
-     * POST /api/v1/sms-payment/debug-topup-approve?topup_id=15
-     */
-    public function debugTopupApprove(Request $request): JsonResponse
-    {
-        $device = $request->attributes->get('sms_checker_device');
-        if (! $device instanceof SmsCheckerDevice) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
-
-        $topupId = $request->input('topup_id');
-        if (! $topupId) {
-            return response()->json(['success' => false, 'message' => 'topup_id is required'], 400);
-        }
-
-        $debug = ['timestamp' => now()->toDateTimeString()];
-
-        $topup = WalletTopup::with(['wallet', 'uniquePaymentAmount'])->find($topupId);
-        if (! $topup) {
-            return response()->json(['success' => false, 'message' => 'Topup not found'], 404);
-        }
-
-        $debug['topup_before'] = [
-            'id' => $topup->id,
-            'status' => $topup->status,
-            'wallet_id' => $topup->wallet_id,
-            'total_amount' => $topup->total_amount,
-            'sms_verification_status' => $topup->sms_verification_status,
-        ];
-
-        // Step 1: เช็ค wallet
-        if (! $topup->wallet) {
-            $debug['error'] = 'Wallet is NULL! wallet_id=' . $topup->wallet_id;
-
-            // ลองสร้าง wallet ให้ user
-            $wallet = Wallet::getOrCreateForUser($topup->user_id);
-            $topup->update(['wallet_id' => $wallet->id]);
-            $topup->refresh();
-            $topup->load('wallet');
-            $debug['wallet_fix'] = 'Created/found wallet id=' . $wallet->id . ' for user_id=' . $topup->user_id;
-        }
-
-        $debug['wallet'] = [
-            'id' => $topup->wallet->id,
-            'balance_before' => $topup->wallet->balance,
-            'is_active' => $topup->wallet->is_active,
-        ];
-
-        // Step 2: ลอง approve
-        try {
-            $debug['status_before_approve'] = $topup->status;
-            $debug['status_equals_pending'] = $topup->status === WalletTopup::STATUS_PENDING;
-
-            if ($topup->status !== WalletTopup::STATUS_PENDING) {
-                // Force status to pending for retry
-                $topup->update(['status' => WalletTopup::STATUS_PENDING]);
-                $topup->refresh();
-                $debug['force_status_reset'] = 'Reset status from "' . $debug['status_before_approve'] . '" to pending';
-            }
-
-            $approved = $topup->approve(0);
-            $topup->refresh();
-
-            $debug['approve_result'] = $approved;
-            $debug['topup_after'] = [
-                'status' => $topup->status,
-                'approved_by' => $topup->approved_by,
-                'approved_at' => $topup->approved_at?->toDateTimeString(),
-            ];
-            $debug['wallet_after'] = [
-                'balance' => $topup->wallet->fresh()->balance,
-            ];
-        } catch (\Exception $e) {
-            $debug['approve_exception'] = [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile() . ':' . $e->getLine(),
-                'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 10),
-            ];
-        }
-
-        Log::info('🔧 DEBUG TOPUP APPROVE', $debug);
-
-        return response()->json([
-            'success' => true,
-            'data' => $debug,
         ]);
     }
 }
