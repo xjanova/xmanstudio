@@ -63,6 +63,10 @@ class GpuxMineDispatchService
                     'score' => $node->score,
                     'tier' => $node->tier,
                     'canRun' => $node->can_run ?? [],
+                    // ส่งไปด้วยเสมอ แม้ว่าง: aixman อ่าน "ไม่มีข้อมูล" เป็นเร็วเต็มที่
+                    // ซึ่งถูกสำหรับโหนดที่ยังไม่ได้อัปเดตไคลเอนต์
+                    'lanes' => $node->lanes ?? [],
+                    'provisional' => $node->provisional ?? [],
                     'ownerUserId' => $node->user_id,
                 ]);
 

@@ -48,6 +48,8 @@ class GpuNode extends Model
         'tier',
         'assessed',
         'can_run',
+        'lanes',
+        'provisional',
         'free_share_pct',
         'last_seen_at',
         'dispatch_synced_at',
@@ -63,6 +65,9 @@ class GpuNode extends Model
         'online' => 'boolean',
         'assessed' => 'boolean',
         'can_run' => 'array',
+        // เร็วพอให้คนนั่งรอไหม — คนละคำถามกับ can_run ที่ตอบแค่ว่าทำได้ไหม
+        'lanes' => 'array',
+        'provisional' => 'array',
         // กุญแจเปิดอุโมงค์ไปเครื่องในบ้านคน — ห้ามอยู่ในฐานข้อมูลแบบอ่านได้
         'relay_token' => 'encrypted',
     ];

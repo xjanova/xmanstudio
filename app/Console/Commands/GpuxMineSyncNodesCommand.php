@@ -49,7 +49,7 @@ class GpuxMineSyncNodesCommand extends Command
             // ไม่ลบแถวทิ้ง เพราะยอดค้างจ่ายและประวัติยังต้องตามได้
             $before = [
                 $node->online, $node->assessed, $node->score,
-                $node->tier, json_encode($node->can_run),
+                $node->tier, json_encode($node->can_run), json_encode($node->lanes),
             ];
 
             $node->forceFill([
@@ -62,12 +62,14 @@ class GpuxMineSyncNodesCommand extends Command
                 'gpu_name' => $telemetry['gpuName'] ?? $node->gpu_name,
                 'vram_total_mb' => (int) ($telemetry['vramTotalMb'] ?? $node->vram_total_mb),
                 'can_run' => $telemetry['canRun'] ?? $node->can_run,
+                'lanes' => $telemetry['lanes'] ?? $node->lanes,
+                'provisional' => $telemetry['provisional'] ?? $node->provisional,
                 'free_share_pct' => (int) ($telemetry['freeSharePct'] ?? $node->free_share_pct),
             ]);
 
             $after = [
                 $node->online, $node->assessed, $node->score,
-                $node->tier, json_encode($node->can_run),
+                $node->tier, json_encode($node->can_run), json_encode($node->lanes),
             ];
 
             if ($node->isDirty()) {
@@ -81,6 +83,9 @@ class GpuxMineSyncNodesCommand extends Command
                 || $before[0] !== $after[0]
                 || $before[1] !== $after[1]
                 || $before[4] !== $after[4]
+                // เลนเปลี่ยนคือเหตุผลที่ต้องยิงที่สุด: เครื่องเพิ่งพิสูจน์ว่าทำงาน
+                // ด่วนไม่ทัน แล้วยังถูกส่งงานด่วนต่อจนกว่าจะมีอย่างอื่นเปลี่ยน
+                || $before[5] !== $after[5]
                 || $node->dispatch_synced_at === null;
 
             if ($worthPushing && $dispatch->sync($node)) {
