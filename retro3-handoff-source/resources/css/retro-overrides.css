@@ -1,0 +1,104 @@
+/* Retro theme — Tailwind v4 override patch
+   วางไฟล์นี้ที่ resources/css/retro-overrides.css แล้ว import ท้ายสุดของ app.css:
+
+       @import './retro-theme.css';
+       @import './retro-overrides.css';   ← ต้องอยู่บรรทัดล่างสุด
+
+   ปัญหา: Tailwind v4 preflight/base layer reset background-image, color บน h1/h2/h3
+          ทำให้ .tron-gold-foil กลายเป็นสีพื้นแทนที่จะเป็น gold gradient
+   วิธีแก้: ใส่ !important + ทับความจำเพาะ (specificity) กับ class ที่สำคัญ
+*/
+
+/* Gold foil — MUST override Tailwind h1/h2 base */
+.tron-gold-foil,
+h1.tron-gold-foil,
+h2.tron-gold-foil,
+h3.tron-gold-foil,
+span.tron-gold-foil,
+div.tron-gold-foil {
+    background-image: linear-gradient(135deg,
+        #8a7020 0%,
+        #f5d76e 25%,
+        #d4af37 50%,
+        #f5d76e 75%,
+        #8a7020 100%) !important;
+    background-size: 200% 200% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    animation: tron-foil 6s ease infinite !important;
+    text-shadow: 0 0 20px rgba(245,215,110,.25) !important;
+}
+
+/* Body must actually be dark */
+body.tron-body,
+.tron-body {
+    background: #030711 !important;
+    color: #f0f8ff !important;
+    font-family: 'Cormorant Garamond', Georgia, serif !important;
+}
+
+/* Headings — Tailwind v4 sets color: inherit; we need explicit */
+.tron-body h1,
+.tron-body h2,
+.tron-body h3 {
+    color: #f0f8ff;
+    font-family: 'DM Serif Display', 'Cormorant Garamond', Georgia, serif;
+}
+
+/* The gold foil class still wins on headings */
+.tron-body h1.tron-gold-foil,
+.tron-body h2.tron-gold-foil,
+.tron-body h3.tron-gold-foil {
+    color: transparent !important;
+}
+
+/* Seal ring — double-border can be wiped by Tailwind reset */
+.tron-seal-ring {
+    border: 2px double #d4af37 !important;
+    box-shadow:
+        inset 0 0 0 4px #030711,
+        inset 0 0 0 5px #d4af37,
+        0 0 10px rgba(212,175,55,.6),
+        0 0 28px rgba(212,175,55,.3) !important;
+}
+
+/* Buttons — ensure borders + glow survive */
+.tron-btn {
+    border: 1px solid #00e5ff !important;
+    color: #00e5ff !important;
+    background: transparent !important;
+    box-shadow: inset 0 0 0 1px rgba(0,229,255,.15), 0 0 12px rgba(0,229,255,.2) !important;
+}
+.tron-btn:hover {
+    background: rgba(0,229,255,.1) !important;
+    box-shadow: inset 0 0 0 1px rgba(0,229,255,.4), 0 0 20px rgba(0,229,255,.5) !important;
+}
+.tron-btn-gold {
+    color: #d4af37 !important;
+    border-color: #d4af37 !important;
+    box-shadow: 0 0 12px rgba(212,175,55,.3) !important;
+}
+.tron-btn-gold:hover {
+    background: rgba(212,175,55,.12) !important;
+    box-shadow: 0 0 24px rgba(212,175,55,.5) !important;
+}
+
+/* Pulse + spin animations must not be purged */
+@keyframes tron-pulse {
+    0%,100% { box-shadow: 0 0 8px rgba(0,229,255,.35), 0 0 20px rgba(0,229,255,.2); }
+    50%     { box-shadow: 0 0 16px rgba(0,229,255,.7),  0 0 44px rgba(0,229,255,.4); }
+}
+@keyframes tron-spin { to { transform: rotate(360deg); } }
+@keyframes tron-foil {
+    0%,100%{background-position:0% 50%}
+    50%    {background-position:100% 50%}
+}
+@keyframes tron-flicker {
+    0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; text-shadow: 0 0 12px rgba(0,229,255,.55), 0 0 32px rgba(0,229,255,.28); }
+    20%,24%,55%                     { opacity: .85; text-shadow: none; }
+}
+.tron-pulse { animation: tron-pulse 2.4s cubic-bezier(.2,.9,.3,1) infinite !important; }
+.tron-spin-slow { animation: tron-spin 12s linear infinite !important; }
+.tron-flicker { animation: tron-flicker 6s infinite !important; }

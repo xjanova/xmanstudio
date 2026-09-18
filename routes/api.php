@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AppAiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\GlobalTorrentController;
+use App\Http\Controllers\Api\GpuxMineNodeController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\LocalVpnFileController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
@@ -223,6 +224,13 @@ Route::prefix('v1/auth')->middleware(['throttle:10,1'])->group(function () {
 // These routes support all products that require license
 // Use /{productSlug}/ to specify the product
 // Rate limited to 60 requests per minute per IP
+
+// ==================== GPUxMINE — แลกรหัสจับคู่เป็นตัวตนของเครื่อง ====================
+// จำกัดหนักกว่าเส้นทางอื่น: การเดารหัส 8 ตัวคือการเดาสิทธิ์สร้าง worker
+// ในนามบัญชีคนอื่น 5 ครั้งต่อนาทีต่อไอพีทำให้การไล่เดาไม่คุ้มค่าเวลา
+Route::post('v1/product/gpuxmine/claim', [GpuxMineNodeController::class, 'claim'])
+    ->middleware(['throttle:5,1'])
+    ->name('api.gpuxmine.claim');
 
 Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(function () {
     // Register device when app starts

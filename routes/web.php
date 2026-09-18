@@ -85,7 +85,9 @@ use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\FaviconController;
+use App\Http\Controllers\GpuNodeController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\KycController;
 use App\Http\Controllers\LocalVpnWebController;
 use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OgImageController;
@@ -1341,4 +1343,41 @@ Route::prefix('apps/aipray')->name('aipray.')->group(function () {
     Route::get('/donate', [AiprayController::class, 'donate'])->name('donate');
     Route::post('/donate', [AiprayController::class, 'storeDonation'])->name('donate.store');
     Route::post('/donation/confirm', [AiprayController::class, 'donationComplete'])->name('donation.confirm');
+});
+
+// ==================== KYC (ยืนยันตัวตน) ====================
+// ด่านเดียวกันสำหรับการรับ/ถอนเงิน และการเข้าถึงหมวดเนื้อหาสำหรับผู้ใหญ่บน aixman
+Route::middleware('auth')->group(function () {
+    Route::get('/kyc', [KycController::class, 'index'])->name('kyc.index');
+    // จำกัดอัตราการส่ง: การอัปโหลดรูปสี่ใบแล้วเข้ารหัสใหม่กินซีพียู และคิวตรวจ
+    // ของเจ้าหน้าที่ไม่ควรถูกถมด้วยใบซ้ำจากคนเดียว
+    Route::post('/kyc', [KycController::class, 'store'])
+        ->middleware('throttle:6,60')
+        ->name('kyc.store');
+    // เอกสารอยู่บนดิสก์ส่วนตัว เสิร์ฟผ่าน controller ที่ตรวจสิทธิ์ทุกครั้ง
+    Route::get('/kyc/document/{id}/{kind}', [KycController::class, 'document'])
+        ->whereNumber('id')
+        ->whereIn('kind', ['front', 'back', 'selfie', 'bank'])
+        ->name('kyc.document');
+});
+
+// ==================== GPUxMINE (เครื่องของฉัน) ====================
+// ที่เดียวที่ออกรหัสจับคู่ได้ — โปรแกรมไคลเอนต์สร้างตัวตนของตัวเองไม่ได้เลย
+Route::middleware('auth')->prefix('gpuxmine')->name('gpuxmine.')->group(function () {
+    Route::get('/', [GpuNodeController::class, 'index'])->name('index');
+    // รหัสจับคู่สร้าง worker ใหม่ในนามบัญชีนี้ได้ จึงจำกัดอัตราการกด
+    Route::post('/pair', [GpuNodeController::class, 'pair'])
+        ->middleware('throttle:10,10')
+        ->name('pair');
+    Route::post('/{id}/rename', [GpuNodeController::class, 'rename'])
+        ->whereNumber('id')->name('rename');
+    Route::delete('/{id}', [GpuNodeController::class, 'forget'])
+        ->whereNumber('id')->name('forget');
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/kyc', [App\Http\Controllers\Admin\KycController::class, 'index'])->name('kyc.index');
+    Route::get('/kyc/{id}', [App\Http\Controllers\Admin\KycController::class, 'show'])->whereNumber('id')->name('kyc.show');
+    Route::post('/kyc/{id}/approve', [App\Http\Controllers\Admin\KycController::class, 'approve'])->whereNumber('id')->name('kyc.approve');
+    Route::post('/kyc/{id}/reject', [App\Http\Controllers\Admin\KycController::class, 'reject'])->whereNumber('id')->name('kyc.reject');
 });

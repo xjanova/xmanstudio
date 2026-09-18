@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AffiliateTracking;
 use App\Http\Middleware\AiCrawlDetector;
+use App\Http\Middleware\EnsureKycVerified;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\ThemeMiddleware;
@@ -33,6 +34,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'turnstile' => VerifyTurnstile::class,
             'affiliate' => AffiliateTracking::class,
+            'kyc.verified' => EnsureKycVerified::class,
         ]);
 
         // Exclude Stripe webhook from CSRF verification

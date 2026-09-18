@@ -185,3 +185,14 @@ Schedule::call(function () {
     ->name('metalx-publish-scheduled-videos')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+// GPUxMINE: ดึงสถานะเครื่องจาก relay แล้วขึ้นทะเบียนรับงานที่ aixman
+// ทุกนาที เพราะเครื่องที่บ้านคนเปิด-ปิดตามใจเจ้าของ และเครื่องที่ประเมินตัวเอง
+// เสร็จตอนตีสามต้องได้งานตอนตีสาม ไม่ใช่ตอนเจ้าของตื่นมาเปิดเว็บ
+Schedule::command('gpuxmine:sync-nodes')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[GPUxMINE] node sync failed');
+    });

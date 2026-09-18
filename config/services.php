@@ -77,6 +77,15 @@ return [
 
     // AIXMAN — AI generation platform (ai.xman4289.com, Next.js, shared DB)
     // See CLAUDE.md "Cross-Project Relationship with AIXMAN" section.
+    // GPUxMINE relay — ตัวรับสายจากเครื่องที่บ้านคน
+    //
+    // admin key นี้ออก worker ใหม่ได้ทั้งเครือข่าย XMAN Studio เป็นที่เดียว
+    // ที่ถือมัน เจ้าของเครื่องไม่เคยเห็น และ aixman ก็ไม่ต้องรู้จัก relay เลย
+    'gpuxmine' => [
+        'relay_url' => env('GPUXMINE_RELAY_URL'),
+        'admin_key' => env('GPUXMINE_RELAY_ADMIN_KEY'),
+    ],
+
     'aixman' => [
         'api_base' => env('AIXMAN_API_BASE', 'https://ai.xman4289.com'),
 
