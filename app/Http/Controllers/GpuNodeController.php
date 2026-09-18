@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GpuJobEarning;
 use App\Models\GpuNode;
 use App\Services\GpuxMineDispatchService;
 use App\Services\GpuxMineRelayService;
@@ -37,11 +38,29 @@ class GpuNodeController extends Controller
         // ผลทันที ไม่ใช่รอรอบถัดไป
         $this->refreshFromRelay($nodes);
 
+        // ประวัติการรับเงิน — เจ้าของเครื่องยอมให้เราใช้การ์ดของเขา
+        // อย่างน้อยที่สุดเขาต้องเห็นได้ว่ามันทำงานไปกี่ชิ้นและได้เท่าไร
+        $earnings = GpuJobEarning::where('user_id', Auth::id())
+            ->orderByDesc('completed_at')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
+
+        $totals = GpuJobEarning::where('user_id', Auth::id())
+            ->selectRaw('status, COUNT(*) as jobs, COALESCE(SUM(amount_satang), 0) as satang')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
         return view('gpuxmine.index', [
             'nodes' => $nodes,
             'pending' => $nodes->firstWhere(fn (GpuNode $n) => $n->pairingIsUsable()),
             'relayReady' => $this->relay->isConfigured(),
             'downloadUrl' => 'https://github.com/xjanova/GpuXmine/releases/latest',
+            'earnings' => $earnings,
+            'paidSatang' => (int) ($totals['paid']->satang ?? 0),
+            'pendingSatang' => (int) ($totals['pending']->satang ?? 0),
+            'jobsTotal' => (int) $totals->sum('jobs'),
         ]);
     }
 

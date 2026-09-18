@@ -106,6 +106,15 @@
                     <x-bi k="common.wallet" layout="stack" />
                 </a>
 
+                {{-- เครื่องที่คนเอาการ์ดจอมาแชร์ เข้าถึงได้จากเมนู ไม่ใช่ต้องจำ URL --}}
+                <a href="{{ route('gpuxmine.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('gpuxmine.*') ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-amber-500 hover:to-yellow-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                    </svg>
+                    <x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" layout="stack" />
+                </a>
+
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"><x-bi th="ธุรกรรม" en="Transactions" /></p>
 
                 <a href="{{ route('customer.orders') }}"
@@ -360,6 +369,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
                     <x-bi k="common.wallet" layout="stack" />
+                </a>
+                <a href="{{ route('gpuxmine.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('gpuxmine.*') ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-amber-500 hover:to-yellow-500 hover:text-white hover:shadow-lg' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                    </svg>
+                    <x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" layout="stack" />
                 </a>
 
                 <div class="pt-2 pb-1">

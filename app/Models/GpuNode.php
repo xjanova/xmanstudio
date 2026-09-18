@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -77,6 +78,12 @@ class GpuNode extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** งานที่เครื่องนี้ทำเสร็จและเงินที่ได้จากมัน */
+    public function earnings(): HasMany
+    {
+        return $this->hasMany(GpuJobEarning::class, 'gpu_node_id');
     }
 
     public function device(): BelongsTo
