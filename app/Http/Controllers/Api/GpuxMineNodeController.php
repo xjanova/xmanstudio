@@ -71,7 +71,13 @@ class GpuxMineNodeController extends Controller
             ->whereNull('deleted_at')
             ->first();
 
-        if ($existing !== null) {
+        // ...แต่คืนของเดิมได้ก็ต่อเมื่อ relay ตัวปัจจุบันยังรู้จัก worker นั้นจริง
+        //
+        // ย้าย relay ไปอีกเครื่องเมื่อไร `workers.json` เริ่มนับหนึ่งใหม่ และ
+        // token เดิมใช้ไม่ได้ทันที ถ้าไม่เช็กตรงนี้ เจ้าของเครื่องจะได้ credential
+        // ที่ relay ปฏิเสธ แล้วนั่งงงว่าลงทะเบียนสำเร็จแต่ทำไมไม่เคยได้งาน
+        // (เจอตอนย้าย relay จากเครื่อง dev ขึ้นเซิร์ฟเวอร์จริง)
+        if ($existing !== null && $this->relay->knows($existing->worker_id)) {
             $node->delete();   // รหัสที่เพิ่งออกไม่ได้ใช้ ทิ้งไป
 
             return $this->credentials($existing, $validated, reused: true);
@@ -89,6 +95,32 @@ class GpuxMineNodeController extends Controller
         }
 
         $device = $this->rememberDevice($validated);
+
+        // เครื่องเดิมที่ worker หายไปจาก relay: ออก worker ใหม่ให้ แต่เขียนทับ
+        // แถวเดิม ไม่สร้างแถวใหม่ — เจ้าของ ชื่อเครื่อง และประวัติยังอยู่ที่เดิม
+        if ($existing !== null) {
+            $existing->forceFill([
+                'worker_id' => $enrolment['workerId'],
+                'relay_token' => $enrolment['token'],
+                'relay_url' => $enrolment['agentRelayUrl'],
+                'tunnel_endpoint' => $enrolment['aixmanEndpoint'],
+                'agent_version' => $validated['app_version'] ?? $existing->agent_version,
+                'online' => false,
+                'assessed' => false,
+                'dispatch_status' => null,
+                'dispatch_note' => null,
+            ])->save();
+
+            $node->delete();
+            $this->dispatch->sync($existing);
+
+            Log::info('GPUxMINE node re-enrolled on a new relay', [
+                'user_id' => $existing->user_id,
+                'worker_id' => $existing->worker_id,
+            ]);
+
+            return $this->credentials($existing, $validated, reused: false);
+        }
 
         $node->forceFill([
             'product_device_id' => $device?->id,
@@ -125,6 +157,11 @@ class GpuxMineNodeController extends Controller
             $node->forceFill([
                 'agent_version' => $validated['app_version'] ?? $node->agent_version,
                 'paired_at' => $node->paired_at ?? now(),
+                // ที่อยู่ของ relay เป็นเรื่องของการติดตั้ง ไม่ใช่คุณสมบัติของเครื่อง
+                // ถ้าย้าย relay ไปพอร์ตหรือโฮสต์ใหม่ เครื่องที่กลับมาจับคู่ต้อง
+                // ได้ที่อยู่ปัจจุบัน ไม่ใช่ที่อยู่ที่เขียนไว้ตั้งแต่วันแรก
+                'relay_url' => $this->relay->agentUrl(),
+                'tunnel_endpoint' => $this->relay->tunnelEndpoint($node->worker_id),
             ])->save();
         }
 

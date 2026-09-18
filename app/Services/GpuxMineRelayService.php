@@ -121,6 +121,36 @@ class GpuxMineRelayService
         }
     }
 
+    /**
+     * relay ตัวปัจจุบันยังรู้จัก worker นี้อยู่ไหม
+     *
+     * ไม่ใช่คำถามเชิงทฤษฎี: ย้าย relay ไปอีกเครื่องเมื่อไร `workers.json`
+     * ก็เริ่มนับหนึ่งใหม่ และ token ของทุกเครื่องที่ลงทะเบียนไว้ก่อนหน้าก็ใช้ไม่ได้
+     * ทันที ถ้าไม่ถามก่อน เราจะคืน credential ที่ relay ปฏิเสธแน่ ๆ ให้เจ้าของ
+     * เครื่องไปนั่งงงว่าทำไมต่อไม่ติด
+     */
+    public function knows(string $workerId): bool
+    {
+        return array_key_exists($workerId, $this->workers());
+    }
+
+    /** ที่อยู่ที่เครื่องลูกต้องต่อเข้ามา แปลงจาก URL ของ relay ที่ตั้งไว้ตอนนี้ */
+    public function agentUrl(): string
+    {
+        $base = rtrim((string) config('services.gpuxmine.relay_url'), '/');
+
+        // https://host:8443 → wss://host:8443/agent — พอร์ตต้องติดไปด้วย
+        // ไม่งั้นเครื่องจะไปเคาะ 443 ซึ่งบนเซิร์ฟเวอร์ที่ relay อยู่ตอนนี้
+        // เปิดให้เฉพาะ Cloudflare
+        return preg_replace('#^http#', 'ws', $base) . '/agent';
+    }
+
+    /** ปลายทางที่ aixman ยิงงานเข้ามา */
+    public function tunnelEndpoint(string $workerId): string
+    {
+        return rtrim((string) config('services.gpuxmine.relay_url'), '/') . '/w/' . $workerId;
+    }
+
     private function url(string $path): string
     {
         return rtrim((string) config('services.gpuxmine.relay_url'), '/') . $path;
