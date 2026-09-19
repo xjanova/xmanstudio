@@ -2,6 +2,7 @@
 
 namespace App\Support\Alerts;
 
+use App\Models\DomainRegistration;
 use App\Models\Order;
 use App\Models\Quotation;
 use App\Models\RentalPayment;
@@ -561,6 +562,69 @@ final class BusinessAlerts
                 ],
                 url: self::adminUrl('admin.quotations.list') . '?follow_up=1',
                 urlLabel: 'ดูรายการที่ต้องตาม',
+                category: 'orders',
+            ), 720);
+        });
+    }
+
+    // =============================================================================== domains
+
+    /**
+     * A domain renewed itself from the customer's wallet.
+     *
+     * Money moved without anybody pressing anything, which is exactly the kind
+     * of thing the team should see the same day rather than discover in a
+     * reconciliation later.
+     */
+    public static function domainRenewed(DomainRegistration $domain, float $price): void
+    {
+        self::guard(function () use ($domain, $price) {
+            AdminAlerts::send(new Alert(
+                key: 'domain-renewed:' . $domain->id . ':' . now()->format('Y-m'),
+                level: Alert::MONEY,
+                title: 'ต่ออายุโดเมนอัตโนมัติ ' . self::baht($price),
+                body: $domain->domain . "\n"
+                    . self::person($domain->user?->name, $domain->user?->email, null),
+                facts: [
+                    'โดเมน' => $domain->domain,
+                    'ค่าต่ออายุ' => self::baht($price),
+                    'หมดอายุใหม่' => $domain->expires_at?->format('d/m/Y') ?? '-',
+                ],
+                url: self::adminUrl('admin.domains.index'),
+                urlLabel: 'เปิดหลังบ้านโดเมน',
+                category: 'orders',
+            ), 60);
+        });
+    }
+
+    /**
+     * A renewal that did not go through.
+     *
+     * Worth a card every time: the customer has weeks left, but somebody has
+     * to look before those weeks run out, and a domain lost to a silent
+     * failure cannot be bought back.
+     */
+    public static function domainRenewalFailed(DomainRegistration $domain, string $reason): void
+    {
+        self::guard(function () use ($domain, $reason) {
+            $days = $domain->expires_at
+                ? (int) now()->startOfDay()->diffInDays($domain->expires_at->startOfDay(), false)
+                : null;
+
+            AdminAlerts::send(new Alert(
+                key: 'domain-renew-failed:' . $domain->id . ':' . now()->toDateString(),
+                level: Alert::WARNING,
+                title: 'ต่ออายุโดเมนไม่สำเร็จ',
+                body: $domain->domain . "\n"
+                    . self::person($domain->user?->name, $domain->user?->email, null) . "\n"
+                    . Str::limit($reason, 300),
+                facts: array_filter([
+                    'โดเมน' => $domain->domain,
+                    'เหลืออีก' => $days !== null ? $days . ' วัน' : null,
+                    'หมดอายุ' => $domain->expires_at?->format('d/m/Y'),
+                ]),
+                url: self::adminUrl('admin.domains.index'),
+                urlLabel: 'เปิดหลังบ้านโดเมน',
                 category: 'orders',
             ), 720);
         });

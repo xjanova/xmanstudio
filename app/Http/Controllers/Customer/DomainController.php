@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\DomainRegistration;
+use App\Services\DomainPurchaseException;
 use App\Services\DomainRegistrarService;
 use App\Services\HostingerApiService;
 use App\Support\DomainPricing;
@@ -35,6 +36,10 @@ class DomainController extends Controller
     public function index(Request $request): View
     {
         $domains = DomainRegistration::where('user_id', $request->user()->id)
+            // A renewal is a payment row in this same table. Without this the
+            // customer's list grows a second copy of the same name every year
+            // they keep it.
+            ->registrations()
             ->whereNotIn('status', [DomainRegistration::STATUS_REFUNDED])
             ->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
             ->orderBy('expires_at')
@@ -63,8 +68,48 @@ class DomainController extends Controller
             'records' => $records,
             'editableTypes' => self::EDITABLE_TYPES,
             'renewPrice' => $this->renewPriceFor($domain),
+            'renewPriceRaw' => $domain->tldRecord?->renewPriceThb() ?? 0.0,
+            'renewals' => $domain->renewals()->get(),
+            'canRenew' => $domain->canRenew(),
             'dnsUnavailable' => $domain->isUsable() && $records === [],
         ]);
+    }
+
+    /**
+     * Renew for another year, now, from the wallet.
+     *
+     * Auto-renew covers the customer who set it and forgot; this is for the one
+     * who turned it off, or who wants the year bought before they travel. Same
+     * service, same money path, same refund guarantee as the automatic run.
+     */
+    public function renew(Request $request, int $id): RedirectResponse
+    {
+        $domain = $this->findOwned($request, $id);
+
+        if (! $domain->canRenew()) {
+            return back()->with('error', 'ตอนนี้ยังต่ออายุโดเมนนี้ไม่ได้ — อาจมีรายการต่ออายุค้างอยู่ หรือโดเมนยังไม่พร้อม');
+        }
+
+        try {
+            $renewal = app(DomainRegistrarService::class)->renew($domain);
+        } catch (DomainPurchaseException $e) {
+            // Everything this throws is already written for the customer.
+            return back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'ต่ออายุไม่สำเร็จ กรุณาลองใหม่อีกครั้ง หรือติดต่อทีมงาน');
+        }
+
+        if ($renewal->status === DomainRegistration::STATUS_REFUNDED) {
+            return back()->with('error', 'ต่ออายุไม่สำเร็จ เราคืนเงินเข้ากระเป๋าให้เรียบร้อยแล้ว');
+        }
+
+        return back()->with('success', sprintf(
+            'ต่ออายุ %s เรียบร้อย หมดอายุใหม่ %s',
+            $domain->domain,
+            $domain->fresh()?->expires_at?->format('d/m/Y') ?? '-',
+        ));
     }
 
     /**

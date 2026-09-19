@@ -57,6 +57,7 @@ class DomainRegistration extends Model
         'tld',
         'status',
         'kind',
+        'renewal_of',
         'domain_contact_id',
         'remote_order_id',
         'remote_subscription_id',
@@ -73,6 +74,7 @@ class DomainRegistration extends Model
         'nameservers',
         'registered_at',
         'expires_at',
+        'renewal_notice_sent_at',
         'last_polled_at',
         'poll_attempts',
         'last_error',
@@ -88,6 +90,7 @@ class DomainRegistration extends Model
         'nameservers' => 'array',
         'registered_at' => 'datetime',
         'expires_at' => 'datetime',
+        'renewal_notice_sent_at' => 'datetime',
         'last_polled_at' => 'datetime',
         'poll_attempts' => 'integer',
     ];
@@ -129,6 +132,87 @@ class DomainRegistration extends Model
     public function scopeUnsettled($query)
     {
         return $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_REGISTERING]);
+    }
+
+    /**
+     * The domains themselves — one row per name.
+     *
+     * A renewal is a payment row in this same table, so any list of "the
+     * customer's domains" has to exclude them or the same name appears again
+     * every year it is kept.
+     */
+    public function scopeRegistrations($query)
+    {
+        return $query->where('kind', self::KIND_REGISTER);
+    }
+
+    /**
+     * Domains whose owner should be told a charge is coming.
+     *
+     * Only one notice per period: renewal_notice_sent_at is cleared when the
+     * renewal goes through, which is what arms it again for next year.
+     */
+    public function scopeDueForRenewalNotice($query, int $withinDays = 37)
+    {
+        return $query->registrations()
+            ->active()
+            ->where('auto_renew', true)
+            ->whereNull('renewal_notice_sent_at')
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '>', now())
+            ->where('expires_at', '<=', now()->addDays($withinDays));
+    }
+
+    /**
+     * Domains to charge for.
+     *
+     * The notice has to have gone out, and to have been out long enough to be
+     * read — the page promises a warning before the money moves, and a warning
+     * that arrives in the same minute as the receipt is not one.
+     */
+    public function scopeDueForRenewalCharge($query, int $withinDays = 30, int $noticeDays = 3)
+    {
+        return $query->registrations()
+            ->active()
+            ->where('auto_renew', true)
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '>', now())
+            ->where('expires_at', '<=', now()->addDays($withinDays))
+            ->whereNotNull('renewal_notice_sent_at')
+            ->where('renewal_notice_sent_at', '<=', now()->subDays($noticeDays));
+    }
+
+    /**
+     * Every renewal ever paid for this domain, newest first.
+     */
+    public function renewals()
+    {
+        return $this->hasMany(self::class, 'renewal_of')->orderByDesc('created_at');
+    }
+
+    public function renewalOf()
+    {
+        return $this->belongsTo(self::class, 'renewal_of');
+    }
+
+    public function isRenewal(): bool
+    {
+        return $this->kind === self::KIND_RENEW;
+    }
+
+    /**
+     * Can this be renewed right now?
+     *
+     * A domain we never finished registering has no subscription upstream to
+     * renew, and renewing one that is already paid for a year ahead is how a
+     * customer ends up buying three years by pressing a button twice.
+     */
+    public function canRenew(): bool
+    {
+        return $this->kind === self::KIND_REGISTER
+            && $this->status === self::STATUS_ACTIVE
+            && $this->remote_subscription_id !== null
+            && ! $this->renewals()->whereIn('status', [self::STATUS_PENDING, self::STATUS_REGISTERING])->exists();
     }
 
     public function isSettled(): bool

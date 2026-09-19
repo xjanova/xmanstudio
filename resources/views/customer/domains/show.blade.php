@@ -261,6 +261,50 @@
         </div>
     @endif
 
+    {{-- ══════════ ประวัติการต่ออายุ ══════════ --}}
+    @if($renewals->isNotEmpty())
+        <div class="{{ $card }} p-5">
+            <h3 class="font-semibold text-slate-900 dark:text-white mb-3">
+                <x-bi th="ประวัติการต่ออายุ" en="Renewal history" />
+            </h3>
+            <div class="space-y-2">
+                @foreach($renewals as $r)
+                    @php
+                        $tone = match ($r->status) {
+                            \App\Models\DomainRegistration::STATUS_ACTIVE => 'border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20',
+                            \App\Models\DomainRegistration::STATUS_REFUNDED => 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30',
+                            default => 'border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20',
+                        };
+                    @endphp
+                    <div class="rounded-xl border {{ $tone }} px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ $r->created_at->format('j M Y') }}
+                                <span class="font-normal text-slate-500 dark:text-slate-400">
+                                    @if($r->status === \App\Models\DomainRegistration::STATUS_REFUNDED)
+                                        · <x-bi th="ไม่สำเร็จ คืนเงินแล้ว" en="Failed — refunded" layout="inline" />
+                                    @elseif($r->status === \App\Models\DomainRegistration::STATUS_ACTIVE)
+                                        · <x-bi th="สำเร็จ" en="Renewed" layout="inline" />
+                                    @else
+                                        · <x-bi th="กำลังดำเนินการ" en="In progress" layout="inline" />
+                                    @endif
+                                </span>
+                            </p>
+                            @if($r->expires_at)
+                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    <x-bi th="ต่อถึง" en="Paid through" layout="inline" /> {{ $r->expires_at->format('j M Y') }}
+                                </p>
+                            @endif
+                        </div>
+                        <p class="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+                            {{ number_format((float) $r->price_thb) }} ฿
+                        </p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- ══════════ การตั้งค่า ══════════ --}}
     <div class="grid sm:grid-cols-2 gap-4">
         <div class="{{ $card }} p-5">
@@ -269,20 +313,35 @@
                 <x-bi th="ตัดจากกระเป๋าเงินก่อนหมดอายุ 30 วัน เราแจ้งล่วงหน้าทุกครั้ง"
                       en="Charged from your wallet 30 days before expiry. We always warn you first." />
             </p>
-            <form method="POST" action="{{ route('customer.domains.auto-renew', $domain->id) }}">
-                @csrf
-                <input type="hidden" name="auto_renew" value="{{ $domain->auto_renew ? 0 : 1 }}">
-                <button type="submit"
-                        class="px-5 py-2.5 rounded-lg text-sm font-semibold transition {{ $domain->auto_renew
-                            ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200'
-                            : 'bg-slate-800 dark:bg-slate-600 text-white hover:bg-slate-700' }}">
-                    @if($domain->auto_renew)
-                        <x-bi th="เปิดอยู่ — กดเพื่อปิด" en="On — tap to turn off" />
-                    @else
-                        <x-bi th="ปิดอยู่ — กดเพื่อเปิด" en="Off — tap to turn on" />
-                    @endif
-                </button>
-            </form>
+            <div class="flex flex-wrap items-center gap-2">
+                <form method="POST" action="{{ route('customer.domains.auto-renew', $domain->id) }}">
+                    @csrf
+                    <input type="hidden" name="auto_renew" value="{{ $domain->auto_renew ? 0 : 1 }}">
+                    <button type="submit"
+                            class="px-5 py-2.5 rounded-lg text-sm font-semibold transition {{ $domain->auto_renew
+                                ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200'
+                                : 'bg-slate-800 dark:bg-slate-600 text-white hover:bg-slate-700' }}">
+                        @if($domain->auto_renew)
+                            <x-bi th="เปิดอยู่ — กดเพื่อปิด" en="On — tap to turn off" />
+                        @else
+                            <x-bi th="ปิดอยู่ — กดเพื่อเปิด" en="Off — tap to turn on" />
+                        @endif
+                    </button>
+                </form>
+
+                {{-- ต่ออายุเองได้ตลอด ไม่ต้องรอรอบอัตโนมัติ — คนที่ปิดสวิตช์ไว้
+                     ก็ยังต้องมีทางจ่ายเงินต่ออายุจากหน้านี้ --}}
+                @if($canRenew && $renewPriceRaw > 0)
+                    <form method="POST" action="{{ route('customer.domains.renew', $domain->id) }}"
+                          onsubmit="return confirm('ต่ออายุ {{ $domain->domain }} อีก 1 ปี เป็นเงิน {{ number_format($renewPriceRaw) }} บาท จะตัดจากกระเป๋าเงินทันที ยืนยันไหม?')">
+                        @csrf
+                        <button type="submit"
+                                class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition">
+                            <x-bi th="ต่ออายุตอนนี้" en="Renew now" /> · {{ number_format($renewPriceRaw) }} ฿
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
 
         @if($domain->isUsable())

@@ -293,6 +293,244 @@ class DomainRegistrarService
     }
 
     /**
+     * Buy the domain another year.
+     *
+     * The customer page has promised since day one that we charge the wallet
+     * before expiry and warn first; nothing did either. This is the half that
+     * moves money, and it is deliberately the same shape as register(): take
+     * the money inside a lock with a row already written, then talk upstream,
+     * then either extend the domain or give the money back. A renewal that
+     * charges and does not renew is worse than one that never ran.
+     *
+     * The charge is its own row (kind = renew) so the customer sees what they
+     * paid and when, and so a failed attempt can be refunded independently of
+     * the registration that came before it.
+     */
+    public function renew(DomainRegistration $domain): DomainRegistration
+    {
+        if ($domain->kind !== DomainRegistration::KIND_REGISTER) {
+            throw new DomainPurchaseException('ต่ออายุได้จากรายการโดเมน ไม่ใช่จากรายการชำระเงิน');
+        }
+
+        if ($domain->status !== DomainRegistration::STATUS_ACTIVE) {
+            throw new DomainPurchaseException('โดเมนนี้ยังใช้งานไม่ได้ จึงยังต่ออายุไม่ได้');
+        }
+
+        if (! $domain->remote_subscription_id) {
+            // Nothing to renew upstream. Taking the money anyway would leave us
+            // holding it with no way to deliver.
+            throw new DomainPurchaseException('โดเมนนี้ยังเชื่อมกับผู้ให้บริการไม่สมบูรณ์ กรุณาติดต่อทีมงาน');
+        }
+
+        $record = DomainTld::where('tld', $domain->tld)->first();
+        $price = $record?->renewPriceThb() ?? 0.0;
+
+        if (! $record || $price <= 0) {
+            throw new DomainPurchaseException('ขออภัย ราคาต่ออายุของนามสกุลนี้ยังไม่พร้อม กรุณาติดต่อทีมงาน');
+        }
+
+        $renewal = $this->debitForRenewal($domain, $record, $price);
+
+        // Handed back by the idempotency guard: this period is already paid
+        // for and on its way. Do not buy it twice.
+        if ($renewal->status !== DomainRegistration::STATUS_PENDING) {
+            return $renewal;
+        }
+
+        return $this->fulfilRenewal($domain, $renewal);
+    }
+
+    /**
+     * The money half. Same lock, same order, same idempotency key shape as a
+     * registration — a renewal is a purchase and gets the same protections.
+     */
+    protected function debitForRenewal(
+        DomainRegistration $domain,
+        DomainTld $record,
+        float $price,
+    ): DomainRegistration {
+        $key = DomainRegistration::makeIdempotencyKey(
+            $domain->user_id,
+            $domain->domain,
+            DomainRegistration::KIND_RENEW,
+        );
+
+        try {
+            return DB::transaction(function () use ($domain, $record, $price, $key) {
+                $wallet = Wallet::getOrCreateForUser($domain->user_id);
+                $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
+
+                if (! $wallet || ! $wallet->is_active) {
+                    throw new DomainPurchaseException('กระเป๋าเงินของคุณถูกระงับ กรุณาติดต่อทีมงาน');
+                }
+
+                if (! $wallet->hasSufficientBalance($price)) {
+                    throw new DomainPurchaseException(sprintf(
+                        'ยอดเงินไม่พอต่ออายุ %s ต้องใช้ %s แต่มี %s',
+                        $domain->domain,
+                        DomainPricing::format($price),
+                        DomainPricing::format((float) $wallet->balance),
+                    ));
+                }
+
+                $renewal = DomainRegistration::create([
+                    'user_id' => $domain->user_id,
+                    'domain' => $domain->domain,
+                    'tld' => $domain->tld,
+                    'status' => DomainRegistration::STATUS_PENDING,
+                    'kind' => DomainRegistration::KIND_RENEW,
+                    'renewal_of' => $domain->id,
+                    'domain_contact_id' => $domain->domain_contact_id,
+                    'remote_subscription_id' => $domain->remote_subscription_id,
+                    'price_thb' => $price,
+                    'cost_usd_cents' => $record->renew_cost_usd_cents ?: $record->cost_usd_cents,
+                    'cost_currency' => $record->costCurrency(),
+                    'fx_rate' => DomainPricing::fxRate(),
+                    'years' => 1,
+                    'idempotency_key' => $key,
+                    // Cast: a parent row whose flag was never loaded would
+                    // otherwise write NULL into a NOT NULL column and kill a
+                    // renewal the customer has already been charged for.
+                    'privacy_protection' => (bool) $domain->privacy_protection,
+                    'auto_renew' => false,
+                ]);
+
+                $transaction = $wallet->pay(
+                    $price,
+                    'ต่ออายุโดเมน ' . $domain->domain,
+                    DomainRegistration::class,
+                    $renewal->id,
+                    ['domain' => $domain->domain, 'kind' => 'renew'],
+                );
+
+                if (! $transaction) {
+                    throw new DomainPurchaseException('ตัดเงินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+                }
+
+                $renewal->update(['wallet_transaction_id' => $transaction->id]);
+
+                return $renewal;
+            }, 3);
+        } catch (QueryException $e) {
+            $existing = DomainRegistration::where('idempotency_key', $key)->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Tell the registrar, then move the expiry date.
+     *
+     * The date comes from upstream when they give one — our +1 year is a
+     * fallback, and a guess about somebody else's billing period is the kind
+     * of thing that quietly drifts a day per renewal.
+     */
+    protected function fulfilRenewal(
+        DomainRegistration $domain,
+        DomainRegistration $renewal,
+    ): DomainRegistration {
+        try {
+            $result = $this->api->renewSubscription($domain->remote_subscription_id);
+
+            if ($result === null) {
+                return $this->failAndRefundRenewal($renewal, 'renew call returned no response');
+            }
+
+            $status = $result['status_code'] ?? 0;
+
+            if ($status >= 400) {
+                return $this->failAndRefundRenewal(
+                    $renewal,
+                    'upstream rejected the renewal: HTTP ' . $status . ' ' . json_encode($result['body'] ?? []),
+                );
+            }
+
+            $renewal->fill([
+                'status' => DomainRegistration::STATUS_ACTIVE,
+                'registered_at' => now(),
+                'remote_order_id' => isset($result['body']['id']) ? (string) $result['body']['id'] : null,
+            ]);
+            $renewal->save();
+
+            $domain->forceFill([
+                'expires_at' => ($domain->expires_at ?? now())->copy()->addYear(),
+                // Arm next year's warning.
+                'renewal_notice_sent_at' => null,
+                'last_error' => null,
+            ])->save();
+
+            // Ask upstream what the date really is; ours is only a guess until
+            // they answer.
+            $this->refreshFromUpstream($domain);
+
+            $renewal->update(['expires_at' => $domain->fresh()?->expires_at]);
+
+            return $renewal;
+        } catch (\Throwable $e) {
+            Log::error('[DomainRegistrar] renewal threw', [
+                'registration_id' => $renewal->id,
+                'domain' => $renewal->domain,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->failAndRefundRenewal($renewal, 'exception: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Give back what we took for a renewal that did not happen.
+     *
+     * Separate from failAndRefund() only for the wording: a customer reading
+     * their wallet history needs to see which of the two charges came back.
+     */
+    public function failAndRefundRenewal(DomainRegistration $renewal, string $reason): DomainRegistration
+    {
+        Log::warning('[DomainRegistrar] refunding failed renewal', [
+            'registration_id' => $renewal->id,
+            'domain' => $renewal->domain,
+            'reason' => $reason,
+        ]);
+
+        if ($renewal->isRefunded()) {
+            $renewal->update(['status' => DomainRegistration::STATUS_REFUNDED, 'last_error' => $reason]);
+
+            return $renewal;
+        }
+
+        DB::transaction(function () use ($renewal, $reason) {
+            $fresh = DomainRegistration::where('id', $renewal->id)->lockForUpdate()->first();
+
+            if (! $fresh || $fresh->refund_transaction_id) {
+                return;
+            }
+
+            $wallet = Wallet::getOrCreateForUser($fresh->user_id);
+            $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
+
+            $refund = $wallet->refund(
+                (float) $fresh->price_thb,
+                'คืนเงินค่าต่ออายุโดเมน ' . $fresh->domain,
+                DomainRegistration::class,
+                $fresh->id,
+                null,
+                ['domain' => $fresh->domain, 'reason' => 'renewal_failed'],
+            );
+
+            $fresh->update([
+                'status' => DomainRegistration::STATUS_REFUNDED,
+                'refund_transaction_id' => $refund->id,
+                'last_error' => $reason,
+            ]);
+        }, 3);
+
+        return $renewal->fresh() ?? $renewal;
+    }
+
+    /**
      * Pull the real expiry and nameservers once the domain exists.
      */
     public function refreshFromUpstream(DomainRegistration $registration): void

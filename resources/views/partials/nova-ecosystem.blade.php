@@ -21,6 +21,32 @@
 
         <div class="nova-grid nova-grid--2">
 
+            {{-- จดโดเมน — ขายในนามเรา จดเป็นชื่อลูกค้า คุม DNS เองได้ในหลังบ้าน --}}
+            <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#60a5fa;">
+                <span class="nova-card__media" aria-hidden="true">
+                    {{-- artwork/card-domains.webp ยังไม่ได้เจน — ยืม card-web ไปก่อน --}}
+                    <img src="{{ asset('artwork/card-web.webp') }}" alt="" loading="lazy" decoding="async">
+                </span>
+                <span class="nova-badge">ใหม่</span>
+                <span class="nova-card__icon" aria-hidden="true">
+                    @include('partials.nova-icon', ['name' => 'globe'])
+                </span>
+                <h3 class="nova-card__title">จดโดเมน / Domains</h3>
+                <span class="nova-card__en">Register &amp; manage your own domain</span>
+                <p class="nova-card__body">
+                    จดโดเมนกว่า 400 นามสกุล ราคาชัดเจนเป็นบาท ไม่มีค่าซ่อน
+                    จดในชื่อคุณเอง ย้ายออกได้ทุกเมื่อ และแก้ DNS เองได้จากหลังบ้าน
+                </p>
+                <div class="nova-eco__links">
+                    <a href="{{ route('domains.index') }}" class="nova-btn nova-btn--primary nova-btn--sm">
+                        ค้นหาชื่อโดเมน
+                    </a>
+                    <a href="{{ route('domains.pricing') }}" class="nova-btn nova-btn--ghost nova-btn--sm">
+                        ดูราคาทุกนามสกุล
+                    </a>
+                </div>
+            </article>
+
             {{-- XDreamer --}}
             <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#f472b6;">
                 <span class="nova-card__media" aria-hidden="true">

@@ -570,6 +570,10 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('id')->middleware('throttle:5,10')->name('auth-code');
             Route::post('/{id}/auto-renew', [CustomerDomainController::class, 'toggleAutoRenew'])
                 ->whereNumber('id')->name('auto-renew');
+            // ต่ออายุเองตอนนี้ — ตัดกระเป๋าเงินทันที เส้นทางเงินเดียวกับตัวตัดอัตโนมัติ
+            // จำกัดอัตราไว้เพราะปุ่มนี้ใช้เงินจริง กดรัวไม่ควรกลายเป็นหลายปี
+            Route::post('/{id}/renew', [CustomerDomainController::class, 'renew'])
+                ->whereNumber('id')->middleware('throttle:5,10')->name('renew');
             Route::post('/{id}/privacy', [CustomerDomainController::class, 'togglePrivacy'])
                 ->whereNumber('id')->name('privacy');
         });
