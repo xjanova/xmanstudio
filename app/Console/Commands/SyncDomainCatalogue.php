@@ -224,7 +224,7 @@ class SyncDomainCatalogue extends Command
 
                 $this->seenCurrencies[$currency] = true;
 
-                $tld = $this->tldFromItemId($id);
+                $tld = $this->tldFromItem($item, $id);
 
                 if ($tld === null) {
                     continue;
@@ -258,6 +258,32 @@ class SyncDomainCatalogue extends Command
         }
 
         return $out;
+    }
+
+    /**
+     * The TLD this catalogue item sells.
+     *
+     * The item's NAME is authoritative — `.CO.UK Domain` — because the id glues
+     * multi-label suffixes together: `hostingerinth-domain-couk-thb-1y` reads
+     * as `couk`, and a catalogue row for a TLD that does not exist is a row
+     * nobody can ever buy. The id is the fallback for an item whose name the
+     * registrar writes differently.
+     *
+     * @param  array<string,mixed>  $item
+     */
+    protected function tldFromItem(array $item, string $priceId): ?string
+    {
+        $name = trim((string) ($item['name'] ?? ''));
+
+        if (preg_match('/^\.([a-z0-9.\-]+)/i', $name, $m)) {
+            $tld = strtolower(rtrim($m[1], '.-'));
+
+            if (preg_match('/^[a-z0-9]+(\.[a-z0-9]+)*$/', $tld)) {
+                return $tld;
+            }
+        }
+
+        return $this->tldFromItemId($priceId);
     }
 
     /**

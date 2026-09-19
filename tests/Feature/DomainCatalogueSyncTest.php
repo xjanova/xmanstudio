@@ -69,14 +69,17 @@ class DomainCatalogueSyncTest extends TestCase
                 ],
             ],
             [
-                'id' => 'hostingerinth-domain-co-uk',
+                // The id glues the labels — `couk`, not `co-uk`. The NAME is
+                // where the real suffix is, and a catalogue row called ".couk"
+                // is a row no customer can ever buy.
+                'id' => 'hostingerinth-domain-couk',
                 'name' => '.CO.UK Domain',
                 'category' => 'DOMAIN',
                 'prices' => [
-                    ['id' => 'hostingerinth-domain-co-uk-thb-1y', 'currency' => 'THB', 'price' => 39900, 'first_period_price' => 25900, 'period' => 1, 'period_unit' => 'year'],
+                    ['id' => 'hostingerinth-domain-couk-thb-1y', 'currency' => 'THB', 'price' => 39900, 'first_period_price' => 25900, 'period' => 1, 'period_unit' => 'year'],
                     // A period-0 row: the catalogue carries these for one-off
                     // items and they must not be read as a yearly price.
-                    ['id' => 'hostingerinth-domain-co-uk-thb-restore', 'currency' => 'THB', 'price' => 350000, 'first_period_price' => 350000, 'period' => 0, 'period_unit' => ''],
+                    ['id' => 'hostingerinth-domain-couk-thb-restore', 'currency' => 'THB', 'price' => 350000, 'first_period_price' => 350000, 'period' => 0, 'period_unit' => ''],
                 ],
             ],
         ];
@@ -106,6 +109,30 @@ class DomainCatalogueSyncTest extends TestCase
         // first_period_price is the first year; price is what renewal costs.
         $this->assertSame(31900, $parsed['com']['cost']);
         $this->assertSame(51900, $parsed['com']['renew']);
+    }
+
+    public function test_a_multi_label_suffix_keeps_its_dots(): void
+    {
+        $parsed = $this->parse($this->thaiCatalogue());
+
+        $this->assertArrayHasKey('co.uk', $parsed, 'the id reads couk — the name is what says .CO.UK');
+        $this->assertArrayNotHasKey('couk', $parsed);
+        $this->assertSame('hostingerinth-domain-couk-thb-1y', $parsed['co.uk']['item_id_register'],
+            'the item id is still what we order with, however it is spelled');
+    }
+
+    public function test_an_item_with_no_usable_name_falls_back_to_its_id(): void
+    {
+        $parsed = $this->parse([[
+            'id' => 'x-domain-com',
+            'name' => 'Domain Registration',
+            'category' => 'DOMAIN',
+            'prices' => [
+                ['id' => 'x-domain-com-thb-1y', 'currency' => 'THB', 'price' => 51900, 'first_period_price' => 31900, 'period' => 1, 'period_unit' => 'year'],
+            ],
+        ]]);
+
+        $this->assertArrayHasKey('com', $parsed);
     }
 
     public function test_only_the_one_year_row_is_priced(): void
