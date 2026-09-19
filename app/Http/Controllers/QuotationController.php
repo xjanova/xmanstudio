@@ -1456,17 +1456,35 @@ class QuotationController extends Controller
         // today — an empty one would be a dead end on the very first question.
         $outcomes = [];
         foreach (Outcomes::all() as $key => $outcome) {
-            $categoryKey = $outcome['category'];
-            if (! isset($services[$categoryKey]) || $services[$categoryKey]['options'] === []) {
+            // The catalogue table and the hardcoded fallback use different keys
+            // for the same service, and index() silently switches between them
+            // when the table is empty. Resolve here, once, and hand the page a
+            // key it can look up directly.
+            $categoryKey = null;
+            foreach ([$outcome['category'], $outcome['category_fallback'] ?? null] as $candidate) {
+                if ($candidate !== null && ! empty($services[$candidate]['options'])) {
+                    $categoryKey = $candidate;
+                    break;
+                }
+            }
+
+            // Nothing in the catalogue answers this outcome today — leave it
+            // out rather than offer a first question that dead-ends.
+            if ($categoryKey === null) {
                 continue;
             }
 
-            $outcomes[] = ['key' => $key] + $outcome + [
+            // The overrides go on the LEFT: `+` keeps the left operand's value
+            // for a duplicate key, so putting them after $outcome would leave
+            // the unresolved category in place.
+            $outcomes[] = [
+                'key' => $key,
+                'category' => $categoryKey,
                 'suggested_addons' => array_values(array_intersect(
                     $outcome['suggested_addons'],
                     array_keys($addons)
                 )),
-            ];
+            ] + $outcome;
         }
 
         return [
