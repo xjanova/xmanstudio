@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Setting;
+use App\Support\Turnstile;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -22,20 +22,14 @@ class VerifyTurnstile
             return $next($request);
         }
 
-        // Check if Turnstile is globally enabled
-        if (! Setting::getValue('turnstile_enabled', false)) {
+        // Turnstile::enabledFor covers the master switch, the key pair and the
+        // per-section toggle together. The <x-turnstile> component asks the same
+        // question — if these two ever disagree the form becomes unsubmittable.
+        if (! Turnstile::enabledFor($section)) {
             return $next($request);
         }
 
-        // Check if Turnstile is enabled for this specific section
-        if ($section && ! Setting::getValue("turnstile_{$section}", false)) {
-            return $next($request);
-        }
-
-        $secretKey = Setting::getValue('turnstile_secret_key');
-        if (! $secretKey) {
-            return $next($request);
-        }
+        $secretKey = Turnstile::secretKey();
 
         $token = $request->input('cf-turnstile-response');
 

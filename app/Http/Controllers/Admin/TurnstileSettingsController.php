@@ -4,23 +4,26 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Support\Turnstile;
 use Illuminate\Http\Request;
 
 class TurnstileSettingsController extends Controller
 {
     public function index()
     {
+        // The per-section boxes read through Turnstile::sectionEnabled, not the
+        // raw setting, so a section whose row does not exist yet shows ticked —
+        // which is what it actually does. Showing it unticked would be a lie the
+        // next Save would then make true.
         $settings = [
             'turnstile_enabled' => Setting::getValue('turnstile_enabled', false),
             'turnstile_site_key' => Setting::getValue('turnstile_site_key', ''),
             'turnstile_secret_key' => Setting::getValue('turnstile_secret_key', ''),
-            'turnstile_login' => Setting::getValue('turnstile_login', false),
-            'turnstile_register' => Setting::getValue('turnstile_register', false),
-            'turnstile_password' => Setting::getValue('turnstile_password', false),
-            'turnstile_checkout' => Setting::getValue('turnstile_checkout', false),
-            'turnstile_support' => Setting::getValue('turnstile_support', false),
-            'turnstile_contact' => Setting::getValue('turnstile_contact', false),
         ];
+
+        foreach (Turnstile::SECTIONS as $section) {
+            $settings["turnstile_{$section}"] = Turnstile::sectionEnabled($section);
+        }
 
         return view('admin.turnstile.index', compact('settings'));
     }
@@ -33,15 +36,10 @@ class TurnstileSettingsController extends Controller
         ]);
 
         // Boolean toggles
-        $booleanFields = [
-            'turnstile_enabled',
-            'turnstile_login',
-            'turnstile_register',
-            'turnstile_password',
-            'turnstile_checkout',
-            'turnstile_support',
-            'turnstile_contact',
-        ];
+        $booleanFields = array_merge(
+            ['turnstile_enabled'],
+            array_map(fn (string $s) => "turnstile_{$s}", Turnstile::SECTIONS),
+        );
 
         foreach ($booleanFields as $field) {
             Setting::setValue($field, $request->boolean($field) ? '1' : '0', 'boolean', 'turnstile');
