@@ -349,7 +349,7 @@
                                     @foreach ([
                                         ['flexible', 'ยืดหยุ่นได้', 'ไม่มีกำหนดตายตัว'],
                                         ['normal', 'ตามปกติ', 'ตามกรอบเวลาที่ประเมิน'],
-                                        ['urgent', 'เร่งด่วน', 'ย่นเวลา คิดเพิ่ม 25%'],
+                                        ['urgent', 'เร่งด่วน', 'ย่นเวลา คิดเพิ่ม ' . rtrim(rtrim(number_format($catalogue['rushPercent'] ?? 25, 2), '0'), '.') . '%'],
                                     ] as [$val, $label, $hint])
                                         <button type="button" @click="timeline = '{{ $val }}'"
                                                 :class="timeline === '{{ $val }}'
@@ -411,7 +411,7 @@
                                 <div x-show="discount === 0 && nextTierHint" class="rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 px-3.5 py-2.5 text-xs text-gray-600 dark:text-gray-400" x-text="nextTierHint"></div>
 
                                 <div x-show="rushFee > 0" class="flex justify-between text-sm">
-                                    <span class="text-amber-700 dark:text-amber-300">ค่าเร่งงาน 25%</span>
+                                    <span class="text-amber-700 dark:text-amber-300">ค่าเร่งงาน <span x-text="rushPercent"></span>%</span>
                                     <span class="font-semibold text-amber-700 dark:text-amber-300 tabular-nums" x-text="money(rushFee)"></span>
                                 </div>
 
@@ -760,7 +760,8 @@ function quoteBuilder(config) {
         },
 
         get afterDiscount() { return r2(this.subtotal - this.discount); },
-        get rushFee() { return this.timeline === 'urgent' ? r2(this.afterDiscount * 0.25) : 0; },
+        get rushFee() { return this.timeline === 'urgent' ? r2(this.afterDiscount * this.rushPercent / 100) : 0; },
+        get rushPercent() { return Number(this.catalogue.rushPercent ?? 25); },
         get beforeVat() { return r2(this.afterDiscount + this.rushFee); },
 
         /** ต้องให้ base + vat = total เป๊ะ เหมือน App\Support\Quotation\VatMode */

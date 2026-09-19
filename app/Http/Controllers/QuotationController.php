@@ -12,9 +12,11 @@ use App\Models\Setting;
 use App\Models\UniquePaymentAmount;
 use App\Services\LineNotifyService;
 use App\Services\PromptPayService;
+use App\Services\QuotationAcceptance;
 use App\Services\ThaiPaymentService;
 use App\Support\Alerts\BusinessAlerts;
 use App\Support\Quotation\Outcomes;
+use App\Support\Quotation\Pricing;
 use App\Support\Quotation\VatMode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -1498,7 +1500,9 @@ class QuotationController extends Controller
             'services' => $services,
             'addons' => $addons,
             'discountTiers' => $this->discountTiers(),
-            'rushPercent' => 25,
+            'rushPercent' => Pricing::rushPercent(),
+            'paymentSplit' => Pricing::paymentSplit(),
+            'validDays' => Pricing::validDays(),
         ];
     }
 
@@ -1514,11 +1518,7 @@ class QuotationController extends Controller
      */
     protected function discountTiers(): array
     {
-        return [
-            ['from' => 200000, 'percent' => 5],
-            ['from' => 500000, 'percent' => 10],
-            ['from' => 1000000, 'percent' => 15],
-        ];
+        return Pricing::discountTiers();
     }
 
     /**
@@ -1586,7 +1586,7 @@ class QuotationController extends Controller
             'status' => 'draft',
             'action_type' => $validated['action_type'],
             'payment_method' => $validated['payment_method'],
-            'valid_until' => now()->addDays(30),
+            'valid_until' => now()->addDays(Pricing::validDays()),
 
             // Stored with the document, not looked up when it is printed: a
             // quotation issued today must still read correctly after the rate
@@ -1612,7 +1612,8 @@ class QuotationController extends Controller
             $responseData = [
                 'success' => true,
                 'message' => 'ได้รับคำสั่งซื้อแล้ว ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง',
-                'quote_number' => $quotation->quote_number,
+                // เลขที่พร้อมเวอร์ชัน: ฉบับแก้ไขใช้เลขเดิม ถ้าพิมพ์แต่เลขจะแยกไม่ออกว่าคนละฉบับ
+                'quote_number' => $quotation->displayNumber(),
                 'action' => 'order',
                 'payment_method' => $validated['payment_method'],
                 'grand_total' => $quotationData['grand_total'],
@@ -1794,7 +1795,7 @@ class QuotationController extends Controller
     /**
      * Accept, ask to renegotiate, or decline.
      */
-    public function respond(Request $request, string $token)
+    public function respond(Request $request, string $token, QuotationAcceptance $acceptance)
     {
         $quotation = $this->quotationByToken($token);
 
@@ -1823,10 +1824,37 @@ class QuotationController extends Controller
             default => $quotation->update(['customer_notes' => $validated['message']]),
         };
 
+        // Accepting opens the job: the customer's press of the button is what
+        // creates the project and the first invoice, not an admin noticing the
+        // e-mail the next morning. Same service the admin side uses, so the
+        // paperwork is identical whichever way the answer arrives.
+        $firstInvoice = null;
+        if ($validated['action'] === 'accept') {
+            try {
+                $project = $acceptance->projectFor($quotation);
+                $firstInvoice = $project->invoices()
+                    ->where('installment_no', 1)
+                    ->whereNotNull('due_date')
+                    ->first();
+            } catch (\Throwable $e) {
+                // The customer's answer is recorded and the admin has been told;
+                // a failure to open the project must not lose the acceptance or
+                // show them an error for something that is ours to fix.
+                Log::error('Opening the project after acceptance failed: ' . $e->getMessage(), [
+                    'quote_number' => $quotation->quote_number,
+                    'exception' => get_class($e),
+                ]);
+            }
+        }
+
         BusinessAlerts::quotationAnswered($quotation, $validated['action'], $validated['message'] ?? null);
 
         return back()->with('quote_success', match ($validated['action']) {
-            'accept' => 'ขอบคุณครับ ทีมงานจะติดต่อกลับเพื่อเริ่มงานโดยเร็วที่สุด',
+            'accept' => $firstInvoice
+                ? 'ขอบคุณครับ เปิดงานให้แล้ว — งวดแรก ' . number_format((float) $firstInvoice->amount, 2)
+                    . ' บาท กำหนดชำระ ' . $firstInvoice->due_date->format('d/m/Y')
+                    . ' ทีมงานจะส่งรายละเอียดการชำระเงินทางอีเมล'
+                : 'ขอบคุณครับ ทีมงานจะติดต่อกลับเพื่อเริ่มงานโดยเร็วที่สุด',
             'decline' => 'รับทราบแล้ว ขอบคุณที่สละเวลาพิจารณา',
             default => 'ส่งข้อความถึงทีมงานแล้ว จะติดต่อกลับพร้อมข้อเสนอใหม่',
         });
@@ -2047,19 +2075,14 @@ class QuotationController extends Controller
 
         // Volume discount — read from the same table the page shows the
         // visitor, so "อีก 300,000 จะได้ 10%" can never disagree with the maths.
-        $discountPercent = 0;
-        foreach ($this->discountTiers() as $tier) {
-            if ($subtotal >= $tier['from']) {
-                $discountPercent = $tier['percent'];
-            }
-        }
+        $discountPercent = Pricing::discountPercentFor($subtotal);
         $discount = round($subtotal * ($discountPercent / 100), 2);
 
         // Rush fee for urgent timeline (calculated on discounted subtotal)
         $rushFee = 0;
         $afterDiscount = $subtotal - $discount;
         if (($data['timeline'] ?? '') === 'urgent') {
-            $rushFee = round($afterDiscount * 0.25, 2);
+            $rushFee = round($afterDiscount * (Pricing::rushPercent() / 100), 2);
         }
 
         $total = round($afterDiscount + $rushFee, 2);
@@ -2078,7 +2101,7 @@ class QuotationController extends Controller
         return [
             'quote_number' => 'QT-' . date('Ymd') . '-' . strtoupper(Str::random(4)),
             'quote_date' => now()->format('d/m/Y'),
-            'valid_until' => now()->addDays(30)->format('d/m/Y'),
+            'valid_until' => now()->addDays(Pricing::validDays())->format('d/m/Y'),
             'customer' => [
                 'name' => $data['customer_name'],
                 'company' => $data['customer_company'] ?? '',

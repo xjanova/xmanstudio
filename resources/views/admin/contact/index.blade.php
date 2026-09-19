@@ -85,6 +85,20 @@
                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                               placeholder="ที่อยู่สำนักงาน (ไม่บังคับ)">{{ old('contact_address', $settings['contact_address']) }}</textarea>
                 </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">ชื่อที่ใช้ออกเอกสาร</label>
+                    <input type="text" name="company_name" value="{{ old('company_name', $settings['company_name']) }}"
+                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                           placeholder="XMAN STUDIO">
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">พิมพ์เป็นชื่อผู้ออกใบเสนอราคาและใบแจ้งหนี้</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">เลขประจำตัวผู้เสียภาษี</label>
+                    <input type="text" name="company_tax_id" value="{{ old('company_tax_id', $settings['company_tax_id']) }}"
+                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                           placeholder="0-0000-00000-00-0">
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">ปล่อยว่างได้ — เอกสารจะไม่พิมพ์บรรทัดนี้เลย ดีกว่าพิมพ์เลขที่ไม่จริง</p>
+                </div>
             </div>
         </div>
 

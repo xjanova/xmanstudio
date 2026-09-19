@@ -332,6 +332,8 @@ class CustomerPortalController extends Controller
 
         $project->load([
             'members',
+            // งวดชำระของงาน — ลูกค้าต้องเห็นว่าจ่ายอะไรไปแล้ว และค้างงวดไหน
+            'invoices',
             'features' => function ($q) {
                 $q->orderBy('order');
             },

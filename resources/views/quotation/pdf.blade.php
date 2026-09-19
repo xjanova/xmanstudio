@@ -126,12 +126,10 @@
     $rate = rtrim(rtrim(number_format((float) ($q['vat_rate'] ?? 7), 2), '0'), '.');
     $money = fn ($n) => number_format((float) $n, 2);
 
-    // งวดชำระมาตรฐาน 50/25/25 คิดจากยอดสุทธิ แล้วให้งวดแรกรับเศษ
-    // ไม่งั้นสามงวดรวมกันขาดไปหนึ่งสตางค์
-    $g = (float) $q['grand_total'];
-    $p2 = round($g * 0.25, 2);
-    $p3 = round($g * 0.25, 2);
-    $p1 = round($g - $p2 - $p3, 2);
+    // งวดชำระตามที่แอดมินตั้งไว้ (ค่าเริ่มต้น 50/25/25) คิดจากยอดสุทธิ
+    // งวดสุดท้ายรับเศษ ไม่งั้นทุกงวดรวมกันขาดไปหนึ่งสตางค์
+    $instalments = \App\Support\Quotation\Pricing::instalments((float) $q['grand_total']);
+    $pct = fn ($n) => rtrim(rtrim(number_format((float) $n, 2), '0'), '.');
 @endphp
 
 <div class="sheet">
@@ -271,9 +269,9 @@
                 <div class="box">
                     <div class="box-label">งวดการชำระเงิน</div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; color: #374151;">
-                        <tr><td style="padding: 2px 0;">งวดที่ 1 · เริ่มงาน</td><td class="num">50%</td><td class="num" style="width: 78px;">{{ $money($p1) }}</td></tr>
-                        <tr><td style="padding: 2px 0;">งวดที่ 2 · ส่งมอบงานออกแบบ</td><td class="num">25%</td><td class="num">{{ $money($p2) }}</td></tr>
-                        <tr><td style="padding: 2px 0;">งวดที่ 3 · ส่งมอบระบบ</td><td class="num">25%</td><td class="num">{{ $money($p3) }}</td></tr>
+                        @foreach ($instalments as $ins)
+                        <tr><td style="padding: 2px 0;">งวดที่ {{ $ins['no'] }} · {{ $ins['label'] }}</td><td class="num">{{ $pct($ins['percent']) }}%</td><td class="num" style="width: 78px;">{{ $money($ins['amount']) }}</td></tr>
+                        @endforeach
                     </table>
                 </div>
             </td>
@@ -293,7 +291,7 @@
 
                     @if ($q['rush_fee'] > 0)
                         <tr>
-                            <td class="k" style="color:#b45309;">ค่าเร่งงาน 25%</td>
+                            <td class="k" style="color:#b45309;">ค่าเร่งงาน {{ $pct(\App\Support\Quotation\Pricing::rushPercent()) }}%</td>
                             <td class="v" style="color:#b45309;">{{ $money($q['rush_fee']) }}</td>
                         </tr>
                     @endif

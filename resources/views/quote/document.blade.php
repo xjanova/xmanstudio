@@ -17,7 +17,7 @@
     $status = $quotation->status;
     $tone = match ($status) {
         'accepted' => ['bg' => 'bg-emerald-500/15', 'border' => 'border-emerald-400/40', 'text' => 'text-emerald-200', 'label' => 'ตอบรับแล้ว'],
-        'declined' => ['bg' => 'bg-slate-500/15', 'border' => 'border-slate-400/40', 'text' => 'text-slate-200', 'label' => 'ไม่รับข้อเสนอ'],
+        'rejected' => ['bg' => 'bg-slate-500/15', 'border' => 'border-slate-400/40', 'text' => 'text-slate-200', 'label' => 'ไม่รับข้อเสนอ'],
         'paid' => ['bg' => 'bg-emerald-500/15', 'border' => 'border-emerald-400/40', 'text' => 'text-emerald-200', 'label' => 'ชำระเงินแล้ว'],
         default => ['bg' => 'bg-sky-500/15', 'border' => 'border-sky-400/40', 'text' => 'text-sky-200', 'label' => 'รอคำตอบ'],
     };
@@ -30,7 +30,7 @@
 
     <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <p class="text-xs font-semibold tracking-[0.2em] uppercase text-blue-300/90 mb-2">ใบเสนอราคา · Quotation</p>
-        <h1 class="text-3xl sm:text-4xl font-black text-white mb-3">{{ $quotation->quote_number }}</h1>
+        <h1 class="text-3xl sm:text-4xl font-black text-white mb-3">{{ $quotation->displayNumber() }}</h1>
         <p class="text-slate-300 text-base sm:text-lg mb-6">{{ $quotation->service_name }}</p>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -124,7 +124,7 @@
                         <div class="flex justify-between text-emerald-700 dark:text-emerald-300"><span>ส่วนลดขนาดงาน {{ $doc['discount_percent'] }}%</span><span class="tabular-nums">&minus;{{ $money($doc['discount']) }}</span></div>
                     @endif
                     @if ($doc['rush_fee'] > 0)
-                        <div class="flex justify-between text-amber-700 dark:text-amber-300"><span>ค่าเร่งงาน 25%</span><span class="tabular-nums">{{ $money($doc['rush_fee']) }}</span></div>
+                        <div class="flex justify-between text-amber-700 dark:text-amber-300"><span>ค่าเร่งงาน {{ rtrim(rtrim(number_format(\App\Support\Quotation\Pricing::rushPercent(), 2), '0'), '.') }}%</span><span class="tabular-nums">{{ $money($doc['rush_fee']) }}</span></div>
                     @endif
 
                     @if ($doc['vat_mode'] === 'inclusive')
@@ -239,14 +239,22 @@
         @else
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center">
                 <p class="text-gray-700 dark:text-gray-200 font-medium">
-                    @if ($expired)
+                    @if ($quotation->isSuperseded())
+                        {{-- ลูกค้าถือลิงก์เก่าไว้ ต้องบอกให้รู้ว่ามีฉบับใหม่ ไม่ใช่ปล่อยให้คิดว่าเราปิดงานไปแล้ว --}}
+                        ใบเสนอราคาฉบับนี้มีฉบับแก้ไขใหม่แทนแล้ว
+                    @elseif ($expired)
                         ใบเสนอราคานี้หมดอายุแล้ว
                     @else
                         ใบเสนอราคานี้มีคำตอบเรียบร้อยแล้ว — {{ $tone['label'] }}
                     @endif
                 </p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    ต้องการคุยต่อ ติดต่อทีมงานได้ที่
+                    @if ($quotation->isSuperseded())
+                        ทีมงานส่งฉบับใหม่ไปที่อีเมลของคุณแล้ว ถ้าไม่ได้รับ
+                    @else
+                        ต้องการคุยต่อ
+                    @endif
+                    ติดต่อทีมงานได้ที่
                     <a href="{{ route('contact.show') }}" class="text-blue-600 dark:text-blue-400 hover:underline">หน้าติดต่อเรา</a>
                 </p>
             </div>

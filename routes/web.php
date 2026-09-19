@@ -55,6 +55,7 @@ use App\Http\Controllers\Admin\PuzzleDebugController as AdminPuzzleDebugControll
 use App\Http\Controllers\Admin\QuotationCategoryController;
 use App\Http\Controllers\Admin\QuotationController as AdminQuotationController;
 use App\Http\Controllers\Admin\QuotationOptionController;
+use App\Http\Controllers\Admin\QuotationPricingController;
 use App\Http\Controllers\Admin\RedisSettingsController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
@@ -87,6 +88,7 @@ use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\FaviconController;
 use App\Http\Controllers\GpuNodeController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KycController;
 use App\Http\Controllers\LocalVpnWebController;
 use App\Http\Controllers\MetalXController;
@@ -340,6 +342,15 @@ Route::prefix('quote')->name('quote.')->group(function () {
     Route::get('/d/{token}/pdf', [QuotationController::class, 'downloadPublic'])->name('show.pdf');
     Route::post('/d/{token}/respond', [QuotationController::class, 'respond'])
         ->middleware('throttle:20,60')->name('respond');
+});
+
+// ใบแจ้งหนี้รายงวด — โทเคนของตัวเอง เพราะคนที่จ่ายเงินมักไม่ใช่คนที่มีบัญชีในเว็บ
+// เรนเดอร์ PDF กินซีพียู และหน้านี้เปิดได้โดยไม่ต้องล็อกอิน จำกัดอัตราไว้
+// กันคนยิงรัวเอาเครื่องลง ไม่ได้กันการเดาโทเคน (64 hex เดาไม่ได้อยู่แล้ว)
+Route::prefix('invoice')->name('invoice.')->middleware('throttle:60,1')->group(function () {
+    Route::get('/{token}', [InvoiceController::class, 'show'])->name('show');
+    Route::get('/{token}/pdf', [InvoiceController::class, 'download'])
+        ->middleware('throttle:20,1')->name('download');
 });
 
 Route::get('/services/{categoryKey}/{optionKey}', [QuotationController::class, 'serviceDetail'])->name('service.detail');
@@ -1083,6 +1094,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Quotation Management
     Route::prefix('quotations')->name('quotations.')->group(function () {
+        // เงื่อนไขราคา: ส่วนลดตามยอด ค่าเร่ง อายุเอกสาร งวดชำระ
+        Route::get('/pricing', [QuotationPricingController::class, 'index'])->name('pricing');
+        Route::put('/pricing', [QuotationPricingController::class, 'update'])->name('pricing.update');
+
         // Categories
         Route::prefix('categories')->name('categories.')->group(function () {
             Route::get('/', [QuotationCategoryController::class, 'index'])->name('index');
@@ -1111,6 +1126,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/', [AdminQuotationController::class, 'index'])->name('list');
         Route::get('/{quotation}', [AdminQuotationController::class, 'show'])->name('detail');
         Route::patch('/{quotation}/status', [AdminQuotationController::class, 'updateStatus'])->name('update-status');
+        // ออกฉบับแก้ไข: เลขที่ใบเดิม เวอร์ชันใหม่ ฉบับเก่าถูกปิดไม่ให้ตอบรับ
+        Route::post('/{quotation}/revise', [AdminQuotationController::class, 'revise'])->name('revise');
+    });
+
+    // ใบแจ้งหนี้รายงวดของโครงการ
+    Route::prefix('invoices')->name('invoices.')->group(function () {
+        Route::patch('/{invoice}/status', [AdminQuotationController::class, 'updateInvoice'])->name('status');
+        Route::get('/{invoice}/pdf', [InvoiceController::class, 'adminDownload'])->name('pdf');
     });
 
     // Order Management (คำสั่งซื้อจากหน้าเว็บ)

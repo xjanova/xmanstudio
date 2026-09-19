@@ -1,10 +1,10 @@
 @extends('emails.partials.email-base')
 
-@section('title', 'ใบเสนอราคา ' . $quotation->quote_number)
+@section('title', 'ใบเสนอราคา ' . $quotation->displayNumber())
 
 @section('header')
     <div class="email-header-badge badge-order">ใบเสนอราคา</div>
-    <h1>{{ $quotation->quote_number }}</h1>
+    <h1>{{ $quotation->displayNumber() }}</h1>
     <p>{{ $doc['service']['name_th'] ?: $quotation->service_name }}</p>
 @endsection
 

@@ -12,6 +12,7 @@ use App\Models\WalletTopup;
 use App\Support\AdminAlerts;
 use App\Support\Telegram\BotActions;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -511,6 +512,57 @@ final class BusinessAlerts
                 category: 'orders',
                 buttons: [[BotActions::ackButton('q' . $q->id)]],
             ), 60, subject: 'quotation:' . $q->id);
+        });
+    }
+
+    /**
+     * The reminders that just went out.
+     *
+     * One card for the batch, not one per customer: the useful signal is "these
+     * four jobs are on the clock this week", and a ping per e-mail would train
+     * everyone to ignore the channel.
+     *
+     * @param  Collection<int, Quotation>  $quotations
+     */
+    public static function quotationsChased($quotations, int $failed = 0): void
+    {
+        self::guard(function () use ($quotations, $failed) {
+            if ($quotations->isEmpty()) {
+                return;
+            }
+
+            $value = (float) $quotations->sum(fn (Quotation $q) => (float) $q->grand_total);
+
+            $lines = $quotations->take(8)->map(fn (Quotation $q) => sprintf(
+                '%s · %s · %s · เหลือ %d วัน',
+                $q->displayNumber(),
+                Str::limit((string) $q->customer_name, 24),
+                self::baht((float) $q->grand_total),
+                $q->daysLeft(),
+            ))->all();
+
+            if ($quotations->count() > 8) {
+                $lines[] = '…และอีก ' . ($quotations->count() - 8) . ' ฉบับ';
+            }
+            if ($failed > 0) {
+                $lines[] = "
+ส่งไม่สำเร็จ {$failed} ฉบับ — ดู log";
+            }
+
+            AdminAlerts::send(new Alert(
+                key: 'quotation-followup:' . now()->toDateString(),
+                level: $failed > 0 ? Alert::WARNING : Alert::MONEY,
+                title: 'เตือนลูกค้าเรื่องใบเสนอราคาใกล้หมดอายุ ' . $quotations->count() . ' ฉบับ',
+                body: implode('
+', $lines),
+                facts: [
+                    'มูลค่ารวม' => self::baht($value),
+                    'ส่งแล้ว' => (string) $quotations->count(),
+                ],
+                url: self::adminUrl('admin.quotations.list') . '?follow_up=1',
+                urlLabel: 'ดูรายการที่ต้องตาม',
+                category: 'orders',
+            ), 720);
         });
     }
 

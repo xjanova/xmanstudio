@@ -40,7 +40,7 @@ class QuotationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'ใบเสนอราคา ' . $this->quotation->quote_number . ' จาก XMAN Studio',
+            subject: 'ใบเสนอราคา ' . $this->quotation->displayNumber() . ' จาก XMAN Studio',
         );
     }
 

@@ -186,6 +186,18 @@ Schedule::call(function () {
     ->everyFiveMinutes()
     ->withoutOverlapping();
 
+// ใบเสนอราคา: เตือนลูกค้าหนึ่งครั้งก่อนหมดอายุ
+// วันละครั้งตอนเก้าโมง — เตือนตอนตีสามไม่มีใครอ่าน และเห็นอีเมลตอนเช้าดูเหมือน
+// คนตามงาน ไม่ใช่สคริปต์ withoutOverlapping กันส่งซ้ำถ้ารันทับกัน
+Schedule::command('quotations:follow-up')
+    ->dailyAt('09:00')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Quotation] follow-up reminders failed');
+    });
+
 // GPUxMINE: ดึงสถานะเครื่องจาก relay แล้วขึ้นทะเบียนรับงานที่ aixman
 // ทุกนาที เพราะเครื่องที่บ้านคนเปิด-ปิดตามใจเจ้าของ และเครื่องที่ประเมินตัวเอง
 // เสร็จตอนตีสามต้องได้งานตอนตีสาม ไม่ใช่ตอนเจ้าของตื่นมาเปิดเว็บ
