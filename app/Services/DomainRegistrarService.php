@@ -150,6 +150,9 @@ class DomainRegistrarService
                     'domain_contact_id' => $contact->id,
                     'price_thb' => $price,
                     'cost_usd_cents' => $record->cost_usd_cents,
+                    // Which money that figure is in, so the margin report does
+                    // not convert a baht cost as though it were dollars.
+                    'cost_currency' => $record->costCurrency(),
                     'fx_rate' => DomainPricing::fxRate(),
                     'years' => 1,
                     'idempotency_key' => $key,

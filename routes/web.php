@@ -1476,6 +1476,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/domains', [DomainSettingController::class, 'index'])->name('domains.index');
     Route::post('/domains', [DomainSettingController::class, 'update'])->name('domains.update');
     Route::post('/domains/test', [DomainSettingController::class, 'testConnection'])->name('domains.test');
+    // ดึงราคาจริงจากผู้ให้บริการจากในเว็บ ไม่ต้อง ssh เข้าไปรัน artisan
+    Route::post('/domains/sync', [DomainSettingController::class, 'syncCatalogue'])->name('domains.sync');
     Route::post('/domains/tld/{id}', [DomainSettingController::class, 'updateTld'])->whereNumber('id')->name('domains.tld');
 
     Route::get('/kyc', [App\Http\Controllers\Admin\KycController::class, 'index'])->name('kyc.index');

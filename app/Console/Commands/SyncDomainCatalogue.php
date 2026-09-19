@@ -28,12 +28,24 @@ class SyncDomainCatalogue extends Command
 
     protected $description = 'Sync domain TLD prices and item ids from the registrar catalogue';
 
+    /**
+     * Currencies the catalogue offered on domain rows, for the message shown
+     * when none of them could be used.
+     *
+     * @var array<string,true>
+     */
+    protected array $seenCurrencies = [];
+
     public function handle(HostingerApiService $api): int
     {
         if (! $api->isConfigured()) {
-            $this->error('No registrar API token configured. Set it at /admin/domains first.');
+            // Not a failure — the shop simply is not set up yet. Returning
+            // FAILURE here made the scheduler write an ERROR line on every run
+            // until somebody pasted a token, which is noise in a log people are
+            // supposed to trust.
+            $this->warn('No registrar API token configured. Set it at /admin/domains first.');
 
-            return self::FAILURE;
+            return self::SUCCESS;
         }
 
         $this->info('Fetching catalogue…');
@@ -50,6 +62,12 @@ class SyncDomainCatalogue extends Command
         if ($parsed === []) {
             $this->warn('The catalogue came back with no domain items. Nothing to do.');
             $this->line('If this is unexpected, the item id format may have changed — see parseDomainItems().');
+            // Say what WAS there. The first time this fired, the catalogue held
+            // 889 domain items priced in THB and the parser wanted USD; without
+            // this line the only clue was "nothing to do".
+            if ($this->seenCurrencies !== []) {
+                $this->line('Currencies seen on domain rows: ' . implode(', ', array_keys($this->seenCurrencies)));
+            }
 
             return self::FAILURE;
         }
@@ -68,6 +86,7 @@ class SyncDomainCatalogue extends Command
                 'cost' => $record->cost_usd_cents,
                 'renew' => $record->renew_cost_usd_cents,
                 'item' => $record->item_id_register,
+                'currency' => $record->cost_currency ?: 'USD',
             ];
 
             $record->fill([
@@ -75,6 +94,9 @@ class SyncDomainCatalogue extends Command
                 'item_id_renew' => $data['item_id_renew'] ?? $record->item_id_renew,
                 'cost_usd_cents' => $data['cost'] ?? $record->cost_usd_cents,
                 'renew_cost_usd_cents' => $data['renew'] ?? $data['cost'] ?? $record->renew_cost_usd_cents,
+                // The money the registrar billed, not ours. A Thai account
+                // quotes the whole catalogue in THB and must not be converted.
+                'cost_currency' => $data['currency'] ?? $record->cost_currency ?? 'USD',
                 'synced_at' => now(),
             ]);
 
@@ -85,14 +107,21 @@ class SyncDomainCatalogue extends Command
                 $record->sort_order = 500;
             }
 
-            $changed = $isNew || $record->isDirty(['cost_usd_cents', 'renew_cost_usd_cents', 'item_id_register']);
+            $changed = $isNew || $record->isDirty(['cost_usd_cents', 'renew_cost_usd_cents', 'item_id_register', 'cost_currency']);
 
             if ($changed) {
                 $rows[] = [
                     '.' . $tld,
                     $isNew ? 'NEW' : 'updated',
-                    sprintf('$%.2f → $%.2f', $before['cost'] / 100, $record->cost_usd_cents / 100),
-                    DomainPricing::format(DomainPricing::sell($record->cost_usd_cents, $record->margin_percent !== null ? (float) $record->margin_percent : null)),
+                    // A TLD we have never seen has no old price to show.
+                    $isNew
+                        ? $record->costLabel()
+                        : sprintf('%s → %s', $this->money((int) $before['cost'], (string) $before['currency']), $record->costLabel()),
+                    DomainPricing::format(DomainPricing::sell(
+                        $record->cost_usd_cents,
+                        $record->margin_percent !== null ? (float) $record->margin_percent : null,
+                        $record->costCurrency(),
+                    )),
                 ];
 
                 $isNew ? $created++ : $updated++;
@@ -158,6 +187,7 @@ class SyncDomainCatalogue extends Command
     protected function parseDomainItems(array $items): array
     {
         $out = [];
+        $this->seenCurrencies = [];
 
         foreach ($items as $item) {
             if (! is_array($item)) {
@@ -176,13 +206,13 @@ class SyncDomainCatalogue extends Command
                 }
 
                 $id = (string) ($price['id'] ?? '');
-                $currency = strtolower((string) ($price['currency'] ?? ''));
+                $currency = strtoupper((string) ($price['currency'] ?? ''));
                 $period = (int) ($price['period'] ?? 0);
                 $unit = strtolower((string) ($price['period_unit'] ?? 'year'));
                 $amount = $price['first_period_price'] ?? $price['price'] ?? null;
                 $renew = $price['price'] ?? $amount;
 
-                if ($id === '' || $currency !== 'usd' || ! is_numeric($amount)) {
+                if ($id === '' || $currency === '' || ! is_numeric($amount)) {
                     continue;
                 }
 
@@ -192,6 +222,8 @@ class SyncDomainCatalogue extends Command
                     continue;
                 }
 
+                $this->seenCurrencies[$currency] = true;
+
                 $tld = $this->tldFromItemId($id);
 
                 if ($tld === null) {
@@ -199,10 +231,20 @@ class SyncDomainCatalogue extends Command
                 }
 
                 $cost = (int) $amount;
+                $existing = $out[$tld] ?? null;
 
-                // Keep the cheapest one-year price per TLD.
-                if (isset($out[$tld]) && $out[$tld]['cost'] <= $cost) {
-                    continue;
+                // A reseller account is billed in one currency, but if the
+                // catalogue ever offers a choice, prefer the one we already
+                // convert from. Otherwise take what we are given: a Thai
+                // account lists THB and nothing else, and refusing it is how
+                // the catalogue ended up with no sellable TLD at all.
+                if ($existing !== null) {
+                    $preferred = $existing['currency'] === 'USD' && $currency !== 'USD';
+                    $cheaperSame = $existing['currency'] === $currency && $existing['cost'] <= $cost;
+
+                    if ($preferred || $cheaperSame) {
+                        continue;
+                    }
                 }
 
                 $out[$tld] = [
@@ -210,11 +252,22 @@ class SyncDomainCatalogue extends Command
                     'item_id_renew' => $id,
                     'cost' => $cost,
                     'renew' => is_numeric($renew) ? (int) $renew : $cost,
+                    'currency' => $currency,
                 ];
             }
         }
 
         return $out;
+    }
+
+    /**
+     * A cost written the way the operator reads it, for the summary table.
+     */
+    protected function money(int $cents, string $currency): string
+    {
+        return strtoupper($currency) === 'THB'
+            ? number_format($cents / 100, 2) . ' ฿'
+            : '$' . number_format($cents / 100, 2);
     }
 
     /**
@@ -226,7 +279,9 @@ class SyncDomainCatalogue extends Command
      */
     protected function tldFromItemId(string $id): ?string
     {
-        if (! preg_match('/-domain-(.+)-(usd|eur|gbp)-\d+[a-z]/i', $id, $m)) {
+        // Any ISO currency, not a hardcoded three: our own account bills THB,
+        // which the original list did not contain.
+        if (! preg_match('/-domain-(.+)-([a-z]{3})-\d+[a-z]/i', $id, $m)) {
             return null;
         }
 

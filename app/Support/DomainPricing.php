@@ -27,22 +27,29 @@ class DomainPricing
 
     public const DEFAULT_ROUNDING = 10;
 
+    /** The money the shop sells in. A cost already in it needs no conversion. */
+    public const HOME_CURRENCY = 'THB';
+
     /**
-     * The selling price in THB for something that costs us $cents upstream.
+     * The selling price in THB for something that cost us $costCents upstream.
+     *
+     * $currency is the money the REGISTRAR billed us in, not ours. A Thai
+     * reseller account quotes the whole catalogue in THB, and multiplying that
+     * by an exchange rate would price a 319 baht domain at eleven thousand —
+     * which is exactly what would have happened had the sync been fixed without
+     * this parameter.
      *
      * Rounds up, never down: rounding a margin away is how a catalogue ends up
      * with a line that loses money on every sale.
      */
-    public static function sell(int $costUsdCents, ?float $marginPercent = null): float
+    public static function sell(int $costCents, ?float $marginPercent = null, string $currency = 'USD'): float
     {
-        if ($costUsdCents <= 0) {
+        if ($costCents <= 0) {
             return 0.0;
         }
 
         $margin = $marginPercent ?? static::defaultMargin();
-
-        $baseThb = ($costUsdCents / 100) * static::fxRate();
-        $withMargin = $baseThb * (1 + ($margin / 100));
+        $withMargin = static::costThb($costCents, null, $currency) * (1 + ($margin / 100));
 
         return static::round($withMargin);
     }
@@ -50,9 +57,15 @@ class DomainPricing
     /**
      * What the sale actually cost us in THB, for margin reporting.
      */
-    public static function costThb(int $costUsdCents, ?float $fxRate = null): float
+    public static function costThb(int $costCents, ?float $fxRate = null, string $currency = 'USD'): float
     {
-        return round(($costUsdCents / 100) * ($fxRate ?? static::fxRate()), 2);
+        $major = $costCents / 100;
+
+        if (strtoupper($currency) === static::HOME_CURRENCY) {
+            return round($major, 2);
+        }
+
+        return round($major * ($fxRate ?? static::fxRate()), 2);
     }
 
     /**

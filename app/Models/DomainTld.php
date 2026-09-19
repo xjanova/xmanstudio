@@ -25,6 +25,7 @@ class DomainTld extends Model
         'cost_usd_cents',
         'renew_cost_usd_cents',
         'transfer_cost_usd_cents',
+        'cost_currency',
         'margin_percent',
         'is_active',
         'is_featured',
@@ -64,7 +65,7 @@ class DomainTld extends Model
      */
     public function registerPriceThb(): float
     {
-        return DomainPricing::sell($this->cost_usd_cents, $this->effectiveMargin());
+        return DomainPricing::sell($this->cost_usd_cents, $this->effectiveMargin(), $this->costCurrency());
     }
 
     /**
@@ -78,7 +79,30 @@ class DomainTld extends Model
     {
         $cost = $this->renew_cost_usd_cents ?: $this->cost_usd_cents;
 
-        return DomainPricing::sell($cost, $this->effectiveMargin());
+        return DomainPricing::sell($cost, $this->effectiveMargin(), $this->costCurrency());
+    }
+
+    /**
+     * The money the registrar bills us in for this TLD.
+     *
+     * Rows that predate the catalogue knowing about currencies are USD, which
+     * is what the seeded fallback prices were quoted in.
+     */
+    public function costCurrency(): string
+    {
+        return strtoupper((string) ($this->cost_currency ?: 'USD'));
+    }
+
+    /**
+     * What this TLD costs us, written the way an operator reads it.
+     */
+    public function costLabel(): string
+    {
+        $major = $this->cost_usd_cents / 100;
+
+        return $this->costCurrency() === 'THB'
+            ? number_format($major, 2) . ' ฿'
+            : '$' . number_format($major, 2);
     }
 
     /**

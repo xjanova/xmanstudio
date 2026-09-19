@@ -133,14 +133,26 @@
             ตารางข้างล่างยังเป็น<span class="font-semibold">ราคาตั้งต้นโดยประมาณ</span>จนกว่าจะรันคำสั่งนี้ครั้งแรก
             นามสกุลที่ยังไม่มี item id จะ<span class="font-semibold">ขายไม่ได้</span> (ระบบปฏิเสธการสั่งซื้อ) ซึ่งเป็นพฤติกรรมที่ตั้งใจ — ดีกว่าขายในราคาที่กุขึ้นเอง
         </p>
-        <div class="space-y-2 font-mono text-xs">
-            <p class="text-gray-500 dark:text-gray-400">ดูว่าจะเปลี่ยนอะไรบ้างก่อน (ไม่เขียนลงฐาน):</p>
-            <pre class="bg-gray-100 dark:bg-gray-900 rounded-lg px-4 py-2.5 text-gray-800 dark:text-gray-200 overflow-x-auto">php artisan domains:sync-catalogue --dry</pre>
-            <p class="text-gray-500 dark:text-gray-400 pt-2">เขียนจริง:</p>
-            <pre class="bg-gray-100 dark:bg-gray-900 rounded-lg px-4 py-2.5 text-gray-800 dark:text-gray-200 overflow-x-auto">php artisan domains:sync-catalogue</pre>
-        </div>
+        <form method="POST" action="{{ route('admin.domains.sync') }}" class="flex flex-wrap items-center gap-3">
+            @csrf
+            <button type="submit" name="dry" value="1"
+                    class="px-5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                ดูก่อนว่าจะเปลี่ยนอะไร
+            </button>
+            <button type="submit"
+                    class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition">
+                ดึงราคาล่าสุดเลย
+            </button>
+            <span class="text-xs text-gray-500 dark:text-gray-400">ใช้เวลาไม่กี่วินาที</span>
+        </form>
+
+        @if (session('sync_output'))
+            <pre class="mt-4 bg-gray-900 text-gray-100 rounded-lg px-4 py-3 text-xs overflow-x-auto whitespace-pre-wrap">{{ session('sync_output') }}</pre>
+        @endif
+
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
-            หลังจากนั้นระบบรันให้เองทุกวันตี 4 · นามสกุลใหม่ที่เจอจะถูกปิดไว้ก่อน ต้องมาเปิดเองในตารางล่าง
+            ระบบดึงให้เองทุกวันตี 4 อยู่แล้ว · นามสกุลใหม่ที่เจอจะถูกปิดไว้ก่อน ต้องมาเปิดเองในตารางล่าง
+            · รันจากเครื่องก็ได้ที่ <code class="font-mono">php artisan domains:sync-catalogue</code>
         </p>
     </div>
 

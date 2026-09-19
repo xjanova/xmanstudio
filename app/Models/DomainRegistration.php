@@ -62,6 +62,7 @@ class DomainRegistration extends Model
         'remote_subscription_id',
         'price_thb',
         'cost_usd_cents',
+        'cost_currency',
         'fx_rate',
         'years',
         'wallet_transaction_id',

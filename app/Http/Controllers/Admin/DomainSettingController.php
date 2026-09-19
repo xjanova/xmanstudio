@@ -10,6 +10,7 @@ use App\Services\HostingerApiService;
 use App\Support\DomainPricing;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
@@ -130,6 +131,47 @@ class DomainSettingController extends Controller
     }
 
     /**
+     * Pull the registrar's real prices, from the browser.
+     *
+     * The page used to print two artisan commands and expect the operator to
+     * SSH in. Nobody does: the catalogue sat unsynced, every TLD kept a null
+     * item id, and the shop could not sell a single domain while looking like
+     * it could. The scheduler runs the same command nightly — this is the
+     * button for the other twenty-three hours.
+     *
+     * Runs inline rather than queued because the operator is looking at the
+     * page and wants the answer, and the call takes a couple of seconds.
+     */
+    public function syncCatalogue(Request $request): RedirectResponse
+    {
+        if (! $this->api->isConfigured()) {
+            return back()->with('error', 'ยังไม่ได้ใส่ API token');
+        }
+
+        $dry = $request->boolean('dry');
+
+        try {
+            $exit = Artisan::call('domains:sync-catalogue', $dry ? ['--dry' => true] : []);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'ดึงราคาไม่สำเร็จ — ดูรายละเอียดใน log');
+        }
+
+        $output = trim(Artisan::output());
+
+        if ($exit !== 0) {
+            return back()
+                ->with('error', 'ดึงราคาไม่สำเร็จ')
+                ->with('sync_output', $output);
+        }
+
+        return back()
+            ->with('success', $dry ? 'ทดลองดึงราคาแล้ว (ยังไม่บันทึก)' : 'ดึงราคาจากผู้ให้บริการเรียบร้อย')
+            ->with('sync_output', $output);
+    }
+
+    /**
      * @return array<string,mixed>
      */
     protected function stats(): array
@@ -138,7 +180,11 @@ class DomainSettingController extends Controller
 
         $revenue = (clone $active)->sum('price_thb');
         $cost = (clone $active)->get()
-            ->sum(fn (DomainRegistration $r) => DomainPricing::costThb($r->cost_usd_cents, (float) $r->fx_rate));
+            ->sum(fn (DomainRegistration $r) => DomainPricing::costThb(
+                $r->cost_usd_cents,
+                (float) $r->fx_rate,
+                (string) ($r->cost_currency ?: 'USD'),
+            ));
 
         return [
             'active' => (clone $active)->count(),

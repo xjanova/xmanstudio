@@ -42,9 +42,12 @@ class ReconcileDomainOrders extends Command
     public function handle(HostingerApiService $api, DomainRegistrarService $registrar): int
     {
         if (! $api->isConfigured()) {
-            $this->error('No registrar API token configured.');
+            // Runs every five minutes. Before a token is pasted in, FAILURE here
+            // meant an ERROR line in the production log 288 times a day saying
+            // nothing more than "not set up yet".
+            $this->warn('No registrar API token configured — nothing to reconcile.');
 
-            return self::FAILURE;
+            return self::SUCCESS;
         }
 
         $query = DomainRegistration::unsettled();
