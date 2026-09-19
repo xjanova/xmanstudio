@@ -244,6 +244,35 @@ class DomainCatalogueSyncTest extends TestCase
         $this->artisan('domains:reconcile')->assertSuccessful();
     }
 
+    public function test_a_tld_we_cannot_actually_buy_is_not_offered(): void
+    {
+        // .ai is switched on and priced, but our Thai reseller account does not
+        // carry it, so the sync never gave it an item id. Quoting a price and
+        // refusing at the end of the form is the worst possible order.
+        DomainTld::updateOrCreate(['tld' => 'ai'], [
+            'item_id_register' => null,
+            'cost_usd_cents' => 8999,
+            'is_active' => true,
+            'search_by_default' => true,
+        ]);
+        DomainTld::updateOrCreate(['tld' => 'com'], [
+            'item_id_register' => 'hostingerinth-domain-com-thb-1y',
+            'cost_usd_cents' => 31900,
+            'cost_currency' => 'THB',
+            'is_active' => true,
+            'search_by_default' => true,
+        ]);
+
+        $offered = DomainTld::active()->pluck('tld')->all();
+
+        $this->assertContains('com', $offered);
+        $this->assertNotContains('ai', $offered);
+        $this->assertNotContains('ai', DomainTld::searchDefault()->pluck('tld')->all());
+
+        // The admin still sees it — that page lists every row on purpose.
+        $this->assertNotNull(DomainTld::where('tld', 'ai')->first());
+    }
+
     public function test_the_admin_can_pull_prices_from_the_page(): void
     {
         Http::fake(['*' => Http::response(['data' => $this->thaiCatalogue()], 200)]);

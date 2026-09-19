@@ -50,14 +50,26 @@ class DomainTld extends Model
         'synced_at' => 'datetime',
     ];
 
+    /**
+     * What the shop may offer: switched on AND actually orderable.
+     *
+     * The item id is half the gate. Our Thai reseller account does not carry
+     * .ai, so it kept the seeded fallback price and no item id — and because
+     * only the final purchase step checked for one, a customer could search it,
+     * be quoted 4,770 baht, fill in the whole registrant form and only then be
+     * told no. A TLD we cannot buy must not be advertised.
+     *
+     * The admin page deliberately does NOT use this scope: an operator needs to
+     * see the rows that are not sellable, which is why they carry a badge.
+     */
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('is_active', true)->whereNotNull('item_id_register');
     }
 
     public function scopeSearchDefault($query)
     {
-        return $query->where('is_active', true)->where('search_by_default', true);
+        return $query->active()->where('search_by_default', true);
     }
 
     /**
