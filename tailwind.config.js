@@ -35,6 +35,13 @@ export default {
         'bounce-in': 'bounceIn 0.5s ease-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        // These four were written into the premium layouts' inline <style> only,
+        // so every page on the standard theme — which is most of the admin panel
+        // — used the class names and got nothing. Defined here they work on both.
+        'blob': 'blob 7s infinite',
+        'slide-in': 'slideIn 0.5s ease-out',
+        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+        'gradient': 'gradientShift 3s ease infinite',
       },
       keyframes: {
         fadeIn: {
@@ -66,6 +73,27 @@ export default {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        // Copied from layouts/app-premium.blade.php so the two agree: a page on
+        // the premium theme must not animate differently from the same page on
+        // the standard one.
+        blob: {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+          '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+        },
+        slideIn: {
+          '0%': { transform: 'translateX(-100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        pulseGlow: {
+          '0%, 100%': { boxShadow: '0 0 5px rgba(99, 102, 241, 0.5)' },
+          '50%': { boxShadow: '0 0 20px rgba(99, 102, 241, 0.8)' },
+        },
+        gradientShift: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
         },
       },
       backgroundImage: {

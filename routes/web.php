@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
+use App\Http\Controllers\Admin\DomainSettingController;
 use App\Http\Controllers\Admin\DonationController;
 use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\Admin\GuideScreenshotController;
@@ -1472,10 +1473,10 @@ Route::middleware('auth')->prefix('gpuxmine')->name('gpuxmine.')->group(function
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     // ระบบขายโดเมน — token ที่ตั้งตรงนี้ใช้เงินได้จริง จึงอยู่หลัง admin เท่านั้น
-    Route::get('/domains', [App\Http\Controllers\Admin\DomainSettingController::class, 'index'])->name('domains.index');
-    Route::post('/domains', [App\Http\Controllers\Admin\DomainSettingController::class, 'update'])->name('domains.update');
-    Route::post('/domains/test', [App\Http\Controllers\Admin\DomainSettingController::class, 'testConnection'])->name('domains.test');
-    Route::post('/domains/tld/{id}', [App\Http\Controllers\Admin\DomainSettingController::class, 'updateTld'])->whereNumber('id')->name('domains.tld');
+    Route::get('/domains', [DomainSettingController::class, 'index'])->name('domains.index');
+    Route::post('/domains', [DomainSettingController::class, 'update'])->name('domains.update');
+    Route::post('/domains/test', [DomainSettingController::class, 'testConnection'])->name('domains.test');
+    Route::post('/domains/tld/{id}', [DomainSettingController::class, 'updateTld'])->whereNumber('id')->name('domains.tld');
 
     Route::get('/kyc', [App\Http\Controllers\Admin\KycController::class, 'index'])->name('kyc.index');
     Route::get('/kyc/{id}', [App\Http\Controllers\Admin\KycController::class, 'show'])->whereNumber('id')->name('kyc.show');

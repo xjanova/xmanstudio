@@ -175,6 +175,28 @@
     .animate-delay-400 { animation-delay: 400ms; }
     .animate-delay-500 { animation-delay: 500ms; }
 
+    /* The blobs behind almost every admin header are written as
+       `animate-blob animation-delay-2000` — 264 of them across the views — and
+       that second class has never existed anywhere in the project. Tailwind has
+       no `animation-delay-*` utility (its `delay-*` is for transitions), and the
+       `animate-delay-*` above is a different name, so every blob on a page
+       started its 7s loop at exactly the same moment and they drifted as one
+       shape instead of three. These are the values the views actually ask for. */
+    .animation-delay-200 { animation-delay: 200ms; }
+    .animation-delay-400 { animation-delay: 400ms; }
+    .animation-delay-600 { animation-delay: 600ms; }
+    .animation-delay-800 { animation-delay: 800ms; }
+    .animation-delay-1000 { animation-delay: 1000ms; }
+    .animation-delay-1200 { animation-delay: 1200ms; }
+    .animation-delay-1400 { animation-delay: 1400ms; }
+    .animation-delay-1600 { animation-delay: 1600ms; }
+    .animation-delay-2000 { animation-delay: 2000ms; }
+    .animation-delay-4000 { animation-delay: 4000ms; }
+
+    /* animate-gradient moves the background position, so the gradient has to be
+       larger than the box or there is nothing for it to move. */
+    .animate-gradient { background-size: 200% 200%; }
+
     /* Hover animations */
     .hover-lift {
         @apply transition-transform duration-300 hover:-translate-y-2;
