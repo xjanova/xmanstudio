@@ -136,6 +136,14 @@
 
 <div class="sheet">
 
+    @if (!empty($isPreview))
+        {{-- ดูก่อนส่ง — ต้องบอกให้ชัดว่ายังไม่ใช่เอกสารจริง ไม่งั้นมีคนเซฟไปใช้ตั้งเบิก --}}
+        <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:7px 12px; margin-bottom:12px;">
+            <span style="font-size:11px; font-weight:bold; color:#92400e;">ตัวอย่างเอกสาร</span>
+            <span style="font-size:11px; color:#92400e;"> &nbsp;— ยังไม่ได้ออกเลขที่จริง ยังไม่มีผลผูกพัน กดส่งเพื่อรับใบเสนอราคาฉบับจริงทางอีเมล</span>
+        </div>
+    @endif
+
     {{-- ══ หัวกระดาษ ══ --}}
     <table class="head">
         <tr>

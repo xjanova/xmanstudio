@@ -1433,6 +1433,12 @@ class QuotationController extends Controller
                     'name_th' => $option['name_th'] ?? $option['name'] ?? $optionKey,
                     'name' => $option['name'] ?? $optionKey,
                     'price' => (float) ($option['price'] ?? 0),
+                    // Add-ons carry is_core too: an admin marking one means
+                    // "tick it for me whenever this group is being offered".
+                    // Leaving it out of the payload made the flag do nothing
+                    // here while working on service options — a setting that
+                    // silently applies to only half the catalogue.
+                    'is_core' => (bool) ($row->is_core ?? false),
                     'requires' => (array) ($row->requires ?? []),
                     'suggested_for' => (array) ($row->suggested_for ?? []),
                     'reason_th' => $row->reason_th ?? null,
@@ -1692,6 +1698,61 @@ class QuotationController extends Controller
     /**
      * Get all valid service type keys (hardcoded + database)
      */
+    /**
+     * The document as it would print, before anyone commits to anything.
+     *
+     * Deliberately NOT validateRequest(): a visitor wants to see what they are
+     * about to receive before handing over a name and an e-mail address, so
+     * the customer fields are optional here and stand in as placeholders. It
+     * stores nothing and issues no quote number that could be mistaken for a
+     * real one.
+     */
+    public function previewDocument(Request $request)
+    {
+        $validated = $request->validate([
+            'service_type' => 'required|string|in:' . implode(',', $this->getAllServiceTypeKeys()),
+            'service_options' => 'required|array|min:1',
+            'service_options.*' => 'string',
+            'additional_options' => 'nullable|array',
+            'additional_options.*' => 'string',
+            'timeline' => 'nullable|string|in:urgent,normal,flexible',
+            'vat_mode' => 'nullable|string|in:' . implode(',', VatMode::all()),
+            'withholding_pct' => 'nullable|numeric|min:0|max:15',
+            'customer_name' => 'nullable|string|max:255',
+            'customer_company' => 'nullable|string|max:255',
+            'customer_email' => 'nullable|string|max:255',
+            'customer_phone' => 'nullable|string|max:20',
+            'customer_address' => 'nullable|string|max:500',
+            'customer_tax_id' => 'nullable|string|max:20',
+            'project_description' => 'nullable|string|max:2000',
+        ]);
+
+        // A field the visitor never filled is absent from $validated entirely,
+        // not present-and-empty — reading it directly throws.
+        $quotation = $this->calculateQuotation(array_merge($validated, [
+            'customer_name' => ($validated['customer_name'] ?? '') ?: '[ชื่อผู้ติดต่อ]',
+            'customer_email' => ($validated['customer_email'] ?? '') ?: '[อีเมล]',
+            'customer_phone' => ($validated['customer_phone'] ?? '') ?: '[เบอร์โทร]',
+        ]));
+
+        // Say plainly that this is not a document anyone can act on.
+        $quotation['quote_number'] = 'ตัวอย่าง — ยังไม่ได้ออกเลขที่';
+        $quotation['public_url'] = null;
+
+        // Same template as the PDF, but a browser is rendering it this time,
+        // and a browser cannot open the absolute disk path DomPDF wants.
+        $company = $this->getCompanyInfo();
+        $company['logo_path'] = $company['logo_url'];
+
+        return response()
+            ->view('quotation.pdf', [
+                'quotation' => $quotation,
+                'companyInfo' => $company,
+                'isPreview' => true,
+            ])
+            ->header('X-Frame-Options', 'SAMEORIGIN');
+    }
+
     /**
      * The quotation as the customer sees it, opened from the e-mailed link.
      */

@@ -15,6 +15,7 @@
         'endpoints' => [
             'submit' => route('quote.submit'),
             'pdf' => route('quote.pdf'),
+            'previewDocument' => route('quote.preview-document'),
         ],
         'csrf' => csrf_token(),
     ]))"
@@ -232,7 +233,9 @@
                             <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">ออกใบเสนอราคาให้ใคร</h2>
                         </div>
                         <p class="ml-[3.1rem] text-sm text-gray-600 dark:text-gray-400 mb-5">
-                            ชื่อและเลขผู้เสียภาษีจะถูกพิมพ์ลงบนเอกสาร ใช้ตั้งเบิกได้ทันที
+                            สิ่งที่กรอกตรงนี้จะถูก <strong class="font-semibold">พิมพ์ลงบนเอกสาร</strong> ตามที่พิมพ์เป๊ะ ๆ
+                            — ใช้ตั้งเบิกได้เลย ช่องที่มี <span class="text-red-500 font-semibold">*</span> จำเป็นต้องมี
+                            ที่เหลือใส่ได้ทีหลัง
                         </p>
 
                         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 sm:p-7 space-y-5">
@@ -400,7 +403,17 @@
                                     <span x-text="durationWeeks"></span>
                                 </div>
 
+                                <p x-show="pulledIn.length" x-cloak class="text-xs text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg px-3 py-2"
+                                   x-text="'เพิ่มให้อัตโนมัติเพราะรายการที่เลือกต้องใช้: ' + pulledIn.join(', ')"></p>
+
                                 <p x-show="error" x-cloak class="text-sm text-red-600 dark:text-red-400 pt-1" x-text="error"></p>
+
+                                <button type="button" @click="previewDocument()" :disabled="previewing || ! lines.length"
+                                        class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <svg x-show="! previewing" class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg x-show="previewing" x-cloak class="w-4.5 h-4.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    <span x-text="previewing ? 'กำลังจัดหน้า…' : 'ดูตัวอย่างใบเสนอราคา'"></span>
+                                </button>
 
                                 <button type="button" @click="submit()" :disabled="sending || ! canSubmit"
                                         class="w-full mt-1 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0">
@@ -416,11 +429,40 @@
                         </div>
                     </div>
 
+                    <div x-show="restored" x-cloak class="rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 px-4 py-3">
+                        <p class="text-sm text-blue-900 dark:text-blue-200">กลับมาต่อจากที่ค้างไว้ให้แล้ว</p>
+                        <button type="button" @click="reset()" class="mt-1 text-xs text-blue-700 dark:text-blue-300 underline hover:no-underline">
+                            เริ่มเลือกใหม่ทั้งหมด
+                        </button>
+                    </div>
+
                     <a href="{{ route('quote.track') }}" class="block text-center text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
                         เคยสั่งงานไว้แล้ว? ติดตามสถานะงาน
                     </a>
                 </div>
             </div>
+        </div>
+    </div>
+    {{-- ══ ตัวอย่างเอกสาร ══ --}}
+    <div x-show="previewHtml" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+         @keydown.escape.window="previewHtml = null">
+        <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" @click="previewHtml = null"></div>
+        <div class="relative w-full max-w-3xl max-h-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between gap-4 px-5 py-3.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white">ตัวอย่างใบเสนอราคา</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">ยังไม่ได้ออกเลขที่จริง · กดส่งเพื่อรับฉบับจริงทางอีเมล</p>
+                </div>
+                <button type="button" @click="previewHtml = null" aria-label="ปิด"
+                        class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            {{-- srcdoc + sandbox: เอกสารเป็น HTML ที่เรนเดอร์จากค่าที่ผู้ใช้พิมพ์
+                 ปิดสคริปต์ไว้ ไม่ให้อะไรที่หลุดการ escape ทำงานได้ --}}
+            <iframe x-ref="previewFrame" :srcdoc="previewHtml" sandbox=""
+                    title="ตัวอย่างใบเสนอราคา"
+                    class="flex-grow w-full bg-white" style="min-height: 60vh;"></iframe>
         </div>
     </div>
 </div>
@@ -450,9 +492,103 @@ function quoteBuilder(config) {
             project_description: '',
         },
         sending: false,
+        previewing: false,
+        previewHtml: null,
+        restored: false,
         error: null,
         done: false,
         doneTitle: '', doneMessage: '', doneNumber: '', doneUrl: null,
+
+        /** คีย์ร่างใน localStorage — ขึ้นเวอร์ชันเมื่อรูปร่าง state เปลี่ยน */
+        storageKey: 'xman.quote.draft.v1',
+
+        init() {
+            this.restore();
+
+            // เก็บทุกครั้งที่อะไรก็ตามเปลี่ยน ไม่ต้องไล่ผูกทีละช่อง
+            this.$watch('outcome', () => this.persist());
+            this.$watch('picked', () => { this.applyRequires(); this.persist(); });
+            this.$watch('addons', () => { this.applyRequires(); this.persist(); });
+            this.$watch('customer', () => this.persist());
+            this.$watch('timeline', () => this.persist());
+            this.$watch('vatMode', () => this.persist());
+            this.$watch('withholding', () => this.persist());
+        },
+
+        /**
+         * เก็บร่างไว้ในเครื่องของลูกค้าเอง
+         *
+         * ปิดแท็บแล้วกลับมาต้องได้ของเดิม — คนเลือกไปสิบกว่ารายการแล้วต้องเริ่มใหม่
+         * เพราะเผลอกดย้อนกลับ คือเหตุผลที่คนเลิกกลางคัน
+         * ไม่เก็บอะไรขึ้นเซิร์ฟเวอร์ และ localStorage อาจใช้ไม่ได้ (โหมดส่วนตัว /
+         * ปิดคุกกี้) จึงต้องพังแบบเงียบ ไม่ใช่ทำให้หน้าล่ม
+         */
+        persist() {
+            try {
+                localStorage.setItem(this.storageKey, JSON.stringify({
+                    at: Date.now(),
+                    outcome: this.outcome,
+                    picked: this.picked,
+                    addons: this.addons,
+                    customer: this.customer,
+                    timeline: this.timeline,
+                    vatMode: this.vatMode,
+                    withholding: this.withholding,
+                }));
+            } catch (e) { /* โหมดส่วนตัว หรือพื้นที่เต็ม — ไม่ใช่เรื่องที่ต้องบอกลูกค้า */ }
+        },
+
+        restore() {
+            let raw = null;
+            try { raw = localStorage.getItem(this.storageKey); } catch (e) { return; }
+            if (!raw) return;
+
+            let d;
+            try { d = JSON.parse(raw); } catch (e) { this.forget(); return; }
+
+            // ร่างเก่ากว่า 14 วันไม่น่าใช่สิ่งที่เขาตั้งใจกลับมาทำต่อ
+            if (!d || !d.at || Date.now() - d.at > 14 * 864e5) { this.forget(); return; }
+
+            // แคตตาล็อกอาจเปลี่ยนไปแล้ว — ผลลัพธ์ที่ไม่มีอยู่จริงต้องไม่ถูกคืนค่า
+            const outcome = this.catalogue.outcomes.find((o) => o.key === d.outcome);
+            if (!outcome) { this.forget(); return; }
+
+            this.outcome = outcome.key;
+
+            // คืนเฉพาะคีย์ที่ยังมีอยู่ ไม่งั้นราคาบนจอจะนับของที่เซิร์ฟเวอร์ตัดทิ้ง
+            const validService = new Set(this.serviceOptions.map((o) => o.key));
+            const validAddons = new Set(
+                Object.values(this.catalogue.addons).flatMap((g) => g.options.map((o) => o.key))
+            );
+            this.picked = (d.picked || []).filter((k) => validService.has(k));
+            this.addons = (d.addons || []).filter((k) => validAddons.has(k));
+
+            // แกนหลักต้องติดกลับมาเสมอ แม้ร่างเก่าจะบันทึกไว้ตอนที่ยังไม่ได้ตั้งเป็นแกนหลัก
+            for (const o of this.serviceOptions) {
+                if (o.is_core && !this.picked.includes(o.key)) this.picked.push(o.key);
+            }
+
+            if (d.customer) Object.assign(this.customer, d.customer);
+            if (d.timeline) this.timeline = d.timeline;
+            if (d.vatMode) this.vatMode = d.vatMode;
+            if (typeof d.withholding === 'number') this.withholding = d.withholding;
+
+            this.restored = this.picked.length > 0 || this.addons.length > 0;
+        },
+
+        forget() {
+            try { localStorage.removeItem(this.storageKey); } catch (e) { /* ไม่เป็นไร */ }
+        },
+
+        reset() {
+            this.forget();
+            this.outcome = null;
+            this.picked = [];
+            this.addons = [];
+            this.restored = false;
+            this.error = null;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
 
         /**
          * เลือกผลลัพธ์ใหม่ = เริ่มรายการใหม่ ไม่งั้นของเก่าจากหมวดอื่นค้างอยู่ในตะกร้า
@@ -463,10 +599,68 @@ function quoteBuilder(config) {
             if (this.outcome === o.key) return;
             this.outcome = o.key;
             this.picked = this.serviceOptions.filter((x) => x.is_core).map((x) => x.key);
-            this.addons = [];
+            // ของเสริมที่แอดมินตั้งเป็นแกนหลักก็ติ๊กให้ด้วย แต่เฉพาะกลุ่มที่
+            // แนะนำกับผลลัพธ์นี้ — ไม่งั้น "แกนหลัก" ของงานอื่นจะโผล่มาทุกครั้ง
+            this.addons = this.suggestedAddonGroups
+                .flatMap((g) => g.options)
+                .filter((x) => x.is_core)
+                .map((x) => x.key);
             this.showAll = false;
+            this.pulledIn = [];
             this.error = null;
         },
+
+        /**
+         * ตัวเลือกที่ถูกดึงมาด้วยเพราะของที่ติ๊กไว้ต้องใช้
+         *
+         * แอดมินกำหนดคู่ความสัมพันธ์ไว้ที่ `requires` บนตัวเลือกนั้น ๆ
+         * (หน้า /admin/quotations/options) ไม่ได้ฝังไว้ในหน้านี้
+         */
+        applyRequires() {
+            const byKey = {};
+            for (const o of this.serviceOptions) byKey[o.key] = { o, bucket: 'picked' };
+            for (const g of Object.values(this.catalogue.addons)) {
+                for (const o of g.options) byKey[o.key] = { o, bucket: 'addons' };
+            }
+
+            // ตามต่อเป็นทอด ๆ เผื่อ A ต้องการ B แล้ว B ต้องการ C
+            // `seen` กัน requires ที่วนกลับมาหากันเองจนลูปไม่จบ
+            const seen = new Set();
+            const queue = [...this.picked, ...this.addons];
+            const pulled = [];
+
+            while (queue.length) {
+                const key = queue.shift();
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                const entry = byKey[key];
+                if (!entry) continue;
+
+                for (const need of entry.o.requires || []) {
+                    const target = byKey[need];
+                    if (!target) continue;
+                    const list = target.bucket === 'picked' ? this.picked : this.addons;
+                    if (!list.includes(need)) {
+                        list.push(need);
+                        pulled.push(target.o.name_th);
+                    }
+                    queue.push(need);
+                }
+            }
+
+            // อย่าทับด้วยค่าว่าง: การ push เข้า picked/addons ข้างบนจะปลุก watcher
+            // อีกรอบ และรอบนั้นไม่มีอะไรให้ดึงแล้ว ถ้าเซ็ตตรง ๆ ป้ายจะหายทันที
+            if (pulled.length) {
+                this.pulledIn = pulled;
+                clearTimeout(this._pulledTimer);
+                // เป็นคำอธิบายชั่วคราว ไม่ใช่สถานะถาวรของตะกร้า
+                this._pulledTimer = setTimeout(() => { this.pulledIn = []; }, 8000);
+            }
+        },
+
+        pulledIn: [],
+        _pulledTimer: null,
 
         get outcomeObj() {
             return this.catalogue.outcomes.find((o) => o.key === this.outcome) || null;
@@ -575,6 +769,46 @@ function quoteBuilder(config) {
             return '~' + Math.ceil(days / 5) + ' สัปดาห์';
         },
 
+        /** เอกสารจริงตามที่เลือกอยู่ ยังไม่ออกเลขที่ ยังไม่เก็บอะไร */
+        async previewDocument() {
+            if (this.previewing || !this.lines.length) return;
+            this.previewing = true;
+            this.error = null;
+
+            try {
+                const res = await fetch(this.endpoints.previewDocument, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+                    body: JSON.stringify(this.payload()),
+                });
+
+                if (!res.ok) {
+                    this.error = 'ยังจัดหน้าตัวอย่างไม่ได้ ลองเลือกรายการให้ครบแล้วลองใหม่';
+                    return;
+                }
+
+                this.previewHtml = await res.text();
+            } catch (e) {
+                this.error = 'ติดต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่';
+            } finally {
+                this.previewing = false;
+            }
+        },
+
+        /** ชุดข้อมูลเดียวกันทั้งตอนดูตัวอย่างและตอนส่งจริง */
+        payload() {
+            return {
+                ...this.customer,
+                service_type: this.outcomeObj.category,
+                outcome: this.outcome,
+                service_options: this.picked,
+                additional_options: this.addons,
+                timeline: this.timeline,
+                vat_mode: this.vatMode,
+                withholding_pct: this.withholding,
+            };
+        },
+
         async submit() {
             if (this.sending || !this.canSubmit) return;
             this.sending = true;
@@ -588,17 +822,7 @@ function quoteBuilder(config) {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': this.csrf,
                     },
-                    body: JSON.stringify({
-                        ...this.customer,
-                        service_type: this.outcomeObj.category,
-                        outcome: this.outcome,
-                        service_options: this.picked,
-                        additional_options: this.addons,
-                        timeline: this.timeline,
-                        vat_mode: this.vatMode,
-                        withholding_pct: this.withholding,
-                        action_type: 'quotation',
-                    }),
+                    body: JSON.stringify({ ...this.payload(), action_type: 'quotation' }),
                 });
 
                 const data = await res.json().catch(() => null);
@@ -611,6 +835,8 @@ function quoteBuilder(config) {
                     return;
                 }
 
+                // ออกใบไปแล้ว ร่างเดิมไม่ใช่ของค้างอีกต่อไป
+                this.forget();
                 this.done = true;
                 this.doneTitle = data.mailed ? 'ส่งใบเสนอราคาแล้ว' : 'บันทึกคำขอแล้ว';
                 this.doneMessage = data.message;

@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Mail\QuotationMail;
 use App\Models\Quotation;
+use App\Models\QuotationCategory;
+use App\Models\QuotationOption;
+use App\Models\User;
 use App\Support\Quotation\VatMode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -216,6 +219,75 @@ class QuotationFlowTest extends TestCase
         $this->assertSame('application/pdf', $response->headers->get('content-type'));
         // dompdf's download() returns a plain response, not a streamed one.
         $this->assertStringStartsWith('%PDF', $response->getContent());
+    }
+
+    public function test_the_document_can_be_previewed_before_handing_over_any_details(): void
+    {
+        // The whole point: see what you are about to receive before giving us
+        // a name and an e-mail address.
+        $response = $this->post('/quote/preview-document', [
+            'service_type' => 'web',
+            'service_options' => ['web_landing'],
+            'vat_mode' => VatMode::EXCLUSIVE,
+        ]);
+
+        $response->assertOk()
+            ->assertSee('ตัวอย่างเอกสาร', false)
+            ->assertSee('[ชื่อผู้ติดต่อ]', false)
+            ->assertDontSee('/quote/d/', false);
+
+        $this->assertSame(0, Quotation::count(), 'a preview must not issue anything');
+    }
+
+    public function test_a_preview_still_needs_something_to_price(): void
+    {
+        $this->postJson('/quote/preview-document', ['service_type' => 'web'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('service_options');
+    }
+
+    public function test_an_admin_can_set_and_clear_the_selling_rules(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $category = QuotationCategory::create([
+            'key' => 'web_development', 'name' => 'Web', 'name_th' => 'เว็บ', 'type' => 'service', 'is_active' => true,
+        ]);
+        QuotationOption::create([
+            'quotation_category_id' => $category->id, 'key' => 'members', 'name' => 'Members', 'price' => 35000,
+        ]);
+        $option = QuotationOption::create([
+            'quotation_category_id' => $category->id, 'key' => 'cart', 'name' => 'Cart', 'price' => 55000,
+        ]);
+
+        $this->actingAs($admin)->put("/admin/quotations/options/{$option->id}", [
+            'quotation_category_id' => $category->id,
+            'name' => 'Cart', 'key' => 'cart', 'price' => 55000,
+            'is_active' => '1', 'is_core' => '1',
+            // An option must never require itself — an unsatisfiable rule.
+            'requires' => ['members', 'cart', ''],
+            'suggested_for' => ['online_store'],
+            'reason_th' => 'ถ้าไม่มีช่องจ่ายเงิน เว็บก็เป็นแค่โบรชัวร์',
+            'duration_days' => 21,
+        ])->assertRedirect();
+
+        $option->refresh();
+        $this->assertTrue($option->is_core);
+        $this->assertSame(['members'], $option->requires);
+        $this->assertSame(['online_store'], $option->suggested_for);
+        $this->assertSame(21, $option->duration_days);
+
+        // An unticked checkbox posts nothing at all; the flag still has to
+        // come back off, or a rule could never be undone.
+        $this->actingAs($admin)->put("/admin/quotations/options/{$option->id}", [
+            'quotation_category_id' => $category->id,
+            'name' => 'Cart', 'key' => 'cart', 'price' => 55000,
+            'is_active' => '1',
+        ])->assertRedirect();
+
+        $option->refresh();
+        $this->assertFalse($option->is_core);
+        $this->assertNull($option->requires);
+        $this->assertNull($option->suggested_for);
     }
 
     public function test_a_mail_failure_does_not_lose_the_quotation(): void

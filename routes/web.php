@@ -327,6 +327,8 @@ Route::prefix('quote')->name('quote.')->group(function () {
     Route::get('/services', [QuotationController::class, 'getServices'])->name('services');
 
     Route::post('/preview', [QuotationController::class, 'preview'])->name('preview');
+    // ดูเอกสารจริงก่อนตัดสินใจ — ไม่ต้องกรอกชื่อหรืออีเมลก่อน
+    Route::post('/preview-document', [QuotationController::class, 'previewDocument'])->name('preview-document');
     Route::post('/pdf', [QuotationController::class, 'generatePdf'])->name('pdf');
     // ออกใบจริงและส่งเมล — กันคนยิงรัวจนกล่องจดหมายทีมงานเต็ม
     Route::post('/submit', [QuotationController::class, 'submitOrder'])
