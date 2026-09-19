@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Affiliate;
 use App\Models\GpuNode;
 use App\Models\Product;
 use App\Models\ProductDevice;
@@ -34,6 +35,66 @@ class GpuxMineNodeController extends Controller
         private readonly GpuxMineRelayService $relay,
         private readonly GpuxMineDispatchService $dispatch,
     ) {}
+
+    /**
+     * ยอดแนะนำเพื่อนของเจ้าของเครื่อง สำหรับแสดงในโปรแกรม
+     *
+     * หน้า Referrals ในโปรแกรมเคยเป็นข้อความอย่างเดียว ขึ้นว่า "จะแสดงเมื่อ
+     * เชื่อมบัญชี" กับขีดกลางแทนตัวเลขทุกช่อง ทั้งที่ระบบ affiliate บนเว็บ
+     * มีข้อมูลครบอยู่แล้ว เจ้าของเครื่องจึงไม่เคยเห็นว่าตัวเองชวนใครได้บ้าง
+     * นอกจากจะเปิดเว็บไปดูเอง
+     *
+     * ยืนยันตัวด้วย worker id กับ token ของ relay ไม่ใช่ machine id เปล่า ๆ
+     * machine id เดาได้จากเครื่องเดียวกัน แต่ token ออกให้ครั้งเดียวตอนจับคู่
+     * และนี่คือข้อมูลรายได้ ไม่ใช่ข้อมูลสาธารณะ
+     */
+    public function referral(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'worker_id' => ['required', 'string', 'max:64'],
+            'token' => ['required', 'string', 'max:256'],
+        ]);
+
+        $node = GpuNode::where('worker_id', $validated['worker_id'])->whereNotNull('paired_at')->first();
+
+        // เทียบแบบเวลาคงที่ เพราะการเทียบสตริงธรรมดาบอกความยาวของ token
+        // ที่ถูกต้องผ่านเวลาที่ใช้ตอบ
+        if (! $node || ! hash_equals((string) $node->relay_token, $validated['token'])) {
+            return response()->json(['success' => false, 'message' => 'ตัวตนเครื่องไม่ถูกต้อง'], 401);
+        }
+
+        $affiliate = Affiliate::where('user_id', $node->user_id)->first();
+
+        if (! $affiliate) {
+            // ยังไม่ได้สมัครเป็นผู้แนะนำ ไม่ใช่ข้อผิดพลาด — บอกไปตรง ๆ
+            // พร้อมที่ที่ไปสมัคร ดีกว่าคืนศูนย์ให้เข้าใจผิดว่าชวนแล้วไม่ได้อะไร
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'enrolled' => false,
+                    'join_url' => url('/affiliate'),
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'enrolled' => true,
+                'referral_code' => $affiliate->referral_code,
+                'referral_url' => url('/?ref=' . $affiliate->referral_code),
+                'commission_rate' => (float) $affiliate->commission_rate,
+                'total_referrals' => (int) $affiliate->total_referrals,
+                'total_conversions' => (int) $affiliate->total_conversions,
+                // บาททศนิยมสองตำแหน่งตามที่เก็บไว้ ไม่แปลงหน่วยระหว่างทาง
+                'total_earned' => (float) $affiliate->total_earned,
+                'total_paid' => (float) $affiliate->total_paid,
+                'total_pending' => (float) $affiliate->total_pending,
+                'status' => $affiliate->status,
+                'dashboard_url' => url('/affiliate'),
+            ],
+        ]);
+    }
 
     public function claim(Request $request): JsonResponse
     {

@@ -232,6 +232,12 @@ Route::post('v1/product/gpuxmine/claim', [GpuxMineNodeController::class, 'claim'
     ->middleware(['throttle:5,1'])
     ->name('api.gpuxmine.claim');
 
+// ยอดแนะนำเพื่อนของเจ้าของเครื่อง ให้โปรแกรมแสดงได้เอง
+// ยืนยันด้วย worker id + token ของ relay ในตัว request จึงไม่ต้องมี session
+Route::post('v1/product/gpuxmine/referral', [GpuxMineNodeController::class, 'referral'])
+    ->middleware(['throttle:30,1'])
+    ->name('api.gpuxmine.referral');
+
 Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(function () {
     // Register device when app starts
     Route::post('/register-device', [ProductLicenseController::class, 'registerDevice']);
