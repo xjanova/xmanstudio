@@ -39,7 +39,12 @@ Heroes are 1920w, cards 1200w, all WebP q82 (~2.4 MB for 25 files).
 
 **Heroes:** `hero-home` `hero-about` `hero-portfolio` `hero-services` `hero-support`
 `hero-team` `hero-products` `hero-rental` `hero-tracking` `hero-changelog`
-`hero-academy` `hero-legal` `hero-metalx` `hero-network`
+`hero-academy` `hero-legal` `hero-metalx` `hero-network` `hero-gpuxmine` `hero-kyc`
+
+`hero-kyc` is deliberately **abstract** — a glowing shield, a fingerprint, a padlock,
+blank floating sheets. No ID card, no face, no lettering. That page asks for a real
+Thai national ID number, and artwork that resembles a real document reads as a
+worked example of one.
 
 **Cards:** `card-blockchain` `card-web` `card-mobile` `card-ai` `card-iot`
 `card-security` `card-software` `card-flutter` `card-design` `card-marketing`
@@ -81,3 +86,37 @@ near-black navy, cyan→violet→magenta neon, volumetric glow, digital particle
 Always ask for **negative space in the centre** on heroes — that is what keeps the
 headline readable — and always negate text/letters/logos, or the model renders
 garbled lettering into the art.
+
+## Putting a hero on a *member-area* page — two traps
+
+The customer portal has two layouts and `ThemeService::getCustomerLayout()` picks
+between them. `layouts/customer-premium.blade.php` ships its own
+"Premium Content Dark Mode Overrides" stylesheet that rewrites plain Tailwind
+utilities with `!important`. Two of those rules quietly break light-tinted
+callouts:
+
+```css
+.bg-white { background: rgba(30, 27, 75, 0.6) !important; }
+
+.bg-gradient-to-r.from-red-50,
+.bg-gradient-to-r.from-amber-50,
+.bg-gradient-to-r.from-yellow-50 { background: rgba(30, 27, 75, 0.8) !important; }
+```
+
+The backgrounds are forced dark but the **text colours are not touched** — only
+`.text-gray-*` is remapped. So `bg-gradient-to-r from-red-50 … text-red-800`
+renders as red-800 on near-black and is effectively unreadable, and
+`bg-white text-slate-900` becomes an invisible dark-on-dark chip. Both were real
+defects on `/kyc` (the rejection reason, and the "you are here" step marker)
+before they were caught by rendering the page rather than by reading it.
+
+Write callouts as `bg-red-50 dark:bg-red-500/10 … text-red-900 dark:text-red-200`
+instead. `html` carries the `dark` class in the portal, so the `dark:` variant is
+what actually paints, and the light pair still covers the standard layout. Opacity
+variants (`bg-white/80`, `bg-white/10`) are a different class name and escape the
+override entirely.
+
+Second trap: **the CSS is prebuilt.** `public_html/build/` is gitignored and
+Tailwind only emits the utilities it finds in source at build time, so a brand-new
+class (`lg:w-72`, `tracking-[0.2em]`, …) does nothing until `npm run build` runs.
+A hero that collapses into a one-word-per-line column is this, not a flex bug.

@@ -346,6 +346,21 @@
                     </div>
                     <span class="text-indigo-100"><x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" /></span>
                 </a>
+                {{-- ยืนยันตัวตน — สองไฟล์เหมือนกัน ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                <a href="{{ route('kyc.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('kyc.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2.5l7.5 3v6c0 4.6-3.1 8.6-7.5 10-4.4-1.4-7.5-5.4-7.5-10v-6l7.5-3z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9.2 12l2.1 2.1 4.2-4.2"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="ยืนยันตัวตน" en="Verify identity" /></span>
+                    @if (auth()->user()?->kyc_status === 'approved')
+                        <svg class="w-4 h-4 ml-auto shrink-0 text-emerald-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
+                </a>
 
 
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider"><x-bi th="ธุรกรรม" en="Transactions" /></p>
@@ -694,6 +709,21 @@
                         </svg>
                     </div>
                     <span class="text-indigo-100"><x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" /></span>
+                </a>
+                {{-- ยืนยันตัวตน — สองไฟล์เหมือนกัน ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                <a href="{{ route('kyc.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('kyc.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2.5l7.5 3v6c0 4.6-3.1 8.6-7.5 10-4.4-1.4-7.5-5.4-7.5-10v-6l7.5-3z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9.2 12l2.1 2.1 4.2-4.2"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="ยืนยันตัวตน" en="Verify identity" /></span>
+                    @if (auth()->user()?->kyc_status === 'approved')
+                        <svg class="w-4 h-4 ml-auto shrink-0 text-emerald-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
                 </a>
 
 

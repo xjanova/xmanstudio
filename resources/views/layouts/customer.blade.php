@@ -115,6 +115,22 @@
                     <x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" layout="stack" />
                 </a>
 
+                {{-- ยืนยันตัวตน — ด่านของการรับ/ถอนเงิน เคยเข้าได้ด้วย URL เท่านั้น
+                     หน้านี้อยู่ในสองไฟล์เหมือน GPUxMINE — ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                <a href="{{ route('kyc.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('kyc.*') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-emerald-500/30' }}">
+                    <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2.5l7.5 3v6c0 4.6-3.1 8.6-7.5 10-4.4-1.4-7.5-5.4-7.5-10v-6l7.5-3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.2 12l2.1 2.1 4.2-4.2"/>
+                    </svg>
+                    <x-bi th="ยืนยันตัวตน" en="Verify identity" layout="stack" />
+                    @if (auth()->user()?->kyc_status === 'approved')
+                        <svg class="w-4 h-4 ml-auto shrink-0 text-emerald-500 group-hover:text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
+                </a>
+
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"><x-bi th="ธุรกรรม" en="Transactions" /></p>
 
                 <a href="{{ route('customer.orders') }}"
@@ -375,6 +391,22 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
                     </svg>
                     <x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" layout="stack" />
+                </a>
+
+                {{-- ยืนยันตัวตน — ด่านของการรับ/ถอนเงิน เคยเข้าได้ด้วย URL เท่านั้น
+                     หน้านี้อยู่ในสองไฟล์เหมือน GPUxMINE — ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                <a href="{{ route('kyc.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('kyc.*') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-emerald-500/30' }}">
+                    <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2.5l7.5 3v6c0 4.6-3.1 8.6-7.5 10-4.4-1.4-7.5-5.4-7.5-10v-6l7.5-3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.2 12l2.1 2.1 4.2-4.2"/>
+                    </svg>
+                    <x-bi th="ยืนยันตัวตน" en="Verify identity" layout="stack" />
+                    @if (auth()->user()?->kyc_status === 'approved')
+                        <svg class="w-4 h-4 ml-auto shrink-0 text-emerald-500 group-hover:text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
                 </a>
 
                 <div class="pt-2 pb-1">
