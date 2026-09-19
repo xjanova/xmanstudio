@@ -21,6 +21,8 @@
         // internal catalogue is reachable from the Featured zone below.
         ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'url' => config('app.product_site_url'),  'art' => 'products',  'desc' => 'ซอฟต์แวร์พร้อมใช้'],
         ['th' => 'เช่าใช้งาน',  'en' => 'Rentals',   'url' => route('rental.index'),           'art' => 'rental',    'desc' => 'จ่ายรายเดือน'],
+        // ใช้ภาพ services ไปก่อน — artwork/menu/domains.webp ยังไม่ได้เจน
+        ['th' => 'จดโดเมน',     'en' => 'Domains',   'url' => route('domains.index'),          'art' => 'services',  'desc' => 'ชื่อเว็บในนามคุณ'],
         ['th' => 'ผลงาน',       'en' => 'Portfolio', 'url' => url('/portfolio'),               'art' => 'portfolio', 'desc' => 'โปรเจคที่ส่งมอบแล้ว'],
         ['th' => 'ทีมงาน',      'en' => 'Team',      'url' => url('/team'),                    'art' => 'team',      'desc' => 'คนเบื้องหลัง'],
         ['th' => 'ติดต่อ/สั่งซื้อ', 'en' => 'Contact', 'url' => route('quote.index'),        'art' => 'support',   'desc' => 'ขอใบเสนอราคา'],

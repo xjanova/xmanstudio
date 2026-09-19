@@ -81,9 +81,12 @@ use App\Http\Controllers\ChanthraStudioWebController;
 use App\Http\Controllers\CluadeXWebController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AffiliateController;
+use App\Http\Controllers\Customer\DomainController as CustomerDomainController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\CustomerPortalController;
+use App\Http\Controllers\DomainController;
+use App\Http\Controllers\DomainOrderController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\FaviconController;
 use App\Http\Controllers\GpuNodeController;
@@ -305,6 +308,29 @@ Route::get('/services/{slug}', [ProductController::class, 'serviceDetail'])->nam
 
 // Rental packages (public view)
 Route::get('/rental', [RentalController::class, 'index'])->name('rental.index');
+
+// ==================== จดโดเมน ====================
+// ร้านขายโดเมนของเราเอง ลูกค้าจ่ายเป็นบาท เราไปจดให้ในนามของเขา
+// /domains/search เรียก API ที่คิดเงินเป็นครั้งและมีเพดาน 90 ครั้ง/นาที
+// ทั้งบัญชี จึงจำกัดอัตราไว้ที่ปลายทางนี้ด้วย ไม่ใช่พึ่งแคชในเซอร์วิสอย่างเดียว
+Route::prefix('domains')->name('domains.')->group(function () {
+    Route::get('/', [DomainController::class, 'index'])->name('index');
+    Route::get('/pricing', [DomainController::class, 'pricing'])->name('pricing');
+    Route::get('/search', [DomainController::class, 'searchJson'])
+        ->middleware('throttle:30,1')->name('search');
+
+    // การสั่งซื้อต้องล็อกอิน เพราะจ่ายด้วยกระเป๋าเงินและต้องมีเจ้าของโดเมน
+    // ที่ระบุตัวได้ · ชื่อโดเมนมีจุดเสมอ จึงต้องปลด constraint เริ่มต้นของ
+    // Laravel ที่ตัดที่จุดแรกด้วย where('domain', ...) ที่ยอมรับจุด
+    Route::middleware('auth')->group(function () {
+        Route::get('/register/{domain}', [DomainOrderController::class, 'create'])
+            ->where('domain', '[A-Za-z0-9.-]+')->name('register');
+        // จำกัดอัตราแน่นหนา: ปลายทางนี้ใช้เงินจริงและเรียก API ที่คิดเงิน
+        Route::post('/register/{domain}', [DomainOrderController::class, 'store'])
+            ->where('domain', '[A-Za-z0-9.-]+')
+            ->middleware('throttle:10,10')->name('register.store');
+    });
+});
 
 // Cart (session-based, works without login)
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -528,6 +554,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders/{order}', [CustomerPortalController::class, 'orderShow'])->name('orders.show');
         Route::get('/invoices', [CustomerPortalController::class, 'invoices'])->name('invoices');
         Route::get('/downloads', [CustomerPortalController::class, 'downloads'])->name('downloads');
+
+        // โดเมนของลูกค้า — ดูรายการ ตั้งค่า DNS เอง และขอรหัสย้ายออก
+        // ทุกเส้นทางอ่านแถวด้วย user_id ของคนที่ล็อกอิน คนอื่นได้ 404 ไม่ใช่ 403
+        Route::prefix('domains')->name('domains.')->group(function () {
+            Route::get('/', [CustomerDomainController::class, 'index'])->name('index');
+            Route::get('/{id}', [CustomerDomainController::class, 'show'])->whereNumber('id')->name('show');
+            Route::post('/{id}/dns', [CustomerDomainController::class, 'updateDns'])
+                ->whereNumber('id')->middleware('throttle:30,10')->name('dns');
+            Route::post('/{id}/nameservers', [CustomerDomainController::class, 'updateNameservers'])
+                ->whereNumber('id')->middleware('throttle:10,10')->name('nameservers');
+            // รหัสย้ายโดเมนออก — ของลับ ขอถี่ ๆ ไม่ได้
+            Route::post('/{id}/auth-code', [CustomerDomainController::class, 'authCode'])
+                ->whereNumber('id')->middleware('throttle:5,10')->name('auth-code');
+            Route::post('/{id}/auto-renew', [CustomerDomainController::class, 'toggleAutoRenew'])
+                ->whereNumber('id')->name('auto-renew');
+            Route::post('/{id}/privacy', [CustomerDomainController::class, 'togglePrivacy'])
+                ->whereNumber('id')->name('privacy');
+        });
 
         // Projects (Order progress tracking)
         Route::get('/projects', [CustomerPortalController::class, 'projects'])->name('projects');
@@ -1427,6 +1471,12 @@ Route::middleware('auth')->prefix('gpuxmine')->name('gpuxmine.')->group(function
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    // ระบบขายโดเมน — token ที่ตั้งตรงนี้ใช้เงินได้จริง จึงอยู่หลัง admin เท่านั้น
+    Route::get('/domains', [App\Http\Controllers\Admin\DomainSettingController::class, 'index'])->name('domains.index');
+    Route::post('/domains', [App\Http\Controllers\Admin\DomainSettingController::class, 'update'])->name('domains.update');
+    Route::post('/domains/test', [App\Http\Controllers\Admin\DomainSettingController::class, 'testConnection'])->name('domains.test');
+    Route::post('/domains/tld/{id}', [App\Http\Controllers\Admin\DomainSettingController::class, 'updateTld'])->whereNumber('id')->name('domains.tld');
+
     Route::get('/kyc', [App\Http\Controllers\Admin\KycController::class, 'index'])->name('kyc.index');
     Route::get('/kyc/{id}', [App\Http\Controllers\Admin\KycController::class, 'show'])->whereNumber('id')->name('kyc.show');
     Route::post('/kyc/{id}/approve', [App\Http\Controllers\Admin\KycController::class, 'approve'])->whereNumber('id')->name('kyc.approve');

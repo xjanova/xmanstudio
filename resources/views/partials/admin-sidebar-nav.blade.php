@@ -48,6 +48,20 @@
 </div>
 
 {{-- การเช่า --}}
+{{-- ระบบขายโดเมน: token ราคา และนามสกุลที่เปิดขาย --}}
+<div x-data="{ open: {{ request()->routeIs('admin.domains.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
+        <span>โดเมน</span>
+        <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </button>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
+        <a href="{{ route('admin.domains.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.domains.*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+            ตั้งค่าและราคา
+        </a>
+    </div>
+</div>
+
 <div x-data="{ open: {{ request()->routeIs('admin.rentals.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>การเช่า</span>

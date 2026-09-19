@@ -277,6 +277,9 @@
                         <a href="/rental" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('rental*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             <x-bi th="เช่าบริการ" en="Rentals" layout="stack" />
                         </a>
+                        <a href="/domains" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('domains*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
+                            <x-bi th="จดโดเมน" en="Domains" layout="stack" />
+                        </a>
                         <a href="/portfolio" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('portfolio*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             <x-bi th="ผลงาน" en="Portfolio" layout="stack" />
                         </a>
@@ -406,6 +409,7 @@
                         <li><a href="/team" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ทีมงานและผู้บริหาร" en="Team & Management" /></a></li>
                         <li><a href="/support" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" /></a></li>
                         <li><a href="/rental" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เช่าบริการ" en="Rentals" /></a></li>
+                        <li><a href="/domains" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="จดโดเมน" en="Domains" /></a></li>
                         <li><a href="{{ config('app.product_site_url') }}" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ผลิตภัณฑ์" en="Products" /></a></li>
                         <li><a href="/portfolio" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ผลงาน" en="Portfolio" /></a></li>
                     </ul>

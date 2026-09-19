@@ -106,6 +106,16 @@
                     <x-bi k="common.wallet" layout="stack" />
                 </a>
 
+                {{-- โดเมนที่ลูกค้าจดกับเรา ตั้งค่า DNS เองได้จากที่นี่
+                     เมนูนี้อยู่ในสองไฟล์ × สองบล็อก = สี่จุด เหมือน GPUxMINE --}}
+                <a href="{{ route('customer.domains.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.domains.*') ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                    </svg>
+                    <x-bi th="โดเมนของฉัน" en="My domains" layout="stack" />
+                </a>
+
                 {{-- เครื่องที่คนเอาการ์ดจอมาแชร์ เข้าถึงได้จากเมนู ไม่ใช่ต้องจำ URL --}}
                 <a href="{{ route('gpuxmine.index') }}"
                    class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('gpuxmine.*') ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-amber-500 hover:to-yellow-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
@@ -386,6 +396,16 @@
                     </svg>
                     <x-bi k="common.wallet" layout="stack" />
                 </a>
+                {{-- โดเมนที่ลูกค้าจดกับเรา ตั้งค่า DNS เองได้จากที่นี่
+                     เมนูนี้อยู่ในสองไฟล์ × สองบล็อก = สี่จุด เหมือน GPUxMINE --}}
+                <a href="{{ route('customer.domains.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.domains.*') ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                    </svg>
+                    <x-bi th="โดเมนของฉัน" en="My domains" layout="stack" />
+                </a>
+
                 <a href="{{ route('gpuxmine.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('gpuxmine.*') ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-amber-500 hover:to-yellow-500 hover:text-white hover:shadow-lg' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>

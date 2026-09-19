@@ -23,6 +23,8 @@
          'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
         ['url' => '/rental', 'label' => 'เช่าบริการ / Rentals', 'match' => 'rental*', 'color' => 'pink-500', 'colorTo' => 'rose-500',
          'icon' => 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z'],
+        ['url' => '/domains', 'label' => 'จดโดเมน / Domains', 'match' => 'domains*', 'color' => 'indigo-500', 'colorTo' => 'cyan-500',
+         'icon' => 'M21 12a9 9 0 11-18 0 9 9 0 0118 0z||M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18'],
         ['url' => '/portfolio', 'label' => 'ผลงาน / Portfolio', 'match' => 'portfolio*', 'color' => 'purple-500', 'colorTo' => 'violet-500',
          'icon' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
         ['url' => '/support', 'label' => 'ติดต่อ/สั่งซื้อ / Contact & Order', 'match' => 'support', 'color' => 'blue-500', 'colorTo' => 'cyan-500',

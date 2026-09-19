@@ -338,6 +338,15 @@
                 </a>
                 {{-- เครื่องที่คนเอาการ์ดจอมาแชร์ — แถบเมนูนี้มีสองไฟล์ (customer และ
                      customer-premium) ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                {{-- โดเมนที่ลูกค้าจดกับเรา ตั้งค่า DNS เองได้ — สองไฟล์ × สองบล็อก = สี่จุด --}}
+                <a href="{{ route('customer.domains.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.domains.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-cyan-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="โดเมนของฉัน" en="My domains" /></span>
+                </a>
                 <a href="{{ route('gpuxmine.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('gpuxmine.*') ? 'active bg-white/10' : '' }}">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center mr-3 shadow-lg">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -702,6 +711,15 @@
                 </a>
                 {{-- เครื่องที่คนเอาการ์ดจอมาแชร์ — แถบเมนูนี้มีสองไฟล์ (customer และ
                      customer-premium) ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                {{-- โดเมนที่ลูกค้าจดกับเรา ตั้งค่า DNS เองได้ — สองไฟล์ × สองบล็อก = สี่จุด --}}
+                <a href="{{ route('customer.domains.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.domains.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-cyan-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="โดเมนของฉัน" en="My domains" /></span>
+                </a>
                 <a href="{{ route('gpuxmine.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('gpuxmine.*') ? 'active bg-white/10' : '' }}">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center mr-3 shadow-lg">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

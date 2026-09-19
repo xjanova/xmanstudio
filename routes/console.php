@@ -208,3 +208,27 @@ Schedule::command('gpuxmine:sync-nodes')
     ->onFailure(function () {
         Log::error('[GPUxMINE] node sync failed');
     });
+
+// โดเมน: ตามเก็บออเดอร์ที่ค้าง — ลูกค้าจ่ายเงินแล้วแต่ยังไม่ได้โดเมน
+// ทุกห้านาที เพราะคนที่เพิ่งจ่ายเงินไปนั่งรออยู่หน้าจอ ถ้าปล่อยถึงชั่วโมงละครั้ง
+// คนที่เจอเน็ตกระตุกตอนกดซื้อจะเห็นแค่ "กำลังดำเนินการ" โดยไม่มีใครมาสะสาง
+// ตัวคำสั่งเองมี backoff ต่อแถวและจำกัด 30 แถวต่อรอบ จึงไม่กิน quota ของ API
+Schedule::command('domains:reconcile')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Domains] reconcile failed');
+    });
+
+// โดเมน: ดึงราคาต้นทุนจริงจากผู้ให้บริการมาอัปเดตแคตตาล็อก
+// วันละครั้งตอนตีสี่ — ผู้ให้บริการขึ้นราคาเมื่อไหร่ก็ได้ และแคตตาล็อกที่ค้าง
+// อยู่หลายเดือนคือแคตตาล็อกที่ขายบางนามสกุลต่ำกว่าทุน
+Schedule::command('domains:sync-catalogue')
+    ->dailyAt('04:00')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Domains] catalogue sync failed');
+    });

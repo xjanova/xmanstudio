@@ -199,6 +199,7 @@
                         <li><a href="/team" class="hover:text-white transition-colors"><x-bi th="ทีมงานและผู้บริหาร" en="Team & Management" /></a></li>
                         <li><a href="/support" class="hover:text-white transition-colors"><x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" /></a></li>
                         <li><a href="/rental" class="hover:text-white transition-colors"><x-bi th="เช่าบริการ" en="Rentals" /></a></li>
+                        <li><a href="/domains" class="hover:text-white transition-colors"><x-bi th="จดโดเมน" en="Domains" /></a></li>
                         <li><a href="{{ config('app.product_site_url') }}" class="hover:text-white transition-colors"><x-bi th="ผลิตภัณฑ์" en="Products" /></a></li>
                         <li><a href="/portfolio" class="hover:text-white transition-colors"><x-bi th="ผลงาน" en="Portfolio" /></a></li>
                     </ul>

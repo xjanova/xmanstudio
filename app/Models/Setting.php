@@ -47,6 +47,9 @@ class Setting extends Model
         // holds the webhook secret can feed the bot fake admin commands.
         'telegram_bot_token',
         'telegram_webhook_secret',
+        // Domain registrar: this token can spend money — it places orders
+        // against our card and can transfer domains out of our account.
+        'hostinger_api_token',
     ];
 
     /** @return array<int,string> keys stored encrypted — also what alert redaction hunts for */
