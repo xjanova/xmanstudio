@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SeoSetting;
 use App\Models\Setting;
 use App\Support\FontFile;
+use App\Support\ThaiShaper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +20,8 @@ class OgImageController extends Controller
         $title = $request->query('title', 'XMAN Studio');
         $subtitle = $request->query('subtitle', 'IT Solutions & Software Development');
 
-        $cacheKey = 'og_image_' . md5($title . $subtitle);
+        // v6: ก่อนหน้านี้วาดไทยโดยไม่ shape สระกับวรรณยุกต์ทับกัน รูปเก่าที่แคชไว้ต้องไม่ถูกเสิร์ฟต่อ
+        $cacheKey = 'og_image_v6_' . md5($title . $subtitle);
 
         $imageData = Cache::remember($cacheKey, 3600, function () use ($title, $subtitle) {
             return $this->createImage($title, $subtitle);
@@ -60,7 +62,7 @@ class OgImageController extends Controller
     {
         $seo = SeoSetting::getInstance();
 
-        $imageData = Cache::remember('og_image_default_v5', 3600, function () use ($seo) {
+        $imageData = Cache::remember('og_image_default_v6', 3600, function () use ($seo) {
             return $this->createImage(
                 $seo->site_name ?: 'XMAN Studio',
                 'IT Solutions & Software Development'
@@ -152,8 +154,11 @@ class OgImageController extends Controller
 
     private function drawLogoAndText($img, int $width, int $height, string $title, string $subtitle): void
     {
-        $fontBold = $this->resolveFont('Sarabun-Bold.ttf', 'DejaVuSans-Bold.ttf');
-        $fontRegular = $this->resolveFont('Sarabun-Regular.ttf', 'DejaVuSans.ttf');
+        // The PUA build, not the plain one: GD draws with FreeType alone and applies no shaping, so
+        // a Thai title with a tone over a vowel (ชื่อ, ที่, หนี้) collides into a blob. ThaiShaper
+        // swaps in the ready-positioned marks this font carries.
+        $fontBold = $this->resolveFont('Sarabun-PUA-Bold.ttf', 'DejaVuSans-Bold.ttf');
+        $fontRegular = $this->resolveFont('Sarabun-PUA-Regular.ttf', 'DejaVuSans.ttf');
 
         $white = imagecolorallocate($img, 255, 255, 255);
         $lightGray = imagecolorallocate($img, 180, 190, 210);
@@ -175,19 +180,24 @@ class OgImageController extends Controller
                 imagettftext($img, 60, 0, 80, 240, $cyan, $fontBold, 'X');
             }
 
+            // Measure and draw the SAME string — the shaped one. Measuring the original and
+            // drawing the shaped text would centre the line against a width it does not have.
+            $drawnTitle = ThaiShaper::shape($title);
+            $drawnSubtitle = ThaiShaper::shape($subtitle);
+
             // Title - centered
             $titleSize = $logoPlaced ? 42 : 48;
-            $bbox = imagettfbbox($titleSize, 0, $fontBold, $title);
+            $bbox = imagettfbbox($titleSize, 0, $fontBold, $drawnTitle);
             $titleWidth = abs($bbox[2] - $bbox[0]);
             $titleX = (int) (($width - $titleWidth) / 2);
-            imagettftext($img, $titleSize, 0, $titleX, $textStartY, $white, $fontBold, $title);
+            imagettftext($img, $titleSize, 0, $titleX, $textStartY, $white, $fontBold, $drawnTitle);
 
             // Subtitle - centered
             $subtitleSize = 22;
-            $bbox = imagettfbbox($subtitleSize, 0, $fontRegular, $subtitle);
+            $bbox = imagettfbbox($subtitleSize, 0, $fontRegular, $drawnSubtitle);
             $subWidth = abs($bbox[2] - $bbox[0]);
             $subX = (int) (($width - $subWidth) / 2);
-            imagettftext($img, $subtitleSize, 0, $subX, $textStartY + 50, $lightGray, $fontRegular, $subtitle);
+            imagettftext($img, $subtitleSize, 0, $subX, $textStartY + 50, $lightGray, $fontRegular, $drawnSubtitle);
         } catch (\Throwable $e) {
             // Fallback: GD built-in fonts (ASCII only)
             if (! $logoPlaced) {
@@ -283,7 +293,7 @@ class OgImageController extends Controller
 
     private function drawBottomBar($img, int $width, int $height): void
     {
-        $fontRegular = $this->resolveFont('Sarabun-Regular.ttf', 'DejaVuSans.ttf');
+        $fontRegular = $this->resolveFont('Sarabun-PUA-Regular.ttf', 'DejaVuSans.ttf');
 
         $barColor = imagecolorallocatealpha($img, 0, 0, 0, 60);
         imagefilledrectangle($img, 0, $height - 60, $width, $height, $barColor);
@@ -303,7 +313,8 @@ class OgImageController extends Controller
             if (! $fontRegular) {
                 throw new \RuntimeException('Font not found');
             }
-            imagettftext($img, 16, 0, 80, $height - 22, $urlColor, $fontRegular, 'xmanstudio.com');
+            // เคยพิมพ์ xmanstudio.com ซึ่งไม่ใช่โดเมนของเว็บ — รูปนี้คือสิ่งที่คนเห็นตอนมีคนแชร์ลิงก์
+            imagettftext($img, 16, 0, 80, $height - 22, $urlColor, $fontRegular, parse_url(config('app.url'), PHP_URL_HOST) ?: 'xman4289.com');
             imagettftext($img, 14, 0, $width - 320, $height - 22, $tagColor, $fontRegular, 'IT Solutions & Development');
         } catch (\Throwable $e) {
             imagestring($img, 3, 80, $height - 35, 'xmanstudio.com', $urlColor);

@@ -39,15 +39,34 @@ class OgImageFontTest extends TestCase
         }
         $resolve = new ReflectionMethod(OgImageController::class, 'resolveFont');
 
-        foreach (['Sarabun-Bold.ttf' => 'DejaVuSans-Bold.ttf', 'Sarabun-Regular.ttf' => 'DejaVuSans.ttf'] as $name => $fallback) {
+        foreach (['Sarabun-PUA-Bold.ttf' => 'DejaVuSans-Bold.ttf', 'Sarabun-PUA-Regular.ttf' => 'DejaVuSans.ttf'] as $name => $fallback) {
             $font = $resolve->invoke(new OgImageController, $name, $fallback);
 
             $this->assertNotNull($font, "no usable font found for {$name}");
-            $this->assertStringEndsWith($name, str_replace('\\', '/', $font), 'the bundled Sarabun must win over the Latin-only DejaVu fallback');
+            $this->assertStringEndsWith($name, str_replace('\\', '/', $font), 'the bundled Sarabun PUA build must win over the Latin-only DejaVu fallback');
             $box = imagettfbbox(24, 0, $font, 'ใบเสนอราคา XMAN Studio');
             $this->assertIsArray($box, "GD could not read {$font}");
             $this->assertGreaterThan(200, $box[2] - $box[0], 'Thai text must be drawn at its real width');
         }
+    }
+
+    public function test_a_thai_title_is_shaped_before_it_is_drawn(): void
+    {
+        if (! function_exists('imagettfbbox')) {
+            $this->markTestSkipped('GD is built without FreeType here.');
+        }
+
+        // GD applies no shaping either, so the OG card had the same collision as the PDF did:
+        // ที่ lost its tone and ชื่อ came out as a blob. The card is what people see when the site
+        // is shared, so it goes through ThaiShaper and the PUA font as well.
+        $source = file_get_contents(app_path('Http/Controllers/OgImageController.php'));
+
+        $this->assertStringContainsString('ThaiShaper::shape($title)', $source, 'the title must be shaped before it is measured and drawn');
+        $this->assertStringContainsString('ThaiShaper::shape($subtitle)', $source);
+        $this->assertStringNotContainsString("resolveFont('Sarabun-Regular.ttf'", $source, 'the plain font has no positioned marks');
+
+        // ไม่เรนเดอร์รูปจริงตรงนี้ — createImage() อ่าน settings (โลโก้แอดมิน) ซึ่งต้องมีฐานข้อมูล
+        // และคลาสนี้ตั้งใจไม่แตะ DB ส่วนที่ต้องกันพลาดคือ "ยังเรียก shaper อยู่ไหม" ซึ่งเช็กไปแล้ว
     }
 
     public function test_a_saved_web_page_is_not_mistaken_for_a_font(): void

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ProjectInvoice;
 use App\Models\Setting;
 use App\Support\Quotation\VatMode;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\ThaiPdf;
 use Illuminate\Http\Request;
 
 /**
@@ -33,11 +33,11 @@ class InvoiceController extends Controller
     {
         $invoice = $this->byToken($token);
 
-        $pdf = Pdf::loadView('invoice.pdf', [
+        $pdf = ThaiPdf::view('invoice.pdf', [
             'invoice' => $invoice,
             'doc' => $this->documentData($invoice),
             'companyInfo' => $this->companyInfo(),
-        ])->setPaper('a4', 'portrait');
+        ]);
 
         return $pdf->download($invoice->invoice_number . '.pdf');
     }
@@ -48,11 +48,11 @@ class InvoiceController extends Controller
      */
     public function adminDownload(Request $request, ProjectInvoice $invoice)
     {
-        $pdf = Pdf::loadView('invoice.pdf', [
+        $pdf = ThaiPdf::view('invoice.pdf', [
             'invoice' => $invoice,
             'doc' => $this->documentData($invoice),
             'companyInfo' => $this->companyInfo(),
-        ])->setPaper('a4', 'portrait');
+        ]);
 
         return $pdf->download($invoice->invoice_number . '.pdf');
     }

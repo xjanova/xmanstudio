@@ -18,7 +18,7 @@ use App\Support\Alerts\BusinessAlerts;
 use App\Support\Quotation\Outcomes;
 use App\Support\Quotation\Pricing;
 use App\Support\Quotation\VatMode;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\ThaiPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1540,10 +1540,10 @@ class QuotationController extends Controller
         $validated = $this->validateRequest($request);
         $quotation = $this->calculateQuotation($validated);
 
-        $pdf = Pdf::loadView('quotation.pdf', [
+        $pdf = ThaiPdf::view('quotation.pdf', [
             'quotation' => $quotation,
             'companyInfo' => $this->getCompanyInfo(),
-        ])->setPaper('a4', 'portrait');
+        ]);
 
         $filename = 'XMAN-Quotation-' . $quotation['quote_number'] . '.pdf';
 
@@ -1676,10 +1676,10 @@ class QuotationController extends Controller
         try {
             $doc = $this->documentData($quotation);
 
-            $pdf = Pdf::loadView('quotation.pdf', [
+            $pdf = ThaiPdf::view('quotation.pdf', [
                 'quotation' => $doc,
                 'companyInfo' => $this->getCompanyInfo(),
-            ])->setPaper('a4', 'portrait');
+            ]);
 
             Mail::to($quotation->customer_email)
                 ->send(new QuotationMail($quotation, $doc, $pdf->output()));
@@ -1784,10 +1784,10 @@ class QuotationController extends Controller
     {
         $quotation = $this->quotationByToken($token);
 
-        $pdf = Pdf::loadView('quotation.pdf', [
+        $pdf = ThaiPdf::view('quotation.pdf', [
             'quotation' => $this->documentData($quotation),
             'companyInfo' => $this->getCompanyInfo(),
-        ])->setPaper('a4', 'portrait');
+        ]);
 
         return $pdf->download('XMAN-Quotation-' . $quotation->quote_number . '.pdf');
     }

@@ -98,12 +98,16 @@ VAT ยังคงที่ 7% ใน `VatMode::DEFAULT_RATE` เพราะ�
 | ใบเสนอราคา | `resources/views/quotation/pdf.blade.php` | `/quote/d/{token}/pdf` |
 | ใบแจ้งหนี้ | `resources/views/invoice/pdf.blade.php` | `/invoice/{token}/pdf`, `/admin/invoices/{id}/pdf` |
 
+**ทุกเอกสารต้องออกผ่าน `App\Support\ThaiPdf::view()` ห้ามเรียก `Pdf::loadView()` ตรง ๆ**
+(มีเทสต์ไล่ทุกคอนโทรลเลอร์ไม่ให้หลุด) เพราะ DomPDF ไม่ shape ภาษาไทย — ดู [ข้อ 8.6](#86-วรรณยุกต์ไทยซ้อนสระในเอกสาร-pdf)
+
 ข้อบังคับของ DomPDF:
 
 - **ไม่รองรับ flexbox และ grid** ใช้ `<table>` เท่านั้น — ใส่ `display:flex` จะไม่ error
   แต่กล่องจะทับกันเงียบ ๆ
 - รูปต้องเป็น **path บนดิสก์** ไม่ใช่ URL (`companyInfo()['logo_path']`)
-- ฟอนต์ไทยต้องเป็นไฟล์ Sarabun จริงใน `storage/fonts/` — `App\Support\FontFile` ตรวจ magic bytes ตอนบูต
+- ฟอนต์ที่เอกสารฝังคือ **`storage/fonts/Sarabun-PUA-*.ttf`** ไม่ใช่ `Sarabun-*.ttf` ธรรมดา
+  (สร้างด้วย `resources/fonts/build_thai_pua_font.py`) — `App\Support\FontFile` ตรวจ magic bytes ตอนบูต
 - ข้อมูลบริษัททั้งหมดมาจาก `settings` ไม่มี hardcode:
   `company_name`, `contact_address`, `contact_email`, `contact_phone`, `contact_line_id`,
   `company_tax_id`, `site_logo` — แก้ที่ `/admin/contact-settings`
@@ -215,6 +219,38 @@ JS ในหน้าสั่งงานคิดราคาโชว์ส�
 `round(total * 25%)` สามครั้งอาจรวมกันขาดหรือเกินหนึ่งสตางค์
 `Pricing::instalments()` ให้ **งวดสุดท้าย** รับเศษ (ไม่ใช่งวดแรก) เพราะงวดแรกที่เลขไม่ตรง
 เปอร์เซ็นต์บนเอกสารคือตัวที่ลูกค้าทัก
+
+### 8.6 วรรณยุกต์ไทยซ้อนสระในเอกสาร PDF
+
+DomPDF วางทุก glyph ตามตำแหน่งเริ่มต้นของฟอนต์ และ **ไม่อ่าน GSUB/GPOS เลย** ผลคือ
+
+- วรรณยุกต์บนสระบน (ใบแจ้ง**หนี้** งวด**ที่** **ชื่อ** **น้ำ**) ถูกวาดที่ความสูงเดียวกับสระ → ทับกันเป็นก้อน
+  บางครั้งดูเหมือนวรรณยุกต์หายไปเลย
+- มาร์กบนพยัญชนะสูง (**ป่า ฟ้า ฝั่ง ปิด**) ไปเกาะบนหางตัวอักษร
+- ญ/ฐ ที่มีสระล่าง (**ญุ ฐุ**) หางชนสระ
+
+เบราว์เซอร์แก้ให้เองด้วย GPOS — PDF ไม่มีให้
+
+**วิธีแก้ (ทำแล้ว):** วิธีเดียวกับที่ฟอนต์ไทยเคยใช้กับ renderer ที่ shape ไม่ได้ —
+เอา glyph มาร์กที่ "วางตำแหน่งไว้แล้ว" ใส่ไว้ใน Private Use Area แล้วสลับเข้าไปตอนจะวาด
+
+| ชิ้นส่วน | ไฟล์ |
+|---|---|
+| สร้างฟอนต์ | `resources/fonts/build_thai_pua_font.py` → `storage/fonts/Sarabun-PUA-{Regular,Bold}.ttf` |
+| สลับตัวอักษร | `App\Support\ThaiShaper::shape()` / `shapeHtml()` |
+| ทางออก PDF ทางเดียว | `App\Support\ThaiPdf::view()` (shape HTML ที่เรนเดอร์เสร็จแล้ว ค่อยส่งให้ DomPDF) |
+| รูป OG (GD ก็ไม่ shape เหมือนกัน) | `OgImageController` shape ก่อนวัดและก่อนวาด |
+
+**ผัง PUA ในสคริปต์สร้างฟอนต์กับใน ThaiShaper ต้องตรงกันเสมอ** แก้ที่เดียวไม่ได้ —
+`ThaiPdfFontTest::test_every_cluster_the_shaper_produces_exists_in_both_fonts` ไล่ทุกคลัสเตอร์
+ที่ shaper สร้างได้ แล้วเช็กว่าฟอนต์ทั้งสองน้ำหนักมี code point นั้นจริง
+
+**ข้อแลกเปลี่ยน:** ข้อความที่ถูกสลับเป็น PUA ถ้า copy ออกจาก PDF จะได้ code point ของ PUA
+ไม่ใช่ตัวอักษรไทยเดิม (ตัวเลข/ภาษาอังกฤษ/คำที่ไม่มีมาร์กซ้อนไม่กระทบ) จึง **shape ให้ช้าที่สุด**
+คือบน HTML ที่เรนเดอร์เสร็จแล้วเท่านั้น ห้าม shape ก่อนเก็บลงฐานข้อมูลหรือก่อนเปรียบเทียบ
+
+ถ้าวันหนึ่งต้องการให้ copy ได้ครบ ทางเลือกคือย้ายไปใช้ mPDF ซึ่งมี OTL engine ของตัวเอง
+(ต้องรื้อเทมเพลตทั้งสองใบ)
 
 ### 8.5 โทเคนของเอกสารต้องไม่หลุดออก API
 

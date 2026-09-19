@@ -20,13 +20,13 @@
             font-family: 'Sarabun';
             font-style: normal;
             font-weight: normal;
-            src: url({{ storage_path('fonts/Sarabun-Regular.ttf') }}) format('truetype');
+            src: url({{ storage_path('fonts/Sarabun-PUA-Regular.ttf') }}) format('truetype');
         }
         @font-face {
             font-family: 'Sarabun';
             font-style: normal;
             font-weight: bold;
-            src: url({{ storage_path('fonts/Sarabun-Bold.ttf') }}) format('truetype');
+            src: url({{ storage_path('fonts/Sarabun-PUA-Bold.ttf') }}) format('truetype');
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
