@@ -2070,7 +2070,17 @@ class QuotationController extends Controller
         // tax_id has no setting behind it yet, and a made-up one on a tax
         // document is worse than none, so an empty value means the line is
         // left off entirely rather than printed as X-XXXX-XXXXX-XX-X.
+        // The real wordmark the admin uploaded, not a drawn letter. DomPDF
+        // cannot fetch a URL reliably, so the document gets an absolute file
+        // path and the web page gets the public one; either may be absent, and
+        // both templates fall back to type when it is.
+        $logo = Setting::getValue('site_logo');
+        $logoPath = $logo ? storage_path('app/public/' . $logo) : null;
+        $logoUsable = $logoPath && is_file($logoPath) && is_readable($logoPath);
+
         return [
+            'logo_path' => $logoUsable ? $logoPath : null,
+            'logo_url' => $logo ? asset('storage/' . $logo) : null,
             'name' => Setting::getValue('company_name', 'XMAN STUDIO'),
             'tagline' => 'IT Solutions & Software Development',
             'address' => trim((string) Setting::getValue('contact_address', '')),

@@ -46,6 +46,9 @@
         /* ── หัวกระดาษ ───────────────────────────────── */
         .head { width: 100%; border-collapse: collapse; }
         .head td { vertical-align: top; }
+        /* โลโก้จริงเป็นเวิร์ดมาร์กแนวนอน (919x243) จึงล็อกความสูงแล้วปล่อยกว้างเอง */
+        .brand-logo { height: 34px; width: auto; }
+        /* ใช้เฉพาะตอนที่ยังไม่ได้อัปโหลดโลโก้ในหน้าแอดมิน */
         .brand-mark {
             width: 42px; height: 42px; background: #1d4ed8; color: #fff;
             text-align: center; font-size: 22px; font-weight: bold;
@@ -137,6 +140,20 @@
     <table class="head">
         <tr>
             <td style="width: 58%;">
+                @if (!empty($c['logo_path']))
+                    {{-- โลโก้ที่อัปโหลดไว้จริงในหน้าแอดมิน (setting `site_logo`)
+                         ส่งเป็น path บนดิสก์ ไม่ใช่ URL — DomPDF ดึง URL ไม่ได้ถ้าไม่เปิด
+                         isRemoteEnabled และถึงเปิดก็ช้าและพังง่ายกว่า --}}
+                    <img src="{{ $c['logo_path'] }}" alt="{{ $c['name'] }}" class="brand-logo">
+                    <div class="brand-lines" style="padding-top: 7px;">
+                        @if ($c['address']){{ $c['address'] }}<br>@endif
+                        @if ($c['phone'])โทร {{ $c['phone'] }}@endif
+                        @if ($c['phone'] && $c['email']) · @endif
+                        @if ($c['email']){{ $c['email'] }}@endif
+                        @if ($c['line'])<br>LINE {{ $c['line'] }}@endif
+                        @if ($c['tax_id'])<br>เลขประจำตัวผู้เสียภาษี {{ $c['tax_id'] }}@endif
+                    </div>
+                @else
                 <table style="border-collapse: collapse;">
                     <tr>
                         <td style="width: 42px; vertical-align: top;"><div class="brand-mark">X</div></td>
@@ -156,6 +173,7 @@
                         </td>
                     </tr>
                 </table>
+                @endif
             </td>
             <td style="width: 42%;">
                 <div class="doc-title">ใบเสนอราคา</div>

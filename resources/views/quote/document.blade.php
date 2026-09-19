@@ -63,6 +63,30 @@
 
         {{-- ══ รายการ ══ --}}
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+            {{-- หัวจดหมายแบบเดียวกับบน PDF เพื่อให้หน้าเว็บกับไฟล์ที่ดาวน์โหลด
+                 อ่านแล้วรู้สึกว่าเป็นเอกสารฉบับเดียวกัน --}}
+            <div class="px-5 sm:px-7 py-5 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between gap-5 flex-wrap">
+                <div>
+                    @if (!empty($companyInfo['logo_url']))
+                        <img src="{{ $companyInfo['logo_url'] }}" alt="{{ $companyInfo['name'] }}" class="h-9 w-auto mb-2.5">
+                    @else
+                        <div class="text-lg font-black tracking-wide text-gray-900 dark:text-white mb-1">{{ $companyInfo['name'] }}</div>
+                    @endif
+                    <div class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                        @if ($companyInfo['address']){{ $companyInfo['address'] }}<br>@endif
+                        @if ($companyInfo['phone'])โทร {{ $companyInfo['phone'] }}@endif
+                        @if ($companyInfo['phone'] && $companyInfo['email']) · @endif
+                        @if ($companyInfo['email']){{ $companyInfo['email'] }}@endif
+                        @if ($companyInfo['tax_id'])<br>เลขประจำตัวผู้เสียภาษี {{ $companyInfo['tax_id'] }}@endif
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">Quotation</div>
+                    <div class="font-mono text-sm font-bold text-gray-900 dark:text-white mt-0.5">{{ $quotation->quote_number }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">ออกเมื่อ {{ $doc['quote_date'] }}</div>
+                </div>
+            </div>
+
             <div class="px-5 sm:px-7 py-4 border-b border-gray-100 dark:border-gray-700">
                 <h2 class="text-lg font-bold text-gray-900 dark:text-white">รายการในใบเสนอราคา</h2>
             </div>
