@@ -230,7 +230,7 @@
                     <section x-show="outcome" x-cloak>
                         <div class="flex items-center gap-3.5 mb-1.5">
                             <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">3</span>
-                            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">ออกใบเสนอราคาให้ใคร</h2>
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">ส่งใบเสนอราคาไปที่ไหน</h2>
                         </div>
                         <p class="ml-[3.1rem] text-sm text-gray-600 dark:text-gray-400 mb-5">
                             สิ่งที่กรอกตรงนี้จะถูก <strong class="font-semibold">พิมพ์ลงบนเอกสาร</strong> ตามที่พิมพ์เป๊ะ ๆ
@@ -238,42 +238,81 @@
                             ที่เหลือใส่ได้ทีหลัง
                         </p>
 
-                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 sm:p-7 space-y-5">
-                            <div class="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="q-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">ชื่อผู้ติดต่อ <span class="text-red-500">*</span></label>
-                                    <input id="q-name" type="text" x-model="customer.customer_name" required
-                                           class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 sm:p-7 space-y-6">
+
+                            {{-- ── ติดต่อกลับ ── --}}
+                            <div>
+                                <div class="flex items-center gap-2 mb-3">
+                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    <span class="text-sm font-bold text-gray-900 dark:text-white">ติดต่อกลับได้ที่</span>
                                 </div>
-                                <div>
-                                    <label for="q-company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">บริษัท / ร้าน <span class="font-normal text-gray-500">ไม่บังคับ</span></label>
-                                    <input id="q-company" type="text" x-model="customer.customer_company"
-                                           class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label for="q-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">อีเมล <span class="text-red-500">*</span> <span class="font-normal text-gray-500">ใบเสนอราคาจะส่งไปที่นี่</span></label>
-                                    <input id="q-email" type="email" x-model="customer.customer_email" required
-                                           class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label for="q-phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">เบอร์โทร <span class="text-red-500">*</span></label>
-                                    <input id="q-phone" type="tel" x-model="customer.customer_phone" required inputmode="tel"
-                                           class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label for="q-tax" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">เลขผู้เสียภาษี <span class="font-normal text-gray-500">ถ้าต้องใช้ตั้งเบิก</span></label>
-                                    <input id="q-tax" type="text" x-model="customer.customer_tax_id" inputmode="numeric" maxlength="20"
-                                           class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm tabular-nums focus:border-blue-500 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label for="q-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">ที่อยู่ออกเอกสาร <span class="font-normal text-gray-500">ไม่บังคับ</span></label>
-                                    <input id="q-address" type="text" x-model="customer.customer_address"
-                                           class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
+                                <div class="grid sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="q-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">ชื่อผู้ติดต่อ <span class="text-red-500">*</span></label>
+                                        <input id="q-name" type="text" x-model="customer.customer_name" required
+                                               placeholder="เช่น สมชาย ใจดี"
+                                               class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="q-phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">เบอร์โทร <span class="text-red-500">*</span></label>
+                                        <input id="q-phone" type="tel" x-model="customer.customer_phone" required inputmode="tel"
+                                               placeholder="08X-XXX-XXXX"
+                                               class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label for="q-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">อีเมล <span class="text-red-500">*</span></label>
+                                        <input id="q-email" type="email" x-model="customer.customer_email" required
+                                               placeholder="you@company.co.th"
+                                               class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <p class="mt-1.5 flex items-start gap-1.5 text-xs text-blue-700 dark:text-blue-300">
+                                            <svg class="w-3.5 h-3.5 shrink-0 mt-px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                                            <span>ไฟล์ PDF และลิงก์สำหรับกดตอบรับจะถูกส่งไปที่อีเมลนี้</span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
+                            {{-- ── ชื่อบนเอกสาร ──
+                                 แยกกล่องออกมาเพราะสามช่องนี้ไม่ได้ใช้ติดต่อ แต่ถูก
+                                 "พิมพ์ลงกระดาษ" ซึ่งคนละเรื่องกัน และเป็นจุดที่ลูกค้า
+                                 องค์กรต้องกรอกให้ตรงกับที่ฝ่ายบัญชีใช้ --}}
+                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 p-4 sm:p-5">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                                    <span class="text-sm font-bold text-gray-900 dark:text-white">ชื่อที่จะพิมพ์ลงบนเอกสาร</span>
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">ไม่บังคับ</span>
+                                </div>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3.5">
+                                    ถ้าเป็นนิติบุคคลและต้องใช้ตั้งเบิก กรอกให้ตรงกับที่ฝ่ายบัญชีใช้
+                                    — ถ้าเป็นบุคคลธรรมดา ข้ามได้เลย เราจะใช้ชื่อผู้ติดต่อด้านบนแทน
+                                </p>
+                                <div class="grid sm:grid-cols-2 gap-4">
+                                    <div class="sm:col-span-2">
+                                        <label for="q-company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">ชื่อบริษัท / ร้าน</label>
+                                        <input id="q-company" type="text" x-model="customer.customer_company"
+                                               placeholder="เช่น บริษัท ตัวอย่าง จำกัด"
+                                               class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="q-tax" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">เลขประจำตัวผู้เสียภาษี</label>
+                                        <input id="q-tax" type="text" x-model="customer.customer_tax_id" inputmode="numeric" maxlength="20"
+                                               placeholder="13 หลัก"
+                                               class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm tabular-nums focus:border-blue-500 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="q-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">ที่อยู่ตามใบกำกับ</label>
+                                        <input id="q-address" type="text" x-model="customer.customer_address"
+                                               placeholder="เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์"
+                                               class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ── เล่างาน ── --}}
                             <div>
-                                <label for="q-brief" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">เล่างานให้ฟังสั้น ๆ</label>
+                                <label for="q-brief" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    เล่างานให้ฟังสั้น ๆ <span class="font-normal text-gray-500">ไม่บังคับ แต่ช่วยให้เราเสนอได้ตรงขึ้น</span>
+                                </label>
                                 <textarea id="q-brief" rows="3" x-model="customer.project_description" maxlength="2000"
                                           placeholder="ตอนนี้ทำอะไรอยู่ ติดปัญหาตรงไหน อยากให้จบเมื่อไร"
                                           class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
