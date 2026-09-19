@@ -40,11 +40,20 @@ Heroes are 1920w, cards 1200w, all WebP q82 (~2.4 MB for 25 files).
 **Heroes:** `hero-home` `hero-about` `hero-portfolio` `hero-services` `hero-support`
 `hero-team` `hero-products` `hero-rental` `hero-tracking` `hero-changelog`
 `hero-academy` `hero-legal` `hero-metalx` `hero-network` `hero-gpuxmine` `hero-kyc`
+`hero-quote` `quote-doc`
 
 `hero-kyc` is deliberately **abstract** — a glowing shield, a fingerprint, a padlock,
 blank floating sheets. No ID card, no face, no lettering. That page asks for a real
 Thai national ID number, and artwork that resembles a real document reads as a
 worked example of one.
+
+`hero-quote` and `quote-doc` are **generated but not wired up yet** — they are for the
+redesign of the quotation builder, which is still a proposal. `hero-quote` is 1920×1080
+and holds its negative space in the upper centre; `quote-doc` is 1600×1000 and is a
+content image (a paper stack lit from one side), so reference it with `<img>`, not
+`<x-page-art>`. Both drop the usual magenta: that page is where a customer decides to
+spend money, so it stays in the blue `#3B82F6` → cyan half of the palette, which is the
+one the design system leads with.
 
 **Cards:** `card-blockchain` `card-web` `card-mobile` `card-ai` `card-iot`
 `card-security` `card-software` `card-flutter` `card-design` `card-marketing`
