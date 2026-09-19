@@ -1,13 +1,15 @@
-@extends($publicLayout ?? 'layouts.app')
+@extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'สถานะการเติมเงิน')
+@section('page-title')<x-bi th="สถานะการเติมเงิน" en="Top-up status" />@endsection
+@section('page-description')<x-bi th="ติดตามรายการเติมเงินของคุณ" en="Track this top-up" />@endsection
 
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="space-y-6">
     <!-- Gradient Header Banner -->
-    <div class="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 dark:from-purple-700 dark:via-purple-600 dark:to-indigo-700">
+    <div class="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 dark:from-purple-700 dark:via-purple-600 dark:to-indigo-700">
         <x-page-art art="hero-payment" :opacity="10" :scrim="false" fade="bottom" />
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="relative px-6 sm:px-8 py-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div class="mb-4 md:mb-0">
                     <nav class="flex items-center text-purple-200 text-sm mb-2">
@@ -35,7 +37,7 @@
         </div>
     </div>
 
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-4xl mx-auto">
         <!-- Status Banner -->
         @if($topup->status === 'pending')
             @if($uniqueAmount && $uniqueAmount->isExpired())
@@ -263,7 +265,7 @@
                             </div>
                             <div class="space-y-2 text-sm">
                                 <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200"><x-bi th="ชื่อบัญชี:" en="Account name:" /></span> {{ $bank->account_name }}</p>
-                                <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200"><x-bi th="เลขบัญชี:" en="Account number:" /></span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">{{ $bank->account_number }}</code></p>
+                                <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200"><x-bi th="เลขบัญชี:" en="Account number:" /></span> <code class="px-2 py-1 bg-white/90 dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">{{ $bank->account_number }}</code></p>
                                 @if($bank->branch)
                                 <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200"><x-bi th="สาขา:" en="Branch:" /></span> {{ $bank->branch }}</p>
                                 @endif
@@ -276,7 +278,7 @@
                     <!-- PromptPay -->
                     <div class="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
                         <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3 shadow-lg overflow-hidden bg-white">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3 shadow-lg overflow-hidden bg-white/95">
                                 <img src="https://www.bot.or.th/content/dam/bot/icons/icon-promptpay.png" alt="PromptPay" class="w-8 h-8 object-contain" onerror="this.style.display='none';this.parentElement.classList.add('bg-gradient-to-br','from-purple-500','to-indigo-500');this.parentElement.innerHTML='<svg class=\'w-5 h-5 text-white\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z\'/></svg>'">
                             </div>
                             <h4 class="font-semibold text-purple-800 dark:text-purple-200">PromptPay</h4>
@@ -285,7 +287,7 @@
                         @if(!empty($promptpayQR['qr_image_url']))
                         <!-- QR Code for scanning -->
                         <div class="text-center mb-4">
-                            <div class="inline-block p-3 bg-white rounded-xl border-2 border-purple-300 shadow-md">
+                            <div class="inline-block p-3 bg-white/95 rounded-xl border-2 border-purple-300 shadow-md">
                                 <img src="{{ $promptpayQR['qr_image_url'] }}" alt="PromptPay QR Code"
                                      class="w-56 h-56 mx-auto object-contain" loading="lazy">
                             </div>
@@ -296,7 +298,7 @@
                         @endif
 
                         <div class="space-y-2 text-sm">
-                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200"><x-bi th="หมายเลข:" en="Number:" /></span> <code class="px-2 py-1 bg-white dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">{{ $promptpayNumber }}</code></p>
+                            <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200"><x-bi th="หมายเลข:" en="Number:" /></span> <code class="px-2 py-1 bg-white/90 dark:bg-gray-700 rounded text-purple-600 dark:text-purple-400 font-mono">{{ $promptpayNumber }}</code></p>
                             @if(!empty($promptpayName))
                             <p class="text-gray-600 dark:text-gray-400"><span class="font-medium text-gray-800 dark:text-gray-200"><x-bi th="ชื่อบัญชี:" en="Account name:" /></span> {{ $promptpayName }}</p>
                             @endif

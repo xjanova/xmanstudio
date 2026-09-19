@@ -1,13 +1,15 @@
-@extends($publicLayout ?? 'layouts.app')
+@extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'กระเป๋าเงิน')
+@section('page-title')<x-bi th="กระเป๋าเงิน" en="Wallet" />@endsection
+@section('page-description')<x-bi th="ยอดเงินและธุรกรรมของคุณ" en="Your balance and transactions" />@endsection
 
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="space-y-6">
     <!-- Gradient Header Banner -->
-    <div class="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 dark:from-purple-700 dark:via-purple-600 dark:to-indigo-700">
+    <div class="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 dark:from-purple-700 dark:via-purple-600 dark:to-indigo-700">
         <x-page-art art="hero-payment" :opacity="14" :scrim="false" fade="bottom" />
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="relative px-6 sm:px-8 py-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div class="mb-4 md:mb-0">
                     <h1 class="text-3xl font-bold text-white flex items-center">
@@ -19,7 +21,7 @@
                     <p class="mt-1 text-purple-100"><x-bi th="จัดการยอดเงินและธุรกรรมของคุณ" en="Manage your balance and transactions" /></p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <a href="{{ route('user.wallet.topup') }}" class="inline-flex items-center px-5 py-2.5 bg-white text-purple-600 font-semibold rounded-xl shadow-lg hover:bg-purple-50 transition-all duration-200">
+                    <a href="{{ route('user.wallet.topup') }}" class="inline-flex items-center px-5 py-2.5 bg-white/95 text-purple-700 font-semibold rounded-xl shadow-lg hover:bg-white transition-all duration-200">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
@@ -36,7 +38,7 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Main Content -->
             <div class="lg:col-span-2 space-y-6">
