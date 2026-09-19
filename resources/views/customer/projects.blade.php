@@ -23,7 +23,7 @@
             </h1>
             <p class="mt-2 text-white/80 text-sm sm:text-base"><x-bi th="ติดตามความคืบหน้าและจัดการโครงการทั้งหมดของคุณ" en="Track progress and manage all your projects" /></p>
         </div>
-        <a href="{{ route('support.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all font-medium shadow-lg">
+        <a href="{{ route('quote.index') }}" class="inline-flex items-center px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all font-medium shadow-lg">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
@@ -191,7 +191,7 @@
             </div>
             <p class="text-lg font-bold text-gray-900 dark:text-white"><x-bi th="ยังไม่มีโครงการ" en="No projects yet" /></p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2"><x-bi th="เมื่อคุณมีโครงการ จะแสดงที่นี่" en="Your projects will appear here once you have any" /></p>
-            <a href="{{ route('support.index') }}" class="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+            <a href="{{ route('quote.index') }}" class="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>

@@ -575,7 +575,7 @@
                         Buy License - {{ number_format($product->price, 0) }} THB
                     </button>
                 </form>
-                <a href="{{ route('support.index') }}" class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
+                <a href="{{ route('quote.index') }}" class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
                     Contact Us
                 </a>
             </div>

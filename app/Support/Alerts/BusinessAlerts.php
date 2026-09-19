@@ -442,6 +442,78 @@ final class BusinessAlerts
         });
     }
 
+    /**
+     * The customer opened the quotation we e-mailed them.
+     *
+     * Sent once, on the first open — the controller only calls this when
+     * viewed_at was still null. Quiet on purpose: it is a signal to follow up,
+     * not news that needs a buzz.
+     */
+    public static function quotationViewed(Quotation $q): void
+    {
+        self::guard(function () use ($q) {
+            AdminAlerts::send(new Alert(
+                key: 'quotation-viewed:' . $q->id,
+                level: Alert::INFO,
+                title: 'ลูกค้าเปิดดูใบเสนอราคาแล้ว',
+                body: self::person($q->customer_name, $q->customer_email, $q->customer_phone)
+                    . ($q->customer_company ? ' · ' . $q->customer_company : '')
+                    . "\n" . Str::limit((string) $q->service_name, 70),
+                facts: ['เลขที่' => (string) $q->quote_number, 'มูลค่า' => self::baht((float) $q->grand_total)],
+                url: self::adminUrl('admin.quotations.detail', $q),
+                urlLabel: 'เปิดใบเสนอราคา',
+                category: 'orders',
+            ), 1440, subject: 'quotation:' . $q->id);
+        });
+    }
+
+    /**
+     * The customer answered: accepted, asked to renegotiate, or declined.
+     *
+     * The card carries what they typed, because for a renegotiation that
+     * sentence IS the work item — it says which line to cut or what number to
+     * come back with.
+     */
+    public static function quotationAnswered(Quotation $q, string $action, ?string $message = null): void
+    {
+        self::guard(function () use ($q, $action, $message) {
+            [$title, $level] = match ($action) {
+                'accept' => ['ลูกค้าตอบรับใบเสนอราคา ' . self::baht((float) $q->grand_total), Alert::MONEY],
+                'decline' => ['ลูกค้าไม่รับข้อเสนอ', Alert::WARNING],
+                default => ['ลูกค้าขอต่อรองราคา', Alert::MONEY],
+            };
+
+            $lines = [
+                self::person($q->customer_name, $q->customer_email, $q->customer_phone)
+                    . ($q->customer_company ? ' · ' . $q->customer_company : ''),
+                Str::limit((string) $q->service_name, 70),
+            ];
+            if (trim((string) $message) !== '') {
+                $lines[] = '"' . Str::limit(trim((string) $message), 500) . '"';
+            }
+
+            AdminAlerts::send(new Alert(
+                key: 'quotation-answer:' . $q->id . ':' . $action,
+                level: $level,
+                title: $title,
+                body: implode("\n", $lines),
+                facts: [
+                    'เลขที่' => (string) $q->quote_number,
+                    'มูลค่า' => self::baht((float) $q->grand_total),
+                    'คำตอบ' => match ($action) {
+                        'accept' => 'ตอบรับ',
+                        'decline' => 'ไม่รับ',
+                        default => 'ขอต่อรอง',
+                    },
+                ],
+                url: self::adminUrl('admin.quotations.detail', $q),
+                urlLabel: 'เปิดใบเสนอราคา',
+                category: 'orders',
+                buttons: [[BotActions::ackButton('q' . $q->id)]],
+            ), 60, subject: 'quotation:' . $q->id);
+        });
+    }
+
     // =============================================================================== contact
 
     /** The "contact us" form. Stored nowhere else — if the e-mail failed, this card IS the message. */

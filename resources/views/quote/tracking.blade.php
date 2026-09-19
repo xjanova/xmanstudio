@@ -22,7 +22,7 @@
 
         <!-- Search Form -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8 border border-gray-100 dark:border-gray-700">
-            <form method="GET" action="{{ route('support.tracking.search') }}" class="flex gap-3">
+            <form method="GET" action="{{ route('quote.track.search') }}" class="flex gap-3">
                 <div class="flex-1 relative">
                     <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -253,7 +253,7 @@
 
         <!-- Back to Support -->
         <div class="text-center mt-10">
-            <a href="{{ route('support.index') }}" class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
+            <a href="{{ route('quote.index') }}" class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>

@@ -23,7 +23,7 @@
         ['th' => 'เช่าใช้งาน',  'en' => 'Rentals',   'url' => route('rental.index'),           'art' => 'rental',    'desc' => 'จ่ายรายเดือน'],
         ['th' => 'ผลงาน',       'en' => 'Portfolio', 'url' => url('/portfolio'),               'art' => 'portfolio', 'desc' => 'โปรเจคที่ส่งมอบแล้ว'],
         ['th' => 'ทีมงาน',      'en' => 'Team',      'url' => url('/team'),                    'art' => 'team',      'desc' => 'คนเบื้องหลัง'],
-        ['th' => 'ติดต่อ/สั่งซื้อ', 'en' => 'Contact', 'url' => route('support.index'),        'art' => 'support',   'desc' => 'ขอใบเสนอราคา'],
+        ['th' => 'ติดต่อ/สั่งซื้อ', 'en' => 'Contact', 'url' => route('quote.index'),        'art' => 'support',   'desc' => 'ขอใบเสนอราคา'],
         ['th' => 'ติดตามงาน',   'en' => 'Tracking',  'url' => url('/tracking'),                'art' => 'tracking',  'desc' => 'เช็คสถานะโปรเจค'],
         // Was in the old desktop bar; dropping it would have left donate
         // reachable only from the mobile menu.

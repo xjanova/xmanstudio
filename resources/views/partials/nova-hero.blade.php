@@ -78,7 +78,7 @@
         </p>
 
         <div class="nova-hero__cta nova-reveal">
-            <a href="{{ route('support.index') }}" class="nova-btn nova-btn--primary">
+            <a href="{{ route('quote.index') }}" class="nova-btn nova-btn--primary">
                 เริ่มโปรเจคของคุณ / Start a project
                 @include('partials.nova-icon', ['name' => 'arrow'])
             </a>

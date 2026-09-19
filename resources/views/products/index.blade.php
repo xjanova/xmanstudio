@@ -361,7 +361,7 @@
             <p class="text-gray-400 mb-6 sm:mb-8 text-sm sm:text-base">เราให้บริการพัฒนาซอฟต์แวร์ตามความต้องการ ติดต่อเราเพื่อรับใบเสนอราคา</p>
 
             <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
-                <a href="{{ route('support.index') }}"
+                <a href="{{ route('quote.index') }}"
                    class="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25 text-sm sm:text-base">
                     ติดต่อเรา
                 </a>

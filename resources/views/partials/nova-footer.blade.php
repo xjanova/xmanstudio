@@ -9,7 +9,7 @@
                     ทีมพัฒนาซอฟต์แวร์และโซลูชั่น IT ครบวงจร<br>
                     <span style="color:var(--nv-fg-3);">Full-stack IT solutions · Bangkok · Est. 2018</span>
                 </p>
-                <a href="{{ route('support.index') }}" class="nova-card__cta" style="--nv-accent: var(--nv-cyan);">
+                <a href="{{ route('quote.index') }}" class="nova-card__cta" style="--nv-accent: var(--nv-cyan);">
                     ปรึกษาฟรี / Free consultation
                     @include('partials.nova-icon', ['name' => 'arrow'])
                 </a>
@@ -21,7 +21,7 @@
                     <li><a href="{{ route('services.index') }}">บริการทั้งหมด / All services</a></li>
                     <li><a href="{{ config('app.product_site_url') }}">ผลิตภัณฑ์ / Products</a></li>
                     <li><a href="{{ route('rental.index') }}">เช่าใช้งาน / Rental</a></li>
-                    <li><a href="{{ route('support.index') }}">ขอใบเสนอราคา / Get a quote</a></li>
+                    <li><a href="{{ route('quote.index') }}">ขอใบเสนอราคา / Get a quote</a></li>
                     <li><a href="{{ route('contact.show') }}">ติดต่อเรา / Contact us</a></li>
                     <li><a href="{{ route('portfolio') }}">ผลงาน / Portfolio</a></li>
                 </ul>
@@ -45,7 +45,7 @@
                     <li><a href="{{ route('team') }}">ทีมงาน / Team</a></li>
                     <li><a href="{{ route('changelog') }}">อัปเดต / Changelog</a></li>
                     <li><a href="{{ route('tracking') }}">ติดตามงาน / Track order</a></li>
-                    <li><a href="{{ route('support.index') }}">ติดต่อ / Contact</a></li>
+                    <li><a href="{{ route('quote.index') }}">ติดต่อ / Contact</a></li>
                 </ul>
             </div>
 

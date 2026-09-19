@@ -225,7 +225,7 @@
                             </svg>
                             ดูรายละเอียด
                         </a>
-                        <a href="{{ route('support.index') }}"
+                        <a href="{{ route('quote.index') }}"
                            class="inline-flex items-center gap-2 px-8 py-4 border-2 border-white/40 text-white rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -516,11 +516,11 @@
             ทีมผู้เชี่ยวชาญของเราพร้อมให้คำปรึกษาและวางแผนโซลูชันที่เหมาะสมกับธุรกิจของคุณ
         </p>
         <div class="flex flex-wrap gap-4 justify-center">
-            <a href="{{ route('support.index') }}"
+            <a href="{{ route('quote.index') }}"
                class="inline-block px-8 py-4 bg-white text-primary-600 rounded-lg hover:bg-gray-100 font-semibold text-lg transition-all shadow-lg">
                 สั่งซื้อบริการ
             </a>
-            <a href="{{ route('support.index') }}#contact"
+            <a href="{{ route('quote.index') }}#contact"
                class="inline-block px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 font-semibold text-lg transition-all">
                 ติดต่อเรา
             </a>

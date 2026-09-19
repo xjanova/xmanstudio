@@ -15,7 +15,7 @@
                 @include('partials.nova-icon', ['name' => 'chat'])
                 ติดต่อเรา / Contact us
             </a>
-            <a href="{{ route('support.index') }}" class="nova-btn nova-btn--ghost">
+            <a href="{{ route('quote.index') }}" class="nova-btn nova-btn--ghost">
                 ขอใบเสนอราคา / Get a quote
                 @include('partials.nova-icon', ['name' => 'arrow'])
             </a>

@@ -157,7 +157,7 @@ class SeoController extends Controller
         ];
 
         $urls[] = [
-            'loc' => route('support.index'),
+            'loc' => route('quote.index'),
             'lastmod' => $now,
             'changefreq' => 'weekly',
             'priority' => '0.8',

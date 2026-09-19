@@ -223,7 +223,7 @@
             <p class="text-sm text-blue-800 dark:text-blue-200 mb-3">
                 <x-bi th="หากมีข้อสงสัยหรือปัญหาเกี่ยวกับคำสั่งซื้อนี้ ติดต่อทีมสนับสนุนของเราได้เลย" en="If you have any questions or issues with this order, feel free to contact our support team." />
             </p>
-            <a href="{{ route('support.index') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold flex items-center transition-colors">
+            <a href="{{ route('quote.index') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold flex items-center transition-colors">
                 <x-bi th="ติดต่อเรา" en="Contact Us" />
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>

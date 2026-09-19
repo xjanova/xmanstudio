@@ -23,7 +23,7 @@
         ['th' => 'สร้างภาพ AI', 'en' => 'XDreamer',  'href' => config('services.aixman.site_url'), 'accent' => '#f472b6', 'icon' => 'spark', 'art' => 'xdreamer'],
         ['th' => 'เรียนโค้ด',   'en' => 'Academy',   'href' => route('code-academy'),     'accent' => '#38bdf8', 'icon' => 'book',  'art' => 'academy'],
         ['th' => 'เพลง',        'en' => 'Metal-X',   'href' => route('metal-x.index'),    'accent' => '#fb7185', 'icon' => 'play',  'art' => 'metalx'],
-        ['th' => 'ติดต่อเรา',   'en' => 'Contact',   'href' => route('support.index'),    'accent' => '#ffd479', 'icon' => 'chat',  'art' => 'contact'],
+        ['th' => 'ติดต่อเรา',   'en' => 'Contact',   'href' => route('quote.index'),    'accent' => '#ffd479', 'icon' => 'chat',  'art' => 'contact'],
     ];
 @endphp
 <!DOCTYPE html>

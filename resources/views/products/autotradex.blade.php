@@ -394,7 +394,7 @@
                    class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-purple-500/25">
                     ดูแพ็กเกจราคา
                 </a>
-                <a href="{{ route('support.index') }}"
+                <a href="{{ route('quote.index') }}"
                    class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
                     ติดต่อสอบถาม
                 </a>

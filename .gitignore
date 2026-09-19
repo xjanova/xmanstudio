@@ -83,3 +83,11 @@ create_personal_access_tokens.sql
 
 # Local backup files (use git history for recovery, not .backup suffix)
 *.backup
+
+# DomPDF font metric caches — regenerated from the TTFs in this folder on first
+# render. The TTFs themselves ARE tracked (see docs: fake Sarabun files once made
+# every Thai PDF unreadable); only the derived caches are noise.
+/storage/fonts/installed-fonts.json
+/storage/fonts/*_*.ufm
+/storage/fonts/*_*.ufm.json
+/storage/fonts/*_*.ttf

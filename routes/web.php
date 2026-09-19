@@ -317,15 +317,41 @@ Route::post('/contact', [ContactController::class, 'send'])
     ->name('contact.send')
     ->middleware(['throttle:5,1', 'turnstile:contact']);
 
-// Support & Quotation
-Route::get('/support', [QuotationController::class, 'index'])->name('support.index');
+// ==================== สั่งงาน & ใบเสนอราคา ====================
+// อยู่ที่ /quote ไม่ใช่ /support — เพราะ "support" ในเว็บนี้หมายถึงตั๋วช่วยเหลือ
+// ที่ /customer/support และ /admin/support หน้านี้คือตัวคิดราคาและสั่งงาน
+Route::prefix('quote')->name('quote.')->group(function () {
+    Route::get('/', [QuotationController::class, 'index'])->name('index');
+    Route::get('/track', [QuotationController::class, 'tracking'])->name('track');
+    Route::get('/track/search', [QuotationController::class, 'trackingSearch'])->name('track.search');
+    Route::get('/services', [QuotationController::class, 'getServices'])->name('services');
+
+    Route::post('/preview', [QuotationController::class, 'preview'])->name('preview');
+    Route::post('/pdf', [QuotationController::class, 'generatePdf'])->name('pdf');
+    // ออกใบจริงและส่งเมล — กันคนยิงรัวจนกล่องจดหมายทีมงานเต็ม
+    Route::post('/submit', [QuotationController::class, 'submitOrder'])
+        ->middleware('throttle:10,60')->name('submit');
+
+    // ใบที่ส่งให้ลูกค้าแล้ว เปิดด้วยโทเคนยาว ไม่ใช่เลขที่ใบ — เลขที่ใบเป็น
+    // QT-<วันที่>-<สุ่ม 4 ตัว> ซึ่งไล่เดาได้ และเอกสารมีราคากับข้อมูลลูกค้าอยู่
+    Route::get('/d/{token}', [QuotationController::class, 'showPublic'])->name('show');
+    Route::get('/d/{token}/pdf', [QuotationController::class, 'downloadPublic'])->name('show.pdf');
+    Route::post('/d/{token}/respond', [QuotationController::class, 'respond'])
+        ->middleware('throttle:20,60')->name('respond');
+});
+
 Route::get('/services/{categoryKey}/{optionKey}', [QuotationController::class, 'serviceDetail'])->name('service.detail');
-Route::post('/quotation/preview', [QuotationController::class, 'preview'])->name('quotation.preview');
-Route::post('/quotation/pdf', [QuotationController::class, 'generatePdf'])->name('quotation.pdf');
-Route::post('/quotation/submit', [QuotationController::class, 'submitOrder'])->name('quotation.submit');
-Route::get('/quotation/services', [QuotationController::class, 'getServices'])->name('quotation.services');
-Route::get('/support/tracking', [QuotationController::class, 'tracking'])->name('support.tracking');
-Route::get('/support/tracking/search', [QuotationController::class, 'trackingSearch'])->name('support.tracking.search');
+
+// ที่อยู่เดิม — ลิงก์ในอีเมลเก่า ในแชท และอันดับที่ Google เก็บไว้ต้องไม่ตาย
+Route::redirect('/support', '/quote', 301);
+Route::redirect('/support/tracking', '/quote/track', 301);
+// ทั้งสามเส้นทางนี้ตอบเหมือนเดิม ไม่ใช่ 301 — /quotation/services เป็น JSON API
+// ที่ไคลเอนต์อาจไม่ตาม redirect ส่วน POST ตามหลัง 301 ไม่ได้อยู่แล้ว
+// (ไม่ตั้งชื่อ route — ชื่อเป็นของชุด quote.* เท่านั้น)
+Route::get('/quotation/services', [QuotationController::class, 'getServices']);
+Route::post('/quotation/preview', [QuotationController::class, 'preview']);
+Route::post('/quotation/pdf', [QuotationController::class, 'generatePdf']);
+Route::post('/quotation/submit', [QuotationController::class, 'submitOrder'])->middleware('throttle:10,60');
 
 // Public project tracking (no login required)
 Route::get('/tracking', [QuotationController::class, 'publicTracking'])->name('tracking');

@@ -75,7 +75,7 @@
                         @endif
                     </div>
                 @else
-                    <a href="{{ route('support.index') }}"
+                    <a href="{{ route('quote.index') }}"
                        class="inline-block px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 font-semibold text-lg">
                         ขอใบเสนอราคา
                     </a>
@@ -144,7 +144,7 @@
             ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี และใบเสนอราคาที่ออกแบบมาเฉพาะสำหรับธุรกิจของคุณ
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{{ route('support.index') }}"
+            <a href="{{ route('quote.index') }}"
                class="inline-block px-8 py-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold text-lg">
                 ติดต่อเรา
             </a>

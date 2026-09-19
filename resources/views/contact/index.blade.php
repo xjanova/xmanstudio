@@ -21,7 +21,7 @@
         </p>
         <p class="mt-8 text-sm text-gray-400">
             อยากได้ราคาโครงการ? ใช้
-            <a href="{{ route('support.index') }}" class="text-primary-300 underline underline-offset-4 hover:text-primary-200">ระบบขอใบเสนอราคา</a>
+            <a href="{{ route('quote.index') }}" class="text-primary-300 underline underline-offset-4 hover:text-primary-200">ระบบขอใบเสนอราคา</a>
             จะได้ตัวเลขทันที / Need a price? Use the quotation builder instead.
         </p>
     </div>
@@ -204,7 +204,7 @@
                         เลือกบริการที่ต้องการแล้วรับใบเสนอราคาได้ทันที ไม่ต้องรอตอบกลับ<br>
                         <span class="text-primary-200">Get an instant quote without waiting for a reply.</span>
                     </p>
-                    <a href="{{ route('support.index') }}"
+                    <a href="{{ route('quote.index') }}"
                        class="inline-block px-6 py-2.5 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 transition-all">
                         ขอใบเสนอราคา / Get a quote
                     </a>
