@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\DomainExpiryReminderMail;
 use App\Mail\DomainRenewalNoticeMail;
 use App\Models\DomainContact;
 use App\Models\DomainRegistration;
@@ -273,7 +274,12 @@ class DomainRenewalTest extends TestCase
             'the lock has to clear, or the customer is never warned again');
     }
 
-    public function test_a_domain_without_auto_renew_is_left_alone(): void
+    /**
+     * "Left alone" means we do not take their money. It used to mean we said
+     * nothing at all, which is how a domain expired with the owner none the
+     * wiser — so the wallet assertions stay and the silence does not.
+     */
+    public function test_a_domain_without_auto_renew_is_never_charged(): void
     {
         Mail::fake();
         Http::fake(['*' => Http::response([], 200)]);
@@ -286,9 +292,103 @@ class DomainRenewalTest extends TestCase
 
         $this->artisan('domains:renew')->assertSuccessful();
 
-        Mail::assertNothingSent();
+        // Not the auto-renew warning: nothing is going to be taken.
+        Mail::assertNotSent(DomainRenewalNoticeMail::class);
         $this->assertSame(0, DomainRegistration::where('kind', DomainRegistration::KIND_RENEW)->count());
         $this->assertEqualsWithDelta(2000.0, (float) Wallet::getOrCreateForUser($this->user->id)->fresh()->balance, 0.01);
+    }
+
+    public function test_a_domain_without_auto_renew_is_still_warned(): void
+    {
+        Mail::fake();
+        Http::fake(['*' => Http::response([], 200)]);
+        $this->domain->update(['auto_renew' => false, 'expires_at' => now()->addDays(20)]);
+
+        $this->artisan('domains:renew')->assertSuccessful();
+
+        Mail::assertSent(DomainExpiryReminderMail::class);
+    }
+
+    /** One per milestone per period — a daily scheduler must not nag daily. */
+    public function test_each_reminder_milestone_is_sent_once(): void
+    {
+        Mail::fake();
+        Http::fake(['*' => Http::response([], 200)]);
+        $this->domain->update(['auto_renew' => false, 'expires_at' => now()->addDays(20)]);
+
+        $this->artisan('domains:renew')->assertSuccessful();
+        $this->artisan('domains:renew')->assertSuccessful();
+        $this->artisan('domains:renew')->assertSuccessful();
+
+        // 20 days out with the default 60/30/14/7/1: the 30-day milestone is
+        // the one owed, and only that one.
+        Mail::assertSent(DomainExpiryReminderMail::class, 1);
+        // 60 is retired alongside 30: the domain is past both, and the owner
+        // has just been told where it actually stands.
+        $this->assertSame([60, 30], $this->domain->fresh()->expiry_reminders_sent);
+    }
+
+    public function test_the_next_milestone_fires_as_the_date_closes_in(): void
+    {
+        Mail::fake();
+        Http::fake(['*' => Http::response([], 200)]);
+        $this->domain->update(['auto_renew' => false, 'expires_at' => now()->addDays(20)]);
+
+        $this->artisan('domains:renew')->assertSuccessful();
+
+        $this->domain->update(['expires_at' => now()->addDays(5)]);
+        $this->artisan('domains:renew')->assertSuccessful();
+
+        Mail::assertSent(DomainExpiryReminderMail::class, 2);
+        $this->assertSame([60, 30, 14, 7], $this->domain->fresh()->expiry_reminders_sent);
+    }
+
+    /**
+     * The registrar token is needed to renew, not to write an e-mail. It used
+     * to be checked first and returned early, so a rotated token silently
+     * switched off the warnings as well.
+     */
+    public function test_reminders_go_out_even_with_no_registrar_token(): void
+    {
+        Mail::fake();
+        Setting::setValue('hostinger_api_token', '');
+        Cache::flush();
+
+        $this->domain->update(['auto_renew' => false, 'expires_at' => now()->addDays(20)]);
+
+        $this->artisan('domains:renew')->assertSuccessful();
+
+        Mail::assertSent(DomainExpiryReminderMail::class);
+    }
+
+    public function test_a_successful_renewal_arms_next_years_reminders(): void
+    {
+        Http::fake(['*' => Http::response([], 200)]);
+        $this->fund(2000);
+        $this->domain->update(['expiry_reminders_sent' => [60, 30]]);
+
+        $this->service()->renew($this->domain);
+
+        $this->assertNull($this->domain->fresh()->expiry_reminders_sent,
+            'the milestone list has to clear, or the domain is never reminded about again');
+    }
+
+    /** The operator's schedule, not the command-line defaults. */
+    public function test_the_notice_day_comes_from_settings(): void
+    {
+        Mail::fake();
+        Http::fake(['*' => Http::response([], 200)]);
+
+        // Default is 37; at 50 days out nothing should be owed yet.
+        $this->domain->update(['expires_at' => now()->addDays(50)]);
+        $this->artisan('domains:renew')->assertSuccessful();
+        Mail::assertNotSent(DomainRenewalNoticeMail::class);
+
+        Setting::setValue('domain_notice_days', 55);
+        Cache::flush();
+
+        $this->artisan('domains:renew')->assertSuccessful();
+        Mail::assertSent(DomainRenewalNoticeMail::class);
     }
 
     public function test_an_empty_wallet_is_skipped_and_kept_for_tomorrow(): void

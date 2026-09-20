@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DomainReminders;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -208,13 +209,18 @@ class DomainRegistration extends Model
     /**
      * The milestone this domain has reached and not yet been told about.
      *
-     * Walks the configured days largest-first and takes the first one the
-     * domain is at or past, so a domain picked up late (added when it already
-     * had 8 days left, with milestones 60/30/14/7) still gets the 14-day
-     * reminder rather than silently skipping to 7.
+     * The CLOSEST one it has passed, not the furthest. A domain with 20 days
+     * left has passed both 60 and 30; the honest one to fire is 30, because
+     * that is where it actually stands.
      *
-     * Only the milestone that fires is recorded, not the ones jumped over:
-     * the customer should hear again at 7 and at 1.
+     * Taking the furthest instead looks harmless and is not: the sender runs
+     * daily, so it would fire 60 today, find 30 still unsent tomorrow and fire
+     * again — two e-mails on consecutive mornings for one milestone crossing.
+     * markReminderSent() closes the other half of that by retiring everything
+     * above the one that fired.
+     *
+     * A domain picked up late still gets the milestone it is standing on: 8
+     * days left with 60/30/14/7/1 gives 14, not 7.
      *
      * @param  list<int>  $milestones  descending
      */
@@ -230,22 +236,43 @@ class DomainRegistration extends Model
 
         $sent = array_map('intval', (array) ($this->expiry_reminders_sent ?? []));
 
+        $due = null;
+
         foreach ($milestones as $milestone) {
             if ($daysLeft <= $milestone && ! in_array($milestone, $sent, true)) {
-                return $milestone;
+                // Keep going: the list is descending, so later matches are
+                // closer to today.
+                $due = $milestone;
             }
         }
 
-        return null;
+        return $due;
     }
 
-    /** Remember that this milestone has gone out for the current period. */
+    /**
+     * Retire this milestone for the current period — and every one above it.
+     *
+     * The wider ones are gone whether or not an e-mail was sent for them: a
+     * domain at 20 days is past 60 and past 30, and the owner has just been
+     * told. Recording only the one that fired would leave the others to go off
+     * on the following days.
+     */
     public function markReminderSent(int $milestone): void
     {
         $sent = array_map('intval', (array) ($this->expiry_reminders_sent ?? []));
+
+        foreach (DomainReminders::reminderDays() as $configured) {
+            if ($configured >= $milestone) {
+                $sent[] = $configured;
+            }
+        }
+
         $sent[] = $milestone;
 
-        $this->update(['expiry_reminders_sent' => array_values(array_unique($sent))]);
+        $sent = array_values(array_unique($sent));
+        rsort($sent);
+
+        $this->update(['expiry_reminders_sent' => $sent]);
     }
 
     /**
