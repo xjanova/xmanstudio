@@ -310,8 +310,9 @@
         <div class="{{ $card }} p-5">
             <h3 class="font-semibold text-slate-900 dark:text-white mb-1"><x-bi th="ต่ออายุอัตโนมัติ" en="Auto-renew" /></h3>
             <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                <x-bi th="ตัดจากกระเป๋าเงินก่อนหมดอายุ 30 วัน เราแจ้งล่วงหน้าทุกครั้ง"
-                      en="Charged from your wallet 30 days before expiry. We always warn you first." />
+                {{-- From settings, not written out — see the order form. --}}
+                <x-bi th="ตัดจากกระเป๋าเงินก่อนหมดอายุ {{ \App\Support\DomainReminders::chargeDays() }} วัน เราแจ้งล่วงหน้าทุกครั้ง"
+                      en="Charged from your wallet {{ \App\Support\DomainReminders::chargeDays() }} days before expiry. We always warn you first." />
             </p>
             <div class="flex flex-wrap items-center gap-2">
                 <form method="POST" action="{{ route('customer.domains.auto-renew', $domain->id) }}">

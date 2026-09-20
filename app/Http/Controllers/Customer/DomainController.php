@@ -8,6 +8,7 @@ use App\Services\DomainPurchaseException;
 use App\Services\DomainRegistrarService;
 use App\Services\HostingerApiService;
 use App\Support\DomainPricing;
+use App\Support\DomainReminders;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -254,8 +255,10 @@ class DomainController extends Controller
         $enabled = $request->boolean('auto_renew');
         $domain->update(['auto_renew' => $enabled]);
 
+        // The day count is an operator setting, so it cannot be written out
+        // here — a shop that charges at 15 days would be promising 30.
         return back()->with('success', $enabled
-            ? 'เปิดต่ออายุอัตโนมัติแล้ว เราจะตัดจากกระเป๋าเงินก่อนหมดอายุ 30 วัน'
+            ? 'เปิดต่ออายุอัตโนมัติแล้ว เราจะตัดจากกระเป๋าเงินก่อนหมดอายุ ' . DomainReminders::chargeDays() . ' วัน'
             : 'ปิดต่ออายุอัตโนมัติแล้ว อย่าลืมต่ออายุเองก่อนหมดอายุ');
     }
 

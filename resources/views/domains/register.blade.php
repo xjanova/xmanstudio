@@ -261,8 +261,10 @@
                             <x-bi th="ต่ออายุอัตโนมัติ" en="Renew automatically" />
                         </span>
                         <span class="block text-sm text-slate-500 dark:text-slate-400">
-                            <x-bi th="ตัดจากกระเป๋าเงินก่อนหมดอายุ 30 วัน เราแจ้งล่วงหน้าทุกครั้ง และปิดได้ตลอดเวลา"
-                                  en="Charged from your wallet 30 days before expiry. We always warn you first, and you can turn it off any time." />
+                            {{-- The day count comes from settings. Written out, this sentence
+                                 becomes a false promise the moment an operator moves it. --}}
+                            <x-bi th="ตัดจากกระเป๋าเงินก่อนหมดอายุ {{ \App\Support\DomainReminders::chargeDays() }} วัน เราแจ้งล่วงหน้าทุกครั้ง และปิดได้ตลอดเวลา"
+                                  en="Charged from your wallet {{ \App\Support\DomainReminders::chargeDays() }} days before expiry. We always warn you first, and you can turn it off any time." />
                         </span>
                     </span>
                 </label>
