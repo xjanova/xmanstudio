@@ -314,9 +314,22 @@
                     @foreach($tlds as $t)
                         @php
                             $sell = $t->registerPriceThb();
-                            $costThb = \App\Support\DomainPricing::costThb($t->cost_usd_cents);
+                            // The currency argument is not optional in practice.
+                            // Our reseller account bills in THB, and costThb()
+                            // defaults to USD — so leaving it out multiplied a
+                            // 319 baht cost by the exchange rate and reported
+                            // .com as losing 11,000 baht a sale. The selling
+                            // price never had the bug (registerPriceThb passes
+                            // it); only this column did, which is why the shop
+                            // looked right and the admin table did not.
+                            $costThb = \App\Support\DomainPricing::costThb(
+                                $t->cost_usd_cents,
+                                null,
+                                $t->costCurrency(),
+                            );
                             $unitProfit = $sell - $costThb;
                             $sellable = (bool) $t->item_id_register;
+                            $costIsHomeCurrency = $t->costCurrency() === \App\Support\DomainPricing::HOME_CURRENCY;
                         @endphp
                         <tr class="{{ $t->is_active ? '' : 'opacity-50' }}">
                             <td class="px-4 py-3">
@@ -336,8 +349,15 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                ${{ number_format($t->cost_usd_cents / 100, 2) }}
-                                <span class="block text-[11px] text-gray-400">{{ number_format($costThb, 0) }} ฿</span>
+                                {{-- costLabel() puts the right symbol on it. The
+                                     column is named cost_usd_cents for historical
+                                     reasons and holds whatever the registrar
+                                     billed us in, so a hard-coded "$" here was
+                                     printing baht with a dollar sign. --}}
+                                {{ $t->costLabel() }}
+                                @unless($costIsHomeCurrency)
+                                    <span class="block text-[11px] text-gray-400">{{ number_format($costThb, 0) }} ฿</span>
+                                @endunless
                             </td>
                             <td class="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ number_format($sell, 0) }} ฿</td>
                             <td class="px-4 py-3 text-right whitespace-nowrap {{ $t->renewalIsDearer() ? 'text-amber-600 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400' }}">
