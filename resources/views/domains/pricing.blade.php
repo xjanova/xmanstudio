@@ -5,7 +5,7 @@
 
 @section('content')
 <section class="relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white overflow-hidden">
-    <x-page-art art="hero-network" :opacity="35" :scrim="false" fade="bottom" />
+    <x-page-art art="hero-domains" :opacity="35" :scrim="false" fade="bottom" />
     <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 text-center">
         <span class="inline-block px-4 py-1.5 bg-indigo-600/30 text-indigo-200 text-xs font-semibold rounded-full mb-5 backdrop-blur-sm border border-indigo-400/30 tracking-[0.2em] uppercase">
             Pricing

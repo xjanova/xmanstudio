@@ -22,7 +22,7 @@
 
     {{-- ══════════ HERO ══════════ --}}
     <div class="relative overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 animate-fade-in">
-        <x-page-art art="hero-network" :opacity="45" :scrim="false" fade="bottom" />
+        <x-page-art art="hero-domains" :opacity="45" :scrim="false" fade="bottom" />
         <div class="absolute inset-0 opacity-40 pointer-events-none" aria-hidden="true">
             <div class="absolute -top-10 -left-10 w-56 h-56 bg-indigo-500 rounded-full mix-blend-screen filter blur-3xl animate-blob"></div>
             <div class="absolute -bottom-16 right-10 w-56 h-56 bg-cyan-500 rounded-full mix-blend-screen filter blur-3xl animate-blob" style="animation-delay: 3s;"></div>

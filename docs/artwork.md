@@ -40,7 +40,7 @@ Heroes are 1920w, cards 1200w, all WebP q82 (~2.4 MB for 25 files).
 **Heroes:** `hero-home` `hero-about` `hero-portfolio` `hero-services` `hero-support`
 `hero-team` `hero-products` `hero-rental` `hero-tracking` `hero-changelog`
 `hero-academy` `hero-legal` `hero-metalx` `hero-network` `hero-gpuxmine` `hero-kyc`
-`hero-quote` `quote-doc`
+`hero-quote` `quote-doc` `hero-domains`
 
 `hero-kyc` is deliberately **abstract** — a glowing shield, a fingerprint, a padlock,
 blank floating sheets. No ID card, no face, no lettering. That page asks for a real
@@ -57,7 +57,7 @@ one the design system leads with.
 
 **Cards:** `card-blockchain` `card-web` `card-mobile` `card-ai` `card-iot`
 `card-security` `card-software` `card-flutter` `card-design` `card-marketing`
-`card-studio`
+`card-studio` `card-domains`
 
 `hero-academy` is generated but unused: `/code-academy` is a deliberately *light*
 (blue/cream) theme and dark artwork clashes with it. The **retro** theme is also

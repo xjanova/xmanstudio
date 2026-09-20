@@ -38,7 +38,7 @@
 
         {{-- สรุปรายการ --}}
         <div class="rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-7 mb-6 shadow-xl relative overflow-hidden">
-            <x-page-art art="hero-network" :opacity="25" :scrim="false" />
+            <x-page-art art="hero-domains" :opacity="25" :scrim="false" />
             <div class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="min-w-0">
                     <p class="text-indigo-300/80 text-xs font-semibold tracking-[0.2em] uppercase mb-1.5">

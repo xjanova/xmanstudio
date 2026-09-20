@@ -24,8 +24,7 @@
             {{-- จดโดเมน — ขายในนามเรา จดเป็นชื่อลูกค้า คุม DNS เองได้ในหลังบ้าน --}}
             <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#60a5fa;">
                 <span class="nova-card__media" aria-hidden="true">
-                    {{-- artwork/card-domains.webp ยังไม่ได้เจน — ยืม card-web ไปก่อน --}}
-                    <img src="{{ asset('artwork/card-web.webp') }}" alt="" loading="lazy" decoding="async">
+                    <img src="{{ asset('artwork/card-domains.webp') }}" alt="" loading="lazy" decoding="async">
                 </span>
                 <span class="nova-badge">ใหม่</span>
                 <span class="nova-card__icon" aria-hidden="true">

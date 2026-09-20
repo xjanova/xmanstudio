@@ -34,7 +34,7 @@
 
     {{-- ══════════ สรุปโดเมน ══════════ --}}
     <div class="relative overflow-hidden rounded-2xl shadow-xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
-        <x-page-art art="hero-network" :opacity="35" :scrim="false" fade="bottom" />
+        <x-page-art art="hero-domains" :opacity="35" :scrim="false" fade="bottom" />
         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent pointer-events-none" aria-hidden="true"></div>
         <div class="relative px-6 sm:px-8 py-7">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">

@@ -23,7 +23,7 @@
 
     {{-- ══════════ HERO + ช่องค้นหา ══════════ --}}
     <section class="relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white overflow-hidden">
-        <x-page-art art="hero-network" :opacity="40" :scrim="false" fade="bottom" />
+        <x-page-art art="hero-domains" :opacity="40" :scrim="false" fade="bottom" />
 
         <div class="absolute inset-0 opacity-40 pointer-events-none" aria-hidden="true">
             <div class="absolute -top-20 left-1/4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-screen filter blur-3xl animate-blob"></div>
