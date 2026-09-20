@@ -24,23 +24,30 @@ use Illuminate\Support\Facades\Log;
 final class LoginLog
 {
     /**
-     * Whether a success row was already written during this request.
+     * The marker saying a success row was already written for this request.
      *
      * The Login event fires for every sign-in, including the ones the social
      * controllers have already written down with the provider they came from.
      * Without this, a Google sign-in would appear twice — once as "Google" and
      * once as "อีเมล + รหัสผ่าน", which is worse than not appearing at all.
+     *
+     * Kept on the request rather than in a static, because a static has no
+     * end. Nothing clears it between requests in a long-lived worker, and
+     * nothing cleared it between tests either: the full suite caught this
+     * where the file on its own passed, because an earlier test had set the
+     * flag and the Login listener then skipped a row it should have written.
+     * A request object dies when the request does.
      */
-    private static bool $recorded = false;
+    private const RECORDED = 'login_log.recorded';
 
     public static function alreadyRecorded(): bool
     {
-        return self::$recorded;
+        return (bool) request()?->attributes->get(self::RECORDED, false);
     }
 
     public static function success(?User $user, string $method = 'password'): void
     {
-        self::$recorded = true;
+        request()?->attributes->set(self::RECORDED, true);
 
         self::record(
             email: $user?->email,

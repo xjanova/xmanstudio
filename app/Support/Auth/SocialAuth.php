@@ -177,7 +177,14 @@ final class SocialAuth
         // Session fixation: the visitor arrived holding a session id, and a
         // sign-in must not keep it. The password flow does this in
         // AuthenticatedSessionController; the LINE flow never did.
-        request()->session()->regenerate();
+        //
+        // Guarded, because Request::session() throws outright when no store is
+        // bound. Every caller today is a web route and always has one — but
+        // the throw would land AFTER Auth::login, so the one time it happened
+        // the visitor would be signed in and looking at a 500.
+        if (request()->hasSession()) {
+            request()->session()->regenerate();
+        }
 
         $target = $firstTime ? route('profile.edit') : route('customer.dashboard');
 
