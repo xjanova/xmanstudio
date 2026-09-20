@@ -263,18 +263,29 @@
     display: none;
 }
 
+/* Bigger than it was (104x58): the words are inside the picture now, and at
+   the old size "X-DREAMER" was a smudge. layout() reads offsetHeight when the
+   menu opens, so the ring re-sizes itself around whatever this is. */
 .nova-js .nova-nav__thumb {
     display: block;
     position: relative;
     width: 100%;
-    max-width: 104px;
-    height: 58px;
-    margin: 0 auto 8px;
-    border-radius: 12px;
+    max-width: 132px;
+    height: 74px;
+    margin: 0 auto 4px;
+    border-radius: 13px;
     overflow: hidden;
     border: 1px solid var(--nv-line);
     background: rgba(10, 14, 32, 0.65);
-    transition: border-color 0.25s var(--nv-ease), box-shadow 0.25s var(--nv-ease);
+    /* Raised, under clear acrylic — the same treatment as the mega-nav tiles.
+       The inset highlight on the top edge and shadow on the bottom are what
+       make it read as a physical key rather than a framed picture. */
+    box-shadow:
+        0 6px 14px -8px rgba(2, 4, 12, 0.9),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -2px 6px -2px rgba(2, 4, 12, 0.85);
+    transition: border-color 0.25s var(--nv-ease), box-shadow 0.25s var(--nv-ease),
+        transform 0.25s var(--nv-ease);
 }
 
 .nova-js .nova-nav__thumb img {
@@ -284,18 +295,43 @@
     object-fit: cover;
 }
 
-/* Sink the lower edge toward the chip so the label reads cleanly under it. */
+/* Was a bottom fade, so a text caption underneath could be read. The caption
+   is inside the artwork now, so this is the acrylic gloss instead: a fixed
+   diagonal sheen that does not move with the picture, which is what sells it
+   as a sheet of clear plastic laid over the top. */
 .nova-js .nova-nav__thumb::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(10, 14, 32, 0.6), transparent 62%);
+    pointer-events: none;
+    background:
+        linear-gradient(148deg,
+            rgba(255, 255, 255, 0.3) 0%,
+            rgba(255, 255, 255, 0.1) 24%,
+            rgba(255, 255, 255, 0) 50%),
+        radial-gradient(120% 80% at 50% 118%, rgba(2, 4, 12, 0.45) 0%, rgba(2, 4, 12, 0) 62%);
+    transition: opacity 0.25s var(--nv-ease);
 }
 
 .nova-js .nova-nav__link:hover .nova-nav__thumb,
 .nova-js .nova-nav__link:focus-visible .nova-nav__thumb {
+    transform: translateY(-2px);
     border-color: var(--nv-accent, var(--nv-cyan));
-    box-shadow: 0 0 18px -4px var(--nv-accent, var(--nv-cyan));
+    box-shadow:
+        0 0 18px -4px var(--nv-accent, var(--nv-cyan)),
+        0 10px 20px -10px rgba(2, 4, 12, 0.95),
+        inset 0 1px 0 rgba(255, 255, 255, 0.42),
+        inset 0 -2px 7px -2px rgba(2, 4, 12, 0.9);
+}
+.nova-js .nova-nav__link:hover .nova-nav__thumb::after,
+.nova-js .nova-nav__link:focus-visible .nova-nav__thumb::after { opacity: 0.72; }
+
+/* Pressed: sinks, gloss flattens. */
+.nova-js .nova-nav__link:active .nova-nav__thumb {
+    transform: translateY(0) scale(0.98);
+    box-shadow:
+        0 3px 8px -6px rgba(2, 4, 12, 0.9),
+        inset 0 2px 6px -2px rgba(2, 4, 12, 0.95);
 }
 
 .nova-nav__th {
@@ -327,8 +363,28 @@
     display: none;
 }
 
+/*
+ * In the orbital view both captions go, because the artwork says the same
+ * words — in Thai and in English, English larger. Two copies of a label on
+ * one chip is noise.
+ *
+ * ONLY in the orbital view. The no-JS bar has no artwork at all (see
+ * .nova-nav__thumb { display: none } above), so hiding these unconditionally
+ * would leave a row of empty links and no menu whatsoever for anyone without
+ * JavaScript. Clipped, not display:none, so the words stay in the
+ * accessibility tree and in the page for crawlers.
+ */
+.nova-js .nova-nav__th,
 .nova-js .nova-nav__en {
-    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 /* Close hint inside the open menu */

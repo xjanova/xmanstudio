@@ -21,8 +21,7 @@
         // internal catalogue is reachable from the Featured zone below.
         ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'url' => config('app.product_site_url'),  'art' => 'products',  'desc' => 'ซอฟต์แวร์พร้อมใช้'],
         ['th' => 'เช่าใช้งาน',  'en' => 'Rentals',   'url' => route('rental.index'),           'art' => 'rental',    'desc' => 'จ่ายรายเดือน'],
-        // ใช้ภาพ services ไปก่อน — artwork/menu/domains.webp ยังไม่ได้เจน
-        ['th' => 'จดโดเมน',     'en' => 'Domains',   'url' => route('domains.index'),          'art' => 'services',  'desc' => 'ชื่อเว็บในนามคุณ'],
+        ['th' => 'จดโดเมน',     'en' => 'Domains',   'url' => route('domains.index'),          'art' => 'domains',   'desc' => 'ชื่อเว็บในนามคุณ'],
         ['th' => 'ผลงาน',       'en' => 'Portfolio', 'url' => url('/portfolio'),               'art' => 'portfolio', 'desc' => 'โปรเจคที่ส่งมอบแล้ว'],
         ['th' => 'ทีมงาน',      'en' => 'Team',      'url' => url('/team'),                    'art' => 'team',      'desc' => 'คนเบื้องหลัง'],
         ['th' => 'ติดต่อ/สั่งซื้อ', 'en' => 'Contact', 'url' => route('quote.index'),        'art' => 'support',   'desc' => 'ขอใบเสนอราคา'],
@@ -94,15 +93,19 @@
                 <h3 class="xm-mega__title">สำรวจ <span>/ Explore</span></h3>
                 <div class="xm-mega__grid">
                     @foreach($megaExplore as $item)
+                        {{-- The label lives in the artwork (menu:build-art), so the
+                             card is the picture and nothing else. The words stay in
+                             the markup twice over: as the image's alt, and as
+                             .xm-mega__sr text that is clipped to nothing. Between
+                             them, a screen reader, a crawler and a visitor whose
+                             images failed all still get the same menu. --}}
                         <a href="{{ $item['url'] }}" class="xm-mega__card">
                             <span class="xm-mega__card-media">
-                                <img src="{{ asset('artwork/menu/' . $item['art'] . '.webp') }}" alt=""
+                                <img src="{{ asset('artwork/menu/labelled/' . $item['art'] . '.webp') }}"
+                                     alt="{{ $item['th'] }} / {{ $item['en'] }}"
                                      width="208" height="116" loading="lazy" decoding="async">
                             </span>
-                            <span class="xm-mega__card-body">
-                                <span class="xm-mega__card-th">{{ $item['th'] }}</span>
-                                <span class="xm-mega__card-desc">{{ $item['desc'] }}</span>
-                            </span>
+                            <span class="xm-mega__sr">{{ $item['th'] }} / {{ $item['en'] }} — {{ $item['desc'] }}</span>
                         </a>
                     @endforeach
                 </div>
