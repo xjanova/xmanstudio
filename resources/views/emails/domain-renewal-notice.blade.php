@@ -12,7 +12,9 @@
     <p class="greeting">เรียนคุณ <strong>{{ $domain->user?->name ?? 'ลูกค้า' }}</strong></p>
     <p style="color: #a8b4d4; font-size: 14px; margin-bottom: 20px;">
         โดเมน <strong style="color:#60a5fa;">{{ $domain->domain }}</strong> ของคุณเปิดต่ออายุอัตโนมัติไว้
-        เราจะตัดเงินจากกระเป๋าเงินในเว็บ <strong>ก่อนหมดอายุ 30 วัน</strong> ตามที่แจ้งไว้
+        {{-- Read from settings, not written out: an operator who moves the
+             charge day must not leave this sentence promising the old one. --}}
+        เราจะตัดเงินจากกระเป๋าเงินในเว็บ <strong>ก่อนหมดอายุ {{ \App\Support\DomainReminders::chargeDays() }} วัน</strong> ตามที่แจ้งไว้
         อีเมลฉบับนี้คือการแจ้งล่วงหน้าก่อนตัดเงินครับ
     </p>
 

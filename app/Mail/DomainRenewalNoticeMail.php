@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\DomainRegistration;
+use App\Support\DomainReminders;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -34,8 +35,27 @@ class DomainRenewalNoticeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'โดเมน ' . $this->domain->domain . ' จะต่ออายุอัตโนมัติในอีก ' . max(0, $this->daysLeft - 30) . ' วัน',
+            subject: 'โดเมน ' . $this->domain->domain . ' จะต่ออายุอัตโนมัติในอีก ' . $this->daysUntilCharge() . ' วัน',
         );
+    }
+
+    /**
+     * Days until the money actually moves.
+     *
+     * Was `daysLeft - 30`, from when thirty was the only possible answer. The
+     * charge day is an operator setting now, so a shop that charges at 15 days
+     * would have promised the customer a date a fortnight off — or, once the
+     * subtraction went negative, "in 0 days" for every single notice.
+     */
+    public function daysUntilCharge(): int
+    {
+        return max(0, $this->daysLeft - DomainReminders::chargeDays());
+    }
+
+    /** The configured charge day, for the wording in the body. */
+    public function chargeDays(): int
+    {
+        return DomainReminders::chargeDays();
     }
 
     public function content(): Content

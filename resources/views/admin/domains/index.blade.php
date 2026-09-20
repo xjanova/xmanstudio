@@ -126,6 +126,109 @@
         </div>
     </form>
 
+    {{-- ══════════ แจ้งเตือนก่อนหมดอายุ ══════════ --}}
+    <form method="POST" action="{{ route('admin.domains.update') }}" class="{{ $card }} p-6">
+        @csrf
+        {{-- This form posts to the same action as the pricing form above, so it
+             must carry that form's required fields too. Without them validation
+             rejects the save and the operator gets errors about the margin
+             while trying to change a reminder. --}}
+        <input type="hidden" name="domain_margin_percent" value="{{ $margin }}">
+        <input type="hidden" name="domain_usd_thb_rate" value="{{ $fxRate }}">
+        <input type="hidden" name="domain_price_rounding" value="{{ $rounding }}">
+        <input type="hidden" name="domain_sales_enabled" value="{{ $salesEnabled ? 1 : 0 }}">
+
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-1">แจ้งเตือนก่อนโดเมนหมดอายุ</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
+            หน้าโดเมนสัญญากับลูกค้าไว้ว่า
+            <span class="font-semibold">“เราแจ้งล่วงหน้าทุกครั้งก่อนตัดเงิน”</span> —
+            ตัวเลขข้างล่างคือสิ่งที่ทำให้ประโยคนั้นเป็นจริง
+        </p>
+
+        @unless($reminders['coherent'])
+            <div class="mb-5 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-200">
+                <strong>ตั้งค่าปัจจุบันขัดกันเอง</strong> —
+                แจ้งเตือนที่ {{ $reminders['notice_days'] }} วัน
+                แต่ตัดเงินที่ {{ $reminders['charge_days'] }} วัน
+                (บวกเวลารออ่าน {{ $reminders['lead_days'] }} วัน)
+                ลูกค้าจะถูกตัดเงินก่อนได้รับอีเมล
+            </div>
+        @endunless
+
+        <label class="flex items-center gap-3 mb-6 cursor-pointer">
+            <input type="hidden" name="domain_reminders_enabled" value="0">
+            <input type="checkbox" name="domain_reminders_enabled" value="1"
+                   class="w-5 h-5 rounded border-gray-300 text-indigo-600"
+                   @checked(old('domain_reminders_enabled', $reminders['enabled']))>
+            <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                ส่งอีเมลแจ้งเตือนโดเมนใกล้หมดอายุ
+            </span>
+        </label>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    แจ้งเตือนก่อนตัดเงิน (วัน)
+                </label>
+                <input type="number" name="domain_notice_days" min="1" max="180" required
+                       value="{{ old('domain_notice_days', $reminders['notice_days']) }}"
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                    เฉพาะโดเมนที่เปิดต่ออายุอัตโนมัติ · ส่งครั้งเดียวต่อรอบปี
+                </p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    ตัดเงินก่อนหมดอายุ (วัน)
+                </label>
+                <input type="number" name="domain_charge_days" min="1" max="180" required
+                       value="{{ old('domain_charge_days', $reminders['charge_days']) }}"
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                    ตัดจากกระเป๋าเงิน เงินไม่พอจะข้ามแล้วลองใหม่พรุ่งนี้
+                </p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    รอให้อ่านอีเมลกี่วัน
+                </label>
+                <input type="number" name="domain_notice_lead_days" min="0" max="30" required
+                       value="{{ old('domain_notice_lead_days', $reminders['lead_days']) }}"
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                    อีเมลต้องส่งไปแล้วอย่างน้อยเท่านี้จึงจะตัดเงินได้
+                </p>
+            </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
+            <label class="block text-sm font-bold text-indigo-900 dark:text-indigo-200 mb-2">
+                เตือนโดเมนที่ลูกค้าต้องต่ออายุเอง (วัน)
+            </label>
+            <input type="text" name="domain_reminder_days" maxlength="100"
+                   value="{{ old('domain_reminder_days', $reminders['reminder_days']) }}"
+                   placeholder="60, 30, 14, 7, 1"
+                   class="w-full px-4 py-2.5 rounded-lg border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono">
+            <p class="text-xs text-indigo-700 dark:text-indigo-300 mt-2 leading-relaxed">
+                คั่นด้วยจุลภาค ใส่ได้สูงสุด 8 จุด (1–180 วัน) ·
+                แต่ละจุดส่งครั้งเดียวต่อรอบปี<br>
+                <strong>สำคัญ:</strong> โดเมนที่<u>ไม่ได้</u>เปิดต่ออายุอัตโนมัติ
+                เดิมไม่เคยได้รับอีเมลเตือนเลย —
+                หมดอายุแล้วเว็บลูกค้าดับโดยไม่มีใครบอก
+                ช่องนี้คือสิ่งที่ปิดช่องว่างนั้น
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3 mt-6">
+            <button type="submit" class="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition">
+                บันทึกการแจ้งเตือน
+            </button>
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+                ระบบส่งให้เองทุกวัน 09:30 น. · ลองก่อนได้ที่ <code class="font-mono">php artisan domains:renew --dry</code>
+            </span>
+        </div>
+    </form>
+
     {{-- ══════════ คำสั่งที่ต้องรันเอง ══════════ --}}
     <div class="{{ $card }} p-6">
         <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">ดึงราคาจริงจากผู้ให้บริการ</h2>
@@ -159,8 +262,41 @@
     {{-- ══════════ ตารางนามสกุล ══════════ --}}
     <div class="{{ $card }} overflow-hidden">
         <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">นามสกุลโดเมน ({{ $tlds->count() }})</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">เว้นช่องกำไรไว้ = ใช้ค่าเริ่มต้น {{ $margin }}%</p>
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">นามสกุลโดเมน ({{ $tlds->count() }})</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        เปิดขายอยู่ {{ $tldCounts['active'] }} ·
+                        <span class="font-semibold text-emerald-600 dark:text-emerald-400">ขายได้จริง {{ $tldCounts['sellable'] }}</span>
+                        @if($tldCounts['no_item'] > 0)
+                            · <span class="text-amber-600 dark:text-amber-400">{{ $tldCounts['no_item'] }} ยังไม่มีรหัสสินค้า</span>
+                        @endif
+                        · เว้นช่องกำไรไว้ = ใช้ค่าเริ่มต้น {{ $margin }}%
+                    </p>
+                </div>
+
+                {{-- "Open the shop" in one press. Eighteen separate row forms is
+                     the wrong tool for a decision that applies to all of them. --}}
+                <div class="flex items-center gap-2">
+                    <form method="POST" action="{{ route('admin.domains.tlds.bulk') }}">
+                        @csrf
+                        <input type="hidden" name="action" value="enable">
+                        <button type="submit"
+                                class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition">
+                            เปิดขายทุกนามสกุล
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('admin.domains.tlds.bulk') }}"
+                          onsubmit="return confirm('ปิดขายทุกนามสกุลใช่ไหม? ลูกค้าจะจดโดเมนใหม่ไม่ได้เลยทั้งเว็บ')">
+                        @csrf
+                        <input type="hidden" name="action" value="disable">
+                        <button type="submit"
+                                class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 font-semibold text-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            ปิดทั้งหมด
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">

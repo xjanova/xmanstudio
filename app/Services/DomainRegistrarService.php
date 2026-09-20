@@ -458,8 +458,11 @@ class DomainRegistrarService
 
             $domain->forceFill([
                 'expires_at' => ($domain->expires_at ?? now())->copy()->addYear(),
-                // Arm next year's warning.
+                // Arm next year's warning, and next year's reminders. Leaving
+                // the milestone list behind would mean a domain renewed once
+                // is never reminded about again.
                 'renewal_notice_sent_at' => null,
+                'expiry_reminders_sent' => null,
                 'last_error' => null,
             ])->save();
 

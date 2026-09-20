@@ -75,6 +75,7 @@ class DomainRegistration extends Model
         'registered_at',
         'expires_at',
         'renewal_notice_sent_at',
+        'expiry_reminders_sent',
         'last_polled_at',
         'poll_attempts',
         'last_error',
@@ -91,6 +92,7 @@ class DomainRegistration extends Model
         'registered_at' => 'datetime',
         'expires_at' => 'datetime',
         'renewal_notice_sent_at' => 'datetime',
+        'expiry_reminders_sent' => 'array',
         'last_polled_at' => 'datetime',
         'poll_attempts' => 'integer',
     ];
@@ -180,6 +182,70 @@ class DomainRegistration extends Model
             ->where('expires_at', '<=', now()->addDays($withinDays))
             ->whereNotNull('renewal_notice_sent_at')
             ->where('renewal_notice_sent_at', '<=', now()->subDays($noticeDays));
+    }
+
+    /**
+     * Domains running out that nothing will renew for them.
+     *
+     * The mirror of dueForRenewalNotice: that one is for auto-renew, this one
+     * is for everybody else. Until this existed, a customer who left auto-renew
+     * off heard nothing at all — the domain just stopped working one morning.
+     *
+     * Deliberately not filtered on which milestone is due. The milestones are
+     * configuration and the "already sent" record is a JSON list, so choosing
+     * between them is done in PHP, per domain, by dueReminderMilestone().
+     */
+    public function scopeDueForExpiryReminder($query, int $withinDays = 60)
+    {
+        return $query->registrations()
+            ->active()
+            ->where('auto_renew', false)
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '>', now())
+            ->where('expires_at', '<=', now()->addDays($withinDays));
+    }
+
+    /**
+     * The milestone this domain has reached and not yet been told about.
+     *
+     * Walks the configured days largest-first and takes the first one the
+     * domain is at or past, so a domain picked up late (added when it already
+     * had 8 days left, with milestones 60/30/14/7) still gets the 14-day
+     * reminder rather than silently skipping to 7.
+     *
+     * Only the milestone that fires is recorded, not the ones jumped over:
+     * the customer should hear again at 7 and at 1.
+     *
+     * @param  list<int>  $milestones  descending
+     */
+    public function dueReminderMilestone(array $milestones): ?int
+    {
+        $daysLeft = $this->daysUntilExpiry();
+
+        // Null means no expiry date on record, which is not the same as
+        // "expires today" — there is nothing to count down to.
+        if ($daysLeft === null || $daysLeft < 0) {
+            return null;
+        }
+
+        $sent = array_map('intval', (array) ($this->expiry_reminders_sent ?? []));
+
+        foreach ($milestones as $milestone) {
+            if ($daysLeft <= $milestone && ! in_array($milestone, $sent, true)) {
+                return $milestone;
+            }
+        }
+
+        return null;
+    }
+
+    /** Remember that this milestone has gone out for the current period. */
+    public function markReminderSent(int $milestone): void
+    {
+        $sent = array_map('intval', (array) ($this->expiry_reminders_sent ?? []));
+        $sent[] = $milestone;
+
+        $this->update(['expiry_reminders_sent' => array_values(array_unique($sent))]);
     }
 
     /**

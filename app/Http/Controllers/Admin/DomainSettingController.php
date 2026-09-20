@@ -8,6 +8,7 @@ use App\Models\DomainTld;
 use App\Models\Setting;
 use App\Services\HostingerApiService;
 use App\Support\DomainPricing;
+use App\Support\DomainReminders;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -40,6 +41,22 @@ class DomainSettingController extends Controller
             'fxRate' => DomainPricing::fxRate(),
             'rounding' => DomainPricing::rounding(),
             'salesEnabled' => (bool) Setting::getValue('domain_sales_enabled', true),
+            'reminders' => [
+                'enabled' => DomainReminders::enabled(),
+                'notice_days' => DomainReminders::noticeDays(),
+                'charge_days' => DomainReminders::chargeDays(),
+                'lead_days' => DomainReminders::leadDays(),
+                'reminder_days' => DomainReminders::formatDays(DomainReminders::reminderDays()),
+                'coherent' => DomainReminders::scheduleIsCoherent(),
+            ],
+            // Switched on is not the same as sellable: a TLD with no item id
+            // cannot actually be bought, whatever the toggle says.
+            'tldCounts' => [
+                'total' => $tlds->count(),
+                'active' => $tlds->where('is_active', true)->count(),
+                'sellable' => $tlds->where('is_active', true)->whereNotNull('item_id_register')->count(),
+                'no_item' => $tlds->whereNull('item_id_register')->count(),
+            ],
             'stats' => $this->stats(),
             'unsettled' => DomainRegistration::unsettled()
                 ->with('user:id,name,email')
@@ -57,10 +74,37 @@ class DomainSettingController extends Controller
             'domain_usd_thb_rate' => ['required', 'numeric', 'min:1', 'max:200'],
             'domain_price_rounding' => ['required', 'integer', 'in:1,5,10,50,100'],
             'domain_sales_enabled' => ['nullable', 'boolean'],
+            'domain_reminders_enabled' => ['nullable', 'boolean'],
+            'domain_notice_days' => ['required', 'integer', 'min:1', 'max:' . DomainReminders::MAX_DAYS],
+            'domain_charge_days' => ['required', 'integer', 'min:1', 'max:' . DomainReminders::MAX_DAYS],
+            'domain_notice_lead_days' => ['required', 'integer', 'min:0', 'max:30'],
+            'domain_reminder_days' => ['nullable', 'string', 'max:100'],
         ], [
             'domain_margin_percent.min' => 'กำไรติดลบไม่ได้ — จะขายต่ำกว่าทุน',
             'domain_usd_thb_rate.min' => 'อัตราแลกเปลี่ยนต้องมากกว่า 1',
+            'domain_notice_days.required' => 'ต้องระบุว่าจะแจ้งเตือนล่วงหน้ากี่วัน',
+            'domain_charge_days.required' => 'ต้องระบุว่าจะตัดเงินก่อนหมดอายุกี่วัน',
         ]);
+
+        // The warning has to reach the customer before the money moves. Saved
+        // the other way round, the page's promise ("we always warn you first")
+        // becomes a lie the same night the scheduler runs.
+        $noticeDays = (int) $validated['domain_notice_days'];
+        $chargeDays = (int) $validated['domain_charge_days'];
+        $leadDays = (int) $validated['domain_notice_lead_days'];
+
+        if ($noticeDays < $chargeDays + $leadDays) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'domain_notice_days' => sprintf(
+                        'แจ้งเตือนต้องมาก่อนตัดเงิน — ตั้งไว้อย่างน้อย %d วัน (ตัดเงิน %d + รออ่าน %d)',
+                        $chargeDays + $leadDays,
+                        $chargeDays,
+                        $leadDays,
+                    ),
+                ]);
+        }
 
         // Blank means "keep what is stored". The field renders with an empty
         // value and a masked placeholder, so echoing bullets back and saving
@@ -73,6 +117,20 @@ class DomainSettingController extends Controller
         Setting::setValue('domain_usd_thb_rate', $validated['domain_usd_thb_rate'], 'string', 'domains');
         Setting::setValue('domain_price_rounding', $validated['domain_price_rounding'], 'integer', 'domains');
         Setting::setValue('domain_sales_enabled', $request->boolean('domain_sales_enabled'), 'boolean', 'domains');
+
+        Setting::setValue('domain_reminders_enabled', $request->boolean('domain_reminders_enabled') ? '1' : '0', 'boolean', 'domains');
+        Setting::setValue('domain_notice_days', (string) $noticeDays, 'integer', 'domains');
+        Setting::setValue('domain_charge_days', (string) $chargeDays, 'integer', 'domains');
+        Setting::setValue('domain_notice_lead_days', (string) $leadDays, 'integer', 'domains');
+
+        // Normalised through the same parser the sender uses, so what is shown
+        // back is exactly what will fire — not what was typed.
+        Setting::setValue(
+            'domain_reminder_days',
+            DomainReminders::formatDays(DomainReminders::parseDays((string) ($validated['domain_reminder_days'] ?? ''))),
+            'string',
+            'domains'
+        );
 
         $this->forgetCatalogueCaches();
 
@@ -198,6 +256,44 @@ class DomainSettingController extends Controller
                 ->whereBetween('expires_at', [now(), now()->addDays(30)])
                 ->count(),
         ];
+    }
+
+    /**
+     * Switch every TLD in the catalogue on, or off, in one press.
+     *
+     * Eighteen rows each with its own form is fine for tuning one extension
+     * and miserable for "open the shop". Switching on does NOT make an
+     * unsellable TLD sellable — DomainTld::scopeActive also needs an item id
+     * from the registrar — so the message says how many actually became
+     * buyable rather than how many rows were touched, which is the number an
+     * operator would otherwise be quietly misled by.
+     */
+    public function bulkTlds(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'in:enable,disable'],
+        ]);
+
+        $enable = $validated['action'] === 'enable';
+
+        $changed = DomainTld::where('is_active', '!=', $enable)->update(['is_active' => $enable]);
+
+        $this->forgetCatalogueCaches();
+
+        if (! $enable) {
+            return back()->with('success', "ปิดขายทุกนามสกุลแล้ว ({$changed} รายการ)");
+        }
+
+        $sellable = DomainTld::active()->count();
+        $blocked = DomainTld::where('is_active', true)->whereNull('item_id_register')->count();
+
+        $message = "เปิดขายทุกนามสกุลแล้ว ({$changed} รายการที่เปลี่ยน) · ขายได้จริง {$sellable} นามสกุล";
+
+        if ($blocked > 0) {
+            $message .= " · อีก {$blocked} นามสกุลยังขายไม่ได้เพราะยังไม่มีรหัสสินค้าจากผู้ให้บริการ — ต้องกดปุ่มดึงราคาจริงก่อน";
+        }
+
+        return back()->with('success', $message);
     }
 
     protected function forgetCatalogueCaches(): void
