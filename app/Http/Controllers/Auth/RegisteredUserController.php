@@ -43,6 +43,9 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            // Chose their own password, so unlinking a social provider later
+            // can never leave them without a way in.
+            'password_set_at' => now(),
         ]);
 
         event(new Registered($user));

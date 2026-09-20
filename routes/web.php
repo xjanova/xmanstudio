@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
 use App\Http\Controllers\Admin\LocalVpnController;
+use App\Http\Controllers\Admin\LoginSecurityController;
 use App\Http\Controllers\Admin\MetalXAiController;
 use App\Http\Controllers\Admin\MetalXAnalyticsController;
 use App\Http\Controllers\Admin\MetalXAutomationController;
@@ -64,6 +65,7 @@ use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SmsPaymentController as AdminSmsPaymentController;
+use App\Http\Controllers\Admin\SocialLoginSettingsController;
 use App\Http\Controllers\Admin\SupportTicketController as AdminSupportTicketController;
 use App\Http\Controllers\Admin\TeamMemberController;
 use App\Http\Controllers\Admin\TelegramAlertController;
@@ -851,6 +853,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Turnstile Settings
     Route::get('/turnstile', [TurnstileSettingsController::class, 'index'])->name('turnstile.index');
     Route::put('/turnstile', [TurnstileSettingsController::class, 'update'])->name('turnstile.update');
+
+    // Sign in with Google / LINE / Telegram
+    Route::get('/social-login', [SocialLoginSettingsController::class, 'index'])->name('social-login.index');
+    Route::put('/social-login', [SocialLoginSettingsController::class, 'update'])->name('social-login.update');
+
+    // Login audit — who has been trying to get in, and the IP block list that
+    // answers them. The Telegram alerts are the shout; this is the record.
+    Route::prefix('security')->name('security.')->group(function () {
+        Route::get('/logins', [LoginSecurityController::class, 'index'])->name('logins.index');
+        Route::post('/logins/block', [LoginSecurityController::class, 'block'])->name('logins.block');
+        Route::post('/logins/unblock', [LoginSecurityController::class, 'unblock'])->name('logins.unblock');
+    });
 
     // Redis Settings
     Route::get('/redis-settings', [RedisSettingsController::class, 'index'])->name('redis-settings.index');

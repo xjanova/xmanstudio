@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\PaymentSetting;
 use App\Observers\AiCreditOrderObserver;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -31,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->configureTrustedProxies();
         $this->configureRateLimiting();
         $this->registerSmsCheckerEvents();
         $this->registerBladeDirectives();
@@ -39,6 +41,27 @@ class AppServiceProvider extends ServiceProvider
         // A paid AI-credit order gets its credits on AIXMAN whichever way it was paid — admin
         // approval, the SMS matcher, the Telegram bot — not only via the success page or Stripe.
         Order::observe(AiCreditOrderObserver::class);
+    }
+
+    /**
+     * Which proxies may tell us the visitor's real IP.
+     *
+     * Set here rather than in bootstrap/app.php because that closure runs
+     * before the config files load, so config() throws there — silently only
+     * on the web, since Artisan resolves its kernel late enough to work.
+     *
+     * The list is Cloudflare plus the local web server. It used to be '*',
+     * which trusts the client's own X-Forwarded-For: with that in place, five
+     * wrong passwords cost an attacker one header change to reset, and every
+     * IP in the login log was whatever they felt like typing.
+     */
+    private function configureTrustedProxies(): void
+    {
+        $proxies = config('security.trusted_proxies', []);
+
+        if (! empty($proxies)) {
+            TrustProxies::at($proxies);
+        }
     }
 
     /**

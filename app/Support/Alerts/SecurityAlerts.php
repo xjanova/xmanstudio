@@ -132,6 +132,33 @@ final class SecurityAlerts
         });
     }
 
+    /**
+     * The blocker shut an address out by itself.
+     *
+     * Unlike everything else in this class, something actually happened here —
+     * a visitor is being refused. The card carries the undo, because the one
+     * case that matters is the false positive: a shared office NAT, a mobile
+     * carrier gateway, a customer who really did forget their password
+     * twenty times.
+     */
+    public static function ipAutoBlocked(string $ip, string $reason, int $minutes): void
+    {
+        self::guard(function () use ($ip, $reason, $minutes) {
+            self::count('lockout', $ip);
+            AdminAlerts::send(new Alert(
+                key: 'ip-blocked:' . $ip,
+                level: Alert::WARNING,
+                title: 'บล็อก IP อัตโนมัติ ' . $minutes . ' นาที',
+                body: $reason . "\nถ้าเป็นลูกค้าที่ลืมรหัสผ่านจริง ๆ (หรือเป็นออฟฟิศที่ใช้ IP ร่วมกัน) ให้กดปลดบล็อกที่หน้าแอดมิน",
+                facts: ['IP' => $ip, 'นาที' => $minutes],
+                url: url('/admin/security/logins?ip=' . urlencode($ip)),
+                urlLabel: 'ดูประวัติและปลดบล็อก',
+                category: 'security',
+                buttons: [[BotActions::muteButton('ip-blocked:' . $ip)]],
+            ), 60);
+        });
+    }
+
     /** A logged-in non-admin opening an admin page. */
     public static function forbidden(User $user, string $path, ?string $ip): void
     {

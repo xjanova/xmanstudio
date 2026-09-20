@@ -43,6 +43,12 @@ class Setting extends Model
         'stripe_secret_key',
         'paypal_secret',
         'turnstile_secret_key',
+        // Social sign-in: the Google secret can mint tokens for our OAuth
+        // client, and the Telegram bot token is the key that signs every
+        // login payload — whoever holds it can sign in as any Telegram user.
+        'google_login_client_secret',
+        'telegram_login_bot_token',
+        'line_login_channel_secret',
         // Admin alerts over Telegram: whoever holds the token can impersonate the bot, and whoever
         // holds the webhook secret can feed the bot fake admin commands.
         'telegram_bot_token',

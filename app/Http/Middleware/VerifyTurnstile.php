@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Auth\LoginLog;
 use App\Support\Turnstile;
 use Closure;
 use Illuminate\Http\Request;
@@ -10,6 +11,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyTurnstile
 {
+    /** Which form this request was filed under, for the failure log. */
+    private string $section = '';
+
     /**
      * Handle an incoming request.
      *
@@ -17,6 +21,8 @@ class VerifyTurnstile
      */
     public function handle(Request $request, Closure $next, string $section = ''): Response
     {
+        $this->section = $section;
+
         // Only verify POST requests
         if (! $request->isMethod('post')) {
             return $next($request);
@@ -57,6 +63,15 @@ class VerifyTurnstile
 
     private function failResponse(Request $request, string $message): Response
     {
+        // Worth a row: a bot that cannot solve Turnstile never reaches the
+        // Failed event, so without this the admin log would show the guessing
+        // stopping the moment the widget went up rather than being deflected.
+        if ($this->section === 'login' || $this->section === 'register') {
+            LoginLog::turnstileFailed(
+                is_string($request->input('email')) ? $request->input('email') : null
+            );
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => false,

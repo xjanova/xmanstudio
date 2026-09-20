@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AffiliateTracking;
 use App\Http\Middleware\AiCrawlDetector;
+use App\Http\Middleware\BlockAbusiveIps;
 use App\Http\Middleware\EnsureKycVerified;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
@@ -51,8 +52,18 @@ $app = Application::configure(basePath: dirname(__DIR__))
             WatchScheduler::class,
         ]);
 
-        // Trust proxies for load balancers
-        $middleware->trustProxies(at: '*');
+        // Trusted proxies are set in AppServiceProvider::boot(), NOT here.
+        //
+        // This closure runs while the HTTP kernel is being resolved, which is
+        // before the configuration files are loaded — calling config() here
+        // throws "Class 'config' does not exist" and takes every web request
+        // with it. (Artisan hides the bug: the console kernel resolves later,
+        // so the same line works fine from the command line.)
+
+        // Refuse a blocked address before the router does any work. Sits ahead
+        // of the throttle on purpose: the point of a block is that the request
+        // stops being cheap for us and expensive for them.
+        $middleware->prepend(BlockAbusiveIps::class);
 
         // Configure rate limiting for specific operations
         $middleware->throttleApi();

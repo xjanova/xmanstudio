@@ -28,6 +28,12 @@ class User extends Authenticatable
         'line_access_token',
         'line_refresh_token',
         'line_picture_url',
+        'google_id',
+        'google_avatar',
+        'telegram_id',
+        'telegram_username',
+        'telegram_avatar',
+        'password_set_at',
         'notification_preferences',
         'marketing_email_enabled',
         'marketing_line_enabled',
@@ -66,6 +72,7 @@ class User extends Authenticatable
             'marketing_email_enabled' => 'boolean',
             'marketing_line_enabled' => 'boolean',
             'marketing_consent_at' => 'datetime',
+            'password_set_at' => 'datetime',
         ];
     }
 

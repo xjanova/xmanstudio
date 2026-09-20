@@ -4,19 +4,40 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LineLoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Auth\YouTubeOAuthController;
 use Illuminate\Support\Facades\Route;
 
-// LINE Login Routes
-Route::get('auth/line', [LineLoginController::class, 'redirect'])->name('line.redirect');
-Route::get('auth/line/callback', [LineLoginController::class, 'callback'])->name('line.callback');
-Route::post('auth/line/unlink', [LineLoginController::class, 'unlink'])->name('line.unlink')->middleware('auth');
+// Social sign-in. The redirects are throttled because each one costs us an
+// outbound call to the provider, and the callbacks because a signed Telegram
+// payload or a stolen OAuth code should not be replayable at speed.
+Route::middleware('throttle:20,1')->group(function () {
+    // LINE
+    Route::get('auth/line', [LineLoginController::class, 'redirect'])->name('line.redirect');
+    Route::get('auth/line/callback', [LineLoginController::class, 'callback'])->name('line.callback');
+
+    // Google
+    Route::get('auth/google', [GoogleLoginController::class, 'redirect'])->name('google.redirect');
+    Route::get('auth/google/callback', [GoogleLoginController::class, 'callback'])->name('google.callback');
+
+    // Telegram — the widget posts the signed profile straight here, so there
+    // is no redirect step of our own to name.
+    Route::get('auth/telegram/callback', [TelegramLoginController::class, 'callback'])->name('telegram.callback');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('auth/line/unlink', [LineLoginController::class, 'unlink'])->name('line.unlink');
+    Route::post('auth/google/unlink', [GoogleLoginController::class, 'unlink'])->name('google.unlink');
+    Route::post('auth/telegram/unlink', [TelegramLoginController::class, 'unlink'])->name('telegram.unlink');
+    Route::post('auth/telegram/link', [TelegramLoginController::class, 'linkStart'])->name('telegram.link');
+});
 
 // YouTube OAuth Routes (Admin only)
 Route::middleware('auth')->group(function () {

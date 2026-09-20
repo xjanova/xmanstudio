@@ -245,3 +245,15 @@ Schedule::command('domains:sync-catalogue')
     ->onFailure(function () {
         Log::error('[Domains] catalogue sync failed');
     });
+
+// ความปลอดภัย: ลบประวัติการเข้าสู่ระบบที่เก่าเกินกำหนด และเก็บกวาดบล็อกที่หมดอายุ
+// ตีสามทุกวัน — ประวัติการล็อกอินคือข้อมูลส่วนบุคคล เก็บไว้เท่าที่ต้องใช้สอบสวน
+// ไม่ใช่เก็บตลอดไป และรายการบล็อกที่ไม่เคยถูกเก็บกวาดจะอ่านไม่รู้เรื่องภายในสัปดาห์เดียว
+Schedule::command('security:prune')
+    ->dailyAt('03:00')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Security] login log prune failed');
+    });

@@ -136,66 +136,8 @@
         </div>
     </div>
 
-    <!-- LINE Connection -->
-    @if (\App\Models\Setting::getValue('line_login_enabled', false))
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-white">
-            <h2 class="text-lg font-semibold text-gray-900"><x-bi th="เชื่อมต่อ LINE" en="Connect LINE" /></h2>
-            <p class="text-sm text-gray-500 mt-1"><x-bi th="เชื่อมต่อบัญชี LINE เพื่อรับการแจ้งเตือนและเข้าสู่ระบบได้ง่ายขึ้น" en="Connect your LINE account for notifications and easier sign-in" /></p>
-        </div>
-        <div class="p-6">
-            @if($user->line_uid)
-                <div class="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div class="flex items-center gap-4">
-                        @if($user->line_picture_url)
-                            <img src="{{ $user->line_picture_url }}" alt="LINE Profile"
-                                 class="w-12 h-12 rounded-full border-2 border-green-300">
-                        @else
-                            <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
-                                </svg>
-                            </div>
-                        @endif
-                        <div>
-                            <p class="font-medium text-green-800">{{ $user->line_display_name ?? 'LINE Account' }}</p>
-                            <p class="text-sm text-green-600"><x-bi th="เชื่อมต่อแล้ว" en="Connected" /></p>
-                        </div>
-                    </div>
-                    <form method="POST" action="{{ route('line.unlink') }}" onsubmit="return confirm('ต้องการยกเลิกการเชื่อมต่อ LINE หรือไม่? / Disconnect your LINE account?')">
-                        @csrf
-                        <button type="submit" class="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg font-medium transition-colors text-sm">
-                            <x-bi th="ยกเลิกการเชื่อมต่อ" en="Disconnect" />
-                        </button>
-                    </form>
-                </div>
-            @else
-                <div class="text-center py-6">
-                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                        <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
-                        </svg>
-                    </div>
-                    <p class="text-gray-600 mb-4"><x-bi th="ยังไม่ได้เชื่อมต่อบัญชี LINE" en="No LINE account connected yet" /></p>
-                    <a href="{{ route('line.redirect', ['link' => 1]) }}"
-                       class="inline-flex items-center px-6 py-3 rounded-xl text-white font-medium transition-colors"
-                       style="background-color: #06C755;">
-                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
-                        </svg>
-                        <x-bi th="เชื่อมต่อ LINE" en="Connect LINE" />
-                    </a>
-                </div>
-            @endif
-            @if (session('status') === 'line-connected')
-                <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)"
-                   class="mt-4 text-sm text-green-600 font-medium text-center">
-                    <x-bi th="เชื่อมต่อ LINE สำเร็จ" en="LINE connected successfully" />
-                </p>
-            @endif
-        </div>
-    </div>
-    @endif
+    {{-- Google / LINE / Telegram, with the disconnect guard. --}}
+    @include('profile.partials.social-accounts')
 
     <!-- Notification Settings -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

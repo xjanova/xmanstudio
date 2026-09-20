@@ -14,6 +14,7 @@ use App\Models\WalletTopup;
 use App\Observers\AdminAlertObserver;
 use App\Support\Alerts\SecurityAlerts;
 use App\Support\Alerts\SystemAlerts;
+use App\Support\Auth\LoginLog;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Login;
@@ -42,19 +43,33 @@ class AdminAlertServiceProvider extends ServiceProvider
             $model::observe(AdminAlertObserver::class);
         }
 
+        // Two things happen on each of these: a card goes to the admin chat
+        // (SecurityAlerts), and a row is written so the attempt is still there
+        // next week (LoginLog). LoginLog is also where an address that keeps
+        // failing gets shut out.
         Event::listen(Failed::class, function (Failed $event) {
-            SecurityAlerts::failedLogin(
-                is_string($event->credentials['email'] ?? null) ? $event->credentials['email'] : null,
-                request()->ip(),
-                $event->user instanceof User ? $event->user : null,
-            );
+            $email = is_string($event->credentials['email'] ?? null) ? $event->credentials['email'] : null;
+            $account = $event->user instanceof User ? $event->user : null;
+
+            SecurityAlerts::failedLogin($email, request()->ip(), $account);
+            LoginLog::failed($email, $account);
         });
         Event::listen(Lockout::class, function (Lockout $event) {
-            SecurityAlerts::lockout((string) $event->request->input('email'), $event->request->ip());
+            $email = (string) $event->request->input('email');
+
+            SecurityAlerts::lockout($email, $event->request->ip());
+            LoginLog::lockout($email !== '' ? $email : null);
         });
         Event::listen(Login::class, function (Login $event) {
             if ($event->user instanceof User) {
                 SecurityAlerts::adminLogin($event->user, request()->ip(), request()->userAgent());
+
+                // The social controllers log their own success with the right
+                // provider name before calling Auth::login, so this would be a
+                // second row for the same sign-in.
+                if (! LoginLog::alreadyRecorded()) {
+                    LoginLog::success($event->user);
+                }
             }
         });
 
