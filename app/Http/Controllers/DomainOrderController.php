@@ -198,7 +198,13 @@ class DomainOrderController extends Controller
         return match ($registration->status) {
             DomainRegistration::STATUS_ACTIVE => 'จดโดเมน ' . $registration->domain . ' สำเร็จแล้ว ตั้งค่า DNS ได้เลย',
             DomainRegistration::STATUS_REGISTERING => 'รับคำสั่งจดโดเมน ' . $registration->domain . ' แล้ว กำลังดำเนินการ ปกติใช้เวลาไม่เกิน 15 นาที เราจะแจ้งเมื่อเสร็จ',
-            DomainRegistration::STATUS_REFUNDED => 'จดโดเมนไม่สำเร็จ และคืนเงินเข้ากระเป๋าของคุณเรียบร้อยแล้ว',
+            // Deliberately vague about WHY. The usual cause is our own card
+            // or credit at the registrar, which is not the customer's
+            // business and not something they can act on — and the honest
+            // action for them either way is the same: the money is back, try
+            // again shortly. The admin gets the real reason by Telegram.
+            DomainRegistration::STATUS_REFUNDED => 'จดโดเมนไม่สำเร็จ คืนเงินเข้ากระเป๋าของคุณเรียบร้อยแล้ว '
+                . 'ทีมงานได้รับแจ้งแล้วและกำลังตรวจสอบ — กรุณาลองใหม่อีกครั้งในภายหลัง',
             default => 'รับคำสั่งจดโดเมน ' . $registration->domain . ' แล้ว กำลังตรวจสอบสถานะ',
         };
     }

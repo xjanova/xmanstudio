@@ -604,6 +604,54 @@ final class BusinessAlerts
      * to look before those weeks run out, and a domain lost to a silent
      * failure cannot be bought back.
      */
+    /**
+     * The registrar refused to sell us the domain.
+     *
+     * We buy from Hostinger with our own card on file, then bill the customer
+     * from their wallet — so a refusal here is OUR problem, not theirs, and
+     * it is the kind that stops every sale at once rather than one. Until
+     * this existed it produced a Log::warning nobody reads, while the shop
+     * quietly refunded customer after customer.
+     *
+     * CRITICAL when the refusal is about money, because that is the case
+     * where nothing will sell until somebody tops up the account or fixes
+     * the card. Everything else is a WARNING: one domain, one reason.
+     *
+     * The key is per-day and not per-domain for the money case: a card that
+     * has expired will refuse every order, and the owner needs one alert,
+     * not one per customer.
+     */
+    public static function domainPurchaseRefused(DomainRegistration $registration, string $reason, bool $isPaymentProblem): void
+    {
+        self::guard(function () use ($registration, $reason, $isPaymentProblem) {
+            AdminAlerts::send(new Alert(
+                key: $isPaymentProblem
+                    ? 'registrar-payment:' . now()->toDateString()
+                    : 'domain-buy-refused:' . $registration->id,
+                level: $isPaymentProblem ? Alert::CRITICAL : Alert::WARNING,
+                title: $isPaymentProblem
+                    ? 'จ่ายเงินให้ผู้ให้บริการโดเมนไม่ผ่าน — ขายโดเมนไม่ได้ทั้งระบบ'
+                    : 'ผู้ให้บริการปฏิเสธคำสั่งจดโดเมน',
+                body: $registration->domain . "\n"
+                    . self::person($registration->user?->name, $registration->user?->email, null) . "\n"
+                    . ($isPaymentProblem
+                        ? "เราจ่าย Hostinger ด้วยบัตรของเราเอง แล้วค่อยเก็บจากกระเป๋าเงินลูกค้า\n"
+                            . "ตอนนี้จ่ายไม่ผ่าน — ทุกคำสั่งซื้อจะล้มเหมือนกันหมดจนกว่าจะแก้\n"
+                            . 'ตรวจบัตร/ยอดเครดิตในบัญชี Hostinger ด่วน · คืนเงินลูกค้ารายนี้แล้ว'
+                        : 'คืนเงินลูกค้าเรียบร้อยแล้ว')
+                    . "\n" . Str::limit($reason, 300),
+                facts: array_filter([
+                    'โดเมน' => $registration->domain,
+                    'ยอดที่คืน' => number_format((float) $registration->price_thb, 2) . ' ฿',
+                    'สาเหตุ' => $isPaymentProblem ? 'การชำระเงินฝั่งเรา' : 'ผู้ให้บริการปฏิเสธ',
+                ]),
+                url: self::adminUrl('admin.domains.index'),
+                urlLabel: 'เปิดหลังบ้านโดเมน',
+                category: 'orders',
+            ), $isPaymentProblem ? 60 : 720);
+        });
+    }
+
     public static function domainRenewalFailed(DomainRegistration $domain, string $reason): void
     {
         self::guard(function () use ($domain, $reason) {

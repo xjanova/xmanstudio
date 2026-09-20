@@ -103,7 +103,10 @@ class DomainController extends Controller
         }
 
         if ($renewal->status === DomainRegistration::STATUS_REFUNDED) {
-            return back()->with('error', 'ต่ออายุไม่สำเร็จ เราคืนเงินเข้ากระเป๋าให้เรียบร้อยแล้ว');
+            // Same reasoning as the purchase path: the usual cause is our own
+            // payment to the registrar, which the customer cannot act on.
+            return back()->with('error', 'ต่ออายุไม่สำเร็จ คืนเงินเข้ากระเป๋าของคุณเรียบร้อยแล้ว '
+                . 'ทีมงานได้รับแจ้งแล้ว — กรุณาลองใหม่อีกครั้งในภายหลัง');
         }
 
         return back()->with('success', sprintf(

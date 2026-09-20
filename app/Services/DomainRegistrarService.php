@@ -6,6 +6,7 @@ use App\Models\DomainContact;
 use App\Models\DomainRegistration;
 use App\Models\DomainTld;
 use App\Models\Wallet;
+use App\Support\Alerts\BusinessAlerts;
 use App\Support\DomainPricing;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -232,7 +233,11 @@ class DomainRegistrarService
             $body = $result['body'] ?? [];
 
             if ($status >= 400) {
-                return $this->failAndRefund($registration, 'upstream rejected the order: HTTP ' . $status . ' ' . json_encode($body));
+                return $this->failAndRefund(
+                    $registration,
+                    'upstream rejected the order: HTTP ' . $status . ' ' . json_encode($body),
+                    self::looksLikePaymentProblem($status, $body),
+                );
             }
 
             $registration->fill([
@@ -269,6 +274,40 @@ class DomainRegistrarService
      * a toggle did not stick would be worse than a toggle that did not stick.
      * Both are re-applied by the reconciliation command.
      */
+    /**
+     * Is this refusal about money on our side?
+     *
+     * The distinction matters because the two need opposite responses. A
+     * domain that is taken, or a name the registry will not accept, is one
+     * order and the customer should try another name. A card that was
+     * declined, or an account with no credit, refuses EVERY order until
+     * somebody fixes it — and nobody finds out unless we say so, because the
+     * customer just sees a refund and walks away.
+     *
+     * Matched on the status code first (402 is unambiguous) and then on the
+     * words upstream uses, because the API does not carry a machine-readable
+     * reason. Over-matching is the safe direction: a false alarm costs one
+     * message, a miss costs every sale until someone notices.
+     *
+     * @param  array<mixed>  $body
+     */
+    public static function looksLikePaymentProblem(int $status, array $body): bool
+    {
+        if ($status === 402) {
+            return true;
+        }
+
+        $haystack = strtolower(json_encode($body) ?: '');
+
+        foreach (['payment', 'insufficient', 'balance', 'funds', 'card', 'billing', 'charge failed', 'declined'] as $needle) {
+            if (str_contains($haystack, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function markActive(DomainRegistration $registration): DomainRegistration
     {
         $registration->status = DomainRegistration::STATUS_ACTIVE;
@@ -446,6 +485,7 @@ class DomainRegistrarService
                 return $this->failAndRefundRenewal(
                     $renewal,
                     'upstream rejected the renewal: HTTP ' . $status . ' ' . json_encode($result['body'] ?? []),
+                    self::looksLikePaymentProblem($status, (array) ($result['body'] ?? [])),
                 );
             }
 
@@ -490,7 +530,10 @@ class DomainRegistrarService
      * Separate from failAndRefund() only for the wording: a customer reading
      * their wallet history needs to see which of the two charges came back.
      */
-    public function failAndRefundRenewal(DomainRegistration $renewal, string $reason): DomainRegistration
+    /**
+     * @param  bool  $paymentProblem  our card at the registrar, not this domain
+     */
+    public function failAndRefundRenewal(DomainRegistration $renewal, string $reason, bool $paymentProblem = false): DomainRegistration
     {
         Log::warning('[DomainRegistrar] refunding failed renewal', [
             'registration_id' => $renewal->id,
@@ -503,6 +546,8 @@ class DomainRegistrarService
 
             return $renewal;
         }
+
+        $alert = fn () => BusinessAlerts::domainPurchaseRefused($renewal->fresh() ?? $renewal, $reason, $paymentProblem);
 
         DB::transaction(function () use ($renewal, $reason) {
             $fresh = DomainRegistration::where('id', $renewal->id)->lockForUpdate()->first();
@@ -529,6 +574,9 @@ class DomainRegistrarService
                 'last_error' => $reason,
             ]);
         }, 3);
+
+        // After the transaction: an alert that throws must not undo a refund.
+        $alert();
 
         return $renewal->fresh() ?? $renewal;
     }
@@ -573,7 +621,11 @@ class DomainRegistrarService
      * $reason is for us. It is written to last_error, which is hidden from
      * serialisation because it can quote the registrar by name.
      */
-    public function failAndRefund(DomainRegistration $registration, string $reason): DomainRegistration
+    /**
+     * @param  bool  $paymentProblem  the refusal was about OUR ability to pay
+     *                                the registrar, not about this domain
+     */
+    public function failAndRefund(DomainRegistration $registration, string $reason, bool $paymentProblem = false): DomainRegistration
     {
         Log::warning('[DomainRegistrar] refunding failed registration', [
             'registration_id' => $registration->id,
@@ -617,7 +669,15 @@ class DomainRegistrarService
             ]);
         }, 3);
 
-        return $registration->fresh() ?? $registration;
+        $registration = $registration->fresh() ?? $registration;
+
+        // Outside the transaction: an alert that fails must not roll back a
+        // refund that succeeded. Raised here rather than at the call sites so
+        // every path that refunds a customer is heard about — the reason this
+        // was invisible was that it only ever wrote to a log.
+        BusinessAlerts::domainPurchaseRefused($registration, $reason, $paymentProblem);
+
+        return $registration;
     }
 
     /**
