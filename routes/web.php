@@ -163,7 +163,7 @@ Route::get('/apple-touch-icon.png', [FaviconController::class, 'appleTouch'])->n
 
 // Public AI Chat
 Route::post('/ai-chat', [PublicChatController::class, 'chat'])
-    ->middleware('throttle:20,1')
+    ->middleware('throttle:20,1,ai-chat')
     ->name('public.ai-chat');
 
 // Changelog (public)
@@ -327,7 +327,7 @@ Route::prefix('chanthra-studio')->name('chanthra-studio.')->group(function () {
 // (จะเปิดให้โหลดสินค้าตัวอื่นที่ต้องซื้อก่อนได้ฟรี)
 Route::get('/winx-tools/download/{version?}', [WinXToolsController::class, 'download'])
     ->where('version', '[0-9A-Za-z.\-]+')
-    ->middleware('throttle:30,1')
+    ->middleware('throttle:30,1,winx-download')
     ->name('winx-tools.download');
 
 // Services
@@ -345,7 +345,7 @@ Route::prefix('domains')->name('domains.')->group(function () {
     Route::get('/', [DomainController::class, 'index'])->name('index');
     Route::get('/pricing', [DomainController::class, 'pricing'])->name('pricing');
     Route::get('/search', [DomainController::class, 'searchJson'])
-        ->middleware('throttle:30,1')->name('search');
+        ->middleware('throttle:30,1,domain-search')->name('search');
 
     // การสั่งซื้อต้องล็อกอิน เพราะจ่ายด้วยกระเป๋าเงินและต้องมีเจ้าของโดเมน
     // ที่ระบุตัวได้ · ชื่อโดเมนมีจุดเสมอ จึงต้องปลด constraint เริ่มต้นของ
@@ -356,7 +356,7 @@ Route::prefix('domains')->name('domains.')->group(function () {
         // จำกัดอัตราแน่นหนา: ปลายทางนี้ใช้เงินจริงและเรียก API ที่คิดเงิน
         Route::post('/register/{domain}', [DomainOrderController::class, 'store'])
             ->where('domain', '[A-Za-z0-9.-]+')
-            ->middleware('throttle:10,10')->name('register.store');
+            ->middleware('throttle:10,10,domain-register')->name('register.store');
     });
 });
 
@@ -369,7 +369,7 @@ Route::prefix('vps')->name('vps.')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::get('/order/{plan:slug}', [VpsController::class, 'create'])->name('order');
         Route::post('/order/{plan:slug}', [VpsController::class, 'store'])
-            ->middleware('throttle:6,10')->name('order.store');
+            ->middleware('throttle:6,10,vps-order')->name('order.store');
     });
 });
 
@@ -384,7 +384,7 @@ Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear
 Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
 Route::post('/contact', [ContactController::class, 'send'])
     ->name('contact.send')
-    ->middleware(['throttle:5,1', 'turnstile:contact']);
+    ->middleware(['throttle:5,1,contact-form', 'turnstile:contact']);
 
 // ==================== สั่งงาน & ใบเสนอราคา ====================
 // อยู่ที่ /quote ไม่ใช่ /support — เพราะ "support" ในเว็บนี้หมายถึงตั๋วช่วยเหลือ
@@ -401,23 +401,23 @@ Route::prefix('quote')->name('quote.')->group(function () {
     Route::post('/pdf', [QuotationController::class, 'generatePdf'])->name('pdf');
     // ออกใบจริงและส่งเมล — กันคนยิงรัวจนกล่องจดหมายทีมงานเต็ม
     Route::post('/submit', [QuotationController::class, 'submitOrder'])
-        ->middleware('throttle:10,60')->name('submit');
+        ->middleware('throttle:10,60,quotation-submit')->name('submit');
 
     // ใบที่ส่งให้ลูกค้าแล้ว เปิดด้วยโทเคนยาว ไม่ใช่เลขที่ใบ — เลขที่ใบเป็น
     // QT-<วันที่>-<สุ่ม 4 ตัว> ซึ่งไล่เดาได้ และเอกสารมีราคากับข้อมูลลูกค้าอยู่
     Route::get('/d/{token}', [QuotationController::class, 'showPublic'])->name('show');
     Route::get('/d/{token}/pdf', [QuotationController::class, 'downloadPublic'])->name('show.pdf');
     Route::post('/d/{token}/respond', [QuotationController::class, 'respond'])
-        ->middleware('throttle:20,60')->name('respond');
+        ->middleware('throttle:20,60,quotation-respond')->name('respond');
 });
 
 // ใบแจ้งหนี้รายงวด — โทเคนของตัวเอง เพราะคนที่จ่ายเงินมักไม่ใช่คนที่มีบัญชีในเว็บ
 // เรนเดอร์ PDF กินซีพียู และหน้านี้เปิดได้โดยไม่ต้องล็อกอิน จำกัดอัตราไว้
 // กันคนยิงรัวเอาเครื่องลง ไม่ได้กันการเดาโทเคน (64 hex เดาไม่ได้อยู่แล้ว)
-Route::prefix('invoice')->name('invoice.')->middleware('throttle:60,1')->group(function () {
+Route::prefix('invoice')->name('invoice.')->middleware('throttle:60,1,invoice')->group(function () {
     Route::get('/{token}', [InvoiceController::class, 'show'])->name('show');
     Route::get('/{token}/pdf', [InvoiceController::class, 'download'])
-        ->middleware('throttle:20,1')->name('download');
+        ->middleware('throttle:20,1,invoice-pdf')->name('download');
 });
 
 Route::get('/services/{categoryKey}/{optionKey}', [QuotationController::class, 'serviceDetail'])->name('service.detail');
@@ -431,13 +431,13 @@ Route::redirect('/support/tracking', '/quote/track', 301);
 Route::get('/quotation/services', [QuotationController::class, 'getServices']);
 Route::post('/quotation/preview', [QuotationController::class, 'preview']);
 Route::post('/quotation/pdf', [QuotationController::class, 'generatePdf']);
-Route::post('/quotation/submit', [QuotationController::class, 'submitOrder'])->middleware('throttle:10,60');
+Route::post('/quotation/submit', [QuotationController::class, 'submitOrder'])->middleware('throttle:10,60,quotation-submit');
 
 // Public project tracking (no login required)
 Route::get('/tracking', [QuotationController::class, 'publicTracking'])->name('tracking');
 Route::get('/tracking/search', [QuotationController::class, 'publicTrackingSearch'])->name('tracking.search');
-Route::post('/tracking/payment-init', [QuotationController::class, 'projectPaymentInit'])->name('tracking.payment.init')->middleware('throttle:20,1');
-Route::get('/tracking/payment-status/{projectNumber}', [QuotationController::class, 'projectPaymentStatus'])->name('tracking.payment.status')->middleware('throttle:60,1');
+Route::post('/tracking/payment-init', [QuotationController::class, 'projectPaymentInit'])->name('tracking.payment.init')->middleware('throttle:20,1,tracking-payment-init');
+Route::get('/tracking/payment-status/{projectNumber}', [QuotationController::class, 'projectPaymentStatus'])->name('tracking.payment.status')->middleware('throttle:60,1,tracking-payment-status');
 
 // About page
 Route::view('/about', 'about')->name('about');
@@ -602,29 +602,29 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [CustomerDomainController::class, 'index'])->name('index');
             Route::get('/{id}', [CustomerDomainController::class, 'show'])->whereNumber('id')->name('show');
             Route::post('/{id}/dns', [CustomerDomainController::class, 'updateDns'])
-                ->whereNumber('id')->middleware('throttle:30,10')->name('dns');
+                ->whereNumber('id')->middleware('throttle:30,10,domain-dns')->name('dns');
             Route::post('/{id}/nameservers', [CustomerDomainController::class, 'updateNameservers'])
-                ->whereNumber('id')->middleware('throttle:10,10')->name('nameservers');
+                ->whereNumber('id')->middleware('throttle:10,10,domain-nameservers')->name('nameservers');
             // รหัสย้ายโดเมนออก — ของลับ ขอถี่ ๆ ไม่ได้
             Route::post('/{id}/auth-code', [CustomerDomainController::class, 'authCode'])
-                ->whereNumber('id')->middleware('throttle:5,10')->name('auth-code');
+                ->whereNumber('id')->middleware('throttle:5,10,domain-auth-code')->name('auth-code');
             Route::post('/{id}/auto-renew', [CustomerDomainController::class, 'toggleAutoRenew'])
                 ->whereNumber('id')->name('auto-renew');
             // ต่ออายุเองตอนนี้ — ตัดกระเป๋าเงินทันที เส้นทางเงินเดียวกับตัวตัดอัตโนมัติ
             // จำกัดอัตราไว้เพราะปุ่มนี้ใช้เงินจริง กดรัวไม่ควรกลายเป็นหลายปี
             Route::post('/{id}/renew', [CustomerDomainController::class, 'renew'])
-                ->whereNumber('id')->middleware('throttle:5,10')->name('renew');
+                ->whereNumber('id')->middleware('throttle:5,10,domain-renew')->name('renew');
             Route::post('/{id}/privacy', [CustomerDomainController::class, 'togglePrivacy'])
                 ->whereNumber('id')->name('privacy');
             // ปลดล็อก/ล็อกกันการย้ายออก — รหัสย้ายอย่างเดียวย้ายไม่ได้ถ้าโดเมนยังล็อก
             Route::post('/{id}/lock', [CustomerDomainController::class, 'toggleLock'])
-                ->whereNumber('id')->middleware('throttle:10,10')->name('lock');
+                ->whereNumber('id')->middleware('throttle:10,10,domain-lock')->name('lock');
             // ส่งต่อโดเมนไปลิงก์อื่น (301/302) ไม่ต้องมีโฮสติ้ง
             Route::post('/{id}/forwarding', [CustomerDomainController::class, 'updateForwarding'])
-                ->whereNumber('id')->middleware('throttle:20,10')->name('forwarding');
+                ->whereNumber('id')->middleware('throttle:20,10,domain-forwarding')->name('forwarding');
             // ย้อนโซน DNS กลับไปจุดที่เคยบันทึก — undo ของคนที่เผลอลบเรคคอร์ด
             Route::post('/{id}/dns/restore/{snapshot}', [CustomerDomainController::class, 'restoreSnapshot'])
-                ->whereNumber('id')->whereNumber('snapshot')->middleware('throttle:10,10')->name('dns-restore');
+                ->whereNumber('id')->whereNumber('snapshot')->middleware('throttle:10,10,domain-dns-restore')->name('dns-restore');
         });
 
         // VPS ที่ลูกค้าเช่า — ทุกเส้นทางอ่านแถวด้วย user_id ของคนที่ล็อกอิน คนอื่นได้ 404
@@ -633,26 +633,26 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [CustomerVpsController::class, 'index'])->name('index');
             Route::get('/{id}', [CustomerVpsController::class, 'show'])->whereNumber('id')->name('show');
             Route::get('/{id}/status', [CustomerVpsController::class, 'status'])
-                ->whereNumber('id')->middleware('throttle:30,1')->name('status');
+                ->whereNumber('id')->middleware('throttle:30,1,vps-status')->name('status');
             Route::post('/{id}/power', [CustomerVpsController::class, 'power'])
-                ->whereNumber('id')->middleware('throttle:10,10')->name('power');
+                ->whereNumber('id')->middleware('throttle:10,10,vps-power')->name('power');
             Route::post('/{id}/password', [CustomerVpsController::class, 'password'])
-                ->whereNumber('id')->middleware('throttle:5,10')->name('password');
+                ->whereNumber('id')->middleware('throttle:5,10,vps-password')->name('password');
             Route::post('/{id}/hostname', [CustomerVpsController::class, 'hostname'])
-                ->whereNumber('id')->middleware('throttle:5,10')->name('hostname');
+                ->whereNumber('id')->middleware('throttle:5,10,vps-hostname')->name('hostname');
             Route::post('/{id}/reinstall', [CustomerVpsController::class, 'reinstall'])
-                ->whereNumber('id')->middleware('throttle:3,30')->name('reinstall');
+                ->whereNumber('id')->middleware('throttle:3,30,vps-reinstall')->name('reinstall');
             Route::post('/{id}/snapshot', [CustomerVpsController::class, 'snapshot'])
-                ->whereNumber('id')->middleware('throttle:6,30')->name('snapshot');
+                ->whereNumber('id')->middleware('throttle:6,30,vps-snapshot')->name('snapshot');
             Route::post('/{id}/backups/{backup}/restore', [CustomerVpsController::class, 'restoreBackup'])
-                ->whereNumber('id')->whereNumber('backup')->middleware('throttle:3,30')->name('backup-restore');
+                ->whereNumber('id')->whereNumber('backup')->middleware('throttle:3,30,vps-backup-restore')->name('backup-restore');
             Route::post('/{id}/point-domain', [CustomerVpsController::class, 'pointDomain'])
-                ->whereNumber('id')->middleware('throttle:10,10')->name('point-domain');
+                ->whereNumber('id')->middleware('throttle:10,10,vps-point-domain')->name('point-domain');
             Route::post('/{id}/auto-renew', [CustomerVpsController::class, 'toggleAutoRenew'])
                 ->whereNumber('id')->name('auto-renew');
             // ต่ออายุเองตอนนี้ — ตัดกระเป๋าเงินทันที เส้นทางเงินเดียวกับตัวตัดอัตโนมัติ
             Route::post('/{id}/renew', [CustomerVpsController::class, 'renew'])
-                ->whereNumber('id')->middleware('throttle:5,10')->name('renew');
+                ->whereNumber('id')->middleware('throttle:5,10,vps-renew')->name('renew');
         });
 
         // Projects (Order progress tracking)
@@ -721,7 +721,7 @@ require __DIR__ . '/auth.php';
 Route::middleware('auth')->group(function () {
     Route::get('/two-factor-challenge', [TwoFactorChallengeController::class, 'show'])->name('two-factor.challenge');
     Route::post('/two-factor-challenge', [TwoFactorChallengeController::class, 'verify'])
-        ->middleware('throttle:20,1')
+        ->middleware('throttle:20,1,two-factor-challenge')
         ->name('two-factor.verify');
 });
 
@@ -952,11 +952,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         // Two-step sign-in — the one admin area an admin who has not enrolled yet may open.
         Route::get('/two-factor', [AdminTwoFactorController::class, 'show'])->name('two-factor.show');
         Route::post('/two-factor/confirm', [AdminTwoFactorController::class, 'confirm'])
-            ->middleware('throttle:20,1')->name('two-factor.confirm');
+            ->middleware('throttle:20,1,admin-2fa-confirm')->name('two-factor.confirm');
         Route::post('/two-factor/recovery-codes', [AdminTwoFactorController::class, 'regenerateRecoveryCodes'])
             ->name('two-factor.recovery-codes');
         Route::post('/two-factor/reset', [AdminTwoFactorController::class, 'reset'])
-            ->middleware('throttle:10,1')->name('two-factor.reset');
+            ->middleware('throttle:10,1,admin-2fa-reset')->name('two-factor.reset');
     });
 
     // Redis Settings
@@ -1559,7 +1559,7 @@ Route::middleware('auth')->group(function () {
     // จำกัดอัตราการส่ง: การอัปโหลดรูปสี่ใบแล้วเข้ารหัสใหม่กินซีพียู และคิวตรวจ
     // ของเจ้าหน้าที่ไม่ควรถูกถมด้วยใบซ้ำจากคนเดียว
     Route::post('/kyc', [KycController::class, 'store'])
-        ->middleware('throttle:6,60')
+        ->middleware('throttle:6,60,kyc-submit')
         ->name('kyc.store');
     // เอกสารอยู่บนดิสก์ส่วนตัว เสิร์ฟผ่าน controller ที่ตรวจสิทธิ์ทุกครั้ง
     Route::get('/kyc/document/{id}/{kind}', [KycController::class, 'document'])
@@ -1574,7 +1574,7 @@ Route::middleware('auth')->prefix('gpuxmine')->name('gpuxmine.')->group(function
     Route::get('/', [GpuNodeController::class, 'index'])->name('index');
     // รหัสจับคู่สร้าง worker ใหม่ในนามบัญชีนี้ได้ จึงจำกัดอัตราการกด
     Route::post('/pair', [GpuNodeController::class, 'pair'])
-        ->middleware('throttle:10,10')
+        ->middleware('throttle:10,10,gpu-pair')
         ->name('pair');
     Route::post('/{id}/rename', [GpuNodeController::class, 'rename'])
         ->whereNumber('id')->name('rename');
