@@ -1128,10 +1128,10 @@ class ProductLicenseController extends Controller
     {
         // Per-product pricing overrides
         $productPricing = [
-            // จ่ายครั้งเดียว ใช้ได้ตลอด — ราคาเดียวกับหน้า products/winxtools และ
+            // Pro ฿199 ต่อปี — ราคาเดียวกับหน้า products/winxtools และ
             // CartController::LICENSE_TERM_PRICES แก้ต้องแก้พร้อมกัน
             'winx-tools' => [
-                'lifetime' => ['original' => 199, 'currency' => 'THB'],
+                'yearly' => ['original' => 199, 'currency' => 'THB'],
             ],
             'smschecker' => [
                 'monthly' => ['original' => 499, 'currency' => 'THB'],
