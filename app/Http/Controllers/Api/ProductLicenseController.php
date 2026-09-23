@@ -37,6 +37,21 @@ class ProductLicenseController extends Controller
         ],
     ];
 
+    /** อายุของแต่ละแผน (วัน) ที่ pricing() บอกแอป — null = ใช้ได้ตลอด */
+    private const PLAN_DURATION_DAYS = [
+        'monthly' => 30,
+        'yearly' => 365,
+        'lifetime' => null,
+    ];
+
+    /**
+     * ระยะทดลองใช้ (วัน) รายผลิตภัณฑ์ — ตัวที่ไม่อยู่ในนี้ได้ 1 วัน (24 ชม.) เท่าเดิม
+     */
+    private const TRIAL_DAYS = [
+        // แอปบอกลูกค้าไว้ว่าทดลอง Pro ได้ 48 ชั่วโมง
+        'winx-tools' => 2,
+    ];
+
     /**
      * Get product by slug or fail
      */
@@ -212,8 +227,8 @@ class ProductLicenseController extends Controller
             ], 403);
         }
 
-        // Start trial (24 hours)
-        $trialDays = 1;
+        // Start trial — 24 ชม. เว้นแต่ผลิตภัณฑ์กำหนดไว้เองใน TRIAL_DAYS
+        $trialDays = self::TRIAL_DAYS[$product->slug] ?? 1;
         if (! $device->startTrial($trialDays)) {
             return response()->json([
                 'success' => false,
@@ -995,7 +1010,16 @@ class ProductLicenseController extends Controller
             ], 404);
         }
 
-        $pricing = $this->getPricingForProduct($productSlug);
+        // เฉพาะแผนที่ผลิตภัณฑ์นี้ขายจริง ตามลำดับที่ประกาศไว้ (WinXTools มีแค่ lifetime)
+        $plans = [];
+        foreach ($this->getPricingForProduct($product->slug) as $type => $plan) {
+            $plans[$type] = [
+                'price' => $plan['original'],
+                'currency' => $plan['currency'],
+                'duration_days' => self::PLAN_DURATION_DAYS[$type],
+                'features' => $this->getFeaturesByType($productSlug, $type),
+            ];
+        }
 
         return response()->json([
             'success' => true,
@@ -1004,26 +1028,9 @@ class ProductLicenseController extends Controller
                     'name' => $product->name,
                     'slug' => $product->slug,
                 ],
-                'plans' => [
-                    'monthly' => [
-                        'price' => $pricing['monthly']['original'],
-                        'currency' => $pricing['monthly']['currency'],
-                        'duration_days' => 30,
-                        'features' => $this->getFeaturesByType($productSlug, 'monthly'),
-                    ],
-                    'yearly' => [
-                        'price' => $pricing['yearly']['original'],
-                        'currency' => $pricing['yearly']['currency'],
-                        'duration_days' => 365,
-                        'features' => $this->getFeaturesByType($productSlug, 'yearly'),
-                    ],
-                    'lifetime' => [
-                        'price' => $pricing['lifetime']['original'],
-                        'currency' => $pricing['lifetime']['currency'],
-                        'duration_days' => null,
-                        'features' => $this->getFeaturesByType($productSlug, 'lifetime'),
-                    ],
-                ],
+                'plans' => $plans,
+                // หน้าเว็บที่ซื้อได้ — null ถ้าสินค้าปิดขายอยู่ (หน้าสินค้าตอบ 404)
+                'purchase_url' => $product->is_active ? route('products.show', $product->slug) : null,
             ],
         ]);
     }
@@ -1054,11 +1061,18 @@ class ProductLicenseController extends Controller
 
     /**
      * Get pricing for product
+     *
+     * คืนเฉพาะแผนที่ผลิตภัณฑ์นั้นขาย — pricing() ส่งให้แอปตามนี้ทุกแผน ไม่เติมแผนที่ไม่มีให้
      */
     private function getPricingForProduct(string $productSlug): array
     {
         // Per-product pricing overrides
         $productPricing = [
+            // จ่ายครั้งเดียว ใช้ได้ตลอด — ราคาเดียวกับหน้า products/winxtools และ
+            // CartController::LICENSE_TERM_PRICES แก้ต้องแก้พร้อมกัน
+            'winx-tools' => [
+                'lifetime' => ['original' => 199, 'currency' => 'THB'],
+            ],
             'smschecker' => [
                 'monthly' => ['original' => 499, 'currency' => 'THB'],
                 'yearly' => ['original' => 4990, 'currency' => 'THB'],

@@ -11,6 +11,13 @@ use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
+    /**
+     * สินค้าที่ขายแบบจ่ายครั้งเดียว ใช้ได้ตลอด (นอกจากแพ็กอวาตาร์) — ดู defaultLicenseType()
+     */
+    public const LIFETIME_LICENSE_SLUGS = [
+        'winx-tools',
+    ];
+
     protected $fillable = [
         'category_id',
         'name',
@@ -78,6 +85,24 @@ class Product extends Model
     public function latestVersion()
     {
         return $this->versions()->active()->latest()->first();
+    }
+
+    /**
+     * ประเภท license ที่ออกให้เมื่อรายการในออเดอร์ไม่ได้ระบุ license_type มาเอง
+     *
+     * ค่าตั้งต้นคือรายปี แต่ของที่ซื้อขาดต้องได้ lifetime ไม่งั้นของที่ลูกค้าจ่ายไปแล้วจะหมดอายุเอง
+     * ในอีกปี — แพ็กอวาตาร์จะหลุดออกจากรายการของที่มีในแอปโดยไม่มีอะไรบอกเหตุผล และ WinXTools
+     * ขายว่า "จ่ายครั้งเดียว ใช้ได้ตลอด" license_type ที่ระบุมากับรายการในออเดอร์ยังชนะค่านี้เสมอ
+     *
+     * ที่เดียวที่ตัดสินเรื่องนี้ — LicenseService และ Api\V1\SmsPaymentController ใช้ร่วมกัน
+     */
+    public function defaultLicenseType(): string
+    {
+        if (in_array($this->slug, self::LIFETIME_LICENSE_SLUGS, true) || $this->avatarPack()->exists()) {
+            return LicenseKey::TYPE_LIFETIME;
+        }
+
+        return LicenseKey::TYPE_YEARLY;
     }
 
     /**

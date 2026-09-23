@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use App\Models\ProductVersion;
 use App\Services\GithubReleaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,10 +51,7 @@ class VersionController extends Controller
                 'changelog' => $version->changelog,
                 'released_at' => $version->synced_at?->toIso8601String(),
             ],
-            'download_url' => route('download.product', [
-                'slug' => $product->slug,
-                'version' => $version->version,
-            ]),
+            'download_url' => $this->downloadUrlFor($product, $version),
         ]);
     }
 
@@ -91,10 +89,7 @@ class VersionController extends Controller
                     'changelog' => $v->changelog,
                     'is_active' => $v->is_active,
                     'released_at' => $v->synced_at?->toIso8601String(),
-                    'download_url' => route('download.product', [
-                        'slug' => $product->slug,
-                        'version' => $v->version,
-                    ]),
+                    'download_url' => $this->downloadUrlFor($product, $v),
                 ];
             }),
         ]);
@@ -160,10 +155,8 @@ class VersionController extends Controller
                 'file_size_formatted' => $latestVersion->file_size_formatted,
                 'changelog' => $latestVersion->changelog,
                 'released_at' => $latestVersion->synced_at?->toIso8601String(),
-                'download_url' => route('download.product', [
-                    'slug' => $product->slug,
-                    'version' => $latestVersion->version,
-                ]),
+                'download_url' => $this->downloadUrlFor($product, $latestVersion),
+                'sha256' => $latestVersion->sha256,
             ] : null,
             'license' => [
                 'valid' => $licenseValid,
@@ -201,6 +194,9 @@ class VersionController extends Controller
                 'latest_version' => '',
                 'download_url' => '',
                 'changelog' => '',
+                'sha256' => null,
+                'file_size' => null,
+                'filename' => null,
             ]);
         }
 
@@ -217,10 +213,7 @@ class VersionController extends Controller
             } elseif ($productSlug === 'localvpn') {
                 $downloadUrl = url('/localvpn/download/apk');
             } else {
-                $downloadUrl = route('download.product', [
-                    'slug' => $product->slug,
-                    'version' => $latestVersion->version,
-                ]);
+                $downloadUrl = $this->downloadUrlFor($product, $latestVersion);
             }
         }
 
@@ -240,6 +233,28 @@ class VersionController extends Controller
             'latest_version' => $latestVersion->version,
             'download_url' => $downloadUrl,
             'changelog' => $latestVersion->changelog ?? '',
+            // 2026-09-23 — ของเวอร์ชันล่าสุด ให้แอปตรวจไฟล์ที่โหลดมาก่อนติดตั้ง (null = ไม่ทราบ)
+            'sha256' => $latestVersion->sha256,
+            'file_size' => $latestVersion->file_size,
+            'filename' => $latestVersion->download_filename,
+        ]);
+    }
+
+    /**
+     * ลิงก์ดาวน์โหลดของเวอร์ชันนี้ที่แอปของผลิตภัณฑ์นั้นใช้ได้จริง
+     *
+     * download.product ต้องล็อกอินและซื้อก่อน — WinXTools มีรุ่นฟรีและแอปโหลดเองโดยไม่มี session
+     * จึงชี้ไปหน้าโหลดสาธารณะของมัน ระบุเวอร์ชันเป๊ะ ๆ ให้ไฟล์ตรงกับ sha256 ที่ส่งไปคู่กัน
+     */
+    private function downloadUrlFor(Product $product, ProductVersion $version): string
+    {
+        if ($product->slug === 'winx-tools') {
+            return route('winx-tools.download', ['version' => $version->version]);
+        }
+
+        return route('download.product', [
+            'slug' => $product->slug,
+            'version' => $version->version,
         ]);
     }
 

@@ -1657,8 +1657,9 @@ class SmsPaymentController extends Controller
                 continue;
             }
 
-            // Determine license type from custom_requirements or default to yearly
-            $licenseType = 'yearly';
+            // Determine license type from custom_requirements, else the product's own
+            // default (yearly, lifetime for what is bought outright) - Product::defaultLicenseType()
+            $licenseType = $item->product->defaultLicenseType();
             if ($item->custom_requirements) {
                 $requirements = json_decode($item->custom_requirements, true);
                 if (! empty($requirements['license_type'])) {

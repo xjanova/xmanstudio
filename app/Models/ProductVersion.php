@@ -16,6 +16,7 @@ class ProductVersion extends Model
         'version',
         'github_release_id',
         'github_release_url',
+        'download_url',
         'download_filename',
         'storage_path',
         'file_size',
