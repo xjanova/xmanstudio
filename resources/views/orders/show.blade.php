@@ -97,7 +97,25 @@
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                                         <td class="px-6 py-4">
                                             <div class="font-medium text-gray-900 dark:text-white">{{ $item->product->name ?? $item->product_name ?? 'สินค้าถูกลบ / Product removed' }}</div>
-                                            @if($item->custom_requirements)
+                                            @php
+                                                // A licence bought by term stores {"license_type": ...} here, not written
+                                                // requirements — show the term, like the customer portal does.
+                                                $requirements = $item->custom_requirements ? json_decode($item->custom_requirements, true) : null;
+                                                $licenseTerm = is_array($requirements) && ! array_is_list($requirements) && is_string($requirements['license_type'] ?? null)
+                                                    ? $requirements['license_type'] : null;
+                                                $termLabels = [
+                                                    'lifetime' => ['ตลอดชีพ', 'Lifetime'],
+                                                    'yearly' => ['รายปี', 'Yearly'],
+                                                    'monthly' => ['รายเดือน', 'Monthly'],
+                                                    'weekly' => ['รายสัปดาห์', 'Weekly'],
+                                                    'daily' => ['รายวัน', 'Daily'],
+                                                ];
+                                            @endphp
+                                            @if($licenseTerm)
+                                                <span class="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                                                    License: <x-bi th="{{ $termLabels[$licenseTerm][0] ?? $licenseTerm }}" en="{{ $termLabels[$licenseTerm][1] ?? ucfirst($licenseTerm) }}" />
+                                                </span>
+                                            @elseif($item->custom_requirements)
                                                 <div class="mt-3 border border-blue-200 dark:border-blue-700 rounded-lg overflow-hidden">
                                                     <div class="bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 flex items-center">
                                                         <svg class="w-4 h-4 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

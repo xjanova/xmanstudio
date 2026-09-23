@@ -20,6 +20,17 @@
         }
     }
 
+    // Only real blocks get rendered. Other JSON can land here too — a licence bought by term
+    // stores {"license_type": "..."} in the same column — and walking such an object as a block
+    // list read "lifetime"['style'] and took the whole order page down with a 500.
+    if (is_array($blocks) && isset($blocks['type']) && is_string($blocks['type'])) {
+        $blocks = [$blocks]; // a single block saved without its list
+    }
+    $blocks = array_values(array_filter(
+        is_array($blocks) ? $blocks : [],
+        fn ($block) => is_array($block) && isset($block['type']) && is_string($block['type'])
+    ));
+
     // Theme-based classes
     $isDark = $theme === 'dark';
     $cardBg = $isDark ? 'bg-white/5 backdrop-blur-sm border-white/10' : 'bg-white border-gray-200';
