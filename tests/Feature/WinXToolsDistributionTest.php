@@ -544,24 +544,39 @@ class WinXToolsDistributionTest extends TestCase
         $html = $this->get('/products/winx-tools')->assertOk()->getContent();
 
         // ปุ่ม "ซื้อ Pro — ฿199" ทั้งสามจุดเป็นฟอร์มใส่ตะกร้าแบบ lifetime ไม่ใช่ลิงก์ไปหน้ารวมสินค้า
+        // และพาไปตะกร้าเลย (buy_now) ไม่ค้างอยู่หน้าเดิมกับข้อความเล็ก ๆ
         $this->assertSame(3, substr_count($html, 'action="' . route('cart.add', $this->product) . '"'));
         $this->assertSame(3, substr_count($html, 'name="license_type" value="lifetime"'));
+        $this->assertSame(3, substr_count($html, 'name="buy_now" value="1"'));
+        $this->assertStringContainsString('ซื้อ Pro — ฿199', $html);
 
-        // "เริ่มใช้ฟรี" โหลดได้เลย ไม่ต้องล็อกอินหรือซื้อก่อน
-        $this->assertStringContainsString('href="' . route('winx-tools.download') . '"', $html);
+        // ดาวน์โหลดได้เลย ไม่ต้องล็อกอินหรือซื้อก่อน (ฮีโร่ + การ์ด Free + ท้ายหน้า)
+        $this->assertSame(3, substr_count($html, 'href="' . route('winx-tools.download') . '"'));
+        $this->assertStringNotContainsString(route('customer.licenses'), $html);
     }
 
-    public function test_a_buyer_sees_download_buttons_that_need_no_customer_portal(): void
+    public function test_a_buyer_can_still_buy_another_licence_and_find_their_keys(): void
     {
+        // แอปเปิดหน้านี้เมื่อกด "ซื้อ Pro" — เดิมบัญชีที่เคยซื้อเห็นแต่ปุ่มดาวน์โหลดทุกจุด
+        // จึงซื้อคีย์ให้เครื่องที่สองไม่ได้ (1 คีย์ = 1 เครื่อง) และไม่มีทางไปดูคีย์ที่ซื้อไว้
         $user = User::factory()->create();
         $order = $this->paidOrder(null, $user);
         $order->update(['status' => 'completed']);
 
         $html = $this->actingAs($user)->get('/products/winx-tools')->assertOk()->getContent();
 
-        // ฮีโร่ + การ์ด Pro + ท้ายหน้า + การ์ด Free
-        $this->assertSame(4, substr_count($html, 'href="' . route('winx-tools.download') . '"'));
-        $this->assertSame(0, substr_count($html, 'name="license_type" value="lifetime"'));
+        $this->assertSame(3, substr_count($html, 'name="license_type" value="lifetime"'));
+        $this->assertStringContainsString('ซื้อ License เพิ่ม — ฿199', $html);
+        $this->assertStringContainsString('href="' . route('customer.licenses') . '"', $html);
+        $this->assertStringContainsString('href="' . route('winx-tools.download') . '"', $html);
+    }
+
+    public function test_buy_now_goes_straight_to_the_cart(): void
+    {
+        $this->post(route('cart.add', $this->product), ['license_type' => 'lifetime', 'buy_now' => 1])
+            ->assertRedirect(route('cart.index'));
+
+        $this->assertEquals(199, (float) CartItem::firstOrFail()->price);
     }
 
     // ── the GitHub setting migration ─────────────────────────────────
