@@ -12,11 +12,13 @@ use App\Http\Middleware\VerifySmsCheckerDevice;
 use App\Http\Middleware\VerifyTurnstile;
 use App\Http\Middleware\WatchScheduler;
 use App\Support\Alerts\ErrorAlert;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -100,8 +102,20 @@ $app = Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // An API caller gets JSON for a 401 or a 422 whether or not it sent Accept —
+        // not a redirect to the login page.
+        $exceptions->shouldRenderJsonWhen(fn (Request $request) => $request->is('api/*') || $request->expectsJson());
+
         // In production, don't expose internal errors
         $exceptions->render(function (Throwable $e, Request $request) {
+            // These are answers, not failures: "who are you?" (401) and "these
+            // fields are wrong" (422). Caught here they all left as a bare 500, so
+            // an app could not tell a wrong password from a crashed server, and
+            // every one was logged as an error with its trace.
+            if ($e instanceof AuthenticationException || $e instanceof ValidationException) {
+                return null;
+            }
+
             if (! config('app.debug') && ($request->is('api/*') || $request->wantsJson())) {
                 Log::error('API Error', [
                     'message' => $e->getMessage(),
