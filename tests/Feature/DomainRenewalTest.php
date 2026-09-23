@@ -184,9 +184,9 @@ class DomainRenewalTest extends TestCase
         );
     }
 
-    public function test_an_upstream_failure_refunds_in_full(): void
+    public function test_an_upstream_refusal_refunds_in_full(): void
     {
-        Http::fake(['*' => Http::response(['message' => 'nope'], 500)]);
+        Http::fake(['*' => Http::response(['message' => 'nope'], 422)]);
         $this->fund(2000);
         $before = $this->domain->expires_at->copy();
 
@@ -196,6 +196,24 @@ class DomainRenewalTest extends TestCase
         $this->assertNotNull($renewal->refund_transaction_id);
         $this->assertEqualsWithDelta(2000.0, (float) Wallet::getOrCreateForUser($this->user->id)->fresh()->balance, 0.01);
         $this->assertEquals($before, $this->domain->fresh()->expires_at, 'a refunded renewal must not extend anything');
+    }
+
+    /**
+     * A 5xx can come after upstream renewed: neither refunded on the spot nor
+     * counted as renewed. The reconciliation job settles it by the date.
+     */
+    public function test_an_upstream_server_error_is_settled_later_not_refunded_on_the_spot(): void
+    {
+        Http::fake(['*' => Http::response(['message' => 'nope'], 500)]);
+        $this->fund(2000);
+        $before = $this->domain->expires_at->copy();
+
+        $renewal = $this->service()->renew($this->domain);
+
+        $this->assertSame(DomainRegistration::STATUS_PENDING, $renewal->status);
+        $this->assertNull($renewal->refund_transaction_id);
+        $this->assertEquals($before, $this->domain->fresh()->expires_at, 'an unconfirmed renewal must not extend anything');
+        $this->assertEquals($before, $renewal->fresh()->previous_expires_at);
     }
 
     public function test_a_domain_with_no_upstream_handle_is_not_charged(): void

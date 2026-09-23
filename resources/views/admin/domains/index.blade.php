@@ -30,6 +30,9 @@
         </div>
     @endif
 
+    {{-- ══════════ จ่ายเงินให้ผู้ให้บริการได้ไหม (ใช้ร่วมกับหน้า VPS) ══════════ --}}
+    @include('admin.partials.upstream-billing', ['billing' => $billing ?? null])
+
     {{-- ══════════ ตัวเลขสรุป ══════════ --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         @php
@@ -53,6 +56,81 @@
             <span class="font-semibold">{{ $stats['unsettled'] }}</span> รายการค้างอยู่ ·
             <span class="font-semibold">{{ $stats['refunded'] }}</span> รายการคืนเงินไปแล้ว
             <span class="text-amber-700 dark:text-amber-300/80">— ตัวตามเก็บรันทุก 5 นาที (<code class="text-xs">domains:reconcile</code>)</span>
+        </div>
+    @endif
+
+    {{-- ══════════ โดเมนที่ยังไม่ได้ผูก subscription ══════════
+         No subscription link means nothing can renew the domain from the
+         wallet — neither the scheduler nor the customer's own button. Listed
+         here, nearest expiry first, so it is fixed before the day it lapses. --}}
+    @if (($unlinked ?? collect())->isNotEmpty())
+        <div class="{{ $card }} overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">โดเมนที่ยังต่ออายุจากกระเป๋าเงินไม่ได้ ({{ $unlinked->count() }})</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    โดเมนเหล่านี้ใช้งานอยู่ แต่ยังไม่ได้ผูกกับ subscription ของผู้ให้บริการ —
+                    <span class="font-semibold">ต่ออายุอัตโนมัติและการกดต่ออายุเองของลูกค้าจะใช้ไม่ได้</span>จนกว่าจะผูก
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    หารหัสได้ใน hPanel เมนู Billing → Subscriptions (รายการที่ชื่อโดเมนตรงกัน) ·
+                    ผูกแล้วระบบจะปิดการต่ออายุอัตโนมัติฝั่งผู้ให้บริการให้ เพื่อไม่ให้บัตรของเราถูกตัดซ้ำ
+                </p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-900/50 text-left">
+                        <tr>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">โดเมน</th>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">ลูกค้า</th>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">หมดอายุ</th>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">ผูก subscription</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                        @foreach ($unlinked as $r)
+                            @php $daysLeft = $r->daysUntilExpiry(); @endphp
+                            <tr>
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ $r->domain }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="block text-gray-900 dark:text-white">{{ $r->user?->name ?? '—' }}</span>
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $r->user?->email }}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    @if ($r->expires_at)
+                                        <span class="block text-gray-900 dark:text-white">{{ $r->expires_at->copy()->timezone('Asia/Bangkok')->format('d/m/Y') }}</span>
+                                        <span @class([
+                                            'block text-xs',
+                                            'text-red-600 dark:text-red-400' => $daysLeft <= 30,
+                                            'text-gray-500 dark:text-gray-400' => $daysLeft > 30,
+                                        ])>{{ $daysLeft < 0 ? 'เลยมาแล้ว ' . abs($daysLeft) . ' วัน' : 'อีก ' . $daysLeft . ' วัน' }}</span>
+                                    @else
+                                        <span class="text-gray-400">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    {{-- The server accepts letters, digits, _ and - only. The
+                                         dash is escaped because browsers compile pattern with
+                                         the v flag, where a bare - in a class is a syntax
+                                         error and the whole pattern is silently dropped. --}}
+                                    <form method="POST" action="{{ route('admin.domains.link-subscription', $r->id) }}"
+                                          onsubmit="this.querySelector('button[type=submit]').disabled = true"
+                                          class="flex items-center gap-2">
+                                        @csrf
+                                        <input type="text" name="subscription_id" required maxlength="64" pattern="[A-Za-z0-9_\-]+"
+                                               autocomplete="off" spellcheck="false"
+                                               placeholder="รหัส subscription จาก hPanel" title="ตัวอักษรอังกฤษ ตัวเลข _ และ - เท่านั้น"
+                                               class="w-56 px-2 py-1 text-xs font-mono border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <button type="submit"
+                                                class="px-3 py-1 rounded bg-gray-800 dark:bg-gray-600 text-white text-xs font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-wait">
+                                            ผูก
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     @endif
 

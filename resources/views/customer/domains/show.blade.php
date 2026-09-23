@@ -259,6 +259,107 @@
                 </button>
             </form>
         </div>
+
+        {{-- ══════════ ส่งต่อโดเมน (redirect) ══════════
+             ใช้ได้โดยไม่ต้องมีโฮสติ้ง — ชี้ชื่อเว็บไปเพจ Facebook ร้านบน Shopee หรือเว็บเก่า --}}
+        <div class="{{ $card }} p-6" x-data="{ open: false }">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                        <x-bi th="ส่งต่อโดเมนไปลิงก์อื่น" en="Forward to another address" />
+                    </h2>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                        <x-bi th="ให้คนที่พิมพ์ชื่อเว็บนี้ ถูกพาไปยังเพจ Facebook ร้านออนไลน์ หรือเว็บอื่นทันที ไม่ต้องมีโฮสติ้ง"
+                              en="Send everyone who types this domain straight to a Facebook page, an online shop or another site — no hosting needed." />
+                    </p>
+                    @if($forwarding)
+                        <p class="mt-3 text-sm text-slate-700 dark:text-slate-300">
+                            <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold mr-1">
+                                <x-bi th="เปิดอยู่" en="On" />
+                            </span>
+                            → <span class="font-mono break-all">{{ $forwarding['url'] }}</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">({{ $forwarding['type'] === '302' ? 'ชั่วคราว 302' : 'ถาวร 301' }})</span>
+                        </p>
+                    @endif
+                </div>
+                <button type="button" @click="open = !open"
+                        class="shrink-0 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                    {{ $forwarding ? 'แก้ไข / Edit' : 'ตั้งค่า / Set up' }}
+                </button>
+            </div>
+
+            <div x-show="open" x-cloak class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700 space-y-3">
+                <form method="POST" action="{{ route('customer.domains.forwarding', $domain->id) }}" class="space-y-3">
+                    @csrf
+                    <input type="url" name="redirect_url" required maxlength="500"
+                           value="{{ old('redirect_url', $forwarding['url'] ?? '') }}"
+                           placeholder="https://www.facebook.com/yourpage"
+                           class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm font-mono focus:border-indigo-500 focus:ring-indigo-500">
+                    <div class="flex flex-wrap items-center gap-4 text-sm text-slate-700 dark:text-slate-300">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="redirect_type" value="301" @checked(old('redirect_type', $forwarding['type'] ?? '301') === '301') class="text-indigo-600 focus:ring-indigo-500">
+                            <x-bi th="ถาวร (301) — แนะนำ" en="Permanent (301) — recommended" />
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="redirect_type" value="302" @checked(old('redirect_type', $forwarding['type'] ?? '301') === '302') class="text-indigo-600 focus:ring-indigo-500">
+                            <x-bi th="ชั่วคราว (302)" en="Temporary (302)" />
+                        </label>
+                    </div>
+                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-slate-800 dark:bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold transition">
+                        <x-bi th="บันทึกการส่งต่อ" en="Save forwarding" />
+                    </button>
+                </form>
+                @if($forwarding)
+                    <form method="POST" action="{{ route('customer.domains.forwarding', $domain->id) }}"
+                          onsubmit="return confirm('ยกเลิกการส่งต่อโดเมนนี้?')">
+                        @csrf
+                        <input type="hidden" name="action" value="remove">
+                        <button type="submit" class="text-sm text-red-600 dark:text-red-400 hover:underline">
+                            <x-bi th="ยกเลิกการส่งต่อ" en="Stop forwarding" />
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+
+        {{-- ══════════ ย้อนการตั้งค่า DNS ══════════
+             ทุกครั้งที่บันทึก DNS ผู้ให้บริการเก็บสำเนาไว้ — ปุ่มนี้คือ "undo"
+             ของคนที่เผลอลบ MX แล้วอีเมลเด้ง ไม่ต้องเปิดตั๋วรอ --}}
+        @if(! empty($snapshots))
+            <div class="{{ $card }} p-6" x-data="{ open: false }">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                            <x-bi th="ย้อนการตั้งค่า DNS" en="Restore earlier DNS" />
+                        </h2>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">
+                            <x-bi th="แก้ DNS แล้วเว็บหรืออีเมลใช้ไม่ได้? ย้อนกลับไปเป็นแบบที่เคยบันทึกไว้ได้ทันที"
+                                  en="Changed DNS and something broke? Put it back the way it was at an earlier save." />
+                        </p>
+                    </div>
+                    <button type="button" @click="open = !open"
+                            class="shrink-0 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                        <x-bi th="ดูจุดย้อนกลับ" en="Show" />
+                    </button>
+                </div>
+                <div x-show="open" x-cloak class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                    @foreach($snapshots as $snap)
+                        <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2.5">
+                            <span class="text-sm text-slate-700 dark:text-slate-300">
+                                {{ $snap['created_at'] ? $snap['created_at']->timezone('Asia/Bangkok')->format('j M Y H:i') . ' น.' : '#' . $snap['id'] }}
+                            </span>
+                            <form method="POST" action="{{ route('customer.domains.dns-restore', [$domain->id, $snap['id']]) }}"
+                                  onsubmit="return confirm(@js('ย้อนการตั้งค่า DNS ทั้งหมดกลับไปเป็นแบบ ' . ($snap['created_at'] ? $snap['created_at']->timezone('Asia/Bangkok')->format('j M Y H:i') : '#' . $snap['id']) . ' ? เรคคอร์ดที่เพิ่มหลังจากนั้นจะหายไป'))">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 rounded-lg bg-slate-800 dark:bg-slate-600 text-white text-xs font-medium hover:bg-slate-700 transition">
+                                    <x-bi th="ย้อนไปจุดนี้" en="Restore" />
+                                </button>
+                            </form>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     @endif
 
     {{-- ══════════ ประวัติการต่ออายุ ══════════ --}}
@@ -334,7 +435,7 @@
                      ก็ยังต้องมีทางจ่ายเงินต่ออายุจากหน้านี้ --}}
                 @if($canRenew && $renewPriceRaw > 0)
                     <form method="POST" action="{{ route('customer.domains.renew', $domain->id) }}"
-                          onsubmit="return confirm('ต่ออายุ {{ $domain->domain }} อีก 1 ปี เป็นเงิน {{ number_format($renewPriceRaw) }} บาท จะตัดจากกระเป๋าเงินทันที ยืนยันไหม?')">
+                          onsubmit="return confirm(@js('ต่ออายุ ' . $domain->domain . ' อีก 1 ปี เป็นเงิน ' . number_format($renewPriceRaw) . ' บาท จะตัดจากกระเป๋าเงินทันที ยืนยันไหม?'))">
                         @csrf
                         <button type="submit"
                                 class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition">
@@ -379,6 +480,44 @@
                 <x-bi th="โดเมนนี้เป็นของคุณ ขอรหัสย้าย (EPP/Auth code) ได้ทุกเมื่อ ไม่มีค่าใช้จ่าย ไม่ต้องชี้แจงเหตุผล"
                       en="This domain is yours. Ask for the transfer code (EPP/Auth) any time — free, no questions asked." />
             </p>
+
+            {{-- รหัสย้ายอย่างเดียวย้ายไม่ได้ ถ้าโดเมนยังล็อกอยู่ — ขั้นตอนต้องครบในหน้านี้ --}}
+            @if(! empty($details['transfer_locked_until']))
+                <div class="rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-4 py-3 mb-4 text-sm text-amber-900 dark:text-amber-200">
+                    <x-bi th="ตามกฎผู้ดูแลทะเบียนสากล โดเมนที่เพิ่งจดหรือเพิ่งเปลี่ยนเจ้าของ ย้ายออกได้ตั้งแต่"
+                          en="Registry rules hold newly registered or re-assigned domains until" />
+                    <strong>{{ $details['transfer_locked_until']->format('j M Y') }}</strong>
+                </div>
+            @endif
+
+            @if(($details['is_locked'] ?? null) !== null && ($details['is_lockable'] ?? true))
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3 mb-4">
+                    <div class="text-sm">
+                        <span class="font-semibold text-slate-900 dark:text-white"><x-bi th="ล็อกกันการย้าย" en="Transfer lock" /></span>
+                        @if($details['is_locked'])
+                            <span class="ml-2 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold"><x-bi th="ล็อกอยู่" en="Locked" /></span>
+                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5"><x-bi th="ต้องปลดล็อกก่อน ผู้ให้บริการใหม่ถึงจะรับย้ายได้" en="Unlock it first — the new provider cannot take a locked domain." /></span>
+                        @else
+                            <span class="ml-2 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-semibold"><x-bi th="ปลดล็อกแล้ว" en="Unlocked" /></span>
+                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5"><x-bi th="พร้อมย้าย — ถ้าไม่ย้ายแล้วควรล็อกกลับ" en="Ready to move — lock it again if you change your mind." /></span>
+                        @endif
+                    </div>
+                    <form method="POST" action="{{ route('customer.domains.lock', $domain->id) }}"
+                          @if($details['is_locked']) onsubmit="return confirm('ปลดล็อกโดเมนเพื่อย้ายออก? ใครที่มีรหัสย้ายจะย้ายโดเมนนี้ได้')" @endif>
+                        @csrf
+                        <input type="hidden" name="lock" value="{{ $details['is_locked'] ? 0 : 1 }}">
+                        <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium transition {{ $details['is_locked']
+                            ? 'border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            : 'bg-slate-800 dark:bg-slate-600 text-white hover:bg-slate-700' }}">
+                            @if($details['is_locked'])
+                                <x-bi th="ปลดล็อกเพื่อย้าย" en="Unlock to transfer" />
+                            @else
+                                <x-bi th="ล็อกกลับ" en="Lock again" />
+                            @endif
+                        </button>
+                    </form>
+                </div>
+            @endif
 
             <template x-if="!code">
                 <button type="button" @click="request()" x-bind:disabled="loading"

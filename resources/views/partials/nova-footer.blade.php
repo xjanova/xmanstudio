@@ -23,6 +23,7 @@
                     <li><a href="{{ route('rental.index') }}">เช่าใช้งาน / Rental</a></li>
                     <li><a href="{{ route('domains.index') }}">จดโดเมน / Domains</a></li>
                     <li><a href="{{ route('domains.pricing') }}">ราคาโดเมน / Domain pricing</a></li>
+                    <li><a href="{{ route('vps.index') }}">เช่า VPS / VPS hosting</a></li>
                     <li><a href="{{ route('quote.index') }}">ขอใบเสนอราคา / Get a quote</a></li>
                     <li><a href="{{ route('contact.show') }}">ติดต่อเรา / Contact us</a></li>
                     <li><a href="{{ route('portfolio') }}">ผลงาน / Portfolio</a></li>
@@ -59,6 +60,7 @@
                         <li><a href="{{ route('customer.licenses') }}">ไลเซนส์ / Licenses</a></li>
                         <li><a href="{{ route('customer.orders') }}">คำสั่งซื้อ / Orders</a></li>
                         <li><a href="{{ route('customer.domains.index') }}">โดเมนของฉัน / My domains</a></li>
+                        <li><a href="{{ route('customer.vps.index') }}">VPS ของฉัน / My servers</a></li>
                         <li><a href="{{ route('user.wallet.index') }}">กระเป๋าเงิน / Wallet</a></li>
                         {{-- customer.affiliate.register is POST-only; dashboard is the GET entry
                              point. Note the group is nested under the `customer.` prefix, so the

@@ -347,6 +347,15 @@
                     </div>
                     <span class="text-indigo-100"><x-bi th="โดเมนของฉัน" en="My domains" /></span>
                 </a>
+                {{-- เซิร์ฟเวอร์ที่ลูกค้าเช่า — สองไฟล์ × สองบล็อก = สี่จุด เหมือนโดเมน --}}
+                <a href="{{ route('customer.vps.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.vps.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-cyan-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="VPS ของฉัน" en="My servers" /></span>
+                </a>
                 <a href="{{ route('gpuxmine.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('gpuxmine.*') ? 'active bg-white/10' : '' }}">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center mr-3 shadow-lg">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -719,6 +728,15 @@
                         </svg>
                     </div>
                     <span class="text-indigo-100"><x-bi th="โดเมนของฉัน" en="My domains" /></span>
+                </a>
+                {{-- เซิร์ฟเวอร์ที่ลูกค้าเช่า — สองไฟล์ × สองบล็อก = สี่จุด เหมือนโดเมน --}}
+                <a href="{{ route('customer.vps.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.vps.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-cyan-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="VPS ของฉัน" en="My servers" /></span>
                 </a>
                 <a href="{{ route('gpuxmine.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('gpuxmine.*') ? 'active bg-white/10' : '' }}">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center mr-3 shadow-lg">

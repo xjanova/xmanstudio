@@ -22,6 +22,7 @@
         ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'url' => config('app.product_site_url'),  'art' => 'products',  'desc' => 'ซอฟต์แวร์พร้อมใช้'],
         ['th' => 'เช่าใช้งาน',  'en' => 'Rentals',   'url' => route('rental.index'),           'art' => 'rental',    'desc' => 'จ่ายรายเดือน'],
         ['th' => 'จดโดเมน',     'en' => 'Domains',   'url' => route('domains.index'),          'art' => 'domains',   'desc' => 'ชื่อเว็บในนามคุณ'],
+        ['th' => 'เช่า VPS',    'en' => 'VPS',       'url' => route('vps.index'),              'art' => 'vps',       'desc' => 'เซิร์ฟเวอร์ส่วนตัว root เต็มสิทธิ์'],
         ['th' => 'ผลงาน',       'en' => 'Portfolio', 'url' => url('/portfolio'),               'art' => 'portfolio', 'desc' => 'โปรเจคที่ส่งมอบแล้ว'],
         ['th' => 'ทีมงาน',      'en' => 'Team',      'url' => url('/team'),                    'art' => 'team',      'desc' => 'คนเบื้องหลัง'],
         ['th' => 'ติดต่อ/สั่งซื้อ', 'en' => 'Contact', 'url' => route('quote.index'),        'art' => 'support',   'desc' => 'ขอใบเสนอราคา'],

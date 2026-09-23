@@ -16,6 +16,7 @@
         'chat'      => '<path d="M21 11.5a8 8 0 0 1-11.6 7.1L3.5 20.5l1.9-5.4A8 8 0 1 1 21 11.5z"/>',
         'chain'     => '<path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2"/><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/>',
         'globe'     => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/>',
+        'server'    => '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/>',
         'mobile'    => '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
         'bolt'      => '<path d="M13 2.5 4 13.5h7L11 21.5l9-11h-7z"/>',
         'shield'    => '<path d="M12 2.5 20 6v6c0 4.5-3.2 8.3-8 9.5-4.8-1.2-8-5-8-9.5V6z"/><path d="M9 12l2 2 4-4"/>',

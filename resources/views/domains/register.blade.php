@@ -47,17 +47,26 @@
                     <p class="text-2xl sm:text-3xl font-bold break-all">{{ $domain }}</p>
                 </div>
                 <div class="text-left sm:text-right shrink-0">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                        <x-bi th="ราคาปีแรก" en="First year" />
+                    </p>
                     <p class="text-3xl font-bold">{{ $priceDisplay }}</p>
                     <p class="text-sm text-indigo-200/70"><x-bi th="สำหรับ 1 ปี" en="for 1 year" /></p>
                 </div>
             </div>
-            @if($renewalIsDearer)
-                <p class="relative mt-4 pt-4 border-t border-white/10 text-xs text-indigo-200/70">
-                    <x-bi th="ปีถัดไปต่ออายุ" en="Renews next year at" />
-                    <span class="font-semibold text-white">{{ $renewDisplay }}</span>
-                    <x-bi th="ต่อปี — เราแจ้งล่วงหน้า 30 วันเสมอ" en="per year — we always remind you 30 days ahead" />
-                </p>
-            @endif
+            {{-- ราคาปีต่อไปแสดงเสมอ ไม่ใช่เฉพาะตอนแพงกว่า — ลูกค้าต้องรู้ทั้งสองตัวเลข
+                 ก่อนกดจ่าย และวันที่เราแจ้งเตือนอ่านจากหลังบ้าน ไม่เขียนตายว่า 30 วัน --}}
+            <p class="relative mt-4 pt-4 border-t border-white/10 text-sm {{ $renewalIsDearer ? 'text-amber-200' : 'text-indigo-200/80' }}">
+                <x-bi th="ปีต่อไป (ต่ออายุ)" en="Following years (renewal)" />
+                <span class="font-bold text-white">{{ $renewDisplay }}</span>
+                <x-bi th="ต่อปี" en="per year" />
+                @if($renewalIsDearer)
+                    <span class="block text-xs mt-1 text-amber-200/80">
+                        <x-bi th="ราคาปีแรกเป็นราคาโปรโมชันของนามสกุลนี้ — เราแจ้งเตือนล่วงหน้าก่อนถึงกำหนดต่ออายุทุกครั้ง"
+                              en="This extension's first year is promotional — we always remind you before a renewal is due." />
+                    </span>
+                @endif
+            </p>
         </div>
 
         {{-- ยอดเงินไม่พอ: หยุดตรงนี้ ไม่ต้องให้กรอกฟอร์มยาวแล้วค่อยบอก --}}
@@ -284,8 +293,11 @@
 
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-5 border-t border-slate-200 dark:border-slate-700">
                     <div>
-                        <p class="text-sm text-slate-500 dark:text-slate-400"><x-bi th="ยอดชำระ" en="Total" /></p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400"><x-bi th="ยอดชำระวันนี้ (ปีแรก)" en="Due today (first year)" /></p>
                         <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ $priceDisplay }}</p>
+                        <p class="text-xs {{ $renewalIsDearer ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">
+                            <x-bi th="ปีต่อไป" en="Following years" /> {{ $renewDisplay }}/<x-bi th="ปี" en="yr" />
+                        </p>
                         <p class="text-xs text-slate-500 dark:text-slate-400">
                             <x-bi th="หักจากกระเป๋าเงิน คงเหลือ" en="From your wallet — balance" /> {{ $balanceDisplay }}
                         </p>

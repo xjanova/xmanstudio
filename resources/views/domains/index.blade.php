@@ -79,13 +79,22 @@
                     {{-- แต่ละราคาเป็นชิปของตัวเอง ไม่ใช่ข้อความไหลต่อกัน — ตอนวางเรียง
                          แบบ inline ตัว "฿" ของราคาหนึ่งไปติดกับจุดนำหน้าของนามสกุล
                          ถัดไป กลายเป็น "590 ฿.net" ซึ่งอ่านผิดได้ทันที --}}
-                    <div class="mt-5 flex flex-wrap items-center justify-center gap-2" x-show="!hasSearched" x-cloak>
-                        @foreach($popular as $p)
-                            <span class="inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-sm text-sm">
-                                <span class="font-semibold text-white">.{{ $p['tld'] }}</span>
-                                <span class="text-cyan-300">{{ $p['price'] }}</span>
-                            </span>
-                        @endforeach
+                    {{-- ทุกราคาบอกว่าเป็น "ปีแรก" และปีต่อไปเท่าไร — ราคาปีแรกของ
+                         บางนามสกุลเป็นโปรของผู้ดูแลทะเบียน ปีสองแพงกว่าหลายเท่า
+                         ลูกค้าต้องเห็นทั้งสองตัวเลขตั้งแต่ก่อนคิดจะซื้อ --}}
+                    <div class="mt-5" x-show="!hasSearched" x-cloak>
+                        <p class="text-[11px] text-slate-400 mb-2 tracking-wide">
+                            <x-bi th="ราคาปีแรก → ปีต่อไป (ต่อปี)" en="First year → following years (per year)" />
+                        </p>
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            @foreach($popular as $p)
+                                <span class="inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-sm text-sm">
+                                    <span class="font-semibold text-white">.{{ $p['tld'] }}</span>
+                                    <span class="text-cyan-300">{{ $p['price'] }}</span>
+                                    <span class="text-slate-400 text-xs">→ {{ $p['renew'] }}</span>
+                                </span>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
             </form>
@@ -136,9 +145,15 @@
                             <template x-if="exact.available">
                                 <div class="flex items-center gap-4 shrink-0">
                                     <div class="text-right">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                            <x-bi th="ปีแรก" en="First year" />
+                                        </p>
                                         <p class="text-2xl font-bold text-slate-900 dark:text-white" x-text="exact.price_display"></p>
                                         <p class="text-xs text-slate-500 dark:text-slate-400">
-                                            <x-bi th="ต่อปี" en="per year" />
+                                            <x-bi th="ปีต่อไป" en="Then" />
+                                            <span class="font-semibold"
+                                                  :class="exact.renewal_is_dearer ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-200'"
+                                                  x-text="exact.renew_price_display"></span>/<x-bi th="ปี" en="yr" />
                                         </p>
                                     </div>
                                     <button type="button" @click="choose(exact)"
@@ -150,10 +165,10 @@
                         </div>
                         {{-- ราคาต่ออายุที่ต่างจากปีแรก ต้องบอกก่อนซื้อ ไม่ใช่ตอนต่ออายุ --}}
                         <template x-if="exact.available && exact.renewal_is_dearer">
-                            <p class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
-                                <x-bi th="ต่ออายุปีถัดไป" en="Renews at" />
-                                <span class="font-semibold text-slate-700 dark:text-slate-200" x-text="exact.renew_price_display"></span>
-                                <x-bi th="ต่อปี" en="per year" />
+                            <p class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs text-amber-700 dark:text-amber-300">
+                                <x-bi th="ราคาปีแรกเป็นราคาโปรโมชัน ตั้งแต่ปีที่สองต่ออายุปีละ" en="The first year is a promotional price. From year two it renews at" />
+                                <span class="font-semibold" x-text="exact.renew_price_display"></span>
+                                <x-bi th="— เราแจ้งเตือนก่อนถึงกำหนดทุกครั้ง" en="— we always remind you before it's due" />
                             </p>
                         </template>
                     </div>
@@ -179,16 +194,18 @@
                                         <p class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white break-all">
                                             <span x-text="row.label"></span><span class="text-indigo-600 dark:text-indigo-400" x-text="'.' + row.tld"></span>
                                         </p>
-                                        <template x-if="row.renewal_is_dearer">
-                                            <p class="text-xs text-slate-400 mt-0.5">
-                                                <x-bi th="ต่ออายุ" en="Renews" /> <span x-text="row.renew_price_display"></span>/<x-bi th="ปี" en="yr" />
-                                            </p>
-                                        </template>
                                     </div>
                                     <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0">
                                         <div class="text-right">
-                                            <p class="text-lg font-bold text-slate-900 dark:text-white" x-text="row.price_display"></p>
-                                            <p class="text-[11px] text-slate-500 dark:text-slate-400"><x-bi th="ต่อปี" en="per year" /></p>
+                                            <p class="text-lg font-bold text-slate-900 dark:text-white">
+                                                <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mr-1"><x-bi th="ปีแรก" en="1st yr" /></span><span x-text="row.price_display"></span>
+                                            </p>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                                <x-bi th="ปีต่อไป" en="then" />
+                                                <span class="font-semibold"
+                                                      :class="row.renewal_is_dearer ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-300'"
+                                                      x-text="row.renew_price_display"></span>/<x-bi th="ปี" en="yr" />
+                                            </p>
                                         </div>
                                         <button type="button" @click="choose(row)"
                                                 class="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-sm hover:shadow-md transition">
@@ -272,7 +289,13 @@
                                 <button type="button" @click="query = query.trim() || ''; suggestTld(@js($t->tld))"
                                         class="text-left rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500/50 p-3 transition">
                                     <p class="font-bold text-slate-900 dark:text-white">.{{ $t->tld }}</p>
-                                    <p class="text-sm text-indigo-600 dark:text-indigo-400">{{ \App\Support\DomainPricing::format($t->registerPriceThb()) }}</p>
+                                    <p class="text-sm text-indigo-600 dark:text-indigo-400">
+                                        <span class="text-[11px] text-slate-500 dark:text-slate-400"><x-bi th="ปีแรก" en="1st yr" /></span>
+                                        {{ \App\Support\DomainPricing::format($t->registerPriceThb()) }}
+                                    </p>
+                                    <p class="text-[11px] {{ $t->renewalIsDearer() ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400' }}">
+                                        <x-bi th="ปีต่อไป" en="then" /> {{ \App\Support\DomainPricing::format($t->renewPriceThb()) }}/<x-bi th="ปี" en="yr" />
+                                    </p>
                                 </button>
                             @endforeach
                         </div>

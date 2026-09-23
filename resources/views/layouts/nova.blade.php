@@ -21,6 +21,7 @@
         ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'href' => config('app.product_site_url'), 'accent' => '#e879f9', 'icon' => 'cube',  'art' => 'products'],
         ['th' => 'เช่าใช้งาน',  'en' => 'Rental',    'href' => route('rental.index'),     'accent' => '#34d399', 'icon' => 'clock', 'art' => 'rental'],
         ['th' => 'จดโดเมน',     'en' => 'Domains',   'href' => route('domains.index'),    'accent' => '#60a5fa', 'icon' => 'globe', 'art' => 'domains'],
+        ['th' => 'เช่า VPS',    'en' => 'VPS',       'href' => route('vps.index'),        'accent' => '#2dd4bf', 'icon' => 'server', 'art' => 'vps'],
         ['th' => 'สร้างภาพ AI', 'en' => 'XDreamer',  'href' => config('services.aixman.site_url'), 'accent' => '#f472b6', 'icon' => 'spark', 'art' => 'xdreamer'],
         ['th' => 'เรียนโค้ด',   'en' => 'Academy',   'href' => route('code-academy'),     'accent' => '#38bdf8', 'icon' => 'book',  'art' => 'academy'],
         ['th' => 'เพลง',        'en' => 'Metal-X',   'href' => route('metal-x.index'),    'accent' => '#fb7185', 'icon' => 'play',  'art' => 'metalx'],

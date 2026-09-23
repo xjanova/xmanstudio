@@ -49,15 +49,20 @@
 
 {{-- การเช่า --}}
 {{-- ระบบขายโดเมน: token ราคา และนามสกุลที่เปิดขาย --}}
-<div x-data="{ open: {{ request()->routeIs('admin.domains.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.domains.*', 'admin.vps.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
-        <span>โดเมน</span>
+        <span>โดเมน & VPS</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
     <div x-show="open" x-collapse class="{{ $subMenuClass }}">
         <a href="{{ route('admin.domains.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.domains.*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
-            ตั้งค่าและราคา
+            โดเมน · ตั้งค่าและราคา
+        </a>
+        {{-- เช่า VPS: แพ็กเกจ ราคา เครื่องของลูกค้า และสถานะบัตรที่ใช้จ่ายผู้ให้บริการ --}}
+        <a href="{{ route('admin.vps.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.vps.*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/></svg>
+            เช่า VPS
         </a>
     </div>
 </div>

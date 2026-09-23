@@ -246,6 +246,61 @@ Schedule::command('domains:sync-catalogue')
         Log::error('[Domains] catalogue sync failed');
     });
 
+// โดเมน: ตามสถานะจริงจากผู้ให้บริการวันละครั้ง — ตีห้า
+// โดเมนที่หมดอายุแล้วต้องขึ้นว่าหมดอายุ (เดิมค้าง "ใช้งานอยู่" ตลอดไป) และโดเมนที่
+// ไม่รู้ว่าผูกกับ subscription ไหนจะต่ออายุจากกระเป๋าเงินไม่ได้ ต้องบอกแอดมินก่อนถึงวัน
+Schedule::command('domains:sync-status')
+    ->dailyAt('05:00')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Domains] status sync failed');
+    });
+
+// ผู้ให้บริการ: บัตรในบัญชี Hostinger ที่ใช้ซื้อโดเมน/VPS ให้ลูกค้า ยังจ่ายได้ไหม
+// ทุก 6 ชั่วโมง — บัตรหมดอายุ/ถูกระงับ/ไม่มีบัตรหลัก = แจ้ง Telegram และหยุดรับคำสั่งซื้อ
+// ก่อนลูกค้าคนแรกจะโดนปฏิเสธ · และปิด auto-renew ฝั่งผู้ให้บริการที่หลุดเปิดไว้
+// (ของที่เราขายต่อต้องต่ออายุจากกระเป๋าลูกค้าเท่านั้น ไม่งั้นบัตรเราโดนตัดเงิน)
+Schedule::command('hostinger:billing-check --quiet-ok')
+    ->cron('15 */6 * * *')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Billing] supplier billing check failed');
+    });
+
+// VPS: ติดตั้งเครื่องที่ซื้อค้าง (202) หาเครื่องที่ซื้อแล้วแต่คำตอบหาย และคืนเงินออเดอร์
+// ที่ไม่เคยถึงผู้ให้บริการ — ทุกห้านาทีเพราะลูกค้านั่งรอหน้าจออยู่
+Schedule::command('vps:reconcile')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[VPS] reconcile failed');
+    });
+
+// VPS: แจ้งล่วงหน้า ตัดเงินต่ออายุจากกระเป๋า เตือนเครื่องที่ไม่ต่อ และตั้งสถานะหมดอายุ
+Schedule::command('vps:renew')
+    ->dailyAt('09:40')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[VPS] renewal run failed');
+    });
+
+// VPS: ดึงแพ็กเกจและราคาต้นทุนจริงจากผู้ให้บริการ — ตีสี่สิบนาที หลังแคตตาล็อกโดเมน
+Schedule::command('vps:sync-catalogue')
+    ->dailyAt('04:10')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[VPS] catalogue sync failed');
+    });
+
 // ความปลอดภัย: ลบประวัติการเข้าสู่ระบบที่เก่าเกินกำหนด และเก็บกวาดบล็อกที่หมดอายุ
 // ตีสามทุกวัน — ประวัติการล็อกอินคือข้อมูลส่วนบุคคล เก็บไว้เท่าที่ต้องใช้สอบสวน
 // ไม่ใช่เก็บตลอดไป และรายการบล็อกที่ไม่เคยถูกเก็บกวาดจะอ่านไม่รู้เรื่องภายในสัปดาห์เดียว

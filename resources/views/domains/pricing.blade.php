@@ -14,8 +14,8 @@
             <x-bi th="ราคาจดโดเมน" en="Domain pricing" layout="stack" />
         </h1>
         <p class="text-slate-300 max-w-2xl mx-auto">
-            <x-bi th="ราคาต่อปี รวมทุกอย่างแล้ว ไม่มีค่าธรรมเนียมแอบแฝง และไม่มีค่าใช้จ่ายตอนย้ายออก"
-                  en="Per year, all in. No hidden fees, and nothing to pay if you transfer away." />
+            <x-bi th="ทุกนามสกุลบอกทั้งราคาปีแรก และราคาปีต่อไป (ต่ออายุปีละ) รวมทุกอย่างแล้ว ไม่มีค่าธรรมเนียมแอบแฝง และไม่มีค่าใช้จ่ายตอนย้ายออก"
+                  en="Every extension shows its first-year price and what each following year costs. All in — no hidden fees, and nothing to pay if you transfer away." />
         </p>
     </div>
 </section>
@@ -42,10 +42,10 @@
                                     <x-bi th="นามสกุล" en="Extension" />
                                 </th>
                                 <th class="text-right px-5 py-3.5 font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                                    <x-bi th="จดใหม่ / ปี" en="Register / yr" />
+                                    <x-bi th="ปีแรก" en="First year" layout="stack" />
                                 </th>
                                 <th class="text-right px-5 py-3.5 font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                                    <x-bi th="ต่ออายุ / ปี" en="Renew / yr" />
+                                    <x-bi th="ปีต่อไป (ต่อปี)" en="Following years (per year)" layout="stack" />
                                 </th>
                                 <th class="px-5 py-3.5"></th>
                             </tr>
@@ -96,8 +96,8 @@
                         <circle cx="12" cy="12" r="9" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M12 8h.01M11 12h1v4h1"/>
                     </svg>
                     <span>
-                        <x-bi th="ตัวเลขสีเหลืองคือนามสกุลที่ค่าต่ออายุสูงกว่าปีแรก เราแสดงไว้ตั้งแต่ก่อนซื้อเพื่อให้คุณวางแผนได้"
-                              en="Amber figures renew for more than the first year. We show it before you buy so there are no surprises." />
+                        <x-bi th="ตัวเลขสีเหลืองคือนามสกุลที่ราคาปีแรกเป็นราคาโปรโมชัน ปีต่อไปต่ออายุในราคาที่สูงกว่า เราแสดงไว้ตั้งแต่ก่อนซื้อเพื่อให้คุณวางแผนได้"
+                              en="Amber figures: the first year is a promotional price and the following years renew for more. We show it before you buy so there are no surprises." />
                     </span>
                 </p>
             @endif

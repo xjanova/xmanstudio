@@ -40,7 +40,7 @@ Heroes are 1920w, cards 1200w, all WebP q82 (~2.4 MB for 25 files).
 **Heroes:** `hero-home` `hero-about` `hero-portfolio` `hero-services` `hero-support`
 `hero-team` `hero-products` `hero-rental` `hero-tracking` `hero-changelog`
 `hero-academy` `hero-legal` `hero-metalx` `hero-network` `hero-gpuxmine` `hero-kyc`
-`hero-quote` `quote-doc` `hero-domains`
+`hero-quote` `quote-doc` `hero-domains` `hero-vps`
 
 `hero-kyc` is deliberately **abstract** — a glowing shield, a fingerprint, a padlock,
 blank floating sheets. No ID card, no face, no lettering. That page asks for a real
@@ -57,12 +57,18 @@ one the design system leads with.
 
 **Cards:** `card-blockchain` `card-web` `card-mobile` `card-ai` `card-iot`
 `card-security` `card-software` `card-flutter` `card-design` `card-marketing`
-`card-studio` `card-domains`
+`card-studio` `card-domains` `card-vps`
 
 `hero-academy` is generated but unused: `/code-academy` is a deliberately *light*
 (blue/cream) theme and dark artwork clashes with it. The **retro** theme is also
 left alone — it is a self-contained Tron/art-deco design with its own visual
 language (gold foil, 80s vector grid) that photographic art would muddy.
+
+`hero-vps`, `card-vps` and `menu/vps.webp` (2026-09-23) came from the same ChatGPT room as the
+domain set, so the three read as one family: glass server blades in a near-black navy void,
+teal/cyan light, violet second, a touch of magenta. The hero keeps its racks at the left and
+right edges and the upper centre dark for the headline; the card keeps its left third dark for
+text. The labelled menu tile is baked by `php artisan menu:build-art --only=vps`.
 
 ## Regenerating — do this in the browser, not over the API
 

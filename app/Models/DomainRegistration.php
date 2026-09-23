@@ -52,6 +52,14 @@ class DomainRegistration extends Model
 
     public const KIND_RENEW = 'renew';
 
+    /**
+     * Days after expiry a lapsed domain can still be renewed at the ordinary
+     * price. Registries allow around 30 before the redemption period, where a
+     * restore fee applies; a few days short of that leaves room for the
+     * registrar's own date and time zone.
+     */
+    public const RENEW_GRACE_DAYS = 25;
+
     protected $fillable = [
         'user_id',
         'domain',
@@ -75,6 +83,7 @@ class DomainRegistration extends Model
         'nameservers',
         'registered_at',
         'expires_at',
+        'previous_expires_at',
         'renewal_notice_sent_at',
         'expiry_reminders_sent',
         'last_polled_at',
@@ -92,6 +101,7 @@ class DomainRegistration extends Model
         'nameservers' => 'array',
         'registered_at' => 'datetime',
         'expires_at' => 'datetime',
+        'previous_expires_at' => 'datetime',
         'renewal_notice_sent_at' => 'datetime',
         'expiry_reminders_sent' => 'array',
         'last_polled_at' => 'datetime',
@@ -302,10 +312,26 @@ class DomainRegistration extends Model
      */
     public function canRenew(): bool
     {
+        // Expired is included on purpose: the registry's grace period is when
+        // a customer who missed every reminder finally comes looking, and the
+        // button has to be there. Past saving, the registrar refuses and the
+        // money goes straight back.
         return $this->kind === self::KIND_REGISTER
-            && $this->status === self::STATUS_ACTIVE
+            && $this->withinRenewalGrace()
             && $this->remote_subscription_id !== null
             && ! $this->renewals()->whereIn('status', [self::STATUS_PENDING, self::STATUS_REGISTERING])->exists();
+    }
+
+    /** Live, or lapsed recently enough to renew at the ordinary price. */
+    public function withinRenewalGrace(): bool
+    {
+        if ($this->status === self::STATUS_ACTIVE) {
+            return true;
+        }
+
+        return $this->status === self::STATUS_EXPIRED
+            && $this->expires_at !== null
+            && $this->expires_at->gt(now()->subDays(self::RENEW_GRACE_DAYS));
     }
 
     public function isSettled(): bool
@@ -408,13 +434,37 @@ class DomainRegistration extends Model
      * Scoped to the day so that a genuine repurchase of a domain that lapsed
      * a year later is still allowed through.
      */
-    public static function makeIdempotencyKey(int $userId, string $domain, string $kind): string
+    public static function makeIdempotencyKey(int $userId, string $domain, string $kind, int $attempt = 0): string
     {
-        return substr(hash('sha256', implode('|', [
+        $parts = [
             $userId,
             strtolower($domain),
             $kind,
             now()->format('Y-m-d'),
-        ])), 0, 64);
+        ];
+
+        // Only a retry after a refund carries a counter, so the key of every
+        // first attempt is exactly what it always was.
+        if ($attempt > 0) {
+            $parts[] = 'retry-' . $attempt;
+        }
+
+        return substr(hash('sha256', implode('|', $parts)), 0, 64);
+    }
+
+    /**
+     * How many of today's attempts at this purchase were refunded.
+     *
+     * Two presses of the same button still share a key (they see the same
+     * count); a new attempt after a refund gets a key of its own.
+     */
+    public static function refundedAttemptsToday(int $userId, string $domain, string $kind): int
+    {
+        return self::where('user_id', $userId)
+            ->where('domain', strtolower($domain))
+            ->where('kind', $kind)
+            ->where('status', self::STATUS_REFUNDED)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->count();
     }
 }

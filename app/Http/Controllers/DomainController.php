@@ -115,6 +115,11 @@ class DomainController extends Controller
             ->map(fn (DomainTld $t) => [
                 'tld' => $t->tld,
                 'price' => DomainPricing::format($t->registerPriceThb()),
+                // Beside every first-year price, what the years after it cost.
+                // Several registries price year one as a promotion and year two
+                // at several times that; a chip showing only the first number
+                // is how a customer ends up surprised a year later.
+                'renew' => DomainPricing::format($t->renewPriceThb()),
             ]);
     }
 }

@@ -2,19 +2,26 @@
 
 namespace App\Support\Alerts;
 
+use App\Mail\AdminAlertMail;
 use App\Models\DomainRegistration;
 use App\Models\Order;
 use App\Models\Quotation;
 use App\Models\RentalPayment;
+use App\Models\Setting;
 use App\Models\SmsPaymentNotification;
 use App\Models\SupportTicket;
 use App\Models\TicketReply;
+use App\Models\User;
+use App\Models\VpsInstance;
 use App\Models\WalletTopup;
 use App\Support\AdminAlerts;
 use App\Support\Telegram\BotActions;
+use App\Support\UpstreamBilling;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
@@ -623,33 +630,345 @@ final class BusinessAlerts
      */
     public static function domainPurchaseRefused(DomainRegistration $registration, string $reason, bool $isPaymentProblem): void
     {
-        self::guard(function () use ($registration, $reason, $isPaymentProblem) {
-            AdminAlerts::send(new Alert(
-                key: $isPaymentProblem
-                    ? 'registrar-payment:' . now()->toDateString()
-                    : 'domain-buy-refused:' . $registration->id,
-                level: $isPaymentProblem ? Alert::CRITICAL : Alert::WARNING,
-                title: $isPaymentProblem
-                    ? 'จ่ายเงินให้ผู้ให้บริการโดเมนไม่ผ่าน — ขายโดเมนไม่ได้ทั้งระบบ'
-                    : 'ผู้ให้บริการปฏิเสธคำสั่งจดโดเมน',
-                body: $registration->domain . "\n"
-                    . self::person($registration->user?->name, $registration->user?->email, null) . "\n"
-                    . ($isPaymentProblem
-                        ? "เราจ่าย Hostinger ด้วยบัตรของเราเอง แล้วค่อยเก็บจากกระเป๋าเงินลูกค้า\n"
-                            . "ตอนนี้จ่ายไม่ผ่าน — ทุกคำสั่งซื้อจะล้มเหมือนกันหมดจนกว่าจะแก้\n"
-                            . 'ตรวจบัตร/ยอดเครดิตในบัญชี Hostinger ด่วน · คืนเงินลูกค้ารายนี้แล้ว'
-                        : 'คืนเงินลูกค้าเรียบร้อยแล้ว')
-                    . "\n" . Str::limit($reason, 300),
-                facts: array_filter([
-                    'โดเมน' => $registration->domain,
-                    'ยอดที่คืน' => number_format((float) $registration->price_thb, 2) . ' ฿',
-                    'สาเหตุ' => $isPaymentProblem ? 'การชำระเงินฝั่งเรา' : 'ผู้ให้บริการปฏิเสธ',
-                ]),
+        self::provider(fn () => new Alert(
+            key: $isPaymentProblem
+                ? 'registrar-payment:' . now()->toDateString()
+                : 'domain-buy-refused:' . $registration->id,
+            level: $isPaymentProblem ? Alert::CRITICAL : Alert::WARNING,
+            title: $isPaymentProblem
+                ? 'ยอดเงิน/บัตรที่ Hostinger ตัดไม่ผ่าน — หยุดขายโดเมนและ VPS ชั่วคราว'
+                : 'ผู้ให้บริการปฏิเสธคำสั่งจดโดเมน',
+            body: $registration->domain . "\n"
+                . self::person($registration->user?->name, $registration->user?->email, null) . "\n"
+                . ($isPaymentProblem
+                    ? "เราจ่าย Hostinger ด้วยบัตรของเราเอง แล้วค่อยเก็บจากกระเป๋าเงินลูกค้า\n"
+                        . "ตอนนี้จ่ายไม่ผ่าน (ยอดเงินไม่พอ/บัตรถูกปฏิเสธ) — ระบบหยุดรับคำสั่งซื้อชั่วคราวแล้ว ลูกค้าจะเห็นว่า \"ลองใหม่ภายหลัง\" โดยไม่ถูกตัดเงิน\n"
+                        . 'เติมเงิน/ตรวจบัตรในบัญชี Hostinger ด่วน แล้วกด "เปิดขายต่อ" ที่หน้าแอดมินโดเมน · คืนเงินลูกค้ารายนี้แล้ว'
+                    : 'คืนเงินลูกค้าเรียบร้อยแล้ว')
+                . "\n" . Str::limit($reason, 300),
+            facts: array_filter([
+                'โดเมน' => $registration->domain,
+                'ยอดที่คืน' => number_format((float) $registration->price_thb, 2) . ' ฿',
+                'สาเหตุ' => $isPaymentProblem ? 'การชำระเงินฝั่งเรา' : 'ผู้ให้บริการปฏิเสธ',
+            ]),
+            url: self::adminUrl('admin.domains.index'),
+            urlLabel: 'เปิดหลังบ้านโดเมน',
+            category: 'orders',
+        ), $isPaymentProblem ? 60 : 720, mailIfUnheard: $isPaymentProblem);
+    }
+
+    /** An order the registrar took our money for and will not finish. A person has to look. */
+    public static function domainNeedsAttention(DomainRegistration $registration, string $reason): void
+    {
+        self::provider(fn () => new Alert(
+            key: 'domain-attention:' . $registration->id . ':' . now()->toDateString(),
+            level: Alert::WARNING,
+            title: $registration->kind === DomainRegistration::KIND_RENEW
+                ? 'ต่ออายุโดเมนค้าง — ต้องตรวจสอบเอง'
+                : 'โดเมนค้างจดไม่เสร็จ — ต้องตรวจสอบเอง',
+            body: $registration->domain . "\n"
+                . self::person($registration->user?->name, $registration->user?->email, null) . "\n"
+                . "ลูกค้าจ่ายแล้ว ระบบยังไม่คืนเงินอัตโนมัติ — ตรวจใน hPanel ว่ารายการนี้สำเร็จหรือไม่\n"
+                . Str::limit($reason, 300),
+            facts: [
+                'โดเมน' => $registration->domain,
+                'ลูกค้าจ่าย' => self::baht((float) $registration->price_thb),
+            ],
+            url: self::adminUrl('admin.domains.index'),
+            urlLabel: 'เปิดหลังบ้านโดเมน',
+            category: 'orders',
+        ), 720);
+    }
+
+    public static function domainExpired(DomainRegistration $domain): void
+    {
+        self::provider(fn () => new Alert(
+            key: 'domain-expired:' . $domain->id . ':' . ($domain->expires_at?->format('Y-m-d') ?? 'x'),
+            level: Alert::INFO,
+            title: 'โดเมนลูกค้าหมดอายุ',
+            body: $domain->domain . "\n"
+                . self::person($domain->user?->name, $domain->user?->email, null) . "\n"
+                . 'ลูกค้ายังต่ออายุได้ในช่วงผ่อนผันจากหน้าโดเมนของเขา',
+            facts: array_filter([
+                'โดเมน' => $domain->domain,
+                'หมดอายุ' => $domain->expires_at?->format('d/m/Y'),
+            ]),
+            url: self::adminUrl('admin.domains.index'),
+            urlLabel: 'เปิดหลังบ้านโดเมน',
+            category: 'orders',
+        ), 1440);
+    }
+
+    /** @param array<int,string> $domains */
+    public static function domainsWithoutSubscription(array $domains): void
+    {
+        self::provider(fn () => new Alert(
+            key: 'domain-unlinked:' . now()->toDateString(),
+            level: Alert::WARNING,
+            title: 'โดเมน ' . count($domains) . ' รายการต่ออายุจากกระเป๋าเงินไม่ได้',
+            body: "ไม่รู้ว่าโดเมนเหล่านี้ผูกกับ subscription ไหนในบัญชี Hostinger — ปุ่มต่ออายุของลูกค้าจะไม่ทำงาน\n"
+                . "ผูกเองได้ในหลังบ้านโดเมน (ใส่รหัส subscription จาก hPanel) ก่อนถึงวันหมดอายุ\n"
+                . implode(', ', array_slice($domains, 0, 15)),
+            facts: ['จำนวน' => (string) count($domains)],
+            url: self::adminUrl('admin.domains.index'),
+            urlLabel: 'เปิดหลังบ้านโดเมน',
+            category: 'orders',
+        ), 1440);
+    }
+
+    // =============================================================================== supplier billing
+
+    /**
+     * The card our Hostinger account pays with is in trouble — found by the
+     * scheduled check, BEFORE a customer's order is refused because of it.
+     *
+     * @param  array<string,mixed>  $health  UpstreamBilling::check()
+     */
+    public static function upstreamBillingProblem(array $health, bool $critical): void
+    {
+        self::provider(function () use ($health, $critical) {
+            $chips = [];
+            foreach ((array) ($health['methods'] ?? []) as $m) {
+                $label = UpstreamBilling::label((string) $m['type']) . ($m['is_default'] ? ' (หลัก)' : '');
+                $chips[$label] = ! $m['is_expired'] && ! $m['is_suspended'];
+            }
+
+            return new Alert(
+                key: 'upstream-billing:' . ($critical ? 'critical' : 'warning') . ':' . now()->toDateString(),
+                level: $critical ? Alert::CRITICAL : Alert::WARNING,
+                title: $critical
+                    ? 'บัญชี Hostinger จ่ายเงินไม่ได้ — หยุดขายโดเมนและ VPS ชั่วคราวแล้ว'
+                    : 'วิธีชำระเงินในบัญชี Hostinger ใกล้หมดอายุ',
+                body: implode("\n", (array) ($health['problems'] ?? []))
+                    . "\n" . ($critical
+                        ? 'ลูกค้าจะเห็นว่า "ปิดปรับปรุงชั่วคราว" โดยไม่ถูกตัดเงิน · แก้ใน hPanel → Billing แล้วระบบจะเปิดขายเองในรอบตรวจถัดไป'
+                        : 'อัปเดตบัตรใน hPanel → Billing ก่อนถึงวันหมดอายุ ไม่งั้นคำสั่งซื้อของลูกค้าจะเริ่มล้ม'),
+                chips: $chips,
+                chipsLabel: 'วิธีชำระเงินในบัญชี',
                 url: self::adminUrl('admin.domains.index'),
-                urlLabel: 'เปิดหลังบ้านโดเมน',
+                urlLabel: 'เปิดหลังบ้าน',
                 category: 'orders',
-            ), $isPaymentProblem ? 60 : 720);
-        });
+            );
+        }, $critical ? 180 : 1440, mailIfUnheard: $critical);
+    }
+
+    /**
+     * Customers whose automatic renewal came due and whose wallet could not
+     * cover it — one card per product per day, so the team can call them
+     * while there are still days left, instead of hearing about it from a
+     * customer whose site went down.
+     *
+     * @param  array<int,array{what:string,name:string,owner:string,need:float,have:float,expires:?string}>  $items
+     */
+    public static function renewalsShortOfFunds(string $product, array $items): void
+    {
+        if ($items === []) {
+            return;
+        }
+
+        self::provider(function () use ($product, $items) {
+            $lines = array_map(fn (array $i) => sprintf(
+                '• %s — %s · ต้อง %s มี %s%s',
+                $i['name'],
+                $i['owner'],
+                self::baht($i['need']),
+                self::baht($i['have']),
+                $i['expires'] ? ' · หมดอายุ ' . $i['expires'] : '',
+            ), array_slice($items, 0, 12));
+
+            if (count($items) > 12) {
+                $lines[] = '…และอีก ' . (count($items) - 12) . ' รายการ';
+            }
+
+            return new Alert(
+                key: 'renewal-short:' . $product . ':' . now()->toDateString(),
+                level: Alert::WARNING,
+                title: sprintf('ลูกค้า %d รายยอดเงินไม่พอต่ออายุ%s', count($items), $product === 'vps' ? ' VPS' : 'โดเมน'),
+                body: "ถึงกำหนดตัดเงินต่ออายุอัตโนมัติแล้ว แต่กระเป๋าเงินลูกค้าไม่พอ — ระบบแจ้งลูกค้าทางอีเมลแล้ว และจะลองตัดใหม่ทุกวันจนหมดอายุ\n"
+                    . implode("\n", $lines),
+                facts: [
+                    'จำนวน' => (string) count($items),
+                    'ยอดที่ขาดรวม' => self::baht(array_sum(array_map(fn ($i) => max(0, $i['need'] - $i['have']), $items))),
+                ],
+                url: self::adminUrl($product === 'vps' ? 'admin.vps.index' : 'admin.domains.index'),
+                urlLabel: 'เปิดหลังบ้าน',
+                category: 'orders',
+            );
+        }, 1440);
+    }
+
+    /** @param array<int,string> $names */
+    public static function strayAutoRenewalsSwitchedOff(array $names): void
+    {
+        self::provider(fn () => new Alert(
+            key: 'stray-autorenew:' . now()->toDateString(),
+            level: Alert::WARNING,
+            title: 'ปิดต่ออายุอัตโนมัติฝั่ง Hostinger ' . count($names) . ' รายการ',
+            body: "บริการที่เราขายต่อต้องต่ออายุจากกระเป๋าเงินลูกค้าเท่านั้น — รายการเหล่านี้ถูกเปิดต่ออายุด้วยบัตรเราไว้ ระบบปิดให้แล้ว\n"
+                . implode(', ', array_slice($names, 0, 15)),
+            facts: ['จำนวน' => (string) count($names)],
+            url: self::adminUrl('admin.domains.index'),
+            urlLabel: 'เปิดหลังบ้าน',
+            category: 'orders',
+        ), 1440);
+    }
+
+    /**
+     * Machines in our account that were bought and never installed, and that
+     * no order of ours claims. Almost always a purchase whose answer came
+     * back after the customer had been refunded — it renews on OUR card
+     * every month until somebody cancels it in hPanel.
+     *
+     * @param  array<int,string>  $machines
+     */
+    public static function orphanMachines(array $machines): void
+    {
+        self::provider(fn () => new Alert(
+            key: 'vps-orphans:' . now()->toDateString(),
+            level: Alert::WARNING,
+            title: 'มีเครื่อง VPS ' . count($machines) . ' เครื่องที่ซื้อแล้วแต่ไม่มีลูกค้าเจ้าของ',
+            body: "เครื่องยังไม่ถูกติดตั้ง และไม่มีคำสั่งเช่าในระบบผูกอยู่ (มักเป็นคำสั่งซื้อที่ตอบกลับช้าหลังคืนเงินลูกค้าไปแล้ว)\n"
+                . "จะต่ออายุด้วยบัตรเราทุกเดือนจนกว่าจะยกเลิกใน hPanel — ถ้าเป็นเครื่องของเราเอง ไม่ต้องทำอะไร\n"
+                . implode(', ', array_slice($machines, 0, 15)),
+            facts: ['จำนวน' => (string) count($machines)],
+            url: self::adminUrl('admin.vps.index'),
+            urlLabel: 'เปิดหลังบ้าน VPS',
+            category: 'orders',
+        ), 1440);
+    }
+
+    // =============================================================================== vps
+
+    public static function vpsOrdered(VpsInstance $vps, float $amount): void
+    {
+        self::guard(fn () => AdminAlerts::send(new Alert(
+            key: 'vps-ordered:' . $vps->id,
+            level: Alert::MONEY,
+            title: 'เช่า VPS ใหม่ ' . self::baht($amount),
+            body: $vps->plan_name . ' · ' . $vps->periodLabel() . "\n"
+                . self::person($vps->user?->name, $vps->user?->email, null) . "\n"
+                . 'กำลังติดตั้ง ' . ($vps->template_name ?? '-') . ' ที่ ' . ($vps->data_center_name ?? '-'),
+            facts: [
+                'แพ็กเกจ' => $vps->plan_name,
+                'ยอดชำระ' => self::baht($amount),
+                'รอบบิล' => $vps->periodLabel(),
+            ],
+            url: self::adminUrl('admin.vps.index'),
+            urlLabel: 'เปิดหลังบ้าน VPS',
+            category: 'orders',
+        ), 1440));
+    }
+
+    public static function vpsReady(VpsInstance $vps): void
+    {
+        self::guard(fn () => AdminAlerts::send(new Alert(
+            key: 'vps-ready:' . $vps->id,
+            level: Alert::OK,
+            title: 'VPS พร้อมใช้งานแล้ว',
+            body: $vps->hostname . ' · ' . ($vps->ipv4 ?? '-') . "\n"
+                . self::person($vps->user?->name, $vps->user?->email, null),
+            facts: array_filter([
+                'แพ็กเกจ' => $vps->plan_name,
+                'IP' => $vps->ipv4,
+                'หมดอายุ' => $vps->expires_at?->format('d/m/Y'),
+            ]),
+            url: self::adminUrl('admin.vps.index'),
+            urlLabel: 'เปิดหลังบ้าน VPS',
+            category: 'orders',
+        ), 1440));
+    }
+
+    /** Bought upstream with our money, and not turning into a working server. */
+    public static function vpsNeedsAttention(VpsInstance $vps, string $reason, bool $failed): void
+    {
+        self::provider(fn () => new Alert(
+            key: 'vps-attention:' . $vps->id . ':' . ($failed ? 'failed' : 'slow'),
+            level: $failed ? Alert::CRITICAL : Alert::WARNING,
+            title: $failed ? 'ติดตั้ง VPS ไม่สำเร็จ — ต้องตรวจสอบเอง' : 'VPS ติดตั้งนานผิดปกติ',
+            body: $vps->hostname . ' · ' . $vps->plan_name . "\n"
+                . self::person($vps->user?->name, $vps->user?->email, null) . "\n"
+                . ($failed
+                    ? "ผู้ให้บริการรับเงินเราแล้ว ระบบไม่คืนเงินลูกค้าอัตโนมัติ — ติดตั้งให้เสร็จใน hPanel หรือกดคืนเงินที่หลังบ้าน VPS\n"
+                    : "ลูกค้าจ่ายแล้ว ระบบยังไม่คืนเงินอัตโนมัติ — ตรวจใน hPanel แล้วติดตั้งให้เสร็จ หรือกดคืนเงินที่หลังบ้าน VPS\n")
+                . Str::limit($reason, 300),
+            facts: array_filter([
+                'แพ็กเกจ' => $vps->plan_name,
+                'สถานะเครื่อง' => $vps->state,
+            ]),
+            url: self::adminUrl('admin.vps.index'),
+            urlLabel: 'เปิดหลังบ้าน VPS',
+            category: 'orders',
+        ), $failed ? 720 : 360, mailIfUnheard: $failed);
+    }
+
+    public static function vpsPurchaseRefused(VpsInstance $vps, string $reason, bool $isPaymentProblem): void
+    {
+        self::provider(fn () => new Alert(
+            // The payment case shares its key with the domain one: the owner
+            // needs one message about the card per day, not one per product.
+            key: $isPaymentProblem
+                ? 'registrar-payment:' . now()->toDateString()
+                : 'vps-buy-refused:' . $vps->id,
+            level: $isPaymentProblem ? Alert::CRITICAL : Alert::WARNING,
+            title: $isPaymentProblem
+                ? 'ยอดเงิน/บัตรที่ Hostinger ตัดไม่ผ่าน — หยุดขายโดเมนและ VPS ชั่วคราว'
+                : 'ผู้ให้บริการปฏิเสธคำสั่งเช่า VPS',
+            body: $vps->plan_name . ' · ' . $vps->hostname . "\n"
+                . self::person($vps->user?->name, $vps->user?->email, null) . "\n"
+                . ($isPaymentProblem
+                    ? "ตอนนี้จ่ายไม่ผ่าน (ยอดเงินไม่พอ/บัตรถูกปฏิเสธ) — ระบบหยุดรับคำสั่งซื้อชั่วคราวแล้ว ลูกค้าเห็นว่า \"ลองใหม่ภายหลัง\"\n"
+                        . 'เติมเงิน/ตรวจบัตรในบัญชี Hostinger ด่วน · คืนเงินลูกค้ารายนี้แล้ว'
+                    : 'คืนเงินลูกค้าเรียบร้อยแล้ว')
+                . "\n" . Str::limit($reason, 300),
+            facts: [
+                'แพ็กเกจ' => $vps->plan_name,
+                'สาเหตุ' => $isPaymentProblem ? 'การชำระเงินฝั่งเรา' : 'ผู้ให้บริการปฏิเสธ',
+            ],
+            url: self::adminUrl('admin.vps.index'),
+            urlLabel: 'เปิดหลังบ้าน VPS',
+            category: 'orders',
+        ), $isPaymentProblem ? 60 : 720, mailIfUnheard: $isPaymentProblem);
+    }
+
+    public static function vpsRenewed(VpsInstance $vps, float $amount): void
+    {
+        self::guard(fn () => AdminAlerts::send(new Alert(
+            key: 'vps-renewed:' . $vps->id . ':' . ($vps->expires_at?->format('Y-m-d') ?? now()->toDateString()),
+            level: Alert::MONEY,
+            title: 'ต่ออายุ VPS ' . self::baht($amount),
+            body: $vps->hostname . ' · ' . $vps->plan_name . "\n"
+                . self::person($vps->user?->name, $vps->user?->email, null),
+            facts: array_filter([
+                'ค่าต่ออายุ' => self::baht($amount),
+                'หมดอายุใหม่' => $vps->expires_at?->format('d/m/Y'),
+            ]),
+            url: self::adminUrl('admin.vps.index'),
+            urlLabel: 'เปิดหลังบ้าน VPS',
+            category: 'orders',
+        ), 720));
+    }
+
+    public static function vpsRenewalFailed(VpsInstance $vps, string $reason, bool $isPaymentProblem = false): void
+    {
+        self::provider(fn () => new Alert(
+            key: $isPaymentProblem
+                ? 'registrar-payment:' . now()->toDateString()
+                : 'vps-renew-failed:' . $vps->id . ':' . now()->toDateString(),
+            level: $isPaymentProblem ? Alert::CRITICAL : Alert::WARNING,
+            title: $isPaymentProblem
+                ? 'ยอดเงิน/บัตรที่ Hostinger ตัดไม่ผ่าน — ต่ออายุ VPS ลูกค้าไม่ได้'
+                : 'ต่ออายุ VPS ไม่สำเร็จ',
+            body: $vps->hostname . ' · ' . $vps->plan_name . "\n"
+                . self::person($vps->user?->name, $vps->user?->email, null) . "\n"
+                . "คืนเงินลูกค้าแล้ว — เครื่องจะถูกระงับเมื่อหมดอายุถ้ายังต่อไม่ได้\n"
+                . Str::limit($reason, 300),
+            facts: array_filter([
+                'หมดอายุ' => $vps->expires_at?->format('d/m/Y'),
+            ]),
+            url: self::adminUrl('admin.vps.index'),
+            urlLabel: 'เปิดหลังบ้าน VPS',
+            category: 'orders',
+        ), 720, mailIfUnheard: $isPaymentProblem);
     }
 
     public static function domainRenewalFailed(DomainRegistration $domain, string $reason): void
@@ -970,6 +1289,71 @@ final class BusinessAlerts
                 [self::$actor, self::$humanOverride] = [$prevActor, $prevHuman];
             }
         }, 'business-alert');
+    }
+
+    /**
+     * An alert about our supplier — our money, not a customer's order.
+     *
+     * Goes to Telegram like everything else. When Telegram cannot take it (no
+     * bot set up yet, or the orders category switched off) and it is one the
+     * business cannot afford to miss — our card refused, a server bought with
+     * our money that will not build — it goes to the admins by e-mail instead.
+     * Production ran without a Telegram bot for its first weeks: every card
+     * about a refused payment would have gone nowhere.
+     *
+     * @param  callable():Alert  $build
+     */
+    private static function provider(callable $build, int $throttleMinutes, bool $mailIfUnheard = false): void
+    {
+        try {
+            $alert = $build();
+
+            if (AdminAlerts::wants($alert->category)) {
+                AdminAlerts::send($alert, $throttleMinutes);
+
+                return;
+            }
+
+            if ($mailIfUnheard) {
+                self::mailAdmins($alert, $throttleMinutes);
+            }
+        } catch (Throwable $e) {
+            try {
+                Log::warning('admin-alert: building the supplier alert failed', ['error' => $e->getMessage(), 'at' => $e->getFile() . ':' . $e->getLine()]);
+            } catch (Throwable) {
+            }
+        }
+    }
+
+    /**
+     * The e-mail fallback: plain text to the contact address and every
+     * super admin, at most once per alert key per throttle window.
+     */
+    private static function mailAdmins(Alert $alert, int $throttleMinutes): void
+    {
+        if (! Cache::add('alert:mail:' . sha1($alert->key), 1, now()->addMinutes(max(1, $throttleMinutes)))) {
+            return;
+        }
+
+        $recipients = collect([(string) Setting::getValue('contact_email', '')])
+            ->merge(User::where('role', 'super_admin')->where('is_active', true)->pluck('email'))
+            ->map(fn ($e) => strtolower(trim((string) $e)))
+            ->filter(fn ($e) => filter_var($e, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($recipients === []) {
+            Log::warning('admin-alert: no e-mail recipient for an unheard supplier alert', ['key' => $alert->key]);
+
+            return;
+        }
+
+        $body = $alert->toText()
+            . "\n\n— ส่งทางอีเมลเพราะยังไม่ได้ตั้งค่าบอท Telegram (หลังบ้าน → ตั้งค่า → แจ้งเตือน Telegram)"
+            . ($alert->url ? "\n" . $alert->url : '');
+
+        Mail::to($recipients)->send(new AdminAlertMail($alert->title, $body));
     }
 
     /**

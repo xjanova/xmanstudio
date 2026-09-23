@@ -11,6 +11,7 @@ use App\Services\DomainRegistrarService;
 use App\Services\HostingerApiService;
 use App\Support\Alerts\BusinessAlerts;
 use App\Support\DomainReminders;
+use App\Support\UpstreamBilling;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -267,6 +268,16 @@ class RenewDomains extends Command
         }
 
         $renewed = $short = $failed = 0;
+        $shortList = [];
+
+        // Our card at the registrar was just refused (or found expired): every
+        // renewal would be debited and refunded. They are due in weeks, not
+        // hours — skip today, and the admin already has the alert.
+        if (UpstreamBilling::isPaused()) {
+            $this->warn('Supplier payments are paused — renewals skipped today.');
+
+            return [0, 0, 0];
+        }
 
         foreach ($query->get() as $domain) {
             if (! $domain->canRenew()) {
@@ -288,6 +299,14 @@ class RenewDomains extends Command
                 // has been told. Try again tomorrow.
                 $this->line(sprintf('  เงินไม่พอ %s — ต้อง %s มี %s', $domain->domain, number_format($price), number_format($balance)));
                 $short++;
+                $shortList[] = [
+                    'what' => 'domain',
+                    'name' => $domain->domain,
+                    'owner' => (string) ($domain->user?->name ?? $domain->user?->email ?? '#' . $domain->user_id),
+                    'need' => $price,
+                    'have' => $balance,
+                    'expires' => $domain->expires_at?->format('d/m/Y'),
+                ];
 
                 continue;
             }
@@ -311,6 +330,15 @@ class RenewDomains extends Command
                 }
 
                 $renewed++;
+
+                if ($renewal->status === DomainRegistration::STATUS_PENDING) {
+                    // Sent, not confirmed (payment still clearing, or the
+                    // answer was lost): "renewed" would be premature. The
+                    // reconciliation job settles it either way.
+                    $this->line('    → รอผู้ให้บริการยืนยัน');
+
+                    continue;
+                }
                 BusinessAlerts::domainRenewed($domain->fresh() ?? $domain, (float) $renewal->price_thb);
             } catch (DomainPurchaseException $e) {
                 // Everything this throws is already customer-readable.
@@ -326,6 +354,13 @@ class RenewDomains extends Command
                 $this->warn('  ' . $domain->domain . ' — ' . $e->getMessage());
                 BusinessAlerts::domainRenewalFailed($domain, 'ข้อผิดพลาดระบบ — ดู log');
             }
+        }
+
+        // The team hears about wallets that could not cover a renewal, once a
+        // day as one card — the customer has been e-mailed, but a phone call
+        // while there are weeks left is what actually keeps the domain.
+        if (! $dry) {
+            BusinessAlerts::renewalsShortOfFunds('domains', $shortList);
         }
 
         return [$renewed, $short, $failed];

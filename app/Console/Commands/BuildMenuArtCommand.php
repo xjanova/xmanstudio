@@ -64,6 +64,7 @@ class BuildMenuArtCommand extends Command
         'products' => ['th' => 'ผลิตภัณฑ์', 'en' => 'PRODUCTS'],
         'rental' => ['th' => 'เช่าใช้งาน', 'en' => 'RENTALS'],
         'domains' => ['th' => 'จดโดเมน', 'en' => 'DOMAINS'],
+        'vps' => ['th' => 'เช่าเซิร์ฟเวอร์', 'en' => 'VPS'],
         'portfolio' => ['th' => 'ผลงาน', 'en' => 'PORTFOLIO'],
         'team' => ['th' => 'ทีมงาน', 'en' => 'TEAM'],
         'support' => ['th' => 'ติดต่อเรา', 'en' => 'CONTACT'],

@@ -9,9 +9,11 @@ use App\Services\DomainRegistrarService;
 use App\Services\HostingerApiService;
 use App\Support\DomainPricing;
 use App\Support\DomainReminders;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
@@ -73,7 +75,132 @@ class DomainController extends Controller
             'renewals' => $domain->renewals()->get(),
             'canRenew' => $domain->canRenew(),
             'dnsUnavailable' => $domain->isUsable() && $records === [],
+            'details' => $domain->isUsable() ? $this->details($domain) : [],
+            'forwarding' => $domain->isUsable() ? $this->forwardingFor($domain) : null,
+            'snapshots' => $domain->isUsable() ? $this->snapshotsFor($domain) : [],
         ]);
+    }
+
+    /**
+     * Unlock the domain so another registrar can take it — or lock it again.
+     *
+     * Handing over the transfer code was only half of letting a customer
+     * leave: a locked domain refuses every transfer, so the code alone did
+     * nothing and the customer had to come and ask. The lock is theirs to
+     * lift. The registry's own 60-day lock after registration is not, and the
+     * page says so rather than letting them find out from the other side.
+     */
+    public function toggleLock(Request $request, int $id): RedirectResponse
+    {
+        $domain = $this->findOwned($request, $id);
+
+        if (! $domain->isUsable()) {
+            return back()->with('error', 'โดเมนนี้ยังใช้งานไม่ได้');
+        }
+
+        $lock = $request->boolean('lock');
+
+        $ok = $lock
+            ? $this->api->enableDomainLock($domain->domain)
+            : $this->api->disableDomainLock($domain->domain);
+
+        Cache::forget($this->detailsCacheKey($domain));
+
+        if (! $ok) {
+            return back()->with('error', $lock
+                ? 'ล็อกโดเมนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
+                : 'ปลดล็อกไม่สำเร็จ — โดเมนที่เพิ่งจดหรือเพิ่งเปลี่ยนเจ้าของอาจยังอยู่ในช่วงล็อก 60 วันของผู้ดูแลทะเบียน');
+        }
+
+        Log::info('[CustomerDomain] transfer lock changed', [
+            'registration_id' => $domain->id,
+            'user_id' => $request->user()->id,
+            'locked' => $lock,
+        ]);
+
+        return back()->with('success', $lock
+            ? 'ล็อกโดเมนแล้ว ป้องกันการย้ายออกโดยไม่ได้ตั้งใจ'
+            : 'ปลดล็อกแล้ว ขอรหัสย้ายด้านล่างแล้วนำไปใส่ที่ผู้ให้บริการใหม่ได้เลย · ถ้าไม่ย้ายแล้ว กรุณาล็อกกลับเพื่อความปลอดภัย');
+    }
+
+    /**
+     * Send every visitor of the domain to another address — a Facebook page,
+     * a shop on a marketplace, an older site. Needs no hosting at all.
+     */
+    public function updateForwarding(Request $request, int $id): RedirectResponse
+    {
+        $domain = $this->findOwned($request, $id);
+
+        if (! $domain->isUsable()) {
+            return back()->with('error', 'โดเมนนี้ยังใช้งานไม่ได้');
+        }
+
+        if ($request->input('action') === 'remove') {
+            if (! $this->api->deleteForwarding($domain->domain)) {
+                return back()->with('error', 'ยกเลิกการส่งต่อไม่สำเร็จ กรุณาลองใหม่');
+            }
+
+            Cache::forget($this->forwardingCacheKey($domain));
+
+            return back()->with('success', 'ยกเลิกการส่งต่อแล้ว โดเมนจะกลับไปใช้การตั้งค่า DNS ตามปกติ');
+        }
+
+        $validated = $request->validate([
+            'redirect_url' => ['required', 'string', 'max:500', 'url:http,https'],
+            'redirect_type' => ['required', 'in:301,302'],
+        ], [
+            'redirect_url.required' => 'กรุณาใส่ปลายทาง',
+            'redirect_url.url' => 'ปลายทางต้องเป็นลิงก์เต็ม ขึ้นต้นด้วย https:// หรือ http://',
+        ]);
+
+        $target = trim($validated['redirect_url']);
+
+        // Forwarding a domain to itself is a redirect loop visitors cannot escape.
+        $host = strtolower((string) parse_url($target, PHP_URL_HOST));
+
+        if ($host === $domain->domain || $host === 'www.' . $domain->domain) {
+            return back()->withInput()->with('error', 'ส่งต่อโดเมนไปที่ตัวมันเองไม่ได้ จะวนไม่รู้จบ');
+        }
+
+        if (! $this->api->saveForwarding($domain->domain, $target, $validated['redirect_type'])) {
+            return back()->withInput()->with('error', 'ตั้งค่าการส่งต่อไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
+
+        Cache::forget($this->forwardingCacheKey($domain));
+
+        return back()->with('success', 'ตั้งค่าแล้ว ผู้เข้าชม ' . $domain->domain . ' จะถูกส่งต่อไปที่ ' . $target . ' (มีผลใน 5–30 นาที)');
+    }
+
+    /**
+     * Put the DNS zone back the way it was at an earlier save.
+     *
+     * The registrar snapshots the zone on every change. This is the undo a
+     * customer who just deleted their MX record by mistake needs — without
+     * opening a ticket and waiting while their mail bounces.
+     */
+    public function restoreSnapshot(Request $request, int $id, int $snapshotId): RedirectResponse
+    {
+        $domain = $this->findOwned($request, $id);
+
+        if (! $domain->isUsable()) {
+            return back()->with('error', 'โดเมนนี้ยังใช้งานไม่ได้');
+        }
+
+        // Only a snapshot that belongs to THIS domain: the id comes from the
+        // form, and the upstream call would happily take any number.
+        $known = collect($this->snapshotsFor($domain))->pluck('id')->map(fn ($v) => (int) $v)->all();
+
+        if (! in_array($snapshotId, $known, true)) {
+            return back()->with('error', 'ไม่พบจุดย้อนกลับนี้ กรุณารีเฟรชหน้าแล้วลองใหม่');
+        }
+
+        if (! $this->api->restoreDnsSnapshot($domain->domain, (string) $snapshotId)) {
+            return back()->with('error', 'ย้อนการตั้งค่า DNS ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
+
+        Cache::forget($this->snapshotsCacheKey($domain));
+
+        return back()->with('success', 'ย้อนการตั้งค่า DNS แล้ว มีผลใน 5–30 นาที');
     }
 
     /**
@@ -177,6 +304,9 @@ class DomainController extends Controller
 
             return back()->withInput()->with('error', 'บันทึก DNS ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง หากยังไม่ได้กรุณาแจ้งทีมงาน');
         }
+
+        // The save made a new restore point; the list on the page must show it.
+        Cache::forget($this->snapshotsCacheKey($domain));
 
         return back()->with('success', 'บันทึกการตั้งค่า DNS แล้ว การเปลี่ยนแปลงอาจใช้เวลา 5–30 นาทีจึงจะมีผลทั่วโลก');
     }
@@ -457,5 +587,88 @@ class DomainController extends Controller
         $tld = $domain->tldRecord;
 
         return $tld ? DomainPricing::format($tld->renewPriceThb()) : null;
+    }
+
+    /**
+     * Lock state and the registry's 60-day lock, read from the registrar.
+     * Cached for a minute: the page is reloaded after every button press and
+     * the upstream budget is 90 calls a minute for the whole site.
+     *
+     * @return array{is_locked:?bool,is_lockable:bool,transfer_locked_until:?Carbon}
+     */
+    protected function details(DomainRegistration $domain): array
+    {
+        $raw = Cache::remember($this->detailsCacheKey($domain), 60, fn () => $this->api->getDomain($domain->domain) ?? []);
+
+        $until = null;
+
+        try {
+            $until = ! empty($raw['60_days_lock_expires_at']) ? Carbon::parse($raw['60_days_lock_expires_at']) : null;
+        } catch (\Throwable) {
+        }
+
+        return [
+            'is_locked' => array_key_exists('is_locked', $raw) ? (bool) $raw['is_locked'] : null,
+            'is_lockable' => (bool) ($raw['is_lockable'] ?? true),
+            'transfer_locked_until' => $until && $until->isFuture() ? $until : null,
+        ];
+    }
+
+    /**
+     * @return array{url:string,type:string}|null
+     */
+    protected function forwardingFor(DomainRegistration $domain): ?array
+    {
+        $raw = Cache::remember($this->forwardingCacheKey($domain), 60, fn () => $this->api->getForwarding($domain->domain) ?? []);
+
+        if (empty($raw['redirect_url'])) {
+            return null;
+        }
+
+        return ['url' => (string) $raw['redirect_url'], 'type' => (string) ($raw['redirect_type'] ?? '301')];
+    }
+
+    /**
+     * The last few saved versions of the zone, newest first.
+     *
+     * @return array<int,array{id:int,created_at:?Carbon}>
+     */
+    protected function snapshotsFor(DomainRegistration $domain): array
+    {
+        $raw = Cache::remember($this->snapshotsCacheKey($domain), 60, fn () => $this->api->getDnsSnapshots($domain->domain) ?? []);
+        $out = [];
+
+        foreach ($raw as $row) {
+            if (! is_array($row) || ! isset($row['id'])) {
+                continue;
+            }
+
+            try {
+                $at = isset($row['created_at']) ? Carbon::parse($row['created_at']) : null;
+            } catch (\Throwable) {
+                $at = null;
+            }
+
+            $out[] = ['id' => (int) $row['id'], 'created_at' => $at];
+        }
+
+        usort($out, fn ($a, $b) => ($b['created_at']?->timestamp ?? 0) <=> ($a['created_at']?->timestamp ?? 0));
+
+        return array_slice($out, 0, 10);
+    }
+
+    protected function detailsCacheKey(DomainRegistration $domain): string
+    {
+        return 'domain.details.' . $domain->id;
+    }
+
+    protected function forwardingCacheKey(DomainRegistration $domain): string
+    {
+        return 'domain.forwarding.' . $domain->id;
+    }
+
+    protected function snapshotsCacheKey(DomainRegistration $domain): string
+    {
+        return 'domain.snapshots.' . $domain->id;
     }
 }

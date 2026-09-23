@@ -73,7 +73,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // A failed validation flashes the submitted form into the session so it can be refilled —
         // including a pasted bot token, which would then sit in plaintext in the session store.
-        $exceptions->dontFlash(['telegram_bot_token']);
+        // Same for a VPS root password: a customer who mistyped the hostname must not leave the
+        // password to their server in Redis. (Laravel's own password fields merge into this list.)
+        $exceptions->dontFlash([
+            'telegram_bot_token',
+            'hostinger_api_token',
+            'root_password',
+            'root_password_confirmation',
+        ]);
 
         // Tell the owner in Telegram when something throws (a 500, a dying command) — throttled
         // hard and sent after the response. Returns nothing, so normal logging still happens.

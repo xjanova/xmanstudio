@@ -25,6 +25,10 @@
          'icon' => 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z'],
         ['url' => '/domains', 'label' => 'จดโดเมน / Domains', 'match' => 'domains*', 'color' => 'indigo-500', 'colorTo' => 'cyan-500',
          'icon' => 'M21 12a9 9 0 11-18 0 9 9 0 0118 0z||M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18'],
+        // Same colour pair as an existing entry: these names are interpolated into
+        // classes, and Tailwind only emits pairs it has already seen in the source.
+        ['url' => '/vps', 'label' => 'เช่า VPS / VPS', 'match' => 'vps*', 'color' => 'teal-500', 'colorTo' => 'cyan-500',
+         'icon' => 'M5 4h14a2 2 0 012 2v3a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z||M5 13h14a2 2 0 012 2v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3a2 2 0 012-2z||M7 7.5h.01M7 16.5h.01'],
         ['url' => '/portfolio', 'label' => 'ผลงาน / Portfolio', 'match' => 'portfolio*', 'color' => 'purple-500', 'colorTo' => 'violet-500',
          'icon' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
         ['url' => '/support', 'label' => 'ติดต่อ/สั่งซื้อ / Contact & Order', 'match' => 'support', 'color' => 'blue-500', 'colorTo' => 'cyan-500',

@@ -63,7 +63,55 @@ class DomainSettingController extends Controller
                 ->orderBy('created_at')
                 ->limit(20)
                 ->get(),
+            // A live domain with no subscription link cannot be renewed from
+            // the wallet. Shown here so it is fixed before the day it lapses.
+            'unlinked' => DomainRegistration::registrations()
+                ->where('status', DomainRegistration::STATUS_ACTIVE)
+                ->whereNull('remote_subscription_id')
+                ->with('user:id,name,email')
+                ->orderBy('expires_at')
+                ->limit(20)
+                ->get(),
+            'billing' => VpsSettingController::billingState(),
         ]);
+    }
+
+    /**
+     * Tie a domain to its billing subscription by hand, when the purchase
+     * never said which one it was and the automatic match found none or two.
+     */
+    public function linkSubscription(Request $request, int $id): RedirectResponse
+    {
+        $registration = DomainRegistration::registrations()->findOrFail($id);
+
+        $validated = $request->validate([
+            'subscription_id' => ['required', 'string', 'max:64', 'regex:/^[A-Za-z0-9_-]+$/'],
+        ]);
+
+        $subscriptionId = $validated['subscription_id'];
+
+        $taken = DomainRegistration::where('remote_subscription_id', $subscriptionId)
+            ->where('id', '!=', $registration->id)
+            ->exists();
+
+        if ($taken) {
+            return back()->with('error', 'subscription นี้ผูกกับโดเมนอื่นอยู่แล้ว');
+        }
+
+        // Confirm it exists upstream before trusting it with renewals.
+        $exists = collect($this->api->getSubscriptions() ?? [])
+            ->contains(fn ($row) => is_array($row) && (string) ($row['id'] ?? '') === $subscriptionId);
+
+        if (! $exists) {
+            return back()->with('error', 'ไม่พบ subscription นี้ในบัญชีผู้ให้บริการ — ตรวจรหัสจาก hPanel อีกครั้ง');
+        }
+
+        $registration->update(['remote_subscription_id' => $subscriptionId]);
+
+        // Ours renews it from the wallet; upstream's own renewal would bill our card too.
+        $this->api->setAutoRenewal($subscriptionId, false);
+
+        return back()->with('success', 'ผูก ' . $registration->domain . ' กับ subscription แล้ว ต่ออายุจากกระเป๋าเงินได้ตามปกติ');
     }
 
     public function update(Request $request): RedirectResponse

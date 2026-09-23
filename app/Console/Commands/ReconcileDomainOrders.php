@@ -5,21 +5,25 @@ namespace App\Console\Commands;
 use App\Models\DomainRegistration;
 use App\Services\DomainRegistrarService;
 use App\Services\HostingerApiService;
+use App\Support\Alerts\BusinessAlerts;
 use Illuminate\Console\Command;
 
 /**
  * Finish, or refund, every domain order that did not settle in one request.
  *
- * Three things leave an order hanging:
+ * What leaves an order hanging, and what happens to it here:
  *
- *   `pending`      — we took the money and the process died before the
- *                    registrar was called. Nothing was bought; refund.
- *   `registering`  — the registrar accepted but answered 202, meaning the
- *                    payment was still clearing on their side. Poll until
- *                    the domain shows up in our portfolio.
- *   either, old    — past the timeout with no resolution. The customer has
- *                    waited long enough; give the money back and let them
- *                    try again.
+ *   `pending`      — we took the money and the process died, or the purchase
+ *                    call timed out. It MAY have reached the registrar, so the
+ *                    portfolio is checked first; only a domain that is not
+ *                    there after the timeout is refunded. (Refunding without
+ *                    looking hands out the domain free when it did go through.)
+ *   `registering`  — the registrar accepted, often with a 202. When its
+ *                    payment clears the domain appears as `pending_setup`:
+ *                    paid for, registered to nobody, until setup is called.
+ *                    That call is made here, with the customer's own contacts.
+ *   renewals       — a renewal whose answer never came back is settled by
+ *                    comparing the registrar's expiry date with ours.
  *
  * Without this command, a customer whose purchase hit a network blip is left
  * with a charge and no domain, and nobody finds out until they complain.
@@ -38,6 +42,12 @@ class ReconcileDomainOrders extends Command
 
     /** Wait this long between polls of the same row. */
     protected const POLL_BACKOFF_MINUTES = 3;
+
+    /** Setup calls per order before a person is asked to look. */
+    protected const MAX_SETUP_ATTEMPTS = 3;
+
+    /** A pending row younger than this may still be mid-purchase in its own request. */
+    protected const PENDING_GRACE_MINUTES = 5;
 
     public function handle(HostingerApiService $api, DomainRegistrarService $registrar): int
     {
@@ -63,7 +73,13 @@ class ReconcileDomainOrders extends Command
             });
         }
 
-        $rows = $query->orderBy('created_at')->limit(30)->get();
+        // Least recently looked at first. Oldest-first let the same thirty
+        // stuck rows take every run while a new order behind them waited.
+        $rows = $query->orderByRaw('last_polled_at IS NOT NULL')
+            ->orderBy('last_polled_at')
+            ->orderBy('created_at')
+            ->limit(30)
+            ->get();
 
         if ($rows->isEmpty()) {
             $this->info('Nothing to reconcile.');
@@ -75,14 +91,15 @@ class ReconcileDomainOrders extends Command
         $settled = $refunded = $stillWaiting = 0;
 
         foreach ($rows as $row) {
-            $age = $row->created_at->diffInMinutes(now());
-            $expired = $age >= DomainRegistrarService::SETTLE_TIMEOUT_MINUTES;
+            $age = (int) $row->created_at->diffInMinutes(now());
+            $expired = $age >= DomainRegistrarService::settleWindowMinutes($row);
 
             $this->line(sprintf(
-                '#%d %s · %s · %d min old%s',
+                '#%d %s · %s%s · %d min old%s',
                 $row->id,
                 str_pad($row->domain, 28),
                 $row->status,
+                $row->kind === DomainRegistration::KIND_RENEW ? ' (renewal)' : '',
                 $age,
                 $expired ? ' · PAST TIMEOUT' : '',
             ));
@@ -91,44 +108,31 @@ class ReconcileDomainOrders extends Command
                 continue;
             }
 
-            // Nothing was ever sent upstream for a pending row, so there is
-            // nothing to look up — it is money taken for an order that never
-            // left the building.
-            if ($row->status === DomainRegistration::STATUS_PENDING) {
-                if ($expired) {
-                    $registrar->failAndRefund($row, 'pending past timeout; upstream was never called');
-                    $this->warn('  → refunded (never reached the registrar)');
-                    $refunded++;
-                } else {
-                    $row->update(['last_polled_at' => now(), 'poll_attempts' => $row->poll_attempts + 1]);
-                    $stillWaiting++;
+            $row->update(['last_polled_at' => now(), 'poll_attempts' => $row->poll_attempts + 1]);
+
+            // A renewal left pending: did the registrar's expiry date move?
+            if ($row->kind === DomainRegistration::KIND_RENEW) {
+                $outcome = $registrar->settleRenewal($row);
+                $this->line('  → renewal ' . $outcome);
+                $outcome === 'confirmed' ? $settled++ : ($outcome === 'refunded' ? $refunded++ : $stillWaiting++);
+
+                if ($outcome === 'unknown' && $expired) {
+                    // The registrar has not answered for the whole window. The
+                    // money stays where it is until somebody looks.
+                    BusinessAlerts::domainNeedsAttention($row, 'ต่ออายุแล้วไม่ทราบผล และอ่านวันหมดอายุจากผู้ให้บริการไม่ได้มา ' . $age . ' นาที — ลูกค้าจ่ายแล้ว ยังไม่คืนเงิน');
                 }
 
                 continue;
             }
 
-            // registering: ask whether the domain exists in our portfolio yet.
-            $details = $api->getDomain($row->domain);
+            $outcome = $this->settleRegistration($row, $registrar, $expired);
+            $this->line('  → ' . $outcome);
 
-            $row->update(['last_polled_at' => now(), 'poll_attempts' => $row->poll_attempts + 1]);
-
-            if (is_array($details) && $details !== [] && $this->looksRegistered($details)) {
-                $registrar->markActive($row);
-                $this->info('  → now active');
-                $settled++;
-
-                continue;
-            }
-
-            if ($expired) {
-                $registrar->failAndRefund($row, 'registration did not complete within the settle window');
-                $this->warn('  → refunded (timed out)');
-                $refunded++;
-
-                continue;
-            }
-
-            $stillWaiting++;
+            match ($outcome) {
+                'active' => $settled++,
+                'refunded' => $refunded++,
+                default => $stillWaiting++,
+            };
         }
 
         $this->newLine();
@@ -144,24 +148,83 @@ class ReconcileDomainOrders extends Command
     }
 
     /**
-     * Does this portfolio entry represent a domain that actually exists?
-     *
-     * Deliberately strict. Treating a half-populated response as success
-     * marks a domain active that the customer does not own, and they will
-     * find out when they try to use it.
-     *
-     * @param  array<string,mixed>  $details
+     * One registration: look it up in our portfolio and move it on.
      */
-    protected function looksRegistered(array $details): bool
+    protected function settleRegistration(DomainRegistration $row, DomainRegistrarService $registrar, bool $expired): string
     {
-        $status = strtolower((string) ($details['status'] ?? ''));
+        // Both pending and registering rows are looked up. A pending row can
+        // be a purchase whose answer we never heard — if the domain is in our
+        // portfolio, it went through, and refunding it would give it away.
+        if ($row->poll_attempts > self::MAX_SETUP_ATTEMPTS * 4 && $row->last_error && str_starts_with($row->last_error, 'setup rejected')) {
+            // The registrar keeps refusing the setup (usually registrant data
+            // it will not accept). Money has left us; a person has to decide —
+            // and has to hear about it, or the order sits here for ever.
+            BusinessAlerts::domainNeedsAttention($row, 'ผู้ให้บริการปฏิเสธการจดให้เสร็จซ้ำหลายครั้ง: ' . mb_substr($row->last_error, 0, 200));
 
-        if (in_array($status, ['active', 'registered', 'ok'], true)) {
-            return true;
+            return 'needs attention: ' . mb_substr($row->last_error, 0, 120);
         }
 
-        // Some responses carry no status but do carry an expiry, which only
-        // a registered domain has.
-        return ! empty($details['expires_at']) || ! empty($details['expire_date']);
+        // A fresh pending row is usually a purchase still in flight in the
+        // request that took the money; settling it from here too would run
+        // activation (and upstream calls) twice. Give it a few minutes.
+        if ($row->status === DomainRegistration::STATUS_PENDING
+            && $row->created_at->diffInMinutes(now()) < self::PENDING_GRACE_MINUTES) {
+            return 'waiting';
+        }
+
+        $outcome = $registrar->settle($row);
+
+        if ($outcome === 'active') {
+            return 'active';
+        }
+
+        if ($outcome === 'ambiguous') {
+            $rival = $registrar->rivalOrderFor($row);
+
+            $row->update(['last_error' => 'ambiguous: another order for this name (#' . ($rival?->id ?? '?') . ') is live or settling — decide by hand']);
+
+            BusinessAlerts::domainNeedsAttention($row, sprintf(
+                'มีอีกรายการของชื่อเดียวกัน (#%d, %s) — ระบบบอกไม่ได้ว่าโดเมนในบัญชีเป็นของรายการไหน จึงไม่เปิดใช้และไม่คืนเงินให้อัตโนมัติ',
+                $rival?->id ?? 0,
+                $rival?->status ?? '?',
+            ));
+
+            return 'ambiguous';
+        }
+
+        if ($outcome === 'unknown') {
+            // Could not ask. Nothing is decided on silence — but a whole
+            // window of it is somebody's problem.
+            if ($expired) {
+                BusinessAlerts::domainNeedsAttention($row, 'อ่านสถานะโดเมนจากผู้ให้บริการไม่ได้มา ' . $row->created_at->diffInMinutes(now()) . ' นาที — ลูกค้าจ่ายแล้ว ยังไม่คืนเงิน');
+            }
+
+            return 'unknown';
+        }
+
+        if (in_array($outcome, ['setup-sent', 'setup-failed', 'waiting'], true)) {
+            // It exists upstream, so it was paid for: never refund on a timer
+            // from here. The setup is retried on the next run.
+            if ($row->status === DomainRegistration::STATUS_PENDING) {
+                $row->update(['status' => DomainRegistration::STATUS_REGISTERING]);
+            }
+
+            return $outcome;
+        }
+
+        // 'missing' (the portfolio was read and the name is not in it) or
+        // 'gone' (deleted/expired upstream).
+        if ($expired) {
+            $registrar->failAndRefund(
+                $row,
+                $outcome === 'gone'
+                    ? 'the domain shows as deleted/expired upstream before it was ever registered'
+                    : 'no domain appeared in the portfolio within the settle window',
+            );
+
+            return 'refunded';
+        }
+
+        return 'waiting';
     }
 }

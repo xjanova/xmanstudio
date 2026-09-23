@@ -8,8 +8,10 @@ use App\Models\DomainTld;
 use App\Models\Wallet;
 use App\Support\Alerts\BusinessAlerts;
 use App\Support\DomainPricing;
+use App\Support\UpstreamBilling;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -45,6 +47,12 @@ class DomainRegistrarService
      * money.
      */
     public const SETTLE_TIMEOUT_MINUTES = 90;
+
+    /**
+     * The same, for an order upstream acknowledged with a 202 ("payment still
+     * processing"): the domain only turns up once that charge clears.
+     */
+    public const ACCEPTED_TIMEOUT_MINUTES = 1440;
 
     public function __construct(
         protected HostingerApiService $api,
@@ -86,6 +94,12 @@ class DomainRegistrarService
             throw new DomainPurchaseException('ขออภัย ขณะนี้เรายังไม่เปิดให้จดนามสกุล .' . $tld);
         }
 
+        // Our card at the registrar was just refused. Every order would fail
+        // the same way — say so before taking the money, not after.
+        if (UpstreamBilling::isPaused()) {
+            throw new DomainPurchaseException(UpstreamBilling::customerMessage());
+        }
+
         // Re-check availability against the registrar, not the cache. The
         // customer has been filling in a form for several minutes; the name
         // may be gone. Finding out here costs one call. Finding out after the
@@ -98,7 +112,15 @@ class DomainRegistrarService
             throw new DomainPurchaseException('ขออภัย ราคาของนามสกุลนี้ยังไม่พร้อม กรุณาติดต่อทีมงาน');
         }
 
-        $registration = $this->debitAndReserve($userId, $domain, $tld, $record, $price, $contact, $options);
+        [$registration, $created] = $this->debitAndReserve($userId, $domain, $tld, $record, $price, $contact, $options);
+
+        // A second submit of the same order. The request that created the row
+        // owns the purchase: buying again from here would either register the
+        // domain twice or — worse — get "not available" back (the first
+        // request just took it) and refund a customer whose domain is live.
+        if (! $created) {
+            return $registration;
+        }
 
         // From here on the customer has paid. Every exit must either deliver
         // the domain or give the money back.
@@ -107,6 +129,8 @@ class DomainRegistrarService
 
     /**
      * Step 2 — the only part that touches money, kept as short as possible.
+     *
+     * @return array{0:DomainRegistration,1:bool} the row, and whether THIS call created it
      */
     protected function debitAndReserve(
         int $userId,
@@ -116,11 +140,19 @@ class DomainRegistrarService
         float $price,
         DomainContact $contact,
         array $options,
-    ): DomainRegistration {
-        $key = DomainRegistration::makeIdempotencyKey($userId, $domain, DomainRegistration::KIND_REGISTER);
+    ): array {
+        $key = DomainRegistration::makeIdempotencyKey(
+            $userId,
+            $domain,
+            DomainRegistration::KIND_REGISTER,
+            // A refunded attempt must not block a fresh one: the key is per
+            // day, and without this a customer refused while our card was
+            // down could not buy the name again until tomorrow.
+            DomainRegistration::refundedAttemptsToday($userId, $domain, DomainRegistration::KIND_REGISTER),
+        );
 
         try {
-            return DB::transaction(function () use ($userId, $domain, $tld, $record, $price, $contact, $options, $key) {
+            return [DB::transaction(function () use ($userId, $domain, $tld, $record, $price, $contact, $options, $key) {
                 $wallet = Wallet::getOrCreateForUser($userId);
 
                 // Re-read under a row lock. The balance loaded a moment ago
@@ -181,7 +213,7 @@ class DomainRegistrarService
                 $registration->update(['wallet_transaction_id' => $transaction->id]);
 
                 return $registration;
-            }, 3);
+            }, 3), true];
         } catch (QueryException $e) {
             // The unique index on idempotency_key fired: this is the second
             // tap of a double-tap, or a retry of a request that already went
@@ -189,7 +221,7 @@ class DomainRegistrarService
             $existing = DomainRegistration::where('idempotency_key', $key)->first();
 
             if ($existing) {
-                return $existing;
+                return [$existing, false];
             }
 
             throw $e;
@@ -211,6 +243,11 @@ class DomainRegistrarService
             return $registration;
         }
 
+        // Set the moment the order may have reached the registrar. From there
+        // on, a crash in our own code is not a reason to refund: upstream may
+        // have registered the domain before we fell over.
+        $purchaseSent = false;
+
         try {
             $whoisId = $this->ensureWhoisProfile($contact, $registration->tld);
 
@@ -218,6 +255,7 @@ class DomainRegistrarService
                 return $this->failAndRefund($registration, 'whois profile could not be created upstream');
             }
 
+            $purchaseSent = true;
             $result = $this->api->purchaseDomain(
                 $registration->domain,
                 $record->item_id_register,
@@ -225,12 +263,31 @@ class DomainRegistrarService
                 $this->extraDetailsFor($contact, $registration->tld),
             );
 
-            if ($result === null) {
-                return $this->failAndRefund($registration, 'purchase call returned no response');
+            $status = (int) ($result['status_code'] ?? 0);
+            $body = $result['body'] ?? [];
+
+            if ($this->api->lastOutcomeUnknown()) {
+                // Timed out in transit, or upstream fell over mid-order: the
+                // registrar may well have registered it with our card.
+                // Refunding on a guess hands out a free domain; the
+                // reconciliation job looks it up in the portfolio and settles
+                // it either way.
+                UpstreamBilling::pauseIfPaymentTrouble($status, is_array($body) ? $body : [], 'domain purchase');
+
+                $registration->update([
+                    'status' => DomainRegistration::STATUS_REGISTERING,
+                    'last_error' => 'purchase outcome unknown: ' . ($result === null
+                        ? 'the request timed out in transit'
+                        : 'HTTP ' . $status . ' ' . mb_substr((string) json_encode($body), 0, 300)),
+                    'last_polled_at' => now(),
+                ]);
+
+                return $registration;
             }
 
-            $status = $result['status_code'] ?? 0;
-            $body = $result['body'] ?? [];
+            if ($result === null) {
+                return $this->failAndRefund($registration, 'purchase call did not go out (' . ($this->api->lastFailure() ?? 'unknown') . ')');
+            }
 
             if ($status >= 400) {
                 return $this->failAndRefund(
@@ -261,6 +318,22 @@ class DomainRegistrarService
                 'domain' => $registration->domain,
                 'error' => $e->getMessage(),
             ]);
+
+            if ($purchaseSent) {
+                $fresh = $registration->fresh() ?? $registration;
+
+                // Only a row still waiting on the answer: one already refunded
+                // or activated before the crash keeps what it is.
+                if ($fresh->status === DomainRegistration::STATUS_PENDING) {
+                    $fresh->update([
+                        'status' => DomainRegistration::STATUS_REGISTERING,
+                        'last_error' => 'purchase outcome unknown: we crashed after sending it: ' . mb_substr($e->getMessage(), 0, 300),
+                        'last_polled_at' => now(),
+                    ]);
+                }
+
+                return $fresh;
+            }
 
             return $this->failAndRefund($registration, 'exception: ' . $e->getMessage());
         }
@@ -319,16 +392,234 @@ class DomainRegistrarService
             $this->api->enablePrivacyProtection($registration->domain);
         }
 
-        if ($registration->auto_renew && $registration->remote_subscription_id) {
-            // Ours renews from the customer's wallet, not upstream's card.
-            // Turning the registrar's own auto-renewal OFF is intentional:
-            // two systems renewing the same domain is a double charge.
+        if (! $registration->remote_subscription_id) {
+            // A 202 purchase does not always say which subscription it made,
+            // and without one the domain can never be renewed from the wallet.
+            $this->linkSubscription($registration);
+        }
+
+        if ($registration->remote_subscription_id) {
+            // Upstream's own auto-renewal goes OFF for every domain we sell —
+            // not only the ones whose owner ticked auto-renew. Left on, it
+            // renews at expiry with OUR card: for a customer who chose to let
+            // the domain go, we pay for a year nobody paid us for; for one who
+            // renews with us, we pay twice.
             $this->api->setAutoRenewal($registration->remote_subscription_id, false);
         }
 
         $this->refreshFromUpstream($registration);
 
         return $registration;
+    }
+
+    /**
+     * Find this domain's billing subscription upstream, when the purchase did
+     * not tell us.
+     *
+     * The subscription list names each entry but carries no domain field, so
+     * the match is on the domain appearing in the name — and only a single
+     * unclaimed match counts. Two candidates is a question for a person, not a
+     * guess: linking the wrong subscription would renew somebody else's domain.
+     */
+    public function linkSubscription(DomainRegistration $registration): ?string
+    {
+        $subscriptions = $this->api->getSubscriptions();
+
+        if (! is_array($subscriptions)) {
+            return null;
+        }
+
+        $taken = DomainRegistration::whereNotNull('remote_subscription_id')
+            ->where('id', '!=', $registration->id)
+            ->pluck('remote_subscription_id')
+            ->all();
+
+        // The name has to stand on its own: "ample.com" must not claim the
+        // subscription of "example.com", nor "example.com" that of
+        // "example.com.au".
+        $pattern = '/(?<![a-z0-9.-])' . preg_quote(strtolower($registration->domain), '/') . '(?![a-z0-9.-])/';
+
+        $matches = array_values(array_filter($subscriptions, fn ($row) => is_array($row)
+            && ! empty($row['id'])
+            && ! in_array((string) $row['id'], $taken, true)
+            && preg_match($pattern, strtolower((string) ($row['name'] ?? ''))) === 1));
+
+        if (count($matches) !== 1) {
+            return null;
+        }
+
+        $id = (string) $matches[0]['id'];
+        $registration->update(['remote_subscription_id' => $id]);
+
+        return $id;
+    }
+
+    /**
+     * Move an order the registrar accepted (or might have) towards "active".
+     *
+     * The registrar's answer to a purchase is not the end of it: a 202 means
+     * payment was still clearing, and once it clears the domain lands in our
+     * portfolio as `pending_setup` — PAID FOR, and registered to nobody,
+     * until somebody calls setup. The reconciliation job used to wait for
+     * "active", never saw it, and refunded the customer at the timeout while
+     * the domain sat bought in our account.
+     *
+     * Only 'missing' and 'gone' can lead to a refund, and 'missing' means the
+     * portfolio list was read and the name is not in it — never that a lookup
+     * failed. A timeout, our own limiter or a 5xx says nothing about whether
+     * the domain was bought; refunding on it gives the domain away.
+     *
+     * @return 'active'|'setup-sent'|'setup-failed'|'waiting'|'missing'|'gone'|'unknown'|'ambiguous'
+     */
+    public function settle(DomainRegistration $registration): string
+    {
+        // The portfolio holds a name once. With another order for it live or
+        // still settling, "it is there" cannot say whose it is — activating
+        // this one could hand one customer's domain to another.
+        if ($this->rivalOrderFor($registration)) {
+            return 'ambiguous';
+        }
+
+        $details = $this->api->getDomain($registration->domain);
+
+        if (! is_array($details) || $details === []) {
+            return match ($this->inPortfolio($registration->domain)) {
+                false => 'missing',
+                // Listed, but its details would not load: it exists, so it
+                // was bought. Try again next run.
+                true => 'waiting',
+                null => 'unknown',
+            };
+        }
+
+        $status = strtolower((string) ($details['status'] ?? ''));
+
+        if ($status === 'active') {
+            $this->markActive($registration);
+
+            return 'active';
+        }
+
+        if (in_array($status, ['pending_setup', 'failed'], true)) {
+            // The registrar can go on reporting pending_setup for a while
+            // after accepting a setup; sending it again only earns a refusal
+            // that reads like a problem.
+            if (Cache::has('domain:setup-sent:' . $registration->id)) {
+                return 'waiting';
+            }
+
+            return $this->completeSetup($registration) ? 'setup-sent' : 'setup-failed';
+        }
+
+        if (in_array($status, ['deleted', 'expired'], true)) {
+            return 'gone';
+        }
+
+        // requested, pending_verification, suspended: the registry is working
+        // on it, or waiting on the registrant's e-mail confirmation.
+        return 'waiting';
+    }
+
+    /**
+     * Is the name in our portfolio? Null when the list could not be read.
+     */
+    public function inPortfolio(string $domain): ?bool
+    {
+        $list = $this->api->listDomains();
+
+        if (! is_array($list)) {
+            return null;
+        }
+
+        foreach ($list as $row) {
+            if (is_array($row) && strcasecmp((string) ($row['domain'] ?? ''), $domain) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Another registration of the same name that is live or still settling.
+     */
+    public function rivalOrderFor(DomainRegistration $registration): ?DomainRegistration
+    {
+        return DomainRegistration::registrations()
+            ->where('id', '!=', $registration->id)
+            ->where('domain', strtolower($registration->domain))
+            ->whereIn('status', [
+                DomainRegistration::STATUS_ACTIVE,
+                DomainRegistration::STATUS_PENDING,
+                DomainRegistration::STATUS_REGISTERING,
+            ])
+            ->first();
+    }
+
+    /**
+     * How long an unsettled order may stay unfound before it is refunded.
+     *
+     * An order upstream acknowledged (it gave an order id — a 202 whose
+     * payment is still clearing) gets a day: the domain only appears once the
+     * charge settles, and refunding in the meantime gives it away if it then
+     * does. An order whose answer we never heard gets the short window.
+     */
+    public static function settleWindowMinutes(DomainRegistration $row): int
+    {
+        return $row->remote_order_id ? self::ACCEPTED_TIMEOUT_MINUTES : self::SETTLE_TIMEOUT_MINUTES;
+    }
+
+    /**
+     * Register a domain that is paid for but was never registered.
+     *
+     * Uses the customer's own registrant profile — the whole point of the
+     * shop is that the domain is theirs — and never places a new order.
+     */
+    public function completeSetup(DomainRegistration $registration): bool
+    {
+        $contact = $registration->contact;
+
+        if (! $contact) {
+            $registration->update(['last_error' => 'setup impossible: the registrant record is missing']);
+
+            return false;
+        }
+
+        $whoisId = $this->ensureWhoisProfile($contact, $registration->tld);
+
+        if (! $whoisId) {
+            $registration->update(['last_error' => 'setup impossible: whois profile could not be created upstream']);
+
+            return false;
+        }
+
+        $result = $this->api->completeDomainSetup(
+            $registration->domain,
+            $whoisId,
+            $this->extraDetailsFor($contact, $registration->tld),
+        );
+
+        if ($result !== null && (int) $result['status_code'] < 300) {
+            $registration->update([
+                'status' => DomainRegistration::STATUS_REGISTERING,
+                'last_error' => null,
+                'last_polled_at' => now(),
+            ]);
+
+            try {
+                Cache::put('domain:setup-sent:' . $registration->id, now()->toIso8601String(), now()->addMinutes(20));
+            } catch (\Throwable) {
+                // Without the marker the worst case is one repeated setup call.
+            }
+
+            return true;
+        }
+
+        $registration->update([
+            'last_error' => 'setup rejected: ' . mb_substr((string) json_encode($result['body'] ?? $this->api->lastFailure()), 0, 500),
+        ]);
+
+        return false;
     }
 
     /**
@@ -351,8 +642,22 @@ class DomainRegistrarService
             throw new DomainPurchaseException('ต่ออายุได้จากรายการโดเมน ไม่ใช่จากรายการชำระเงิน');
         }
 
-        if ($domain->status !== DomainRegistration::STATUS_ACTIVE) {
+        // An expired domain is still renewable during the registry's grace
+        // period — that is exactly when a customer who missed the e-mails
+        // comes looking. If it is past saving, the registrar says no and the
+        // money goes straight back.
+        if (! in_array($domain->status, [DomainRegistration::STATUS_ACTIVE, DomainRegistration::STATUS_EXPIRED], true)) {
             throw new DomainPurchaseException('โดเมนนี้ยังใช้งานไม่ได้ จึงยังต่ออายุไม่ได้');
+        }
+
+        // Past the grace period a registry charges a restore fee on top — to
+        // our card, while the customer paid the ordinary renewal price. That
+        // one is a conversation with the team, not a button.
+        if (! $domain->withinRenewalGrace()) {
+            throw new DomainPurchaseException(sprintf(
+                'โดเมนนี้หมดอายุเกิน %d วันแล้ว ต่ออายุด้วยตัวเองไม่ได้ — กรุณาติดต่อทีมงานเพื่อกู้คืน (อาจมีค่าธรรมเนียมเพิ่ม)',
+                DomainRegistration::RENEW_GRACE_DAYS,
+            ));
         }
 
         if (! $domain->remote_subscription_id) {
@@ -368,11 +673,17 @@ class DomainRegistrarService
             throw new DomainPurchaseException('ขออภัย ราคาต่ออายุของนามสกุลนี้ยังไม่พร้อม กรุณาติดต่อทีมงาน');
         }
 
-        $renewal = $this->debitForRenewal($domain, $record, $price);
+        if (UpstreamBilling::isPaused()) {
+            throw new DomainPurchaseException(UpstreamBilling::customerMessage());
+        }
 
-        // Handed back by the idempotency guard: this period is already paid
-        // for and on its way. Do not buy it twice.
-        if ($renewal->status !== DomainRegistration::STATUS_PENDING) {
+        [$renewal, $created] = $this->debitForRenewal($domain, $record, $price);
+
+        // Handed back by the idempotency guard: another request owns this
+        // renewal — finished, or still talking to the registrar. Calling
+        // upstream from here too would renew twice, or refund a renewal that
+        // is about to succeed.
+        if (! $created) {
             return $renewal;
         }
 
@@ -383,19 +694,23 @@ class DomainRegistrarService
      * The money half. Same lock, same order, same idempotency key shape as a
      * registration — a renewal is a purchase and gets the same protections.
      */
+    /**
+     * @return array{0:DomainRegistration,1:bool} the renewal row, and whether THIS call created it
+     */
     protected function debitForRenewal(
         DomainRegistration $domain,
         DomainTld $record,
         float $price,
-    ): DomainRegistration {
+    ): array {
         $key = DomainRegistration::makeIdempotencyKey(
             $domain->user_id,
             $domain->domain,
             DomainRegistration::KIND_RENEW,
+            DomainRegistration::refundedAttemptsToday($domain->user_id, $domain->domain, DomainRegistration::KIND_RENEW),
         );
 
         try {
-            return DB::transaction(function () use ($domain, $record, $price, $key) {
+            return [DB::transaction(function () use ($domain, $record, $price, $key) {
                 $wallet = Wallet::getOrCreateForUser($domain->user_id);
                 $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
 
@@ -432,6 +747,9 @@ class DomainRegistrarService
                     // renewal the customer has already been charged for.
                     'privacy_protection' => (bool) $domain->privacy_protection,
                     'auto_renew' => false,
+                    // What "the date moved" is measured against if the answer
+                    // never comes back (see settleRenewal).
+                    'previous_expires_at' => $domain->expires_at,
                 ]);
 
                 $transaction = $wallet->pay(
@@ -449,12 +767,12 @@ class DomainRegistrarService
                 $renewal->update(['wallet_transaction_id' => $transaction->id]);
 
                 return $renewal;
-            }, 3);
+            }, 3), true];
         } catch (QueryException $e) {
             $existing = DomainRegistration::where('idempotency_key', $key)->first();
 
             if ($existing) {
-                return $existing;
+                return [$existing, false];
             }
 
             throw $e;
@@ -475,18 +793,48 @@ class DomainRegistrarService
         try {
             $result = $this->api->renewSubscription($domain->remote_subscription_id);
 
-            if ($result === null) {
-                return $this->failAndRefundRenewal($renewal, 'renew call returned no response');
+            $status = (int) ($result['status_code'] ?? 0);
+            $body = (array) ($result['body'] ?? []);
+
+            if ($this->api->lastOutcomeUnknown()) {
+                // May have gone through. The reconciliation job compares the
+                // registrar's expiry date with the one this was paid against.
+                UpstreamBilling::pauseIfPaymentTrouble($status, $body, 'domain renewal');
+
+                $renewal->update([
+                    'last_error' => 'renewal outcome unknown: ' . ($result === null
+                        ? 'the request timed out in transit'
+                        : 'HTTP ' . $status . ' ' . mb_substr((string) json_encode($body), 0, 300)),
+                    'last_polled_at' => now(),
+                ]);
+
+                return $renewal;
             }
 
-            $status = $result['status_code'] ?? 0;
+            if ($result === null) {
+                return $this->failAndRefundRenewal($renewal, 'renew call did not go out (' . ($this->api->lastFailure() ?? 'unknown') . ')');
+            }
 
             if ($status >= 400) {
                 return $this->failAndRefundRenewal(
                     $renewal,
-                    'upstream rejected the renewal: HTTP ' . $status . ' ' . json_encode($result['body'] ?? []),
-                    self::looksLikePaymentProblem($status, (array) ($result['body'] ?? [])),
+                    'upstream rejected the renewal: HTTP ' . $status . ' ' . json_encode($body),
+                    self::looksLikePaymentProblem($status, $body),
                 );
+            }
+
+            if ($status === 202) {
+                // Accepted, payment still clearing: NOT renewed yet. Moving
+                // the date now would promise a year that a declined charge
+                // later takes back. The reconciliation job confirms it when
+                // the registrar's date moves.
+                $renewal->update([
+                    'remote_order_id' => isset($body['id']) ? (string) $body['id'] : null,
+                    'last_error' => 'renewal accepted, payment still clearing (HTTP 202)',
+                    'last_polled_at' => now(),
+                ]);
+
+                return $renewal;
             }
 
             $renewal->fill([
@@ -498,6 +846,8 @@ class DomainRegistrarService
 
             $domain->forceFill([
                 'expires_at' => ($domain->expires_at ?? now())->copy()->addYear(),
+                // A domain renewed in its grace period is live again.
+                'status' => DomainRegistration::STATUS_ACTIVE,
                 // Arm next year's warning, and next year's reminders. Leaving
                 // the milestone list behind would mean a domain renewed once
                 // is never reminded about again.
@@ -520,7 +870,15 @@ class DomainRegistrarService
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->failAndRefundRenewal($renewal, 'exception: ' . $e->getMessage());
+            // The API client never throws, so this came from our own code
+            // AFTER the renewal was sent — upstream may have renewed before we
+            // fell over. Settled by the reconciliation job, not refunded here.
+            $renewal->update([
+                'last_error' => 'renewal outcome unknown: we crashed after sending it: ' . mb_substr($e->getMessage(), 0, 300),
+                'last_polled_at' => now(),
+            ]);
+
+            return $renewal;
         }
     }
 
@@ -575,10 +933,80 @@ class DomainRegistrarService
             ]);
         }, 3);
 
-        // After the transaction: an alert that throws must not undo a refund.
+        // After the transaction: a pause or an alert that throws must not
+        // undo a refund.
+        if ($paymentProblem) {
+            UpstreamBilling::pause('domain renewal refused: ' . $reason);
+        }
+
         $alert();
 
         return $renewal->fresh() ?? $renewal;
+    }
+
+    /**
+     * A renewal whose answer never came back (or came back "payment still
+     * clearing"): did the registrar's expiry date move? Called by the
+     * reconciliation job.
+     *
+     * 'unknown' is "could not ask" — never a reason to refund.
+     *
+     * @return 'confirmed'|'refunded'|'waiting'|'unknown'|'skip'
+     */
+    public function settleRenewal(DomainRegistration $renewal): string
+    {
+        $domain = $renewal->renewalOf;
+
+        if (! $domain || $renewal->kind !== DomainRegistration::KIND_RENEW || $renewal->status !== DomainRegistration::STATUS_PENDING) {
+            return 'skip';
+        }
+
+        // Measured against the date this renewal was paid against, not the
+        // domain's current one: the daily sync copies the registrar's date
+        // over as soon as the renewal lands, and a date is never later than
+        // itself — which used to refund renewals that had gone through.
+        $paidAgainst = $renewal->previous_expires_at ?? $domain->expires_at;
+
+        $details = $this->api->getDomain($domain->domain);
+
+        if (! is_array($details) || $details === []) {
+            return 'unknown';
+        }
+
+        $expires = null;
+
+        try {
+            $expires = isset($details['expires_at']) ? Carbon::parse($details['expires_at']) : null;
+        } catch (\Throwable) {
+        }
+
+        // Moved past the date it was paid against by more than a day: it went through.
+        if ($expires && $paidAgainst && $expires->gt($paidAgainst->copy()->addDay())) {
+            $renewal->update([
+                'status' => DomainRegistration::STATUS_ACTIVE,
+                'registered_at' => now(),
+                'expires_at' => $expires,
+                'last_error' => null,
+            ]);
+
+            $domain->forceFill([
+                'expires_at' => $expires,
+                'status' => DomainRegistration::STATUS_ACTIVE,
+                'renewal_notice_sent_at' => null,
+                'expiry_reminders_sent' => null,
+                'last_error' => null,
+            ])->save();
+
+            return 'confirmed';
+        }
+
+        if ($renewal->created_at->diffInMinutes(now()) >= self::settleWindowMinutes($renewal)) {
+            $this->failAndRefundRenewal($renewal, 'renewal outcome unknown and the expiry date never moved');
+
+            return 'refunded';
+        }
+
+        return 'waiting';
     }
 
     /**
@@ -670,6 +1098,13 @@ class DomainRegistrarService
         }, 3);
 
         $registration = $registration->fresh() ?? $registration;
+
+        // Our card was refused: every order after this one would be too.
+        // Stop taking money for a while instead of debiting and refunding
+        // customer after customer (see UpstreamBilling).
+        if ($paymentProblem) {
+            UpstreamBilling::pause('domain purchase refused: ' . $reason);
+        }
 
         // Outside the transaction: an alert that fails must not roll back a
         // refund that succeeded. Raised here rather than at the call sites so

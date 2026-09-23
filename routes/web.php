@@ -74,6 +74,7 @@ use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowCont
 use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\TwoFactorController as AdminTwoFactorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\VpsSettingController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
@@ -89,6 +90,7 @@ use App\Http\Controllers\Customer\AffiliateController;
 use App\Http\Controllers\Customer\DomainController as CustomerDomainController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
+use App\Http\Controllers\Customer\VpsController as CustomerVpsController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainOrderController;
@@ -116,6 +118,7 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
+use App\Http\Controllers\VpsController;
 use App\Http\Controllers\WinXToolsController;
 use App\Http\Controllers\XdreamerController;
 use App\Models\AdsTxtSetting;
@@ -354,6 +357,19 @@ Route::prefix('domains')->name('domains.')->group(function () {
         Route::post('/register/{domain}', [DomainOrderController::class, 'store'])
             ->where('domain', '[A-Za-z0-9.-]+')
             ->middleware('throttle:10,10')->name('register.store');
+    });
+});
+
+// ==================== เช่า VPS ====================
+// ขายในนามเรา ลูกค้าจ่ายจากกระเป๋าเงิน เราไปซื้อเครื่องให้ด้วยบัญชีของเรา
+// หน้าแพ็กเกจเปิดให้ทุกคน การสั่งซื้อต้องล็อกอิน และจำกัดอัตราเพราะใช้เงินจริง
+Route::prefix('vps')->name('vps.')->group(function () {
+    Route::get('/', [VpsController::class, 'index'])->name('index');
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/order/{plan:slug}', [VpsController::class, 'create'])->name('order');
+        Route::post('/order/{plan:slug}', [VpsController::class, 'store'])
+            ->middleware('throttle:6,10')->name('order.store');
     });
 });
 
@@ -600,6 +616,43 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('id')->middleware('throttle:5,10')->name('renew');
             Route::post('/{id}/privacy', [CustomerDomainController::class, 'togglePrivacy'])
                 ->whereNumber('id')->name('privacy');
+            // ปลดล็อก/ล็อกกันการย้ายออก — รหัสย้ายอย่างเดียวย้ายไม่ได้ถ้าโดเมนยังล็อก
+            Route::post('/{id}/lock', [CustomerDomainController::class, 'toggleLock'])
+                ->whereNumber('id')->middleware('throttle:10,10')->name('lock');
+            // ส่งต่อโดเมนไปลิงก์อื่น (301/302) ไม่ต้องมีโฮสติ้ง
+            Route::post('/{id}/forwarding', [CustomerDomainController::class, 'updateForwarding'])
+                ->whereNumber('id')->middleware('throttle:20,10')->name('forwarding');
+            // ย้อนโซน DNS กลับไปจุดที่เคยบันทึก — undo ของคนที่เผลอลบเรคคอร์ด
+            Route::post('/{id}/dns/restore/{snapshot}', [CustomerDomainController::class, 'restoreSnapshot'])
+                ->whereNumber('id')->whereNumber('snapshot')->middleware('throttle:10,10')->name('dns-restore');
+        });
+
+        // VPS ที่ลูกค้าเช่า — ทุกเส้นทางอ่านแถวด้วย user_id ของคนที่ล็อกอิน คนอื่นได้ 404
+        // ปุ่มที่แตะเครื่องจริง (ปิด/เปิด/รหัสผ่าน/ติดตั้งใหม่) จำกัดอัตราไว้ทุกตัว
+        Route::prefix('vps')->name('vps.')->group(function () {
+            Route::get('/', [CustomerVpsController::class, 'index'])->name('index');
+            Route::get('/{id}', [CustomerVpsController::class, 'show'])->whereNumber('id')->name('show');
+            Route::get('/{id}/status', [CustomerVpsController::class, 'status'])
+                ->whereNumber('id')->middleware('throttle:30,1')->name('status');
+            Route::post('/{id}/power', [CustomerVpsController::class, 'power'])
+                ->whereNumber('id')->middleware('throttle:10,10')->name('power');
+            Route::post('/{id}/password', [CustomerVpsController::class, 'password'])
+                ->whereNumber('id')->middleware('throttle:5,10')->name('password');
+            Route::post('/{id}/hostname', [CustomerVpsController::class, 'hostname'])
+                ->whereNumber('id')->middleware('throttle:5,10')->name('hostname');
+            Route::post('/{id}/reinstall', [CustomerVpsController::class, 'reinstall'])
+                ->whereNumber('id')->middleware('throttle:3,30')->name('reinstall');
+            Route::post('/{id}/snapshot', [CustomerVpsController::class, 'snapshot'])
+                ->whereNumber('id')->middleware('throttle:6,30')->name('snapshot');
+            Route::post('/{id}/backups/{backup}/restore', [CustomerVpsController::class, 'restoreBackup'])
+                ->whereNumber('id')->whereNumber('backup')->middleware('throttle:3,30')->name('backup-restore');
+            Route::post('/{id}/point-domain', [CustomerVpsController::class, 'pointDomain'])
+                ->whereNumber('id')->middleware('throttle:10,10')->name('point-domain');
+            Route::post('/{id}/auto-renew', [CustomerVpsController::class, 'toggleAutoRenew'])
+                ->whereNumber('id')->name('auto-renew');
+            // ต่ออายุเองตอนนี้ — ตัดกระเป๋าเงินทันที เส้นทางเงินเดียวกับตัวตัดอัตโนมัติ
+            Route::post('/{id}/renew', [CustomerVpsController::class, 'renew'])
+                ->whereNumber('id')->middleware('throttle:5,10')->name('renew');
         });
 
         // Projects (Order progress tracking)
@@ -1538,6 +1591,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/domains/sync', [DomainSettingController::class, 'syncCatalogue'])->name('domains.sync');
     Route::post('/domains/tld/{id}', [DomainSettingController::class, 'updateTld'])->whereNumber('id')->name('domains.tld');
     Route::post('/domains/tlds/bulk', [DomainSettingController::class, 'bulkTlds'])->name('domains.tlds.bulk');
+    // ผูกโดเมนกับ subscription ที่ผู้ให้บริการเอง เมื่อระบบหาให้ไม่เจอ — ไม่ผูก = ต่ออายุจากกระเป๋าไม่ได้
+    Route::post('/domains/registrations/{id}/subscription', [DomainSettingController::class, 'linkSubscription'])
+        ->whereNumber('id')->name('domains.link-subscription');
+
+    // สุขภาพการจ่ายเงินให้ผู้ให้บริการ (บัตรในบัญชี Hostinger) — ใช้ร่วมทั้งโดเมนและ VPS
+    Route::post('/upstream-billing/check', [VpsSettingController::class, 'checkBilling'])->name('upstream-billing.check');
+    Route::post('/upstream-billing/resume', [VpsSettingController::class, 'resumeSales'])->name('upstream-billing.resume');
+
+    // ระบบเช่า VPS — ราคา แพ็กเกจ และรายการเครื่องของลูกค้า
+    Route::get('/vps', [VpsSettingController::class, 'index'])->name('vps.index');
+    Route::post('/vps', [VpsSettingController::class, 'update'])->name('vps.update');
+    Route::post('/vps/sync', [VpsSettingController::class, 'syncCatalogue'])->name('vps.sync');
+    Route::post('/vps/plans/{id}', [VpsSettingController::class, 'updatePlan'])->whereNumber('id')->name('vps.plan');
+    Route::post('/vps/instances/{id}/retry', [VpsSettingController::class, 'retry'])->whereNumber('id')->name('vps.retry');
+    Route::post('/vps/instances/{id}/refund', [VpsSettingController::class, 'refund'])->whereNumber('id')->name('vps.refund');
 
     Route::get('/kyc', [App\Http\Controllers\Admin\KycController::class, 'index'])->name('kyc.index');
     Route::get('/kyc/{id}', [App\Http\Controllers\Admin\KycController::class, 'show'])->whereNumber('id')->name('kyc.show');

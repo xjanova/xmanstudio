@@ -43,6 +43,25 @@ class HostingerApiService
 
     protected const RATE_LIMIT_KEY = 'hostinger-api';
 
+    /**
+     * Why the last call came back null, when it did.
+     *
+     * Most callers only need "it failed". The purchase paths need more: a
+     * request that never left (no token, our own limiter, upstream's 429) bought
+     * nothing and can be refunded on the spot, but one that timed out in transit
+     * may have gone through upstream with our card — refunding that one hands
+     * the customer the product and their money back. 'transport' (the request
+     * left and no answer came) and 'server_error' (upstream fell over, maybe
+     * after taking the order) mean "we do not know"; 'unreachable' (DNS or
+     * connection refused) never got as far as upstream.
+     *
+     * @var 'unconfigured'|'rate_limited'|'throttled_upstream'|'unreachable'|'transport'|'server_error'|'http'|null
+     */
+    protected ?string $lastFailure = null;
+
+    /** HTTP status of the last response, or null when no response came back. */
+    protected ?int $lastStatus = null;
+
     protected string $apiToken;
 
     public function __construct()
@@ -53,6 +72,34 @@ class HostingerApiService
     public function isConfigured(): bool
     {
         return $this->apiToken !== '';
+    }
+
+    /**
+     * True when the last call may have reached upstream without us hearing
+     * the answer — the one failure a purchase must not refund blindly.
+     */
+    public function lastOutcomeUnknown(): bool
+    {
+        return in_array($this->lastFailure, ['transport', 'server_error'], true);
+    }
+
+    public function lastFailure(): ?string
+    {
+        return $this->lastFailure;
+    }
+
+    /**
+     * Did the last lookup answer "there is no such thing" — as opposed to not
+     * answering at all?
+     *
+     * The difference decides refunds. A 404 is upstream saying the domain or
+     * machine does not exist; a timeout, our own rate limiter or a 5xx says
+     * nothing about it, and refunding on that is refunding something that may
+     * well have been bought.
+     */
+    public function lastWasNotFound(): bool
+    {
+        return $this->lastStatus === 404;
     }
 
     // ---------------------------------------------------------------- domains
@@ -194,6 +241,70 @@ class HostingerApiService
     public function disableDomainLock(string $domain): bool
     {
         return $this->delete("/api/domains/v1/portfolio/{$domain}/domain-lock") !== null;
+    }
+
+    /**
+     * Register a domain that is paid for but not registered.
+     *
+     * This is what a 202 from purchaseDomain() leaves behind: once upstream's
+     * payment clears, the domain lands in the portfolio as `pending_setup` and
+     * stays there — paid for with our card, registered to nobody — until this
+     * is called. No new order is placed and nothing is charged.
+     *
+     * @param  array<string,mixed>  $additionalDetails
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function completeDomainSetup(string $domain, int $whoisId, array $additionalDetails = []): ?array
+    {
+        $payload = [
+            'domain_contacts' => [
+                'owner_id' => $whoisId,
+                'admin_id' => $whoisId,
+                'billing_id' => $whoisId,
+                'tech_id' => $whoisId,
+            ],
+        ];
+
+        if ($additionalDetails !== []) {
+            $payload['additional_details'] = $additionalDetails;
+        }
+
+        return $this->request('post', "/api/domains/v1/portfolio/{$domain}/setup", $payload, withStatus: true);
+    }
+
+    /**
+     * Where the domain redirects to, if anywhere.
+     *
+     * @return array<string,mixed>|null null when there is no forwarding (or the call failed)
+     */
+    public function getForwarding(string $domain): ?array
+    {
+        return $this->get("/api/domains/v1/forwarding/{$domain}");
+    }
+
+    /**
+     * Point the whole domain at another URL. Creates the forwarding when there
+     * is none and replaces it when there is — the caller does not have to know
+     * which, and asking first would cost a call from a 90-a-minute budget.
+     *
+     * @param  '301'|'302'  $type
+     */
+    public function saveForwarding(string $domain, string $url, string $type): bool
+    {
+        $body = ['redirect_type' => $type, 'redirect_url' => $url];
+
+        $updated = $this->request('put', "/api/domains/v1/forwarding/{$domain}", $body, withStatus: true);
+
+        if ($updated !== null && $updated['status_code'] < 300) {
+            return true;
+        }
+
+        return $this->post('/api/domains/v1/forwarding', ['domain' => $domain] + $body) !== null;
+    }
+
+    public function deleteForwarding(string $domain): bool
+    {
+        return $this->delete("/api/domains/v1/forwarding/{$domain}") !== null;
     }
 
     // ----------------------------------------------------------------- whois
@@ -356,6 +467,201 @@ class HostingerApiService
         return $this->request('post', "/api/dns/v1/snapshots/{$domain}/{$snapshotId}/restore", []) !== null;
     }
 
+    // ------------------------------------------------------------------- vps
+
+    /**
+     * Every virtual machine on the account — ours and the ones we sold.
+     *
+     * @return array<int,array<string,mixed>>|null
+     */
+    public function listVirtualMachines(): ?array
+    {
+        return $this->get('/api/vps/v1/virtual-machines');
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    public function getVirtualMachine(int $vmId): ?array
+    {
+        return $this->get("/api/vps/v1/virtual-machines/{$vmId}");
+    }
+
+    /**
+     * Buy a VPS and install it in one call.
+     *
+     * 200 carries both the order and the machine. 202 means upstream's payment
+     * is still clearing and the machine was NOT set up: it appears later in
+     * `initial` state and has to be set up with setupVirtualMachine(). Never
+     * resend on a 202 — the order already exists.
+     *
+     * @param  array<string,mixed>  $setup  template_id, data_center_id, hostname, password, public_key…
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function purchaseVirtualMachine(string $itemId, array $setup, ?int $paymentMethodId = null): ?array
+    {
+        $payload = ['item_id' => $itemId, 'setup' => $setup];
+
+        if ($paymentMethodId) {
+            $payload['payment_method_id'] = $paymentMethodId;
+        }
+
+        return $this->request('post', '/api/vps/v1/virtual-machines', $payload, withStatus: true);
+    }
+
+    /**
+     * Install a machine that was paid for but never set up (state `initial`).
+     *
+     * @param  array<string,mixed>  $setup
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function setupVirtualMachine(int $vmId, array $setup): ?array
+    {
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/setup", $setup, withStatus: true);
+    }
+
+    /**
+     * start, stop or restart. Stopping does not stop billing — nothing here does.
+     *
+     * @param  'start'|'stop'|'restart'  $action
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function powerVirtualMachine(int $vmId, string $action): ?array
+    {
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/{$action}", [], withStatus: true);
+    }
+
+    /**
+     * Reinstall the operating system. Destroys everything on the disk and any
+     * snapshot with it.
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function recreateVirtualMachine(int $vmId, int $templateId, ?string $password = null): ?array
+    {
+        $payload = ['template_id' => $templateId];
+
+        if ($password !== null && $password !== '') {
+            $payload['password'] = $password;
+        }
+
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/recreate", $payload, withStatus: true);
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function setVirtualMachineHostname(int $vmId, string $hostname): ?array
+    {
+        return $this->request('put', "/api/vps/v1/virtual-machines/{$vmId}/hostname", ['hostname' => $hostname], withStatus: true);
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function setVirtualMachineRootPassword(int $vmId, string $password): ?array
+    {
+        return $this->request('put', "/api/vps/v1/virtual-machines/{$vmId}/root-password", ['password' => $password], withStatus: true);
+    }
+
+    /**
+     * Reverse DNS for one of the machine's addresses.
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function setVirtualMachinePtr(int $vmId, int $ipAddressId, string $domain): ?array
+    {
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/ptr/{$ipAddressId}", ['domain' => $domain], withStatus: true);
+    }
+
+    /**
+     * CPU, RAM, disk, traffic and uptime between two moments — each series a
+     * map of unix timestamp => value.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function getVirtualMachineMetrics(int $vmId, \DateTimeInterface $from, \DateTimeInterface $to): ?array
+    {
+        return $this->get("/api/vps/v1/virtual-machines/{$vmId}/metrics", [
+            'date_from' => $from->format('Y-m-d\TH:i:s\Z'),
+            'date_to' => $to->format('Y-m-d\TH:i:s\Z'),
+        ]);
+    }
+
+    /**
+     * The single snapshot a machine can hold, or null when it has none.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function getVirtualMachineSnapshot(int $vmId): ?array
+    {
+        return $this->get("/api/vps/v1/virtual-machines/{$vmId}/snapshot");
+    }
+
+    /**
+     * Take a snapshot. There is only ever one: this overwrites the last.
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function createVirtualMachineSnapshot(int $vmId): ?array
+    {
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/snapshot", [], withStatus: true);
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function restoreVirtualMachineSnapshot(int $vmId): ?array
+    {
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/snapshot/restore", [], withStatus: true);
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function deleteVirtualMachineSnapshot(int $vmId): ?array
+    {
+        return $this->request('delete', "/api/vps/v1/virtual-machines/{$vmId}/snapshot", [], withStatus: true);
+    }
+
+    /**
+     * The weekly automatic backups.
+     *
+     * @return array<int,array<string,mixed>>|null
+     */
+    public function getVirtualMachineBackups(int $vmId): ?array
+    {
+        return $this->get("/api/vps/v1/virtual-machines/{$vmId}/backups");
+    }
+
+    /**
+     * Overwrite the whole disk with a backup.
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function restoreVirtualMachineBackup(int $vmId, int $backupId): ?array
+    {
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/backups/{$backupId}/restore", [], withStatus: true);
+    }
+
+    /**
+     * Operating systems and one-click apps a machine can be installed with.
+     *
+     * @return array<int,array<string,mixed>>|null
+     */
+    public function getVpsTemplates(): ?array
+    {
+        return $this->get('/api/vps/v1/templates');
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>|null
+     */
+    public function getVpsDataCenters(): ?array
+    {
+        return $this->get('/api/vps/v1/data-centers');
+    }
+
     // --------------------------------------------------------------- plumbing
 
     /**
@@ -406,8 +712,12 @@ class HostingerApiService
      */
     protected function request(string $method, string $path, array $payload = [], bool $withStatus = false): ?array
     {
+        $this->lastFailure = null;
+        $this->lastStatus = null;
+
         if (! $this->isConfigured()) {
             Log::warning('[HostingerApi] no API token configured', ['path' => $path]);
+            $this->lastFailure = 'unconfigured';
 
             return null;
         }
@@ -417,15 +727,18 @@ class HostingerApiService
                 'path' => $path,
                 'available_in' => RateLimiter::availableIn(self::RATE_LIMIT_KEY),
             ]);
+            $this->lastFailure = 'rate_limited';
 
             return null;
         }
 
         RateLimiter::hit(self::RATE_LIMIT_KEY, 60);
 
+        $isRead = strtolower($method) === 'get';
+
         try {
-            $response = $this->client()->send(strtoupper($method), $this->baseUrl . $path, [
-                strtolower($method) === 'get' ? 'query' : 'json' => $payload,
+            $response = $this->client(retry: $isRead)->send(strtoupper($method), $this->baseUrl . $path, [
+                $isRead ? 'query' : 'json' => $payload,
             ]);
         } catch (\Throwable $e) {
             // The message can contain the URL but never the Authorization
@@ -435,9 +748,12 @@ class HostingerApiService
                 'method' => $method,
                 'error' => $e->getMessage(),
             ]);
+            $this->lastFailure = $this->neverReachedServer($e) ? 'unreachable' : 'transport';
 
             return null;
         }
+
+        $this->lastStatus = $response->status();
 
         if ($response->status() === 429) {
             Log::warning('[HostingerApi] upstream 429', [
@@ -448,6 +764,7 @@ class HostingerApiService
             // Burn the local budget so the next caller backs off too, rather
             // than each of them discovering the block separately.
             RateLimiter::hit(self::RATE_LIMIT_KEY, 60, self::RATE_LIMIT_PER_MINUTE);
+            $this->lastFailure = 'throttled_upstream';
 
             return null;
         }
@@ -459,6 +776,9 @@ class HostingerApiService
                 'status' => $response->status(),
                 'body' => $this->loggableBody($path, $response->body()),
             ]);
+            // A 5xx is upstream falling over mid-request, which can be after
+            // it placed the order: as unknown as a timeout, not a refusal.
+            $this->lastFailure = $response->serverError() ? 'server_error' : 'http';
 
             return $withStatus
                 ? ['status_code' => $response->status(), 'body' => $this->decode($response)]
@@ -488,6 +808,14 @@ class HostingerApiService
             }
         }
 
+        // The VPS calls that take a root password. A validation error echoes
+        // the rejected fields back, and a password in last week's log is a
+        // password in every copy of that log.
+        if (str_starts_with($path, '/api/vps/v1/virtual-machines')
+            && preg_match('#/virtual-machines(/\d+/(setup|recreate|root-password|panel-password|recovery))?$#', $path)) {
+            return '[redacted: response on a path that carries a root password]';
+        }
+
         return mb_substr($body, 0, 1000);
     }
 
@@ -512,18 +840,54 @@ class HostingerApiService
         return $json;
     }
 
-    protected function client(): PendingRequest
+    /**
+     * Did this transport failure happen before the request reached upstream?
+     *
+     * cURL reports a DNS failure (6) or a refused connection (7) before a byte
+     * was sent — nothing can have been bought. Every other failure — above all
+     * a timeout (28) or an empty reply (52) — may have arrived after upstream
+     * took the order, and counts as "we do not know".
+     */
+    protected function neverReachedServer(\Throwable $e): bool
     {
-        return Http::withToken($this->apiToken)
+        for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
+            if (method_exists($cause, 'getHandlerContext')) {
+                $errno = (int) ($cause->getHandlerContext()['errno'] ?? 0);
+
+                if ($errno === 6 || $errno === 7) {
+                    return true;
+                }
+            }
+
+            $message = strtolower($cause->getMessage());
+
+            if (str_contains($message, 'could not resolve host') || str_contains($message, 'failed to connect')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function client(bool $retry = false): PendingRequest
+    {
+        $client = Http::withToken($this->apiToken)
             ->acceptJson()
             ->asJson()
             ->timeout(30)
-            ->connectTimeout(10)
-            // Retries are for the network dropping, not for a refusal. A 4xx
-            // is never retried: replaying a purchase that was rejected for
-            // business reasons is how you buy the same domain twice.
-            ->retry(2, 500, function ($exception, $request) {
+            ->connectTimeout(10);
+
+        // Only reads are retried. The client counts a timeout AFTER the request
+        // went out as a connection failure too, so retrying a POST replays an
+        // order upstream may already have taken: a second server bought with
+        // our card, or "domain not available" back for the one we just got —
+        // and a refund to a customer who has it. A 4xx is never retried either.
+        if ($retry) {
+            $client->retry(2, 500, function ($exception, $request) {
                 return $exception instanceof ConnectionException;
             }, throw: false);
+        }
+
+        return $client;
     }
 }

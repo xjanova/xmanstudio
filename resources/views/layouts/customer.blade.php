@@ -115,6 +115,14 @@
                     </svg>
                     <x-bi th="โดเมนของฉัน" en="My domains" layout="stack" />
                 </a>
+                {{-- เซิร์ฟเวอร์ที่ลูกค้าเช่า — สองไฟล์ × สองบล็อก = สี่จุด เหมือนโดเมน --}}
+                <a href="{{ route('customer.vps.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.vps.*') ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/>
+                    </svg>
+                    <x-bi th="VPS ของฉัน" en="My servers" layout="stack" />
+                </a>
 
                 {{-- เครื่องที่คนเอาการ์ดจอมาแชร์ เข้าถึงได้จากเมนู ไม่ใช่ต้องจำ URL --}}
                 <a href="{{ route('gpuxmine.index') }}"
@@ -404,6 +412,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
                     </svg>
                     <x-bi th="โดเมนของฉัน" en="My domains" layout="stack" />
+                </a>
+                {{-- เซิร์ฟเวอร์ที่ลูกค้าเช่า — สองไฟล์ × สองบล็อก = สี่จุด เหมือนโดเมน --}}
+                <a href="{{ route('customer.vps.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.vps.*') ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/>
+                    </svg>
+                    <x-bi th="VPS ของฉัน" en="My servers" layout="stack" />
                 </a>
 
                 <a href="{{ route('gpuxmine.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('gpuxmine.*') ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-amber-500 hover:to-yellow-500 hover:text-white hover:shadow-lg' }}">
