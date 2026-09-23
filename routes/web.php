@@ -116,6 +116,7 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
+use App\Http\Controllers\WinXToolsController;
 use App\Http\Controllers\XdreamerController;
 use App\Models\AdsTxtSetting;
 use App\Models\AiCrawlSetting;
@@ -317,6 +318,14 @@ Route::prefix('chanthra-studio')->name('chanthra-studio.')->group(function () {
     Route::get('/pricing', [ChanthraStudioWebController::class, 'pricing'])->name('pricing');
     Route::get('/download', [ChanthraStudioWebController::class, 'downloadPage'])->name('download');
 });
+
+// WinXTools (Windows) - ดาวน์โหลดสาธารณะ ไฟล์เดียวทั้ง Free/Pro (Pro ปลดล็อกในแอปด้วย license key)
+// แอปอัปเดตตัวเองผ่าน URL นี้ด้วย · ผูกกับ winx-tools ตายตัว ห้ามทำเป็น {slug}
+// (จะเปิดให้โหลดสินค้าตัวอื่นที่ต้องซื้อก่อนได้ฟรี)
+Route::get('/winx-tools/download/{version?}', [WinXToolsController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1')
+    ->name('winx-tools.download');
 
 // Services
 Route::get('/services', [ProductController::class, 'services'])->name('services.index');

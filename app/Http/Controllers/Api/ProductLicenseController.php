@@ -37,6 +37,35 @@ class ProductLicenseController extends Controller
         ],
     ];
 
+    /** อายุของแต่ละแผน (วัน) ที่ pricing() บอกแอป — null = ใช้ได้ตลอด */
+    private const PLAN_DURATION_DAYS = [
+        'monthly' => 30,
+        'yearly' => 365,
+        'lifetime' => null,
+    ];
+
+    /**
+     * ระยะทดลองใช้ (วัน) รายผลิตภัณฑ์ — ตัวที่ไม่อยู่ในนี้ได้ 1 วัน (24 ชม.) เท่าเดิม
+     */
+    private const TRIAL_DAYS = [
+        // แอปบอกลูกค้าไว้ว่าทดลอง Pro ได้ 48 ชั่วโมง
+        'winx-tools' => 2,
+    ];
+
+    /**
+     * ทดลองได้ครั้งเดียวต่อฮาร์ดแวร์ ไม่ใช่ต่อ machine_id
+     *
+     * machine_id ของ WinXTools มาจาก MachineGuid ของ Windows — ลง Windows ใหม่ได้ machine_id ใหม่
+     * = เครื่องใหม่ = ทดลองใหม่ได้อีกรอบ แต่ hardware_hash (SMBIOS UUID + serial ของบอร์ด/เครื่อง)
+     * ยังเท่าเดิม จึงใช้ตัวนี้ผูกสิทธิ์ทดลองแทน
+     *
+     * เฉพาะผลิตภัณฑ์ในรายการนี้ — แอป Android บางตัวส่ง hash ระดับรุ่นเครื่อง (ทุกเครื่องรุ่นเดียวกัน
+     * ได้ค่าเดียวกัน) ถ้าใช้กฎนี้กับทุกตัวจะตัดสิทธิ์ลูกค้าจริงจำนวนมาก
+     */
+    private const HARDWARE_BOUND_TRIAL_PRODUCTS = [
+        'winx-tools',
+    ];
+
     /**
      * Get product by slug or fail
      */
@@ -170,6 +199,17 @@ class ProductLicenseController extends Controller
         }
         $device->update($updateData);
 
+        // ฮาร์ดแวร์นี้เคยทดลองแล้วในชื่อเครื่องอื่น (เช่นลง Windows ใหม่) — ไม่ให้ทดลองซ้ำ
+        // ตรวจก่อน abuse check และไม่ติดธง suspicious/blocked: ลูกค้าที่ลงเครื่องใหม่ไม่ได้โกง แค่ใช้สิทธิ์ไปแล้ว
+        if ($this->trialUsedOnThisHardware($product, $device, $validated['hardware_hash'] ?? null)) {
+            return response()->json([
+                'success' => false,
+                'server_time' => now()->toISOString(),
+                'error_code' => 'TRIAL_USED_ON_THIS_HARDWARE',
+                'message' => 'เครื่องนี้เคยใช้สิทธิ์ทดลองใช้ไปแล้ว',
+            ], 403);
+        }
+
         // Check for abuse
         $abuseCheck = $device->checkTrialAbuse();
         if ($abuseCheck['is_abuse']) {
@@ -212,8 +252,8 @@ class ProductLicenseController extends Controller
             ], 403);
         }
 
-        // Start trial (24 hours)
-        $trialDays = 1;
+        // Start trial — 24 ชม. เว้นแต่ผลิตภัณฑ์กำหนดไว้เองใน TRIAL_DAYS
+        $trialDays = self::TRIAL_DAYS[$product->slug] ?? 1;
         if (! $device->startTrial($trialDays)) {
             return response()->json([
                 'success' => false,
@@ -323,12 +363,16 @@ class ProductLicenseController extends Controller
             }
         }
 
+        // ฮาร์ดแวร์นี้เคยทดลองแล้วในชื่อเครื่องอื่น → บอกแอปตั้งแต่ตรงนี้ว่าใช้สิทธิ์ไปแล้ว ไม่ต้องยิง /demo
+        // (แอปไม่ต้องส่ง hardware_hash มาที่นี่ก็ได้ ใช้ค่าที่ register-device เก็บไว้กับเครื่อง)
+        $usedOnThisHardware = $this->trialUsedOnThisHardware($product, $device, $request->input('hardware_hash'));
+
         if (! $device) {
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'has_used_demo' => false,
-                    'can_start_demo' => true,
+                    'has_used_demo' => $usedOnThisHardware,
+                    'can_start_demo' => ! $usedOnThisHardware,
                 ],
             ]);
         }
@@ -339,8 +383,8 @@ class ProductLicenseController extends Controller
             'success' => true,
             'server_time' => now()->toISOString(),
             'data' => [
-                'has_used_demo' => $device->trial_attempts > 0,
-                'can_start_demo' => $device->canStartTrial(),
+                'has_used_demo' => $device->trial_attempts > 0 || $usedOnThisHardware,
+                'can_start_demo' => $device->canStartTrial() && ! $usedOnThisHardware,
                 'is_trial_active' => $isTrialActive,
                 'trial_info' => $device->trial_expires_at ? [
                     'expires_at' => $device->trial_expires_at->toISOString(),
@@ -356,6 +400,37 @@ class ProductLicenseController extends Controller
                 ] : ['eligible' => false],
             ],
         ]);
+    }
+
+    /**
+     * สิทธิ์ทดลองของฮาร์ดแวร์นี้ถูกใช้ไปแล้วบนเครื่องอื่น (machine_id อื่น) หรือยัง
+     *
+     * เฉพาะผลิตภัณฑ์ใน HARDWARE_BOUND_TRIAL_PRODUCTS — ตัวอื่นได้ false เสมอ (พฤติกรรมเดิม)
+     * ใช้ hardware_hash ที่ส่งมากับคำขอก่อน ไม่มีค่อยใช้ค่าที่เครื่องนี้ลงทะเบียนไว้ ไม่มีทั้งคู่ = ไม่ตัดสิทธิ์
+     * (แอปส่ง null เมื่อ firmware เป็นค่าขยะ ดีกว่าให้หลายเครื่องได้ hash เดียวกันแล้วโดนตัดสิทธิ์พร้อมกัน)
+     */
+    private function trialUsedOnThisHardware(Product $product, ?ProductDevice $device, mixed $hardwareHash): bool
+    {
+        if (! in_array($product->slug, self::HARDWARE_BOUND_TRIAL_PRODUCTS, true)) {
+            return false;
+        }
+
+        if (! is_string($hardwareHash) || $hardwareHash === '' || strlen($hardwareHash) > 64) {
+            $hardwareHash = $device?->hardware_hash;
+        }
+
+        if (empty($hardwareHash)) {
+            return false;
+        }
+
+        return ProductDevice::where('product_id', $product->id)
+            ->where('hardware_hash', $hardwareHash)
+            ->when($device, fn ($query) => $query->where('id', '!=', $device->id))
+            ->where(function ($query) {
+                $query->whereNotNull('first_trial_at')
+                    ->orWhere('trial_attempts', '>', 0);
+            })
+            ->exists();
     }
 
     /**
@@ -995,7 +1070,16 @@ class ProductLicenseController extends Controller
             ], 404);
         }
 
-        $pricing = $this->getPricingForProduct($productSlug);
+        // เฉพาะแผนที่ผลิตภัณฑ์นี้ขายจริง ตามลำดับที่ประกาศไว้ (WinXTools มีแค่ lifetime)
+        $plans = [];
+        foreach ($this->getPricingForProduct($product->slug) as $type => $plan) {
+            $plans[$type] = [
+                'price' => $plan['original'],
+                'currency' => $plan['currency'],
+                'duration_days' => self::PLAN_DURATION_DAYS[$type],
+                'features' => $this->getFeaturesByType($productSlug, $type),
+            ];
+        }
 
         return response()->json([
             'success' => true,
@@ -1004,26 +1088,9 @@ class ProductLicenseController extends Controller
                     'name' => $product->name,
                     'slug' => $product->slug,
                 ],
-                'plans' => [
-                    'monthly' => [
-                        'price' => $pricing['monthly']['original'],
-                        'currency' => $pricing['monthly']['currency'],
-                        'duration_days' => 30,
-                        'features' => $this->getFeaturesByType($productSlug, 'monthly'),
-                    ],
-                    'yearly' => [
-                        'price' => $pricing['yearly']['original'],
-                        'currency' => $pricing['yearly']['currency'],
-                        'duration_days' => 365,
-                        'features' => $this->getFeaturesByType($productSlug, 'yearly'),
-                    ],
-                    'lifetime' => [
-                        'price' => $pricing['lifetime']['original'],
-                        'currency' => $pricing['lifetime']['currency'],
-                        'duration_days' => null,
-                        'features' => $this->getFeaturesByType($productSlug, 'lifetime'),
-                    ],
-                ],
+                'plans' => $plans,
+                // หน้าเว็บที่ซื้อได้ — null ถ้าสินค้าปิดขายอยู่ (หน้าสินค้าตอบ 404)
+                'purchase_url' => $product->is_active ? route('products.show', $product->slug) : null,
             ],
         ]);
     }
@@ -1054,11 +1121,18 @@ class ProductLicenseController extends Controller
 
     /**
      * Get pricing for product
+     *
+     * คืนเฉพาะแผนที่ผลิตภัณฑ์นั้นขาย — pricing() ส่งให้แอปตามนี้ทุกแผน ไม่เติมแผนที่ไม่มีให้
      */
     private function getPricingForProduct(string $productSlug): array
     {
         // Per-product pricing overrides
         $productPricing = [
+            // จ่ายครั้งเดียว ใช้ได้ตลอด — ราคาเดียวกับหน้า products/winxtools และ
+            // CartController::LICENSE_TERM_PRICES แก้ต้องแก้พร้อมกัน
+            'winx-tools' => [
+                'lifetime' => ['original' => 199, 'currency' => 'THB'],
+            ],
             'smschecker' => [
                 'monthly' => ['original' => 499, 'currency' => 'THB'],
                 'yearly' => ['original' => 4990, 'currency' => 'THB'],

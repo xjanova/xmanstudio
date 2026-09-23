@@ -75,12 +75,10 @@ class LicenseService
                 continue;
             }
 
-            // An avatar pack is bought outright, not rented. A yearly license
-            // would take a pack the customer paid for off their device a year
-            // later - it drops out of the app's owned list the moment it
-            // expires, with nothing to explain why. An explicit license_type
-            // on the order item still wins over this.
-            $licenseType = $item->product->avatarPack()->exists() ? 'lifetime' : 'yearly';
+            // Yearly unless the product is bought outright (an avatar pack,
+            // WinXTools) - see Product::defaultLicenseType(). An explicit
+            // license_type on the order item still wins over this.
+            $licenseType = $item->product->defaultLicenseType();
 
             if ($item->custom_requirements) {
                 $requirements = json_decode($item->custom_requirements, true);

@@ -84,7 +84,18 @@ class GithubReleaseService
             return $current;
         }
 
-        $release = $this->fetchLatestRelease($githubSetting);
+        try {
+            $release = $this->fetchLatestRelease($githubSetting);
+        } catch (\Throwable $e) {
+            // ต่อ GitHub ไม่ติดเลย (timeout/DNS) HTTP client โยน ConnectionException ออกมา — เดิมหลุดขึ้นไป
+            // ทำให้ /update/check ของทุกผลิตภัณฑ์ตอบ 500 · สัญญาของ method นี้คือคืนค่าจาก DB แทน
+            Log::warning('GitHub unreachable during read-through release check', [
+                'product' => $product->slug,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $current;
+        }
         $tag = $release['tag_name'] ?? null;
 
         if (! $tag) {
@@ -274,15 +285,47 @@ class GithubReleaseService
         };
 
         $response = $this->githubRequest($githubSetting, fn (bool $withToken) => Http::withHeaders($buildHeaders($withToken))
+            ->timeout(15)
             ->withOptions([
                 'allow_redirects' => false,
+                // ต้องการแค่ header Location — ถ้า GitHub เลือกส่งตัวไฟล์มาเลย (200) ก็ไม่ดึงเนื้อไฟล์
+                // หลายสิบ MB เข้าหน่วยความจำของ PHP
+                'stream' => true,
             ])->get($url));
 
-        if ($response->status() === 302) {
-            return $response->header('Location');
+        if ($response->redirect()) {
+            return $response->header('Location') ?: null;
         }
 
         return null;
+    }
+
+    /**
+     * ลิงก์โหลดชั่วคราวที่ GitHub เซ็นให้ สำหรับไฟล์ของเวอร์ชันนี้
+     *
+     * ส่งให้ลูกค้าเปิดเองได้เลย ในลิงก์ไม่มี token ของเรา — ต่างจาก downloadAsset() ที่ดึงไฟล์
+     * ผ่านเซิร์ฟเวอร์ ซึ่งไฟล์ใหญ่จะกิน PHP worker ไว้ตลอดเวลาที่ลูกค้าโหลด
+     * คืน null เมื่อเวอร์ชันนี้ไม่ได้มาจาก asset ของ GitHub หรือ GitHub ไม่ให้ลิงก์
+     */
+    public function signedDownloadUrl(GithubSetting $githubSetting, ProductVersion $version): ?string
+    {
+        $assetId = $this->releaseAssetId($version);
+
+        return $assetId ? $this->getAssetDownloadUrl($githubSetting, $assetId) : null;
+    }
+
+    /**
+     * เลข asset ของไฟล์เวอร์ชันนี้บน GitHub
+     *
+     * เวอร์ชันที่ sync มาเก็บ URL ของ asset API (…/releases/assets/<id>) ไว้ใน github_release_url
+     * แต่ถ้า release นั้นไม่มี asset จะเป็นหน้า release (html_url) และเวอร์ชันที่สร้างมือในหน้า admin
+     * เป็นลิงก์อะไรก็ได้ — สองแบบหลังไม่ใช่ไฟล์บน GitHub คืน null
+     */
+    public function releaseAssetId(ProductVersion $version): ?int
+    {
+        return preg_match('#^https://api\.github\.com/repos/[^/]+/[^/]+/releases/assets/(\d+)$#', (string) $version->github_release_url, $m)
+            ? (int) $m[1]
+            : null;
     }
 
     /**
@@ -301,12 +344,22 @@ class GithubReleaseService
             'version' => $version,
             'github_release_id' => $release['id'],
             'github_release_url' => $asset ? $asset['url'] : $release['html_url'],
+            // ลิงก์ตรงของไฟล์ — repo public ส่งลูกค้าไปโหลดได้เลยโดยไม่ต้องถาม API
+            'download_url' => $asset['browser_download_url'] ?? null,
             'download_filename' => $asset ? $asset['name'] : null,
             'file_size' => $asset ? $asset['size'] : null,
             'changelog' => $release['body'] ?? null,
             'is_active' => true,
             'synced_at' => now(),
         ];
+
+        // GitHub ใส่ digest "sha256:<hex>" ให้ asset ที่อัปโหลดตั้งแต่กลางปี 2025 — แอปใช้ตรวจไฟล์
+        // ที่โหลดมาก่อนติดตั้ง asset เก่าไม่มีค่านี้ → ไม่ใส่คีย์เลย ค่าที่มีอยู่แล้วจึงไม่ถูกทับด้วย null
+        $sha256 = $this->sha256FromDigest($asset['digest'] ?? null);
+
+        if ($sha256 !== null) {
+            $data['sha256'] = $sha256;
+        }
 
         // Deactivate previous versions
         ProductVersion::where('product_id', $product->id)
@@ -317,6 +370,18 @@ class GithubReleaseService
             ['product_id' => $product->id, 'version' => $version],
             $data
         );
+    }
+
+    /**
+     * "sha256:ABC…" → "abc…" (hex ตัวเล็ก 64 ตัว) · ไม่มีหรือเป็นอัลกอริทึมอื่น = null
+     */
+    protected function sha256FromDigest(mixed $digest): ?string
+    {
+        if (is_string($digest) && preg_match('/^sha256:([0-9a-f]{64})$/i', $digest, $m)) {
+            return strtolower($m[1]);
+        }
+
+        return null;
     }
 
     /**

@@ -15,13 +15,15 @@ class CartController extends Controller
      * The page used to post the price along with the term and the cart charged
      * it as sent — a lifetime licence for whatever the form said, and with the
      * price left out, any term at the product's base price. The pages still show
-     * these numbers (products/smspaymentchecker, products/xcluadeagent); change
-     * both together.
+     * these numbers (products/smspaymentchecker, products/xcluadeagent,
+     * products/winxtools); change both together.
      */
     private const LICENSE_TERM_PRICES = [
         'sms-payment-checker' => ['monthly' => 990, 'yearly' => 9900, 'lifetime' => 29900],
         'xcluadeagent' => ['yearly' => 199, 'lifetime' => 1999],
         'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
+        // Pro จ่ายครั้งเดียว ใช้ได้ตลอด — ราคาเดียวกับ pricing API (ProductLicenseController)
+        'winx-tools' => ['lifetime' => 199],
     ];
 
     /**

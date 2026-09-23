@@ -62,24 +62,23 @@
                             <p class="text-cyan-300/80 text-sm mt-1">มีรุ่นฟรี + ทดลอง Pro ฟรีก่อนซื้อ</p>
                         </div>
 
-                        @auth
-                            @if($hasPurchased)
-                                <a href="{{ route('customer.downloads') }}"
-                                   class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                                    ดาวน์โหลด
-                                </a>
-                            @else
-                                <a href="{{ route('products.index') }}"
-                                   class="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
-                                    ซื้อ Pro — ฿199
-                                </a>
-                            @endif
-                        @else
-                            <a href="{{ route('products.index') }}"
-                               class="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
-                                ซื้อ Pro — ฿199
+                        @if(auth()->check() && $hasPurchased)
+                            <a href="{{ route('winx-tools.download') }}"
+                               class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                                ดาวน์โหลด
                             </a>
-                        @endauth
+                        @else
+                            {{-- Pro = license lifetime · ราคามาจาก CartController::LICENSE_TERM_PRICES ไม่ใช่จากฟอร์ม --}}
+                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="quantity" value="1">
+                                <input type="hidden" name="license_type" value="lifetime">
+                                <button type="submit"
+                                        class="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
+                                    ซื้อ Pro — ฿199
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
 
@@ -354,7 +353,8 @@
                         <li class="flex items-start"><span class="text-green-400 mr-3 mt-0.5">&#10003;</span> Windows Optimizer พื้นฐาน</li>
                         <li class="flex items-start"><span class="text-green-400 mr-3 mt-0.5">&#10003;</span> รองรับสองภาษา ไทย/อังกฤษ + ธีมมืด</li>
                     </ul>
-                    <a href="{{ route('products.index') }}"
+                    {{-- ไฟล์เดียวกับ Pro — Pro ปลดล็อกในแอปด้วย license key --}}
+                    <a href="{{ route('winx-tools.download') }}"
                        class="block w-full py-3 text-center bg-gray-700/60 hover:bg-gray-600/60 text-white font-semibold rounded-xl border border-gray-600 transition-all">
                         เริ่มใช้ฟรี
                     </a>
@@ -380,24 +380,22 @@
                         <li class="flex items-start"><span class="text-cyan-300 mr-3 mt-0.5">&#10003;</span> คำสั่งลับ &amp; ทริก Windows ทั้งหมด</li>
                         <li class="flex items-start"><span class="text-cyan-300 mr-3 mt-0.5">&#10003;</span> Rules / Automation ตั้งกฎอัตโนมัติ</li>
                     </ul>
-                    @auth
-                        @if($hasPurchased)
-                            <a href="{{ route('customer.downloads') }}"
-                               class="block w-full py-3.5 text-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                                ดาวน์โหลด Pro
-                            </a>
-                        @else
-                            <a href="{{ route('products.index') }}"
-                               class="block w-full py-3.5 text-center bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
-                                ซื้อ Pro — ฿199
-                            </a>
-                        @endif
-                    @else
-                        <a href="{{ route('products.index') }}"
-                           class="block w-full py-3.5 text-center bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
-                            ซื้อ Pro — ฿199
+                    @if(auth()->check() && $hasPurchased)
+                        <a href="{{ route('winx-tools.download') }}"
+                           class="block w-full py-3.5 text-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                            ดาวน์โหลด Pro
                         </a>
-                    @endauth
+                    @else
+                        <form action="{{ route('cart.add', $product) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="license_type" value="lifetime">
+                            <button type="submit"
+                                    class="block w-full py-3.5 text-center bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
+                                ซื้อ Pro — ฿199
+                            </button>
+                        </form>
+                    @endif
                     <p class="text-center text-cyan-200/70 text-xs mt-4">ทดลอง Pro ฟรีก่อนตัดสินใจ · ไม่มีค่าใช้จ่ายซ่อน</p>
                 </div>
 
@@ -459,27 +457,25 @@
                     </p>
 
                     <div class="flex flex-wrap justify-center gap-4">
-                        @auth
-                            @if($hasPurchased)
-                                <a href="{{ route('customer.downloads') }}"
-                                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                    </svg>
-                                    ดาวน์โหลด
-                                </a>
-                            @else
-                                <a href="{{ route('products.index') }}"
-                                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
-                                    ซื้อ Pro — ฿199
-                                </a>
-                            @endif
-                        @else
-                            <a href="{{ route('products.index') }}"
-                               class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
-                                ซื้อ Pro — ฿199
+                        @if(auth()->check() && $hasPurchased)
+                            <a href="{{ route('winx-tools.download') }}"
+                               class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                ดาวน์โหลด
                             </a>
-                        @endauth
+                        @else
+                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="quantity" value="1">
+                                <input type="hidden" name="license_type" value="lifetime">
+                                <button type="submit"
+                                        class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
+                                    ซื้อ Pro — ฿199
+                                </button>
+                            </form>
+                        @endif
                         <a href="{{ route('products.index') }}"
                            class="inline-flex items-center px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
                             ดูผลิตภัณฑ์อื่น
