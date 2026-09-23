@@ -53,6 +53,20 @@ class ProductLicenseController extends Controller
     ];
 
     /**
+     * ทดลองได้ครั้งเดียวต่อฮาร์ดแวร์ ไม่ใช่ต่อ machine_id
+     *
+     * machine_id ของ WinXTools มาจาก MachineGuid ของ Windows — ลง Windows ใหม่ได้ machine_id ใหม่
+     * = เครื่องใหม่ = ทดลองใหม่ได้อีกรอบ แต่ hardware_hash (SMBIOS UUID + serial ของบอร์ด/เครื่อง)
+     * ยังเท่าเดิม จึงใช้ตัวนี้ผูกสิทธิ์ทดลองแทน
+     *
+     * เฉพาะผลิตภัณฑ์ในรายการนี้ — แอป Android บางตัวส่ง hash ระดับรุ่นเครื่อง (ทุกเครื่องรุ่นเดียวกัน
+     * ได้ค่าเดียวกัน) ถ้าใช้กฎนี้กับทุกตัวจะตัดสิทธิ์ลูกค้าจริงจำนวนมาก
+     */
+    private const HARDWARE_BOUND_TRIAL_PRODUCTS = [
+        'winx-tools',
+    ];
+
+    /**
      * Get product by slug or fail
      */
     private function getProduct(string $productSlug): ?Product
@@ -184,6 +198,17 @@ class ProductLicenseController extends Controller
             $updateData['drm_id'] = $validated['drm_id'];
         }
         $device->update($updateData);
+
+        // ฮาร์ดแวร์นี้เคยทดลองแล้วในชื่อเครื่องอื่น (เช่นลง Windows ใหม่) — ไม่ให้ทดลองซ้ำ
+        // ตรวจก่อน abuse check และไม่ติดธง suspicious/blocked: ลูกค้าที่ลงเครื่องใหม่ไม่ได้โกง แค่ใช้สิทธิ์ไปแล้ว
+        if ($this->trialUsedOnThisHardware($product, $device, $validated['hardware_hash'] ?? null)) {
+            return response()->json([
+                'success' => false,
+                'server_time' => now()->toISOString(),
+                'error_code' => 'TRIAL_USED_ON_THIS_HARDWARE',
+                'message' => 'เครื่องนี้เคยใช้สิทธิ์ทดลองใช้ไปแล้ว',
+            ], 403);
+        }
 
         // Check for abuse
         $abuseCheck = $device->checkTrialAbuse();
@@ -338,12 +363,16 @@ class ProductLicenseController extends Controller
             }
         }
 
+        // ฮาร์ดแวร์นี้เคยทดลองแล้วในชื่อเครื่องอื่น → บอกแอปตั้งแต่ตรงนี้ว่าใช้สิทธิ์ไปแล้ว ไม่ต้องยิง /demo
+        // (แอปไม่ต้องส่ง hardware_hash มาที่นี่ก็ได้ ใช้ค่าที่ register-device เก็บไว้กับเครื่อง)
+        $usedOnThisHardware = $this->trialUsedOnThisHardware($product, $device, $request->input('hardware_hash'));
+
         if (! $device) {
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'has_used_demo' => false,
-                    'can_start_demo' => true,
+                    'has_used_demo' => $usedOnThisHardware,
+                    'can_start_demo' => ! $usedOnThisHardware,
                 ],
             ]);
         }
@@ -354,8 +383,8 @@ class ProductLicenseController extends Controller
             'success' => true,
             'server_time' => now()->toISOString(),
             'data' => [
-                'has_used_demo' => $device->trial_attempts > 0,
-                'can_start_demo' => $device->canStartTrial(),
+                'has_used_demo' => $device->trial_attempts > 0 || $usedOnThisHardware,
+                'can_start_demo' => $device->canStartTrial() && ! $usedOnThisHardware,
                 'is_trial_active' => $isTrialActive,
                 'trial_info' => $device->trial_expires_at ? [
                     'expires_at' => $device->trial_expires_at->toISOString(),
@@ -371,6 +400,37 @@ class ProductLicenseController extends Controller
                 ] : ['eligible' => false],
             ],
         ]);
+    }
+
+    /**
+     * สิทธิ์ทดลองของฮาร์ดแวร์นี้ถูกใช้ไปแล้วบนเครื่องอื่น (machine_id อื่น) หรือยัง
+     *
+     * เฉพาะผลิตภัณฑ์ใน HARDWARE_BOUND_TRIAL_PRODUCTS — ตัวอื่นได้ false เสมอ (พฤติกรรมเดิม)
+     * ใช้ hardware_hash ที่ส่งมากับคำขอก่อน ไม่มีค่อยใช้ค่าที่เครื่องนี้ลงทะเบียนไว้ ไม่มีทั้งคู่ = ไม่ตัดสิทธิ์
+     * (แอปส่ง null เมื่อ firmware เป็นค่าขยะ ดีกว่าให้หลายเครื่องได้ hash เดียวกันแล้วโดนตัดสิทธิ์พร้อมกัน)
+     */
+    private function trialUsedOnThisHardware(Product $product, ?ProductDevice $device, mixed $hardwareHash): bool
+    {
+        if (! in_array($product->slug, self::HARDWARE_BOUND_TRIAL_PRODUCTS, true)) {
+            return false;
+        }
+
+        if (! is_string($hardwareHash) || $hardwareHash === '' || strlen($hardwareHash) > 64) {
+            $hardwareHash = $device?->hardware_hash;
+        }
+
+        if (empty($hardwareHash)) {
+            return false;
+        }
+
+        return ProductDevice::where('product_id', $product->id)
+            ->where('hardware_hash', $hardwareHash)
+            ->when($device, fn ($query) => $query->where('id', '!=', $device->id))
+            ->where(function ($query) {
+                $query->whereNotNull('first_trial_at')
+                    ->orWhere('trial_attempts', '>', 0);
+            })
+            ->exists();
     }
 
     /**
