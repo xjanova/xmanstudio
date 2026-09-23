@@ -62,22 +62,34 @@
                             <p class="text-cyan-300/80 text-sm mt-1">มีรุ่นฟรี + ทดลอง Pro ฟรีก่อนซื้อ</p>
                         </div>
 
-                        @if(auth()->check() && $hasPurchased)
-                            <a href="{{ route('winx-tools.download') }}"
-                               class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                                ดาวน์โหลด
-                            </a>
-                        @else
+                        {{-- ปุ่มซื้อต้องมีเสมอ — แอปส่งลูกค้ามาหน้านี้เพื่อซื้อ และ 1 คีย์ใช้ได้ 1 เครื่อง
+                             คนที่เคยซื้อแล้วก็ต้องซื้อเพิ่มให้เครื่องอื่นได้ (เดิมบัญชีที่เคยซื้อเห็นแต่ปุ่มดาวน์โหลด) --}}
+                        @php $ownsWinXTools = auth()->check() && $hasPurchased; @endphp
+                        <div class="flex flex-wrap items-center gap-3">
                             {{-- Pro = license lifetime · ราคามาจาก CartController::LICENSE_TERM_PRICES ไม่ใช่จากฟอร์ม --}}
                             <form action="{{ route('cart.add', $product) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
                                 <input type="hidden" name="license_type" value="lifetime">
+                                <input type="hidden" name="buy_now" value="1">
                                 <button type="submit"
                                         class="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
-                                    ซื้อ Pro — ฿199
+                                    {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199' : 'ซื้อ Pro — ฿199' }}
                                 </button>
                             </form>
+                            @if($ownsWinXTools)
+                                <a href="{{ route('customer.licenses') }}"
+                                   class="px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25">
+                                    ดูคีย์ License ของฉัน
+                                </a>
+                            @endif
+                            <a href="{{ route('winx-tools.download') }}"
+                               class="px-6 py-4 bg-gray-700/60 hover:bg-gray-600/60 text-white font-semibold rounded-xl border border-gray-600 transition-all">
+                                ดาวน์โหลดฟรี
+                            </a>
+                        </div>
+                        @if($ownsWinXTools)
+                            <p class="w-full text-cyan-300/80 text-sm">คุณมี License แล้ว · 1 คีย์ใช้ได้ 1 เครื่อง — ซื้อเพิ่มได้สำหรับเครื่องอื่น</p>
                         @endif
                     </div>
                 </div>
@@ -380,23 +392,23 @@
                         <li class="flex items-start"><span class="text-cyan-300 mr-3 mt-0.5">&#10003;</span> คำสั่งลับ &amp; ทริก Windows ทั้งหมด</li>
                         <li class="flex items-start"><span class="text-cyan-300 mr-3 mt-0.5">&#10003;</span> Rules / Automation ตั้งกฎอัตโนมัติ</li>
                     </ul>
-                    @if(auth()->check() && $hasPurchased)
-                        <a href="{{ route('winx-tools.download') }}"
-                           class="block w-full py-3.5 text-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                            ดาวน์โหลด Pro
+                    <form action="{{ route('cart.add', $product) }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="license_type" value="lifetime">
+                        <input type="hidden" name="buy_now" value="1">
+                        <button type="submit"
+                                class="block w-full py-3.5 text-center bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
+                            {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199' : 'ซื้อ Pro — ฿199' }}
+                        </button>
+                    </form>
+                    @if($ownsWinXTools)
+                        <a href="{{ route('customer.licenses') }}"
+                           class="block text-center text-green-300 hover:text-green-200 text-sm font-semibold mt-3">
+                            มี License แล้ว? ดูคีย์ของคุณ →
                         </a>
-                    @else
-                        <form action="{{ route('cart.add', $product) }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="quantity" value="1">
-                            <input type="hidden" name="license_type" value="lifetime">
-                            <button type="submit"
-                                    class="block w-full py-3.5 text-center bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
-                                ซื้อ Pro — ฿199
-                            </button>
-                        </form>
                     @endif
-                    <p class="text-center text-cyan-200/70 text-xs mt-4">ทดลอง Pro ฟรีก่อนตัดสินใจ · ไม่มีค่าใช้จ่ายซ่อน</p>
+                    <p class="text-center text-cyan-200/70 text-xs mt-4">ทดลอง Pro ฟรีก่อนตัดสินใจ · 1 คีย์ใช้ได้ 1 เครื่อง · ไม่มีค่าใช้จ่ายซ่อน</p>
                 </div>
 
             </div>
@@ -457,25 +469,29 @@
                     </p>
 
                     <div class="flex flex-wrap justify-center gap-4">
-                        @if(auth()->check() && $hasPurchased)
-                            <a href="{{ route('winx-tools.download') }}"
-                               class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                </svg>
-                                ดาวน์โหลด
+                        <form action="{{ route('cart.add', $product) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="license_type" value="lifetime">
+                            <input type="hidden" name="buy_now" value="1">
+                            <button type="submit"
+                                    class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
+                                {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199' : 'ซื้อ Pro — ฿199' }}
+                            </button>
+                        </form>
+                        @if($ownsWinXTools)
+                            <a href="{{ route('customer.licenses') }}"
+                               class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25">
+                                ดูคีย์ License ของฉัน
                             </a>
-                        @else
-                            <form action="{{ route('cart.add', $product) }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="quantity" value="1">
-                                <input type="hidden" name="license_type" value="lifetime">
-                                <button type="submit"
-                                        class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
-                                    ซื้อ Pro — ฿199
-                                </button>
-                            </form>
                         @endif
+                        <a href="{{ route('winx-tools.download') }}"
+                           class="inline-flex items-center px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            ดาวน์โหลดฟรี
+                        </a>
                         <a href="{{ route('products.index') }}"
                            class="inline-flex items-center px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
                             ดูผลิตภัณฑ์อื่น

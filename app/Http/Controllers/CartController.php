@@ -103,6 +103,14 @@ class CartController extends Controller
             ]);
         }
 
+        // "ซื้อเลย" (e.g. the WinXTools page the app opens to buy a licence): go straight to the
+        // cart to check out, instead of staying on the page with only a flash message.
+        if ($request->boolean('buy_now')) {
+            return redirect()
+                ->route('cart.index')
+                ->with('success', "เพิ่ม '{$product->name}' ลงตะกร้าแล้ว");
+        }
+
         return redirect()
             ->back()
             ->with('success', "เพิ่ม '{$product->name}' ลงตะกร้าแล้ว");
