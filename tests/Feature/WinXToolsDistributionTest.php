@@ -407,7 +407,7 @@ class WinXToolsDistributionTest extends TestCase
 
     // ── pricing ───────────────────────────────────────────────────────
 
-    public function test_pricing_sells_only_pro_lifetime_at_199_and_says_where_to_buy_it(): void
+    public function test_pricing_sells_only_pro_yearly_at_199_and_says_where_to_buy_it(): void
     {
         $this->getJson('/api/v1/product/winx-tools/pricing')
             ->assertOk()
@@ -416,11 +416,11 @@ class WinXToolsDistributionTest extends TestCase
                 'data' => [
                     'product' => ['name' => 'WinXTools', 'slug' => 'winx-tools'],
                     'plans' => [
-                        'lifetime' => [
+                        'yearly' => [
                             'price' => 199,
                             'currency' => 'THB',
-                            'duration_days' => null,
-                            'features' => ['all_features', 'priority_support', 'cloud_sync', 'lifetime_updates', 'unlimited_devices'],
+                            'duration_days' => 365,
+                            'features' => ['all_features', 'priority_support', 'cloud_sync', 'priority_updates'],
                         ],
                     ],
                     'purchase_url' => url('/products/winx-tools'),
@@ -477,39 +477,40 @@ class WinXToolsDistributionTest extends TestCase
 
     // ── buying Pro ────────────────────────────────────────────────────
 
-    public function test_buying_pro_puts_the_lifetime_licence_in_the_cart_at_199(): void
+    public function test_buying_pro_puts_the_yearly_licence_in_the_cart_at_199(): void
     {
         $this->actingAs(User::factory()->create());
 
-        $this->post(route('cart.add', $this->product), ['quantity' => 1, 'license_type' => 'lifetime'])
+        $this->post(route('cart.add', $this->product), ['quantity' => 1, 'license_type' => 'yearly'])
             ->assertSessionHas('success');
 
         $item = CartItem::firstOrFail();
         $this->assertEquals(199, (float) $item->price);
-        $this->assertSame('lifetime', json_decode($item->custom_requirements, true)['license_type']);
+        $this->assertSame('yearly', json_decode($item->custom_requirements, true)['license_type']);
     }
 
-    public function test_winx_tools_is_not_sold_by_the_month_or_the_year(): void
+    public function test_winx_tools_is_not_sold_by_the_month_or_for_life(): void
     {
         $this->actingAs(User::factory()->create());
 
-        foreach (['monthly', 'yearly'] as $term) {
+        foreach (['monthly', 'lifetime'] as $term) {
             $this->post(route('cart.add', $this->product), ['license_type' => $term])->assertSessionHas('error');
         }
 
         $this->assertSame(0, CartItem::count());
     }
 
-    public function test_a_plain_purchase_gives_a_licence_that_never_expires(): void
+    public function test_a_plain_purchase_gives_a_licence_for_one_year(): void
     {
+        $this->freezeSecond();
         app(LicenseService::class)->generateLicensesForOrder($this->paidOrder());
 
         $license = LicenseKey::where('product_id', $this->product->id)->sole();
-        $this->assertSame('lifetime', $license->license_type);
-        $this->assertNull($license->expires_at);
+        $this->assertSame('yearly', $license->license_type);
+        $this->assertTrue($license->expires_at->equalTo(now()->addYear()));
     }
 
-    public function test_the_sms_payment_api_issues_the_same_lifetime_licence(): void
+    public function test_the_sms_payment_api_issues_the_same_yearly_licence(): void
     {
         // Api\V1\SmsPaymentController มีสำเนาตัวออก license ของตัวเอง (private) ที่เคยตั้งต้นเป็นรายปีเสมอ
         // เรียกผ่าน reflection เพราะเส้นทางจริงต้องมีลายเซ็นของเครื่อง SmsChecker; ตัวมันไม่ใช้ dependency
@@ -518,8 +519,8 @@ class WinXToolsDistributionTest extends TestCase
         (new \ReflectionMethod($controller, 'generateLicensesForOrder'))->invoke($controller, $this->paidOrder());
 
         $license = LicenseKey::where('product_id', $this->product->id)->sole();
-        $this->assertSame('lifetime', $license->license_type);
-        $this->assertNull($license->expires_at);
+        $this->assertSame('yearly', $license->license_type);
+        $this->assertNotNull($license->expires_at);
     }
 
     public function test_a_licence_type_named_on_the_order_item_still_wins(): void
@@ -531,9 +532,9 @@ class WinXToolsDistributionTest extends TestCase
         $this->assertNotNull($license->expires_at);
     }
 
-    public function test_other_products_still_default_to_a_yearly_licence(): void
+    public function test_winx_tools_and_other_products_default_to_a_yearly_licence(): void
     {
-        $this->assertSame('lifetime', $this->product->defaultLicenseType());
+        $this->assertSame('yearly', $this->product->defaultLicenseType());
         $this->assertSame('yearly', $this->otherLicensedProduct('some-desktop-app')->defaultLicenseType());
     }
 
@@ -543,12 +544,12 @@ class WinXToolsDistributionTest extends TestCase
     {
         $html = $this->get('/products/winx-tools')->assertOk()->getContent();
 
-        // ปุ่ม "ซื้อ Pro — ฿199" ทั้งสามจุดเป็นฟอร์มใส่ตะกร้าแบบ lifetime ไม่ใช่ลิงก์ไปหน้ารวมสินค้า
+        // ปุ่ม "ซื้อ Pro — ฿199/ปี" ทั้งสามจุดเป็นฟอร์มใส่ตะกร้าแบบรายปี ไม่ใช่ลิงก์ไปหน้ารวมสินค้า
         // และพาไปตะกร้าเลย (buy_now) ไม่ค้างอยู่หน้าเดิมกับข้อความเล็ก ๆ
         $this->assertSame(3, substr_count($html, 'action="' . route('cart.add', $this->product) . '"'));
-        $this->assertSame(3, substr_count($html, 'name="license_type" value="lifetime"'));
+        $this->assertSame(3, substr_count($html, 'name="license_type" value="yearly"'));
         $this->assertSame(3, substr_count($html, 'name="buy_now" value="1"'));
-        $this->assertStringContainsString('ซื้อ Pro — ฿199', $html);
+        $this->assertStringContainsString('ซื้อ Pro — ฿199/ปี', $html);
 
         // ดาวน์โหลดได้เลย ไม่ต้องล็อกอินหรือซื้อก่อน (ฮีโร่ + การ์ด Free + ท้ายหน้า)
         $this->assertSame(3, substr_count($html, 'href="' . route('winx-tools.download') . '"'));
@@ -565,15 +566,15 @@ class WinXToolsDistributionTest extends TestCase
 
         $html = $this->actingAs($user)->get('/products/winx-tools')->assertOk()->getContent();
 
-        $this->assertSame(3, substr_count($html, 'name="license_type" value="lifetime"'));
-        $this->assertStringContainsString('ซื้อ License เพิ่ม — ฿199', $html);
+        $this->assertSame(3, substr_count($html, 'name="license_type" value="yearly"'));
+        $this->assertStringContainsString('ซื้อ License เพิ่ม — ฿199/ปี', $html);
         $this->assertStringContainsString('href="' . route('customer.licenses') . '"', $html);
         $this->assertStringContainsString('href="' . route('winx-tools.download') . '"', $html);
     }
 
     public function test_buy_now_goes_straight_to_the_cart(): void
     {
-        $this->post(route('cart.add', $this->product), ['license_type' => 'lifetime', 'buy_now' => 1])
+        $this->post(route('cart.add', $this->product), ['license_type' => 'yearly', 'buy_now' => 1])
             ->assertRedirect(route('cart.index'));
 
         $this->assertEquals(199, (float) CartItem::firstOrFail()->price);

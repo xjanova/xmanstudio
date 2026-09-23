@@ -57,7 +57,7 @@
                         <div>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-4xl font-black text-white">฿199</span>
-                                <span class="text-gray-400 text-sm">/ จ่ายครั้งเดียว</span>
+                                <span class="text-gray-400 text-sm">/ ปี</span>
                             </div>
                             <p class="text-cyan-300/80 text-sm mt-1">มีรุ่นฟรี + ทดลอง Pro ฟรีก่อนซื้อ</p>
                         </div>
@@ -66,15 +66,15 @@
                              คนที่เคยซื้อแล้วก็ต้องซื้อเพิ่มให้เครื่องอื่นได้ (เดิมบัญชีที่เคยซื้อเห็นแต่ปุ่มดาวน์โหลด) --}}
                         @php $ownsWinXTools = auth()->check() && $hasPurchased; @endphp
                         <div class="flex flex-wrap items-center gap-3">
-                            {{-- Pro = license lifetime · ราคามาจาก CartController::LICENSE_TERM_PRICES ไม่ใช่จากฟอร์ม --}}
+                            {{-- Pro = license รายปี · ราคามาจาก CartController::LICENSE_TERM_PRICES ไม่ใช่จากฟอร์ม --}}
                             <form action="{{ route('cart.add', $product) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
-                                <input type="hidden" name="license_type" value="lifetime">
+                                <input type="hidden" name="license_type" value="yearly">
                                 <input type="hidden" name="buy_now" value="1">
                                 <button type="submit"
                                         class="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
-                                    {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199' : 'ซื้อ Pro — ฿199' }}
+                                    {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199/ปี' : 'ซื้อ Pro — ฿199/ปี' }}
                                 </button>
                             </form>
                             @if($ownsWinXTools)
@@ -345,7 +345,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-14">
                 <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">ราคาที่คุ้มที่สุด</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">เริ่มฟรีได้ทันที หรือปลดล็อกทุกฟีเจอร์ด้วย Pro จ่ายครั้งเดียว ใช้ได้ตลอด</p>
+                <p class="text-gray-400 max-w-2xl mx-auto">เริ่มฟรีได้ทันที หรือปลดล็อกทุกฟีเจอร์ด้วย Pro เพียง ฿199 ต่อปี</p>
             </div>
 
             <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -381,7 +381,7 @@
                     <p class="text-cyan-200/80 text-sm mb-6">ปลดล็อกทุกฟีเจอร์ขั้นสูง</p>
                     <div class="mb-6">
                         <span class="text-4xl font-black text-white">฿199</span>
-                        <span class="text-gray-300 text-sm">/ จ่ายครั้งเดียว</span>
+                        <span class="text-gray-300 text-sm">/ ปี</span>
                     </div>
                     <ul class="space-y-3 text-gray-100 text-sm mb-8 flex-1">
                         <li class="flex items-start"><span class="text-cyan-300 mr-3 mt-0.5">&#10003;</span> <span><span class="font-semibold text-white">ทุกอย่างในรุ่น Free</span> และ...</span></li>
@@ -395,11 +395,11 @@
                     <form action="{{ route('cart.add', $product) }}" method="POST">
                         @csrf
                         <input type="hidden" name="quantity" value="1">
-                        <input type="hidden" name="license_type" value="lifetime">
+                        <input type="hidden" name="license_type" value="yearly">
                         <input type="hidden" name="buy_now" value="1">
                         <button type="submit"
                                 class="block w-full py-3.5 text-center bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
-                            {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199' : 'ซื้อ Pro — ฿199' }}
+                            {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199/ปี' : 'ซื้อ Pro — ฿199/ปี' }}
                         </button>
                     </form>
                     @if($ownsWinXTools)
@@ -465,18 +465,18 @@
                 <div class="relative">
                     <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">พร้อมคุมเครื่องของคุณแล้วหรือยัง?</h2>
                     <p class="text-gray-300 mb-8 max-w-2xl mx-auto">
-                        ดาวน์โหลดรุ่นฟรีเริ่มใช้ได้ทันที หรือปลดล็อกทุกฟีเจอร์ด้วย Pro เพียง ฿199 จ่ายครั้งเดียว ใช้ได้ตลอด
+                        ดาวน์โหลดรุ่นฟรีเริ่มใช้ได้ทันที หรือปลดล็อกทุกฟีเจอร์ด้วย Pro เพียง ฿199 ต่อปี
                     </p>
 
                     <div class="flex flex-wrap justify-center gap-4">
                         <form action="{{ route('cart.add', $product) }}" method="POST">
                             @csrf
                             <input type="hidden" name="quantity" value="1">
-                            <input type="hidden" name="license_type" value="lifetime">
+                            <input type="hidden" name="license_type" value="yearly">
                             <input type="hidden" name="buy_now" value="1">
                             <button type="submit"
                                     class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer">
-                                {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199' : 'ซื้อ Pro — ฿199' }}
+                                {{ $ownsWinXTools ? 'ซื้อ License เพิ่ม — ฿199/ปี' : 'ซื้อ Pro — ฿199/ปี' }}
                             </button>
                         </form>
                         @if($ownsWinXTools)

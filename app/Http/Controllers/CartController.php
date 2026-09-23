@@ -22,8 +22,8 @@ class CartController extends Controller
         'sms-payment-checker' => ['monthly' => 990, 'yearly' => 9900, 'lifetime' => 29900],
         'xcluadeagent' => ['yearly' => 199, 'lifetime' => 1999],
         'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
-        // Pro จ่ายครั้งเดียว ใช้ได้ตลอด — ราคาเดียวกับ pricing API (ProductLicenseController)
-        'winx-tools' => ['lifetime' => 199],
+        // Pro ฿199 ต่อปี (license รายปี) — ราคาเดียวกับ pricing API (ProductLicenseController)
+        'winx-tools' => ['yearly' => 199],
     ];
 
     /**
