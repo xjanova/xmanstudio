@@ -84,7 +84,18 @@ class GithubReleaseService
             return $current;
         }
 
-        $release = $this->fetchLatestRelease($githubSetting);
+        try {
+            $release = $this->fetchLatestRelease($githubSetting);
+        } catch (\Throwable $e) {
+            // ต่อ GitHub ไม่ติดเลย (timeout/DNS) HTTP client โยน ConnectionException ออกมา — เดิมหลุดขึ้นไป
+            // ทำให้ /update/check ของทุกผลิตภัณฑ์ตอบ 500 · สัญญาของ method นี้คือคืนค่าจาก DB แทน
+            Log::warning('GitHub unreachable during read-through release check', [
+                'product' => $product->slug,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $current;
+        }
         $tag = $release['tag_name'] ?? null;
 
         if (! $tag) {

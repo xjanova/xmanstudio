@@ -303,6 +303,23 @@ class WinXToolsDistributionTest extends TestCase
             ->assertRedirect($latest->download_url);
     }
 
+    public function test_update_check_answers_from_the_database_when_github_cannot_be_reached(): void
+    {
+        $latest = $this->makeVersion('1.2.0');
+        $this->githubSetting();
+
+        Http::fake(['api.github.com/*' => Http::failedConnection()]);
+
+        // เดิม ConnectionException หลุดออกมา → 500 ทั้งที่ DB รู้เวอร์ชันล่าสุดอยู่แล้ว
+        $this->getJson('/api/v1/product/winx-tools/update/check?current_version=1.1.0')
+            ->assertOk()
+            ->assertJson([
+                'has_update' => true,
+                'latest_version' => $latest->version,
+                'sha256' => self::SHA256,
+            ]);
+    }
+
     public function test_an_older_version_stays_downloadable_by_its_number(): void
     {
         // update/check บอก sha256 ของ 1.1.0 ไปแล้ว ถ้าระหว่างนั้น 1.2.0 ออก ไฟล์ที่ได้ต้องยังเป็น 1.1.0
