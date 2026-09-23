@@ -36,7 +36,7 @@ XMAN Studio is a comprehensive business management platform built with **Laravel
 
 ## Key Architecture Decisions
 
-- **Public directory:** `public_html/` (not the default `public/`). Vite config uses `publicDir: 'public_html'`.
+- **Public directory:** `public_html/` (not the default `public/`). Vite reaches it through the Laravel plugin's `publicDirectory: 'public_html'`. Vite's own `publicDir` must stay `false`: set to `public_html` it copies the whole web root (index.php, .htaccess, every upload behind the storage link) into `public_html/build` on each build, where it is served again.
 - **Static assets** stored in `public/` (for `asset()` helper) and `public_html/` (for web root).
 - **Dark mode:** Class-based (`darkMode: 'class'`), toggled via `localStorage.darkMode`.
 - **Settings system:** Dynamic key-value settings via `App\Models\Setting` with caching. SEO managed by `App\Models\SeoSetting` (singleton pattern).

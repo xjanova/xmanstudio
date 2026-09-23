@@ -239,7 +239,7 @@ class AvatarPackController extends Controller
             'kind' => ['required', Rule::in(AvatarPack::KINDS)],
             'requires' => 'nullable|string|max:48',
             'price' => 'required|numeric|min:0',
-            'preview' => 'nullable|image|max:4096',
+            'preview' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ], [
             'pack_id.regex' => 'รหัสชุดใช้ได้เฉพาะ a-z 0-9 จุด ขีดล่าง และขีดกลาง',
         ]);
@@ -330,8 +330,13 @@ class AvatarPackController extends Controller
 
     protected function storePreview(Request $request, AvatarPack $pack): string
     {
-        $name = 'pack-' . $pack->pack_id . '-' . Str::random(6) . '.'
-            . $request->file('preview')->getClientOriginalExtension();
+        // This lands in the web root, so the extension comes from the file's content
+        // (checked against the rule above), never from the name it was uploaded with.
+        $extension = $request->file('preview')->guessExtension();
+        abort_unless(in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true), 422);
+
+        // pack_id may contain dots; one extension per file name, so they go.
+        $name = 'pack-' . preg_replace('/[^a-z0-9_-]/i', '-', $pack->pack_id) . '-' . Str::random(6) . '.' . $extension;
 
         $request->file('preview')->move(public_path('uploads/packs'), $name);
 

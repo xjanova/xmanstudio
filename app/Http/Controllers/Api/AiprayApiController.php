@@ -262,10 +262,15 @@ class AiprayApiController extends Controller
      */
     public function mlCallback(Request $request): JsonResponse
     {
-        $secret = $request->header('Authorization');
-        $expectedSecret = 'Bearer ' . config('services.aipray_ml.secret');
+        $configured = (string) config('services.aipray_ml.secret');
 
-        if (! $secret || ! $expectedSecret || ! hash_equals($expectedSecret, (string) $secret)) {
+        // Closed until a secret is set. 'Bearer ' alone was never empty, so the old
+        // "no secret configured" check could not fire.
+        if ($configured === '') {
+            return response()->json(['error' => 'ML callback not configured'], 503);
+        }
+
+        if (! hash_equals('Bearer ' . $configured, (string) $request->header('Authorization'))) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 

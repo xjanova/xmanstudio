@@ -556,7 +556,8 @@ class OrderController extends Controller
         }
 
         $request->validate([
-            'payment_slip' => 'required|image|max:5120',
+            // Raster only: `image` alone admits SVG, which runs script when an admin opens the slip.
+            'payment_slip' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         // Store payment slip

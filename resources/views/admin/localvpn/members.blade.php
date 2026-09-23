@@ -59,7 +59,7 @@
                     <td class="py-3 px-4 text-gray-500 text-xs">{{ $member->last_heartbeat_at?->diffForHumans() ?? '-' }}</td>
                     <td class="py-3 px-4 text-center">
                         <form method="POST" action="{{ route('admin.localvpn.members.kick', $member) }}"
-                              onsubmit="return confirm('เตะ \'{{ $member->display_name }}\' ออกจากเครือข่าย?')">
+                              onsubmit="return confirm('เตะ \'' + @js($member->display_name) + '\' ออกจากเครือข่าย?')">
                             @csrf
                             <button type="submit" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors">เตะ</button>
                         </form>

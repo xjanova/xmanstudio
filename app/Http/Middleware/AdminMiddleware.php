@@ -24,6 +24,18 @@ class AdminMiddleware
             abort(403, 'ไม่มีสิทธิ์เข้าถึงหน้านี้');
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        // Never framed by another origin. SameSite=Lax keeps the session cookie out
+        // of a frame on a stranger's site, but not out of one on a sibling
+        // *.xman4289.com site — and a click on "อนุมัติ" in a disguised frame is
+        // a real approval.
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+
+        // Never kept. Customer records, wallets and settings should not sit in the
+        // browser's disk cache or come back with the Back button after logout.
+        $response->headers->set('Cache-Control', 'no-store, private');
+
+        return $response;
     }
 }

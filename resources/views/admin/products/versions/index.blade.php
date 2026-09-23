@@ -284,7 +284,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             @if($version->changelog)
-                                <button type="button" onclick="showChangelog('{{ addslashes($version->version) }}', `{{ addslashes($version->changelog) }}`)"
+                                <button type="button" onclick="showChangelog(@js($version->version), @js($version->changelog))"
                                         class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-3 transition-colors">Changelog</button>
                             @endif
                             <form action="{{ route('admin.products.versions.toggle', [$product, $version]) }}" method="POST" class="inline">

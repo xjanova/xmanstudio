@@ -361,7 +361,7 @@
                                 </a>
 
                                 @if($license->license_type !== 'lifetime')
-                                    <button type="button" onclick="showExtendModal({{ $license->id }}, '{{ $license->license_key }}')"
+                                    <button type="button" onclick="showExtendModal({{ $license->id }}, @js($license->license_key))"
                                             class="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition"
                                             title="ขยายเวลา">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -371,7 +371,7 @@
                                 @endif
 
                                 @if($license->status === 'active')
-                                    <button type="button" onclick="showRevokeModal({{ $license->id }}, '{{ $license->license_key }}')"
+                                    <button type="button" onclick="showRevokeModal({{ $license->id }}, @js($license->license_key))"
                                             class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
                                             title="ยกเลิก License">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,7 +404,7 @@
                                     </form>
                                 @endif
 
-                                <button type="button" onclick="showDeleteModal({{ $license->id }}, '{{ $license->license_key }}')"
+                                <button type="button" onclick="showDeleteModal({{ $license->id }}, @js($license->license_key))"
                                         class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
                                         title="ลบ License">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

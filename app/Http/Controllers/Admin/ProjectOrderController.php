@@ -251,7 +251,7 @@ class ProjectOrderController extends Controller
             'is_public' => 'boolean',
             'notify_customer' => 'boolean',
             'attachments' => 'nullable|array',
-            'attachments.*' => 'file|max:10240', // 10MB max
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt,mp4|max:10240', // 10MB max; no svg/html: they run script from the public disk
         ]);
 
         $attachments = [];

@@ -280,7 +280,7 @@
                                  :class="{'opacity-50': imagesToRemove.includes('{{ $image }}')}"
                                  loading="lazy">
                             <button type="button"
-                                    @click="markForRemoval('{{ $image }}')"
+                                    @click="markForRemoval(@js($image))"
                                     class="absolute top-2 right-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all"
                                     :class="imagesToRemove.includes('{{ $image }}') ? 'bg-green-500 text-white' : 'bg-red-500 text-white'">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" x-show="!imagesToRemove.includes('{{ $image }}')">

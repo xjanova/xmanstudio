@@ -44,10 +44,12 @@ class RedisSettingsController extends Controller
 
     public function updateEnv(Request $request)
     {
+        // Both end up as a line in .env: a line break in either would write a
+        // second setting of the sender's choosing.
         $request->validate([
-            'redis_host' => 'required|string|max:255',
+            'redis_host' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9.\-_:\/\[\]]+$/'],
             'redis_port' => 'required|integer|min:1|max:65535',
-            'redis_password' => 'nullable|string|max:255',
+            'redis_password' => ['nullable', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'],
             'redis_db' => 'required|integer|min:0|max:15',
             'redis_client' => 'required|in:phpredis,predis',
             'cache_store' => 'required|in:database,redis,file,array',
@@ -161,15 +163,31 @@ class RedisSettingsController extends Controller
         $content = file_get_contents($envPath);
 
         foreach ($updates as $key => $value) {
-            $escapedValue = str_contains($value, ' ') ? '"' . $value . '"' : $value;
+            $line = $key . '=' . self::envValue((string) $value);
+            $pattern = '/^' . preg_quote($key, '/') . '=.*/m';
 
-            if (preg_match("/^{$key}=.*/m", $content)) {
-                $content = preg_replace("/^{$key}=.*/m", "{$key}={$escapedValue}", $content);
+            if (preg_match($pattern, $content)) {
+                // A callback, not a replacement string: "$1" in a password is text, not a backreference.
+                $content = preg_replace_callback($pattern, fn () => $line, $content, 1);
             } else {
-                $content .= "\n{$key}={$escapedValue}";
+                $content .= "\n{$line}";
             }
         }
 
         file_put_contents($envPath, $content);
+    }
+
+    /**
+     * One value, written the way phpdotenv reads it back — and never more than one line.
+     *
+     * Quoted and escaped whole, not only when it has a space: unquoted, a "#" starts
+     * a comment and a "$" starts a variable reference.
+     */
+    private static function envValue(string $value): string
+    {
+        // Validation already refuses control characters; this is the second lock.
+        $value = preg_replace('/[\x00-\x1F\x7F]/', '', $value);
+
+        return '"' . str_replace(['\\', '"', '$'], ['\\\\', '\\"', '\\$'], $value) . '"';
     }
 }

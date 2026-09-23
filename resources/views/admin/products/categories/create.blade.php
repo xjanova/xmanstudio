@@ -131,7 +131,7 @@
                 </span>
                 ตัวอย่าง
             </h3>
-            <div class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-700/50 dark:to-purple-900/20 rounded-xl" x-data="{ icon: '{{ old('icon', '📦') }}', name: '{{ old('name', 'ชื่อหมวดหมู่') }}' }">
+            <div class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-700/50 dark:to-purple-900/20 rounded-xl" x-data="{ icon: @js(old('icon', '📦')), name: @js(old('name', 'ชื่อหมวดหมู่')) }">
                 <span class="text-3xl mr-4" x-text="$refs.iconInput?.value || '📦'"></span>
                 <div>
                     <div class="font-medium text-gray-900 dark:text-white" x-text="$refs.nameInput?.value || 'ชื่อหมวดหมู่'"></div>

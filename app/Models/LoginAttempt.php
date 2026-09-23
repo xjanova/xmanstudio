@@ -45,6 +45,8 @@ class LoginAttempt extends Model
         'line' => 'LINE',
         'google' => 'Google',
         'telegram' => 'Telegram',
+        'api' => 'แอป (API)',
+        'device' => 'ลิงก์จากแอป',
         'sso' => 'XMAN ID',
     ];
 

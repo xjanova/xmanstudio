@@ -32,10 +32,16 @@ class Setting extends Model
         'claude_api_key',
         'gemini_api_key',
         'line_notify_token',
+        // LINE Messaging: the access token pushes messages as our bot, the secret
+        // is what proves a webhook really came from LINE.
+        'line_channel_access_token',
+        'line_channel_secret',
         'youtube_api_key',
         'youtube_client_id',
         'youtube_client_secret',
         'youtube_refresh_token',
+        'metalx_youtube_access_token',
+        'freepik_api_key',
         'suno_api_key',
         'groq_api_key',
         'smtp_password',

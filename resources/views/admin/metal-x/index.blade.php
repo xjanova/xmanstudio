@@ -193,7 +193,7 @@
                             <div class="flex items-center space-x-3">
                                 <a href="{{ route('admin.metal-x.edit', $member) }}"
                                    class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">แก้ไข</a>
-                                <button type="button" onclick="confirmDelete({{ $member->id }}, '{{ $member->name }}')"
+                                <button type="button" onclick="confirmDelete({{ $member->id }}, @js($member->name))"
                                         class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors">ลบ</button>
                             </div>
                         </td>

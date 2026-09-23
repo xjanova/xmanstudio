@@ -71,7 +71,9 @@ return [
     // Aipray ML inference service (Python microservice for chant AI)
     'aipray_ml' => [
         'url' => env('AIPRAY_ML_SERVICE_URL', 'http://localhost:8100'),
-        'secret' => env('AIPRAY_ML_SERVICE_SECRET', 'ml-service-secret-key'),
+        // No default. The old one was published with the code, which made it a
+        // password everyone had; with this unset the training callback answers 503.
+        'secret' => env('AIPRAY_ML_SERVICE_SECRET'),
         'timeout' => env('AIPRAY_ML_SERVICE_TIMEOUT', 300),
     ],
 

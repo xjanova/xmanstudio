@@ -10,6 +10,21 @@ use Illuminate\Http\Request;
 class CartController extends Controller
 {
     /**
+     * What a licence costs on the pages that sell it by term.
+     *
+     * The page used to post the price along with the term and the cart charged
+     * it as sent — a lifetime licence for whatever the form said, and with the
+     * price left out, any term at the product's base price. The pages still show
+     * these numbers (products/smspaymentchecker, products/xcluadeagent); change
+     * both together.
+     */
+    private const LICENSE_TERM_PRICES = [
+        'sms-payment-checker' => ['monthly' => 990, 'yearly' => 9900, 'lifetime' => 29900],
+        'xcluadeagent' => ['yearly' => 199, 'lifetime' => 1999],
+        'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
+    ];
+
+    /**
      * Display the cart
      */
     public function index()
@@ -39,15 +54,20 @@ class CartController extends Controller
         $customRequirements = null;
         if ($request->filled('license_type') && $product->requires_license) {
             $licenseType = $request->license_type;
-            $customRequirements = json_encode(['license_type' => $licenseType]);
+            $termPrice = self::LICENSE_TERM_PRICES[$product->slug][$licenseType] ?? null;
 
-            // Override price based on license type (from product page pricing)
-            if ($request->filled('price')) {
-                $requestedPrice = (float) $request->price;
-                if ($requestedPrice > 0) {
-                    $price = $requestedPrice;
-                }
+            // Only a term this product is sold by, at the price held here. The
+            // form's own `price` field is ignored: it used to be charged as sent.
+            if ($termPrice === null) {
+                $message = 'แพ็กเกจนี้ไม่มีจำหน่ายสำหรับสินค้านี้';
+
+                return $request->wantsJson()
+                    ? response()->json(['success' => false, 'message' => $message], 422)
+                    : redirect()->back()->with('error', $message);
             }
+
+            $price = $termPrice;
+            $customRequirements = json_encode(['license_type' => $licenseType]);
         }
 
         // Check if product already in cart (replace if different license_type)

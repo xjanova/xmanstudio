@@ -11,7 +11,12 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
-    publicDir: 'public_html',
+    // Not 'public_html'. Vite copies its publicDir into the build output, so that
+    // setting copied the whole web root into public_html/build on every deploy:
+    // index.php, .htaccess, a stray phpinfo file and a 240 MB copy of every upload
+    // behind the storage link, all served again under /build/. The Laravel plugin's
+    // `publicDirectory` above is what points the build at public_html.
+    publicDir: false,
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

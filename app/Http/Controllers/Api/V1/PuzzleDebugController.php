@@ -39,7 +39,8 @@ class PuzzleDebugController extends Controller
             'drag_dist' => 'nullable|integer',
             'track_width' => 'nullable|integer',
             'images' => 'required|array|min:1|max:10',
-            'images.*' => 'file|image|max:2048', // max 2MB per image
+            // Raster only: these land on the public disk, and an SVG there runs script on this origin.
+            'images.*' => 'file|mimes:png,jpg,jpeg,webp|max:2048', // max 2MB per image
         ]);
 
         if ($validator->fails()) {
@@ -51,19 +52,20 @@ class PuzzleDebugController extends Controller
 
         try {
             $machineId = $request->input('machine_id');
-            $shortId = substr($machineId, 0, 8);
+            $shortId = self::pathSegment(substr($machineId, 0, 8));
             $date = now()->format('Y-m-d');
             $batch = now()->format('His'); // HH:mm:ss as batch ID
 
             // Store images in: puzzle-debug/{product}/{date}/{machine_short}/{batch}/
-            $storagePath = "puzzle-debug/{$productSlug}/{$date}/{$shortId}/{$batch}";
+            $storagePath = 'puzzle-debug/' . self::pathSegment($productSlug) . "/{$date}/{$shortId}/{$batch}";
             $savedPaths = [];
 
             foreach ($request->file('images') as $image) {
-                $originalName = $image->getClientOriginalName();
-                // Sanitize filename
-                $safeName = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $originalName);
-                $path = $image->storeAs($storagePath, $safeName, 'public');
+                // The name is kept — the admin page and train.py read an image's role from
+                // it ("before", "diff_raw" …) — but without its dots, and the extension comes
+                // from the file's content, never from the name the client sent.
+                $base = self::pathSegment(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME));
+                $path = $image->storeAs($storagePath, $base . '.' . $image->guessExtension(), 'public');
                 $savedPaths[] = $path;
             }
 
@@ -358,8 +360,8 @@ class PuzzleDebugController extends Controller
             'slider_y' => 'required|integer',
             'move_distance' => 'required|integer',
             'track_width' => 'required|integer',
-            'before' => 'required|file|image|max:5120',
-            'after' => 'required|file|image|max:5120',
+            'before' => 'required|file|mimes:png,jpg,jpeg,webp|max:5120',
+            'after' => 'required|file|mimes:png,jpg,jpeg,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -372,10 +374,10 @@ class PuzzleDebugController extends Controller
             $trackWidth = (int) $request->input('track_width');
 
             // Store images for future training
-            $shortId = substr($machineId, 0, 8);
+            $shortId = self::pathSegment(substr($machineId, 0, 8));
             $date = now()->format('Y-m-d');
             $batch = now()->format('His');
-            $storagePath = "puzzle-debug/{$productSlug}/{$date}/{$shortId}/infer_{$batch}";
+            $storagePath = 'puzzle-debug/' . self::pathSegment($productSlug) . "/{$date}/{$shortId}/infer_{$batch}";
 
             $beforePath = $request->file('before')->storeAs($storagePath, 'before.png', 'public');
             $afterPath = $request->file('after')->storeAs($storagePath, 'after.png', 'public');
@@ -561,5 +563,16 @@ class PuzzleDebugController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * One folder or file name on the public disk, made from text the client sent:
+     * letters, digits, "_" and "-" only — so no "..", and no second extension.
+     */
+    private static function pathSegment(string $value): string
+    {
+        $clean = substr((string) preg_replace('/[^A-Za-z0-9_-]/', '_', $value), 0, 80);
+
+        return trim($clean, '_') !== '' ? $clean : 'x';
     }
 }

@@ -192,7 +192,8 @@ class RentalController extends Controller
     public function uploadSlip(Request $request, string $uuid)
     {
         $request->validate([
-            'slip' => 'required|image|max:5120',
+            // Raster only: `image` alone admits SVG, which runs script when an admin opens the slip.
+            'slip' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         $payment = RentalPayment::where('uuid', $uuid)

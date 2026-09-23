@@ -133,7 +133,7 @@
                     <td class="py-3 px-4 text-gray-500 text-xs">{{ $member->joined_at?->format('d/m/Y H:i') ?? '-' }}</td>
                     <td class="py-3 px-4 text-center">
                         <form method="POST" action="{{ route('admin.localvpn.members.kick', $member) }}"
-                              onsubmit="return confirm('เตะ \'{{ $member->display_name }}\' ออกจากเครือข่าย?')">
+                              onsubmit="return confirm('เตะ \'' + @js($member->display_name) + '\' ออกจากเครือข่าย?')">
                             @csrf
                             <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">เตะ</button>
                         </form>

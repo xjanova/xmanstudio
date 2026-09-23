@@ -82,7 +82,7 @@
     @if ($kyc->isPending())
         <div class="grid sm:grid-cols-2 gap-4">
             <form method="POST" action="{{ route('admin.kyc.approve', $kyc->id) }}"
-                  onsubmit="return confirm('อนุมัติการยืนยันตัวตนของ {{ $kyc->user->name ?? '' }}?\n\nการอนุมัติจะเปิดสิทธิ์ถอนเงินและเข้าถึงหมวดเนื้อหาสำหรับผู้ใหญ่');"
+                  onsubmit="return confirm('อนุมัติการยืนยันตัวตนของ ' + @js($kyc->user->name ?? '') + '?\n\nการอนุมัติจะเปิดสิทธิ์ถอนเงินและเข้าถึงหมวดเนื้อหาสำหรับผู้ใหญ่');"
                   class="rounded-2xl border border-green-200 bg-green-50 p-5">
                 @csrf
                 <h3 class="font-semibold text-green-900 mb-2">อนุมัติ</h3>

@@ -333,7 +333,7 @@ class SmsPaymentController extends Controller
             $query->where('type', $request->input('type'));
         }
 
-        $notifications = $query->paginate($request->input('per_page', 20));
+        $notifications = $query->paginate(min(max((int) $request->input('per_page', 20), 1), 100));
 
         return response()->json([
             'success' => true,

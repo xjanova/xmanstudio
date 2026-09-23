@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\MetalXMediaLibrary;
 use App\Models\MetalXMusicLibrary;
-use App\Models\Setting;
+use App\Support\ShellBinary;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -185,7 +185,7 @@ class MetalXImportFromUrl extends Command
     protected function getAudioDuration(string $path): ?int
     {
         try {
-            $ffprobe = Setting::getValue('ffprobe_binary', 'ffprobe');
+            $ffprobe = ShellBinary::ffprobe();
             $result = shell_exec("{$ffprobe} -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($path) . ' 2>/dev/null');
             if ($result && is_numeric(trim($result))) {
                 return (int) round((float) trim($result));

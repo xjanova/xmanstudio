@@ -130,7 +130,7 @@
                                       title="มีแอดมินเคยล็อกอินสำเร็จจาก IP นี้ ระบบจึงไม่บล็อกอัตโนมัติ">ยกเว้นไว้</span>
                             @endif
                             <form method="POST" action="{{ route('admin.security.logins.block') }}"
-                                  onsubmit="return confirm('บล็อก {{ $row['ip'] }} ถาวรใช่ไหม? ผู้ใช้ที่ใช้ IP นี้จะเข้าเว็บไม่ได้ทั้งเว็บ')">
+                                  onsubmit="return confirm('บล็อก ' + @js($row['ip']) + ' ถาวรใช่ไหม? ผู้ใช้ที่ใช้ IP นี้จะเข้าเว็บไม่ได้ทั้งเว็บ')">
                                 @csrf
                                 <input type="hidden" name="ip" value="{{ $row['ip'] }}">
                                 <input type="hidden" name="reason" value="บล็อกจากหน้าสรุป IP ที่ล้มเหลวมากที่สุด">
@@ -298,7 +298,7 @@
                             <td class="px-4 py-3 text-right">
                                 @if($attempt->ip && $attempt->outcome !== 'success')
                                     <form method="POST" action="{{ route('admin.security.logins.block') }}"
-                                          onsubmit="return confirm('บล็อก {{ $attempt->ip }} ถาวรใช่ไหม?')">
+                                          onsubmit="return confirm('บล็อก ' + @js($attempt->ip) + ' ถาวรใช่ไหม?')">
                                         @csrf
                                         <input type="hidden" name="ip" value="{{ $attempt->ip }}">
                                         <input type="hidden" name="reason" value="บล็อกจากประวัติการเข้าสู่ระบบ">

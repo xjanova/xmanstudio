@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -44,6 +45,10 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        if ($refused = $this->ownerOnly()) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50', 'unique:roles', 'regex:/^[a-z_]+$/'],
             'display_name' => ['required', 'string', 'max:100'],
@@ -101,6 +106,10 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
+        if ($refused = $this->ownerOnly()) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50', Rule::unique('roles')->ignore($role->id), 'regex:/^[a-z_]+$/'],
             'display_name' => ['required', 'string', 'max:100'],
@@ -149,6 +158,10 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
+        if ($refused = $this->ownerOnly()) {
+            return $refused;
+        }
+
         // Prevent deleting system roles
         if ($role->is_system) {
             return redirect()
@@ -186,6 +199,10 @@ class RoleController extends Controller
      */
     public function addUser(Request $request, Role $role)
     {
+        if ($refused = $this->ownerOnly()) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
         ]);
@@ -211,6 +228,10 @@ class RoleController extends Controller
      */
     public function removeUser(Request $request, Role $role)
     {
+        if ($refused = $this->ownerOnly()) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
         ]);
@@ -239,6 +260,10 @@ class RoleController extends Controller
      */
     public function duplicate(Role $role)
     {
+        if ($refused = $this->ownerOnly()) {
+            return $refused;
+        }
+
         $newRole = $role->replicate();
         $newRole->name = $role->name . '_copy_' . time();
         $newRole->display_name = $role->display_name . ' (สำเนา)';
@@ -270,6 +295,10 @@ class RoleController extends Controller
      */
     public function storePermission(Request $request)
     {
+        if ($refused = $this->ownerOnly()) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50', 'unique:permissions', 'regex:/^[a-z_.]+$/'],
             'display_name' => ['required', 'string', 'max:100'],
@@ -289,10 +318,33 @@ class RoleController extends Controller
      */
     public function destroyPermission(Permission $permission)
     {
+        if ($refused = $this->ownerOnly()) {
+            return $refused;
+        }
+
         $permission->delete();
 
         return redirect()
             ->back()
             ->with('success', 'ลบสิทธิ์สำเร็จ');
+    }
+
+    /**
+     * Changing who holds what is the owner's call alone.
+     *
+     * A role named super_admin passes every permission check (Role::hasPermission),
+     * so anyone able to add a user to it, or to widen a role they hold, could hand
+     * themselves the whole panel with nothing more than roles.edit. Viewing stays
+     * behind the roles.view / permissions.view permissions as before.
+     */
+    private function ownerOnly(): ?RedirectResponse
+    {
+        if (auth()->user()->isSuperAdmin()) {
+            return null;
+        }
+
+        return redirect()
+            ->back()
+            ->with('error', 'เฉพาะ Super Admin เท่านั้นที่เปลี่ยนบทบาทและสิทธิ์ได้');
     }
 }

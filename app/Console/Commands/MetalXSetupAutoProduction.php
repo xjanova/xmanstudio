@@ -9,6 +9,7 @@ use App\Models\MetalXMediaLibrary;
 use App\Models\MetalXMusicLibrary;
 use App\Models\Setting;
 use App\Services\ContentPlanService;
+use App\Support\ShellBinary;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -268,7 +269,7 @@ class MetalXSetupAutoProduction extends Command
     {
         // Check custom setting first
         $customPath = Setting::getValue('ffmpeg_binary');
-        if ($customPath && file_exists($customPath)) {
+        if (ShellBinary::isAcceptable($customPath) && file_exists($customPath)) {
             return $customPath;
         }
 

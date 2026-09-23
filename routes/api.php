@@ -419,8 +419,9 @@ Route::prefix('v1/sms-payment')->group(function () {
         // Generate unique payment amount for bank transfer
         Route::post('/generate-amount', [SmsPaymentController::class, 'generateAmount']);
 
-        // Get notification history (admin)
-        Route::get('/notifications', [SmsPaymentController::class, 'notifications']);
+        // Get notification history (admin) — every payment SMS the shop received: banks,
+        // amounts, account digits. auth:sanctum alone let any registered customer read it.
+        Route::get('/notifications', [SmsPaymentController::class, 'notifications'])->middleware('admin');
     });
 });
 

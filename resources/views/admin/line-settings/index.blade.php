@@ -103,13 +103,13 @@
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel Access Token</label>
-                    <input type="password" name="line_channel_access_token" value="{{ $settings['line_channel_access_token'] }}" placeholder="Channel Access Token จาก LINE Developers Console"
+                    <input type="password" name="line_channel_access_token" value="" placeholder="{{ ! empty($settings['line_channel_access_token']) ? '••••••••••••••••  (มีค่าเก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'Channel Access Token จาก LINE Developers Console' }}"
                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all font-mono text-sm">
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel Secret</label>
-                    <input type="password" name="line_channel_secret" value="{{ $settings['line_channel_secret'] }}" placeholder="Channel Secret"
+                    <input type="password" name="line_channel_secret" value="" placeholder="{{ ! empty($settings['line_channel_secret']) ? '••••••••••••••••  (มีค่าเก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'Channel Secret' }}"
                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all font-mono text-sm">
                 </div>
 
@@ -159,7 +159,7 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel Secret</label>
-                        <input type="password" name="line_login_channel_secret" value="{{ $settings['line_login_channel_secret'] }}" placeholder="Channel Secret"
+                        <input type="password" name="line_login_channel_secret" value="" placeholder="{{ ! empty($settings['line_login_channel_secret']) ? '••••••••••••••••  (มีค่าเก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'Channel Secret' }}"
                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono text-sm">
                     </div>
                 </div>
@@ -195,7 +195,7 @@
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Access Token</label>
-                    <input type="password" name="line_notify_token" value="{{ $settings['line_notify_token'] }}" placeholder="LINE Notify Access Token"
+                    <input type="password" name="line_notify_token" value="" placeholder="{{ ! empty($settings['line_notify_token']) ? '••••••••••••••••  (มีค่าเก็บไว้แล้ว — เว้นว่างเพื่อใช้ค่าเดิม)' : 'LINE Notify Access Token' }}"
                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-mono text-sm">
                     <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">รับ Token ได้ที่ <a href="https://notify-bot.line.me/my/" target="_blank" class="text-amber-600 dark:text-amber-400 hover:underline font-medium">notify-bot.line.me</a></p>
                 </div>

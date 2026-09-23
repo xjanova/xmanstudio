@@ -120,6 +120,7 @@ use App\Models\AiCrawlSetting;
 use App\Models\SeoSetting;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Support\Auth\LoginLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -175,7 +176,17 @@ Route::get('/auth/device-login/{token}', function (string $token) {
     if (! $user) {
         return redirect('/')->with('error', 'ไม่พบบัญชีผู้ใช้');
     }
+    // Checked again here, not only where the link is minted: the link lives for five
+    // minutes and a role or a suspension can change inside that window. An admin
+    // session starts at the password form, behind Turnstile and the login audit.
+    if ($user->isAdmin() || ! $user->is_active) {
+        return redirect()->route('login')->withErrors([
+            'email' => 'ลิงก์จากแอปใช้เข้าสู่ระบบบัญชีนี้ไม่ได้ กรุณาเข้าสู่ระบบด้วยอีเมลและรหัสผ่าน',
+        ]);
+    }
+    LoginLog::success($user, 'device');
     Auth::login($user);
+    request()->session()->regenerate();
 
     return redirect('/my-account/tping-workflows');
 })->name('auth.device-login');

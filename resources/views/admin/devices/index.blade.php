@@ -228,7 +228,7 @@
                                 </a>
 
                                 @if($device->status !== 'blocked')
-                                    <button type="button" onclick="showBlockModal({{ $device->id }}, '{{ $device->machine_name ?? $device->machine_id }}')"
+                                    <button type="button" onclick="showBlockModal({{ $device->id }}, @js($device->machine_name ?? $device->machine_id))"
                                             class="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
                                             title="บล็อก">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

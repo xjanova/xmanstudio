@@ -42,7 +42,14 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // A switched-off account is refused here as it is by the API, SSO and social
+        // sign-in; this form was the one door that still let it in. It fails like
+        // a wrong password, so the page says nothing about the account's state.
+        if (! Auth::attemptWhen(
+            $this->only('email', 'password'),
+            fn ($user) => (bool) $user->is_active,
+            $this->boolean('remember'),
+        )) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
