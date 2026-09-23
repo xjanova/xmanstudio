@@ -80,6 +80,13 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'hostinger_api_token',
             'root_password',
             'root_password_confirmation',
+            'recovery_password',
+            'recovery_password_confirmation',
+            'panel_password',
+            'panel_password_confirmation',
+            // Meant to be a public key — but what gets pasted into that box by
+            // mistake is sometimes the private one, and it must not sit in the session.
+            'public_key',
         ]);
 
         // Tell the owner in Telegram when something throws (a 500, a dying command) — throttled

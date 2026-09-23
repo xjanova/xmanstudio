@@ -10,10 +10,14 @@ use App\Models\VpsPayment;
 use App\Models\VpsPlan;
 use App\Services\HostingerApiService;
 use App\Support\UpstreamBilling;
+use App\Support\VpsCatalog;
+use App\Support\VpsPricing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Js;
+use Illuminate\Support\Str;
 use Tests\Concerns\FakesSupplierApi;
 use Tests\TestCase;
 
@@ -117,6 +121,114 @@ class VpsPagesTest extends TestCase
         $this->assertStringNotContainsString('Ubuntu 24.04 with Hostinger Tools', $html);
     }
 
+    public function test_the_order_form_picks_the_os_from_cards_and_draws_flags_not_emoji(): void
+    {
+        $html = $this->actingAs($this->user)->get(route('vps.order', 'kvm2'))->assertOk()->getContent();
+
+        // The OS is picked from radio cards that still post template_id, with
+        // the default (Ubuntu 24.04 LTS) already chosen — not a <select>.
+        $this->assertMatchesRegularExpression('/<input type="radio" name="template_id" value="1077"[^>]*\schecked/', $html);
+        $this->assertMatchesRegularExpression('/<input type="radio" name="template_id" value="1121"[^>]*>/', $html);
+        $this->assertDoesNotMatchRegularExpression('/<select[^>]*name="template_id"/', $html);
+
+        // Windows draws no flag emoji ("MY" in a box): Kuala Lumpur gets an SVG flag.
+        $this->assertMatchesRegularExpression('/id="vps-dc-flag-21">\s*<svg[^>]*viewBox="0 0 30 20"/', $html);
+        $this->assertStringContainsString('fill="#010066"', $html);   // Malaysia's blue canton
+        $this->assertStringNotContainsString(VpsCatalog::flag('my'), $html);
+        $this->assertStringNotContainsString(VpsCatalog::flag('de'), $html);
+
+        // The order summary shows today's price AND the renewal price, together.
+        $summary = Str::between($html, 'aria-labelledby="vps-summary-title"', '</aside>');
+        $this->assertStringContainsString('ยอดชำระวันนี้', $summary);
+        $this->assertStringContainsString(VpsPricing::format($this->plan->firstPriceThb('1m')), $summary);
+        $this->assertStringContainsString('เดือนถัดไป (ต่ออายุ)', $summary);
+        $this->assertStringContainsString(VpsPricing::format($this->plan->renewPriceThb('1m')), $summary);
+        $this->assertStringContainsString('Kuala Lumpur', $summary);
+        $this->assertStringContainsString('name="accept_terms"', $summary);
+
+        $this->assertStringNotContainsStringIgnoringCase('hostinger', $html);
+    }
+
+    public function test_a_rejected_order_comes_back_with_the_same_choices(): void
+    {
+        $html = $this->actingAs($this->user)
+            ->from(route('vps.order', 'kvm2'))
+            ->followingRedirects()
+            ->post(route('vps.order.store', 'kvm2'), [
+                'order_token' => (string) Str::uuid(),
+                'period' => '1m',
+                'template_id' => 1121,
+                'data_center_id' => 19,
+                'hostname' => 'app.example.com',
+                'root_password' => 'too-short',
+                'expected_amount' => 600,
+                'auto_renew' => '0',
+                'accept_terms' => '1',
+            ])
+            ->assertOk()
+            ->getContent();
+
+        // Docker is still the chosen card, and its tab is the one open.
+        $this->assertMatchesRegularExpression('/name="template_id" value="1121"[^>]*\schecked/', $html);
+        $this->assertDoesNotMatchRegularExpression('/name="template_id" value="1077"[^>]*\schecked/', $html);
+        $this->assertMatchesRegularExpression('/id="vps-os-tab-app"[^>]*aria-selected="true"/', $html);
+        $this->assertMatchesRegularExpression('/name="data_center_id" value="19"[^>]*\schecked/', $html);
+        $this->assertStringContainsString('Ubuntu 24.04 with Docker', Str::between($html, 'aria-labelledby="vps-summary-title"', '</aside>'));
+
+        // The root password is never written back into the page.
+        $this->assertStringNotContainsString('too-short', $html);
+    }
+
+    public function test_the_order_form_still_renders_when_the_catalogue_is_down(): void
+    {
+        $this->upstream([
+            'GET /api/vps/v1/templates' => Http::response(['message' => 'down'], 500),
+            'GET /api/vps/v1/data-centers' => Http::response(['message' => 'down'], 500),
+        ]);
+
+        $html = $this->actingAs($this->user)->get(route('vps.order', 'kvm2'))
+            ->assertOk()
+            ->assertSee('โหลดตัวเลือกเซิร์ฟเวอร์ไม่สำเร็จ')
+            ->getContent();
+
+        // Nothing to choose, so nothing can be ordered — but both prices still show.
+        $this->assertDoesNotMatchRegularExpression('/name="template_id"/', $html);
+        $this->assertMatchesRegularExpression('/<button type="submit"\s+disabled/', $html);
+        $summary = Str::between($html, 'aria-labelledby="vps-summary-title"', '</aside>');
+        $this->assertStringContainsString(VpsPricing::format($this->plan->firstPriceThb('1m')), $summary);
+        $this->assertStringContainsString(VpsPricing::format($this->plan->renewPriceThb('1m')), $summary);
+    }
+
+    public function test_panels_that_need_a_licence_say_so_on_their_card(): void
+    {
+        $this->upstream([
+            'GET /api/vps/v1/templates' => [
+                ['id' => 1077, 'name' => 'Ubuntu 24.04 LTS', 'description' => 'Ubuntu'],
+                ['id' => 1126, 'name' => 'AlmaLinux 9 with cPanel', 'description' => 'cPanel &amp; WHM'],
+            ],
+        ]);
+
+        $this->actingAs($this->user)->get(route('vps.order', 'kvm2'))
+            ->assertOk()
+            ->assertSee('id="vps-os-tab-panel"', false)
+            ->assertSee('ต้องซื้อไลเซนส์แยก')
+            ->assertSee('licence sold separately');
+    }
+
+    public function test_the_flag_and_icon_partials_never_print_what_they_were_given(): void
+    {
+        $flag = view('vps.partials.flag', ['country' => '"><script>alert(1)</script>', 'class' => 'w-6 h-4'])->render();
+        $this->assertStringNotContainsString('<script', $flag);
+        $this->assertStringContainsString('<svg', $flag);
+
+        $this->assertStringContainsString('>ZA</text>', view('vps.partials.flag', ['country' => 'za'])->render());
+        $this->assertStringContainsString('#C8102E', view('vps.partials.flag', ['country' => 'uk'])->render());
+
+        $icon = view('vps.partials.os-icon', ['name' => 'Ubuntu 24.04 with <img src=x onerror=alert(1)>', 'class' => 'w-8 h-8'])->render();
+        $this->assertStringNotContainsString('<img', $icon);
+        $this->assertStringContainsString('<svg', $icon);
+    }
+
     public function test_the_order_form_needs_a_login(): void
     {
         $this->get(route('vps.order', 'kvm2'))->assertRedirect();
@@ -143,8 +255,13 @@ class VpsPagesTest extends TestCase
 
         $this->assertStringContainsString('203.0.113.10', $html);
         $this->assertStringContainsString('ssh root@203.0.113.10', $html);
-        $this->assertStringContainsString('name="confirm_hostname"', $html);
         $this->assertStringNotContainsStringIgnoringCase('hostinger', strip_tags($html));
+
+        // The reinstall form lives on the System tab, behind its own link.
+        $this->assertStringContainsString(route('customer.vps.show', ['id' => $server->id, 'tab' => 'system']), $html);
+
+        $system = $this->actingAs($this->user)->get(route('customer.vps.show', ['id' => $server->id, 'tab' => 'system']))->assertOk()->getContent();
+        $this->assertStringContainsString('name="confirm_hostname"', $system);
     }
 
     public function test_a_server_being_built_renders_its_waiting_state(): void

@@ -648,6 +648,22 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('id')->whereNumber('backup')->middleware('throttle:3,30,vps-backup-restore')->name('backup-restore');
             Route::post('/{id}/point-domain', [CustomerVpsController::class, 'pointDomain'])
                 ->whereNumber('id')->middleware('throttle:10,10,vps-point-domain')->name('point-domain');
+            // เครือข่ายและความปลอดภัย — ไฟร์วอลล์ของเครื่องนี้เท่านั้น (id อยู่ในแถว ไม่รับจากฟอร์ม)
+            Route::post('/{id}/firewall', [CustomerVpsController::class, 'firewall'])
+                ->whereNumber('id')->middleware('throttle:15,10,vps-firewall')->name('firewall');
+            Route::post('/{id}/ssh-keys', [CustomerVpsController::class, 'sshKey'])
+                ->whereNumber('id')->middleware('throttle:10,10,vps-ssh-keys')->name('ssh-keys');
+            Route::post('/{id}/reverse-dns', [CustomerVpsController::class, 'reverseDns'])
+                ->whereNumber('id')->middleware('throttle:10,10,vps-reverse-dns')->name('reverse-dns');
+            Route::post('/{id}/resolvers', [CustomerVpsController::class, 'resolvers'])
+                ->whereNumber('id')->middleware('throttle:10,10,vps-resolvers')->name('resolvers');
+            Route::post('/{id}/malware', [CustomerVpsController::class, 'malware'])
+                ->whereNumber('id')->middleware('throttle:5,30,vps-malware')->name('malware');
+            // ระบบ — โหมดกู้ระบบ และรหัสผ่านแผงควบคุม
+            Route::post('/{id}/recovery', [CustomerVpsController::class, 'recovery'])
+                ->whereNumber('id')->middleware('throttle:5,30,vps-recovery')->name('recovery');
+            Route::post('/{id}/panel-password', [CustomerVpsController::class, 'panelPassword'])
+                ->whereNumber('id')->middleware('throttle:5,10,vps-panel-password')->name('panel-password');
             Route::post('/{id}/auto-renew', [CustomerVpsController::class, 'toggleAutoRenew'])
                 ->whereNumber('id')->name('auto-renew');
             // ต่ออายุเองตอนนี้ — ตัดกระเป๋าเงินทันที เส้นทางเงินเดียวกับตัวตัดอัตโนมัติ

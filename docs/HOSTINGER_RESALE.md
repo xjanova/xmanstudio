@@ -96,6 +96,25 @@ per period (`hostingerinth-vps-kvm2-thb-1m`) and opaque — copy them from the c
   on the site says which one it is ("ปีแรก / ปีต่อไป", "เดือนแรก / เดือนถัดไป"), and renewals are
   charged at the renewal cost — never the first-period price again.
 
+## The customer's VPS panel (`/my-account/vps/{id}?tab=…`)
+
+Six tabs — overview, network & security, backups, system, activity, billing. Each tab is a plain
+link and fetches only what it shows (`Customer\VpsController::show()`): the whole site shares 90
+supplier calls a minute, so the panel never loads everything at once. Live machine details are
+cached 20 s (`vps.vm.{id}`), metrics 5 min, firewall/actions 1 min, keys 5 min, malware 10 min.
+
+- **Firewall**: one per rental, created on first use, its id kept in `vps_instances.remote_firewall_id`.
+  Customer requests only ever touch that id (never one from a form). Firewalls drop everything no rule
+  accepts, so a new one is seeded with SSH + HTTP + HTTPS before activation, and any rule set without
+  SSH needs an explicit "block SSH on purpose" tick (`VpsFirewall::allowsSsh()`).
+- **SSH keys** are account-level upstream: stored as `vps{id}-{name}` and attached to the one machine;
+  the panel lists the machine's attached keys only. The API cannot detach a key — the page says to
+  remove it from `~/.ssh/authorized_keys`.
+- **Recovery mode / panel password / root password**: passwords go straight to the API, are in
+  `dontFlash`, and the API client redacts those paths from its logs.
+- Each VPS route has its own throttle prefix (`throttle:N,M,vps-…`): a bare `throttle:N,M` is keyed on
+  the user alone, so every such route in the app shares one counter.
+
 ## Schedule (routes/console.php)
 
 | Command | When | Does |

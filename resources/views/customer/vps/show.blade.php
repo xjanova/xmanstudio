@@ -107,6 +107,7 @@
         'snapshotRestore' => 'กู้คืนเครื่องกลับไปเป็นสแนปช็อต' . ($snapWhen ? ' ' . $snapWhen : '')
             . "?\n\nข้อมูลทั้งหมดที่เปลี่ยนหลังจากนั้นจะหายไป และเครื่องจะรีสตาร์ท",
         'snapshotDelete' => 'ลบสแนปช็อต' . ($snapWhen ? ' ' . $snapWhen : '') . "?\n\nลบแล้วกู้คืนไม่ได้",
+        'recovery' => 'บูต ' . $server->hostname . " เข้าโหมดกู้ระบบ?\n\nเว็บและบริการทั้งหมดบนเครื่องจะหยุดจนกว่าจะออกจากโหมดนี้",
         'reinstall' => 'ยืนยันครั้งสุดท้าย: ลบทุกอย่างใน ' . $server->hostname
             . " แล้วติดตั้งระบบใหม่?\n\nข้อมูลทั้งหมดและสแนปช็อตจะหายไป กู้คืนไม่ได้",
     ];
@@ -114,9 +115,21 @@
     // ฟอร์มที่เพิ่งส่งไม่ผ่าน validation — ช่องซ่อน section ถูก flash กลับมาพร้อม
     // input ใช้เปิดส่วนติดตั้ง OS ใหม่ค้างไว้ให้แก้ต่อ แทนที่จะพับหายไป
     $failedSection = $errors->any() ? old('section') : null;
+
+    // แท็บของหน้า — ลิงก์ธรรมดา (?tab=) ไม่ใช่สลับด้วย JS: แต่ละแท็บดึงข้อมูลจากเครื่อง
+    // เฉพาะที่ตัวเองแสดง และฟอร์มบันทึกเสร็จกลับมาแท็บเดิมได้โดยไม่ต้องใช้ JS
+    $tabUrl = fn (string $key, array $extra = []) => route('customer.vps.show', array_merge(['id' => $server->id, 'tab' => $key], $extra));
+    $tabs = [
+        'overview' => ['th' => 'ภาพรวม', 'en' => 'Overview', 'icon' => 'M4 13h6V4H4v9zm0 7h6v-5H4v5zm10 0h6v-9h-6v9zm0-16v5h6V4h-6z'],
+        'network' => ['th' => 'ความปลอดภัย', 'en' => 'Security & network', 'icon' => 'M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z'],
+        'backups' => ['th' => 'สำรองข้อมูล', 'en' => 'Backups', 'icon' => 'M4 7h3l2-3h6l2 3h3v12H4V7zm8 9.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z'],
+        'system' => ['th' => 'ระบบ', 'en' => 'System', 'icon' => 'M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm7.4-2.5l1.6 1.2-2 3.4-1.9-.7a7 7 0 01-1.7 1l-.3 2.1h-4l-.3-2.1a7 7 0 01-1.7-1l-1.9.7-2-3.4L4.6 13a7 7 0 010-2L3 9.8l2-3.4 1.9.7a7 7 0 011.7-1L8.9 4h4l.3 2.1a7 7 0 011.7 1l1.9-.7 2 3.4-1.6 1.2a7 7 0 010 2z'],
+        'activity' => ['th' => 'ประวัติ', 'en' => 'Activity', 'icon' => 'M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z'],
+        'billing' => ['th' => 'การเงิน', 'en' => 'Billing', 'icon' => 'M3 10h18M7 15h2m4 0h4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z'],
+    ];
+    $inRecovery = in_array($server->state, ['recovery', 'stopping_recovery'], true);
     $selectedTemplate = (int) old('template_id', $server->template_id);
 @endphp
-
 <div class="space-y-6">
 
     <a href="{{ route('customer.vps.index') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
@@ -294,629 +307,76 @@
                 <p><x-bi th="เครื่องนี้ถูกตั้งรหัสผ่าน root แบบสุ่มที่ไม่มีใครรู้ — ตั้งรหัสของคุณเองตอนนี้ แล้วเข้าใช้งานด้วย SSH ได้ทันที"
                          en="This server has a random root password nobody knows. Set your own now and SSH straight in." /></p>
             </div>
-            <a href="#root-password" class="{{ $btnDanger }} shrink-0"><x-bi th="ตั้งรหัสผ่านตอนนี้" en="Set it now" /></a>
+            <a href="{{ $tabUrl('system') }}#root-password" class="{{ $btnDanger }} shrink-0"><x-bi th="ตั้งรหัสผ่านตอนนี้" en="Set it now" /></a>
+        </div>
+    @endif
+
+    @if($manageable && $inRecovery && $tab !== 'system')
+        <div class="rounded-xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 px-5 py-4 text-sm text-violet-900 dark:text-violet-200 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="min-w-0 flex-1">
+                <p class="font-semibold mb-1"><x-bi th="เครื่องอยู่ในโหมดกู้ระบบ" en="The server is in recovery mode" /></p>
+                <p><x-bi th="เว็บและบริการปกติหยุดอยู่ — ดิสก์เดิมอยู่ที่ /mnt ออกจากโหมดนี้ได้ที่แท็บระบบ"
+                         en="Normal services are down — your disk is at /mnt. Leave recovery mode on the System tab." /></p>
+            </div>
+            <a href="{{ $tabUrl('system') }}#recovery" class="{{ $btnPrimary }} shrink-0"><x-bi th="ไปที่โหมดกู้ระบบ" en="Go to recovery" /></a>
         </div>
     @endif
 
     @if($manageable)
-        {{-- ══════════ เข้าใช้งาน + เปิด/ปิดเครื่อง ══════════ --}}
-        <div class="grid lg:grid-cols-2 gap-6">
-            <div class="{{ $card }} p-6">
-                <h2 class="{{ $h2 }}"><x-bi th="เข้าใช้งาน" en="Connect" /></h2>
-                <p class="{{ $lead }}">
-                    <x-bi th="เปิด Terminal (Mac/Linux) หรือ PowerShell (Windows) แล้วพิมพ์คำสั่งนี้"
-                          en="Open Terminal (Mac/Linux) or PowerShell (Windows) and run:" />
+        {{-- เครื่องกำลังรีสตาร์ท/ติดตั้งใหม่/กู้คืน: ปุ่มทุกแท็บถูกปิดไว้ — ถามสถานะเป็นระยะ
+             แล้วรีโหลดเมื่อเสร็จ อยู่เหนือแถบแท็บเพื่อให้ทำงานไม่ว่าจะอยู่แท็บไหน --}}
+        @if($busy)
+            <div x-data="vpsPoller(@js($statusUrl), 'idle', @js($powerText))"
+                 class="rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-5 py-4 text-sm text-amber-900 dark:text-amber-200">
+                <p x-show="!ready" class="flex items-start gap-3">
+                    <svg class="w-5 h-5 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" class="opacity-25"/>
+                        <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                    <span>
+                        <span class="font-semibold"><x-bi th="เครื่องกำลังทำงานอื่นอยู่" en="The server is busy with another task" /></span>
+                        (<span x-text="label">{{ $powerText }}</span>)
+                        — <x-bi th="ปุ่มจะกดได้อีกครั้งเมื่อเสร็จ หน้านี้จะอัปเดตเอง" en="the buttons come back when it's done; this page updates itself" />
+                    </span>
                 </p>
-
-                @if($sshCommand)
-                    {{-- จอแคบ: ปุ่มคัดลอกตกลงบรรทัดใหม่ ให้คำสั่งได้เต็มบรรทัดไม่ขาดกลาง IP --}}
-                    <div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-slate-900 px-4 py-3" x-data="vpsCopy(@js($sshCommand))">
-                        <p class="flex-1 min-w-[13rem] font-mono text-sm break-all">
-                            <span class="text-slate-500 select-none" aria-hidden="true">$ </span><span class="text-emerald-300 select-all">{{ $sshCommand }}</span>
-                        </p>
-                        <button type="button" @click="copy()"
-                                class="shrink-0 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition">
-                            <span x-show="!copied"><x-bi th="คัดลอก" en="Copy" /></span>
-                            <span x-show="copied" x-cloak><x-bi th="คัดลอกแล้ว" en="Copied" /></span>
-                        </button>
-                    </div>
-                @else
-                    <p class="mt-4 rounded-xl bg-slate-100 dark:bg-slate-900/60 px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-                        <x-bi th="เครื่องยังไม่ได้รับ IP — รีเฟรชอีกครั้งในไม่กี่นาที" en="No IP address yet — refresh again in a few minutes." />
-                    </p>
-                @endif
-
-                <dl class="mt-5 grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                    <div class="min-w-0">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="ผู้ใช้" en="User" /></dt>
-                        <dd class="font-mono text-slate-900 dark:text-white">root</dd>
-                    </div>
-                    <div class="min-w-0">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="รหัสผ่าน" en="Password" /></dt>
-                        <dd class="text-slate-700 dark:text-slate-300">
-                            <x-bi th="รหัสที่คุณตั้งไว้ — เราไม่เก็บและแสดงให้ดูไม่ได้" en="The one you set — we never keep or show it" />
-                            <a href="#root-password" class="text-indigo-600 dark:text-indigo-400 hover:underline"><x-bi th="ตั้งใหม่" en="Reset" /></a>
-                        </dd>
-                    </div>
-                    @if($server->ipv6)
-                        <div class="min-w-0 sm:col-span-2">
-                            <dt class="text-xs text-slate-500 dark:text-slate-400">IPv6</dt>
-                            <dd class="font-mono text-slate-900 dark:text-white break-all select-all">{{ $server->ipv6 }}</dd>
-                        </div>
-                    @endif
-                    <div class="min-w-0">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="ระบบปฏิบัติการ" en="Operating system" /></dt>
-                        <dd class="text-slate-900 dark:text-white break-words">{{ $server->template_name ?: '—' }}</dd>
-                    </div>
-                    <div class="min-w-0">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="ศูนย์ข้อมูล" en="Data center" /></dt>
-                        <dd class="text-slate-900 dark:text-white break-words">{{ $server->data_center_name ?: '—' }}</dd>
-                    </div>
-                </dl>
-            </div>
-
-            <div class="{{ $card }} p-6">
-                <h2 class="{{ $h2 }}"><x-bi th="เปิด/ปิดเครื่อง" en="Power" /></h2>
-                <p class="mt-1 inline-flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300">
-                    <span class="w-2.5 h-2.5 rounded-full shrink-0 {{ $power['dot'] }}" aria-hidden="true"></span>
-                    <x-bi :th="$power['th']" :en="$power['en']" />
+                <p x-show="halted" x-cloak class="mt-1 text-xs">
+                    <x-bi th="หยุดตรวจสถานะอัตโนมัติแล้ว กรุณารีเฟรชหน้าเพื่อดูสถานะล่าสุด" en="Stopped checking automatically — refresh the page for the latest status." />
                 </p>
-
-                <div class="mt-4 flex flex-wrap gap-2">
-                    <form method="POST" action="{{ route('customer.vps.power', $server->id) }}" data-once>
-                        @csrf
-                        <input type="hidden" name="action" value="start">
-                        <button type="submit" class="{{ $btnPrimary }}" @disabled($busy || $running)>
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 001.5.87l10.5-6.5a1 1 0 000-1.74L9.5 4.63A1 1 0 008 5.5z"/></svg>
-                            <x-bi th="เปิดเครื่อง" en="Start" />
-                        </button>
-                    </form>
-                    <form method="POST" action="{{ route('customer.vps.power', $server->id) }}" data-once
-                          onsubmit="return confirm(@js($confirm['restart']))">
-                        @csrf
-                        <input type="hidden" name="action" value="restart">
-                        <button type="submit" class="{{ $btnGhost }}" @disabled($busy || $stopped)>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                            <x-bi th="รีสตาร์ท" en="Restart" />
-                        </button>
-                    </form>
-                    <form method="POST" action="{{ route('customer.vps.power', $server->id) }}" data-once
-                          onsubmit="return confirm(@js($confirm['stop']))">
-                        @csrf
-                        <input type="hidden" name="action" value="stop">
-                        <button type="submit" class="{{ $btnGhostDanger }}" @disabled($busy || $stopped)>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2" d="M12 3v8"/><path stroke-linecap="round" stroke-width="2" d="M6.3 6.3a8 8 0 1011.4 0"/></svg>
-                            <x-bi th="ปิดเครื่อง" en="Stop" />
-                        </button>
-                    </form>
-                </div>
-
-                @if($busy)
-                    {{-- ระหว่างรีสตาร์ท/ติดตั้งใหม่/กู้คืน ปุ่มถูกปิดไว้ — ถามสถานะเป็นระยะ
-                         แล้วรีโหลดเมื่อเสร็จ ยกเว้นลูกค้ากำลังพิมพ์อะไรค้างในฟอร์มอยู่ --}}
-                    <div x-data="vpsPoller(@js($statusUrl), 'idle', @js($powerText))"
-                         class="mt-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-                        <p x-show="!ready">
-                            <span class="font-semibold"><x-bi th="เครื่องกำลังทำงานอื่นอยู่" en="The server is busy with another task" /></span>
-                            (<span x-text="label">{{ $powerText }}</span>)
-                            — <x-bi th="ปุ่มจะกดได้อีกครั้งเมื่อเสร็จ หน้านี้จะอัปเดตเอง" en="the buttons come back when it's done; this page updates itself" />
-                        </p>
-                        <p x-show="halted" x-cloak class="mt-1 text-xs">
-                            <x-bi th="หยุดตรวจสถานะอัตโนมัติแล้ว กรุณารีเฟรชหน้าเพื่อดูสถานะล่าสุด" en="Stopped checking automatically — refresh the page for the latest status." />
-                        </p>
-                        <p x-show="ready" x-cloak class="flex flex-wrap items-center gap-2">
-                            <span class="font-semibold"><x-bi th="เครื่องทำงานเสร็จแล้ว" en="All done" /></span>
-                            <button type="button" onclick="window.location.reload()" class="underline font-semibold hover:no-underline">
-                                <x-bi th="รีเฟรชหน้า" en="Refresh" />
-                            </button>
-                        </p>
-                    </div>
-                @endif
-
-                <p class="mt-4 text-xs text-slate-500 dark:text-slate-400">
-                    <x-bi th="ปิดเครื่องไม่หยุดรอบบิล — เครื่องยังเป็นของคุณ และคิดค่าบริการตามปกติจนหมดอายุ"
-                          en="Stopping doesn't pause billing — the server stays yours, and billed, until it expires." />
-                </p>
-            </div>
-        </div>
-
-        {{-- ══════════ การใช้งาน ══════════ --}}
-        @if($metrics)
-            <div class="{{ $card }} p-6">
-                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                    <h2 class="{{ $h2 }}"><x-bi th="การใช้งาน 24 ชั่วโมงล่าสุด" en="Last 24 hours" /></h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="ข้อมูลอัปเดตทุก 5 นาที" en="Updated every 5 minutes" /></p>
-                </div>
-                <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div class="{{ $tile }}">
-                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">CPU</p>
-                        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{{ $pct($metrics['cpu'] ?? null) }}</p>
-                        @if(! empty($metrics['cpu_line']))
-                            <svg viewBox="0 0 120 32" preserveAspectRatio="none" class="mt-2 w-full h-8 text-indigo-500 dark:text-indigo-400" aria-hidden="true">
-                                <polyline points="{{ $metrics['cpu_line'] }}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-                            </svg>
-                        @endif
-                    </div>
-                    <div class="{{ $tile }}">
-                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">RAM</p>
-                        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{{ $pct($metrics['ram_percent'] ?? null) }}</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                            {{ $gb($metrics['ram_used'] ?? null) }}
-                            @if($server->spec('memory_mb'))
-                                <x-bi th="จาก" en="of" /> {{ \App\Models\VpsPlan::sizeLabel($server->spec('memory_mb')) }}
-                            @endif
-                        </p>
-                        @if(! empty($metrics['ram_line']))
-                            <svg viewBox="0 0 120 32" preserveAspectRatio="none" class="mt-2 w-full h-8 text-cyan-500 dark:text-cyan-400" aria-hidden="true">
-                                <polyline points="{{ $metrics['ram_line'] }}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-                            </svg>
-                        @endif
-                    </div>
-                    <div class="{{ $tile }}">
-                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400"><x-bi th="ดิสก์" en="Disk" /></p>
-                        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{{ $gb($metrics['disk_used'] ?? null) }}</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                            {{ $pct($metrics['disk_percent'] ?? null) }}
-                            @if($server->spec('disk_mb'))
-                                <x-bi th="จาก" en="of" /> {{ \App\Models\VpsPlan::sizeLabel($server->spec('disk_mb')) }}
-                            @endif
-                        </p>
-                        <div class="mt-3 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                            <div class="h-full rounded-full {{ $barTone($metrics['disk_percent'] ?? null) }}" style="width: {{ $barWidth($metrics['disk_percent'] ?? null) }}%"></div>
-                        </div>
-                    </div>
-                    <div class="{{ $tile }}">
-                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400"><x-bi th="ทราฟฟิก 24 ชม." en="Traffic, 24h" /></p>
-                        <p class="mt-1 text-sm text-slate-900 dark:text-white tabular-nums">
-                            <span class="text-slate-400" aria-hidden="true">↑</span> {{ $gb($metrics['traffic_out_gb'] ?? null, 2) }}
-                            <span class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="ขาออก" en="out" /></span>
-                        </p>
-                        <p class="mt-1 text-sm text-slate-900 dark:text-white tabular-nums">
-                            <span class="text-slate-400" aria-hidden="true">↓</span> {{ $gb($metrics['traffic_in_gb'] ?? null, 2) }}
-                            <span class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="ขาเข้า" en="in" /></span>
-                        </p>
-                    </div>
-                </div>
-                @if($uptime)
-                    <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
-                        <x-bi th="เปิดต่อเนื่องมาแล้ว" en="Up for" />
-                        <span class="font-semibold text-slate-900 dark:text-white"><x-bi :th="$uptime['th']" :en="$uptime['en']" /></span>
-                    </p>
-                @endif
-            </div>
-        @else
-            <div class="{{ $card }} p-6">
-                <h2 class="{{ $h2 }}"><x-bi th="การใช้งาน" en="Usage" /></h2>
-                <p class="{{ $lead }}">
-                    <x-bi th="ยังไม่มีข้อมูลการใช้งาน — กราฟจะเริ่มแสดงหลังเครื่องทำงานไปสักพัก"
-                          en="No usage data yet — the graphs appear once the server has been running for a while." />
+                <p x-show="ready" x-cloak class="flex flex-wrap items-center gap-2">
+                    <span class="font-semibold"><x-bi th="เครื่องทำงานเสร็จแล้ว" en="All done" /></span>
+                    <button type="button" onclick="window.location.reload()" class="underline font-semibold hover:no-underline">
+                        <x-bi th="รีเฟรชหน้า" en="Refresh" />
+                    </button>
                 </p>
             </div>
         @endif
 
-        {{-- ══════════ รหัสผ่าน root + ชื่อโฮสต์ + ชี้โดเมน ══════════ --}}
-        <div class="grid lg:grid-cols-2 gap-6">
-            {{-- ไม่เติมค่ารหัสผ่านเดิมกลับเข้าช่องเด็ดขาด แม้ validation ไม่ผ่าน --}}
-            <div id="root-password" class="{{ $card }} p-6 scroll-mt-24" x-data="vpsPassword()">
-                <h2 class="{{ $h2 }}"><x-bi th="ตั้งรหัสผ่าน root" en="Root password" /></h2>
-                <p class="{{ $lead }}">
-                    <x-bi th="ลืมรหัสหรืออยากเปลี่ยน ตั้งใหม่ได้ทันทีโดยไม่ต้องติดตั้งเครื่องใหม่ — เราไม่เก็บรหัสผ่านของคุณ จึงแสดงให้ดูซ้ำไม่ได้"
-                          en="Forgot it or want a new one? Set it here without reinstalling. We never keep your password, so we can't show it again." />
-                </p>
-
-                <form method="POST" action="{{ route('customer.vps.password', $server->id) }}" class="mt-4 space-y-3" data-once>
-                    @csrf
-                    <input type="hidden" name="section" value="password">
-                    <div>
-                        <label for="root_password" class="{{ $label }}"><x-bi th="รหัสผ่านใหม่" en="New password" /></label>
-                        <div class="flex gap-2">
-                            <input type="password" :type="show ? 'text' : 'password'" id="root_password" name="root_password" x-ref="pw"
-                                   required minlength="12" maxlength="128" autocomplete="new-password" autocapitalize="off" spellcheck="false"
-                                   class="{{ $field }} font-mono">
-                            <button type="button" @click="show = !show" class="{{ $btnGhost }} shrink-0">
-                                <span x-show="!show"><x-bi th="แสดง" en="Show" /></span>
-                                <span x-show="show" x-cloak><x-bi th="ซ่อน" en="Hide" /></span>
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="root_password_confirmation" class="{{ $label }}"><x-bi th="ยืนยันรหัสผ่าน" en="Confirm password" /></label>
-                        <input type="password" :type="show ? 'text' : 'password'" id="root_password_confirmation" name="root_password_confirmation" x-ref="confirm"
-                               required minlength="12" maxlength="128" autocomplete="new-password" autocapitalize="off" spellcheck="false"
-                               class="{{ $field }} font-mono">
-                    </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                        <x-bi th="อย่างน้อย 12 ตัว มีทั้งตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข · ห้ามใช้รหัสที่เคยหลุดสู่สาธารณะ"
-                              en="At least 12 characters with upper case, lower case and a number — and not one that has leaked before." />
-                    </p>
-                    <p x-show="generated" x-cloak class="rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
-                        <x-bi th="คัดลอกหรือจดรหัสนี้ไว้ก่อนกดบันทึก — หลังจากนี้เราแสดงให้ดูอีกไม่ได้"
-                              en="Copy or write it down before you save — we can't show it to you again afterwards." />
-                    </p>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" x-show="canGenerate" @click="generate()" class="{{ $btnGhost }}">
-                            <x-bi th="สุ่มรหัสที่ปลอดภัย" en="Generate one" />
-                        </button>
-                        <button type="button" x-show="generated" x-cloak @click="copy()" class="{{ $btnGhost }}">
-                            <span x-show="!copied"><x-bi th="คัดลอกรหัส" en="Copy" /></span>
-                            <span x-show="copied" x-cloak><x-bi th="คัดลอกแล้ว" en="Copied" /></span>
-                        </button>
-                        <button type="submit" class="{{ $btnPrimary }}"><x-bi th="บันทึกรหัสผ่าน" en="Save password" /></button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="space-y-6">
-                <div class="{{ $card }} p-6">
-                    <h2 class="{{ $h2 }}"><x-bi th="ชื่อโฮสต์" en="Hostname" /></h2>
-                    <p class="{{ $lead }}">
-                        <x-bi th="ชื่อของเครื่อง เช่น server.example.com — เป็นแค่ป้ายชื่อ ไม่ได้ทำให้โดเมนชี้มาที่เครื่องนี้"
-                              en="The machine's name, e.g. server.example.com. It's only a label — it doesn't point a domain here." />
-                    </p>
-                    <form method="POST" action="{{ route('customer.vps.hostname', $server->id) }}" class="mt-4 flex flex-col sm:flex-row gap-2" data-once>
-                        @csrf
-                        <input type="hidden" name="section" value="hostname">
-                        <label for="hostname" class="sr-only">ชื่อโฮสต์ / Hostname</label>
-                        <input type="text" id="hostname" name="hostname" value="{{ old('hostname', $server->hostname) }}"
-                               required maxlength="253" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url"
-                               class="{{ $field }} font-mono">
-                        <button type="submit" class="{{ $btnDark }} shrink-0"><x-bi th="บันทึก" en="Save" /></button>
-                    </form>
-                </div>
-
-                <div class="{{ $card }} p-6">
-                    <h2 class="{{ $h2 }}"><x-bi th="ชี้โดเมนมาที่เครื่องนี้" en="Point a domain here" /></h2>
-                    <p class="{{ $lead }}">
-                        <x-bi th="ตั้ง A record ของตัวโดเมน (@) ไปที่ IP ของเครื่องนี้ และให้ www ชี้ไปที่โดเมนเดียวกัน — ระเบียนอีเมลและระเบียนอื่นไม่ถูกแตะ · มีผลใน 5–30 นาที"
-                              en="Sets the domain's A record (@) to this server's IP and points www at the domain. Mail and every other record are left alone. Takes 5–30 minutes." />
-                    </p>
-                    @if(! $server->ipv4)
-                        <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">
-                            <x-bi th="เครื่องยังไม่ได้รับ IP — รอสักครู่แล้วรีเฟรช" en="The server has no IP yet — wait a moment and refresh." />
-                        </p>
-                    @elseif($domains->isNotEmpty())
-                        <form method="POST" action="{{ route('customer.vps.point-domain', $server->id) }}" class="mt-4 flex flex-col sm:flex-row gap-2" data-once
-                              onsubmit="return vpsConfirmPoint(this, @js($server->ipv4))">
-                            @csrf
-                            <label for="domain_id" class="sr-only">โดเมน / Domain</label>
-                            {{-- ตัวเลือกเรนเดอร์จาก Blade ไม่ใช่ x-for (x-model อ่านค่าก่อนตัวเลือกจะมีจริง) --}}
-                            <select id="domain_id" name="domain_id" required class="{{ $field }}">
-                                @foreach($domains as $d)
-                                    <option value="{{ $d->id }}" @selected((int) old('domain_id') === (int) $d->id)>{{ $d->domain }}</option>
-                                @endforeach
-                            </select>
-                            <button type="submit" class="{{ $btnDark }} shrink-0"><x-bi th="ชี้มาที่นี่" en="Point it here" /></button>
-                        </form>
-                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            <x-bi :th="'ถ้าโดเมนใช้ nameserver ที่อื่น (เช่น Cloudflare) ให้ตั้ง A record ไปที่ ' . $server->ipv4 . ' ที่ผู้ให้บริการ DNS นั้นแทน'"
-                                  :en="'If the domain uses someone else\'s nameservers (e.g. Cloudflare), add an A record for ' . $server->ipv4 . ' there instead.'" />
-                        </p>
-                    @else
-                        <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                            <p class="text-sm text-slate-500 dark:text-slate-400 flex-1"><x-bi th="ยังไม่มีโดเมนในบัญชีนี้" en="No domains on this account yet" /></p>
-                            <a href="{{ route('domains.index') }}" class="{{ $btnGhost }} shrink-0"><x-bi th="จดโดเมนใหม่" en="Register a domain" /></a>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- ══════════ สแนปช็อต + แบ็กอัป ══════════ --}}
-        <div class="grid lg:grid-cols-2 gap-6">
-            <div class="{{ $card }} p-6">
-                <h2 class="{{ $h2 }}"><x-bi th="สแนปช็อต" en="Snapshot" /></h2>
-                <p class="{{ $lead }}">
-                    <x-bi th="ภาพทั้งเครื่อง ณ เวลาหนึ่ง เก็บได้ครั้งละ 1 ชุด — ทำไว้ก่อนอัปเดตระบบหรือแก้ไขครั้งใหญ่ ถ้าพังก็ย้อนกลับได้"
-                          en="A picture of the whole server at one moment, one at a time. Take one before a big update — if it breaks, roll back." />
-                </p>
-
-                @if($snapshot)
-                    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-                        <div class="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3 min-w-0">
-                            <dt class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="สร้างเมื่อ" en="Taken" /></dt>
-                            <dd class="font-semibold text-slate-900 dark:text-white">{{ $snapWhen ?? '—' }}</dd>
-                        </div>
-                        <div class="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3 min-w-0">
-                            <dt class="text-xs text-slate-500 dark:text-slate-400"><x-bi th="หมดอายุ" en="Expires" /></dt>
-                            <dd class="font-semibold text-slate-900 dark:text-white">{{ $when($snapshot['expires_at'] ?? null) ?? '—' }}</dd>
-                        </div>
-                    </dl>
-                    @if(($snapshot['restore_minutes'] ?? 0) > 0)
-                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            <x-bi :th="'กู้คืนใช้เวลาประมาณ ' . $snapshot['restore_minutes'] . ' นาที ระหว่างนั้นเครื่องใช้งานไม่ได้'"
-                                  :en="'A restore takes about ' . $snapshot['restore_minutes'] . ' minutes, during which the server is offline.'" />
-                        </p>
-                    @endif
-                @else
-                    <p class="mt-4 text-sm text-slate-500 dark:text-slate-400"><x-bi th="ยังไม่มีสแนปช็อต" en="No snapshot yet" /></p>
-                @endif
-
-                <div class="mt-4 flex flex-wrap gap-2">
-                    <form method="POST" action="{{ route('customer.vps.snapshot', $server->id) }}" data-once
-                          @if($snapshot) onsubmit="return confirm(@js($confirm['snapshotCreate']))" @endif>
-                        @csrf
-                        <input type="hidden" name="action" value="create">
-                        <button type="submit" class="{{ $btnDark }}" @disabled($busy)>
-                            @if($snapshot)
-                                <x-bi th="สร้างใหม่ (แทนที่อันเดิม)" en="Take a new one (replaces it)" />
-                            @else
-                                <x-bi th="สร้างสแนปช็อต" en="Take a snapshot" />
-                            @endif
-                        </button>
-                    </form>
-                    @if($snapshot)
-                        <form method="POST" action="{{ route('customer.vps.snapshot', $server->id) }}" data-once
-                              onsubmit="return confirm(@js($confirm['snapshotRestore']))">
-                            @csrf
-                            <input type="hidden" name="action" value="restore">
-                            <button type="submit" class="{{ $btnGhost }}" @disabled($busy)><x-bi th="กู้คืนจากสแนปช็อต" en="Restore" /></button>
-                        </form>
-                        <form method="POST" action="{{ route('customer.vps.snapshot', $server->id) }}" data-once
-                              onsubmit="return confirm(@js($confirm['snapshotDelete']))">
-                            @csrf
-                            <input type="hidden" name="action" value="delete">
-                            <button type="submit" class="{{ $btnGhostDanger }}" @disabled($busy)><x-bi th="ลบ" en="Delete" /></button>
-                        </form>
-                    @endif
-                </div>
-            </div>
-
-            <div class="{{ $card }} p-6">
-                <h2 class="{{ $h2 }}"><x-bi th="แบ็กอัปรายสัปดาห์" en="Weekly backups" /></h2>
-                <p class="{{ $lead }}">
-                    <x-bi th="ระบบสำรองทั้งเครื่องให้อัตโนมัติทุกสัปดาห์ กู้คืนเองได้จากที่นี่"
-                          en="The whole server is backed up automatically every week. Restore one yourself from here." />
-                </p>
-
-                @if(! empty($backups))
-                    <ul class="mt-4 space-y-2">
-                        @foreach($backups as $b)
-                            @php
-                                $backupLabel = $when($b['created_at'] ?? null) ?? ('#' . $b['id']);
-                                $backupConfirm = 'กู้คืนเครื่องจากแบ็กอัป ' . $backupLabel
-                                    . "?\n\nข้อมูลทั้งหมดในเครื่องจะถูกแทนที่ด้วยข้อมูลในแบ็กอัป — ไฟล์ที่สร้างหรือแก้ไขหลังจากนั้นจะหายไป และย้อนกลับไม่ได้";
-                            @endphp
-                            <li class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2.5">
-                                <div class="min-w-0 text-sm">
-                                    <p class="font-medium text-slate-900 dark:text-white">{{ $backupLabel }}</p>
-                                    @if(($b['size_gb'] ?? 0) > 0)
-                                        <p class="text-xs text-slate-500 dark:text-slate-400 tabular-nums">{{ number_format((float) $b['size_gb'], 1) }} GB</p>
-                                    @endif
-                                </div>
-                                <form method="POST" action="{{ route('customer.vps.backup-restore', [$server->id, $b['id']]) }}" data-once
-                                      onsubmit="return confirm(@js($backupConfirm))">
-                                    @csrf
-                                    <button type="submit" class="{{ $btnGhost }}" @disabled($busy)><x-bi th="กู้คืน" en="Restore" /></button>
-                                </form>
-                            </li>
-                        @endforeach
-                    </ul>
-                @else
-                    <p class="mt-4 rounded-lg bg-slate-100 dark:bg-slate-900/60 px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-                        <x-bi th="ระบบสำรองข้อมูลรายสัปดาห์จะเริ่มสร้างแบ็กอัปแรกภายใน 7 วัน"
-                              en="The weekly backup makes its first copy within 7 days." />
-                    </p>
-                @endif
-            </div>
-        </div>
-
-        {{-- ══════════ DANGER ZONE — ติดตั้ง OS ใหม่ ══════════
-             ปุ่มที่ทำลายที่สุดในหน้า: พับไว้ก่อน และต้องพิมพ์ชื่อโฮสต์ยืนยัน
-             เพราะ confirm() เฉยๆ คนกดผ่านโดยไม่อ่าน (controller ตรวจซ้ำอีกชั้น)
-             ห้ามใช้ bg-white ที่กล่องนี้: customer-premium เขียน .bg-white ทับ
-             border เป็นเส้นม่วงบาง 1px (สไตล์นอก layer ชนะ utility เสมอ) ขอบแดงจะหายไป --}}
-        <div class="rounded-2xl border-2 border-red-300 dark:border-red-500/40 bg-red-50/40 dark:bg-slate-800 p-6"
-             x-data="vpsReinstall(@js(['hostname' => $server->hostname, 'open' => $failedSection === 'reinstall', 'busy' => $busy, 'confirmText' => $confirm['reinstall']]))">
-            <div class="flex items-start justify-between gap-4">
-                <div class="min-w-0">
-                    <p class="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">Danger zone</p>
-                    <h2 class="{{ $h2 }} mt-1"><x-bi th="ติดตั้งระบบปฏิบัติการใหม่" en="Reinstall the operating system" /></h2>
-                    <p class="{{ $lead }}">
-                        <x-bi th="ล้างดิสก์ทั้งหมดแล้วติดตั้งใหม่ — ใช้เมื่อเครื่องพังจนแก้ไม่ได้ หรืออยากเปลี่ยนระบบปฏิบัติการ"
-                              en="Wipe the disk and start again — for a server broken beyond repair, or to switch operating system." />
-                    </p>
-                </div>
-                <button type="button" @click="open = !open" class="{{ $btnGhostDanger }} shrink-0" aria-controls="reinstall-panel" :aria-expanded="open ? 'true' : 'false'">
-                    <span x-show="!open"><x-bi th="เปิด" en="Show" /></span>
-                    <span x-show="open" x-cloak><x-bi th="ปิด" en="Hide" /></span>
-                </button>
-            </div>
-
-            <div id="reinstall-panel" x-show="open" x-cloak class="mt-5 pt-5 border-t border-red-200 dark:border-red-500/30">
-                <div class="rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 px-4 py-3 mb-4 text-sm text-red-900 dark:text-red-200">
-                    <p class="font-semibold"><x-bi th="ลบข้อมูลทั้งหมดและสแนปช็อต กู้คืนไม่ได้" en="Deletes all data and the snapshot — this cannot be undone" /></p>
-                    <p class="mt-1"><x-bi th="ไฟล์ ฐานข้อมูล และการตั้งค่าทุกอย่างในเครื่องจะหายไป — สำรองสิ่งที่ต้องการออกไปก่อน"
-                                          en="Every file, database and setting on the server goes. Copy off anything you need first." /></p>
-                </div>
-
-                @if(empty($templates))
-                    <p class="text-sm text-slate-600 dark:text-slate-400">
-                        <x-bi th="โหลดรายการระบบปฏิบัติการไม่ได้ในขณะนี้ กรุณารีเฟรชหน้าอีกครั้ง" en="Couldn't load the list of operating systems — please refresh the page." />
-                    </p>
-                @else
-                    <form method="POST" action="{{ route('customer.vps.reinstall', $server->id) }}" class="space-y-4" data-once
-                          @submit="confirmSubmit($event)">
-                        @csrf
-                        <input type="hidden" name="section" value="reinstall">
-
-                        <div>
-                            <label for="template_id" class="{{ $label }}"><x-bi th="ระบบปฏิบัติการ" en="Operating system" /></label>
-                            {{-- ตัวเลือกเรนเดอร์จาก Blade ไม่ใช่ x-for — x-model อ่านค่าตั้งแต่ก่อน
-                                 ตัวเลือกจะมีจริง แล้ว select ตกไปที่ตัวแรก --}}
-                            <select id="template_id" name="template_id" required class="{{ $field }}">
-                                @foreach($templates as $group => $list)
-                                    <optgroup label="{{ (\App\Support\VpsCatalog::GROUPS[$group]['th'] ?? $group) . ' / ' . (\App\Support\VpsCatalog::GROUPS[$group]['en'] ?? $group) }}">
-                                        @foreach($list as $t)
-                                            <option value="{{ $t['id'] }}" @selected($selectedTemplate === (int) $t['id'])>{{ $t['name'] }}{{ ! empty($t['licensed']) ? ' (ต้องซื้อไลเซนส์แยก)' : '' }}</option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div x-data="vpsPassword()">
-                            <label for="reinstall_root_password" class="{{ $label }}"><x-bi th="รหัสผ่าน root ของระบบใหม่" en="Root password for the new system" /></label>
-                            <div class="flex gap-2">
-                                <input type="password" :type="show ? 'text' : 'password'" id="reinstall_root_password" name="root_password" x-ref="pw"
-                                       required minlength="12" maxlength="128" autocomplete="new-password" autocapitalize="off" spellcheck="false"
-                                       class="{{ $field }} font-mono">
-                                <button type="button" @click="show = !show" class="{{ $btnGhost }} shrink-0">
-                                    <span x-show="!show"><x-bi th="แสดง" en="Show" /></span>
-                                    <span x-show="show" x-cloak><x-bi th="ซ่อน" en="Hide" /></span>
-                                </button>
-                            </div>
-                            <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                                <x-bi th="อย่างน้อย 12 ตัว มีทั้งตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข"
-                                      en="At least 12 characters with upper case, lower case and a number." />
-                            </p>
-                            <p x-show="generated" x-cloak class="mt-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
-                                <x-bi th="คัดลอกหรือจดรหัสนี้ไว้ก่อนกดติดตั้ง — หลังจากนี้เราแสดงให้ดูอีกไม่ได้"
-                                      en="Copy or write it down before you reinstall — we can't show it to you again afterwards." />
-                            </p>
-                            <div class="mt-2 flex flex-wrap gap-2">
-                                <button type="button" x-show="canGenerate" @click="generate()" class="{{ $btnGhost }}">
-                                    <x-bi th="สุ่มรหัสที่ปลอดภัย" en="Generate one" />
-                                </button>
-                                <button type="button" x-show="generated" x-cloak @click="copy()" class="{{ $btnGhost }}">
-                                    <span x-show="!copied"><x-bi th="คัดลอกรหัส" en="Copy" /></span>
-                                    <span x-show="copied" x-cloak><x-bi th="คัดลอกแล้ว" en="Copied" /></span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="confirm_hostname" class="{{ $label }}">
-                                <x-bi th="พิมพ์ชื่อโฮสต์เพื่อยืนยัน" en="Type the hostname to confirm" />:
-                                <span class="font-mono break-all">{{ $server->hostname }}</span>
-                            </label>
-                            <input type="text" id="confirm_hostname" name="confirm_hostname" x-model="typed"
-                                   required autocomplete="off" autocapitalize="off" spellcheck="false"
-                                   class="{{ $field }} font-mono">
-                        </div>
-
-                        <div class="flex flex-wrap items-center gap-3">
-                            <button type="submit" class="{{ $btnDanger }}" @disabled($busy) :disabled="busy || !matches">
-                                <x-bi th="ลบทุกอย่างและติดตั้งใหม่" en="Wipe and reinstall" />
-                            </button>
-                            @if($busy)
-                                <p class="text-xs text-amber-700 dark:text-amber-300"><x-bi th="เครื่องกำลังทำงานอื่นอยู่ — รอให้เสร็จก่อน" en="The server is busy — wait for it to finish first" /></p>
-                            @else
-                                <p x-show="typed.length > 0 && !matches" x-cloak class="text-xs text-red-600 dark:text-red-400"><x-bi th="ชื่อโฮสต์ยังไม่ตรง" en="The hostname doesn't match yet" /></p>
-                            @endif
-                        </div>
-                    </form>
-                @endif
-            </div>
-        </div>
-    @endif
-
-    {{-- ══════════ ต่ออายุและการชำระเงิน ══════════ --}}
-    <div class="{{ $card }} p-6">
-        <h2 class="{{ $h2 }}"><x-bi th="ต่ออายุและการชำระเงิน" en="Renewal & billing" /></h2>
-
-        <div class="mt-4 grid sm:grid-cols-2 gap-4">
-            @if($status !== \App\Models\VpsInstance::STATUS_REFUNDED)
-                <div class="{{ $tile }}">
-                    <h3 class="font-semibold text-slate-900 dark:text-white mb-1"><x-bi th="ต่ออายุอัตโนมัติ" en="Auto-renew" /></h3>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                        <x-bi :th="'ตัดจากกระเป๋าเงินก่อนหมดอายุ ' . $chargeDays . ' วัน แจ้งล่วงหน้าทุกครั้ง'"
-                              :en="'Charged from your wallet ' . $chargeDays . ' days before expiry — we always tell you first.'" />
-                    </p>
-                    <form method="POST" action="{{ route('customer.vps.auto-renew', $server->id) }}" data-once>
-                        @csrf
-                        <input type="hidden" name="auto_renew" value="{{ $server->auto_renew ? 0 : 1 }}">
-                        <button type="submit"
-                                class="px-5 py-2.5 rounded-lg text-sm font-semibold transition {{ $server->auto_renew
-                                    ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200'
-                                    : 'bg-slate-800 dark:bg-slate-600 text-white hover:bg-slate-700' }}">
-                            @if($server->auto_renew)
-                                <x-bi th="เปิดอยู่ — กดเพื่อปิด" en="On — tap to turn off" />
-                            @else
-                                <x-bi th="ปิดอยู่ — กดเพื่อเปิด" en="Off — tap to turn on" />
-                            @endif
-                        </button>
-                    </form>
-                </div>
-            @endif
-
-            <div class="{{ $tile }}">
-                <h3 class="font-semibold text-slate-900 dark:text-white mb-1"><x-bi th="ต่ออายุตอนนี้" en="Renew now" /></h3>
-                @if($renewable)
-                    {{-- ต่ออายุเองได้ตลอด ไม่ต้องรอรอบอัตโนมัติ — คนที่ปิดสวิตช์ไว้ก็ต้องมีทางจ่าย --}}
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                        <x-bi :th="'อีก ' . $spanTh . ' เป็นเงิน ' . $renewDisplay . ' — ' . $renewBasisTh"
-                              :en="'One more period for ' . $renewDisplay . ' — ' . $renewBasisEn . '.'" />
-                    </p>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <form method="POST" action="{{ route('customer.vps.renew', $server->id) }}" data-once
-                              onsubmit="return confirm(@js($confirm['renew']))">
-                            @csrf
-                            <button type="submit" class="{{ $btnRenew }}">
-                                <x-bi th="ต่ออายุตอนนี้" en="Renew now" /> · {{ $renewDisplay }}
-                            </button>
-                        </form>
-                        <a href="{{ route('user.wallet.topup') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"><x-bi th="เติมเงินเข้ากระเป๋า" en="Top up wallet" /></a>
-                    </div>
-                @elseif($pendingRenew)
-                    <p class="text-sm text-amber-700 dark:text-amber-300">
-                        <x-bi th="กำลังยืนยันการต่ออายุกับระบบ ไม่ต้องกดซ้ำ — วันหมดอายุจะอัปเดตภายในไม่กี่นาที"
-                              en="Your renewal is being confirmed — no need to press again. The expiry date updates within minutes." />
-                    </p>
-                @elseif(in_array($status, [\App\Models\VpsInstance::STATUS_ACTIVE, \App\Models\VpsInstance::STATUS_EXPIRED], true))
-                    <p class="text-sm text-slate-600 dark:text-slate-400">
-                        <x-bi th="ตอนนี้ยังต่ออายุออนไลน์ไม่ได้ กรุณาติดต่อทีมงาน" en="Online renewal isn't available right now — please contact our team." />
-                        <a href="{{ route('customer.support.create') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline"><x-bi th="แจ้งทีมงาน" en="Contact support" /></a>
-                    </p>
-                @else
-                    <p class="text-sm text-slate-600 dark:text-slate-400">
-                        <x-bi th="ต่ออายุได้เมื่อเซิร์ฟเวอร์พร้อมใช้งาน" en="Renewal opens once the server is up and running." />
-                    </p>
-                @endif
-            </div>
-        </div>
-
-        @if($payments->isNotEmpty())
-            <h3 class="font-semibold text-slate-900 dark:text-white mt-6 mb-3"><x-bi th="ประวัติการชำระเงิน" en="Payment history" /></h3>
-            <ul class="space-y-2">
-                @foreach($payments as $p)
-                    @php
-                        // สตริงคลาสเต็ม ไม่ต่อชื่อสีเอง — Tailwind เห็นเฉพาะคลาสทั้งคำ
-                        $pill = match ($p->status) {
-                            \App\Models\VpsPayment::STATUS_PAID => ['th' => 'ชำระแล้ว', 'en' => 'Paid', 'classes' => 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300'],
-                            \App\Models\VpsPayment::STATUS_REFUNDED => ['th' => 'คืนเงินแล้ว', 'en' => 'Refunded', 'classes' => 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'],
-                            default => ['th' => 'กำลังดำเนินการ', 'en' => 'Processing', 'classes' => 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300'],
-                        };
-                        $refunded = $p->status === \App\Models\VpsPayment::STATUS_REFUNDED;
-                    @endphp
-                    <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-slate-900 dark:text-white">
-                                @if($p->kind === \App\Models\VpsPayment::KIND_RENEW)
-                                    <x-bi th="ต่ออายุ" en="Renewal" />
-                                @else
-                                    <x-bi th="เช่าครั้งแรก" en="First rental" />
-                                @endif
-                                @if($p->months)
-                                    <span class="font-normal text-slate-500 dark:text-slate-400">· {{ $p->months }} <x-bi th="เดือน" en="mo" /></span>
-                                @endif
-                            </p>
-                            @if($p->created_at)
-                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $p->created_at->copy()->timezone('Asia/Bangkok')->format('j M Y H:i') }} น.</p>
-                            @endif
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $pill['classes'] }}">
-                                <x-bi :th="$pill['th']" :en="$pill['en']" />
+        {{-- ══════════ แถบแท็บ ══════════
+             เลื่อนแนวนอนได้บนจอแคบ — ชื่อแท็บไทยยาว ห้ามตัดคำกลางแท็บ --}}
+        <nav class="-mx-1 overflow-x-auto" aria-label="ส่วนของหน้า / Sections">
+            <ul class="flex w-full min-w-max gap-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-1 mx-1">
+                @foreach($tabs as $key => $t)
+                    <li class="flex-1">
+                        <a href="{{ $tabUrl($key) }}"
+                           @if($tab === $key) aria-current="page" @endif
+                           class="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 transition {{ $tab === $key
+                               ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-900/30'
+                               : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60' }}">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $t['icon'] }}"/></svg>
+                            <span class="flex flex-col items-start leading-tight">
+                                <span class="text-sm font-semibold">{{ $t['th'] }}</span>
+                                <span class="text-[10px] font-normal opacity-70">{{ $t['en'] }}</span>
                             </span>
-                            <span class="text-sm font-bold tabular-nums {{ $refunded ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white' }}">
-                                {{ \App\Support\VpsPricing::format((float) $p->amount_thb) }}
-                            </span>
-                        </div>
+                        </a>
                     </li>
                 @endforeach
             </ul>
-        @endif
-    </div>
+        </nav>
+
+        @include('customer.vps.tabs.' . $tab)
+    @else
+        @include('customer.vps.tabs.billing')
+    @endif
 </div>
 @endsection
 
@@ -1051,9 +511,17 @@ function vpsConfirmPoint(form, ip) {
 //   idle   — ระหว่างเครื่องทำงานอื่น: รอจน busy = false แล้วรีโหลด
 // หยุดถามตอนแท็บถูกซ่อน (โควตาเรียกเครื่องทั้งเว็บมีจำกัด) แล้วถามต่อเมื่อกลับมา
 // ถ้าลูกค้าพิมพ์อะไรค้างในฟอร์มอยู่ จะไม่รีโหลดทับ แต่ขึ้นปุ่มให้รีเฟรชเอง
+// ค่าตั้งต้นของทุกช่องหลัง Alpine เติมค่าเสร็จ — ช่องที่ x-model หรือ x-for สร้าง
+// ไม่มี defaultValue ให้เทียบ จะถูกนับว่า "แก้ค้าง" ตลอดถ้าเทียบกับค่านั้น
+const vpsInitialValues = new WeakMap();
+const vpsFieldSelector = 'form input[type=text], form input[type=password], form textarea';
+document.addEventListener('alpine:initialized', () => {
+    document.querySelectorAll(vpsFieldSelector).forEach((el) => vpsInitialValues.set(el, el.value));
+});
+
 function vpsFormsDirty() {
-    return Array.from(document.querySelectorAll('form input[type=text], form input[type=password]'))
-        .some((el) => el.value !== el.defaultValue);
+    return Array.from(document.querySelectorAll(vpsFieldSelector))
+        .some((el) => el.value !== (vpsInitialValues.has(el) ? vpsInitialValues.get(el) : el.defaultValue));
 }
 
 function vpsPoller(url, mode, initialLabel) {
@@ -1116,6 +584,71 @@ function vpsPoller(url, mode, initialLabel) {
                 this.inflight = false;
             }
             if (!this.stopped) this.schedule(Math.min(60000, every * (1 + this.failures)));
+        },
+    };
+}
+
+// ── ตัวแก้กฎไฟร์วอลล์ ─────────────────────────────────────────────────────
+// ชนิดที่มีพอร์ตในตัว (SSH, HTTP …) ล็อกช่องพอร์ตไว้ · เตือนเมื่อไม่มีกฎที่เปิด SSH
+// เพราะไฟร์วอลล์ปิดทุกอย่างที่ไม่มีกฎ — ไม่มี SSH = เจ้าของเข้าเครื่องตัวเองไม่ได้
+function vpsFirewallRules(config) {
+    let serial = 0;
+    const protocols = config.protocols || {};
+    const toRow = (r) => ({
+        _k: ++serial,
+        protocol: r && protocols[r.protocol] ? r.protocol : 'TCP',
+        port: r && r.port != null ? String(r.port) : '',
+        source_detail: r && r.source_detail && String(r.source_detail).toLowerCase() !== 'any' ? String(r.source_detail) : '',
+    });
+
+    const snapshot = (rows) => JSON.stringify(rows.map((r) => [r.protocol, String(r.port || '').trim(), String(r.source_detail || '').trim()]));
+    const rows = (config.rows || []).map(toRow);
+
+    return {
+        protocols,
+        rows,
+        confirmNoSsh: !!config.confirmNoSsh,
+        // เทียบกับกฎที่บันทึกไว้จริง — แถวที่กลับมาจาก validation ไม่ผ่านยังไม่ได้บันทึก
+        initial: snapshot((config.saved || config.rows || []).map(toRow)),
+
+        // แก้กฎค้างอยู่ยังไม่บันทึก — ปุ่ม "เปิดไฟร์วอลล์" ใช้กฎที่บันทึกไว้
+        // ไม่ใช่ที่เห็นบนจอ จึงต้องให้บันทึกก่อน
+        get dirty() {
+            return snapshot(this.rows) !== this.initial;
+        },
+
+        portFixed(row) {
+            const p = protocols[row.protocol];
+            return !!(p && p.port !== null);
+        },
+
+        fixPort(row) {
+            const p = protocols[row.protocol];
+            if (p && p.port !== null) {
+                row.port = p.port;
+            } else if (Object.values(protocols).some((x) => x.port === row.port)) {
+                row.port = '';
+            }
+        },
+
+        add() {
+            this.rows.push(toRow({ protocol: 'TCP', port: '', source_detail: '' }));
+        },
+
+        remove(i) {
+            this.rows.splice(i, 1);
+        },
+
+        covers(port, wanted) {
+            const text = String(port || '').trim().toLowerCase();
+            if (text === '' || text === 'any') return true;
+            const range = text.match(/^(\d+):(\d+)$/);
+            if (range) return Number(range[1]) <= wanted && wanted <= Number(range[2]);
+            return Number(text) === wanted;
+        },
+
+        get allowsSsh() {
+            return this.rows.some((r) => r.protocol === 'SSH' || (r.protocol === 'TCP' && this.covers(r.port, 22)));
         },
     };
 }

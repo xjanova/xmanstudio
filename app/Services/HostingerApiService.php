@@ -575,6 +575,186 @@ class HostingerApiService
     }
 
     /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function deleteVirtualMachinePtr(int $vmId, int $ipAddressId): ?array
+    {
+        return $this->request('delete', "/api/vps/v1/virtual-machines/{$vmId}/ptr/{$ipAddressId}", [], withStatus: true);
+    }
+
+    /**
+     * The resolvers the machine itself uses to look names up (not the
+     * nameservers of any domain).
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function setVirtualMachineNameservers(int $vmId, string $ns1, ?string $ns2 = null): ?array
+    {
+        return $this->request('put', "/api/vps/v1/virtual-machines/{$vmId}/nameservers", array_filter([
+            'ns1' => $ns1,
+            'ns2' => $ns2,
+        ]), withStatus: true);
+    }
+
+    /**
+     * Password of the control panel a panel template installs. Ignored
+     * upstream when the machine runs a plain OS.
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function setVirtualMachinePanelPassword(int $vmId, string $password): ?array
+    {
+        return $this->request('put', "/api/vps/v1/virtual-machines/{$vmId}/panel-password", ['password' => $password], withStatus: true);
+    }
+
+    /**
+     * Boot the rescue image; the machine's own disk is mounted at /mnt and the
+     * given password is root's for the rescue system only.
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function startVirtualMachineRecovery(int $vmId, string $rootPassword): ?array
+    {
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/recovery", ['root_password' => $rootPassword], withStatus: true);
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function stopVirtualMachineRecovery(int $vmId): ?array
+    {
+        return $this->request('delete', "/api/vps/v1/virtual-machines/{$vmId}/recovery", [], withStatus: true);
+    }
+
+    /**
+     * What has been done to the machine, newest first — one page.
+     *
+     * @return array<int,array<string,mixed>>|null
+     */
+    public function getVirtualMachineActions(int $vmId, int $page = 1): ?array
+    {
+        return $this->get("/api/vps/v1/virtual-machines/{$vmId}/actions", ['page' => max(1, $page)]);
+    }
+
+    /**
+     * SSH keys installed on this machine. Per machine, so it never lists keys
+     * of other customers' servers in the same account.
+     *
+     * @return array<int,array<string,mixed>>|null
+     */
+    public function getVirtualMachinePublicKeys(int $vmId): ?array
+    {
+        return $this->get("/api/vps/v1/virtual-machines/{$vmId}/public-keys");
+    }
+
+    /**
+     * Store a public key on the ACCOUNT. On its own it reaches no machine —
+     * attachPublicKeys() puts it on one.
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function createPublicKey(string $name, string $key): ?array
+    {
+        return $this->request('post', '/api/vps/v1/public-keys', ['name' => $name, 'key' => $key], withStatus: true);
+    }
+
+    /**
+     * @param  array<int,int>  $keyIds
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function attachPublicKeys(int $vmId, array $keyIds): ?array
+    {
+        return $this->request('post', "/api/vps/v1/public-keys/attach/{$vmId}", ['ids' => array_values(array_map('intval', $keyIds))], withStatus: true);
+    }
+
+    /**
+     * Firewalls live on the account, not on a machine: one is created per
+     * rented server and activated on it. Only one can be active per machine.
+     *
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function createFirewall(string $name): ?array
+    {
+        return $this->request('post', '/api/vps/v1/firewall', ['name' => $name], withStatus: true);
+    }
+
+    /**
+     * One page of the account's firewalls (every customer's and the owner's).
+     *
+     * @return array<int,array<string,mixed>>|null
+     */
+    public function listFirewalls(int $page = 1): ?array
+    {
+        return $this->get('/api/vps/v1/firewall', ['page' => max(1, $page)]);
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    public function getFirewall(int $firewallId): ?array
+    {
+        return $this->get("/api/vps/v1/firewall/{$firewallId}");
+    }
+
+    /**
+     * Replace every rule at once, and push them to the machines using it.
+     * Everything not accepted by a rule is dropped.
+     *
+     * @param  array<int,array{protocol:string,port:string,source:string,source_detail:string}>  $rules
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function replaceFirewallRules(int $firewallId, array $rules, bool $sync = true): ?array
+    {
+        return $this->request('put', "/api/vps/v1/firewall/{$firewallId}/rules", [
+            'rules' => array_values($rules),
+            'sync' => $sync,
+        ], withStatus: true);
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function activateFirewall(int $firewallId, int $vmId): ?array
+    {
+        return $this->request('post', "/api/vps/v1/firewall/{$firewallId}/activate/{$vmId}", [], withStatus: true);
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function deactivateFirewall(int $firewallId, int $vmId): ?array
+    {
+        return $this->request('post', "/api/vps/v1/firewall/{$firewallId}/deactivate/{$vmId}", [], withStatus: true);
+    }
+
+    /**
+     * Last malware scan on the machine, or null when the scanner is not
+     * installed (or upstream would not say).
+     *
+     * @return array<string,mixed>|null
+     */
+    public function getMalwareScan(int $vmId): ?array
+    {
+        return $this->get("/api/vps/v1/virtual-machines/{$vmId}/monarx");
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function installMalwareScanner(int $vmId): ?array
+    {
+        return $this->request('post', "/api/vps/v1/virtual-machines/{$vmId}/monarx", [], withStatus: true);
+    }
+
+    /**
+     * @return array{status_code:int,body:array<string,mixed>}|null
+     */
+    public function uninstallMalwareScanner(int $vmId): ?array
+    {
+        return $this->request('delete', "/api/vps/v1/virtual-machines/{$vmId}/monarx", [], withStatus: true);
+    }
+
+    /**
      * CPU, RAM, disk, traffic and uptime between two moments — each series a
      * map of unix timestamp => value.
      *
