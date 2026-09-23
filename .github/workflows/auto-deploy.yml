@@ -86,8 +86,10 @@ jobs:
             echo "🚀 Starting deployment to ${DEPLOY_PATH}"
             cd "${DEPLOY_PATH}"
 
-            # Backup .env
-            cp .env .env.backup.$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+            # Backup .env — owner-only, like .env itself. The shell's umask made every
+            # backup world-readable (664), and this box also runs a www-data PHP pool.
+            ( umask 077 && cp .env ".env.backup.$(date +%Y%m%d_%H%M%S)" ) 2>/dev/null || true
+            chmod 600 .env 2>/dev/null || true
 
             # Pull latest code
             echo "📥 Pulling latest code..."

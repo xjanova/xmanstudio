@@ -520,7 +520,7 @@
 </div>
 
 {{-- การตั้งค่า --}}
-<div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ai-crawl*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') || request()->routeIs('admin.social-login*') || request()->routeIs('admin.security.logins*') || request()->routeIs('admin.redis-settings*') || request()->routeIs('admin.email-settings*') || request()->routeIs('admin.alerts*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ai-crawl*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') || request()->routeIs('admin.social-login*') || request()->routeIs('admin.security.*') || request()->routeIs('admin.redis-settings*') || request()->routeIs('admin.email-settings*') || request()->routeIs('admin.alerts*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ตั้งค่า</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -593,6 +593,10 @@
         <a href="{{ route('admin.security.logins.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.security.logins*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             ตรวจสอบการเข้าสู่ระบบ
+        </a>
+        <a href="{{ route('admin.security.two-factor.show') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.security.two-factor*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            ยืนยันตัวตน 2 ขั้น
         </a>
         <a href="{{ route('admin.redis-settings.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.redis-settings*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>

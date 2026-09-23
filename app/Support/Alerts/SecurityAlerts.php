@@ -84,6 +84,31 @@ final class SecurityAlerts
         });
     }
 
+    /**
+     * A wrong second-step code on an admin account. The password was already right
+     * to get this far, so the first wrong code is news — not the third.
+     */
+    public static function twoFactorFailed(User $user, ?string $ip): void
+    {
+        self::guard(function () use ($user, $ip) {
+            self::count('failed_login', $ip);
+            $tries = self::tick('sec:2fa:' . $user->id);
+
+            AdminAlerts::send(new Alert(
+                key: 'admin-2fa:' . $user->id,
+                level: Alert::CRITICAL,
+                title: 'รหัสผ่านแอดมินถูก แต่รหัสยืนยัน 2 ขั้นผิด',
+                body: 'บัญชี: ' . self::maskEmail($user->email) . "\nผิด {$tries} ครั้งใน " . self::WINDOW_MINUTES . ' นาที'
+                    . "\nถ้าไม่ใช่คุณ แปลว่ารหัสผ่านหลุดแล้ว — เปลี่ยนรหัสผ่านทันที",
+                facts: ['IP' => $ip ?? '—', 'ครั้งที่ผิด' => $tries],
+                url: url('/admin/security/logins'),
+                urlLabel: 'เปิดบันทึกการเข้าสู่ระบบ',
+                category: 'security',
+                buttons: [[BotActions::ackButton('x')]],
+            ), 60);
+        });
+    }
+
     public static function lockout(?string $email, ?string $ip): void
     {
         self::guard(function () use ($ip) {

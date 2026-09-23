@@ -30,5 +30,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Admin tests act as an admin without enrolling; AdminTwoFactorTest turns this on. -->
+        <env name="ADMIN_2FA_REQUIRED" value="false"/>
     </php>
 </phpunit>

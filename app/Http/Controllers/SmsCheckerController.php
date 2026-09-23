@@ -76,6 +76,8 @@ class SmsCheckerController extends Controller
 
     public function detail(GithubReleaseService $github)
     {
+        $this->abortUnlessOnSale();
+
         $product = Product::where('slug', 'smschecker')->first();
 
         $version = null;
@@ -94,6 +96,8 @@ class SmsCheckerController extends Controller
 
     public function pricing(Request $request)
     {
+        $this->abortUnlessOnSale();
+
         $machineId = $request->query('machine_id') ?? session('smschecker_machine_id');
 
         if ($machineId) {
@@ -108,6 +112,8 @@ class SmsCheckerController extends Controller
 
     public function checkout(Request $request, string $plan)
     {
+        $this->abortUnlessOnSale();
+
         if (! isset(self::PRICING[$plan])) {
             abort(404, 'Plan not found');
         }
@@ -134,6 +140,8 @@ class SmsCheckerController extends Controller
 
     public function processCheckout(Request $request, string $plan)
     {
+        $this->abortUnlessOnSale();
+
         if (! isset(self::PRICING[$plan])) {
             abort(404, 'Plan not found');
         }
@@ -420,6 +428,8 @@ class SmsCheckerController extends Controller
 
     public function buyRedirect(Request $request)
     {
+        $this->abortUnlessOnSale();
+
         $plan = $request->query('plan');
         $machineId = $request->query('machine_id');
 
@@ -446,6 +456,8 @@ class SmsCheckerController extends Controller
 
     public function downloadPage(GithubReleaseService $github)
     {
+        $this->abortUnlessOnSale();
+
         $product = Product::where('slug', 'smschecker')->first();
 
         $version = null;
@@ -541,5 +553,20 @@ class SmsCheckerController extends Controller
         $random = strtoupper(Str::random(4));
 
         return $prefix . '-' . $random;
+    }
+
+    /**
+     * Sales are closed until the owner says otherwise (2026-09-23: the prices on
+     * the pages and in the code disagreed). Every page that shows or sells the
+     * product answers 404 while the smschecker product is switched off in
+     * แอดมิน → สินค้า; switching it back on reopens them, no deploy needed.
+     *
+     * Deliberately NOT gated: the APK download (the app's own update check points
+     * there, and 8 customers hold active licences), the licence API, and the
+     * payment pages of orders already placed.
+     */
+    private function abortUnlessOnSale(): void
+    {
+        abort_unless(Product::where('slug', 'smschecker')->where('is_active', true)->exists(), 404);
     }
 }

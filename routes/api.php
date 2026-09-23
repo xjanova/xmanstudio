@@ -416,8 +416,10 @@ Route::prefix('v1/sms-payment')->group(function () {
 
     // Web-authenticated endpoints (for checkout flow)
     Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
-        // Generate unique payment amount for bank transfer
-        Route::post('/generate-amount', [SmsPaymentController::class, 'generateAmount']);
+        // Generate unique payment amount for bank transfer. Admin-only: any customer
+        // token could reserve amounts for any transaction and drain the suffix pool,
+        // and the access logs show no client calling it (checkout generates its own).
+        Route::post('/generate-amount', [SmsPaymentController::class, 'generateAmount'])->middleware('admin');
 
         // Get notification history (admin) — every payment SMS the shop received: banks,
         // amounts, account digits. auth:sanctum alone let any registered customer read it.

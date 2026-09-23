@@ -59,6 +59,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -73,6 +75,10 @@ class User extends Authenticatable
             'marketing_line_enabled' => 'boolean',
             'marketing_consent_at' => 'datetime',
             'password_set_at' => 'datetime',
+            // Two-step sign-in (App\Support\Auth\TwoFactor). Never in $fillable.
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 

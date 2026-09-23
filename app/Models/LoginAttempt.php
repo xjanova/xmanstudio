@@ -47,6 +47,7 @@ class LoginAttempt extends Model
         'telegram' => 'Telegram',
         'api' => 'แอป (API)',
         'device' => 'ลิงก์จากแอป',
+        '2fa' => 'รหัสยืนยัน 2 ขั้น',
         'sso' => 'XMAN ID',
     ];
 

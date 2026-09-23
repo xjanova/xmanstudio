@@ -72,10 +72,12 @@ use App\Http\Controllers\Admin\TelegramAlertController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowController;
 use App\Http\Controllers\Admin\TurnstileSettingsController;
+use App\Http\Controllers\Admin\TwoFactorController as AdminTwoFactorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
 use App\Http\Controllers\CartController;
@@ -652,6 +654,15 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__ . '/auth.php';
 
+// Two-step sign-in for admins: where the admin gate sends a session that has not
+// passed the second step yet (App\Support\Auth\TwoFactor). Customers never see it.
+Route::middleware('auth')->group(function () {
+    Route::get('/two-factor-challenge', [TwoFactorChallengeController::class, 'show'])->name('two-factor.challenge');
+    Route::post('/two-factor-challenge', [TwoFactorChallengeController::class, 'verify'])
+        ->middleware('throttle:20,1')
+        ->name('two-factor.verify');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Admin Routes
@@ -875,6 +886,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/logins', [LoginSecurityController::class, 'index'])->name('logins.index');
         Route::post('/logins/block', [LoginSecurityController::class, 'block'])->name('logins.block');
         Route::post('/logins/unblock', [LoginSecurityController::class, 'unblock'])->name('logins.unblock');
+
+        // Two-step sign-in — the one admin area an admin who has not enrolled yet may open.
+        Route::get('/two-factor', [AdminTwoFactorController::class, 'show'])->name('two-factor.show');
+        Route::post('/two-factor/confirm', [AdminTwoFactorController::class, 'confirm'])
+            ->middleware('throttle:20,1')->name('two-factor.confirm');
+        Route::post('/two-factor/recovery-codes', [AdminTwoFactorController::class, 'regenerateRecoveryCodes'])
+            ->name('two-factor.recovery-codes');
+        Route::post('/two-factor/reset', [AdminTwoFactorController::class, 'reset'])
+            ->middleware('throttle:10,1')->name('two-factor.reset');
     });
 
     // Redis Settings

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\Alerts\Alert;
 use App\Support\Alerts\SecurityAlerts;
 use App\Support\Alerts\SystemAlerts;
+use App\Support\Auth\TwoFactor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -45,6 +46,12 @@ class XdreamerSsoController extends Controller
      */
     public function authorize(Request $request)
     {
+        // An admin identity handed to another site passes the same second step
+        // as the admin panel; the challenge brings the browser back here after.
+        if ($refusal = TwoFactor::gate($request, $request->user())) {
+            return $refusal;
+        }
+
         $validated = $request->validate([
             'redirect_uri' => ['required', 'string', 'max:255'],
             'state' => ['required', 'string', 'max:255'],

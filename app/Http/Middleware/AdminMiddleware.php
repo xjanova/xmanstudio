@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Support\Alerts\SecurityAlerts;
+use App\Support\Auth\TwoFactor;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +23,12 @@ class AdminMiddleware
         if (! auth()->user()->isAdmin()) {
             SecurityAlerts::forbidden(auth()->user(), $request->path(), $request->ip());
             abort(403, 'ไม่มีสิทธิ์เข้าถึงหน้านี้');
+        }
+
+        // The second step: a code from the admin's authenticator app, once per
+        // session, whichever way the session was signed in.
+        if ($refusal = TwoFactor::gate($request, auth()->user())) {
+            return $refusal;
         }
 
         $response = $next($request);

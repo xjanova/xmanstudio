@@ -40,6 +40,10 @@ class CartController extends Controller
      */
     public function add(Request $request, Product $product)
     {
+        // A product switched off in the admin is off sale — its page is already a
+        // 404, and a hand-made POST must not buy it either.
+        abort_unless($product->is_active, 404);
+
         $request->validate([
             'quantity' => 'integer|min:1|max:99',
             'license_type' => 'nullable|in:monthly,yearly,lifetime',

@@ -117,4 +117,22 @@ return [
             explode(',', (string) env('LOGIN_NEVER_BLOCK_IPS', ''))
         ))),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Two-step sign-in for admins
+    |--------------------------------------------------------------------------
+    |
+    | With this on, an admin account reaches the panel only after a code from an
+    | authenticator app (or a one-time recovery code) — enrolled on first visit.
+    | Locked out? From the server: php artisan security:2fa-reset {email}
+    | ADMIN_2FA_REQUIRED=false stops asking admins who have not enrolled; an
+    | account that has enrolled is always asked.
+    |
+    */
+
+    'two_factor' => [
+        'required_for_admins' => (bool) env('ADMIN_2FA_REQUIRED', true),
+        'issuer' => env('TWO_FACTOR_ISSUER', 'XMAN Studio'),
+    ],
 ];

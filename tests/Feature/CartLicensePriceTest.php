@@ -95,6 +95,15 @@ class CartLicensePriceTest extends TestCase
         $this->assertSame(0, CartItem::count());
     }
 
+    public function test_a_product_switched_off_cannot_be_put_in_the_cart(): void
+    {
+        $this->checker->forceFill(['is_active' => false])->save();
+
+        $this->post(route('cart.add', $this->checker), ['license_type' => 'monthly'])->assertNotFound();
+
+        $this->assertSame(0, CartItem::count());
+    }
+
     public function test_a_plain_add_still_charges_the_product_price(): void
     {
         $this->post(route('cart.add', $this->checker), ['price' => 1]);
