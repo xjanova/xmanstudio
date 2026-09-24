@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\Service;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -131,6 +132,10 @@ class ProductController extends Controller
                 ->exists();
         }
 
+        // A renewable product (BrainX Cloud): the key buying it again would extend — the page
+        // offers "renew" on that key instead of selling what looks like a second one
+        $renewalKey = app(LicenseService::class)->renewalTargetFor(Auth::id(), $product);
+
         // Redirect products with dedicated pages
         if ($slug === 'tping') {
             return redirect()->route('tping.detail');
@@ -156,13 +161,15 @@ class ProductController extends Controller
             'gpusharx' => 'products.gpusharx',
             'skidrow-killer' => 'products.skidrowkiller',
             'sms-payment-checker' => 'products.smspaymentchecker',
+            // BrainX Cloud — the BrainX app links here to buy and to renew
+            'brainx' => 'products.brainx',
         ];
 
         if (isset($customViews[$slug])) {
-            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense', 'hasPurchased'));
+            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense', 'hasPurchased', 'renewalKey'));
         }
 
-        return view('products.show', compact('product', 'relatedProducts', 'userLicense', 'hasPurchased'));
+        return view('products.show', compact('product', 'relatedProducts', 'userLicense', 'hasPurchased', 'renewalKey'));
     }
 
     public function services()

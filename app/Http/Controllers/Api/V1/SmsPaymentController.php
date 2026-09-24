@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Events\PaymentMatched;
 use App\Http\Controllers\Controller;
-use App\Mail\PaymentConfirmedMail;
-use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\ProjectOrder;
 use App\Models\SmsCheckerDevice;
@@ -22,7 +20,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Pusher\Pusher;
 
@@ -1634,78 +1631,17 @@ class SmsPaymentController extends Controller
     }
 
     /**
-     * Auto-generate license keys for order items that require them.
-     * (Same logic as Admin\SmsPaymentController::generateLicensesForOrder)
+     * Issue the order's license keys and send the payment-confirmed e-mail.
+     *
+     * This used to be its own copy of LicenseService::generateLicensesForOrder(), and fell
+     * behind it: a renewable product (BrainX Cloud) approved from the SmsChecker app would have
+     * issued a second key instead of extending the one the customer holds. The service is the
+     * one implementation now — the same keys, the same renewal, the same e-mail as every other
+     * way an order gets paid.
      */
     private function generateLicensesForOrder(Order $order): void
     {
-        $order->load('items.product');
-        $licenseService = app(LicenseService::class);
-        $generated = false;
-
-        foreach ($order->items as $item) {
-            if (! $item->product || ! $item->product->requires_license) {
-                continue;
-            }
-
-            // Check if licenses already exist for this order+product
-            $existingCount = LicenseKey::where('order_id', $order->id)
-                ->where('product_id', $item->product_id)
-                ->count();
-
-            if ($existingCount >= $item->quantity) {
-                continue;
-            }
-
-            // Determine license type from custom_requirements, else the product's own
-            // default (yearly, lifetime for what is bought outright) - Product::defaultLicenseType()
-            $licenseType = $item->product->defaultLicenseType();
-            if ($item->custom_requirements) {
-                $requirements = json_decode($item->custom_requirements, true);
-                if (! empty($requirements['license_type'])) {
-                    $licenseType = $requirements['license_type'];
-                }
-            }
-
-            $expiresAt = match ($licenseType) {
-                'monthly' => now()->addDays(30),
-                'yearly' => now()->addYear(),
-                'lifetime' => null,
-                default => now()->addYear(),
-            };
-
-            $toGenerate = $item->quantity - $existingCount;
-            $licenses = $licenseService->generateLicenses(
-                $licenseType,
-                $toGenerate,
-                1,
-                $item->product_id
-            );
-
-            // Link licenses to the order
-            foreach ($licenses as $license) {
-                LicenseKey::where('id', $license['id'])->update([
-                    'order_id' => $order->id,
-                    'user_id' => $order->user_id,
-                    'expires_at' => $expiresAt,
-                ]);
-            }
-
-            $generated = true;
-        }
-
-        // Send payment confirmed email with license keys
-        if ($generated && $order->customer_email) {
-            try {
-                Mail::to($order->customer_email)
-                    ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
-            } catch (\Exception $e) {
-                Log::error('Failed to send payment confirmed email', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
+        app(LicenseService::class)->generateLicensesForOrder($order);
     }
 
     /**

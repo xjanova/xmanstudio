@@ -66,9 +66,10 @@
         </tbody>
     </table>
 
-    {{-- License Keys --}}
+    {{-- License Keys — the ones this order issued, and the ones it renewed (a renewed key
+         keeps the order_id of the order that first issued it) --}}
     @php
-        $licenseKeys = \App\Models\LicenseKey::where('order_id', $order->id)
+        $licenseKeys = \App\Models\LicenseKey::deliveredByOrder($order->id)
             ->where('status', 'active')
             ->with('product')
             ->get();
@@ -85,6 +86,11 @@
                 {{ $license->product->name ?? 'ผลิตภัณฑ์' }}
             </div>
             <div class="license-key-display">{{ $license->license_key }}</div>
+            @if($license->renewals->isNotEmpty())
+            <div class="license-meta" style="color: #34d399;">
+                ต่ออายุคีย์เดิมแล้ว ใช้คีย์นี้ต่อได้เลย ไม่ต้องกรอกใหม่ &bull; Renewed — keep using this same key
+            </div>
+            @endif
             <div class="license-meta">
                 ประเภท: {{ ucfirst($license->license_type) }}
                 @if($license->expires_at)

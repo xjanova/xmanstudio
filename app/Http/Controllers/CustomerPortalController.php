@@ -9,6 +9,7 @@ use App\Models\RentalInvoice;
 use App\Models\RentalPayment;
 use App\Models\SupportTicket;
 use App\Models\UserRental;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -154,7 +155,16 @@ class CustomerPortalController extends Controller
 
         $license->load('product', 'activations');
 
-        return view('customer.license-detail', compact('license'));
+        // A renewable product (BrainX Cloud): offer "renew" on this key when paying for it would
+        // extend this very key — the same test the payment applies, so the button never
+        // promises a renewal that turns into a new key
+        $canRenew = $license->product
+            && $license->product->is_active
+            && app(LicenseService::class)
+                ->renewalTargetFor(Auth::id(), $license->product, $license->id)
+                ?->is($license);
+
+        return view('customer.license-detail', compact('license', 'canRenew'));
     }
 
     /**

@@ -17,6 +17,12 @@ class Product extends Model
      */
     public const LIFETIME_LICENSE_SLUGS = [];
 
+    /**
+     * สินค้าที่ขายเป็นรายเดือนเท่านั้น — ปุ่มซื้อที่ไม่ส่ง license_type มาก็ต้องได้คีย์รายเดือน
+     * ไม่ใช่รายปีที่เป็นค่าตั้งต้น (BrainX Cloud ฿399/เดือน)
+     */
+    public const MONTHLY_LICENSE_SLUGS = ['brainx'];
+
     protected $fillable = [
         'category_id',
         'name',
@@ -101,7 +107,19 @@ class Product extends Model
             return LicenseKey::TYPE_LIFETIME;
         }
 
+        if (in_array($this->slug, self::MONTHLY_LICENSE_SLUGS, true)) {
+            return LicenseKey::TYPE_MONTHLY;
+        }
+
         return LicenseKey::TYPE_YEARLY;
+    }
+
+    /**
+     * ซื้อซ้ำแล้วต่ออายุคีย์เดิมแทนการออกคีย์ใหม่ — รายการอยู่ที่ config/licenses.php
+     */
+    public function isRenewable(): bool
+    {
+        return in_array($this->slug, (array) config('licenses.renewable_products', []), true);
     }
 
     /**

@@ -1133,6 +1133,11 @@ class ProductLicenseController extends Controller
             'winx-tools' => [
                 'yearly' => ['original' => 199, 'currency' => 'THB'],
             ],
+            // BrainX Cloud ฿399 ต่อเดือน — แผนเดียว ราคาเดียวกับ CartController::LICENSE_TERM_PRICES
+            // แก้ต้องแก้พร้อมกัน · ซื้อซ้ำต่ออายุคีย์เดิม (config/licenses.php)
+            'brainx' => [
+                'monthly' => ['original' => 399, 'currency' => 'THB'],
+            ],
             'smschecker' => [
                 'monthly' => ['original' => 499, 'currency' => 'THB'],
                 'yearly' => ['original' => 4990, 'currency' => 'THB'],

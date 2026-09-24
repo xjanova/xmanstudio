@@ -99,7 +99,10 @@ class LicenseActivity extends Model
             'actor_type' => $actorType,
             'machine_id' => $machineId,
             'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            // The column is varchar(255). A longer header (in-app browsers send long ones) made
+            // MySQL strict refuse the row, and with it whatever wrote the log — a licence
+            // renewal delivered in the same transaction as its activity row among them.
+            'user_agent' => ($agent = request()->userAgent()) !== null ? mb_substr($agent, 0, 255) : null,
             'metadata' => $metadata,
             'notes' => $notes,
         ]);
