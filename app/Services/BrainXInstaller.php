@@ -33,8 +33,8 @@ class BrainXInstaller
     /** How long a release that was found is believed before GitHub is asked again. */
     public const CACHE_MINUTES = 10;
 
-    /** The longest one download may take. Also how long a download slot outlives a worker that died holding it. */
-    public const MAX_SECONDS = 7200;
+    /** The longest one download may take. */
+    private const MAX_SECONDS = 7200;
 
     /** A GitHub transfer slower than this for LOW_SPEED_SECONDS is dropped instead of holding a worker. */
     private const LOW_SPEED_BYTES = 1024;

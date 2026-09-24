@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\BrainXDownloadController;
 use App\Services\BrainXInstaller;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
@@ -28,6 +28,9 @@ class BrainXDownloadTest extends TestCase
 
     private const SIZE = 260677138;
 
+    /** Places in the site-wide pool of streamed downloads, for these tests. */
+    private const SLOTS = 3;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -36,6 +39,8 @@ class BrainXDownloadTest extends TestCase
 
         // A test that reaches GitHub for real fails right here instead of pulling 260 MB.
         Http::preventStrayRequests();
+
+        config(['downloads.max_concurrent_streams' => self::SLOTS]);
     }
 
     public function test_anyone_gets_the_latest_installer_as_a_file_from_this_site(): void
@@ -92,7 +97,7 @@ class BrainXDownloadTest extends TestCase
         $this->withoutMiddleware(ThrottleRequests::class);
 
         // Streams that have started and not finished: their callbacks have not run yet.
-        for ($i = 0; $i < BrainXDownloadController::MAX_CONCURRENT; $i++) {
+        for ($i = 0; $i < self::SLOTS; $i++) {
             $this->get('/brainx/download')->assertOk();
         }
 
@@ -109,7 +114,7 @@ class BrainXDownloadTest extends TestCase
         $this->fakeGitHub();
         $this->withoutMiddleware(ThrottleRequests::class);
 
-        for ($i = 0; $i < BrainXDownloadController::MAX_CONCURRENT + 2; $i++) {
+        for ($i = 0; $i < self::SLOTS + 2; $i++) {
             $response = $this->call('HEAD', '/brainx/download');
 
             $response->assertOk()
@@ -120,6 +125,36 @@ class BrainXDownloadTest extends TestCase
         }
 
         $this->assertEverySlotIsFree();
+    }
+
+    public function test_the_other_apps_downloads_take_places_from_the_same_pool(): void
+    {
+        $this->fakeGitHub();
+
+        // Every place held by another app's download (ReleaseDownloadStreamer uses the same keys).
+        $held = [];
+
+        for ($i = 0; $i < self::SLOTS; $i++) {
+            $held[$i] = Cache::lock("downloads:stream-slot:{$i}", 60);
+            $this->assertTrue($held[$i]->get());
+        }
+
+        $this->get('/brainx/download')->assertStatus(503);
+
+        $held[1]->release();
+
+        $this->get('/brainx/download')->assertOk();
+    }
+
+    public function test_with_the_limit_switched_off_nobody_is_turned_away(): void
+    {
+        $this->fakeGitHub();
+        $this->withoutMiddleware(ThrottleRequests::class);
+        config(['downloads.max_concurrent_streams' => 0]);
+
+        for ($i = 0; $i < self::SLOTS + 2; $i++) {
+            $this->get('/brainx/download')->assertOk();
+        }
     }
 
     public function test_the_release_that_was_found_is_remembered_for_a_while(): void
@@ -246,7 +281,7 @@ class BrainXDownloadTest extends TestCase
     {
         $this->withoutMiddleware(ThrottleRequests::class);
 
-        for ($i = 0; $i < BrainXDownloadController::MAX_CONCURRENT; $i++) {
+        for ($i = 0; $i < self::SLOTS; $i++) {
             $this->get('/brainx/download')->assertOk();
         }
     }

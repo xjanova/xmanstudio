@@ -6,6 +6,7 @@ use App\Services\BrainXInstaller;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * GET /brainx/download — the free BrainX app for Windows.
@@ -17,14 +18,11 @@ use Illuminate\Support\Facades\Cache;
  *
  * The bytes pass through this server (BrainXInstaller says why). On production that holds a PHP-FPM
  * worker for as long as the customer takes to download ~260 MB — Apache hands PHP's output straight
- * to the client, and the pool has 50 workers — so only MAX_CONCURRENT downloads stream at a time, and
- * the route's throttle limits how often one address may start one.
+ * to the client, and the pool has 50 workers — so each download takes a place in the site-wide pool
+ * of streamed downloads, and the route's throttle limits how often one address may start one.
  */
 class BrainXDownloadController extends Controller
 {
-    /** Leaves most of production's 50 PHP-FPM workers to the rest of the site. */
-    public const MAX_CONCURRENT = 10;
-
     public function download(Request $request, BrainXInstaller $installer)
     {
         $file = $installer->latest();
@@ -57,16 +55,16 @@ class BrainXDownloadController extends Controller
             return response('', 200, $headers);
         }
 
-        $slot = $this->claimSlot();
+        $slot = $this->takeSlot();
 
-        if ($slot === null) {
+        if ($slot === false) {
             return $this->unavailable(
                 $request,
-                'Too many BrainX downloads are running, please try again in a minute or two',
+                'Too many downloads are running, please try again in a minute or two',
                 'มีคนดาวน์โหลดพร้อมกันเต็มแล้ว',
                 'Too many downloads at once',
-                'ขณะนี้มีผู้ดาวน์โหลด BrainX พร้อมกันเต็มจำนวน กรุณาลองใหม่อีกครั้งในอีก 1–2 นาที',
-                'BrainX is being downloaded by many people right now. Please try again in a minute or two.',
+                'ขณะนี้มีผู้ดาวน์โหลดพร้อมกันเต็มจำนวน กรุณาลองใหม่อีกครั้งในอีก 1–2 นาที',
+                'Many downloads are running right now. Please try again in a minute or two.',
             );
         }
 
@@ -74,28 +72,46 @@ class BrainXDownloadController extends Controller
             try {
                 $installer->stream($file);
             } finally {
-                $slot->release();
+                $slot?->release();
             }
         }, 200, $headers);
     }
 
     /**
-     * One of MAX_CONCURRENT download slots, or null when all are taken.
+     * A place in the site-wide pool of streamed downloads, shared with the other apps' downloads
+     * (ReleaseDownloadStreamer): the same lock keys and the same config/downloads.php, so all of
+     * them together never hold more than `max_concurrent_streams` of the PHP-FPM workers.
      *
-     * A slot expires on its own if the worker holding it dies mid-download (PHP-FPM restarted by a
-     * deploy), never sooner than the longest transfer BrainXInstaller lets run.
+     * false: every place is taken. null: there is nothing to hold — the limit is switched off (0),
+     * or the cache cannot lock, where a customer who can download beats a closed door.
      */
-    private function claimSlot(): ?Lock
+    private function takeSlot(): Lock|false|null
     {
-        for ($i = 0; $i < self::MAX_CONCURRENT; $i++) {
-            $lock = Cache::lock("brainx:download:slot:{$i}", BrainXInstaller::MAX_SECONDS);
+        $slots = (int) config('downloads.max_concurrent_streams', 10);
 
-            if ($lock->get()) {
-                return $lock;
-            }
+        if ($slots <= 0) {
+            return null;
         }
 
-        return null;
+        // A worker that dies mid-download (PHP-FPM restarted by a deploy) never gives its place
+        // back, so each place expires on its own; a longer download keeps going, just uncounted.
+        $seconds = max(60, (int) config('downloads.stream_slot_seconds', 1200));
+
+        try {
+            for ($i = 0; $i < $slots; $i++) {
+                $lock = Cache::lock("downloads:stream-slot:{$i}", $seconds);
+
+                if ($lock->get()) {
+                    return $lock;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('BrainX download: no download slot could be taken, streaming without one', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+
+        return false;
     }
 
     /**
