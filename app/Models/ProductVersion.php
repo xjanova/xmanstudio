@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\ReleaseNotes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +38,18 @@ class ProductVersion extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * changelog ในรูปที่ลูกค้าเห็นได้ ทุกที่ที่อ่าน — หน้าสินค้า หน้าโหลด update/check และ API รายการเวอร์ชัน
+     *
+     * ตอน sync ก็ล้างลิงก์ GitHub ไว้แล้ว (GithubReleaseService) แต่เวอร์ชันเก่าที่ไม่ถูก sync ซ้ำ
+     * (API รายการเวอร์ชันคืนย้อนหลังถึง 10 ตัว) และข้อความที่ admin พิมพ์เอง ไม่เคยผ่านตรงนั้น
+     * ห้ามให้ลูกค้ารู้ repo (กฎเจ้าของ 2026-09-24) — จึงกรองอีกชั้นตอนอ่าน ค่าที่สะอาดแล้วผ่านซ้ำก็เท่าเดิม
+     */
+    protected function changelog(): Attribute
+    {
+        return Attribute::get(fn (?string $value) => ReleaseNotes::forCustomers($value, ReleaseNotes::studioAccounts()));
     }
 
     public function downloadLogs(): HasMany

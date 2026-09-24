@@ -71,7 +71,11 @@
     @endif
 
     {{-- Changelog Section --}}
-    @if(!empty($changelog))
+    @php
+        // ลูกค้าต้องไม่รู้ repo (กฎเจ้าของ 2026-09-24) — ล้างลิงก์ GitHub ก่อนแสดง (ข้อความที่ล้างแล้วผ่านซ้ำก็เท่าเดิม)
+        $releaseNotes = \App\Support\ReleaseNotes::forCustomers($changelog ?? null, \App\Support\ReleaseNotes::studioAccounts());
+    @endphp
+    @if($releaseNotes)
     <section class="max-w-4xl mx-auto px-4 py-16 bg-gray-900">
         <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12 text-white">
             <span class="gold-text">บันทึก</span>การเปลี่ยนแปลง
@@ -80,7 +84,8 @@
             <div class="prose prose-invert prose-sm sm:prose-base max-w-none
                         prose-headings:gold-text prose-a:gold-text prose-strong:text-gray-100
                         prose-ul:text-gray-300 prose-li:text-gray-300">
-                {!! $changelog !!}
+                {{-- release notes เป็น markdown: แปลงเป็น HTML เอง ตัด HTML ดิบทิ้ง (เดิม {!! !!} ตรง ๆ = script ใน release รันบนหน้าเว็บได้) --}}
+                {!! Str::markdown($releaseNotes, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
             </div>
         </div>
     </section>
