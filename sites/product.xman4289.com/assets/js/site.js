@@ -256,8 +256,8 @@ const FEATURES = [
    'สแกนทั้งเครื่อง จัดสวน หรือ re-index — ปุ่มที่เริ่มคือปุ่มที่หยุด พร้อมบอกความคืบหน้า',
    'Whole-machine scans, gardening, re-indexing: the button that starts it is the button that stops it, with progress.'],
   ['UPDATE', 'อัปเดตเองตอนคุณไม่อยู่', 'Updates itself politely',
-   'ตรวจรุ่นใหม่เป็นระยะ แล้วติดตั้งตอนเครื่องว่าง ไม่ขัดจังหวะกลางงาน',
-   'Polls for releases and applies them once you have been idle — never in the middle of your work.'],
+   'ตรวจรุ่นใหม่เป็นระยะ แล้วติดตั้งตอนเครื่องว่าง ไม่ขัดจังหวะกลางงาน — สำหรับเครื่องที่ใส่คีย์ BrainX Cloud',
+   'Polls for releases and applies them once you have been idle — never in the middle of your work. Needs a BrainX Cloud key.'],
   ['WALL', 'ใช้เป็นวอลเปเปอร์ได้', 'Runs as wallpaper',
    'ส่งจักรวาลความรู้ไปเป็นพื้นหลังเดสก์ท็อป รองรับหลายจอ แต่ละจอมีฉากของตัวเอง',
    'Push the knowledge universe onto the desktop as live wallpaper, one scene per monitor.'],
@@ -303,10 +303,12 @@ const CODEX = [
     <p>Each agent's identity comes from its connection handshake (MCP <code>initialize</code>), <b>never from a tool argument</b> — so no agent can impersonate another.</p>
     <p>The display is a solar system: the brain is the star, each agent a planet on its own orbit, and real traffic flies between them as motes of light — with a ticker underneath naming who did what.</p>`],
   ['ความเป็นส่วนตัวและการเก็บข้อมูล', 'Privacy and where data lives',
-   `<p>BrainX เป็นโปรแกรมเดสก์ท็อป ไม่ใช่บริการคลาวด์ โน้ตของคุณยังเป็นไฟล์ Markdown อยู่บนดิสก์ของคุณ อ่านได้ด้วยโปรแกรมอะไรก็ได้ และยังใช้ Obsidian เปิดได้ตามปกติ</p>
+   `<p>แอป BrainX เป็นโปรแกรมเดสก์ท็อป โน้ตของคุณยังเป็นไฟล์ Markdown อยู่บนดิสก์ของคุณ อ่านได้ด้วยโปรแกรมอะไรก็ได้ และยังใช้ Obsidian เปิดได้ตามปกติ</p>
+    <p>BrainX Cloud เป็นบริการเสริมที่จะใช้หรือไม่ก็ได้ ถ้าสมัคร จะมีเฉพาะโฟลเดอร์ที่คุณเลือกเท่านั้นที่ถูกอัปโหลดขึ้นพื้นที่ส่วนตัวของคุณบน serverbrain.xman4289.com ซึ่งเข้าถึงได้ด้วยโทเค็นของคุณเท่านั้น ส่วนที่เหลือยังอยู่บนเครื่องคุณ</p>
     <p>ดัชนีและ embedding เก็บอยู่ในฐานข้อมูล SQLite ในเครื่อง การฝัง embedding ทำในเครื่องได้ผ่าน Ollama โดยไม่ต้องส่งเนื้อหาออกไปไหน</p>
     <p>สะพานที่ต่อออกไปหาโปรแกรมอื่นถูกจำกัดให้ทำงานเฉพาะในเครื่องเท่านั้น ผู้ที่เชื่อมต่อจากระยะไกลเข้าถึงไม่ได้เลย</p>`,
-   `<p>BrainX is a desktop application, not a cloud service. Your notes remain Markdown files on your own disk, readable by anything, and still openable in Obsidian.</p>
+   `<p>The BrainX app is a desktop application. Your notes remain Markdown files on your own disk, readable by anything, and still openable in Obsidian.</p>
+    <p>BrainX Cloud is an optional add-on. If you subscribe, only the folders you choose are uploaded, into your own private space on serverbrain.xman4289.com that only your tokens can reach — everything else stays on your machine.</p>
     <p>The index and embeddings live in a local SQLite database. Embeddings can be computed on-machine through Ollama, so nothing needs to leave the computer.</p>
     <p>Outbound bridges to other software are restricted to local use only — remote callers can never reach them.</p>`],
   ['ต้องใช้เครื่องแรงแค่ไหน', 'What it needs to run',
@@ -319,7 +321,7 @@ const CODEX = [
 ];
 
 const PRODUCTS = [
-  ['BrainX','Neural Knowledge Engine','AI & Automation',null,0,'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ + MCP hub สำหรับเอเจนต์ทุกตัว','A second brain you can see: a 3D knowledge graph and an MCP hub for every agent you use.','#6cf0ff',1],
+  ['BrainX','Neural Knowledge Engine','AI & Automation',0,0,'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ + MCP hub สำหรับเอเจนต์ทุกตัว แอปใช้ฟรี · BrainX Cloud ฿399/เดือน','A second brain you can see: a 3D knowledge graph and an MCP hub for every agent you use. The app is free; BrainX Cloud is ฿399/month.','#6cf0ff',1],
   ['AutoTradeX','Crypto Arbitrage Bot','Software',19900,0,'บอทเทรด Crypto Arbitrage อัตโนมัติ รองรับ 6 Exchange ชั้นนำ พร้อมโหมดทดลองและระบบจัดการความเสี่ยง','Automated crypto arbitrage across 6 major exchanges, with simulation mode and risk controls.','#57e08a',0],
   ['PostXAgent','AI Brand Promotion','AI & Automation',7990,1,'โพสต์อัตโนมัติ 9 แพลตฟอร์ม พร้อม Web Automation ที่เรียนรู้เองและซ่อมตัวเองได้','Auto-posting across 9 platforms with self-learning, self-repairing web automation.','#8b7cf6',0],
   ['Live x Shop Pro','Live Commerce Platform','E-Commerce',5990,1,'รวมแชท Facebook/TikTok/LINE อ่านสลิปด้วย AI OCR ตรวจสลิปปลอม เชื่อมขนส่งครบ','Unified Facebook/TikTok/LINE chat, AI OCR slip reading, fraud detection and courier integration.','#e8825a',0],

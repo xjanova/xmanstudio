@@ -3,9 +3,9 @@
    and the grid both pick it up with no layout work.
    [name, sub, category, priceTHB|null, comingSoon, descTH, descEN, colour, href] */
 window.PRODUCTS = [
- ['BrainX','Neural Knowledge Engine','AI & Automation',null,0,
-  'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ ค้นด้วยความหมาย และเป็นศูนย์กลาง MCP ให้เอเจนต์ AI ทุกตัว',
-  'A second brain you can see: a 3D knowledge graph, semantic retrieval, and an MCP hub for every AI agent you use.',
+ ['BrainX','Neural Knowledge Engine','AI & Automation',0,0,
+  'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ ค้นด้วยความหมาย และเป็นศูนย์กลาง MCP ให้เอเจนต์ AI ทุกตัว แอปใช้ฟรี · BrainX Cloud ฿399/เดือน',
+  'A second brain you can see: a 3D knowledge graph, semantic retrieval, and an MCP hub for every AI agent you use. The app is free; BrainX Cloud is ฿399/month.',
   '#6cf0ff','/brainx.html'],
  ['AutoTradeX','Crypto Arbitrage Bot','Software',19900,0,
   'บอทเทรด arbitrage อัตโนมัติ 6 exchange พร้อมโหมดทดลองและระบบจัดการความเสี่ยง',
