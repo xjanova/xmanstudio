@@ -63,7 +63,7 @@
             <x-page-art art="team-cta" :opacity="14" :scrim="false" />
             <div class="relative text-center">
                 <p class="text-gray-500 text-sm">ทุกแพ็กเกจรวม: อัพเดทอัตโนมัติ, Bug Report, ซัพพอร์ตจาก XMAN Studio</p>
-                <a href="https://github.com/xjanova/cluadeX/releases/latest" class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1">
+                <a href="{{ route('cluadex.download') }}" class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1">
                     หรือ ดาวน์โหลดเวอร์ชันฟรี →
                 </a>
             </div>

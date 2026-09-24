@@ -16,15 +16,19 @@ use App\Models\User;
 use App\Services\GithubReleaseService;
 use App\Services\LicenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Testing\TestResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\TestCase;
 
 /**
  * WinXTools (Windows) ขายและแจกผ่านระบบเดียวกับแอปอื่นของสตูดิโอ
  *
  *   — แอปอัปเดตตัวเอง: update/check ชี้ไปหน้าโหลดสาธารณะแบบระบุเวอร์ชัน พร้อม sha256 ขนาด ชื่อไฟล์
- *   — หน้าโหลด redirect ไปที่ไฟล์บน GitHub (ไม่ stream ผ่าน PHP) และไม่ต้องล็อกอิน เพราะมีรุ่นฟรี
+ *   — หน้าโหลดส่งไฟล์จาก xman4289.com เอง ไม่ redirect ไป GitHub (ลูกค้าต้องไม่รู้ repo) และไม่ต้องล็อกอิน
+ *     เพราะมีรุ่นฟรี · ตัวอัปเดตในแอปได้ 200 + ขนาด + ไฟล์ตรงทุก byte เหมือนตอนโหลดจาก GitHub
  *   — ขายแค่ Pro ฿199 จ่ายครั้งเดียว: pricing มีแผนเดียว ตะกร้าคิด 199 license ไม่มีวันหมดอายุ
  *   — ทดลอง Pro 48 ชั่วโมงตามที่แอปบอกลูกค้าไว้
  *   — แอปอื่น (smschecker ฯลฯ) ต้องได้คำตอบเหมือนเดิม
@@ -36,6 +40,12 @@ class WinXToolsDistributionTest extends TestCase
     private const SHA256 = 'aa11bb22cc33dd44ee55ff6600778899aa11bb22cc33dd44ee55ff6600778899';
 
     private const ZIP_SIZE = 73400320;
+
+    /** เนื้อไฟล์ที่ "GitHub" ส่งมาในเทสต์ — ต้องถึงมือลูกค้าครบทุก byte */
+    private const ZIP_BYTES = "PK\x03\x04winxtools-release-package\x00\x01\x02\xff";
+
+    /** ลิงก์ชั่วคราวที่ GitHub เซ็นให้ (CDN) — ต้องไม่หลุดไปถึงลูกค้า */
+    private const SIGNED_URL = 'https://release-assets.githubusercontent.com/github-production-release-asset/555?X-Amz-Signature=abc';
 
     private Product $product;
 
@@ -267,40 +277,111 @@ class WinXToolsDistributionTest extends TestCase
             ->assertExactJson(['success' => false, 'error' => 'No file available for this version']);
     }
 
-    public function test_without_a_token_it_redirects_straight_to_the_public_file(): void
+    public function test_the_app_gets_the_file_from_this_site_with_no_trace_of_github(): void
     {
-        $version = $this->makeVersion('1.2.0');
+        $version = $this->makeVersion('1.2.0', ['file_size' => strlen(self::ZIP_BYTES)]);
         $this->githubSetting();
+        $this->fakeReleaseFile('1.2.0');
 
-        $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
-            ->assertStatus(302)
-            ->assertRedirect($version->download_url);
+        // header เดียวกับที่ AutoUpdateService ของแอปส่งมา (ไม่มี Accept)
+        $response = $this->get('/winx-tools/download/1.2.0', ['Accept' => '', 'User-Agent' => 'WinXTools-AutoUpdate']);
 
-        // ไม่ถาม GitHub API เลย (ถ้าถาม preventStrayRequests จะทำให้ล้ม) และบันทึกการโหลดไว้
+        $response->assertOk()
+            ->assertHeaderMissing('Location')
+            ->assertHeader('Content-Type', 'application/octet-stream')
+            // แอปเทียบค่านี้กับ file_size ของ update/check — ไม่ตรงแอปไม่ติดตั้ง
+            ->assertHeader('Content-Length', (string) $version->file_size);
+        $this->assertStringContainsString('WinXTools-v1.2.0-win-x64.zip', $response->headers->get('Content-Disposition'));
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
+
+        // ไม่มี header ของต้นทางติดออกไป (ETag/x-ms-*/x-github-*) และไม่มีคำว่า github ที่ไหนเลย
+        $this->assertNoTraceOfGithub($response);
+        $response->assertHeaderMissing('ETag');
+        $response->assertHeaderMissing('x-ms-request-id');
+
+        // repo public: โหลดจากลิงก์ไฟล์ตรง ไม่ถาม API (preventStrayRequests กันไว้) ไม่มี token
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.github.com'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'release-assets.githubusercontent.com')
+            && ! $request->hasHeader('Authorization'));
+
         $log = DownloadLog::sole();
         $this->assertSame($version->id, $log->product_version_id);
         $this->assertNull($log->user_id);
+        $this->assertSame('WinXTools-AutoUpdate', $log->user_agent);
+    }
+
+    public function test_a_browser_gets_the_file_too_not_a_redirect(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->githubSetting();
+        $this->fakeReleaseFile('1.2.0');
+
+        // ค่า Accept ตั้งต้นของ test client คือของเบราว์เซอร์ (text/html,…)
+        $response = $this->get('/winx-tools/download/1.2.0')->assertOk()->assertHeaderMissing('Location');
+
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
+        $this->assertNoTraceOfGithub($response);
+    }
+
+    public function test_head_answers_from_the_database_and_never_touches_github(): void
+    {
+        // curl -I / link preview: Symfony ไม่รัน callback ของ StreamedResponse ตอน HEAD เลย
+        // ถ้าเปิดต้นทางหรือจองช่องไว้ จะไม่มีใครปิด — ต้องไม่แตะ GitHub (preventStrayRequests จับได้ถ้าแตะ)
+        config(['downloads.max_concurrent_streams' => 1]);
+        $this->makeVersion('1.2.0');
+        $this->githubSetting();
+
+        $response = $this->call('HEAD', '/winx-tools/download/1.2.0', [], [], [], ['HTTP_ACCEPT' => '*/*']);
+
+        $response->assertOk()
+            ->assertHeaderMissing('Location')
+            ->assertHeader('Content-Length', (string) self::ZIP_SIZE);
+        $this->assertStringContainsString('WinXTools-v1.2.0-win-x64.zip', $response->headers->get('Content-Disposition'));
+        $this->assertSame('', $response->getContent());
+
+        // HEAD ไม่ใช่การโหลดจริง และไม่ได้จองช่องส่งไฟล์ค้างไว้
+        $this->assertSame(0, DownloadLog::count());
+        $this->assertTrue(Cache::lock('downloads:stream-slot:0', 10)->get());
+    }
+
+    public function test_the_customer_gets_the_real_length_even_when_the_database_remembers_another(): void
+    {
+        // file_size ใน DB ค้างของเก่า (asset ถูกอัปโหลดใหม่) — ส่งขนาดจริงของไฟล์ที่ส่ง ห้ามโกหก
+        // ไม่งั้นเบราว์เซอร์รอ byte ที่ไม่มีวันมา · แอปเห็นว่าไม่ตรงก็ไม่ติดตั้ง (ไม่ติดตั้งไฟล์เสีย)
+        $this->makeVersion('1.2.0', ['file_size' => self::ZIP_SIZE]);
+        $this->githubSetting();
+        $this->fakeReleaseFile('1.2.0');
+
+        $response = $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
+            ->assertOk()
+            ->assertHeader('Content-Length', (string) strlen(self::ZIP_BYTES));
+
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
     }
 
     public function test_without_a_version_it_serves_the_latest(): void
     {
         $this->makeVersion('1.1.0', ['is_active' => false]);
-        $latest = $this->makeVersion('1.2.0');
+        $this->makeVersion('1.2.0');
+        $this->fakeReleaseFile('1.2.0');
 
-        $this->get('/winx-tools/download', ['Accept' => '*/*'])
-            ->assertRedirect($latest->download_url);
+        $response = $this->get('/winx-tools/download', ['Accept' => '*/*'])->assertOk();
+
+        $this->assertStringContainsString('WinXTools-v1.2.0-win-x64.zip', $response->headers->get('Content-Disposition'));
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
     }
 
     public function test_when_github_cannot_be_reached_the_free_download_still_works(): void
     {
-        $latest = $this->makeVersion('1.2.0');
+        $this->makeVersion('1.2.0');
         $this->githubSetting();
 
-        Http::fake(['api.github.com/*' => Http::failedConnection()]);
+        // ปุ่ม "เริ่มใช้ฟรี" ถาม GitHub API ว่ามีตัวใหม่ไหมก่อน — ต่อไม่ติดต้องได้ตัวที่ DB รู้ ไม่ใช่หน้า 500
+        $this->fakeReleaseFile('1.2.0', ['api.github.com/*' => Http::failedConnection()]);
 
-        // ปุ่ม "เริ่มใช้ฟรี" ถาม GitHub ว่ามีตัวใหม่ไหมก่อน — ต่อไม่ติดต้องได้ตัวที่ DB รู้ ไม่ใช่หน้า 500
-        $this->get('/winx-tools/download', ['Accept' => '*/*'])
-            ->assertRedirect($latest->download_url);
+        $response = $this->get('/winx-tools/download', ['Accept' => '*/*'])->assertOk();
+
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
     }
 
     public function test_update_check_answers_from_the_database_when_github_cannot_be_reached(): void
@@ -323,60 +404,71 @@ class WinXToolsDistributionTest extends TestCase
     public function test_an_older_version_stays_downloadable_by_its_number(): void
     {
         // update/check บอก sha256 ของ 1.1.0 ไปแล้ว ถ้าระหว่างนั้น 1.2.0 ออก ไฟล์ที่ได้ต้องยังเป็น 1.1.0
-        $old = $this->makeVersion('1.1.0', ['is_active' => false]);
+        $this->makeVersion('1.1.0', ['is_active' => false]);
         $this->makeVersion('1.2.0');
+        $this->fakeReleaseFile('1.1.0');
 
-        $this->get('/winx-tools/download/1.1.0', ['Accept' => '*/*'])
-            ->assertRedirect($old->download_url);
+        $response = $this->get('/winx-tools/download/1.1.0', ['Accept' => '*/*'])->assertOk();
+
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/releases/download/v1.1.0/WinXTools-v1.1.0-win-x64.zip'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'v1.2.0'));
     }
 
-    public function test_with_a_token_it_redirects_to_the_link_github_signs_and_never_leaks_the_token(): void
+    public function test_with_a_token_the_file_comes_through_the_api_and_the_token_stops_at_github(): void
     {
-        $this->makeVersion('1.2.0');
+        $this->makeVersion('1.2.0', ['file_size' => strlen(self::ZIP_BYTES)]);
         $this->githubSetting(['github_token' => 'ghp_test_secret_token']);
 
-        $signed = 'https://release-assets.githubusercontent.com/github-production-release-asset/555?X-Amz-Signature=abc';
         Http::fake([
-            'api.github.com/repos/xjanova/winxtools/releases/assets/555' => Http::response('', 302, ['Location' => $signed]),
+            'api.github.com/repos/xjanova/winxtools/releases/assets/555' => Http::response('', 302, ['Location' => self::SIGNED_URL]),
+            'release-assets.githubusercontent.com/*' => $this->releaseFileResponse(),
         ]);
 
         $response = $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
-            ->assertStatus(302)
-            ->assertRedirect($signed);
+            ->assertOk()
+            ->assertHeaderMissing('Location');
 
-        $this->assertStringNotContainsString('ghp_test_secret_token', (string) $response->headers->get('Location'));
-        $this->assertStringNotContainsString('ghp_test_secret_token', (string) $response->getContent());
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
+        $this->assertNoTraceOfGithub($response);
+        $this->assertStringNotContainsString('ghp_test_secret_token', json_encode($response->headers->all()));
 
-        Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Bearer ghp_test_secret_token')
+        // token ไปถึง API ของ GitHub เท่านั้น — Guzzle ตัดทิ้งเมื่อ redirect ข้ามโดเมนไป CDN
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.github.com')
+            && $request->hasHeader('Authorization', 'Bearer ghp_test_secret_token')
             && $request->hasHeader('Accept', 'application/octet-stream'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'release-assets.githubusercontent.com')
+            && ! $request->hasHeader('Authorization'));
     }
 
-    public function test_a_version_synced_before_download_url_existed_is_still_served_through_github(): void
+    public function test_a_version_synced_before_download_url_existed_is_still_served(): void
     {
         $this->makeVersion('1.2.0', ['download_url' => null]);
         $this->githubSetting();
 
         Http::fake([
-            'api.github.com/repos/xjanova/winxtools/releases/assets/555' => Http::response('', 302, [
-                'Location' => 'https://release-assets.githubusercontent.com/signed',
-            ]),
+            'api.github.com/repos/xjanova/winxtools/releases/assets/555' => Http::response('', 302, ['Location' => self::SIGNED_URL]),
+            'release-assets.githubusercontent.com/*' => $this->releaseFileResponse(),
         ]);
 
-        $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
-            ->assertRedirect('https://release-assets.githubusercontent.com/signed');
+        $response = $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])->assertOk();
 
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
         Http::assertSent(fn ($request) => ! $request->hasHeader('Authorization'));
     }
 
-    public function test_when_github_will_not_sign_a_link_it_falls_back_to_the_public_file(): void
+    public function test_when_the_api_will_not_hand_over_the_file_it_falls_back_to_the_public_file(): void
     {
-        $version = $this->makeVersion('1.2.0');
+        // token ตาย/API ล่ม — repo public ยังโหลดจากลิงก์ไฟล์ตรงได้
+        $this->makeVersion('1.2.0');
         $this->githubSetting(['github_token' => 'ghp_test_secret_token']);
+        $this->fakeReleaseFile('1.2.0', ['api.github.com/*' => Http::response(['message' => 'Bad credentials'], 401)]);
 
-        Http::fake(['api.github.com/*' => Http::response(['message' => 'Server Error'], 500)]);
+        $response = $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])->assertOk();
 
-        $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
-            ->assertRedirect($version->download_url);
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'github.com/xjanova/winxtools/releases/download/')
+            && ! $request->hasHeader('Authorization'));
     }
 
     public function test_when_github_fails_and_there_is_no_public_file_the_app_gets_a_502(): void
@@ -386,11 +478,93 @@ class WinXToolsDistributionTest extends TestCase
 
         Http::fake(['api.github.com/*' => Http::response(['message' => 'Server Error'], 500)]);
 
-        $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
+        $response = $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
             ->assertStatus(502)
-            ->assertJsonPath('success', false);
+            ->assertExactJson(['success' => false, 'error' => 'Could not get the file, please try again later']);
+
+        $this->assertNoTraceOfGithub($response);
+        $this->assertSame(0, DownloadLog::count());
+    }
+
+    public function test_an_error_page_from_upstream_is_never_handed_out_as_the_package(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->githubSetting();
+
+        Http::fake([
+            'github.com/xjanova/winxtools/releases/download/*' => Http::response('<html>Rate limited</html>', 200, ['Content-Type' => 'text/html; charset=utf-8']),
+        ]);
+
+        $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])->assertStatus(502);
 
         $this->assertSame(0, DownloadLog::count());
+    }
+
+    public function test_it_never_follows_a_redirect_away_from_github(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->githubSetting();
+
+        Http::fake([
+            'github.com/xjanova/winxtools/releases/download/*' => Http::response('', 302, ['Location' => 'https://files.example.net/WinXTools.zip']),
+            'files.example.net/*' => $this->releaseFileResponse(),
+        ]);
+
+        $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])->assertStatus(502);
+
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'files.example.net'));
+    }
+
+    public function test_when_every_download_slot_is_busy_the_app_is_told_to_retry_later(): void
+    {
+        // ไฟล์ใหญ่จอง PHP worker ไว้ตลอดเวลาที่ลูกค้าโหลด — เต็มแล้วต้องตอบ 503 ไม่ใช่ปล่อยให้ worker หมดทั้งเว็บ
+        config(['downloads.max_concurrent_streams' => 1]);
+        $this->makeVersion('1.2.0');
+        $this->githubSetting();
+
+        $this->assertTrue(Cache::lock('downloads:stream-slot:0', 60)->get());
+
+        $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
+            ->assertStatus(503)
+            ->assertHeader('Retry-After', '60')
+            ->assertJsonPath('success', false);
+
+        $this->get('/winx-tools/download/1.2.0')
+            ->assertRedirect(route('products.show', 'winx-tools'))
+            ->assertSessionHas('error');
+
+        // ไม่ได้ต่อ GitHub (preventStrayRequests) และไม่นับเป็นการโหลด
+        $this->assertSame(0, DownloadLog::count());
+    }
+
+    public function test_the_slot_is_held_while_the_file_flows_and_given_back_after(): void
+    {
+        config(['downloads.max_concurrent_streams' => 1]);
+        $this->makeVersion('1.2.0');
+        $this->githubSetting();
+        $this->fakeReleaseFile('1.2.0');
+
+        $response = $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])->assertOk();
+
+        // header ส่งแล้ว เนื้อไฟล์ยังไม่ไหล — ช่องยังถูกจองอยู่
+        $this->assertFalse(Cache::lock('downloads:stream-slot:0', 10)->get());
+
+        $response->streamedContent();
+
+        $this->assertTrue(Cache::lock('downloads:stream-slot:0', 10)->get());
+    }
+
+    public function test_a_download_that_cannot_start_gives_its_slot_back(): void
+    {
+        config(['downloads.max_concurrent_streams' => 1]);
+        $this->makeVersion('1.2.0', ['download_url' => null]);
+        $this->githubSetting();
+
+        Http::fake(['api.github.com/*' => Http::response(['message' => 'Server Error'], 500)]);
+
+        $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])->assertStatus(502);
+
+        $this->assertTrue(Cache::lock('downloads:stream-slot:0', 10)->get());
     }
 
     public function test_the_download_is_404_while_the_product_is_switched_off(): void
@@ -634,6 +808,46 @@ class WinXToolsDistributionTest extends TestCase
             'is_active' => true,
             'synced_at' => now(),
         ]);
+    }
+
+    /**
+     * GitHub จริง: ลิงก์ไฟล์ของ release → 302 ไป CDN → ไฟล์ · $more มาก่อน (เช่น API ที่ล่ม)
+     */
+    private function fakeReleaseFile(string $version, array $more = []): void
+    {
+        Http::fake($more + [
+            "github.com/xjanova/winxtools/releases/download/v{$version}/*" => Http::response('', 302, ['Location' => self::SIGNED_URL]),
+            'release-assets.githubusercontent.com/*' => $this->releaseFileResponse(),
+        ]);
+    }
+
+    /**
+     * ไฟล์จาก CDN ของ GitHub พร้อม header ของต้นทางที่ต้องไม่หลุดไปถึงลูกค้า
+     * (closure = ได้ body ใหม่ทุกครั้ง ถ้าใช้ response ตัวเดียว คำขอที่สองจะได้ stream ที่อ่านจนหมดแล้ว)
+     */
+    private function releaseFileResponse(): \Closure
+    {
+        return fn () => Http::response(self::ZIP_BYTES, 200, [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Length' => (string) strlen(self::ZIP_BYTES),
+            'ETag' => '"0x8DCB7C0FFEE"',
+            'x-ms-request-id' => 'cdn-request-id',
+            'x-github-request-id' => 'ABCD:1234',
+        ]);
+    }
+
+    /** ลูกค้าต้องไม่เห็นคำว่า github ใน header ไหนเลย ทั้งชื่อและค่า (Location, x-github-*, ลิงก์ที่เซ็นแล้ว) */
+    private function assertNoTraceOfGithub(TestResponse $response): void
+    {
+        foreach ($response->headers->all() as $name => $values) {
+            foreach ($values as $value) {
+                $this->assertStringNotContainsStringIgnoringCase('github', $name . ': ' . $value);
+            }
+        }
+
+        if (! $response->baseResponse instanceof StreamedResponse) {
+            $this->assertStringNotContainsStringIgnoringCase('github', (string) $response->getContent());
+        }
     }
 
     private function githubSetting(array $attributes = []): GithubSetting
