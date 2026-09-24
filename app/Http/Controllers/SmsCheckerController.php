@@ -316,11 +316,13 @@ class SmsCheckerController extends Controller
                 ]);
             }
 
+            // The license is out, so the order is complete (as LicenseService does for every other
+            // checkout). Left at processing, every "has this customer bought it?" check said no.
             $metadata = json_decode($order->metadata ?? '{}', true);
             $metadata['license_key'] = $license->license_key;
             $metadata['license_id'] = $license->id;
             $metadata['hwid_bound'] = ! empty($machineId);
-            $order->update(['metadata' => json_encode($metadata)]);
+            $order->update(['metadata' => json_encode($metadata), 'status' => 'completed']);
 
             // Send payment confirmed email with license keys
             if ($order->customer_email && PaymentSetting::get('mail_enabled', true)) {

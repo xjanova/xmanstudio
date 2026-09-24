@@ -563,11 +563,13 @@ class LocalVpnWebController extends Controller
                 ]);
             }
 
+            // The license is out, so the order is complete (as LicenseService does for every other
+            // checkout). Left at processing, every "has this customer bought it?" check said no.
             $metadata = $order->metadata ?? [];
             $metadata['license_key'] = $license->license_key;
             $metadata['license_id'] = $license->id;
             $metadata['hwid_bound'] = ! empty($machineId);
-            $order->update(['metadata' => $metadata]);
+            $order->update(['metadata' => $metadata, 'status' => 'completed']);
 
             if ($order->customer_email && PaymentSetting::get('mail_enabled', true)) {
                 try {
