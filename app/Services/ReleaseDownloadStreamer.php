@@ -53,9 +53,11 @@ class ReleaseDownloadStreamer
      *
      * ไฟล์บน GitHub → stream ผ่านเซิร์ฟเวอร์ · ลิงก์ที่ admin ใส่เองซึ่งไม่ใช่ GitHub (mirror ฯลฯ) → redirect ตามเดิม
      *
+     * @param  ?string  $fallbackName  ชื่อไฟล์เมื่อไม่รู้ชื่อจริง (เวอร์ชันสร้างมือที่มีแค่ลิงก์ API) — นามสกุลกำหนด Content-Type
+     *
      * @throws DownloadUnavailableException ไม่มีไฟล์ / ดึงไม่ได้ / ช่องส่งเต็ม
      */
-    public function respond(Request $request, ProductVersion $version, ?GithubSetting $setting): Response
+    public function respond(Request $request, ProductVersion $version, ?GithubSetting $setting, ?string $fallbackName = null): Response
     {
         $sources = $this->sources($version, $setting);
 
@@ -69,7 +71,7 @@ class ReleaseDownloadStreamer
             return redirect()->away($external);
         }
 
-        $filename = $this->filename($version, $sources);
+        $filename = $this->filename($version, $sources, $fallbackName);
 
         if ($request->isMethod('HEAD')) {
             return response('', 200, $this->headers($filename, $version->file_size));
@@ -364,9 +366,11 @@ class ReleaseDownloadStreamer
     }
 
     /**
+     * ชื่อที่รู้จริงก่อน (ที่ sync มา → ชื่อไฟล์ในลิงก์ release) แล้วค่อยเป็นชื่อสำรองที่ controller ให้มา
+     *
      * @param  list<array{url: string, token: ?string, via: string}>  $sources
      */
-    private function filename(ProductVersion $version, array $sources): string
+    private function filename(ProductVersion $version, array $sources, ?string $fallbackName = null): string
     {
         $name = $version->download_filename;
 
@@ -378,7 +382,7 @@ class ReleaseDownloadStreamer
             }
         }
 
-        $name = trim((string) preg_replace('/[\x00-\x1F\x7F"\\\\\/]+/', '_', (string) $name));
+        $name = trim((string) preg_replace('/[\x00-\x1F\x7F"\\\\\/]+/', '_', (string) ($name ?: $fallbackName)));
 
         return $name !== '' ? $name : 'download-' . $version->version;
     }

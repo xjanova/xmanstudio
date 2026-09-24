@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * ปุ่มดาวน์โหลดฟรีของแอป (WinXTools, CluadeX, GPUxMINE) — ไฟล์ส่งจาก xman4289.com เองทุกตัว
+ * ปุ่มดาวน์โหลดของแอป (ตัวฟรีบน Windows และ APK ของแอป Android) — ไฟล์ส่งจาก xman4289.com เองทุกตัว
  *
  * ห้ามพาลูกค้าไป GitHub ไม่ว่าทางลิงก์หรือ redirect (กฎเจ้าของ 2026-09-24) — ReleaseDownloadStreamer
  * ดึงไฟล์ผ่านเซิร์ฟเวอร์ให้ ที่นี่แค่เลือกเวอร์ชัน แปลงความล้มเหลวเป็นคำตอบที่อ่านออก และนับยอดโหลด
@@ -24,15 +24,16 @@ trait ServesReleaseDownloads
      * ไฟล์ของเวอร์ชันนี้ หรือคำตอบที่บอกว่าทำไมยังส่งไม่ได้
      *
      * @param  string  $backTo  หน้าที่พาเบราว์เซอร์กลับไปพร้อมข้อความเมื่อส่งไม่ได้
+     * @param  ?string  $fallbackName  ชื่อไฟล์เมื่อเวอร์ชันไม่รู้ชื่อจริง
      */
-    protected function serveRelease(Request $request, Product $product, ?ProductVersion $version, string $backTo): Response
+    protected function serveRelease(Request $request, Product $product, ?ProductVersion $version, string $backTo, ?string $fallbackName = null): Response
     {
         if (! $version) {
             return $this->downloadUnavailable($request, $backTo, 404, 'Version not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
         }
 
         try {
-            $response = app(ReleaseDownloadStreamer::class)->respond($request, $version, $product->githubSetting);
+            $response = app(ReleaseDownloadStreamer::class)->respond($request, $version, $product->githubSetting, $fallbackName);
         } catch (DownloadUnavailableException $e) {
             return $this->downloadUnavailable($request, $backTo, $e->status, $e->getMessage(), $e->customerMessage, $e->retryAfter);
         }
@@ -72,6 +73,17 @@ trait ServesReleaseDownloads
 
             return $product->latestVersion();
         }
+    }
+
+    /**
+     * APK ของแอป Android — Content-Type ต้องเป็น application/vnd.android.package-archive มือถือถึงจะเสนอติดตั้ง
+     *
+     * streamer เลือกชนิดจากนามสกุลของชื่อไฟล์ เวอร์ชันที่ไม่รู้ชื่อไฟล์ (สร้างมือ มีแค่ลิงก์ API) จึงได้ชื่อ
+     * "{แอป}-v{เวอร์ชัน}.apk" แบบเดียวกับไฟล์ใน release ของแอปเหล่านี้ ไม่ใช่ "download-{เวอร์ชัน}" ที่ไม่มีนามสกุล
+     */
+    protected function serveApk(Request $request, Product $product, ?ProductVersion $version, string $backTo, string $appName): Response
+    {
+        return $this->serveRelease($request, $product, $version, $backTo, $version ? "{$appName}-v{$version->version}.apk" : null);
     }
 
     /**

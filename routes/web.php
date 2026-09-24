@@ -272,7 +272,10 @@ Route::prefix('tping')->name('tping.')->group(function () {
     Route::get('/pricing', [TpingController::class, 'pricing'])->name('pricing');
     Route::get('/buy', [TpingController::class, 'buyRedirect'])->name('buy');
     Route::get('/download', [TpingController::class, 'downloadPage'])->name('download');
-    Route::get('/download/apk', [TpingController::class, 'downloadApk'])->name('download.apk');
+    // APK ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง · ตัวอัปเดตในแอปโหลดจากที่นี่
+    Route::get('/download/apk', [TpingController::class, 'downloadApk'])
+        ->middleware('throttle:30,1,tping-apk-download')
+        ->name('download.apk');
     Route::get('/install-guide', [TpingController::class, 'installGuide'])->name('install-guide');
 
     // Require authentication for checkout
@@ -291,7 +294,11 @@ Route::prefix('smschecker')->name('smschecker.')->group(function () {
     Route::get('/pricing', [SmsCheckerController::class, 'pricing'])->name('pricing');
     Route::get('/buy', [SmsCheckerController::class, 'buyRedirect'])->name('buy');
     Route::get('/download', [SmsCheckerController::class, 'downloadPage'])->name('download');
-    Route::get('/download/apk', [SmsCheckerController::class, 'downloadApk'])->name('download.apk');
+    // APK ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
+    // เปิดอยู่แม้ปิดขาย: ตัวเช็คอัปเดตในแอปส่งลูกค้าที่ถือ license มาโหลดที่นี่
+    Route::get('/download/apk', [SmsCheckerController::class, 'downloadApk'])
+        ->middleware('throttle:30,1,smschecker-apk-download')
+        ->name('download.apk');
 
     // Require authentication for checkout
     Route::middleware('auth')->group(function () {
@@ -309,7 +316,10 @@ Route::prefix('localvpn')->name('localvpn.')->group(function () {
     Route::get('/pricing', [LocalVpnWebController::class, 'pricing'])->name('pricing');
     Route::get('/buy', [LocalVpnWebController::class, 'buyRedirect'])->name('buy');
     Route::get('/download', [LocalVpnWebController::class, 'downloadPage'])->name('download');
-    Route::get('/download/apk', [LocalVpnWebController::class, 'downloadApk'])->name('download.apk');
+    // APK ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง · ตัวอัปเดตในแอปโหลดจากที่นี่
+    Route::get('/download/apk', [LocalVpnWebController::class, 'downloadApk'])
+        ->middleware('throttle:30,1,localvpn-apk-download')
+        ->name('download.apk');
     Route::get('/install-guide', [LocalVpnWebController::class, 'installGuide'])->name('install-guide');
 
     // Require authentication for checkout & payment
