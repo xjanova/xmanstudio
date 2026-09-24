@@ -13,8 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/site.css?v=202608031327">
-<link rel="stylesheet" href="/assets/css/pricing.css?v=202608031327">
+<link rel="stylesheet" href="/assets/css/site.css?v=202609241343">
+<link rel="stylesheet" href="/assets/css/pricing.css?v=202609241343">
 </head>
 <body>
 
@@ -42,7 +42,7 @@
     <button class="lang" id="lang-toggle" type="button" aria-label="Switch language">
       <span class="lang-th">TH</span><span class="lang-sep"></span><span class="lang-en">EN</span>
     </button>
-    <a class="btn btn-sm" href="#get" data-th="ขอทดลองใช้" data-en="Get access">ขอทดลองใช้</a>
+    <a class="btn btn-sm" href="https://xman4289.com/products/brainx" data-th="เริ่มใช้งาน" data-en="Start now">เริ่มใช้งาน</a>
   </div>
 </header>
 
@@ -69,7 +69,7 @@
     </p>
 
     <div class="hero-cta reveal" data-d="3">
-      <a class="btn btn-primary" href="#trial">
+      <a class="btn btn-primary" href="https://xman4289.com/products/brainx">
         <span data-th="เริ่มใช้งาน" data-en="Start now">เริ่มใช้งาน</span>
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
@@ -321,137 +321,60 @@
   </div>
 </section>
 
-<!-- ══ TRIAL ══ -->
-<section class="sec" id="trial">
-  <div class="wrap">
-    <div class="trial-card reveal">
-      <div class="cta-glow" aria-hidden="true"></div>
-      <div class="trial-copy">
-        <span class="kicker" data-th="ทดลองใช้" data-en="Free trial">ทดลองใช้</span>
-        <h2 data-th="ใช้ฟรีเต็มระบบ 1 เดือน" data-en="One month free. The whole thing.">ใช้ฟรีเต็มระบบ 1 เดือน</h2>
-        <p data-th="ลงทะเบียนด้วยเบอร์มือถือ เราส่งรหัสยืนยันไปให้ทาง SMS ไม่ต้องผูกบัตรเครดิต ไม่ตัดเงินอัตโนมัติเมื่อครบกำหนด"
-           data-en="Register with your phone number and we text you a verification code. No credit card, and nothing charges itself when the month ends.">
-          ลงทะเบียนด้วยเบอร์มือถือ เราส่งรหัสยืนยันไปให้ทาง SMS ไม่ต้องผูกบัตรเครดิต ไม่ตัดเงินอัตโนมัติเมื่อครบกำหนด</p>
-        <ul class="trial-list">
-          <li data-th="ทุกฟีเจอร์ ไม่มีตัวไหนถูกล็อก" data-en="Every feature. Nothing is locked.">ทุกฟีเจอร์ ไม่มีตัวไหนถูกล็อก</li>
-          <li data-th="โน้ตไม่จำกัดจำนวน" data-en="Unlimited notes">โน้ตไม่จำกัดจำนวน</li>
-          <li data-th="ต่อ AI ได้ทุกตัวที่รองรับ MCP" data-en="Connect any MCP-capable agent">ต่อ AI ได้ทุกตัวที่รองรับ MCP</li>
-          <li data-th="ครบเดือนแล้วข้อมูลยังเป็นของคุณ ไฟล์อยู่บนเครื่องคุณเสมอ" data-en="When it ends your data is still yours — the files never left your machine">ครบเดือนแล้วข้อมูลยังเป็นของคุณ ไฟล์อยู่บนเครื่องคุณเสมอ</li>
-        </ul>
-      </div>
-
-      <form class="signup" id="signup" novalidate>
-        <div class="su-step" data-step="1">
-          <label for="su-phone" data-th="เบอร์มือถือ" data-en="Mobile number">เบอร์มือถือ</label>
-          <div class="su-row">
-            <select id="su-cc" aria-label="Country code">
-              <option value="+66" selected>🇹🇭 +66</option>
-              <option value="+1">🇺🇸 +1</option>
-              <option value="+44">🇬🇧 +44</option>
-              <option value="+61">🇦🇺 +61</option>
-              <option value="+65">🇸🇬 +65</option>
-              <option value="+81">🇯🇵 +81</option>
-              <option value="+49">🇩🇪 +49</option>
-            </select>
-            <input id="su-phone" type="tel" inputmode="numeric" autocomplete="tel-national"
-                   placeholder="081 234 5678" required>
-          </div>
-          <label class="su-ref" for="su-ref">
-            <span data-th="รหัสผู้แนะนำ (ถ้ามี)" data-en="Referral code (optional)">รหัสผู้แนะนำ (ถ้ามี)</span>
-            <input id="su-ref" type="text" autocomplete="off" placeholder="XMAN-XXXX">
-          </label>
-          <button class="btn btn-primary su-go" type="submit">
-            <span data-th="ส่งรหัสยืนยัน" data-en="Send code">ส่งรหัสยืนยัน</span>
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-
-        <div class="su-step" data-step="2" hidden>
-          <label data-th="กรอกรหัส 6 หลักที่ส่งไปทาง SMS" data-en="Enter the 6-digit code we sent">กรอกรหัส 6 หลักที่ส่งไปทาง SMS</label>
-          <div class="otp" id="otp">
-            <input inputmode="numeric" maxlength="1" aria-label="1"><input inputmode="numeric" maxlength="1" aria-label="2">
-            <input inputmode="numeric" maxlength="1" aria-label="3"><input inputmode="numeric" maxlength="1" aria-label="4">
-            <input inputmode="numeric" maxlength="1" aria-label="5"><input inputmode="numeric" maxlength="1" aria-label="6">
-          </div>
-          <p class="su-sent" id="su-sent"></p>
-          <button class="btn btn-primary su-go" type="button" id="su-verify" data-th="ยืนยันและเริ่มใช้งาน" data-en="Verify and start">ยืนยันและเริ่มใช้งาน</button>
-          <button class="su-back" type="button" id="su-back" data-th="แก้เบอร์" data-en="Change number">แก้เบอร์</button>
-        </div>
-
-        <div class="su-step su-done" data-step="3" hidden>
-          <div class="su-tick" aria-hidden="true">✓</div>
-          <b data-th="ลงทะเบียนไว้แล้ว" data-en="You are on the list">ลงทะเบียนไว้แล้ว</b>
-          <p id="su-msg"></p>
-        </div>
-
-        <p class="su-note" id="su-note"
-           data-th="ระบบยืนยันตัวตนจริงกำลังเชื่อมกับระบบสมาชิกของ XMAN Studio — ตอนนี้แบบฟอร์มจะเก็บคำขอไว้ให้ก่อน แล้วเราจะติดต่อกลับ"
-           data-en="Live verification is being wired into the XMAN Studio member system. For now this records your request and we come back to you.">
-          ระบบยืนยันตัวตนจริงกำลังเชื่อมกับระบบสมาชิกของ XMAN Studio — ตอนนี้แบบฟอร์มจะเก็บคำขอไว้ให้ก่อน แล้วเราจะติดต่อกลับ</p>
-      </form>
-    </div>
-  </div>
-</section>
-
 <!-- ══ PRICING ══ -->
 <section class="sec" id="pricing">
   <div class="wrap">
     <div class="sec-head reveal" style="text-align:center;margin-inline:auto">
       <span class="kicker" data-th="ราคา" data-en="Pricing">ราคา</span>
-      <h2 data-th="จ่ายครั้งเดียวก็ได้ ไม่ต้องผูกรายเดือนตลอดชีวิต" data-en="Buy it once. You do not have to rent it forever.">จ่ายครั้งเดียวก็ได้ ไม่ต้องผูกรายเดือนตลอดชีวิต</h2>
+      <h2 data-th="แอปใช้ฟรี ไม่ต้องมีคีย์" data-en="The app is free. No key required.">แอปใช้ฟรี ไม่ต้องมีคีย์</h2>
       <p class="sec-lede" style="margin-inline:auto"
-         data-th="ราคาเดียวกันทั่วโลก · ไลเซนส์ผูกกับเครื่อง · อัปเดตฟรีตลอดอายุไลเซนส์"
-         data-en="One price worldwide · licensed per machine · updates included for the life of the licence">ราคาเดียวกันทั่วโลก · ไลเซนส์ผูกกับเครื่อง · อัปเดตฟรีตลอดอายุไลเซนส์</p>
+         data-th="คีย์ BrainX Cloud ฿399/เดือน เพิ่มสิ่งที่แอปฟรีไม่มี: สมองบนคลาวด์ที่ Claude ทุกเครื่องใช้ได้ และการอัปเดตอัตโนมัติ"
+         data-en="A BrainX Cloud key, ฿399/month, adds what the free app does not have: a cloud brain every Claude can use, and automatic updates.">คีย์ BrainX Cloud ฿399/เดือน เพิ่มสิ่งที่แอปฟรีไม่มี: สมองบนคลาวด์ที่ Claude ทุกเครื่องใช้ได้ และการอัปเดตอัตโนมัติ</p>
     </div>
 
     <div class="plans">
-      <article class="plan reveal">
-        <span class="plan-n" data-th="รายเดือน" data-en="Monthly">รายเดือน</span>
-        <div class="plan-p"><b>$19</b><i data-th="/ เดือน" data-en="/ month">/ เดือน</i></div>
-        <p data-th="เหมาะกับคนที่อยากลองยาว ๆ ก่อนตัดสินใจ ยกเลิกเมื่อไรก็ได้" data-en="For trying it properly before committing. Cancel any time.">เหมาะกับคนที่อยากลองยาว ๆ ก่อนตัดสินใจ ยกเลิกเมื่อไรก็ได้</p>
-        <ul><li data-th="ทุกฟีเจอร์" data-en="Every feature">ทุกฟีเจอร์</li>
-            <li data-th="อัปเดตระหว่างที่ยังใช้อยู่" data-en="Updates while active">อัปเดตระหว่างที่ยังใช้อยู่</li>
-            <li data-th="1 เครื่อง" data-en="1 machine">1 เครื่อง</li></ul>
-        <a class="btn btn-ghost" href="#trial" data-th="เริ่มจากทดลองฟรี" data-en="Start with the free month">เริ่มจากทดลองฟรี</a>
+      <article class="plan plan-free reveal">
+        <span class="plan-n" data-th="แอป BrainX" data-en="BrainX app">แอป BrainX</span>
+        <div class="plan-p"><b data-th="ฟรี" data-en="Free">ฟรี</b></div>
+        <p data-th="ใช้ได้เลยโดยไม่ต้องมีคีย์ — สมองที่สองบนเครื่องคุณเอง" data-en="No key needed — your second brain, on your own machine.">ใช้ได้เลยโดยไม่ต้องมีคีย์ — สมองที่สองบนเครื่องคุณเอง</p>
+        <ul><li data-th="กราฟความรู้ 3 มิติ ค้นแบบ hybrid และ Agent Bus" data-en="3D knowledge graph, hybrid search and the Agent Bus">กราฟความรู้ 3 มิติ ค้นแบบ hybrid และ Agent Bus</li>
+            <li data-th="เป็น MCP server ให้ AI ที่คุณใช้ต่อเข้ามา" data-en="An MCP server for the agents you already use">เป็น MCP server ให้ AI ที่คุณใช้ต่อเข้ามา</li>
+            <li data-th="โน้ตยังเป็น Markdown บนดิสก์ของคุณ" data-en="Your notes stay Markdown on your own disk">โน้ตยังเป็น Markdown บนดิสก์ของคุณ</li>
+            <li data-th="Windows 10/11 · ภาษาไทยและอังกฤษ" data-en="Windows 10/11 · Thai and English">Windows 10/11 · ภาษาไทยและอังกฤษ</li>
+            <li class="no" data-th="ไม่มีอัปเดตอัตโนมัติ" data-en="No automatic updates">ไม่มีอัปเดตอัตโนมัติ</li>
+            <li class="no" data-th="ขึ้นคลาวด์ไม่ได้" data-en="No cloud brain">ขึ้นคลาวด์ไม่ได้</li></ul>
       </article>
 
       <article class="plan plan-best reveal" data-d="1">
-        <span class="plan-flag" data-th="คุ้มที่สุด" data-en="Best value">คุ้มที่สุด</span>
-        <span class="plan-n" data-th="รายปี" data-en="Yearly">รายปี</span>
-        <div class="plan-p"><b>$99</b><i data-th="/ ปี" data-en="/ year">/ ปี</i></div>
-        <p class="plan-save" data-th="ถูกกว่ารายเดือน 57% — เท่ากับจ่าย $8.25 ต่อเดือน" data-en="57% below monthly — works out at $8.25 a month">ถูกกว่ารายเดือน 57% — เท่ากับจ่าย $8.25 ต่อเดือน</p>
-        <ul><li data-th="ทุกฟีเจอร์" data-en="Every feature">ทุกฟีเจอร์</li>
-            <li data-th="อัปเดตทั้งปี" data-en="A year of updates">อัปเดตทั้งปี</li>
-            <li data-th="2 เครื่อง" data-en="2 machines">2 เครื่อง</li>
-            <li data-th="ซัพพอร์ตทางอีเมล" data-en="Email support">ซัพพอร์ตทางอีเมล</li></ul>
-        <a class="btn btn-primary" href="#trial" data-th="เริ่มจากทดลองฟรี" data-en="Start with the free month">เริ่มจากทดลองฟรี</a>
-      </article>
-
-      <article class="plan plan-life reveal" data-d="2">
-        <span class="plan-n" data-th="ตลอดชีพ" data-en="Lifetime">ตลอดชีพ</span>
-        <div class="plan-p"><s>$999</s><b>$599</b></div>
-        <p class="plan-save hot" data-th="ลด 40% เพียงแนะนำเพื่อน 1 คนที่สมัครรายเดือน" data-en="40% off when one friend you refer subscribes monthly">ลด 40% เพียงแนะนำเพื่อน 1 คนที่สมัครรายเดือน</p>
-        <ul><li data-th="ทุกฟีเจอร์ ตลอดไป" data-en="Every feature, forever">ทุกฟีเจอร์ ตลอดไป</li>
-            <li data-th="อัปเดตตลอดชีพ" data-en="Updates for life">อัปเดตตลอดชีพ</li>
-            <li data-th="3 เครื่อง" data-en="3 machines">3 เครื่อง</li>
-            <li data-th="ซัพพอร์ตแบบมีลำดับความสำคัญ" data-en="Priority support">ซัพพอร์ตแบบมีลำดับความสำคัญ</li></ul>
-        <a class="btn btn-ghost" href="#refer" data-th="ดูวิธีรับส่วนลด" data-en="How to unlock it">ดูวิธีรับส่วนลด</a>
+        <span class="plan-flag" data-th="บริการเสริม" data-en="Add-on">บริการเสริม</span>
+        <span class="plan-n">BrainX Cloud</span>
+        <div class="plan-p"><b>฿399</b><i data-th="/ เดือน" data-en="/ month">/ เดือน</i></div>
+        <p data-th="เลือกโฟลเดอร์ในสมองที่จะอัปโหลดขึ้นพื้นที่คลาวด์ส่วนตัวของคุณ แล้ว Claude เครื่องไหนก็ใช้สมองก้อนนั้นได้" data-en="Choose which vault folders go up to your own private cloud space, and any Claude on any machine can use that brain.">เลือกโฟลเดอร์ในสมองที่จะอัปโหลดขึ้นพื้นที่คลาวด์ส่วนตัวของคุณ แล้ว Claude เครื่องไหนก็ใช้สมองก้อนนั้นได้</p>
+        <ul><li data-th="พื้นที่ส่วนตัว 1 GB ต่อบัญชี เข้าถึงได้ด้วยโทเค็นของคุณเท่านั้น" data-en="Your own 1 GB space, reachable only with your tokens">พื้นที่ส่วนตัว 1 GB ต่อบัญชี เข้าถึงได้ด้วยโทเค็นของคุณเท่านั้น</li>
+            <li data-th="ขึ้นคลาวด์เฉพาะโฟลเดอร์ที่เลือก ที่เหลืออยู่บนเครื่องคุณ" data-en="Only the folders you pick go up — the rest stays on your machine">ขึ้นคลาวด์เฉพาะโฟลเดอร์ที่เลือก ที่เหลืออยู่บนเครื่องคุณ</li>
+            <li data-th="Remote MCP — คำสั่งเดียว ไม่ต้องติดตั้งอะไร" data-en="Remote MCP — one command, nothing to install">Remote MCP — คำสั่งเดียว ไม่ต้องติดตั้งอะไร</li>
+            <li data-th="brainx-mcp --cloud — แคชไว้ในเครื่อง เน็ตหลุดก็ใช้ต่อได้" data-en="brainx-mcp --cloud — local cache, keeps working offline">brainx-mcp --cloud — แคชไว้ในเครื่อง เน็ตหลุดก็ใช้ต่อได้</li>
+            <li data-th="แอปอัปเดตตัวเองอัตโนมัติ" data-en="The app updates itself">แอปอัปเดตตัวเองอัตโนมัติ</li>
+            <li data-th="ต่ออายุแล้วคีย์เดิมยืดออกไป ไม่ต้องตั้งค่าใหม่" data-en="Renewing extends the same key — nothing to set up again">ต่ออายุแล้วคีย์เดิมยืดออกไป ไม่ต้องตั้งค่าใหม่</li></ul>
+        <a class="btn btn-primary" href="https://xman4289.com/products/brainx" data-th="สมัคร — ฿399/เดือน" data-en="Subscribe — ฿399/month">สมัคร — ฿399/เดือน</a>
       </article>
     </div>
 
-    <!-- referral -->
-    <div class="refer reveal" id="refer">
-      <div class="refer-l">
-        <span class="kicker" data-th="โปรแนะนำเพื่อน" data-en="Referral offer">โปรแนะนำเพื่อน</span>
-        <h3 data-th="แนะนำเพื่อน 1 คน ลดทันที 40%" data-en="Refer one friend, take 40% off">แนะนำเพื่อน 1 คน ลดทันที 40%</h3>
-        <p data-th="เมื่อเพื่อนที่ใช้รหัสแนะนำของคุณสมัครแพ็กเกจรายเดือน คุณจะได้ส่วนลด 40% สำหรับไลเซนส์ตลอดชีพทันที — จาก $999 เหลือ $599 ส่วนลดนี้เป็นของคุณถาวร ไม่มีวันหมดอายุ"
-           data-en="When a friend uses your code and subscribes monthly, your lifetime licence drops 40% — from $999 to $599. The discount is yours permanently and does not expire.">
-          เมื่อเพื่อนที่ใช้รหัสแนะนำของคุณสมัครแพ็กเกจรายเดือน คุณจะได้ส่วนลด 40% สำหรับไลเซนส์ตลอดชีพทันที — จาก $999 เหลือ $599 ส่วนลดนี้เป็นของคุณถาวร ไม่มีวันหมดอายุ</p>
+    <!-- how any Claude reaches the cloud brain -->
+    <div class="connect reveal">
+      <div class="connect-l">
+        <span class="kicker" data-th="ต่อ Claude เข้ากับ BrainX Cloud" data-en="Connecting to BrainX Cloud">ต่อ Claude เข้ากับ BrainX Cloud</span>
+        <h3 data-th="Claude เครื่องไหนก็ใช้สมองก้อนเดียวกัน" data-en="Any Claude, any machine, one brain">Claude เครื่องไหนก็ใช้สมองก้อนเดียวกัน</h3>
+        <p data-th="ชำระแล้วรับ License key ทางอีเมล ใส่คีย์ในแอป BrainX เลือกโฟลเดอร์ที่จะอัปโหลด แล้วสร้างโทเค็นแยกให้แต่ละเครื่อง ยกเลิกทีละใบได้"
+           data-en="Pay, and your licence key arrives by e-mail. Enter it in the BrainX app, pick the folders to upload, then create a separate token for each machine — each one revocable on its own.">
+          ชำระแล้วรับ License key ทางอีเมล ใส่คีย์ในแอป BrainX เลือกโฟลเดอร์ที่จะอัปโหลด แล้วสร้างโทเค็นแยกให้แต่ละเครื่อง ยกเลิกทีละใบได้</p>
       </div>
-      <ol class="refer-steps">
-        <li><span>1</span><b data-th="ลงทะเบียนรับรหัสของคุณ" data-en="Register to get your code">ลงทะเบียนรับรหัสของคุณ</b></li>
-        <li><span>2</span><b data-th="เพื่อนสมัครรายเดือนด้วยรหัสนั้น" data-en="A friend subscribes monthly with it">เพื่อนสมัครรายเดือนด้วยรหัสนั้น</b></li>
-        <li><span>3</span><b data-th="ส่วนลด 40% เปิดใช้ทันที" data-en="Your 40% unlocks immediately">ส่วนลด 40% เปิดใช้ทันที</b></li>
+      <ol class="connect-ways">
+        <li><b data-th="Remote MCP — ไม่ต้องติดตั้งอะไร" data-en="Remote MCP — nothing to install">Remote MCP — ไม่ต้องติดตั้งอะไร</b>
+            <code class="cmd">claude mcp add --transport http brainx https://serverbrain.xman4289.com/mcp --header "Authorization: Bearer &lt;token&gt;"</code></li>
+        <li><b><code>brainx-mcp --cloud</code> <span data-th="— ใช้ได้แม้เน็ตหลุด" data-en="— works offline">— ใช้ได้แม้เน็ตหลุด</span></b>
+            <span data-th="ดึงโน้ตมาแคชไว้ในเครื่อง ทำงานต่อได้ตอนเน็ตหลุด แล้วส่งสิ่งที่เขียนกลับขึ้นคลาวด์ให้"
+                  data-en="Caches your notes locally, keeps working through a dropped connection and pushes your writes back up.">ดึงโน้ตมาแคชไว้ในเครื่อง ทำงานต่อได้ตอนเน็ตหลุด แล้วส่งสิ่งที่เขียนกลับขึ้นคลาวด์ให้</span></li>
       </ol>
     </div>
   </div>
@@ -465,11 +388,11 @@
       <span class="kicker" data-th="เริ่มต้น" data-en="Get started">เริ่มต้น</span>
       <h2 data-th="เอาความรู้ที่คุณสะสมมาทั้งชีวิต มาทำให้มันใช้งานได้จริง"
           data-en="Take everything you have ever written, and make it usable.">เอาความรู้ที่คุณสะสมมาทั้งชีวิต มาทำให้มันใช้งานได้จริง</h2>
-      <p data-th="BrainX ทำงานบนเครื่องคุณ ข้อมูลไม่ออกจากเครื่อง ไม่มีการสมัครสมาชิกรายเดือนเพื่อจะเข้าถึงโน้ตของตัวเอง"
-         data-en="BrainX runs on your machine. Your data never leaves it. No subscription just to reach your own notes.">BrainX ทำงานบนเครื่องคุณ ข้อมูลไม่ออกจากเครื่อง ไม่มีการสมัครสมาชิกรายเดือนเพื่อจะเข้าถึงโน้ตของตัวเอง</p>
+      <p data-th="แอป BrainX ทำงานบนเครื่องคุณและใช้ฟรี ไม่ต้องสมัครสมาชิกเพื่อเข้าถึงโน้ตของตัวเอง ข้อมูลจะออกจากเครื่องก็ต่อเมื่อคุณเลือกโฟลเดอร์ขึ้น BrainX Cloud เอง"
+         data-en="The BrainX app runs on your machine, free. No subscription just to reach your own notes — data leaves the machine only when you choose folders for BrainX Cloud.">แอป BrainX ทำงานบนเครื่องคุณและใช้ฟรี ไม่ต้องสมัครสมาชิกเพื่อเข้าถึงโน้ตของตัวเอง ข้อมูลจะออกจากเครื่องก็ต่อเมื่อคุณเลือกโฟลเดอร์ขึ้น BrainX Cloud เอง</p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="https://xman4289.com" target="_blank" rel="noopener">
-          <span data-th="ติดต่อขอใช้งาน" data-en="Request access">ติดต่อขอใช้งาน</span>
+        <a class="btn btn-primary" href="https://xman4289.com/products/brainx">
+          <span data-th="สมัคร BrainX Cloud" data-en="Get BrainX Cloud">สมัคร BrainX Cloud</span>
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
         <a class="btn btn-ghost" href="https://xman4289.com" target="_blank" rel="noopener" data-th="ดูสินค้าทั้งหมด" data-en="Browse all products">ดูสินค้าทั้งหมด</a>
@@ -498,7 +421,6 @@
   </div>
 </footer>
 
-<script src="/assets/js/site.js?v=202608031327" defer></script>
-<script src="/assets/js/signup.js?v=202608031327" defer></script>
+<script src="/assets/js/site.js?v=202609241343" defer></script>
 </body>
 </html>
