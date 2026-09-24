@@ -68,6 +68,8 @@ Schedule::command('alerts:daily-report')
 // Product Releases: ดึง release ล่าสุดจาก GitHub เข้า product_versions
 // 2026-07-28 — เดิมต้องกดปุ่ม Sync ในหน้า admin เอง ถ้าลืมกด API เช็คอัพเดทจะ
 // โฆษณาเวอร์ชันเก่าค้างไว้ แอปลูกค้าเลยตอบ "ไม่มีอัพเดท" ทั้งที่ GitHub มีของใหม่แล้ว
+// รันทุก 10 นาที แต่แอปที่ไม่มี token (โควตาร่วม 60 ครั้ง/ชม. ของเซิร์ฟเวอร์) ถูกถามอย่างมากทุก 30 นาที
+// และข้ามทั้งรอบเมื่อ GitHub บอกว่าโควตาหมด — ดู GithubReleaseService::TOKENLESS_SYNC_MINUTES
 Schedule::command('products:sync-releases')
     ->everyTenMinutes()
     ->withoutOverlapping()
