@@ -242,7 +242,9 @@ Route::prefix('autotradex')->name('autotradex.')->group(function () {
     Route::get('/reset-device', [AutoTradeXController::class, 'resetDevicePage'])->name('reset-device');
 
     // ดาวน์โหลดฟรี (ลองในแอปก่อน ใส่ License Key เพื่อปลดล็อก) — ไฟล์ส่งผ่านเซิร์ฟเวอร์เอง ห้าม redirect ไป GitHub
-    Route::get('/download', [AutoTradeXController::class, 'download'])
+    // {version} = ตัวนั้นเป๊ะ ๆ ตามที่ update/check ประกาศ sha256 ไว้ · ไม่ใส่ = ตัวล่าสุด
+    Route::get('/download/{version?}', [AutoTradeXController::class, 'download'])
+        ->where('version', '[0-9A-Za-z.\-]+')
         ->middleware('throttle:30,1,autotradex-download')
         ->name('download');
 
@@ -328,7 +330,9 @@ Route::prefix('chanthra-studio')->name('chanthra-studio.')->group(function () {
     Route::get('/manual', [ChanthraStudioWebController::class, 'manual'])->name('manual');
     Route::get('/pricing', [ChanthraStudioWebController::class, 'pricing'])->name('pricing');
     // zip ~90 MB ส่งผ่านเซิร์ฟเวอร์เอง (ห้าม redirect ไป GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
-    Route::get('/download', [ChanthraStudioWebController::class, 'downloadPage'])
+    // {version} = ตัวนั้นเป๊ะ ๆ ที่ตัวอัปเดตในแอปได้จาก update/check · ไม่ใส่ = ตัวล่าสุด
+    Route::get('/download/{version?}', [ChanthraStudioWebController::class, 'downloadPage'])
+        ->where('version', '[0-9A-Za-z.\-]+')
         ->middleware('throttle:30,1,chanthra-download')
         ->name('download');
 });
@@ -1575,7 +1579,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 Route::prefix('apps/aipray')->name('aipray.')->group(function () {
     Route::get('/', [AiprayController::class, 'show'])->name('show');
     // APK ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
-    Route::get('/download', [AiprayController::class, 'download'])
+    // {version} = ตัวนั้นเป๊ะ ๆ ที่ตัวอัปเดตในแอปได้จาก update/check · ไม่ใส่ = ตัวล่าสุด
+    Route::get('/download/{version?}', [AiprayController::class, 'download'])
+        ->where('version', '[0-9A-Za-z.\-]+')
         ->middleware('throttle:30,1,aipray-download')
         ->name('download');
     Route::get('/donate', [AiprayController::class, 'donate'])->name('donate');

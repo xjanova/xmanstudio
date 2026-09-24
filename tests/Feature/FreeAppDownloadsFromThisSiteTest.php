@@ -260,6 +260,60 @@ class FreeAppDownloadsFromThisSiteTest extends TestCase
         $this->assertSame(0, DownloadLog::count());
     }
 
+    // ── ตัวอัปเดตในแอป (update/check) ──────────────────────────────────
+
+    /**
+     * ตัวอัปเดตในแอปโหลดเองโดยไม่มี session — ลิงก์ที่ update/check ส่งต้องเป็นหน้าโหลดสาธารณะของเว็บเรา
+     * ระบุเวอร์ชันเป๊ะ ๆ คู่กับ sha256 ของเวอร์ชันนั้น (ไม่ใช่ /download/{slug} ที่ต้องล็อกอิน + ซื้อ และไม่ใช่ GitHub)
+     */
+    public function test_update_check_hands_each_app_its_exact_version_on_this_site(): void
+    {
+        $apps = [
+            ['product' => $this->autotradex(), 'repo' => 'autotradex', 'version' => '0.3.0', 'file' => 'AutoTradeX-v0.3.0-win-x64-portable.zip', 'route' => 'autotradex.download'],
+            ['product' => Product::where('slug', 'chanthra-studio')->sole(), 'repo' => 'chanthra-studio', 'version' => '0.10.0', 'file' => 'ChanthraStudio-v0.10.0-win-x64.zip', 'route' => 'chanthra-studio.download'],
+            ['product' => $this->aipray(), 'repo' => 'Aipray', 'version' => '1.2.4', 'file' => 'aipray-1.2.4-universal.apk', 'route' => 'aipray.download'],
+        ];
+
+        foreach ($apps as $app) {
+            $this->release($app['product'], $app['repo'], $app['version'], $app['file']);
+            $this->fakeGithub($app['repo'], $app['version']);
+        }
+
+        foreach ($apps as $app) {
+            $slug = $app['product']->slug;
+            $json = $this->getJson("/api/v1/product/{$slug}/update/check?current_version=0.0.1")
+                ->assertOk()
+                ->assertJsonPath('has_update', true)
+                ->assertJsonPath('latest_version', $app['version'])
+                ->assertJsonPath('filename', $app['file'])
+                ->assertJsonPath('download_url', route($app['route'], ['version' => $app['version']]))
+                ->json();
+
+            $this->assertStringNotContainsStringIgnoringCase('github', json_encode($json), $slug);
+
+            // ไม่ล็อกอิน — แบบเดียวกับตัวอัปเดตในแอป
+            $response = $this->get($json['download_url'])->assertOk()->assertHeaderMissing('Location');
+            $this->assertStringContainsString($app['file'], $response->headers->get('Content-Disposition'), $slug);
+            $this->assertSame(self::FILE_BYTES, $response->streamedContent(), $slug);
+        }
+    }
+
+    public function test_a_versioned_download_is_that_exact_file_even_after_a_newer_release(): void
+    {
+        $product = Product::where('slug', 'chanthra-studio')->sole();
+        // sync ปิดเวอร์ชันเก่าเมื่อตัวใหม่เข้ามา — แอปที่เพิ่งได้ sha256 ของตัวเก่าจาก update/check ต้องยังโหลดตัวนั้นได้
+        $this->release($product, 'chanthra-studio', '0.9.0', 'ChanthraStudio-v0.9.0-win-x64.zip')->update(['is_active' => false]);
+        $this->release($product, 'chanthra-studio', '0.10.0', 'ChanthraStudio-v0.10.0-win-x64.zip');
+        $this->fakeGithub('chanthra-studio', '0.10.0');
+
+        $response = $this->get('/chanthra-studio/download/0.9.0')->assertOk()->assertHeaderMissing('Location');
+        $this->assertStringContainsString('ChanthraStudio-v0.9.0-win-x64.zip', $response->headers->get('Content-Disposition'));
+
+        $this->get('/chanthra-studio/download/9.9.9', ['Accept' => '*/*'])
+            ->assertNotFound()
+            ->assertExactJson(['success' => false, 'error' => 'Version not found']);
+    }
+
     // ── helpers ───────────────────────────────────────────────────────
 
     /** สินค้าแบบใน production (id 1) — GitHub setting ค่าเดียวกับที่ migration 2026_09_24_200000 ใส่ให้ */

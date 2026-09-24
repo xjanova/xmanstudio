@@ -83,15 +83,15 @@ class AutoTradeXController extends Controller
     }
 
     /**
-     * ดาวน์โหลดฟรี — ไฟล์ของเวอร์ชันล่าสุดส่งจาก xman4289.com เอง
+     * ดาวน์โหลดฟรี — ไฟล์ส่งจาก xman4289.com เอง
      *
-     * GET /autotradex/download
+     * GET /autotradex/download/{version?} — ไม่ระบุ = ตัวล่าสุด · ระบุ = ตัวนั้นเป๊ะ ๆ (ลิงก์ที่ update/check ส่งให้แอป)
      *
      * เจ้าของเลือก (2026-09-24): ให้ทุกคนโหลดได้ ลองในแอปก่อนแล้วใส่ License Key เพื่อปลดล็อก แบบ CluadeX/WinXTools
      * เดิมหน้าลูกค้าลิงก์ไปหน้า releases บน GitHub = ลูกค้าเห็น repo · กฎเจ้าของ (2026-09-24) ห้ามเด็ดขาด
      * ไฟล์ไหนเป็นตัวดาวน์โหลด (ตัว portable) กำหนดที่ asset_pattern ของ GitHub setting ไม่ใช่ในโค้ด
      */
-    public function download(Request $request)
+    public function download(Request $request, ?string $version = null)
     {
         $product = Product::where('slug', 'autotradex')->where('is_active', true)->first();
 
@@ -99,7 +99,7 @@ class AutoTradeXController extends Controller
             return $this->downloadUnavailable($request, route('autotradex.pricing'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
         }
 
-        return $this->serveRelease($request, $product, $this->latestRelease($product), route('products.show', 'autotradex'));
+        return $this->serveRelease($request, $product, $this->releaseFor($product, $version), route('products.show', 'autotradex'));
     }
 
     /**

@@ -43,10 +43,11 @@ class AiprayController extends Controller
     /**
      * ดาวน์โหลด APK (ฟรี ไม่ต้องล็อกอิน) — ไฟล์ส่งจาก xman4289.com เอง ไม่ redirect ไป GitHub
      *
+     * GET /apps/aipray/download/{version?} — ไม่ระบุ = ตัวล่าสุด · ระบุ = ตัวนั้นเป๊ะ ๆ (ลิงก์ที่ update/check ส่งให้แอป)
      * ไฟล์ไหนคือตัวให้ลูกค้ากำหนดที่ asset_pattern ของ GitHub setting (ตัว universal — เจ้าของเลือก 2026-09-24)
      * Content-Type เป็น application/vnd.android.package-archive มือถือจึงเสนอติดตั้งได้ทันที
      */
-    public function download(Request $request)
+    public function download(Request $request, ?string $version = null)
     {
         $product = Product::where('slug', 'aipray')->where('is_active', true)->first();
 
@@ -57,7 +58,7 @@ class AiprayController extends Controller
             return response()->json(['success' => false, 'error' => 'Product not found'], 404);
         }
 
-        return $this->serveRelease($request, $product, $this->latestRelease($product), route('aipray.show'));
+        return $this->serveRelease($request, $product, $this->releaseFor($product, $version), route('aipray.show'));
     }
 
     public function donate()

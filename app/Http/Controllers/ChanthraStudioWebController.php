@@ -107,13 +107,16 @@ class ChanthraStudioWebController extends Controller
     }
 
     /**
-     * ดาวน์โหลดฟรี — zip ของเวอร์ชันล่าสุดส่งจาก xman4289.com เอง
+     * ดาวน์โหลดฟรี — zip ส่งจาก xman4289.com เอง
+     *
+     * GET /chanthra-studio/download/{version?} — ไม่ระบุ = ตัวล่าสุด (ปุ่มในหน้าเว็บ/คู่มือ/ปุ่มโหลดเองในแอป)
+     * · ระบุ = ตัวนั้นเป๊ะ ๆ (ลิงก์ที่ update/check ส่งให้ตัวอัปเดตในแอป คู่กับ sha256 ของเวอร์ชันนั้น)
      *
      * เดิม 302 ไปหน้า releases บน GitHub = ลูกค้าเห็น repo · กฎเจ้าของ (2026-09-24) ห้ามเด็ดขาด
      * สินค้ายังเป็น "เร็ว ๆ นี้" (ซื้อไม่ได้) ก็โหลดได้ — ตัวแอปฟรี ที่ขายคือ License key
      * ไฟล์ไหนเป็นตัวดาวน์โหลดกำหนดที่ asset_pattern ของ GitHub setting ในหน้า admin ไม่ใช่ในโค้ด
      */
-    public function downloadPage(Request $request)
+    public function downloadPage(Request $request, ?string $version = null)
     {
         $product = Product::where('slug', self::PRODUCT_SLUG)->where('is_active', true)->first();
 
@@ -121,6 +124,6 @@ class ChanthraStudioWebController extends Controller
             return $this->downloadUnavailable($request, route('chanthra-studio.detail'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
         }
 
-        return $this->serveRelease($request, $product, $this->latestRelease($product), route('chanthra-studio.detail'));
+        return $this->serveRelease($request, $product, $this->releaseFor($product, $version), route('chanthra-studio.detail'));
     }
 }
