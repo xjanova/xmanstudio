@@ -154,6 +154,56 @@ class ReleaseNotesTest extends TestCase
         );
     }
 
+    public function test_code_blocks_keep_their_comment_lines_and_lose_only_links(): void
+    {
+        // ในบล็อกโค้ด "# download" คือ comment ของ PowerShell ไม่ใช่หัวข้อ — ถ้าตีความเป็นหัวข้อว่างจะถูกตัดทิ้ง
+        // และ "# Contributors" ในโค้ดต้องไม่ลากบรรทัดถัดไปหายไปทั้ง section
+        $body = "## วิธีติดตั้ง\n"
+            . "```powershell\n"
+            . "# download\n"
+            . "# Contributors\n"
+            . "git clone https://github.com/xjanova/GpuXmine\n"
+            . ".\\setup.exe\n"
+            . "```\n\n"
+            . '**Full Changelog**: https://github.com/xjanova/GpuXmine/compare/v0.1.16...v0.1.17';
+
+        $this->assertSame(
+            "## วิธีติดตั้ง\n```powershell\n# download\n# Contributors\ngit clone\n.\\setup.exe\n```",
+            ReleaseNotes::forCustomers($body, self::ACCOUNTS),
+        );
+    }
+
+    public function test_a_section_left_with_only_empty_subheadings_goes_too(): void
+    {
+        $this->assertSame(
+            "## Features\n- Fast",
+            ReleaseNotes::forCustomers("## Resources\n### Links\n- Source: https://github.com/xjanova/GpuXmine\n\n## Features\n- Fast", self::ACCOUNTS),
+        );
+    }
+
+    public function test_multi_line_html_comments_are_dropped(): void
+    {
+        // GitHub ไม่แสดง comment อยู่แล้ว — หน้าเว็บที่แสดงเป็นข้อความเฉย ๆ จะโชว์ "<!--" ดิบ ๆ
+        $this->assertSame(
+            "เพิ่มโหมดมืด\nแก้บั๊กตอนเปิดแอป",
+            ReleaseNotes::forCustomers("เพิ่มโหมดมืด\n<!--\nnote to self: https://github.com/xjanova/BrainX/issues/9\n-->\nแก้บั๊กตอนเปิดแอป", self::ACCOUNTS),
+        );
+    }
+
+    public function test_a_repository_name_with_a_commit_goes_whole(): void
+    {
+        $this->assertSame('แก้แล้วใน', ReleaseNotes::forCustomers('แก้แล้วใน xjanova/GpuXmine@a1b2c3d', self::ACCOUNTS));
+    }
+
+    public function test_a_broken_byte_does_not_let_a_link_through(): void
+    {
+        // regex แบบ /u ล้มทั้งบรรทัดเมื่อเจอ byte ที่ไม่ใช่ UTF-8 — ต้องไม่กลายเป็นทางให้ลิงก์หลุดรอด
+        $clean = ReleaseNotes::forCustomers("- bad byte \xff here https://github.com/xjanova/GpuXmine/pull/3", self::ACCOUNTS);
+
+        $this->assertStringNotContainsString('github', (string) $clean);
+        $this->assertStringContainsString('bad byte', (string) $clean);
+    }
+
     public function test_nothing_in_nothing_out(): void
     {
         $this->assertNull(ReleaseNotes::forCustomers(null, self::ACCOUNTS));
