@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\LicenseKey;
+use App\Models\LicenseRenewal;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -26,12 +27,18 @@ class OrderPaymentService
             // Serialise approvals of one order (the admin page, the Telegram bot, a double-click):
             // two at once would each generate the "missing" licenses and each send the e-mail.
             $this->lock($order);
-            $update = ['payment_status' => 'paid', 'paid_at' => now(), 'status' => 'processing'];
 
             // Generate license keys for products that require them
             $this->generateAndBindLicenses($order);
 
-            $order->update($update + $this->noteField($order, $note));
+            $order->update([
+                'payment_status' => 'paid',
+                'paid_at' => now(),
+                // Completed once its licenses are out: issuing them just now completed it, and an
+                // order approved again (after a mistaken rejection, say) still holds its first keys.
+                // Writing processing over that sent the buyer's /download/{slug} page to "buy first".
+                'status' => $order->status === 'completed' || $this->licensesIssued($order) ? 'completed' : 'processing',
+            ] + $this->noteField($order, $note));
         });
     }
 
@@ -126,6 +133,13 @@ class OrderPaymentService
 
         return ['notes' => ($order->notes ? $order->notes . "\n" : '')
             . '[Admin] ' . $note . ' — ' . now()->format('d/m/Y H:i')];
+    }
+
+    /** Whether the order has delivered licenses: keys of its own, or time added to a key the buyer held. */
+    private function licensesIssued(Order $order): bool
+    {
+        return LicenseKey::where('order_id', $order->id)->exists()
+            || LicenseRenewal::where('order_id', $order->id)->exists();
     }
 
     /**
