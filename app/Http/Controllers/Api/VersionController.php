@@ -241,15 +241,26 @@ class VersionController extends Controller
     }
 
     /**
+     * แอปฟรีที่มีหน้าโหลดสาธารณะ (ไม่ต้องล็อกอิน ไฟล์ส่งจาก xman4289.com เอง) — slug → ชื่อ route ที่รับ {version}
+     * ตัวอัปเดตในแอปเหล่านี้โหลดเองโดยไม่มี session จึงใช้ download.product (ต้องล็อกอิน + ซื้อ) ไม่ได้
+     */
+    private const PUBLIC_DOWNLOAD_ROUTES = [
+        'winx-tools' => 'winx-tools.download',
+        'autotradex' => 'autotradex.download',
+        'chanthra-studio' => 'chanthra-studio.download',
+        'aipray' => 'aipray.download',
+    ];
+
+    /**
      * ลิงก์ดาวน์โหลดของเวอร์ชันนี้ที่แอปของผลิตภัณฑ์นั้นใช้ได้จริง
      *
-     * download.product ต้องล็อกอินและซื้อก่อน — WinXTools มีรุ่นฟรีและแอปโหลดเองโดยไม่มี session
-     * จึงชี้ไปหน้าโหลดสาธารณะของมัน ระบุเวอร์ชันเป๊ะ ๆ ให้ไฟล์ตรงกับ sha256 ที่ส่งไปคู่กัน
+     * download.product ต้องล็อกอินและซื้อก่อน — แอปที่โหลดฟรี (PUBLIC_DOWNLOAD_ROUTES) ชี้ไปหน้าโหลดสาธารณะของมัน
+     * ระบุเวอร์ชันเป๊ะ ๆ ให้ไฟล์ตรงกับ sha256 ที่ส่งไปคู่กัน · ห้ามคืนลิงก์ GitHub (กฎเจ้าของ 2026-09-24)
      */
     private function downloadUrlFor(Product $product, ProductVersion $version): string
     {
-        if ($product->slug === 'winx-tools') {
-            return route('winx-tools.download', ['version' => $version->version]);
+        if ($route = self::PUBLIC_DOWNLOAD_ROUTES[$product->slug] ?? null) {
+            return route($route, ['version' => $version->version]);
         }
 
         return route('download.product', [

@@ -146,6 +146,10 @@ class ProductController extends Controller
         if ($slug === 'localvpn') {
             return redirect()->route('localvpn.detail');
         }
+        // ลิงก์ในแอปและใน release notes ชี้มาที่ /products/chanthra-studio — หน้าจริงของมันคือหน้า Chanthra
+        if ($slug === 'chanthra-studio') {
+            return redirect()->route('chanthra-studio.detail');
+        }
 
         // Custom views, keyed by the product's real slug. Keys that matched no
         // product ('xcluadeagent', 'live-x-shop-pro', 'winxtools', 'postxagent')

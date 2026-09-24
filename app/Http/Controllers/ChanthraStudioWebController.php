@@ -2,22 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use Illuminate\Http\Request;
 
 /**
  * Chanthra Studio Web Controller
  *
- * Landing page (detail), manual/docs, and download redirect for the
+ * Landing page (detail), manual/docs, and the free download of the
  * Chanthra Studio desktop app. License/version checks are handled by
  * the existing generic ProductLicenseController + VersionController
  * under /api/v1/product/{slug}.
+ *
+ * ⚠️ ห้ามลิงก์หรือ redirect ไป GitHub (กฎเจ้าของ 2026-09-24: แอปโหลดจาก xman4289.com เท่านั้น ลูกค้าต้องไม่รู้ repo)
  */
 class ChanthraStudioWebController extends Controller
 {
-    private const PRODUCT_SLUG = 'chanthra-studio';
+    use ServesReleaseDownloads;
 
-    private const GITHUB_REPO = 'https://github.com/xjanova/chanthra-studio';
+    private const PRODUCT_SLUG = 'chanthra-studio';
 
     private const PRICING = [
         'monthly' => [
@@ -31,7 +35,7 @@ class ChanthraStudioWebController extends Controller
                 'ComfyUI WebSocket integration',
                 'TTS (OpenAI / ElevenLabs)',
                 'LLM script writing (4 providers)',
-                'Auto-update จาก GitHub Releases',
+                'อัปเดตอัตโนมัติในแอป',
                 'ซัพพอร์ตมาตรฐาน',
             ],
         ],
@@ -87,15 +91,12 @@ class ChanthraStudioWebController extends Controller
             'product' => $product,
             'version' => $version,
             'hasPurchased' => $hasPurchased,
-            'githubRepo' => self::GITHUB_REPO,
         ]);
     }
 
     public function manual()
     {
-        return view('chanthrastudio.manual', [
-            'githubRepo' => self::GITHUB_REPO,
-        ]);
+        return view('chanthrastudio.manual');
     }
 
     public function pricing()
@@ -105,8 +106,24 @@ class ChanthraStudioWebController extends Controller
         ]);
     }
 
-    public function downloadPage()
+    /**
+     * ดาวน์โหลดฟรี — zip ส่งจาก xman4289.com เอง
+     *
+     * GET /chanthra-studio/download/{version?} — ไม่ระบุ = ตัวล่าสุด (ปุ่มในหน้าเว็บ/คู่มือ/ปุ่มโหลดเองในแอป)
+     * · ระบุ = ตัวนั้นเป๊ะ ๆ (ลิงก์ที่ update/check ส่งให้ตัวอัปเดตในแอป คู่กับ sha256 ของเวอร์ชันนั้น)
+     *
+     * เดิม 302 ไปหน้า releases บน GitHub = ลูกค้าเห็น repo · กฎเจ้าของ (2026-09-24) ห้ามเด็ดขาด
+     * สินค้ายังเป็น "เร็ว ๆ นี้" (ซื้อไม่ได้) ก็โหลดได้ — ตัวแอปฟรี ที่ขายคือ License key
+     * ไฟล์ไหนเป็นตัวดาวน์โหลดกำหนดที่ asset_pattern ของ GitHub setting ในหน้า admin ไม่ใช่ในโค้ด
+     */
+    public function downloadPage(Request $request, ?string $version = null)
     {
-        return redirect(self::GITHUB_REPO . '/releases/latest');
+        $product = Product::where('slug', self::PRODUCT_SLUG)->where('is_active', true)->first();
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, route('chanthra-studio.detail'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        return $this->serveRelease($request, $product, $this->releaseFor($product, $version), route('chanthra-studio.detail'));
     }
 }

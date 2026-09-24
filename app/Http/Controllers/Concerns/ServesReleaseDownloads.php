@@ -46,6 +46,17 @@ trait ServesReleaseDownloads
     }
 
     /**
+     * เวอร์ชันที่ขอ — ระบุเวอร์ชัน = ตัวนั้นเป๊ะ ๆ แม้ไม่ใช่ตัวล่าสุดแล้ว (update/check ส่ง sha256 ของเวอร์ชันนี้ให้แอป
+     * ไปแล้ว ต่อให้ระหว่างนั้นมีตัวใหม่ออกมา ไฟล์ที่แอปโหลดก็ต้องตรงกับ hash) · ไม่ระบุ = ตัวล่าสุด
+     */
+    protected function releaseFor(Product $product, ?string $version): ?ProductVersion
+    {
+        return $version !== null
+            ? ProductVersion::where('product_id', $product->id)->where('version', $version)->first()
+            : $this->latestRelease($product);
+    }
+
+    /**
      * ตัวล่าสุดที่ตามทัน GitHub (read-through 5 นาที) — ต่อ GitHub ไม่ติด (timeout/DNS) HTTP client โยน
      * ConnectionException ออกมา ปุ่ม "ดาวน์โหลดฟรี" ต้องไม่กลายเป็นหน้า 500 จึงถอยไปใช้ตัวที่ DB รู้
      */

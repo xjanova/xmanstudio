@@ -265,7 +265,7 @@
                         <div class="step-num">1</div>
                         <div>
                             <h3 style="margin-top: 0;">ดาวน์โหลด</h3>
-                            <p>ไปที่ <a class="gold-link" href="{{ $githubRepo }}/releases/latest">GitHub Releases ล่าสุด</a> แล้วโหลดไฟล์ <code>ChanthraStudio-vX.Y.Z-win-x64.zip</code></p>
+                            <p>กด <a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลดเวอร์ชันล่าสุด</a> จะได้ไฟล์ <code>ChanthraStudio-vX.Y.Z-win-x64.zip</code></p>
                         </div>
                     </div>
 
@@ -330,7 +330,7 @@
                     <span class="section-label">SECTION 05</span>
                     <h2>Auto-update</h2>
                     <p>
-                        เมื่อ activate license แล้ว แอปจะเช็ค GitHub Releases ตอนเปิดทุกครั้ง ถ้ามีเวอร์ชันใหม่จะเด้ง <strong>Update available</strong> dialog แสดง:
+                        เมื่อ activate license แล้ว แอปจะเช็คเวอร์ชันใหม่ตอนเปิดทุกครั้ง ถ้ามีเวอร์ชันใหม่จะเด้ง <strong>Update available</strong> dialog แสดง:
                     </p>
                     <ul>
                         <li>เวอร์ชันปัจจุบัน → เวอร์ชันใหม่</li>
@@ -343,7 +343,7 @@
                     <p>กด <code>Settings → License &amp; Updates → Check for updates</code> เพื่อตรวจสอบทันที</p>
 
                     <h3>ถ้ายังไม่ได้ activate</h3>
-                    <p>ปุ่ม Install จะ disabled ให้กด <strong>เปิดหน้า GitHub Releases</strong> เพื่อดาวน์โหลด zip มาแตกเองแบบ manual</p>
+                    <p>ปุ่ม Install จะ disabled ให้ <a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลด zip เวอร์ชันล่าสุด</a> มาแตกทับโฟลเดอร์เดิมเองแบบ manual</p>
 
                     <div class="doc-callout">
                         <strong>เบื้องหลัง</strong> — เมื่อกด Install แอปจะดาวน์โหลด zip ลง <code>%TEMP%</code>, สร้างสคริปต์ <code>chanthra-studio-update.cmd</code> ที่รอให้แอปปิด แล้วแตก zip ทับ install dir แล้วเปิดแอปใหม่
@@ -487,7 +487,7 @@
                         <ul>
                             <li>ตรวจ License — ต้อง valid ก่อนระบบ update ทำงาน</li>
                             <li>กด <code>Settings → Check for updates</code> เพื่อ trigger เอง</li>
-                            <li>ถ้ายังไม่เจอ ให้ดาวน์โหลด zip ตรงจาก <a class="gold-link" href="{{ $githubRepo }}/releases/latest">GitHub Releases</a></li>
+                            <li>ถ้ายังไม่เจอ ให้ <a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลด zip เวอร์ชันล่าสุด</a> มาแตกทับโฟลเดอร์เดิม</li>
                         </ul>
                     </div>
                 </section>
@@ -495,16 +495,15 @@
                 <section id="changelog" class="doc-section" style="border-bottom: 0;">
                     <span class="section-label">SECTION 09</span>
                     <h2>Changelog</h2>
-                    <p>ดู release notes ทั้งหมดที่ <a class="gold-link" href="{{ $githubRepo }}/releases">{{ $githubRepo }}/releases</a></p>
+                    <p>release notes ของเวอร์ชันใหม่แต่ละตัวแสดงในหน้าต่าง <strong>Update available</strong> ของแอปก่อนติดตั้ง</p>
 
                     <div class="doc-card">
                         <strong style="color: var(--gold-hi); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.2em;">v0.2.0 — Node Flow + License + Auto-update</strong>
                         <ul>
                             <li>Phase 6: visual graph editor (palette · bezier wires · mini-map · auto-arrange)</li>
                             <li>License system: Activation dialog + xman4289.com integration</li>
-                            <li>Auto-update: GitHub Releases checker + progress bar + release notes display</li>
+                            <li>Auto-update: เช็คเวอร์ชันใหม่ + progress bar + release notes display</li>
                             <li>Status bar license badge + dynamic version label</li>
-                            <li>GitHub Actions workflow สำหรับสร้าง release อัตโนมัติเมื่อ push tag</li>
                         </ul>
                     </div>
 

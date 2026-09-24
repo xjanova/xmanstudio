@@ -324,18 +324,27 @@
             <h2 class="text-3xl font-bold text-white mb-4">ดาวน์โหลด AutoTradeX</h2>
             <p class="text-gray-400 mb-8 max-w-2xl mx-auto">ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นใช้งานได้ทันที</p>
 
-            @auth
+            <div class="flex flex-wrap justify-center gap-4">
+                {{-- ทุกคนโหลดได้ฟรี ลองในแอปก่อนแล้วใส่ License Key (เจ้าของเลือก 2026-09-24)
+                     ไฟล์ส่งจาก xman4289.com เอง ห้ามลิงก์ไป GitHub (กฎเจ้าของ 2026-09-24) --}}
+                <a href="{{ route('autotradex.download') }}"
+                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    ดาวน์โหลดฟรี
+                </a>
+
                 @if($hasPurchased)
-                    {{-- User has purchased - show download button --}}
-                    <a href="{{ route('customer.downloads') }}"
-                       class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                    {{-- ซื้อแล้ว — License Key อยู่ในหน้าลูกค้า --}}
+                    <a href="{{ route('customer.licenses') }}"
+                       class="inline-flex items-center px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                         </svg>
-                        ดาวน์โหลด
+                        License Key ของฉัน
                     </a>
                 @else
-                    {{-- User has not purchased - show packages button --}}
                     <a href="{{ route('autotradex.pricing') }}"
                        class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,19 +353,16 @@
                         ดูแพคเกจ
                     </a>
                 @endif
-            @else
-                {{-- User not logged in - show packages button --}}
-                <a href="{{ route('autotradex.pricing') }}"
-                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                    </svg>
-                    ดูแพคเกจ
-                </a>
-            @endauth
+            </div>
 
+            <p class="text-gray-400 text-sm mt-4">ลองใช้ในแอปได้ก่อนซื้อ · ใส่ License Key ในแอปเพื่อปลดล็อกฟีเจอร์เต็ม</p>
+
+            @php($latestRelease = $product->latestVersion())
             <p class="text-gray-500 text-sm mt-6">
-                เวอร์ชันล่าสุด: v1.0.0 | ขนาด: ~50MB | รองรับ Windows 10/11
+                @if($latestRelease)
+                    เวอร์ชันล่าสุด: v{{ $latestRelease->version }} | ขนาด: {{ $latestRelease->file_size_formatted }} |
+                @endif
+                รองรับ Windows 10/11
             </p>
         </div>
     </section>

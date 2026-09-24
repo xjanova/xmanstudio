@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\Product;
-use App\Models\ProductVersion;
 use Illuminate\Http\Request;
 
 /**
@@ -38,12 +37,7 @@ class WinXToolsController extends Controller
             return response()->json(['success' => false, 'error' => 'Product not found'], 404);
         }
 
-        // ระบุเวอร์ชัน = ตัวนั้นเป๊ะ ๆ (update/check ส่ง sha256 ของเวอร์ชันนี้ให้แอปไปแล้ว ต่อให้ระหว่างนั้น
-        // มีตัวใหม่ออกมา ไฟล์ก็ต้องตรงกับ hash) · ไม่ระบุ = ตัวล่าสุด ตัวเดียวกับที่ update/check โฆษณา
-        $productVersion = $version !== null
-            ? ProductVersion::where('product_id', $product->id)->where('version', $version)->first()
-            : $this->latestRelease($product);
-
-        return $this->serveRelease($request, $product, $productVersion, route('products.show', self::PRODUCT_SLUG));
+        // ระบุเวอร์ชัน = ตัวนั้นเป๊ะ ๆ ตาม sha256 ที่ update/check ส่งให้แอปไปแล้ว · ไม่ระบุ = ตัวล่าสุด
+        return $this->serveRelease($request, $product, $this->releaseFor($product, $version), route('products.show', self::PRODUCT_SLUG));
     }
 }

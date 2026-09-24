@@ -69,7 +69,8 @@
 
                 <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-2">
                     @if($product->slug === 'autotradex')
-                    <a href="https://github.com/xjanova/autotradex/releases/latest" target="_blank"
+                    {{-- ไฟล์ส่งจาก xman4289.com เอง ห้ามลิงก์ไป GitHub (กฎเจ้าของ 2026-09-24) --}}
+                    <a href="{{ route('autotradex.download') }}"
                        class="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 flex items-center justify-center font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>

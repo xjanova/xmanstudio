@@ -163,7 +163,7 @@
                         </span>
                         <span class="flex items-center gap-2">
                             <span class="inline-block w-1 h-1 rounded-full" style="background: var(--gold);"></span>
-                            Auto-update via GitHub Releases
+                            Auto-update ในแอป
                         </span>
                         <span class="flex items-center gap-2">
                             <span class="inline-block w-1 h-1 rounded-full" style="background: var(--gold);"></span>
@@ -241,7 +241,7 @@
                 ['icon' => '❍', 'title' => 'Library + Queue', 'desc' => 'เก็บคลิปทั้งหมดใน SQLite ใกล้ ๆ exe มี search + tags + thumbnails · queue เห็นความคืบหน้าจริงทุกชอต'],
                 ['icon' => '◐', 'title' => 'Render film', 'desc' => 'ต่อคลิปทั้ง project เป็น MP4 ผ่าน ffmpeg เลือก fps · audio track · voice take จาก Sound atelier ได้โดยตรง'],
                 ['icon' => '▶', 'title' => 'Node Flow editor', 'desc' => 'visual graph editor ในแอป สำหรับ ComfyUI workflow มี palette · drag-drop nodes · bezier wires · mini-map · auto-arrange'],
-                ['icon' => '⌘', 'title' => 'Auto-update', 'desc' => 'เช็ค GitHub Releases ทุกครั้งที่เปิดแอป มี progress bar + release notes ให้อ่าน ก่อนติดตั้ง — ต้องมี License key ที่ถูกต้อง'],
+                ['icon' => '⌘', 'title' => 'Auto-update', 'desc' => 'เช็คเวอร์ชันใหม่ทุกครั้งที่เปิดแอป มี progress bar + release notes ให้อ่าน ก่อนติดตั้ง — ต้องมี License key ที่ถูกต้อง'],
                 ['icon' => '☾', 'title' => 'License system', 'desc' => '1 key = 1 เครื่อง bound ด้วย HWID (CPU + Motherboard + Disk) ย้ายเครื่องผ่าน Deactivate ได้เอง'],
                 ['icon' => '※', 'title' => 'Privacy by default', 'desc' => 'API keys ทุก provider เข้ารหัสด้วย Windows DPAPI · settings + library อยู่บนเครื่องตัวเอง · zero telemetry'],
                 ['icon' => '✧', 'title' => 'Lunar atelier UI', 'desc' => 'Frameless 1640×1000 window กับ Mica gradient ทอง/ครามม่วง · Cormorant Garamond + IBM Plex font stack · per-row save feedback'],
@@ -306,7 +306,7 @@
                 เริ่มต้นภายใน <span style="color: var(--gold-hi);">5 นาที</span>
             </h2>
             <p class="text-lg mb-10" style="color: var(--text-2);">
-                ดาวน์โหลดเวอร์ชันล่าสุดจาก GitHub Releases · กรอก License key ที่ซื้อจาก xman4289.com · เริ่ม generate ได้เลย
+                ดาวน์โหลดเวอร์ชันล่าสุดจาก xman4289.com · กรอก License key ที่ซื้อจาก xman4289.com · เริ่ม generate ได้เลย
             </p>
             <div class="flex flex-wrap justify-center gap-3">
                 <a href="{{ route('chanthra-studio.download') }}" class="gold-cta px-8 py-4 rounded-xl font-display italic text-lg">
