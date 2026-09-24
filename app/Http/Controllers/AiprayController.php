@@ -2,51 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\AiprayDonation;
 use App\Models\Product;
 use App\Services\AiprayDonationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class AiprayController extends Controller
 {
+    use ServesReleaseDownloads;
+
+    /**
+     * หน้าแอป Aipray — เวอร์ชัน/บันทึกการเปลี่ยนแปลงมาจากเวอร์ชันที่ sync ไว้ใน DB ปุ่มโหลดชี้มาที่เว็บเราเอง
+     *
+     * เดิมถาม GitHub API ทุกครั้งที่มีคนเปิดหน้า (ไม่มี token = 60 ครั้ง/ชม. ต่อทั้งเซิร์ฟเวอร์) แล้วยื่นลิงก์ไฟล์บน
+     * GitHub ให้ลูกค้า = บอก repo · กฎเจ้าของ (2026-09-24) แอปโหลดจาก xman4289.com เท่านั้น
+     * latestRelease() ยังตามทัน release ใหม่เอง (ถาม GitHub ได้อย่างมากทุก 5 นาที) ถ้าต่อไม่ติดก็ใช้ของใน DB
+     */
     public function show()
     {
-        $product = Product::where('slug', 'aipray')->with(['versions', 'githubSetting'])->firstOrFail();
+        $product = Product::where('slug', 'aipray')->with('githubSetting')->firstOrFail();
 
-        // Fetch latest release from GitHub
-        $release = null;
-        $changelog = '';
-        $downloadUrl = '';
-        $version = $product->latestVersion()?->version ?? '1.0.0';
+        $latest = $this->latestRelease($product);
 
-        try {
-            $response = Http::timeout(10)
-                ->withHeaders(['Accept' => 'application/vnd.github.v3+json'])
-                ->get('https://api.github.com/repos/xjanova/Aipray/releases/latest');
-
-            if ($response->ok()) {
-                $release = $response->json();
-                $version = ltrim($release['tag_name'] ?? $version, 'v');
-                $changelog = $release['body'] ?? '';
-                foreach ($release['assets'] ?? [] as $asset) {
-                    if (str_contains($asset['name'] ?? '', 'universal')) {
-                        $downloadUrl = $asset['browser_download_url'] ?? '';
-                        break;
-                    }
-                }
-                if (! $downloadUrl) {
-                    foreach ($release['assets'] ?? [] as $asset) {
-                        if (str_ends_with($asset['name'] ?? '', '.apk')) {
-                            $downloadUrl = $asset['browser_download_url'] ?? '';
-                            break;
-                        }
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            // Fallback to DB version
-        }
+        // ยังไม่มีเวอร์ชันใน DB = ไม่แสดงป้ายเวอร์ชัน (เดิมเดาเป็น 1.0.0)
+        $version = $latest?->version;
+        $changelog = $latest?->changelog ?? '';
+        $downloadUrl = route('aipray.download');
 
         $donationService = app(AiprayDonationService::class);
         $donations = $donationService->getPublicDonations(20);
@@ -56,6 +38,26 @@ class AiprayController extends Controller
             'product', 'version', 'changelog', 'downloadUrl',
             'donations', 'donationStats'
         ));
+    }
+
+    /**
+     * ดาวน์โหลด APK (ฟรี ไม่ต้องล็อกอิน) — ไฟล์ส่งจาก xman4289.com เอง ไม่ redirect ไป GitHub
+     *
+     * ไฟล์ไหนคือตัวให้ลูกค้ากำหนดที่ asset_pattern ของ GitHub setting (ตัว universal — เจ้าของเลือก 2026-09-24)
+     * Content-Type เป็น application/vnd.android.package-archive มือถือจึงเสนอติดตั้งได้ทันที
+     */
+    public function download(Request $request)
+    {
+        $product = Product::where('slug', 'aipray')->where('is_active', true)->first();
+
+        if (! $product) {
+            // หน้าแอปก็ 404 อยู่แล้ว ไม่มีที่ให้ส่งเบราว์เซอร์กลับไป
+            abort_if($this->isBrowser($request), 404);
+
+            return response()->json(['success' => false, 'error' => 'Product not found'], 404);
+        }
+
+        return $this->serveRelease($request, $product, $this->latestRelease($product), route('aipray.show'));
     }
 
     public function donate()

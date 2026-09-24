@@ -146,6 +146,10 @@ class ProductController extends Controller
         if ($slug === 'localvpn') {
             return redirect()->route('localvpn.detail');
         }
+        // ลิงก์ในแอปและใน release notes ชี้มาที่ /products/chanthra-studio — หน้าจริงของมันคือหน้า Chanthra
+        if ($slug === 'chanthra-studio') {
+            return redirect()->route('chanthra-studio.detail');
+        }
 
         // Custom views for each product
         $customViews = [

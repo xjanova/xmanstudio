@@ -40,7 +40,7 @@ class ChanthraStudioSeeder extends Seeder
 <li><strong>Library + Queue</strong> — เก็บคลิปทั้งหมดใน SQLite ใกล้ ๆ exe, มี queue ที่เห็นความคืบหน้าจริง</li>
 <li><strong>Render film</strong> — ต่อคลิปเป็น MP4 ด้วย ffmpeg พร้อม audio track</li>
 <li><strong>Node Flow</strong> — visual graph editor ในแอปสำหรับ ComfyUI workflow (drag-drop nodes, bezier wires, mini-map)</li>
-<li><strong>Auto-update</strong> — เช็ค GitHub Releases อัตโนมัติ มี progress bar + release notes ให้อ่าน</li>
+<li><strong>Auto-update</strong> — เช็คเวอร์ชันใหม่อัตโนมัติ มี progress bar + release notes ให้อ่าน</li>
 </ul>
 
 <h3>Lunar atelier aesthetic</h3>
@@ -75,7 +75,8 @@ HTML;
                     'LLM script writing (OpenAI / Claude / Gemini / OpenRouter)',
                     'ffmpeg slideshow render with audio',
                     'Facebook + webhook auto-posting',
-                    'GitHub Releases auto-update with progress bar',
+                    // ลูกค้าต้องไม่รู้ว่าไฟล์อยู่บน GitHub (กฎเจ้าของ 2026-09-24) — production ลงแถวนี้ด้วย migration 2026_09_24_200001
+                    'in-app auto-update with progress bar',
                     'DPAPI-encrypted API keys',
                 ],
                 'price' => 2500.00,

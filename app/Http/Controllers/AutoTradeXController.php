@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\AutoTradeXDevice;
 use App\Models\BankAccount;
 use App\Models\Order;
@@ -19,6 +20,8 @@ use Illuminate\Support\Str;
  */
 class AutoTradeXController extends Controller
 {
+    use ServesReleaseDownloads;
+
     /**
      * Early bird discount percentage
      */
@@ -77,6 +80,26 @@ class AutoTradeXController extends Controller
             'earlyBird' => $earlyBirdInfo,
             'pricing' => $pricing,
         ]);
+    }
+
+    /**
+     * ดาวน์โหลดฟรี — ไฟล์ของเวอร์ชันล่าสุดส่งจาก xman4289.com เอง
+     *
+     * GET /autotradex/download
+     *
+     * เจ้าของเลือก (2026-09-24): ให้ทุกคนโหลดได้ ลองในแอปก่อนแล้วใส่ License Key เพื่อปลดล็อก แบบ CluadeX/WinXTools
+     * เดิมหน้าลูกค้าลิงก์ไปหน้า releases บน GitHub = ลูกค้าเห็น repo · กฎเจ้าของ (2026-09-24) ห้ามเด็ดขาด
+     * ไฟล์ไหนเป็นตัวดาวน์โหลด (ตัว portable) กำหนดที่ asset_pattern ของ GitHub setting ไม่ใช่ในโค้ด
+     */
+    public function download(Request $request)
+    {
+        $product = Product::where('slug', 'autotradex')->where('is_active', true)->first();
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, route('autotradex.pricing'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        return $this->serveRelease($request, $product, $this->latestRelease($product), route('products.show', 'autotradex'));
     }
 
     /**

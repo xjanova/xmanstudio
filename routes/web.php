@@ -241,6 +241,11 @@ Route::prefix('autotradex')->name('autotradex.')->group(function () {
     // Reset Device for Lifetime license holders (public page)
     Route::get('/reset-device', [AutoTradeXController::class, 'resetDevicePage'])->name('reset-device');
 
+    // ดาวน์โหลดฟรี (ลองในแอปก่อน ใส่ License Key เพื่อปลดล็อก) — ไฟล์ส่งผ่านเซิร์ฟเวอร์เอง ห้าม redirect ไป GitHub
+    Route::get('/download', [AutoTradeXController::class, 'download'])
+        ->middleware('throttle:30,1,autotradex-download')
+        ->name('download');
+
     // Require authentication for checkout
     Route::middleware('auth')->group(function () {
         Route::get('/checkout/{plan}', [AutoTradeXController::class, 'checkout'])->name('checkout');
@@ -322,7 +327,10 @@ Route::prefix('chanthra-studio')->name('chanthra-studio.')->group(function () {
     Route::get('/', [ChanthraStudioWebController::class, 'detail'])->name('detail');
     Route::get('/manual', [ChanthraStudioWebController::class, 'manual'])->name('manual');
     Route::get('/pricing', [ChanthraStudioWebController::class, 'pricing'])->name('pricing');
-    Route::get('/download', [ChanthraStudioWebController::class, 'downloadPage'])->name('download');
+    // zip ~90 MB ส่งผ่านเซิร์ฟเวอร์เอง (ห้าม redirect ไป GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
+    Route::get('/download', [ChanthraStudioWebController::class, 'downloadPage'])
+        ->middleware('throttle:30,1,chanthra-download')
+        ->name('download');
 });
 
 // WinXTools (Windows) - ดาวน์โหลดสาธารณะ ไฟล์เดียวทั้ง Free/Pro (Pro ปลดล็อกในแอปด้วย license key)
@@ -1566,6 +1574,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 // ==================== Aipray Public Pages ====================
 Route::prefix('apps/aipray')->name('aipray.')->group(function () {
     Route::get('/', [AiprayController::class, 'show'])->name('show');
+    // APK ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
+    Route::get('/download', [AiprayController::class, 'download'])
+        ->middleware('throttle:30,1,aipray-download')
+        ->name('download');
     Route::get('/donate', [AiprayController::class, 'donate'])->name('donate');
     Route::post('/donate', [AiprayController::class, 'storeDonation'])->name('donate.store');
     Route::post('/donation/confirm', [AiprayController::class, 'donationComplete'])->name('donation.confirm');
