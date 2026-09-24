@@ -6,30 +6,11 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Services\LicenseService;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    /**
-     * What a licence costs on the pages that sell it by term.
-     *
-     * The page used to post the price along with the term and the cart charged
-     * it as sent — a lifetime licence for whatever the form said, and with the
-     * price left out, any term at the product's base price. The pages still show
-     * these numbers (products/smspaymentchecker, products/xcluadeagent,
-     * products/winxtools, products/brainx); change both together.
-     */
-    private const LICENSE_TERM_PRICES = [
-        'sms-payment-checker' => ['monthly' => 990, 'yearly' => 9900, 'lifetime' => 29900],
-        'xcluadeagent' => ['yearly' => 199, 'lifetime' => 1999],
-        'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
-        // Pro ฿199 ต่อปี (license รายปี) — ราคาเดียวกับ pricing API (ProductLicenseController)
-        'winx-tools' => ['yearly' => 199],
-        // BrainX Cloud ฿399 ต่อเดือน — ราคาเดียวกับ pricing API (ProductLicenseController)
-        // ซื้อซ้ำ = ต่ออายุคีย์เดิม (config/licenses.php) จำนวนในตะกร้าคือจำนวนเดือน
-        'brainx' => ['monthly' => 399],
-    ];
-
     /**
      * Display the cart
      */
@@ -65,10 +46,13 @@ class CartController extends Controller
         $customRequirements = null;
         if ($request->filled('license_type') && $product->requires_license) {
             $licenseType = $request->license_type;
-            $termPrice = self::LICENSE_TERM_PRICES[$product->slug][$licenseType] ?? null;
+            $termPrice = LicensePlans::soldInCart($product->slug)
+                ? LicensePlans::price($product->slug, $licenseType)
+                : null;
 
-            // Only a term this product is sold by, at the price held here. The
-            // form's own `price` field is ignored: it used to be charged as sent.
+            // Only a term this product is sold by in the cart, at the price in
+            // config/licenses.php — the same number its page shows. The form's own
+            // `price` field is ignored: it used to be charged as sent.
             if ($termPrice === null) {
                 $message = 'แพ็กเกจนี้ไม่มีจำหน่ายสำหรับสินค้านี้';
 

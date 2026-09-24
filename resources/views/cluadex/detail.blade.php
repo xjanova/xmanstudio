@@ -246,7 +246,11 @@
                     <div class="text-center mb-6">
                         <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-bold">PRO</span>
                         <h3 class="text-xl font-bold text-white mt-3">ปลดล็อกทั้งหมด</h3>
-                        <div class="text-4xl font-black text-indigo-400 mt-2">฿199<span class="text-base text-gray-400">/เดือน</span></div>
+                        @if($pricing)
+                        {{-- the entry plan and its price, from config/licenses.php --}}
+                        @php $proTerm = array_key_first($pricing); @endphp
+                        <div class="text-4xl font-black text-indigo-400 mt-2">฿{{ number_format($pricing[$proTerm]['price']) }}<span class="text-base text-gray-400">{{ $proTerm === 'lifetime' ? ' จ่ายครั้งเดียว' : '/' . ($proTerm === 'monthly' ? 'เดือน' : 'ปี') }}</span></div>
+                        @endif
                     </div>
                     <ul class="space-y-2.5 text-gray-300 text-sm">
                         <li class="flex items-start gap-2"><span class="text-indigo-400 mt-0.5">✓</span> <strong>ทุกอย่างใน Free</strong> +</li>
