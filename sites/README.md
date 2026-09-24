@@ -61,5 +61,14 @@ sed -i "s/v=[0-9]\{12\}/v=$(date +%Y%m%d%H%M)/g" sites/product.xman4289.com/inde
 | | `brainx.html` | หน้าขาย BrainX |
 | | `wiki.html` | wiki |
 
-catalogue ของทั้งกลุ่มดาวและ grid อ่านจาก `assets/js/products.js` ที่เดียว
+catalogue ของกลุ่มดาวและ grid หน้าแรกอ่านจาก `assets/js/products.js`
 เพิ่มสินค้า = เพิ่มหนึ่งแถวในนั้น ไม่ต้องแตะ layout
+
+แต่ grid สินค้าท้ายหน้า `brainx.html` อ่านสำเนาของตัวเอง — `PRODUCTS` ใน
+`assets/js/site.js` แก้ราคา สถานะ "เร็ว ๆ นี้" หรือคำอธิบายต้องแก้ทั้งสองไฟล์
+และบัมพ์ `?v=` ทั้ง `index.html` และ `brainx.html`
+
+ราคาให้เทียบกับที่ร้านขายจริง (หน้า `https://xman4289.com/products/<slug>`)
+ไม่ใช่ `/api/v1/product/<slug>/pricing` อย่างเดียว — API นั้นคืน 399/2500/5000
+เป็นค่า default ให้ทุกสินค้าที่ไม่มีราคากำหนดไว้ใน `ProductLicenseController`
+ราคาที่เป็นรายปี/รายเดือนให้บอกหน่วยไว้ในคำอธิบายด้วย เพราะ grid แสดงแค่ตัวเลข
