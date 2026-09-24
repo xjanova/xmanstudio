@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\GpuJobEarning;
 use App\Models\GpuNode;
+use App\Models\Product;
 use App\Services\GpuxMineDispatchService;
 use App\Services\GpuxMineRelayService;
 use Carbon\Carbon;
@@ -11,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * หน้า "เครื่องของฉัน" ของ GPUxMINE
@@ -21,6 +24,8 @@ use Illuminate\View\View;
  */
 class GpuNodeController extends Controller
 {
+    use ServesReleaseDownloads;
+
     public function __construct(
         private readonly GpuxMineRelayService $relay,
         private readonly GpuxMineDispatchService $dispatch,
@@ -56,12 +61,28 @@ class GpuNodeController extends Controller
             'nodes' => $nodes,
             'pending' => $nodes->firstWhere(fn (GpuNode $n) => $n->pairingIsUsable()),
             'relayReady' => $this->relay->isConfigured(),
-            'downloadUrl' => 'https://github.com/xjanova/GpuXmine/releases/latest',
+            // ตัวติดตั้งส่งจาก xman4289.com เอง — ลิงก์ GitHub บอกลูกค้าว่า repo อยู่ไหน (กฎเจ้าของ 2026-09-24)
+            'downloadUrl' => route('gpuxmine.download'),
             'earnings' => $earnings,
             'paidSatang' => (int) ($totals['paid']->satang ?? 0),
             'pendingSatang' => (int) ($totals['pending']->satang ?? 0),
             'jobsTotal' => (int) $totals->sum('jobs'),
         ]);
+    }
+
+    /**
+     * ตัวติดตั้งโปรแกรมรุ่นล่าสุด (แจกฟรี — ที่ขายคือ Pro Miner ซึ่งเป็น license บนสินค้าตัวเดียวกัน)
+     * ไฟล์ไหนคือตัวติดตั้งกำหนดที่ asset_pattern ของ GitHub setting (Setup.exe ของ Velopack)
+     */
+    public function download(Request $request): Response
+    {
+        $product = Product::where('slug', 'gpuxmine')->where('is_active', true)->first();
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, route('gpuxmine.index'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        return $this->serveRelease($request, $product, $this->latestRelease($product), route('gpuxmine.index'));
     }
 
     /**

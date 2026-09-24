@@ -265,56 +265,6 @@ class GithubReleaseService
     }
 
     /**
-     * Get download URL for an asset (requires authentication for private repos)
-     */
-    public function getAssetDownloadUrl(GithubSetting $githubSetting, int $assetId): ?string
-    {
-        $url = "https://api.github.com/repos/{$githubSetting->full_repo_name}/releases/assets/{$assetId}";
-
-        $buildHeaders = function (bool $withToken) use ($githubSetting): array {
-            $headers = [
-                'Accept' => 'application/octet-stream',
-                'User-Agent' => 'XMAN-Studio-Download-Service',
-            ];
-            $token = $withToken ? $githubSetting->github_token_decrypted : null;
-            if (! empty($token)) {
-                $headers['Authorization'] = 'Bearer ' . $token;
-            }
-
-            return $headers;
-        };
-
-        $response = $this->githubRequest($githubSetting, fn (bool $withToken) => Http::withHeaders($buildHeaders($withToken))
-            ->timeout(15)
-            ->withOptions([
-                'allow_redirects' => false,
-                // ต้องการแค่ header Location — ถ้า GitHub เลือกส่งตัวไฟล์มาเลย (200) ก็ไม่ดึงเนื้อไฟล์
-                // หลายสิบ MB เข้าหน่วยความจำของ PHP
-                'stream' => true,
-            ])->get($url));
-
-        if ($response->redirect()) {
-            return $response->header('Location') ?: null;
-        }
-
-        return null;
-    }
-
-    /**
-     * ลิงก์โหลดชั่วคราวที่ GitHub เซ็นให้ สำหรับไฟล์ของเวอร์ชันนี้
-     *
-     * ส่งให้ลูกค้าเปิดเองได้เลย ในลิงก์ไม่มี token ของเรา — ต่างจาก downloadAsset() ที่ดึงไฟล์
-     * ผ่านเซิร์ฟเวอร์ ซึ่งไฟล์ใหญ่จะกิน PHP worker ไว้ตลอดเวลาที่ลูกค้าโหลด
-     * คืน null เมื่อเวอร์ชันนี้ไม่ได้มาจาก asset ของ GitHub หรือ GitHub ไม่ให้ลิงก์
-     */
-    public function signedDownloadUrl(GithubSetting $githubSetting, ProductVersion $version): ?string
-    {
-        $assetId = $this->releaseAssetId($version);
-
-        return $assetId ? $this->getAssetDownloadUrl($githubSetting, $assetId) : null;
-    }
-
-    /**
      * เลข asset ของไฟล์เวอร์ชันนี้บน GitHub
      *
      * เวอร์ชันที่ sync มาเก็บ URL ของ asset API (…/releases/assets/<id>) ไว้ใน github_release_url

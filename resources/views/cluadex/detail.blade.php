@@ -45,7 +45,7 @@
 
                     {{-- CTA --}}
                     <div class="flex flex-wrap gap-4">
-                        <a href="https://github.com/xjanova/cluadeX/releases/latest"
+                        <a href="{{ route('cluadex.download') }}"
                            class="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25 flex items-center gap-2 text-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             ดาวน์โหลดฟรี
@@ -145,7 +145,7 @@
                 <div class="text-center">
                     <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-2xl font-black mx-auto mb-4 shadow-lg shadow-green-500/25">1</div>
                     <h3 class="text-lg font-bold text-white mb-2">ดาวน์โหลด</h3>
-                    <p class="text-gray-400 text-sm">ดาวน์โหลดฟรีจาก GitHub<br>แตกไฟล์แล้วเปิด CluadeX.exe</p>
+                    <p class="text-gray-400 text-sm">ดาวน์โหลดฟรีจาก XMAN Studio<br>แตกไฟล์แล้วเปิด CluadeX.exe</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white text-2xl font-black mx-auto mb-4 shadow-lg shadow-indigo-500/25">2</div>
@@ -237,7 +237,7 @@
                         <li class="flex items-start gap-2 text-gray-500"><span class="mt-0.5">✗</span> Cloud AI Providers</li>
                         <li class="flex items-start gap-2 text-gray-500"><span class="mt-0.5">✗</span> Git/GitHub Integration</li>
                     </ul>
-                    <a href="https://github.com/xjanova/cluadeX/releases/latest" class="block w-full text-center mt-8 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all">ดาวน์โหลดฟรี</a>
+                    <a href="{{ route('cluadex.download') }}" class="block w-full text-center mt-8 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all">ดาวน์โหลดฟรี</a>
                 </div>
 
                 {{-- Pro --}}
@@ -345,7 +345,7 @@
             <h2 class="text-4xl md:text-5xl font-black text-white mb-4">พร้อมเขียนโค้ดกับ AI?</h2>
             <p class="text-xl text-gray-400 mb-8">ดาวน์โหลดฟรี ไม่ต้องสมัคร ไม่มีค่าใช้จ่าย</p>
             <div class="flex flex-wrap gap-4 justify-center">
-                <a href="https://github.com/xjanova/cluadeX/releases/latest"
+                <a href="{{ route('cluadex.download') }}"
                    class="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-black text-lg rounded-2xl transition-all transform hover:scale-105 shadow-2xl shadow-green-500/25 flex items-center gap-3">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     ดาวน์โหลด CluadeX ฟรี

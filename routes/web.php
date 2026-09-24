@@ -311,7 +311,10 @@ Route::prefix('localvpn')->name('localvpn.')->group(function () {
 Route::prefix('cluadex')->name('cluadex.')->group(function () {
     Route::get('/', [CluadeXWebController::class, 'detail'])->name('detail');
     Route::get('/pricing', [CluadeXWebController::class, 'pricing'])->name('pricing');
-    Route::get('/download', [CluadeXWebController::class, 'downloadPage'])->name('download');
+    // ไฟล์ ~480 MB ส่งผ่านเซิร์ฟเวอร์เอง (ห้าม redirect ไป GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
+    Route::get('/download', [CluadeXWebController::class, 'downloadPage'])
+        ->middleware('throttle:30,1,cluadex-download')
+        ->name('download');
 });
 
 // Chanthra Studio - AI video atelier (Windows desktop)
@@ -1588,6 +1591,10 @@ Route::middleware('auth')->group(function () {
 // ที่เดียวที่ออกรหัสจับคู่ได้ — โปรแกรมไคลเอนต์สร้างตัวตนของตัวเองไม่ได้เลย
 Route::middleware('auth')->prefix('gpuxmine')->name('gpuxmine.')->group(function () {
     Route::get('/', [GpuNodeController::class, 'index'])->name('index');
+    // ตัวติดตั้ง ~90 MB ส่งจาก xman4289.com เอง (ห้ามลิงก์ไป GitHub)
+    Route::get('/download', [GpuNodeController::class, 'download'])
+        ->middleware('throttle:30,1,gpuxmine-download')
+        ->name('download');
     // รหัสจับคู่สร้าง worker ใหม่ในนามบัญชีนี้ได้ จึงจำกัดอัตราการกด
     Route::post('/pair', [GpuNodeController::class, 'pair'])
         ->middleware('throttle:10,10,gpu-pair')

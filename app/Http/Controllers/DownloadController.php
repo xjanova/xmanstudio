@@ -2,24 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\DownloadUnavailableException;
 use App\Models\DownloadLog;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVersion;
-use App\Services\GithubReleaseService;
+use App\Services\ReleaseDownloadStreamer;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DownloadController extends Controller
 {
-    protected GithubReleaseService $githubService;
-
-    public function __construct(GithubReleaseService $githubService)
-    {
-        $this->githubService = $githubService;
-    }
+    /**
+     * ไฟล์ส่งจาก xman4289.com เองเสมอ — ห้าม redirect หรือยื่นลิงก์ GitHub ให้ลูกค้า (กฎเจ้าของ 2026-09-24)
+     */
+    public function __construct(protected ReleaseDownloadStreamer $streamer) {}
 
     /**
      * Download a product (requires authentication)
@@ -106,24 +104,25 @@ class DownloadController extends Controller
             'license_key_id' => $license?->id,
             'product_version_id' => $productVersion->id,
             'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
+            // คอลัมน์ยาว 255 — MySQL strict ไม่ตัดให้เอง แต่ error ทั้งแถว
+            'user_agent' => $request->userAgent() ? mb_substr($request->userAgent(), 0, 255) : null,
             'downloaded_at' => now(),
         ]);
 
-        // Get GitHub settings
-        $githubSetting = $product->githubSetting;
-
-        if (! $githubSetting || ! $productVersion->github_release_url) {
-            // If no GitHub settings, redirect to external URL if available
-            if ($productVersion->github_release_url) {
-                return redirect($productVersion->github_release_url);
+        try {
+            return $this->streamer->respond($request, $productVersion, $product->githubSetting);
+        } catch (DownloadUnavailableException $e) {
+            if ($request->wantsJson()) {
+                return response()
+                    ->json(['success' => false, 'error' => $e->getMessage()], $e->status)
+                    ->withHeaders($e->retryAfter ? ['Retry-After' => (string) $e->retryAfter] : []);
             }
 
-            abort(404, 'Download not available');
-        }
+            abort_if($e->status === 404, 404, 'Download not available');
 
-        // Proxy the download from GitHub
-        return $this->proxyGithubDownload($githubSetting, $productVersion);
+            // ดึงไฟล์ไม่ได้ชั่วคราว / ช่องส่งเต็ม — กลับหน้าดาวน์โหลดพร้อมบอกให้ลองใหม่ ไม่ใช่หน้า error เปล่า ๆ
+            return redirect()->route('download.page', $product->slug)->with('error', $e->customerMessage);
+        }
     }
 
     /**
@@ -246,30 +245,29 @@ class DownloadController extends Controller
             'license_key_id' => $license->id,
             'product_version_id' => $productVersion->id,
             'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
+            // คอลัมน์ยาว 255 — MySQL strict ไม่ตัดให้เอง แต่ error ทั้งแถว
+            'user_agent' => $request->userAgent() ? mb_substr($request->userAgent(), 0, 255) : null,
             'downloaded_at' => now(),
         ]);
 
-        // Get GitHub settings
-        $githubSetting = $product->githubSetting;
-
-        if (! $githubSetting || ! $productVersion->github_release_url) {
-            if ($productVersion->github_release_url) {
-                return response()->json([
-                    'success' => true,
-                    'download_url' => $productVersion->github_release_url,
-                    'redirect' => true,
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Download not available',
-            ], 404);
+        try {
+            $response = $this->streamer->respond($request, $productVersion, $product->githubSetting);
+        } catch (DownloadUnavailableException $e) {
+            return response()
+                ->json(['success' => false, 'error' => $e->getMessage()], $e->status)
+                ->withHeaders($e->retryAfter ? ['Retry-After' => (string) $e->retryAfter] : []);
         }
 
-        // Proxy the download from GitHub
-        return $this->proxyGithubDownload($githubSetting, $productVersion);
+        // ลิงก์ภายนอกที่ admin ใส่เอง (ไม่ใช่ GitHub — ไฟล์บน GitHub ถูก stream ไปแล้ว) ตอบเป็น JSON ตามเดิม
+        if ($response instanceof RedirectResponse) {
+            return response()->json([
+                'success' => true,
+                'download_url' => $response->getTargetUrl(),
+                'redirect' => true,
+            ]);
+        }
+
+        return $response;
     }
 
     /**
@@ -308,64 +306,5 @@ class DownloadController extends Controller
         }
 
         return null;
-    }
-
-    /**
-     * Proxy download from GitHub private repo
-     */
-    protected function proxyGithubDownload($githubSetting, ProductVersion $productVersion): StreamedResponse
-    {
-        $token = $githubSetting->github_token_decrypted;
-        $assetUrl = $productVersion->github_release_url;
-
-        // Get the actual download URL (GitHub redirects to S3)
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-            'Accept' => 'application/octet-stream',
-            'User-Agent' => 'XMAN-Studio-Download-Proxy',
-        ])->withOptions([
-            'allow_redirects' => false,
-        ])->get($assetUrl);
-
-        if ($response->status() === 302) {
-            $downloadUrl = $response->header('Location');
-        } else {
-            $downloadUrl = $assetUrl;
-        }
-
-        // Stream the file
-        $filename = $productVersion->download_filename ?? 'download';
-        $fileSize = $productVersion->file_size;
-
-        return new StreamedResponse(function () use ($downloadUrl, $token) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
-                echo $data;
-                flush();
-
-                return strlen($data);
-            });
-
-            // For S3 URLs, we don't need auth, but for GitHub we do
-            if (strpos($downloadUrl, 'github.com') !== false) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer ' . $token,
-                    'Accept: application/octet-stream',
-                    'User-Agent: XMAN-Studio-Download-Proxy',
-                ]);
-            }
-
-            curl_exec($ch);
-            curl_close($ch);
-        }, 200, [
-            'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Content-Length' => $fileSize,
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
     }
 }
