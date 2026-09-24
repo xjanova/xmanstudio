@@ -46,6 +46,12 @@ class AdminTelegramAlertsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Every ceiling counts per clock slot — the hour (category caps, ErrorAlert), the Thai day
+        // (security tallies), the minute (button presses) — and a test that runs across an edge
+        // starts a fresh count halfway: at 23:00 all 25 contact alerts got past a ceiling of 20.
+        // Ten minutes into the current hour is clear of both edges, and still close enough to the
+        // real clock for quietUntil(), which compares against time().
+        $this->travelTo(now()->startOfHour()->addMinutes(10));
         Cache::flush();
         Http::preventStrayRequests();
         BusinessAlerts::$actor = null;

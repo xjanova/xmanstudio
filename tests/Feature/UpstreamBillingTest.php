@@ -117,6 +117,9 @@ class UpstreamBillingTest extends TestCase
     /** Customers whose wallet cannot cover a due renewal: one Telegram card a day, not one per run. */
     public function test_short_customer_wallets_reach_the_admin_telegram_once_a_day(): void
     {
+        // "Once a day" is keyed by the date, so both runs must see the same one: a test that
+        // crosses midnight UTC (07:00 in Bangkok) would rightly send a second card.
+        $this->freezeTime();
         Setting::setValue('telegram_bot_token', '123456:TEST-TOKEN', 'string', 'telegram');
         Setting::setValue('telegram_chat_id', '-1001234567890', 'string', 'telegram');
         Setting::setValue('telegram_alerts_enabled', '1', 'boolean', 'telegram');
