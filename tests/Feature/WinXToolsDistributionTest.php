@@ -359,6 +359,26 @@ class WinXToolsDistributionTest extends TestCase
         $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
     }
 
+    public function test_the_file_never_runs_past_the_length_it_announced(): void
+    {
+        // Apache เชื่อ Content-Length ของเรา (public_html/.htaccess) — byte ที่เกินจะกลายเป็นต้น response
+        // ถัดไปบน connection เดียวกัน · ต้นทางที่ส่งเกินขนาดที่ตัวเองบอกต้องถูกตัดตรงขนาดนั้นพอดี
+        $this->makeVersion('1.2.0', ['file_size' => strlen(self::ZIP_BYTES)]);
+        $this->githubSetting();
+        $this->fakeReleaseFile('1.2.0', [
+            'release-assets.githubusercontent.com/*' => fn () => Http::response(self::ZIP_BYTES . 'extra-bytes', 200, [
+                'Content-Type' => 'application/octet-stream',
+                'Content-Length' => (string) strlen(self::ZIP_BYTES),
+            ]),
+        ]);
+
+        $response = $this->get('/winx-tools/download/1.2.0', ['Accept' => '*/*'])
+            ->assertOk()
+            ->assertHeader('Content-Length', (string) strlen(self::ZIP_BYTES));
+
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
+    }
+
     public function test_without_a_version_it_serves_the_latest(): void
     {
         $this->makeVersion('1.1.0', ['is_active' => false]);

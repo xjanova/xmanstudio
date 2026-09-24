@@ -198,6 +198,48 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
         $this->assertNoTraceOfGithub($response);
     }
 
+    // ── Apache (public_html/.htaccess) ────────────────────────────────
+
+    public function test_apache_keeps_the_length_of_every_streamed_download_and_nothing_else(): void
+    {
+        // production gzip ทุก response และไม่เชื่อ Content-Length จาก PHP-FPM — กฎนี้ปิดทั้งสองอย่างให้ URL
+        // ที่ ReleaseDownloadStreamer ส่งไฟล์ · ย้าย route แล้วลืมแก้ .htaccess = ไฟล์กลับไปไม่มีขนาดอีก
+        $lines = file(base_path('public_html/.htaccess'), FILE_IGNORE_NEW_LINES);
+        $at = collect($lines)->search(fn ($line) => str_starts_with(trim($line), 'RewriteCond %{THE_REQUEST}'));
+        $this->assertNotFalse($at, 'public_html/.htaccess ไม่มีกฎของ URL ดาวน์โหลด');
+
+        [, , $pattern, $flags] = preg_split('/\s+/', trim($lines[$at]));
+        $this->assertSame('[NC]', $flags);
+        $this->assertSame('RewriteRule ^ - [E=no-gzip:1,E=dont-vary:1,E=ap_trust_cgilike_cl:1]', trim($lines[$at + 1]));
+
+        $matches = fn (string $method, string $url) => preg_match(
+            '#' . str_replace('#', '\#', $pattern) . '#i',
+            $method . ' ' . parse_url($url, PHP_URL_PATH) . (parse_url($url, PHP_URL_QUERY) ? '?' . parse_url($url, PHP_URL_QUERY) : '') . ' HTTP/1.1'
+        ) === 1;
+
+        foreach ([
+            ['GET', route('winx-tools.download')],
+            ['GET', route('winx-tools.download', ['version' => '1.0.2'])],
+            ['HEAD', route('winx-tools.download', ['version' => '1.0.2'])],
+            ['GET', route('winx-tools.download', ['version' => '1.0.2', 'from' => 'app'])],
+            ['GET', route('cluadex.download')],
+            ['GET', route('gpuxmine.download')],
+            ['GET', route('download.product', ['slug' => 'some-desktop-app', 'version' => '2.0.0'])],
+            ['POST', route('download.api', ['slug' => 'some-desktop-app'])],
+            ['POST', route('download.api', ['slug' => 'some-desktop-app', 'version' => '2.0.0'])],
+        ] as [$method, $url]) {
+            $this->assertTrue($matches($method, $url), "{$method} {$url} ต้องได้ Content-Length");
+        }
+
+        foreach ([
+            route('download.page', ['slug' => 'some-desktop-app']), // หน้า HTML
+            '/tping/download/apk', '/smschecker/download/apk', '/localvpn/download/apk', // APK รุ่นเก่า ขนาดจาก DB
+            '/tping/download', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
+        ] as $url) {
+            $this->assertFalse($matches('GET', $url), "GET {$url} ต้องไม่อยู่ในกฎนี้");
+        }
+    }
+
     // ── helpers ───────────────────────────────────────────────────────
 
     /** บางตัว (gpuxmine) migration สร้างไว้แล้ว — ใช้แถวเดิม */
