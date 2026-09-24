@@ -214,6 +214,19 @@ Schedule::command('gpuxmine:sync-nodes')
         Log::error('[GPUxMINE] node sync failed');
     });
 
+// GPUxMINE: รายได้จากงานพักไว้ตาม GPUXMINE_EARNING_HOLD_HOURS แล้วโอนเข้ากระเป๋า
+// ทุกชั่วโมง — เจ้าของเครื่องไม่ต้องรอใครกดจ่าย ส่วนงานที่ติด "รอตรวจสอบ" รอแอดมิน
+// ล็อกกันรันซ้อนหมดอายุใน 55 นาที: รอบที่ถูกฆ่ากลางทางต้องไม่ขวางการจ่ายทั้งวัน
+// (ค่าเริ่มต้น 24 ชั่วโมง) และรอบที่ทับกันจริงก็ยังจ่ายซ้ำไม่ได้ — ดู
+// GpuxMineEarningSettlementService
+Schedule::command('gpuxmine:settle-earnings')
+    ->hourly()
+    ->withoutOverlapping(55)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[GPUxMINE] settling earnings failed');
+    });
+
 // โดเมน: ตามเก็บออเดอร์ที่ค้าง — ลูกค้าจ่ายเงินแล้วแต่ยังไม่ได้โดเมน
 // ทุกห้านาที เพราะคนที่เพิ่งจ่ายเงินไปนั่งรออยู่หน้าจอ ถ้าปล่อยถึงชั่วโมงละครั้ง
 // คนที่เจอเน็ตกระตุกตอนกดซื้อจะเห็นแค่ "กำลังดำเนินการ" โดยไม่มีใครมาสะสาง

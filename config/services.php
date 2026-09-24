@@ -94,6 +94,10 @@ return [
         // ส่งสถานะเครื่องให้ aixman ซ้ำทุกกี่นาทีแม้ไม่มีอะไรเปลี่ยน — เผื่อ
         // aixman ปิด worker ไปเองระหว่างนั้น (ดู GpuxMineNodeStateService)
         'resync_minutes' => (int) env('GPUXMINE_RESYNC_MINUTES', 10),
+
+        // เงินจากงานแต่ละชิ้นพักไว้กี่ชั่วโมงก่อนเข้ากระเป๋า (D2) — ช่วงที่แอดมิน
+        // ยังระงับเครื่องที่ส่งผลงานปลอมทันก่อนเงินออก ดู gpuxmine:settle-earnings
+        'earning_hold_hours' => (int) env('GPUXMINE_EARNING_HOLD_HOURS', 24),
     ],
 
     'aixman' => [

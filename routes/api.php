@@ -238,6 +238,12 @@ Route::post('v1/product/gpuxmine/referral', [GpuxMineNodeController::class, 'ref
     ->middleware(['throttle:30,1,api-gpuxmine-referral'])
     ->name('api.gpuxmine.referral');
 
+// สถานะเครื่องที่ aixman เห็น และรายได้ของเจ้าของ ให้โปรแกรมแสดงเองได้ (C6)
+// ยืนยันตัวแบบเดียวกับ referral — โปรแกรมถามทุกสามนาทีระหว่างเปิดแชร์
+Route::post('v1/product/gpuxmine/status', [GpuxMineNodeController::class, 'status'])
+    ->middleware(['throttle:30,1,api-gpuxmine-status'])
+    ->name('api.gpuxmine.status');
+
 Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1,api-product'])->group(function () {
     // Register device when app starts
     Route::post('/register-device', [ProductLicenseController::class, 'registerDevice']);

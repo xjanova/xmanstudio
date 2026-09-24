@@ -70,8 +70,10 @@ class GpuNodeController extends Controller
             // ตัวติดตั้งส่งจาก xman4289.com เอง — ลิงก์ GitHub บอกลูกค้าว่า repo อยู่ไหน (กฎเจ้าของ 2026-09-24)
             'downloadUrl' => route('gpuxmine.download'),
             'earnings' => $earnings,
-            'paidSatang' => (int) ($totals['paid']->satang ?? 0),
-            'pendingSatang' => (int) ($totals['pending']->satang ?? 0),
+            'paidSatang' => (int) ($totals[GpuJobEarning::STATUS_PAID]->satang ?? 0),
+            // ยังไม่ถึงกระเป๋าแต่ยังเป็นของเขา: อยู่ในระยะพัก, รอตรวจ, หรือพ้นระยะพักแล้วรอรอบโอน
+            'pendingSatang' => (int) collect(GpuJobEarning::UNPAID_STATUSES)
+                ->sum(fn (string $status) => (int) ($totals[$status]->satang ?? 0)),
             'jobsTotal' => (int) $totals->sum('jobs'),
         ]);
     }

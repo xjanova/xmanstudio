@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
+use App\Models\GpuJobEarning;
 use App\Models\GpuNode;
 use App\Models\Product;
 use App\Models\ProductDevice;
+use App\Models\Wallet;
 use App\Services\GpuxMineDispatchService;
+use App\Services\GpuxMineEarningSettlementService;
 use App\Services\GpuxMineNodeStateService;
 use App\Services\GpuxMineReferrerResolver;
 use App\Services\GpuxMineRelayService;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,11 +38,18 @@ class GpuxMineNodeController extends Controller
 {
     private const PRODUCT_SLUG = 'gpuxmine';
 
+    /** งานล่าสุดที่ /status คืนให้โปรแกรม */
+    private const STATUS_JOBS = 50;
+
+    /** "วันนี้" ของเจ้าของเครื่อง — แอปเก็บเวลาเป็น UTC แต่เจ้าของอยู่เมืองไทย */
+    private const OWNER_TIMEZONE = 'Asia/Bangkok';
+
     public function __construct(
         private readonly GpuxMineRelayService $relay,
         private readonly GpuxMineDispatchService $dispatch,
         private readonly GpuxMineNodeStateService $state,
         private readonly GpuxMineReferrerResolver $referrers,
+        private readonly GpuxMineEarningSettlementService $settlement,
     ) {}
 
     /**
@@ -55,17 +66,9 @@ class GpuxMineNodeController extends Controller
      */
     public function referral(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'worker_id' => ['required', 'string', 'max:64'],
-            'token' => ['required', 'string', 'max:256'],
-        ]);
-
-        $node = GpuNode::where('worker_id', $validated['worker_id'])->whereNotNull('paired_at')->first();
-
-        // เทียบแบบเวลาคงที่ เพราะการเทียบสตริงธรรมดาบอกความยาวของ token
-        // ที่ถูกต้องผ่านเวลาที่ใช้ตอบ
-        if (! $node || ! hash_equals((string) $node->relay_token, $validated['token'])) {
-            return response()->json(['success' => false, 'message' => 'ตัวตนเครื่องไม่ถูกต้อง'], 401);
+        $node = $this->authenticatedNode($request);
+        if ($node === null) {
+            return $this->identityRejected();
         }
 
         $affiliate = Affiliate::where('user_id', $node->user_id)->first();
@@ -97,6 +100,43 @@ class GpuxMineNodeController extends Controller
                 'total_pending' => (float) $affiliate->total_pending,
                 'status' => $affiliate->status,
                 'dashboard_url' => url('/affiliate'),
+            ],
+        ]);
+    }
+
+    /**
+     * สิ่งที่ aixman เห็นเกี่ยวกับเครื่องนี้ และเงินของเจ้าของ สำหรับแสดงในโปรแกรม (C6)
+     *
+     * โปรแกรมเคยรู้แค่สถานะของตัวเอง: ขึ้นว่า "กำลังแชร์" ทั้งที่ aixman ปฏิเสธเครื่อง
+     * หรือแอดมินระงับไว้ และทุกช่องเงินเป็นขีดกลาง เพราะไม่มีที่ไหนบอกว่างานไหนได้
+     * เท่าไร ตอนนี้ถามที่นี่ทุกสามนาที ยืนยันตัวแบบเดียวกับ referral
+     *
+     * earnings เป็นยอดของทั้งบัญชี (ทุกเครื่องของเจ้าของ) เพราะกระเป๋ามีใบเดียว ส่วน
+     * jobs เป็นงานของเครื่องนี้เท่านั้น — โปรแกรมเอา prompt_id ไปจับกับบัญชีงานในเครื่อง
+     */
+    public function status(Request $request): JsonResponse
+    {
+        $node = $this->authenticatedNode($request);
+        if ($node === null) {
+            return $this->identityRejected();
+        }
+
+        $suspended = $node->isSuspended();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'node' => [
+                    'dispatch_status' => $node->dispatch_status,
+                    'dispatch_note' => $node->dispatch_note,
+                    'dispatch_worker_status' => $node->dispatch_worker_status,
+                    'relay_online' => (bool) $node->online,
+                    'suspended' => $suspended,
+                    'suspended_reason' => $suspended ? $node->suspended_reason : null,
+                    'last_seen_at' => $node->last_seen_at?->toIso8601String(),
+                ],
+                'earnings' => $this->earningsSummary((int) $node->user_id),
+                'jobs' => $this->recentJobs($node),
             ],
         ]);
     }
@@ -295,6 +335,97 @@ class GpuxMineNodeController extends Controller
         ]);
 
         return $this->credentials($node, $validated, reused: false);
+    }
+
+    /**
+     * เครื่องที่ยืนยันตัวด้วย worker id + token ของ relay (ใบที่เครื่องถือ)
+     *
+     * token ออกให้ครั้งเดียวตอนจับคู่ ส่วน machine id เดาได้จากเครื่องเดียวกัน
+     * เครื่องที่เจ้าของถอนแล้ว (soft delete) ไม่ผ่าน — โปรแกรมต้องเห็นว่าต้องจับคู่ใหม่
+     */
+    private function authenticatedNode(Request $request): ?GpuNode
+    {
+        $validated = $request->validate([
+            'worker_id' => ['required', 'string', 'max:64'],
+            'token' => ['required', 'string', 'max:256'],
+        ]);
+
+        $node = GpuNode::where('worker_id', $validated['worker_id'])->whereNotNull('paired_at')->first();
+
+        // เทียบแบบเวลาคงที่ เพราะการเทียบสตริงธรรมดาบอกความยาวของ token
+        // ที่ถูกต้องผ่านเวลาที่ใช้ตอบ
+        if (! $node || ! hash_equals((string) $node->relay_token, $validated['token'])) {
+            return null;
+        }
+
+        return $node;
+    }
+
+    private function identityRejected(): JsonResponse
+    {
+        return response()->json(['success' => false, 'message' => 'ตัวตนเครื่องไม่ถูกต้อง'], 401);
+    }
+
+    /**
+     * ยอดเงินของเจ้าของทั้งบัญชี เป็นสตางค์จำนวนเต็มทุกช่อง
+     *
+     * "วันนี้" กับ "เดือนนี้" นับตามเวลาไทย — เจ้าของเครื่องอยู่ที่นี่ ถ้านับตาม UTC
+     * ยอดวันนี้จะรีเซ็ตตอนเจ็ดโมงเช้า งานที่ถูกยกเลิก (void) ไม่นับในยอดไหนเลย
+     *
+     * @return array<string, int>
+     */
+    private function earningsSummary(int $userId): array
+    {
+        $byStatus = GpuJobEarning::where('user_id', $userId)
+            ->selectRaw('status, COALESCE(SUM(amount_satang), 0) as satang')
+            ->groupBy('status')
+            ->pluck('satang', 'status');
+
+        $earned = GpuJobEarning::where('user_id', $userId)->where('status', '!=', GpuJobEarning::STATUS_VOID);
+        $local = now(self::OWNER_TIMEZONE);
+        $since = fn (CarbonInterface $from, string $column = 'amount_satang'): int => (int) (clone $earned)
+            ->where('completed_at', '>=', $from->copy()->setTimezone(config('app.timezone')))
+            ->sum($column);
+
+        $balance = Wallet::where('user_id', $userId)->value('balance');
+
+        return [
+            'pending_satang' => (int) ($byStatus[GpuJobEarning::STATUS_PENDING] ?? 0),
+            'review_satang' => (int) ($byStatus[GpuJobEarning::STATUS_REVIEW] ?? 0),
+            'cleared_satang' => (int) ($byStatus[GpuJobEarning::STATUS_CLEARED] ?? 0),
+            'paid_satang' => (int) ($byStatus[GpuJobEarning::STATUS_PAID] ?? 0),
+            'today_satang' => $since($local->copy()->startOfDay()),
+            'month_satang' => $since($local->copy()->startOfMonth()),
+            'donated_satang_30d' => $since(now()->subDays(30), 'donated_value_satang'),
+            'wallet_balance_satang' => GpuxMineEarningSettlementService::satang($balance === null ? null : (string) $balance),
+            'hold_hours' => $this->settlement->holdHours(),
+        ];
+    }
+
+    /**
+     * งานล่าสุดของเครื่องนี้ — จับทั้ง gpu_node_id และ worker_id เผื่อแถวที่ aixman
+     * เขียนโดยไม่มี gpu_node_id และจำกัดที่เจ้าของคนเดียวกันเสมอ
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function recentJobs(GpuNode $node): array
+    {
+        return GpuJobEarning::where('user_id', $node->user_id)
+            ->where(fn ($q) => $q->where('gpu_node_id', $node->id)->orWhere('worker_id', $node->worker_id))
+            ->orderByDesc('completed_at')
+            ->orderByDesc('id')
+            ->limit(self::STATUS_JOBS)
+            ->get(['id', 'job_id', 'prompt_id', 'kind', 'amount_satang', 'donated_value_satang', 'status', 'completed_at'])
+            ->map(fn (GpuJobEarning $job) => [
+                'job_id' => $job->job_id,
+                'prompt_id' => $job->prompt_id,
+                'kind' => $job->kind,
+                'amount_satang' => (int) $job->amount_satang,
+                'donated_value_satang' => (int) $job->donated_value_satang,
+                'status' => $job->status,
+                'completed_at' => $job->completed_at?->toIso8601String(),
+            ])
+            ->all();
     }
 
     private function atNodeCap(int $userId): bool
