@@ -320,6 +320,18 @@ class ReleaseDownloadStreamer
                 }
 
                 $emptyReads = 0;
+
+                if ($length !== null && $sent + strlen($chunk) > $length) {
+                    // Apache เชื่อ Content-Length ของเรา (public_html/.htaccess) — byte ที่เกินจะถูกอ่านเป็นต้น
+                    // response ถัดไปบน connection เดียวกัน จึงส่งแค่ที่ประกาศไว้แล้วเลิก
+                    Log::warning('download: ต้นทางส่งเกินขนาดที่ประกาศ ตัดที่ Content-Length', [
+                        'product_id' => $version->product_id,
+                        'version' => $version->version,
+                        'expected' => $length,
+                    ]);
+                    $chunk = substr($chunk, 0, $length - $sent);
+                }
+
                 $sent += strlen($chunk);
 
                 echo $chunk;
@@ -331,7 +343,7 @@ class ReleaseDownloadStreamer
 
                 flush();
 
-                if (connection_aborted()) {
+                if (connection_aborted() || ($length !== null && $sent >= $length)) {
                     break;
                 }
             }
