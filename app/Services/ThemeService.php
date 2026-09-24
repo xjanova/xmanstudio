@@ -51,6 +51,25 @@ class ThemeService
     public const DEFAULT_THEME = 'premium';
 
     /**
+     * Themes the member area (/my-account) can wear: the two that have a customer layout.
+     *
+     * Chosen at /admin/theme separately from the site theme (owner, 2026-09-24), so switching
+     * the public site to another theme never restyles every customer's back office with it.
+     */
+    public const CUSTOMER_THEMES = [
+        'classic' => [
+            'name' => 'Classic',
+            'description' => 'พื้นสว่าง เรียบง่าย อ่านง่าย',
+        ],
+        'premium' => [
+            'name' => 'Premium',
+            'description' => 'พื้นมืด ไล่สี พร้อม animation',
+        ],
+    ];
+
+    public const DEFAULT_CUSTOMER_THEME = 'classic';
+
+    /**
      * Get site default theme
      */
     public static function getSiteDefaultTheme(): string
@@ -135,13 +154,35 @@ class ThemeService
     }
 
     /**
-     * Get customer layout path based on current theme
+     * The member area's theme — the same for every customer, set by an admin (see CUSTOMER_THEMES).
+     */
+    public static function getCustomerTheme(): string
+    {
+        $theme = Cache::remember('customer_theme', 3600, function () {
+            return Setting::getValue('customer_theme', self::DEFAULT_CUSTOMER_THEME);
+        });
+
+        return array_key_exists($theme, self::CUSTOMER_THEMES) ? $theme : self::DEFAULT_CUSTOMER_THEME;
+    }
+
+    public static function setCustomerTheme(string $theme): bool
+    {
+        if (! array_key_exists($theme, self::CUSTOMER_THEMES)) {
+            return false;
+        }
+
+        Setting::setValue('customer_theme', $theme, 'string', 'appearance', 'Member area theme');
+        Cache::forget('customer_theme');
+
+        return true;
+    }
+
+    /**
+     * Get customer layout path based on the member area's theme (not the site theme)
      */
     public static function getCustomerLayout(): string
     {
-        $theme = self::getCurrentTheme();
-
-        return match ($theme) {
+        return match (self::getCustomerTheme()) {
             'premium' => 'layouts.customer-premium',
             default => 'layouts.customer',
         };
