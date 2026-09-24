@@ -81,6 +81,7 @@ use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
+use App\Http\Controllers\BrainXDownloadController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\ChanthraStudioWebController;
@@ -232,6 +233,13 @@ Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store
 Route::get('/download/{slug}', [DownloadController::class, 'downloadPage'])->name('download.page');
 Route::get('/download/{slug}/{version?}', [DownloadController::class, 'download'])->name('download.product')->middleware('auth');
 Route::post('/api/download/{slug}/{version?}', [DownloadController::class, 'apiDownload'])->name('download.api');
+
+// BrainX (Windows) — the free app needs no account and no key, so anyone may download it.
+// This one file only, streamed through the server: the browser never sees GitHub (owner's rule).
+// ~260 MB a time, hence 6 an hour per address (see BrainXDownloadController).
+Route::get('/brainx/download', [BrainXDownloadController::class, 'download'])
+    ->middleware('throttle:6,60,brainx-download')
+    ->name('brainx.download');
 
 // AutoTradeX - Direct purchase from app
 Route::prefix('autotradex')->name('autotradex.')->group(function () {
