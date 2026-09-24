@@ -707,8 +707,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/support/{ticket}/close', [SupportTicketController::class, 'close'])->name('support.close');
         Route::post('/support/{ticket}/reopen', [SupportTicketController::class, 'reopen'])->name('support.reopen');
 
-        // Theme is site-wide and admin-controlled (/admin/theme) — there is
-        // no per-user theme setting.
+        // This member area's theme is admin-controlled (/admin/theme), set
+        // separately from the site theme — there is no per-user theme setting.
 
         // Tping Workflows
         Route::prefix('tping-workflows')->name('tping.workflows.')->group(function () {
@@ -1286,6 +1286,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Theme Settings
     Route::get('/theme', [ThemeController::class, 'index'])->name('theme.index');
     Route::put('/theme', [ThemeController::class, 'update'])->name('theme.update');
+    Route::put('/theme/customer', [ThemeController::class, 'updateCustomer'])->name('theme.customer.update');
 
     // Quotation Management
     Route::prefix('quotations')->name('quotations.')->group(function () {

@@ -2,7 +2,7 @@
 
 @section('title', 'ตั้งค่าธีม')
 @section('page-title', 'ตั้งค่าธีม')
-@section('page-description', 'เลือกธีมหลักที่ต้องการใช้งานสำหรับทั้งระบบ')
+@section('page-description', 'เลือกธีมของเว็บไซต์ และธีมหลังบ้านสมาชิก')
 
 @section('content')
 <div class="max-w-5xl mx-auto">
@@ -26,7 +26,7 @@
                         </svg>
                         จัดการธีมระบบ
                     </h1>
-                    <p class="text-white/80 text-lg">กำหนดธีมหลักสำหรับหน้า Admin และ Customer Dashboard</p>
+                    <p class="text-white/80 text-lg">กำหนดธีมของเว็บไซต์ และธีมหลังบ้านสมาชิกแยกกัน</p>
                 </div>
                 <div class="hidden lg:block">
                     <div class="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center shadow-xl">
@@ -55,8 +55,8 @@
                     @endif
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">ธีมเริ่มต้นของเว็บไซต์</h2>
-                    <p class="text-gray-500 dark:text-gray-400">ผู้ใช้ใหม่จะเห็นธีม <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $themes[$currentTheme]['name'] }}</span> เป็นค่าเริ่มต้น</p>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">ธีมของเว็บไซต์</h2>
+                    <p class="text-gray-500 dark:text-gray-400">ทุกคนเห็นธีม <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $themes[$currentTheme]['name'] }}</span></p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -64,7 +64,7 @@
                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
-                    ค่าเริ่มต้น
+                    ใช้งานอยู่
                 </span>
             </div>
         </div>
@@ -76,7 +76,7 @@
                 </svg>
                 <div>
                     <p class="text-sm text-indigo-700 dark:text-indigo-300">
-                        <strong>หมายเหตุ:</strong> ธีมเริ่มต้นจะใช้กับผู้ใช้ที่ยังไม่ได้ตั้งค่าธีมส่วนตัว ผู้ใช้ที่ตั้งค่าธีมส่วนตัวแล้วจะเห็นธีมของตัวเอง
+                        <strong>หมายเหตุ:</strong> ใช้กับทุกคนเหมือนกัน ไม่มีการตั้งธีมรายคน — มีผลกับหน้าเว็บและหน้าแอดมิน · Retro และ Nova เปลี่ยนเฉพาะหน้าแรก หน้าอื่นกับหน้าแอดมินใช้แบบ Classic · หลังบ้านสมาชิกตั้งแยกได้ที่ด้านล่างของหน้านี้
                     </p>
                 </div>
             </div>
@@ -312,10 +312,68 @@
                 <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                บันทึกการเปลี่ยนแปลง
+                บันทึกธีมเว็บไซต์
             </button>
         </div>
     </form>
+
+    <!-- Member Area Theme — ตั้งแยกจากธีมเว็บไซต์ เปลี่ยนธีมหน้าเว็บแล้วหลังบ้านของลูกค้าต้องไม่เปลี่ยนตาม (เจ้าของ 2026-09-24) -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-12 animate-fade-in" style="animation-delay: 0.6s;">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">ธีมหลังบ้านสมาชิก</h2>
+                <p class="text-gray-500 dark:text-gray-400">หน้า "บัญชีของฉัน" ของลูกค้าทุกคนใช้ธีม <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $customerThemes[$customerTheme]['name'] }}</span> — ไม่เปลี่ยนตามธีมของเว็บไซต์</p>
+            </div>
+        </div>
+
+        <form action="{{ route('admin.theme.customer.update') }}" method="POST" id="customerThemeForm">
+            @csrf
+            @method('PUT')
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                @foreach($customerThemes as $optionKey => $option)
+                    <label class="theme-card group cursor-pointer">
+                        <input type="radio" name="customer_theme" value="{{ $optionKey }}"
+                               class="sr-only peer"
+                               {{ $customerTheme === $optionKey ? 'checked' : '' }}>
+
+                        <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
+                                    {{ $customerTheme === $optionKey ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                    peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
+                                    hover:border-indigo-400">
+                            <!-- ภาพย่อหลังบ้าน: เมนูข้าง + เนื้อหา -->
+                            <div class="flex w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 {{ $optionKey === 'premium' ? 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900' : 'bg-gray-50' }}">
+                                <div class="w-6 {{ $optionKey === 'premium' ? 'bg-white/10' : 'bg-white border-r border-gray-200' }}"></div>
+                                <div class="flex-1 p-1.5 space-y-1">
+                                    <div class="h-2 rounded {{ $optionKey === 'premium' ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-gray-300' }}"></div>
+                                    <div class="h-5 rounded {{ $optionKey === 'premium' ? 'bg-white/10' : 'bg-white border border-gray-200' }}"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900 dark:text-white">{{ $option['name'] }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $option['description'] }}</p>
+                            </div>
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="group inline-flex items-center px-8 py-4 border border-transparent text-base font-bold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    บันทึกธีมหลังบ้านสมาชิก
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 @push('scripts')
