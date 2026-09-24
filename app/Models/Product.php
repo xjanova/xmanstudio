@@ -86,7 +86,12 @@ class Product extends Model
     }
 
     /**
-     * Get the latest active version
+     * The version this site hands out now: the active one added most recently.
+     *
+     * Every GitHub sync and every version created in admin switches the product's other versions
+     * off, so normally exactly one is active. Two are active only after an admin switches an old
+     * one back on, and the one added later still wins. Never sort the version string as text:
+     * "1.2.99" beats "1.2.102" that way.
      */
     public function latestVersion()
     {
@@ -113,6 +118,17 @@ class Product extends Model
         return $this->versions()->active()->exists()
             ? route('download.page', $this->slug)
             : null;
+    }
+
+    /**
+     * What the download runs on ("Windows", "Android"), or null when this site doesn't know, in
+     * which case the card in the customer's Download Center shows no Platform row.
+     *
+     * Listed per app in config/downloads.php → app_platforms.
+     */
+    public function downloadPlatform(): ?string
+    {
+        return config('downloads.app_platforms', [])[$this->slug] ?? null;
     }
 
     /**

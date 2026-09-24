@@ -58,4 +58,31 @@ return [
         'smschecker' => 'smschecker.download.apk',
         'tping' => 'tping.download.apk',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | What each app runs on, by product slug
+    |--------------------------------------------------------------------------
+    |
+    | The Platform row on the same cards — see Product::downloadPlatform(). A
+    | product not listed shows no Platform row: the card says nothing rather
+    | than guess.
+    |
+    | Listed here, not read from the release's file name: CluadeX and WinXTools
+    | ship a .zip, which says nothing about the OS, and an app with no version
+    | synced yet has no file name at all (AutoTradeX, 2026-09-24).
+    |
+    */
+    'app_platforms' => [
+        'autotradex' => 'Windows',
+        'brainx' => 'Windows',
+        'chanthra-studio' => 'Windows',
+        'cluadex-ai-coding-assistant' => 'Windows',
+        'gpuxmine' => 'Windows',
+        'winx-tools' => 'Windows',
+        'aipray' => 'Android',
+        'localvpn' => 'Android',
+        'smschecker' => 'Android',
+        'tping' => 'Android',
+    ],
 ];
