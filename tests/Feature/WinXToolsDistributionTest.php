@@ -792,7 +792,118 @@ class WinXToolsDistributionTest extends TestCase
         $this->assertFalse(GithubSetting::whereHas('product', fn ($q) => $q->where('slug', 'winx-tools'))->exists());
     }
 
+    // ── the listing price migration ──────────────────────────────────
+
+    public function test_the_product_list_sells_winx_tools_at_199_once_the_launch_values_are_gone(): void
+    {
+        // แถวบน production ยังเป็นค่าก่อนเปิดขาย: ฿990 + Coming Soon
+        $this->product->update(['price' => 990, 'is_coming_soon' => true]);
+
+        [$badges, $price] = $this->listingCard();
+        $this->assertStringContainsString('Coming Soon', $badges);
+        $this->assertStringContainsString('฿990', $price);
+
+        $this->listingMigration()->up();
+
+        $product = $this->product->fresh();
+        $this->assertEquals(199, (float) $product->price);
+        $this->assertFalse($product->is_coming_soon);
+        $this->assertNull($product->coming_soon_until);
+
+        [$badges, $price] = $this->listingCard();
+        $this->assertStringNotContainsString('Coming Soon', $badges);
+        $this->assertStringContainsString('฿199', $price);
+        $this->assertStringNotContainsString('฿990', $price);
+
+        // ตัวกรอง "พร้อมขาย" ของหน้ารายการก็เห็นแล้ว
+        $this->get(route('products.index', ['status' => 'available']))
+            ->assertOk()
+            ->assertSee(route('products.show', 'winx-tools'), false);
+    }
+
+    public function test_the_listing_migration_fixes_only_the_fields_still_at_their_launch_values(): void
+    {
+        // เจ้าของแก้ราคาในหน้า admin แล้วแต่ยังไม่ปิด Coming Soon: ราคาของเจ้าของอยู่ต่อ
+        $this->product->update(['price' => 249, 'is_coming_soon' => true, 'coming_soon_until' => now()->addWeek()]);
+
+        $this->listingMigration()->up();
+
+        $this->assertEquals(249, (float) $this->product->fresh()->price);
+        $this->assertFalse($this->product->fresh()->is_coming_soon);
+        $this->assertNull($this->product->fresh()->coming_soon_until);
+
+        // ปิด Coming Soon ไปแล้วแต่ราคายังเป็น 990: แก้แค่ราคา รันซ้ำก็ได้ผลเดิม
+        $this->product->update(['price' => 990]);
+
+        $migration = $this->listingMigration();
+        $migration->up();
+        $migration->up();
+
+        $this->assertEquals(199, (float) $this->product->fresh()->price);
+        $this->assertFalse($this->product->fresh()->is_coming_soon);
+
+        // rollback ไม่เอาราคาผิดกลับขึ้นหน้าร้าน
+        $migration->down();
+        $this->assertEquals(199, (float) $this->product->fresh()->price);
+        $this->assertFalse($this->product->fresh()->is_coming_soon);
+    }
+
+    public function test_the_listing_migration_leaves_every_other_product_alone(): void
+    {
+        $other = Product::create([
+            'category_id' => $this->product->category_id,
+            'name' => 'PostXAgent',
+            'slug' => 'postx-agent',
+            'description' => 'x',
+            'price' => 990,
+            'stock' => 999,
+            'requires_license' => true,
+            'is_active' => true,
+            'is_coming_soon' => true,
+        ]);
+
+        $this->listingMigration()->up();
+
+        $this->assertEquals(990, (float) $other->fresh()->price);
+        $this->assertTrue($other->fresh()->is_coming_soon);
+    }
+
+    public function test_the_listing_migration_does_nothing_where_winx_tools_is_not_sold(): void
+    {
+        $this->product->delete();
+
+        $this->listingMigration()->up();
+
+        $this->assertFalse(Product::where('slug', 'winx-tools')->exists());
+    }
+
     // ── helpers ───────────────────────────────────────────────────────
+
+    private function listingMigration(): object
+    {
+        return require database_path('migrations/2026_09_24_160000_list_winx_tools_at_its_selling_price.php');
+    }
+
+    /**
+     * The WinXTools card on /products, cut in two: from its link to its name (where the badges
+     * are) and its price block. The page carries "Coming Soon" elsewhere too — the status filter.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function listingCard(): array
+    {
+        $html = $this->get(route('products.index'))->assertOk()->getContent();
+
+        $start = strpos($html, 'href="' . route('products.show', 'winx-tools') . '"');
+        $this->assertNotFalse($start, 'WinXTools is missing from the product list');
+
+        $name = strpos($html, '<h3', $start);
+        $price = strpos($html, '<!-- Price & Actions -->', $start);
+        $this->assertNotFalse($name);
+        $this->assertNotFalse($price);
+
+        return [substr($html, $start, $name - $start), substr($html, $price, 800)];
+    }
 
     private function makeVersion(string $version, array $attributes = []): ProductVersion
     {
