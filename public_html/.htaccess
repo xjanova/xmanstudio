@@ -6,13 +6,14 @@
     RewriteEngine On
 
     # ไฟล์ที่ ReleaseDownloadStreamer ส่ง (/winx-tools/download[/{version}], /cluadex/download,
-    # /gpuxmine/download, /download/{slug}/{version}, /api/download/{slug}[/{version}]) ต้องถึงลูกค้า
-    # พร้อม Content-Length: เบราว์เซอร์รู้ขนาดและรู้ว่าไฟล์ขาด ตัวอัปเดต WinXTools เทียบขนาดทุก byte
+    # /gpuxmine/download, APK ที่ /tping|smschecker|localvpn/download/apk, /download/{slug}/{version},
+    # /api/download/{slug}[/{version}]) ต้องถึงลูกค้าพร้อม Content-Length: เบราว์เซอร์รู้ขนาดและรู้ว่าไฟล์ขาด
+    # ตัวอัปเดต WinXTools เทียบขนาดทุก byte · แอป Android ใช้แสดงความคืบหน้าตอนอัปเดต
     # Apache ทิ้งค่านี้สองชั้น: mod_deflate ของเซิร์ฟเวอร์ gzip ทุก response (zip บีบไม่ลงแต่เสียความยาว)
     # และตั้งแต่ 2.4.59 ไม่เชื่อ Content-Length ที่ PHP-FPM ส่งมา เว้นแต่ตั้ง ap_trust_cgilike_cl
-    # เชื่อได้เพราะ streamer ไม่ส่งเกินขนาดที่ประกาศ · route APK รุ่นเก่าเอาขนาดจาก DB จึงไม่อยู่ในนี้
+    # เชื่อได้เพราะ streamer ไม่ส่งเกินขนาดที่ประกาศ · route ที่ย้ายมาใช้ streamer ต้องเพิ่มที่นี่ด้วย
     # THE_REQUEST คือบรรทัดคำขอเดิม จึงตรงอีกครั้งตอน redirect ภายในไป index.php ซึ่งเป็นคำขอที่ตอบจริง
-    RewriteCond %{THE_REQUEST} ^\S+\s/(?:(?:winx-tools|cluadex|gpuxmine)/download(?:/[^\s?/]+)?|download/[^\s?/]+/[^\s?/]+|api/download/[^\s?/]+(?:/[^\s?/]+)?)[?\s] [NC]
+    RewriteCond %{THE_REQUEST} ^\S+\s/(?:(?:winx-tools|cluadex|gpuxmine)/download(?:/[^\s?/]+)?|(?:tping|smschecker|localvpn)/download/apk|download/[^\s?/]+/[^\s?/]+|api/download/[^\s?/]+(?:/[^\s?/]+)?)[?\s] [NC]
     RewriteRule ^ - [E=no-gzip:1,E=dont-vary:1,E=ap_trust_cgilike_cl:1]
 
     # Handle Authorization Header

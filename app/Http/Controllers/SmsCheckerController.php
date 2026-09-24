@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Mail\PaymentConfirmedMail;
 use App\Models\BankAccount;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\PaymentSetting;
 use App\Models\Product;
-use App\Models\ProductVersion;
 use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
 use App\Services\GithubReleaseService;
@@ -17,11 +17,9 @@ use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * SmsChecker Web Controller
@@ -31,6 +29,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class SmsCheckerController extends Controller
 {
+    use ServesReleaseDownloads;
+
     private const WALLET_DISCOUNT_PERCENT = 10;
 
     /**
@@ -482,79 +482,38 @@ class SmsCheckerController extends Controller
         ]);
     }
 
-    public function downloadApk(GithubReleaseService $github)
+    /**
+     * APK ของ SMS Checker — ไฟล์ส่งจาก xman4289.com เอง ลูกค้าไม่เห็น GitHub (ReleaseDownloadStreamer)
+     * และจองที่ในช่องส่งไฟล์ร่วมของทั้งเว็บ (config/downloads.php) เหมือนแอปอื่น
+     *
+     * GET /smschecker/download/apk — ตัวเช็คอัปเดตในแอปส่งลูกค้ามาที่นี่ จึงเปิดอยู่แม้ปิดขาย
+     * (ไม่เรียก abortUnlessOnSale — ลูกค้าที่ถือ license อยู่ต้องอัปเดตได้)
+     */
+    public function downloadApk(Request $request)
     {
-        $product = Product::where('slug', 'smschecker')->firstOrFail();
-        // ต้องตรงกับเวอร์ชันที่ API เช็คอัพเดทโฆษณาไว้เป๊ะ ไม่งั้นจะบอกลูกค้าว่ามี 2.0.176
+        $product = Product::where('slug', 'smschecker')->first();
+        $backTo = $this->apkBackTo($request, $product);
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, $backTo, 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        // ต้องตรงกับเวอร์ชันที่ API เช็คอัพเดทโฆษณาไว้เป๊ะ (latestVersionFresh ตัวเดียวกัน) ไม่งั้นจะบอกลูกค้าว่ามี 2.0.176
         // แต่เสิร์ฟไฟล์เก่ากว่า → ติดตั้งไม่ได้เพราะ Android กัน downgrade
-        $version = $github->latestVersionFresh($product);
-
-        if (! $version || ! $version->github_release_url) {
-            return redirect()->route('smschecker.download')
-                ->with('error', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
-        }
-
-        $githubSetting = $product->githubSetting;
-
-        if (! $githubSetting) {
-            return redirect()->route('smschecker.download')
-                ->with('error', 'ระบบดาวน์โหลดยังไม่พร้อม');
-        }
-
-        return $this->proxyGithubDownload($githubSetting, $version);
+        return $this->serveApk($request, $product, $this->latestRelease($product), $backTo, 'SmsChecker');
     }
 
-    protected function proxyGithubDownload($githubSetting, ProductVersion $productVersion): StreamedResponse
+    /**
+     * ส่งไฟล์ไม่ได้ พาเบราว์เซอร์ไปหน้าที่เปิดได้จริงพร้อมข้อความ — ระหว่างปิดขายหน้า SMS Checker ทุกหน้าตอบ 404
+     * คนที่ล็อกอินอยู่มาจากศูนย์ดาวน์โหลด (ทางเดียวที่ยังมีปุ่มนี้) จึงกลับไปที่นั่น · คนอื่นไปหน้าแรก
+     */
+    private function apkBackTo(Request $request, ?Product $product): string
     {
-        $token = $githubSetting->github_token_decrypted;
-        $assetUrl = $productVersion->github_release_url;
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-            'Accept' => 'application/octet-stream',
-            'User-Agent' => 'XMAN-SmsChecker-Download-Proxy',
-        ])->withOptions([
-            'allow_redirects' => false,
-        ])->get($assetUrl);
-
-        if ($response->status() === 302) {
-            $downloadUrl = $response->header('Location');
-        } else {
-            $downloadUrl = $assetUrl;
-        }
-
-        $filename = $productVersion->download_filename ?? 'SmsChecker-v' . $productVersion->version . '.apk';
-        $fileSize = $productVersion->file_size;
-
-        return new StreamedResponse(function () use ($downloadUrl, $token) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
-                echo $data;
-                flush();
-
-                return strlen($data);
-            });
-
-            if (strpos($downloadUrl, 'github.com') !== false) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer ' . $token,
-                    'Accept: application/octet-stream',
-                    'User-Agent: XMAN-SmsChecker-Download-Proxy',
-                ]);
-            }
-
-            curl_exec($ch);
-            curl_close($ch);
-        }, 200, [
-            'Content-Type' => 'application/vnd.android.package-archive',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Content-Length' => $fileSize,
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
+        return match (true) {
+            (bool) $product?->is_active => route('smschecker.download'),
+            $request->user() !== null => route('customer.downloads'),
+            default => route('home'),
+        };
     }
 
     protected function generateOrderNumber(): string

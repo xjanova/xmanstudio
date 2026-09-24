@@ -224,6 +224,10 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['GET', route('winx-tools.download', ['version' => '1.0.2', 'from' => 'app'])],
             ['GET', route('cluadex.download')],
             ['GET', route('gpuxmine.download')],
+            ['GET', route('tping.download.apk')],
+            ['HEAD', route('tping.download.apk')],
+            ['GET', route('smschecker.download.apk')],
+            ['GET', route('localvpn.download.apk')],
             ['GET', route('download.product', ['slug' => 'some-desktop-app', 'version' => '2.0.0'])],
             ['POST', route('download.api', ['slug' => 'some-desktop-app'])],
             ['POST', route('download.api', ['slug' => 'some-desktop-app', 'version' => '2.0.0'])],
@@ -233,8 +237,8 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
 
         foreach ([
             route('download.page', ['slug' => 'some-desktop-app']), // หน้า HTML
-            '/tping/download/apk', '/smschecker/download/apk', '/localvpn/download/apk', // APK รุ่นเก่า ขนาดจาก DB
-            '/tping/download', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
+            '/tping/download', '/smschecker/download', '/localvpn/download', '/tping/install-guide', // หน้าของแอป APK
+            '/tping/download/apkx', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
         ] as $url) {
             $this->assertFalse($matches('GET', $url), "GET {$url} ต้องไม่อยู่ในกฎนี้");
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Mail\PaymentConfirmedMail;
 use App\Models\BankAccount;
 use App\Models\LicenseKey;
@@ -17,12 +18,10 @@ use App\Services\ThaiPaymentService;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * LocalVPN Web Controller
@@ -32,6 +31,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class LocalVpnWebController extends Controller
 {
+    use ServesReleaseDownloads;
+
     private const WALLET_DISCOUNT_PERCENT = 10;
 
     /**
@@ -180,118 +181,26 @@ class LocalVpnWebController extends Controller
     }
 
     /**
-     * Download APK (proxy from GitHub release)
+     * APK ของ LocalVPN — ไฟล์ส่งจาก xman4289.com เอง ลูกค้าไม่เห็น GitHub (ReleaseDownloadStreamer)
+     * และจองที่ในช่องส่งไฟล์ร่วมของทั้งเว็บ (config/downloads.php) เหมือนแอปอื่น
+     *
+     * GET /localvpn/download/apk — ตัวอัปเดตในแอป (update/check) ก็ชี้มาที่นี่
+     * เวอร์ชันที่ส่งยังเป็นกฎเดิมของ LocalVPN: ตัวที่ active
      */
-    public function downloadApk()
+    public function downloadApk(Request $request)
     {
-        $product = Product::where('slug', 'localvpn')->firstOrFail();
+        $product = Product::where('slug', 'localvpn')->first();
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, route('localvpn.download'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
         $version = ProductVersion::where('product_id', $product->id)
             ->where('is_active', true)
             ->orderByDesc('version')
             ->first();
 
-        if (! $version || ! $version->github_release_url) {
-            return redirect()->route('localvpn.download')
-                ->with('error', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
-        }
-
-        $githubSetting = $product->githubSetting;
-
-        if (! $githubSetting) {
-            return redirect()->route('localvpn.download')
-                ->with('error', 'ระบบดาวน์โหลดยังไม่พร้อม');
-        }
-
-        return $this->proxyGithubDownload($githubSetting, $version);
-    }
-
-    /**
-     * Proxy download from GitHub
-     */
-    protected function proxyGithubDownload($githubSetting, ProductVersion $productVersion): StreamedResponse
-    {
-        $token = $githubSetting->github_token_decrypted;
-        $assetUrl = $productVersion->github_release_url;
-        $filename = $productVersion->download_filename ?? 'LocalVPN-v' . $productVersion->version . '.apk';
-        $fileSize = $productVersion->file_size;
-
-        // For public repos without token: use browser_download_url (direct download)
-        // which doesn't require authentication. The github_release_url is an API URL
-        // that needs a token for private repos.
-        if (empty($token)) {
-            // Convert API asset URL to browser download URL, or use direct redirect
-            $browserUrl = $productVersion->browser_download_url
-                ?? "https://github.com/{$githubSetting->github_owner}/{$githubSetting->github_repo}/releases/download/v{$productVersion->version}/{$filename}";
-
-            return new StreamedResponse(function () use ($browserUrl) {
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $browserUrl);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'User-Agent: XMAN-LocalVPN-Download-Proxy',
-                ]);
-                curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
-                    echo $data;
-                    flush();
-
-                    return strlen($data);
-                });
-                curl_exec($ch);
-                curl_close($ch);
-            }, 200, [
-                'Content-Type' => 'application/vnd.android.package-archive',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                'Content-Length' => $fileSize,
-                'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                'Pragma' => 'no-cache',
-                'Expires' => '0',
-            ]);
-        }
-
-        // Private repo: use API URL with token to get redirect URL
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-            'Accept' => 'application/octet-stream',
-            'User-Agent' => 'XMAN-LocalVPN-Download-Proxy',
-        ])->withOptions([
-            'allow_redirects' => false,
-        ])->get($assetUrl);
-
-        if ($response->status() === 302) {
-            $downloadUrl = $response->header('Location');
-        } else {
-            $downloadUrl = $assetUrl;
-        }
-
-        return new StreamedResponse(function () use ($downloadUrl, $token) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
-                echo $data;
-                flush();
-
-                return strlen($data);
-            });
-
-            if (strpos($downloadUrl, 'github.com') !== false) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer ' . $token,
-                    'Accept: application/octet-stream',
-                    'User-Agent: XMAN-LocalVPN-Download-Proxy',
-                ]);
-            }
-
-            curl_exec($ch);
-            curl_close($ch);
-        }, 200, [
-            'Content-Type' => 'application/vnd.android.package-archive',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Content-Length' => $fileSize,
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
+        return $this->serveApk($request, $product, $version, route('localvpn.download'), 'LocalVPN');
     }
 
     /**
