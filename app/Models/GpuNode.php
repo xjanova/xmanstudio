@@ -29,14 +29,26 @@ class GpuNode extends Model
      */
     public const PAIRING_TTL_MINUTES = 10;
 
+    /**
+     * การถอน worker ที่ aixman และ relay — ยังไม่ยืนยันทั้งสองฝั่ง
+     *
+     * แถวที่ soft delete แล้วแต่ยังค้างสถานะนี้ gpuxmine:sync-nodes จะลองถอน
+     * ให้ใหม่ทุกรอบ จนทั้งสองฝั่งตอบว่าเอาออกแล้ว
+     */
+    public const RETIRE_PENDING = 'pending';
+
+    public const RETIRE_DONE = 'done';
+
     protected $fillable = [
         'user_id',
+        'referrer_user_id',
         'product_device_id',
         'pairing_code',
         'pairing_expires_at',
         'paired_at',
         'worker_id',
         'relay_token',
+        'tunnel_token',
         'relay_url',
         'tunnel_endpoint',
         'label',
@@ -48,6 +60,8 @@ class GpuNode extends Model
         'score',
         'tier',
         'assessed',
+        'accepting',
+        'busy',
         'can_run',
         'lanes',
         'provisional',
@@ -56,6 +70,13 @@ class GpuNode extends Model
         'dispatch_synced_at',
         'dispatch_status',
         'dispatch_note',
+        'dispatch_fingerprint',
+        'dispatch_worker_status',
+        'dispatch_last_error',
+        'suspended_at',
+        'suspended_reason',
+        'suspended_by',
+        'retire_status',
     ];
 
     protected $casts = [
@@ -63,21 +84,50 @@ class GpuNode extends Model
         'paired_at' => 'datetime',
         'last_seen_at' => 'datetime',
         'dispatch_synced_at' => 'datetime',
+        'suspended_at' => 'datetime',
         'online' => 'boolean',
         'assessed' => 'boolean',
+        // null = เครื่องไม่ได้บอก (ไคลเอนต์รุ่นเก่า หรือออฟไลน์อยู่) ไม่ใช่ "ไม่รับ"
+        'accepting' => 'boolean',
+        'busy' => 'boolean',
         'can_run' => 'array',
         // เร็วพอให้คนนั่งรอไหม — คนละคำถามกับ can_run ที่ตอบแค่ว่าทำได้ไหม
         'lanes' => 'array',
         'provisional' => 'array',
         // กุญแจเปิดอุโมงค์ไปเครื่องในบ้านคน — ห้ามอยู่ในฐานข้อมูลแบบอ่านได้
         'relay_token' => 'encrypted',
+        // กุญแจฝั่ง aixman (/w/) ที่ relay รุ่นใหม่ออกแยกจากกุญแจของเครื่อง
+        'tunnel_token' => 'encrypted',
     ];
 
-    protected $hidden = ['relay_token'];
+    protected $hidden = ['relay_token', 'tunnel_token'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** ผู้แนะนำของเจ้าของเครื่อง — จับไว้ครั้งเดียวตอนจับคู่ (D8) */
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referrer_user_id');
+    }
+
+    /**
+     * กุญแจที่ aixman ต้องใช้เปิดอุโมงค์ /w/ ของเครื่องนี้
+     *
+     * relay รุ่นใหม่ออกกุญแจแยกให้ aixman — เครื่องถือ relay_token ไว้ต่อ
+     * /agent อย่างเดียว ส่วนเครื่องที่ลงทะเบียนกับ relay รุ่นเก่ามีกุญแจใบเดียว
+     * ใช้ทั้งสองทาง
+     */
+    public function dispatchToken(): ?string
+    {
+        return $this->tunnel_token ?: $this->relay_token;
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
     }
 
     /** งานที่เครื่องนี้ทำเสร็จและเงินที่ได้จากมัน */
