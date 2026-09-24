@@ -498,7 +498,11 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="text-xs text-gray-400 mt-3"><x-bi th="แสดง 50 รายการล่าสุด" en="Showing the 50 most recent" /></p>
+                @if ($earnings->hasPages())
+                    <div class="mt-4">
+                        {{ $earnings->links() }}
+                    </div>
+                @endif
             @endif
         </div>
     </div>

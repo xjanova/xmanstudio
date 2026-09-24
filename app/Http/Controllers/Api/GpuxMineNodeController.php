@@ -8,9 +8,12 @@ use App\Models\GpuNode;
 use App\Models\Product;
 use App\Models\ProductDevice;
 use App\Services\GpuxMineDispatchService;
+use App\Services\GpuxMineNodeStateService;
+use App\Services\GpuxMineReferrerResolver;
 use App\Services\GpuxMineRelayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -34,6 +37,8 @@ class GpuxMineNodeController extends Controller
     public function __construct(
         private readonly GpuxMineRelayService $relay,
         private readonly GpuxMineDispatchService $dispatch,
+        private readonly GpuxMineNodeStateService $state,
+        private readonly GpuxMineReferrerResolver $referrers,
     ) {}
 
     /**
@@ -114,16 +119,44 @@ class GpuxMineNodeController extends Controller
         $node = GpuNode::where('pairing_code', $code)->first();
 
         if ($node === null || ! $node->pairingIsUsable()) {
-            // ข้อความเดียวกันทั้งกรณีรหัสผิดและรหัสหมดอายุ เพื่อไม่ให้คนที่
-            // สุ่มรหัสรู้ว่าเดาถูกบางส่วน — แต่บอกทางออกให้คนที่พิมพ์ถูกแล้ว
-            // รหัสหมดอายุพอดี
-            return response()->json([
-                'success' => false,
-                'error_code' => 'PAIRING_INVALID',
-                'message' => 'รหัสจับคู่ไม่ถูกต้องหรือหมดอายุแล้ว — กดขอรหัสใหม่ที่หน้าเครื่องของฉัน',
-            ], 422);
+            return $this->pairingInvalid();
         }
 
+        // จองรหัสก่อนทำอะไรต่อ ด้วย UPDATE แบบมีเงื่อนไขที่ชนะได้คนเดียว —
+        // ไม่งั้นโปรแกรมที่กดยืนยันซ้ำ หรือสองเครื่องที่พิมพ์รหัสเดียวกันพร้อมกัน
+        // จะได้ worker คนละตัวจาก relay ทั้งคู่ แล้วตัวหนึ่งกลายเป็นกำพร้า
+        // ระหว่างที่จองอยู่ รหัสนี้ใช้ไม่ได้ (pairingIsUsable = false) ถ้าจบ
+        // แบบไม่สำเร็จ คืนรหัสให้ใช้ต่อได้จนหมดอายุเดิม
+        $expiresAt = $node->pairing_expires_at;
+        $taken = GpuNode::whereKey($node->id)
+            ->whereNull('paired_at')
+            ->where('pairing_code', $code)
+            ->where('pairing_expires_at', '>', now())
+            ->update(['pairing_expires_at' => null]);
+
+        if ($taken !== 1) {
+            return $this->pairingInvalid();
+        }
+
+        $response = null;
+
+        try {
+            $response = $this->claimTaken($node, $validated);
+        } finally {
+            if ($response === null || $response->getStatusCode() >= 300) {
+                GpuNode::whereKey($node->id)
+                    ->whereNull('paired_at')
+                    ->whereNull('pairing_expires_at')
+                    ->update(['pairing_expires_at' => $expiresAt]);
+            }
+        }
+
+        return $response;
+    }
+
+    /** รหัสที่จองไว้แล้ว — จากตรงนี้ไม่มีใครแย่งรหัสนี้ได้อีก */
+    private function claimTaken(GpuNode $node, array $validated): JsonResponse
+    {
         // เครื่องเดิมที่เคยจับคู่แล้วมาขอใหม่ (ลงโปรแกรมใหม่ / ล้างเครื่อง):
         // คืน worker เดิม ไม่สร้างใหม่ ไม่งั้นประวัติงานและคะแนนสะสมขาดตอน
         $existing = GpuNode::where('user_id', $node->user_id)
@@ -138,21 +171,50 @@ class GpuxMineNodeController extends Controller
         // token เดิมใช้ไม่ได้ทันที ถ้าไม่เช็กตรงนี้ เจ้าของเครื่องจะได้ credential
         // ที่ relay ปฏิเสธ แล้วนั่งงงว่าลงทะเบียนสำเร็จแต่ทำไมไม่เคยได้งาน
         // (เจอตอนย้าย relay จากเครื่อง dev ขึ้นเซิร์ฟเวอร์จริง)
-        if ($existing !== null && $this->relay->knows($existing->worker_id)) {
-            $node->delete();   // รหัสที่เพิ่งออกไม่ได้ใช้ ทิ้งไป
+        if ($existing !== null) {
+            $known = $this->relay->knows($existing->worker_id);
 
-            return $this->credentials($existing, $validated, reused: true);
+            // ถาม relay ไม่ได้ ≠ relay ไม่รู้จัก — ถ้าเดาว่าไม่รู้จักแล้วออก
+            // worker ใหม่ ตัวเดิมที่ยังใช้ได้ดีจะถูกทิ้ง ให้ลองใหม่ดีกว่า
+            if ($known === null) {
+                return $this->relayUnavailable();
+            }
+
+            if ($known) {
+                if ($existing->referrer_user_id === null) {
+                    $existing->referrer_user_id = $node->referrer_user_id
+                        ?? $this->referrers->resolve((int) $existing->user_id, fromRequest: false);
+                }
+
+                $node->delete();   // รหัสที่เพิ่งออกไม่ได้ใช้ ทิ้งไป
+
+                $response = $this->credentials($existing, $validated, reused: true);
+
+                // ที่อยู่ relay อาจเพิ่งเปลี่ยนใน credentials() — aixman ต้องรู้
+                // ด้วย ไม่งั้นมันยิงงานไปที่อยู่เดิมต่อ
+                $this->dispatch->sync($existing);
+
+                return $response;
+            }
+        }
+
+        // เพดานเครื่องต่อบัญชี (D9) — นับเฉพาะเครื่องใหม่ เครื่องเดิมที่กลับมา
+        // จับคู่ซ้ำไม่ได้เพิ่มจำนวน
+        if ($existing === null && $this->atNodeCap((int) $node->user_id)) {
+            $cap = (int) config('services.gpuxmine.max_nodes_per_user', 10);
+
+            return response()->json([
+                'success' => false,
+                'error_code' => 'NODE_LIMIT',
+                'message' => "บัญชีนี้ลงทะเบียนเครื่องครบ {$cap} เครื่องแล้ว — ถอนเครื่องที่ไม่ได้ใช้ออกที่หน้าเครื่องของฉันก่อน แล้วขอรหัสใหม่",
+            ], 409);
         }
 
         $label = $validated['machine_name'] ?: ('เครื่องของ ' . ($node->user?->name ?? 'สมาชิก'));
         $enrolment = $this->relay->enroll($label);
 
         if ($enrolment === null) {
-            return response()->json([
-                'success' => false,
-                'error_code' => 'RELAY_UNAVAILABLE',
-                'message' => 'ระบบรับเครื่องยังไม่พร้อม กรุณาลองใหม่อีกครั้งในอีกสักครู่',
-            ], 503);
+            return $this->relayUnavailable();
         }
 
         $device = $this->rememberDevice($validated);
@@ -160,24 +222,44 @@ class GpuxMineNodeController extends Controller
         // เครื่องเดิมที่ worker หายไปจาก relay: ออก worker ใหม่ให้ แต่เขียนทับ
         // แถวเดิม ไม่สร้างแถวใหม่ — เจ้าของ ชื่อเครื่อง และประวัติยังอยู่ที่เดิม
         if ($existing !== null) {
-            $existing->forceFill([
-                'worker_id' => $enrolment['workerId'],
-                'relay_token' => $enrolment['token'],
-                'relay_url' => $enrolment['agentRelayUrl'],
-                'tunnel_endpoint' => $enrolment['aixmanEndpoint'],
-                'agent_version' => $validated['app_version'] ?? $existing->agent_version,
-                'online' => false,
-                'assessed' => false,
-                'dispatch_status' => null,
-                'dispatch_note' => null,
-            ])->save();
+            $oldWorkerId = $existing->worker_id;
 
-            $node->delete();
+            DB::transaction(function () use ($existing, $node, $enrolment, $validated) {
+                $existing->forceFill([
+                    'worker_id' => $enrolment['workerId'],
+                    'relay_token' => $enrolment['token'],
+                    // relay รุ่นเก่าไม่ออกใบนี้ — ต้องล้างใบของ worker เก่าทิ้ง
+                    // ไม่งั้น aixman ได้กุญแจที่เปิดอุโมงค์ของ worker ใหม่ไม่ได้
+                    'tunnel_token' => $enrolment['tunnelToken'],
+                    'relay_url' => $enrolment['agentRelayUrl'],
+                    'tunnel_endpoint' => $enrolment['aixmanEndpoint'],
+                    'agent_version' => $validated['app_version'] ?? $existing->agent_version,
+                    'online' => false,
+                    'assessed' => false,
+                    'accepting' => null,
+                    'busy' => null,
+                    'referrer_user_id' => $existing->referrer_user_id
+                        ?? $node->referrer_user_id
+                        ?? $this->referrers->resolve((int) $existing->user_id, fromRequest: false),
+                    'dispatch_status' => null,
+                    'dispatch_note' => null,
+                    'dispatch_fingerprint' => null,
+                    'dispatch_worker_status' => null,
+                    'dispatch_last_error' => null,
+                ])->save();
+
+                $node->delete();
+            });
+
+            // worker เก่าต้องออกจากทั้ง aixman และ relay — เคยปล่อยค้างไว้
+            // ให้ aixman ส่งงานไปหาต่อ ถ้าถอนไม่สำเร็จตอนนี้ ตัวจับเวลาลองต่อ
+            $this->state->retireReplacedWorker($existing, $oldWorkerId);
             $this->dispatch->sync($existing);
 
             Log::info('GPUxMINE node re-enrolled on a new relay', [
                 'user_id' => $existing->user_id,
                 'worker_id' => $existing->worker_id,
+                'replaced_worker_id' => $oldWorkerId,
             ]);
 
             return $this->credentials($existing, $validated, reused: false);
@@ -189,10 +271,14 @@ class GpuxMineNodeController extends Controller
             'label' => $label,
             'worker_id' => $enrolment['workerId'],
             'relay_token' => $enrolment['token'],
+            'tunnel_token' => $enrolment['tunnelToken'],
             'relay_url' => $enrolment['agentRelayUrl'],
             'tunnel_endpoint' => $enrolment['aixmanEndpoint'],
             'agent_version' => $validated['app_version'] ?? null,
             'paired_at' => now(),
+            // ผู้แนะนำ: ถ้าหน้าเว็บจับไว้ตอนออกรหัสแล้วใช้ตัวนั้น (D8)
+            'referrer_user_id' => $node->referrer_user_id
+                ?? $this->referrers->resolve((int) $node->user_id, fromRequest: false),
             // ใช้แล้วใช้อีกไม่ได้ ล้างทิ้งทันทีที่แลกสำเร็จ
             'pairing_code' => null,
             'pairing_expires_at' => null,
@@ -209,6 +295,35 @@ class GpuxMineNodeController extends Controller
         ]);
 
         return $this->credentials($node, $validated, reused: false);
+    }
+
+    private function atNodeCap(int $userId): bool
+    {
+        $cap = (int) config('services.gpuxmine.max_nodes_per_user', 10);
+
+        return $cap > 0
+            && GpuNode::where('user_id', $userId)->whereNotNull('paired_at')->count() >= $cap;
+    }
+
+    private function pairingInvalid(): JsonResponse
+    {
+        // ข้อความเดียวกันทั้งกรณีรหัสผิดและรหัสหมดอายุ เพื่อไม่ให้คนที่
+        // สุ่มรหัสรู้ว่าเดาถูกบางส่วน — แต่บอกทางออกให้คนที่พิมพ์ถูกแล้ว
+        // รหัสหมดอายุพอดี
+        return response()->json([
+            'success' => false,
+            'error_code' => 'PAIRING_INVALID',
+            'message' => 'รหัสจับคู่ไม่ถูกต้องหรือหมดอายุแล้ว — กดขอรหัสใหม่ที่หน้าเครื่องของฉัน',
+        ], 422);
+    }
+
+    private function relayUnavailable(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'error_code' => 'RELAY_UNAVAILABLE',
+            'message' => 'ระบบรับเครื่องยังไม่พร้อม กรุณาลองใหม่อีกครั้งในอีกสักครู่',
+        ], 503);
     }
 
     private function credentials(GpuNode $node, array $validated, bool $reused): JsonResponse

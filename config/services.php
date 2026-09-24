@@ -86,6 +86,14 @@ return [
     'gpuxmine' => [
         'relay_url' => env('GPUXMINE_RELAY_URL'),
         'admin_key' => env('GPUXMINE_RELAY_ADMIN_KEY'),
+
+        // เครื่องต่อบัญชี (D9) — บัญชีเดียวลงทะเบียนเครื่องได้ไม่จำกัดคือช่องให้
+        // สร้าง worker ปลอมเป็นกอง ทั้งถ่วง relay และแย่งคิวงาน 0 = ไม่จำกัด
+        'max_nodes_per_user' => (int) env('GPUXMINE_MAX_NODES_PER_USER', 10),
+
+        // ส่งสถานะเครื่องให้ aixman ซ้ำทุกกี่นาทีแม้ไม่มีอะไรเปลี่ยน — เผื่อ
+        // aixman ปิด worker ไปเองระหว่างนั้น (ดู GpuxMineNodeStateService)
+        'resync_minutes' => (int) env('GPUXMINE_RESYNC_MINUTES', 10),
     ],
 
     'aixman' => [

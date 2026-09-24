@@ -4,9 +4,9 @@ namespace App\Console\Commands;
 
 use App\Models\GpuNode;
 use App\Services\GpuxMineDispatchService;
+use App\Services\GpuxMineNodeStateService;
 use App\Services\GpuxMineRelayService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
 
 /**
  * ดึงสถานะเครื่องจาก relay แล้วส่งต่อให้ aixman
@@ -15,9 +15,12 @@ use Illuminate\Support\Carbon;
  * รอให้ใครเปิดหน้าไหน: เครื่องที่เพิ่งประเมินตัวเองเสร็จตอนตีสามต้องได้งาน
  * ตอนตีสาม ไม่ใช่ตอนเจ้าของตื่นมาเปิดเว็บ
  *
- * ส่งต่อให้ aixman เฉพาะเมื่อมีอะไรเปลี่ยนจริง — ออนไลน์/ออฟไลน์ ผลประเมิน
- * หรืองานที่รับได้ ไม่งั้นทุกนาทีคือการยิง webhook หนึ่งครั้งต่อเครื่องหนึ่งตัว
- * ตลอดไป
+ * การส่งต่อตัดสินจากสภาพปัจจุบัน ไม่ใช่จาก "รอบนี้เห็นอะไรเปลี่ยน" — ดู
+ * GpuxMineNodeStateService::needsPush() เครื่องที่ไม่มีอะไรใหม่และ aixman
+ * ตอบรับไปแล้วไม่ถูกยิงซ้ำ นอกจากรอบทวนทุกสิบนาที
+ *
+ * relay ตอบไม่ได้ = ไม่แตะแถวไหนเลยและจบด้วย FAILURE เคยถือว่า "ไม่มีเครื่อง"
+ * แล้วเขียนทุกเครื่องเป็นออฟไลน์ ล้างคะแนน และบอก aixman ให้ถอดทั้งกอง
  */
 class GpuxMineSyncNodesCommand extends Command
 {
@@ -25,77 +28,71 @@ class GpuxMineSyncNodesCommand extends Command
 
     protected $description = 'ดึงสถานะเครื่อง GPUxMINE จาก relay แล้วขึ้นทะเบียนรับงานที่ aixman';
 
-    public function handle(GpuxMineRelayService $relay, GpuxMineDispatchService $dispatch): int
-    {
+    public function handle(
+        GpuxMineRelayService $relay,
+        GpuxMineDispatchService $dispatch,
+        GpuxMineNodeStateService $state,
+    ): int {
         if (! $relay->isConfigured()) {
             $this->warn('ยังไม่ได้ตั้งค่า GPUXMINE_RELAY_URL / GPUXMINE_RELAY_ADMIN_KEY');
 
             return self::SUCCESS;   // ยังไม่ตั้งค่า ไม่ใช่ความล้มเหลว
         }
 
-        $live = $relay->workers();
-        $nodes = GpuNode::paired()->get();
+        // เครื่องที่เจ้าของถอนไปแล้วแต่ยังถอนที่ aixman/relay ไม่สำเร็จ
+        // ไม่ขึ้นกับรายชื่อจาก relay จึงทำก่อน
+        $retired = $state->retryPendingRetirements();
 
+        $live = $relay->workers();
+        if ($live === null) {
+            $this->error('อ่านรายชื่อเครื่องจาก relay ไม่ได้ — รอบนี้ไม่แตะสถานะเครื่องใด ๆ');
+
+            return self::FAILURE;
+        }
+
+        $total = 0;
         $changed = 0;
         $pushed = 0;
+        $failures = 0;
+        $aixmanDown = false;
 
-        foreach ($nodes as $node) {
-            $row = $live[$node->worker_id] ?? null;
+        foreach (GpuNode::paired()->lazyById(100) as $node) {
+            $total++;
 
-            $telemetry = is_array($row['telemetry'] ?? null) ? $row['telemetry'] : [];
-            $online = (bool) ($row['online'] ?? false);
-
-            // relay ไม่รู้จัก worker นี้แล้ว (store ถูกล้าง / ย้าย relay)
-            // ไม่ลบแถวทิ้ง เพราะยอดค้างจ่ายและประวัติยังต้องตามได้
-            $before = [
-                $node->online, $node->assessed, $node->score,
-                $node->tier, json_encode($node->can_run), json_encode($node->lanes),
-            ];
-
-            $node->forceFill([
-                'online' => $online,
-                'agent_version' => $row['agentVersion'] ?? $node->agent_version,
-                'last_seen_at' => ! empty($row['lastSeenAt']) ? Carbon::parse($row['lastSeenAt']) : $node->last_seen_at,
-                'assessed' => (bool) ($telemetry['assessed'] ?? false),
-                'score' => (int) ($telemetry['score'] ?? 0),
-                'tier' => (string) ($telemetry['tier'] ?? 'unrated'),
-                'gpu_name' => $telemetry['gpuName'] ?? $node->gpu_name,
-                'vram_total_mb' => (int) ($telemetry['vramTotalMb'] ?? $node->vram_total_mb),
-                'can_run' => $telemetry['canRun'] ?? $node->can_run,
-                'lanes' => $telemetry['lanes'] ?? $node->lanes,
-                'provisional' => $telemetry['provisional'] ?? $node->provisional,
-                'free_share_pct' => (int) ($telemetry['freeSharePct'] ?? $node->free_share_pct),
-            ]);
-
-            $after = [
-                $node->online, $node->assessed, $node->score,
-                $node->tier, json_encode($node->can_run), json_encode($node->lanes),
-            ];
-
-            if ($node->isDirty()) {
-                $node->save();
+            if ($state->apply($node, $live[$node->worker_id] ?? null)) {
                 $changed++;
             }
 
-            // ความสามารถหรือการเชื่อมต่อเปลี่ยน = aixman ต้องรู้
-            // คะแนนขยับนิดหน่อยระหว่างการวัดสองครั้งไม่ใช่เหตุให้ยิง
-            $worthPushing = $this->option('force')
-                || $before[0] !== $after[0]
-                || $before[1] !== $after[1]
-                || $before[4] !== $after[4]
-                // เลนเปลี่ยนคือเหตุผลที่ต้องยิงที่สุด: เครื่องเพิ่งพิสูจน์ว่าทำงาน
-                // ด่วนไม่ทัน แล้วยังถูกส่งงานด่วนต่อจนกว่าจะมีอย่างอื่นเปลี่ยน
-                || $before[5] !== $after[5]
-                || $node->dispatch_synced_at === null;
+            if ($aixmanDown || ! ($this->option('force') || $state->needsPush($node))) {
+                continue;
+            }
 
-            if ($worthPushing && $dispatch->sync($node)) {
-                $pushed++;
-            } elseif ($worthPushing) {
-                $pushed++;   // ส่งแล้ว แม้ผลจะเป็น "ยังรับงานไม่ได้"
+            $outcome = $dispatch->push($node);
+            if ($outcome === GpuxMineDispatchService::OUTCOME_SKIPPED) {
+                continue;
+            }
+
+            $pushed++;
+
+            if ($outcome === GpuxMineDispatchService::OUTCOME_UNREACHABLE) {
+                // aixman ล่ม: ยิงเครื่องที่เหลือทีละ 10 วินาทีไม่ช่วยอะไร และจะลาก
+                // รอบนี้ยาวจนชนรอบถัดไป แถวที่ยังไม่ได้ส่งยังค้างเป็น "ต้องส่ง"
+                // อยู่แล้ว รอบหน้าหยิบต่อเอง
+                if (++$failures >= GpuxMineNodeStateService::GIVE_UP_AFTER_FAILURES) {
+                    $aixmanDown = true;
+                }
+            } else {
+                $failures = 0;
             }
         }
 
-        $this->info("เครื่องทั้งหมด {$nodes->count()} · อัปเดต {$changed} · ส่งให้ aixman {$pushed}");
+        $this->info("เครื่องทั้งหมด {$total} · อัปเดต {$changed} · ส่งให้ aixman {$pushed} · ถอนค้างสำเร็จ {$retired}");
+
+        if ($aixmanDown) {
+            $this->error('ติดต่อ aixman ไม่ได้ติดกันหลายเครื่อง — หยุดส่งรอบนี้ รอบหน้าลองใหม่');
+
+            return self::FAILURE;
+        }
 
         return self::SUCCESS;
     }

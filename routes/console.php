@@ -203,9 +203,12 @@ Schedule::command('quotations:follow-up')
 // GPUxMINE: ดึงสถานะเครื่องจาก relay แล้วขึ้นทะเบียนรับงานที่ aixman
 // ทุกนาที เพราะเครื่องที่บ้านคนเปิด-ปิดตามใจเจ้าของ และเครื่องที่ประเมินตัวเอง
 // เสร็จตอนตีสามต้องได้งานตอนตีสาม ไม่ใช่ตอนเจ้าของตื่นมาเปิดเว็บ
+// (cron บนเซิร์ฟเวอร์ต้องเป็น * * * * * — ถ้าตั้งไว้ทุกห้านาที ทุกอย่างช้าตามห้าเท่า)
+// ล็อกกันรันซ้อนหมดอายุในห้านาที: ค่าเริ่มต้นคือ 24 ชั่วโมง รอบที่ถูกฆ่ากลางทาง
+// จะทิ้งล็อกไว้จนไม่มีเครื่องไหนถูกส่งต่อได้ทั้งวัน
 Schedule::command('gpuxmine:sync-nodes')
     ->everyMinute()
-    ->withoutOverlapping()
+    ->withoutOverlapping(5)
     ->runInBackground()
     ->onFailure(function () {
         Log::error('[GPUxMINE] node sync failed');
