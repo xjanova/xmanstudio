@@ -56,16 +56,25 @@
                 <h3 class="font-bold text-gray-900 dark:text-white text-lg">{{ $product->name }}</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ Str::limit($product->description, 80) }}</p>
 
+                {{-- เวอร์ชัน = Product::latestVersion() อ่าน DB อย่างเดียว ห้ามถาม GitHub ตอนเปิดหน้านี้ · แพลตฟอร์มจาก config/downloads.php → app_platforms · ไม่รู้ = ไม่แสดงแถว ห้ามเดา --}}
+                @php($latestVersion = $product->latestVersion())
+                @php($platform = $product->downloadPlatform())
+                @if($latestVersion || $platform)
                 <div class="mt-4 space-y-2 text-sm">
+                    @if($latestVersion)
                     <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                         <span class="text-gray-500 dark:text-gray-400"><x-bi th="เวอร์ชัน" en="Version" />:</span>
-                        <span class="font-semibold text-gray-900 dark:text-white px-2 py-0.5 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded">{{ $product->version ?? '1.0.0' }}</span>
+                        <span class="font-semibold text-gray-900 dark:text-white px-2 py-0.5 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded">{{ $latestVersion->version }}</span>
                     </div>
+                    @endif
+                    @if($platform)
                     <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                         <span class="text-gray-500 dark:text-gray-400"><x-bi th="แพลตฟอร์ม" en="Platform" />:</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ $product->platform ?? 'Windows' }}</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ $platform }}</span>
                     </div>
+                    @endif
                 </div>
+                @endif
 
                 {{-- ทุกแอปโหลดจาก xman4289.com เอง ห้ามลิงก์ไป GitHub (กฎเจ้าของ 2026-09-24) · ไม่มีไฟล์ให้โหลด = ไม่มีปุ่ม — ดู Product::downloadUrl() --}}
                 @php($downloadUrl = $product->downloadUrl())
@@ -137,21 +146,7 @@
                         <span class="px-3 py-1.5 bg-gradient-to-r from-emerald-400 to-green-500 text-white text-xs font-semibold rounded-full shadow-sm"><x-bi k="common.status_active" /></span>
                     </div>
                 </div>
-
-                <div class="mt-4 flex flex-wrap gap-2 ml-14">
-                    <button class="inline-flex items-center px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium transition-all">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                        </svg>
-                        <x-bi th="เอกสาร" en="Documentation" />
-                    </button>
-                    <button class="inline-flex items-center px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium transition-all">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                        </svg>
-                        API Keys
-                    </button>
-                </div>
+                {{-- ไม่มีปุ่มเอกสาร / API Keys: แพ็กเกจเช่ายังไม่มีเอกสาร และเว็บนี้ไม่มีระบบ API key ให้ลูกค้า (ปุ่มเดิมกดแล้วไม่เกิดอะไร) · มีของจริงเมื่อไหร่ค่อยใส่ลิงก์ตรงนี้ --}}
             </div>
             @endforeach
         </div>
