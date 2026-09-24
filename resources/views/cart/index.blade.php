@@ -64,6 +64,12 @@
                                             @endif
                                             <div>
                                                 <div class="font-medium text-gray-900 dark:text-white">{{ $item->product->name }}</div>
+                                                @if($item->product->isRenewable())
+                                                    {{-- quantity = months on one key, not a number of keys --}}
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                        <x-bi th="จำนวน = จำนวนเดือน · มีคีย์อยู่แล้วจะต่ออายุคีย์เดิม" en="Quantity = months · extends your key if you have one" />
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>

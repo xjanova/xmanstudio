@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
@@ -16,7 +17,7 @@ class CartController extends Controller
      * it as sent — a lifetime licence for whatever the form said, and with the
      * price left out, any term at the product's base price. The pages still show
      * these numbers (products/smspaymentchecker, products/xcluadeagent,
-     * products/winxtools); change both together.
+     * products/winxtools, products/brainx); change both together.
      */
     private const LICENSE_TERM_PRICES = [
         'sms-payment-checker' => ['monthly' => 990, 'yearly' => 9900, 'lifetime' => 29900],
@@ -24,6 +25,9 @@ class CartController extends Controller
         'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
         // Pro ฿199 ต่อปี (license รายปี) — ราคาเดียวกับ pricing API (ProductLicenseController)
         'winx-tools' => ['yearly' => 199],
+        // BrainX Cloud ฿399 ต่อเดือน — ราคาเดียวกับ pricing API (ProductLicenseController)
+        // ซื้อซ้ำ = ต่ออายุคีย์เดิม (config/licenses.php) จำนวนในตะกร้าคือจำนวนเดือน
+        'brainx' => ['monthly' => 399],
     ];
 
     /**
@@ -50,6 +54,7 @@ class CartController extends Controller
             'quantity' => 'integer|min:1|max:99',
             'license_type' => 'nullable|in:monthly,yearly,lifetime',
             'price' => 'nullable|numeric|min:0',
+            'renew_license' => 'nullable|integer',
         ]);
 
         $cart = $this->getOrCreateCart();
@@ -73,7 +78,21 @@ class CartController extends Controller
             }
 
             $price = $termPrice;
-            $customRequirements = json_encode(['license_type' => $licenseType]);
+            $requirements = ['license_type' => $licenseType];
+
+            // "ต่ออายุ" on one of the customer's own keys names that key, so the payment extends
+            // it even when they hold more than one. Anyone else's key, or one that can no longer
+            // be renewed, is ignored here — and checked again when the order is paid.
+            if ($request->filled('renew_license')) {
+                $keyId = $request->integer('renew_license');
+                $target = app(LicenseService::class)->renewalTargetFor(auth()->id(), $product, $keyId);
+
+                if ($target && $target->id === $keyId) {
+                    $requirements['renew_license_id'] = $keyId;
+                }
+            }
+
+            $customRequirements = json_encode($requirements);
         }
 
         // Check if product already in cart (replace if different license_type)

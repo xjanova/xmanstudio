@@ -93,6 +93,30 @@ class LicenseKey extends Model
             ->latest();
     }
 
+    /** Orders that extended this key after the one that issued it (renewable products). */
+    public function renewals(): HasMany
+    {
+        return $this->hasMany(LicenseRenewal::class);
+    }
+
+    /**
+     * The keys an order delivered: the ones it issued, and the ones it renewed.
+     *
+     * A renewed key keeps the order_id of the order that first issued it, so
+     * `where('order_id', ...)` alone shows a renewal order as having no key at
+     * all. `renewals` comes loaded with this order's renewal only — non-empty
+     * means the order extended that key rather than issuing it.
+     */
+    public function scopeDeliveredByOrder($query, int $orderId)
+    {
+        return $query
+            ->where(function ($q) use ($orderId) {
+                $q->where('order_id', $orderId)
+                    ->orWhereIn('id', LicenseRenewal::select('license_key_id')->where('order_id', $orderId));
+            })
+            ->with(['renewals' => fn ($q) => $q->where('order_id', $orderId)]);
+    }
+
     public function getActivationCountAttribute(): int
     {
         return (int) $this->attributes['activations'];

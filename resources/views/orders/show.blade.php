@@ -172,9 +172,10 @@
                     </div>
                 </div>
 
-                <!-- License Keys (query directly from license_keys table) -->
+                <!-- License Keys — issued by this order, or renewed by it (a renewed key keeps the
+                     order_id of the order that first issued it) -->
                 @php
-                    $orderLicenses = \App\Models\LicenseKey::where('order_id', $order->id)->with('product')->get();
+                    $orderLicenses = \App\Models\LicenseKey::deliveredByOrder($order->id)->with('product')->get();
                 @endphp
                 @if($orderLicenses->isNotEmpty())
                     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
@@ -190,6 +191,11 @@
                                     <div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $license->product->name ?? 'Product' }}</div>
                                         <div class="font-mono font-bold text-lg text-gray-900 dark:text-white">{{ $license->license_key }}</div>
+                                        @if($license->renewals->isNotEmpty())
+                                            <div class="text-xs font-medium text-green-700 dark:text-green-400 mt-1">
+                                                <x-bi th="ต่ออายุคีย์เดิมแล้ว — ใช้คีย์นี้ต่อได้เลย" en="Renewed — keep using this same key" />
+                                            </div>
+                                        @endif
                                         <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                             {{ $license->license_type === 'lifetime' ? 'ตลอดชีพ / Lifetime' : 'หมดอายุ / Expires: ' . ($license->expires_at ? $license->expires_at->format('d/m/Y') : '-') }}
                                         </div>

@@ -228,6 +228,28 @@
                 Quick Actions
             </h3>
             <div class="space-y-3">
+                @if($canRenew ?? false)
+                {{-- Renewable product (BrainX Cloud): pays for more time on THIS key — the same key,
+                     so nothing has to be re-entered anywhere. The price comes from the cart. --}}
+                <form action="{{ route('cart.add', $license->product) }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="quantity" value="1">
+                    <input type="hidden" name="license_type" value="{{ $license->product->defaultLicenseType() }}">
+                    <input type="hidden" name="renew_license" value="{{ $license->id }}">
+                    <input type="hidden" name="buy_now" value="1">
+                    <button type="submit"
+                            class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-700 hover:to-purple-700 font-semibold shadow-lg transition-all">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <x-bi th="ต่ออายุคีย์นี้" en="Renew this key" class="text-white" />
+                    </button>
+                </form>
+                <p class="text-xs text-center text-gray-500 dark:text-gray-400">
+                    <x-bi th="ใช้คีย์เดิม เวลาบวกต่อจากวันหมดอายุ" en="Same key, time adds on from its expiry" />
+                </p>
+                @endif
+
                 @if($license->product && $license->product->slug === 'autotradex')
                 <a href="https://github.com/xjanova/autotradex/releases/latest" target="_blank"
                    class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:via-violet-600 hover:to-pink-600 font-semibold shadow-lg transition-all">

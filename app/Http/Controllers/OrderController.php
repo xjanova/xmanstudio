@@ -589,8 +589,9 @@ class OrderController extends Controller
                 ->with('error', 'คำสั่งซื้อยังไม่ได้รับการชำระเงิน');
         }
 
-        // Get license keys for this order
-        $licenses = LicenseKey::where('order_id', $order->id)->get();
+        // Get license keys for this order — including a key it renewed, which keeps the
+        // order_id of the order that first issued it
+        $licenses = LicenseKey::deliveredByOrder($order->id)->get();
 
         if ($licenses->isEmpty()) {
             return redirect()
