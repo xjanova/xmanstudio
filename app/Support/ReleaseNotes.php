@@ -17,7 +17,7 @@ use Throwable;
  * - บรรทัดที่เครื่องมือเติมเอง (GitHub, Release Drafter, CI, git trailer) ทิ้งทั้งบรรทัด
  * - ลิงก์ไปโฮสต์ของ GitHub ทุกตัว (github.com, *.githubusercontent.com, *.github.io, ghcr.io …) ถูกถอด
  *   เก็บข้อความของลิงก์ไว้ · รูปที่อยู่บน GitHub ทิ้งทั้งรูป · บรรทัดที่เหลือแต่ป้าย ("Docs:") ทิ้ง
- * - ชื่อบัญชีของเรา ("xjanova/GpuXmine", "@xjanova") ที่เขียนเป็นข้อความเฉย ๆ ก็ถอด
+ * - ชื่อบัญชีของเรา ("xjanova/GpuXmine", "@xjanova") ที่เขียนเป็นข้อความเฉย ๆ ก็ถอด · SHA เต็มของ commit ย่อเหลือ 7 ตัว
  * - ลิงก์เว็บอื่น (xman4289.com, ollama.com) และ @ อื่น ๆ (@Volatile, @tailwindcss/…, LINE @ร้าน) อยู่ตามเดิม
  *
  * ไม่มีอะไรต้องตัด = คืนค่าเดิมทุก byte · ผ่านซ้ำกี่รอบก็ได้ผลเท่าเดิม — ใช้ทั้งตอน sync, migration และตอนอ่านจาก DB
@@ -234,6 +234,10 @@ final class ReleaseNotes
         if ($accounts !== []) {
             $line = preg_replace(self::accountMentionPatterns($accounts), '', $line) ?? $line;
         }
+
+        // SHA เต็ม 40 ตัวของ commit ค้นหา repo บน GitHub ได้ทันที — เหลือ 7 ตัวแบบ git log --oneline (ในบล็อกโค้ดด้วย)
+        // checksum SHA-256 (64 ตัว ไม่มีจุดตัดให้ 40 ตัวยืนเดี่ยว) และ checksum ตัวพิมพ์ใหญ่ไม่เข้าเงื่อนไข
+        $line = preg_replace('/(?<![0-9a-f])([0-9a-f]{7})[0-9a-f]{33}(?![0-9a-f])/', '$1', $line) ?? $line;
 
         if ($line === $before) {
             return $line;

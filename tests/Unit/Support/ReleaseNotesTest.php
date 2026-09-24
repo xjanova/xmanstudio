@@ -121,7 +121,8 @@ class ReleaseNotesTest extends TestCase
             . "- Bump @tailwindcss/typography from 0.5.9 to 0.5.10\r\n"
             . "- `introShownThisProcess` เป็น @Volatile static (หลุดมาจาก 21d8c79)\r\n"
             . "- ติดต่อ LINE @xmanstudio หรือ support@xman4289.com · ไม่ใช่บัญชีเรา: @xjanovax, xjanovax/tools\r\n"
-            . "- SHA1: 2fd4e1c67a2d28fced849ee1bb76e7391b93eb12\r\n"
+            . "- SHA256: 3532c4682dd4fe0977cc5d9e3add414f4a1ffa1314f0a0ad9038c567ee6c0576\r\n"
+            . "- SHA1 (certutil): 2FD4E1C67A2D28FCED849EE1BB76E7391B93EB12\r\n"
             . "- Fixed crash (#124) · Build #184\r\n"
             . 'Auto-generated release from commit `dd6fbfe`.';
 
@@ -193,6 +194,18 @@ class ReleaseNotesTest extends TestCase
     public function test_a_repository_name_with_a_commit_goes_whole(): void
     {
         $this->assertSame('แก้แล้วใน', ReleaseNotes::forCustomers('แก้แล้วใน xjanova/GpuXmine@a1b2c3d', self::ACCOUNTS));
+    }
+
+    public function test_a_full_commit_sha_is_shortened_everywhere(): void
+    {
+        // SHA เต็มค้นหา commit บน GitHub แล้วเจอ repo — ในข้อความและในบล็อกโค้ด เหลือ 7 ตัวแบบ git log --oneline
+        $this->assertSame(
+            "- fixed crash (6b3493d)\n```\nCommit: dc0d352\n```",
+            ReleaseNotes::forCustomers(
+                "- fixed crash (6b3493d0206e6d741a42cf6c46616cd0f85d5b88)\n```\nCommit: dc0d3523af9dbc1e4ab1e71fe35b922700db982f\n```",
+                self::ACCOUNTS,
+            ),
+        );
     }
 
     public function test_a_broken_byte_does_not_let_a_link_through(): void
