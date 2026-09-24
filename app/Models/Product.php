@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
@@ -90,6 +91,28 @@ class Product extends Model
     public function latestVersion()
     {
         return $this->versions()->active()->latest()->first();
+    }
+
+    /**
+     * Where the Download button in the customer's Download Center takes someone who owns this
+     * product, or null when there is nothing to download (the card then shows no button).
+     *
+     * The app's own route first (config/downloads.php → app_routes), which streams the file from
+     * this site. Anything else goes to the licence-checked /download/{slug} page, but only with an
+     * active version to hand out: that page answers 404 without one.
+     */
+    public function downloadUrl(): ?string
+    {
+        $route = config('downloads.app_routes', [])[$this->slug] ?? null;
+
+        // A route this site does not register must not take the whole page down with it
+        if ($route !== null && Route::has($route)) {
+            return route($route);
+        }
+
+        return $this->versions()->active()->exists()
+            ? route('download.page', $this->slug)
+            : null;
     }
 
     /**
