@@ -325,7 +325,7 @@
                     <h3 class="text-xl font-bold text-white mb-2">Monthly</h3>
                     <p class="text-gray-400 mb-6">For testing and small shops</p>
                     <div class="mb-6">
-                        <span class="text-4xl font-black text-white">990</span>
+                        <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'monthly')) }}</span>
                         <span class="text-gray-400 ml-2">THB/month</span>
                     </div>
                     <ul class="space-y-3 mb-8">
@@ -350,7 +350,6 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="license_type" value="monthly">
-                        <input type="hidden" name="price" value="990">
                         <button type="submit" class="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-all">
                             Get Monthly
                         </button>
@@ -365,7 +364,7 @@
                     <h3 class="text-xl font-bold text-white mb-2">Yearly</h3>
                     <p class="text-gray-400 mb-6">Best value for growing businesses</p>
                     <div class="mb-2">
-                        <span class="text-4xl font-black text-white">9,900</span>
+                        <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'yearly')) }}</span>
                         <span class="text-gray-400 ml-2">THB/year</span>
                     </div>
                     <p class="text-emerald-400 text-sm mb-6">Save 17% vs monthly</p>
@@ -391,7 +390,6 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="license_type" value="yearly">
-                        <input type="hidden" name="price" value="9900">
                         <button type="submit" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/25">
                             Get Yearly
                         </button>
@@ -403,7 +401,7 @@
                     <h3 class="text-xl font-bold text-white mb-2">Lifetime</h3>
                     <p class="text-gray-400 mb-6">One-time payment, forever access</p>
                     <div class="mb-6">
-                        <span class="text-4xl font-black text-white">29,900</span>
+                        <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'lifetime')) }}</span>
                         <span class="text-gray-400 ml-2">THB</span>
                     </div>
                     <ul class="space-y-3 mb-8">
@@ -428,7 +426,6 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="license_type" value="lifetime">
-                        <input type="hidden" name="price" value="29900">
                         <button type="submit" class="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-all">
                             Get Lifetime
                         </button>

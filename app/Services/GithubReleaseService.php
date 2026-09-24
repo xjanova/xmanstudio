@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\GithubSetting;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use App\Support\ReleaseNotes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -298,7 +299,13 @@ class GithubReleaseService
             'download_url' => $asset['browser_download_url'] ?? null,
             'download_filename' => $asset ? $asset['name'] : null,
             'file_size' => $asset ? $asset['size'] : null,
-            'changelog' => $release['body'] ?? null,
+            // body ของ GitHub พกลิงก์ repo มาเสมอ ("**Full Changelog**: …/compare/…", "by @user in …/pull/N")
+            // ลูกค้าต้องไม่รู้ repo (กฎเจ้าของ 2026-09-24) — เก็บเฉพาะข้อความที่คนเขียน · cron sync ทุก 10 นาที
+            // จึงล้างแถวของเวอร์ชันล่าสุดที่ sync ไว้ก่อนหน้านี้ให้เองด้วย
+            'changelog' => ReleaseNotes::forCustomers(
+                $release['body'] ?? null,
+                [$githubSetting->github_owner, ...ReleaseNotes::studioAccounts()],
+            ),
             'is_active' => true,
             'synced_at' => now(),
         ];

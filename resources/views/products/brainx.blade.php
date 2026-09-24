@@ -1,13 +1,12 @@
 @extends($publicLayout ?? 'layouts.app')
 
-@section('title', 'BrainX Cloud — สมองที่สองบนคลาวด์ ฿399/เดือน | XMAN Studio')
-@section('meta_description', 'BrainX Cloud: อัปโหลดโน้ตที่คุณเลือกขึ้นพื้นที่ส่วนตัว แล้วให้ Claude ใช้ได้ทุกที่ผ่าน Remote MCP ฿399 ต่อเดือน · Your second brain in the cloud for any Claude, 399 THB a month.')
+@section('title', 'BrainX Cloud — สมองที่สองบนคลาวด์ ฿' . \App\Support\LicensePlans::price('brainx', 'monthly') . '/เดือน | XMAN Studio')
+@section('meta_description', 'BrainX Cloud: อัปโหลดโน้ตที่คุณเลือกขึ้นพื้นที่ส่วนตัว แล้วให้ Claude ใช้ได้ทุกที่ผ่าน Remote MCP ฿' . \App\Support\LicensePlans::price('brainx', 'monthly') . ' ต่อเดือน · Your second brain in the cloud for any Claude, ' . \App\Support\LicensePlans::price('brainx', 'monthly') . ' THB a month.')
 
 @section('content')
 @php
-    // ราคาที่ตะกร้าคิดจริงอยู่ที่ CartController::LICENSE_TERM_PRICES['brainx'] (และ pricing API)
-    // ตัวเลขบนหน้านี้ต้องตรงกับที่นั่น — แก้ต้องแก้พร้อมกัน
-    $monthlyPrice = 399;
+    // ราคาเดียวกับที่ตะกร้าและ pricing API ใช้ — แก้ราคาที่ config/licenses.php 'plans' ที่เดียว
+    $monthlyPrice = \App\Support\LicensePlans::price('brainx', 'monthly');
 
     // คีย์ที่การซื้อครั้งนี้จะต่ออายุให้ (null = ยังไม่มี / ยังไม่ล็อกอิน / คีย์ทุกใบถูกยกเลิก → ได้คีย์ใหม่)
     $key = $renewalKey ?? null;

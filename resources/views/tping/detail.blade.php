@@ -273,7 +273,7 @@
                         <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['yearly']['price']) }}
                     </div>
                     <p class="text-gray-500 text-sm mb-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
-                    <span class="inline-block text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full mb-6">ประหยัด 48%</span>
+                    <span class="inline-block text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full mb-6">ประหยัด {{ \App\Support\LicensePlans::yearlySaving('tping') }}%</span>
                     <ul class="space-y-2 mb-8 text-sm text-left">
                         @foreach($pricing['yearly']['features'] as $feature)
                         <li class="flex items-center text-gray-300">

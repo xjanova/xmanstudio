@@ -15,6 +15,7 @@ use App\Services\GithubReleaseService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -32,11 +33,14 @@ class SmsCheckerController extends Controller
 {
     private const WALLET_DISCOUNT_PERCENT = 10;
 
-    private const PRICING = [
+    /**
+     * The plans this page offers: names, durations, features. What each one
+     * costs is in config/licenses.php; pricedPlans() puts the two together.
+     */
+    private const PLANS = [
         'monthly' => [
             'name' => 'Monthly',
             'name_th' => 'รายเดือน',
-            'price' => 499,
             'duration_days' => 30,
             'license_type' => 'monthly',
             'features' => [
@@ -48,7 +52,6 @@ class SmsCheckerController extends Controller
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 4990,
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
@@ -61,7 +64,6 @@ class SmsCheckerController extends Controller
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 29000,
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
@@ -73,6 +75,12 @@ class SmsCheckerController extends Controller
             ],
         ],
     ];
+
+    /** PLANS with each price from config/licenses.php — only the terms the store sells. */
+    private static function pricedPlans(): array
+    {
+        return LicensePlans::priced('smschecker', self::PLANS);
+    }
 
     public function detail(GithubReleaseService $github)
     {
@@ -88,7 +96,7 @@ class SmsCheckerController extends Controller
         }
 
         return view('smschecker.detail', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'product' => $product,
             'version' => $version,
         ]);
@@ -106,7 +114,7 @@ class SmsCheckerController extends Controller
 
         return view('smschecker.pricing', [
             'machineId' => $machineId,
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
         ]);
     }
 
@@ -114,13 +122,13 @@ class SmsCheckerController extends Controller
     {
         $this->abortUnlessOnSale();
 
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
         $product = Product::where('slug', 'smschecker')->firstOrFail();
         $machineId = $request->query('machine_id') ?? session('smschecker_machine_id');
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
 
         $wallet = auth()->check() ? Wallet::getOrCreateForUser(auth()->id()) : null;
         $walletDiscount = (int) floor($planInfo['price'] * self::WALLET_DISCOUNT_PERCENT / 100);
@@ -142,7 +150,7 @@ class SmsCheckerController extends Controller
     {
         $this->abortUnlessOnSale();
 
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
@@ -156,7 +164,7 @@ class SmsCheckerController extends Controller
 
         $machineId = $validated['machine_id'] ?? session('smschecker_machine_id');
         $product = Product::where('slug', 'smschecker')->firstOrFail();
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
 
         $subtotal = $planInfo['price'];
@@ -356,7 +364,7 @@ class SmsCheckerController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         $paymentService = app(ThaiPaymentService::class);
         $paymentInfo = null;
@@ -417,7 +425,7 @@ class SmsCheckerController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
         $licenses = LicenseKey::where('order_id', $order->id)->get();
 
         return view('smschecker.payment-success', [

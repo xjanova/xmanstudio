@@ -14,6 +14,7 @@ use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -33,11 +34,14 @@ class LocalVpnWebController extends Controller
 {
     private const WALLET_DISCOUNT_PERCENT = 10;
 
-    private const PRICING = [
+    /**
+     * The plans this page offers: names, durations, features. What each one
+     * costs is in config/licenses.php; pricedPlans() puts the two together.
+     */
+    private const PLANS = [
         'monthly' => [
             'name' => 'Monthly',
             'name_th' => 'รายเดือน',
-            'price' => 399,
             'duration_days' => 30,
             'license_type' => 'monthly',
             'features' => [
@@ -51,7 +55,6 @@ class LocalVpnWebController extends Controller
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 2500,
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
@@ -66,7 +69,6 @@ class LocalVpnWebController extends Controller
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 5000,
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
@@ -80,6 +82,12 @@ class LocalVpnWebController extends Controller
             ],
         ],
     ];
+
+    /** PLANS with each price from config/licenses.php — only the terms the store sells. */
+    private static function pricedPlans(): array
+    {
+        return LicensePlans::priced('localvpn', self::PLANS);
+    }
 
     /**
      * Show LocalVPN detail / landing page
@@ -97,7 +105,7 @@ class LocalVpnWebController extends Controller
         }
 
         return view('localvpn.detail', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'product' => $product,
             'version' => $version,
         ]);
@@ -115,7 +123,7 @@ class LocalVpnWebController extends Controller
         }
 
         return view('localvpn.pricing', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'machineId' => $machineId,
             'walletDiscount' => self::WALLET_DISCOUNT_PERCENT,
         ]);
@@ -314,7 +322,7 @@ class LocalVpnWebController extends Controller
      */
     public function checkout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             return redirect()->route('localvpn.pricing');
         }
 
@@ -324,7 +332,7 @@ class LocalVpnWebController extends Controller
             abort(404, 'Product not found');
         }
 
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
         $machineId = $request->query('machine_id') ?? session('localvpn_machine_id');
 
         if ($machineId) {
@@ -354,7 +362,7 @@ class LocalVpnWebController extends Controller
      */
     public function processCheckout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
@@ -368,7 +376,7 @@ class LocalVpnWebController extends Controller
 
         $machineId = $validated['machine_id'] ?? session('localvpn_machine_id');
         $product = Product::where('slug', 'localvpn')->firstOrFail();
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
 
         // === Calculate price & discount ===
@@ -607,7 +615,7 @@ class LocalVpnWebController extends Controller
 
         $metadata = $order->metadata ?? [];
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         $paymentService = app(ThaiPaymentService::class);
         $paymentInfo = null;
@@ -686,7 +694,7 @@ class LocalVpnWebController extends Controller
 
         $metadata = $order->metadata ?? [];
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         $licenses = LicenseKey::where('order_id', $order->id)->get();
 

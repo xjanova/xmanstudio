@@ -14,6 +14,7 @@ use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -37,13 +38,13 @@ class TpingController extends Controller
     private const WALLET_DISCOUNT_PERCENT = 10;
 
     /**
-     * License pricing information
+     * The plans this page offers: names, durations, features. What each one
+     * costs is in config/licenses.php; pricedPlans() puts the two together.
      */
-    private const PRICING = [
+    private const PLANS = [
         'monthly' => [
             'name' => 'Monthly',
             'name_th' => 'รายเดือน',
-            'price' => 399,
             'duration_days' => 30,
             'license_type' => 'monthly',
             'features' => [
@@ -55,7 +56,6 @@ class TpingController extends Controller
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 2500,
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
@@ -68,7 +68,6 @@ class TpingController extends Controller
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 5000,
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
@@ -80,6 +79,12 @@ class TpingController extends Controller
             ],
         ],
     ];
+
+    /** PLANS with each price from config/licenses.php — only the terms the store sells. */
+    private static function pricedPlans(): array
+    {
+        return LicensePlans::priced('tping', self::PLANS);
+    }
 
     /**
      * Show Tping detail / landing page
@@ -99,7 +104,7 @@ class TpingController extends Controller
         }
 
         return view('tping.detail', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'product' => $product,
             'version' => $version,
         ]);
@@ -120,7 +125,7 @@ class TpingController extends Controller
 
         return view('tping.pricing', [
             'machineId' => $machineId,
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
         ]);
     }
 
@@ -131,7 +136,7 @@ class TpingController extends Controller
      */
     public function checkout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
@@ -142,7 +147,7 @@ class TpingController extends Controller
         }
 
         $machineId = $request->query('machine_id') ?? session('tping_machine_id');
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
 
         // Load wallet for authenticated user
         $wallet = auth()->check() ? Wallet::getOrCreateForUser(auth()->id()) : null;
@@ -168,7 +173,7 @@ class TpingController extends Controller
      */
     public function processCheckout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
@@ -182,7 +187,7 @@ class TpingController extends Controller
 
         $machineId = $validated['machine_id'] ?? session('tping_machine_id');
         $product = Product::where('slug', 'tping')->firstOrFail();
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
 
         // === Calculate price & discount ===
@@ -411,7 +416,7 @@ class TpingController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         $paymentService = app(ThaiPaymentService::class);
         $paymentInfo = null;
@@ -485,7 +490,7 @@ class TpingController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         // Load license keys for this order (available for wallet payments)
         $licenses = LicenseKey::where('order_id', $order->id)->get();

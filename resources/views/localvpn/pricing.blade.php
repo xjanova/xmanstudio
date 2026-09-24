@@ -110,7 +110,7 @@
                         <h3 class="text-xl font-bold text-white mb-2">{{ $pricing['yearly']['name_th'] }}</h3>
                         <div class="text-4xl font-black text-cyan-400">฿{{ number_format($pricing['yearly']['price']) }}</div>
                         <p class="text-gray-500 text-sm mt-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
-                        <span class="inline-block mt-2 text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full">ประหยัด 48%</span>
+                        <span class="inline-block mt-2 text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full">ประหยัด {{ \App\Support\LicensePlans::yearlySaving('localvpn') }}%</span>
                     </div>
                     <ul class="space-y-3 mb-6 text-sm">
                         @foreach($pricing['yearly']['features'] as $feature)
