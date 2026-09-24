@@ -224,6 +224,15 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['GET', route('winx-tools.download', ['version' => '1.0.2', 'from' => 'app'])],
             ['GET', route('cluadex.download')],
             ['GET', route('gpuxmine.download')],
+            ['GET', route('brainx.download')],
+            ['HEAD', route('brainx.download')],
+            ['GET', route('autotradex.download')],
+            ['GET', route('autotradex.download', ['version' => '1.2.0'])],
+            ['GET', route('chanthra-studio.download')],
+            ['GET', route('chanthra-studio.download', ['version' => '0.7.31'])],
+            ['GET', route('aipray.download')],
+            ['GET', route('aipray.download', ['version' => '1.2.4'])],
+            ['HEAD', route('aipray.download', ['version' => '1.2.4'])],
             ['GET', route('tping.download.apk')],
             ['HEAD', route('tping.download.apk')],
             ['GET', route('smschecker.download.apk')],
@@ -239,6 +248,8 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             route('download.page', ['slug' => 'some-desktop-app']), // หน้า HTML
             '/tping/download', '/smschecker/download', '/localvpn/download', '/tping/install-guide', // หน้าของแอป APK
             '/tping/download/apkx', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
+            '/apps/aipray', '/apps/aipray/donate', '/chanthra-studio', '/chanthra-studio/manual', '/autotradex/pricing', // หน้าของแอปที่โหลดฟรี
+            '/brainx', '/brainx/downloads',
         ] as $url) {
             $this->assertFalse($matches('GET', $url), "GET {$url} ต้องไม่อยู่ในกฎนี้");
         }
