@@ -176,6 +176,7 @@ class AffiliateCommission extends Model
             'order' => 'สินค้า',
             'rental_payment' => 'Rental',
             'autotradex' => 'AutoTradeX',
+            'gpuxmine' => 'GPUxMINE',
             default => $this->source_type ?? 'ไม่ระบุ',
         };
     }

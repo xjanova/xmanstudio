@@ -7,6 +7,8 @@ use App\Models\RentalPackage;
 use App\Models\RentalPayment;
 use App\Models\User;
 use App\Models\UserRental;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -119,6 +121,41 @@ class EnumColumnsMatchCodeTest extends TestCase
         foreach (Quotation::STATUSES as $status) {
             $quotation->update(['status' => $status]);
             $this->assertSame($status, $quotation->fresh()->status, "the column rejected {$status}");
+        }
+    }
+
+    public function test_every_wallet_transaction_type_the_code_knows_can_be_stored(): void
+    {
+        // 'earning' (GPUxMINE payouts) arrived later, in a migration of its own. Lose that
+        // migration and gpuxmine:settle-earnings fails every owner on MySQL.
+        $user = User::factory()->create();
+        $wallet = Wallet::getOrCreateForUser($user->id);
+
+        $types = [
+            WalletTransaction::TYPE_DEPOSIT,
+            WalletTransaction::TYPE_WITHDRAWAL,
+            WalletTransaction::TYPE_PAYMENT,
+            WalletTransaction::TYPE_REFUND,
+            WalletTransaction::TYPE_BONUS,
+            WalletTransaction::TYPE_ADJUSTMENT,
+            WalletTransaction::TYPE_CASHBACK,
+            WalletTransaction::TYPE_EARNING,
+        ];
+
+        foreach ($types as $i => $type) {
+            $transaction = WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'user_id' => $user->id,
+                'transaction_id' => 'ENUM-TEST-' . $i,
+                'type' => $type,
+                'amount' => 1,
+                'balance_before' => 0,
+                'balance_after' => 1,
+                'status' => WalletTransaction::STATUS_COMPLETED,
+            ]);
+
+            $this->assertSame($type, $transaction->fresh()->type, "the column rejected {$type}");
+            $this->assertNotSame($type, $transaction->type_label, "{$type} has no label");
         }
     }
 }
