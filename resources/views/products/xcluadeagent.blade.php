@@ -488,7 +488,7 @@
                     </div>
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">รายปี</h3>
-                        <div class="text-4xl font-black text-white">฿199</div>
+                        <div class="text-4xl font-black text-white">฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'yearly')) }}</div>
                         <p class="text-gray-500 text-sm mt-1">365 วัน</p>
                     </div>
                     <ul class="space-y-3 mb-8 text-sm">
@@ -508,10 +508,9 @@
                             @csrf
                             <input type="hidden" name="quantity" value="1">
                             <input type="hidden" name="license_type" value="yearly">
-                            <input type="hidden" name="price" value="199">
                             <button type="submit"
                                     class="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25">
-                                ซื้อ License รายปี - ฿199
+                                ซื้อ License รายปี - ฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'yearly')) }}
                             </button>
                         </form>
                     @endif
@@ -521,7 +520,7 @@
                 <div class="bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/30 hover:border-amber-400 transition-all">
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">ตลอดชีพ</h3>
-                        <div class="text-4xl font-black text-white">฿1,999</div>
+                        <div class="text-4xl font-black text-white">฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'lifetime')) }}</div>
                         <p class="text-amber-400 text-sm mt-1">ไม่มีวันหมดอายุ</p>
                     </div>
                     <ul class="space-y-3 mb-8 text-sm">
@@ -541,10 +540,9 @@
                             @csrf
                             <input type="hidden" name="quantity" value="1">
                             <input type="hidden" name="license_type" value="lifetime">
-                            <input type="hidden" name="price" value="1999">
                             <button type="submit"
                                     class="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-500/25">
-                                ซื้อ License ตลอดชีพ - ฿1,999
+                                ซื้อ License ตลอดชีพ - ฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'lifetime')) }}
                             </button>
                         </form>
                     @endif

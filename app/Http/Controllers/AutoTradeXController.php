@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\ThaiPaymentService;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -25,31 +26,35 @@ class AutoTradeXController extends Controller
     private const EARLY_BIRD_DISCOUNT_PERCENT = 20;
 
     /**
-     * License pricing information
+     * The plans this page offers: names, durations, features. What each one
+     * costs is in config/licenses.php; pricedPlans() puts the two together.
      */
-    private const PRICING = [
+    private const PLANS = [
         'monthly' => [
             'name' => 'Monthly',
             'name_th' => 'รายเดือน',
-            'price' => 990,
             'duration_days' => 30,
             'license_type' => 'monthly',
         ],
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 7900,
             'duration_days' => 365,
             'license_type' => 'yearly',
         ],
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 19900,
             'duration_days' => null, // Never expires
             'license_type' => 'lifetime',
         ],
     ];
+
+    /** PLANS with each price from config/licenses.php — only the terms the store sells. */
+    private static function pricedPlans(): array
+    {
+        return LicensePlans::priced('autotradex', self::PLANS);
+    }
 
     /**
      * Show pricing page
@@ -86,7 +91,7 @@ class AutoTradeXController extends Controller
      */
     public function checkout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
@@ -122,7 +127,7 @@ class AutoTradeXController extends Controller
      */
     public function processCheckout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
@@ -228,7 +233,7 @@ class AutoTradeXController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         $paymentService = app(ThaiPaymentService::class);
         $paymentInfo = null;
@@ -346,7 +351,7 @@ class AutoTradeXController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         return view('autotradex.payment-success', [
             'order' => $order,
@@ -506,7 +511,7 @@ class AutoTradeXController extends Controller
     {
         $pricing = [];
 
-        foreach (self::PRICING as $key => $plan) {
+        foreach (self::pricedPlans() as $key => $plan) {
             $pricing[$key] = $plan;
             $pricing[$key]['original_price'] = $plan['price'];
 

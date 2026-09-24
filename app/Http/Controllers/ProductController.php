@@ -147,17 +147,16 @@ class ProductController extends Controller
             return redirect()->route('localvpn.detail');
         }
 
-        // Custom views for each product
+        // Custom views, keyed by the product's real slug. Keys that matched no
+        // product ('xcluadeagent', 'live-x-shop-pro', 'winxtools', 'postxagent')
+        // were removed: they never showed a page, and switching them on would
+        // put pages nobody reviewed in front of customers.
         $customViews = [
             'autotradex' => 'products.autotradex',
             'spiderx' => 'products.spiderx',
-            'xcluadeagent' => 'products.xcluadeagent',
             'cluadex-ai-coding-assistant' => 'products.xcluadeagent',
             'phonex-manager' => 'products.phonexmanager',
-            'live-x-shop-pro' => 'products.livexshoppro',
-            'winxtools' => 'products.winxtools',
             'winx-tools' => 'products.winxtools',
-            'postxagent' => 'products.postxagent',
             'gpusharx' => 'products.gpusharx',
             'skidrow-killer' => 'products.skidrowkiller',
             'sms-payment-checker' => 'products.smspaymentchecker',

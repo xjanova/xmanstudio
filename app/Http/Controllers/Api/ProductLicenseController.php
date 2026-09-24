@@ -8,6 +8,7 @@ use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductDevice;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -19,24 +20,6 @@ use Illuminate\Support\Str;
  */
 class ProductLicenseController extends Controller
 {
-    /**
-     * Default pricing for products (can be overridden per product)
-     */
-    private const DEFAULT_PRICING = [
-        'monthly' => [
-            'original' => 399,
-            'currency' => 'THB',
-        ],
-        'yearly' => [
-            'original' => 2500,
-            'currency' => 'THB',
-        ],
-        'lifetime' => [
-            'original' => 5000,
-            'currency' => 'THB',
-        ],
-    ];
-
     /** อายุของแต่ละแผน (วัน) ที่ pricing() บอกแอป — null = ใช้ได้ตลอด */
     private const PLAN_DURATION_DAYS = [
         'monthly' => 30,
@@ -1070,12 +1053,13 @@ class ProductLicenseController extends Controller
             ], 404);
         }
 
-        // เฉพาะแผนที่ผลิตภัณฑ์นี้ขายจริง ตามลำดับที่ประกาศไว้ (WinXTools มีแค่ lifetime)
+        // เฉพาะแผนที่ผลิตภัณฑ์นี้ขายจริง ตามลำดับในตารางราคา (config/licenses.php 'plans')
+        // สินค้าที่ไม่ขายแผนไหนเลย (Aipray ฟรี, ตัวที่ยังไม่เปิดขาย) ได้ plans ว่าง ไม่ใช่ราคาที่แต่งขึ้น
         $plans = [];
-        foreach ($this->getPricingForProduct($product->slug) as $type => $plan) {
+        foreach (LicensePlans::for($product->slug) as $type => $price) {
             $plans[$type] = [
-                'price' => $plan['original'],
-                'currency' => $plan['currency'],
+                'price' => $price,
+                'currency' => LicensePlans::CURRENCY,
                 'duration_days' => self::PLAN_DURATION_DAYS[$type],
                 'features' => $this->getFeaturesByType($productSlug, $type),
             ];
@@ -1088,7 +1072,8 @@ class ProductLicenseController extends Controller
                     'name' => $product->name,
                     'slug' => $product->slug,
                 ],
-                'plans' => $plans,
+                // {} ไม่ใช่ [] เมื่อว่าง — แอปอ่าน plans เป็น object/map เสมอ
+                'plans' => $plans ?: new \stdClass,
                 // หน้าเว็บที่ซื้อได้ — null ถ้าสินค้าปิดขายอยู่ (หน้าสินค้าตอบ 404)
                 'purchase_url' => $product->is_active ? route('products.show', $product->slug) : null,
             ],
@@ -1117,40 +1102,6 @@ class ProductLicenseController extends Controller
     private function getTrialFeatures(string $productSlug): array
     {
         return ['basic_features', 'trial_mode'];
-    }
-
-    /**
-     * Get pricing for product
-     *
-     * คืนเฉพาะแผนที่ผลิตภัณฑ์นั้นขาย — pricing() ส่งให้แอปตามนี้ทุกแผน ไม่เติมแผนที่ไม่มีให้
-     */
-    private function getPricingForProduct(string $productSlug): array
-    {
-        // Per-product pricing overrides
-        $productPricing = [
-            // Pro ฿199 ต่อปี — ราคาเดียวกับหน้า products/winxtools และ
-            // CartController::LICENSE_TERM_PRICES แก้ต้องแก้พร้อมกัน
-            'winx-tools' => [
-                'yearly' => ['original' => 199, 'currency' => 'THB'],
-            ],
-            // BrainX Cloud ฿399 ต่อเดือน — แผนเดียว ราคาเดียวกับ CartController::LICENSE_TERM_PRICES
-            // แก้ต้องแก้พร้อมกัน · ซื้อซ้ำต่ออายุคีย์เดิม (config/licenses.php)
-            'brainx' => [
-                'monthly' => ['original' => 399, 'currency' => 'THB'],
-            ],
-            'smschecker' => [
-                'monthly' => ['original' => 499, 'currency' => 'THB'],
-                'yearly' => ['original' => 4990, 'currency' => 'THB'],
-                'lifetime' => ['original' => 29000, 'currency' => 'THB'],
-            ],
-            'localvpn' => [
-                'monthly' => ['original' => 399, 'currency' => 'THB'],
-                'yearly' => ['original' => 2500, 'currency' => 'THB'],
-                'lifetime' => ['original' => 5000, 'currency' => 'THB'],
-            ],
-        ];
-
-        return $productPricing[$productSlug] ?? self::DEFAULT_PRICING;
     }
 
     /**

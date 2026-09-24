@@ -615,7 +615,12 @@ class WinXToolsDistributionTest extends TestCase
         // assertSame = คีย์ ลำดับ และชนิดตรงกันทุกตัว — สิ่งที่แอปเดิม parse อยู่
         $this->assertSame($plans(499, 4990, 29000), $this->getJson('/api/v1/product/smschecker/pricing')->assertOk()->json('data.plans'));
         $this->assertSame($plans(399, 2500, 5000), $this->getJson('/api/v1/product/localvpn/pricing')->assertOk()->json('data.plans'));
-        $this->assertSame($plans(399, 2500, 5000), $this->getJson('/api/v1/product/some-desktop-app/pricing')->assertOk()->json('data.plans'));
+
+        // สินค้าที่ไม่มีราคาใน config/licenses.php ไม่ได้ 399/2500/5000 ที่แต่งขึ้นอีกแล้ว
+        // plans ว่างเป็น object {} ไม่ใช่ [] — แอปอ่าน plans เป็น map เสมอ
+        $response = $this->getJson('/api/v1/product/some-desktop-app/pricing')->assertOk();
+        $this->assertSame([], $response->json('data.plans'));
+        $this->assertStringContainsString('"plans":{}', $response->getContent());
     }
 
     // ── trial ─────────────────────────────────────────────────────────
