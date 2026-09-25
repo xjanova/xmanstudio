@@ -150,6 +150,29 @@ class WalletWithdrawalTest extends TestCase
         $this->actingAs($this->user)->get('/wallet/transactions')->assertOk()->assertSee('พักยอดไว้ · รอแอดมินอนุมัติ');
     }
 
+    public function test_the_form_shows_the_kyc_account_or_asks_for_one(): void
+    {
+        $this->actingAs($this->user)->get('/wallet/withdraw')->assertOk()
+            ->assertSee('name="request_key"', false)
+            ->assertSee('กสิกรไทย · xxx-7890')
+            ->assertSee('บัญชีที่ยืนยันตัวตนไว้')
+            ->assertSee('฿100.00')          // ขั้นต่ำ
+            ->assertSee('฿500.00')          // ถอนได้สูงสุด
+            ->assertDontSee('name="account_number"', false)
+            ->assertDontSee(self::ACCOUNT)
+            ->assertSee('ยังไม่เคยขอถอนเงิน');
+
+        $noBank = $this->verifiedUser(withBank: false);
+        $this->fund($noBank, '50.00');
+        $this->actingAs($noBank)->get('/wallet/withdraw')->assertOk()
+            ->assertSee('name="account_number"', false)
+            ->assertSee('name="promptpay_id"', false)
+            ->assertSee('ยอดในกระเป๋ายังไม่ถึงขั้นต่ำ');
+
+        // หน้ากระเป๋ามีทางไปหน้าถอน
+        $this->actingAs($this->user)->get('/wallet')->assertOk()->assertSee(route('user.wallet.withdraw'), false);
+    }
+
     public function test_the_same_submit_twice_makes_one_request_and_one_hold(): void
     {
         $key = (string) Str::uuid();
