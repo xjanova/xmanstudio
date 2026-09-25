@@ -584,6 +584,10 @@ class WalletWithdrawalTest extends TestCase
             ->assertSessionHas('success');
         $this->assertSame(WalletWithdrawal::STATUS_APPROVED, $w->fresh()->status);
         $this->assertSame('200.00', $this->balance());
+
+        // หน้าผลบอกทั้งคนที่เริ่มโอนและคนที่บันทึก — และเลขเต็มยังอยู่ให้เทียบกับรายการเดินบัญชี
+        $this->actingAs($this->admin)->get("/admin/wallets/withdrawals/{$w->id}")->assertOk()
+            ->assertSee('เริ่มโอนโดย:')->assertSee('SCB-7788')->assertSee(self::ACCOUNT)->assertDontSee('บันทึกว่าโอนแล้ว');
     }
 
     public function test_the_admin_can_still_reject_after_starting_and_the_hold_returns_once(): void
