@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\Satang;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Wallet extends Model
@@ -83,7 +85,13 @@ class Wallet extends Model
     }
 
     /**
-     * Deduct money from wallet (for payments)
+     * Deduct money from wallet (for payments) — null when the wallet cannot cover it right now
+     *
+     * The deduction is one conditional UPDATE (balance >= amount, wallet active), not a check on
+     * this model followed by an unconditional decrement. Callers load the wallet, build an order,
+     * then pay; the balance they read may be stale by then. A withdrawal request that held the
+     * same money in between (WalletWithdrawalService) used to be spent a second time and leave the
+     * balance negative — the goods and the cash out of one baht. Callers must handle null.
      */
     public function pay(
         float $amount,
@@ -92,28 +100,44 @@ class Wallet extends Model
         ?int $referenceId = null,
         array $metadata = []
     ): ?WalletTransaction {
-        if (! $this->hasSufficientBalance($amount)) {
+        // Whole satang: the columns are DECIMAL(12,2), and a raw float is never bound into the SQL
+        $satang = (int) round($amount * 100);
+        if ($satang < 0) {
             return null;
         }
+        $baht = Satang::toBaht($satang);
 
-        $balanceBefore = $this->balance;
+        return DB::transaction(function () use ($satang, $baht, $description, $referenceType, $referenceId, $metadata) {
+            $payable = static::whereKey($this->id)->where('is_active', true)->where('balance', '>=', $baht);
 
-        $this->decrement('balance', $amount);
-        $this->increment('total_spent', $amount);
+            // A zero payment (fully discounted order) changes no column, and MySQL reports an UPDATE
+            // that changes nothing as 0 rows — ask instead of updating
+            $taken = $satang === 0
+                ? $payable->exists()
+                : $payable->decrement('balance', $baht, ['total_spent' => DB::raw('total_spent + ' . $baht)]) === 1;
 
-        return $this->transactions()->create([
-            'user_id' => $this->user_id,
-            'transaction_id' => $this->generateTransactionId(),
-            'type' => WalletTransaction::TYPE_PAYMENT,
-            'amount' => -$amount,
-            'balance_before' => $balanceBefore,
-            'balance_after' => $this->fresh()->balance,
-            'reference_type' => $referenceType,
-            'reference_id' => $referenceId,
-            'description' => $description,
-            'status' => WalletTransaction::STATUS_COMPLETED,
-            'metadata' => $metadata,
-        ]);
+            if (! $taken) {
+                return null;
+            }
+
+            // The row is locked by the UPDATE until the caller commits: this is our own result
+            $this->refresh();
+            $after = Satang::fromBaht((string) $this->balance);
+
+            return $this->transactions()->create([
+                'user_id' => $this->user_id,
+                'transaction_id' => $this->generateTransactionId(),
+                'type' => WalletTransaction::TYPE_PAYMENT,
+                'amount' => Satang::toBaht(-$satang),
+                'balance_before' => Satang::toBaht($after + $satang),
+                'balance_after' => Satang::toBaht($after),
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'description' => $description,
+                'status' => WalletTransaction::STATUS_COMPLETED,
+                'metadata' => $metadata,
+            ]);
+        });
     }
 
     /**

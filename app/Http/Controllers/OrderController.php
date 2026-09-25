@@ -18,6 +18,7 @@ use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Support\Satang;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -263,6 +264,19 @@ class OrderController extends Controller
                     'App\Models\Order',
                     $order->id
                 );
+
+                // The balance checked above was read before the order was built — a withdrawal
+                // request or another purchase may have taken it since. No money moved: undo the
+                // order (and its coupon/commission rows) and leave the cart as it was.
+                if ($transaction === null) {
+                    DB::rollBack();
+
+                    $left = (string) (Wallet::where('user_id', auth()->id())->value('balance') ?? '0');
+
+                    return redirect()
+                        ->back()
+                        ->with('error', 'ยอดเงินใน Wallet ไม่เพียงพอ (ยอดคงเหลือ: ' . Satang::format(Satang::fromBaht($left)) . ') — ยังไม่ได้ตัดเงินและยังไม่ได้สร้างคำสั่งซื้อ');
+                }
 
                 // Mark order as paid + link wallet transaction
                 $order->update([
