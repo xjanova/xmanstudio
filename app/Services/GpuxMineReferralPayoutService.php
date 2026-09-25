@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Support\Satang;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -56,7 +57,7 @@ class GpuxMineReferralPayoutService
 
         $affiliate = Affiliate::find($peek->affiliate_id);
         $user = $affiliate ? User::find($affiliate->user_id) : null;
-        if ($affiliate === null || ! $affiliate->isActive() || $user === null || $user->is_active === false) {
+        if ($this->referrerBlocker($affiliate, $user) !== null) {
             return false;
         }
 
@@ -109,21 +110,54 @@ class GpuxMineReferralPayoutService
     }
 
     /**
+     * ทำไมค่าแนะนำ pending รายการนี้จ่ายเข้ากระเป๋าไม่ได้ตอนนี้ — null = จ่ายได้ (หรือไม่ใช่ pending แล้ว)
+     *
+     * หน้าค่าแนะนำของแอดมินบอกสาเหตุนี้ตรง ๆ แทน "อาจจ่ายแล้วหรือถูกปฏิเสธ"
+     */
+    public function blockedReason(int $commissionId): ?string
+    {
+        $commission = AffiliateCommission::find($commissionId);
+        if ($commission === null || $commission->status !== 'pending' || $commission->source_type !== self::SOURCE) {
+            return null;
+        }
+
+        $affiliate = Affiliate::find($commission->affiliate_id);
+        $user = $affiliate ? User::find($affiliate->user_id) : null;
+
+        if ($reason = $this->referrerBlocker($affiliate, $user)) {
+            return $reason;
+        }
+
+        $wallet = Wallet::where('user_id', $user->id)->first();
+
+        return $wallet !== null && ! $wallet->is_active
+            ? 'กระเป๋าเงินของผู้แนะนำถูกระงับ — ระบบจะจ่ายเองเมื่อเปิดคืน หรือกดปฏิเสธถ้าไม่ต้องการจ่าย'
+            : null;
+    }
+
+    /**
      * ค่าแนะนำ GPUxMINE ที่ยังค้าง pending — ของรอบแรกที่รอแอดมิน และของผู้แนะนำที่กระเป๋าเพิ่งเปิดคืน
+     *
+     * คัดเฉพาะรายการที่จ่ายได้จริงตั้งแต่ใน query (affiliate active, บัญชีไม่ถูกปิด, กระเป๋าไม่ถูกระงับ
+     * หรือยังไม่มี) — รายการของผู้แนะนำที่จ่ายไม่ได้ไปเรื่อย ๆ ค้างเป็น pending ที่ id ต่ำสุด ถ้าไม่คัดออก
+     * มันจะกินโควตา SWEEP_LIMIT ทุกรอบ และรายการของคนอื่นที่ id สูงกว่าไม่ถูกจ่ายอีกเลย
+     * ที่ถูกคัดออกนับเป็น blocked ให้รายงานของคำสั่งเห็น
      *
      * รายการหนึ่งพังไม่ลากรายการอื่น รอบหน้าลองใหม่
      *
-     * @return array{paid:int, waiting:int, failed:int}
+     * @return array{paid:int, waiting:int, failed:int, blocked:int}
      */
     public function payPending(): array
     {
-        $result = ['paid' => 0, 'waiting' => 0, 'failed' => 0];
+        $result = ['paid' => 0, 'waiting' => 0, 'failed' => 0, 'blocked' => 0];
 
-        $ids = AffiliateCommission::where('source_type', self::SOURCE)
-            ->where('status', 'pending')
-            ->orderBy('id')
+        $ids = $this->payableNow()
+            ->orderBy('affiliate_commissions.id')
             ->limit(self::SWEEP_LIMIT)
-            ->pluck('id');
+            ->pluck('affiliate_commissions.id');
+
+        $result['blocked'] = AffiliateCommission::where('source_type', self::SOURCE)->where('status', 'pending')->count()
+            - $this->payableNow()->count();
 
         foreach ($ids as $id) {
             try {
@@ -138,6 +172,35 @@ class GpuxMineReferralPayoutService
         }
 
         return $result;
+    }
+
+    /**
+     * ค่าแนะนำ GPUxMINE pending ที่ผู้แนะนำรับเงินได้ตอนนี้ — เงื่อนไขเดียวกับ referrerBlocker() และการ
+     * ตรวจกระเป๋าใน pay() แต่อยู่ใน SQL (users.is_active ที่เป็น NULL ถือว่าเปิด แบบเดียวกับ pay())
+     */
+    private function payableNow(): Builder
+    {
+        return AffiliateCommission::query()
+            ->join('affiliates', 'affiliates.id', '=', 'affiliate_commissions.affiliate_id')
+            ->join('users', 'users.id', '=', 'affiliates.user_id')
+            ->leftJoin('wallets', 'wallets.user_id', '=', 'users.id')
+            ->where('affiliate_commissions.source_type', self::SOURCE)
+            ->where('affiliate_commissions.status', 'pending')
+            ->where('affiliates.status', 'active')
+            ->where(fn (Builder $q) => $q->where('users.is_active', true)->orWhereNull('users.is_active'))
+            ->where(fn (Builder $q) => $q->whereNull('wallets.id')->orWhere('wallets.is_active', true));
+    }
+
+    /** ผู้แนะนำคนนี้รับเงินไม่ได้เพราะอะไร (ไม่รวมกระเป๋า — ตรวจใต้ล็อกใน pay()) — null = รับได้ */
+    private function referrerBlocker(?Affiliate $affiliate, ?User $user): ?string
+    {
+        return match (true) {
+            $affiliate === null => 'ไม่พบบัญชี affiliate ของผู้แนะนำแล้ว — กดปฏิเสธรายการนี้แทน',
+            ! $affiliate->isActive() => 'บัญชี affiliate ของผู้แนะนำไม่ active (' . $affiliate->status . ') — ระบบจะจ่ายเองเมื่อเปิดคืน หรือกดปฏิเสธถ้าไม่ต้องการจ่าย',
+            $user === null => 'บัญชีผู้แนะนำถูกลบแล้ว — กดปฏิเสธรายการนี้แทน',
+            $user->is_active === false => 'บัญชีผู้แนะนำถูกปิดการใช้งาน — ระบบจะจ่ายเองเมื่อเปิดคืน หรือกดปฏิเสธถ้าไม่ต้องการจ่าย',
+            default => null,
+        };
     }
 
     /** กระเป๋าของผู้แนะนำ — สร้างให้ถ้ายังไม่มี โดยไม่ชนกับใครที่สร้างพร้อมกัน */

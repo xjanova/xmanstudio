@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Services\GpuxMineEarningSettlementService;
+use App\Services\GpuxMineReferralPayoutService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Console\Kernel as ConsoleKernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -446,6 +447,101 @@ class GpuxMineEarningSettlementTest extends TestCase
         $this->assertSame('0.40', $this->wallet($referrer)->balance);
         $this->assertSame(1, WalletTransaction::where('user_id', $referrer->id)->count());
         $this->assertSame('0.00', $affiliate->fresh()->total_pending);
+    }
+
+    /**
+     * รีวิวรอบสอง: การกวาดหยิบ 500 รายการแรกตาม id โดยไม่คัดผู้แนะนำที่จ่ายไม่ได้ออก — เมื่อรายการของ
+     * คนที่กระเป๋าถูกปิดค้างเกิน 500 รายการ ค่าแนะนำของคนอื่นที่ id สูงกว่าไม่เคยถูกจ่ายอีกเลย
+     */
+    public function test_referrers_who_cannot_be_paid_never_starve_the_sweep(): void
+    {
+        $frozen = User::factory()->create();
+        $frozenAffiliate = $this->affiliateFor($frozen);
+        Wallet::getOrCreateForUser($frozen->id)->update(['is_active' => false]);
+
+        $now = now();
+        $stuck = array_fill(0, GpuxMineReferralPayoutService::SWEEP_LIMIT + 1, [
+            'affiliate_id' => $frozenAffiliate->id,
+            'referred_user_id' => $this->owner->id,
+            'order_amount' => '4.00',
+            'commission_rate' => '10.00',
+            'commission_amount' => '0.40',
+            'status' => 'pending',
+            'source_type' => 'gpuxmine',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        foreach (array_chunk($stuck, 100) as $chunk) {
+            AffiliateCommission::insert($chunk);
+        }
+
+        // ผู้แนะนำอีกคนที่กระเป๋าเคยถูกปิดชั่วคราว — รายการของเขา id สูงกว่าทั้งหมด
+        $referrer = User::factory()->create();
+        $affiliate = $this->affiliateFor($referrer);
+        $affiliate->update(['total_earned' => '0.25', 'total_pending' => '0.25']);
+        $late = AffiliateCommission::create([
+            'affiliate_id' => $affiliate->id,
+            'referred_user_id' => $this->owner->id,
+            'order_amount' => '2.50',
+            'commission_rate' => '10.00',
+            'commission_amount' => '0.25',
+            'status' => 'pending',
+            'source_type' => 'gpuxmine',
+        ]);
+
+        $result = app(GpuxMineReferralPayoutService::class)->payPending();
+
+        $this->assertSame(1, $result['paid']);
+        $this->assertSame(0, $result['waiting']);
+        $this->assertSame(GpuxMineReferralPayoutService::SWEEP_LIMIT + 1, $result['blocked']);
+        $this->assertSame('paid', $late->fresh()->status);
+        $this->assertSame('0.25', $this->wallet($referrer)->balance);
+        $this->assertSame(GpuxMineReferralPayoutService::SWEEP_LIMIT + 1, AffiliateCommission::where('affiliate_id', $frozenAffiliate->id)->where('status', 'pending')->count());
+
+        // รายงานของคำสั่งแยกให้เห็นว่ามีกี่รายการที่ผู้แนะนำรับเงินไม่ได้
+        $this->artisan('gpuxmine:settle-earnings')
+            ->expectsOutputToContain('ผู้แนะนำรับเงินไม่ได้ ' . (GpuxMineReferralPayoutService::SWEEP_LIMIT + 1))
+            ->assertExitCode(0);
+    }
+
+    public function test_the_admin_is_told_why_a_referral_commission_cannot_be_paid_yet(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $referrer = User::factory()->create();
+        $affiliate = $this->affiliateFor($referrer);
+        $commission = AffiliateCommission::create([
+            'affiliate_id' => $affiliate->id,
+            'referred_user_id' => $this->owner->id,
+            'order_amount' => '4.00',
+            'commission_rate' => '10.00',
+            'commission_amount' => '0.40',
+            'status' => 'pending',
+            'source_type' => 'gpuxmine',
+        ]);
+        $approve = fn () => $this->actingAs($admin)->post("/admin/affiliates/commission/{$commission->id}/approve");
+
+        Wallet::getOrCreateForUser($referrer->id)->update(['is_active' => false]);
+        $approve()->assertSessionHas('error', fn ($m) => str_contains($m, 'กระเป๋าเงินของผู้แนะนำถูกระงับ') && str_contains($m, 'จ่ายเองเมื่อเปิดคืน'));
+
+        $referrer->forceFill(['is_active' => false])->save();
+        $approve()->assertSessionHas('error', fn ($m) => str_contains($m, 'บัญชีผู้แนะนำถูกปิดการใช้งาน'));
+
+        $affiliate->update(['status' => 'suspended']);
+        $approve()->assertSessionHas('error', fn ($m) => str_contains($m, 'ไม่ active (suspended)'));
+
+        $this->actingAs($admin)->post('/admin/affiliates/commissions/bulk-approve')
+            ->assertSessionHas('success', fn ($m) => str_contains($m, 'อนุมัติ 0 รายการ') && str_contains($m, '1 รายการยังจ่ายไม่ได้'));
+        $this->assertSame('pending', $commission->fresh()->status);
+
+        // เปิดคืนทั้งหมด — จ่ายได้ และข้อความสำเร็จตามปกติ
+        $affiliate->update(['status' => 'active']);
+        $referrer->forceFill(['is_active' => true])->save();
+        Wallet::where('user_id', $referrer->id)->update(['is_active' => true]);
+        $approve()->assertSessionHas('success');
+        $this->assertSame('paid', $commission->fresh()->status);
+
+        // จ่ายแล้ว — ข้อความเดิม ไม่ใช่สาเหตุเรื่องกระเป๋า
+        $approve()->assertSessionHas('error', 'ไม่สามารถอนุมัติได้ (อาจจ่ายแล้วหรือถูกปฏิเสธ)');
     }
 
     public function test_a_round_one_pending_commission_is_paid_once_even_from_two_stale_copies_and_the_sweep(): void

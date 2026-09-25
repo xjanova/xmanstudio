@@ -73,7 +73,7 @@ class GpuxMineSettleEarningsCommand extends Command
         $failures += $referrals['failed'];
 
         $this->info(sprintf(
-            'พ้นระยะพัก %d งาน · ส่งตรวจ %d · โอนเข้ากระเป๋า %d คน %d งาน ฿%s · ค่าแนะนำ %d รายการ (เข้ากระเป๋าผู้แนะนำ %d · รายการค้างที่จ่ายรอบนี้ %d · ยังรอ %d) · ข้าม %d · ล้ม %d',
+            'พ้นระยะพัก %d งาน · ส่งตรวจ %d · โอนเข้ากระเป๋า %d คน %d งาน ฿%s · ค่าแนะนำ %d รายการ (เข้ากระเป๋าผู้แนะนำ %d · รายการค้างที่จ่ายรอบนี้ %d · ยังรอ %d · ผู้แนะนำรับเงินไม่ได้ %d) · ข้าม %d · ล้ม %d',
             $clearing['cleared'],
             $clearing['review'],
             $owners,
@@ -83,6 +83,7 @@ class GpuxMineSettleEarningsCommand extends Command
             $commissionsPaid,
             $referrals['paid'],
             $referrals['waiting'],
+            $referrals['blocked'],
             $skipped,
             $failures,
         ));
