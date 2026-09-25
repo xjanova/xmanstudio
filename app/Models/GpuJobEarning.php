@@ -22,7 +22,8 @@ use Illuminate\Support\Carbon;
  *   review  = ผลงานดูผิดปกติ รอแอดมินตัดสิน ไม่ถูกปล่อยเอง
  *   void    = ยกเลิก ไม่จ่าย
  *
- * amount_satang คือสิ่งที่เจ้าของเครื่องได้จริง (หลังหักส่วนแบ่งผู้แนะนำแล้ว)
+ * amount_satang คือสิ่งที่เจ้าของเครื่องได้จริง (หลังหักส่วนแบ่งผู้แนะนำแล้ว) — ถ้าถึงวันโอน
+ * ผู้แนะนำไม่ active แล้วและส่วนแบ่งถูกคืน ยอดนี้รวมส่วนที่คืนแล้ว (referral_unpaid_*)
  */
 class GpuJobEarning extends Model
 {
@@ -56,6 +57,17 @@ class GpuJobEarning extends Model
     /** รูปแบบ job_id ที่ aixman เขียน: 'aix-gpu-job-' + ai_gpu_jobs.id */
     public const JOB_ID_PREFIX = 'aix-gpu-job-';
 
+    /**
+     * ส่วนแบ่งผู้แนะนำที่ถึงวันโอนแล้วไม่มีใครรับได้ (referral_unpaid_to) — ดู
+     * GpuxMineEarningSettlementService::unpaidReferralPolicy()
+     *
+     * owner: คืนเข้า amount_satang ของงานนี้แล้ว (referral_satang กลายเป็น 0)
+     * platform: แพลตฟอร์มเก็บไว้ (referral_satang คงเดิม — ยังถูกหักจากเจ้าของ)
+     */
+    public const REFERRAL_UNPAID_TO_OWNER = 'owner';
+
+    public const REFERRAL_UNPAID_TO_PLATFORM = 'platform';
+
     protected $fillable = [
         'gpu_node_id',
         'user_id',
@@ -76,6 +88,8 @@ class GpuJobEarning extends Model
         'platform_fee_satang',
         'referral_satang',
         'referral_user_id',
+        'referral_unpaid_satang',
+        'referral_unpaid_to',
         'donated_value_satang',
         'free_share',
         'pro',
@@ -104,6 +118,7 @@ class GpuJobEarning extends Model
         'platform_fee_satang' => 'integer',
         'referral_satang' => 'integer',
         'referral_user_id' => 'integer',
+        'referral_unpaid_satang' => 'integer',
         'donated_value_satang' => 'integer',
         'free_share' => 'boolean',
         'pro' => 'boolean',

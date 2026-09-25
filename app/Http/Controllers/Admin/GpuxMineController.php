@@ -506,13 +506,19 @@ class GpuxMineController extends Controller
     }
 
     /**
-     * @return array<string, array{jobs:int, satang:int, donated:int, referral:int}>
+     * returned / kept: ส่วนแบ่งผู้แนะนำที่ถึงวันโอนแล้วไม่มีใครรับได้ — คืนเจ้าของเครื่อง หรือแพลตฟอร์มเก็บ
+     * (GPUXMINE_UNPAID_REFERRAL) แสดงตรง ๆ ไม่ให้เงินส่วนนี้หายเงียบเหมือนเมื่อก่อน
+     *
+     * @return array<string, array{jobs:int, satang:int, donated:int, referral:int, returned:int, kept:int}>
      */
     private function moneyByStatus(Builder $query): array
     {
         $rows = (clone $query)
             ->selectRaw('status, COUNT(*) as jobs, COALESCE(SUM(amount_satang), 0) as satang, '
-                . 'COALESCE(SUM(donated_value_satang), 0) as donated, COALESCE(SUM(referral_satang), 0) as referral')
+                . 'COALESCE(SUM(donated_value_satang), 0) as donated, COALESCE(SUM(referral_satang), 0) as referral, '
+                . 'COALESCE(SUM(CASE WHEN referral_unpaid_to = ? THEN referral_unpaid_satang ELSE 0 END), 0) as returned, '
+                . 'COALESCE(SUM(CASE WHEN referral_unpaid_to = ? THEN referral_unpaid_satang ELSE 0 END), 0) as kept',
+                [GpuJobEarning::REFERRAL_UNPAID_TO_OWNER, GpuJobEarning::REFERRAL_UNPAID_TO_PLATFORM])
             ->groupBy('status')
             ->toBase()
             ->get()
@@ -526,6 +532,8 @@ class GpuxMineController extends Controller
                 'satang' => (int) ($row->satang ?? 0),
                 'donated' => (int) ($row->donated ?? 0),
                 'referral' => (int) ($row->referral ?? 0),
+                'returned' => (int) ($row->returned ?? 0),
+                'kept' => (int) ($row->kept ?? 0),
             ];
         }
 

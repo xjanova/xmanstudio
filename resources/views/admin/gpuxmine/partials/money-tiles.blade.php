@@ -9,6 +9,9 @@
     ];
     $donated = collect($money)->except(\App\Models\GpuJobEarning::STATUS_VOID)->sum('donated');
     $referral = collect($money)->except(\App\Models\GpuJobEarning::STATUS_VOID)->sum('referral');
+    // ส่วนแบ่งผู้แนะนำที่ถึงวันโอนแล้วไม่มีใครรับได้ — เกิดตอนโอน จึงอยู่ในแถวที่จ่ายแล้วเท่านั้น
+    $returned = collect($money)->sum('returned');
+    $kept = collect($money)->sum('kept');
 @endphp
 <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
     @foreach ($tiles as $status => [$label, $tone])
@@ -22,10 +25,16 @@
         </a>
     @endforeach
 </div>
-@if ($donated > 0 || $referral > 0)
+@if ($donated > 0 || $referral > 0 || $returned > 0 || $kept > 0)
     <p class="text-xs text-gray-500 dark:text-gray-400">
         มูลค่างานที่แชร์ฟรี (ไม่จ่ายเครื่อง): <span class="font-medium tabular-nums">฿{{ number_format($donated / 100, 2) }}</span>
         · ส่วนแบ่งผู้แนะนำที่หักจากงาน: <span class="font-medium tabular-nums">฿{{ number_format($referral / 100, 2) }}</span>
         <span class="text-gray-400">(ไม่นับงานที่ยกเลิก)</span>
+        @if ($returned > 0)
+            · ส่วนแบ่งผู้แนะนำที่ไม่มีผู้รับ คืนให้เจ้าของเครื่อง: <span class="font-medium tabular-nums">฿{{ number_format($returned / 100, 2) }}</span>
+        @endif
+        @if ($kept > 0)
+            · ส่วนแบ่งผู้แนะนำที่ไม่มีผู้รับ แพลตฟอร์มเก็บไว้: <span class="font-medium tabular-nums text-amber-700 dark:text-amber-300">฿{{ number_format($kept / 100, 2) }}</span>
+        @endif
     </p>
 @endif

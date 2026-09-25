@@ -57,6 +57,11 @@
                         @if ($row->referral_satang > 0)
                             <span class="block">ผู้แนะนำ −{{ $baht((int) $row->referral_satang) }}</span>
                         @endif
+                        @if ($row->referral_unpaid_satang > 0)
+                            <span class="block text-amber-700 dark:text-amber-300">
+                                {{ $row->referral_unpaid_to === 'owner' ? 'ผู้แนะนำไม่ active แล้ว — คืนเจ้าของ +' : 'ผู้แนะนำไม่ active แล้ว — แพลตฟอร์มเก็บ ' }}{{ $baht((int) $row->referral_unpaid_satang) }}
+                            </span>
+                        @endif
                         @if ($row->free_share || $row->donated_value_satang > 0)
                             <span class="block text-teal-600 dark:text-teal-400">แชร์ฟรี มูลค่า {{ $baht((int) $row->donated_value_satang) }}</span>
                         @endif

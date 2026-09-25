@@ -427,30 +427,126 @@ class GpuxMineEarningSettlementTest extends TestCase
         $this->assertSame('0.00', $affiliate->total_pending);
     }
 
-    public function test_a_suspended_or_missing_referrer_is_not_paid_and_the_owner_still_is(): void
+    public function test_a_share_no_referrer_can_take_any_more_goes_back_to_the_owner_in_the_same_entry(): void
     {
+        // aixman หักส่วนแบ่งตอนงานเสร็จ (ผู้แนะนำยัง active ตอนนั้น) — ถึงวันโอนผู้แนะนำถูกระงับ
+        // ไม่มีบัญชี affiliate หรือบัญชีถูกลบไปแล้ว ส่วนนั้นเคยหายเงียบ ไม่มีใครได้ ไม่คืนใคร
         $suspended = User::factory()->create();
         $this->affiliateFor($suspended, 'suspended');
         $nobody = User::factory()->create();
+        $active = User::factory()->create();
+        $this->affiliateFor($active);
+
         $a = $this->earning(['amount_satang' => 100, 'referral_satang' => 20, 'referral_user_id' => $suspended->id]);
         $b = $this->earning(['amount_satang' => 100, 'referral_satang' => 20, 'referral_user_id' => $nobody->id]);
+        // ผู้แนะนำที่บัญชีถูกลบ: FK กลายเป็น null แต่ยอดที่หักไว้ยังอยู่
+        $c = $this->earning(['amount_satang' => 100, 'referral_satang' => 15, 'referral_user_id' => null]);
+        // ผู้แนะนำที่ยัง active ในชุดเดียวกัน ยังได้ค่าแนะนำตามปกติ ไม่ถูกคืน
+        $d = $this->earning(['amount_satang' => 100, 'referral_satang' => 10, 'referral_user_id' => $active->id]);
 
         $this->assertSame(0, $this->settle());
 
-        $this->assertSame(0, AffiliateCommission::count());
-        $this->assertSame(GpuJobEarning::STATUS_PAID, $a->fresh()->status);
-        $this->assertSame(GpuJobEarning::STATUS_PAID, $b->fresh()->status);
-        $this->assertSame('2.00', $this->wallet()->balance);
+        // 4 × ฿1.00 + คืน 20 + 20 + 15
+        $this->assertSame('4.55', $this->wallet()->balance);
+        $txn = WalletTransaction::where('wallet_id', $this->wallet()->id)->sole();
+        $this->assertSame('4.55', $txn->amount);
+        $this->assertSame(55, $txn->metadata['returned_referral_satang']);
+        $this->assertEqualsCanonicalizing([$a->id, $b->id, $c->id], $txn->metadata['returned_referral_earning_ids']);
+        $this->assertStringContainsString('คืนให้ ฿0.55', $txn->description);
+
+        foreach ([[$a, 20], [$b, 20], [$c, 15]] as [$row, $share]) {
+            $row->refresh();
+            $this->assertSame(GpuJobEarning::STATUS_PAID, $row->status);
+            // ยอดของงานบอกสิ่งที่เจ้าของได้จริง และ amount + referral ยังเท่ากับส่วนของเครื่อง
+            $this->assertSame(100 + $share, $row->amount_satang);
+            $this->assertSame(0, $row->referral_satang);
+            $this->assertSame($share, $row->referral_unpaid_satang);
+            $this->assertSame(GpuJobEarning::REFERRAL_UNPAID_TO_OWNER, $row->referral_unpaid_to);
+            $this->assertNull($row->affiliate_commission_id);
+        }
+
+        $d->refresh();
+        $this->assertSame(100, $d->amount_satang);
+        $this->assertSame(10, $d->referral_satang);
+        $this->assertNull($d->referral_unpaid_to);
+        $this->assertSame('0.10', AffiliateCommission::sole()->commission_amount);
+        $this->assertSame(AffiliateCommission::sole()->id, $d->affiliate_commission_id);
+
+        // รอบถัดไปไม่คืนซ้ำ
+        $this->assertSame(0, $this->settle());
+        $this->assertSame('4.55', $this->wallet()->balance);
+        $this->assertSame(1, WalletTransaction::count());
+
+        // เจ้าของเห็นว่าส่วนไหนถูกคืน แอดมินเห็นยอดรวมที่คืน
+        $this->withoutVite();
+        $this->fakeGpuxMine();
+        $this->relayWorkers = [];
+        $this->actingAs($this->owner)->get('/gpuxmine')->assertOk()->assertSee('+฿0.20');
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get('/admin/gpuxmine')
+            ->assertOk()
+            ->assertSeeInOrder(['ไม่มีผู้รับ คืนให้เจ้าของเครื่อง', '฿0.55']);
     }
 
-    public function test_the_owner_is_never_paid_a_referral_on_their_own_jobs(): void
+    public function test_the_owner_is_never_paid_a_referral_on_their_own_jobs_and_gets_the_share_back(): void
     {
         $this->affiliateFor($this->owner);
-        $this->earning(['referral_satang' => 20, 'referral_user_id' => $this->owner->id]);
+        $row = $this->earning(['amount_satang' => 80, 'referral_satang' => 20, 'referral_user_id' => $this->owner->id]);
 
         $this->assertSame(0, $this->settle());
 
         $this->assertSame(0, AffiliateCommission::count());
+        $this->assertSame('1.00', $this->wallet()->balance);
+        $this->assertSame(GpuJobEarning::REFERRAL_UNPAID_TO_OWNER, $row->fresh()->referral_unpaid_to);
+    }
+
+    public function test_a_share_that_only_existed_because_of_referral_can_be_the_whole_payout(): void
+    {
+        // งานที่เจ้าของได้ 0 หลังหัก แต่ส่วนแบ่งถูกคืน — ต้องมีรายการในกระเป๋า ไม่ใช่ปิดเป็น paid เปล่า ๆ
+        $row = $this->earning(['amount_satang' => 0, 'referral_satang' => 7, 'referral_user_id' => null]);
+
+        $this->assertSame(0, $this->settle());
+
+        $this->assertSame('0.07', $this->wallet()->balance);
+        $this->assertSame(WalletTransaction::sole()->id, $row->fresh()->wallet_transaction_id);
+    }
+
+    public function test_the_platform_can_be_set_to_keep_a_share_no_referrer_can_take_and_it_is_recorded(): void
+    {
+        config(['services.gpuxmine.unpaid_referral' => 'platform']);
+        $suspended = User::factory()->create();
+        $this->affiliateFor($suspended, 'suspended');
+        $row = $this->earning(['amount_satang' => 100, 'referral_satang' => 20, 'referral_user_id' => $suspended->id]);
+
+        $this->assertSame(0, $this->settle());
+
+        $this->assertSame('1.00', $this->wallet()->balance);
+        $this->assertSame(0, WalletTransaction::sole()->metadata['returned_referral_satang']);
+        $this->assertSame(0, AffiliateCommission::count());
+
+        $row->refresh();
+        $this->assertSame(100, $row->amount_satang);
+        $this->assertSame(20, $row->referral_satang, 'the share was still taken from the owner');
+        $this->assertSame(20, $row->referral_unpaid_satang);
+        $this->assertSame(GpuJobEarning::REFERRAL_UNPAID_TO_PLATFORM, $row->referral_unpaid_to);
+
+        // ไม่ใช่เก็บเงียบ: หน้าแอดมินบอกยอดที่แพลตฟอร์มเก็บไว้
+        $this->withoutVite();
+        $this->fakeGpuxMine();
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get('/admin/gpuxmine/earnings')
+            ->assertOk()
+            ->assertSeeInOrder(['ไม่มีผู้รับ แพลตฟอร์มเก็บไว้', '฿0.20']);
+    }
+
+    public function test_an_unknown_policy_value_falls_back_to_returning_the_share(): void
+    {
+        config(['services.gpuxmine.unpaid_referral' => 'keep-it']);
+        $this->earning(['amount_satang' => 100, 'referral_satang' => 20, 'referral_user_id' => null]);
+
+        $this->assertSame(0, $this->settle());
+
+        $this->assertSame('1.20', $this->wallet()->balance);
     }
 
     public function test_an_existing_commission_for_the_job_is_linked_rather_than_duplicated(): void

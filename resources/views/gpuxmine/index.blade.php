@@ -586,6 +586,11 @@
                                     <td class="py-2.5 pr-3 text-right text-gray-600 dark:text-gray-300 whitespace-nowrap tabular-nums">
                                         @if ($row->referral_satang > 0)
                                             −฿{{ number_format($row->referral_satang / 100, 2) }}
+                                        @elseif ($row->referral_unpaid_to === 'owner' && $row->referral_unpaid_satang > 0)
+                                            {{-- ผู้แนะนำไม่ active แล้วตอนโอน ส่วนนี้คืนเข้ายอดของงานนี้แล้ว --}}
+                                            <span class="text-emerald-600 dark:text-emerald-400" title="ผู้แนะนำไม่ได้ใช้งานแล้ว ส่วนแบ่งคืนเข้ายอดของงานนี้ / The referrer is no longer active, so their share was added back to this job">
+                                                <x-bi th="คืนแล้ว" en="returned" /> +฿{{ number_format($row->referral_unpaid_satang / 100, 2) }}
+                                            </span>
                                         @else
                                             <span class="text-gray-300 dark:text-gray-600">—</span>
                                         @endif

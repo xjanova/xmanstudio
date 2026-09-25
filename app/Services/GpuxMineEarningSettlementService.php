@@ -32,6 +32,8 @@ use RuntimeException;
  *     แล้วเปลี่ยนแถวเป็น paid พร้อมเลขรายการ — ขั้นไหนพลาด ย้อนทั้งชุด
  *     ส่วนแบ่งผู้แนะนำ (referral_satang) กลายเป็น AffiliateCommission หนึ่งรายการต่อ
  *     ผู้แนะนำต่อชุด ในทรานแซกชันเดียวกัน รอแอดมินอนุมัติแบบเดียวกับค่าแนะนำจากทุกช่องทาง
+ *     ส่วนแบ่งที่ไม่มีผู้แนะนำคนไหนรับได้แล้ว ไม่หายเงียบ: คืนเข้ายอดของเจ้าของเครื่องใน
+ *     รายการเดียวกัน หรือแพลตฟอร์มเก็บไว้ตามที่ตั้ง — ดู unpaidReferralPolicy()
  *
  * กันจ่ายซ้ำหลายชั้น เพราะนี่คือเงินออกจริง: withoutOverlapping ที่ตัวตั้งเวลา,
  * row lock บนกระเป๋าและแถวรายได้, UPDATE แบบมีเงื่อนไข (status = cleared) ที่ต้อง
@@ -62,6 +64,24 @@ class GpuxMineEarningSettlementService
     public function holdHours(): int
     {
         return max(0, (int) config('services.gpuxmine.earning_hold_hours', 24));
+    }
+
+    /**
+     * ส่วนแบ่งผู้แนะนำที่ถึงวันโอนแล้วไม่มีใครรับได้ ไปที่ไหน (ต่อจาก D8)
+     *
+     * aixman หักส่วนแบ่งออกจากเงินของเจ้าของเครื่องตอนงานเสร็จ เมื่อผู้แนะนำเป็น affiliate ที่
+     * active ตอนนั้น ถ้าถึงวันโอนผู้แนะนำถูกระงับ บัญชีถูกลบ หรือกลายเป็นเจ้าของเครื่องเอง
+     * ส่วนนั้นเคยไม่ถูกจ่ายให้ใครและไม่คืนใคร — หายเข้าแพลตฟอร์มโดยมีแค่บรรทัดใน log
+     *
+     * 'owner' (ค่าเริ่มต้น): คืนเข้ายอดของเจ้าของเครื่อง เงินก้อนนั้นหักจากเขาตั้งแต่แรก
+     * 'platform': แพลตฟอร์มเก็บไว้ ต้องตั้ง GPUXMINE_UNPAID_REFERRAL=platform เอง
+     * ทั้งสองแบบบันทึกลงแถว (referral_unpaid_*) และเห็นในหน้าแอดมิน ค่าอื่นถือเป็น 'owner'
+     */
+    public function unpaidReferralPolicy(): string
+    {
+        return config('services.gpuxmine.unpaid_referral') === GpuJobEarning::REFERRAL_UNPAID_TO_PLATFORM
+            ? GpuJobEarning::REFERRAL_UNPAID_TO_PLATFORM
+            : GpuJobEarning::REFERRAL_UNPAID_TO_OWNER;
     }
 
     /**
@@ -227,10 +247,15 @@ class GpuxMineEarningSettlementService
         }
 
         $ids = $rows->pluck('id')->map(fn ($id) => (int) $id)->all();
-        $satang = (int) $rows->sum('amount_satang');
+
+        // ตัดสินส่วนแบ่งผู้แนะนำก่อนคิดยอด: ส่วนที่ไม่มีใครรับได้แล้วและต้องคืนเจ้าของ
+        // ต้องเข้ากระเป๋าในรายการเดียวกับงานของมัน ไม่ใช่หายไประหว่างทาง
+        [$owed, $unpaid] = $this->splitReferrals($rows);
+        $returned = $this->settleUnpaidReferrals($unpaid);
+        $satang = (int) $rows->sum('amount_satang') + $returned['satang'];
 
         // งานแชร์ฟรีได้ 0 — ปิดแถวเป็น paid ได้เลย ไม่ต้องมีรายการ 0 บาทในกระเป๋า
-        $transaction = $satang > 0 ? $this->credit($wallet, $satang, $ids) : null;
+        $transaction = $satang > 0 ? $this->credit($wallet, $satang, $ids, $returned) : null;
 
         $now = now();
         $paid = GpuJobEarning::whereKey($ids)
@@ -247,7 +272,7 @@ class GpuxMineEarningSettlementService
             throw new RuntimeException("GPUxMINE payout for user {$userId}: expected " . count($ids) . " cleared rows, updated {$paid}");
         }
 
-        $commissions = $this->recordReferrals($rows);
+        $commissions = $this->recordReferrals($owed);
 
         return [
             'rows' => count($ids),
@@ -265,9 +290,13 @@ class GpuxMineEarningSettlementService
      * ว่ากระเป๋ายังเปิดใช้งาน แล้วอ่านยอดหลังบวกในทรานแซกชันเดียวกัน — แบบเดียวกับ
      * ที่ aixman ตัดเงินจากกระเป๋าใบนี้อยู่ (wallet.ts)
      *
+     * ส่วนแบ่งผู้แนะนำที่คืนให้เจ้าของ (ถ้ามี) รวมอยู่ใน $satang แล้ว — metadata บอกว่าเท่าไร
+     * จากงานไหน ให้คนที่ดูรายการในกระเป๋าตามได้ว่าทำไมยอดสูงกว่าผลรวมที่ aixman เขียน
+     *
      * @param  array<int, int>  $ids
+     * @param  array{satang:int, earning_ids:array<int, int>}  $returned
      */
-    private function credit(Wallet $wallet, int $satang, array $ids): WalletTransaction
+    private function credit(Wallet $wallet, int $satang, array $ids, array $returned): WalletTransaction
     {
         $amount = self::baht($satang);
 
@@ -293,15 +322,131 @@ class GpuxMineEarningSettlementService
             'balance_after' => self::baht($after),
             'reference_type' => self::REFERENCE_TYPE,
             'reference_id' => $lastId,
-            'description' => 'รายได้จากการแชร์การ์ดจอ GPUxMINE · ' . count($ids) . ' งาน',
+            'description' => 'รายได้จากการแชร์การ์ดจอ GPUxMINE · ' . count($ids) . ' งาน'
+                . ($returned['satang'] > 0 ? ' · รวมส่วนแบ่งผู้แนะนำที่คืนให้ ฿' . self::baht($returned['satang']) : ''),
             'status' => WalletTransaction::STATUS_COMPLETED,
             'metadata' => [
                 'source' => 'gpuxmine',
                 'jobs' => count($ids),
                 'amount_satang' => $satang,
                 'earning_ids' => $ids,
+                'returned_referral_satang' => $returned['satang'],
+                'returned_referral_earning_ids' => $returned['earning_ids'],
             ],
         ]);
+    }
+
+    /**
+     * แยกส่วนแบ่งผู้แนะนำของชุดนี้เป็น "จ่ายได้" กับ "ไม่มีใครรับได้แล้ว"
+     *
+     * จ่ายได้ = ผู้แนะนำมีบัญชี affiliate ที่ active และไม่ใช่เจ้าของเครื่องเอง ที่เหลือ (ผู้แนะนำถูก
+     * ระงับ ไม่มีบัญชี affiliate บัญชีถูกลบจน referral_user_id กลายเป็น null หรือเป็นเจ้าของเอง)
+     * ไม่มีใครรับได้ งานที่มีค่าแนะนำอยู่แล้ว (affiliate_commission_id) หรือถูกตัดสินไปแล้ว
+     * (referral_unpaid_to) ไม่ถูกนับอีก ค่าแนะนำรายงานเดิมที่บันทึกไว้ก่อนเปลี่ยนเป็นแบบรวม
+     * (source_id = id ของงานนั้น) ถูกผูกกลับตรงนี้ ไม่ถูกสร้างซ้ำ และไม่ถูกคืนใคร
+     *
+     * @param  Collection<int, GpuJobEarning>  $rows  แถวของเจ้าของหนึ่งคนที่กำลังจ่าย (ล็อกอยู่)
+     * @return array{0: array<int, array{affiliate: Affiliate, rows: Collection<int, GpuJobEarning>}>, 1: Collection<int, GpuJobEarning>}
+     */
+    private function splitReferrals(Collection $rows): array
+    {
+        $candidates = $rows->filter(fn (GpuJobEarning $row) => $row->referral_satang > 0
+            && $row->affiliate_commission_id === null
+            && $row->referral_unpaid_to === null);
+
+        if ($candidates->isEmpty()) {
+            return [[], new Collection];
+        }
+
+        $existing = AffiliateCommission::where('source_type', self::COMMISSION_SOURCE)
+            ->whereIn('source_id', $candidates->modelKeys())
+            ->pluck('id', 'source_id');
+
+        foreach ($existing as $sourceId => $commissionId) {
+            GpuJobEarning::whereKey((int) $sourceId)->update(['affiliate_commission_id' => (int) $commissionId]);
+        }
+
+        $owed = [];
+        $unpaid = new Collection;
+        $candidates = $candidates->reject(fn (GpuJobEarning $row) => $existing->has($row->id));
+
+        foreach ($candidates->groupBy(fn (GpuJobEarning $row) => (int) $row->referral_user_id) as $referrerId => $group) {
+            $ownerId = (int) $group->first()->user_id;
+            $affiliate = $referrerId > 0 && $referrerId !== $ownerId
+                ? Affiliate::where('user_id', $referrerId)->first()
+                : null;
+
+            if ($affiliate !== null && $affiliate->isActive()) {
+                $owed[] = ['affiliate' => $affiliate, 'rows' => $group];
+            } else {
+                $unpaid = $unpaid->merge($group);
+            }
+        }
+
+        return [$owed, $unpaid];
+    }
+
+    /**
+     * ส่วนแบ่งผู้แนะนำที่ไม่มีใครรับได้แล้ว → ตามนโยบาย (unpaidReferralPolicy) แล้วบันทึกลงแถว
+     *
+     * 'owner': ย้ายเข้า amount_satang ของงานนั้น และ referral_satang เป็น 0 — ยอดของงานบอกสิ่งที่
+     *   เจ้าของได้จริง (หน้าเจ้าของ, /status ของโปรแกรม และยอดรวมทุกที่ตรงกับกระเป๋าเอง) และ
+     *   amount + referral ยังเท่ากับส่วนของเครื่องที่ aixman คิดไว้ (aixman ใช้ผลรวมนี้คิดคะแนน
+     *   ความร่วมมือ) ผู้เรียกบวกยอดที่คืนเข้ารายการในกระเป๋าของชุดเดียวกัน
+     * 'platform': แถวคงยอดเดิม (ส่วนแบ่งยังถูกหักจากเจ้าของ) แค่ประทับว่าไม่มีใครรับ แพลตฟอร์มเก็บ
+     *
+     * UPDATE มีเงื่อนไขเดียวกับที่เลือกแถวมา และต้องโดนครบทุกแถว — ไม่ครบคือมีคนแตะแถวที่ล็อก
+     * อยู่ ย้อนทั้งชุด
+     *
+     * @param  Collection<int, GpuJobEarning>  $unpaid
+     * @return array{satang:int, earning_ids:array<int, int>} ยอดที่คืนเข้ากระเป๋าเจ้าของ
+     */
+    private function settleUnpaidReferrals(Collection $unpaid): array
+    {
+        if ($unpaid->isEmpty()) {
+            return ['satang' => 0, 'earning_ids' => []];
+        }
+
+        $policy = $this->unpaidReferralPolicy();
+        $ids = $unpaid->modelKeys();
+        $satang = (int) $unpaid->sum('referral_satang');
+
+        $marked = GpuJobEarning::whereKey($ids)
+            ->where('status', GpuJobEarning::STATUS_CLEARED)
+            ->where('referral_satang', '>', 0)
+            ->whereNull('referral_unpaid_to')
+            ->whereNull('affiliate_commission_id')
+            ->update(array_merge(
+                [
+                    'referral_unpaid_satang' => DB::raw('referral_satang'),
+                    'referral_unpaid_to' => $policy,
+                ],
+                // อ่าน referral_satang เดิมทั้งสองช่อง — MySQL ประเมิน SET จากซ้ายไปขวา
+                // จึงศูนย์มันในคำสั่งถัดไป ไม่ใช่คำสั่งนี้
+                $policy === GpuJobEarning::REFERRAL_UNPAID_TO_OWNER
+                    ? ['amount_satang' => DB::raw('amount_satang + referral_satang')]
+                    : [],
+            ));
+
+        if ($marked !== count($ids)) {
+            throw new RuntimeException('GPUxMINE payout: expected ' . count($ids) . " unpaid referral rows, updated {$marked}");
+        }
+
+        Log::info('[GPUxMINE] referral share had no active referrer at payout — ' . ($policy === GpuJobEarning::REFERRAL_UNPAID_TO_OWNER ? 'returned to the owner' : 'kept by the platform'), [
+            'earning_ids' => $ids,
+            'referral_user_ids' => $unpaid->pluck('referral_user_id')->unique()->values()->all(),
+            'satang' => $satang,
+        ]);
+
+        if ($policy !== GpuJobEarning::REFERRAL_UNPAID_TO_OWNER) {
+            return ['satang' => 0, 'earning_ids' => []];
+        }
+
+        GpuJobEarning::whereKey($ids)
+            ->where('referral_unpaid_to', GpuJobEarning::REFERRAL_UNPAID_TO_OWNER)
+            ->update(['referral_satang' => 0]);
+
+        return ['satang' => $satang, 'earning_ids' => array_map('intval', $ids)];
     }
 
     /**
@@ -315,52 +460,23 @@ class GpuxMineEarningSettlementService
      * งานในชุดชี้กลับมาที่รายการเดียวกันด้วย affiliate_commission_id
      *
      * กันซ้ำ: แถวถูกล็อกอยู่ในทรานแซกชันของการจ่าย และแถวที่มี affiliate_commission_id แล้ว
-     * ไม่ถูกนับอีก ค่าแนะนำรายงานเดิมที่บันทึกไว้ก่อนเปลี่ยนเป็นแบบรวม (source_id = id ของงาน
-     * นั้น) ถูกผูกกลับ ไม่ถูกสร้างซ้ำ
+     * ไม่ถูกนับอีก (splitReferrals() คัดมาให้แล้ว รวมการผูกค่าแนะนำรายงานเดิมกลับ)
      *
-     * ผู้แนะนำที่ถูกระงับหรือไม่มีบัญชี affiliate แล้ว ไม่ได้ — ส่วนนั้นไม่ถูกจ่ายให้ใคร
-     * ผู้แนะนำที่เป็นเจ้าของเครื่องเอง = ข้อมูลผิด ไม่จ่าย
+     * ผู้แนะนำที่ถูกระงับ ไม่มีบัญชี affiliate แล้ว หรือเป็นเจ้าของเครื่องเอง ไม่มาถึงตรงนี้ —
+     * ส่วนของเขาถูกตัดสินใน settleUnpaidReferrals() ไม่หายเงียบอีก
      *
      * ยอดสะสมของ affiliate ขยับแบบเดียวกับ AffiliateCommissionService (total_earned,
      * total_pending) แต่ total_referrals/total_conversions นับเจ้าของเครื่องหนึ่งคน
      * ครั้งเดียว ไม่ใช่ทุกรายการ — ไม่งั้นตัวเลข "ชวนได้กี่คน" กลายเป็นจำนวนรอบโอน
      *
-     * @param  Collection<int, GpuJobEarning>  $rows  แถวของเจ้าของหนึ่งคนที่เพิ่งถูกจ่าย (ล็อกอยู่)
+     * @param  array<int, array{affiliate: Affiliate, rows: Collection<int, GpuJobEarning>}>  $owed
      * @return int จำนวนค่าแนะนำที่สร้างรอบนี้
      */
-    private function recordReferrals(Collection $rows): int
+    private function recordReferrals(array $owed): int
     {
-        $owed = $rows->filter(fn (GpuJobEarning $row) => $row->referral_satang > 0
-            && $row->referral_user_id !== null
-            && $row->affiliate_commission_id === null
-            && $row->referral_user_id !== (int) $row->user_id);
-
-        if ($owed->isEmpty()) {
-            return 0;
-        }
-
-        // ค่าแนะนำรายงานที่มีอยู่แล้ว — ผูกกลับ ไม่สร้างซ้ำ
-        $existing = AffiliateCommission::where('source_type', self::COMMISSION_SOURCE)
-            ->whereIn('source_id', $owed->modelKeys())
-            ->pluck('id', 'source_id');
-
-        foreach ($existing as $sourceId => $commissionId) {
-            GpuJobEarning::whereKey((int) $sourceId)->update(['affiliate_commission_id' => (int) $commissionId]);
-        }
-
         $created = 0;
 
-        foreach ($owed->reject(fn (GpuJobEarning $row) => $existing->has($row->id))->groupBy('referral_user_id') as $referrerId => $group) {
-            $affiliate = Affiliate::where('user_id', (int) $referrerId)->first();
-            if ($affiliate === null || ! $affiliate->isActive()) {
-                Log::info('[GPUxMINE] referral share not paid: referrer has no active affiliate', [
-                    'earning_ids' => $group->modelKeys(),
-                    'referral_user_id' => (int) $referrerId,
-                ]);
-
-                continue;
-            }
-
+        foreach ($owed as ['affiliate' => $affiliate, 'rows' => $group]) {
             $ownerId = (int) $group->first()->user_id;
             $shareSatang = (int) $group->sum('referral_satang');
             $revenueSatang = (int) $group->sum(fn (GpuJobEarning $row) => max(0, (int) $row->revenue_satang));
