@@ -632,6 +632,10 @@ to that enum by hand survives).
 2. Admins take back a paid earning on `/admin/gpuxmine/earnings` and a paid commission on
    `/admin/affiliates/commissions` — once each, reason of 10+ characters, and only while the
    wallet's available balance covers it (money held by a pending withdrawal does not count).
+   Taking back an earning also takes that job's referral share by default (a ticked box): from
+   the referrer's wallet if the commission was paid (refused whole if the referrer cashed it out —
+   untick to take only the owner's part), or cut from a commission still waiting so the sweep
+   never pays it; a commission taken back later takes only what is left.
 3. Cash-out: users ask on `/wallet/withdraw` (KYC required; paid only to the KYC bank account),
    the amount is held at once, and admins work it under การเงิน → คำขอถอนเงิน in three steps:
    press "เริ่มโอน" (the user can no longer cancel, and only now the page shows the full account

@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Schema;
  *
  * gpu_job_earnings: สถานะเป็น 'void' เหมือนการยกเลิกก่อนจ่าย (C2 มีห้าสถานะเท่านั้น และโปรแกรม
  *   ฝั่งเครื่องรู้จัก void อยู่แล้ว) ส่วน reversed_at บอกว่าเงินเคยเข้ากระเป๋าแล้วถูกเรียกคืน
+ *   referral_reversed_satang: ส่วนแบ่งผู้แนะนำของงานนี้ที่ถูกเอาออกพร้อมกัน — หักจากกระเป๋าผู้แนะนำ
+ *   (referral_reversal_wallet_transaction_id) ถ้าค่าแนะนำจ่ายไปแล้ว หรือตัดออกจากค่าแนะนำที่ยังไม่จ่าย
+ *   ค่าแนะนำเป็นก้อนรวมหลายงาน การเรียกคืนทั้งก้อนภายหลังจึงหักเฉพาะส่วนที่ยังเหลือ
  * affiliate_commissions: ค่าใหม่ 'reversed' ต่อท้าย enum ของ status — 'rejected' แปลว่าไม่เคยจ่าย
  *   ใช้ปนกันไม่ได้ ผู้อ่านคอลัมน์นี้ที่ตรวจแล้ว (2026-09-26): xmanstudio เท่านั้น (หน้า affiliate
  *   ของลูกค้าและแอดมิน ป้าย/สีมี default ทุกที่ ยอดรายเดือนนับเฉพาะ 'paid') — aixman ไม่อ่านตารางนี้
@@ -33,6 +36,8 @@ return new class extends Migration
             $table->foreignId('reversed_by')->nullable()->after('reversed_at')
                 ->constrained('users')->nullOnDelete();
             $table->unsignedBigInteger('reversal_wallet_transaction_id')->nullable()->after('reversed_by');
+            $table->bigInteger('referral_reversed_satang')->default(0)->after('reversal_wallet_transaction_id');
+            $table->unsignedBigInteger('referral_reversal_wallet_transaction_id')->nullable()->after('referral_reversed_satang');
         });
 
         Schema::table('affiliate_commissions', function (Blueprint $table) {
@@ -80,7 +85,7 @@ return new class extends Migration
 
         Schema::table('gpu_job_earnings', function (Blueprint $table) {
             $table->dropConstrainedForeignId('reversed_by');
-            $table->dropColumn(['reversed_at', 'reversal_wallet_transaction_id']);
+            $table->dropColumn(['reversed_at', 'reversal_wallet_transaction_id', 'referral_reversed_satang', 'referral_reversal_wallet_transaction_id']);
         });
     }
 

@@ -364,10 +364,170 @@ class GpuxMinePayoutReversalTest extends TestCase
         $commission = $this->paidCommission($referrer, 40);
         $earning = GpuJobEarning::where('affiliate_commission_id', $commission->id)->sole();
 
-        $this->reverseEarning($earning)->assertSessionHas('success', fn ($m) => str_contains($m, 'ค่าแนะนำ #' . $commission->id));
+        // ไม่ติ๊ก (หรือหน้าที่เปิดค้างจากก่อนมีช่องนี้) — เฉพาะส่วนเจ้าของเครื่อง และบอกว่าส่วนผู้แนะนำอยู่ไหน
+        $this->reverseEarning($earning)->assertSessionHas('success', fn ($m) => str_contains($m, 'ค่าแนะนำ #' . $commission->id) && str_contains($m, 'ไม่ได้เรียกคืน'));
 
-        // ค่าแนะนำไม่ถูกเรียกคืนตามเอง — แอดมินตัดสินแยก
         $this->assertSame('paid', $commission->fresh()->status);
         $this->assertSame('0.40', $this->balance($referrer));
+        $this->assertSame(0, $earning->fresh()->referral_reversed_satang);
+    }
+
+    // ── ส่วนแบ่งผู้แนะนำของงานที่ถูกเรียกคืน (รีวิวรอบสอง) ─────────────────────
+
+    /** เจ้าของเครื่องหนึ่งคน สองงานในรอบโอนเดียว — ค่าแนะนำก้อนเดียว #C = 40 + 60 สตางค์ */
+    private function twoJobsOneCommission(User $referrer, bool $referrerWalletOpen = true): array
+    {
+        Affiliate::create(['user_id' => $referrer->id, 'referral_code' => strtoupper(Str::random(8)), 'status' => 'active']);
+        if (! $referrerWalletOpen) {
+            Wallet::getOrCreateForUser($referrer->id)->update(['is_active' => false]);
+        }
+        $a = GpuJobEarning::factory()->forNode($this->node)->matured()->create(['amount_satang' => 100, 'referral_satang' => 40, 'referral_user_id' => $referrer->id, 'revenue_satang' => 400]);
+        $b = GpuJobEarning::factory()->forNode($this->node)->matured()->create(['amount_satang' => 200, 'referral_satang' => 60, 'referral_user_id' => $referrer->id, 'revenue_satang' => 600]);
+        $this->settle();
+
+        return [$a->fresh(), $b->fresh(), AffiliateCommission::where('source_type', 'gpuxmine')->sole()];
+    }
+
+    private function reverseWithReferral(GpuJobEarning $earning, bool $withReferral = true)
+    {
+        return $this->actingAs($this->admin)->post("/admin/gpuxmine/earnings/{$earning->id}/reverse", [
+            'reason' => self::REASON,
+            'with_referral' => $withReferral ? '1' : '0',
+        ]);
+    }
+
+    public function test_a_reversed_jobs_referral_share_is_taken_back_from_a_paid_commission_and_never_twice(): void
+    {
+        $referrer = User::factory()->create();
+        [$a, $b, $commission] = $this->twoJobsOneCommission($referrer);
+        $this->assertSame('paid', $commission->status);
+        $this->assertSame('1.00', $commission->commission_amount);
+        $this->assertSame('1.00', $this->balance($referrer));
+        $this->assertSame('3.00', $this->balance($this->owner));
+
+        // หน้าคิวเสนอให้เรียกคืนส่วนผู้แนะนำไปพร้อมกัน (ติ๊กไว้ให้)
+        $this->fakeGpuxMine();
+        $this->actingAs($this->admin)->get('/admin/gpuxmine/earnings?status=all')->assertOk()
+            ->assertSee('เรียกคืนส่วนแบ่งผู้แนะนำ ฿0.40 ด้วย');
+
+        $this->reverseWithReferral($a)->assertSessionHas('success', fn ($m) => str_contains($m, 'ส่วนแบ่งผู้แนะนำ ฿0.40') && str_contains($m, 'ค่าแนะนำ #' . $commission->id));
+
+        $this->assertSame('2.00', $this->balance($this->owner));
+        $this->assertSame('0.60', $this->balance($referrer));
+        $a->refresh();
+        $this->assertSame(40, $a->referral_reversed_satang);
+        $share = WalletTransaction::findOrFail($a->referral_reversal_wallet_transaction_id);
+        $this->assertSame('GXVR' . $a->id, $share->transaction_id);
+        $this->assertSame('-0.40', $share->amount);
+        $this->assertSame((int) $commission->wallet_transaction_id, $share->metadata['reverses_wallet_transaction_id']);
+        $this->assertSame('paid', $commission->fresh()->status, 'the rest of the commission stays paid');
+        $affiliate = Affiliate::where('user_id', $referrer->id)->first();
+        $this->assertSame('0.60', $affiliate->total_earned);
+        $this->assertSame('0.60', $affiliate->total_paid);
+
+        $this->actingAs($this->admin)->get('/admin/affiliates/commissions?status=paid')->assertOk()->assertSee('เรียกคืนบางงานแล้ว ฿0.40');
+
+        // เรียกคืนทั้งก้อนทีหลัง — หักเฉพาะที่ยังเหลือ ฿0.60 ไม่ใช่ ฿1.00
+        $this->reverseCommission($commission)->assertSessionHas('success', fn ($m) => str_contains($m, '฿0.60'));
+        $this->assertSame('0.00', $this->balance($referrer));
+        $this->assertSame('-0.60', WalletTransaction::where('transaction_id', 'GXAV' . $commission->id)->value('amount'));
+        $affiliate->refresh();
+        $this->assertSame('0.00', $affiliate->total_earned);
+        $this->assertSame('0.00', $affiliate->total_paid);
+
+        // งานที่สองหลังค่าแนะนำถูกเรียกคืนทั้งก้อนแล้ว — ส่วนผู้แนะนำไม่อยู่กับเขาแล้ว ไม่หักซ้ำ
+        $this->reverseWithReferral($b)->assertSessionHas('success', fn ($m) => ! str_contains($m, 'ผู้แนะนำ'));
+        $this->assertSame('0.00', $this->balance($referrer));
+        $this->assertSame('0.00', $this->balance($this->owner));
+        $this->assertSame(0, $b->fresh()->referral_reversed_satang);
+    }
+
+    public function test_a_referral_share_still_waiting_is_cut_from_the_commission_before_it_is_paid(): void
+    {
+        $referrer = User::factory()->create();
+        [$a, , $commission] = $this->twoJobsOneCommission($referrer, referrerWalletOpen: false);
+        $this->assertSame('pending', $commission->status);
+
+        $this->reverseWithReferral($a)->assertSessionHas('success', fn ($m) => str_contains($m, 'ตัดส่วนแบ่งผู้แนะนำ ฿0.40') && str_contains($m, 'เหลือ ฿0.60'));
+
+        $commission->refresh();
+        $this->assertSame('pending', $commission->status);
+        $this->assertSame('0.60', $commission->commission_amount);
+        $this->assertSame('0.60', Affiliate::where('user_id', $referrer->id)->value('total_pending'));
+        $this->assertSame(40, $a->fresh()->referral_reversed_satang);
+        $this->assertNull($a->fresh()->referral_reversal_wallet_transaction_id);
+
+        // กระเป๋าเปิดคืน — รอบกวาดจ่ายเฉพาะส่วนของงานที่ยังไม่ถูกเรียกคืน
+        Wallet::where('user_id', $referrer->id)->update(['is_active' => true]);
+        $this->settle();
+        $this->assertSame('paid', $commission->fresh()->status);
+        $this->assertSame('0.60', $this->balance($referrer));
+
+        // เรียกคืนทั้งก้อนหลังจ่ายแล้ว — ส่วนที่ตัดตอนยังไม่จ่ายไม่ถูกลบซ้ำ
+        $this->reverseCommission($commission)->assertSessionHas('success', fn ($m) => str_contains($m, '฿0.60'));
+        $this->assertSame('0.00', $this->balance($referrer));
+    }
+
+    public function test_when_every_job_of_a_waiting_commission_is_reversed_it_is_rejected_and_never_paid(): void
+    {
+        $referrer = User::factory()->create();
+        [$a, $b, $commission] = $this->twoJobsOneCommission($referrer, referrerWalletOpen: false);
+
+        $this->reverseWithReferral($a)->assertSessionHas('success');
+        $this->reverseWithReferral($b)->assertSessionHas('success', fn ($m) => str_contains($m, 'รายการถูกปฏิเสธ'));
+
+        $commission->refresh();
+        $this->assertSame('rejected', $commission->status);
+        $this->assertSame('0.00', $commission->commission_amount);
+        $this->assertSame('0.00', Affiliate::where('user_id', $referrer->id)->value('total_pending'));
+
+        Wallet::where('user_id', $referrer->id)->update(['is_active' => true]);
+        $this->settle();
+        $this->assertSame('rejected', $commission->fresh()->status);
+        $this->assertSame('0.00', $this->balance($referrer));
+        $this->assertSame(0, WalletTransaction::where('user_id', $referrer->id)->count());
+    }
+
+    public function test_a_referrer_who_withdrew_blocks_only_the_referral_part(): void
+    {
+        $referrer = User::factory()->create();
+        [$a, , $commission] = $this->twoJobsOneCommission($referrer);
+        // ผู้แนะนำใช้/ถอนเงินไปแล้วเหลือ ฿0.10 — ไม่พอเรียกคืนส่วน ฿0.40
+        Wallet::where('user_id', $referrer->id)->update(['balance' => '0.10']);
+
+        $this->reverseWithReferral($a)->assertSessionHas('error', fn ($m) => str_contains($m, 'ผู้แนะนำถอนออกไปแล้ว') && str_contains($m, '฿0.40') && str_contains($m, 'เอาเครื่องหมาย'));
+
+        // ไม่มีอะไรเกิดขึ้นเลย รวมส่วนของเจ้าของเครื่อง
+        $this->assertSame('3.00', $this->balance($this->owner));
+        $this->assertSame(GpuJobEarning::STATUS_PAID, $a->fresh()->status);
+        $this->assertSame(0, WalletTransaction::where('type', 'adjustment')->count());
+
+        // แอดมินเลือกเรียกคืนเฉพาะส่วนเจ้าของเครื่อง
+        $this->reverseWithReferral($a, false)->assertSessionHas('success', fn ($m) => str_contains($m, 'ไม่ได้เรียกคืน'));
+        $this->assertSame('2.00', $this->balance($this->owner));
+        $this->assertSame('0.10', $this->balance($referrer));
+        $this->assertSame('paid', $commission->fresh()->status);
+    }
+
+    public function test_reversing_keeps_who_approved_the_job_and_records_who_took_it_back(): void
+    {
+        $approver = User::factory()->create(['role' => 'admin', 'name' => 'ผู้อนุมัติงาน']);
+        $reverser = User::factory()->create(['role' => 'admin', 'name' => 'ผู้เรียกคืนงาน']);
+        $row = GpuJobEarning::factory()->forNode($this->node)->matured()->create(['amount_satang' => 150, 'status' => GpuJobEarning::STATUS_REVIEW]);
+
+        $this->actingAs($approver)->post("/admin/gpuxmine/earnings/{$row->id}/approve")->assertSessionHas('success');
+        $this->settle();
+        $this->assertSame(GpuJobEarning::STATUS_PAID, $row->fresh()->status);
+
+        $this->reverseEarning($row->fresh(), self::REASON, $reverser)->assertSessionHas('success');
+
+        $row->refresh();
+        $this->assertSame($approver->id, $row->reviewed_by);
+        $this->assertSame($reverser->id, $row->reversed_by);
+        $this->assertNotNull($row->reversed_at);
+
+        $this->fakeGpuxMine();
+        $this->actingAs($this->admin)->get('/admin/gpuxmine/earnings?status=all')->assertOk()
+            ->assertSee('อนุมัติโดย ผู้อนุมัติงาน')->assertSee('เรียกคืนโดย ผู้เรียกคืนงาน');
     }
 }

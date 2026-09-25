@@ -80,7 +80,16 @@
                             <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $c->referredUser->name ?? '-' }}</td>
                             <td class="px-6 py-3 text-sm text-right text-gray-700 dark:text-gray-300">฿{{ number_format($c->order_amount, 2) }}</td>
                             <td class="px-6 py-3 text-sm text-center text-gray-500">{{ number_format($c->commission_rate) }}%</td>
-                            <td class="px-6 py-3 text-sm text-right font-semibold {{ $c->status === 'reversed' ? 'text-gray-400 line-through' : 'text-green-600' }}">+฿{{ number_format($c->commission_amount, 2) }}</td>
+                            @php
+                                $takenSatang = (int) ($c->referral_taken_satang ?? 0);
+                                $leftSatang = max(0, \App\Support\Satang::fromBaht((string) $c->commission_amount) - $takenSatang);
+                            @endphp
+                            <td class="px-6 py-3 text-sm text-right font-semibold {{ $c->status === 'reversed' ? 'text-gray-400 line-through' : 'text-green-600' }}">
+                                +฿{{ number_format($c->commission_amount, 2) }}
+                                @if($c->status === 'paid' && $takenSatang > 0)
+                                    <span class="block text-[11px] font-normal text-gray-500">เรียกคืนบางงานแล้ว {{ \App\Support\Satang::format($takenSatang) }}</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-3 text-center">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                                     {{ $c->status === 'paid' ? 'bg-green-100 text-green-800' : '' }}
@@ -108,7 +117,7 @@
                                     {{-- เรียกคืนค่าแนะนำ GPUxMINE ที่จ่ายไปแล้ว (R2-3) — หักกระเป๋าผู้แนะนำ ได้ต่อเมื่อยอดยังไม่ถูกถอนออก --}}
                                     <span class="block text-xs text-gray-400 mb-1">{{ $c->paid_at?->format('d/m/y') ?? '-' }}</span>
                                     <form action="{{ route('admin.affiliates.commission.reverse', $c->id) }}" method="POST" class="flex items-center gap-1.5"
-                                          onsubmit="if (! window.confirm(@js('เรียกคืนค่าแนะนำ #' . $c->id . ' (฿' . number_format($c->commission_amount, 2) . ') จากกระเป๋าผู้แนะนำ?' . "\n\n" . 'ได้ต่อเมื่อยอดยังไม่ถูกถอนออก — ทำได้ครั้งเดียว ย้อนกลับไม่ได้ ผู้แนะนำจะเห็นเหตุผลที่กรอก'))) return false; this.querySelector('button[type=submit]').disabled = true;">
+                                          onsubmit="if (! window.confirm(@js('เรียกคืนค่าแนะนำ #' . $c->id . ' (' . \App\Support\Satang::format($leftSatang) . ($takenSatang > 0 ? ' — ส่วนที่ยังไม่ถูกเรียกคืนแยก' : '') . ') จากกระเป๋าผู้แนะนำ?' . "\n\n" . 'ได้ต่อเมื่อยอดยังไม่ถูกถอนออก — ทำได้ครั้งเดียว ย้อนกลับไม่ได้ ผู้แนะนำจะเห็นเหตุผลที่กรอก'))) return false; this.querySelector('button[type=submit]').disabled = true;">
                                         @csrf
                                         <input type="text" name="reason" required minlength="{{ \App\Services\GpuxMinePayoutReversalService::MIN_REASON }}" maxlength="255" autocomplete="off"
                                                placeholder="เหตุผล (≥10 ตัวอักษร)" class="w-36 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white">

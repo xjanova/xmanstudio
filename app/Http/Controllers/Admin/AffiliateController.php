@@ -108,7 +108,9 @@ class AffiliateController extends Controller
      */
     public function commissions(Request $request)
     {
-        $query = AffiliateCommission::with('affiliate.user', 'order', 'referredUser');
+        $query = AffiliateCommission::with('affiliate.user', 'order', 'referredUser')
+            // ส่วนแบ่งของงาน GPUxMINE ที่ถูกหักคืนจากกระเป๋าผู้แนะนำแยกไปแล้ว — ค่าแนะนำที่จ่ายแล้วเหลือให้เรียกคืนเท่านี้
+            ->withSum(['gpuEarnings as referral_taken_satang' => fn ($q) => $q->whereNotNull('referral_reversal_wallet_transaction_id')], 'referral_reversed_satang');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);

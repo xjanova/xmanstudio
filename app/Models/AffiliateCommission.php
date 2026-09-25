@@ -6,6 +6,7 @@ use App\Mail\AffiliateCommissionMail;
 use App\Services\GpuxMineReferralPayoutService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -57,6 +58,12 @@ class AffiliateCommission extends Model
     public function referredUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'referred_user_id');
+    }
+
+    /** งาน GPUxMINE ที่ส่วนแบ่งผู้แนะนำรวมอยู่ในค่าแนะนำรายการนี้ */
+    public function gpuEarnings(): HasMany
+    {
+        return $this->hasMany(GpuJobEarning::class, 'affiliate_commission_id');
     }
 
     /** แอดมินที่เรียกคืนค่าแนะนำนี้ (ถ้าถูกเรียกคืน) */

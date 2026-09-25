@@ -132,6 +132,8 @@ class GpuJobEarning extends Model
         'reversed_at' => 'datetime',
         'reversed_by' => 'integer',
         'reversal_wallet_transaction_id' => 'integer',
+        'referral_reversed_satang' => 'integer',
+        'referral_reversal_wallet_transaction_id' => 'integer',
     ];
 
     public function node(): BelongsTo

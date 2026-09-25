@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\GpuJobEarning;
 use App\Services\GpuxMinePayoutReversalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,19 +17,16 @@ class GpuxMineReversalController extends Controller
 {
     public function __construct(private readonly GpuxMinePayoutReversalService $reversals) {}
 
+    /**
+     * with_referral: เรียกคืนส่วนแบ่งผู้แนะนำของงานเดียวกันด้วย (ฟอร์มติ๊กไว้ให้) — ไม่ส่งมา (หน้าที่เปิด
+     * ค้างจากก่อนมีช่องนี้ ซึ่งบอกแอดมินว่าส่วนผู้แนะนำไม่ถูกเรียกคืนตาม) = เฉพาะส่วนเจ้าของเครื่อง
+     * ข้อความผลบอกว่าส่วนผู้แนะนำไปทางไหน
+     */
     public function earning(Request $request, int $id): RedirectResponse
     {
-        $result = $this->reversals->reverseEarning($id, $request->user(), $this->reason($request));
+        $result = $this->reversals->reverseEarning($id, $request->user(), $this->reason($request), $request->boolean('with_referral'));
 
-        if (! $result['ok']) {
-            return back()->with('error', $result['message']);
-        }
-
-        // ค่าแนะนำของงานนี้อยู่ในรายการค่าแนะนำรวมของรอบโอน — ไม่ถูกเรียกคืนตามไปเอง บอกแอดมินตรง ๆ
-        $commissionId = GpuJobEarning::whereKey($id)->value('affiliate_commission_id');
-
-        return back()->with('success', $result['message']
-            . ($commissionId ? ' · ส่วนแบ่งผู้แนะนำของงานนี้อยู่ในค่าแนะนำ #' . $commissionId . ' ซึ่งไม่ถูกเรียกคืนตาม — เรียกคืนแยกได้ที่หน้าค่าแนะนำ' : ''));
+        return back()->with($result['ok'] ? 'success' : 'error', $result['message']);
     }
 
     public function commission(Request $request, int $id): RedirectResponse

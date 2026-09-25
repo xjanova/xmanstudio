@@ -15,8 +15,16 @@
         default => 'ยังอยู่ในระยะพัก — จะกลับไปพักจนถึง ' . $holdEndsAt->copy()->timezone('Asia/Bangkok')->format('d/m H:i') . ' น. แล้วค่อยเข้ากระเป๋า',
     };
     $voidPrompt = "ยกเลิกรายได้ {$earning->job_id} ({$amount})?\n\nเจ้าของเครื่องจะไม่ได้เงินรายการนี้ และจะเห็นเหตุผลที่กรอก — ย้อนกลับไม่ได้";
-    $reversePrompt = "เรียกคืนรายได้ {$earning->job_id} ({$amount}) จากกระเป๋าเจ้าของเครื่อง?\n\nหักกระเป๋าใบเดิมเท่ายอดนี้ (ได้ต่อเมื่อยอดยังไม่ถูกถอนออก) งานกลายเป็น \"เรียกคืนแล้ว\" และเจ้าของเห็นเหตุผลที่กรอก — ทำได้ครั้งเดียว ย้อนกลับไม่ได้"
-        . ($earning->affiliate_commission_id ? "\n\nส่วนแบ่งผู้แนะนำของงานนี้ (ค่าแนะนำ #{$earning->affiliate_commission_id}) ไม่ถูกเรียกคืนตาม" : '');
+    $reversePrompt = "เรียกคืนรายได้ {$earning->job_id} ({$amount}) จากกระเป๋าเจ้าของเครื่อง?\n\nหักกระเป๋าใบเดิมเท่ายอดนี้ (ได้ต่อเมื่อยอดยังไม่ถูกถอนออก) งานกลายเป็น \"เรียกคืนแล้ว\" และเจ้าของเห็นเหตุผลที่กรอก — ทำได้ครั้งเดียว ย้อนกลับไม่ได้";
+    // ส่วนแบ่งผู้แนะนำของงานนี้ยังอยู่กับผู้แนะนำ (ค่าแนะนำจ่ายแล้วหรือยังรอจ่าย) — เลือกเรียกคืนพร้อมกันได้
+    $referralShare = $earning->affiliate_commission_id
+        && (int) $earning->referral_satang > 0
+        && $earning->referral_unpaid_to === null
+        && (int) $earning->referral_reversed_satang === 0
+        && in_array($earning->affiliateCommission?->status, ['pending', 'paid'], true);
+    $referralAmount = '฿' . number_format(((int) $earning->referral_satang) / 100, 2);
+    $withReferralPrompt = $reversePrompt . "\n\nรวมส่วนแบ่งผู้แนะนำของงานนี้ {$referralAmount} (ค่าแนะนำ #{$earning->affiliate_commission_id}) — หักกระเป๋าผู้แนะนำถ้าจ่ายไปแล้ว หรือตัดออกจากค่าแนะนำที่ยังไม่จ่าย";
+    $withoutReferralPrompt = $reversePrompt . "\n\nส่วนแบ่งผู้แนะนำของงานนี้ {$referralAmount} (ค่าแนะนำ #{$earning->affiliate_commission_id}) ไม่ถูกเรียกคืน";
 @endphp
 <div class="w-56 space-y-1.5">
     @if ($earning->canBeApproved())
@@ -45,15 +53,28 @@
 
     @if ($earning->canBeReversed())
         <form method="POST" action="{{ route('admin.gpuxmine.earnings.reverse', $earning->id) }}"
-              onsubmit="if (! window.confirm(@js($reversePrompt))) return false; this.querySelector('button[type=submit]').disabled = true;"
-              class="flex items-center gap-1.5">
+              @if ($referralShare)
+                  onsubmit="if (! window.confirm(this.querySelector('input[type=checkbox][name=with_referral]').checked ? @js($withReferralPrompt) : @js($withoutReferralPrompt))) return false; this.querySelector('button[type=submit]').disabled = true;"
+              @else
+                  onsubmit="if (! window.confirm(@js($reversePrompt))) return false; this.querySelector('button[type=submit]').disabled = true;"
+              @endif
+              class="space-y-1">
             @csrf
-            <input type="text" name="reason" required minlength="{{ \App\Services\GpuxMinePayoutReversalService::MIN_REASON }}" maxlength="255" autocomplete="off"
-                   placeholder="เหตุผลที่เรียกคืน (≥10 ตัวอักษร)" title="เจ้าของเครื่องจะเห็นเหตุผลนี้"
-                   class="flex-1 min-w-0 {{ $small }}">
-            <button type="submit" class="px-2.5 py-1 rounded bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold transition whitespace-nowrap disabled:opacity-50 disabled:cursor-wait">
-                เรียกคืน
-            </button>
+            <div class="flex items-center gap-1.5">
+                <input type="text" name="reason" required minlength="{{ \App\Services\GpuxMinePayoutReversalService::MIN_REASON }}" maxlength="255" autocomplete="off"
+                       placeholder="เหตุผลที่เรียกคืน (≥10 ตัวอักษร)" title="เจ้าของเครื่องจะเห็นเหตุผลนี้"
+                       class="flex-1 min-w-0 {{ $small }}">
+                <button type="submit" class="px-2.5 py-1 rounded bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold transition whitespace-nowrap disabled:opacity-50 disabled:cursor-wait">
+                    เรียกคืน
+                </button>
+            </div>
+            @if ($referralShare)
+                <input type="hidden" name="with_referral" value="0">
+                <label class="flex items-start gap-1.5 text-[11px] text-gray-600 dark:text-gray-300">
+                    <input type="checkbox" name="with_referral" value="1" checked class="mt-0.5">
+                    <span>เรียกคืนส่วนแบ่งผู้แนะนำ {{ $referralAmount }} ด้วย (ค่าแนะนำ #{{ $earning->affiliate_commission_id }})</span>
+                </label>
+            @endif
         </form>
     @endif
 
