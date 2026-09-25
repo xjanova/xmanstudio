@@ -7,6 +7,7 @@ use App\Services\ThemeService;
 use App\Support\UniverseHome;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Vite;
 use Tests\TestCase;
 
 /**
@@ -101,6 +102,28 @@ class UniverseHomeTest extends TestCase
     {
         $this->assertFalse(UniverseHome::isCrawler('Mozilla/5.0 (Linux; Android 12; CUBOT X50) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36'));
         $this->assertTrue(UniverseHome::isCrawler('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'));
+    }
+
+    public function test_until_the_build_has_the_universe_everyone_gets_the_theme_home_page(): void
+    {
+        // A deploy puts the new views live minutes before `npm run build` writes the
+        // manifest that knows the universe's entries, and a failed build keeps the old
+        // manifest for good. @vite would throw on every hit: the home page must fall back.
+        $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);
+        unset($manifest['resources/css/universe.css'], $manifest['resources/js/universe/main.js']);
+        $name = 'manifest-before-universe.json';
+        file_put_contents(public_path('build/' . $name), json_encode($manifest));
+
+        try {
+            Vite::useManifestFilename($name);
+
+            $this->home()
+                ->assertOk()
+                ->assertDontSee(self::UNIVERSE_MARK, false)
+                ->assertSee('nova-body', false);
+        } finally {
+            @unlink(public_path('build/' . $name));
+        }
     }
 
     public function test_switched_off_everyone_gets_the_theme_home_page_without_the_3d_pill(): void

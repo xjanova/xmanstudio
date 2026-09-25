@@ -21,11 +21,6 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
-        $categories = Category::onWebsite()
-            ->where('is_active', true)
-            ->orderBy('order')
-            ->get();
-
         $featuredReviews = Review::approved()
             ->featured()
             ->with(['user', 'reviewable'])
@@ -39,6 +34,11 @@ class HomeController extends Controller
         if (UniverseHome::shouldServe(request())) {
             return view('home-universe', compact('featuredProducts', 'featuredReviews'));
         }
+
+        $categories = Category::onWebsite()
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
 
         // Retro and Nova each get their own landing page; classic/premium
         // keep the original marketing home (sale banner, services grid,

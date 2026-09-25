@@ -98,8 +98,12 @@ export class Stations {
         if (need > room + 2) panel.style.setProperty('--fit', Math.max(0.6, room / need).toFixed(3));
     }
 
+    /** After a real resize (rotation, window size): refit what is on screen now, the rest on mount. */
     relayout() {
-        for (const item of this.items) item.fitted = false;
+        for (const item of this.items) {
+            item.fitted = false;
+            if (item.mounted) this.fit(item);
+        }
     }
 
     /**

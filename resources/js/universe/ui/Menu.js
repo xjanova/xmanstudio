@@ -119,14 +119,21 @@ export class Menu {
         else this.button.focus({ preventScroll: true });
     }
 
-    /** Reset after the page comes back from the back/forward cache. */
+    /**
+     * Put the menu away without ceremony: after the page comes back from the
+     * back/forward cache, or when a launch never left the page. Tells main.js
+     * too, or the HUD would stay hidden and the stops dimmed behind a menu
+     * that is no longer there.
+     */
     reset() {
+        const wasOpen = this.isOpen || this.going;
         this.going = false;
         this.isOpen = false;
         this.root.classList.remove('is-open', 'is-going');
         this.root.hidden = true;
         for (const item of this.items) item.classList.remove('is-chosen');
         this.button.setAttribute('aria-expanded', 'false');
+        if (wasOpen) this.onOpenChange?.(false);
     }
 
     spinTo(i) {
@@ -239,13 +246,10 @@ export class Menu {
     }
 
     onKey(e) {
-        if (!this.isOpen) {
-            if ((e.key === 'm' || e.key === 'M') && !e.target.closest?.('input, textarea, [contenteditable]') && !e.metaKey && !e.ctrlKey && !e.altKey) {
-                e.preventDefault();
-                this.open();
-            }
-            return;
-        }
+        // No single-key shortcut to open it: one that cannot be turned off fails
+        // WCAG 2.1.4, and it fired under the loader before the flight began.
+        // The menu button is in the Tab order, and the guide opens it too.
+        if (!this.isOpen) return;
         const back = this.vertical ? 'ArrowUp' : 'ArrowLeft';
         const fwd = this.vertical ? 'ArrowDown' : 'ArrowRight';
         switch (e.key) {

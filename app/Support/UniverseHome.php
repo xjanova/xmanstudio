@@ -3,7 +3,9 @@
 namespace App\Support;
 
 use App\Models\Setting;
+use Illuminate\Foundation\ViteException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Vite;
 
 /**
  * XMAN Universe — the full-3D home page, and who gets it.
@@ -13,8 +15,9 @@ use Illuminate\Http\Request;
  * as before (HomeController picks it). "Can run it" is decided twice:
  *
  *   1. here, on the server: the admin switch (/admin/theme), an explicit ?view=classic, the
- *      visitor's own earlier choice (cookie), and crawlers, which index the theme's page
- *      instead (same content, same links, no WebGL needed to read it);
+ *      visitor's own earlier choice (cookie), crawlers, which index the theme's page
+ *      instead (same content, same links, no WebGL needed to read it), and whether the
+ *      current front-end build has the page at all (see assetsBuilt());
  *   2. in the browser, by partials/universe/detect.blade.php before anything paints: WebGL2
  *      on real graphics hardware, no reduced-motion preference, enough memory. A device that
  *      fails goes to ?view=classic and the cookie remembers it for a week, so its next visit
@@ -37,6 +40,9 @@ class UniverseHome
 
     /** The browser check sent this device to the classic home; expires after a week. */
     public const MODE_LITE = 'lite';
+
+    /** The page's own Vite entry points (vite.config.js). */
+    private const ENTRIES = ['resources/css/universe.css', 'resources/js/universe/main.js'];
 
     /**
      * Crawlers and link-preview fetchers. Listed by name rather than matched on a bare "bot":
@@ -76,7 +82,28 @@ class UniverseHome
             return false;
         }
 
-        return ! self::isCrawler((string) $request->userAgent());
+        return ! self::isCrawler((string) $request->userAgent()) && self::assetsBuilt();
+    }
+
+    /**
+     * Is the universe in the current front-end build?
+     *
+     * A deploy puts the new views live (git reset) minutes before `npm run build` writes the
+     * manifest that knows these entries, and a build that fails leaves the old manifest for
+     * good. @vite throws on an entry it cannot find, so without this check the home page
+     * would answer 500 through every deploy that ships a change to it.
+     */
+    public static function assetsBuilt(): bool
+    {
+        try {
+            foreach (self::ENTRIES as $entry) {
+                Vite::asset($entry);
+            }
+
+            return true;
+        } catch (ViteException) {
+            return false;
+        }
     }
 
     public static function isCrawler(string $userAgent): bool

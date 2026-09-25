@@ -36,8 +36,9 @@ export function pickTier(gpu = '') {
     const memory = navigator.deviceMemory || 8;
 
     if (mobile) {
-        // iOS Safari reports 2 cores on every device, so Apple GPUs start at mid
-        // and the governor steps an older iPhone down if it needs to.
+        // Safari reports 4 cores for anything under 8, so the count cannot tell
+        // one iPhone from another: Apple GPUs start at mid and the governor
+        // steps an older one down if it needs to.
         if (/apple/.test(g)) return 'mid';
         if (/adreno.*\b(6[4-9]\d|7\d\d|8\d\d)\b|mali-g(7[1-9]|[6-9]\d\d)|immortalis|xclipse/.test(g) && memory >= 6) return 'mid';
         return 'low';
@@ -305,7 +306,10 @@ export class Engine {
         if (now - g.lastCheck < 2200) return;
         g.lastCheck = now;
 
-        if (g.ema > 1 / 36) this.degrade(g.ema);
+        // Under ~27 fps. Not 30: a device capped there (iOS Low Power Mode,
+        // Chrome's Energy Saver) runs a steady 33 ms, and would otherwise be
+        // stepped all the way down to a blurry floor it never needed.
+        if (g.ema > 1 / 27) this.degrade(g.ema);
     }
 
     /** Pause judging performance (a jump, a menu opening, anything that is a burst on purpose). */

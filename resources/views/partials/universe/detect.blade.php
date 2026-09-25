@@ -13,10 +13,10 @@
     "Cannot run it" means: no ES modules; no WebGL2, or WebGL2 only through a
     software rasteriser (failIfMajorPerformanceCaveat, SwiftShader, llvmpipe);
     prefers-reduced-motion (the page IS motion); Save-Data or a 2G link; under
-    4 GB of memory or under 4 CPU cores (not asked of iPhones and iPads, whose
-    Safari always answers 2). A visitor who pressed the 3D switch on
-    the classic page (xu_mode=universe) skips everything but the hard WebGL2
-    requirement.
+    4 GB of memory or under 4 CPU cores (Safari never reports fewer than 4, so
+    that one only screens out old Android and dual-core laptops). A visitor who
+    pressed the 3D switch on the classic page (xu_mode=universe) skips
+    everything but the hard WebGL2 requirement.
 
     window.__xuFallback is also how main.js gives up at runtime (a crash, a
     lost GPU, too few frames per second). The watchdog covers the case where
@@ -44,7 +44,10 @@
         if (w.__xuLeaving) return;
         w.__xuLeaving = true;
         // A network hiccup should not cost the visitor the 3D page for a week.
-        if (!forced && !transient) remember('lite', 7);
+        // A real failure does, even for one who asked for 3D: otherwise their
+        // device would load, stutter and bounce on every visit for a year. The
+        // pill on the classic page still takes them back in.
+        if (!transient) remember('lite', 7);
         root.className += ' xu-leaving';
         // Carry the rest of the query string (an affiliate ?ref=, say) along.
         var extra = location.search.replace(/^\?/, '').split('&').filter(function (p) {
@@ -57,9 +60,6 @@
     try {
         var mq = function (q) { return !!(w.matchMedia && w.matchMedia(q).matches); };
         var link = n.connection || {};
-        // Safari on iPhone and iPad reports 2 cores whatever the chip (a
-        // fingerprinting cap), so the core count says nothing there.
-        var apple = /iP(hone|ad|od)/.test(n.userAgent) || (n.platform === 'MacIntel' && n.maxTouchPoints > 1);
         if (!('noModule' in d.createElement('script')) || !w.Promise || !w.requestAnimationFrame) {
             why = 'browser';
         } else if (!forced && mq('(prefers-reduced-motion: reduce)')) {
@@ -68,7 +68,7 @@
             why = 'data';
         } else if (!forced && n.deviceMemory && n.deviceMemory < 4) {
             why = 'memory';
-        } else if (!forced && !apple && n.hardwareConcurrency && n.hardwareConcurrency < 4) {
+        } else if (!forced && n.hardwareConcurrency && n.hardwareConcurrency < 4) {
             why = 'cpu';
         } else {
             var gl = d.createElement('canvas').getContext('webgl2', {

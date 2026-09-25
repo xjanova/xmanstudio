@@ -56,8 +56,30 @@ async function boot() {
     const loader = new Loader(document.getElementById('xu-loader'));
     loader.step('link');
 
+    // The detect script's watchdog only covered the module arriving. Building
+    // and compiling can still hang on a sick GPU driver: never leave the
+    // visitor on the loader for good.
+    // Not transient: a device that needs half a minute to get here is better
+    // served by the classic page for the week.
+    const bootWatchdog = setTimeout(() => giveUp('boot-timeout'), 30000);
+
     const engine = new Engine(document.getElementById('xu-canvas'), { gpu: window.__xuGpu || '' });
     html.classList.add(engine.tierName === 'high' ? 'xu-q-hi' : engine.tierName === 'mid' ? 'xu-q-mid' : 'xu-q-low');
+
+    // Watch the GPU context from the start: building the world is when memory
+    // pressure is highest, and a context that dies then must not leave a
+    // black screen behind the gate.
+    let world = null;
+    let lostTimer = null;
+    engine.onContextLost = () => {
+        clearTimeout(lostTimer);
+        lostTimer = setTimeout(() => giveUp('context', true), 4000);
+    };
+    engine.onContextRestored = () => {
+        clearTimeout(lostTimer);
+        world?.sky?.bake();
+    };
+
     loader.step('engine');
     await nextFrame();
 
@@ -67,7 +89,7 @@ async function boot() {
     const journey = new Journey(sections);
     journey.layout(layoutInfo());
 
-    const world = new World(engine, journey);
+    world = new World(engine, journey);
     await world.build((key) => loader.step(key));
     world.setLayout(layoutInfo());
 
@@ -100,6 +122,17 @@ async function boot() {
         if (j.screens > 2.2) sound.warp(Math.min(j.duration * 0.8, 1.8), true);
     };
 
+    // Give the page back if a launch never leaves it: Stop pressed, a network
+    // error, a download link. Otherwise the white-out and the click lock stay.
+    let launchTimer = null;
+    const abortLaunch = () => {
+        clearTimeout(launchTimer);
+        state.launching = 0;
+        state.flash = 0;
+        menu.reset();
+        html.style.overflow = '';
+    };
+
     const launchTo = (href) => {
         if (state.launching) return;
         state.launching = 0.0001;
@@ -109,6 +142,8 @@ async function boot() {
         setTimeout(() => {
             window.location.href = href;
         }, 900);
+        clearTimeout(launchTimer);
+        launchTimer = setTimeout(abortLaunch, 6000);
     };
 
     const hud = new Hud({ journey, sound, onJump: (i) => jump(i) });
@@ -187,14 +222,13 @@ async function boot() {
     });
 
     // Leaving: remember where we were, so Back lands here again.
-    window.addEventListener('pagehide', () => place.save(journey.u));
+    window.addEventListener('pagehide', () => {
+        clearTimeout(launchTimer);
+        place.save(journey.u);
+    });
     window.addEventListener('pageshow', (e) => {
-        if (!e.persisted) return;
-        // Back from the bfcache: undo the launch.
-        state.launching = 0;
-        state.flash = 0;
-        menu.reset();
-        html.style.overflow = '';
+        // Back from the bfcache: undo the launch (and the menu it left from).
+        if (e.persisted) abortLaunch();
     });
 
     // ---- quality and failure ------------------------------------------------
@@ -209,14 +243,6 @@ async function boot() {
     engine.onGiveUp = () => {
         hud.toast('เครื่องนี้แสดงผล 3D ได้ไม่ลื่น — กำลังพาไปหน้าเว็บแบบปกติ / Switching to the classic page for a smoother ride');
         setTimeout(() => giveUp('slow'), 1800);
-    };
-    let lostTimer = null;
-    engine.onContextLost = () => {
-        lostTimer = setTimeout(() => giveUp('context', true), 4000);
-    };
-    engine.onContextRestored = () => {
-        clearTimeout(lostTimer);
-        world.sky.bake();
     };
     let laidOut = { w: window.innerWidth, h: window.innerHeight };
     engine.onResize = (w, h) => {
@@ -393,6 +419,8 @@ async function boot() {
 
     loader.step('ready');
     await sleep(380);
+    // Built and drawing. From here the frame loop's own guards take over.
+    clearTimeout(bootWatchdog);
 
     // ---- enter -----------------------------------------------------------
     // Restore a Back-button position straight away; otherwise start at the core.
@@ -423,6 +451,12 @@ async function boot() {
     sound.setEnabled(choice.sound);
     hud.setSound(choice.sound);
 
+    // A context that died while the gate was up would dive into a black screen.
+    if (engine.lost) {
+        giveUp('context', true);
+        return;
+    }
+
     loader.leave();
     intro.dur = saved !== null ? 1.6 : returning ? 2.1 : 2.8;
     // When does the straight dive cross the portal? (The ease is a half cosine.)
@@ -436,7 +470,11 @@ async function boot() {
     sound.warp(intro.dur * intro.cross, true);
 }
 
-boot().catch((err) => {
-    console.error('[xu] boot failed', err);
-    giveUp('boot');
-});
+// The browser check may already be on its way to the classic page; a module
+// that still runs would only burn the GPU for a page that is being replaced.
+if (!window.__xuLeaving) {
+    boot().catch((err) => {
+        console.error('[xu] boot failed', err);
+        giveUp('boot');
+    });
+}

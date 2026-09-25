@@ -68,16 +68,26 @@
 (function () {
     var el = document.getElementById('xu-switch');
     if (!el) return;
-    try {
-        if (!('noModule' in document.createElement('script'))) return;
-        var gl = document.createElement('canvas').getContext('webgl2');
-        if (!gl) return;
-        var lose = gl.getExtension('WEBGL_lose_context');
-        if (lose) lose.loseContext();
-    } catch (e) {
-        return;
-    }
-    el.hidden = false;
+    // Probing WebGL costs a moment on the weak devices this page mostly
+    // serves, so it waits until the page is idle.
+    var idle = window.requestIdleCallback
+        ? window.requestIdleCallback.bind(window)
+        : function (fn) { return setTimeout(fn, 400); };
+    idle(function () {
+        try {
+            if (!('noModule' in document.createElement('script'))) return;
+            var gl = document.createElement('canvas').getContext('webgl2');
+            if (!gl) return;
+            var lose = gl.getExtension('WEBGL_lose_context');
+            if (lose) lose.loseContext();
+        } catch (e) {
+            return;
+        }
+        // Out of <main>: the layouts give <main> and the footer their own
+        // stacking contexts, and the footer would paint over the pill.
+        document.body.appendChild(el);
+        el.hidden = false;
+    }, { timeout: 2500 });
     el.addEventListener('click', function (e) {
         e.preventDefault();
         document.cookie = 'xu_mode=universe; path=/; max-age=' + (365 * 86400) + '; SameSite=Lax'
