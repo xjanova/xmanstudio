@@ -399,6 +399,35 @@ crontab -e
 * * * * * cd /var/www/xmanstudio && php artisan schedule:run >> /dev/null 2>&1
 ```
 
+**On DirectAdmin** (Advanced Features → Cron Jobs) the entry must be every minute too:
+Minute `*`, Hour `*`, Day of Month `*`, Month `*`, Day of Week `*`, command
+`cd /path/to/xmanstudio && php artisan schedule:run >> /dev/null 2>&1`.
+Do not use `*/5` — the scheduler only runs what is due at the minute it is called, so a
+five-minute cron silently turns every "every minute" task into "every five minutes" and skips
+tasks pinned to a minute it never lands on.
+
+GPUxMINE depends on two of those tasks (`routes/console.php`):
+
+| Task | Schedule | What stops if it does not run |
+|------|----------|-------------------------------|
+| `gpuxmine:sync-nodes` | every minute (`* * * * *`) | Machines never reach aixman, suspensions and removals are not passed on, stuck retirements are not retried |
+| `gpuxmine:settle-earnings` | hourly (`0 * * * *`) | Earnings stay `pending` forever and never reach the owners' XMAN wallets |
+
+Check it after every deploy, and whenever someone says their machine gets no work or their
+earnings are not arriving:
+
+```bash
+php artisan gpuxmine:doctor          # exit 1 when something is broken
+php artisan gpuxmine:doctor --strict # also exit 1 on warnings
+```
+
+It checks the relay and aixman settings (`GPUXMINE_RELAY_URL`, `GPUXMINE_RELAY_ADMIN_KEY`,
+`AIXMAN_API_BASE`, `AIXMAN_WEBHOOK_SECRET` — which must equal aixman's `XMAN_WEBHOOK_SECRET`),
+that the relay answers with the admin key, that aixman accepts the secret (without writing
+anything there), that the migrations have run, that both tasks are scheduled and that the cron
+really ran them recently, and whether any earnings are stuck past the hold or waiting for an
+admin at `/admin/gpuxmine/earnings`. It never prints a secret.
+
 ---
 
 ## Performance Optimization

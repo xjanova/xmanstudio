@@ -271,6 +271,46 @@ class GpuxMineRelayService
         }
     }
 
+    /**
+     * ถาม relay ด้วย admin key หนึ่งครั้ง แล้วบอกผลแบบที่คนอ่านแก้ต่อได้ (gpuxmine:doctor)
+     *
+     * ต่างจาก workers() ตรงที่ไม่กลืนสาเหตุ: 401/403 คือ admin key ไม่ตรง, ต่อไม่ติด
+     * คือ URL หรือเครือข่าย — สองอย่างนี้แก้คนละที่ ไม่มีการ log หรือคืนตัว key
+     *
+     * @return array{ok:bool, status:?int, workers:?int, online:?int, error:?string}
+     */
+    public function probe(): array
+    {
+        $result = ['ok' => false, 'status' => null, 'workers' => null, 'online' => null, 'error' => null];
+
+        if (! $this->isConfigured()) {
+            return ['error' => 'ยังไม่ได้ตั้งค่า'] + $result;
+        }
+
+        try {
+            $response = $this->admin()->get($this->url('/admin/workers'));
+        } catch (\Throwable $e) {
+            return ['error' => 'ติดต่อไม่ได้ (' . class_basename($e) . ')'] + $result;
+        }
+
+        $result['status'] = $response->status();
+        $rows = $response->json();
+
+        if (in_array($response->status(), [401, 403], true)) {
+            return ['error' => 'relay ไม่รับ admin key (HTTP ' . $response->status() . ')'] + $result;
+        }
+
+        if (! $response->successful() || ! is_array($rows) || ! array_is_list($rows)) {
+            return ['error' => 'relay ตอบผิดรูปแบบ (HTTP ' . $response->status() . ')'] + $result;
+        }
+
+        return [
+            'ok' => true,
+            'workers' => count($rows),
+            'online' => count(array_filter($rows, fn ($row) => is_array($row) && ($row['online'] ?? false) === true)),
+        ] + $result;
+    }
+
     /** ที่อยู่ที่เครื่องลูกต้องต่อเข้ามา แปลงจาก URL ของ relay ที่ตั้งไว้ตอนนี้ */
     public function agentUrl(): string
     {

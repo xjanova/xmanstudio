@@ -261,6 +261,38 @@ class GpuxMineDispatchService
     }
 
     /**
+     * aixman รับเราไหม — โดยไม่เขียนอะไรที่นั่น (gpuxmine:doctor)
+     *
+     * ยิง POST /api/gpux/nodes ด้วย body ที่ไม่มี workerId: aixman ตรวจความลับ
+     * ก่อนตรวจ body เสมอ ดังนั้น 400 = ถึงแล้วและความลับตรง (และไม่มีแถวไหนถูก
+     * เขียน เพราะ body ไม่ผ่านการตรวจ), 401 = ความลับสองฝั่งไม่ตรงกัน,
+     * 404/405 = aixman ตัวนั้นยังไม่มีเส้นทางนี้
+     *
+     * @return array{ok:bool, status:?int, error:?string}
+     */
+    public function probe(): array
+    {
+        if (! $this->isConfigured()) {
+            return ['ok' => false, 'status' => null, 'error' => 'ยังไม่ได้ตั้งค่า'];
+        }
+
+        try {
+            $response = $this->aixman()->post($this->nodesUrl(), ['probe' => 'gpuxmine:doctor']);
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'status' => null, 'error' => 'ติดต่อไม่ได้ (' . class_basename($e) . ')'];
+        }
+
+        $status = $response->status();
+
+        return match (true) {
+            $status === 400 => ['ok' => true, 'status' => $status, 'error' => null],
+            $status === 401, $status === 403 => ['ok' => false, 'status' => $status, 'error' => 'aixman ไม่รับ AIXMAN_WEBHOOK_SECRET (ต้องตรงกับ XMAN_WEBHOOK_SECRET ของ aixman)'],
+            $status === 404, $status === 405 => ['ok' => false, 'status' => $status, 'error' => 'aixman ตัวนี้ยังไม่มี /api/gpux/nodes'],
+            default => ['ok' => false, 'status' => $status, 'error' => 'aixman ตอบ HTTP ' . $status . ' (คาดว่าจะได้ 400)'],
+        };
+    }
+
+    /**
      * จุดต่อของ Pro Miner (D10) — ยังคืน false เสมอ
      *
      * Pro Miner ยังไม่มีราคาและยังไม่มีไลเซนส์ไหนถูกตีธงว่าเป็น pro
