@@ -25,6 +25,13 @@
     } catch (\Throwable $e) {
         $gpuxmineReview = 0;
     }
+
+    // คำขอถอนเงินที่รอแอดมินโอน — ยอดของผู้ใช้ถูกพักไว้จนกว่าจะมีคนกด (แยก try แบบเดียวกัน)
+    try {
+        $pendingWithdrawals = \App\Models\WalletWithdrawal::where('status', \App\Models\WalletWithdrawal::STATUS_PENDING)->count();
+    } catch (\Throwable $e) {
+        $pendingWithdrawals = 0;
+    }
 @endphp
 
 {{-- Menu link helper class --}}
@@ -483,7 +490,7 @@
 <div x-data="{ open: {{ request()->routeIs('admin.wallets.*') || request()->routeIs('admin.coupons*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>การเงิน</span>
-        @if($pendingTopups > 0)<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingTopups }}</span>@endif
+        @if($pendingTopups + $pendingWithdrawals > 0)<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingTopups + $pendingWithdrawals }}</span>@endif
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </button>
     <div x-show="open" x-collapse class="{{ $subMenuClass }}">
@@ -500,6 +507,13 @@
             การเติมเงิน
             @if($pendingTopups > 0)
             <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingTopups }}</span>
+            @endif
+        </a>
+        <a href="{{ route('admin.wallets.withdrawals') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.wallets.withdrawals*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4m0 0l6-6m-6 6l6 6"/></svg>
+            คำขอถอนเงิน
+            @if($pendingWithdrawals > 0)
+            <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingWithdrawals }}</span>
             @endif
         </a>
         <a href="{{ route('admin.wallets.transactions') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.wallets.transactions') ? $linkActive : $linkInactive }}">

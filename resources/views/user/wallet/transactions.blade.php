@@ -134,6 +134,10 @@
                                     </span>
                                 </div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ $transaction->description }}</p>
+                                {{-- สถานะที่ไม่ใช่ "สำเร็จ" ธรรมดา — โดยเฉพาะการถอน: พักยอดไว้ / โอนแล้ว / คืนเข้ากระเป๋า --}}
+                                @if($state = $transaction->stateLabel())
+                                <span class="inline-block mt-1 text-xs px-2 py-0.5 rounded-full border {{ $transaction->status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800' : ($transaction->status === 'completed' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600') }}">{{ $state }}</span>
+                                @endif
                                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
                                     <code class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-600 dark:text-gray-400 font-mono">
                                         {{ $transaction->transaction_id }}

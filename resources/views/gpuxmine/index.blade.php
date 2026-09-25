@@ -61,10 +61,10 @@
                         </div>
                     </div>
 
-                    {{-- สัญญาเท่าที่ทำจริง (D3): เงินพักไว้ก่อน แล้วเข้ากระเป๋า XMAN — ยังไม่มีการถอนเป็นเงินสด --}}
+                    {{-- สัญญาเท่าที่ทำจริง (R2-4): เงินพักไว้ก่อน แล้วเข้ากระเป๋า XMAN — ถอนเป็นเงินสด = ขอถอนจากกระเป๋าแล้วแอดมินอนุมัติ --}}
                     <p class="mt-4 text-slate-300 text-sm sm:text-base max-w-xl">
-                        <x-bi :th="'เปิดโปรแกรมทิ้งไว้ ระบบจะส่งงาน AI มาให้การ์ดจอของคุณทำตามที่เครื่องไหว ค่าตอบแทนของแต่ละงานพักไว้ ' . $holdHours . ' ชั่วโมงเพื่อตรวจสอบ แล้วเข้ากระเป๋าเงิน XMAN ของคุณ'"
-                              :en="'Leave the client running. We send AI jobs your card can handle. Earnings for each job are held for ' . $holdHours . ' hours for checks, then land in your XMAN wallet.'" />
+                        <x-bi :th="'เปิดโปรแกรมทิ้งไว้ ระบบจะส่งงาน AI มาให้การ์ดจอของคุณทำตามที่เครื่องไหว ค่าตอบแทนของแต่ละงานพักไว้ ' . $holdHours . ' ชั่วโมงเพื่อตรวจสอบ แล้วเข้ากระเป๋าเงิน XMAN ของคุณ — ถอนเป็นเงินสดได้จากกระเป๋า แอดมินอนุมัติแล้วโอนเข้าบัญชีที่ยืนยันตัวตนไว้'"
+                              :en="'Leave the client running. We send AI jobs your card can handle. Earnings for each job are held for ' . $holdHours . ' hours for checks, then land in your XMAN wallet. Cash out with a wallet withdrawal: our team approves it and transfers to your verified account.'" />
                     </p>
 
                     {{-- ป้ายสถานะสด --}}
@@ -263,8 +263,8 @@
     </div>
 
     {{-- ══════════ เงินไปไหน ══════════
-         บอกตามที่ระบบทำจริง (D3): พัก → ตรวจ → เข้ากระเป๋า XMAN เป็นรอบ
-         ยังไม่มีระบบถอนเป็นเงินสด ห้ามสัญญาว่ามี --}}
+         บอกตามที่ระบบทำจริง: พัก → ตรวจ → เข้ากระเป๋า XMAN เป็นรอบ → ถอนเป็นเงินสดได้
+         ด้วยคำขอถอนที่แอดมินอนุมัติ (R2-4) — ไม่มีการโอนเข้าบัญชีอัตโนมัติ ห้ามสัญญาว่ามี --}}
     <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg px-5 sm:px-6 py-4 animate-fade-in">
         <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6">
             <h2 class="text-sm font-semibold text-gray-900 dark:text-white shrink-0"><x-bi th="เงินเดินทางอย่างไร" en="How earnings move" /></h2>
@@ -282,11 +282,16 @@
                 <li>
                     <span class="px-2 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30"><x-bi th="เข้ากระเป๋าแล้ว" en="Paid" /></span>
                 </li>
+                <li aria-hidden="true" class="text-gray-300 dark:text-gray-600">→</li>
+                <li class="inline-flex items-center gap-1.5">
+                    <a href="{{ route('user.wallet.withdraw') }}" class="px-2 py-0.5 rounded-full border bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-500/30 hover:bg-teal-100 dark:hover:bg-teal-500/20 transition"><x-bi th="ถอนเป็นเงินสด" en="Cash out" /></a>
+                    <span><x-bi th="แอดมินอนุมัติ" en="approved by our team" /></span>
+                </li>
             </ol>
         </div>
         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-            <x-bi th="งานที่ผลดูผิดปกติจะขึ้นว่า “รอตรวจสอบ” จนกว่าผู้ดูแลจะตัดสิน และเครื่องที่ถูกระงับจะพักเงินไว้จนกว่าจะยกเลิกการระงับ · เงินในกระเป๋า XMAN ใช้ซื้อสินค้าและบริการในเว็บนี้ได้ ตอนนี้ยังไม่มีการถอนเป็นเงินสด"
-                  en="Jobs that look unusual show “Under review” until an admin decides, and a suspended machine's earnings wait until the suspension is lifted. XMAN wallet money can be spent on this site; cash withdrawal is not available yet." />
+            <x-bi th="งานที่ผลดูผิดปกติจะขึ้นว่า “รอตรวจสอบ” จนกว่าผู้ดูแลจะตัดสิน และเครื่องที่ถูกระงับจะพักเงินไว้จนกว่าจะยกเลิกการระงับ · เงินในกระเป๋า XMAN ใช้ซื้อสินค้าและบริการในเว็บนี้ได้ หรือถอนเป็นเงินสด: ขอถอนที่หน้ากระเป๋าเงิน (ต้องยืนยันตัวตน) แล้วแอดมินอนุมัติและโอนเข้าบัญชีของคุณ"
+                  en="Jobs that look unusual show “Under review” until an admin decides, and a suspended machine's earnings wait until the suspension is lifted. XMAN wallet money can be spent on this site or cashed out: request a withdrawal on the wallet page (identity verification required), and our team approves it and transfers it to your account." />
         </p>
     </div>
 

@@ -14,6 +14,7 @@ use App\Services\GpuxMineEarningSettlementService;
 use App\Services\GpuxMineNodeStateService;
 use App\Services\GpuxMineReferrerResolver;
 use App\Services\GpuxMineRelayService;
+use App\Services\WalletWithdrawalService;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -72,6 +73,7 @@ class GpuxMineNodeController extends Controller
         private readonly GpuxMineNodeStateService $state,
         private readonly GpuxMineReferrerResolver $referrers,
         private readonly GpuxMineEarningSettlementService $settlement,
+        private readonly WalletWithdrawalService $withdrawals,
     ) {}
 
     /**
@@ -466,7 +468,11 @@ class GpuxMineNodeController extends Controller
      * "วันนี้" กับ "เดือนนี้" นับตามเวลาไทย — เจ้าของเครื่องอยู่ที่นี่ ถ้านับตาม UTC
      * ยอดวันนี้จะรีเซ็ตตอนเจ็ดโมงเช้า งานที่ถูกยกเลิก (void) ไม่นับในยอดไหนเลย
      *
-     * @return array<string, int>
+     * withdraw_url / withdrawal_pending_satang (C6 รอบสอง — โปรแกรมเก่าไม่อ่าน): การถอนเป็นเงินสด
+     * คือการขอถอนจากกระเป๋าบนเว็บแล้วรอแอดมินอนุมัติ (R2-4) — ลิงก์เป็น null เมื่อแอดมินปิดการถอนไว้
+     * ยอดที่รอถอนถูกหักออกจาก wallet_balance_satang แล้วตั้งแต่ตอนขอ
+     *
+     * @return array<string, int|string|null>
      */
     private function earningsSummary(int $userId): array
     {
@@ -493,6 +499,8 @@ class GpuxMineNodeController extends Controller
             'donated_satang_30d' => $since(now()->subDays(30), 'donated_value_satang'),
             'wallet_balance_satang' => GpuxMineEarningSettlementService::satang($balance === null ? null : (string) $balance),
             'hold_hours' => $this->settlement->holdHours(),
+            'withdraw_url' => $this->withdrawals->enabled() ? route('user.wallet.withdraw') : null,
+            'withdrawal_pending_satang' => $this->withdrawals->pendingSatang($userId),
         ];
     }
 

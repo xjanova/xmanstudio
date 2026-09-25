@@ -1,0 +1,598 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Exceptions\WithdrawalRefused;
+use App\Models\GpuNode;
+use App\Models\KycVerification;
+use App\Models\Setting;
+use App\Models\User;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
+use App\Models\WalletWithdrawal;
+use App\Services\WalletWithdrawalService;
+use App\Support\AdminAlerts;
+use App\Support\Alerts\BusinessAlerts;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as HttpRequest;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
+use Tests\TestCase;
+
+/**
+ * ถอนเงินสดออกจากกระเป๋า XMAN (R2-4): ขอ → พักยอดทันที → แอดมินโอนแล้วอนุมัติ หรือปฏิเสธ (คืนยอด)
+ *
+ *   — ต้องยืนยันตัวตนแล้ว และโอนเข้าบัญชีที่ยืนยันไว้กับ KYC เท่านั้น
+ *   — กดส่งซ้ำได้คำขอเดิม, หนึ่งคำขอที่เปิดอยู่ต่อคน, ยอดขั้นต่ำ, ไม่เกินยอดคงเหลือ, จำกัดอัตรา
+ *   — ยอดที่คืน (ปฏิเสธ/ยกเลิก) ตรงกับที่พักไว้ทุกสตางค์ และคืนได้ครั้งเดียว
+ *   — แอดมินสองคนกดพร้อมกัน / ผู้ใช้ยกเลิกขณะแอดมินอนุมัติ มีผลครั้งเดียว
+ *   — แจ้งแอดมินทาง Telegram ด้วยระบบแจ้งเตือนเดิม โดยไม่ส่งเลขบัญชีเต็ม
+ */
+class WalletWithdrawalTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private const ACCOUNT = '1234567890';
+
+    private User $user;
+
+    private User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+        Cache::flush();
+        Http::preventStrayRequests();
+        Storage::fake('local');
+        AdminAlerts::$immediate = false;
+        BusinessAlerts::$actor = null;
+
+        $this->user = $this->verifiedUser();
+        $this->admin = User::factory()->create(['role' => 'admin', 'name' => 'แอดมินการเงิน']);
+        $this->fund($this->user, '500.00');
+    }
+
+    private function verifiedUser(bool $withBank = true): User
+    {
+        $user = User::factory()->create(['name' => 'สมหญิง ใจดี']);
+        KycVerification::create([
+            'user_id' => $user->id,
+            'status' => KycVerification::STATUS_APPROVED,
+            'full_name_th' => 'สมหญิง ใจดี',
+            'bank_code' => $withBank ? 'KBANK' : null,
+            'bank_account_number' => $withBank ? '123-4-56789-0' : null,
+            'bank_account_name' => $withBank ? 'สมหญิง ใจดี' : null,
+        ]);
+        $user->forceFill(['kyc_status' => KycVerification::STATUS_APPROVED, 'kyc_verified_at' => now()])->save();
+
+        return $user;
+    }
+
+    private function fund(User $user, string $baht): Wallet
+    {
+        $wallet = Wallet::getOrCreateForUser($user->id);
+        $wallet->update(['balance' => $baht, 'total_deposited' => $baht]);
+
+        return $wallet->fresh();
+    }
+
+    private function balance(?User $user = null): string
+    {
+        return (string) Wallet::where('user_id', ($user ?? $this->user)->id)->value('balance');
+    }
+
+    private function ask(string $amount, ?string $key = null, array $extra = [], ?User $as = null): TestResponse
+    {
+        return $this->actingAs($as ?? $this->user)->post('/wallet/withdraw', array_merge([
+            'amount' => $amount,
+            'request_key' => $key ?? (string) Str::uuid(),
+        ], $extra));
+    }
+
+    private function onlyRequest(): WalletWithdrawal
+    {
+        return WalletWithdrawal::sole();
+    }
+
+    private function telegramOn(): void
+    {
+        Setting::setValue('telegram_bot_token', '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw', 'string', 'telegram');
+        Setting::setValue('telegram_chat_id', '-1001234567890', 'string', 'telegram');
+        Setting::setValue('telegram_alerts_enabled', '1', 'boolean', 'telegram');
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 77]])]);
+    }
+
+    // ── ขอถอน ─────────────────────────────────────────────────────────────
+
+    public function test_a_request_holds_the_amount_at_once_and_pays_only_the_kyc_account(): void
+    {
+        $this->ask('200.50')->assertRedirect(route('user.wallet.withdraw'))->assertSessionHas('success');
+
+        $w = $this->onlyRequest();
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->status);
+        $this->assertSame('200.50', $w->amount);
+        $this->assertSame($this->user->id, $w->open_user_id);
+        // ปลายทางมาจาก KYC ที่อนุมัติแล้ว — ไม่ใช่สิ่งที่ฟอร์มส่งมา
+        $this->assertSame(WalletWithdrawal::SOURCE_KYC, $w->account_source);
+        $this->assertSame(self::ACCOUNT, $w->account_number);
+        $this->assertSame('สมหญิง ใจดี', $w->account_name);
+        $this->assertSame('กสิกรไทย', $w->bank_name);
+        // เลขบัญชีเก็บแบบเข้ารหัส
+        $this->assertNotSame(self::ACCOUNT, DB::table('wallet_withdrawals')->value('account_number'));
+
+        // ยอดถูกพักด้วยการหักทันที — aixman และทุกที่ที่ตัดเงินจาก balance ใช้ยอดนี้ไม่ได้แล้ว
+        $this->assertSame('299.50', $this->balance());
+        $wallet = Wallet::where('user_id', $this->user->id)->first();
+        $this->assertSame('0.00', $wallet->total_spent);
+        $this->assertSame('500.00', $wallet->total_deposited);
+
+        $hold = WalletTransaction::findOrFail($w->hold_transaction_id);
+        $this->assertSame('WDH' . $w->id, $hold->transaction_id);
+        $this->assertSame(WalletTransaction::TYPE_WITHDRAWAL, $hold->type);
+        $this->assertSame(WalletTransaction::STATUS_PENDING, $hold->status);
+        $this->assertSame('-200.50', $hold->amount);
+        $this->assertSame('500.00', $hold->balance_before);
+        $this->assertSame('299.50', $hold->balance_after);
+        $this->assertSame('พักยอดไว้ · รอแอดมินอนุมัติ', $hold->stateLabel());
+
+        // ผู้ใช้เห็นคำขอที่รอ ทั้งหน้าถอน หน้ากระเป๋า และประวัติ
+        $this->actingAs($this->user)->get('/wallet/withdraw')->assertOk()
+            ->assertSee($w->withdrawal_id)->assertSee('คำขอที่รอแอดมินโอน')->assertSee('ยกเลิกคำขอนี้')->assertDontSee(self::ACCOUNT);
+        $this->actingAs($this->user)->get('/wallet')->assertOk()
+            ->assertSee('คำขอถอนรอแอดมินโอน')->assertSee('พักยอดไว้ · รอแอดมินอนุมัติ');
+        $this->actingAs($this->user)->get('/wallet/transactions')->assertOk()->assertSee('พักยอดไว้ · รอแอดมินอนุมัติ');
+    }
+
+    public function test_the_same_submit_twice_makes_one_request_and_one_hold(): void
+    {
+        $key = (string) Str::uuid();
+
+        $this->ask('150', $key)->assertSessionHas('success');
+        $this->ask('150', $key)->assertRedirect(route('user.wallet.withdraw'))
+            ->assertSessionHas('success', fn ($m) => str_contains($m, 'ส่งไปแล้ว'));
+
+        $this->assertSame(1, WalletWithdrawal::count());
+        $this->assertSame(1, WalletTransaction::where('type', 'withdrawal')->count());
+        $this->assertSame('350.00', $this->balance());
+
+        // service ตรง ๆ ด้วยกุญแจเดิม (เช่นคำขอที่หลุดมาพร้อมกัน) ก็ได้คำขอเดิม
+        [$again, $created] = app(WalletWithdrawalService::class)->request($this->user->fresh(), 15000, $key);
+        $this->assertFalse($created);
+        $this->assertSame($this->onlyRequest()->id, $again->id);
+        $this->assertSame('350.00', $this->balance());
+    }
+
+    public function test_only_one_open_request_per_user(): void
+    {
+        $this->ask('100')->assertSessionHas('success');
+
+        $this->ask('100')->assertSessionHas('error', fn ($m) => str_contains($m, 'รอแอดมินอยู่แล้ว'));
+
+        $this->assertSame(1, WalletWithdrawal::count());
+        $this->assertSame('400.00', $this->balance());
+    }
+
+    public function test_the_minimum_is_one_hundred_baht_unless_the_back_office_sets_another(): void
+    {
+        $this->ask('99.99')->assertSessionHas('error', fn ($m) => str_contains($m, 'ขั้นต่ำ') && str_contains($m, '฿100.00'));
+        $this->assertSame(0, WalletWithdrawal::count());
+
+        config(['services.wallet.withdraw_min_baht' => '150']);
+        $this->ask('120')->assertSessionHas('error', fn ($m) => str_contains($m, '฿150.00'));
+
+        // หลังบ้านตั้งทับค่า env
+        Setting::setValue('wallet_withdraw_min_amount', '50');
+        $this->ask('60')->assertSessionHas('success');
+        $this->assertSame('440.00', $this->balance());
+    }
+
+    public function test_more_than_the_balance_or_a_malformed_amount_is_refused_in_thai(): void
+    {
+        $this->ask('500.01')->assertSessionHas('error', fn ($m) => str_contains($m, 'ไม่พอ') && str_contains($m, '฿500.00'));
+
+        foreach (['abc', '-100', '1e3', '100.123', ''] as $bad) {
+            $this->ask($bad)->assertSessionHasErrors('amount');
+        }
+        // ความพยายามที่ผิดก็นับโควตา — ล้างก่อนลองของจริง
+        Cache::flush();
+
+        $this->assertSame(0, WalletWithdrawal::count());
+        $this->assertSame('500.00', $this->balance());
+
+        // ทั้งหมดถอนได้ — ยอดไม่ติดลบ ไม่เหลือเศษ
+        $this->ask('500')->assertSessionHas('success');
+        $this->assertSame('0.00', $this->balance());
+    }
+
+    public function test_an_unverified_account_cannot_request_and_is_sent_to_kyc(): void
+    {
+        $stranger = User::factory()->create();
+        $this->fund($stranger, '1000.00');
+
+        $this->ask('200', null, [], $stranger)->assertRedirect(route('kyc.index'))->assertSessionHas('error');
+        $this->actingAs($stranger)
+            ->postJson('/wallet/withdraw', ['amount' => '200', 'request_key' => (string) Str::uuid()])
+            ->assertForbidden()
+            ->assertJsonPath('error', 'kyc_required');
+
+        // KYC ยังรอตรวจ = ยังถอนไม่ได้
+        $stranger->forceFill(['kyc_status' => KycVerification::STATUS_PENDING])->save();
+        $this->ask('200', null, [], $stranger)->assertRedirect(route('kyc.index'));
+
+        $this->assertSame(0, WalletWithdrawal::count());
+        $this->assertSame('1000.00', $this->balance($stranger));
+
+        // หน้าถอนเปิดได้ และบอกว่าต้องทำอะไรก่อน
+        $this->actingAs($stranger)->get('/wallet/withdraw')->assertOk()->assertSee('ไปหน้ายืนยันตัวตน')->assertDontSee('name="request_key"', false);
+    }
+
+    public function test_a_frozen_wallet_or_paused_withdrawals_refuse_the_request(): void
+    {
+        Wallet::where('user_id', $this->user->id)->update(['is_active' => false]);
+        $this->ask('100')->assertSessionHas('error', fn ($m) => str_contains($m, 'ถูกระงับ'));
+
+        Wallet::where('user_id', $this->user->id)->update(['is_active' => true]);
+        Setting::setValue('wallet_withdraw_enabled', '0');
+        $this->ask('100')->assertSessionHas('error', fn ($m) => str_contains($m, 'ปิดปรับปรุง'));
+        $this->actingAs($this->user)->get('/wallet/withdraw')->assertOk()->assertSee('ปิดปรับปรุงชั่วคราว');
+
+        $this->assertSame(0, WalletWithdrawal::count());
+        $this->assertSame('500.00', $this->balance());
+    }
+
+    public function test_requests_are_throttled(): void
+    {
+        foreach (range(1, 6) as $i) {
+            // ขอแล้วยกเลิกทันที — วนขอซ้ำเร็ว ๆ ได้ไม่เกินที่จำกัด
+            $this->ask('100')->assertSessionHas('success');
+            $w = WalletWithdrawal::latest('id')->first();
+            $this->actingAs($this->user)->post("/wallet/withdraw/{$w->id}/cancel")->assertSessionHas('success');
+        }
+
+        $this->ask('100')->assertStatus(429);
+        $this->assertSame('500.00', $this->balance());
+    }
+
+    public function test_without_a_kyc_bank_account_the_form_asks_for_one_and_checks_it(): void
+    {
+        $user = $this->verifiedUser(withBank: false);
+        $this->fund($user, '300.00');
+
+        $this->ask('150', null, [], $user)->assertSessionHasErrors(['method', 'account_name']);
+        $this->ask('150', null, ['method' => 'promptpay', 'promptpay_id' => '12345', 'account_name' => 'สมหญิง ใจดี'], $user)
+            ->assertSessionHasErrors('promptpay_id');
+        $this->ask('150', null, ['method' => 'bank', 'bank_code' => 'NOPE', 'account_number' => '1234567890', 'account_name' => 'สมหญิง ใจดี'], $user)
+            ->assertSessionHasErrors('bank_code');
+        $this->assertSame(0, WalletWithdrawal::count());
+
+        $this->ask('150', null, ['method' => 'promptpay', 'promptpay_id' => '081-234-5678', 'account_name' => 'สมหญิง  ใจดี'], $user)
+            ->assertSessionHas('success');
+
+        $w = $this->onlyRequest();
+        $this->assertSame(WalletWithdrawal::SOURCE_FORM, $w->account_source);
+        $this->assertSame('0812345678', $w->promptpay_id);
+        $this->assertSame('สมหญิง ใจดี', $w->account_name);
+        $this->assertSame('พร้อมเพย์ xxx-5678', $w->maskedDestination());
+
+        // แอดมินถูกเตือนให้เทียบชื่อกับ KYC
+        $this->actingAs($this->admin)->get("/admin/wallets/withdrawals/{$w->id}")->assertOk()
+            ->assertSee('ผู้ใช้กรอกบัญชีนี้เอง')->assertSee('0812345678');
+    }
+
+    public function test_a_form_account_is_ignored_when_kyc_has_one(): void
+    {
+        $this->ask('100', null, ['method' => 'bank', 'bank_code' => 'SCB', 'account_number' => '9999999999', 'account_name' => 'คนอื่น'])
+            ->assertSessionHas('success');
+
+        $w = $this->onlyRequest();
+        $this->assertSame(self::ACCOUNT, $w->account_number);
+        $this->assertSame('KBANK', $w->bank_code);
+        $this->assertSame(WalletWithdrawal::SOURCE_KYC, $w->account_source);
+    }
+
+    // ── ยกเลิก ───────────────────────────────────────────────────────────
+
+    public function test_the_user_can_cancel_and_gets_the_hold_back_exactly_once(): void
+    {
+        $this->ask('123.45')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+        $this->assertSame('376.55', $this->balance());
+
+        $this->actingAs($this->user)->post("/wallet/withdraw/{$w->id}/cancel")
+            ->assertRedirect(route('user.wallet.withdraw'))->assertSessionHas('success');
+
+        $w->refresh();
+        $this->assertSame(WalletWithdrawal::STATUS_CANCELLED, $w->status);
+        $this->assertNull($w->open_user_id);
+        $this->assertNotNull($w->cancelled_at);
+        $this->assertSame('500.00', $this->balance());
+
+        $this->assertSame(WalletTransaction::STATUS_CANCELLED, WalletTransaction::find($w->hold_transaction_id)->status);
+        $returned = WalletTransaction::findOrFail($w->return_transaction_id);
+        $this->assertSame('WDR' . $w->id, $returned->transaction_id);
+        $this->assertSame('123.45', $returned->amount);
+        $this->assertSame('376.55', $returned->balance_before);
+        $this->assertSame('500.00', $returned->balance_after);
+        $this->assertSame('คืนยอดที่ขอถอน', $returned->type_label);
+        // เงินที่คืนไม่ใช่เงินเติมหรือเงินคืนจากการซื้อ
+        $this->assertSame('0.00', Wallet::where('user_id', $this->user->id)->value('total_refunded'));
+
+        // ยกเลิกซ้ำ — ไม่คืนสองรอบ
+        $this->actingAs($this->user)->post("/wallet/withdraw/{$w->id}/cancel")->assertSessionHas('error');
+        $this->assertSame('500.00', $this->balance());
+        $this->assertSame(1, WalletTransaction::where('type', 'refund')->count());
+
+        // ขอใหม่ได้หลังยกเลิก
+        $this->ask('100')->assertSessionHas('success');
+        $this->actingAs($this->user)->get('/wallet/transactions')->assertOk()->assertSee('ยกเลิกแล้ว · คืนเข้ากระเป๋าแล้ว');
+    }
+
+    public function test_nobody_else_can_cancel_or_see_a_request(): void
+    {
+        $this->ask('100')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+        $other = $this->verifiedUser();
+
+        $this->actingAs($other)->post("/wallet/withdraw/{$w->id}/cancel")->assertNotFound();
+        $this->actingAs($other)->get("/wallet/withdraw/{$w->id}/slip")->assertNotFound();
+        $this->actingAs($other)->get('/wallet/withdraw')->assertOk()->assertDontSee($w->withdrawal_id);
+
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->fresh()->status);
+        $this->assertSame('400.00', $this->balance());
+    }
+
+    // ── แอดมิน ────────────────────────────────────────────────────────────
+
+    public function test_admin_rejects_with_a_reason_and_the_hold_returns_exactly(): void
+    {
+        $this->ask('199.99')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+
+        $this->actingAs($this->admin)->post("/admin/wallets/withdrawals/{$w->id}/reject", ['reason' => 'สั้นไป'])
+            ->assertSessionHasErrors('reason');
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->fresh()->status);
+        $this->assertSame('300.01', $this->balance());
+
+        $this->actingAs($this->admin)
+            ->post("/admin/wallets/withdrawals/{$w->id}/reject", ['reason' => 'ชื่อบัญชีไม่ตรงกับเอกสารยืนยันตัวตน'])
+            ->assertSessionHas('success');
+
+        $w->refresh();
+        $this->assertSame(WalletWithdrawal::STATUS_REJECTED, $w->status);
+        $this->assertSame('ชื่อบัญชีไม่ตรงกับเอกสารยืนยันตัวตน', $w->reject_reason);
+        $this->assertSame($this->admin->id, $w->reviewed_by);
+        $this->assertSame('500.00', $this->balance());
+        $this->assertSame(WalletTransaction::STATUS_FAILED, WalletTransaction::find($w->hold_transaction_id)->status);
+        $this->assertSame('199.99', WalletTransaction::find($w->return_transaction_id)->amount);
+
+        // ปฏิเสธซ้ำ / อนุมัติหลังปฏิเสธ — ไม่มีผล
+        $this->actingAs($this->admin)->post("/admin/wallets/withdrawals/{$w->id}/reject", ['reason' => 'กดซ้ำจากแท็บเก่าที่เปิดค้างไว้'])
+            ->assertSessionHas('error');
+        $this->actingAs($this->admin)->post("/admin/wallets/withdrawals/{$w->id}/approve", ['payout_reference' => 'REF-1'])
+            ->assertSessionHas('error');
+        $this->assertSame('500.00', $this->balance());
+        $this->assertSame(WalletWithdrawal::STATUS_REJECTED, $w->fresh()->status);
+
+        $this->actingAs($this->user)->get('/wallet/withdraw')->assertOk()
+            ->assertSee('ไม่อนุมัติ · คืนเข้ากระเป๋าแล้ว')->assertSee('ชื่อบัญชีไม่ตรงกับเอกสารยืนยันตัวตน');
+    }
+
+    public function test_admin_approves_with_a_reference_and_slip_and_the_owner_sees_it(): void
+    {
+        $this->ask('250')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+
+        // ต้องมีเลขอ้างอิงหรือสลิปอย่างน้อยหนึ่งอย่าง
+        $this->actingAs($this->admin)->post("/admin/wallets/withdrawals/{$w->id}/approve", [])
+            ->assertSessionHasErrors(['payout_reference', 'slip']);
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->fresh()->status);
+
+        $this->actingAs($this->admin)->post("/admin/wallets/withdrawals/{$w->id}/approve", [
+            'payout_reference' => 'KBANK-202609261234',
+            'slip' => UploadedFile::fake()->image('slip.png', 600, 900),
+        ])->assertSessionHas('success');
+
+        $w->refresh();
+        $this->assertSame(WalletWithdrawal::STATUS_APPROVED, $w->status);
+        $this->assertNull($w->open_user_id);
+        $this->assertSame('KBANK-202609261234', $w->payout_reference);
+        $this->assertStringStartsWith('withdrawals/' . $this->user->id . '/', $w->slip_path);
+        Storage::disk('local')->assertExists($w->slip_path);
+
+        $hold = WalletTransaction::find($w->hold_transaction_id);
+        $this->assertSame(WalletTransaction::STATUS_COMPLETED, $hold->status);
+        $this->assertSame('KBANK-202609261234', $hold->payment_reference);
+        $this->assertSame('โอนเข้าบัญชีแล้ว', $hold->stateLabel());
+        // ยอดถูกหักไปตั้งแต่ตอนขอ — อนุมัติไม่หักซ้ำ
+        $this->assertSame('250.00', $this->balance());
+        $this->assertNull($w->return_transaction_id);
+
+        $this->actingAs($this->user)->get('/wallet/withdraw')->assertOk()
+            ->assertSee('โอนเข้าบัญชีแล้ว')->assertSee('KBANK-202609261234')->assertSee('ดูสลิปการโอน');
+        $this->actingAs($this->user)->get("/wallet/withdraw/{$w->id}/slip")->assertOk()
+            ->assertHeader('Cache-Control', 'max-age=0, no-store, private');
+        $this->actingAs($this->admin)->get("/admin/wallets/withdrawals/{$w->id}/slip")->assertOk();
+
+        // ผู้ใช้ยกเลิกหลังโอนแล้วไม่ได้
+        $this->actingAs($this->user)->post("/wallet/withdraw/{$w->id}/cancel")->assertSessionHas('error');
+        $this->assertSame('250.00', $this->balance());
+    }
+
+    public function test_two_admins_approving_at_once_and_a_late_cancel_have_one_effect(): void
+    {
+        $this->ask('300')->assertSessionHas('success');
+        $service = app(WalletWithdrawalService::class);
+
+        // สองแท็บโหลดคำขอเดียวกันไว้ก่อน
+        $first = WalletWithdrawal::sole();
+        $second = WalletWithdrawal::sole();
+        $userCopy = WalletWithdrawal::sole();
+        $otherAdmin = User::factory()->create(['role' => 'admin']);
+
+        $service->approve($first, $this->admin, 'REF-A', null);
+
+        try {
+            $service->approve($second, $otherAdmin, 'REF-B', null);
+            $this->fail('the second approval must be refused');
+        } catch (WithdrawalRefused $e) {
+            $this->assertStringContainsString('โอนเข้าบัญชีแล้ว', $e->getMessage());
+        }
+
+        try {
+            $service->cancel($this->user, $userCopy);
+            $this->fail('cancelling an approved request must be refused');
+        } catch (WithdrawalRefused) {
+        }
+
+        $w = WalletWithdrawal::sole();
+        $this->assertSame('REF-A', $w->payout_reference);
+        $this->assertSame($this->admin->id, $w->reviewed_by);
+        $this->assertSame('200.00', $this->balance());
+        $this->assertSame(0, WalletTransaction::where('type', 'refund')->count());
+    }
+
+    public function test_a_cancel_that_wins_the_race_stops_the_admins_approval(): void
+    {
+        $this->ask('300')->assertSessionHas('success');
+        $service = app(WalletWithdrawalService::class);
+        $adminCopy = WalletWithdrawal::sole();
+
+        $service->cancel($this->user, WalletWithdrawal::sole());
+
+        $this->expectException(WithdrawalRefused::class);
+        try {
+            $service->approve($adminCopy, $this->admin, 'REF-LATE', UploadedFile::fake()->image('late.png', 400, 400));
+        } finally {
+            $this->assertSame(WalletWithdrawal::STATUS_CANCELLED, WalletWithdrawal::sole()->status);
+            $this->assertSame('500.00', $this->balance());
+            // สลิปของการอนุมัติที่แพ้ไม่ค้างบนดิสก์
+            $this->assertSame([], Storage::disk('local')->allFiles('withdrawals'));
+        }
+    }
+
+    public function test_the_admin_queue_is_for_admins_only(): void
+    {
+        $this->ask('100')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+
+        $this->actingAs($this->user)->get('/admin/wallets/withdrawals')->assertForbidden();
+        $this->actingAs($this->user)->get("/admin/wallets/withdrawals/{$w->id}")->assertForbidden();
+        $this->actingAs($this->user)->post("/admin/wallets/withdrawals/{$w->id}/approve", ['payout_reference' => 'SELF'])->assertForbidden();
+        $this->actingAs($this->user)->post("/admin/wallets/withdrawals/{$w->id}/reject", ['reason' => 'ขอคืนเงินให้ตัวเองหน่อย'])->assertForbidden();
+        $this->actingAs($this->user)->get('/admin/wallets/withdrawals/export')->assertForbidden();
+
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->fresh()->status);
+        $this->assertSame('400.00', $this->balance());
+    }
+
+    public function test_the_admin_queue_lists_filters_and_shows_the_full_account_only_on_the_request_page(): void
+    {
+        $this->ask('100')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+
+        $this->actingAs($this->admin)->get('/admin/wallets/withdrawals')->assertOk()
+            ->assertSee($w->withdrawal_id)->assertSee('กสิกรไทย xxx-7890')->assertDontSee(self::ACCOUNT)->assertSee('คำขอถอนเงิน');
+        $this->actingAs($this->admin)->get('/admin/wallets/withdrawals?status=approved')->assertOk()->assertDontSee($w->withdrawal_id);
+        $this->actingAs($this->admin)->get('/admin/wallets/withdrawals?status=all&q=' . urlencode($this->user->email))->assertOk()->assertSee($w->withdrawal_id);
+        $this->actingAs($this->admin)->get('/admin/wallets/withdrawals?q[]=x&status[]=y')->assertOk();
+
+        $this->actingAs($this->admin)->get("/admin/wallets/withdrawals/{$w->id}")->assertOk()
+            ->assertSee(self::ACCOUNT)->assertSee('บันทึกว่าโอนแล้ว')->assertSee('ไม่อนุมัติ')->assertSee('window.confirm', false);
+    }
+
+    public function test_the_export_masks_the_account_and_defuses_spreadsheet_formulas(): void
+    {
+        $user = $this->verifiedUser(withBank: false);
+        $this->fund($user, '300.00');
+        $this->ask('150', null, ['method' => 'bank', 'bank_code' => 'SCB', 'account_number' => '5555555555', 'account_name' => '=HYPERLINK("http://evil")'], $user)
+            ->assertSessionHas('success');
+        $this->ask('100')->assertSessionHas('success');
+
+        $csv = $this->actingAs($this->admin)->get('/admin/wallets/withdrawals/export?status=all')->assertOk()->streamedContent();
+
+        $this->assertStringContainsString('ไทยพาณิชย์ xxx-5555', $csv);
+        $this->assertStringNotContainsString('5555555555', $csv);
+        $this->assertStringNotContainsString(self::ACCOUNT, $csv);
+        $this->assertStringContainsString("'=HYPERLINK", $csv);
+        $this->assertStringContainsString('100.00', $csv);
+    }
+
+    public function test_the_admin_hears_about_a_request_on_telegram_without_the_full_account_number(): void
+    {
+        $this->telegramOn();
+
+        $this->ask('321')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+
+        $sent = Http::recorded()->map(fn ($pair) => $pair[0])
+            ->filter(fn (HttpRequest $r) => str_ends_with($r->url(), '/sendPhoto') || str_ends_with($r->url(), '/sendMessage'))
+            ->values();
+        $this->assertCount(1, $sent);
+        // caption ของรูปการ์ด หรือข้อความ (เมื่อวาดรูปไม่ได้) — ไม่ใช่ไบต์ของรูป
+        $body = '';
+        foreach ((array) $sent[0]->data() as $key => $part) {
+            if (is_array($part) && in_array($part['name'] ?? null, ['caption', 'text', 'reply_markup'], true)) {
+                $body .= (string) $part['contents'];
+            } elseif (in_array($key, ['caption', 'text', 'reply_markup'], true)) {
+                $body .= (string) $part;
+            }
+        }
+        $this->assertStringContainsString($w->withdrawal_id, $body);
+        $this->assertStringContainsString('xxx-7890', $body);
+        $this->assertStringNotContainsString(self::ACCOUNT, $body);
+        $this->assertSame('withdrawal:' . $w->id, DB::table('admin_alerts')->value('subject'));
+    }
+
+    public function test_the_machine_status_shows_the_withdraw_page_and_the_amount_held(): void
+    {
+        $node = GpuNode::factory()->paired()->create(['user_id' => $this->user->id]);
+        $this->ask('120.25')->assertSessionHas('success');
+
+        $this->postJson('/api/v1/product/gpuxmine/status', ['worker_id' => $node->worker_id, 'token' => $node->relay_token])
+            ->assertOk()
+            ->assertJsonPath('data.earnings.withdraw_url', route('user.wallet.withdraw'))
+            ->assertJsonPath('data.earnings.withdrawal_pending_satang', 12025)
+            ->assertJsonPath('data.earnings.wallet_balance_satang', 37975);
+
+        Setting::setValue('wallet_withdraw_enabled', '0');
+        $this->postJson('/api/v1/product/gpuxmine/status', ['worker_id' => $node->worker_id, 'token' => $node->relay_token])
+            ->assertOk()
+            ->assertJsonPath('data.earnings.withdraw_url', null);
+    }
+
+    public function test_the_back_office_sets_the_minimum_and_can_pause_withdrawals(): void
+    {
+        $this->actingAs($this->admin)->get('/admin/wallets/settings')->assertOk()->assertSee('ยอดถอนขั้นต่ำต่อคำขอ')->assertSee('100.00');
+
+        $this->actingAs($this->admin)->put('/admin/wallets/settings', [
+            'wallet_topup_min_amount' => 100,
+            'wallet_topup_max_amount' => 100000,
+            'wallet_topup_expiry_minutes' => 30,
+            'wallet_quick_amounts' => '100,500',
+            'wallet_enabled' => '1',
+            'wallet_withdraw_min_amount' => '250.50',
+        ])->assertSessionHas('success');
+
+        $service = app(WalletWithdrawalService::class);
+        $this->assertSame(25050, $service->minSatang());
+        $this->assertFalse($service->enabled(), 'an unticked box pauses withdrawals');
+
+        // หน้าตั้งค่าที่เปิดค้างจากก่อนอัปเดต (ไม่มีช่องถอนเงิน) ไม่ไปแตะค่าการถอน
+        Setting::setValue('wallet_withdraw_enabled', '1');
+        $this->actingAs($this->admin)->put('/admin/wallets/settings', [
+            'wallet_topup_min_amount' => 100,
+            'wallet_topup_max_amount' => 100000,
+            'wallet_topup_expiry_minutes' => 30,
+            'wallet_quick_amounts' => '100,500',
+        ])->assertSessionHas('success');
+        $this->assertTrue($service->enabled());
+        $this->assertSame(25050, $service->minSatang());
+    }
+}

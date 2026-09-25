@@ -9,10 +9,12 @@ use App\Models\Setting;
 use App\Models\Wallet;
 use App\Models\WalletBonusTier;
 use App\Models\WalletTopup;
+use App\Models\WalletTransaction;
 use App\Services\PaymentFeeService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Services\WalletWithdrawalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -25,9 +27,13 @@ class WalletController extends Controller
     {
         $wallet = Wallet::getOrCreateForUser(auth()->id());
 
+        // รายการถอนเงินขึ้นทุกสถานะ (พักยอดไว้ / โอนแล้ว / คืนเข้ากระเป๋า) — ไม่งั้นยอดคงเหลือลดลง
+        // ตอนขอถอนโดยที่ประวัติไม่มีอะไรบอกว่าเพราะอะไร
         $transactions = $wallet->transactions()
-            ->completed()
+            ->where(fn ($q) => $q->where('status', WalletTransaction::STATUS_COMPLETED)
+                ->orWhere('type', WalletTransaction::TYPE_WITHDRAWAL))
             ->latest()
+            ->latest('id')
             ->take(10)
             ->get();
 
@@ -36,7 +42,9 @@ class WalletController extends Controller
             ->latest()
             ->get();
 
-        return view('user.wallet.index', compact('wallet', 'transactions', 'pendingTopups'));
+        $openWithdrawal = app(WalletWithdrawalService::class)->openFor((int) auth()->id());
+
+        return view('user.wallet.index', compact('wallet', 'transactions', 'pendingTopups', 'openWithdrawal'));
     }
 
     /**

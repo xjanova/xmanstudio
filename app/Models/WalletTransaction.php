@@ -62,6 +62,8 @@ class WalletTransaction extends Model
      */
     const SOURCE_GPUXMINE_REFERRAL = 'gpuxmine_referral';
 
+    const SOURCE_WITHDRAWAL_RETURN = 'withdrawal_return';
+
     const STATUS_PENDING = 'pending';
 
     const STATUS_COMPLETED = 'completed';
@@ -98,7 +100,7 @@ class WalletTransaction extends Model
             self::TYPE_CASHBACK => 'เงินคืน',
             self::TYPE_EARNING => $this->source() === self::SOURCE_GPUXMINE_REFERRAL ? 'ค่าแนะนำ GPUxMINE' : 'รายได้แชร์การ์ดจอ',
             self::TYPE_ADJUSTMENT => 'ปรับยอด',
-            self::TYPE_REFUND => 'คืนเงิน',
+            self::TYPE_REFUND => $this->source() === self::SOURCE_WITHDRAWAL_RETURN ? 'คืนยอดที่ขอถอน' : 'คืนเงิน',
             default => $this->type,
         };
     }
@@ -109,6 +111,27 @@ class WalletTransaction extends Model
         $source = is_array($this->metadata) ? ($this->metadata['source'] ?? null) : null;
 
         return is_string($source) ? $source : null;
+    }
+
+    /**
+     * สถานะเป็นคำไทยสำหรับประวัติในกระเป๋า — null เมื่อไม่ต้องบอกอะไรเพิ่ม (รายการสำเร็จทั่วไป)
+     *
+     * รายการถอนเงินมีสี่สถานะที่ผู้ใช้ต้องแยกออก: ยอดยังถูกพักอยู่ โอนออกแล้ว หรือถูกคืนเข้ากระเป๋า
+     * (แอดมินไม่อนุมัติ = failed, ผู้ใช้ยกเลิกเอง = cancelled — ค่าที่คอลัมน์ status มีอยู่แล้ว)
+     */
+    public function stateLabel(): ?string
+    {
+        if ($this->type === self::TYPE_WITHDRAWAL) {
+            return match ($this->status) {
+                self::STATUS_PENDING => 'พักยอดไว้ · รอแอดมินอนุมัติ',
+                self::STATUS_COMPLETED => 'โอนเข้าบัญชีแล้ว',
+                self::STATUS_FAILED => 'ไม่อนุมัติ · คืนเข้ากระเป๋าแล้ว',
+                self::STATUS_CANCELLED => 'ยกเลิกแล้ว · คืนเข้ากระเป๋าแล้ว',
+                default => $this->status_label,
+            };
+        }
+
+        return $this->status === self::STATUS_COMPLETED ? null : $this->status_label;
     }
 
     /**

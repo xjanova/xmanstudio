@@ -93,6 +93,9 @@ class GpuxMineStatusApiTest extends TestCase
             'donated_satang_30d' => 80,       // 70 เกินสามสิบวันแล้ว
             'wallet_balance_satang' => 12345,
             'hold_hours' => 12,
+            // C6 รอบสอง: ถอนเป็นเงินสด = ขอถอนจากกระเป๋าบนเว็บ แล้วรอแอดมินอนุมัติ
+            'withdraw_url' => route('user.wallet.withdraw'),
+            'withdrawal_pending_satang' => 0,
         ]);
 
         $jobs = $response->json('data.jobs');

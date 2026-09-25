@@ -77,6 +77,7 @@ use App\Http\Controllers\Admin\TwoFactorController as AdminTwoFactorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VpsSettingController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
+use App\Http\Controllers\Admin\WalletWithdrawalController as AdminWalletWithdrawalController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
@@ -120,6 +121,7 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
+use App\Http\Controllers\User\WalletWithdrawalController as UserWalletWithdrawalController;
 use App\Http\Controllers\VpsController;
 use App\Http\Controllers\WinXToolsController;
 use App\Http\Controllers\XdreamerController;
@@ -761,6 +763,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/transactions', [UserWalletController::class, 'transactions'])->name('transactions');
         Route::delete('/topup/{topup}', [UserWalletController::class, 'cancelTopup'])->name('cancel-topup');
         Route::get('/bonus-preview', [UserWalletController::class, 'bonusPreview'])->name('bonus-preview');
+
+        // ถอนเงินสดออกจากกระเป๋า (R2-4) — หน้าเปิดได้ทุกคน (คนยังไม่ยืนยันตัวตนเห็นว่าต้องทำอะไร
+        // และคนที่มีคำขอค้างยกเลิกได้เสมอ) ส่วนการส่งคำขอต้องผ่าน KYC และถูกจำกัดอัตรา
+        Route::get('/withdraw', [UserWalletWithdrawalController::class, 'index'])->name('withdraw');
+        Route::post('/withdraw', [UserWalletWithdrawalController::class, 'store'])
+            ->middleware(['kyc.verified', 'throttle:6,10,wallet-withdraw'])
+            ->name('withdraw.store');
+        Route::post('/withdraw/{id}/cancel', [UserWalletWithdrawalController::class, 'cancel'])
+            ->whereNumber('id')
+            ->middleware('throttle:10,10,wallet-withdraw-cancel')
+            ->name('withdraw.cancel');
+        Route::get('/withdraw/{id}/slip', [UserWalletWithdrawalController::class, 'slip'])
+            ->whereNumber('id')->name('withdraw.slip');
     });
 });
 
@@ -1412,6 +1427,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/topups/{topup}/debug', [AdminWalletController::class, 'debugTopup'])->name('topups.debug');
         Route::get('/settings', [AdminWalletController::class, 'settings'])->name('settings');
         Route::put('/settings', [AdminWalletController::class, 'updateSettings'])->name('settings.update');
+
+        // คำขอถอนเงินสด (R2-4) — อนุมัติ = บันทึกว่าโอนแล้ว, ปฏิเสธ = คืนยอดที่พักไว้
+        // เปลี่ยนเงินของคนอื่นทั้งคู่ จึงเป็น POST ที่มี CSRF และหน้าเว็บถามยืนยันก่อนทุกครั้ง
+        Route::get('/withdrawals', [AdminWalletWithdrawalController::class, 'index'])->name('withdrawals');
+        Route::get('/withdrawals/export', [AdminWalletWithdrawalController::class, 'export'])->name('withdrawals.export');
+        Route::get('/withdrawals/{id}', [AdminWalletWithdrawalController::class, 'show'])->whereNumber('id')->name('withdrawals.show');
+        Route::post('/withdrawals/{id}/approve', [AdminWalletWithdrawalController::class, 'approve'])->whereNumber('id')->name('withdrawals.approve');
+        Route::post('/withdrawals/{id}/reject', [AdminWalletWithdrawalController::class, 'reject'])->whereNumber('id')->name('withdrawals.reject');
+        Route::get('/withdrawals/{id}/slip', [AdminWalletWithdrawalController::class, 'slip'])->whereNumber('id')->name('withdrawals.slip');
     });
 
     // User Management

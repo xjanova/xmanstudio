@@ -8,6 +8,8 @@ use App\Models\Wallet;
 use App\Models\WalletBonusTier;
 use App\Models\WalletTopup;
 use App\Models\WalletTransaction;
+use App\Services\WalletWithdrawalService;
+use App\Support\Satang;
 use Illuminate\Http\Request;
 
 class WalletController extends Controller
@@ -389,6 +391,8 @@ class WalletController extends Controller
             'wallet_payment_bank_transfer' => Setting::getValue('wallet_payment_bank_transfer', true),
             'wallet_payment_promptpay' => Setting::getValue('wallet_payment_promptpay', true),
             'wallet_payment_truemoney' => Setting::getValue('wallet_payment_truemoney', true),
+            'wallet_withdraw_min_amount' => Satang::toBaht(app(WalletWithdrawalService::class)->minSatang()),
+            'wallet_withdraw_enabled' => app(WalletWithdrawalService::class)->enabled(),
         ];
 
         return view('admin.wallets.settings', compact('settings'));
@@ -404,6 +408,9 @@ class WalletController extends Controller
             'wallet_topup_max_amount' => 'required|numeric|min:1|gt:wallet_topup_min_amount',
             'wallet_topup_expiry_minutes' => 'required|integer|min:5|max:1440',
             'wallet_quick_amounts' => 'required|string',
+            'wallet_withdraw_min_amount' => 'sometimes|required|numeric|min:1|max:1000000',
+        ], [
+            'wallet_withdraw_min_amount.*' => 'ยอดถอนขั้นต่ำต้องเป็นตัวเลข ฿1 – ฿1,000,000',
         ]);
 
         // Save settings
@@ -415,6 +422,14 @@ class WalletController extends Controller
         Setting::setValue('wallet_payment_bank_transfer', $request->boolean('wallet_payment_bank_transfer'));
         Setting::setValue('wallet_payment_promptpay', $request->boolean('wallet_payment_promptpay'));
         Setting::setValue('wallet_payment_truemoney', $request->boolean('wallet_payment_truemoney'));
+
+        // ถอนเงิน: บันทึกเฉพาะเมื่อฟอร์มมีช่องนี้ — หน้าตั้งค่าที่เปิดค้างไว้จากก่อนอัปเดต
+        // (ไม่มี checkbox) ต้องไม่ปิดการถอนของทุกคนไปเงียบ ๆ
+        if ($request->has('wallet_withdraw_min_amount')) {
+            $min = Satang::parseInput((string) $validated['wallet_withdraw_min_amount']);
+            Setting::setValue('wallet_withdraw_min_amount', Satang::toBaht(max(100, $min ?? 10000)));
+            Setting::setValue('wallet_withdraw_enabled', $request->boolean('wallet_withdraw_enabled') ? '1' : '0');
+        }
 
         return redirect()
             ->back()
