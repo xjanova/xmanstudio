@@ -1,0 +1,3961 @@
+/* ==========================================================================
+   XMAN UNIVERSE — the full-3D home page (home-universe.blade.php)
+   --------------------------------------------------------------------------
+   Its own Vite entry, loaded by that page only; nothing here reaches the rest
+   of the site. Three states, set on <html>:
+
+     (none)      No JavaScript. The sections are an ordinary dark page that
+                 reads top to bottom — the "flat" layout at the end of the
+                 base rules below.
+     .xu-js      The browser check passed (partials/universe/detect). The
+                 loader covers the page while main.js boots.
+     .xu-live    The flight is running: each section becomes a fixed overlay
+                 whose entrance and exit main.js drives through --vin/--vout,
+                 and the section itself is only a tall, empty scroll spacer.
+
+   Design language follows Nova (deep void, cyan/violet/magenta aurora, the
+   warm gold of the XMAN core, glass and hairlines), pushed further into a
+   flight-HUD: mono readouts, corner ticks, targeting reticles.
+   ========================================================================== */
+
+.xu-doc {
+    --xu-void: #03040b;
+    --xu-abyss: #070a18;
+    --xu-panel: rgba(16, 22, 48, 0.62);
+    --xu-panel-2: rgba(8, 11, 26, 0.58);
+    --xu-line: rgba(150, 180, 255, 0.16);
+    --xu-line-hi: rgba(170, 200, 255, 0.34);
+
+    --xu-cyan: #22d3ee;
+    --xu-violet: #8b5cf6;
+    --xu-magenta: #e879f9;
+    --xu-mint: #34d399;
+    --xu-gold: #ffd479;
+    --xu-rose: #fb7185;
+
+    --xu-fg-1: #edf2ff;
+    --xu-fg-2: #aab6d6;
+    --xu-fg-3: #6f7ba0;
+
+    --xu-display: 'Unbounded', 'Kanit', system-ui, sans-serif;
+    --xu-head: 'Kanit', 'Noto Sans Thai', system-ui, sans-serif;
+    --xu-body: 'Noto Sans Thai', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --xu-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+    --xu-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --xu-ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+
+    --xu-hud-h: 68px;
+    --xu-gutter: clamp(18px, 4.6vw, 64px);
+
+    background: var(--xu-void);
+    color-scheme: dark;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.55) transparent;
+}
+
+.xu-doc *,
+.xu-doc *::before,
+.xu-doc *::after {
+    box-sizing: border-box;
+}
+
+.xu-body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(76, 29, 149, 0.28), transparent 70%),
+        radial-gradient(ellipse 70% 50% at 100% 100%, rgba(14, 116, 144, 0.18), transparent 70%),
+        var(--xu-void);
+    color: var(--xu-fg-1);
+    font-family: var(--xu-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+}
+
+.xu-body ::selection {
+    background: rgba(139, 92, 246, 0.5);
+    color: #fff;
+}
+
+.xu-body a {
+    color: inherit;
+}
+
+.xu-body img {
+    max-width: 100%;
+}
+
+.xu-body :focus-visible {
+    outline: 2px solid var(--xu-cyan);
+    outline-offset: 3px;
+}
+
+.xu-sr {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* The page is on its way to the classic home (detect / runtime fallback). */
+.xu-leaving body {
+    visibility: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Skip link — first stop for keyboard and screen-reader visitors
+   -------------------------------------------------------------------------- */
+
+.xu-skip {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    z-index: 130;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: #fff;
+    color: #04050d !important;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    transform: translate(-50%, -160%);
+    transition: transform 0.3s var(--xu-ease);
+}
+
+.xu-skip:focus,
+.xu-skip:focus-visible {
+    transform: translate(-50%, 0);
+}
+
+/* ==========================================================================
+   Type & shared pieces
+   ========================================================================== */
+
+.xu-grad {
+    background: linear-gradient(110deg, var(--xu-cyan), var(--xu-violet) 48%, var(--xu-magenta));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    /* A text-shadow paints over a text-clipped background and turns it to mud. */
+    text-shadow: none;
+    filter: drop-shadow(0 2px 14px rgba(3, 4, 11, 0.7));
+}
+
+.xu-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 18px;
+    padding: 7px 15px 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--xu-line-hi);
+    background: rgba(10, 14, 32, 0.55);
+    color: var(--xu-fg-2);
+    font-family: var(--xu-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1.3;
+}
+
+.xu-eyebrow__dot {
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--xu-cyan);
+    box-shadow: 0 0 10px 2px rgba(34, 211, 238, 0.8);
+    animation: xu-blink 2.4s var(--xu-ease-io) infinite;
+}
+
+@keyframes xu-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+.xu-h2 {
+    margin: 0 0 14px;
+    font-family: var(--xu-head);
+    font-size: clamp(28px, 3.6vw, 52px);
+    font-weight: 600;
+    line-height: 1.16;
+    letter-spacing: -0.01em;
+    color: var(--xu-fg-1);
+    text-wrap: balance;
+}
+
+.xu-lede {
+    margin: 0 0 8px;
+    max-width: 640px;
+    color: var(--xu-fg-2);
+    font-size: clamp(14px, 1.2vw, 17px);
+    line-height: 1.75;
+    text-wrap: pretty;
+}
+
+.xu-lede small,
+.xu-card small {
+    display: block;
+    color: var(--xu-fg-3);
+    font-size: 0.86em;
+    letter-spacing: 0.01em;
+}
+
+.xu-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.xu-head .xu-lede {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.xu-head--left {
+    align-items: flex-start;
+    text-align: left;
+}
+
+.xu-center {
+    display: flex;
+    justify-content: center;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+
+.xu-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 26px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-family: var(--xu-body);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    isolation: isolate;
+    overflow: hidden;
+    transition: transform 0.35s var(--xu-ease), box-shadow 0.35s var(--xu-ease),
+        background 0.35s var(--xu-ease), border-color 0.35s var(--xu-ease), color 0.35s var(--xu-ease);
+}
+
+.xu-btn small {
+    display: inline;
+    margin-left: 0.35em;
+    font-size: 0.74em;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    opacity: 0.72;
+}
+
+.xu-btn svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    transition: transform 0.35s var(--xu-ease);
+}
+
+.xu-btn:hover svg,
+.xu-btn:focus-visible svg {
+    transform: translateX(3px);
+}
+
+.xu-btn--primary {
+    color: #05060f;
+    background: linear-gradient(110deg, var(--xu-cyan), var(--xu-violet) 55%, var(--xu-magenta));
+    box-shadow: 0 14px 44px -14px rgba(139, 92, 246, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* The shimmer that sweeps across on hover. */
+.xu-btn--primary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.55) 45%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 0.8s var(--xu-ease);
+}
+
+.xu-btn--primary:hover,
+.xu-btn--primary:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 60px -12px rgba(139, 92, 246, 1), 0 0 0 1px rgba(255, 255, 255, 0.35) inset;
+}
+
+.xu-btn--primary:hover::after,
+.xu-btn--primary:focus-visible::after {
+    transform: translateX(120%);
+}
+
+.xu-btn--ghost {
+    color: var(--xu-fg-1);
+    background: rgba(12, 16, 36, 0.5);
+    border-color: var(--xu-line-hi);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.xu-btn--ghost:hover,
+.xu-btn--ghost:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--xu-cyan);
+    background: rgba(34, 211, 238, 0.1);
+    box-shadow: 0 0 28px -8px rgba(34, 211, 238, 0.8);
+}
+
+.xu-btn--sm {
+    padding: 10px 18px;
+    font-size: 13px;
+}
+
+.xu-btn--lg {
+    padding: 17px 32px;
+    font-size: 16px;
+}
+
+.xu-go {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent, var(--xu-cyan));
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+}
+
+.xu-go svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.3s var(--xu-ease);
+}
+
+a:hover > .xu-go svg,
+.xu-go:hover svg {
+    transform: translateX(3px);
+}
+
+.xu-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 212, 121, 0.14);
+    border: 1px solid rgba(255, 212, 121, 0.45);
+    color: var(--xu-gold);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+}
+
+.xu-badge--soon {
+    background: rgba(232, 121, 249, 0.16);
+    border-color: rgba(232, 121, 249, 0.5);
+    color: #f5c2fb;
+}
+
+/* --------------------------------------------------------------------------
+   Glass card — the base of every content card
+   -------------------------------------------------------------------------- */
+
+.xu-card {
+    --accent: var(--xu-cyan);
+    position: relative;
+    display: block;
+    border-radius: 20px;
+    border: 1px solid var(--xu-line);
+    background: linear-gradient(160deg, var(--xu-panel), var(--xu-panel-2));
+    box-shadow: 0 30px 70px -28px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    color: var(--xu-fg-1);
+    text-decoration: none;
+    -webkit-backdrop-filter: blur(14px) saturate(135%);
+    backdrop-filter: blur(14px) saturate(135%);
+    transition: border-color 0.35s var(--xu-ease), box-shadow 0.35s var(--xu-ease), transform 0.45s var(--xu-ease);
+}
+
+/* Accent hairline along the top edge. */
+.xu-card::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 18%;
+    right: 18%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+/* Glare that follows the pointer (--gx/--gy from ui/Tilt.js). */
+.xu-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, 0.09), transparent 45%);
+    opacity: 0;
+    transition: opacity 0.35s var(--xu-ease);
+    pointer-events: none;
+}
+
+a.xu-card:hover,
+a.xu-card:focus-visible,
+.xu-card.is-hot {
+    border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+    box-shadow: 0 30px 80px -26px color-mix(in srgb, var(--accent) 65%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+a.xu-card:hover::after,
+a.xu-card:focus-visible::after,
+.xu-card.is-hot::after {
+    opacity: 1;
+}
+
+/* ==========================================================================
+   FLAT LAYOUT — no JavaScript (and the base the live mode builds on)
+   ========================================================================== */
+
+.xu-canvas,
+.xu-loader,
+.xu-rail,
+.xu-coords,
+.xu-reticle,
+.xu-scrollhint,
+.xu-flash,
+.xu-toast,
+.xu-sound,
+.xu-menu-btn,
+.xu-classic,
+.xu-stats__pips {
+    display: none;
+}
+
+.xu-main {
+    position: relative;
+    z-index: 10;
+}
+
+.xu-st {
+    position: relative;
+    z-index: 10;
+}
+
+.xu-panel {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: clamp(64px, 10vh, 120px) var(--xu-gutter);
+}
+
+.xu-core {
+    min-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding-top: calc(var(--xu-hud-h) + 40px);
+}
+
+/* ==========================================================================
+   HUD
+   ========================================================================== */
+
+.xu-hud {
+    position: relative;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    height: var(--xu-hud-h);
+    padding: 0 var(--xu-gutter);
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+.xu-js .xu-hud {
+    position: fixed;
+    inset: 0 0 auto;
+    height: calc(var(--xu-hud-h) + env(safe-area-inset-top, 0px));
+    background: linear-gradient(180deg, rgba(3, 4, 11, 0.82), rgba(3, 4, 11, 0.35) 70%, transparent);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-14px);
+    transition: opacity 0.9s var(--xu-ease), transform 0.9s var(--xu-ease);
+}
+
+.xu-js .xu-hud > * {
+    pointer-events: auto;
+}
+
+.xu-entered .xu-hud {
+    opacity: 1;
+    transform: none;
+}
+
+.xu-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--xu-fg-1);
+}
+
+.xu-brand__badge {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(60, 70, 130, 0.95), rgba(6, 9, 22, 0.98));
+    box-shadow: 0 0 0 1px var(--xu-line-hi), 0 0 22px -6px rgba(255, 212, 121, 0.7);
+}
+
+.xu-brand__badge::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    border-top-color: var(--xu-cyan);
+    border-right-color: var(--xu-magenta);
+    animation: xu-spin 5s linear infinite;
+}
+
+.xu-brand__logo {
+    width: 64%;
+    height: auto;
+}
+
+.xu-brand__mark {
+    font-family: var(--xu-display);
+    font-weight: 800;
+    font-size: 17px;
+    background: linear-gradient(140deg, #fff3d0, var(--xu-gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.xu-brand__word {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.xu-brand__word b {
+    font-family: var(--xu-display);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.xu-brand__word small {
+    margin-top: 5px;
+    font-family: var(--xu-mono);
+    font-size: 9px;
+    letter-spacing: 0.52em;
+    color: var(--xu-fg-3);
+}
+
+@keyframes xu-spin {
+    to { transform: rotate(360deg); }
+}
+
+.xu-promo {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px 6px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(251, 113, 133, 0.45);
+    background: linear-gradient(100deg, rgba(124, 29, 63, 0.72), rgba(124, 45, 146, 0.72));
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 10px 34px -12px rgba(185, 28, 92, 0.9);
+    transition: transform 0.3s var(--xu-ease), box-shadow 0.3s var(--xu-ease);
+}
+
+.xu-promo:hover,
+.xu-promo:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 40px -10px rgba(232, 121, 249, 0.9);
+}
+
+.xu-promo__tag {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--xu-gold);
+    color: #7c1d3f;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.xu-promo__text small {
+    margin-left: 4px;
+    font-size: 10.5px;
+    opacity: 0.75;
+}
+
+.xu-promo__off {
+    padding: 2px 10px;
+    border-radius: 8px;
+    background: var(--xu-gold);
+    color: #7c1d3f;
+    font-weight: 900;
+    font-size: 13px;
+}
+
+.xu-promo__go {
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #7c1d3f;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+@media (min-width: 1080px) {
+    .xu-promo {
+        display: inline-flex;
+    }
+}
+
+.xu-hud__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.xu-js .xu-sound,
+.xu-js .xu-menu-btn {
+    display: inline-flex;
+}
+
+.xu-sound,
+.xu-menu-btn {
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 16px 0 13px;
+    border-radius: 999px;
+    border: 1px solid var(--xu-line-hi);
+    background: rgba(8, 11, 26, 0.62);
+    color: var(--xu-fg-1);
+    font-family: var(--xu-body);
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition: border-color 0.3s var(--xu-ease), box-shadow 0.3s var(--xu-ease), background 0.3s var(--xu-ease);
+}
+
+.xu-sound:hover,
+.xu-sound:focus-visible,
+.xu-menu-btn:hover,
+.xu-menu-btn:focus-visible {
+    border-color: var(--xu-cyan);
+    box-shadow: 0 0 24px -6px rgba(34, 211, 238, 0.85);
+}
+
+.xu-sound__label,
+.xu-menu-btn__label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.05;
+}
+
+.xu-sound__label b,
+.xu-menu-btn__label b {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.xu-sound__label small,
+.xu-menu-btn__label small {
+    margin-top: 2px;
+    font-family: var(--xu-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.24em;
+    color: var(--xu-fg-3);
+}
+
+.xu-sound__bars {
+    display: flex;
+    align-items: center;
+    gap: 2.5px;
+    height: 18px;
+}
+
+.xu-sound__bars i {
+    display: block;
+    width: 2.5px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--xu-fg-3);
+    transition: background 0.3s ease;
+}
+
+.xu-sound[aria-pressed="true"] .xu-sound__bars i {
+    background: linear-gradient(180deg, var(--xu-cyan), var(--xu-violet));
+    animation: xu-eq 1.1s var(--xu-ease-io) infinite;
+}
+
+.xu-sound[aria-pressed="true"] .xu-sound__bars i:nth-child(2) { animation-delay: -0.35s; animation-duration: 0.9s; }
+.xu-sound[aria-pressed="true"] .xu-sound__bars i:nth-child(3) { animation-delay: -0.7s; animation-duration: 1.3s; }
+.xu-sound[aria-pressed="true"] .xu-sound__bars i:nth-child(4) { animation-delay: -0.2s; animation-duration: 0.8s; }
+.xu-sound[aria-pressed="true"] .xu-sound__bars i:nth-child(5) { animation-delay: -0.55s; animation-duration: 1.15s; }
+
+@keyframes xu-eq {
+    0%, 100% { height: 4px; }
+    50% { height: 17px; }
+}
+
+.xu-sound[aria-pressed="true"] {
+    border-color: rgba(34, 211, 238, 0.55);
+}
+
+.xu-menu-btn {
+    border-color: rgba(139, 92, 246, 0.6);
+    background: linear-gradient(120deg, rgba(34, 211, 238, 0.14), rgba(139, 92, 246, 0.22), rgba(232, 121, 249, 0.16)), rgba(8, 11, 26, 0.7);
+}
+
+.xu-menu-btn__orbit {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--xu-fg-1);
+}
+
+.xu-menu-btn__orbit i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    margin: -2.5px 0 0 -2.5px;
+    border-radius: 50%;
+    background: var(--xu-gold);
+    box-shadow: 0 0 8px 1px rgba(255, 212, 121, 0.9);
+}
+
+.xu-menu-btn__orbit i + i {
+    width: 4px;
+    height: 4px;
+    margin: -2px 0 0 -2px;
+    background: var(--xu-cyan);
+    box-shadow: 0 0 6px 1px rgba(34, 211, 238, 0.9);
+    animation: xu-orbit 2.6s linear infinite;
+}
+
+@keyframes xu-orbit {
+    from { transform: rotate(0deg) translateX(10px); }
+    to { transform: rotate(360deg) translateX(10px); }
+}
+
+/* --------------------------------------------------------------------------
+   Journey rail — right edge, one pip per stop (built by ui/Hud.js)
+   -------------------------------------------------------------------------- */
+
+.xu-live .xu-rail {
+    position: fixed;
+    top: 50%;
+    right: clamp(12px, 1.8vw, 28px);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.8s var(--xu-ease) 0.4s;
+}
+
+.xu-entered .xu-rail {
+    opacity: 1;
+}
+
+.xu-rail::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    bottom: 14px;
+    right: 13px;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--xu-line-hi) 12%, var(--xu-line-hi) 88%, transparent);
+}
+
+.xu-rail__fill {
+    position: absolute;
+    top: 14px;
+    right: 13px;
+    width: 1px;
+    height: calc((100% - 28px) * var(--progress, 0));
+    background: linear-gradient(180deg, var(--xu-cyan), var(--xu-violet), var(--xu-magenta));
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.9);
+}
+
+.xu-rail__stop {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    cursor: pointer;
+}
+
+.xu-rail__label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.1;
+    opacity: 0;
+    transform: translateX(8px);
+    transition: opacity 0.3s var(--xu-ease), transform 0.3s var(--xu-ease);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.xu-rail__label b {
+    font-family: var(--xu-body);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--xu-fg-1);
+}
+
+.xu-rail__label small {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.xu-rail__pip {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    font-size: 8.5px;
+    letter-spacing: 0.04em;
+}
+
+.xu-rail__pip::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--xu-void);
+    border: 1px solid var(--xu-fg-3);
+    transition: all 0.35s var(--xu-ease);
+}
+
+/* Labels only on demand: a label that stays out would sit on top of the
+   right-hand cards (platforms, reviews). The current stop is named in the
+   coordinate readout instead. */
+.xu-rail__stop:hover .xu-rail__label,
+.xu-rail__stop:focus-visible .xu-rail__label {
+    opacity: 1;
+    transform: none;
+}
+
+.xu-rail__stop:hover .xu-rail__pip::before,
+.xu-rail__stop:focus-visible .xu-rail__pip::before {
+    border-color: var(--xu-cyan);
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.9);
+}
+
+.xu-rail__stop.is-past .xu-rail__pip::before {
+    background: var(--xu-violet);
+    border-color: var(--xu-violet);
+}
+
+.xu-rail__stop.is-here .xu-rail__pip::before {
+    width: 11px;
+    height: 11px;
+    background: var(--xu-gold);
+    border-color: #fff3d0;
+    box-shadow: 0 0 0 4px rgba(255, 212, 121, 0.16), 0 0 16px 2px rgba(255, 212, 121, 0.75);
+}
+
+/* --------------------------------------------------------------------------
+   Readouts, reticle, hints
+   -------------------------------------------------------------------------- */
+
+.xu-live .xu-coords {
+    position: fixed;
+    left: var(--xu-gutter);
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    display: flex;
+    gap: 16px;
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.8s var(--xu-ease) 0.6s;
+}
+
+.xu-entered .xu-coords {
+    opacity: 0.9;
+}
+
+.xu-coords__sector {
+    color: var(--xu-cyan);
+}
+
+.xu-live .xu-reticle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    display: block;
+    width: 100px;
+    height: 100px;
+    color: var(--accent, var(--xu-cyan));
+    pointer-events: none;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.xu-reticle__ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+}
+
+.xu-reticle__ring circle {
+    stroke-width: 0.35;
+    opacity: 0.55;
+    vector-effect: non-scaling-stroke;
+}
+
+.xu-reticle__ring .xu-reticle__dash {
+    stroke-width: 1.4;
+    stroke-dasharray: 4 3 12 3 1 6;
+    opacity: 0.9;
+    transform-origin: 50% 50%;
+    animation: xu-spin 14s linear infinite;
+}
+
+.xu-reticle__tick {
+    position: absolute;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.xu-reticle__tick--n,
+.xu-reticle__tick--s {
+    left: 50%;
+    width: 1px;
+    height: 12px;
+}
+
+.xu-reticle__tick--n { top: -16px; }
+.xu-reticle__tick--s { bottom: -16px; }
+
+.xu-reticle__tick--e,
+.xu-reticle__tick--w {
+    top: 50%;
+    width: 12px;
+    height: 1px;
+}
+
+.xu-reticle__tick--e { right: -16px; }
+.xu-reticle__tick--w { left: -16px; }
+
+.xu-reticle__label {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 26px);
+    padding: 4px 9px;
+    border-left: 1px solid currentColor;
+    background: linear-gradient(90deg, rgba(3, 4, 11, 0.7), transparent);
+    color: var(--xu-fg-1);
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    white-space: nowrap;
+    transform: translateY(-50%);
+}
+
+.xu-reticle.is-flip .xu-reticle__label {
+    left: auto;
+    right: calc(100% + 26px);
+    border-left: 0;
+    border-right: 1px solid currentColor;
+    background: linear-gradient(270deg, rgba(3, 4, 11, 0.7), transparent);
+    text-align: right;
+}
+
+.xu-live .xu-scrollhint {
+    position: fixed;
+    left: 50%;
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--xu-fg-2);
+    font-size: 12px;
+    transform: translateX(-50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s var(--xu-ease);
+}
+
+.xu-scrollhint small {
+    display: block;
+    font-family: var(--xu-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--xu-fg-3);
+}
+
+.xu-scrollhint.is-on {
+    opacity: 1;
+}
+
+.xu-scrollhint__mouse {
+    position: relative;
+    width: 22px;
+    height: 34px;
+    border: 1px solid var(--xu-line-hi);
+    border-radius: 12px;
+}
+
+.xu-scrollhint__mouse i {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 3px;
+    height: 7px;
+    margin-left: -1.5px;
+    border-radius: 2px;
+    background: var(--xu-cyan);
+    animation: xu-wheel 1.8s var(--xu-ease-io) infinite;
+}
+
+@keyframes xu-wheel {
+    0% { transform: translateY(0); opacity: 1; }
+    70%, 100% { transform: translateY(12px); opacity: 0; }
+}
+
+.xu-live .xu-classic {
+    position: fixed;
+    right: var(--xu-gutter);
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--xu-line);
+    background: rgba(3, 4, 11, 0.55);
+    color: var(--xu-fg-3);
+    font-size: 11.5px;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.8s var(--xu-ease) 0.6s, color 0.3s ease, border-color 0.3s ease;
+}
+
+.xu-entered .xu-classic {
+    opacity: 1;
+}
+
+.xu-classic small {
+    font-family: var(--xu-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+}
+
+.xu-classic:hover,
+.xu-classic:focus-visible {
+    color: var(--xu-fg-1);
+    border-color: var(--xu-line-hi);
+}
+
+.xu-live .xu-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: block;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95), rgba(196, 181, 253, 0.6) 35%, rgba(34, 211, 238, 0.12) 70%, transparent);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.xu-live .xu-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    z-index: 110;
+    display: block;
+    max-width: min(92vw, 520px);
+    padding: 12px 18px;
+    border-radius: 14px;
+    border: 1px solid var(--xu-line-hi);
+    background: rgba(8, 11, 26, 0.92);
+    color: var(--xu-fg-1);
+    font-size: 13.5px;
+    text-align: center;
+    transform: translate(-50%, 20px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s var(--xu-ease), transform 0.4s var(--xu-ease);
+}
+
+.xu-toast.is-on {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* ==========================================================================
+   LOADER / GATE
+   ========================================================================== */
+
+.xu-js .xu-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    display: block;
+}
+
+.xu-canvas canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    outline: none;
+}
+
+.xu-js:not(.xu-entered),
+.xu-js:not(.xu-entered) body {
+    overflow: hidden;
+}
+
+.xu-js .xu-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px;
+    background:
+        radial-gradient(ellipse 60% 45% at 50% 42%, rgba(88, 28, 135, 0.35), transparent 70%),
+        radial-gradient(ellipse 40% 30% at 50% 42%, rgba(14, 116, 144, 0.25), transparent 70%),
+        var(--xu-void);
+    text-align: center;
+    transition: opacity 1.1s var(--xu-ease), visibility 0s linear 1.1s;
+}
+
+.xu-loader.is-gone {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.xu-js .xu-loader[hidden] {
+    display: none;
+}
+
+/* A fixed scatter of stars, painted by gradients so the loader has depth before WebGL exists. */
+.xu-loader__stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.8;
+    background-image:
+        radial-gradient(1.2px 1.2px at 12% 18%, #fff, transparent),
+        radial-gradient(1px 1px at 27% 72%, #cde8ff, transparent),
+        radial-gradient(1.4px 1.4px at 41% 33%, #fff, transparent),
+        radial-gradient(1px 1px at 58% 84%, #e9d5ff, transparent),
+        radial-gradient(1.3px 1.3px at 66% 14%, #fff, transparent),
+        radial-gradient(1px 1px at 79% 57%, #bae6fd, transparent),
+        radial-gradient(1.5px 1.5px at 88% 28%, #fff, transparent),
+        radial-gradient(1px 1px at 7% 61%, #fbcfe8, transparent),
+        radial-gradient(1.1px 1.1px at 35% 92%, #fff, transparent),
+        radial-gradient(1px 1px at 93% 88%, #fff, transparent),
+        radial-gradient(1px 1px at 51% 6%, #c7d2fe, transparent),
+        radial-gradient(1.2px 1.2px at 19% 44%, #fff, transparent);
+    animation: xu-twinkle 5s ease-in-out infinite alternate;
+}
+
+@keyframes xu-twinkle {
+    from { opacity: 0.45; }
+    to { opacity: 0.95; }
+}
+
+.xu-loader__emblem {
+    position: relative;
+    width: 168px;
+    height: 168px;
+    margin-bottom: 18px;
+    display: grid;
+    place-items: center;
+    perspective: 600px;
+    transition: transform 1.3s var(--xu-ease-io), opacity 1.1s var(--xu-ease);
+}
+
+.xu-loader__orbit {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(34, 211, 238, 0.65);
+    box-shadow: 0 0 18px -4px rgba(34, 211, 238, 0.7), inset 0 0 18px -4px rgba(34, 211, 238, 0.5);
+}
+
+.xu-loader__orbit--a {
+    transform: rotateX(72deg) rotateZ(45deg);
+    animation: xu-orbit-a 7s linear infinite;
+}
+
+.xu-loader__orbit--b {
+    border-color: rgba(232, 121, 249, 0.65);
+    box-shadow: 0 0 18px -4px rgba(232, 121, 249, 0.7), inset 0 0 18px -4px rgba(232, 121, 249, 0.5);
+    transform: rotateX(72deg) rotateZ(-45deg);
+    animation: xu-orbit-b 9s linear infinite;
+}
+
+@keyframes xu-orbit-a {
+    from { transform: rotateY(-40deg) rotateX(70deg) rotateZ(0deg); }
+    to { transform: rotateY(-40deg) rotateX(70deg) rotateZ(360deg); }
+}
+
+@keyframes xu-orbit-b {
+    from { transform: rotateY(40deg) rotateX(70deg) rotateZ(360deg); }
+    to { transform: rotateY(40deg) rotateX(70deg) rotateZ(0deg); }
+}
+
+.xu-loader__halo {
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 212, 121, 0.42), rgba(232, 121, 249, 0.14) 38%, transparent 66%);
+    animation: xu-breathe 3.2s var(--xu-ease-io) infinite;
+}
+
+@keyframes xu-breathe {
+    0%, 100% { transform: scale(0.92); opacity: 0.75; }
+    50% { transform: scale(1.06); opacity: 1; }
+}
+
+.xu-loader__core {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #fffaf0, #ffd479 34%, #d97706 72%, #7c2d12);
+    box-shadow: 0 0 40px 8px rgba(255, 212, 121, 0.55), 0 0 90px 20px rgba(232, 121, 249, 0.2);
+}
+
+.xu-loader__logo {
+    width: 66%;
+    height: auto;
+    filter: drop-shadow(0 1px 2px rgba(124, 45, 18, 0.6));
+}
+
+.xu-loader__mark {
+    font-family: var(--xu-display);
+    font-size: 34px;
+    font-weight: 800;
+    color: #3b1403;
+}
+
+.xu-loader__title {
+    margin: 0;
+    font-family: var(--xu-display);
+    font-size: clamp(20px, 3.2vw, 30px);
+    font-weight: 800;
+    letter-spacing: 0.34em;
+    padding-left: 0.34em;
+}
+
+.xu-loader__title span {
+    background: linear-gradient(110deg, var(--xu-cyan), var(--xu-violet), var(--xu-magenta));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.xu-loader__sub {
+    margin: 0;
+    color: var(--xu-fg-2);
+    font-size: 14px;
+}
+
+.xu-loader__sub small {
+    display: block;
+    color: var(--xu-fg-3);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+}
+
+.xu-loader__boot {
+    width: min(340px, 80vw);
+    margin-top: 14px;
+    transition: opacity 0.5s var(--xu-ease);
+}
+
+.xu-loader__boot.is-done {
+    opacity: 0;
+}
+
+.xu-loader__meter {
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(160, 190, 255, 0.14);
+    overflow: hidden;
+}
+
+.xu-loader__meter span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--xu-cyan), var(--xu-violet), var(--xu-magenta));
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.9);
+    transform-origin: 0 50%;
+    transform: scaleX(var(--load, 0));
+    transition: transform 0.4s var(--xu-ease);
+}
+
+.xu-loader__readout {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 9px;
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+}
+
+.xu-loader__pct {
+    color: var(--xu-cyan);
+}
+
+.xu-loader__log {
+    height: 64px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    overflow: hidden;
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 10.5px;
+    line-height: 1.55;
+    text-align: left;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 40%);
+    mask-image: linear-gradient(180deg, transparent, #000 40%);
+}
+
+.xu-loader__log li {
+    animation: xu-log-in 0.4s var(--xu-ease) both;
+}
+
+.xu-loader__log li::before {
+    content: "› ";
+    color: var(--xu-violet);
+}
+
+.xu-loader__log li.is-ok::after {
+    content: "  ✓";
+    color: var(--xu-mint);
+}
+
+@keyframes xu-log-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.xu-loader__gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+    animation: xu-log-in 0.7s var(--xu-ease) both;
+}
+
+.xu-loader__gate[hidden] {
+    display: none;
+}
+
+.xu-enter {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 18px 44px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: linear-gradient(120deg, rgba(34, 211, 238, 0.24), rgba(139, 92, 246, 0.38), rgba(232, 121, 249, 0.28)), rgba(8, 11, 26, 0.8);
+    color: #fff;
+    font-family: var(--xu-body);
+    cursor: pointer;
+    isolation: isolate;
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.35), 0 20px 60px -16px rgba(139, 92, 246, 0.95);
+    transition: transform 0.4s var(--xu-ease), box-shadow 0.4s var(--xu-ease);
+}
+
+.xu-enter__glow {
+    position: absolute;
+    inset: -3px;
+    z-index: -1;
+    border-radius: inherit;
+    background: conic-gradient(from var(--xu-angle, 0deg), var(--xu-cyan), var(--xu-violet), var(--xu-magenta), var(--xu-gold), var(--xu-cyan));
+    filter: blur(12px);
+    opacity: 0.55;
+    animation: xu-spin-glow 4s linear infinite;
+}
+
+@property --xu-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+@keyframes xu-spin-glow {
+    to { --xu-angle: 360deg; }
+}
+
+.xu-enter__label {
+    font-family: var(--xu-head);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.xu-enter__sub {
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.xu-enter:hover,
+.xu-enter:focus-visible {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45), 0 26px 70px -14px rgba(139, 92, 246, 1);
+}
+
+.xu-loader__quiet {
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--xu-fg-2);
+    font-family: var(--xu-body);
+    font-size: 13px;
+    text-decoration: underline;
+    text-decoration-color: rgba(170, 182, 214, 0.35);
+    text-underline-offset: 4px;
+    cursor: pointer;
+}
+
+.xu-loader__quiet:hover,
+.xu-loader__quiet:focus-visible {
+    color: var(--xu-fg-1);
+}
+
+.xu-loader__tip {
+    margin: 4px 0 0;
+    color: var(--xu-fg-3);
+    font-size: 12px;
+}
+
+.xu-loader__tip small {
+    display: block;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+}
+
+.xu-loader__classic {
+    position: absolute;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--xu-fg-3);
+    font-size: 12px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.xu-loader__classic:hover,
+.xu-loader__classic:focus-visible {
+    color: var(--xu-fg-1);
+}
+
+/* The emblem grows into the portal the camera flies through. */
+.xu-loader.is-leaving .xu-loader__emblem {
+    transform: scale(7);
+    opacity: 0;
+}
+
+.xu-loader.is-leaving .xu-loader__title,
+.xu-loader.is-leaving .xu-loader__sub,
+.xu-loader.is-leaving .xu-loader__gate,
+.xu-loader.is-leaving .xu-loader__classic,
+.xu-loader.is-leaving .xu-loader__boot {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s var(--xu-ease), transform 0.5s var(--xu-ease);
+}
+
+/* ==========================================================================
+   LIVE MODE — the flight
+   ========================================================================== */
+
+.xu-live .xu-main {
+    z-index: auto;
+}
+
+/* Sections become empty scroll spacers; main.js sets their pixel height. */
+.xu-live .xu-st {
+    position: relative;
+    z-index: auto;
+    height: var(--xu-len-px, 100vh);
+}
+
+.xu-live .xu-tail {
+    height: 100vh;
+}
+
+/* Each panel is a full-screen overlay. Off stops are display:none, so their
+   images do not load and their links cannot take focus until the flight is
+   near them. */
+.xu-live .xu-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    max-width: none;
+    margin: 0;
+    padding: calc(var(--xu-hud-h) + env(safe-area-inset-top, 0px) + 14px) var(--xu-gutter) calc(44px + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+    /* --hide (on <html>) clears the overlays for hyperspace jumps and the menu. */
+    opacity: calc((1 - var(--vout, 0)) * (1 - var(--hide, 0)));
+    transform: translate3d(0, calc(var(--vout, 0) * -5vh), 0) scale(calc(1 + var(--vout, 0) * 0.07));
+    transform-origin: 50% 55%;
+    perspective: 1400px;
+}
+
+/* Short screens: ui/Stations.js measures the content and shrinks it to fit. */
+.xu-live .xu-panel > * {
+    zoom: var(--fit, 1);
+}
+
+.xu-live .xu-st.is-on > .xu-panel {
+    display: flex;
+}
+
+.xu-live .xu-st.is-active > .xu-panel {
+    pointer-events: none;
+}
+
+.xu-live .xu-st.is-active > .xu-panel a,
+.xu-live .xu-st.is-active > .xu-panel button,
+.xu-live .xu-st.is-active > .xu-panel .xu-card {
+    pointer-events: auto;
+}
+
+/* The shared reveal: every .xu-r arrives in turn, --i sets its place in the
+   queue. --vin (0 → 1) is the stop's arrival, from ui/Stations.js. */
+.xu-live .xu-r {
+    --r: clamp(0, calc((var(--vin, 0) - var(--i, 0) * 0.07) * 2.4), 1);
+    opacity: var(--r);
+    transform: translate3d(0, calc((1 - var(--r)) * 30px), 0);
+}
+
+.xu-live .xu-card.xu-r {
+    transform: translate3d(0, calc((1 - var(--r)) * 40px), 0) scale(calc(0.96 + var(--r) * 0.04));
+}
+
+/* Readability over a bright scene: a soft dark pool behind text blocks. */
+.xu-live .xu-head,
+.xu-live .xu-core,
+.xu-live .xu-launch,
+.xu-live .xu-origin__why,
+.xu-live .xu-origin__stats {
+    text-shadow: 0 2px 18px rgba(3, 4, 11, 0.85), 0 0 2px rgba(3, 4, 11, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   Stop: core (hero)
+   -------------------------------------------------------------------------- */
+
+.xu-core__title {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 6px 0 18px;
+}
+
+.xu-core__th {
+    font-family: var(--xu-head);
+    font-size: clamp(34px, 6vw, 86px);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    color: #fff;
+}
+
+.xu-core__en {
+    font-family: var(--xu-display);
+    font-size: clamp(13px, 1.55vw, 22px);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.xu-core__tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 18px;
+    margin: 0 0 26px;
+    font-family: var(--xu-mono);
+    font-size: clamp(11px, 1vw, 13px);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.xu-core__tags span {
+    color: var(--c);
+    text-shadow: 0 0 14px color-mix(in srgb, var(--c) 70%, transparent);
+}
+
+.xu-core__tags span + span::before {
+    content: "·";
+    margin-right: 18px;
+    color: var(--xu-fg-3);
+    text-shadow: none;
+}
+
+.xu-core__cta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+}
+
+.xu-live .xu-core {
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: center;
+    padding-bottom: clamp(84px, 13vh, 150px);
+}
+
+/* Wide screens: the guide stands on the right, so the headline keeps left. */
+@media (min-width: 1100px) and (min-aspect-ratio: 5/4) {
+    .xu-live .xu-core {
+        align-items: flex-start;
+        text-align: left;
+        padding-left: calc(var(--xu-gutter) + 1vw);
+    }
+
+    .xu-live .xu-core__title {
+        max-width: min(62vw, 900px);
+    }
+
+    .xu-live .xu-core__th {
+        font-size: clamp(38px, 5vw, 76px);
+    }
+
+    .xu-live .xu-core__tags,
+    .xu-live .xu-core__cta {
+        justify-content: flex-start;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Stop: origin (numbers + why us)
+   -------------------------------------------------------------------------- */
+
+.xu-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 24px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.xu-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.xu-stat__num {
+    font-family: var(--xu-display);
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(110deg, var(--xu-cyan), var(--xu-violet), var(--xu-magenta));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.xu-stat__label b {
+    display: block;
+    font-family: var(--xu-head);
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.xu-stat__label small {
+    display: block;
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+}
+
+.xu-origin__why {
+    margin-top: 80px;
+    max-width: 620px;
+}
+
+.xu-why {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 22px 0 26px;
+    padding: 0;
+    list-style: none;
+}
+
+.xu-why__item {
+    --accent: var(--xu-cyan);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 13px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--xu-line);
+    background: linear-gradient(120deg, rgba(16, 22, 48, 0.66), rgba(8, 11, 26, 0.5));
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    text-shadow: none;
+}
+
+.xu-why__item b {
+    display: block;
+    font-family: var(--xu-head);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.xu-why__item small {
+    display: block;
+    color: var(--accent);
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.xu-why__body {
+    display: block;
+    margin-top: 3px;
+    color: var(--xu-fg-2);
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+.xu-why__icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    box-shadow: 0 0 18px -6px var(--accent);
+}
+
+.xu-why__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Live: the number itself is drawn by stars; the DOM keeps it for readers.
+   (Only while mounted: a bare .xu-live .xu-origin would outrank the rule
+   that hides every panel the flight is not near.) */
+.xu-live .xu-st.is-on > .xu-origin {
+    display: block;
+}
+
+.xu-live .xu-origin__stats {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: clamp(64px, 11vh, 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    opacity: var(--sa, 0);
+    transform: translate3d(0, calc((1 - var(--sa, 0)) * 24px), 0);
+}
+
+.xu-live .xu-stats {
+    position: relative;
+    display: block;
+    width: min(560px, 90vw);
+    height: 64px;
+    margin: 4px auto 0;
+}
+
+.xu-live .xu-stat {
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    opacity: var(--on, 0);
+    transform: translate3d(0, calc((1 - var(--on, 0)) * 14px), 0);
+}
+
+.xu-live .xu-stat__num {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
+.xu-live .xu-stat__label b {
+    font-size: clamp(22px, 2.6vw, 34px);
+    font-weight: 500;
+}
+
+.xu-live .xu-stats__pips {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.xu-stats__pips i {
+    display: block;
+    width: 22px;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(160, 190, 255, 0.2);
+    overflow: hidden;
+    position: relative;
+}
+
+.xu-stats__pips i::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--xu-cyan), var(--xu-magenta));
+    transform-origin: 0 50%;
+    transform: scaleX(var(--fill, 0));
+}
+
+.xu-live .xu-origin__why {
+    position: absolute;
+    top: 50%;
+    left: var(--xu-gutter);
+    width: min(560px, 46vw);
+    margin: 0;
+    transform: translate3d(0, -50%, 0);
+    --vin: var(--wa, 0);
+    visibility: hidden;
+}
+
+.xu-live .xu-origin.has-why .xu-origin__why {
+    visibility: visible;
+}
+
+/* --------------------------------------------------------------------------
+   Stop: services
+   -------------------------------------------------------------------------- */
+
+.xu-services {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(18px, 3vh, 32px);
+}
+
+.xu-svc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.xu-svc {
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    overflow: hidden;
+}
+
+.xu-svc__media {
+    display: block;
+    height: 84px;
+    margin: -18px -18px 14px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent);
+    mask-image: linear-gradient(180deg, #000 30%, transparent);
+}
+
+.xu-svc__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.85;
+    transition: transform 0.8s var(--xu-ease), opacity 0.4s ease;
+}
+
+.xu-svc:hover .xu-svc__media img,
+.xu-svc:focus-visible .xu-svc__media img {
+    transform: scale(1.08);
+    opacity: 1;
+}
+
+.xu-svc .xu-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+.xu-svc__icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    margin-top: -34px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    background: rgba(6, 9, 22, 0.88);
+    color: var(--accent);
+    box-shadow: 0 0 18px -4px var(--accent);
+    position: relative;
+}
+
+.xu-svc__icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.xu-svc__title {
+    margin: 0;
+    font-family: var(--xu-body);
+    font-size: 15.5px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.xu-svc__en {
+    display: block;
+    margin-top: 2px;
+    color: var(--accent);
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.xu-svc__body {
+    flex: 1;
+    margin: 9px 0 12px;
+    color: var(--xu-fg-2);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.xu-live .xu-services {
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 2.4vh, 26px);
+    perspective: 1400px;
+}
+
+.xu-live .xu-svc-grid {
+    width: min(1180px, 100%);
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(10px, 1.2vw, 16px);
+    transform: rotateX(var(--tilt-x, 6deg)) rotateY(var(--tilt-y, 0deg));
+    transform-style: preserve-3d;
+}
+
+.xu-live .xu-services .xu-head .xu-lede {
+    margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Stop: products
+   -------------------------------------------------------------------------- */
+
+.xu-products {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(18px, 3vh, 30px);
+}
+
+.xu-track {
+    overflow-x: auto;
+    padding: 10px 0 18px;
+    scrollbar-width: thin;
+}
+
+.xu-track__rail {
+    display: flex;
+    gap: 18px;
+    width: max-content;
+}
+
+.xu-prod {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    overflow: hidden;
+}
+
+.xu-prod__art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 30%, transparent), rgba(6, 9, 22, 0.9));
+}
+
+.xu-prod__art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s var(--xu-ease);
+}
+
+.xu-prod:hover .xu-prod__art img,
+.xu-prod:focus-visible .xu-prod__art img {
+    transform: scale(1.06);
+}
+
+.xu-prod__initials {
+    font-family: var(--xu-display);
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--accent);
+    text-shadow: 0 0 24px var(--accent);
+}
+
+.xu-prod .xu-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.xu-prod__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 16px 18px 18px;
+}
+
+.xu-prod__name {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.xu-prod__desc {
+    flex: 1;
+    margin: 0 0 14px;
+    color: var(--xu-fg-2);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.xu-prod__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.xu-price {
+    font-family: var(--xu-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--xu-fg-1);
+}
+
+.xu-price small {
+    display: inline;
+    margin-left: 4px;
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    color: var(--xu-fg-3);
+    letter-spacing: 0.14em;
+}
+
+.xu-price--free {
+    color: var(--xu-mint);
+}
+
+.xu-price--soon {
+    font-family: var(--xu-body);
+    font-size: 14px;
+    color: var(--xu-fg-2);
+}
+
+.xu-live .xu-products {
+    justify-content: center;
+    gap: clamp(14px, 2.6vh, 28px);
+}
+
+.xu-live .xu-track {
+    margin: 0 calc(var(--xu-gutter) * -1);
+    padding: 16px 0 20px;
+    overflow: visible;
+    perspective: 1600px;
+}
+
+.xu-live .xu-track__rail {
+    padding: 0 var(--xu-gutter);
+    transform: translate3d(var(--track-x, 0px), 0, 0);
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+.xu-live .xu-prod {
+    width: clamp(250px, 24vw, 320px);
+    transform: translate3d(0, calc((1 - var(--r)) * 40px), 0) rotateY(var(--ry, 0deg)) translateZ(var(--tz, 0px));
+}
+
+/* --------------------------------------------------------------------------
+   Stop: platforms (one planet at a time)
+   -------------------------------------------------------------------------- */
+
+.xu-planets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 18px;
+}
+
+.xu-planets__head {
+    grid-column: 1 / -1;
+}
+
+.xu-planet__card {
+    padding: 24px;
+    height: 100%;
+}
+
+.xu-planet__index {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 14px;
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+}
+
+.xu-planet__index > span:first-child {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.xu-planet__title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.xu-planet__title h3 {
+    margin: 0;
+    font-family: var(--xu-head);
+    font-size: clamp(22px, 2.2vw, 30px);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.xu-planet__title small {
+    display: block;
+    margin-top: 2px;
+    color: var(--accent);
+    font-family: var(--xu-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.xu-planet__icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 14%, rgba(6, 9, 22, 0.9));
+    color: var(--accent);
+    box-shadow: 0 0 26px -6px var(--accent);
+}
+
+.xu-planet__icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.xu-planet__body {
+    margin: 0 0 20px;
+    color: var(--xu-fg-2);
+    font-size: 14.5px;
+    line-height: 1.75;
+}
+
+.xu-planet__links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+}
+
+.xu-planet__sub {
+    color: var(--xu-fg-2);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.xu-planet__sub:hover,
+.xu-planet__sub:focus-visible {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.xu-planet__note {
+    color: var(--xu-fg-3);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.xu-live .xu-st.is-on > .xu-planets {
+    display: block;
+}
+
+.xu-live .xu-planets__head {
+    position: absolute;
+    top: calc(var(--xu-hud-h) + 26px);
+    left: var(--xu-gutter);
+    max-width: 520px;
+    opacity: var(--ha, 0);
+    transform: translate3d(0, calc((1 - var(--ha, 0)) * 20px), 0);
+}
+
+.xu-live .xu-planets__head .xu-h2 {
+    font-size: clamp(24px, 2.8vw, 40px);
+}
+
+.xu-live .xu-planet {
+    position: absolute;
+    top: 50%;
+    width: min(460px, 40vw);
+    opacity: var(--on, 0);
+    visibility: hidden;
+    transform: translate3d(calc((1 - var(--on, 0)) * var(--from, 60px)), calc(-50% + (1 - var(--on, 0)) * 10px), 0);
+}
+
+.xu-live .xu-planet.is-on {
+    visibility: visible;
+}
+
+.xu-live .xu-planet--right {
+    right: calc(var(--xu-gutter) + 40px);
+    --from: 80px;
+}
+
+.xu-live .xu-planet--left {
+    left: var(--xu-gutter);
+    --from: -80px;
+}
+
+.xu-live .xu-planet__card {
+    height: auto;
+    padding: clamp(20px, 2.2vw, 30px);
+}
+
+/* --------------------------------------------------------------------------
+   Stop: stack (3D ring of chips)
+   -------------------------------------------------------------------------- */
+
+.xu-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+}
+
+.xu-orbit {
+    width: 100%;
+}
+
+.xu-orbit__ring {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.xu-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 18px 11px 13px;
+    border-radius: 14px;
+    border: 1px solid var(--xu-line-hi);
+    background: linear-gradient(140deg, rgba(20, 28, 60, 0.82), rgba(8, 11, 26, 0.78));
+    color: var(--xu-fg-1);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.8);
+}
+
+.xu-chip img {
+    width: 26px;
+    height: 26px;
+}
+
+.xu-live .xu-stack {
+    justify-content: flex-start;
+    gap: 0;
+}
+
+.xu-live .xu-orbit {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    perspective: 1100px;
+    perspective-origin: 50% 30%;
+}
+
+.xu-live .xu-orbit__ring {
+    position: absolute;
+    top: 54%;
+    left: 50%;
+    display: block;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    transform: rotateX(-10deg) rotateY(var(--spin, 0deg));
+}
+
+/* Each chip rides the ring, then turns back by its own angle plus the ring's
+   spin (--counter, from ui/Stations.js) so it always faces the viewer. */
+.xu-live .xu-orbit__item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: rotateY(calc(var(--j) * 360deg / var(--n))) translateZ(var(--orbit-r, 380px)) rotateY(var(--counter, 0deg)) translate(-50%, -50%);
+    opacity: var(--face, 1);
+}
+
+.xu-live .xu-chip {
+    transform: scale(calc(0.8 + var(--face, 1) * 0.28));
+}
+
+/* --------------------------------------------------------------------------
+   Stop: reviews (the deck)
+   -------------------------------------------------------------------------- */
+
+.xu-reviews {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.xu-signal {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 0;
+    color: var(--xu-cyan);
+    font-family: var(--xu-mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+}
+
+.xu-signal__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--xu-cyan);
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7);
+    animation: xu-ping 1.6s var(--xu-ease) infinite;
+}
+
+@keyframes xu-ping {
+    0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7); }
+    100% { box-shadow: 0 0 0 12px rgba(34, 211, 238, 0); }
+}
+
+.xu-deck {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.xu-review {
+    --accent: var(--xu-gold);
+    padding: 22px 24px;
+}
+
+.xu-review__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 12px;
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+}
+
+.xu-review__wave {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 12px;
+}
+
+.xu-review__wave i {
+    display: block;
+    width: 2px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--xu-cyan);
+    animation: xu-eq 1s var(--xu-ease-io) infinite;
+}
+
+.xu-review__wave i:nth-child(2) { animation-delay: -0.3s; }
+.xu-review__wave i:nth-child(3) { animation-delay: -0.6s; }
+.xu-review__wave i:nth-child(4) { animation-delay: -0.15s; }
+.xu-review__wave i:nth-child(5) { animation-delay: -0.45s; }
+
+.xu-review__stars {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 10px;
+    color: var(--xu-gold);
+}
+
+.xu-review__stars svg {
+    width: 17px;
+    height: 17px;
+    filter: drop-shadow(0 0 6px rgba(255, 212, 121, 0.6));
+}
+
+.xu-review__title {
+    margin: 0 0 8px;
+    font-family: var(--xu-head);
+    font-size: 19px;
+    font-weight: 500;
+}
+
+.xu-review__text {
+    margin: 0 0 18px;
+    color: var(--xu-fg-2);
+    font-size: 14.5px;
+    line-height: 1.75;
+}
+
+.xu-review__who {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.xu-review__who b {
+    display: block;
+    font-size: 14px;
+}
+
+.xu-review__who small {
+    display: block;
+    color: var(--xu-fg-3);
+    font-size: 12px;
+}
+
+.xu-review__avatar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--xu-violet), var(--xu-magenta));
+    color: #fff;
+    font-weight: 700;
+}
+
+.xu-live .xu-reviews {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5vw;
+}
+
+.xu-live .xu-reviews .xu-head {
+    flex: 0 1 420px;
+}
+
+.xu-live .xu-deck {
+    position: relative;
+    display: block;
+    flex: 0 1 540px;
+    height: min(420px, 56vh);
+    perspective: 1200px;
+    transform-style: preserve-3d;
+}
+
+.xu-live .xu-review {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translate3d(0, calc(-50% + var(--dy, 0px)), var(--dz, 0px)) rotateX(var(--drx, 0deg)) scale(var(--ds, 1));
+    opacity: var(--do, 0);
+    visibility: var(--dv, hidden);
+    transform-origin: 50% 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Stop: launch (CTA)
+   -------------------------------------------------------------------------- */
+
+.xu-launch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.xu-launch__title {
+    margin: 0 0 16px;
+    font-family: var(--xu-head);
+    font-size: clamp(34px, 5.4vw, 76px);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+}
+
+.xu-launch .xu-lede {
+    margin: 0 auto 32px;
+}
+
+.xu-launch__cta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+}
+
+.xu-live .xu-launch {
+    justify-content: center;
+}
+
+.xu-live .xu-launch::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: -1;
+    width: min(980px, 110vw);
+    height: min(560px, 80vh);
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(3, 4, 11, 0.72), rgba(3, 4, 11, 0.35) 45%, transparent 70%);
+    transform: translate(-50%, -50%);
+    opacity: var(--vin, 0);
+    pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Last stop: mission control (footer)
+   -------------------------------------------------------------------------- */
+
+.xu-control {
+    padding-bottom: 40px;
+}
+
+.xu-control__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 30px 28px;
+}
+
+.xu-control__name {
+    margin: 0 0 10px;
+    font-family: var(--xu-display);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+.xu-control__brand p {
+    margin: 0 0 14px;
+    color: var(--xu-fg-2);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.xu-control__brand small {
+    display: block;
+    color: var(--xu-fg-3);
+    font-size: 12.5px;
+}
+
+.xu-control__title {
+    margin: 0 0 12px;
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.xu-control__links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.xu-control__links a {
+    color: var(--xu-fg-2);
+    font-size: 13.5px;
+    text-decoration: none;
+    transition: color 0.25s ease;
+}
+
+.xu-control__links a:hover,
+.xu-control__links a:focus-visible {
+    color: var(--xu-cyan);
+}
+
+.xu-control__base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-top: 34px;
+    padding-top: 20px;
+    border-top: 1px solid var(--xu-line);
+    color: var(--xu-fg-3);
+    font-size: 12.5px;
+}
+
+.xu-control__legal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+}
+
+.xu-control__legal a {
+    color: var(--xu-fg-3);
+    text-decoration: none;
+}
+
+.xu-control__legal a:hover,
+.xu-control__legal a:focus-visible {
+    color: var(--xu-fg-1);
+}
+
+.xu-live .xu-control {
+    align-items: center;
+    justify-content: center;
+}
+
+.xu-live .xu-control > * {
+    width: min(1120px, 100%);
+}
+
+/* Wide screens: the footer keeps left of the guide, who waves goodbye on the right. */
+@media (min-width: 1100px) {
+    .xu-live .xu-control {
+        align-items: flex-start;
+        padding-right: min(34vw, 520px);
+    }
+}
+
+.xu-live .xu-control__grid {
+    padding: clamp(22px, 3vw, 38px);
+    border-radius: 24px;
+    border: 1px solid var(--xu-line);
+    background: linear-gradient(160deg, rgba(14, 20, 44, 0.78), rgba(6, 8, 20, 0.72));
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+    backdrop-filter: blur(16px) saturate(130%);
+    box-shadow: 0 40px 100px -40px rgba(0, 0, 0, 0.9);
+}
+
+.xu-live .xu-control {
+    flex-direction: column;
+}
+
+.xu-live .xu-control__base {
+    border-top: 0;
+    margin-top: 16px;
+    padding: 0 8px;
+}
+
+/* ==========================================================================
+   MENU — the command ring
+   ========================================================================== */
+
+.xu-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) var(--xu-gutter) calc(18px + env(safe-area-inset-bottom, 0px));
+    color: var(--xu-fg-1);
+    opacity: 0;
+    transition: opacity 0.45s var(--xu-ease);
+}
+
+.xu-menu[hidden] {
+    display: none;
+}
+
+.xu-menu.is-open {
+    opacity: 1;
+}
+
+.xu-menu__veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(ellipse 70% 55% at 50% 48%, rgba(49, 26, 98, 0.55), transparent 72%),
+        radial-gradient(ellipse 100% 80% at 50% 50%, rgba(3, 4, 11, 0.55), rgba(3, 4, 11, 0.94));
+}
+
+.xu-q-hi .xu-menu__veil {
+    -webkit-backdrop-filter: blur(5px) saturate(120%);
+    backdrop-filter: blur(5px) saturate(120%);
+}
+
+.xu-menu__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+}
+
+.xu-menu__title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-family: var(--xu-head);
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.xu-menu__title small {
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    letter-spacing: 0.28em;
+}
+
+.xu-menu__title {
+    white-space: nowrap;
+}
+
+/* The HUD and the guide step back while the menu has the screen. */
+.xu-menu-open .xu-hud,
+.xu-menu-open .xu-rail,
+.xu-menu-open .xu-coords,
+.xu-menu-open .xu-classic,
+.xu-menu-open .xu-guide {
+    opacity: 0 !important;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+@media (max-width: 420px) {
+    .xu-menu__title small {
+        display: none;
+    }
+}
+
+.xu-menu__pulse {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--xu-gold);
+    box-shadow: 0 0 0 0 rgba(255, 212, 121, 0.7);
+    animation: xu-ping-gold 1.8s var(--xu-ease) infinite;
+}
+
+@keyframes xu-ping-gold {
+    0% { box-shadow: 0 0 0 0 rgba(255, 212, 121, 0.7); }
+    100% { box-shadow: 0 0 0 14px rgba(255, 212, 121, 0); }
+}
+
+.xu-menu__close {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--xu-line-hi);
+    background: rgba(8, 11, 26, 0.7);
+    color: var(--xu-fg-1);
+    font-family: var(--xu-body);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.xu-menu__close small {
+    padding: 2px 6px;
+    border-radius: 5px;
+    border: 1px solid var(--xu-line-hi);
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+}
+
+.xu-menu__close:hover,
+.xu-menu__close:focus-visible {
+    border-color: var(--xu-rose);
+    box-shadow: 0 0 22px -6px rgba(251, 113, 133, 0.9);
+}
+
+.xu-menu__stage {
+    position: relative;
+    flex: 1;
+    min-height: 240px;
+    perspective: var(--persp, 1150px);
+    perspective-origin: 50% 46%;
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.xu-menu__stage.is-dragging {
+    cursor: grabbing;
+}
+
+.xu-ring {
+    --cw: 232px;
+    --ch: 130px;
+    position: absolute;
+    top: 46%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    transform: translateZ(calc(var(--R, 480px) * -1)) rotateY(var(--rot, 0deg)) scale(var(--intro, 1));
+}
+
+.xu-ring.is-vertical {
+    transform: translateZ(calc(var(--R, 300px) * -1)) rotateX(var(--rot, 0deg)) scale(var(--intro, 1));
+}
+
+.xu-ring__item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: var(--cw);
+    margin-left: calc(var(--cw) / -2);
+    margin-top: calc(var(--ch) / -2);
+    color: var(--xu-fg-1);
+    text-decoration: none;
+    transform: rotateY(calc(var(--i) * 360deg / var(--n))) translateZ(var(--R, 480px)) scale(var(--lift, 1));
+    opacity: var(--face, 1);
+    -webkit-tap-highlight-color: transparent;
+    will-change: transform, opacity;
+}
+
+.xu-ring.is-vertical .xu-ring__item {
+    transform: rotateX(calc(var(--i) * -360deg / var(--n))) translateZ(var(--R, 300px)) scale(var(--lift, 1));
+}
+
+.xu-ring__card {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--ch);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, rgba(160, 190, 255, 0.2));
+    background: #070a18;
+    box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.9), 0 0 calc(var(--glow, 0) * 46px) calc(var(--glow, 0) * -4px) var(--accent);
+    transition: border-color 0.35s var(--xu-ease);
+}
+
+.xu-ring__card img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.xu-ring__sheen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.35) 48%, transparent 64%);
+    transform: translateX(-130%);
+    pointer-events: none;
+}
+
+.xu-ring__item.is-front .xu-ring__sheen {
+    animation: xu-sheen 1.1s var(--xu-ease) 0.1s both;
+}
+
+@keyframes xu-sheen {
+    to { transform: translateX(130%); }
+}
+
+.xu-ring__num {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(3, 4, 11, 0.7);
+    color: var(--accent);
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+}
+
+.xu-ring__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.1;
+    opacity: calc(0.4 + var(--glow, 0) * 0.6);
+}
+
+.xu-ring__label b {
+    font-family: var(--xu-head);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.xu-ring__label small {
+    color: var(--accent);
+    font-family: var(--xu-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.xu-ring__icon {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
+}
+
+.xu-ring__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.xu-ring__item.is-front .xu-ring__card,
+.xu-ring__item:hover .xu-ring__card,
+.xu-ring__item:focus-visible .xu-ring__card {
+    border-color: var(--accent);
+}
+
+.xu-ring__item:focus-visible {
+    outline: none;
+}
+
+.xu-ring__item:focus-visible .xu-ring__card {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+}
+
+/* The chosen card flies at the viewer while the rest scatter. */
+.xu-menu.is-going .xu-ring__item {
+    transition: transform 0.75s var(--xu-ease-io), opacity 0.55s ease;
+    opacity: 0;
+}
+
+.xu-menu.is-going .xu-ring__item.is-chosen {
+    opacity: 1;
+    transform: rotateY(calc(var(--i) * 360deg / var(--n))) translateZ(calc(var(--R, 480px) + 900px)) scale(1.4);
+}
+
+.xu-menu.is-going .xu-ring.is-vertical .xu-ring__item.is-chosen {
+    transform: rotateX(calc(var(--i) * -360deg / var(--n))) translateZ(calc(var(--R, 300px) + 700px)) scale(1.4);
+}
+
+.xu-menu__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-height: 118px;
+    text-align: center;
+}
+
+.xu-menu__now {
+    margin: 0;
+    font-family: var(--xu-head);
+    font-size: clamp(26px, 3.2vw, 40px);
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.xu-menu__now small {
+    display: block;
+    margin-top: 4px;
+    color: var(--xu-accent-now, var(--xu-cyan));
+    font-family: var(--xu-mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.xu-menu__about {
+    margin: 0;
+    color: var(--xu-fg-2);
+    font-size: 14px;
+}
+
+.xu-menu__about small {
+    display: block;
+    color: var(--xu-fg-3);
+    font-size: 11.5px;
+}
+
+.xu-menu__keys {
+    margin: 4px 0 0;
+    color: var(--xu-fg-3);
+    font-size: 11.5px;
+}
+
+.xu-menu__keys small {
+    display: block;
+    font-size: 10.5px;
+}
+
+.xu-menu__keys kbd {
+    display: inline-block;
+    min-width: 20px;
+    margin: 0 2px;
+    padding: 1px 5px;
+    border-radius: 5px;
+    border: 1px solid var(--xu-line-hi);
+    background: rgba(255, 255, 255, 0.04);
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    text-align: center;
+}
+
+.xu-menu__dock {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.xu-dock {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--xu-line);
+    background: rgba(10, 14, 32, 0.6);
+    color: var(--xu-fg-1);
+    font-size: 13px;
+    text-decoration: none;
+    transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.xu-dock small {
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.xu-dock:hover,
+.xu-dock:focus-visible {
+    border-color: var(--xu-cyan);
+    background: rgba(34, 211, 238, 0.08);
+    box-shadow: 0 0 20px -8px rgba(34, 211, 238, 0.9);
+}
+
+.xu-dock--hi {
+    border-color: rgba(139, 92, 246, 0.6);
+    background: linear-gradient(120deg, rgba(34, 211, 238, 0.14), rgba(139, 92, 246, 0.24));
+}
+
+.xu-dock--ghost {
+    color: var(--xu-fg-2);
+    border-style: dashed;
+}
+
+/* ==========================================================================
+   THE GUIDE — the twin-tail girl who flies along (ui/Guide.js)
+   ========================================================================== */
+
+.xu-guide {
+    display: none;
+}
+
+.xu-live .xu-guide {
+    position: fixed;
+    inset: 0;
+    z-index: 9; /* under the panels: text always wins */
+    display: block;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.8s var(--xu-ease);
+}
+
+.xu-guide.is-on {
+    opacity: 1;
+}
+
+.xu-guide.is-away {
+    opacity: 0;
+}
+
+.xu-guide__body {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 50% 100%;
+    will-change: transform;
+}
+
+.xu-guide__body img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    user-select: none;
+    -webkit-user-drag: none;
+    filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.42)) drop-shadow(0 18px 34px rgba(0, 0, 0, 0.55));
+    transition: opacity 0.22s ease;
+}
+
+.xu-guide__body img.is-on {
+    opacity: 1;
+}
+
+.xu-guide__body.is-flying img {
+    filter: drop-shadow(0 0 22px rgba(34, 211, 238, 0.55)) drop-shadow(0 0 40px rgba(232, 121, 249, 0.3));
+}
+
+/* A soft glow behind her, breathing. */
+.xu-guide__aura {
+    position: absolute;
+    inset: 8% 4% 2%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(139, 92, 246, 0.34), rgba(34, 211, 238, 0.12) 62%, transparent);
+    filter: blur(16px);
+    animation: xu-breathe 3.4s var(--xu-ease-io) infinite;
+}
+
+/* Only her middle takes clicks — the transparent margins of the picture must not. */
+.xu-guide__hit {
+    position: absolute;
+    top: 10%;
+    right: 30%;
+    bottom: 12%;
+    left: 30%;
+    border-radius: 40%;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.xu-guide__bubble {
+    position: fixed;
+    top: 0;
+    left: 0;
+    max-width: min(300px, 70vw);
+    padding: 11px 15px 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(232, 121, 249, 0.5);
+    background: linear-gradient(140deg, rgba(34, 14, 58, 0.94), rgba(8, 11, 30, 0.94));
+    box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.8), 0 0 26px -10px rgba(232, 121, 249, 0.9);
+    color: var(--xu-fg-1);
+    font-size: 13.5px;
+    line-height: 1.5;
+    opacity: 0;
+    transition: opacity 0.35s var(--xu-ease);
+    pointer-events: none;
+}
+
+.xu-guide__bubble b {
+    display: block;
+    font-family: var(--xu-head);
+    font-weight: 500;
+}
+
+.xu-guide__bubble small {
+    display: block;
+    margin-top: 2px;
+    color: #d8b4fe;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+}
+
+/* The tail points down at her head (--tail from ui/Guide.js). */
+.xu-guide__bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -7px;
+    left: calc(var(--tail, 28px) - 6px);
+    width: 12px;
+    height: 12px;
+    border-right: 1px solid rgba(232, 121, 249, 0.5);
+    border-bottom: 1px solid rgba(232, 121, 249, 0.5);
+    background: rgba(12, 11, 34, 0.96);
+    transform: rotate(45deg);
+}
+
+.xu-guide:not(.is-compact) .xu-guide__bubble {
+    max-width: 270px;
+}
+
+/* Compact, the portrait and its bubble are small and in a corner: they sit
+   above the panels so no card ever cuts them off. */
+.xu-live .xu-guide.is-compact {
+    z-index: 12;
+}
+
+.xu-guide-compact .xu-coords {
+    opacity: 0 !important;
+}
+
+.xu-guide.is-talking .xu-guide__bubble {
+    opacity: 1;
+}
+
+.xu-guide__trail {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.xu-spark {
+    position: absolute;
+    width: var(--size, 6px);
+    height: var(--size, 6px);
+    margin: calc(var(--size, 6px) / -2) 0 0 calc(var(--size, 6px) / -2);
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff, hsl(var(--hue, 280) 95% 72%) 38%, transparent 70%);
+    animation: xu-spark 0.95s ease-out forwards;
+}
+
+@keyframes xu-spark {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: translateY(16px) scale(0.2); }
+}
+
+/* Compact: a round portrait in the corner. */
+.xu-guide__avatar {
+    position: fixed;
+    left: var(--xu-gutter);
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    display: none;
+    width: 70px;
+    height: 70px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 212, 121, 0.85);
+    background: radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.6), rgba(8, 11, 26, 0.95));
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.22), 0 0 30px -4px rgba(232, 121, 249, 0.9);
+    overflow: hidden;
+    cursor: pointer;
+    pointer-events: auto;
+    animation: xu-bob 3.2s var(--xu-ease-io) infinite;
+}
+
+.xu-guide__avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.xu-guide.is-compact .xu-guide__body {
+    display: none;
+}
+
+.xu-guide.is-compact .xu-guide__avatar {
+    display: block;
+}
+
+.xu-guide.is-compact .xu-guide__bubble {
+    top: auto;
+    left: calc(var(--xu-gutter) + 84px);
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: none;
+}
+
+.xu-guide.is-compact .xu-guide__bubble::after {
+    bottom: 14px;
+    left: -7px;
+    border-right: 0;
+    border-top: 1px solid rgba(232, 121, 249, 0.5);
+    border-left: 1px solid rgba(232, 121, 249, 0.5);
+    border-bottom: 0;
+    transform: rotate(-45deg);
+}
+
+@keyframes xu-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Phones: the compact guide lives in the HUD, and what she says drops down
+   from it like a notification — the bottom corner collides with too much. */
+@media (max-width: 700px) {
+    .xu-guide__avatar {
+        top: calc(12px + env(safe-area-inset-top, 0px));
+        right: 166px;
+        bottom: auto;
+        left: auto;
+        width: 44px;
+        height: 44px;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.22), 0 0 18px -4px rgba(232, 121, 249, 0.9);
+    }
+
+    .xu-guide.is-compact .xu-guide__bubble {
+        top: calc(var(--xu-hud-h) + 6px + env(safe-area-inset-top, 0px));
+        right: 12px;
+        bottom: auto;
+        left: auto;
+        max-width: min(270px, 78vw);
+        font-size: 12.5px;
+    }
+
+    .xu-guide.is-compact .xu-guide__bubble::after {
+        top: -7px;
+        right: 164px;
+        bottom: auto;
+        left: auto;
+        border: 0;
+        border-top: 1px solid rgba(232, 121, 249, 0.5);
+        border-left: 1px solid rgba(232, 121, 249, 0.5);
+        transform: rotate(45deg);
+    }
+}
+
+/* A pose that failed to load: no broken-image box, just no guide. */
+.xu-guide.is-missing {
+    display: none;
+}
+
+@keyframes xu-float {
+    0%, 100% { transform: translateY(0) rotate(-0.6deg); }
+    50% { transform: translateY(-14px) rotate(0.8deg); }
+}
+
+/* The welcome at the gate: big, beside the enter button. */
+.xu-loader__guide {
+    position: absolute;
+    right: max(2vw, 16px);
+    bottom: 0;
+    z-index: 1;
+    height: min(86vh, 880px);
+    margin: 0;
+    pointer-events: none;
+    animation: xu-guide-in 1.4s var(--xu-ease) 0.3s both;
+    transition: transform 1.15s cubic-bezier(0.55, 0, 0.8, 0.25), opacity 1s ease 0.15s;
+}
+
+.xu-loader__guide img {
+    display: block;
+    height: 100%;
+    width: auto;
+    filter: drop-shadow(0 0 22px rgba(139, 92, 246, 0.5)) drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
+    animation: xu-float 5.2s var(--xu-ease-io) infinite;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.xu-loader__say {
+    position: absolute;
+    top: 9%;
+    right: 72%;
+    width: max-content;
+    max-width: 280px;
+    padding: 12px 16px 11px;
+    border-radius: 16px;
+    border: 1px solid rgba(232, 121, 249, 0.5);
+    background: linear-gradient(140deg, rgba(34, 14, 58, 0.94), rgba(8, 11, 30, 0.94));
+    box-shadow: 0 0 26px -10px rgba(232, 121, 249, 0.9);
+    text-align: left;
+    animation: xu-guide-in 0.9s var(--xu-ease) 1.3s both;
+}
+
+.xu-loader__say b {
+    display: block;
+    font-family: var(--xu-head);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.xu-loader__say small {
+    display: block;
+    margin-top: 3px;
+    color: #d8b4fe;
+    font-size: 11.5px;
+}
+
+.xu-loader__say::after {
+    content: "";
+    position: absolute;
+    top: 22px;
+    right: -7px;
+    width: 12px;
+    height: 12px;
+    border-top: 1px solid rgba(232, 121, 249, 0.5);
+    border-right: 1px solid rgba(232, 121, 249, 0.5);
+    background: rgba(20, 12, 44, 0.96);
+    transform: rotate(45deg);
+}
+
+@keyframes xu-guide-in {
+    from { opacity: 0; transform: translateY(5vh) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Entering: she dives into the portal ahead of the camera. */
+.xu-loader.is-leaving .xu-loader__guide {
+    opacity: 0;
+    transform: translate(-32vw, -30vh) scale(0.12) rotate(-24deg);
+}
+
+.xu-loader.is-leaving .xu-loader__say {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+@media (min-width: 1100px) {
+    /* Room for her on the right: the gate's own column moves left. */
+    .xu-js .xu-loader {
+        padding-right: min(36vw, 560px);
+    }
+}
+
+@media (max-width: 1099px) {
+    .xu-loader__guide {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        order: -1;
+        height: min(40vh, 360px);
+        margin-bottom: -8px;
+    }
+
+    .xu-loader__guide + .xu-loader__emblem {
+        display: none;
+    }
+
+    .xu-loader__say {
+        top: 6%;
+        right: auto;
+        left: 64%;
+        max-width: min(200px, 44vw);
+        padding: 9px 12px;
+    }
+
+    .xu-loader__say b {
+        font-size: 12.5px;
+    }
+
+    .xu-loader__say::after {
+        right: auto;
+        left: -7px;
+        transform: rotate(-135deg);
+    }
+
+    .xu-loader.is-leaving .xu-loader__guide {
+        transform: translateY(8vh) scale(0.1) rotate(-20deg);
+    }
+}
+
+/* ==========================================================================
+   QUALITY — main.js lowers these on weaker GPUs
+   ========================================================================== */
+
+/* Blurring what is behind a panel re-renders every frame the scene moves;
+   on low tiers the glass turns into a plain, darker tint instead. */
+.xu-q-low .xu-card,
+.xu-q-low .xu-why__item,
+.xu-q-low .xu-btn--ghost,
+.xu-q-low .xu-sound,
+.xu-q-low .xu-menu-btn,
+.xu-q-low .xu-live .xu-control__grid,
+.xu-q-low.xu-live .xu-control__grid {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.xu-q-low .xu-card {
+    background: linear-gradient(160deg, rgba(16, 22, 48, 0.9), rgba(8, 11, 26, 0.88));
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-height: 860px) and (min-width: 701px) {
+    .xu-live .xu-svc__media {
+        display: none;
+    }
+
+    .xu-live .xu-svc__icon {
+        margin-top: 0;
+    }
+
+    .xu-live .xu-services .xu-head .xu-lede {
+        display: none;
+    }
+}
+
+@media (max-height: 720px) and (min-width: 701px) {
+    .xu-live .xu-svc__body {
+        display: none;
+    }
+
+    .xu-live .xu-svc {
+        padding: 14px;
+    }
+
+    .xu-live .xu-h2 {
+        font-size: clamp(24px, 3vw, 38px);
+    }
+}
+
+@media (max-width: 1100px) {
+    .xu-live .xu-svc-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .xu-live .xu-svc__media,
+    .xu-live .xu-services .xu-head .xu-lede {
+        display: none;
+    }
+
+    .xu-live .xu-svc__icon {
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 1100px) and (min-width: 701px) {
+    .xu-live .xu-svc-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .xu-live .xu-svc__body {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .xu-doc {
+        --xu-hud-h: 60px;
+        --xu-gutter: 16px;
+    }
+
+    .xu-brand__word small {
+        letter-spacing: 0.4em;
+    }
+
+    .xu-sound {
+        width: 44px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .xu-sound__label {
+        display: none;
+    }
+
+    .xu-menu-btn {
+        padding: 0 14px 0 12px;
+    }
+
+    .xu-live .xu-rail {
+        right: 4px;
+        gap: 0;
+    }
+
+    .xu-live .xu-rail .xu-rail__label {
+        display: none;
+    }
+
+    .xu-rail__stop {
+        height: 22px;
+    }
+
+    .xu-rail__pip {
+        width: 18px;
+        height: 22px;
+        font-size: 0;
+    }
+
+    .xu-rail::before,
+    .xu-rail__fill {
+        right: 8.5px;
+    }
+
+    .xu-live .xu-coords {
+        display: none;
+    }
+
+    .xu-live .xu-classic {
+        right: 14px;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        font-size: 11px;
+    }
+
+    .xu-live .xu-classic small {
+        display: none;
+    }
+
+    .xu-live .xu-scrollhint {
+        bottom: calc(54px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .xu-core__cta .xu-btn {
+        padding: 13px 20px;
+        font-size: 14px;
+    }
+
+    /* Clear of the scroll hint below the buttons. */
+    .xu-live .xu-core {
+        padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .xu-live .xu-scrollhint {
+        bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .xu-live .xu-origin__stats {
+        bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .xu-live .xu-origin__why {
+        top: auto;
+        bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+        left: var(--xu-gutter);
+        right: var(--xu-gutter);
+        width: auto;
+        transform: none;
+    }
+
+    .xu-live .xu-origin__why .xu-h2 {
+        font-size: 24px;
+    }
+
+    .xu-live .xu-origin__why .xu-lede {
+        display: none;
+    }
+
+    .xu-live .xu-why {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 12px 0 14px;
+    }
+
+    .xu-live .xu-why__item {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .xu-live .xu-why__icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .xu-live .xu-why__item b {
+        font-size: 13.5px;
+    }
+
+    .xu-live .xu-why__body,
+    .xu-live .xu-why__item small {
+        display: none;
+    }
+
+    .xu-live .xu-svc-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        transform: none;
+    }
+
+    .xu-live .xu-svc {
+        padding: 12px;
+        border-radius: 14px;
+    }
+
+    .xu-live .xu-svc__body,
+    .xu-live .xu-svc .xu-go,
+    .xu-live .xu-svc .xu-badge {
+        display: none;
+    }
+
+    .xu-live .xu-svc__icon {
+        width: 30px;
+        height: 30px;
+        margin-bottom: 6px;
+    }
+
+    .xu-live .xu-svc__title {
+        font-size: 13px;
+    }
+
+    .xu-live .xu-svc__en {
+        font-size: 8.5px;
+    }
+
+    .xu-live .xu-services .xu-head .xu-h2,
+    .xu-live .xu-products .xu-head .xu-h2,
+    .xu-live .xu-stack .xu-head .xu-h2 {
+        font-size: 25px;
+    }
+
+    .xu-live .xu-eyebrow {
+        margin-bottom: 10px;
+        font-size: 9.5px;
+    }
+
+    .xu-live .xu-prod {
+        width: 72vw;
+    }
+
+    .xu-live .xu-products .xu-lede {
+        display: none;
+    }
+
+    .xu-live .xu-planets__head {
+        top: calc(var(--xu-hud-h) + 12px);
+        right: var(--xu-gutter);
+    }
+
+    .xu-live .xu-planets__head .xu-lede {
+        display: none;
+    }
+
+    .xu-live .xu-planet,
+    .xu-live .xu-planet--left,
+    .xu-live .xu-planet--right {
+        top: auto;
+        left: var(--xu-gutter);
+        right: var(--xu-gutter);
+        bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+        width: auto;
+        transform: translate3d(0, calc((1 - var(--on, 0)) * 40px), 0);
+    }
+
+    .xu-live .xu-planet__body {
+        margin-bottom: 14px;
+        font-size: 13px;
+        line-height: 1.65;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .xu-live .xu-planet__icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .xu-live .xu-reviews {
+        flex-direction: column;
+        justify-content: center;
+        gap: 18px;
+    }
+
+    .xu-live .xu-reviews .xu-head {
+        flex: none;
+        align-items: center;
+        text-align: center;
+    }
+
+    .xu-live .xu-deck {
+        flex: none;
+        width: 100%;
+        height: 330px;
+    }
+
+    .xu-live .xu-review__text {
+        font-size: 13.5px;
+    }
+
+    .xu-live .xu-control {
+        justify-content: flex-start;
+        overflow-y: auto;
+        pointer-events: auto;
+        overscroll-behavior: contain;
+    }
+
+    .xu-live .xu-control__grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        padding: 18px;
+    }
+
+    .xu-control__brand {
+        grid-column: 1 / -1;
+    }
+
+    .xu-ring {
+        --cw: 190px;
+        --ch: 106px;
+        top: 50%;
+    }
+
+    .xu-menu__info {
+        min-height: 92px;
+    }
+
+    .xu-menu__keys {
+        display: none;
+    }
+
+    .xu-menu__dock {
+        gap: 6px;
+    }
+
+    .xu-dock {
+        padding: 7px 11px;
+        font-size: 12px;
+    }
+
+    .xu-dock small {
+        display: none;
+    }
+}
+
+@media (max-width: 380px) {
+    .xu-core__th {
+        font-size: 31px;
+    }
+
+    .xu-brand__word {
+        display: none;
+    }
+}
+
+/* Short landscape phones: keep the essentials only. */
+@media (max-height: 520px) and (orientation: landscape) {
+    .xu-live .xu-svc-grid {
+        display: none;
+    }
+
+    .xu-live .xu-core__tags,
+    .xu-live .xu-scrollhint {
+        display: none;
+    }
+
+    .xu-menu__info {
+        min-height: 0;
+    }
+
+    .xu-menu__about,
+    .xu-menu__keys {
+        display: none;
+    }
+}

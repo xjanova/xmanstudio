@@ -5,7 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            // universe.*: the 3D home page (home-universe.blade.php) — its own
+            // entry so three.js never ships with the rest of the site.
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/css/universe.css', 'resources/js/universe/main.js'],
             refresh: true,
             publicDirectory: 'public_html',
         }),

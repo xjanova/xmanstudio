@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
 use App\Services\ThemeService;
+use App\Support\UniverseHome;
 
 class HomeController extends Controller
 {
@@ -31,6 +32,13 @@ class HomeController extends Controller
             ->latest()
             ->limit(6)
             ->get();
+
+        // The 3D XMAN Universe, for browsers that can run it. Its own page
+        // sends a device that cannot back here with ?view=classic, and that
+        // visitor gets the theme's home below, unchanged.
+        if (UniverseHome::shouldServe(request())) {
+            return view('home-universe', compact('featuredProducts', 'featuredReviews'));
+        }
 
         // Retro and Nova each get their own landing page; classic/premium
         // keep the original marketing home (sale banner, services grid,

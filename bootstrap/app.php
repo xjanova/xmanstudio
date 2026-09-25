@@ -45,6 +45,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'stripe/webhook',
         ]);
 
+        // Written by JavaScript on the home page (3D universe or classic, see
+        // App\Support\UniverseHome), so it cannot carry Laravel's encryption.
+        $middleware->encryptCookies(except: [
+            'xu_mode',
+        ]);
+
         // Apply theme + affiliate tracking + AI crawl detection middleware to web routes
         $middleware->web(append: [
             AiCrawlDetector::class,

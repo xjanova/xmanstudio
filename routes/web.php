@@ -1298,6 +1298,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/theme', [ThemeController::class, 'index'])->name('theme.index');
     Route::put('/theme', [ThemeController::class, 'update'])->name('theme.update');
     Route::put('/theme/customer', [ThemeController::class, 'updateCustomer'])->name('theme.customer.update');
+    Route::put('/theme/universe', [ThemeController::class, 'updateUniverse'])->name('theme.universe.update');
 
     // Quotation Management
     Route::prefix('quotations')->name('quotations.')->group(function () {

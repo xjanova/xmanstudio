@@ -1,19 +1,7 @@
 {{-- Nova tech stack + customer reviews. --}}
 @php
-    $novaTech = [
-        ['React',      'react/react-original'],
-        ['Flutter',    'flutter/flutter-original'],
-        ['Laravel',    'laravel/laravel-original'],
-        ['Node.js',    'nodejs/nodejs-original'],
-        ['Python',     'python/python-original'],
-        ['AWS',        'amazonwebservices/amazonwebservices-plain-wordmark'],
-        ['PHP',        'php/php-original'],
-        ['TypeScript', 'typescript/typescript-original'],
-        ['Docker',     'docker/docker-original'],
-        ['PostgreSQL', 'postgresql/postgresql-original'],
-        ['Tailwind',   'tailwindcss/tailwindcss-original'],
-        ['Solidity',   'solidity/solidity-original'],
-    ];
+    // Shared with the 3D universe home (HomeContent).
+    $novaTech = \App\Support\HomeContent::tech();
 @endphp
 
 <section class="nova-section nova-section--tight">

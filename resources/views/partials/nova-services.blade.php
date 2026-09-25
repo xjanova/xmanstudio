@@ -1,57 +1,8 @@
 {{-- Nova services — all 8 services carried over from the original home page.
      Every card links to /services (the detail hub), matching the previous
-     behaviour. --}}
+     behaviour. The list is shared with the 3D universe home (HomeContent). --}}
 @php
-    $novaServices = [
-        [
-            'th' => 'Blockchain Development', 'en' => 'Smart contracts · DeFi · NFT',
-            'body' => 'พัฒนาโซลูชั่น Blockchain, Smart Contracts, DeFi และ NFT Marketplace',
-            'icon' => 'chain', 'accent' => '#22d3ee', 'badge' => 'ยอดนิยม',
-            'art' => 'card-blockchain',
-        ],
-        [
-            'th' => 'Web Development', 'en' => 'Responsive · Modern stack',
-            'body' => 'ออกแบบและพัฒนาเว็บไซต์สมัยใหม่ Responsive รองรับทุกอุปกรณ์',
-            'icon' => 'globe', 'accent' => '#38bdf8', 'badge' => null,
-            'art' => 'card-web',
-        ],
-        [
-            'th' => 'Mobile Application', 'en' => 'iOS · Android',
-            'body' => 'พัฒนาแอพ iOS และ Android ด้วย Flutter และ React Native',
-            'icon' => 'mobile', 'accent' => '#34d399', 'badge' => null,
-            'art' => 'card-mobile',
-        ],
-        [
-            'th' => 'AI Solutions', 'en' => 'Generative AI · Chatbot',
-            'body' => 'วีดีโอ AI, เพลง AI, Chatbot และบริการ Generative AI',
-            'icon' => 'spark', 'accent' => '#e879f9', 'badge' => 'ใหม่',
-            'art' => 'card-ai',
-        ],
-        [
-            'th' => 'IoT Solutions', 'en' => 'Internet of Things',
-            'body' => 'ออกแบบและพัฒนาระบบ Internet of Things ครบวงจร',
-            'icon' => 'bolt', 'accent' => '#fb923c', 'badge' => null,
-            'art' => 'card-iot',
-        ],
-        [
-            'th' => 'Network & IT Security', 'en' => 'Firewall · Pentest',
-            'body' => 'ออกแบบ ติดตั้งระบบ Network, Firewall และทดสอบเจาะระบบ',
-            'icon' => 'shield', 'accent' => '#fb7185', 'badge' => null,
-            'art' => 'card-security',
-        ],
-        [
-            'th' => 'Custom Software', 'en' => 'ERP · CRM · Inventory',
-            'body' => 'พัฒนาซอฟต์แวร์เฉพาะ ERP, CRM และระบบจัดการสินค้าคงคลัง',
-            'icon' => 'layers', 'accent' => '#8b5cf6', 'badge' => null,
-            'art' => 'card-software',
-        ],
-        [
-            'th' => 'Flutter & Android Studio', 'en' => 'Cross-platform · Training',
-            'body' => 'พัฒนาแอพ Cross-platform ด้วย Flutter และอบรมการใช้งาน',
-            'icon' => 'code', 'accent' => '#0ea5e9', 'badge' => 'Flutter',
-            'art' => 'card-flutter',
-        ],
-    ];
+    $novaServices = \App\Support\HomeContent::services();
 @endphp
 
 <section id="nova-services" class="nova-section">

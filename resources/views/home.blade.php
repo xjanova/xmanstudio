@@ -748,6 +748,8 @@
     .hero-firefly-dot.hf-cyan { background: #22d3ee; box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px rgba(34,211,238,0.4); }
     .hero-firefly-dot.hf-pink { background: #f472b6; box-shadow: 0 0 4px 2px #f472b6, 0 0 10px 4px rgba(244,114,182,0.4); }
 </style>
+{{-- The way back into the 3D XMAN Universe home (App\Support\UniverseHome). --}}
+@include('partials.universe.switch', ['aboveBottomNav' => true])
 @endsection
 
 @push('scripts')

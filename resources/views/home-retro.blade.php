@@ -35,4 +35,6 @@
             <div style="font-family:var(--font-ui);font-size:11px;letter-spacing:.3em;color:var(--tron-gold);text-transform:uppercase;">— XMAN STUDIO · BANGKOK —</div>
         </div>
     </section>
+    {{-- The way back into the 3D XMAN Universe home (App\Support\UniverseHome). --}}
+    @include('partials.universe.switch')
 @endsection

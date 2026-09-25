@@ -33,6 +33,8 @@
     @include('partials.nova-ecosystem')
     @include('partials.nova-proof')
     @include('partials.nova-cta')
+    {{-- The way back into the 3D XMAN Universe home (App\Support\UniverseHome). --}}
+    @include('partials.universe.switch')
 @endsection
 
 @push('styles')

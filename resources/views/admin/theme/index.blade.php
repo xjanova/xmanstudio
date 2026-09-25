@@ -374,6 +374,87 @@
             </div>
         </form>
     </div>
+
+    <!-- XMAN Universe — หน้าแรกแบบ 3D เต็มจอ ซ้อนอยู่บนธีมเว็บไซต์: เครื่องที่ไม่รองรับ (ไม่มี WebGL2, ตั้งลดการเคลื่อนไหว, แรมน้อย) ได้หน้าแรกของธีมตามเดิมอัตโนมัติ -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-12 animate-fade-in" style="animation-delay: 0.7s;">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-400 via-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                    <ellipse cx="12" cy="12" rx="10" ry="4" stroke-width="1.6" transform="rotate(-30 12 12)"/>
+                    <ellipse cx="12" cy="12" rx="10" ry="4" stroke-width="1.6" transform="rotate(30 12 12)"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">หน้าแรกจักรวาล 3D — XMAN Universe</h2>
+                <p class="text-gray-500 dark:text-gray-400">
+                    เลื่อนเมาส์แล้วเดินทางผ่านจักรวาล XMAN พร้อมเมนูวงแหวนและเสียง —
+                    ตอนนี้ <span class="font-semibold {{ $universeEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-300' }}">{{ $universeEnabled ? 'เปิดอยู่' : 'ปิดอยู่' }}</span>
+                </p>
+            </div>
+        </div>
+
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+            เครื่องที่ไม่รองรับ (ไม่มีการ์ดจอที่ใช้ WebGL2 ได้, ตั้งค่าลดการเคลื่อนไหว, แรมน้อย หรือเปิดโหมดประหยัดเน็ต)
+            และบอทของ Google จะเห็นหน้าแรกของธีม <span class="font-semibold">{{ $themes[$currentTheme]['name'] ?? $currentTheme }}</span> ตามเดิมโดยอัตโนมัติ
+            ผู้เข้าชมสลับไป-มาเองได้จากปุ่มในหน้า
+        </p>
+
+        <form action="{{ route('admin.theme.universe.update') }}" method="POST" id="universeForm">
+            @csrf
+            @method('PUT')
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                @foreach([1 => ['เปิด — ใช้หน้าแรก 3D', 'เครื่องที่รองรับเห็นจักรวาล 3D ที่เหลือเห็นหน้าเดิม'], 0 => ['ปิด — ใช้หน้าแรกของธีม', 'ทุกคนเห็นหน้าแรกของธีมเว็บไซต์']] as $value => [$label, $hint])
+                    <label class="theme-card group cursor-pointer">
+                        <input type="radio" name="home_universe" value="{{ $value }}"
+                               class="sr-only peer"
+                               {{ (int) $universeEnabled === $value ? 'checked' : '' }}>
+
+                        <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
+                                    {{ (int) $universeEnabled === $value ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                    peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
+                                    hover:border-indigo-400">
+                            <!-- ภาพย่อ: จักรวาลกับดาวแกนกลาง หรือหน้าแรกแบบเรียบ -->
+                            <div class="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 {{ $value ? 'bg-gradient-to-br from-gray-950 via-indigo-950 to-fuchsia-950' : 'bg-gray-50' }}">
+                                @if($value)
+                                    <div class="absolute left-1/2 top-1/2 w-5 h-5 -ml-2.5 -mt-2.5 rounded-full bg-amber-200 shadow-[0_0_14px_4px_rgba(255,212,121,.7)]"></div>
+                                    <div class="absolute left-1/2 top-1/2 w-16 h-5 -ml-8 -mt-2.5 rounded-[50%] border border-cyan-300/70 rotate-[-18deg]"></div>
+                                    <div class="absolute left-2 top-2 w-1 h-1 rounded-full bg-white/80"></div>
+                                    <div class="absolute right-3 bottom-3 w-1 h-1 rounded-full bg-fuchsia-300"></div>
+                                    <div class="absolute right-5 top-3 w-0.5 h-0.5 rounded-full bg-cyan-200"></div>
+                                @else
+                                    <div class="p-1.5 space-y-1">
+                                        <div class="h-2 rounded bg-gray-300"></div>
+                                        <div class="h-3 rounded bg-white border border-gray-200"></div>
+                                        <div class="h-3 rounded bg-white border border-gray-200"></div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900 dark:text-white">{{ $label }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $hint }}</p>
+                            </div>
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap gap-4 text-sm">
+                    <a href="{{ url('/') }}" target="_blank" rel="noopener" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">ดูหน้าแรก ↗</a>
+                    <a href="{{ \App\Support\UniverseHome::classicUrl() }}" target="_blank" rel="noopener" class="font-semibold text-gray-600 dark:text-gray-300 hover:underline">ดูหน้าแรกแบบเดิม ↗</a>
+                </div>
+                <button type="submit"
+                        class="group inline-flex items-center px-8 py-4 border border-transparent text-base font-bold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    บันทึกหน้าแรก 3D
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 @push('scripts')
