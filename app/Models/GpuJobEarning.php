@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * งานหนึ่งชิ้นที่เครื่องของคนแชร์ทำเสร็จ และเงินที่เขาควรได้จากมัน
@@ -85,6 +86,8 @@ class GpuJobEarning extends Model
         'cleared_at',
         'paid_at',
         'void_reason',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     protected $casts = [
@@ -108,6 +111,8 @@ class GpuJobEarning extends Model
         'completed_at' => 'datetime',
         'cleared_at' => 'datetime',
         'paid_at' => 'datetime',
+        'reviewed_by' => 'integer',
+        'reviewed_at' => 'datetime',
     ];
 
     public function node(): BelongsTo
@@ -134,6 +139,36 @@ class GpuJobEarning extends Model
     public function affiliateCommission(): BelongsTo
     {
         return $this->belongsTo(AffiliateCommission::class);
+    }
+
+    /** แอดมินที่อนุมัติหรือยกเลิกงานนี้ล่าสุด */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * ยกเลิกได้เฉพาะเงินที่ยังไม่ถึงกระเป๋า — แถวที่จ่ายแล้วมีรายการในกระเป๋า
+     * ผูกอยู่ การยกเลิกตรงนี้จะทำให้ประวัติกับยอดเงินไม่ตรงกัน ต้องปรับกระเป๋า
+     * แยกต่างหากแทน
+     */
+    public function canBeVoided(): bool
+    {
+        return in_array($this->status, self::UNPAID_STATUSES, true);
+    }
+
+    /** อนุมัติได้เฉพาะงานที่ติดรอตรวจ และยอดไม่ติดลบ (ยอดติดลบต้องยกเลิกเท่านั้น) */
+    public function canBeApproved(): bool
+    {
+        return $this->status === self::STATUS_REVIEW && $this->amount_satang >= 0;
+    }
+
+    /** เวลาที่งานนี้พ้นระยะพัก — นับจากเวลางานเสร็จ (ไม่มีก็นับจากเวลาที่แถวเกิด) */
+    public function holdEndsAt(int $holdHours): ?Carbon
+    {
+        $from = $this->completed_at ?? $this->created_at;
+
+        return $from?->copy()->addHours(max(0, $holdHours));
     }
 
     /** ยอดเป็นบาท สำหรับแสดงผลเท่านั้น — การคำนวณทุกอย่างอยู่บนสตางค์ */

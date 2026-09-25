@@ -76,6 +76,9 @@ class GpuNode extends Model
         'suspended_at',
         'suspended_reason',
         'suspended_by',
+        'banned_at',
+        'banned_reason',
+        'banned_by',
         'retire_status',
     ];
 
@@ -85,6 +88,7 @@ class GpuNode extends Model
         'last_seen_at' => 'datetime',
         'dispatch_synced_at' => 'datetime',
         'suspended_at' => 'datetime',
+        'banned_at' => 'datetime',
         'online' => 'boolean',
         'assessed' => 'boolean',
         // null = เครื่องไม่ได้บอก (ไคลเอนต์รุ่นเก่า หรือออฟไลน์อยู่) ไม่ใช่ "ไม่รับ"
@@ -128,6 +132,67 @@ class GpuNode extends Model
     public function isSuspended(): bool
     {
         return $this->suspended_at !== null;
+    }
+
+    /**
+     * แอดมินแบนเครื่องนี้ — ถูกถอนออกแล้ว และทั้งเครื่องนี้กับบัญชีเจ้าของ
+     * จับคู่ใหม่ไม่ได้จนกว่าจะยกเลิกแบน (ต่างจากระงับ ซึ่งแค่หยุดส่งงานชั่วคราว)
+     */
+    public function isBanned(): bool
+    {
+        return $this->banned_at !== null;
+    }
+
+    /** แอดมินที่ระงับเครื่องนี้ */
+    public function suspendedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'suspended_by');
+    }
+
+    /** แอดมินที่แบนเครื่องนี้ */
+    public function bannedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'banned_by');
+    }
+
+    /**
+     * เครื่องนี้ (ตาม machine_id) ห้ามได้ worker ใหม่ไหม — ไม่ว่าจะมาในบัญชีไหน
+     *
+     * ห้ามเมื่อมีแถวไหนของเครื่องนี้ถูกแบน หรือถูกระงับอยู่ รวมแถวที่ถอนไปแล้ว:
+     * ถ้าไม่กันกรณีหลัง การถอนแล้วจับคู่ใหม่ (หรือจับคู่ในอีกบัญชี) คือทางหนี
+     * การระงับ เพราะแถวใหม่ไม่มีการระงับติดมา แอดมินปลดได้ด้วยการยกเลิกแบน /
+     * ยกเลิกระงับที่แถวเดิมในหน้าแอดมิน
+     *
+     * $exceptNodeId คือแถวที่ยังใช้งานอยู่ซึ่งการจับคู่ครั้งนี้จะคืน worker เดิมให้
+     * — แถวนั้นถูกระงับอยู่ก็ยังระงับต่อ ไม่ได้หนีไปไหน จึงไม่นับ
+     */
+    public static function machineIsBlocked(?string $machineId, ?int $exceptNodeId = null): bool
+    {
+        if ($machineId === null || $machineId === '') {
+            return false;
+        }
+
+        return static::withTrashed()
+            ->where('machine_id', $machineId)
+            ->when($exceptNodeId !== null, fn ($q) => $q->whereKeyNot($exceptNodeId))
+            ->where(fn ($q) => $q->whereNotNull('banned_at')->orWhereNotNull('suspended_at'))
+            ->exists();
+    }
+
+    /** บัญชีนี้มีเครื่องที่ถูกแบนอยู่ — ห้ามจับคู่เครื่องใหม่ทุกเครื่อง */
+    public static function ownerIsBanned(int $userId): bool
+    {
+        return static::bannedRowFor($userId) !== null;
+    }
+
+    /** แถวที่ถูกแบนล่าสุดของเจ้าของคนนี้ (รวมแถวที่ถอนไปแล้ว) — เอาไว้บอกเหตุผล */
+    public static function bannedRowFor(int $userId): ?self
+    {
+        return static::withTrashed()
+            ->where('user_id', $userId)
+            ->whereNotNull('banned_at')
+            ->latest('banned_at')
+            ->first();
     }
 
     /** งานที่เครื่องนี้ทำเสร็จและเงินที่ได้จากมัน */
@@ -188,6 +253,10 @@ class GpuNode extends Model
         if ($this->paired_at === null) {
             return 'รอจับคู่';
         }
+        // ระงับมาก่อนทุกอย่าง — เครื่องที่ออนไลน์และพร้อมแต่ถูกระงับ ไม่ได้งานแน่นอน
+        if ($this->isSuspended()) {
+            return 'ถูกระงับ';
+        }
         if (! $this->online) {
             return 'ออฟไลน์';
         }
@@ -205,9 +274,47 @@ class GpuNode extends Model
     {
         return match ($this->statusLabel()) {
             'พร้อมรับงาน' => 'text-green-700 bg-green-50 border-green-200',
+            'ถูกระงับ' => 'text-red-700 bg-red-50 border-red-200',
             'ออฟไลน์' => 'text-gray-600 bg-gray-50 border-gray-200',
             'รอจับคู่' => 'text-blue-700 bg-blue-50 border-blue-200',
             default => 'text-amber-700 bg-amber-50 border-amber-200',
+        };
+    }
+
+    /**
+     * สถานะ worker ของเครื่องนี้ในระบบส่งงาน (ที่ aixman ตอบกลับมาครั้งล่าสุด)
+     * เป็นคำที่เจ้าของเครื่องอ่านเข้าใจ — null คือ aixman ยังไม่เคยบอก
+     */
+    public function dispatchWorkerStatusLabel(): ?string
+    {
+        return match ($this->dispatch_worker_status) {
+            null, '' => null,
+            'provisioning' => 'กำลังเตรียมเครื่อง',
+            'warming' => 'กำลังตรวจความพร้อม — ยังไม่ส่งงาน',
+            'ready' => 'พร้อม รอรับงาน',
+            'busy' => 'กำลังทำงานให้ลูกค้า',
+            'draining' => 'กำลังถอนออกจากคิวงาน',
+            'terminated' => 'ถูกนำออกจากคิวงาน',
+            'failed' => 'ขัดข้อง',
+            default => $this->dispatch_worker_status,
+        };
+    }
+
+    /** ผลการขึ้นทะเบียนที่ aixman (dispatch_status) เป็นคำภาษาไทย */
+    public function dispatchStatusLabel(): ?string
+    {
+        return match ($this->dispatch_status) {
+            null, '' => null,
+            'eligible' => 'มีสิทธิ์รับงาน',
+            'unassessed' => 'ยังไม่ผ่านการประเมิน',
+            'no-matching-model' => 'ยังไม่มีโมเดลที่เครื่องนี้รับไหว',
+            'offline' => 'ออฟไลน์',
+            'suspended' => 'ถูกระงับ',
+            'retired' => 'ถูกปลดที่ระบบส่งงาน',
+            'rejected' => 'ระบบส่งงานปฏิเสธ',
+            'error' => 'ส่งข้อมูลให้ระบบส่งงานไม่สำเร็จ',
+            'unconfigured' => 'ยังไม่ได้ตั้งค่าการเชื่อมต่อระบบส่งงาน',
+            default => $this->dispatch_status,
         };
     }
 

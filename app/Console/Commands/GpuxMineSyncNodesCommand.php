@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\GpuNode;
 use App\Services\GpuxMineDispatchService;
+use App\Services\GpuxMineHealthService;
 use App\Services\GpuxMineNodeStateService;
 use App\Services\GpuxMineRelayService;
 use Illuminate\Console\Command;
@@ -32,7 +33,11 @@ class GpuxMineSyncNodesCommand extends Command
         GpuxMineRelayService $relay,
         GpuxMineDispatchService $dispatch,
         GpuxMineNodeStateService $state,
+        GpuxMineHealthService $health,
     ): int {
+        // หลักฐานว่า cron เรียกเราจริง — gpuxmine:doctor ดูตรงนี้
+        $health->beat(GpuxMineHealthService::TASK_SYNC);
+
         if (! $relay->isConfigured()) {
             $this->warn('ยังไม่ได้ตั้งค่า GPUXMINE_RELAY_URL / GPUXMINE_RELAY_ADMIN_KEY');
 

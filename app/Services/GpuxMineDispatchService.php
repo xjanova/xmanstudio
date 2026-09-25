@@ -132,6 +132,18 @@ class GpuxMineDispatchService
             return self::OUTCOME_SKIPPED;
         }
 
+        // อ่านสองค่านี้ใหม่จากฐานข้อมูลก่อนส่งทุกครั้ง — ตัวจับเวลาโหลดเครื่องทีละร้อย แถวในมือ
+        // อาจเก่ากว่าที่แอดมินเพิ่งระงับ/แบน หรือเจ้าของเพิ่งถอน ส่งของเก่าไปคือ aixman ปลด
+        // การระงับเอง หรือฟื้น worker ที่เพิ่งถอนกลับมา
+        if ($node->exists) {
+            $current = GpuNode::withTrashed()->whereKey($node->getKey())->first(['id', 'deleted_at', 'suspended_at']);
+            if ($current === null || $current->trashed()) {
+                return self::OUTCOME_SKIPPED;
+            }
+            $node->setRawAttributes(['suspended_at' => $current->getRawOriginal('suspended_at')] + $node->getAttributes());
+            $node->syncOriginalAttribute('suspended_at');
+        }
+
         if (! $this->isConfigured()) {
             $node->forceFill([
                 'dispatch_status' => 'unconfigured',

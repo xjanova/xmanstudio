@@ -18,6 +18,13 @@
         $pendingCommissions = $totalUsers = $newBugReports = $pendingQuotations = 0;
         $pendingPaymentOrders = $pendingTopups = $activeDevices = $pendingOrders = $onlineVpnDevices = 0;
     }
+
+    // รายได้ GPUxMINE ที่รอแอดมินตัดสิน — ไม่มีใครกดก็ไม่มีวันจ่าย (แยก try: ตารางนี้พังต้องไม่ลากตัวเลขอื่นเป็นศูนย์)
+    try {
+        $gpuxmineReview = \App\Models\GpuJobEarning::where('status', \App\Models\GpuJobEarning::STATUS_REVIEW)->count();
+    } catch (\Throwable $e) {
+        $gpuxmineReview = 0;
+    }
 @endphp
 
 {{-- Menu link helper class --}}
@@ -216,6 +223,33 @@
         <a href="{{ route('admin.localvpn.settings') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.localvpn.settings') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             ตั้งค่า
+        </a>
+    </div>
+</div>
+
+{{-- GPUxMINE: เครื่องที่คนแชร์การ์ดจอ และรายได้ที่ต้องมีคนตัดสิน --}}
+<div x-data="{ open: {{ request()->routeIs('admin.gpuxmine.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
+        <span>
+            <svg class="w-3 h-3 inline-block mr-1 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+            GPUxMINE
+            @if($gpuxmineReview > 0)
+            <span class="ml-1 bg-orange-600 text-white text-[10px] px-1.5 py-0.5 rounded-full normal-case">{{ $gpuxmineReview }}</span>
+            @endif
+        </span>
+        <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </button>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
+        <a href="{{ route('admin.gpuxmine.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.gpuxmine.index', 'admin.gpuxmine.show') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+            เครื่องในเครือข่าย
+        </a>
+        <a href="{{ route('admin.gpuxmine.earnings') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.gpuxmine.earnings*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            รายได้ · คิวตรวจ
+            @if($gpuxmineReview > 0)
+            <span class="ml-auto bg-orange-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $gpuxmineReview }}</span>
+            @endif
         </a>
     </div>
 </div>

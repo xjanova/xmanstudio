@@ -205,6 +205,15 @@ class GpuxMineNodeController extends Controller
             ->whereNull('deleted_at')
             ->first();
 
+        // แอดมินแบนบัญชีนี้ หรือเครื่องนี้ถูกแบน/ระงับอยู่ที่แถวอื่น (ถอนแล้วจับคู่ใหม่ หรือย้าย
+        // ไปอีกบัญชี คือทางหนีการระงับ) — ไม่ออก worker ใหม่ ไม่คืนกุญแจ
+        if (GpuNode::ownerIsBanned((int) $node->user_id)) {
+            return $this->pairingRefused('OWNER_BANNED', 'บัญชีนี้ถูกระงับการแชร์เครื่อง GPUxMINE — ติดต่อผู้ดูแลระบบ');
+        }
+        if (GpuNode::machineIsBlocked($validated['machine_id'], $existing?->id)) {
+            return $this->pairingRefused('MACHINE_BLOCKED', 'เครื่องนี้ถูกผู้ดูแลระงับการแชร์ไว้ — จับคู่ใหม่ไม่ได้จนกว่าผู้ดูแลจะยกเลิก ติดต่อผู้ดูแลระบบ');
+        }
+
         // ...แต่คืนของเดิมได้ก็ต่อเมื่อ relay ตัวปัจจุบันยังรู้จัก worker นั้นจริง
         //
         // ย้าย relay ไปอีกเครื่องเมื่อไร `workers.json` เริ่มนับหนึ่งใหม่ และ
@@ -446,6 +455,17 @@ class GpuxMineNodeController extends Controller
             'error_code' => 'PAIRING_INVALID',
             'message' => 'รหัสจับคู่ไม่ถูกต้องหรือหมดอายุแล้ว — กดขอรหัสใหม่ที่หน้าเครื่องของฉัน',
         ], 422);
+    }
+
+    private function pairingRefused(string $code, string $message): JsonResponse
+    {
+        Log::notice('GPUxMINE pairing refused by a ban or suspension', ['error_code' => $code]);
+
+        return response()->json([
+            'success' => false,
+            'error_code' => $code,
+            'message' => $message,
+        ], 403);
     }
 
     private function relayUnavailable(): JsonResponse

@@ -213,9 +213,10 @@
 
     {{-- ══════════ สิ่งที่การยืนยันตัวตนปลดล็อก ══════════ --}}
     <div class="grid sm:grid-cols-3 gap-4">
+        {{-- ถอนเงินเข้าธนาคาร: ยังไม่มีระบบถอนเงินสด (D3 2026-09-25) — บอกตามจริง ไม่สัญญาสิ่งที่ยังไม่มี --}}
         @foreach ([
             ['th' => 'รับเงินค่าเช่าการ์ดจอ', 'en' => 'GPUxMINE payouts', 'dth' => 'ค่าตอบแทนจาก GPUxMINE เข้ากระเป๋าได้', 'den' => 'Earnings from sharing your GPU land in your wallet', 'grad' => 'from-amber-400 to-yellow-600', 'icon' => 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z'],
-            ['th' => 'ถอนเงินเข้าบัญชีธนาคาร', 'en' => 'Bank withdrawals', 'dth' => 'โอนออกเข้าบัญชีที่ยืนยันชื่อไว้แล้ว', 'den' => 'Transfer out to the bank account you verified', 'grad' => 'from-emerald-400 to-green-600', 'icon' => 'M3 10h18M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z'],
+            ['th' => 'ถอนเงินเข้าบัญชีธนาคาร (เร็ว ๆ นี้)', 'en' => 'Bank withdrawals (coming later)', 'dth' => 'ยังไม่เปิดให้บริการ — เมื่อเปิดแล้ว โอนออกได้เฉพาะบัญชีที่ยืนยันชื่อไว้', 'den' => 'Not available yet — once it opens, only to the bank account you verified', 'grad' => 'from-emerald-400 to-green-600', 'icon' => 'M3 10h18M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z'],
             ['th' => 'หมวดเนื้อหาสำหรับผู้ใหญ่', 'en' => 'Adult content tier', 'dth' => 'เปิดหมวด 18+ บน ai.xman4289.com', 'den' => 'Unlocks the 18+ tier on ai.xman4289.com', 'grad' => 'from-violet-400 to-purple-600', 'icon' => 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'],
         ] as $perk)
             <div class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-fade-in">

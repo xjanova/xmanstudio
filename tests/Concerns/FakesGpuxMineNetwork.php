@@ -23,6 +23,12 @@ trait FakesGpuxMineNetwork
     /** @var array<int, array<string, mixed>>|null รายชื่อที่ relay ตอบ — null = relay ตอบ 500 */
     protected ?array $relayWorkers = [];
 
+    /** สถานะที่ relay ตอบรายชื่อ (เมื่อ relayWorkers ไม่เป็น null) — 401 = admin key ผิด */
+    protected int $relayListStatus = 200;
+
+    /** สถานะที่ relay ตอบ POST /admin/workers/{id}/disable|enable|rotate */
+    protected int $relayAdminActionStatus = 200;
+
     /** @var array<string, mixed>|null สิ่งที่ /enroll ตอบ — null = relay ปฏิเสธ */
     protected ?array $enrolment = null;
 
@@ -81,9 +87,13 @@ trait FakesGpuxMineNetwork
             }
 
             if ($url === $this->relayBase . '/admin/workers' && $method === 'GET') {
-                return $this->relayWorkers === null
-                    ? Factory::response('upstream down', 502)
-                    : Factory::response($this->relayWorkers);
+                if ($this->relayWorkers === null) {
+                    return Factory::response('upstream down', 502);
+                }
+
+                return $this->relayListStatus === 200
+                    ? Factory::response($this->relayWorkers)
+                    : Factory::response(['error' => 'unauthorized'], $this->relayListStatus);
             }
 
             if (str_starts_with($url, $this->relayBase . '/admin/workers/') && $method === 'DELETE') {
@@ -91,7 +101,7 @@ trait FakesGpuxMineNetwork
             }
 
             if (str_starts_with($url, $this->relayBase . '/admin/workers/') && $method === 'POST') {
-                return Factory::response(['ok' => true]);
+                return Factory::response(['ok' => $this->relayAdminActionStatus < 300], $this->relayAdminActionStatus);
             }
 
             return Factory::response('unexpected ' . $method . ' ' . $url, 599);
@@ -124,6 +134,17 @@ trait FakesGpuxMineNetwork
         return array_values(array_map(
             fn ($c) => rawurldecode(substr($c['url'], strlen($prefix))),
             array_filter($this->gpuxCalls, fn ($c) => $c['method'] === 'DELETE' && str_starts_with($c['url'], $prefix))
+        ));
+    }
+
+    /** @return array<int, string> คำสั่งแอดมินที่ส่งให้ relay ตามลำดับ เช่น 'gxm-abc/disable' */
+    protected function relayAdminActions(): array
+    {
+        $prefix = $this->relayBase . '/admin/workers/';
+
+        return array_values(array_map(
+            fn ($c) => rawurldecode(substr($c['url'], strlen($prefix))),
+            array_filter($this->gpuxCalls, fn ($c) => $c['method'] === 'POST' && str_starts_with($c['url'], $prefix))
         ));
     }
 

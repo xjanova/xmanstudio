@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\GpuJobEarning;
 use App\Models\GpuNode;
 use App\Models\Product;
+use App\Services\GpuxMineEarningSettlementService;
 use App\Services\GpuxMineNodeStateService;
 use App\Services\GpuxMineReferrerResolver;
 use App\Services\GpuxMineRelayService;
@@ -33,6 +34,7 @@ class GpuNodeController extends Controller
         private readonly GpuxMineRelayService $relay,
         private readonly GpuxMineNodeStateService $state,
         private readonly GpuxMineReferrerResolver $referrers,
+        private readonly GpuxMineEarningSettlementService $settlement,
     ) {}
 
     public function index(Request $request): View
@@ -63,6 +65,8 @@ class GpuNodeController extends Controller
             ->get()
             ->keyBy('status');
 
+        $satang = fn (string $status): int => (int) ($totals[$status]->satang ?? 0);
+
         return view('gpuxmine.index', [
             'nodes' => $nodes,
             'pending' => $nodes->firstWhere(fn (GpuNode $n) => $n->pairingIsUsable()),
@@ -70,11 +74,15 @@ class GpuNodeController extends Controller
             // ตัวติดตั้งส่งจาก xman4289.com เอง — ลิงก์ GitHub บอกลูกค้าว่า repo อยู่ไหน (กฎเจ้าของ 2026-09-24)
             'downloadUrl' => route('gpuxmine.download'),
             'earnings' => $earnings,
-            'paidSatang' => (int) ($totals[GpuJobEarning::STATUS_PAID]->satang ?? 0),
+            'paidSatang' => $satang(GpuJobEarning::STATUS_PAID),
             // ยังไม่ถึงกระเป๋าแต่ยังเป็นของเขา: อยู่ในระยะพัก, รอตรวจ, หรือพ้นระยะพักแล้วรอรอบโอน
-            'pendingSatang' => (int) collect(GpuJobEarning::UNPAID_STATUSES)
-                ->sum(fn (string $status) => (int) ($totals[$status]->satang ?? 0)),
-            'jobsTotal' => (int) $totals->sum('jobs'),
+            'pendingSatang' => (int) collect(GpuJobEarning::UNPAID_STATUSES)->sum($satang),
+            // แยกให้เห็นว่าเงินที่ยังไม่ถึงกระเป๋าติดอยู่ขั้นไหน — "รอ" เฉย ๆ ตอบไม่ได้ว่ารออะไร
+            'unpaidSatang' => collect(GpuJobEarning::UNPAID_STATUSES)->mapWithKeys(fn (string $s) => [$s => $satang($s)])->all(),
+            'jobsTotal' => (int) $totals->whereNotIn('status', [GpuJobEarning::STATUS_VOID])->sum('jobs'),
+            'holdHours' => $this->settlement->holdHours(),
+            // แอดมินแบนบัญชีนี้ — ขอรหัสจับคู่ไม่ได้ และต้องบอกเหตุผลตรง ๆ
+            'ban' => GpuNode::bannedRowFor((int) Auth::id()),
         ]);
     }
 
@@ -107,6 +115,11 @@ class GpuNodeController extends Controller
         }
 
         $userId = (int) Auth::id();
+
+        // แอดมินแบนบัญชีนี้ — ตรวจซ้ำอีกครั้งตอนโปรแกรมมาแลกรหัส (พร้อม machine id)
+        if (GpuNode::ownerIsBanned($userId)) {
+            return back()->with('error', 'บัญชีนี้ถูกระงับการแชร์เครื่อง GPUxMINE — ขอรหัสจับคู่ใหม่ไม่ได้ ติดต่อผู้ดูแลระบบ');
+        }
 
         // เพดานเครื่องต่อบัญชี (D9) — ตรวจซ้ำอีกครั้งตอนโปรแกรมมาแลกรหัส
         // เพราะนั่นคือจุดที่ worker ใหม่เกิดขึ้นจริง
@@ -159,7 +172,10 @@ class GpuNodeController extends Controller
 
         $this->state->forget($node);
 
-        return back()->with('success', 'ถอนเครื่องออกจากระบบแล้ว — ยอดที่ค้างจ่ายยังอยู่ตามเดิม');
+        // ถอนเครื่องที่ถูกระงับไม่ได้ปลดการระงับ — บอกตรง ๆ ไม่งั้นเจ้าของจะงงตอนจับคู่ใหม่ไม่ได้
+        return back()->with('success', $node->isSuspended()
+            ? 'ถอนเครื่องออกจากระบบแล้ว — เครื่องนี้ถูกผู้ดูแลระงับไว้ จึงจับคู่ใหม่ไม่ได้จนกว่าผู้ดูแลจะยกเลิกการระงับ'
+            : 'ถอนเครื่องออกจากระบบแล้ว — ยอดที่ค้างจ่ายยังอยู่ตามเดิม');
     }
 
     private function ownedNode(int $id): GpuNode

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\GpuxMineEarningSettlementService;
+use App\Services\GpuxMineHealthService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -23,8 +24,11 @@ class GpuxMineSettleEarningsCommand extends Command
 
     protected $description = 'ปล่อยรายได้ GPUxMINE ที่พ้นระยะพักแล้วโอนเข้ากระเป๋า XMAN ของเจ้าของเครื่อง';
 
-    public function handle(GpuxMineEarningSettlementService $settlement): int
+    public function handle(GpuxMineEarningSettlementService $settlement, GpuxMineHealthService $health): int
     {
+        // หลักฐานว่า cron เรียกเราจริง — gpuxmine:doctor ดูตรงนี้
+        $health->beat(GpuxMineHealthService::TASK_SETTLE);
+
         $clearing = $settlement->clearMatured();
 
         $owners = 0;

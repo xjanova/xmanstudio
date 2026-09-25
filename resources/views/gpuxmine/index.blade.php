@@ -2,14 +2,16 @@
 
 @section('title', 'เครื่องของฉัน · GPUxMINE')
 @section('page-title')<x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" />@endsection
-@section('page-description')<x-bi th="แชร์การ์ดจอที่บ้านให้รับงาน AI แล้วได้ค่าตอบแทนเข้ากระเป๋า" en="Share your home GPU, take AI jobs, get paid into your wallet" />@endsection
+@section('page-description')<x-bi th="แชร์การ์ดจอที่บ้านให้รับงาน AI แล้วได้ค่าตอบแทนเข้ากระเป๋า XMAN" en="Share your home GPU, take AI jobs, earn into your XMAN wallet" />@endsection
 
 @section('content')
 @php
     // นับจากชุดเดียวกับที่แสดงข้างล่าง เพื่อให้เลขบนหัวกับรายการตรงกันเสมอ
     $pairedNodes = $nodes->whereNotNull('paired_at');
     $onlineCount = $pairedNodes->where('online', true)->count();
-    $readyCount = $pairedNodes->where('online', true)->where('dispatch_status', 'eligible')->count();
+    // เครื่องที่ถูกระงับไม่ได้งานแม้ aixman จะเคยตอบว่ามีสิทธิ์
+    $readyCount = $pairedNodes->filter(fn ($n) => $n->online && $n->dispatch_status === 'eligible' && ! $n->isSuspended())->count();
+    $pairingBlocked = ! $relayReady || $ban !== null;
     // รหัสที่ยังไม่หมดอายุ — ต้องเห็นได้แม้กดรีเฟรชแล้ว flash หายไป
     $liveCode = session('pairing_code') ?? $pending?->pairing_code;
     $liveCodeExpiresAt = session('pairing_code') && $pending === null ? null : $pending?->pairing_expires_at;
@@ -59,9 +61,10 @@
                         </div>
                     </div>
 
+                    {{-- สัญญาเท่าที่ทำจริง (D3): เงินพักไว้ก่อน แล้วเข้ากระเป๋า XMAN — ยังไม่มีการถอนเป็นเงินสด --}}
                     <p class="mt-4 text-slate-300 text-sm sm:text-base max-w-xl">
-                        <x-bi th="เปิดโปรแกรมทิ้งไว้ ระบบจะส่งงาน AI มาให้การ์ดจอของคุณทำตามที่เครื่องไหว แล้วโอนค่าตอบแทนเข้ากระเป๋าเงินอัตโนมัติ"
-                              en="Leave the client running. We send AI jobs your card can handle and pay you straight into your wallet." />
+                        <x-bi :th="'เปิดโปรแกรมทิ้งไว้ ระบบจะส่งงาน AI มาให้การ์ดจอของคุณทำตามที่เครื่องไหว ค่าตอบแทนของแต่ละงานพักไว้ ' . $holdHours . ' ชั่วโมงเพื่อตรวจสอบ แล้วเข้ากระเป๋าเงิน XMAN ของคุณ'"
+                              :en="'Leave the client running. We send AI jobs your card can handle. Earnings for each job are held for ' . $holdHours . ' hours for checks, then land in your XMAN wallet.'" />
                     </p>
 
                     {{-- ป้ายสถานะสด --}}
@@ -97,8 +100,8 @@
                             <button type="submit"
                                     {{-- ต้องรวมเงื่อนไข relay เข้าไปใน x-bind ด้วย: x-bind:disabled ที่ได้ค่า false
                                          จะ "ถอด" attribute disabled ที่ Blade ใส่ไว้ทิ้ง ปุ่มจะกดได้ทั้งที่ระบบไม่พร้อม --}}
-                                    x-bind:disabled="sending || @js(! $relayReady)"
-                                    @disabled(! $relayReady)
+                                    x-bind:disabled="sending || @js($pairingBlocked)"
+                                    @disabled($pairingBlocked)
                                     class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 text-sm font-bold shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -118,12 +121,22 @@
                 </div>
             </div>
 
-            @unless ($relayReady)
+            @if ($ban)
+                <div class="relative mt-6 text-sm text-red-100 bg-red-500/20 border border-red-400/40 rounded-xl px-4 py-3">
+                    <p class="font-semibold">
+                        <x-bi th="บัญชีนี้ถูกผู้ดูแลระงับการแชร์เครื่อง — ขอรหัสจับคู่ใหม่ไม่ได้" en="This account has been barred from sharing machines — new pairing codes are disabled." />
+                    </p>
+                    @if ($ban->banned_reason)
+                        <p class="mt-1 text-red-100/90"><x-bi th="เหตุผล" en="Reason" />: {{ $ban->banned_reason }}</p>
+                    @endif
+                    <p class="mt-1 text-xs text-red-100/80"><x-bi th="ถ้าคิดว่าเป็นความผิดพลาด ติดต่อผู้ดูแลระบบ" en="If you believe this is a mistake, contact support." /></p>
+                </div>
+            @elseif (! $relayReady)
                 <p class="relative mt-6 text-sm text-amber-200 bg-amber-500/15 border border-amber-400/30 rounded-xl px-4 py-3">
                     <x-bi th="ระบบรับเครื่องยังไม่พร้อมใช้งาน — ผู้ดูแลยังไม่ได้ตั้งค่า relay"
                           en="Machine intake is not ready yet — the relay has not been configured by an admin." />
                 </p>
-            @endunless
+            @endif
         </div>
     </div>
 
@@ -196,9 +209,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <h3 class="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1"><x-bi th="รอเข้ากระเป๋า" en="Pending" /></h3>
+                <h3 class="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1"><x-bi th="รอเข้ากระเป๋า" en="Not yet in wallet" /></h3>
                 <p class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">฿{{ number_format($pendingSatang / 100, 2) }}</p>
-                <p class="mt-2 text-xs text-gray-400"><x-bi th="โอนเป็นรอบ" en="Paid out in batches" /></p>
+                {{-- แยกให้เห็นว่าติดอยู่ขั้นไหน — แต่ละขั้นรอคนละอย่าง --}}
+                <dl class="mt-2 space-y-0.5 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                    <div class="flex justify-between gap-2"><dt><x-bi th="อยู่ในระยะพัก" en="On hold" /></dt><dd>฿{{ number_format(($unpaidSatang['pending'] ?? 0) / 100, 2) }}</dd></div>
+                    @if (($unpaidSatang['review'] ?? 0) !== 0)
+                        <div class="flex justify-between gap-2 text-orange-600 dark:text-orange-300"><dt><x-bi th="รอตรวจสอบ" en="Under review" /></dt><dd>฿{{ number_format($unpaidSatang['review'] / 100, 2) }}</dd></div>
+                    @endif
+                    <div class="flex justify-between gap-2"><dt><x-bi th="รอโอนรอบถัดไป" en="Next transfer" /></dt><dd>฿{{ number_format(($unpaidSatang['cleared'] ?? 0) / 100, 2) }}</dd></div>
+                </dl>
             </div>
         </div>
 
@@ -231,6 +251,34 @@
                 <p class="mt-2 text-xs text-gray-400">{{ $onlineCount }} <x-bi th="ออนไลน์อยู่" en="online now" /></p>
             </div>
         </div>
+    </div>
+
+    {{-- ══════════ เงินไปไหน ══════════
+         บอกตามที่ระบบทำจริง (D3): พัก → ตรวจ → เข้ากระเป๋า XMAN เป็นรอบ
+         ยังไม่มีระบบถอนเป็นเงินสด ห้ามสัญญาว่ามี --}}
+    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg px-5 sm:px-6 py-4 animate-fade-in">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6">
+            <h2 class="text-sm font-semibold text-gray-900 dark:text-white shrink-0"><x-bi th="เงินเดินทางอย่างไร" en="How earnings move" /></h2>
+            <ol class="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+                <li class="inline-flex items-center gap-1.5">
+                    <span class="px-2 py-0.5 rounded-full border bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30"><x-bi th="อยู่ในระยะพัก" en="On hold" /></span>
+                    <span><x-bi :th="$holdHours . ' ชม. หลังงานเสร็จ'" :en="$holdHours . ' h after the job'" /></span>
+                </li>
+                <li aria-hidden="true" class="text-gray-300 dark:text-gray-600">→</li>
+                <li class="inline-flex items-center gap-1.5">
+                    <span class="px-2 py-0.5 rounded-full border bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-500/30"><x-bi th="รอโอนเข้ากระเป๋า" en="Cleared" /></span>
+                    <span><x-bi th="โอนทุกชั่วโมง" en="transferred hourly" /></span>
+                </li>
+                <li aria-hidden="true" class="text-gray-300 dark:text-gray-600">→</li>
+                <li>
+                    <span class="px-2 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30"><x-bi th="เข้ากระเป๋าแล้ว" en="Paid" /></span>
+                </li>
+            </ol>
+        </div>
+        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            <x-bi th="งานที่ผลดูผิดปกติจะขึ้นว่า “รอตรวจสอบ” จนกว่าผู้ดูแลจะตัดสิน และเครื่องที่ถูกระงับจะพักเงินไว้จนกว่าจะยกเลิกการระงับ · เงินในกระเป๋า XMAN ใช้ซื้อสินค้าและบริการในเว็บนี้ได้ ตอนนี้ยังไม่มีการถอนเป็นเงินสด"
+                  en="Jobs that look unusual show “Under review” until an admin decides, and a suspended machine's earnings wait until the suspension is lifted. XMAN wallet money can be spent on this site; cash withdrawal is not available yet." />
+        </p>
     </div>
 
     {{-- ══════════ วิธีเริ่มใช้งาน ══════════
@@ -287,8 +335,16 @@
 
         @forelse ($pairedNodes as $node)
             @php
-                $isReady = $node->online && $node->dispatch_status === 'eligible';
-                $accent = $isReady ? 'from-emerald-400 to-green-600' : ($node->online ? 'from-amber-400 to-orange-600' : 'from-slate-400 to-slate-600');
+                $suspended = $node->isSuspended();
+                $isReady = ! $suspended && $node->online && $node->dispatch_status === 'eligible';
+                $accent = match (true) {
+                    $suspended => 'from-red-400 to-rose-600',
+                    $isReady => 'from-emerald-400 to-green-600',
+                    (bool) $node->online => 'from-amber-400 to-orange-600',
+                    default => 'from-slate-400 to-slate-600',
+                };
+                $workerLabel = $node->dispatchWorkerStatusLabel();
+                $dispatchLabel = $node->dispatchStatusLabel();
             @endphp
             <div class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in">
                 {{-- แถบสีบอกสถานะที่ขอบซ้าย เห็นได้จากหางตาเวลามีหลายเครื่อง --}}
@@ -343,6 +399,7 @@
                                         $names = [
                                             'image' => ['th' => 'สร้างภาพ', 'en' => 'Images'],
                                             'video' => ['th' => 'สร้างวิดีโอ', 'en' => 'Video'],
+                                            'audio' => ['th' => 'สร้างเสียง/เพลง', 'en' => 'Audio'],
                                             'upscale' => ['th' => 'ขยายภาพ', 'en' => 'Upscale'],
                                             'embed' => ['th' => 'ประมวลผลข้อความ', 'en' => 'Text embeddings'],
                                         ];
@@ -367,10 +424,32 @@
                                 </div>
                             @endif
 
-                            @if ($node->dispatch_note && $node->dispatch_status !== 'eligible')
-                                <p class="mt-4 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
-                                    {{ $node->dispatch_note }}
-                                </p>
+                            @if ($suspended)
+                                {{-- เจ้าของต้องรู้ว่าทำไมไม่ได้งาน และเงินที่ค้างอยู่เป็นอย่างไร --}}
+                                <div class="mt-4 text-xs text-red-800 dark:text-red-200 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2 space-y-1">
+                                    <p class="font-semibold"><x-bi th="ผู้ดูแลระงับเครื่องนี้ไว้" en="An admin has suspended this machine" /></p>
+                                    @if ($node->suspended_reason)
+                                        <p><x-bi th="เหตุผล" en="Reason" />: {{ $node->suspended_reason }}</p>
+                                    @endif
+                                    <p><x-bi th="ระหว่างนี้ไม่มีงานส่งมา และรายได้ที่ยังไม่เข้ากระเป๋าของเครื่องนี้ถูกพักไว้จนกว่าจะยกเลิกการระงับ — ติดต่อผู้ดูแลระบบ"
+                                             en="No jobs are sent meanwhile, and this machine's earnings that have not reached the wallet are held until the suspension is lifted. Contact support." /></p>
+                                </div>
+                            @elseif ($dispatchLabel)
+                                {{-- สิ่งที่ระบบส่งงาน (aixman) เห็น — ต่างจากที่โปรแกรมบอกได้ เช่นเครื่องเปิดอยู่แต่ถูกนำออกจากคิว --}}
+                                <div class="mt-4 rounded-lg border px-3 py-2 text-xs space-y-1 {{ $node->dispatch_status === 'eligible' && ! $node->dispatch_last_error
+                                    ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 text-gray-600 dark:text-gray-300'
+                                    : 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200' }}">
+                                    <p>
+                                        <span class="font-medium"><x-bi th="ระบบส่งงาน" en="Dispatch" />:</span>
+                                        {{ $dispatchLabel }}@if ($workerLabel) · {{ $workerLabel }}@endif
+                                    </p>
+                                    @if ($node->dispatch_note && $node->dispatch_status !== 'eligible')
+                                        <p>{{ $node->dispatch_note }}</p>
+                                    @endif
+                                    @if ($node->dispatch_last_error)
+                                        <p><span class="font-medium"><x-bi th="ปัญหาล่าสุดที่ระบบส่งงานพบ" en="Last problem seen by dispatch" />:</span> {{ \Illuminate\Support\Str::limit($node->dispatch_last_error, 200) }}</p>
+                                    @endif
+                                </div>
                             @endif
                         </div>
 
@@ -385,7 +464,8 @@
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('gpuxmine.forget', $node->id) }}"
-                                  onsubmit="return confirm(@js('ถอนเครื่อง ' . $node->displayName() . ' ออกจากระบบ? จะไม่มีงานส่งมาที่เครื่องนี้อีก (ยอดที่ค้างจ่ายยังอยู่)'));">
+                                  onsubmit="return window.confirm(@js('ถอนเครื่อง ' . $node->displayName() . ' ออกจากระบบ? จะไม่มีงานส่งมาที่เครื่องนี้อีก (ยอดที่ค้างจ่ายยังอยู่)'
+                                      . ($suspended ? ' — เครื่องนี้ถูกระงับอยู่ ถอนแล้วจะจับคู่ใหม่ไม่ได้จนกว่าผู้ดูแลจะยกเลิกการระงับ' : '')));">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="w-full px-3 py-2 text-sm rounded-lg border border-red-200 text-red-700 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10 transition">
@@ -445,8 +525,8 @@
                     </div>
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-200"><x-bi th="ยังไม่มีงานที่จ่ายเงิน" en="No paid jobs yet" /></p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 max-w-lg mx-auto leading-relaxed">
-                        <x-bi th="เครื่องจะเริ่มได้รับงานเมื่อผ่านการประเมิน และมีโมเดลในระบบที่การ์ดของคุณรับไหว — รายการงานแต่ละชิ้นพร้อมยอดเงินจะขึ้นที่นี่ทันทีที่ทำเสร็จ"
-                              en="Jobs start arriving once a machine passes assessment and there is a model your card can handle. Each job and its payout appears here the moment it finishes." />
+                        <x-bi :th="'เครื่องจะเริ่มได้รับงานเมื่อผ่านการประเมิน และมีโมเดลในระบบที่การ์ดของคุณรับไหว — งานแต่ละชิ้นพร้อมยอดเงินขึ้นที่นี่เมื่อทำเสร็จ แล้วเข้ากระเป๋า XMAN เมื่อพ้นระยะพัก ' . $holdHours . ' ชั่วโมง'"
+                              :en="'Jobs start arriving once a machine passes assessment and there is a model your card can handle. Each job and its earnings appear here when it finishes, and reach your XMAN wallet after the ' . $holdHours . '-hour hold.'" />
                     </p>
                 </div>
             @else
@@ -459,6 +539,10 @@
                                 <th class="py-2.5 pr-3 font-medium"><x-bi th="เครื่อง" en="Machine" /></th>
                                 <th class="py-2.5 pr-3 font-medium text-right"><x-bi th="ใช้เวลา" en="Took" /></th>
                                 <th class="py-2.5 pr-3 font-medium text-right"><x-bi th="ได้รับ" en="Earned" /></th>
+                                {{-- แชร์ฟรี: เครื่องได้ 0 แต่เห็นว่างานนั้นมีค่าเท่าไร (D6) --}}
+                                <th class="py-2.5 pr-3 font-medium text-right"><x-bi th="แชร์ฟรี (มูลค่า)" en="Donated value" /></th>
+                                {{-- ส่วนแบ่งผู้แนะนำที่หักออกไปแล้ว — "ได้รับ" คือยอดหลังหัก (D8) --}}
+                                <th class="py-2.5 pr-3 font-medium text-right"><x-bi th="หักผู้แนะนำ" en="Referral share" /></th>
                                 <th class="py-2.5 font-medium"><x-bi th="สถานะ" en="Status" /></th>
                             </tr>
                         </thead>
@@ -466,7 +550,7 @@
                             @foreach ($earnings as $row)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
                                     <td class="py-2.5 pr-3 text-gray-600 dark:text-gray-300 whitespace-nowrap tabular-nums">
-                                        {{ optional($row->completed_at)->format('d/m/y H:i') ?? '—' }}
+                                        {{ $row->completed_at?->copy()->timezone('Asia/Bangkok')->format('d/m/y H:i') ?? '—' }}
                                     </td>
                                     <td class="py-2.5 pr-3 text-gray-900 dark:text-white">
                                         {{ $row->kindLabel() }}
@@ -480,18 +564,32 @@
                                     <td class="py-2.5 pr-3 text-right text-gray-600 dark:text-gray-300 whitespace-nowrap tabular-nums">
                                         {{ $row->seconds > 0 ? $row->seconds . ' s' : '—' }}
                                     </td>
-                                    <td class="py-2.5 pr-3 text-right font-semibold text-gray-900 dark:text-white whitespace-nowrap tabular-nums">
+                                    <td class="py-2.5 pr-3 text-right font-semibold whitespace-nowrap tabular-nums {{ $row->status === 'void' ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-white' }}">
                                         ฿{{ number_format($row->amountBaht(), 2) }}
                                     </td>
+                                    <td class="py-2.5 pr-3 text-right text-gray-600 dark:text-gray-300 whitespace-nowrap tabular-nums">
+                                        @if ($row->donated_value_satang > 0)
+                                            ฿{{ number_format($row->donated_value_satang / 100, 2) }}
+                                        @else
+                                            <span class="text-gray-300 dark:text-gray-600">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-2.5 pr-3 text-right text-gray-600 dark:text-gray-300 whitespace-nowrap tabular-nums">
+                                        @if ($row->referral_satang > 0)
+                                            −฿{{ number_format($row->referral_satang / 100, 2) }}
+                                        @else
+                                            <span class="text-gray-300 dark:text-gray-600">—</span>
+                                        @endif
+                                    </td>
                                     <td class="py-2.5">
-                                        <span class="text-xs px-2 py-0.5 rounded-full border
-                                            {{ $row->status === 'paid'
-                                                ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30'
-                                                : ($row->status === 'void'
-                                                    ? 'bg-gray-100 text-gray-500 border-gray-200'
-                                                    : 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30') }}">
-                                            {{ $row->statusLabel() }}
-                                        </span>
+                                        @include('gpuxmine.partials.earning-status', ['earning' => $row])
+                                        @if ($row->status === 'pending' && ($ends = $row->holdEndsAt($holdHours)))
+                                            <span class="block mt-0.5 text-[11px] text-gray-400 whitespace-nowrap">
+                                                <x-bi th="พ้นระยะพัก" en="Clears" /> {{ $ends->copy()->timezone('Asia/Bangkok')->format('d/m H:i') }}
+                                            </span>
+                                        @elseif ($row->status === 'void' && $row->void_reason)
+                                            <span class="block mt-0.5 text-[11px] text-gray-400 max-w-[14rem]">{{ $row->void_reason }}</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

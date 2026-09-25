@@ -384,8 +384,9 @@ class GpuxMineEarningSettlementService
      * ตัดแถวของเครื่องที่แอดมินระงับไว้ (รวมเครื่องที่ถอนไปแล้ว — soft delete ไม่ปลดการระงับ)
      *
      * จับทั้ง gpu_node_id และ worker_id: aixman อาจเขียนแถวโดยไม่มี gpu_node_id
+     * gpuxmine:doctor ใช้ตัวเดียวกันนับเงินที่ค้าง — เงินของเครื่องที่ถูกระงับค้างโดยตั้งใจ
      */
-    private function notFrozen(Builder $query): Builder
+    public function notFrozen(Builder $query): Builder
     {
         return $query->whereNotExists(function (QueryBuilder $q) {
             $q->selectRaw('1')

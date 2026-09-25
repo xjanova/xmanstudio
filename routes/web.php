@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
 use App\Http\Controllers\Admin\DomainSettingController;
 use App\Http\Controllers\Admin\DonationController;
 use App\Http\Controllers\Admin\EmailSettingController;
+use App\Http\Controllers\Admin\GpuxMineController;
 use App\Http\Controllers\Admin\GuideScreenshotController;
 use App\Http\Controllers\Admin\LicenseAnalyticsController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
@@ -1671,4 +1672,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/kyc/{id}', [App\Http\Controllers\Admin\KycController::class, 'show'])->whereNumber('id')->name('kyc.show');
     Route::post('/kyc/{id}/approve', [App\Http\Controllers\Admin\KycController::class, 'approve'])->whereNumber('id')->name('kyc.approve');
     Route::post('/kyc/{id}/reject', [App\Http\Controllers\Admin\KycController::class, 'reject'])->whereNumber('id')->name('kyc.reject');
+
+    // GPUxMINE — ทุกเครื่องในเครือข่าย (รวมที่ถอนแล้ว) และรายได้ที่ต้องมีคนตัดสิน
+    // ระงับ/แบนเปลี่ยนสิ่งที่ aixman ส่งงานให้ และยกเลิกรายได้คือไม่จ่ายเงินของคนอื่น
+    // จึงเป็น POST ที่มี CSRF และหน้าเว็บถามยืนยันก่อนทุกครั้ง
+    Route::prefix('gpuxmine')->name('gpuxmine.')->group(function () {
+        Route::get('/', [GpuxMineController::class, 'index'])->name('index');
+        Route::get('/earnings', [GpuxMineController::class, 'earnings'])->name('earnings');
+        Route::post('/earnings/{id}/approve', [GpuxMineController::class, 'approveEarning'])
+            ->whereNumber('id')->name('earnings.approve');
+        Route::post('/earnings/{id}/void', [GpuxMineController::class, 'voidEarning'])
+            ->whereNumber('id')->name('earnings.void');
+        Route::get('/nodes/{id}', [GpuxMineController::class, 'show'])->whereNumber('id')->name('show');
+        Route::post('/nodes/{id}/suspend', [GpuxMineController::class, 'suspend'])->whereNumber('id')->name('suspend');
+        Route::post('/nodes/{id}/resume', [GpuxMineController::class, 'resume'])->whereNumber('id')->name('resume');
+        Route::post('/nodes/{id}/ban', [GpuxMineController::class, 'ban'])->whereNumber('id')->name('ban');
+        Route::post('/nodes/{id}/unban', [GpuxMineController::class, 'unban'])->whereNumber('id')->name('unban');
+        Route::post('/nodes/{id}/resync', [GpuxMineController::class, 'resync'])->whereNumber('id')->name('resync');
+    });
 });
