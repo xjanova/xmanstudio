@@ -163,6 +163,36 @@ class GpuxMineHealthService
         return $counts;
     }
 
+    /**
+     * เครื่องที่ยังใช้งานอยู่ แต่ปลายทางที่เก็บไว้ (ที่ aixman ยิงงาน) ไม่ตรงกับ GPUXMINE_RELAY_URL
+     *
+     * แถวที่จับคู่ตอน proxy หน้า relay ตั้งผิดเก็บ http:// หรือ URL ที่หลุดพอร์ตไว้ — aixman รุ่นใหม่
+     * ตอบ 400 กับ http ทุกครั้ง insecure คือส่วนที่ aixman ไม่รับ ตรวจค่าในแต่ละแถว ไม่ใช่แค่ค่าใน
+     * config (tunnelEndpoint() เป็นการคิดจาก config ล้วน ๆ ไม่ได้ยิงออกไปไหน)
+     *
+     * @return array{mismatched:int, insecure:int, examples:array<int, string>}
+     */
+    public function staleTunnelEndpoints(GpuxMineRelayService $relay): array
+    {
+        $result = ['mismatched' => 0, 'insecure' => 0, 'examples' => []];
+
+        foreach (GpuNode::paired()->whereNotNull('worker_id')->select(['id', 'worker_id', 'tunnel_endpoint'])->lazyById(500) as $node) {
+            if ($node->tunnel_endpoint === $relay->tunnelEndpoint($node->worker_id)) {
+                continue;
+            }
+
+            $result['mismatched']++;
+            if (! GpuxMineRelayService::acceptableEndpoint($node->tunnel_endpoint)) {
+                $result['insecure']++;
+            }
+            if (count($result['examples']) < 3) {
+                $result['examples'][] = $node->worker_id . ' → ' . ($node->tunnel_endpoint ?: '(ว่าง)');
+            }
+        }
+
+        return $result;
+    }
+
     /** เครื่องที่ยังใช้งานอยู่แต่ส่งให้ aixman ครั้งล่าสุดไม่สำเร็จ */
     public function dispatchErrors(): int
     {

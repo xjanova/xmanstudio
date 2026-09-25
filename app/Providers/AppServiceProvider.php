@@ -11,6 +11,7 @@ use App\Models\PaymentSetting;
 use App\Observers\AiCreditOrderObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -175,6 +176,26 @@ class AppServiceProvider extends ServiceProvider
                         'code' => 'RATE_LIMIT_EXCEEDED',
                     ], 429);
                 });
+        });
+
+        // /api/v1/product/gpuxmine/status — โปรแกรม GPUxMINE ถามทุกสามนาที (เร็วสุดทุกสิบห้าวินาที
+        // เมื่อเจ้าของกดรีเฟรช/START/จับคู่) route นี้ไม่มีผู้ใช้ที่ล็อกอิน throttle:30,1 เดิมจึงนับ
+        // ต่อ IP: ร้านหรือเจ้าของที่มีสิบเครื่องหลังเราเตอร์เดียว หรือ CGNAT ของ ISP ไทย ชน 429 พร้อมกัน
+        // แล้วโปรแกรมถอยไปถึงสามสิบนาที ตอนนี้นับต่อเครื่อง (worker_id คู่กับ IP — คนอื่นที่รู้
+        // worker_id จึงเผาโควตาของเครื่องจริงจากที่อื่นไม่ได้) และมีเพดานรวมต่อ IP กันการไล่ยิง
+        RateLimiter::for('gpuxmine-status', function (Request $request) {
+            $worker = $request->input('worker_id');
+            $worker = is_string($worker) ? mb_substr($worker, 0, 64) : '';
+            $tooMany = fn (Request $request, array $headers) => response()->json([
+                'success' => false,
+                'message' => 'ถามสถานะเครื่องถี่เกินไป — รอสักครู่แล้วลองใหม่',
+                'code' => 'RATE_LIMIT_EXCEEDED',
+            ], 429, $headers);
+
+            return [
+                Limit::perMinute(10)->by('gxm-status:' . $worker . '|' . $request->ip())->response($tooMany),
+                Limit::perMinute(600)->by('gxm-status-ip:' . $request->ip())->response($tooMany),
+            ];
         });
 
         RateLimiter::for('comment-moderation', function ($request) {

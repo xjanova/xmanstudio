@@ -234,6 +234,44 @@ class GpuxMineDoctorTest extends TestCase
         $this->assertSame(1, $strict);
     }
 
+    public function test_a_stored_http_endpoint_fails_before_aixman_starts_refusing_it(): void
+    {
+        // doctor เคยตรวจแค่ URL ใน config — ค่าที่เก็บในแต่ละแถวคือสิ่งที่ถูกส่งให้ aixman จริง
+        $node = GpuNode::factory()->paired()->create();
+        $node->forceFill(['tunnel_endpoint' => 'http://relay.example.test/w/' . $node->worker_id])->save();
+
+        [$code, $out] = $this->doctor();
+
+        $this->assertSame(1, $code, $out);
+        $this->assertStringContainsString('ปลายทางอุโมงค์', $out);
+        $this->assertStringContainsString('1 เครื่องไม่ใช่ https', $out);
+        $this->assertStringContainsString($node->worker_id . ' → http://relay.example.test/w/', $out);
+    }
+
+    public function test_an_https_endpoint_that_differs_from_the_relay_url_only_warns(): void
+    {
+        $node = GpuNode::factory()->paired()->create();
+        $node->forceFill(['tunnel_endpoint' => 'https://relay.example.test/w/' . $node->worker_id])->save();
+
+        [$code, $out] = $this->doctor();
+        $this->assertSame(0, $code, $out);
+        $this->assertStringContainsString('ไม่ตรงกับ GPUXMINE_RELAY_URL', $out);
+
+        [$strict] = $this->doctor(['--strict' => true]);
+        $this->assertSame(1, $strict);
+    }
+
+    public function test_the_doctor_says_where_a_referral_share_nobody_can_take_goes(): void
+    {
+        [, $out] = $this->doctor();
+        $this->assertStringContainsString('ส่วนแบ่งผู้แนะนำที่ไม่มีผู้รับ: คืนเจ้าของเครื่อง', $out);
+        $this->assertStringContainsString('ทุกเครื่องเก็บปลายทาง', $out);
+
+        config(['services.gpuxmine.unpaid_referral' => 'platform']);
+        [, $out] = $this->doctor();
+        $this->assertStringContainsString('แพลตฟอร์มเก็บ (GPUXMINE_UNPAID_REFERRAL=platform)', $out);
+    }
+
     public function test_both_gpuxmine_tasks_are_scheduled_as_the_doctor_expects(): void
     {
         $events = collect($this->app->make(Schedule::class)->events());

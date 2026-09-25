@@ -44,6 +44,10 @@ class GpuxMineDispatchService
      */
     private const VOLATILE_FIELDS = ['busy', 'score'];
 
+    public function __construct(
+        private readonly GpuxMineRelayService $relay,
+    ) {}
+
     public function isConfigured(): bool
     {
         return (bool) config('services.aixman.api_base')
@@ -64,7 +68,7 @@ class GpuxMineDispatchService
 
         return [
             'workerId' => $node->worker_id,
-            'endpoint' => $node->tunnel_endpoint,
+            'endpoint' => $this->endpoint($node),
             // กุญแจที่ aixman ต้องใช้เปิด /w/ — ใบแยกของ aixman ถ้า relay ออกให้
             'token' => $node->dispatchToken(),
             'label' => $node->displayName(),
@@ -94,6 +98,30 @@ class GpuxMineDispatchService
             // แอดมินระงับ — aixman ต้องหยุดส่งงาน แต่ถอยกลับได้ ต่างจากการถอน
             'suspended' => $suspended,
         ];
+    }
+
+    /**
+     * ปลายทางที่ส่งให้ aixman — ค่าที่เก็บไว้ ยกเว้นเมื่อ aixman ไม่รับมัน (http ไปเครื่องอื่น
+     * หรือว่าง) และคิดจาก GPUXMINE_RELAY_URL ได้ค่าที่รับ
+     *
+     * aixman รุ่นใหม่ตอบ 400 กับปลายทางที่ไม่ใช่ https ทุกครั้ง แถวที่จับคู่ตอน proxy หน้า relay
+     * ตั้งผิดเก็บ http ไว้ ถ้าส่งตามที่เก็บ ทุกการส่ง (รวมการระงับที่แอดมินเพิ่งกด) ตกหมดจนกว่า
+     * gpuxmine:sync-nodes จะเขียนแถวให้ตรง (GpuxMineNodeStateService::apply) ค่าที่ส่งตรงนี้
+     * เท่ากับที่ apply() จะเขียน ลายนิ้วมือจึงไม่ขยับซ้ำเมื่อแถวถูกแก้ตามมา
+     */
+    private function endpoint(GpuNode $node): ?string
+    {
+        $stored = $node->tunnel_endpoint;
+
+        if ($node->worker_id === null
+            || GpuxMineRelayService::acceptableEndpoint($stored)
+            || ! $this->relay->isConfigured()) {
+            return $stored;
+        }
+
+        $configured = $this->relay->tunnelEndpoint($node->worker_id);
+
+        return GpuxMineRelayService::acceptableEndpoint($configured) ? $configured : $stored;
     }
 
     /**

@@ -383,6 +383,51 @@ class GpuxMineRelayService
         return rtrim((string) config('services.gpuxmine.relay_url'), '/') . '/w/' . $workerId;
     }
 
+    /**
+     * ปลายทางที่จะเก็บให้ worker ที่ relay เพิ่งออก — คิดจาก GPUXMINE_RELAY_URL ไม่ใช่จาก
+     * aixmanEndpoint ที่ relay ตอบมา
+     *
+     * relay สร้าง aixmanEndpoint จาก scheme และ host ของคำขอที่มันเห็น ซึ่งอยู่หลัง nginx:
+     * ตอนติดตั้งครั้งแรก proxy ตั้งผิด แถวที่จับคู่ช่วงนั้นได้ http:// หรือ URL ที่หลุด :8443
+     * aixman รุ่นใหม่ตอบ 400 กับปลายทางที่ไม่ใช่ https ทุกครั้ง เครื่องนั้นไม่ได้งานเลย
+     * ค่าที่ตั้งไว้เป็นของจริงของการติดตั้ง — ใช้ค่าที่ relay ตอบเฉพาะเมื่อค่าที่ตั้งไว้เองใช้ไม่ได้
+     */
+    public function endpointFor(string $workerId, ?string $reported = null): string
+    {
+        $configured = $this->tunnelEndpoint($workerId);
+
+        return ! self::acceptableEndpoint($configured) && self::acceptableEndpoint($reported)
+            ? (string) $reported
+            : $configured;
+    }
+
+    /**
+     * aixman รับปลายทางนี้ไหม — กติกาเดียวกับ endpointProblem() ของ aixman
+     * (src/lib/gpu/community-push.ts): https เท่านั้น ยกเว้น http ไปเครื่องตัวเองตอนพัฒนา
+     * กุญแจของ aixman วิ่งไปกับทุกคำขอ ผ่าน http คือทุกคนระหว่างทางอ่านได้
+     */
+    public static function acceptableEndpoint(?string $url): bool
+    {
+        if ($url === null || $url === '') {
+            return false;
+        }
+
+        $parts = parse_url($url);
+        if (! is_array($parts)) {
+            return false;
+        }
+
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = strtolower((string) ($parts['host'] ?? ''));
+
+        if ($host === '') {
+            return false;
+        }
+
+        return $scheme === 'https'
+            || ($scheme === 'http' && in_array($host, ['localhost', '127.0.0.1'], true));
+    }
+
     private function adminAction(string $workerId, string $action): bool
     {
         if (! $this->isConfigured()) {

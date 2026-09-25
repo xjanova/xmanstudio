@@ -430,6 +430,21 @@ admin at `/admin/gpuxmine/earnings`. It never prints a secret.
 
 **GPUxMINE deploy order — aixman first (required), then this app, then the relay token split.**
 
+0. Before deploying aixman, check the tunnel address every machine has on file. The new aixman
+   refuses (HTTP 400) any address that is not `https://`, and machines paired while the relay's
+   proxy was set up wrong stored `http://` or an address without `:8443`. Read only:
+
+   ```sql
+   SELECT id, worker_id, tunnel_endpoint FROM gpu_nodes
+    WHERE deleted_at IS NULL AND paired_at IS NOT NULL
+      AND tunnel_endpoint NOT LIKE 'https://relay.xman4289.com:8443/w/%';
+   ```
+
+   It should return no rows. Any it does return cannot be updated at aixman from the moment aixman
+   is deployed until this app is: this app sends them with the address built from
+   `GPUXMINE_RELAY_URL` and `gpuxmine:sync-nodes` rewrites the stored value within a minute of its
+   deploy. Keep the two deploys close together. `php artisan gpuxmine:doctor` reports the same rows
+   under "ปลายทางอุโมงค์" (fail when any is not https).
 1. Deploy aixman's `feat/sharing-complete` first. This app sends aixman its machines every
    ten minutes even when nothing changed, and whenever a machine's `accepting` flag flips — that
    is what brings back a machine aixman dropped. The aixman on `main` rewrites a machine that is
@@ -456,6 +471,12 @@ admin at `/admin/gpuxmine/earnings`. It never prints a secret.
    the relay answers, the old token no longer opens the tunnel, and only this command stores the
    new one and hands it to aixman in the same step. It skips machines rendering for a customer
    (`--include-busy` to override) and is safe to run again until nothing is left.
+
+A referral share nobody can take any more (the referrer's affiliate account was suspended or
+deleted between the job and the payout, or the referrer is the owner) goes back to the machine's
+owner in the same wallet entry as the job, by default. `GPUXMINE_UNPAID_REFERRAL=platform` keeps it
+instead. Either way the row records it (`referral_unpaid_satang`, `referral_unpaid_to`) and the
+admin pages show the total.
 
 ---
 

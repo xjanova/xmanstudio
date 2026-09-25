@@ -83,6 +83,11 @@ class GpuxMineNodeStateService
             ];
         }
 
+        $endpoint = $this->correctedEndpoint($node, $row);
+        if ($endpoint !== null) {
+            $fresh['tunnel_endpoint'] = $endpoint;
+        }
+
         $node->forceFill($fresh);
         if (! $node->isDirty()) {
             return false;
@@ -91,6 +96,37 @@ class GpuxMineNodeStateService
         $node->save();
 
         return true;
+    }
+
+    /**
+     * ปลายทางที่ aixman ยิงงาน (tunnel_endpoint) ที่ควรเป็น ถ้าค่าที่เก็บไว้ผิด — null = ถูกอยู่แล้ว
+     * หรือไม่ควรแตะ
+     *
+     * แถวที่จับคู่ช่วงที่ proxy หน้า relay ตั้งผิดเก็บ aixmanEndpoint เป็น http:// หรือไม่มี :8443
+     * (relay เดาจากคำขอที่มันเห็น) และเคยถูกแก้เฉพาะตอนเครื่องกลับมาจับคู่ซ้ำ aixman รุ่นใหม่
+     * ตอบ 400 กับ http ทุกครั้ง — เครื่องนั้นไม่ได้งานเลยทั้งที่ทุกอย่างดูปกติ ตรงนี้เขียนให้ตรงกับ
+     * GPUXMINE_RELAY_URL ทุกรอบ ลายนิ้วมือมี endpoint อยู่แล้ว needsPush() จึงส่งค่าใหม่ให้ aixman เอง
+     *
+     * เขียนทับเมื่อ relay ตัวที่ตั้งไว้รู้จัก worker นี้ (worker อยู่ที่นั่นจริง) หรือค่าที่เก็บไว้
+     * aixman ไม่รับอยู่แล้ว ไม่เขียนถ้าค่าที่ตั้งไว้เองก็ใช้ไม่ได้ (gpuxmine:doctor บอกเรื่องนั้น)
+     *
+     * @param  array<string, mixed>|null  $row
+     */
+    private function correctedEndpoint(GpuNode $node, ?array $row): ?string
+    {
+        if ($node->worker_id === null || ! $this->relay->isConfigured()) {
+            return null;
+        }
+
+        $expected = $this->relay->tunnelEndpoint($node->worker_id);
+
+        if ($node->tunnel_endpoint === $expected || ! GpuxMineRelayService::acceptableEndpoint($expected)) {
+            return null;
+        }
+
+        return $row !== null || ! GpuxMineRelayService::acceptableEndpoint($node->tunnel_endpoint)
+            ? $expected
+            : null;
     }
 
     /**

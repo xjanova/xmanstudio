@@ -105,7 +105,10 @@ class GpuxMineStatusApiTest extends TestCase
             'donated_value_satang' => 0,
             'status' => 'pending',
             'completed_at' => $todayJob->completed_at->toIso8601String(),
+            'updated_at' => $todayJob->updated_at->toIso8601String(),
         ], $jobs[0]);
+        // ห้าสิบงานล่าสุดแบบเดิม ไม่มี jobs_more — โปรแกรมรุ่นเก่าเห็นคำตอบรูปเดิม
+        $this->assertArrayNotHasKey('jobs_more', $response->json('data'));
         $this->assertNotContains(5000, array_column($jobs, 'amount_satang'));
         $this->assertNotContains(400, array_column($jobs, 'amount_satang'));
     }
@@ -176,10 +179,164 @@ class GpuxMineStatusApiTest extends TestCase
         $this->postJson(self::URL, [])->assertStatus(422)->assertJsonValidationErrors(['worker_id', 'token']);
     }
 
-    public function test_the_status_route_has_its_own_budget(): void
+    // ── งานที่เปลี่ยนตั้งแต่ครั้งก่อน (updated_after) ─────────────────────────
+
+    private function askChanges(GpuNode $node, ?string $after)
+    {
+        return $this->postJson(self::URL, [
+            'worker_id' => $node->worker_id,
+            'token' => $node->relay_token,
+            'updated_after' => $after,
+        ]);
+    }
+
+    public function test_a_fast_machine_sees_its_old_jobs_clear_pay_and_void_beyond_the_newest_fifty(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-25 10:00:00', 'UTC'));
+        $node = GpuNode::factory()->paired()->create();
+        $old = GpuJobEarning::factory()->forNode($node)->create(['prompt_id' => 'p-oldest', 'completed_at' => now()->subHours(30)]);
+        $voided = GpuJobEarning::factory()->forNode($node)->create(['prompt_id' => 'p-voided', 'completed_at' => now()->subHours(29)]);
+        foreach (range(1, 60) as $i) {
+            GpuJobEarning::factory()->forNode($node)->create(['completed_at' => now()->subMinutes($i)]);
+        }
+
+        $first = $this->askStatus($node)->assertOk()->json('data.jobs');
+        $this->assertCount(50, $first);
+        $this->assertNotContains('p-oldest', array_column($first, 'prompt_id'), 'the old way never showed it');
+        $cursor = max(array_column($first, 'updated_at'));
+
+        // ชั่วโมงถัดมา: งานเก่าพ้นระยะพักแล้วถูกโอน อีกงานถูกแอดมินยกเลิก
+        Carbon::setTestNow(now()->addHour());
+        GpuJobEarning::whereKey($old->id)->update(['status' => GpuJobEarning::STATUS_PAID, 'amount_satang' => 170]);
+        Carbon::setTestNow(now()->addSeconds(5));
+        GpuJobEarning::whereKey($voided->id)->update(['status' => GpuJobEarning::STATUS_VOID]);
+        Carbon::setTestNow(now()->addMinutes(3));
+
+        $response = $this->askChanges($node, $cursor)->assertOk();
+        $jobs = $response->json('data.jobs');
+
+        $this->assertSame(['p-oldest', 'p-voided'], array_column($jobs, 'prompt_id'), 'oldest change first');
+        $this->assertSame(['paid', 'void'], array_column($jobs, 'status'));
+        $this->assertSame(170, $jobs[0]['amount_satang']);
+        $this->assertFalse($response->json('data.jobs_more'));
+        // ยอดเงินของบัญชียังมาทุกครั้ง ไม่ขึ้นกับเคอร์เซอร์
+        $this->assertSame(170, $response->json('data.earnings.paid_satang'));
+
+        // ถามต่อจากค่ามากสุดที่เห็น: ไม่มีอะไรใหม่ = รายการว่าง ไม่ใช่ห้าสิบงานเดิม
+        $this->askChanges($node, max(array_column($jobs, 'updated_at')))
+            ->assertOk()
+            ->assertJsonPath('data.jobs', [])
+            ->assertJsonPath('data.jobs_more', false);
+    }
+
+    public function test_changes_from_the_last_two_minutes_wait_for_the_next_poll(): void
+    {
+        // แถวที่ทรานแซกชันอื่นคิดเวลาไว้ก่อนแต่ commit ทีหลัง หรือ aixman เขียนด้วยนาฬิกาที่ช้า
+        // ต้องไม่มีเวลาน้อยกว่าเคอร์เซอร์ที่โปรแกรมเพิ่งจำไป
+        Carbon::setTestNow(Carbon::parse('2026-09-25 10:00:00', 'UTC'));
+        $node = GpuNode::factory()->paired()->create();
+        $job = GpuJobEarning::factory()->forNode($node)->create();
+        $cursor = now()->subMinute()->toIso8601String();
+
+        Carbon::setTestNow(now()->addSeconds(30));
+        $this->askChanges($node, $cursor)->assertOk()->assertJsonPath('data.jobs', []);
+
+        Carbon::setTestNow(now()->addMinutes(2));
+        $this->askChanges($node, $cursor)->assertOk()->assertJsonPath('data.jobs.0.job_id', $job->job_id);
+    }
+
+    public function test_a_page_never_cuts_through_one_second_of_changes(): void
+    {
+        // ตัวปล่อยเงินเปลี่ยนสถานะทีละห้าร้อยแถวใน UPDATE เดียว — ทุกแถวได้ updated_at วินาทีเดียวกัน
+        // หน้าที่ตัดกลางวินาทีทำให้โปรแกรมที่ถามต่อ "หลังค่ามากสุดที่เห็น" ข้ามส่วนที่เหลือไปตลอด
+        Carbon::setTestNow(Carbon::parse('2026-09-25 10:00:00', 'UTC'));
+        $node = GpuNode::factory()->paired()->create();
+        $before = GpuJobEarning::factory()->forNode($node)->create();
+        $ids = GpuJobEarning::factory()->forNode($node)->count(230)->create()->modelKeys();
+        $cursor = now()->subSecond()->toIso8601String();
+
+        Carbon::setTestNow(now()->addHour());
+        GpuJobEarning::whereKey($ids)->update(['status' => GpuJobEarning::STATUS_CLEARED]);
+        Carbon::setTestNow(now()->addMinutes(3));
+
+        $response = $this->askChanges($node, $cursor)->assertOk();
+        $jobs = $response->json('data.jobs');
+
+        // หน้าแรก: แถวที่ยังไม่เปลี่ยน (วินาทีก่อน) + วินาทีที่ปล่อยเงินทั้งกลุ่ม ไม่ใช่แค่สองร้อยแถวแรก
+        $this->assertCount(231, $jobs);
+        $this->assertSame($before->job_id, $jobs[0]['job_id']);
+        $this->assertSame(230, count(array_filter($jobs, fn ($j) => $j['status'] === 'cleared')));
+        $this->assertTrue($response->json('data.jobs_more'));
+
+        $this->askChanges($node, max(array_column($jobs, 'updated_at')))
+            ->assertOk()
+            ->assertJsonPath('data.jobs', []);
+    }
+
+    public function test_changes_of_another_machine_or_owner_never_leak_through_the_cursor(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-25 10:00:00', 'UTC'));
+        $node = GpuNode::factory()->paired()->create();
+        $sibling = GpuNode::factory()->paired()->create(['user_id' => $node->user_id]);
+        GpuJobEarning::factory()->forNode($sibling)->create();
+        GpuJobEarning::factory()->create(['worker_id' => $node->worker_id]);   // เจ้าของอื่น worker_id ชนกัน
+        $cursor = now()->subMinute()->toIso8601String();
+        Carbon::setTestNow(now()->addMinutes(5));
+
+        $this->askChanges($node, $cursor)->assertOk()->assertJsonPath('data.jobs', []);
+    }
+
+    public function test_an_unreadable_updated_after_is_a_readable_422_and_a_stranger_still_gets_401(): void
+    {
+        $node = GpuNode::factory()->paired()->create();
+
+        $this->askChanges($node, 'yesterday-ish?')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['updated_after'])
+            ->assertJsonPath('errors.updated_after.0', 'updated_after ต้องเป็นวันเวลาแบบ ISO 8601 ที่ได้จาก updated_at ของงาน');
+
+        $this->postJson(self::URL, ['worker_id' => $node->worker_id, 'token' => 'wrong', 'updated_after' => 'nope'])
+            ->assertStatus(401);
+
+        // ค่าว่าง = ไม่ได้ส่ง ได้ห้าสิบงานล่าสุดแบบเดิม
+        $this->askChanges($node, '')->assertOk()->assertJsonMissingPath('data.jobs_more');
+    }
+
+    // ── โควตา ─────────────────────────────────────────────────────────
+
+    public function test_the_status_route_has_its_own_budget_per_machine_not_per_address(): void
     {
         $middleware = Route::getRoutes()->getByName('api.gpuxmine.status')->gatherMiddleware();
 
-        $this->assertContains('throttle:30,1,api-gpuxmine-status', $middleware);
+        $this->assertContains('throttle:gpuxmine-status', $middleware);
+        // throttle:api ของทั้งกลุ่มนับต่อ IP — ถ้ายังอยู่ ร้านที่มีหลายเครื่องก็ชน 429 เหมือนเดิม
+        $this->assertNotContains('throttle:api', $middleware);
+    }
+
+    public function test_many_machines_behind_one_router_each_keep_their_own_budget(): void
+    {
+        $nodes = GpuNode::factory()->paired()->count(16)->create();
+
+        // สิบหกเครื่องหลัง IP เดียว ถามสี่รอบในนาทีเดียว (ทุกสิบห้าวินาที) = 64 ครั้ง — เกินทั้ง
+        // throttle:30,1 ต่อ IP เดิม และ throttle:api 60 ต่อนาทีต่อ IP ของทั้งกลุ่ม เคยโดน 429 ทั้งร้าน
+        foreach (range(1, 4) as $round) {
+            foreach ($nodes as $node) {
+                $this->askStatus($node)->assertOk();
+            }
+        }
+
+        // แต่เครื่องเดียวที่ถามรัวเกินสิบครั้งต่อนาทีถูกเบรก ด้วยข้อความที่อ่านออก
+        $noisy = $nodes->first();
+        foreach (range(5, 10) as $i) {
+            $this->askStatus($noisy)->assertOk();
+        }
+        $this->askStatus($noisy)
+            ->assertStatus(429)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'RATE_LIMIT_EXCEEDED')
+            ->assertHeader('Retry-After');
+
+        // เครื่องอื่นในร้านยังถามได้
+        $this->askStatus($nodes->last())->assertOk();
     }
 }

@@ -240,8 +240,12 @@ Route::post('v1/product/gpuxmine/referral', [GpuxMineNodeController::class, 'ref
 
 // สถานะเครื่องที่ aixman เห็น และรายได้ของเจ้าของ ให้โปรแกรมแสดงเองได้ (C6)
 // ยืนยันตัวแบบเดียวกับ referral — โปรแกรมถามทุกสามนาทีระหว่างเปิดแชร์
+// โควตาต่อเครื่อง ไม่ใช่ต่อ IP (หลายเครื่องหลัง NAT เดียวกัน) — ดู AppServiceProvider
+// ถอด throttle:api (60 ต่อนาทีต่อ IP ของทั้งกลุ่ม api) ออกด้วย ไม่งั้นมันกลับมาเป็นเพดานต่อ IP
+// ที่ต่ำกว่าเดิม — gpuxmine-status มีเพดานต่อ IP ของตัวเองอยู่แล้ว
 Route::post('v1/product/gpuxmine/status', [GpuxMineNodeController::class, 'status'])
-    ->middleware(['throttle:30,1,api-gpuxmine-status'])
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:gpuxmine-status'])
     ->name('api.gpuxmine.status');
 
 Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1,api-product'])->group(function () {

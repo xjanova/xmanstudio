@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\GpuJobEarning;
 use App\Services\GpuxMineDispatchService;
 use App\Services\GpuxMineEarningSettlementService;
 use App\Services\GpuxMineHealthService;
@@ -100,10 +101,13 @@ class GpuxMineDoctorCommand extends Command
         $hold = $settlement->holdHours();
         $cap = (int) config('services.gpuxmine.max_nodes_per_user', 10);
         $values = sprintf(
-            'พักเงิน %d ชม. · เพดาน %s เครื่อง/บัญชี · ส่งซ้ำทุก %d นาที',
+            'พักเงิน %d ชม. · เพดาน %s เครื่อง/บัญชี · ส่งซ้ำทุก %d นาที · ส่วนแบ่งผู้แนะนำที่ไม่มีผู้รับ: %s',
             $hold,
             $cap > 0 ? (string) $cap : 'ไม่จำกัด',
             max(1, (int) config('services.gpuxmine.resync_minutes', 10)),
+            $settlement->unpaidReferralPolicy() === GpuJobEarning::REFERRAL_UNPAID_TO_PLATFORM
+                ? 'แพลตฟอร์มเก็บ (GPUXMINE_UNPAID_REFERRAL=platform)'
+                : 'คืนเจ้าของเครื่อง',
         );
         $this->record(
             $hold === 0 ? self::WARN : self::OK,
@@ -116,7 +120,7 @@ class GpuxMineDoctorCommand extends Command
     {
         $required = [
             'gpu_nodes' => ['tunnel_token', 'dispatch_fingerprint', 'dispatch_worker_status', 'suspended_at', 'retire_status', 'banned_at'],
-            'gpu_job_earnings' => ['prompt_id', 'donated_value_satang', 'referral_satang', 'cleared_at', 'void_reason', 'reviewed_by'],
+            'gpu_job_earnings' => ['prompt_id', 'donated_value_satang', 'referral_satang', 'cleared_at', 'void_reason', 'reviewed_by', 'referral_unpaid_satang'],
         ];
 
         $missing = [];
@@ -293,6 +297,20 @@ class GpuxMineDoctorCommand extends Command
                 $this->record(self::OK, 'กุญแจอุโมงค์', "{$tokens['legacy']} เครื่องยังใช้กุญแจใบเดียวทั้งเครื่องและ aixman — แยกได้ด้วย gpuxmine:rotate-tunnel-tokens หลังตั้ง Relay__IssueTunnelTokens=true");
             } else {
                 $this->record(self::OK, 'กุญแจอุโมงค์', 'ทุกเครื่องมีกุญแจของ aixman แยกแล้ว');
+            }
+        }
+
+        // ปลายทางในแต่ละแถว ไม่ใช่แค่ URL ใน config — ต้องได้ 0 ก่อน deploy aixman รุ่นที่ตรวจ https
+        if ($relay->isConfigured()) {
+            $endpoints = $health->staleTunnelEndpoints($relay);
+            $examples = $endpoints['examples'] === [] ? '' : ' (เช่น ' . implode(', ', $endpoints['examples']) . ')';
+
+            if ($endpoints['mismatched'] === 0) {
+                $this->record(self::OK, 'ปลายทางอุโมงค์', 'ทุกเครื่องเก็บปลายทาง ' . rtrim((string) config('services.gpuxmine.relay_url'), '/') . '/w/… ตรงกับ GPUXMINE_RELAY_URL');
+            } elseif ($endpoints['insecure'] > 0) {
+                $this->record(self::FAIL, 'ปลายทางอุโมงค์', "{$endpoints['mismatched']} เครื่องเก็บปลายทางที่ไม่ตรงกับ GPUXMINE_RELAY_URL ในนั้น {$endpoints['insecure']} เครื่องไม่ใช่ https — aixman รุ่นใหม่ตอบ 400 ทุกครั้ง เครื่องไม่ได้งานเลย{$examples} gpuxmine:sync-nodes เขียนให้ตรงเองในรอบถัดไป ถ้าไม่หายดูว่า cron รันไหม");
+            } else {
+                $this->record(self::WARN, 'ปลายทางอุโมงค์', "{$endpoints['mismatched']} เครื่องเก็บปลายทางที่ไม่ตรงกับ GPUXMINE_RELAY_URL{$examples} — gpuxmine:sync-nodes เขียนให้ตรงเองเมื่อ relay ยังรู้จัก worker นั้น ที่ค้างอยู่คือ worker ที่ relay ไม่รู้จักแล้ว (เจ้าของต้องจับคู่ใหม่)");
             }
         }
 

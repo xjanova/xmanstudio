@@ -87,6 +87,20 @@ class GpuxMinePairingTest extends TestCase
         $this->assertSame($this->relayBase . '/w/gxm-new000000001', $pushes[0]['endpoint']);
     }
 
+    public function test_an_address_the_relay_guessed_wrong_behind_its_proxy_is_not_what_aixman_gets(): void
+    {
+        // relay สร้าง aixmanEndpoint จากคำขอที่มันเห็นหลัง nginx — ตอนติดตั้งครั้งแรก proxy ตั้งผิด
+        // ได้ http และหลุดพอร์ต aixman รุ่นใหม่ตอบ 400 กับ http ทุกครั้ง เครื่องไม่ได้งานเลย
+        $this->enrolment['aixmanEndpoint'] = 'http://relay.example.test/w/gxm-new000000001';
+        $owner = User::factory()->create();
+        $pending = $this->pendingCode($owner);
+
+        $this->claim($pending->pairing_code)->assertOk();
+
+        $this->assertSame($this->relayBase . '/w/gxm-new000000001', $pending->fresh()->tunnel_endpoint);
+        $this->assertSame($this->relayBase . '/w/gxm-new000000001', $this->aixmanPushes()[0]['endpoint']);
+    }
+
     public function test_an_old_relay_without_a_tunnel_token_keeps_the_single_token_for_both(): void
     {
         unset($this->enrolment['tunnelToken']);

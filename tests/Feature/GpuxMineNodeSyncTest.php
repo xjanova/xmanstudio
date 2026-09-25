@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\GpuJobEarning;
 use App\Models\GpuNode;
 use App\Models\User;
+use App\Services\GpuxMineDispatchService;
 use App\Services\GpuxMineNodeStateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -452,5 +453,70 @@ class GpuxMineNodeSyncTest extends TestCase
         $this->assertTrue($node->fresh()->online);
         $this->assertTrue($node->fresh()->assessed);
         $this->assertSame(1200, $node->fresh()->score);
+    }
+
+    // ── ปลายทางที่ aixman ยิงงาน (C1) ─────────────────────────────────
+
+    public function test_a_stored_http_endpoint_is_corrected_from_the_relay_url_and_sent_to_aixman(): void
+    {
+        // จับคู่ช่วงที่ proxy หน้า relay ตั้งผิด — เคยถูกแก้เฉพาะตอนเครื่องกลับมาจับคู่ซ้ำ
+        $node = GpuNode::factory()->paired()->create();
+        $node->forceFill(['tunnel_endpoint' => 'http://relay.example.test/w/' . $node->worker_id])->save();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+
+        $this->assertSame(0, $this->sync());
+
+        $expected = $this->relayBase . '/w/' . $node->worker_id;
+        $this->assertSame($expected, $node->fresh()->tunnel_endpoint);
+        $this->assertSame($expected, $this->aixmanPushes()[0]['endpoint']);
+
+        // แก้แล้วครั้งเดียวจบ รอบถัดไปไม่มีอะไรต้องส่ง
+        $this->gpuxCalls = [];
+        $this->assertSame(0, $this->sync());
+        $this->assertSame([], $this->aixmanPushes());
+    }
+
+    public function test_an_https_endpoint_that_lost_its_port_is_corrected_only_while_the_relay_knows_the_worker(): void
+    {
+        $known = GpuNode::factory()->paired()->create();
+        $known->forceFill(['tunnel_endpoint' => 'https://relay.example.test/w/' . $known->worker_id])->save();
+        // relay ตัวที่ตั้งไว้ไม่รู้จัก worker นี้ — อาจอยู่ที่อื่น ปลายทางที่ใช้ได้อยู่ไม่ถูกเดาทับ
+        $elsewhere = GpuNode::factory()->paired()->create();
+        $elsewhere->forceFill(['tunnel_endpoint' => 'https://old-relay.example.test/w/' . $elsewhere->worker_id])->save();
+        // แต่ http ที่ relay ไม่รู้จักถูกแก้อยู่ดี — aixman ไม่รับมันแน่ ๆ
+        $insecure = GpuNode::factory()->paired()->create();
+        $insecure->forceFill(['tunnel_endpoint' => 'http://old-relay.example.test/w/' . $insecure->worker_id])->save();
+        $this->relayWorkers = [$this->liveWorker($known->worker_id)];
+
+        $this->sync();
+
+        $this->assertSame($this->relayBase . '/w/' . $known->worker_id, $known->fresh()->tunnel_endpoint);
+        $this->assertSame('https://old-relay.example.test/w/' . $elsewhere->worker_id, $elsewhere->fresh()->tunnel_endpoint);
+        $this->assertSame($this->relayBase . '/w/' . $insecure->worker_id, $insecure->fresh()->tunnel_endpoint);
+    }
+
+    public function test_a_push_before_the_row_is_corrected_already_sends_an_address_aixman_accepts(): void
+    {
+        // เช่นแอดมินกดระงับก่อนตัวจับเวลารอบถัดไป — การระงับต้องไปถึง aixman ไม่ใช่ตกที่ 400
+        $node = GpuNode::factory()->paired()->create();
+        $node->forceFill(['tunnel_endpoint' => 'http://relay.example.test/w/' . $node->worker_id])->save();
+
+        app(GpuxMineDispatchService::class)->push($node);
+
+        $this->assertSame($this->relayBase . '/w/' . $node->worker_id, $this->aixmanPushes()[0]['endpoint']);
+    }
+
+    public function test_a_relay_url_aixman_would_refuse_never_overwrites_a_working_endpoint(): void
+    {
+        // ตั้ง GPUXMINE_RELAY_URL ผิดเป็น http — gpuxmine:doctor บอกเรื่องนั้นเอง ตรงนี้ต้องไม่ทำให้แย่ลง
+        $node = GpuNode::factory()->paired()->create();
+        $good = $node->tunnel_endpoint;
+        $this->relayBase = 'http://relay.example.test:8443';   // relay ปลอมอ่านค่านี้ตอนมีคำขอ
+        config(['services.gpuxmine.relay_url' => $this->relayBase]);
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+
+        $this->sync();
+
+        $this->assertSame($good, $node->fresh()->tunnel_endpoint);
     }
 }

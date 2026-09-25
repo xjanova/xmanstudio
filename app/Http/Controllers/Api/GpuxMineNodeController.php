@@ -15,8 +15,10 @@ use App\Services\GpuxMineNodeStateService;
 use App\Services\GpuxMineReferrerResolver;
 use App\Services\GpuxMineRelayService;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -38,8 +40,28 @@ class GpuxMineNodeController extends Controller
 {
     private const PRODUCT_SLUG = 'gpuxmine';
 
-    /** งานล่าสุดที่ /status คืนให้โปรแกรม */
+    /** งานล่าสุดที่ /status คืนให้โปรแกรม (ไม่ส่ง updated_after มา — โปรแกรมรุ่นเก่าและครั้งแรก) */
     private const STATUS_JOBS = 50;
+
+    /** งานที่เปลี่ยนตั้งแต่ updated_after ต่อหนึ่งคำตอบ */
+    private const STATUS_CHANGED_JOBS = 200;
+
+    /**
+     * เพดานของหน้าที่ถูกยืดให้จบวินาทีเดียวกัน — ตัวปล่อยเงินเปลี่ยนสถานะทีละห้าร้อยแถวใน
+     * UPDATE เดียว ทุกแถวได้ updated_at วินาทีเดียวกัน ตัดกลางกลุ่มแล้วโปรแกรมที่จำ "ค่ามากสุด
+     * ที่เห็น" จะข้ามส่วนที่เหลือของวินาทีนั้นไปตลอด
+     */
+    private const STATUS_CHANGED_GROUP_CAP = 2000;
+
+    /**
+     * งานที่เพิ่งเปลี่ยนภายในกี่วินาทียังไม่คืนในโหมด updated_after — แถวที่ทรานแซกชันอื่นคิด
+     * updated_at ไว้ก่อนแต่ commit ทีหลัง (ชุดโอนเงินที่ยาว) หรือที่ aixman เขียนด้วยนาฬิกา
+     * ของเครื่องมันที่ช้ากว่าเล็กน้อย จะได้ไม่มีค่าน้อยกว่าเคอร์เซอร์ที่โปรแกรมจำไปแล้ว
+     */
+    private const STATUS_SETTLE_SECONDS = 120;
+
+    /** คอลัมน์ที่ /status อ่านต่องาน */
+    private const JOB_COLUMNS = ['id', 'job_id', 'prompt_id', 'kind', 'amount_satang', 'donated_value_satang', 'status', 'completed_at', 'updated_at'];
 
     /** "วันนี้" ของเจ้าของเครื่อง — แอปเก็บเวลาเป็น UTC แต่เจ้าของอยู่เมืองไทย */
     private const OWNER_TIMEZONE = 'Asia/Bangkok';
@@ -113,6 +135,11 @@ class GpuxMineNodeController extends Controller
      *
      * earnings เป็นยอดของทั้งบัญชี (ทุกเครื่องของเจ้าของ) เพราะกระเป๋ามีใบเดียว ส่วน
      * jobs เป็นงานของเครื่องนี้เท่านั้น — โปรแกรมเอา prompt_id ไปจับกับบัญชีงานในเครื่อง
+     *
+     * jobs สองแบบ: ไม่ส่ง updated_after = ห้าสิบงานล่าสุดตามเดิม (โปรแกรมรุ่นเก่า และครั้งแรก)
+     * ส่ง updated_after = งานที่เปลี่ยนหลังเวลานั้น เรียงจากเก่าไปใหม่ ทีละสองร้อย เครื่องเร็วที่
+     * ทำเกินห้าสิบงานในระยะพักเคยไม่เห็นงานเก่าเปลี่ยนเป็น cleared/paid/void เลย ทุกงานมี
+     * updated_at ให้โปรแกรมจำค่ามากสุดที่เห็นไว้ถามรอบหน้า และ jobs_more บอกว่ายังมีต่อ
      */
     public function status(Request $request): JsonResponse
     {
@@ -121,24 +148,48 @@ class GpuxMineNodeController extends Controller
             return $this->identityRejected();
         }
 
+        $cursor = $this->statusCursor($request);
         $suspended = $node->isSuspended();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'node' => [
-                    'dispatch_status' => $node->dispatch_status,
-                    'dispatch_note' => $node->dispatch_note,
-                    'dispatch_worker_status' => $node->dispatch_worker_status,
-                    'relay_online' => (bool) $node->online,
-                    'suspended' => $suspended,
-                    'suspended_reason' => $suspended ? $node->suspended_reason : null,
-                    'last_seen_at' => $node->last_seen_at?->toIso8601String(),
-                ],
-                'earnings' => $this->earningsSummary((int) $node->user_id),
-                'jobs' => $this->recentJobs($node),
+        $data = [
+            'node' => [
+                'dispatch_status' => $node->dispatch_status,
+                'dispatch_note' => $node->dispatch_note,
+                'dispatch_worker_status' => $node->dispatch_worker_status,
+                'relay_online' => (bool) $node->online,
+                'suspended' => $suspended,
+                'suspended_reason' => $suspended ? $node->suspended_reason : null,
+                'last_seen_at' => $node->last_seen_at?->toIso8601String(),
             ],
-        ]);
+            'earnings' => $this->earningsSummary((int) $node->user_id),
+        ];
+
+        if ($cursor === null) {
+            $data['jobs'] = $this->recentJobs($node);
+        } else {
+            [$data['jobs'], $data['jobs_more']] = $this->changedJobs($node, $cursor);
+        }
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    /**
+     * updated_after ที่โปรแกรมส่งมา (ISO 8601 ที่เราเคยคืนไป) เป็นเวลาของแอป — null = ไม่ได้ส่ง
+     *
+     * ตรวจรูปแบบหลังยืนยันตัวแล้ว คนที่ไม่มี token ได้ 401 เหมือนเดิม ไม่ได้รู้ว่าฟิลด์นี้มีอยู่
+     */
+    private function statusCursor(Request $request): ?Carbon
+    {
+        $validated = $request->validate(
+            ['updated_after' => ['nullable', 'string', 'max:64', 'date']],
+            ['updated_after.*' => 'updated_after ต้องเป็นวันเวลาแบบ ISO 8601 ที่ได้จาก updated_at ของงาน'],
+        );
+
+        $raw = $validated['updated_after'] ?? null;
+
+        return $raw === null || $raw === ''
+            ? null
+            : Carbon::parse($raw)->setTimezone((string) config('app.timezone', 'UTC'));
     }
 
     public function claim(Request $request): JsonResponse
@@ -287,7 +338,8 @@ class GpuxMineNodeController extends Controller
                     // ไม่งั้น aixman ได้กุญแจที่เปิดอุโมงค์ของ worker ใหม่ไม่ได้
                     'tunnel_token' => $enrolment['tunnelToken'],
                     'relay_url' => $enrolment['agentRelayUrl'],
-                    'tunnel_endpoint' => $enrolment['aixmanEndpoint'],
+                    // จาก GPUXMINE_RELAY_URL ไม่ใช่ที่ relay เดาจากคำขอหลัง proxy — ดู endpointFor()
+                    'tunnel_endpoint' => $this->relay->endpointFor($enrolment['workerId'], $enrolment['aixmanEndpoint']),
                     'agent_version' => $validated['app_version'] ?? $existing->agent_version,
                     'online' => false,
                     'assessed' => false,
@@ -328,7 +380,8 @@ class GpuxMineNodeController extends Controller
             'relay_token' => $enrolment['token'],
             'tunnel_token' => $enrolment['tunnelToken'],
             'relay_url' => $enrolment['agentRelayUrl'],
-            'tunnel_endpoint' => $enrolment['aixmanEndpoint'],
+            // จาก GPUXMINE_RELAY_URL ไม่ใช่ที่ relay เดาจากคำขอหลัง proxy — ดู endpointFor()
+            'tunnel_endpoint' => $this->relay->endpointFor($enrolment['workerId'], $enrolment['aixmanEndpoint']),
             'agent_version' => $validated['app_version'] ?? null,
             'paired_at' => now(),
             // ผู้แนะนำ: ถ้าหน้าเว็บจับไว้ตอนออกรหัสแล้วใช้ตัวนั้น (D8)
@@ -444,29 +497,96 @@ class GpuxMineNodeController extends Controller
     }
 
     /**
-     * งานล่าสุดของเครื่องนี้ — จับทั้ง gpu_node_id และ worker_id เผื่อแถวที่ aixman
+     * งานของเครื่องนี้ — จับทั้ง gpu_node_id และ worker_id เผื่อแถวที่ aixman
      * เขียนโดยไม่มี gpu_node_id และจำกัดที่เจ้าของคนเดียวกันเสมอ
+     */
+    private function nodeJobs(GpuNode $node): Builder
+    {
+        return GpuJobEarning::where('user_id', $node->user_id)
+            ->where(fn ($q) => $q->where('gpu_node_id', $node->id)->orWhere('worker_id', $node->worker_id));
+    }
+
+    /**
+     * ห้าสิบงานล่าสุดของเครื่องนี้ ตามเวลาที่งานเสร็จ
      *
      * @return array<int, array<string, mixed>>
      */
     private function recentJobs(GpuNode $node): array
     {
-        return GpuJobEarning::where('user_id', $node->user_id)
-            ->where(fn ($q) => $q->where('gpu_node_id', $node->id)->orWhere('worker_id', $node->worker_id))
+        return $this->nodeJobs($node)
             ->orderByDesc('completed_at')
             ->orderByDesc('id')
             ->limit(self::STATUS_JOBS)
-            ->get(['id', 'job_id', 'prompt_id', 'kind', 'amount_satang', 'donated_value_satang', 'status', 'completed_at'])
-            ->map(fn (GpuJobEarning $job) => [
-                'job_id' => $job->job_id,
-                'prompt_id' => $job->prompt_id,
-                'kind' => $job->kind,
-                'amount_satang' => (int) $job->amount_satang,
-                'donated_value_satang' => (int) $job->donated_value_satang,
-                'status' => $job->status,
-                'completed_at' => $job->completed_at?->toIso8601String(),
-            ])
+            ->get(self::JOB_COLUMNS)
+            ->map(fn (GpuJobEarning $job) => $this->jobPayload($job))
             ->all();
+    }
+
+    /**
+     * งานของเครื่องนี้ที่เปลี่ยนหลัง $cursor เรียงตาม (updated_at, id) — ทุกการเปลี่ยนสถานะ
+     * (ปล่อยเงิน โอน ยกเลิก อนุมัติ) ผ่าน Eloquent update ซึ่งแตะ updated_at อยู่แล้ว
+     *
+     * โปรแกรมจำ updated_at มากสุดที่เห็นแล้วถามต่อจากค่านั้น (มากกว่า ไม่ใช่มากกว่าหรือเท่ากับ)
+     * คำตอบจึงต้องไม่ตัดกลางวินาที: หน้าเต็มเมื่อไร ยืดให้จบวินาทีของแถวสุดท้าย (ถึงเพดาน
+     * STATUS_CHANGED_GROUP_CAP) และแถวที่เพิ่งเปลี่ยนภายใน STATUS_SETTLE_SECONDS ยังไม่คืน —
+     * ดูเหตุผลที่ค่าคงที่ทั้งสอง
+     *
+     * @return array{0: array<int, array<string, mixed>>, 1: bool} งาน และ "ยังมีต่อ"
+     */
+    private function changedJobs(GpuNode $node, Carbon $cursor): array
+    {
+        $settled = now()->subSeconds(self::STATUS_SETTLE_SECONDS);
+        $changed = fn () => $this->nodeJobs($node)
+            ->where('updated_at', '>', $cursor)
+            ->where('updated_at', '<=', $settled);
+
+        $page = $changed()
+            ->orderBy('updated_at')
+            ->orderBy('id')
+            ->limit(self::STATUS_CHANGED_JOBS)
+            ->get(self::JOB_COLUMNS);
+
+        $more = $page->count() >= self::STATUS_CHANGED_JOBS;
+
+        if ($more) {
+            /** @var GpuJobEarning $last */
+            $last = $page->last();
+            $rest = $changed()
+                ->where('updated_at', $last->updated_at)
+                ->where('id', '>', $last->id)
+                ->orderBy('id')
+                ->limit(self::STATUS_CHANGED_GROUP_CAP - self::STATUS_CHANGED_JOBS)
+                ->get(self::JOB_COLUMNS);
+
+            if ($rest->count() >= self::STATUS_CHANGED_GROUP_CAP - self::STATUS_CHANGED_JOBS) {
+                // วินาทีเดียวใหญ่เกินเพดาน — ส่วนที่เหลือของวินาทีนั้นจะไม่ถูกส่งแบบเคอร์เซอร์อีก
+                // (สถานะเงินจริงในกระเป๋าไม่กระทบ มีแค่ประวัติในโปรแกรม) บันทึกไว้ให้รู้ว่าเกิด
+                Log::warning('[GPUxMINE] /status page could not finish one second of changes', [
+                    'node_id' => $node->id,
+                    'updated_at' => $last->updated_at?->toIso8601String(),
+                ]);
+            }
+
+            $page = $page->concat($rest);
+        }
+
+        return [$page->map(fn (GpuJobEarning $job) => $this->jobPayload($job))->values()->all(), $more];
+    }
+
+    /** @return array<string, mixed> */
+    private function jobPayload(GpuJobEarning $job): array
+    {
+        return [
+            'job_id' => $job->job_id,
+            'prompt_id' => $job->prompt_id,
+            'kind' => $job->kind,
+            'amount_satang' => (int) $job->amount_satang,
+            'donated_value_satang' => (int) $job->donated_value_satang,
+            'status' => $job->status,
+            'completed_at' => $job->completed_at?->toIso8601String(),
+            // เคอร์เซอร์ของ updated_after — โปรแกรมจำค่ามากสุดที่เห็นแล้วส่งกลับมารอบหน้า
+            'updated_at' => $job->updated_at?->toIso8601String(),
+        ];
     }
 
     private function atNodeCap(int $userId): bool
@@ -520,7 +640,7 @@ class GpuxMineNodeController extends Controller
                 // ถ้าย้าย relay ไปพอร์ตหรือโฮสต์ใหม่ เครื่องที่กลับมาจับคู่ต้อง
                 // ได้ที่อยู่ปัจจุบัน ไม่ใช่ที่อยู่ที่เขียนไว้ตั้งแต่วันแรก
                 'relay_url' => $this->relay->agentUrl(),
-                'tunnel_endpoint' => $this->relay->tunnelEndpoint($node->worker_id),
+                'tunnel_endpoint' => $this->relay->endpointFor($node->worker_id, $node->tunnel_endpoint),
             ])->save();
         }
 
