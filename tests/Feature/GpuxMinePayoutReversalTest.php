@@ -197,6 +197,7 @@ class GpuxMinePayoutReversalTest extends TestCase
         // เงินที่โอนออกไปแล้ว (อนุมัติแล้ว) ก็เรียกคืนไม่ได้เหมือนกัน
         $second = $this->paidEarning(['amount_satang' => 15000]);
         [$paidOut] = app(WalletWithdrawalService::class)->request($this->owner->fresh(), 15000, (string) Str::uuid());
+        $paidOut = app(WalletWithdrawalService::class)->startTransfer($paidOut, $this->admin);
         app(WalletWithdrawalService::class)->approve($paidOut, $this->admin, 'SCB-REF-9', null);
         $this->reverseEarning($second)->assertSessionHas('error', fn ($m) => str_contains($m, 'ถอนออกไปแล้ว'));
         $this->assertSame(GpuJobEarning::STATUS_PAID, $second->fresh()->status);

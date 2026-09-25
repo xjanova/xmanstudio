@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Schema;
  * คำขอถอนเงินสดออกจากกระเป๋า XMAN (R2-4)
  *
  * ผู้ใช้กดถอน → ยอดถูกพักทันที (หักจาก wallets.balance ด้วยรายการ withdrawal ที่ยัง pending)
- * → รอแอดมินโอนแล้วกดอนุมัติพร้อมเลขอ้างอิง/สลิป หรือปฏิเสธพร้อมเหตุผล (ยอดที่พักคืนกระเป๋า)
- * ผู้ใช้ยกเลิกเองได้ระหว่างรอ
+ * → แอดมินกด "เริ่มโอน" (processing — ผู้ใช้ยกเลิกไม่ได้แล้ว) → โอนในแอปธนาคาร → กดบันทึกพร้อม
+ * เลขอ้างอิง/สลิป หรือปฏิเสธพร้อมเหตุผล (ยอดที่พักคืนกระเป๋า) ผู้ใช้ยกเลิกเองได้เฉพาะก่อนเริ่มโอน
  *
  * ข้อออกแบบที่ตั้งใจ:
  *   - status เป็น string ไม่ใช่ enum — enum ของ MySQL เพิ่มค่าทีหลังแล้วเจ็บ (บทเรียน 2026-09-19:
@@ -34,7 +34,7 @@ return new class extends Migration
 
             $table->decimal('amount', 12, 2);
 
-            // pending | approved | rejected | cancelled
+            // pending | processing | approved | rejected | cancelled
             $table->string('status', 16)->default('pending');
             $table->unsignedBigInteger('open_user_id')->nullable()->unique();
             $table->string('idempotency_key', 64);
@@ -51,6 +51,10 @@ return new class extends Migration
             // รายการในกระเป๋า: พักยอด และคืนยอด (เมื่อปฏิเสธ/ยกเลิก)
             $table->unsignedBigInteger('hold_transaction_id')->nullable();
             $table->unsignedBigInteger('return_transaction_id')->nullable();
+
+            // แอดมินที่กด "เริ่มโอน" — ตั้งแต่ตอนนี้ผู้ใช้ยกเลิกไม่ได้ เพราะเงินอาจกำลังออกจากบัญชีเรา
+            $table->foreignId('processing_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('processing_at')->nullable();
 
             // การตัดสินของแอดมิน
             $table->string('payout_reference', 100)->nullable();

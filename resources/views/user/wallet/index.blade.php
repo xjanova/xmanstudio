@@ -90,8 +90,13 @@
                 <a href="{{ route('user.wallet.withdraw') }}" class="block rounded-2xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-6 py-4 hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div>
+                            @if($openWithdrawal->isProcessing())
+                            <p class="font-semibold text-amber-900 dark:text-amber-100"><x-bi th="แอดมินกำลังโอนเงินถอน" en="We are transferring your withdrawal" /> · {{ $openWithdrawal->withdrawal_id }}</p>
+                            <p class="text-sm text-amber-800/80 dark:text-amber-200/80"><x-bi th="ยอดนี้พักไว้แล้ว ไม่รวมในยอดคงเหลือ — เริ่มโอนแล้ว ยกเลิกไม่ได้" en="Held and not part of the balance above; the transfer has started and cannot be cancelled" /></p>
+                            @else
                             <p class="font-semibold text-amber-900 dark:text-amber-100"><x-bi th="คำขอถอนรอแอดมินโอน" en="Withdrawal waiting for our transfer" /> · {{ $openWithdrawal->withdrawal_id }}</p>
-                            <p class="text-sm text-amber-800/80 dark:text-amber-200/80"><x-bi th="ยอดนี้พักไว้แล้ว ไม่รวมในยอดคงเหลือ — ยกเลิกได้ระหว่างรอ" en="Held and not part of the balance above; you can cancel while it waits" /></p>
+                            <p class="text-sm text-amber-800/80 dark:text-amber-200/80"><x-bi th="ยอดนี้พักไว้แล้ว ไม่รวมในยอดคงเหลือ — ยกเลิกได้จนกว่าแอดมินจะเริ่มโอน" en="Held and not part of the balance above; you can cancel until we start the transfer" /></p>
+                            @endif
                         </div>
                         <span class="text-lg font-bold text-amber-900 dark:text-amber-100 tabular-nums">{{ \App\Support\Satang::format($openWithdrawal->amountSatang()) }}</span>
                     </div>

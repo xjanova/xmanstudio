@@ -14,6 +14,7 @@
     $tone = static fn (string $status) => match ($status) {
         'approved' => 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30',
         'pending' => 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30',
+        'processing' => 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-500/30',
         'rejected' => 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30',
         default => 'bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600',
     };
@@ -32,8 +33,8 @@
                 </nav>
                 <h1 class="text-3xl font-bold text-white"><x-bi th="ถอนเงินเข้าบัญชี" en="Withdraw to your bank" /></h1>
                 <p class="mt-1 text-emerald-50/90 text-sm max-w-xl">
-                    <x-bi th="ขอถอนแล้วยอดถูกพักไว้ทันที แอดมินตรวจและโอนเข้าบัญชีที่ยืนยันตัวตนไว้ ยกเลิกได้ระหว่างรอ"
-                          en="The amount is held as soon as you ask. Our team checks it and transfers to your verified account. You can cancel while it waits." />
+                    <x-bi th="ขอถอนแล้วยอดถูกพักไว้ทันที แอดมินตรวจและโอนเข้าบัญชีที่ยืนยันตัวตนไว้ ยกเลิกได้จนกว่าแอดมินจะเริ่มโอน"
+                          en="The amount is held as soon as you ask. Our team checks it and transfers to your verified account. You can cancel until we start the transfer." />
                 </p>
             </div>
             <div class="shrink-0 md:text-right">
@@ -59,7 +60,13 @@
                 {{-- ══════════ คำขอที่รออยู่ ══════════ --}}
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-amber-200 dark:border-amber-500/30 overflow-hidden">
                     <div class="px-6 py-4 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/30 flex items-center justify-between gap-3">
-                        <h2 class="font-semibold text-amber-900 dark:text-amber-100"><x-bi th="คำขอที่รอแอดมินโอน" en="Waiting for our transfer" /></h2>
+                        <h2 class="font-semibold text-amber-900 dark:text-amber-100">
+                            @if ($open->isProcessing())
+                                <x-bi th="แอดมินกำลังโอนเงินให้คุณ" en="We are transferring it now" />
+                            @else
+                                <x-bi th="คำขอที่รอแอดมินโอน" en="Waiting for our transfer" />
+                            @endif
+                        </h2>
                         <span class="text-xs font-mono text-amber-800 dark:text-amber-200">{{ $open->withdrawal_id }}</span>
                     </div>
                     <div class="p-6 space-y-4">
@@ -78,9 +85,15 @@
                                 <dd class="text-gray-900 dark:text-white tabular-nums">{{ $bkk($open->created_at) }}</dd>
                             </div>
                         </dl>
+                        @if ($open->isProcessing())
+                            <p class="rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 px-4 py-3 text-sm text-sky-900 dark:text-sky-100 leading-relaxed">
+                                <x-bi th="แอดมินเริ่มโอนเงินเข้าบัญชีของคุณแล้ว — ยกเลิกคำขอนี้ไม่ได้แล้ว สถานะจะเปลี่ยนเป็น “โอนเข้าบัญชีแล้ว” พร้อมเลขอ้างอิงเมื่อบันทึกผลเสร็จ หากมีปัญหาติดต่อทีมงาน"
+                                      en="We have started the transfer to your account, so this request can no longer be cancelled. It turns to “Transferred” with a reference once recorded. Contact us if anything looks wrong." />
+                            </p>
+                        @else
                         <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                            <x-bi th="ยอดนี้ถูกพักไว้ ใช้จ่ายที่อื่นไม่ได้จนกว่าแอดมินจะโอนหรือคุณยกเลิก — ยกเลิกแล้วยอดคืนเข้ากระเป๋าทันที"
-                                  en="This amount is held and cannot be spent until we transfer it or you cancel. Cancelling returns it to your wallet at once." />
+                            <x-bi th="ยอดนี้ถูกพักไว้ ใช้จ่ายที่อื่นไม่ได้จนกว่าแอดมินจะโอนหรือคุณยกเลิก — ยกเลิกได้จนกว่าแอดมินจะเริ่มโอน และยอดคืนเข้ากระเป๋าทันที"
+                                  en="This amount is held and cannot be spent until we transfer it or you cancel. You can cancel until we start the transfer; the amount returns to your wallet at once." />
                         </p>
                         <form method="POST" action="{{ route('user.wallet.withdraw.cancel', $open->id) }}"
                               x-data="{ sending: false }"
@@ -91,6 +104,7 @@
                                 <x-bi th="ยกเลิกคำขอนี้" en="Cancel this request" />
                             </button>
                         </form>
+                        @endif
                     </div>
                 </div>
             @elseif (! $kycApproved)
@@ -118,7 +132,7 @@
                 <form method="POST" action="{{ route('user.wallet.withdraw.store') }}"
                       class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 space-y-5"
                       x-data="{ sending: false, amount: @js(old('amount', '')), method: @js(old('method', 'bank')) }"
-                      @submit="if (! window.confirm('ยืนยันขอถอน ฿' + amount + '?\n\nยอดนี้จะถูกพักไว้ทันที และแอดมินจะโอนเข้าบัญชีที่แสดงไว้ — ยกเลิกได้ระหว่างรอ')) { $event.preventDefault(); return; } sending = true">
+                      @submit="if (! window.confirm('ยืนยันขอถอน ฿' + amount + '?\n\nยอดนี้จะถูกพักไว้ทันที และแอดมินจะโอนเข้าบัญชีที่แสดงไว้ — ยกเลิกได้จนกว่าแอดมินจะเริ่มโอน')) { $event.preventDefault(); return; } sending = true">
                     @csrf
                     <input type="hidden" name="request_key" value="{{ $requestKey }}">
 
@@ -261,7 +275,7 @@
                 <h2 class="font-semibold text-gray-900 dark:text-white"><x-bi th="ถอนเงินทำงานอย่างไร" en="How withdrawals work" /></h2>
                 <ol class="mt-3 space-y-3 text-sm text-gray-600 dark:text-gray-300">
                     <li><span class="font-semibold text-gray-900 dark:text-white">1.</span> <x-bi th="ขอถอน — ยอดถูกพักไว้ในกระเป๋าทันที" en="Request: the amount is held in your wallet at once" /></li>
-                    <li><span class="font-semibold text-gray-900 dark:text-white">2.</span> <x-bi th="แอดมินตรวจ แล้วโอนเข้าบัญชีที่ยืนยันตัวตนไว้" en="We check it and transfer to your verified account" /></li>
+                    <li><span class="font-semibold text-gray-900 dark:text-white">2.</span> <x-bi th="แอดมินตรวจ แล้วเริ่มโอนเข้าบัญชีที่ยืนยันตัวตนไว้ — ตั้งแต่ตอนนี้ยกเลิกไม่ได้แล้ว" en="We check it and start the transfer to your verified account; from then on it cannot be cancelled" /></li>
                     <li><span class="font-semibold text-gray-900 dark:text-white">3.</span> <x-bi th="สถานะเปลี่ยนเป็น “โอนเข้าบัญชีแล้ว” พร้อมเลขอ้างอิงหรือสลิป" en="The status turns to “Transferred” with a reference or slip" /></li>
                 </ol>
                 <p class="mt-4 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">

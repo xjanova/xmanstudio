@@ -354,7 +354,7 @@ final class BusinessAlerts
         });
     }
 
-    /** Approved, rejected or cancelled: the card in the chat shows the outcome, not a stale request. */
+    /** Started, approved, rejected or cancelled: the card in the chat shows where it stands, not a stale request. */
     public static function withdrawalUpdated(WalletWithdrawal $withdrawal): void
     {
         self::later(function () use ($withdrawal) {
@@ -368,7 +368,7 @@ final class BusinessAlerts
     public static function withdrawalCard(WalletWithdrawal $withdrawal, ?string $headline = null): Alert
     {
         $withdrawal->loadMissing('user', 'reviewer');
-        $open = $withdrawal->status === WalletWithdrawal::STATUS_PENDING;
+        $open = $withdrawal->isOpen();
         $amount = Satang::format($withdrawal->amountSatang());
 
         // The destination is masked here: the chat is not the place for a full account number —
@@ -386,6 +386,11 @@ final class BusinessAlerts
         if ($withdrawal->status === WalletWithdrawal::STATUS_APPROVED && $withdrawal->payout_reference) {
             $lines[] = 'อ้างอิงการโอน: ' . Str::limit((string) $withdrawal->payout_reference, 60);
         }
+        if ($withdrawal->processing_at !== null) {
+            // Whoever pressed "start" owns the transfer — a second admin must not pay it again
+            $withdrawal->loadMissing('processor');
+            $lines[] = 'เริ่มโอนโดย: ' . ($withdrawal->processor?->name ?? 'ผู้ดูแล') . ' · ' . self::time($withdrawal->processing_at);
+        }
         if (! $open) {
             $who = $withdrawal->status === WalletWithdrawal::STATUS_CANCELLED
                 ? 'ลูกค้ายกเลิกเอง'
@@ -396,11 +401,12 @@ final class BusinessAlerts
         return new Alert(
             key: 'withdrawal:' . $withdrawal->id . ':' . $withdrawal->status,
             level: match ($withdrawal->status) {
-                WalletWithdrawal::STATUS_PENDING => Alert::MONEY,
+                WalletWithdrawal::STATUS_PENDING, WalletWithdrawal::STATUS_PROCESSING => Alert::MONEY,
                 WalletWithdrawal::STATUS_APPROVED => Alert::OK,
                 default => Alert::INFO,
             },
             title: ($headline ?? match ($withdrawal->status) {
+                WalletWithdrawal::STATUS_PROCESSING => 'กำลังโอนเงินถอน',
                 WalletWithdrawal::STATUS_APPROVED => 'โอนเงินถอนแล้ว',
                 WalletWithdrawal::STATUS_REJECTED => 'ไม่อนุมัติการถอนเงิน',
                 WalletWithdrawal::STATUS_CANCELLED => 'ลูกค้ายกเลิกคำขอถอนเงิน',

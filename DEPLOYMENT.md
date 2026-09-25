@@ -633,7 +633,12 @@ to that enum by hand survives).
    `/admin/affiliates/commissions` — once each, reason of 10+ characters, and only while the
    wallet's available balance covers it (money held by a pending withdrawal does not count).
 3. Cash-out: users ask on `/wallet/withdraw` (KYC required; paid only to the KYC bank account),
-   the amount is held at once, and admins approve (transfer reference and/or slip) or reject
-   (hold returned) under การเงิน → คำขอถอนเงิน. The minimum per request is set on
+   the amount is held at once, and admins work it under การเงิน → คำขอถอนเงิน in three steps:
+   press "เริ่มโอน" (the user can no longer cancel, and only now the page shows the full account
+   number), transfer in the banking app, then record the transfer reference and/or slip — or
+   reject (hold returned). Never transfer before pressing "เริ่มโอน": until then the user can still
+   cancel and get the hold back. The request page also shows the wallet's balance and where its
+   money came from (earnings, referrals, top-ups and their bonus, last top-up), with a warning when
+   the cash-out is larger than the net GPUxMINE income. The minimum per request is set on
    `/admin/wallets/settings` (falls back to `WALLET_WITHDRAW_MIN_BAHT`, default 100); the same page
    can pause new requests. New requests raise a Telegram card (alert category "orders").

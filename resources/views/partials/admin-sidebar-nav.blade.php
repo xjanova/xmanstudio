@@ -26,9 +26,9 @@
         $gpuxmineReview = 0;
     }
 
-    // คำขอถอนเงินที่รอแอดมินโอน — ยอดของผู้ใช้ถูกพักไว้จนกว่าจะมีคนกด (แยก try แบบเดียวกัน)
+    // คำขอถอนเงินที่รอแอดมิน (รออนุมัติ + เริ่มโอนแล้วแต่ยังไม่บันทึกผล) — ยอดของผู้ใช้ถูกพักไว้จนกว่าจะมีคนกด
     try {
-        $pendingWithdrawals = \App\Models\WalletWithdrawal::where('status', \App\Models\WalletWithdrawal::STATUS_PENDING)->count();
+        $pendingWithdrawals = \App\Models\WalletWithdrawal::whereIn('status', \App\Models\WalletWithdrawal::OPEN_STATUSES)->count();
     } catch (\Throwable $e) {
         $pendingWithdrawals = 0;
     }

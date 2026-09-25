@@ -1437,6 +1437,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/withdrawals', [AdminWalletWithdrawalController::class, 'index'])->name('withdrawals');
         Route::get('/withdrawals/export', [AdminWalletWithdrawalController::class, 'export'])->name('withdrawals.export');
         Route::get('/withdrawals/{id}', [AdminWalletWithdrawalController::class, 'show'])->whereNumber('id')->name('withdrawals.show');
+        Route::post('/withdrawals/{id}/start', [AdminWalletWithdrawalController::class, 'start'])->whereNumber('id')->name('withdrawals.start');
         Route::post('/withdrawals/{id}/approve', [AdminWalletWithdrawalController::class, 'approve'])->whereNumber('id')->name('withdrawals.approve');
         Route::post('/withdrawals/{id}/reject', [AdminWalletWithdrawalController::class, 'reject'])->whereNumber('id')->name('withdrawals.reject');
         Route::get('/withdrawals/{id}/slip', [AdminWalletWithdrawalController::class, 'slip'])->whereNumber('id')->name('withdrawals.slip');

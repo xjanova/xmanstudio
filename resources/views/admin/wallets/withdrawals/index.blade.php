@@ -12,10 +12,11 @@
     $tone = static fn (string $status) => match ($status) {
         'approved' => 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30',
         'pending' => 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30',
+        'processing' => 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-500/30',
         'rejected' => 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30',
         default => 'bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600',
     };
-    $pendingTotal = \App\Support\Satang::fromBaht((string) ($counts['pending']->total ?? '0'));
+    $pendingTotal = \App\Support\Satang::fromBaht((string) ($counts[$status]->total ?? '0'));
 @endphp
 
 <div class="space-y-6">
@@ -23,8 +24,8 @@
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">คำขอถอนเงินจากกระเป๋า</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-3xl">
-                ยอดถูกพักไว้ตั้งแต่ผู้ใช้ขอ (หักจากยอดคงเหลือแล้ว) · โอนเงินจริงในแอปธนาคาร แล้วเปิดคำขอกด “บันทึกว่าโอนแล้ว” พร้อมเลขอ้างอิงหรือสลิป ·
-                ไม่อนุมัติ = ยอดที่พักคืนเข้ากระเป๋าผู้ใช้ทันที · ผู้ใช้ต้องยืนยันตัวตนแล้วทุกคน
+                ยอดถูกพักไว้ตั้งแต่ผู้ใช้ขอ (หักจากยอดคงเหลือแล้ว) · เปิดคำขอแล้วกด “เริ่มโอน” ก่อน (ผู้ใช้ยกเลิกไม่ได้แล้ว) → โอนในแอปธนาคาร →
+                กลับมากด “บันทึกว่าโอนแล้ว” พร้อมเลขอ้างอิงหรือสลิป · ไม่อนุมัติ = ยอดที่พักคืนเข้ากระเป๋าผู้ใช้ทันที · ผู้ใช้ต้องยืนยันตัวตนแล้วทุกคน
             </p>
         </div>
         <a href="{{ route('admin.wallets.withdrawals.export', array_filter(['status' => $status, 'q' => $search ?: null])) }}"
@@ -33,11 +34,11 @@
         </a>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        @foreach (['pending', 'approved', 'rejected', 'cancelled'] as $key)
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        @foreach (['pending', 'processing', 'approved', 'rejected', 'cancelled'] as $key)
             <a href="{{ route('admin.wallets.withdrawals', ['status' => $key]) }}" class="{{ $card }} p-4 hover:border-emerald-300 dark:hover:border-emerald-500/50 transition">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $filters[$key] }}</p>
-                <p class="text-xl font-bold tabular-nums {{ $key === 'pending' && ($counts[$key]->n ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white' }}">
+                <p class="text-xl font-bold tabular-nums {{ in_array($key, ['pending', 'processing'], true) && ($counts[$key]->n ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white' }}">
                     {{ $fmt(\App\Support\Satang::fromBaht((string) ($counts[$key]->total ?? '0'))) }}
                 </p>
                 <p class="text-[11px] text-gray-400 mt-0.5">{{ number_format((int) ($counts[$key]->n ?? 0)) }} คำขอ</p>
@@ -70,8 +71,8 @@
                     <a href="{{ route('admin.wallets.withdrawals', ['status' => $status]) }}" class="px-3 py-2 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">ล้าง</a>
                 @endif
             </form>
-            @if ($status === 'pending' && $pendingTotal > 0)
-                <p class="text-xs text-amber-700 dark:text-amber-300">ยอดที่รอโอนทั้งหมด {{ $fmt($pendingTotal) }} — เรียงจากคำขอที่รอนานที่สุด</p>
+            @if (in_array($status, ['pending', 'processing'], true) && $pendingTotal > 0)
+                <p class="text-xs text-amber-700 dark:text-amber-300">{{ $status === 'pending' ? 'ยอดที่รอโอนทั้งหมด' : 'ยอดที่เริ่มโอนแล้วแต่ยังไม่บันทึกผล' }} {{ $fmt($pendingTotal) }} — เรียงจากคำขอที่รอนานที่สุด</p>
             @endif
         </div>
 
@@ -115,12 +116,14 @@
                                     <span class="inline-block text-xs px-2 py-0.5 rounded-full border whitespace-nowrap {{ $tone($w->status) }}">{{ $w->statusLabel() }}</span>
                                     @if ($w->reviewer)
                                         <span class="block text-[11px] text-gray-400 mt-0.5">โดย {{ $w->reviewer->name }} · {{ $bkk($w->reviewed_at) }}</span>
+                                    @elseif ($w->isProcessing())
+                                        <span class="block text-[11px] text-gray-400 mt-0.5">เริ่มโอนโดย {{ $w->processor?->name ?? 'แอดมินที่ถูกลบ' }} · {{ $bkk($w->processing_at) }}</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <a href="{{ route('admin.wallets.withdrawals.show', $w->id) }}"
-                                       class="inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold {{ $w->isPending() ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200' }} transition whitespace-nowrap">
-                                        {{ $w->isPending() ? 'ตรวจและโอน' : 'ดูรายละเอียด' }}
+                                       class="inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold {{ $w->isOpen() ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200' }} transition whitespace-nowrap">
+                                        {{ $w->isPending() ? 'ตรวจและเริ่มโอน' : ($w->isProcessing() ? 'บันทึกผลการโอน' : 'ดูรายละเอียด') }}
                                     </a>
                                 </td>
                             </tr>

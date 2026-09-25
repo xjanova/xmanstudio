@@ -7,6 +7,7 @@ use App\Models\KycVerification;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Models\WalletTopup;
 use App\Models\WalletTransaction;
 use App\Models\WalletWithdrawal;
 use App\Support\Alerts\BusinessAlerts;
@@ -20,7 +21,8 @@ use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
- * ถอนเงินสดออกจากกระเป๋า XMAN (R2-4): ผู้ใช้ขอ → พักยอดทันที → แอดมินโอนแล้วอนุมัติ หรือปฏิเสธ
+ * ถอนเงินสดออกจากกระเป๋า XMAN (R2-4): ผู้ใช้ขอ → พักยอดทันที → แอดมินกดเริ่มโอน → โอนแล้วบันทึก
+ * หรือปฏิเสธ
  *
  * เจ้าของระบบตัดสินไว้: "การถอนเงินสดอยู่ที่ xmanstudio คือการกดถอนออกจากวอลเลต แล้วรอแอดมินอนุมัติ"
  *
@@ -28,11 +30,15 @@ use RuntimeException;
  *   - ต้องยืนยันตัวตนแล้ว และโอนเข้าบัญชีที่ยืนยันชื่อไว้กับ KYC เท่านั้น (กรอกเองได้เฉพาะเมื่อ
  *     KYC ไม่มีบัญชี) — ขโมย session ได้ก็เปลี่ยนปลายทางเป็นบัญชีตัวเองไม่ได้
  *   - หนึ่งคำขอที่เปิดอยู่ต่อคน (unique ที่ open_user_id), ยอดขั้นต่ำ, ไม่เกินยอดคงเหลือ
- *   - กดส่งซ้ำ/รีเฟรช = คำขอเดิม (unique ที่ user_id + idempotency_key)
+ *   - กดส่งซ้ำ/รีเฟรช = คำขอเดิม (unique ที่ user_id + idempotency_key) — ฟอร์มเก่าที่คำขอของมัน
+ *     ปิดไปแล้ว หรือยอดไม่ตรงกับที่ส่งครั้งแรก ถูกปฏิเสธ ไม่ใช่ตอบว่าสำเร็จ
  *   - พักยอดด้วยการหัก wallets.balance ทันที (รายการ withdrawal ที่ยัง pending) — เงินที่รอถอน
  *     จึงใช้จ่ายไม่ได้ทั้งในเว็บนี้และที่ aixman และไม่นับเป็นยอดที่ใช้ได้ตอนแอดมินเรียกคืนรายได้
- *   - เปลี่ยนสถานะด้วย UPDATE แบบมีเงื่อนไข (status = pending) ที่ชนะได้คนเดียว: แอดมินสองคนกด
- *     อนุมัติพร้อมกัน หรือผู้ใช้ยกเลิกขณะแอดมินอนุมัติ — มีผลแค่ครั้งแรก ยอดคืนครั้งเดียว
+ *   - แอดมินต้องกด "เริ่มโอน" (pending → processing) ก่อนเห็นเลขบัญชีเต็มและก่อนบันทึกว่าโอนแล้ว
+ *     ผู้ใช้ยกเลิกได้เฉพาะ pending — ไม่งั้นผู้ใช้ที่เห็นเงินเข้าบัญชีกดยกเลิกก่อนแอดมินกลับมาบันทึก
+ *     ได้ทั้งเงินสดและยอดที่คืนเข้ากระเป๋า
+ *   - เปลี่ยนสถานะด้วย UPDATE แบบมีเงื่อนไข (สถานะเดิมที่ยอมรับ) ที่ชนะได้คนเดียว: แอดมินสองคนกด
+ *     พร้อมกัน หรือผู้ใช้ยกเลิกขณะแอดมินกดเริ่มโอน — มีผลแค่ครั้งแรก ยอดคืนครั้งเดียว
  *
  * ลำดับล็อกเหมือนทุกทางที่แตะเงิน: กระเป๋าก่อน แล้วแถวของรายการ
  */
@@ -51,6 +57,9 @@ class WalletWithdrawalService
 
     /** พิกเซลสูงสุดของสลิป (กว้าง × สูง) — กันไฟล์เล็กที่แตกออกมาเป็นภาพมหึมา */
     public const MAX_SLIP_PIXELS = 40_000_000;
+
+    /** เติมเงินภายในกี่วันก่อนขอถอน ถึงเตือนแอดมิน (เงินเติมด้วยบัตรถูก chargeback ย้อนหลังได้) */
+    public const RECENT_TOPUP_DAYS = 7;
 
     public function __construct(private readonly WalletLedger $ledger) {}
 
@@ -85,11 +94,11 @@ class WalletWithdrawalService
         return WalletWithdrawal::where('open_user_id', $userId)->first();
     }
 
-    /** ยอดที่ถูกพักกับคำขอถอนที่ยังรอ (สตางค์) */
+    /** ยอดที่ถูกพักกับคำขอถอนที่ยังเปิดอยู่ — รอแอดมิน หรือแอดมินกำลังโอน (สตางค์) */
     public function pendingSatang(int $userId): int
     {
         $sum = WalletWithdrawal::where('user_id', $userId)
-            ->where('status', WalletWithdrawal::STATUS_PENDING)
+            ->whereIn('status', WalletWithdrawal::OPEN_STATUSES)
             ->sum('amount');
 
         return Satang::fromBaht((string) $sum);
@@ -108,7 +117,7 @@ class WalletWithdrawalService
     public function request(User $user, int $satang, string $key, ?array $formAccount = null, ?string $ip = null): array
     {
         if ($existing = WalletWithdrawal::where('user_id', $user->id)->where('idempotency_key', $key)->first()) {
-            return [$existing, false];
+            return [$this->sameSubmit($existing, $satang), false];
         }
 
         if (! $this->enabled()) {
@@ -134,7 +143,7 @@ class WalletWithdrawalService
 
                 // ใต้ล็อกกระเป๋าแล้ว: คำขอเดียวกันที่ชนะไปก่อนหน้าเสี้ยววินาทีเห็นได้แน่นอน
                 if ($same = WalletWithdrawal::where('user_id', $user->id)->where('idempotency_key', $key)->first()) {
-                    return [$same, false];
+                    return [$this->sameSubmit($same, $satang), false];
                 }
                 if ($wallet === null || ! $wallet->is_active) {
                     throw new WithdrawalRefused('กระเป๋าเงินนี้ถูกระงับการใช้งาน กรุณาติดต่อทีมงาน');
@@ -185,7 +194,7 @@ class WalletWithdrawalService
         } catch (UniqueConstraintViolationException) {
             // สองคำขอหลุดมาพร้อมกัน (หรือ SQLite ที่ไม่มี row lock): key เดียวกัน = คำขอเดิม
             if ($same = WalletWithdrawal::where('user_id', $user->id)->where('idempotency_key', $key)->first()) {
-                return [$same, false];
+                return [$this->sameSubmit($same, $satang), false];
             }
             $open = $this->openFor($user->id);
 
@@ -208,6 +217,8 @@ class WalletWithdrawalService
     /**
      * ผู้ใช้ยกเลิกคำขอของตัวเองระหว่างรอ — ยอดที่พักคืนเข้ากระเป๋าทันที
      *
+     * ได้เฉพาะก่อนแอดมินกดเริ่มโอน: หลังจากนั้นเงินอาจออกจากบัญชีเราไปแล้ว
+     *
      * @throws WithdrawalRefused
      */
     public function cancel(User $user, WalletWithdrawal $withdrawal): WalletWithdrawal
@@ -216,13 +227,16 @@ class WalletWithdrawalService
             throw new WithdrawalRefused('ไม่พบคำขอนี้');
         }
 
-        return $this->close($withdrawal, WalletWithdrawal::STATUS_CANCELLED, [
+        return $this->close($withdrawal, [WalletWithdrawal::STATUS_PENDING], WalletWithdrawal::STATUS_CANCELLED, [
             'cancelled_at' => now(),
         ], WalletTransaction::STATUS_CANCELLED, 'คืนยอดที่พักไว้ — ยกเลิกคำขอถอน ' . $withdrawal->withdrawal_id);
     }
 
     /**
      * แอดมินปฏิเสธ — ต้องมีเหตุผล (ผู้ใช้เห็น) ยอดที่พักคืนเข้ากระเป๋า
+     *
+     * ได้ทั้งก่อนและหลังกดเริ่มโอน (เช่น ชื่อบัญชีไม่ตรง หรือโอนไม่ผ่าน) — หน้าแอดมินเตือนว่า
+     * ห้ามกดถ้าโอนไปแล้ว เพราะยอดที่พักจะคืนเข้ากระเป๋าผู้ใช้
      *
      * @throws WithdrawalRefused
      */
@@ -233,7 +247,7 @@ class WalletWithdrawalService
             throw new WithdrawalRefused('กรุณาระบุเหตุผล ' . self::MIN_REJECT_REASON . '–255 ตัวอักษร — ผู้ใช้จะเห็นข้อความนี้');
         }
 
-        return $this->close($withdrawal, WalletWithdrawal::STATUS_REJECTED, [
+        return $this->close($withdrawal, WalletWithdrawal::OPEN_STATUSES, WalletWithdrawal::STATUS_REJECTED, [
             'reject_reason' => $reason,
             'reviewed_by' => $admin->id,
             'reviewed_at' => now(),
@@ -241,7 +255,53 @@ class WalletWithdrawalService
     }
 
     /**
+     * แอดมินรับเรื่องก่อนโอน (pending → processing) — ตั้งแต่นี้ผู้ใช้ยกเลิกไม่ได้ และหน้าแอดมิน
+     * แสดงเลขบัญชีเต็มให้โอน
+     *
+     * กระเป๋าที่ติดลบ (ปรับยอดด้วยมือ หรือรายการที่ตัดเงินซ้อนกัน) ไม่ให้เริ่ม — เงินที่พักไว้อาจ
+     * ถูกใช้ไปแล้ว แอดมินต้องตรวจก่อน หรือปฏิเสธ
+     *
+     * @throws WithdrawalRefused
+     */
+    public function startTransfer(WalletWithdrawal $withdrawal, User $admin): WalletWithdrawal
+    {
+        if ($withdrawal->status !== WalletWithdrawal::STATUS_PENDING) {
+            throw new WithdrawalRefused($this->notStartable($withdrawal));
+        }
+
+        DB::transaction(function () use ($withdrawal, $admin) {
+            $wallet = $withdrawal->wallet_id ? Wallet::whereKey($withdrawal->wallet_id)->lockForUpdate()->first() : null;
+
+            if ($wallet !== null && ($balance = $this->ledger->balanceSatang($wallet->id)) < 0) {
+                throw new WithdrawalRefused('กระเป๋าของผู้ใช้ติดลบ ' . Satang::format($balance)
+                    . ' — ยอดที่พักไว้อาจถูกใช้ซ้อนไปแล้ว ตรวจรายการในกระเป๋าก่อน หรือกดไม่อนุมัติ');
+            }
+
+            $claimed = WalletWithdrawal::whereKey($withdrawal->id)
+                ->where('status', WalletWithdrawal::STATUS_PENDING)
+                ->update([
+                    'status' => WalletWithdrawal::STATUS_PROCESSING,
+                    'processing_by' => $admin->id,
+                    'processing_at' => now(),
+                ]);
+
+            if ($claimed !== 1) {
+                throw new WithdrawalRefused($this->notStartable($withdrawal->fresh() ?? $withdrawal));
+            }
+        }, GpuxMineEarningSettlementService::DEADLOCK_ATTEMPTS);
+
+        $withdrawal->refresh();
+        Log::info('[wallet] withdrawal transfer started', ['withdrawal_id' => $withdrawal->id, 'by' => $admin->id]);
+        BusinessAlerts::withdrawalUpdated($withdrawal);
+
+        return $withdrawal;
+    }
+
+    /**
      * แอดมินโอนเงินให้แล้ว — บันทึกเลขอ้างอิงการโอน และ/หรือสลิป (เก็บบนดิสก์ส่วนตัว)
+     *
+     * ได้เฉพาะคำขอที่กดเริ่มโอนแล้ว (processing) — ไม่ปฏิเสธเพราะยอดกระเป๋าตอนนี้: เงินออกไปแล้ว
+     * สิ่งที่ต้องทำคือบันทึกให้ตรงความจริง การตรวจยอดอยู่ที่ startTransfer() ก่อนโอน
      *
      * @throws WithdrawalRefused
      */
@@ -253,7 +313,10 @@ class WalletWithdrawalService
         if ($reference === null && $slip === null) {
             throw new WithdrawalRefused('กรุณากรอกเลขอ้างอิงการโอน หรือแนบสลิปอย่างน้อยหนึ่งอย่าง');
         }
-        if ($withdrawal->status !== WalletWithdrawal::STATUS_PENDING) {
+        if ($withdrawal->status === WalletWithdrawal::STATUS_PENDING) {
+            throw new WithdrawalRefused('กด "เริ่มโอน" ก่อน แล้วจึงโอนในแอปธนาคาร — คำขอ ' . $withdrawal->withdrawal_id . ' ยังไม่ได้เริ่มโอน');
+        }
+        if ($withdrawal->status !== WalletWithdrawal::STATUS_PROCESSING) {
             throw new WithdrawalRefused($this->alreadyDecided($withdrawal));
         }
 
@@ -261,7 +324,7 @@ class WalletWithdrawalService
 
         $won = DB::transaction(function () use ($withdrawal, $admin, $reference, $slipPath) {
             $claimed = WalletWithdrawal::whereKey($withdrawal->id)
-                ->where('status', WalletWithdrawal::STATUS_PENDING)
+                ->where('status', WalletWithdrawal::STATUS_PROCESSING)
                 ->update([
                     'status' => WalletWithdrawal::STATUS_APPROVED,
                     'open_user_id' => null,
@@ -306,21 +369,22 @@ class WalletWithdrawalService
     /**
      * ปิดคำขอแบบคืนยอด (ยกเลิก/ปฏิเสธ) — claim ได้ครั้งเดียว แล้วคืนยอดเข้ากระเป๋าในทรานแซกชันเดียวกัน
      *
+     * @param  array<int, string>  $from  สถานะที่ยอมให้ปิดทางนี้
      * @param  array<string, mixed>  $columns
      *
      * @throws WithdrawalRefused
      */
-    private function close(WalletWithdrawal $withdrawal, string $to, array $columns, string $holdStatus, string $description): WalletWithdrawal
+    private function close(WalletWithdrawal $withdrawal, array $from, string $to, array $columns, string $holdStatus, string $description): WalletWithdrawal
     {
-        if ($withdrawal->status !== WalletWithdrawal::STATUS_PENDING) {
-            throw new WithdrawalRefused($this->alreadyDecided($withdrawal));
+        if (! in_array($withdrawal->status, $from, true)) {
+            throw new WithdrawalRefused($this->notClosable($withdrawal, $to));
         }
 
-        $won = DB::transaction(function () use ($withdrawal, $to, $columns, $holdStatus, $description) {
+        $won = DB::transaction(function () use ($withdrawal, $from, $to, $columns, $holdStatus, $description) {
             $wallet = $withdrawal->wallet_id ? Wallet::whereKey($withdrawal->wallet_id)->lockForUpdate()->first() : null;
 
             $claimed = WalletWithdrawal::whereKey($withdrawal->id)
-                ->where('status', WalletWithdrawal::STATUS_PENDING)
+                ->whereIn('status', $from)
                 ->update(array_merge($columns, ['status' => $to, 'open_user_id' => null]));
 
             if ($claimed !== 1) {
@@ -365,7 +429,7 @@ class WalletWithdrawalService
         }, GpuxMineEarningSettlementService::DEADLOCK_ATTEMPTS);
 
         if (! $won) {
-            throw new WithdrawalRefused($this->alreadyDecided($withdrawal->fresh() ?? $withdrawal));
+            throw new WithdrawalRefused($this->notClosable($withdrawal->fresh() ?? $withdrawal, $to));
         }
 
         $withdrawal->refresh();
@@ -466,9 +530,99 @@ class WalletWithdrawalService
         return $path;
     }
 
+    /**
+     * ที่มาของเงินในกระเป๋าของคำขอนี้ — หน้าแอดมินแสดงก่อนโอน (null = กระเป๋าถูกลบไปแล้ว)
+     *
+     * ยอดถอนได้คือยอดคงเหลือทั้งกระเป๋า (R2-4) ซึ่งรวมเงินเติม โบนัสเติมเงิน และเงินคืน — แอดมิน
+     * ต้องแยกได้ว่ากำลังจ่ายรายได้จริง หรือเงินโปรโมชัน/เงินที่เพิ่งเติมด้วยบัตร (เสี่ยงถูก
+     * chargeback) นโยบายว่าจะจ่ายหรือไม่เป็นของเจ้าของระบบ ตรงนี้แค่ทำให้เห็น
+     *
+     * earned = รายได้ GPUxMINE + ค่าแนะนำ GPUxMINE − ที่ถูกเรียกคืน; over_earned = ยอดที่ถอนแล้ว/รอถอน
+     * (รวมคำขอนี้) ที่เกินจาก earned
+     *
+     * @return array{balance:int, active:bool, deposits:int, topup_bonus:int, bonus:int, earnings:int, referrals:int, reversed:int, earned:int, withdrawn:int, over_earned:int, last_topup:?WalletTopup, recent_topup:bool}|null
+     */
+    public function fundsFor(WalletWithdrawal $withdrawal): ?array
+    {
+        $wallet = $withdrawal->wallet_id ? Wallet::find($withdrawal->wallet_id) : null;
+        if ($wallet === null) {
+            return null;
+        }
+
+        $sum = fn (callable $scope): int => Satang::fromBaht((string) ($scope(WalletTransaction::where('wallet_id', $wallet->id))->sum('amount') ?? '0'));
+        $completed = fn ($q) => $q->where('status', WalletTransaction::STATUS_COMPLETED);
+
+        $earnings = $sum(fn ($q) => $completed($q)->where('type', WalletTransaction::TYPE_EARNING)->where('transaction_id', 'like', 'GXM%'));
+        $referrals = $sum(fn ($q) => $completed($q)->where('type', WalletTransaction::TYPE_EARNING)->where('transaction_id', 'like', 'GXA%'));
+        $reversed = $sum(fn ($q) => $completed($q)->where('type', WalletTransaction::TYPE_ADJUSTMENT)
+            ->where(fn ($q) => $q->where('transaction_id', 'like', GpuxMinePayoutReversalService::EARNING_PREFIX . '%')
+                ->orWhere('transaction_id', 'like', GpuxMinePayoutReversalService::COMMISSION_PREFIX . '%')));
+        $withdrawn = -$sum(fn ($q) => $q->where('type', WalletTransaction::TYPE_WITHDRAWAL)
+            ->whereIn('status', [WalletTransaction::STATUS_PENDING, WalletTransaction::STATUS_COMPLETED]));
+        $earned = $earnings + $referrals + $reversed;
+
+        $topups = WalletTopup::where('wallet_id', $wallet->id)->where('status', WalletTopup::STATUS_APPROVED);
+        $lastTopup = (clone $topups)->latest('approved_at')->latest('id')->first();
+
+        return [
+            'balance' => Satang::fromBaht((string) $wallet->balance),
+            'active' => (bool) $wallet->is_active,
+            'deposits' => $sum(fn ($q) => $completed($q)->where('type', WalletTransaction::TYPE_DEPOSIT)),
+            'topup_bonus' => Satang::fromBaht((string) ((clone $topups)->sum('bonus_amount') ?? '0')),
+            'bonus' => $sum(fn ($q) => $completed($q)->whereIn('type', [WalletTransaction::TYPE_BONUS, WalletTransaction::TYPE_CASHBACK])),
+            'earnings' => $earnings,
+            'referrals' => $referrals,
+            'reversed' => $reversed,
+            'earned' => $earned,
+            'withdrawn' => $withdrawn,
+            'over_earned' => max(0, $withdrawn - max(0, $earned)),
+            'last_topup' => $lastTopup,
+            'recent_topup' => $lastTopup?->approved_at !== null && $lastTopup->approved_at->gt(now()->subDays(self::RECENT_TOPUP_DAYS)),
+        ];
+    }
+
+    /**
+     * กุญแจเดิมที่ส่งมาอีกครั้ง: เป็นการกดซ้ำจริงก็ต่อเมื่อคำขอเดิมยังเปิดอยู่และยอดเท่าเดิม
+     *
+     * ฟอร์มที่เบราว์เซอร์เก็บไว้ (กด Back หลังยกเลิกหรือหลังแอดมินปิดคำขอ) ส่งกุญแจเดิมมาพร้อมยอดใหม่ได้
+     * ถ้าตอบว่า "ส่งไปแล้ว" ผู้ใช้จะรอเงินที่ไม่มีคำขอรองรับ — บอกให้โหลดหน้าใหม่แทน
+     *
+     * @throws WithdrawalRefused
+     */
+    private function sameSubmit(WalletWithdrawal $existing, int $satang): WalletWithdrawal
+    {
+        if (! $existing->isOpen() || $existing->amountSatang() !== $satang) {
+            throw new WithdrawalRefused('ฟอร์มนี้ใช้ส่งคำขอ ' . $existing->withdrawal_id . ' ไปแล้ว (' . $existing->statusLabel() . ') — โหลดหน้าใหม่แล้วลองอีกครั้ง');
+        }
+
+        return $existing;
+    }
+
+    private function notStartable(WalletWithdrawal $withdrawal): string
+    {
+        if ($withdrawal->isProcessing()) {
+            $who = $withdrawal->processor?->name;
+
+            return 'คำขอ ' . $withdrawal->withdrawal_id . ' เริ่มโอนไปแล้ว' . ($who ? ' โดย ' . $who : '') . ' — โหลดหน้าใหม่แล้วดูอีกครั้ง';
+        }
+
+        return $this->alreadyDecided($withdrawal);
+    }
+
+    private function notClosable(WalletWithdrawal $withdrawal, string $to): string
+    {
+        if ($to === WalletWithdrawal::STATUS_CANCELLED && $withdrawal->isProcessing()) {
+            return 'แอดมินกำลังโอนเงินคำขอ ' . $withdrawal->withdrawal_id . ' อยู่ — ยกเลิกไม่ได้แล้ว หากมีปัญหาติดต่อทีมงาน';
+        }
+
+        return $this->alreadyDecided($withdrawal);
+    }
+
     private function alreadyOpen(WalletWithdrawal $open): string
     {
-        return 'มีคำขอถอน ' . $open->withdrawal_id . ' (' . Satang::format($open->amountSatang()) . ') รอแอดมินอยู่แล้ว — ยกเลิกคำขอเดิมก่อน หรือรอให้ดำเนินการเสร็จ';
+        return $open->isProcessing()
+            ? 'มีคำขอถอน ' . $open->withdrawal_id . ' (' . Satang::format($open->amountSatang()) . ') ที่แอดมินกำลังโอนอยู่ — รอให้เสร็จก่อนแล้วจึงขอใหม่'
+            : 'มีคำขอถอน ' . $open->withdrawal_id . ' (' . Satang::format($open->amountSatang()) . ') รอแอดมินอยู่แล้ว — ยกเลิกคำขอเดิมก่อน หรือรอให้ดำเนินการเสร็จ';
     }
 
     private function alreadyDecided(WalletWithdrawal $withdrawal): string

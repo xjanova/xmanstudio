@@ -9,9 +9,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * คำขอถอนเงินสดออกจากกระเป๋า XMAN หนึ่งใบ (R2-4)
  *
- *   pending ──(แอดมินโอนแล้วกดอนุมัติ + เลขอ้างอิง/สลิป)──▶ approved
- *      │──(แอดมินปฏิเสธ + เหตุผล: คืนยอดที่พักเข้ากระเป๋า)──▶ rejected
- *      └──(ผู้ใช้ยกเลิกเอง: คืนยอดที่พักเข้ากระเป๋า)──────────▶ cancelled
+ *   pending ──(แอดมินกด "เริ่มโอน")──▶ processing ──(โอนในแอปธนาคารแล้ว + เลขอ้างอิง/สลิป)──▶ approved
+ *      │                                  └──(แอดมินปฏิเสธ + เหตุผล: คืนยอดที่พัก)──────────▶ rejected
+ *      │──(แอดมินปฏิเสธ + เหตุผล: คืนยอดที่พักเข้ากระเป๋า)──────────────────────────────────▶ rejected
+ *      └──(ผู้ใช้ยกเลิกเอง: คืนยอดที่พักเข้ากระเป๋า)──────────────────────────────────────▶ cancelled
+ *
+ * processing มีไว้กันจ่ายสองทาง: แอดมินโอนเงินจริงก่อนแล้วค่อยกลับมาบันทึก ถ้าผู้ใช้ยังยกเลิกได้
+ * ในช่วงนั้น ยอดที่พักจะคืนเข้ากระเป๋าทั้งที่เงินสดออกไปแล้ว ผู้ใช้ยกเลิกได้เฉพาะ pending
+ * และบันทึกว่าโอนแล้วได้เฉพาะ processing — เลขบัญชีเต็มขึ้นให้แอดมินเห็นหลังกดเริ่มโอนเท่านั้น
  *
  * ยอดถูกพักตั้งแต่ตอนขอ: wallets.balance ถูกหักด้วยรายการ withdrawal (pending) ทันที
  * เงินที่รอถอนจึงใช้จ่ายไม่ได้ — ทั้งในเว็บนี้และที่ aixman ซึ่งตัดเงินจาก balance ตรง ๆ
@@ -21,6 +26,9 @@ class WalletWithdrawal extends Model
 {
     public const STATUS_PENDING = 'pending';
 
+    /** แอดมินรับเรื่องและกำลังโอน — ยอดยังพักอยู่ ผู้ใช้ยกเลิกไม่ได้แล้ว */
+    public const STATUS_PROCESSING = 'processing';
+
     public const STATUS_APPROVED = 'approved';
 
     public const STATUS_REJECTED = 'rejected';
@@ -29,9 +37,16 @@ class WalletWithdrawal extends Model
 
     public const STATUSES = [
         self::STATUS_PENDING,
+        self::STATUS_PROCESSING,
         self::STATUS_APPROVED,
         self::STATUS_REJECTED,
         self::STATUS_CANCELLED,
+    ];
+
+    /** ยังเปิดอยู่ = ยอดยังถูกพัก และ open_user_id ยังกันคำขอใหม่ของคนเดียวกัน */
+    public const OPEN_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_PROCESSING,
     ];
 
     public const METHOD_BANK = 'bank';
@@ -72,10 +87,12 @@ class WalletWithdrawal extends Model
         'promptpay_id' => 'encrypted',
         'reviewed_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'processing_at' => 'datetime',
         'open_user_id' => 'integer',
         'hold_transaction_id' => 'integer',
         'return_transaction_id' => 'integer',
         'reviewed_by' => 'integer',
+        'processing_by' => 'integer',
     ];
 
     /** เลขบัญชี/พร้อมเพย์เต็ม ๆ ห้ามหลุดออก JSON โดยไม่ตั้งใจ */
@@ -102,6 +119,12 @@ class WalletWithdrawal extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    /** แอดมินที่กด "เริ่มโอน" */
+    public function processor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'processing_by');
+    }
+
     public function holdTransaction(): BelongsTo
     {
         return $this->belongsTo(WalletTransaction::class, 'hold_transaction_id');
@@ -117,10 +140,22 @@ class WalletWithdrawal extends Model
         return $this->status === self::STATUS_PENDING;
     }
 
+    public function isProcessing(): bool
+    {
+        return $this->status === self::STATUS_PROCESSING;
+    }
+
+    /** ยอดยังถูกพักอยู่ (รอแอดมิน หรือแอดมินกำลังโอน) */
+    public function isOpen(): bool
+    {
+        return in_array($this->status, self::OPEN_STATUSES, true);
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {
             self::STATUS_PENDING => 'รอแอดมินอนุมัติ',
+            self::STATUS_PROCESSING => 'แอดมินกำลังโอน',
             self::STATUS_APPROVED => 'โอนเข้าบัญชีแล้ว',
             self::STATUS_REJECTED => 'ไม่อนุมัติ · คืนเข้ากระเป๋าแล้ว',
             self::STATUS_CANCELLED => 'ยกเลิกแล้ว · คืนเข้ากระเป๋าแล้ว',

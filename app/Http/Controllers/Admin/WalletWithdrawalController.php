@@ -18,9 +18,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * คิวคำขอถอนเงินของแอดมิน (R2-4)
  *
- * ยอดถูกพักไว้ตั้งแต่ผู้ใช้ขอ — แอดมินโอนเงินจริงนอกระบบ (แอปธนาคาร) แล้วกลับมากดอนุมัติพร้อม
- * เลขอ้างอิง/สลิป หรือปฏิเสธพร้อมเหตุผล (ยอดคืนกระเป๋า) ทั้งสองอย่างถามยืนยันก่อนที่หน้าเว็บ
- * และกันกดซ้ำที่ฝั่งเซิร์ฟเวอร์ (WalletWithdrawalService)
+ * ยอดถูกพักไว้ตั้งแต่ผู้ใช้ขอ — แอดมินกด "เริ่มโอน" ก่อน (ผู้ใช้ยกเลิกไม่ได้แล้ว และเลขบัญชีเต็ม
+ * ขึ้นให้เห็น) แล้วโอนเงินจริงนอกระบบ (แอปธนาคาร) แล้วกลับมาบันทึกพร้อมเลขอ้างอิง/สลิป หรือ
+ * ปฏิเสธพร้อมเหตุผล (ยอดคืนกระเป๋า) ทุกปุ่มถามยืนยันก่อนที่หน้าเว็บ และกันกดซ้ำที่ฝั่งเซิร์ฟเวอร์
+ * (WalletWithdrawalService)
  */
 class WalletWithdrawalController extends Controller
 {
@@ -29,6 +30,7 @@ class WalletWithdrawalController extends Controller
     /** ตัวกรองสถานะ → คำบนแท็บ */
     public const FILTERS = [
         WalletWithdrawal::STATUS_PENDING => 'รออนุมัติ',
+        WalletWithdrawal::STATUS_PROCESSING => 'กำลังโอน',
         WalletWithdrawal::STATUS_APPROVED => 'โอนแล้ว',
         WalletWithdrawal::STATUS_REJECTED => 'ไม่อนุมัติ',
         WalletWithdrawal::STATUS_CANCELLED => 'ผู้ใช้ยกเลิก',
@@ -43,10 +45,10 @@ class WalletWithdrawalController extends Controller
 
         return view('admin.wallets.withdrawals.index', [
             'withdrawals' => $this->filtered($status, $search)
-                ->with(['user:id,name,email', 'reviewer:id,name'])
-                // คิวรออนุมัติ: รอนานสุดขึ้นก่อน — ที่อื่นใหม่สุดก่อน
+                ->with(['user:id,name,email', 'reviewer:id,name', 'processor:id,name'])
+                // คิวที่ยังเปิด (รออนุมัติ/กำลังโอน): รอนานสุดขึ้นก่อน — ที่อื่นใหม่สุดก่อน
                 ->when(
-                    $status === WalletWithdrawal::STATUS_PENDING,
+                    in_array($status, WalletWithdrawal::OPEN_STATUSES, true),
                     fn (Builder $q) => $q->orderBy('id'),
                     fn (Builder $q) => $q->orderByDesc('id'),
                 )
@@ -64,16 +66,32 @@ class WalletWithdrawalController extends Controller
 
     public function show(int $id): View
     {
-        $withdrawal = WalletWithdrawal::with(['user', 'reviewer', 'holdTransaction', 'returnTransaction'])->findOrFail($id);
+        $withdrawal = WalletWithdrawal::with(['user', 'reviewer', 'processor', 'holdTransaction', 'returnTransaction'])->findOrFail($id);
 
         return view('admin.wallets.withdrawals.show', [
             'withdrawal' => $withdrawal,
+            // ยอดกระเป๋าตอนนี้และที่มาของเงิน — เห็นก่อนเริ่มโอนว่ากำลังจ่ายรายได้จริงหรือเงินเติม/โบนัส
+            'funds' => $this->withdrawals->fundsFor($withdrawal),
             // ชื่อที่ยืนยันตัวตนไว้ — ให้เทียบกับชื่อบัญชีปลายทางก่อนโอน
             'kyc' => $withdrawal->user_id ? KycVerification::where('user_id', $withdrawal->user_id)->first() : null,
             'others' => $withdrawal->user_id
                 ? WalletWithdrawal::where('user_id', $withdrawal->user_id)->whereKeyNot($withdrawal->id)->latest('id')->limit(10)->get()
                 : collect(),
         ]);
+    }
+
+    /** รับเรื่องก่อนโอน — ผู้ใช้ยกเลิกไม่ได้ตั้งแต่ตอนนี้ และหน้าคำขอแสดงเลขบัญชีเต็ม */
+    public function start(Request $request, int $id): RedirectResponse
+    {
+        $withdrawal = WalletWithdrawal::findOrFail($id);
+
+        try {
+            $withdrawal = $this->withdrawals->startTransfer($withdrawal, $request->user());
+        } catch (WithdrawalRefused $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', 'เริ่มโอน ' . $withdrawal->withdrawal_id . ' แล้ว — ผู้ใช้ยกเลิกไม่ได้แล้ว โอน ' . Satang::format($withdrawal->amountSatang()) . ' ในแอปธนาคาร แล้วกลับมาบันทึกเลขอ้างอิงหรือสลิป');
     }
 
     public function approve(Request $request, int $id): RedirectResponse
@@ -140,7 +158,7 @@ class WalletWithdrawalController extends Controller
     public function export(Request $request): StreamedResponse
     {
         [$status, $search] = $this->filters($request);
-        $query = $this->filtered($status, $search)->with(['user:id,name,email', 'reviewer:id,name'])->orderBy('id');
+        $query = $this->filtered($status, $search)->with(['user:id,name,email', 'reviewer:id,name', 'processor:id,name'])->orderBy('id');
 
         return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
@@ -162,8 +180,8 @@ class WalletWithdrawalController extends Controller
                         $w->account_source === WalletWithdrawal::SOURCE_KYC ? 'KYC' : 'กรอกเอง',
                         $w->payout_reference,
                         $w->reject_reason,
-                        $w->reviewer?->name,
-                        ($w->reviewed_at ?? $w->cancelled_at)?->copy()->timezone('Asia/Bangkok')->format('Y-m-d H:i'),
+                        $w->reviewer?->name ?? $w->processor?->name,
+                        ($w->reviewed_at ?? $w->cancelled_at ?? $w->processing_at)?->copy()->timezone('Asia/Bangkok')->format('Y-m-d H:i'),
                     ]));
                 }
             });
