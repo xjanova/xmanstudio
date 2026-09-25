@@ -290,8 +290,8 @@
             </ol>
         </div>
         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-            <x-bi th="งานที่ผลดูผิดปกติจะขึ้นว่า “รอตรวจสอบ” จนกว่าผู้ดูแลจะตัดสิน และเครื่องที่ถูกระงับจะพักเงินไว้จนกว่าจะยกเลิกการระงับ · เงินในกระเป๋า XMAN ใช้ซื้อสินค้าและบริการในเว็บนี้ได้ หรือถอนเป็นเงินสด: ขอถอนที่หน้ากระเป๋าเงิน (ต้องยืนยันตัวตน) แล้วแอดมินอนุมัติและโอนเข้าบัญชีของคุณ"
-                  en="Jobs that look unusual show “Under review” until an admin decides, and a suspended machine's earnings wait until the suspension is lifted. XMAN wallet money can be spent on this site or cashed out: request a withdrawal on the wallet page (identity verification required), and our team approves it and transfers it to your account." />
+            <x-bi th="งานที่ผลดูผิดปกติจะขึ้นว่า “รอตรวจสอบ” จนกว่าผู้ดูแลจะตัดสิน และเครื่องที่ถูกระงับจะพักเงินไว้จนกว่าจะยกเลิกการระงับ · เงินในกระเป๋า XMAN ใช้ซื้อสินค้าและบริการในเว็บนี้ได้ หรือถอนเป็นเงินสด: ขอถอนที่หน้ากระเป๋าเงิน (ต้องยืนยันตัวตน) แล้วแอดมินอนุมัติและโอนเข้าบัญชีของคุณ · งานที่เข้ากระเป๋าแล้วแต่ภายหลังพบว่าผิดปกติ ผู้ดูแลเรียกคืนได้ถ้ายอดยังไม่ถูกถอนออก — จะขึ้นว่า “เรียกคืนแล้ว” พร้อมเหตุผล"
+                  en="Jobs that look unusual show “Under review” until an admin decides, and a suspended machine's earnings wait until the suspension is lifted. XMAN wallet money can be spent on this site or cashed out: request a withdrawal on the wallet page (identity verification required), and our team approves it and transfers it to your account. A paid job later found to be bad can be taken back by an admin while the money is still in the wallet; it then shows “Reversed” with the reason." />
         </p>
     </div>
 
@@ -607,6 +607,7 @@
                                                 <x-bi th="พ้นระยะพัก" en="Clears" /> {{ $ends->copy()->timezone('Asia/Bangkok')->format('d/m H:i') }}
                                             </span>
                                         @elseif ($row->status === 'void' && $row->void_reason)
+                                            {{-- ยกเลิกก่อนจ่าย หรือจ่ายแล้วถูกเรียกคืนจากกระเป๋า (R2-3) — ป้ายสถานะบอกว่าอันไหน --}}
                                             <span class="block mt-0.5 text-[11px] text-gray-400 max-w-[14rem]">{{ $row->void_reason }}</span>
                                         @endif
                                     </td>

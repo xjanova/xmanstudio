@@ -107,6 +107,8 @@ class GpuxMineStatusApiTest extends TestCase
             'amount_satang' => 150,
             'donated_value_satang' => 0,
             'status' => 'pending',
+            'void_reason' => null,
+            'reversed' => false,
             'completed_at' => $todayJob->completed_at->toIso8601String(),
             'updated_at' => $todayJob->updated_at->toIso8601String(),
         ], $jobs[0]);

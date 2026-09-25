@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\DomainSettingController;
 use App\Http\Controllers\Admin\DonationController;
 use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\Admin\GpuxMineController;
+use App\Http\Controllers\Admin\GpuxMineReversalController;
 use App\Http\Controllers\Admin\GuideScreenshotController;
 use App\Http\Controllers\Admin\LicenseAnalyticsController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
@@ -837,6 +838,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::delete('/{affiliate}', [App\Http\Controllers\Admin\AffiliateController::class, 'destroy'])->name('destroy');
         Route::post('/commission/{commission}/approve', [App\Http\Controllers\Admin\AffiliateController::class, 'approveCommission'])->name('commission.approve');
         Route::post('/commission/{commission}/reject', [App\Http\Controllers\Admin\AffiliateController::class, 'rejectCommission'])->name('commission.reject');
+        // เรียกคืนค่าแนะนำ GPUxMINE ที่จ่ายไปแล้ว (R2-3) — ได้ครั้งเดียว และเฉพาะเมื่อยอดยังไม่ถูกถอนออก
+        Route::post('/commission/{id}/reverse', [GpuxMineReversalController::class, 'commission'])
+            ->whereNumber('id')->name('commission.reverse');
     });
 
     // Premium Mockup Dashboard
@@ -1707,6 +1711,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->whereNumber('id')->name('earnings.approve');
         Route::post('/earnings/{id}/void', [GpuxMineController::class, 'voidEarning'])
             ->whereNumber('id')->name('earnings.void');
+        // เรียกคืนรายได้ที่เข้ากระเป๋าไปแล้ว (R2-3) — ได้ครั้งเดียว และเฉพาะเมื่อยอดยังไม่ถูกถอนออก
+        Route::post('/earnings/{id}/reverse', [GpuxMineReversalController::class, 'earning'])
+            ->whereNumber('id')->name('earnings.reverse');
         Route::get('/nodes/{id}', [GpuxMineController::class, 'show'])->whereNumber('id')->name('show');
         Route::post('/nodes/{id}/suspend', [GpuxMineController::class, 'suspend'])->whereNumber('id')->name('suspend');
         Route::post('/nodes/{id}/resume', [GpuxMineController::class, 'resume'])->whereNumber('id')->name('resume');

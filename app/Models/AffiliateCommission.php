@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Mail;
 
 class AffiliateCommission extends Model
 {
+    /**
+     * จ่ายแล้วถูกแอดมินเรียกคืนจากกระเป๋า (R2-3 — ค่าแนะนำ GPUxMINE เท่านั้น ดู
+     * GpuxMinePayoutReversalService) ต่างจาก 'rejected' ซึ่งแปลว่าไม่เคยจ่าย
+     */
+    public const STATUS_REVERSED = 'reversed';
+
     protected $fillable = [
         'affiliate_id',
         'order_id',
@@ -33,6 +39,7 @@ class AffiliateCommission extends Model
         'commission_rate' => 'decimal:2',
         'commission_amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'reversed_at' => 'datetime',
     ];
 
     // ── Relationships ──
@@ -50,6 +57,18 @@ class AffiliateCommission extends Model
     public function referredUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'referred_user_id');
+    }
+
+    /** แอดมินที่เรียกคืนค่าแนะนำนี้ (ถ้าถูกเรียกคืน) */
+    public function reversedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    /** เรียกคืนได้: ค่าแนะนำ GPUxMINE ที่จ่ายแล้วและยังไม่ถูกเรียกคืน (ยอดพอหรือไม่ ตัดสินตอนกด) */
+    public function canBeReversed(): bool
+    {
+        return $this->source_type === 'gpuxmine' && $this->status === 'paid' && $this->reversed_at === null;
     }
 
     // ── Scopes ──
@@ -242,6 +261,7 @@ class AffiliateCommission extends Model
             'approved' => 'อนุมัติแล้ว',
             'paid' => 'จ่ายแล้ว',
             'rejected' => 'ปฏิเสธ',
+            self::STATUS_REVERSED => 'เรียกคืนแล้ว',
             default => $this->status,
         };
     }
@@ -256,6 +276,7 @@ class AffiliateCommission extends Model
             'approved' => 'blue',
             'paid' => 'green',
             'rejected' => 'red',
+            self::STATUS_REVERSED => 'gray',
             default => 'gray',
         };
     }

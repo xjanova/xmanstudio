@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
  *   pending ──(พ้นระยะพัก และเครื่องไม่ถูกระงับ)──▶ cleared ──(โอนเข้ากระเป๋า)──▶ paid
  *   (ระยะพักนับจากงานเสร็จหรือแถวถูกบันทึก แล้วแต่อันไหนช้ากว่า — ดู holdEndsAt())
  *   review  = ผลงานดูผิดปกติ รอแอดมินตัดสิน ไม่ถูกปล่อยเอง
- *   void    = ยกเลิก ไม่จ่าย
+ *   void    = ยกเลิก ไม่จ่าย — หรือจ่ายแล้วแอดมินเรียกคืนจากกระเป๋า (reversed_at ไม่ว่าง, R2-3)
  *
  * amount_satang คือสิ่งที่เจ้าของเครื่องได้จริง (หลังหักส่วนแบ่งผู้แนะนำแล้ว) — ถ้าถึงวันโอน
  * ผู้แนะนำไม่ active แล้วและส่วนแบ่งถูกคืน ยอดนี้รวมส่วนที่คืนแล้ว (referral_unpaid_*)
@@ -129,6 +129,9 @@ class GpuJobEarning extends Model
         'paid_at' => 'datetime',
         'reviewed_by' => 'integer',
         'reviewed_at' => 'datetime',
+        'reversed_at' => 'datetime',
+        'reversed_by' => 'integer',
+        'reversal_wallet_transaction_id' => 'integer',
     ];
 
     public function node(): BelongsTo
@@ -163,10 +166,30 @@ class GpuJobEarning extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    /** แอดมินที่เรียกคืนงานนี้จากกระเป๋า (ถ้าถูกเรียกคืน) */
+    public function reverser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    /** จ่ายเข้ากระเป๋าแล้วถูกแอดมินเรียกคืน — สถานะเป็น void เหมือนการยกเลิก แต่เงินเคยเข้ากระเป๋า */
+    public function isReversed(): bool
+    {
+        return $this->reversed_at !== null;
+    }
+
+    /**
+     * เรียกคืนได้: เข้ากระเป๋าแล้วและยังไม่ถูกเรียกคืน — ยอดในกระเป๋ายังพอหรือไม่ตัดสินตอนกด
+     * (GpuxMinePayoutReversalService) ไม่ใช่ตอนวาดหน้า
+     */
+    public function canBeReversed(): bool
+    {
+        return $this->status === self::STATUS_PAID && $this->reversed_at === null;
+    }
+
     /**
      * ยกเลิกได้เฉพาะเงินที่ยังไม่ถึงกระเป๋า — แถวที่จ่ายแล้วมีรายการในกระเป๋า
-     * ผูกอยู่ การยกเลิกตรงนี้จะทำให้ประวัติกับยอดเงินไม่ตรงกัน ต้องปรับกระเป๋า
-     * แยกต่างหากแทน
+     * ผูกอยู่ ใช้การเรียกคืน (canBeReversed) แทน ซึ่งหักกระเป๋าเป็นรายการของมันเอง
      */
     public function canBeVoided(): bool
     {
@@ -223,7 +246,7 @@ class GpuJobEarning extends Model
             self::STATUS_CLEARED => 'รอโอนเข้ากระเป๋า',
             self::STATUS_PENDING => 'อยู่ในระยะพัก',
             self::STATUS_REVIEW => 'รอตรวจสอบ',
-            self::STATUS_VOID => 'ยกเลิก',
+            self::STATUS_VOID => $this->reversed_at !== null ? 'เรียกคืนแล้ว' : 'ยกเลิก',
             default => $this->status,
         };
     }

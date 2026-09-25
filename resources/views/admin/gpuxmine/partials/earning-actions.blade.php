@@ -1,5 +1,6 @@
-{{-- ปุ่มตัดสินรายได้หนึ่งงาน: อนุมัติ (เฉพาะรอตรวจ) และยกเลิก (เฉพาะที่ยังไม่เข้ากระเป๋า)
-     ทั้งสองอย่างเปลี่ยนเงินของคนอื่น จึงถามยืนยันก่อนเสมอ และปิดปุ่มหลังกดกันกดซ้ำ
+{{-- ปุ่มตัดสินรายได้หนึ่งงาน: อนุมัติ (เฉพาะรอตรวจ) ยกเลิก (เฉพาะที่ยังไม่เข้ากระเป๋า) และเรียกคืน
+     (เข้ากระเป๋าแล้ว — หักกระเป๋าเจ้าของคืน ได้ต่อเมื่อยอดยังไม่ถูกถอนออก, R2-3)
+     ทุกอย่างเปลี่ยนเงินของคนอื่น จึงถามยืนยันก่อนเสมอ และปิดปุ่มหลังกดกันกดซ้ำ
      (ฝั่งเซิร์ฟเวอร์กันซ้ำอยู่แล้ว — ตรงนี้กันแค่ความงง) --}}
 @php
     $holdEndsAt = $earning->holdEndsAt($holdHours);
@@ -14,6 +15,8 @@
         default => 'ยังอยู่ในระยะพัก — จะกลับไปพักจนถึง ' . $holdEndsAt->copy()->timezone('Asia/Bangkok')->format('d/m H:i') . ' น. แล้วค่อยเข้ากระเป๋า',
     };
     $voidPrompt = "ยกเลิกรายได้ {$earning->job_id} ({$amount})?\n\nเจ้าของเครื่องจะไม่ได้เงินรายการนี้ และจะเห็นเหตุผลที่กรอก — ย้อนกลับไม่ได้";
+    $reversePrompt = "เรียกคืนรายได้ {$earning->job_id} ({$amount}) จากกระเป๋าเจ้าของเครื่อง?\n\nหักกระเป๋าใบเดิมเท่ายอดนี้ (ได้ต่อเมื่อยอดยังไม่ถูกถอนออก) งานกลายเป็น \"เรียกคืนแล้ว\" และเจ้าของเห็นเหตุผลที่กรอก — ทำได้ครั้งเดียว ย้อนกลับไม่ได้"
+        . ($earning->affiliate_commission_id ? "\n\nส่วนแบ่งผู้แนะนำของงานนี้ (ค่าแนะนำ #{$earning->affiliate_commission_id}) ไม่ถูกเรียกคืนตาม" : '');
 @endphp
 <div class="w-56 space-y-1.5">
     @if ($earning->canBeApproved())
@@ -40,7 +43,21 @@
         </form>
     @endif
 
-    @if (! $earning->canBeApproved() && ! $earning->canBeVoided())
+    @if ($earning->canBeReversed())
+        <form method="POST" action="{{ route('admin.gpuxmine.earnings.reverse', $earning->id) }}"
+              onsubmit="if (! window.confirm(@js($reversePrompt))) return false; this.querySelector('button[type=submit]').disabled = true;"
+              class="flex items-center gap-1.5">
+            @csrf
+            <input type="text" name="reason" required minlength="{{ \App\Services\GpuxMinePayoutReversalService::MIN_REASON }}" maxlength="255" autocomplete="off"
+                   placeholder="เหตุผลที่เรียกคืน (≥10 ตัวอักษร)" title="เจ้าของเครื่องจะเห็นเหตุผลนี้"
+                   class="flex-1 min-w-0 {{ $small }}">
+            <button type="submit" class="px-2.5 py-1 rounded bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold transition whitespace-nowrap disabled:opacity-50 disabled:cursor-wait">
+                เรียกคืน
+            </button>
+        </form>
+    @endif
+
+    @if (! $earning->canBeApproved() && ! $earning->canBeVoided() && ! $earning->canBeReversed())
         <span class="text-xs text-gray-400">—</span>
     @endif
 </div>

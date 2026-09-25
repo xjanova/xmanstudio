@@ -5,7 +5,7 @@
         \App\Models\GpuJobEarning::STATUS_REVIEW => ['รอแอดมินตรวจ', 'text-orange-600 dark:text-orange-400'],
         \App\Models\GpuJobEarning::STATUS_CLEARED => ['รอโอนเข้ากระเป๋า', 'text-sky-600 dark:text-sky-400'],
         \App\Models\GpuJobEarning::STATUS_PAID => ['เข้ากระเป๋าแล้ว', 'text-emerald-600 dark:text-emerald-400'],
-        \App\Models\GpuJobEarning::STATUS_VOID => ['ยกเลิก', 'text-gray-500 dark:text-gray-400'],
+        \App\Models\GpuJobEarning::STATUS_VOID => ['ยกเลิก / เรียกคืน', 'text-gray-500 dark:text-gray-400'],
     ];
     $donated = collect($money)->except(\App\Models\GpuJobEarning::STATUS_VOID)->sum('donated');
     $referral = collect($money)->except(\App\Models\GpuJobEarning::STATUS_VOID)->sum('referral');

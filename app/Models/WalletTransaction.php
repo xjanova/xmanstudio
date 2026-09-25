@@ -62,6 +62,8 @@ class WalletTransaction extends Model
      */
     const SOURCE_GPUXMINE_REFERRAL = 'gpuxmine_referral';
 
+    const SOURCE_REVERSAL = 'reversal';
+
     const SOURCE_WITHDRAWAL_RETURN = 'withdrawal_return';
 
     const STATUS_PENDING = 'pending';
@@ -99,7 +101,7 @@ class WalletTransaction extends Model
             self::TYPE_BONUS => 'โบนัส',
             self::TYPE_CASHBACK => 'เงินคืน',
             self::TYPE_EARNING => $this->source() === self::SOURCE_GPUXMINE_REFERRAL ? 'ค่าแนะนำ GPUxMINE' : 'รายได้แชร์การ์ดจอ',
-            self::TYPE_ADJUSTMENT => 'ปรับยอด',
+            self::TYPE_ADJUSTMENT => $this->source() === self::SOURCE_REVERSAL ? 'เรียกคืนโดยผู้ดูแล' : 'ปรับยอด',
             self::TYPE_REFUND => $this->source() === self::SOURCE_WITHDRAWAL_RETURN ? 'คืนยอดที่ขอถอน' : 'คืนเงิน',
             default => $this->type,
         };
