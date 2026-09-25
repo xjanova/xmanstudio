@@ -56,6 +56,12 @@ class WalletTransaction extends Model
      */
     const TYPE_EARNING = 'earning';
 
+    /**
+     * metadata.source ของรายการที่ประเภทเดียวแยกความหมายไม่ได้ — ป้ายภาษาไทยอ่านจากตรงนี้
+     * ไม่ต้องเพิ่มค่าใน enum ของคอลัมน์ type (aixman และรายงานเดิมไม่ต้องรู้จักอะไรใหม่)
+     */
+    const SOURCE_GPUXMINE_REFERRAL = 'gpuxmine_referral';
+
     const STATUS_PENDING = 'pending';
 
     const STATUS_COMPLETED = 'completed';
@@ -88,13 +94,21 @@ class WalletTransaction extends Model
             self::TYPE_DEPOSIT => 'เติมเงิน',
             self::TYPE_WITHDRAWAL => 'ถอนเงิน',
             self::TYPE_PAYMENT => 'ชำระเงิน',
-            self::TYPE_REFUND => 'คืนเงิน',
             self::TYPE_BONUS => 'โบนัส',
-            self::TYPE_ADJUSTMENT => 'ปรับยอด',
             self::TYPE_CASHBACK => 'เงินคืน',
-            self::TYPE_EARNING => 'รายได้แชร์การ์ดจอ',
+            self::TYPE_EARNING => $this->source() === self::SOURCE_GPUXMINE_REFERRAL ? 'ค่าแนะนำ GPUxMINE' : 'รายได้แชร์การ์ดจอ',
+            self::TYPE_ADJUSTMENT => 'ปรับยอด',
+            self::TYPE_REFUND => 'คืนเงิน',
             default => $this->type,
         };
+    }
+
+    /** metadata.source (ถ้ามี) — บอกว่ารายการนี้มาจากระบบไหน */
+    public function source(): ?string
+    {
+        $source = is_array($this->metadata) ? ($this->metadata['source'] ?? null) : null;
+
+        return is_string($source) ? $source : null;
     }
 
     /**

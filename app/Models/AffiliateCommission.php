@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Mail\AffiliateCommissionMail;
+use App\Services\GpuxMineReferralPayoutService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -83,6 +84,19 @@ class AffiliateCommission extends Model
     {
         if ($this->status !== 'pending') {
             return false;
+        }
+
+        // ค่าแนะนำ GPUxMINE เข้ากระเป๋าทางเดียวกับที่ระบบจ่ายเอง (R2-3): เลขรายการ GXA{id}
+        // ไม่บวก total_deposited และไม่จ่ายเข้ากระเป๋าที่ถูกปิด — ไม่ผ่าน addBonus() ข้างล่าง
+        if ($this->source_type === 'gpuxmine') {
+            $paid = app(GpuxMineReferralPayoutService::class)->pay((int) $this->id);
+            $this->refresh();
+
+            if ($paid) {
+                $this->sendNotificationEmail('paid');
+            }
+
+            return $paid;
         }
 
         $paid = DB::transaction(function () use ($adminId) {
