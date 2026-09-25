@@ -610,3 +610,30 @@ sudo systemctl restart nginx
 ---
 
 **ถูกสร้างด้วย ❤️ โดย XMAN Studio**
+
+**GPUxMINE round 2 — referral auto-pay, rollback, wallet cash-out.** No order with aixman or the
+relay is required (aixman does not read the new columns or table). Deploy after round 1
+(`feat/sharing-complete`) and run the migrations: `wallet_withdrawals` (new table) and
+`2026_09_26_100001` (reversal columns, and `'reversed'` appended to
+`affiliate_commissions.status` — read from `information_schema` and appended, so a value added
+to that enum by hand survives).
+
+1. Referral commissions are paid into the referrer's wallet by `gpuxmine:settle-earnings`, with no
+   admin approval. The first run after the deploy also pays every GPUxMINE commission round 1
+   left `pending` for an admin. To look at them before deploying (read only):
+
+   ```sql
+   SELECT id, affiliate_id, commission_amount, created_at FROM affiliate_commissions
+    WHERE source_type = 'gpuxmine' AND status = 'pending' ORDER BY id;
+   ```
+
+   Reject any you do not want paid on `/admin/affiliates/commissions` before deploying. After it,
+   a paid one can still be taken back there ("เรียกคืน") while the referrer has not cashed it out.
+2. Admins take back a paid earning on `/admin/gpuxmine/earnings` and a paid commission on
+   `/admin/affiliates/commissions` — once each, reason of 10+ characters, and only while the
+   wallet's available balance covers it (money held by a pending withdrawal does not count).
+3. Cash-out: users ask on `/wallet/withdraw` (KYC required; paid only to the KYC bank account),
+   the amount is held at once, and admins approve (transfer reference and/or slip) or reject
+   (hold returned) under การเงิน → คำขอถอนเงิน. The minimum per request is set on
+   `/admin/wallets/settings` (falls back to `WALLET_WITHDRAW_MIN_BAHT`, default 100); the same page
+   can pause new requests. New requests raise a Telegram card (alert category "orders").
