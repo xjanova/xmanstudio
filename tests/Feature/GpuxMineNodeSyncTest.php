@@ -122,6 +122,8 @@ class GpuxMineNodeSyncTest extends TestCase
     {
         $node = GpuNode::factory()->paired()->create();
         $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        // เครื่องที่ aixman ตัดสินแล้ว — warming ถูกถามซ้ำเร็วโดยตั้งใจ (ดูเทสต์ถัดไป)
+        $this->aixmanBody['worker']['status'] = 'ready';
 
         $this->sync();
         $this->travel(2)->minutes();
@@ -129,6 +131,71 @@ class GpuxMineNodeSyncTest extends TestCase
         $this->sync();
 
         $this->assertCount(1, $this->aixmanPushes());
+    }
+
+    /**
+     * aixman ตอบการส่งแรกของเครื่องที่เพิ่งพร้อมว่า warming เสมอ (มันถามเครื่องเองไม่กี่วินาทีหลังจากนั้น)
+     * เจอใน e2e sandbox: เครื่อง ready ที่ aixman ตั้งแต่ 12:16:50 แต่หน้าเว็บและ Dashboard ในโปรแกรม
+     * ขึ้น "pool กำลังตรวจความพร้อมของเครื่อง" จนรอบส่งซ้ำสิบนาทีถัดไป
+     */
+    public function test_a_node_aixman_was_still_checking_is_asked_again_within_minutes(): void
+    {
+        $node = GpuNode::factory()->paired()->create();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertSame('warming', $node->fresh()->dispatch_worker_status);
+
+        // ไม่ถามถี่กว่าสองนาที
+        $this->travel(1)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertCount(1, $this->aixmanPushes());
+
+        $this->travel(2)->minutes();
+        $this->aixmanBody['worker']['status'] = 'ready';
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+        $this->assertSame('ready', $node->fresh()->dispatch_worker_status);
+
+        // ได้คำตอบแล้ว กลับไปส่งซ้ำตามรอบสิบนาทีตามเดิม
+        $this->travel(3)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+    }
+
+    public function test_a_paused_node_or_an_older_aixman_is_not_asked_again_early_while_warming(): void
+    {
+        $paused = GpuNode::factory()->paired()->create();
+        $this->relayWorkers = [$this->liveWorker($paused->worker_id, ['accepting' => false])];
+        $this->sync();
+        $this->assertSame('warming', $paused->fresh()->dispatch_worker_status);
+
+        // เจ้าของใช้เครื่องอยู่ — aixman ให้ warming ไปจนกว่าเครื่องจะรับงานอีก ถามซ้ำก็ได้คำตอบเดิม
+        $this->travel(3)->minutes();
+        $this->relayWorkers = [$this->liveWorker($paused->worker_id, ['accepting' => false])];
+        $this->sync();
+        $this->assertCount(1, $this->aixmanPushes());
+
+        // aixman รุ่นก่อนสัญญา C1 (ไม่มี lastError) — ไม่เก็บสถานะ worker จึงไม่ถามซ้ำก่อนรอบ
+        $old = GpuNode::factory()->paired()->create();
+        $this->answerLikeTheOldAixman();
+        $this->relayWorkers = [
+            $this->liveWorker($paused->worker_id, ['accepting' => false]),
+            $this->liveWorker($old->worker_id),
+        ];
+        $this->sync();
+        $this->assertNull($old->fresh()->dispatch_worker_status);
+        $pushes = count($this->aixmanPushes());
+
+        $this->travel(3)->minutes();
+        $this->relayWorkers = [
+            $this->liveWorker($paused->worker_id, ['accepting' => false]),
+            $this->liveWorker($old->worker_id),
+        ];
+        $this->sync();
+        $this->assertCount($pushes, $this->aixmanPushes());
     }
 
     public function test_a_score_wiggle_or_a_busy_flip_alone_does_not_push_but_a_lane_change_does(): void

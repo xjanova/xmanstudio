@@ -26,6 +26,14 @@ class GpuxMineNodeStateService
      */
     private const TERMINATED_RETRY_MINUTES = 2;
 
+    /**
+     * aixman ตอบการส่งด้วยสถานะของ worker ในวินาทีนั้น — เครื่องที่เพิ่งเข้า pool หรือเพิ่งกลับมา
+     * รับงานได้ warming แทบทุกครั้ง เพราะ aixman ถามเครื่องเอง (/aixman/ready) หลังจากนั้นไม่กี่วินาที
+     * แล้วจึงเป็น ready ถ้ารอรอบส่งซ้ำสิบนาที หน้าเครื่องของฉันและ Dashboard ในโปรแกรมขึ้น
+     * "pool กำลังตรวจความพร้อมของเครื่อง" ไปอีกสิบนาทีทั้งที่เครื่องพร้อมรับงานแล้ว — ถามซ้ำเร็วกว่านั้น
+     */
+    private const WARMING_RECHECK_MINUTES = 2;
+
     /** ติดต่อ aixman หรือ relay ไม่ได้ติดกันเท่านี้ครั้ง ถือว่าล่มทั้งรอบ */
     public const GIVE_UP_AFTER_FAILURES = 3;
 
@@ -169,6 +177,20 @@ class GpuxMineNodeStateService
             && $node->dispatch_status === 'eligible'
             && ! $node->isSuspended()
             && $node->dispatch_synced_at->lte(now()->subMinutes(self::TERMINATED_RETRY_MINUTES))) {
+            return true;
+        }
+
+        // aixman ยังตรวจความพร้อมอยู่ตอนตอบรอบก่อน — ถามอีกทีให้รู้ผลภายในไม่กี่นาที เฉพาะเครื่องที่
+        // ออนไลน์ มีสิทธิ์ และไม่ได้พักเอง (accepting = false คือเจ้าของใช้เครื่องอยู่ aixman จะให้
+        // warming ไปจนกว่าจะรับงานอีก ถามถี่ก็ได้คำตอบเดิม) และเฉพาะ aixman รุ่นที่รับสัญญานี้ —
+        // รุ่นเก่าเขียน warming ทับทุกการส่ง ส่งซ้ำก็ได้ warming กลับมาเสมอ
+        if ($current
+            && in_array($node->dispatch_worker_status, ['warming', 'provisioning'], true)
+            && $node->online
+            && $node->accepting !== false
+            && $node->dispatch_status === 'eligible'
+            && ! $node->isSuspended()
+            && $node->dispatch_synced_at->lte(now()->subMinutes(self::WARMING_RECHECK_MINUTES))) {
             return true;
         }
 
