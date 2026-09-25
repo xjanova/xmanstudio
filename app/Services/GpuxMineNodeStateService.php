@@ -31,6 +31,7 @@ class GpuxMineNodeStateService
      * รับงานได้ warming แทบทุกครั้ง เพราะ aixman ถามเครื่องเอง (/aixman/ready) หลังจากนั้นไม่กี่วินาที
      * แล้วจึงเป็น ready ถ้ารอรอบส่งซ้ำสิบนาที หน้าเครื่องของฉันและ Dashboard ในโปรแกรมขึ้น
      * "pool กำลังตรวจความพร้อมของเครื่อง" ไปอีกสิบนาทีทั้งที่เครื่องพร้อมรับงานแล้ว — ถามซ้ำเร็วกว่านั้น
+     * ใช้กับ busy ด้วย: คิวของ aixman ปล่อย worker เองเมื่องานจบ ไม่มีอะไรฝั่งเราเปลี่ยนให้ส่ง
      */
     private const WARMING_RECHECK_MINUTES = 2;
 
@@ -144,6 +145,12 @@ class GpuxMineNodeStateService
      * เปลี่ยน: ส่งไม่ถึงรอบก่อน = ส่งใหม่, aixman ไม่เคยตอบรับ = ส่งใหม่,
      * ข้อมูลตอนนี้ต่างจากชุดที่ aixman ตอบรับล่าสุด = ส่งใหม่, และส่งซ้ำ
      * ทุกสิบนาทีแม้ไม่มีอะไรเปลี่ยน เผื่อ aixman ปิด worker ไปเองระหว่างนั้น
+     *
+     * คำตัดสินของ aixman (dispatch_status: unassessed, no-matching-model, offline ...) คิดจาก
+     * ข้อมูลที่เราส่งไปเท่านั้น (assessed, canRun, vramTotalMb, lanes, provisional, online) ซึ่งอยู่ใน
+     * ลายนิ้วมือทั้งหมด — เช่นเครื่องที่เพิ่งจับคู่ใหม่แล้ว heartbeat แรก ๆ บอก assessed=false:
+     * ทันทีที่มันบอกว่าประเมินแล้ว ลายนิ้วมือขยับและรอบถัดไป (ทุกนาที) ส่งเอง ถามซ้ำก่อนนั้นได้คำเดิม
+     * ที่ต้องถามซ้ำตามเวลาคือสถานะ worker ซึ่ง aixman ย้ายเองได้ — ดู askAgainSoon()
      */
     public function needsPush(GpuNode $node): bool
     {
@@ -172,29 +179,46 @@ class GpuxMineNodeStateService
             return true;
         }
 
-        if ($node->dispatch_worker_status === 'terminated'
-            && $node->online
-            && $node->dispatch_status === 'eligible'
-            && ! $node->isSuspended()
-            && $node->dispatch_synced_at->lte(now()->subMinutes(self::TERMINATED_RETRY_MINUTES))) {
-            return true;
-        }
-
-        // aixman ยังตรวจความพร้อมอยู่ตอนตอบรอบก่อน — ถามอีกทีให้รู้ผลภายในไม่กี่นาที เฉพาะเครื่องที่
-        // ออนไลน์ มีสิทธิ์ และไม่ได้พักเอง (accepting = false คือเจ้าของใช้เครื่องอยู่ aixman จะให้
-        // warming ไปจนกว่าจะรับงานอีก ถามถี่ก็ได้คำตอบเดิม) และเฉพาะ aixman รุ่นที่รับสัญญานี้ —
-        // รุ่นเก่าเขียน warming ทับทุกการส่ง ส่งซ้ำก็ได้ warming กลับมาเสมอ
-        if ($current
-            && in_array($node->dispatch_worker_status, ['warming', 'provisioning'], true)
-            && $node->online
-            && $node->accepting !== false
-            && $node->dispatch_status === 'eligible'
-            && ! $node->isSuspended()
-            && $node->dispatch_synced_at->lte(now()->subMinutes(self::WARMING_RECHECK_MINUTES))) {
+        // เฉพาะ aixman รุ่นที่รับสัญญานี้ — รุ่นเก่าเขียน warming ทับทุกการส่ง ส่งซ้ำก็ได้ warming
+        // กลับมาเสมอ (และไม่มีสถานะ worker ให้ดูอยู่แล้ว)
+        if ($current && $this->askAgainSoon($node)) {
             return true;
         }
 
         return $this->dispatch->fingerprint($node, null, $current) !== $node->dispatch_fingerprint;
+    }
+
+    /**
+     * สถานะ worker ที่ aixman ตอบรอบก่อนเป็นแบบที่ aixman ย้ายออกเองภายในไม่กี่นาที โดยไม่มีอะไร
+     * ฝั่งเราเปลี่ยน — ลายนิ้วมือจึงไม่ขยับให้ และถ้ารอรอบสิบนาที หน้าเครื่องของฉันกับ Dashboard
+     * ในโปรแกรม (POST /status) ขึ้นคำตอบเก่าไปอีกสิบนาที
+     *
+     *   terminated — ส่งซ้ำให้ฟื้น แต่ไม่ถี่กว่าสองนาที เผื่อแอดมินฝั่ง aixman ปิดไว้เอง
+     *   draining — ถูกพักหลังงานที่มีปัญหา รอบถัดไปของ aixman ถามเครื่องแล้วให้ ready/warming เอง
+     *   warming / provisioning — aixman ยังตรวจความพร้อมอยู่ ยกเว้นเจ้าของพักเครื่อง (accepting =
+     *     false คือเจ้าของใช้เครื่องอยู่): aixman ให้ warming ไปจนกว่าจะรับงานอีก ถามถี่ก็ได้คำเดิม
+     *   busy — คิวของ aixman ปล่อย worker เองเมื่องานจบ เคยค้าง "กำลังทำงานให้ลูกค้า" ไปถึงสิบนาที
+     *     หลังเครื่องว่าง ถามซ้ำเมื่อ heartbeat ของเครื่องไม่ได้บอกว่ายังทำงานอยู่ (busy = true คือ
+     *     ยังเรนเดอร์ คำตอบเดิมยังถูก ไม่ต้องยิงระหว่างงานยาว ๆ · null = ไคลเอนต์รุ่นที่ไม่บอก ถามตามเวลา)
+     *
+     * เฉพาะเครื่องที่ออนไลน์ มีสิทธิ์ และไม่ถูกระงับ — นอกนั้นสถานะ worker ไม่มีผลกับใคร และแต่ละ
+     * เครื่องถูกถามไม่ถี่กว่าสองนาทีครั้ง ไม่ว่าจะค้างสถานะไหนนานแค่ไหน ready ไม่ถามซ้ำ (aixman
+     * ตัดสินแล้ว รอบสิบนาทีตามเดิม)
+     */
+    private function askAgainSoon(GpuNode $node): bool
+    {
+        if (! $node->online || $node->dispatch_status !== 'eligible' || $node->isSuspended()) {
+            return false;
+        }
+
+        [$ask, $minutes] = match ($node->dispatch_worker_status) {
+            'terminated', 'draining' => [true, self::TERMINATED_RETRY_MINUTES],
+            'warming', 'provisioning' => [$node->accepting !== false, self::WARMING_RECHECK_MINUTES],
+            'busy' => [$node->busy !== true, self::WARMING_RECHECK_MINUTES],
+            default => [false, 0],
+        };
+
+        return $ask && $node->dispatch_synced_at->lte(now()->subMinutes($minutes));
     }
 
     /**

@@ -198,6 +198,159 @@ class GpuxMineNodeSyncTest extends TestCase
         $this->assertCount($pushes, $this->aixmanPushes());
     }
 
+    /**
+     * หลังจับคู่ใหม่ heartbeat แรก ๆ ของเครื่องบอก assessed=false จนโปรแกรมตรวจการ์ดกับ ComfyUI เสร็จ
+     * การส่งที่ตกในช่วงนั้นได้ unassessed กลับมา (เจอใน e2e sandbox) — aixman ตัดสินคำนี้จาก assessed
+     * ที่เราส่งไปเท่านั้น ถามซ้ำตอนเครื่องยังไม่ประเมินก็ได้คำเดิม แต่ทันทีที่เครื่องบอกว่าประเมินแล้ว
+     * รอบถัดไปต้องส่ง ไม่ว่าหน้าเว็บจะเขียนแถวไปก่อนและการส่งของหน้าเว็บจะถูกหน่วงไว้หรือไม่
+     */
+    public function test_an_unassessed_answer_is_asked_again_on_the_next_run_once_the_node_has_checked_its_card(): void
+    {
+        $node = GpuNode::factory()->paired()->create();
+        $checking = ['assessed' => false, 'score' => 0, 'tier' => 'unrated', 'canRun' => null, 'lanes' => null];
+        $this->aixmanBody['status'] = 'unassessed';
+        $this->aixmanBody['note'] = 'เครื่องยังไม่ผ่านการประเมิน — โปรแกรมจะวัดให้เองเมื่อ ComfyUI พร้อม';
+
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, $checking)];
+        $this->sync();
+        $this->assertSame('unassessed', $node->fresh()->dispatch_status);
+        $this->assertFalse($this->aixmanPushes()[0]['assessed']);
+
+        // ยังไม่ประเมิน — ไม่ถามซ้ำก่อนรอบ: aixman ตอบคำเดิมกับข้อมูลชุดเดิมเสมอ
+        $this->travel(3)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, $checking)];
+        $this->sync();
+        $this->assertCount(1, $this->aixmanPushes());
+
+        // ตรวจการ์ดเสร็จ และหน้าเว็บเขียนแถวไปก่อนโดยไม่ได้ส่ง — รอบถัดไปของตัวจับเวลาส่งทันที
+        // เพราะลายนิ้วมือขยับ ไม่ต้องรอรอบสิบนาที
+        $this->aixmanBody['status'] = 'eligible';
+        $this->aixmanBody['note'] = null;
+        $node->refresh();
+        app(GpuxMineNodeStateService::class)->apply($node, $this->liveWorker($node->worker_id));
+        $this->assertTrue($node->fresh()->assessed);
+
+        $this->travel(30)->seconds();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+        $this->assertTrue($this->aixmanPushes()[1]['assessed']);
+        $this->assertSame('eligible', $node->fresh()->dispatch_status);
+        $this->assertNull($node->fresh()->dispatch_note);
+    }
+
+    /**
+     * การส่งที่ลงกลางงานของลูกค้า (รอบสิบนาที หรือ accepting พลิก) ได้ busy กลับมา แล้วไม่มีอะไร
+     * ฝั่งเราเปลี่ยนให้ส่งอีก — busy ของเครื่องไม่อยู่ในลายนิ้วมือ หน้าเครื่องของฉันและ Dashboard
+     * ในโปรแกรมเคยขึ้น "กำลังทำงานให้ลูกค้า" ไปถึงสิบนาทีหลังเครื่องว่าง
+     */
+    public function test_a_node_aixman_last_saw_working_for_a_customer_is_asked_again_once_it_has_gone_idle(): void
+    {
+        $owner = User::factory()->create();
+        $node = GpuNode::factory()->paired()->create(['user_id' => $owner->id]);
+        $this->aixmanBody['worker']['status'] = 'busy';
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['busy' => true])];
+        $this->sync();
+        $this->assertSame('busy', $node->fresh()->dispatch_worker_status);
+
+        // เครื่องยังเรนเดอร์อยู่ — คำตอบเดิมยังถูก ไม่ยิงซ้ำระหว่างงานยาว ๆ
+        $this->travel(5)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['busy' => true])];
+        $this->sync();
+        $this->assertCount(1, $this->aixmanPushes());
+
+        // งานจบ คิวของ aixman ปล่อย worker แล้ว — รอบแรกที่เห็นเครื่องว่างถามทันที
+        $this->aixmanBody['worker']['status'] = 'ready';
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['busy' => false])];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+        $this->assertSame('ready', $node->fresh()->dispatch_worker_status);
+
+        $this->actingAs($owner)->get('/gpuxmine')
+            ->assertOk()
+            ->assertSee('พร้อม รอรับงาน')
+            ->assertDontSee('กำลังทำงานให้ลูกค้า');
+        $this->postJson('/api/v1/product/gpuxmine/status', ['worker_id' => $node->worker_id, 'token' => $node->relay_token])
+            ->assertOk()
+            ->assertJsonPath('data.node.dispatch_worker_status', 'ready');
+
+        // ได้คำตอบแล้ว — ready กลับไปส่งซ้ำตามรอบสิบนาทีตามเดิม
+        $this->travel(3)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['busy' => false])];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+    }
+
+    public function test_a_busy_answer_is_not_asked_again_sooner_than_two_minutes_and_an_older_client_is_asked_on_time(): void
+    {
+        // งานสั้นจบหนึ่งนาทีหลังการส่ง — ถามไม่ถี่กว่าสองนาทีครั้ง
+        $node = GpuNode::factory()->paired()->create();
+        $this->aixmanBody['worker']['status'] = 'busy';
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['busy' => true])];
+        $this->sync();
+
+        $this->travel(1)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['busy' => false])];
+        $this->sync();
+        $this->assertCount(1, $this->aixmanPushes());
+
+        // aixman ยังส่งผลงานกลับไม่เสร็จ ตอบ busy อีกรอบ — ถามต่ออีกสองนาทีถัดไป ไม่ใช่ทุกนาที
+        $this->travel(1)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['busy' => false])];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+
+        $this->travel(1)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['busy' => false])];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+
+        // ไคลเอนต์รุ่นที่ไม่บอก busy — ไม่รู้ว่าว่างหรือยัง ถามตามเวลา
+        $old = GpuNode::factory()->paired()->create();
+        $this->gpuxCalls = [];
+        $this->relayWorkers = [
+            $this->liveWorker($node->worker_id, ['busy' => true]),
+            $this->liveWorker($old->worker_id),
+        ];
+        $this->sync();
+        $this->assertSame([$old->worker_id], array_column($this->aixmanPushes(), 'workerId'));
+        $this->assertNull($old->fresh()->busy);
+
+        $this->travel(2)->minutes();
+        $this->relayWorkers = [
+            $this->liveWorker($node->worker_id, ['busy' => true]),
+            $this->liveWorker($old->worker_id),
+        ];
+        $this->sync();
+        $this->assertSame([$old->worker_id, $old->worker_id], array_column($this->aixmanPushes(), 'workerId'));
+    }
+
+    public function test_a_draining_answer_is_asked_again_within_minutes(): void
+    {
+        // aixman พัก worker หลังงานที่มีปัญหา แล้วถามเครื่องเองในรอบถัดไป — หน้าเว็บไม่ควรค้าง
+        // "กำลังถอนออกจากคิวงาน" ไปอีกสิบนาที
+        $node = GpuNode::factory()->paired()->create();
+        $this->aixmanBody['worker']['status'] = 'draining';
+        $this->aixmanBody['worker']['lastError'] = 'Job timed out on this worker';
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertSame('draining', $node->fresh()->dispatch_worker_status);
+
+        $this->travel(1)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertCount(1, $this->aixmanPushes());
+
+        $this->travel(1)->minutes();
+        $this->aixmanBody['worker']['status'] = 'ready';
+        $this->aixmanBody['worker']['lastError'] = null;
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+        $this->assertSame('ready', $node->fresh()->dispatch_worker_status);
+        $this->assertNull($node->fresh()->dispatch_last_error);
+    }
+
     public function test_a_score_wiggle_or_a_busy_flip_alone_does_not_push_but_a_lane_change_does(): void
     {
         $node = GpuNode::factory()->paired()->create();
