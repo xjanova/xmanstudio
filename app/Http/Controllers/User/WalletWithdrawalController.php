@@ -94,7 +94,9 @@ class WalletWithdrawalController extends Controller
         try {
             [$withdrawal, $created] = $this->withdrawals->request($user, $satang, $validated['request_key'], $account, $request->ip());
         } catch (WithdrawalRefused $e) {
-            return back()->withInput()->with('error', $e->getMessage());
+            // ไม่มีคำขอเกิดจากการกดนี้ — ฟอร์มที่กลับไปได้กุญแจใหม่ ไม่งั้นกุญแจของฟอร์มเก่าที่ใช้ไปแล้ว
+            // ทำให้ส่งซ้ำแล้วเจอ "ฟอร์มนี้ใช้ไปแล้ว" วนไม่จบ
+            return back()->withInput($request->except('request_key'))->with('error', $e->getMessage());
         }
 
         return redirect()->route('user.wallet.withdraw')->with('success', $created

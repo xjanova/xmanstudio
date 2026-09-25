@@ -636,6 +636,9 @@ class WalletWithdrawalTest extends TestCase
         $this->ask('150', $key)->assertSessionHas('error', fn ($m) => str_contains($m, 'ฟอร์มนี้ใช้ส่งคำขอ') && str_contains($m, 'ยกเลิกแล้ว'));
         $this->ask('800', $key)->assertSessionHas('error', fn ($m) => str_contains($m, 'โหลดหน้าใหม่'));
 
+        // ฟอร์มที่กลับมาได้กุญแจใหม่ — ส่งอีกครั้งได้เลย ไม่วนเจอข้อความเดิม
+        $this->actingAs($this->user)->get('/wallet/withdraw')->assertOk()->assertSee('name="request_key"', false)->assertDontSee($key);
+
         $this->assertSame(1, WalletWithdrawal::count());
         $this->assertSame('500.00', $this->balance());
         $this->assertNull(app(WalletWithdrawalService::class)->openFor($this->user->id));
