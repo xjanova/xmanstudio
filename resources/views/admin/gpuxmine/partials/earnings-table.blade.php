@@ -41,7 +41,7 @@
                                 <span class="block font-mono text-[11px] text-gray-500">{{ $row->worker_id }}</span>
                             @endif
                             <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $row->user?->email ?? 'บัญชีถูกลบ' }}</span>
-                            @if ($row->node?->isSuspended())
+                            @if (in_array((int) $row->id, $frozenIds ?? [], true) && in_array($row->status, ['pending', 'review', 'cleared'], true))
                                 <span class="block text-[11px] font-semibold text-red-600 dark:text-red-400">เครื่องถูกระงับ — เงินพักไว้</span>
                             @endif
                         </td>

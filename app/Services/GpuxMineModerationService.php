@@ -19,8 +19,9 @@ use Illuminate\Support\Facades\Log;
  * UPDATE ของเราต้องรอล็อกของรอบจ่ายก่อน แล้วจะเห็นว่าแถวเป็น paid ไปแล้วจึงไม่แตะ
  *
  * ฐานข้อมูลเป็นความจริง ส่วน relay กับ aixman ถูกแจ้งต่อแบบพยายามเต็มที่ แจ้งไม่ถึงตอนนี้
- * gpuxmine:sync-nodes ส่งให้เองในรอบถัดไป (suspended อยู่ในลายนิ้วมือ) และการถอนที่ค้าง
- * ถูกลองซ้ำจนสำเร็จ
+ * gpuxmine:sync-nodes ตามให้ในรอบถัดไป: aixman ได้ suspended ใหม่ (อยู่ในลายนิ้วมือ),
+ * relay ถูกเปิด/ปิด worker ให้ตรงกับการระงับ (reconcileRelayGate — เฉพาะ relay รุ่นที่
+ * บอก `disabled` ในรายชื่อ ซึ่งเป็นรุ่นเดียวกับที่มีคำสั่งนี้) และการถอนที่ค้างถูกลองซ้ำ
  */
 class GpuxMineModerationService
 {
@@ -111,12 +112,16 @@ class GpuxMineModerationService
      *
      * ห้ามทั้งเครื่องนี้ (machine_id ในบัญชีไหนก็ตาม) และบัญชีเจ้าของ (เครื่องใหม่ทุกเครื่อง)
      * จนกว่าจะยกเลิกแบน เครื่องอื่นที่เจ้าของคนนี้แชร์อยู่แล้วยังทำงานต่อ — แอดมินระงับหรือ
-     * แบนแยกทีละเครื่อง
+     * แบนแยกทีละเครื่อง machine_id เป็นค่าที่ตัวเครื่องรายงานเอง คนที่แก้เครื่องแล้วมาด้วย
+     * บัญชีใหม่หลบได้ (ดู GpuNode::machineIsBlocked) — ไม่ใช่การแบนที่หลบไม่ได้
      *
      * ระงับไปด้วย (ถ้ายังไม่ได้ระงับ) เพื่อพักรายได้ที่ยังไม่เข้ากระเป๋าของเครื่องนี้ไว้ให้
      * แอดมินตัดสินทีละรายการ แถวถูก soft delete เหมือนเจ้าของถอนเอง ประวัติยังอยู่
      *
-     * @return array{changed:bool, retired:bool}
+     * retire_status บอกว่าการถอนค้างตรงไหน — RETIRE_AWAITING_RELAY คือ aixman ถอนแล้ว
+     * แต่ relay รุ่นนี้ยังลบ worker ไม่ได้
+     *
+     * @return array{changed:bool, retired:bool, retire_status:?string}
      */
     public function ban(GpuNode $node, User $admin, string $reason): array
     {
@@ -147,7 +152,11 @@ class GpuxMineModerationService
         $node->refresh();
 
         if (! $changed) {
-            return ['changed' => false, 'retired' => $node->retire_status === GpuNode::RETIRE_DONE];
+            return [
+                'changed' => false,
+                'retired' => $node->retire_status === GpuNode::RETIRE_DONE,
+                'retire_status' => $node->retire_status,
+            ];
         }
 
         Log::warning('[GPUxMINE] node banned by admin', [
@@ -158,16 +167,14 @@ class GpuxMineModerationService
             'by' => $admin->id,
         ]);
 
-        if (! $node->trashed()) {
+        $retired = match (true) {
             // ถอนแล้ว soft delete — ถอนไม่ครบตอนนี้ แถวค้าง pending ให้ตัวจับเวลาลองต่อ
-            return ['changed' => true, 'retired' => $this->state->forget($node)];
-        }
+            ! $node->trashed() => $this->state->forget($node),
+            $node->retire_status !== GpuNode::RETIRE_DONE => $this->state->retire($node),
+            default => true,
+        };
 
-        if ($node->retire_status !== GpuNode::RETIRE_DONE) {
-            return ['changed' => true, 'retired' => $this->state->retire($node)];
-        }
-
-        return ['changed' => true, 'retired' => true];
+        return ['changed' => true, 'retired' => $retired, 'retire_status' => $node->retire_status];
     }
 
     /**
@@ -204,22 +211,28 @@ class GpuxMineModerationService
     }
 
     /**
-     * อ่านสถานะจาก relay ใหม่แล้วส่งให้ aixman ทันที ไม่รอลายนิ้วมือหรือรอบเวลา
+     * อ่านสถานะจาก relay ใหม่ ทำให้ประตูที่ relay ตรงกับการระงับ แล้วส่งให้ aixman ทันที
+     * ไม่รอลายนิ้วมือหรือรอบเวลา
+     *
+     * gate: null = ประตูที่ relay ตรงอยู่แล้ว (หรือ relay รุ่นนี้ไม่บอก) · true = เพิ่งเปิด/ปิด
+     * ให้ตรง · false = relay ไม่รับคำสั่ง
      *
      * เครื่องที่ถอนไปแล้ว: ไม่มีอะไรให้ส่ง แต่ถ้าการถอนยังค้าง ลองถอนให้อีกครั้งแทน
      *
-     * @return array{kind:string, relay:?bool, aixman:?string, retired:?bool}
+     * @return array{kind:string, relay:?bool, gate:?bool, aixman:?string, retired:?bool, retire_status:?string}
      */
     public function resync(GpuNode $node): array
     {
-        $result = ['kind' => 'push', 'relay' => null, 'aixman' => null, 'retired' => null];
+        $result = ['kind' => 'push', 'relay' => null, 'gate' => null, 'aixman' => null, 'retired' => null, 'retire_status' => null];
 
         if ($node->trashed()) {
             if ($node->worker_id === null || $node->retire_status === GpuNode::RETIRE_DONE) {
                 return ['kind' => 'removed'] + $result;
             }
 
-            return ['kind' => 'retire', 'retired' => $this->state->retire($node)] + $result;
+            $retired = $this->state->retire($node);
+
+            return ['kind' => 'retire', 'retired' => $retired, 'retire_status' => $node->retire_status] + $result;
         }
 
         if ($node->worker_id === null || $node->paired_at === null) {
@@ -227,12 +240,17 @@ class GpuxMineModerationService
         }
 
         $workers = $this->relay->workers();
+        $gate = null;
         if ($workers !== null) {
-            $this->state->apply($node, $workers[$node->worker_id] ?? null);
+            $row = $workers[$node->worker_id] ?? null;
+            $this->state->apply($node, $row);
+            // เปิดประตูก่อนส่งให้ aixman — aixman จะเคาะ /aixman/ready ผ่านอุโมงค์ต่อทันที
+            $gate = $this->state->reconcileRelayGate($node, $row);
         }
 
         return [
             'relay' => $workers !== null,
+            'gate' => $gate,
             'aixman' => $this->dispatch->push($node),
         ] + $result;
     }

@@ -66,6 +66,7 @@ class GpuNodeController extends Controller
             ->keyBy('status');
 
         $satang = fn (string $status): int => (int) ($totals[$status]->satang ?? 0);
+        $cap = (int) config('services.gpuxmine.max_nodes_per_user', 10);
 
         return view('gpuxmine.index', [
             'nodes' => $nodes,
@@ -83,6 +84,10 @@ class GpuNodeController extends Controller
             'holdHours' => $this->settlement->holdHours(),
             // แอดมินแบนบัญชีนี้ — ขอรหัสจับคู่ไม่ได้ และต้องบอกเหตุผลตรง ๆ
             'ban' => GpuNode::bannedRowFor((int) Auth::id()),
+            // ครบเพดานเครื่องต่อบัญชีแล้ว: ยังขอรหัสได้ (สำหรับเครื่องเดิมที่ลงโปรแกรมใหม่)
+            // แต่ต้องบอกก่อนว่าเครื่องใหม่จะถูกปฏิเสธ
+            'nodeCap' => $cap,
+            'atNodeCap' => $cap > 0 && $nodes->whereNotNull('paired_at')->count() >= $cap,
         ]);
     }
 
@@ -121,17 +126,23 @@ class GpuNodeController extends Controller
             return back()->with('error', 'บัญชีนี้ถูกระงับการแชร์เครื่อง GPUxMINE — ขอรหัสจับคู่ใหม่ไม่ได้ ติดต่อผู้ดูแลระบบ');
         }
 
-        // เพดานเครื่องต่อบัญชี (D9) — ตรวจซ้ำอีกครั้งตอนโปรแกรมมาแลกรหัส
-        // เพราะนั่นคือจุดที่ worker ใหม่เกิดขึ้นจริง
-        $cap = (int) config('services.gpuxmine.max_nodes_per_user', 10);
-        if ($cap > 0 && GpuNode::where('user_id', $userId)->whereNotNull('paired_at')->count() >= $cap) {
-            return back()->with('error', "บัญชีนี้ลงทะเบียนเครื่องครบ {$cap} เครื่องแล้ว — ถอนเครื่องที่ไม่ได้ใช้ออกก่อน แล้วค่อยขอรหัสจับคู่ใหม่");
-        }
+        // เพดานเครื่องต่อบัญชี (D9) ไม่ตัดสินที่นี่: ตอนออกรหัสยังไม่รู้ว่าเครื่องไหนจะมาแลก
+        // เครื่องเดิมที่ลงโปรแกรมใหม่ (credential หาย) ต้องได้ worker เดิมคืนแม้บัญชีครบเพดาน
+        // — claim รู้ machine id แล้วจึงนับเฉพาะเครื่องใหม่ (NODE_LIMIT) หน้าเว็บบอกเจ้าของ
+        // ตรง ๆ ว่ารหัสนี้ใช้ได้กับเครื่องเดิมเท่านั้น (ดู index: atNodeCap)
 
         // รหัสที่ออกค้างไว้และยังไม่ได้ใช้ ถือว่าถูกแทนที่ — ไม่งั้นกดหลายครั้ง
         // แล้วมีรหัสใช้ได้ค้างอยู่หลายตัวพร้อมกัน
+        //
+        // ยกเว้นรหัสที่โปรแกรมกำลังแลกอยู่ (claim จองไว้ด้วย pairing_expires_at = null แล้วรอ
+        // relay ออก worker ได้หลายวินาที): เจ้าของที่เห็นโปรแกรมนิ่งแล้วกดขอรหัสซ้ำ เคยทำให้
+        // แถวที่จองถูกลบกลางทาง — claim ยังเขียนทับแถวที่ถูกลบ เครื่องได้ credential แต่ไม่มี
+        // แถวที่ใช้งานอยู่ ไม่ถูกส่งให้ aixman และไม่มีใครถอน worker นั้นจาก relay การจองที่
+        // เก่ากว่า PAIRING_RESERVATION_MINUTES คือ claim ที่ตายกลางทางไปแล้ว ลบได้
         GpuNode::where('user_id', $userId)
             ->whereNull('paired_at')
+            ->where(fn ($q) => $q->whereNotNull('pairing_expires_at')
+                ->orWhere('updated_at', '<=', now()->subMinutes(GpuNode::PAIRING_RESERVATION_MINUTES)))
             ->delete();
 
         $node = GpuNode::create([

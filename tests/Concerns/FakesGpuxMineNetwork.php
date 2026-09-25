@@ -34,6 +34,17 @@ trait FakesGpuxMineNetwork
 
     protected int $relayDeleteStatus = 200;
 
+    /**
+     * สิ่งที่ POST /admin/workers/{id}/rotate ตอบเมื่อสถานะเป็น 2xx — null = กุญแจอุโมงค์ใหม่
+     * แบบที่ relay ตอบ `?only=tunnel` (token เป็น null)
+     *
+     * @var array<string, mixed>|null
+     */
+    protected ?array $rotation = null;
+
+    /** เรียกระหว่างที่ relay กำลังออก worker ให้ /enroll — จำลองสิ่งที่เกิดขึ้นกลางทาง */
+    protected ?\Closure $whileEnrolling = null;
+
     /** null = ติดต่อ aixman ไม่ได้เลย */
     protected ?int $aixmanStatus = 200;
 
@@ -81,6 +92,10 @@ trait FakesGpuxMineNetwork
             }
 
             if (str_starts_with($url, $this->relayBase . '/enroll')) {
+                if ($this->whileEnrolling !== null) {
+                    ($this->whileEnrolling)();
+                }
+
                 return $this->enrolment === null
                     ? Factory::response(['error' => 'nope'], 500)
                     : Factory::response($this->enrolment);
@@ -101,6 +116,16 @@ trait FakesGpuxMineNetwork
             }
 
             if (str_starts_with($url, $this->relayBase . '/admin/workers/') && $method === 'POST') {
+                if (str_contains($url, '/rotate') && $this->relayAdminActionStatus < 300) {
+                    $workerId = rawurldecode((string) preg_replace('#^.*/admin/workers/([^/]+)/rotate.*$#', '$1', $url));
+
+                    return Factory::response($this->rotation ?? [
+                        'workerId' => $workerId,
+                        'token' => null,
+                        'tunnelToken' => 'tunnel-rotated-' . $workerId,
+                    ]);
+                }
+
                 return Factory::response(['ok' => $this->relayAdminActionStatus < 300], $this->relayAdminActionStatus);
             }
 
@@ -164,12 +189,18 @@ trait FakesGpuxMineNetwork
     /**
      * แถวหนึ่งในรายชื่อของ relay สำหรับเครื่องที่ออนไลน์และประเมินแล้ว
      *
+     * $disabled = null คือ relay รุ่นก่อนที่ยังไม่บอกช่อง disabled (และไม่มีคำสั่งปิด/ลบ)
+     *
      * @param  array<string, mixed>  $telemetry
      * @return array<string, mixed>
      */
-    protected function liveWorker(string $workerId, array $telemetry = [], bool $online = true): array
+    protected function liveWorker(string $workerId, array $telemetry = [], bool $online = true, ?bool $disabled = null): array
     {
-        return [
+        return ($disabled === null ? [] : [
+            // relay รุ่นที่มีคำสั่ง disable/enable/delete บอกสองค่านี้ในรายชื่อ — รุ่นเก่าไม่บอก
+            'disabled' => $disabled,
+            'hasTunnelToken' => false,
+        ]) + [
             'workerId' => $workerId,
             'label' => 'x',
             'online' => $online,

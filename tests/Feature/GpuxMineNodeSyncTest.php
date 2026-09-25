@@ -176,24 +176,79 @@ class GpuxMineNodeSyncTest extends TestCase
         $this->assertCount(2, $this->aixmanPushes());
     }
 
-    public function test_an_older_aixman_that_reports_no_worker_status_is_not_resynced_on_a_timer(): void
+    /** คำตอบของ POST /api/gpux/nodes จาก aixman บน main (ก่อนสัญญา C1) — มี worker.status แต่ไม่มี lastError */
+    private function answerLikeTheOldAixman(): void
     {
-        // aixman รุ่นก่อนสัญญานี้เขียนแถวที่กำลังเรนเดอร์เป็น warming ทุกครั้งที่ได้
-        // ข้อมูล — ส่งซ้ำตามรอบเวลาคือฆ่างานกลางทาง ส่งเฉพาะเมื่อข้อมูลเปลี่ยน
-        unset($this->aixmanBody['worker']);
+        $this->aixmanBody = [
+            'status' => 'eligible',
+            'note' => null,
+            'modelKey' => 'sdxl-community',
+            'worker' => ['id' => 1, 'externalId' => 'x', 'status' => 'warming', 'modelKey' => 'sdxl-community'],
+        ];
+    }
+
+    public function test_an_older_aixman_is_not_resynced_on_a_timer_even_though_it_reports_a_worker_status(): void
+    {
+        // aixman รุ่นก่อนสัญญานี้เขียนแถวที่กำลังเรนเดอร์เป็น warming ทุกครั้งที่ได้ข้อมูล
+        // แล้วตัวเก็บกวาดของมันฆ่า worker ที่ warming นานเกินชั่วโมง — ส่งซ้ำตามรอบเวลาคือ
+        // ฆ่างานกลางทาง รุ่นนั้นคืน worker.status อยู่แล้ว ตัวแยกรุ่นจึงต้องเป็น lastError
+        $this->answerLikeTheOldAixman();
         $node = GpuNode::factory()->paired()->create();
         $this->relayWorkers = [$this->liveWorker($node->worker_id)];
         $this->sync();
         $this->assertNull($node->fresh()->dispatch_worker_status);
+        $this->assertSame('eligible', $node->fresh()->dispatch_status);
 
         $this->travel(30)->minutes();
         $this->relayWorkers = [$this->liveWorker($node->worker_id)];
         $this->sync();
         $this->assertCount(1, $this->aixmanPushes());
 
+        // เจ้าของขยับเมาส์ / เปิดเกม — accepting พลิก ไม่ใช่เหตุให้ส่งกับรุ่นนี้
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['accepting' => false])];
+        $this->sync();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['accepting' => true])];
+        $this->sync();
+        $this->assertCount(1, $this->aixmanPushes());
+
+        // ข้อมูลที่ aixman รุ่นนั้นใช้จริงเปลี่ยน — ยังส่งเหมือนที่เคยทำ
         $this->relayWorkers = [$this->liveWorker($node->worker_id, online: false)];
         $this->sync();
         $this->assertCount(2, $this->aixmanPushes());
+    }
+
+    public function test_the_current_aixman_hears_an_accepting_flip_and_the_timed_resync(): void
+    {
+        $node = GpuNode::factory()->paired()->create();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertSame('warming', $node->fresh()->dispatch_worker_status);
+
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, ['accepting' => false])];
+        $this->sync();
+        $this->assertCount(2, $this->aixmanPushes());
+        $this->assertFalse($this->aixmanPushes()[1]['accepting']);
+    }
+
+    public function test_an_upgraded_aixman_is_recognised_on_its_first_answer(): void
+    {
+        $this->answerLikeTheOldAixman();
+        $node = GpuNode::factory()->paired()->create();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $this->sync();
+        $this->assertNull($node->fresh()->dispatch_worker_status);
+
+        // aixman อัปเกรดแล้ว: ส่งครั้งถัดไป (เพราะข้อมูลเปลี่ยน) ได้คำตอบแบบใหม่
+        $this->aixmanBody['worker']['lastError'] = null;
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, online: false)];
+        $this->sync();
+        $this->assertSame('warming', $node->fresh()->dispatch_worker_status);
+
+        // จากนี้ส่งซ้ำตามรอบเวลาได้
+        $this->travel(11)->minutes();
+        $this->relayWorkers = [$this->liveWorker($node->worker_id, online: false)];
+        $this->sync();
+        $this->assertCount(3, $this->aixmanPushes());
     }
 
     public function test_an_unconfigured_aixman_is_recorded_once_and_pushed_as_soon_as_it_is_configured(): void

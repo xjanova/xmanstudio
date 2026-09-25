@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\GpuJobEarning;
 use App\Models\GpuNode;
+use App\Models\Product;
+use App\Models\ProductDevice;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\GpuxMineDispatchService;
@@ -307,6 +309,70 @@ class GpuxMineAdminTest extends TestCase
             ->assertSessionHas('error');
     }
 
+    public function test_a_resume_the_relay_missed_is_switched_back_on_by_the_cron(): void
+    {
+        $workerId = $this->node->worker_id;
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/suspend", ['reason' => 'ตรวจสอบ']);
+
+        // relay กำลังรีสตาร์ตตอนแอดมินกดยกเลิกระงับ — เคยค้างปิดที่ relay ไปตลอด
+        $this->relayAdminActionStatus = 503;
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/resume")
+            ->assertSessionHas('success', fn (string $m) => str_contains($m, 'relay ไม่รับคำสั่งเปิดสาย') && str_contains($m, 'สั่งซ้ำ'));
+        $this->assertNull($this->node->fresh()->suspended_at);
+
+        // ตัวจับเวลาเห็นว่า relay ยังปิด worker ที่ไม่ได้ถูกระงับ → เปิดให้
+        $this->relayAdminActionStatus = 200;
+        $this->relayWorkers = [$this->liveWorker($workerId, online: false, disabled: true)];
+        $this->gpuxCalls = [];
+        $this->artisan('gpuxmine:sync-nodes')->assertExitCode(0);
+        $this->assertSame([$workerId . '/enable'], $this->relayAdminActions());
+
+        // ตรงกันแล้ว — ไม่สั่งซ้ำ
+        $this->relayWorkers = [$this->liveWorker($workerId, disabled: false)];
+        $this->gpuxCalls = [];
+        $this->artisan('gpuxmine:sync-nodes')->run();
+        $this->assertSame([], $this->relayAdminActions());
+    }
+
+    public function test_a_suspension_the_relay_missed_is_cut_off_by_the_cron(): void
+    {
+        $workerId = $this->node->worker_id;
+        $this->relayAdminActionStatus = 503;
+
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/suspend", ['reason' => 'ตรวจสอบ'])
+            ->assertSessionHas('success', fn (string $m) => str_contains($m, 'relay ไม่รับคำสั่งตัดสาย'));
+
+        $this->relayAdminActionStatus = 200;
+        $this->relayWorkers = [$this->liveWorker($workerId, disabled: false)];
+        $this->gpuxCalls = [];
+        $this->artisan('gpuxmine:sync-nodes')->run();
+
+        $this->assertSame([$workerId . '/disable'], $this->relayAdminActions());
+    }
+
+    public function test_a_relay_that_does_not_report_its_gate_is_never_sent_gate_commands(): void
+    {
+        // relay รุ่นก่อนไม่มีทั้งช่อง disabled และคำสั่ง disable/enable — ไม่ยิง 404 ทุกนาที
+        $this->node->forceFill(['suspended_at' => now(), 'suspended_reason' => 'ตรวจสอบ'])->save();
+        $this->relayWorkers = [$this->liveWorker($this->node->worker_id)];
+
+        $this->artisan('gpuxmine:sync-nodes')->run();
+
+        $this->assertSame([], $this->relayAdminActions());
+    }
+
+    public function test_a_suspended_machine_is_sent_to_aixman_as_offline_too(): void
+    {
+        // aixman รุ่นที่ยังไม่รู้จัก suspended ต้องหยุดส่งงานด้วย — ออฟไลน์คือสิ่งที่ทุกรุ่นเข้าใจ
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/suspend", ['reason' => 'ตรวจสอบ']);
+        $this->assertFalse($this->aixmanPushes()[0]['online']);
+        $this->assertTrue($this->aixmanPushes()[0]['suspended']);
+
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/resume");
+        $this->assertTrue($this->aixmanPushes()[1]['online']);
+        $this->assertFalse($this->aixmanPushes()[1]['suspended']);
+    }
+
     public function test_a_push_from_a_stale_copy_never_undoes_a_suspension_or_revives_a_removed_worker(): void
     {
         // ตัวจับเวลาโหลดแถวนี้ไว้แล้ว...
@@ -392,6 +458,79 @@ class GpuxMineAdminTest extends TestCase
         $this->assertSame(GpuNode::RETIRE_DONE, GpuNode::withTrashed()->find($this->node->id)->retire_status);
     }
 
+    public function test_a_ban_on_a_relay_without_delete_waits_for_the_upgrade_instead_of_calling_it_done(): void
+    {
+        $workerId = $this->node->worker_id;
+        $this->relayDeleteStatus = 404;   // relay รุ่นก่อนยังไม่มี DELETE /admin/workers/{id}
+
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/ban", ['reason' => 'ส่งภาพปลอม'])
+            ->assertSessionHas('success', fn (string $m) => str_contains($m, 'relay รุ่นนี้ยังลบ worker ไม่ได้'));
+
+        $row = GpuNode::withTrashed()->find($this->node->id);
+        $this->assertSame(GpuNode::RETIRE_AWAITING_RELAY, $row->retire_status);
+        $this->assertSame([$workerId], $this->aixmanRetires());
+
+        // relay ยังเป็นรุ่นเก่า: ไม่ยิงคำสั่งที่รู้ว่าจะได้ 404 ทุกนาที และไม่ปิดว่าเสร็จ
+        $this->relayWorkers = [$this->liveWorker($workerId)];
+        $this->gpuxCalls = [];
+        $this->artisan('gpuxmine:sync-nodes')->run();
+        $this->assertSame([], $this->relayDeletes());
+        $this->assertSame([], $this->aixmanRetires());
+        $this->assertSame(GpuNode::RETIRE_AWAITING_RELAY, $row->fresh()->retire_status);
+
+        $this->asAdmin()->get('/admin/gpuxmine?state=retiring')->assertOk()->assertSee('ค้างที่ relay รุ่นเก่า');
+
+        // relay อัปเกรดแล้ว (บอก disabled ในรายชื่อ) → ลบให้เอง
+        $this->relayDeleteStatus = 200;
+        $this->relayWorkers = [$this->liveWorker($workerId, online: false, disabled: false)];
+        $this->gpuxCalls = [];
+        $this->artisan('gpuxmine:sync-nodes')->run();
+        $this->assertSame([$workerId], $this->relayDeletes());
+        $this->assertSame(GpuNode::RETIRE_DONE, $row->fresh()->retire_status);
+    }
+
+    public function test_a_worker_the_relay_has_already_forgotten_needs_no_delete(): void
+    {
+        $this->relayDeleteStatus = 404;
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/ban", ['reason' => 'ส่งภาพปลอม']);
+
+        $this->relayWorkers = [];
+        $this->gpuxCalls = [];
+        $this->artisan('gpuxmine:sync-nodes')->run();
+
+        $this->assertSame([], $this->relayDeletes());
+        $this->assertSame(GpuNode::RETIRE_DONE, GpuNode::withTrashed()->find($this->node->id)->retire_status);
+    }
+
+    public function test_the_ban_says_what_a_machine_id_ban_can_and_cannot_stop_and_shows_lookalikes(): void
+    {
+        $product = Product::where('slug', 'gpuxmine')->firstOrFail();
+        $device = fn (string $machineId, string $ip, string $hash) => ProductDevice::create([
+            'product_id' => $product->id,
+            'machine_id' => $machineId,
+            'hardware_hash' => $hash,
+            'first_ip' => $ip,
+            'last_ip' => $ip,
+        ]);
+        $this->node->update(['product_device_id' => $device($this->node->machine_id, '203.0.113.7', 'hw-same')->id]);
+
+        // บัญชีใหม่ machine id ใหม่ แต่ IP และฮาร์ดแวร์ตรงกัน — เบาะแสว่าเป็นเครื่องเดิม
+        $evader = GpuNode::factory()->paired()->create(['label' => 'เครื่องบัญชีใหม่']);
+        $device($evader->machine_id, '203.0.113.7', 'hw-same');
+        $elsewhere = GpuNode::factory()->paired()->create(['label' => 'บ้านอีกหลัง']);
+        $device($elsewhere->machine_id, '198.51.100.20', 'hw-same');
+
+        $this->asAdmin()->get("/admin/gpuxmine/nodes/{$this->node->id}")
+            ->assertOk()
+            ->assertSee('เครื่องที่ IP ตอนจับคู่ตรงกัน')
+            ->assertSee('เครื่องบัญชีใหม่')
+            ->assertSee('ฮาร์ดแวร์ตรงกันด้วย')
+            ->assertDontSee('บ้านอีกหลัง');
+
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/ban", ['reason' => 'ส่งภาพปลอม'])
+            ->assertSessionHas('success', fn (string $m) => str_contains($m, 'machine id นี้') && str_contains($m, 'หลบได้'));
+    }
+
     public function test_unbanning_lets_the_owner_pair_that_machine_again(): void
     {
         $machineId = $this->node->machine_id;
@@ -462,6 +601,18 @@ class GpuxMineAdminTest extends TestCase
         $this->assertSame(1500, $pushes[0]['score']);
     }
 
+    public function test_force_resync_also_puts_the_relay_gate_right(): void
+    {
+        // ไม่ได้ถูกระงับ แต่ relay ยังปิด worker ไว้ (คำสั่งเปิดตอนยกเลิกระงับหายไป)
+        $this->relayWorkers = [$this->liveWorker($this->node->worker_id, online: false, disabled: true)];
+
+        $this->asAdmin()->post("/admin/gpuxmine/nodes/{$this->node->id}/resync")
+            ->assertSessionHas('success', fn (string $m) => str_contains($m, 'เปิด/ปิด worker ที่ relay ให้ตรง'));
+
+        $this->assertSame([$this->node->worker_id . '/enable'], $this->relayAdminActions());
+        $this->assertCount(1, $this->aixmanPushes());
+    }
+
     public function test_force_resync_on_a_removed_node_retries_its_stuck_retirement(): void
     {
         $this->relayDeleteStatus = 500;
@@ -503,10 +654,11 @@ class GpuxMineAdminTest extends TestCase
             'amount_satang' => 800,
             'status' => GpuJobEarning::STATUS_REVIEW,
             'completed_at' => now()->subHours(2),
+            'created_at' => now()->subHours(2),
         ]);
 
         $this->asAdmin()->post("/admin/gpuxmine/earnings/{$earning->id}/approve")
-            ->assertSessionHas('success');
+            ->assertSessionHas('success', fn (string $m) => str_contains($m, 'ยังอยู่ในระยะพัก'));
         $this->assertSame(GpuJobEarning::STATUS_PENDING, $earning->fresh()->status);
 
         $this->settle();
@@ -515,6 +667,39 @@ class GpuxMineAdminTest extends TestCase
         $this->travel(23)->hours();
         $this->settle();
         $this->assertSame(GpuJobEarning::STATUS_PAID, $earning->fresh()->status);
+    }
+
+    public function test_approving_money_a_suspension_is_holding_says_it_waits_for_the_resume(): void
+    {
+        $approved = $this->earning(['status' => GpuJobEarning::STATUS_REVIEW, 'amount_satang' => 600]);
+        $this->earning(['status' => GpuJobEarning::STATUS_REVIEW]);
+        // aixman เขียนแถวนี้โดยไม่มี gpu_node_id — ยังเป็นเงินของเครื่องที่ถูกระงับ
+        $unlinked = $this->earning(['status' => GpuJobEarning::STATUS_REVIEW, 'gpu_node_id' => null]);
+        $this->node->forceFill(['suspended_at' => now(), 'suspended_reason' => 'ตรวจสอบ'])->save();
+
+        $this->asAdmin()->post("/admin/gpuxmine/earnings/{$approved->id}/approve")
+            ->assertSessionHas('success', fn (string $m) => str_contains($m, 'ถูกระงับอยู่') && ! str_contains($m, 'รอบโอนถัดไป'));
+
+        $this->assertSame(GpuJobEarning::STATUS_CLEARED, $approved->fresh()->status);
+        $this->settle();
+        $this->assertSame(GpuJobEarning::STATUS_CLEARED, $approved->fresh()->status);
+        $this->assertSame('0.00', $this->balance());
+
+        $this->asAdmin()->get('/admin/gpuxmine/earnings')
+            ->assertOk()
+            ->assertSee('อนุมัติ (เงินพักจนยกเลิกระงับ)')
+            ->assertSee($unlinked->job_id)
+            ->assertSee('เครื่องถูกระงับ — เงินพักไว้');
+    }
+
+    public function test_approving_a_review_aixman_wrote_late_holds_it_from_when_it_arrived(): void
+    {
+        $late = GpuJobEarning::factory()->forNode($this->node)->backfilled(3)->create(['status' => GpuJobEarning::STATUS_REVIEW]);
+
+        $this->asAdmin()->post("/admin/gpuxmine/earnings/{$late->id}/approve")
+            ->assertSessionHas('success', fn (string $m) => str_contains($m, 'ยังอยู่ในระยะพัก'));
+
+        $this->assertSame(GpuJobEarning::STATUS_PENDING, $late->fresh()->status);
     }
 
     public function test_only_a_non_negative_review_can_be_approved(): void

@@ -237,6 +237,12 @@ class GpuxMineNodeController extends Controller
 
                 $node->delete();   // รหัสที่เพิ่งออกไม่ได้ใช้ ทิ้งไป
 
+                // IP และฮาร์ดแวร์ล่าสุดของเครื่อง — หน้าแอดมินใช้หาเครื่องที่อาจหลบการแบน
+                $device = $this->rememberDevice($validated);
+                if ($device !== null && $existing->product_device_id === null) {
+                    $existing->product_device_id = $device->id;
+                }
+
                 $response = $this->credentials($existing, $validated, reused: true);
 
                 // ที่อยู่ relay อาจเพิ่งเปลี่ยนใน credentials() — aixman ต้องรู้
@@ -314,7 +320,7 @@ class GpuxMineNodeController extends Controller
             return $this->credentials($existing, $validated, reused: false);
         }
 
-        $node->forceFill([
+        $paired = [
             'product_device_id' => $device?->id,
             'machine_id' => $validated['machine_id'],
             'label' => $label,
@@ -331,7 +337,33 @@ class GpuxMineNodeController extends Controller
             // ใช้แล้วใช้อีกไม่ได้ ล้างทิ้งทันทีที่แลกสำเร็จ
             'pairing_code' => null,
             'pairing_expires_at' => null,
-        ])->save();
+        ];
+
+        // เขียนผลลงแถวที่จองไว้ก็ต่อเมื่อแถวยังอยู่จริง — ระหว่างรอ relay เจ้าของอาจกดขอรหัส
+        // ใหม่ (pair() ไม่ลบการจองที่ยังสด แต่รุ่นก่อนหน้านี้ลบ และ Eloquent save() เขียนตาม id
+        // โดยไม่ดู deleted_at) ล็อกแถวไว้ก่อนเขียน การลบที่มาพร้อมกันจึงต้องรอเราเสร็จ
+        $saved = DB::transaction(function () use ($node, $paired) {
+            $live = GpuNode::whereKey($node->id)->whereNull('paired_at')->lockForUpdate()->first();
+            if ($live === null) {
+                return false;
+            }
+
+            $node->forceFill($paired)->save();
+
+            return true;
+        });
+
+        if (! $saved) {
+            // worker ที่เพิ่งออกไม่มีแถวไหนรับไป — ถอนทิ้ง ไม่งั้นค้างที่ relay ไปตลอด
+            $this->state->retireUnclaimedWorker($node, $enrolment['workerId'], $validated['machine_id']);
+
+            Log::notice('GPUxMINE pairing code replaced while it was being redeemed — new worker retired', [
+                'user_id' => $node->user_id,
+                'worker_id' => $enrolment['workerId'],
+            ]);
+
+            return $this->pairingInvalid();
+        }
 
         // ขึ้นทะเบียนที่ aixman ทันที ตอนนี้เครื่องยังไม่ได้ประเมินตัวเอง
         // จึงยังไม่มีสิทธิ์รับงาน — แต่แถวต้องมีอยู่ก่อน ไม่งั้นพอประเมินเสร็จ
@@ -524,19 +556,26 @@ class GpuxMineNodeController extends Controller
             return null;
         }
 
-        return ProductDevice::updateOrCreate(
-            ['product_id' => $product->id, 'machine_id' => $validated['machine_id']],
-            [
-                'machine_name' => $validated['machine_name'] ?? null,
-                'os_version' => $validated['os_version'] ?? null,
-                'app_version' => $validated['app_version'] ?? null,
-                'hardware_hash' => $validated['hardware_hash'] ?? null,
-                'last_ip' => request()->ip(),
-                'first_ip' => request()->ip(),
-                'first_seen_at' => now(),
-                'last_seen_at' => now(),
-            ]
-        );
+        $device = ProductDevice::firstOrNew(['product_id' => $product->id, 'machine_id' => $validated['machine_id']]);
+
+        $device->fill([
+            'machine_name' => $validated['machine_name'] ?? $device->machine_name,
+            'os_version' => $validated['os_version'] ?? $device->os_version,
+            'app_version' => $validated['app_version'] ?? $device->app_version,
+            'hardware_hash' => $validated['hardware_hash'] ?? $device->hardware_hash,
+            'last_ip' => request()->ip(),
+            'last_seen_at' => now(),
+        ]);
+
+        // ครั้งแรกเท่านั้น — เคยถูกเขียนทับทุกครั้งที่จับคู่ ทำให้ "IP แรก" ไม่มีความหมาย
+        // หน้าแอดมินใช้สองค่านี้หาเครื่องที่อาจเป็นเครื่องเดิมที่รายงาน machine id ใหม่
+        if (! $device->exists) {
+            $device->fill(['first_ip' => request()->ip(), 'first_seen_at' => now()]);
+        }
+
+        $device->save();
+
+        return $device;
     }
 
     /** "abcd efgh" · "abcd-efgh" · "ABCDEFGH" ล้วนเป็นรหัสเดียวกัน */

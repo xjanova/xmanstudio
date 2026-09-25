@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\GpuJobEarning;
 use App\Models\GpuNode;
+use App\Models\ProductDevice;
 use App\Services\GpuxMineDispatchService;
 use App\Services\GpuxMineEarningSettlementService;
 use App\Services\GpuxMineHealthService;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\View\View;
 
 /**
@@ -78,7 +80,7 @@ class GpuxMineController extends Controller
                     ->where('dispatch_status', 'eligible')->whereNull('suspended_at')->count(),
                 'suspended' => (clone $network)->whereNotNull('suspended_at')->whereNull('banned_at')->count(),
                 'banned' => (clone $network)->whereNotNull('banned_at')->count(),
-                'retiring' => (clone $network)->where('retire_status', GpuNode::RETIRE_PENDING)->count(),
+                'retiring' => (clone $network)->whereIn('retire_status', GpuNode::RETIRE_UNFINISHED)->count(),
             ],
             'money' => $this->moneyByStatus(GpuJobEarning::query()),
             'health' => $this->healthSummary(),
@@ -117,8 +119,10 @@ class GpuxMineController extends Controller
         return view('admin.gpuxmine.show', [
             'node' => $node,
             'earnings' => $earnings,
+            'frozenIds' => $this->settlement->frozenAmong($earnings->getCollection()->modelKeys()),
             'money' => $this->moneyByStatus($this->earningsOf($node)),
             'siblings' => $siblings,
+            'lookalikes' => $this->lookalikes($node, $siblings->pluck('id')->push($node->id)->all()),
             'holdHours' => $this->settlement->holdHours(),
             'ownerBanned' => $node->user_id ? GpuNode::ownerIsBanned((int) $node->user_id) : false,
         ]);
@@ -153,6 +157,8 @@ class GpuxMineController extends Controller
 
         return view('admin.gpuxmine.earnings', [
             'earnings' => $earnings,
+            // รายการของเครื่องที่ถูกระงับ — ตัวโอนข้ามจนกว่าจะยกเลิกระงับ ปุ่มอนุมัติต้องบอก
+            'frozenIds' => $this->settlement->frozenAmong($earnings->getCollection()->modelKeys()),
             'status' => $status,
             'search' => $search,
             'money' => $this->moneyByStatus(GpuJobEarning::query()),
@@ -176,7 +182,7 @@ class GpuxMineController extends Controller
         }
 
         return back()->with('success', 'ระงับ ' . $node->displayName() . ' แล้ว — ไม่มีงานส่งมาอีก และรายได้ที่ยังไม่เข้ากระเป๋าถูกพักไว้'
-            . $this->aftermath($result));
+            . $this->aftermath($result, suspending: true));
     }
 
     public function resume(Request $request, int $id): RedirectResponse
@@ -197,7 +203,7 @@ class GpuxMineController extends Controller
             ? 'ยกเลิกระงับแล้ว — เครื่องนี้ถูกถอนไปแล้ว เจ้าของจับคู่เครื่องนี้ใหม่ได้ และรายได้ที่ค้างจะเดินต่อในรอบถัดไป'
             : 'ยกเลิกระงับ ' . $node->displayName() . ' แล้ว — เครื่องกลับเข้าคิวเมื่อโปรแกรมต่อ relay ใหม่ และรายได้ที่ค้างจะเดินต่อ';
 
-        return back()->with('success', $message . $this->aftermath($result));
+        return back()->with('success', $message . $this->aftermath($result, suspending: false));
     }
 
     public function ban(Request $request, int $id): RedirectResponse
@@ -211,8 +217,10 @@ class GpuxMineController extends Controller
             return back()->with('error', 'เครื่องนี้ถูกแบนอยู่แล้ว');
         }
 
-        return back()->with('success', 'แบน ' . $node->displayName() . ' แล้ว — ถอนออกจากระบบ และห้ามจับคู่ใหม่ทั้งเครื่องนี้และบัญชีเจ้าของ'
-            . ($result['retired'] ? '' : ' · ถอนที่ aixman/relay ยังไม่ครบ ระบบลองซ้ำเองทุกนาที'));
+        // machine id มาจากตัวเครื่องเอง — บอกแอดมินตรง ๆ ว่ากันได้แค่ไหน
+        return back()->with('success', 'แบน ' . $node->displayName() . ' แล้ว — ถอนออกจากระบบ ห้ามบัญชีเจ้าของจับคู่ใหม่'
+            . ' และห้ามเครื่องที่รายงาน machine id นี้ (เครื่องที่ถูกแก้ให้รายงานค่าอื่นหลบได้ ดูเครื่องที่ IP ตรงกันในหน้านี้)'
+            . ($result['retired'] ? '' : ' · ' . $this->retireNote($result['retire_status'])));
     }
 
     public function unban(Request $request, int $id): RedirectResponse
@@ -231,16 +239,22 @@ class GpuxMineController extends Controller
         $node = GpuNode::withTrashed()->findOrFail($id);
         $result = $this->moderation->resync($node);
 
+        $gate = match ($result['gate']) {
+            true => ' · เปิด/ปิด worker ที่ relay ให้ตรงกับการระงับแล้ว',
+            false => ' · relay ไม่รับคำสั่งเปิด/ปิด worker ให้ตรงกับการระงับ — ตัวจับเวลาสั่งซ้ำทุกนาที',
+            default => '',
+        };
+
         return match ($result['kind']) {
             'removed' => back()->with('error', 'เครื่องนี้ถูกถอนเรียบร้อยแล้ว — ไม่มีอะไรให้ส่ง'),
             'unpaired' => back()->with('error', 'เครื่องนี้ยังไม่ได้จับคู่กับ relay'),
             'retire' => $result['retired']
                 ? back()->with('success', 'ถอน worker ที่ค้างอยู่สำเร็จแล้วทั้งที่ aixman และ relay')
-                : back()->with('error', 'ยังถอนไม่สำเร็จ — aixman หรือ relay ยังไม่ตอบรับ ระบบลองซ้ำเองทุกนาที'),
+                : back()->with('error', $this->retireNote($result['retire_status'])),
             default => $result['aixman'] === GpuxMineDispatchService::OUTCOME_OK
                 ? back()->with('success', 'ส่งข้อมูลให้ aixman แล้ว · ผล: ' . ($node->fresh()?->dispatch_status ?? '—')
-                    . ($result['relay'] ? '' : ' · อ่านสถานะจาก relay ไม่ได้ ใช้สถานะล่าสุดที่รู้'))
-                : back()->with('error', 'ส่งให้ aixman ไม่สำเร็จ (' . ($node->fresh()?->dispatch_note ?? $result['aixman']) . ') — ระบบลองซ้ำเองทุกนาที'),
+                    . ($result['relay'] ? '' : ' · อ่านสถานะจาก relay ไม่ได้ ใช้สถานะล่าสุดที่รู้') . $gate)
+                : back()->with('error', 'ส่งให้ aixman ไม่สำเร็จ (' . ($node->fresh()?->dispatch_note ?? $result['aixman']) . ') — ระบบลองซ้ำเองทุกนาที' . $gate),
         };
     }
 
@@ -257,11 +271,24 @@ class GpuxMineController extends Controller
 
         $to = $this->moderation->approveEarning($earning, $request->user());
 
-        return match ($to) {
-            GpuJobEarning::STATUS_CLEARED => back()->with('success', 'อนุมัติ ' . $earning->job_id . ' แล้ว — พ้นระยะพักแล้ว จะเข้ากระเป๋าเจ้าของในรอบโอนถัดไป'),
-            GpuJobEarning::STATUS_PENDING => back()->with('success', 'อนุมัติ ' . $earning->job_id . ' แล้ว — ยังอยู่ในระยะพัก จะเข้ากระเป๋าเมื่อพ้น ' . $this->settlement->holdHours() . ' ชม. นับจากงานเสร็จ'),
-            default => back()->with('error', 'สถานะของงานนี้เพิ่งเปลี่ยน — โหลดหน้าใหม่แล้วดูอีกครั้ง'),
-        };
+        if ($to === null) {
+            return back()->with('error', 'สถานะของงานนี้เพิ่งเปลี่ยน — โหลดหน้าใหม่แล้วดูอีกครั้ง');
+        }
+
+        // เครื่องที่ถูกระงับ: อนุมัติได้ แต่ตัวโอนข้ามเงินของเครื่องนั้นจนกว่าจะยกเลิกระงับ —
+        // เคยบอกแอดมินว่า "เข้ากระเป๋ารอบถัดไป" ทั้งที่เงินค้างอยู่
+        if ($this->settlement->frozenAmong([$earning->id]) !== []) {
+            return back()->with('success', 'อนุมัติ ' . $earning->job_id . ' แล้ว — แต่เครื่องนี้ถูกระงับอยู่ เงินจะเดินต่อ (พักให้ครบแล้วเข้ากระเป๋า) เมื่อยกเลิกระงับ');
+        }
+
+        if ($to === GpuJobEarning::STATUS_CLEARED) {
+            return back()->with('success', 'อนุมัติ ' . $earning->job_id . ' แล้ว — พ้นระยะพักแล้ว จะเข้ากระเป๋าเจ้าของในรอบโอนถัดไป');
+        }
+
+        $endsAt = $earning->fresh()?->holdEndsAt($this->settlement->holdHours());
+
+        return back()->with('success', 'อนุมัติ ' . $earning->job_id . ' แล้ว — ยังอยู่ในระยะพัก จะเข้ากระเป๋าในรอบโอนแรกหลัง '
+            . ($endsAt ? $endsAt->copy()->timezone('Asia/Bangkok')->format('d/m/Y H:i') . ' น.' : 'พ้นระยะพัก'));
     }
 
     public function voidEarning(Request $request, int $id): RedirectResponse
@@ -307,9 +334,13 @@ class GpuxMineController extends Controller
     /**
      * สิ่งที่ยังไม่ครบหลังเปลี่ยนสถานะ — ฐานข้อมูลเปลี่ยนแล้ว ส่วนที่ขาดตัวจับเวลาตามให้
      *
+     * ต้องพูดความจริงว่าตัวจับเวลาตามให้ได้แค่ไหน: aixman ได้ suspended ใหม่ทุกกรณี
+     * ส่วนประตูที่ relay ตัวจับเวลาเปิด/ปิดให้ตรงเฉพาะ relay รุ่นที่มีคำสั่งนี้ — relay รุ่นเก่า
+     * ไม่มีทั้งคำสั่งและไม่มีอะไรให้ตาม (แต่ก็ไม่เคยปิดเครื่องไว้ด้วย)
+     *
      * @param  array{relay:?bool, aixman:?string}  $result
      */
-    private function aftermath(array $result): string
+    private function aftermath(array $result, bool $suspending): string
     {
         $notes = [];
 
@@ -321,10 +352,20 @@ class GpuxMineController extends Controller
         }
 
         if ($result['relay'] === false) {
-            $notes[] = 'relay ไม่รับคำสั่ง (relay รุ่นเก่าอาจยังไม่มีคำสั่งนี้)';
+            $notes[] = $suspending
+                ? 'relay ไม่รับคำสั่งตัดสาย — ตัวจับเวลาสั่งซ้ำทุกนาทีจนกว่า relay จะรับ (relay รุ่นเก่าที่ยังไม่มีคำสั่งนี้ตัดสายไม่ได้ แต่ aixman หยุดส่งงานแล้ว)'
+                : 'relay ไม่รับคำสั่งเปิดสาย — เครื่องต่อ relay ไม่ได้จนกว่า relay จะรับ ตัวจับเวลาสั่งซ้ำทุกนาทีให้เอง';
         }
 
         return $notes === [] ? '' : ' · ' . implode(' · ', $notes);
+    }
+
+    /** การถอนค้างตรงไหน เป็นคำที่แอดมินรู้ว่าต้องรอหรือต้องทำอะไร */
+    private function retireNote(?string $retireStatus): string
+    {
+        return $retireStatus === GpuNode::RETIRE_AWAITING_RELAY
+            ? 'aixman ถอนแล้ว แต่ relay รุ่นนี้ยังลบ worker ไม่ได้ (เครื่องยังต่อ relay ได้ แต่ไม่มีงานเข้า) — ลบให้เองเมื่ออัปเกรด relay'
+            : 'ถอนที่ aixman/relay ยังไม่ครบ — ระบบลองซ้ำเองทุกนาที';
     }
 
     private function filteredNodes(string $filter, string $search): Builder
@@ -341,7 +382,7 @@ class GpuxMineController extends Controller
             'suspended' => $query->whereNotNull('suspended_at')->whereNull('banned_at'),
             'banned' => $query->whereNotNull('banned_at'),
             'removed' => $query->whereNotNull('deleted_at'),
-            'retiring' => $query->where('retire_status', GpuNode::RETIRE_PENDING),
+            'retiring' => $query->whereIn('retire_status', GpuNode::RETIRE_UNFINISHED),
             default => null,
         };
 
@@ -357,6 +398,54 @@ class GpuxMineController extends Controller
         }
 
         return $query;
+    }
+
+    /**
+     * เครื่องอื่นที่อาจเป็นเครื่องเดียวกันกับเครื่องนี้ — ให้แอดมินดูเอง ไม่ใช่เหตุให้บล็อก
+     *
+     * การแบนผูกกับ machine_id ซึ่งตัวเครื่องรายงานเอง เจ้าของที่ถูกแบนแก้เครื่องแล้วมาด้วย
+     * บัญชีใหม่ได้ machine_id ใหม่ สิ่งที่เหลือให้จับคือ IP ตอนจับคู่ (product_devices) ซึ่ง
+     * ซ้ำกันได้ในคนละบ้าน (CGNAT ของผู้ให้บริการเน็ตบ้าน) และ hardware hash ซึ่งหยาบมาก
+     * (จำนวนคอร์ + รุ่น CPU — เครื่องที่ใช้ CPU รุ่นเดียวกันได้ค่าเดียวกันหมด) จึงแสดงเฉพาะ
+     * เครื่องที่ IP ตรงกัน และบอกเพิ่มว่าฮาร์ดแวร์ก็ตรงด้วยไหม
+     *
+     * @param  array<int, int>  $exceptNodeIds  แถวที่แสดงอยู่แล้ว (เครื่องนี้และเครื่องพี่น้อง)
+     * @return SupportCollection<int, array{node:GpuNode, sameHardware:bool}>
+     */
+    private function lookalikes(GpuNode $node, array $exceptNodeIds): SupportCollection
+    {
+        $device = $node->product_device_id ? ProductDevice::find($node->product_device_id) : null;
+        $ips = $device ? array_values(array_unique(array_filter([$device->last_ip, $device->first_ip]))) : [];
+
+        if ($device === null || $ips === []) {
+            return collect();
+        }
+
+        $matches = ProductDevice::query()
+            ->where('product_id', $device->product_id)
+            ->where('machine_id', '!=', $device->machine_id)
+            ->where(fn (Builder $q) => $q->whereIn('last_ip', $ips)->orWhereIn('first_ip', $ips))
+            ->limit(50)
+            ->get(['machine_id', 'hardware_hash'])
+            ->keyBy('machine_id');
+
+        if ($matches->isEmpty()) {
+            return collect();
+        }
+
+        return GpuNode::withTrashed()
+            ->whereIn('machine_id', $matches->keys()->all())
+            ->whereNotNull('worker_id')
+            ->whereKeyNot($exceptNodeIds)
+            ->with('user:id,name,email')
+            ->orderByDesc('paired_at')
+            ->limit(20)
+            ->get()
+            ->map(fn (GpuNode $other) => [
+                'node' => $other,
+                'sameHardware' => $device->hardware_hash !== null
+                    && $device->hardware_hash === $matches->get($other->machine_id)?->hardware_hash,
+            ]);
     }
 
     /**

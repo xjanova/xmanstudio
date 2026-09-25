@@ -176,6 +176,15 @@
                     @endif
                     · <x-bi th="ใช้ได้ครั้งเดียว หมดอายุแล้วกดขอใหม่ได้เลย" en="single use — just request a new one when it expires" />
                 </p>
+
+                @if ($atNodeCap)
+                    {{-- ครบเพดานแล้วยังออกรหัสได้ — เครื่องเดิมที่ลงโปรแกรมใหม่ต้องได้ worker เดิมคืน
+                         แต่เจ้าของต้องรู้ก่อนพิมพ์ว่าเครื่องใหม่จะถูกปฏิเสธ --}}
+                    <p class="mt-3 text-xs text-amber-900 bg-amber-100/80 border border-amber-300 rounded-lg px-3 py-2 inline-block">
+                        <x-bi :th="'บัญชีนี้มีเครื่องครบ ' . $nodeCap . ' เครื่องแล้ว — รหัสนี้ใช้ได้กับเครื่องที่เคยจับคู่ไว้แล้วเท่านั้น (เช่น ลงโปรแกรม GPUxMINE ใหม่บนเครื่องเดิม) ถ้าจะเพิ่มเครื่องใหม่ ถอนเครื่องที่ไม่ใช้ออกก่อน'"
+                              :en="'This account already has ' . $nodeCap . ' machines — this code only works for a machine paired before (e.g. GPUxMINE reinstalled on the same PC). To add a new machine, remove one you no longer use first.'" />
+                    </p>
+                @endif
             </div>
         </div>
     @endif

@@ -24,6 +24,22 @@ class GpuxMineRelayService
 
     private const PAGE_CACHE_SECONDS = 15;
 
+    /** ผลของ deleteWorker() */
+    public const DELETE_DONE = 'deleted';
+
+    public const DELETE_UNSUPPORTED = 'unsupported';
+
+    public const DELETE_FAILED = 'failed';
+
+    /** ผลของ rotateWorker() */
+    public const ROTATE_OK = 'ok';
+
+    public const ROTATE_UNKNOWN = 'unknown';
+
+    public const ROTATE_UNSUPPORTED = 'unsupported';
+
+    public const ROTATE_FAILED = 'failed';
+
     public function isConfigured(): bool
     {
         return (bool) config('services.gpuxmine.relay_url')
@@ -191,21 +207,34 @@ class GpuxMineRelayService
     /**
      * ลบ worker ออกจาก relay — กุญแจทั้งสองใบใช้ไม่ได้อีก และสายที่ต่ออยู่ถูกตัด
      *
-     * คืน true เมื่อ relay ยืนยันว่า worker ไม่อยู่แล้ว ซึ่งรวม 404 (relay
-     * ไม่รู้จักตั้งแต่แรก หรือ relay รุ่นเก่าที่ยังไม่มีเส้นทางนี้ — กรณีหลัง
-     * ลองซ้ำก็ไม่ได้อะไร)
+     * คืนหนึ่งใน DELETE_*:
+     *   - DELETE_DONE: relay ตอบ 2xx — relay รุ่นที่มีคำสั่งนี้ตอบ 200 เสมอ แม้ไม่รู้จัก
+     *     worker นั้นแล้ว (`existed:false`) เพราะ "ไม่อยู่แล้ว" คือผลที่ต้องการ
+     *   - DELETE_UNSUPPORTED: 404/405 — relay รุ่นที่ยังไม่มีเส้นทางนี้ worker ยังอยู่
+     *     และกุญแจยังต่อ /agent ได้ เคยนับเป็นลบสำเร็จ แถวจึงถูกปิดว่าเสร็จ และไม่มีใคร
+     *     กลับมาลบให้หลังอัปเกรด relay ตอนนี้ผู้เรียกเก็บไว้รอ relay รุ่นใหม่
+     *   - DELETE_FAILED: relay ปฏิเสธด้วยเหตุอื่น หรือติดต่อไม่ได้ — ลองใหม่ได้
      */
-    public function deleteWorker(string $workerId): bool
+    public function deleteWorker(string $workerId): string
     {
         if (! $this->isConfigured()) {
-            return false;
+            return self::DELETE_FAILED;
         }
 
         try {
             $response = $this->admin()->delete($this->url('/admin/workers/' . rawurlencode($workerId)));
 
-            if ($response->successful() || in_array($response->status(), [404, 405], true)) {
-                return true;
+            if ($response->successful()) {
+                return self::DELETE_DONE;
+            }
+
+            if (in_array($response->status(), [404, 405], true)) {
+                Log::notice('GPUxMINE relay has no worker delete yet — the worker stays until the relay is upgraded', [
+                    'worker_id' => $workerId,
+                    'status' => $response->status(),
+                ]);
+
+                return self::DELETE_UNSUPPORTED;
             }
 
             Log::warning('GPUxMINE relay refused to delete a worker', [
@@ -213,11 +242,11 @@ class GpuxMineRelayService
                 'status' => $response->status(),
             ]);
 
-            return false;
+            return self::DELETE_FAILED;
         } catch (\Throwable $e) {
             Log::warning('GPUxMINE relay delete threw', ['worker_id' => $workerId, 'error' => $e->getMessage()]);
 
-            return false;
+            return self::DELETE_FAILED;
         }
     }
 
@@ -236,38 +265,64 @@ class GpuxMineRelayService
     }
 
     /**
-     * ออกกุญแจใหม่ทั้งสองใบให้ worker เดิม ใบเก่าใช้ไม่ได้ทันที
+     * ออกกุญแจใหม่ให้ worker เดิม ใบเก่าใช้ไม่ได้ทันที
      *
-     * @return array{workerId:string, token:string, tunnelToken:?string}|null
+     * $tunnelOnly = true (`?only=tunnel`): ออกเฉพาะกุญแจอุโมงค์ของ aixman เครื่องยังต่ออยู่
+     * ด้วยกุญแจเดิม — ทางย้าย worker ที่ลงทะเบียนก่อนแยกกุญแจให้มีใบของ aixman เอง
+     * (gpuxmine:rotate-tunnel-tokens) ตั้งแต่วินาทีที่ relay ตอบ ใบเดิมเปิด /w/ ไม่ได้แล้ว
+     * ผู้เรียกต้องเก็บใบใหม่และส่งให้ aixman ทันที
+     *
+     * false: ออกใหม่ทั้งสองใบ สายของเครื่องถูกตัด และเครื่องต้องจับคู่ใหม่
+     *
+     * outcome เป็นหนึ่งใน ROTATE_*: ROTATE_UNKNOWN คือ relay ตอบ `unknown-worker`,
+     * ROTATE_UNSUPPORTED คือ relay รุ่นที่ยังไม่มีเส้นทางนี้ (404/405 แบบอื่น)
+     *
+     * @return array{outcome:string, workerId:string, token:?string, tunnelToken:?string}
      */
-    public function rotateWorker(string $workerId): ?array
+    public function rotateWorker(string $workerId, bool $tunnelOnly = false): array
     {
+        $result = ['outcome' => self::ROTATE_FAILED, 'workerId' => $workerId, 'token' => null, 'tunnelToken' => null];
+
         if (! $this->isConfigured()) {
-            return null;
+            return $result;
         }
 
         try {
-            $response = $this->admin()->post($this->url('/admin/workers/' . rawurlencode($workerId) . '/rotate'));
+            $path = '/admin/workers/' . rawurlencode($workerId) . '/rotate' . ($tunnelOnly ? '?only=tunnel' : '');
+            $response = $this->admin()->post($this->url($path));
             $data = $response->json();
 
-            if (! $response->successful() || ! is_array($data) || empty($data['token'])) {
+            if (in_array($response->status(), [404, 405], true)) {
+                $unknown = is_array($data) && ($data['error'] ?? null) === 'unknown-worker';
+
+                return ['outcome' => $unknown ? self::ROTATE_UNKNOWN : self::ROTATE_UNSUPPORTED] + $result;
+            }
+
+            // ใบที่ต้องได้กลับมา: ของ aixman เสมอ และของเครื่องเมื่อออกใหม่ทั้งสองใบ
+            $issued = is_array($data)
+                && ! empty($data['tunnelToken'])
+                && ($tunnelOnly || ! empty($data['token']));
+
+            if (! $response->successful() || ! $issued) {
                 Log::warning('GPUxMINE relay refused to rotate a worker', [
                     'worker_id' => $workerId,
+                    'tunnel_only' => $tunnelOnly,
                     'status' => $response->status(),
                 ]);
 
-                return null;
+                return $result;
             }
 
             return [
+                'outcome' => self::ROTATE_OK,
                 'workerId' => (string) ($data['workerId'] ?? $workerId),
-                'token' => (string) $data['token'],
-                'tunnelToken' => ! empty($data['tunnelToken']) ? (string) $data['tunnelToken'] : null,
+                'token' => ! empty($data['token']) ? (string) $data['token'] : null,
+                'tunnelToken' => (string) $data['tunnelToken'],
             ];
         } catch (\Throwable $e) {
             Log::warning('GPUxMINE relay rotate threw', ['worker_id' => $workerId, 'error' => $e->getMessage()]);
 
-            return null;
+            return $result;
         }
     }
 

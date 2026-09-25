@@ -23,15 +23,15 @@ use RuntimeException;
  *
  * aixman เขียนแถวไว้เป็น pending ทุกงาน ตรงนี้ทำสองขั้น:
  *
- *  1. ปล่อยเงิน (clearMatured): แถว pending ที่งานเสร็จมาเกินระยะพักแล้ว และเครื่อง
- *     ไม่ได้ถูกแอดมินระงับ → cleared ระยะพักคือช่วงที่ยังจับเครื่องที่ส่งผลงานปลอม
- *     ทันก่อนเงินออก แถว review ไม่ถูกแตะ — รอแอดมิน
+ *  1. ปล่อยเงิน (clearMatured): แถว pending ที่พักมาครบระยะพักแล้ว (นับจากงานเสร็จ
+ *     หรือแถวถูกบันทึก แล้วแต่อันไหนช้ากว่า) และเครื่องไม่ได้ถูกแอดมินระงับ → cleared
+ *     ระยะพักคือช่วงที่ยังจับเครื่องที่ส่งผลงานปลอมทันก่อนเงินออก แถว review ไม่ถูกแตะ
  *
  *  2. จ่าย (payUser): ต่อเจ้าของหนึ่งคน ในทรานแซกชันเดียว ล็อกกระเป๋าแล้วล็อกแถว
  *     cleared ของเขา บวกเงินแบบ atomic เขียน wallet_transactions หนึ่งแถวต่อชุด
  *     แล้วเปลี่ยนแถวเป็น paid พร้อมเลขรายการ — ขั้นไหนพลาด ย้อนทั้งชุด
- *     ส่วนแบ่งผู้แนะนำ (referral_satang) กลายเป็น AffiliateCommission ในทรานแซกชัน
- *     เดียวกัน รอแอดมินอนุมัติแบบเดียวกับค่าแนะนำจากทุกช่องทาง
+ *     ส่วนแบ่งผู้แนะนำ (referral_satang) กลายเป็น AffiliateCommission หนึ่งรายการต่อ
+ *     ผู้แนะนำต่อชุด ในทรานแซกชันเดียวกัน รอแอดมินอนุมัติแบบเดียวกับค่าแนะนำจากทุกช่องทาง
  *
  * กันจ่ายซ้ำหลายชั้น เพราะนี่คือเงินออกจริง: withoutOverlapping ที่ตัวตั้งเวลา,
  * row lock บนกระเป๋าและแถวรายได้, UPDATE แบบมีเงื่อนไข (status = cleared) ที่ต้อง
@@ -83,15 +83,12 @@ class GpuxMineEarningSettlementService
         $counts = ['cleared' => 0, 'review' => 0];
 
         $this->notFrozen(
-            GpuJobEarning::query()
-                ->where('status', GpuJobEarning::STATUS_PENDING)
-                ->whereNotNull('user_id')
-                ->where(function (Builder $q) use ($cutoff) {
-                    $q->where('completed_at', '<=', $cutoff)
-                        // aixman ควรใส่ completed_at เสมอ — ถ้าไม่มี นับจากเวลาที่แถวเกิด
-                        // ดีกว่าปล่อยให้ค้างเป็น pending ไปตลอด
-                        ->orWhere(fn (Builder $q) => $q->whereNull('completed_at')->where('created_at', '<=', $cutoff));
-                })
+            $this->heldSince(
+                GpuJobEarning::query()
+                    ->where('status', GpuJobEarning::STATUS_PENDING)
+                    ->whereNotNull('user_id'),
+                $cutoff
+            )
         )
             ->select(['id', 'amount_satang'])
             ->chunkById(self::BATCH_SIZE, function (Collection $rows) use ($now, &$counts) {
@@ -108,6 +105,25 @@ class GpuxMineEarningSettlementService
             });
 
         return $counts;
+    }
+
+    /**
+     * แถวที่พักมาครบถึง $cutoff แล้ว — นับจากเวลาที่ช้ากว่าระหว่างงานเสร็จกับแถวถูกบันทึก
+     *
+     * เคยนับจากงานเสร็จอย่างเดียว แต่ aixman เขียนย้อนหลังได้ถึงเจ็ดวัน (catch-up sweep
+     * หลัง DB ล่ม, แพ็กเกจเครดิตถูกปิด, ยังไม่รู้เจ้าของ ฯลฯ) แถวที่เข้ามาช้าจึงพ้นระยะพัก
+     * ตั้งแต่วินาทีที่เกิด และถูกโอนในรอบชั่วโมงถัดไป — ช่วงที่แอดมินจะจับผลงานปลอมได้ทัน
+     * เหลือศูนย์ ระยะพักต้องเริ่มเมื่อเงินปรากฏในระบบให้คนเห็น ไม่ใช่ก่อนนั้น
+     *
+     * aixman ควรใส่ completed_at เสมอ — ถ้าไม่มี นับจากเวลาที่แถวเกิด ดีกว่าค้าง pending
+     * ไปตลอด GpuJobEarning::holdEndsAt() คิดแบบเดียวกัน
+     */
+    public function heldSince(Builder $query, CarbonInterface $cutoff): Builder
+    {
+        return $query
+            ->where(fn (Builder $q) => $q->whereNull('completed_at')->orWhere('completed_at', '<=', $cutoff))
+            ->where(fn (Builder $q) => $q->whereNull('created_at')->orWhere('created_at', '<=', $cutoff))
+            ->where(fn (Builder $q) => $q->whereNotNull('completed_at')->orWhereNotNull('created_at'));
     }
 
     /**
@@ -231,12 +247,7 @@ class GpuxMineEarningSettlementService
             throw new RuntimeException("GPUxMINE payout for user {$userId}: expected " . count($ids) . " cleared rows, updated {$paid}");
         }
 
-        $commissions = 0;
-        foreach ($rows as $row) {
-            if ($this->recordReferral($row)) {
-                $commissions++;
-            }
-        }
+        $commissions = $this->recordReferrals($rows);
 
         return [
             'rows' => count($ids),
@@ -294,76 +305,99 @@ class GpuxMineEarningSettlementService
     }
 
     /**
-     * ส่วนแบ่งผู้แนะนำของงานหนึ่งชิ้น → AffiliateCommission (pending รอแอดมินอนุมัติ)
+     * ส่วนแบ่งผู้แนะนำของชุดที่เพิ่งจ่าย → AffiliateCommission หนึ่งรายการต่อผู้แนะนำ (pending
+     * รอแอดมินอนุมัติเหมือนค่าแนะนำจากทุกช่องทาง)
      *
-     * หนึ่งงานได้ค่าแนะนำหนึ่งรายการเท่านั้น: เช็กทั้ง affiliate_commission_id บนแถว
-     * (ซึ่งล็อกอยู่) และรายการเดิมที่ source_type/source_id ตรงกัน ผู้แนะนำที่ถูกระงับ
-     * หรือไม่มีบัญชี affiliate แล้ว ไม่ได้ — ส่วนนั้นไม่ถูกจ่ายให้ใคร
+     * เคยเป็นหนึ่งรายการต่อหนึ่งงาน: เครื่องสามเครื่องที่ทำงานวันละสี่ร้อยชิ้น ทำให้ค่าแนะนำ
+     * pending ขึ้นเป็นพันต่อสัปดาห์ และทางอนุมัติรวดเดียวของหน้า affiliate ส่งเมลทีละรายการ
+     * จนคำขอยาวเกินเวลาของ proxy — แอดมินกดซ้ำแล้วจ่ายซ้ำได้ ตอนนี้ชุดหนึ่ง (เจ้าของหนึ่งคน
+     * ต่อรอบโอน) ได้หนึ่งรายการต่อผู้แนะนำ source_id คือ id สูงสุดของงานในรายการนั้น และทุก
+     * งานในชุดชี้กลับมาที่รายการเดียวกันด้วย affiliate_commission_id
+     *
+     * กันซ้ำ: แถวถูกล็อกอยู่ในทรานแซกชันของการจ่าย และแถวที่มี affiliate_commission_id แล้ว
+     * ไม่ถูกนับอีก ค่าแนะนำรายงานเดิมที่บันทึกไว้ก่อนเปลี่ยนเป็นแบบรวม (source_id = id ของงาน
+     * นั้น) ถูกผูกกลับ ไม่ถูกสร้างซ้ำ
+     *
+     * ผู้แนะนำที่ถูกระงับหรือไม่มีบัญชี affiliate แล้ว ไม่ได้ — ส่วนนั้นไม่ถูกจ่ายให้ใคร
+     * ผู้แนะนำที่เป็นเจ้าของเครื่องเอง = ข้อมูลผิด ไม่จ่าย
      *
      * ยอดสะสมของ affiliate ขยับแบบเดียวกับ AffiliateCommissionService (total_earned,
      * total_pending) แต่ total_referrals/total_conversions นับเจ้าของเครื่องหนึ่งคน
-     * ครั้งเดียว ไม่ใช่ทุกงาน — ไม่งั้นตัวเลข "ชวนได้กี่คน" กลายเป็นจำนวนภาพที่เรนเดอร์
+     * ครั้งเดียว ไม่ใช่ทุกรายการ — ไม่งั้นตัวเลข "ชวนได้กี่คน" กลายเป็นจำนวนรอบโอน
+     *
+     * @param  Collection<int, GpuJobEarning>  $rows  แถวของเจ้าของหนึ่งคนที่เพิ่งถูกจ่าย (ล็อกอยู่)
+     * @return int จำนวนค่าแนะนำที่สร้างรอบนี้
      */
-    private function recordReferral(GpuJobEarning $row): bool
+    private function recordReferrals(Collection $rows): int
     {
-        if ($row->referral_satang <= 0 || $row->referral_user_id === null || $row->affiliate_commission_id !== null) {
-            return false;
+        $owed = $rows->filter(fn (GpuJobEarning $row) => $row->referral_satang > 0
+            && $row->referral_user_id !== null
+            && $row->affiliate_commission_id === null
+            && $row->referral_user_id !== (int) $row->user_id);
+
+        if ($owed->isEmpty()) {
+            return 0;
         }
 
-        // ผู้แนะนำคือเจ้าของเครื่องเอง = ข้อมูลผิด ไม่จ่าย
-        if ($row->referral_user_id === (int) $row->user_id) {
-            return false;
-        }
-
+        // ค่าแนะนำรายงานที่มีอยู่แล้ว — ผูกกลับ ไม่สร้างซ้ำ
         $existing = AffiliateCommission::where('source_type', self::COMMISSION_SOURCE)
-            ->where('source_id', $row->id)
-            ->value('id');
+            ->whereIn('source_id', $owed->modelKeys())
+            ->pluck('id', 'source_id');
 
-        if ($existing !== null) {
-            GpuJobEarning::whereKey($row->id)->update(['affiliate_commission_id' => $existing]);
-
-            return false;
+        foreach ($existing as $sourceId => $commissionId) {
+            GpuJobEarning::whereKey((int) $sourceId)->update(['affiliate_commission_id' => (int) $commissionId]);
         }
 
-        $affiliate = Affiliate::where('user_id', $row->referral_user_id)->first();
-        if ($affiliate === null || ! $affiliate->isActive()) {
-            Log::info('[GPUxMINE] referral share not paid: referrer has no active affiliate', [
-                'earning_id' => $row->id,
-                'referral_user_id' => $row->referral_user_id,
+        $created = 0;
+
+        foreach ($owed->reject(fn (GpuJobEarning $row) => $existing->has($row->id))->groupBy('referral_user_id') as $referrerId => $group) {
+            $affiliate = Affiliate::where('user_id', (int) $referrerId)->first();
+            if ($affiliate === null || ! $affiliate->isActive()) {
+                Log::info('[GPUxMINE] referral share not paid: referrer has no active affiliate', [
+                    'earning_ids' => $group->modelKeys(),
+                    'referral_user_id' => (int) $referrerId,
+                ]);
+
+                continue;
+            }
+
+            $ownerId = (int) $group->first()->user_id;
+            $shareSatang = (int) $group->sum('referral_satang');
+            $revenueSatang = (int) $group->sum(fn (GpuJobEarning $row) => max(0, (int) $row->revenue_satang));
+            $amount = self::baht($shareSatang);
+            $sorted = $group->sortBy('id')->values();
+
+            $firstFromThisOwner = ! AffiliateCommission::where('affiliate_id', $affiliate->id)
+                ->where('source_type', self::COMMISSION_SOURCE)
+                ->where('referred_user_id', $ownerId)
+                ->exists();
+
+            $commission = AffiliateCommission::create([
+                'affiliate_id' => $affiliate->id,
+                'order_id' => null,
+                'referred_user_id' => $ownerId,
+                'order_amount' => self::baht($revenueSatang),
+                'commission_rate' => self::ratePercent($shareSatang, $revenueSatang),
+                'commission_amount' => $amount,
+                'status' => 'pending',
+                'source_type' => self::COMMISSION_SOURCE,
+                'source_id' => (int) $sorted->last()->id,
+                'source_description' => $sorted->count() === 1
+                    ? 'GPUxMINE ' . $sorted->first()->job_id
+                    : sprintf('GPUxMINE %d งาน (%s – %s)', $sorted->count(), $sorted->first()->job_id, $sorted->last()->job_id),
             ]);
 
-            return false;
+            $totals = ['total_earned' => $amount, 'total_pending' => $amount];
+            if ($firstFromThisOwner) {
+                $totals += ['total_referrals' => 1, 'total_conversions' => 1];
+            }
+            Affiliate::whereKey($affiliate->id)->toBase()->incrementEach($totals, ['updated_at' => now()]);
+
+            GpuJobEarning::whereKey($group->modelKeys())->update(['affiliate_commission_id' => $commission->id]);
+            $created++;
         }
 
-        $amount = self::baht($row->referral_satang);
-
-        $firstFromThisOwner = ! AffiliateCommission::where('affiliate_id', $affiliate->id)
-            ->where('source_type', self::COMMISSION_SOURCE)
-            ->where('referred_user_id', $row->user_id)
-            ->exists();
-
-        $commission = AffiliateCommission::create([
-            'affiliate_id' => $affiliate->id,
-            'order_id' => null,
-            'referred_user_id' => $row->user_id,
-            'order_amount' => self::baht(max(0, $row->revenue_satang)),
-            'commission_rate' => self::ratePercent($row->referral_satang, $row->revenue_satang),
-            'commission_amount' => $amount,
-            'status' => 'pending',
-            'source_type' => self::COMMISSION_SOURCE,
-            'source_id' => $row->id,
-            'source_description' => 'GPUxMINE ' . $row->job_id,
-        ]);
-
-        $totals = ['total_earned' => $amount, 'total_pending' => $amount];
-        if ($firstFromThisOwner) {
-            $totals += ['total_referrals' => 1, 'total_conversions' => 1];
-        }
-        Affiliate::whereKey($affiliate->id)->toBase()->incrementEach($totals, ['updated_at' => now()]);
-
-        GpuJobEarning::whereKey($row->id)->update(['affiliate_commission_id' => $commission->id]);
-
-        return true;
+        return $created;
     }
 
     /**
@@ -397,6 +431,29 @@ class GpuxMineEarningSettlementService
                         ->orWhereColumn('gpu_nodes.worker_id', 'gpu_job_earnings.worker_id');
                 });
         });
+    }
+
+    /**
+     * รายการไหนในชุดนี้ที่ถูกพักไว้เพราะเครื่องถูกระงับ — ตัวโอนจะข้ามจนกว่าจะยกเลิกระงับ
+     *
+     * หน้าแอดมินใช้บอกตรง ๆ ตอนอนุมัติ: เคยบอกว่า "เข้ากระเป๋ารอบถัดไป" ทั้งที่เงินค้างอยู่
+     * คำถามเดียวต่อหน้า ไม่ใช่หนึ่งคำถามต่อแถว
+     *
+     * @param  array<int, int>  $ids
+     * @return array<int, int>
+     */
+    public function frozenAmong(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $free = $this->notFrozen(GpuJobEarning::query()->whereKey($ids))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return array_values(array_diff(array_map('intval', $ids), $free));
     }
 
     /** กระเป๋าของเจ้าของ — สร้างให้ถ้ายังไม่มี โดยไม่ชนกับใครที่สร้างพร้อมกัน */

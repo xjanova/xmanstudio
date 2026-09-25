@@ -10,6 +10,8 @@
         <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">ถอนแล้ว</span>
         @if ($node->retire_status === \App\Models\GpuNode::RETIRE_PENDING)
             <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">ถอนยังไม่เสร็จ</span>
+        @elseif ($node->retire_status === \App\Models\GpuNode::RETIRE_AWAITING_RELAY)
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300" title="aixman ถอนแล้ว — relay รุ่นนี้ยังลบ worker ไม่ได้">ค้างที่ relay รุ่นเก่า</span>
         @endif
     @elseif ($node->online)
         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">

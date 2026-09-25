@@ -21,7 +21,8 @@
         . ($live ? '' : ' (เครื่องนี้ถูกถอนไปแล้ว — เจ้าของจะจับคู่ใหม่ได้)');
     $banPrompt = "แบน {$name} ของ {$owner}?\n\n"
         . "• ถอน worker ออกจาก aixman และ relay (ย้อนกลับไม่ได้ — ถ้ายกเลิกแบน เจ้าของต้องจับคู่ใหม่)\n"
-        . "• เครื่องนี้ (machine id) จับคู่ในบัญชีไหนก็ไม่ได้ และบัญชีเจ้าของขอรหัสจับคู่ใหม่ไม่ได้ จนกว่าจะยกเลิกแบน\n"
+        . "• บัญชีเจ้าของขอรหัสจับคู่ใหม่ไม่ได้ และเครื่องที่รายงาน machine id นี้จับคู่ในบัญชีไหนก็ไม่ได้ จนกว่าจะยกเลิกแบน\n"
+        . "  (machine id มาจากตัวเครื่องเอง เครื่องที่ถูกแก้ให้รายงานค่าอื่นหลบได้ — ดูรายการเครื่องที่ IP ตรงกันในหน้านี้)\n"
         . "• รายได้ที่ยังไม่เข้ากระเป๋าของเครื่องนี้ถูกพักไว้ ยกเลิกทีละรายการได้ด้านล่าง\n"
         . '• เครื่องอื่นของเจ้าของคนนี้ยังทำงานต่อ — ระงับหรือแบนแยกทีละเครื่อง';
     $unbanPrompt = "ยกเลิกแบน {$name}?\n\nเจ้าของจับคู่ใหม่ได้ และรายได้ที่พักไว้ของเครื่องนี้จะเดินต่อเข้ากระเป๋าในรอบถัดไป"
@@ -77,6 +78,8 @@
                 ถอนออกจากระบบเมื่อ {{ $bkk($node->deleted_at) }} ·
                 @if ($node->retire_status === \App\Models\GpuNode::RETIRE_PENDING)
                     <span class="font-semibold text-amber-700 dark:text-amber-300">aixman หรือ relay ยังไม่ยืนยันการถอน — ระบบลองซ้ำทุกนาที</span>
+                @elseif ($node->retire_status === \App\Models\GpuNode::RETIRE_AWAITING_RELAY)
+                    <span class="font-semibold text-amber-700 dark:text-amber-300">aixman ถอนแล้ว แต่ relay รุ่นนี้ยังลบ worker ไม่ได้ — เครื่องยังต่อ relay ได้ (ไม่มีงานเข้า) ระบบลบให้เองเมื่ออัปเกรด relay</span>
                 @elseif ($node->retire_status === \App\Models\GpuNode::RETIRE_DONE)
                     ถอนครบทั้ง aixman และ relay แล้ว
                 @else
@@ -132,7 +135,7 @@
             <div class="{{ $card }} p-5 space-y-4">
                 <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">จัดการเครื่องนี้</h2>
 
-                @if ($live || $node->retire_status === \App\Models\GpuNode::RETIRE_PENDING)
+                @if ($live || in_array($node->retire_status, \App\Models\GpuNode::RETIRE_UNFINISHED, true))
                     <form method="POST" action="{{ route('admin.gpuxmine.resync', $node->id) }}"
                           onsubmit="this.querySelector('button[type=submit]').disabled = true">
                         @csrf
@@ -202,6 +205,26 @@
                                     @if ($other->machine_id && $other->machine_id === $node->machine_id) · เครื่องเดียวกัน @endif
                                 </span>
                                 <div class="mt-1">@include('admin.gpuxmine.partials.node-badges', ['node' => $other])</div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if ($lookalikes->isNotEmpty())
+                {{-- การแบนตาม machine id หลบได้ด้วยการแก้เครื่องแล้วมาด้วยบัญชีใหม่ — ที่นี่ช่วยให้แอดมินเห็นเอง
+                     IP ซ้ำกันได้ในคนละบ้าน (CGNAT) จึงเป็นแค่เบาะแส ไม่ใช่หลักฐาน --}}
+                <div class="{{ $card }} p-5">
+                    <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">เครื่องที่ IP ตอนจับคู่ตรงกัน</h2>
+                    <p class="mt-0.5 mb-2 text-[11px] text-gray-500 dark:text-gray-400">อาจเป็นเครื่องเดียวกันที่รายงาน machine id ใหม่ หรือแค่บ้านที่ใช้เน็ตเจ้าเดียวกัน — ดูประกอบกันก่อนตัดสิน</p>
+                    <ul class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                        @foreach ($lookalikes as $match)
+                            <li class="py-2">
+                                <a href="{{ route('admin.gpuxmine.show', $match['node']->id) }}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400">{{ $match['node']->displayName() }}</a>
+                                <span class="block font-mono text-[11px] text-gray-500 dark:text-gray-400">{{ $match['node']->worker_id }} · บัญชี {{ $match['node']->user?->email ?? 'ที่ถูกลบ' }}
+                                    @if ($match['sameHardware']) · ฮาร์ดแวร์ตรงกันด้วย @endif
+                                </span>
+                                <div class="mt-1">@include('admin.gpuxmine.partials.node-badges', ['node' => $match['node']])</div>
                             </li>
                         @endforeach
                     </ul>

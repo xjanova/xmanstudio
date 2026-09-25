@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Mail\AffiliateCommissionMail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -71,6 +72,12 @@ class AffiliateCommission extends Model
 
     /**
      * Approve this commission (auto-pay to wallet).
+     *
+     * The row is claimed with a conditional UPDATE (pending → paid) inside the same
+     * transaction as the wallet credit, so only one caller can ever pay it. Checking
+     * $this->status alone was not enough: bulk approve loads every pending row up front,
+     * and an admin who re-submitted after a proxy timeout had a second request paying the
+     * same rows from its own stale copies. The e-mail goes out only after the commit.
      */
     public function approveAndPay(?int $adminId = null): bool
     {
@@ -78,37 +85,51 @@ class AffiliateCommission extends Model
             return false;
         }
 
-        $affiliate = $this->affiliate;
-        $wallet = Wallet::getOrCreateForUser($affiliate->user_id);
+        $paid = DB::transaction(function () use ($adminId) {
+            $claimed = static::whereKey($this->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'paid', 'paid_at' => now()]);
 
-        // Build description based on source
-        $description = $this->source_description
-            ?? ($this->order ? "Order #{$this->order->order_number}" : "Commission #{$this->id}");
+            if ($claimed !== 1) {
+                return false;
+            }
 
-        // Add commission to wallet as bonus
-        $transaction = $wallet->addBonus(
-            $this->commission_amount,
-            "ค่าแนะนำ Affiliate จาก {$description}",
-            $adminId,
-            [
-                'affiliate_commission_id' => $this->id,
-                'affiliate_id' => $affiliate->id,
-                'order_id' => $this->order_id,
-                'source_type' => $this->source_type,
-                'source_id' => $this->source_id,
-            ]
-        );
+            $affiliate = $this->affiliate;
+            $wallet = Wallet::getOrCreateForUser($affiliate->user_id);
 
-        // Update commission record
-        $this->update([
-            'status' => 'paid',
-            'wallet_transaction_id' => $transaction->id,
-            'paid_at' => now(),
-        ]);
+            // Build description based on source
+            $description = $this->source_description
+                ?? ($this->order ? "Order #{$this->order->order_number}" : "Commission #{$this->id}");
 
-        // Update affiliate totals
-        $affiliate->increment('total_paid', $this->commission_amount);
-        $affiliate->decrement('total_pending', $this->commission_amount);
+            // Add commission to wallet as bonus
+            $transaction = $wallet->addBonus(
+                $this->commission_amount,
+                "ค่าแนะนำ Affiliate จาก {$description}",
+                $adminId,
+                [
+                    'affiliate_commission_id' => $this->id,
+                    'affiliate_id' => $affiliate->id,
+                    'order_id' => $this->order_id,
+                    'source_type' => $this->source_type,
+                    'source_id' => $this->source_id,
+                ]
+            );
+
+            static::whereKey($this->id)->update(['wallet_transaction_id' => $transaction->id]);
+
+            // Update affiliate totals
+            $affiliate->increment('total_paid', $this->commission_amount);
+            $affiliate->decrement('total_pending', $this->commission_amount);
+
+            return true;
+        });
+
+        // Either way the row has moved on — keep this copy in step with it
+        $this->refresh();
+
+        if (! $paid) {
+            return false;
+        }
 
         // Send email notification
         $this->sendNotificationEmail('paid');
@@ -118,6 +139,9 @@ class AffiliateCommission extends Model
 
     /**
      * Reject this commission.
+     *
+     * Same one-winner claim as approveAndPay(): a row another request has just paid or
+     * rejected is left alone, and total_pending moves once.
      */
     public function reject(?string $reason = null): bool
     {
@@ -125,12 +149,25 @@ class AffiliateCommission extends Model
             return false;
         }
 
-        $this->update([
-            'status' => 'rejected',
-            'admin_note' => $reason,
-        ]);
+        $rejected = DB::transaction(function () use ($reason) {
+            $claimed = static::whereKey($this->id)
+                ->where('status', 'pending')
+                ->update(['status' => 'rejected', 'admin_note' => $reason]);
 
-        $this->affiliate->decrement('total_pending', $this->commission_amount);
+            if ($claimed !== 1) {
+                return false;
+            }
+
+            $this->affiliate->decrement('total_pending', $this->commission_amount);
+
+            return true;
+        });
+
+        $this->refresh();
+
+        if (! $rejected) {
+            return false;
+        }
 
         // Send email notification
         $this->sendNotificationEmail('rejected');

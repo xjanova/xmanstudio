@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * ส่วนการพักเงิน ปล่อยเงิน และโอนเข้ากระเป๋าเป็นของ gpuxmine:settle-earnings
  *
  *   pending ──(พ้นระยะพัก และเครื่องไม่ถูกระงับ)──▶ cleared ──(โอนเข้ากระเป๋า)──▶ paid
+ *   (ระยะพักนับจากงานเสร็จหรือแถวถูกบันทึก แล้วแต่อันไหนช้ากว่า — ดู holdEndsAt())
  *   review  = ผลงานดูผิดปกติ รอแอดมินตัดสิน ไม่ถูกปล่อยเอง
  *   void    = ยกเลิก ไม่จ่าย
  *
@@ -163,10 +164,20 @@ class GpuJobEarning extends Model
         return $this->status === self::STATUS_REVIEW && $this->amount_satang >= 0;
     }
 
-    /** เวลาที่งานนี้พ้นระยะพัก — นับจากเวลางานเสร็จ (ไม่มีก็นับจากเวลาที่แถวเกิด) */
+    /**
+     * เวลาที่งานนี้พ้นระยะพัก — นับจากเวลาที่ช้ากว่าระหว่างงานเสร็จกับแถวถูกบันทึก
+     *
+     * แถวที่ aixman เขียนย้อนหลัง (catch-up sweep) ต้องได้ระยะพักเต็มนับจากวันที่เงิน
+     * ปรากฏในระบบ ไม่งั้นมันพ้นระยะพักตั้งแต่เกิด — ตรงกับ
+     * GpuxMineEarningSettlementService::heldSince()
+     */
     public function holdEndsAt(int $holdHours): ?Carbon
     {
-        $from = $this->completed_at ?? $this->created_at;
+        $from = match (true) {
+            $this->completed_at === null => $this->created_at,
+            $this->created_at === null => $this->completed_at,
+            default => $this->created_at->gt($this->completed_at) ? $this->created_at : $this->completed_at,
+        };
 
         return $from?->copy()->addHours(max(0, $holdHours));
     }

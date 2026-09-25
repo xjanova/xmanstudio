@@ -62,7 +62,7 @@ class GpuxMineDoctorCommand extends Command
         if ($schemaReady) {
             $this->checkHeartbeats($health, $settlement);
             $this->checkMoney($health);
-            $this->checkNodes($health);
+            $this->checkNodes($health, $relay);
         }
 
         return $this->report();
@@ -271,12 +271,30 @@ class GpuxMineDoctorCommand extends Command
             : $this->record(self::OK, 'รอแอดมินตรวจ', 'ไม่มี');
     }
 
-    private function checkNodes(GpuxMineHealthService $health): void
+    private function checkNodes(GpuxMineHealthService $health, GpuxMineRelayService $relay): void
     {
         $retirements = $health->staleRetirements();
         $retirements > 0
             ? $this->record(self::WARN, 'การถอนเครื่องที่ค้าง', "{$retirements} เครื่องถอนไม่สำเร็จมาเกิน " . GpuxMineHealthService::RETIRE_STALE_MINUTES . ' นาที — relay หรือ aixman ปฏิเสธ (ดู log GPUxMINE worker retirement)')
             : $this->record(self::OK, 'การถอนเครื่องที่ค้าง', 'ไม่มี');
+
+        $awaiting = $health->awaitingRelayRetirements();
+        if ($awaiting > 0) {
+            $this->record(self::WARN, 'worker ค้างที่ relay', "{$awaiting} เครื่องถูกถอนที่ aixman แล้ว แต่ relay รุ่นนี้ยังไม่มีคำสั่งลบ worker — กุญแจของเครื่องยังต่อ relay ได้ (ไม่มีงานเข้า) อัปเกรด relay แล้ว gpuxmine:sync-nodes ลบให้เอง");
+        }
+
+        // กุญแจอุโมงค์ต้องใช้รายชื่อจาก relay — relay ตอบไม่ได้ก็บอกไปแล้วในหัวข้อ relay
+        $live = $relay->isConfigured() ? $relay->workers() : null;
+        if ($live !== null) {
+            $tokens = $health->sharedTunnelTokens($live);
+            if ($tokens['lost'] > 0) {
+                $this->record(self::FAIL, 'กุญแจอุโมงค์', "{$tokens['lost']} เครื่องถูกออกกุญแจอุโมงค์ใหม่ที่ relay แต่ xmanstudio ไม่มีใบนั้น — aixman เรียกเครื่องเหล่านี้ไม่ได้เลย รัน php artisan gpuxmine:rotate-tunnel-tokens");
+            } elseif ($tokens['legacy'] > 0) {
+                $this->record(self::OK, 'กุญแจอุโมงค์', "{$tokens['legacy']} เครื่องยังใช้กุญแจใบเดียวทั้งเครื่องและ aixman — แยกได้ด้วย gpuxmine:rotate-tunnel-tokens หลังตั้ง Relay__IssueTunnelTokens=true");
+            } else {
+                $this->record(self::OK, 'กุญแจอุโมงค์', 'ทุกเครื่องมีกุญแจของ aixman แยกแล้ว');
+            }
+        }
 
         $errors = $health->dispatchErrors();
         $errors > 0

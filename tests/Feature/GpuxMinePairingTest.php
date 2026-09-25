@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Affiliate;
 use App\Models\GpuNode;
+use App\Models\ProductDevice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -143,6 +144,67 @@ class GpuxMinePairingTest extends TestCase
         $this->assertNotNull($pending->fresh()->paired_at);
     }
 
+    public function test_asking_for_a_new_code_leaves_a_code_the_client_is_redeeming_right_now_alone(): void
+    {
+        $owner = User::factory()->create();
+        $redeeming = $this->pendingCode($owner);
+        $stale = $this->pendingCode($owner);
+        $abandoned = $this->pendingCode($owner);
+
+        // claim จองรหัสแรกไว้แล้วและกำลังรอ relay — ส่วนรหัสที่สามเป็นการจองของคำขอที่ตายไปนานแล้ว
+        GpuNode::whereKey($redeeming->id)->update(['pairing_expires_at' => null]);
+        GpuNode::whereKey($abandoned->id)->update(['pairing_expires_at' => null]);
+        GpuNode::whereKey($abandoned->id)->toBase()->update(['updated_at' => now()->subMinutes(GpuNode::PAIRING_RESERVATION_MINUTES + 1)]);
+
+        $this->actingAs($owner)->post('/gpuxmine/pair')->assertSessionHas('pairing_code');
+
+        $this->assertNotSoftDeleted($redeeming);
+        $this->assertSoftDeleted($stale);
+        $this->assertSoftDeleted($abandoned);
+    }
+
+    public function test_a_code_replaced_mid_claim_gets_no_credentials_and_its_new_worker_is_retired(): void
+    {
+        $owner = User::factory()->create();
+        $pending = $this->pendingCode($owner);
+
+        // ระหว่างที่ relay ออก worker ให้ แถวที่จองไว้ถูกลบ (เช่น โดย pair() รุ่นก่อนหน้านี้)
+        $this->whileEnrolling = fn () => GpuNode::whereKey($pending->id)->delete();
+
+        $this->claim($pending->pairing_code)
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'PAIRING_INVALID')
+            ->assertJsonMissingPath('data.token');
+
+        // ไม่มีแถวไหนถือ worker นี้แบบใช้งานอยู่ และไม่ถูกส่งให้ aixman
+        $this->assertNull(GpuNode::where('worker_id', 'gxm-new000000001')->first());
+        $this->assertSame([], $this->aixmanPushes());
+        $this->assertNull(GpuNode::withTrashed()->find($pending->id)->paired_at);
+
+        // worker ที่เพิ่งออกถูกถอนทิ้ง — ไม่ค้างเป็นกำพร้าที่ relay
+        $this->assertSame(['gxm-new000000001'], $this->relayDeletes());
+        $tomb = GpuNode::onlyTrashed()->where('worker_id', 'gxm-new000000001')->sole();
+        $this->assertSame(GpuNode::RETIRE_DONE, $tomb->retire_status);
+        $this->assertSame($owner->id, (int) $tomb->user_id);
+    }
+
+    public function test_an_unclaimed_worker_the_relay_would_not_delete_is_retried_by_the_cron(): void
+    {
+        $owner = User::factory()->create();
+        $pending = $this->pendingCode($owner);
+        $this->whileEnrolling = fn () => GpuNode::whereKey($pending->id)->delete();
+        $this->relayDeleteStatus = 500;
+
+        $this->claim($pending->pairing_code)->assertStatus(422);
+        $tomb = GpuNode::onlyTrashed()->where('worker_id', 'gxm-new000000001')->sole();
+        $this->assertSame(GpuNode::RETIRE_PENDING, $tomb->retire_status);
+
+        $this->relayDeleteStatus = 200;
+        $this->artisan('gpuxmine:sync-nodes')->run();
+
+        $this->assertSame(GpuNode::RETIRE_DONE, $tomb->fresh()->retire_status);
+    }
+
     // ── เครื่องเดิมกลับมาจับคู่ ───────────────────────────────────────
 
     public function test_a_returning_machine_the_relay_knows_is_reused_and_pushed_with_the_current_address(): void
@@ -169,6 +231,29 @@ class GpuxMinePairingTest extends TestCase
         // ที่อยู่เปลี่ยน aixman ต้องได้ยินทันที ไม่ใช่รอให้ตัวจับเวลาสังเกตเอง
         $this->assertCount(1, $this->aixmanPushes());
         $this->assertSame($this->relayBase . '/w/' . $existing->worker_id, $this->aixmanPushes()[0]['endpoint']);
+    }
+
+    public function test_the_device_record_keeps_the_first_ip_and_follows_the_latest_one(): void
+    {
+        // หน้าแอดมินใช้ IP ตอนจับคู่หาเครื่องที่อาจหลบการแบนด้วย machine id ใหม่ — "IP แรก"
+        // เคยถูกเขียนทับทุกครั้ง และเครื่องเดิมที่กลับมาจับคู่ไม่ถูกบันทึกเลย
+        $owner = User::factory()->create();
+        $first = $this->pendingCode($owner);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.1']);
+        $this->claim($first->pairing_code)->assertOk();
+        $node = $first->fresh();
+        $this->assertNotNull($node->product_device_id);
+
+        $this->relayWorkers = [$this->liveWorker($node->worker_id)];
+        $again = $this->pendingCode($owner);
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.9']);
+        $this->claim($again->pairing_code)->assertOk()->assertJsonPath('data.worker_id', $node->worker_id);
+
+        $device = ProductDevice::where('machine_id', $this->machineId)->sole();
+        $this->assertSame('203.0.113.1', $device->first_ip);
+        $this->assertSame('198.51.100.9', $device->last_ip);
+        $this->assertSame($device->id, $node->fresh()->product_device_id);
     }
 
     public function test_a_relay_that_cannot_be_read_never_triggers_a_reenrolment(): void
@@ -286,17 +371,44 @@ class GpuxMinePairingTest extends TestCase
 
     // ── เพดานเครื่องต่อบัญชี (D9) ─────────────────────────────────────
 
-    public function test_the_node_cap_refuses_a_new_pairing_code_on_the_web(): void
+    public function test_at_the_node_cap_the_web_still_issues_a_code_and_says_it_is_for_a_machine_paired_before(): void
     {
         config(['services.gpuxmine.max_nodes_per_user' => 2]);
         $owner = User::factory()->create();
-        GpuNode::factory()->paired()->count(2)->create(['user_id' => $owner->id]);
+        [$reinstalled] = GpuNode::factory()->paired()->count(2)->create(['user_id' => $owner->id])->all();
+        $this->relayWorkers = [$this->liveWorker($reinstalled->worker_id)];
 
-        $this->actingAs($owner)->post('/gpuxmine/pair')
-            ->assertRedirect()
-            ->assertSessionHas('error', fn ($m) => str_contains($m, 'ครบ 2 เครื่อง'));
+        // เครื่องเดิมที่ลงโปรแกรมใหม่ (credential หาย) ต้องขอรหัสได้ — เคยถูกปฏิเสธที่หน้าเว็บ
+        // ทั้งที่ claim คืน worker เดิมให้ได้ เจ้าของจึงต้องถอนเครื่องแล้วเสียประวัติทิ้ง
+        $this->actingAs($owner)->post('/gpuxmine/pair')->assertRedirect()->assertSessionHas('pairing_code');
+        $this->actingAs($owner)->get('/gpuxmine')
+            ->assertOk()
+            ->assertSee('บัญชีนี้มีเครื่องครบ 2 เครื่องแล้ว')
+            ->assertSee('ใช้ได้กับเครื่องที่เคยจับคู่ไว้แล้วเท่านั้น');
 
-        $this->assertSame(0, GpuNode::where('user_id', $owner->id)->whereNull('paired_at')->count());
+        $code = GpuNode::where('user_id', $owner->id)->whereNull('paired_at')->sole();
+
+        // เครื่องใหม่: ยังติดเพดาน
+        $this->claim($code->pairing_code, Str::lower(Str::random(40)))
+            ->assertStatus(409)
+            ->assertJsonPath('error_code', 'NODE_LIMIT');
+        $this->assertSame(0, $this->enrolments());
+
+        // เครื่องเดิม: ได้ worker เดิมคืน
+        $this->claim($code->pairing_code, $reinstalled->machine_id)
+            ->assertOk()
+            ->assertJsonPath('data.worker_id', $reinstalled->worker_id);
+    }
+
+    public function test_below_the_cap_the_page_does_not_warn(): void
+    {
+        config(['services.gpuxmine.max_nodes_per_user' => 2]);
+        $owner = User::factory()->create();
+        GpuNode::factory()->paired()->create(['user_id' => $owner->id]);
+        $this->relayWorkers = [];
+
+        $this->actingAs($owner)->post('/gpuxmine/pair')->assertSessionHas('pairing_code');
+        $this->actingAs($owner)->get('/gpuxmine')->assertOk()->assertDontSee('บัญชีนี้มีเครื่องครบ');
     }
 
     public function test_the_node_cap_refuses_a_new_machine_at_claim_but_not_a_returning_one(): void

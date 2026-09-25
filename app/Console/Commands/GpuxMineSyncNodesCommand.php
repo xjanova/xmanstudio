@@ -22,6 +22,10 @@ use Illuminate\Console\Command;
  *
  * relay ตอบไม่ได้ = ไม่แตะแถวไหนเลยและจบด้วย FAILURE เคยถือว่า "ไม่มีเครื่อง"
  * แล้วเขียนทุกเครื่องเป็นออฟไลน์ ล้างคะแนน และบอก aixman ให้ถอดทั้งกอง
+ *
+ * ทุกรอบยังทำให้ relay ตรงกับฐานข้อมูลด้วย: worker ของเครื่องที่ถูกระงับต้องถูกปิดที่
+ * relay และเครื่องที่ยกเลิกระงับแล้วต้องเปิด (ปุ่มแอดมินสั่งแค่ครั้งเดียว) และ worker ที่
+ * ถอนแล้วแต่ค้างที่ relay รุ่นเก่าถูกลบเมื่อ relay อัปเกรด
  */
 class GpuxMineSyncNodesCommand extends Command
 {
@@ -55,17 +59,35 @@ class GpuxMineSyncNodesCommand extends Command
             return self::FAILURE;
         }
 
+        // worker ที่ถอนแล้วแต่ค้างที่ relay รุ่นเก่า — ต้องใช้รายชื่อ จึงทำหลังอ่านรายชื่อได้
+        $retired += $state->retryAwaitingRelay($live);
+
         $total = 0;
         $changed = 0;
         $pushed = 0;
+        $gates = 0;
         $failures = 0;
+        $gateFailures = 0;
         $aixmanDown = false;
 
         foreach (GpuNode::paired()->lazyById(100) as $node) {
             $total++;
+            $row = $live[$node->worker_id] ?? null;
 
-            if ($state->apply($node, $live[$node->worker_id] ?? null)) {
+            if ($state->apply($node, $row)) {
                 $changed++;
+            }
+
+            // ประตูที่ relay ต้องตรงกับการระงับ — ปุ่มของแอดมินสั่งครั้งเดียว ตรงนี้ตามให้
+            // จนตรง relay ปฏิเสธติดกันหลายครั้ง = relay มีปัญหา หยุดสั่งรอบนี้
+            if ($gateFailures < GpuxMineNodeStateService::GIVE_UP_AFTER_FAILURES) {
+                $gate = $state->reconcileRelayGate($node, $row);
+                if ($gate === true) {
+                    $gates++;
+                    $gateFailures = 0;
+                } elseif ($gate === false) {
+                    $gateFailures++;
+                }
             }
 
             if ($aixmanDown || ! ($this->option('force') || $state->needsPush($node))) {
@@ -91,7 +113,11 @@ class GpuxMineSyncNodesCommand extends Command
             }
         }
 
-        $this->info("เครื่องทั้งหมด {$total} · อัปเดต {$changed} · ส่งให้ aixman {$pushed} · ถอนค้างสำเร็จ {$retired}");
+        $this->info("เครื่องทั้งหมด {$total} · อัปเดต {$changed} · ส่งให้ aixman {$pushed} · แก้ประตูที่ relay {$gates} · ถอนค้างสำเร็จ {$retired}");
+
+        if ($gateFailures > 0) {
+            $this->warn('relay ไม่รับคำสั่งเปิด/ปิด worker ' . $gateFailures . ' ครั้ง — รอบหน้าลองใหม่');
+        }
 
         if ($aixmanDown) {
             $this->error('ติดต่อ aixman ไม่ได้ติดกันหลายเครื่อง — หยุดส่งรอบนี้ รอบหน้าลองใหม่');

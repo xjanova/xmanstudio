@@ -70,17 +70,18 @@ class GpuxMineHealthService
     {
         $cutoff = now()->subHours($this->settlement->holdHours() + self::STUCK_GRACE_HOURS);
 
+        // ฐานเวลาเดียวกับตัวปล่อยเงิน (heldSince) — แถวที่ aixman เขียนย้อนหลังยังพักไม่ครบ
+        // ไม่ใช่ "ค้าง"
         $query = $this->settlement->notFrozen(
-            GpuJobEarning::query()
-                ->where('status', GpuJobEarning::STATUS_PENDING)
-                ->whereNotNull('user_id')
-                ->where(function (Builder $q) use ($cutoff) {
-                    $q->where('completed_at', '<=', $cutoff)
-                        ->orWhere(fn (Builder $q) => $q->whereNull('completed_at')->where('created_at', '<=', $cutoff));
-                })
+            $this->settlement->heldSince(
+                GpuJobEarning::query()
+                    ->where('status', GpuJobEarning::STATUS_PENDING)
+                    ->whereNotNull('user_id'),
+                $cutoff
+            )
         );
 
-        return $this->summarise($query, 'COALESCE(completed_at, created_at)');
+        return $this->summarise($query, 'CASE WHEN completed_at IS NULL OR created_at > completed_at THEN created_at ELSE completed_at END');
     }
 
     /**
@@ -120,6 +121,46 @@ class GpuxMineHealthService
             ->where('retire_status', GpuNode::RETIRE_PENDING)
             ->where('updated_at', '<=', now()->subMinutes(self::RETIRE_STALE_MINUTES))
             ->count();
+    }
+
+    /** เครื่องที่ถอนแล้ว aixman ถอนแล้ว แต่ worker ยังค้างที่ relay รุ่นที่ยังไม่มีคำสั่งลบ */
+    public function awaitingRelayRetirements(): int
+    {
+        return GpuNode::onlyTrashed()
+            ->where('retire_status', GpuNode::RETIRE_AWAITING_RELAY)
+            ->count();
+    }
+
+    /**
+     * เครื่องที่ยังใช้งานอยู่แต่ยังไม่มีกุญแจอุโมงค์ของตัวเอง แบ่งตามสิ่งที่ relay บอก
+     *
+     * legacy: relay ก็ยังไม่ได้ออกใบแยกให้ — ใช้ได้ปกติ แยกได้เมื่อพร้อมด้วย
+     * gpuxmine:rotate-tunnel-tokens · lost: relay ออกใบแยกให้ worker นั้นไปแล้ว (มีคนหมุน
+     * กุญแจเองที่ relay) แต่เราไม่มีใบนั้น — aixman ถือใบเดิมซึ่ง relay ไม่รับแล้ว เครื่องนี้
+     * ไม่ได้งานเลยจนกว่าจะออกใบใหม่ให้
+     *
+     * @param  array<string, array<string, mixed>>  $live  รายชื่อจาก relay
+     * @return array{legacy:int, lost:int}
+     */
+    public function sharedTunnelTokens(array $live): array
+    {
+        $counts = ['legacy' => 0, 'lost' => 0];
+
+        foreach (GpuNode::paired()->whereNotNull('worker_id')->lazyById(200) as $node) {
+            $shared = $node->tunnel_token === null
+                || $node->tunnel_token === ''
+                || hash_equals((string) $node->relay_token, (string) $node->tunnel_token);
+
+            if (! $shared) {
+                continue;
+            }
+
+            ($live[$node->worker_id]['hasTunnelToken'] ?? false) === true
+                ? $counts['lost']++
+                : $counts['legacy']++;
+        }
+
+        return $counts;
     }
 
     /** เครื่องที่ยังใช้งานอยู่แต่ส่งให้ aixman ครั้งล่าสุดไม่สำเร็จ */

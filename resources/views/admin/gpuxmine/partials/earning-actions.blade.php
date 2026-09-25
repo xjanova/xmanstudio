@@ -4,11 +4,15 @@
 @php
     $holdEndsAt = $earning->holdEndsAt($holdHours);
     $clearsNow = $holdEndsAt === null || $holdEndsAt->lte(now());
+    // เครื่องที่ถูกระงับ: ตัวโอนข้ามเงินของมันจนกว่าจะยกเลิกระงับ — ห้ามสัญญาว่า "รอบถัดไป"
+    $frozen = in_array((int) $earning->id, $frozenIds ?? [], true);
     $amount = '฿' . number_format($earning->amount_satang / 100, 2);
     $small = 'px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white';
-    $approvePrompt = "อนุมัติรายได้ {$earning->job_id} ({$amount})?\n\n" . ($clearsNow
-        ? 'พ้นระยะพักแล้ว — จะเข้ากระเป๋าเจ้าของเครื่องในรอบโอนถัดไป (ภายในหนึ่งชั่วโมง)'
-        : "ยังอยู่ในระยะพัก — จะกลับไปพักจนครบ {$holdHours} ชม. แล้วค่อยเข้ากระเป๋า");
+    $approvePrompt = "อนุมัติรายได้ {$earning->job_id} ({$amount})?\n\n" . match (true) {
+        $frozen => 'เครื่องนี้ถูกระงับอยู่ — อนุมัติได้ แต่เงินจะยังไม่เดินจนกว่าจะยกเลิกระงับ',
+        $clearsNow => 'พ้นระยะพักแล้ว — จะเข้ากระเป๋าเจ้าของเครื่องในรอบโอนถัดไป (ภายในหนึ่งชั่วโมง)',
+        default => 'ยังอยู่ในระยะพัก — จะกลับไปพักจนถึง ' . $holdEndsAt->copy()->timezone('Asia/Bangkok')->format('d/m H:i') . ' น. แล้วค่อยเข้ากระเป๋า',
+    };
     $voidPrompt = "ยกเลิกรายได้ {$earning->job_id} ({$amount})?\n\nเจ้าของเครื่องจะไม่ได้เงินรายการนี้ และจะเห็นเหตุผลที่กรอก — ย้อนกลับไม่ได้";
 @endphp
 <div class="w-56 space-y-1.5">
@@ -17,7 +21,7 @@
               onsubmit="if (! window.confirm(@js($approvePrompt))) return false; this.querySelector('button[type=submit]').disabled = true;">
             @csrf
             <button type="submit" class="w-full px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition disabled:opacity-50 disabled:cursor-wait">
-                {{ $clearsNow ? 'อนุมัติ → รอโอน' : 'อนุมัติ → กลับไปพัก' }}
+                {{ $frozen ? 'อนุมัติ (เงินพักจนยกเลิกระงับ)' : ($clearsNow ? 'อนุมัติ → รอโอน' : 'อนุมัติ → กลับไปพัก') }}
             </button>
         </form>
     @endif

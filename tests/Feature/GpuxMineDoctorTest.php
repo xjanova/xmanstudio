@@ -184,13 +184,25 @@ class GpuxMineDoctorTest extends TestCase
     public function test_earnings_stuck_past_the_hold_fail(): void
     {
         $node = GpuNode::factory()->paired()->create();
-        GpuJobEarning::factory()->forNode($node)->create(['completed_at' => now()->subHours(30)]);
+        GpuJobEarning::factory()->forNode($node)->create(['completed_at' => now()->subHours(30), 'created_at' => now()->subHours(30)]);
 
         [$code, $out] = $this->doctor();
 
         $this->assertSame(1, $code);
         $this->assertStringContainsString('เงินค้างระยะพัก', $out);
         $this->assertStringContainsString('1 งาน ฿1.50', $out);
+    }
+
+    public function test_a_row_aixman_wrote_late_is_not_stuck_until_its_own_hold_has_passed(): void
+    {
+        // งานเสร็จสามวันก่อน แต่ aixman เพิ่งเขียนแถว (catch-up sweep) — ยังพักไม่ครบ ไม่ใช่ "ค้าง"
+        $node = GpuNode::factory()->paired()->create();
+        GpuJobEarning::factory()->forNode($node)->backfilled(3)->create();
+
+        [$code, $out] = $this->doctor();
+
+        $this->assertSame(0, $code, $out);
+        $this->assertStringNotContainsString('พ้นระยะพักเกิน', $out);
     }
 
     public function test_money_held_on_purpose_is_not_reported_as_stuck(): void

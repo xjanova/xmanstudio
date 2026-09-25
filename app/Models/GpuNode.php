@@ -30,6 +30,15 @@ class GpuNode extends Model
     public const PAIRING_TTL_MINUTES = 10;
 
     /**
+     * รหัสที่โปรแกรมกำลังแลก (claim จองไว้แล้วรอ relay) ห้ามถูกแทนที่นานเท่านี้
+     *
+     * claim ที่ช้าที่สุดคือถาม relay + ออก worker + ถอน worker เก่า + ส่ง aixman
+     * แต่ละขั้นหมดเวลาที่สิบวินาที ห้านาทีเผื่อไว้เกินพอ การจองที่เก่ากว่านี้คือคำขอที่
+     * ตายกลางทาง (process ถูกฆ่าก่อนคืนรหัส) — ขอรหัสใหม่ลบทิ้งได้
+     */
+    public const PAIRING_RESERVATION_MINUTES = 5;
+
+    /**
      * การถอน worker ที่ aixman และ relay — ยังไม่ยืนยันทั้งสองฝั่ง
      *
      * แถวที่ soft delete แล้วแต่ยังค้างสถานะนี้ gpuxmine:sync-nodes จะลองถอน
@@ -38,6 +47,17 @@ class GpuNode extends Model
     public const RETIRE_PENDING = 'pending';
 
     public const RETIRE_DONE = 'done';
+
+    /**
+     * aixman ถอนแล้ว แต่ relay รุ่นนี้ยังไม่มีคำสั่งลบ worker — worker ยังอยู่ใน
+     * workers.json และกุญแจของเครื่องยังต่อ /agent ได้ (ไม่มีงานเข้า เพราะ aixman
+     * ถอนไปแล้ว) ตัวจับเวลาไม่ยิงซ้ำทุกนาที แต่ลบให้ทันทีที่เห็นว่า relay อัปเกรดแล้ว
+     * หรือ relay ไม่รู้จัก worker นี้แล้ว
+     */
+    public const RETIRE_AWAITING_RELAY = 'awaiting-relay';
+
+    /** การถอนที่ยังไม่จบ — หน้าแอดมินรวมไว้ในแท็บ "ถอนยังไม่เสร็จ" */
+    public const RETIRE_UNFINISHED = [self::RETIRE_PENDING, self::RETIRE_AWAITING_RELAY];
 
     protected $fillable = [
         'user_id',
@@ -165,6 +185,12 @@ class GpuNode extends Model
      *
      * $exceptNodeId คือแถวที่ยังใช้งานอยู่ซึ่งการจับคู่ครั้งนี้จะคืน worker เดิมให้
      * — แถวนั้นถูกระงับอยู่ก็ยังระงับต่อ ไม่ได้หนีไปไหน จึงไม่นับ
+     *
+     * ข้อจำกัดที่ต้องรู้: machine_id คือสิ่งที่โปรแกรมบนเครื่องรายงานเอง (hash ของ
+     * MachineGuid, SMBIOS UUID และ serial ของบอร์ด) คนที่แก้ registry ลง Windows ใหม่
+     * หรือแก้โปรแกรม ได้ machine_id ใหม่ และถ้ามาด้วยบัญชีใหม่ก็ผ่านตรงนี้ได้ นี่จึงหยุดได้
+     * แค่เครื่องที่ไม่ได้ถูกแก้ ไม่ใช่การแบนที่หลบไม่ได้ — หน้าแอดมินแสดงเครื่องที่ฮาร์ดแวร์
+     * หรือ IP ตรงกันไว้ให้แอดมินดูเอง (สองค่านั้นซ้ำกันได้ในคนละบ้าน จึงไม่ใช้บล็อกเอง)
      */
     public static function machineIsBlocked(?string $machineId, ?int $exceptNodeId = null): bool
     {

@@ -56,9 +56,24 @@ class GpuJobEarningFactory extends Factory
         ]);
     }
 
-    /** เสร็จมานานกว่าระยะพักเริ่มต้น (24 ชั่วโมง) แล้ว */
+    /**
+     * เสร็จและถูกบันทึกมานานกว่าระยะพักเริ่มต้น (24 ชั่วโมง) แล้ว — ระยะพักนับจากเวลาที่ช้ากว่า
+     * ของสองอย่างนี้ แถวที่เพิ่งถูกเขียนย้อนหลังยังไม่พ้นระยะพัก (ดู backfilled())
+     */
     public function matured(): static
     {
-        return $this->state(fn () => ['completed_at' => now()->subHours(25)]);
+        return $this->state(fn () => [
+            'completed_at' => now()->subHours(25),
+            'created_at' => now()->subHours(25),
+        ]);
+    }
+
+    /** งานที่เสร็จไปนานแล้ว แต่ aixman เพิ่งเขียนแถวตอนนี้ (catch-up sweep) */
+    public function backfilled(int $daysAgo = 3): static
+    {
+        return $this->state(fn () => [
+            'completed_at' => now()->subDays($daysAgo),
+            'created_at' => now(),
+        ]);
     }
 }

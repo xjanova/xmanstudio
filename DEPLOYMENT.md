@@ -428,6 +428,35 @@ anything there), that the migrations have run, that both tasks are scheduled and
 really ran them recently, and whether any earnings are stuck past the hold or waiting for an
 admin at `/admin/gpuxmine/earnings`. It never prints a secret.
 
+**GPUxMINE deploy order — aixman first (required), then this app, then the relay token split.**
+
+1. Deploy aixman's `feat/sharing-complete` first. This app sends aixman its machines every
+   ten minutes even when nothing changed, and whenever a machine's `accepting` flag flips — that
+   is what brings back a machine aixman dropped. The aixman on `main` rewrites a machine that is
+   rendering to `warming` every time it hears about it, and its reaper then kills warming workers
+   older than an hour, so it must not receive those pushes. This app tells the two apart by the
+   `worker.lastError` key in aixman's reply (only the new one sends it) and holds back the timed
+   and `accepting` pushes until it sees it, but that is a safety net: the intended order is aixman
+   first.
+2. Deploy this app and run the migrations.
+3. The relay (GpuXmine) can go before or after. Until it is upgraded: suspending a machine cannot
+   cut its relay connection (aixman is told the machine is offline and suspended, so no work is
+   sent), and a removed or banned machine's worker cannot be deleted at the relay — those rows
+   are marked `awaiting-relay` and `gpuxmine:sync-nodes` deletes them once the relay has the
+   command. `php artisan gpuxmine:doctor` counts them.
+4. Last, split the tokens. Set `Relay__IssueTunnelTokens=true` on the relay and restart it, then
+   give every machine enrolled before the split its own aixman tunnel token:
+
+   ```bash
+   php artisan gpuxmine:rotate-tunnel-tokens --dry-run   # what would change
+   php artisan gpuxmine:rotate-tunnel-tokens             # rotate, store, push to aixman
+   ```
+
+   Use this command, not `POST /admin/workers/{id}/rotate?only=tunnel` by hand: from the moment
+   the relay answers, the old token no longer opens the tunnel, and only this command stores the
+   new one and hands it to aixman in the same step. It skips machines rendering for a customer
+   (`--include-busy` to override) and is safe to run again until nothing is left.
+
 ---
 
 ## Performance Optimization

@@ -23,7 +23,7 @@ use Tests\TestCase;
  *   — ก่อนหน้านี้ไม่มีอะไรพาเงินออกจาก pending เลย ทุกงานค้างเป็น "รอเข้ากระเป๋า"
  *   — การจ่ายรันซ้ำได้โดยไม่จ่ายซ้ำ แม้ตัวรันสองตัวจะเห็นแถวชุดเดียวกัน
  *   — เครื่องที่แอดมินระงับ และงานที่ติดรอตรวจ ไม่ถูกปล่อยเงินเอง
- *   — ส่วนแบ่งผู้แนะนำกลายเป็นค่าแนะนำหนึ่งรายการต่อหนึ่งงาน ครั้งเดียว
+ *   — ส่วนแบ่งผู้แนะนำกลายเป็นค่าแนะนำหนึ่งรายการต่อผู้แนะนำต่อรอบโอน ครั้งเดียว
  *   — รายได้ไม่ใช่เงินเติม: total_deposited ต้องไม่ขยับ
  */
 class GpuxMineEarningSettlementTest extends TestCase
@@ -140,12 +140,34 @@ class GpuxMineEarningSettlementTest extends TestCase
     {
         $old = $this->earning(['completed_at' => null]);
         GpuJobEarning::whereKey($old->id)->update(['created_at' => now()->subDays(2)]);
-        $new = $this->earning(['completed_at' => null]);
+        $new = GpuJobEarning::factory()->forNode($this->node)->create(['completed_at' => null]);
 
         $this->assertSame(0, $this->settle());
 
         $this->assertSame(GpuJobEarning::STATUS_PAID, $old->fresh()->status);
         $this->assertSame(GpuJobEarning::STATUS_PENDING, $new->fresh()->status);
+    }
+
+    public function test_a_row_aixman_wrote_late_gets_the_full_hold_from_when_it_was_recorded(): void
+    {
+        // งานเสร็จสามวันก่อน แต่ aixman เพิ่งเขียนแถว (catch-up sweep หลังแพ็กเกจเครดิตถูกปิด
+        // หรือ DB ล่ม) — เคยพ้นระยะพักตั้งแต่เกิดและถูกโอนในชั่วโมงถัดไป ไม่เหลือเวลาให้แอดมิน
+        // จับผลงานปลอมเลย ต้องพักครบนับจากวันที่แถวปรากฏ
+        $late = GpuJobEarning::factory()->forNode($this->node)->backfilled(3)->create(['amount_satang' => 700]);
+        $this->assertTrue($late->holdEndsAt(24)->isSameMinute(now()->addHours(24)));
+
+        $this->assertSame(0, $this->settle());
+        $this->assertSame(GpuJobEarning::STATUS_PENDING, $late->fresh()->status);
+        $this->assertNull($this->wallet());
+
+        $this->travel(23)->hours();
+        $this->settle();
+        $this->assertSame(GpuJobEarning::STATUS_PENDING, $late->fresh()->status);
+
+        $this->travel(2)->hours();
+        $this->settle();
+        $this->assertSame(GpuJobEarning::STATUS_PAID, $late->fresh()->status);
+        $this->assertSame('7.00', $this->wallet()->balance);
     }
 
     // ── ไม่จ่ายซ้ำ ───────────────────────────────────────────────────
@@ -331,40 +353,78 @@ class GpuxMineEarningSettlementTest extends TestCase
 
     // ── ส่วนแบ่งผู้แนะนำ (D8) ───────────────────────────────────────────
 
-    public function test_the_referral_share_becomes_one_pending_commission_per_job(): void
+    public function test_the_referral_share_becomes_one_pending_commission_per_referrer_per_payout(): void
     {
         $referrer = User::factory()->create();
         $affiliate = $this->affiliateFor($referrer);
+        $other = User::factory()->create();
+        $this->affiliateFor($other);
         $a = $this->earning(['referral_satang' => 25, 'referral_user_id' => $referrer->id, 'revenue_satang' => 200]);
         $b = $this->earning(['referral_satang' => 30, 'referral_user_id' => $referrer->id, 'revenue_satang' => 300]);
+        // เครื่องอีกเครื่องของเจ้าของคนเดียวกันที่จับคู่มาจากลิงก์ของอีกคน — รายการแยก
+        $c = $this->earning(['referral_satang' => 10, 'referral_user_id' => $other->id, 'revenue_satang' => 100]);
 
         $this->assertSame(0, $this->settle());
         $this->assertSame(0, $this->settle());
 
-        $commissions = AffiliateCommission::where('source_type', 'gpuxmine')->orderBy('source_id')->get();
-        $this->assertCount(2, $commissions);
-        $this->assertSame([$a->id, $b->id], $commissions->pluck('source_id')->map(fn ($id) => (int) $id)->all());
+        // หนึ่งรายการต่อผู้แนะนำต่อรอบโอน ไม่ใช่หนึ่งรายการต่องาน — เคยท่วมหน้าอนุมัติค่าแนะนำ
+        $this->assertSame(2, AffiliateCommission::where('source_type', 'gpuxmine')->count());
 
-        $first = $commissions->first();
-        $this->assertSame('pending', $first->status);
-        $this->assertSame('0.25', $first->commission_amount);
-        $this->assertSame('2.00', $first->order_amount);
-        $this->assertSame('12.50', $first->commission_rate);
-        $this->assertSame($this->owner->id, (int) $first->referred_user_id);
-        $this->assertNull($first->order_id);
-        $this->assertSame('GPUxMINE', $first->source_label);
-        $this->assertSame($first->id, $a->fresh()->affiliate_commission_id);
+        $mine = AffiliateCommission::where('affiliate_id', $affiliate->id)->sole();
+        $this->assertSame('pending', $mine->status);
+        $this->assertSame('0.55', $mine->commission_amount);
+        $this->assertSame('5.00', $mine->order_amount);
+        $this->assertSame('11.00', $mine->commission_rate);
+        $this->assertSame($b->id, (int) $mine->source_id, 'source_id is the newest job in the commission');
+        $this->assertSame($this->owner->id, (int) $mine->referred_user_id);
+        $this->assertNull($mine->order_id);
+        $this->assertSame('GPUxMINE', $mine->source_label);
+        $this->assertStringContainsString('2 งาน', (string) $mine->source_description);
+        $this->assertSame($mine->id, $a->fresh()->affiliate_commission_id);
+        $this->assertSame($mine->id, $b->fresh()->affiliate_commission_id);
+        $this->assertNotSame($mine->id, $c->fresh()->affiliate_commission_id);
 
         $affiliate->refresh();
         $this->assertSame('0.55', $affiliate->total_earned);
         $this->assertSame('0.55', $affiliate->total_pending);
-        // เจ้าของเครื่องหนึ่งคนนับเป็นการแนะนำหนึ่งครั้ง ไม่ใช่ทุกงาน
+        // เจ้าของเครื่องหนึ่งคนนับเป็นการแนะนำหนึ่งครั้ง ไม่ใช่ทุกรอบโอน
         $this->assertSame(1, (int) $affiliate->total_referrals);
         $this->assertSame(1, (int) $affiliate->total_conversions);
 
+        // รอบโอนถัดไปได้รายการใหม่ แต่ยังนับเจ้าของคนเดิมเป็นการแนะนำครั้งเดียว
+        $this->earning(['referral_satang' => 5, 'referral_user_id' => $referrer->id, 'revenue_satang' => 50]);
+        $this->assertSame(0, $this->settle());
+        $this->assertSame(2, AffiliateCommission::where('affiliate_id', $affiliate->id)->count());
+        $this->assertSame(1, (int) $affiliate->fresh()->total_referrals);
+        $this->assertSame('0.60', $affiliate->fresh()->total_earned);
+
         // แอดมินอนุมัติได้ตามทางเดิม
+        $this->assertTrue($mine->approveAndPay());
+        $this->assertSame('0.55', Wallet::where('user_id', $referrer->id)->value('balance'));
+    }
+
+    public function test_a_commission_is_paid_once_even_from_two_stale_copies(): void
+    {
+        // หน้าอนุมัติรวดเดียวโหลดทุกรายการ pending ไว้ก่อน — แอดมินกดซ้ำหลัง proxy ตอบ 504
+        // คำขอที่สองถือสำเนาเก่าของรายการเดียวกัน ต้องไม่จ่ายซ้ำ
+        $referrer = User::factory()->create();
+        $affiliate = $this->affiliateFor($referrer);
+        $this->earning(['referral_satang' => 40, 'referral_user_id' => $referrer->id, 'revenue_satang' => 400]);
+        $this->settle();
+
+        $first = AffiliateCommission::where('affiliate_id', $affiliate->id)->sole();
+        $second = AffiliateCommission::find($first->id);
+
         $this->assertTrue($first->approveAndPay());
-        $this->assertSame('0.25', Wallet::where('user_id', $referrer->id)->value('balance'));
+        $this->assertFalse($second->approveAndPay());
+        $this->assertSame('paid', $second->status, 'the stale copy is brought up to date');
+        $this->assertFalse($second->reject('ช้าไป'));
+
+        $this->assertSame('0.40', Wallet::where('user_id', $referrer->id)->value('balance'));
+        $this->assertSame(1, WalletTransaction::where('user_id', $referrer->id)->count());
+        $affiliate->refresh();
+        $this->assertSame('0.40', $affiliate->total_paid);
+        $this->assertSame('0.00', $affiliate->total_pending);
     }
 
     public function test_a_suspended_or_missing_referrer_is_not_paid_and_the_owner_still_is(): void

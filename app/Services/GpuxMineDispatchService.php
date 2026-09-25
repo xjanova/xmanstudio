@@ -60,13 +60,19 @@ class GpuxMineDispatchService
      */
     public function payload(GpuNode $node): array
     {
+        $suspended = $node->isSuspended();
+
         return [
             'workerId' => $node->worker_id,
             'endpoint' => $node->tunnel_endpoint,
             // กุญแจที่ aixman ต้องใช้เปิด /w/ — ใบแยกของ aixman ถ้า relay ออกให้
             'token' => $node->dispatchToken(),
             'label' => $node->displayName(),
-            'online' => (bool) $node->online,
+            // เครื่องที่ถูกระงับถูกส่งเป็นออฟไลน์ด้วย: aixman รุ่นที่ยังไม่รู้จัก `suspended`
+            // (และ relay รุ่นที่ยังตัดสายไม่ได้) จะยังส่งงานให้เครื่องที่ถูกระงับต่อ ขณะที่
+            // รายได้ของมันถูกพักไว้ — เจ้าของทำงานฟรีโดยไม่รู้ตัว ออฟไลน์คือสิ่งที่ทุกรุ่น
+            // เข้าใจและถอดออกจากคิว รุ่นใหม่ดู `suspended` อยู่แล้ว
+            'online' => (bool) $node->online && ! $suspended,
             'assessed' => (bool) $node->assessed,
             'gpuName' => $node->gpu_name,
             'vramTotalMb' => (int) $node->vram_total_mb,
@@ -86,8 +92,25 @@ class GpuxMineDispatchService
             'referrerUserId' => $node->referrer_user_id,
             'firstPairedAt' => $this->firstPairedAt((int) $node->user_id),
             // แอดมินระงับ — aixman ต้องหยุดส่งงาน แต่ถอยกลับได้ ต่างจากการถอน
-            'suspended' => $node->isSuspended(),
+            'suspended' => $suspended,
         ];
+    }
+
+    /**
+     * aixman ที่ตอบเครื่องนี้ครั้งล่าสุดเป็นรุ่นที่รับสัญญา C1 แล้วหรือยัง
+     *
+     * รุ่นก่อนสัญญานี้ (main) ก็คืน worker.status อยู่แล้ว ({id, externalId, status,
+     * modelKey}) จึงใช้ "มี status" แยกรุ่นไม่ได้ — ตัวที่มีเฉพาะรุ่นใหม่คือ lastError
+     * (มี key เสมอ แม้ค่าเป็น null) push() เก็บ dispatch_worker_status เฉพาะเมื่อเห็น key นี้
+     * ค่านี้ไม่เป็น null จึงแปลว่ารุ่นใหม่
+     *
+     * สำคัญเพราะรุ่นเก่าเขียน status = warming ทับแถวทุกครั้งที่ได้ข้อมูลเครื่อง รวมแถว
+     * ที่กำลังเรนเดอร์ แล้วตัวเก็บกวาดของมันก็ฆ่า worker ที่ warming นานเกินชั่วโมง
+     * การส่งซ้ำตามรอบเวลา และการส่งทุกครั้งที่ accepting พลิก จึงทำได้กับรุ่นใหม่เท่านั้น
+     */
+    public function knowsCurrentContract(GpuNode $node): bool
+    {
+        return $node->dispatch_worker_status !== null;
     }
 
     /**
@@ -101,14 +124,24 @@ class GpuxMineDispatchService
      * token ถูกย่อเป็น sha1 ก่อนเข้าลายนิ้วมือ — ค่าที่เก็บลงฐานข้อมูลไม่ควร
      * มาจากความลับตรง ๆ แม้จะผ่าน hash อีกชั้นแล้วก็ตาม
      *
+     * accepting นับเป็นข้อมูลเปลี่ยนเฉพาะกับ aixman รุ่นที่รับสัญญานี้ ($current)
+     * มันพลิกทุกครั้งที่เจ้าของขยับเมาส์ (YieldWhenActive) เปิดเกมเต็มจอ หรือการ์ดร้อน
+     * ถึงเพดาน และ aixman รุ่นเก่าไม่ได้ใช้ค่านี้เลย แต่เขียนแถวเป็น warming ทุกครั้งที่
+     * ได้ข้อมูล — ส่งทุกครั้งที่พลิกคือฆ่างานที่กำลังเรนเดอร์ ค่ายังไปถึงทุกครั้งที่ส่งด้วย
+     * เหตุอื่น $current = null คือให้ตัดสินจากแถว (knowsCurrentContract)
+     *
      * @param  array<string, mixed>|null  $payload
      */
-    public function fingerprint(GpuNode $node, ?array $payload = null): string
+    public function fingerprint(GpuNode $node, ?array $payload = null, ?bool $current = null): string
     {
         $basis = $payload ?? $this->payload($node);
+        $current ??= $this->knowsCurrentContract($node);
 
         foreach (self::VOLATILE_FIELDS as $field) {
             unset($basis[$field]);
+        }
+        if (! $current) {
+            unset($basis['accepting']);
         }
         $basis['token'] = sha1((string) ($basis['token'] ?? ''));
 
@@ -132,16 +165,24 @@ class GpuxMineDispatchService
             return self::OUTCOME_SKIPPED;
         }
 
-        // อ่านสองค่านี้ใหม่จากฐานข้อมูลก่อนส่งทุกครั้ง — ตัวจับเวลาโหลดเครื่องทีละร้อย แถวในมือ
-        // อาจเก่ากว่าที่แอดมินเพิ่งระงับ/แบน หรือเจ้าของเพิ่งถอน ส่งของเก่าไปคือ aixman ปลด
-        // การระงับเอง หรือฟื้น worker ที่เพิ่งถอนกลับมา
+        // อ่านค่าเหล่านี้ใหม่จากฐานข้อมูลก่อนส่งทุกครั้ง — ตัวจับเวลาโหลดเครื่องทีละร้อย แถวในมือ
+        // อาจเก่ากว่าที่แอดมินเพิ่งระงับ/แบน เจ้าของเพิ่งถอน หรือ gpuxmine:rotate-tunnel-tokens
+        // เพิ่งเก็บกุญแจใหม่ ส่งของเก่าไปคือ aixman ปลดการระงับเอง ฟื้น worker ที่เพิ่งถอน
+        // กลับมา หรือได้กุญแจที่ relay ไม่รับแล้ว
         if ($node->exists) {
-            $current = GpuNode::withTrashed()->whereKey($node->getKey())->first(['id', 'deleted_at', 'suspended_at']);
+            $fresh = ['suspended_at', 'relay_token', 'tunnel_token'];
+            $current = GpuNode::withTrashed()->whereKey($node->getKey())->first(['id', 'deleted_at', ...$fresh]);
             if ($current === null || $current->trashed()) {
                 return self::OUTCOME_SKIPPED;
             }
-            $node->setRawAttributes(['suspended_at' => $current->getRawOriginal('suspended_at')] + $node->getAttributes());
-            $node->syncOriginalAttribute('suspended_at');
+            $raw = [];
+            foreach ($fresh as $column) {
+                $raw[$column] = $current->getRawOriginal($column);
+            }
+            $node->setRawAttributes($raw + $node->getAttributes());
+            foreach ($fresh as $column) {
+                $node->syncOriginalAttribute($column);
+            }
         }
 
         if (! $this->isConfigured()) {
@@ -155,7 +196,6 @@ class GpuxMineDispatchService
         }
 
         $payload = $this->payload($node);
-        $fingerprint = $this->fingerprint($node, $payload);
 
         try {
             $response = $this->aixman()
@@ -166,15 +206,19 @@ class GpuxMineDispatchService
 
             if ($response->successful() && is_array($body)) {
                 $worker = is_array($body['worker'] ?? null) ? $body['worker'] : [];
+                // รุ่นที่รับสัญญานี้ใส่ lastError มาเสมอ (null ได้) — รุ่นก่อนหน้าก็คืน status
+                // แต่ไม่มี lastError ดู knowsCurrentContract()
+                $current = array_key_exists('lastError', $worker) && isset($worker['status']);
 
                 $node->forceFill([
                     'dispatch_status' => mb_substr((string) ($body['status'] ?? 'unknown'), 0, 32),
                     'dispatch_note' => isset($body['note']) ? mb_substr((string) $body['note'], 0, 255) : null,
                     'dispatch_synced_at' => now(),
-                    'dispatch_fingerprint' => $fingerprint,
-                    // aixman รุ่นเก่าไม่ได้ส่งสองค่านี้มา — null คือไม่รู้ ไม่ใช่ปกติ
-                    'dispatch_worker_status' => isset($worker['status']) ? mb_substr((string) $worker['status'], 0, 32) : null,
-                    'dispatch_last_error' => ! empty($worker['lastError']) ? mb_substr((string) $worker['lastError'], 0, 255) : null,
+                    // ลายนิ้วมือคิดตามรุ่นของ aixman ที่เพิ่งตอบ ให้ตรงกับที่ needsPush() จะเทียบ
+                    'dispatch_fingerprint' => $this->fingerprint($node, $payload, $current),
+                    // aixman รุ่นเก่า: ไม่เก็บ — null คือ "ยังไม่รู้" และคือสัญญาณว่าห้ามส่งซ้ำตามรอบ
+                    'dispatch_worker_status' => $current ? mb_substr((string) $worker['status'], 0, 32) : null,
+                    'dispatch_last_error' => $current && ! empty($worker['lastError']) ? mb_substr((string) $worker['lastError'], 0, 255) : null,
                 ])->save();
 
                 return self::OUTCOME_OK;
