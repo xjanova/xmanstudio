@@ -315,6 +315,9 @@ class GpuxMineStatusApiTest extends TestCase
 
     public function test_many_machines_behind_one_router_each_keep_their_own_budget(): void
     {
+        // อย่างบน prod: APP_DEBUG ปิด — ตัวจัดการ error ของ API เคยกลืน 429 ที่ limiter สร้างเอง
+        // แล้วตอบ 500 เฉพาะตอน debug ปิด เทสต์ที่รันบนเครื่อง dev (debug เปิด) จึงไม่เคยเห็น
+        config(['app.debug' => false]);
         $nodes = GpuNode::factory()->paired()->count(16)->create();
 
         // สิบหกเครื่องหลัง IP เดียว ถามสี่รอบในนาทีเดียว (ทุกสิบห้าวินาที) = 64 ครั้ง — เกินทั้ง

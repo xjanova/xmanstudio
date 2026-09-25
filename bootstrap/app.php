@@ -16,6 +16,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -127,6 +128,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
             // an app could not tell a wrong password from a crashed server, and
             // every one was logged as an error with its trace.
             if ($e instanceof AuthenticationException || $e instanceof ValidationException) {
+                return null;
+            }
+
+            // A response somebody already built — a rate limiter's own 429 (Limit::response(),
+            // e.g. gpuxmine-status), an abort with a response. Caught here it became a bare 500
+            // whenever APP_DEBUG was off, i.e. in production: a machine asking /status too often
+            // was told the server crashed instead of when to try again.
+            if ($e instanceof HttpResponseException) {
                 return null;
             }
 
