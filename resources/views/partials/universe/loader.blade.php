@@ -17,20 +17,22 @@
         </figcaption>
     </figure>
 
-    <div class="xu-loader__emblem" aria-hidden="true">
-        <span class="xu-loader__orbit xu-loader__orbit--a"></span>
-        <span class="xu-loader__orbit xu-loader__orbit--b"></span>
-        <span class="xu-loader__halo"></span>
-        <span class="xu-loader__core">
-            @if($logoUrl)
-                <img src="{{ $logoUrl }}" alt="" class="xu-loader__logo">
-            @else
-                <span class="xu-loader__mark">X</span>
-            @endif
-        </span>
-    </div>
-
-    <p id="xu-loader-title" class="xu-loader__title">XMAN <span>UNIVERSE</span></p>
+    @if($logoUrl)
+        {{-- The logo itself, big and glinting; it is what grows into the portal on the way in. --}}
+        <div class="xu-loader__emblem xu-loader__emblem--logo" aria-hidden="true">
+            <span class="xu-loader__halo"></span>
+            @include('partials.universe.logo', ['src' => $logoUrl, 'class' => 'xu-logo--gate', 'alt' => ''])
+        </div>
+        <p id="xu-loader-title" class="xu-loader__title"><span class="xu-sr">XMAN </span><span>UNIVERSE</span></p>
+    @else
+        <div class="xu-loader__emblem" aria-hidden="true">
+            <span class="xu-loader__orbit xu-loader__orbit--a"></span>
+            <span class="xu-loader__orbit xu-loader__orbit--b"></span>
+            <span class="xu-loader__halo"></span>
+            <span class="xu-loader__core"><span class="xu-loader__mark">X</span></span>
+        </div>
+        <p id="xu-loader-title" class="xu-loader__title">XMAN <span>UNIVERSE</span></p>
+    @endif
     <p id="xu-loader-sub" class="xu-loader__sub">กำลังเปิดประตูสู่จักรวาลของ XMAN Studio<small>Opening the gate to the XMAN Studio universe</small></p>
 
     <div class="xu-loader__boot" id="xu-loader-boot">

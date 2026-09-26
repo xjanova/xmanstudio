@@ -177,9 +177,13 @@
     .mobile-nav-item:active .mobile-nav-ai-icon {
         transform: scale(0.88);
     }
-    .mobile-nav-ai-icon svg {
-        width: 30px;
-        height: 30px;
+    .mobile-nav-ai-icon img {
+        display: block;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 2px solid #ffd479;
+        object-fit: cover;
     }
     .mobile-nav-ai .mobile-nav-label {
         color: #7c3aed;
@@ -245,19 +249,8 @@
         <button type="button" class="mobile-nav-item mobile-nav-ai" id="mobileNavAiBtn" onclick="window.AiChat && window.AiChat.toggle()">
             <span class="mobile-nav-ai-dot"></span>
             <span class="mobile-nav-ai-icon">
-                <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
-                    <circle cx="20" cy="20" r="16" fill="white" opacity="0.95"/>
-                    <ellipse cx="13.5" cy="16" rx="2.3" ry="2.5" fill="#4f46e5"/>
-                    <ellipse cx="26.5" cy="16" rx="2.3" ry="2.5" fill="#4f46e5"/>
-                    <circle cx="14.5" cy="15" r="0.8" fill="white"/>
-                    <circle cx="27.5" cy="15" r="0.8" fill="white"/>
-                    <path d="M 14 23.5 Q 20 27 26 23.5" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-                    {{-- Bow ribbon --}}
-                    <g transform="translate(27, 5)">
-                        <path d="M -5 0 Q -7 -4 -3 -5 Q 0 -6 0 -2 Q 0 -6 3 -5 Q 7 -4 5 0 Z" fill="#f472b6"/>
-                        <ellipse cx="0" cy="-1" rx="1.2" ry="1.2" fill="#ec4899"/>
-                    </g>
-                </svg>
+                {{-- The AI assistant wears the home page guide's face (ai-chat-widget). --}}
+                <img src="{{ asset('artwork/universe/guide/face.webp') }}" alt="" width="56" height="56" decoding="async" draggable="false">
             </span>
             <span class="mobile-nav-label">AI Chat</span>
         </button>

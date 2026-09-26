@@ -30,6 +30,10 @@
                    data-xu-ring="{{ $i }}"
                    data-about-th="{{ $item['about_th'] }}"
                    data-about-en="{{ $item['about_en'] }}"
+                   data-desc-th="{{ $item['desc_th'] }}"
+                   data-desc-en="{{ $item['desc_en'] }}"
+                   data-points="{{ implode('|', $item['points']) }}"
+                   aria-description="{{ $item['desc_th'] }}"
                    style="--i: {{ $i }}; --accent: {{ $item['accent'] }};">
                     <span class="xu-ring__card">
                         <img src="{{ asset('artwork/menu/labelled/' . $item['art'] . '.webp') }}"
@@ -47,12 +51,21 @@
         </div>
     </div>
 
+    {{-- The card in front, explained (ui/Menu.js fills it). Hidden from assistive tech:
+         every ring card already carries its name and description itself. --}}
     <div class="xu-menu__info" aria-hidden="true">
-        <p class="xu-menu__now"><span id="xu-menu-now-th"></span><small id="xu-menu-now-en"></small></p>
-        <p class="xu-menu__about"><span id="xu-menu-about-th"></span><small id="xu-menu-about-en"></small></p>
+        <div class="xu-menu__story">
+            <p class="xu-menu__now"><span id="xu-menu-now-th"></span><small id="xu-menu-now-en"></small></p>
+            <p class="xu-menu__desc"><span id="xu-menu-desc-th"></span><small id="xu-menu-desc-en"></small></p>
+            <ul class="xu-menu__points" id="xu-menu-points"></ul>
+        </div>
+        <a href="{{ url('/') }}" class="xu-btn xu-btn--primary xu-menu__go" id="xu-menu-go" tabindex="-1">
+            <span>ไปที่หน้านี้ <small>Go</small></span>
+            @include('partials.nova-icon', ['name' => 'arrow'])
+        </a>
         <p class="xu-menu__keys">
-            <kbd>←</kbd><kbd>→</kbd> หมุน · <kbd>Enter</kbd> ไป · ลากหรือเลื่อนล้อเมาส์ก็ได้
-            <small>Spin with arrows, wheel or drag · Enter to go</small>
+            ชี้เมาส์ไปทางซ้ายหรือขวาเพื่อหมุน · ชี้ที่การ์ดตรงกลางให้หยุดอ่าน · <kbd>←</kbd><kbd>→</kbd> ก็ได้
+            <small>Point left or right to spin · point at the middle card to stop it · or use the arrow keys</small>
         </p>
     </div>
 

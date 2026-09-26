@@ -49,8 +49,12 @@ export class Stations {
                     break;
                 case 'stack':
                     item.orbit = panel.querySelector('.xu-orbit');
-                    item.ring = panel.querySelector('.xu-orbit__ring');
-                    item.chips = [...panel.querySelectorAll('.xu-orbit__item')];
+                    // The dev stack turns one way, the AI models above it the other.
+                    item.rings = [...panel.querySelectorAll('.xu-orbit__ring')].map((ring) => ({
+                        el: ring,
+                        dir: ring.dataset.ring === 'ai' ? -1 : 1,
+                        chips: [...ring.querySelectorAll('.xu-orbit__item')],
+                    }));
                     break;
                 case 'reviews':
                     item.cards = [...panel.querySelectorAll('.xu-review')];
@@ -226,19 +230,22 @@ export class Stations {
     }
 
     stack(item, p, s) {
-        const n = item.chips.length;
-        const spin = p * 220 + s.time * 7;
         const radius = Math.min(430, window.innerWidth * 0.36);
         item.orbit.style.setProperty('--orbit-r', `${radius.toFixed(0)}px`);
-        item.ring.style.setProperty('--spin', `${(-spin).toFixed(2)}deg`);
-        item.chips.forEach((chip, j) => {
-            const deg = (j * 360) / n - spin;
-            const face = 0.2 + 0.8 * ((Math.cos(deg * (Math.PI / 180)) + 1) / 2);
-            chip.style.setProperty('--face', face.toFixed(3));
-            chip.style.setProperty('--counter', `${(-deg).toFixed(2)}deg`);
-            // Near chips in front of far ones.
-            chip.style.zIndex = String(Math.round(face * 100));
-        });
+        item.orbit.style.setProperty('--orbit-r-ai', `${(radius * 0.78).toFixed(0)}px`);
+        for (const ring of item.rings) {
+            const n = ring.chips.length;
+            const spin = ring.dir * (p * 220 + s.time * 7);
+            ring.el.style.setProperty('--spin', `${(-spin).toFixed(2)}deg`);
+            ring.chips.forEach((chip, j) => {
+                const deg = (j * 360) / n - spin;
+                const face = 0.2 + 0.8 * ((Math.cos(deg * (Math.PI / 180)) + 1) / 2);
+                chip.style.setProperty('--face', face.toFixed(3));
+                chip.style.setProperty('--counter', `${(-deg).toFixed(2)}deg`);
+                // Near chips in front of far ones.
+                chip.style.zIndex = String(Math.round(face * 100));
+            });
+        }
         return null;
     }
 

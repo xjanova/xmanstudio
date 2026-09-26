@@ -6,14 +6,12 @@
 --}}
 <header id="xu-hud" class="xu-hud">
     <a href="{{ url('/') }}" class="xu-brand" data-xu-top aria-label="XMAN Studio — กลับสู่จุดเริ่มต้น / Back to the start">
-        <span class="xu-brand__badge" aria-hidden="true">
-            @if($logoUrl)
-                <img src="{{ $logoUrl }}" alt="" class="xu-brand__logo">
-            @else
-                <span class="xu-brand__mark">X</span>
-            @endif
-        </span>
-        <span class="xu-brand__word"><b>XMAN</b><small>STUDIO</small></span>
+        @if($logoUrl)
+            @include('partials.universe.logo', ['src' => $logoUrl, 'class' => 'xu-logo--hud', 'alt' => ''])
+        @else
+            <span class="xu-brand__badge" aria-hidden="true"><span class="xu-brand__mark">X</span></span>
+            <span class="xu-brand__word"><b>XMAN</b><small>STUDIO</small></span>
+        @endif
     </a>
 
     <a href="{{ route('services.index') }}" class="xu-promo">

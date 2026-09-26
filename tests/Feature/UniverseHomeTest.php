@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\ThemeService;
 use App\Support\UniverseHome;
@@ -160,6 +161,34 @@ class UniverseHomeTest extends TestCase
         $this->assertLinkParity();
     }
 
+    public function test_with_the_ai_assistant_on_the_guide_takes_questions(): void
+    {
+        Setting::setValue('ai_chat_enabled', '1', 'boolean', 'ai');
+        Setting::setValue('ai_bot_name', 'น้องเอ็กซ์', 'string', 'ai');
+
+        $html = $this->home()
+            ->assertOk()
+            ->assertSee('id="xu-guide-ask"', false)
+            ->assertSee('id="xu-chat"', false)
+            ->assertSee('น้องเอ็กซ์')
+            ->getContent();
+
+        $this->assertSame(route('public.ai-chat'), $this->config($html)['chat']);
+    }
+
+    public function test_with_the_ai_assistant_off_the_guide_only_talks(): void
+    {
+        $html = $this->home()
+            ->assertOk()
+            ->assertDontSee('id="xu-guide-ask"', false)
+            ->assertDontSee('id="xu-chat"', false)
+            ->getContent();
+
+        $config = $this->config($html);
+        $this->assertNull($config['chat']);
+        $this->assertSame(UniverseHome::classicUrl(), $config['classicUrl']);
+    }
+
     public function test_an_admin_can_switch_the_universe_off_and_on(): void
     {
         $admin = User::where('role', 'admin')->first();
@@ -193,6 +222,14 @@ class UniverseHomeTest extends TestCase
         $this->assertNotEmpty($classic);
         $missing = array_values(array_diff($classic, $universe));
         $this->assertSame([], $missing, 'The universe home is missing links the classic home has: ' . implode(', ', $missing));
+    }
+
+    /** @return array<string, mixed> what the page hands main.js (#xu-config) */
+    private function config(string $html): array
+    {
+        $this->assertSame(1, preg_match('#<script type="application/json" id="xu-config">(.*?)</script>#s', $html, $m));
+
+        return json_decode($m[1], true, 512, JSON_THROW_ON_ERROR);
     }
 
     /** @return array<int, string> every navigable href on the page */

@@ -25,11 +25,12 @@ const PLAN = {
         { pose: 'moon', side: 'right', h: 0.34, x: 0.015, y: 0.5, m: 'compact' },
     ],
     services: { compact: true, pose: 'cheer' },
-    products: { pose: 'moon', side: 'right', h: 0.3, x: 0.03, y: 0.54, m: 'compact' },
+    products: { pose: 'moon', side: 'right', h: 0.3, x: 0.03, y: 0.54, m: 'compact', narrow: 'compact', narrowAt: 1200 },
     platforms: { pose: 'present', side: 'planet', h: 0.5, x: 0.02, y: 0.02, m: 'compact' },
     stack: { pose: 'cheer', side: 'right', h: 0.44, x: 0.02, y: 0.01, m: 'compact' },
-    reviews: { pose: 'moon', side: 'left', h: 0.36, x: 0.02, y: 0.04, m: 'compact' },
-    launch: { pose: 'welcome', side: 'left', h: 0.42, x: 0.03, y: 0, m: 'compact' },
+    // Her bubble draws over the panels: these two keep it off their headlines.
+    reviews: { compact: true, pose: 'moon' },
+    launch: { pose: 'welcome', side: 'right', h: 0.34, x: 0.04, y: 0, mirror: true, m: 'compact', narrow: 'compact', narrowAt: 1200 },
     // The footer leaves her a column on the right on wide screens (universe.css).
     control: { pose: 'bye', side: 'right', h: 0.62, x: 0.02, y: 0.02, m: 'compact', narrow: 'compact' },
 };
@@ -43,15 +44,38 @@ const HEAD_X = { welcome: 0.5, present: 0.52, moon: 0.57, cheer: 0.47, bye: 0.42
 const HUD_BOTTOM = 68;
 
 export class Guide {
-    constructor({ root, journey, sound, onClick }) {
+    constructor({ root, journey, sound, onClick, onAsk }) {
         this.root = root;
         this.journey = journey;
         this.sound = sound;
         this.body = root.querySelector('.xu-guide__body');
         this.hit = root.querySelector('.xu-guide__hit');
         this.bubble = root.querySelector('.xu-guide__bubble');
-        this.bubbleTh = this.bubble.querySelector('b');
-        this.bubbleEn = this.bubble.querySelector('small');
+        this.bubbleTh = this.bubble.querySelector('.xu-guide__line b');
+        this.bubbleEn = this.bubble.querySelector('.xu-guide__line small');
+
+        // The "ask me" field in the bubble: typing there starts a chat (ui/Chat.js).
+        this.askForm = this.bubble.querySelector('.xu-guide__ask');
+        this.askInput = this.askForm?.querySelector('input');
+        this.bubbleHeld = false;
+        if (this.askForm) {
+            root.classList.add('has-ask');
+            const hold = () => {
+                this.bubbleHeld = document.activeElement === this.askInput || this.askInput.value !== '' || this.bubble.matches(':hover');
+            };
+            for (const type of ['focusin', 'focusout', 'pointerenter', 'pointerleave', 'input']) {
+                this.bubble.addEventListener(type, () => setTimeout(hold, 0));
+            }
+            this.askForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = this.askInput.value.trim();
+                if (!text) return;
+                this.askInput.value = '';
+                this.bubbleHeld = false;
+                // Focus moves into the chat, and comes back here when it closes.
+                onAsk?.(text);
+            });
+        }
         this.avatar = root.querySelector('.xu-guide__avatar');
         this.trail = root.querySelector('.xu-guide__trail');
         this.lines = JSON.parse(document.getElementById('xu-guide-lines')?.textContent || '{}');
@@ -81,6 +105,7 @@ export class Guide {
         this.sayUntil = 0;
         this.lastSpark = 0;
         this.pointer = { x: 0, y: 0 };
+        this.reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
         window.addEventListener(
             'pointermove',
@@ -144,10 +169,10 @@ export class Guide {
         const phone = w < 760 || h > w * 1.15;
         let spec = plan;
         if (phone && plan.m) spec = plan.m === 'compact' ? { compact: true, pose: plan.pose } : { ...plan, ...plan.m };
-        // `narrow`: below 1100px there is no room beside this stop's content.
-        if (!phone && w < 1100 && plan.narrow === 'compact') spec = { compact: true, pose: plan.pose };
+        // `narrow`: below `narrowAt` (1100px) there is no room beside this stop's content.
+        if (!phone && w < (plan.narrowAt ?? 1100) && plan.narrow === 'compact') spec = { compact: true, pose: plan.pose };
         if (!phone && w < 1100 && !spec.compact) spec = { ...spec, h: spec.h * 0.8 };
-        if (spec.compact) return { compact: true, pose: spec.pose, key: `${line}:c`, line };
+        if (spec.compact) return { compact: true, pose: spec.pose, key: `${line}:c`, line, phone };
 
         let side = spec.side;
         let mirror = !!spec.mirror;
@@ -163,7 +188,7 @@ export class Guide {
         const pw = ph * this.aspect(spec.pose);
         const cx = side === 'left' ? spec.x * w + pw / 2 : w - spec.x * w - pw / 2;
         const by = h - spec.y * h;
-        return { compact: false, pose: spec.pose, cx, by, h: ph, mirror, key: `${line}:${side}`, line };
+        return { compact: false, pose: spec.pose, cx, by, h: ph, mirror, key: `${line}:${side}`, line, phone };
     }
 
     /** Appear: she comes flying out of the portal at the middle of the screen. */
@@ -174,6 +199,12 @@ export class Guide {
         Object.assign(this.cur, { cx: window.innerWidth / 2, by: window.innerHeight * 0.52, h: 70, pose: 'fly', mirror: false });
         this.key = '';
         this.entering = true;
+    }
+
+    /** While the chat window is open she steps aside: its header shows her face. */
+    setChatting(on) {
+        this.root.classList.toggle('is-chatting', on);
+        if (!on) this.hop = 0.9;
     }
 
     say(line, seconds = 6) {
@@ -211,6 +242,8 @@ export class Guide {
             this.target = place;
             this.compact = place.compact;
             this.root.classList.toggle('is-compact', place.compact);
+            // A phone has no room over her head for the "ask me" field (universe.css).
+            this.root.classList.toggle('is-phone', place.phone);
             document.documentElement.classList.toggle('xu-guide-compact', place.compact);
             if (!place.compact) {
                 if (this.cur.h > 0 && (this.flight || this.entering || !this.wasCompact)) {
@@ -228,9 +261,23 @@ export class Guide {
             if (next && PLAN[next.type]) this.preload(...[].concat(PLAN[next.type]).map((p) => p.pose));
         }
 
-        const talking = performance.now() / 1000 < this.sayUntil && !s.menuOpen && s.hide < 0.5;
+        // The bubble: her line while she talks; full size and still, the "ask me"
+        // field once she has finished; either way the field while the visitor
+        // points at it, is in it or has typed something (universe.css).
+        const calm = !s.menuOpen && s.hide < 0.5;
+        const talking = performance.now() / 1000 < this.sayUntil && calm;
+        const held = this.bubbleHeld && calm;
+        const asking = !!this.askForm && calm && !this.flight && s.cruise < 0.55;
         this.root.classList.toggle('is-talking', talking);
+        this.root.classList.toggle('is-held', held);
+        this.root.classList.toggle('is-asking', asking);
         this.root.classList.toggle('is-away', s.hide > 0.5 && s.cruise < 0.2);
+        // Each of those changes the bubble's size: measure it again.
+        const shape = `${talking}|${held}|${asking}`;
+        if (shape !== this.bubbleShape) {
+            this.bubbleShape = shape;
+            this.bubbleW = 0;
+        }
 
         const tgt = this.target;
         if (!tgt) return;
@@ -293,13 +340,15 @@ export class Guide {
         this.cur.mirror = mirror;
         this.cur.pose = pose;
 
-        // Alive: bob, sway, breathe, drift with the pointer, lean into speed.
+        // Alive: bob, sway, breathe, drift with the pointer, lean into speed —
+        // unless the visitor asked for less motion (her bubble is a form field too).
         this.hop = damp(this.hop, 0, 4.5, s.dt);
-        const bob = Math.sin(s.time * 1.7) * 9 - Math.sin(this.hop * Math.PI) * 26;
-        const sway = Math.sin(s.time * 1.1) * 1.4 + tilt + clamp(s.lean, -1, 1) * 3;
-        const breathe = 1 + Math.sin(s.time * 2.3) * 0.009;
-        const dx = -this.pointer.x * 12;
-        const dy = -this.pointer.y * 7;
+        const alive = this.reduced ? 0 : 1;
+        const bob = (Math.sin(s.time * 1.7) * 9 - Math.sin(this.hop * Math.PI) * 26) * alive;
+        const sway = (Math.sin(s.time * 1.1) * 1.4 + tilt + clamp(s.lean, -1, 1) * 3) * alive;
+        const breathe = 1 + Math.sin(s.time * 2.3) * 0.009 * alive;
+        const dx = -this.pointer.x * 12 * alive;
+        const dy = -this.pointer.y * 7 * alive;
         const hh = this.cur.h;
         const ww = hh * this.aspect(pose);
         const left = this.cur.cx - ww / 2 + dx;

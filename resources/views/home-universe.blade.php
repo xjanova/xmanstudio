@@ -16,11 +16,19 @@
     Receives from HomeController: $featuredProducts, $featuredReviews.
 --}}
 @php
-    $xuLogo = \App\Models\Setting::getValue('site_logo');
-    $xuLogoUrl = $xuLogo ? asset('storage/' . $xuLogo) : null;
+    // The uploaded logo with its black wordmark turned white: the original disappears on space.
+    $xuLogoUrl = \App\Support\BrandLogo::darkUrl();
     $xuClassicUrl = \App\Support\UniverseHome::classicUrl();
     $xuHasProducts = isset($featuredProducts) && $featuredProducts->isNotEmpty();
     $xuHasReviews = isset($featuredReviews) && $featuredReviews->isNotEmpty();
+    // For main.js. Built here, not inline in @json(...): that directive splits its argument
+    // on every comma, so an array literal with more than two entries does not compile.
+    $xuConfig = [
+        'classicUrl' => $xuClassicUrl,
+        'home' => url('/'),
+        // The guide's chat (ui/Chat.js) talks to the site's AI assistant when it is switched on.
+        'chat' => \App\Models\Setting::getValue('ai_chat_enabled', false) ? route('public.ai-chat') : null,
+    ];
 @endphp
 <!DOCTYPE html>
 <html lang="th" class="xu-doc">
@@ -97,10 +105,7 @@
 
     <div id="xu-toast" class="xu-toast" role="status" aria-live="polite"></div>
 
-    <script type="application/json" id="xu-config">@json([
-        'classicUrl' => $xuClassicUrl,
-        'home' => url('/'),
-    ])</script>
+    <script type="application/json" id="xu-config">@json($xuConfig)</script>
 
     @php
         $customBodyEndCode = \App\Models\Setting::getValue('custom_code_body_end', '');

@@ -21,6 +21,7 @@ import { platforms as platformChoreo } from './engine/choreo.js';
 import { clamp, damp, easeInOutSine, nextFrame, sleep, smoothstep } from './lib/math.js';
 import { ANCHORS } from './world/anchors.js';
 import { place, prefs } from './lib/prefs.js';
+import { Chat } from './ui/Chat.js';
 import { Guide } from './ui/Guide.js';
 import { Hud } from './ui/Hud.js';
 import { Loader } from './ui/Loader.js';
@@ -102,6 +103,14 @@ async function boot() {
     engine.renderOnce();
     await nextFrame();
 
+    const config = (() => {
+        try {
+            return JSON.parse(document.getElementById('xu-config')?.textContent || '{}');
+        } catch {
+            return {};
+        }
+    })();
+
     const sound = new Sound(prefs.sound);
     const stations = new Stations({ journey, world, sound });
 
@@ -149,9 +158,11 @@ async function boot() {
     const hud = new Hud({ journey, sound, onJump: (i) => jump(i) });
     hud.setSound(sound.enabled);
 
+    let chat = null; // ui/Chat.js, below
     const menu = new Menu({
         sound,
         onOpenChange: (open) => {
+            if (open) chat?.close();
             state.menuOpen = open;
             html.style.overflow = open ? 'hidden' : '';
             html.classList.toggle('xu-menu-open', open);
@@ -169,12 +180,30 @@ async function boot() {
         },
     });
 
+    if (window.__xu) window.__xu.menu = menu;
+
+    // Talking to the guide: her speech bubble's "ask me" field opens a chat with
+    // the site's AI assistant (only when an admin has switched that on).
     const guide = new Guide({
         root: document.getElementById('xu-guide'),
         journey,
         sound,
         onClick: () => menu.open(),
+        onAsk: (text) => chat?.open(text),
     });
+    const chatRoot = document.getElementById('xu-chat');
+    if (chatRoot && config.chat) {
+        chat = new Chat({
+            root: chatRoot,
+            url: config.chat,
+            avatar: document.querySelector('.xu-guide__avatar img')?.src || '',
+            sound,
+            onOpenChange: (open) => {
+                guide.setChatting(open);
+                html.classList.toggle('xu-chatting', open);
+            },
+        });
+    }
 
     bindPointerPolish(document.body, sound);
 

@@ -2,6 +2,12 @@
 <section id="xu-core" class="xu-st" data-station="core" data-len="1.35"
          data-label-th="แกนกลาง" data-label-en="Core" aria-labelledby="xu-core-title">
     <div class="xu-panel xu-core">
+        @if($xuLogoUrl)
+            {{-- Big and glinting, in the empty sky above the headline. --}}
+            <div class="xu-core__logo xu-r" style="--i: 0;">
+                @include('partials.universe.logo', ['src' => $xuLogoUrl, 'class' => 'xu-logo--hero'])
+            </div>
+        @endif
         <p class="xu-eyebrow xu-r" style="--i: 0;">
             <span class="xu-eyebrow__dot" aria-hidden="true"></span>
             XMAN Studio · IT Solutions ครบวงจร · Since 2018

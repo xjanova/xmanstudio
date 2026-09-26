@@ -1698,12 +1698,20 @@ a.xu-card:focus-visible::after,
     padding-bottom: clamp(84px, 13vh, 150px);
 }
 
-/* Wide screens: the guide stands on the right, so the headline keeps left. */
+/* Wide screens: the guide stands on the right, so the headline keeps left,
+   and the logo takes the empty sky at the top left. */
 @media (min-width: 1100px) and (min-aspect-ratio: 5/4) {
     .xu-live .xu-core {
         align-items: flex-start;
         text-align: left;
         padding-left: calc(var(--xu-gutter) + 1vw);
+    }
+
+    .xu-live .xu-core__logo {
+        position: absolute;
+        top: calc(var(--xu-hud-h) + env(safe-area-inset-top, 0px) + 5vh);
+        left: calc(var(--xu-gutter) + 1vw);
+        margin: 0;
     }
 
     .xu-live .xu-core__title {
@@ -2359,6 +2367,25 @@ a.xu-card:focus-visible::after,
     width: 100%;
 }
 
+.xu-orbit__group + .xu-orbit__group {
+    margin-top: 22px;
+}
+
+.xu-orbit__caption {
+    margin: 0 0 12px;
+    text-align: center;
+    color: var(--xu-fg-2);
+    font-size: 13px;
+}
+
+.xu-orbit__caption small {
+    color: var(--xu-fg-3);
+    font-family: var(--xu-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
 .xu-orbit__ring {
     display: flex;
     flex-wrap: wrap;
@@ -2389,6 +2416,19 @@ a.xu-card:focus-visible::after,
     height: 26px;
 }
 
+/* The AI models: violet glass and a glow, a notch above the dev stack. */
+.xu-chip--ai {
+    border-color: rgba(196, 181, 253, 0.55);
+    background: linear-gradient(140deg, rgba(76, 29, 149, 0.75), rgba(15, 12, 41, 0.85));
+    box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.8), 0 0 26px -8px rgba(167, 139, 250, 0.9);
+    font-size: 15px;
+}
+
+.xu-chip--ai img {
+    width: 28px;
+    height: 28px;
+}
+
 .xu-live .xu-stack {
     justify-content: flex-start;
     gap: 0;
@@ -2402,15 +2442,33 @@ a.xu-card:focus-visible::after,
     perspective-origin: 50% 30%;
 }
 
+/* Live: both rings share one 3D stage; captions are for the flat layout only. */
+.xu-live .xu-orbit__group {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    transform-style: preserve-3d;
+}
+
+.xu-live .xu-orbit__caption {
+    display: none;
+}
+
 .xu-live .xu-orbit__ring {
     position: absolute;
-    top: 54%;
+    top: 64%;
     left: 50%;
     display: block;
     width: 0;
     height: 0;
     transform-style: preserve-3d;
     transform: rotateX(-10deg) rotateY(var(--spin, 0deg));
+}
+
+/* The AI ring rides higher and tighter, tilted the other way. */
+.xu-live .xu-orbit__ring--ai {
+    top: 26%;
+    transform: rotateX(-16deg) rotateY(var(--spin, 0deg));
 }
 
 /* Each chip rides the ring, then turns back by its own angle plus the ring's
@@ -2421,6 +2479,10 @@ a.xu-card:focus-visible::after,
     left: 0;
     transform: rotateY(calc(var(--j) * 360deg / var(--n))) translateZ(var(--orbit-r, 380px)) rotateY(var(--counter, 0deg)) translate(-50%, -50%);
     opacity: var(--face, 1);
+}
+
+.xu-live .xu-orbit__ring--ai .xu-orbit__item {
+    transform: rotateY(calc(var(--j) * 360deg / var(--n))) translateZ(var(--orbit-r-ai, 300px)) rotateY(var(--counter, 0deg)) translate(-50%, -50%);
 }
 
 .xu-live .xu-chip {
@@ -2907,9 +2969,11 @@ a.xu-card:focus-visible::after,
 .xu-menu__stage {
     position: relative;
     flex: 1;
-    min-height: 240px;
-    perspective: var(--persp, 1150px);
-    perspective-origin: 50% 46%;
+    min-height: 260px;
+    perspective: var(--persp, 1400px);
+    /* A camera a little above the ring, looking down on it: the far side of
+       the loop shows above the near side, so it reads as a carousel. */
+    perspective-origin: 50% 18%;
     touch-action: none;
     cursor: grab;
     user-select: none;
@@ -2921,19 +2985,20 @@ a.xu-card:focus-visible::after,
 }
 
 .xu-ring {
-    --cw: 232px;
-    --ch: 130px;
+    --cw: 300px;
+    --ch: 168px;
     position: absolute;
-    top: 46%;
+    top: 44%;
     left: 50%;
     width: 0;
     height: 0;
     transform-style: preserve-3d;
-    transform: translateZ(calc(var(--R, 480px) * -1)) rotateY(var(--rot, 0deg)) scale(var(--intro, 1));
+    transform: translateZ(calc(var(--R, 520px) * -1)) rotateX(-11deg) rotateY(var(--rot, 0deg)) scale(var(--intro, 1));
 }
 
+/* Standing on its side, it leans the same way to show its depth. */
 .xu-ring.is-vertical {
-    transform: translateZ(calc(var(--R, 300px) * -1)) rotateX(var(--rot, 0deg)) scale(var(--intro, 1));
+    transform: translateZ(calc(var(--R, 300px) * -1)) rotateY(16deg) rotateX(var(--rot, 0deg)) scale(var(--intro, 1));
 }
 
 .xu-ring__item {
@@ -3019,7 +3084,7 @@ a.xu-card:focus-visible::after,
 
 .xu-ring__label b {
     font-family: var(--xu-head);
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
 }
 
@@ -3078,9 +3143,77 @@ a.xu-card:focus-visible::after,
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    min-height: 118px;
+    gap: 10px;
+    width: min(760px, 100%);
+    min-height: 196px;
+    margin: 0 auto;
     text-align: center;
+}
+
+.xu-menu__story {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.xu-menu__info.is-new .xu-menu__story {
+    animation: xu-story-in 0.55s var(--xu-ease) both;
+}
+
+@keyframes xu-story-in {
+    from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+    to { opacity: 1; transform: none; filter: none; }
+}
+
+.xu-menu__desc {
+    margin: 0;
+    max-width: 680px;
+    color: var(--xu-fg-1);
+    font-size: clamp(14.5px, 1.25vw, 16.5px);
+    line-height: 1.75;
+    text-wrap: pretty;
+}
+
+.xu-menu__desc small {
+    display: block;
+    margin-top: 4px;
+    color: var(--xu-fg-3);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.xu-menu__points {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 2px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.xu-menu__points li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--xu-accent-now, var(--xu-cyan)) 55%, transparent);
+    background: color-mix(in srgb, var(--xu-accent-now, var(--xu-cyan)) 12%, rgba(8, 11, 26, 0.7));
+    color: var(--xu-fg-1);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.xu-menu__points li::before {
+    content: "✦";
+    color: var(--xu-accent-now, var(--xu-cyan));
+    font-size: 11px;
+}
+
+.xu-menu__go {
+    margin-top: 2px;
 }
 
 .xu-menu__now {
@@ -3099,18 +3232,6 @@ a.xu-card:focus-visible::after,
     font-size: 11px;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-}
-
-.xu-menu__about {
-    margin: 0;
-    color: var(--xu-fg-2);
-    font-size: 14px;
-}
-
-.xu-menu__about small {
-    display: block;
-    color: var(--xu-fg-3);
-    font-size: 11.5px;
 }
 
 .xu-menu__keys {
@@ -3185,6 +3306,133 @@ a.xu-card:focus-visible::after,
 }
 
 /* ==========================================================================
+   THE LOGO — glint and twinkling stars (partials/universe/logo)
+   ========================================================================== */
+
+.xu-logo {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    isolation: isolate;
+}
+
+.xu-logo__img {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+    animation: xu-logo-glow 4.2s var(--xu-ease-io) infinite;
+}
+
+@keyframes xu-logo-glow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5)) drop-shadow(0 0 26px rgba(34, 211, 238, 0.2)); }
+    50% { filter: drop-shadow(0 0 16px rgba(232, 121, 249, 0.72)) drop-shadow(0 0 42px rgba(34, 211, 238, 0.38)); }
+}
+
+/* A bright band sweeps across the logo's own shape (masked by the logo). */
+.xu-logo__shine {
+    position: absolute;
+    inset: 0;
+    -webkit-mask: var(--logo) center / 100% 100% no-repeat;
+    mask: var(--logo) center / 100% 100% no-repeat;
+    background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.95) 50%, transparent 60%);
+    background-size: 280% 100%;
+    background-position: 125% 0;
+    mix-blend-mode: screen;
+    animation: xu-logo-shine 5s var(--xu-ease-io) infinite;
+    pointer-events: none;
+}
+
+@keyframes xu-logo-shine {
+    0%, 52% { background-position: 125% 0; }
+    82%, 100% { background-position: -25% 0; }
+}
+
+/* Four-point stars that flare in turn around the logo. */
+.xu-logo__stars i {
+    position: absolute;
+    width: var(--s, 16px);
+    height: var(--s, 16px);
+    margin: calc(var(--s, 16px) / -2) 0 0 calc(var(--s, 16px) / -2);
+    background: radial-gradient(circle, #fff 0%, #fff6d6 35%, #ffd479 60%, transparent 72%);
+    clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+    filter: drop-shadow(0 0 6px rgba(255, 230, 170, 0.95));
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+    animation: xu-twinkle-star 3.6s var(--xu-ease-io) infinite;
+    animation-delay: var(--d, 0s);
+    pointer-events: none;
+}
+
+.xu-logo__stars i:nth-child(1) { left: 6%; top: 12%; --s: 22px; --d: 0s; }
+.xu-logo__stars i:nth-child(2) { left: 24%; top: 90%; --s: 14px; --d: 0.7s; }
+.xu-logo__stars i:nth-child(3) { left: 52%; top: 4%; --s: 18px; --d: 1.4s; }
+.xu-logo__stars i:nth-child(4) { left: 78%; top: 86%; --s: 12px; --d: 2.1s; }
+.xu-logo__stars i:nth-child(5) { left: 97%; top: 24%; --s: 20px; --d: 2.7s; }
+.xu-logo__stars i:nth-child(6) { left: 38%; top: 48%; --s: 12px; --d: 3.1s; }
+
+@keyframes xu-twinkle-star {
+    0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+    12% { opacity: 1; transform: scale(1.15) rotate(45deg); }
+    26% { opacity: 0.2; transform: scale(0.4) rotate(80deg); }
+    34% { opacity: 0; transform: scale(0) rotate(90deg); }
+}
+
+.xu-logo--gate {
+    width: min(480px, 78vw);
+}
+
+.xu-logo--hero {
+    width: clamp(240px, 34vw, 560px);
+}
+
+.xu-logo--hud .xu-logo__img {
+    width: auto;
+    height: 40px;
+}
+
+.xu-logo--hud .xu-logo__stars i:nth-child(n + 4) {
+    display: none;
+}
+
+.xu-logo--hud .xu-logo__stars i {
+    --s: 10px;
+}
+
+.xu-loader__emblem--logo {
+    width: auto;
+    height: auto;
+    margin-bottom: 6px;
+    perspective: none;
+}
+
+.xu-loader__emblem--logo .xu-loader__halo {
+    width: 120%;
+    height: 260%;
+    left: -10%;
+    top: -80%;
+    opacity: 0.55;
+}
+
+.xu-core__logo {
+    margin-bottom: 18px;
+    line-height: 0;
+}
+
+.xu-core__logo .xu-logo__img {
+    animation-duration: 3.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .xu-logo__img,
+    .xu-logo__shine,
+    .xu-logo__stars i {
+        animation: none;
+    }
+}
+
+/* ==========================================================================
    THE GUIDE — the twin-tail girl who flies along (ui/Guide.js)
    ========================================================================== */
 
@@ -3192,28 +3440,39 @@ a.xu-card:focus-visible::after,
     display: none;
 }
 
+/* Her parts stack on their own: the figure and its sparkles under the panels
+   (text always wins), what she says above them, so her words stay readable
+   and the "ask me" field can always be reached. So the root sets no position
+   or z-index: at full opacity it makes no stacking context of its own.
+
+   Hidden, she is also out of reach: nothing invisible may take a click or
+   Tab focus (her hit area, the portrait, the "ask me" field). Visibility
+   switches off only once the fade has finished. */
 .xu-live .xu-guide {
-    position: fixed;
-    inset: 0;
-    z-index: 9; /* under the panels: text always wins */
     display: block;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.8s var(--xu-ease);
+    visibility: hidden;
+    transition: opacity 0.8s var(--xu-ease), visibility 0s linear 0.8s;
 }
 
 .xu-guide.is-on {
     opacity: 1;
+    visibility: visible;
+    transition: opacity 0.8s var(--xu-ease), visibility 0s;
 }
 
 .xu-guide.is-away {
     opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s var(--xu-ease), visibility 0s linear 0.8s;
 }
 
 .xu-guide__body {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
+    z-index: 9; /* under the panels */
     transform-origin: 50% 100%;
     will-change: transform;
 }
@@ -3265,6 +3524,7 @@ a.xu-card:focus-visible::after,
     position: fixed;
     top: 0;
     left: 0;
+    z-index: 11; /* over the panels, under the HUD */
     max-width: min(300px, 70vw);
     padding: 11px 15px 10px;
     border-radius: 16px;
@@ -3277,6 +3537,10 @@ a.xu-card:focus-visible::after,
     opacity: 0;
     transition: opacity 0.35s var(--xu-ease);
     pointer-events: none;
+}
+
+.xu-guide__line {
+    margin: 0;
 }
 
 .xu-guide__bubble b {
@@ -3311,12 +3575,6 @@ a.xu-card:focus-visible::after,
     max-width: 270px;
 }
 
-/* Compact, the portrait and its bubble are small and in a corner: they sit
-   above the panels so no card ever cuts them off. */
-.xu-live .xu-guide.is-compact {
-    z-index: 12;
-}
-
 .xu-guide-compact .xu-coords {
     opacity: 0 !important;
 }
@@ -3326,8 +3584,9 @@ a.xu-card:focus-visible::after,
 }
 
 .xu-guide__trail {
-    position: absolute;
+    position: fixed;
     inset: 0;
+    z-index: 9;
     overflow: hidden;
 }
 
@@ -3346,9 +3605,11 @@ a.xu-card:focus-visible::after,
     to { opacity: 0; transform: translateY(16px) scale(0.2); }
 }
 
-/* Compact: a round portrait in the corner. */
+/* Compact: a round portrait in the corner, over the panels so no card ever
+   cuts it off. */
 .xu-guide__avatar {
     position: fixed;
+    z-index: 12;
     left: var(--xu-gutter);
     bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     display: none;
@@ -3439,6 +3700,487 @@ a.xu-card:focus-visible::after,
 /* A pose that failed to load: no broken-image box, just no guide. */
 .xu-guide.is-missing {
     display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Asking her — the bubble's "ask me" field (only with the AI assistant on;
+   state classes from ui/Guide.js)
+
+   .is-talking  her line shows, the field stays folded away: a short bubble
+                that clears the panels' headlines and cards.
+   .is-asking   full size and still: once she has finished, the bubble
+                becomes a pill holding just the field.
+   .is-held     the visitor points at the bubble, is in the field or has
+                typed something: the field is there, whatever else is.
+   On a phone the field comes with what she says at her corner-portrait
+   stops (the only place there is room for it there); at the one stop where
+   she stands full size under the HUD, a taller bubble would cover her face.
+   -------------------------------------------------------------------------- */
+
+.xu-guide.has-ask .xu-guide__bubble {
+    width: min(292px, 76vw);
+    max-width: none;
+}
+
+.xu-guide.has-ask.is-talking .xu-guide__bubble,
+.xu-guide.has-ask.is-held .xu-guide__bubble,
+.xu-guide.has-ask.is-asking:not(.is-compact):not(.is-phone) .xu-guide__bubble {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.xu-guide.has-ask .xu-guide__ask {
+    display: none;
+}
+
+.xu-guide.has-ask.is-held .xu-guide__ask,
+.xu-guide.has-ask.is-asking:not(.is-talking):not(.is-compact):not(.is-phone) .xu-guide__ask,
+.xu-guide.has-ask.is-phone.is-compact.is-talking .xu-guide__ask {
+    display: flex;
+}
+
+.xu-guide.has-ask:not(.is-talking) .xu-guide__line {
+    display: none;
+}
+
+.xu-guide.is-talking .xu-guide__line {
+    animation: xu-line-in 0.4s var(--xu-ease) both;
+}
+
+@keyframes xu-line-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Just the pill. */
+.xu-guide.has-ask:not(.is-talking) .xu-guide__bubble {
+    width: min(252px, 70vw);
+    padding: 5px;
+    border-radius: 999px;
+}
+
+.xu-guide__ask {
+    align-items: center;
+    gap: 6px;
+    margin-top: 9px;
+    padding: 3px 3px 3px 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(232, 121, 249, 0.34);
+    background: rgba(3, 4, 11, 0.55);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.xu-guide.has-ask:not(.is-talking) .xu-guide__ask {
+    margin-top: 0;
+    border-color: transparent;
+    background: transparent;
+}
+
+.xu-guide__ask:focus-within {
+    border-color: rgba(34, 211, 238, 0.6) !important;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.14);
+}
+
+.xu-guide__ask input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 0;
+    border: 0;
+    background: transparent;
+    color: var(--xu-fg-1);
+    font: inherit;
+    font-size: 13px;
+}
+
+.xu-guide__ask input::placeholder {
+    color: #c4b5fd;
+    opacity: 0.8;
+}
+
+.xu-guide__ask input:focus-visible {
+    outline: none; /* the field's frame shows focus */
+}
+
+.xu-guide__ask button,
+.xu-chat__form button {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--xu-magenta), var(--xu-violet) 55%, var(--xu-cyan));
+    box-shadow: 0 0 16px -4px rgba(232, 121, 249, 0.9);
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.25s var(--xu-ease), filter 0.25s ease, opacity 0.2s ease;
+}
+
+.xu-guide__ask button:hover,
+.xu-chat__form button:hover {
+    transform: scale(1.08);
+    filter: brightness(1.15);
+}
+
+.xu-guide__ask button svg,
+.xu-chat__form button svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.2;
+}
+
+/* While the chat is open she is in its header: the figure steps aside. */
+.xu-guide.is-chatting .xu-guide__body,
+.xu-guide.is-chatting .xu-guide__bubble,
+.xu-guide.is-chatting .xu-guide__avatar {
+    opacity: 0 !important;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.xu-guide__body {
+    transition: opacity 0.4s ease;
+}
+
+/* iOS zooms the page into any field set under 16px. */
+@media (pointer: coarse) {
+    .xu-guide__ask input,
+    .xu-chat__form textarea {
+        font-size: 16px;
+    }
+}
+
+/* ==========================================================================
+   CHAT — talking with the guide (ui/Chat.js), answered by the site's AI
+   assistant. A panel in the corner; a sheet from the bottom on phones.
+   ========================================================================== */
+
+.xu-chat {
+    position: fixed;
+    right: var(--xu-gutter);
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    width: min(400px, calc(100vw - 32px));
+    height: min(600px, calc(100vh - var(--xu-hud-h) - 44px));
+    height: min(600px, calc(100dvh - var(--xu-hud-h) - 44px));
+    overflow: hidden;
+    border: 1px solid rgba(232, 121, 249, 0.42);
+    border-radius: 24px;
+    background:
+        radial-gradient(120% 60% at 100% 0%, rgba(139, 92, 246, 0.3), transparent 62%),
+        radial-gradient(90% 50% at 0% 100%, rgba(34, 211, 238, 0.14), transparent 62%),
+        linear-gradient(160deg, rgba(26, 12, 48, 0.96), rgba(6, 9, 26, 0.97));
+    box-shadow:
+        0 30px 80px -20px rgba(0, 0, 0, 0.85),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 0 50px -18px rgba(232, 121, 249, 0.8);
+    color: var(--xu-fg-1);
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+    transform-origin: 100% 100%;
+    transition: opacity 0.32s var(--xu-ease), transform 0.5s var(--xu-ease);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+}
+
+.xu-chat[hidden] {
+    display: none;
+}
+
+.xu-chat.is-open {
+    opacity: 1;
+    transform: none;
+}
+
+.xu-chat__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 14px 12px 16px;
+    border-bottom: 1px solid rgba(232, 121, 249, 0.18);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.18), transparent);
+}
+
+.xu-chat__avatar {
+    flex: none;
+    width: 54px;
+    height: 54px;
+    border: 2px solid rgba(255, 212, 121, 0.85);
+    border-radius: 50%;
+    object-fit: cover;
+    background: radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.6), rgba(8, 11, 26, 0.95));
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 26px -4px rgba(232, 121, 249, 0.9);
+    animation: xu-bob 3.2s var(--xu-ease-io) infinite;
+}
+
+.xu-chat__who {
+    flex: 1;
+    min-width: 0;
+}
+
+.xu-chat__who h2 {
+    margin: 0;
+    overflow: hidden;
+    font-family: var(--xu-head);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.xu-chat__who small {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--xu-fg-2);
+    font-size: 11.5px;
+}
+
+.xu-chat__who small::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--xu-mint);
+    box-shadow: 0 0 8px var(--xu-mint);
+}
+
+.xu-chat.is-thinking .xu-chat__who small::before {
+    background: var(--xu-gold);
+    box-shadow: 0 0 8px var(--xu-gold);
+    animation: xu-chat-blink 0.9s ease-in-out infinite;
+}
+
+@keyframes xu-chat-blink {
+    50% { opacity: 0.25; }
+}
+
+.xu-chat__close {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--xu-line);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--xu-fg-2);
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.35s var(--xu-ease);
+}
+
+.xu-chat__close:hover {
+    border-color: var(--xu-line-hi);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: rotate(90deg);
+}
+
+.xu-chat__log {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    padding: 16px 14px 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.xu-chat__msg {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    transform-origin: 0 100%;
+}
+
+.xu-chat__msg--user {
+    justify-content: flex-end;
+    transform-origin: 100% 100%;
+}
+
+.xu-chat__msg.is-new {
+    animation: xu-msg-in 0.45s var(--xu-ease) both;
+}
+
+@keyframes xu-msg-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+.xu-chat__face {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border: 1.5px solid rgba(255, 212, 121, 0.7);
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(139, 92, 246, 0.4);
+}
+
+.xu-chat__bubble,
+.xu-chat__dots {
+    border: 1px solid rgba(167, 139, 250, 0.26);
+    border-radius: 16px 16px 16px 5px;
+    background: rgba(139, 92, 246, 0.16);
+}
+
+.xu-chat__bubble {
+    max-width: 82%;
+    padding: 9px 13px;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.xu-chat__msg--user .xu-chat__bubble {
+    border-color: transparent;
+    border-radius: 16px 16px 5px 16px;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.88), rgba(139, 92, 246, 0.92));
+    color: #fff;
+}
+
+.xu-chat__bubble strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.xu-chat__link {
+    color: var(--xu-cyan) !important;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.xu-chat__dots {
+    display: flex;
+    gap: 4px;
+    padding: 13px 14px;
+}
+
+.xu-chat__dots i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #d8b4fe;
+    animation: xu-chat-dot 1.2s ease-in-out infinite;
+}
+
+.xu-chat__dots i:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.xu-chat__dots i:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes xu-chat-dot {
+    0%, 80%, 100% { opacity: 0.35; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-5px); }
+}
+
+.xu-chat__form {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin: 4px 12px 0;
+    padding: 5px 5px 5px 14px;
+    border: 1px solid rgba(232, 121, 249, 0.3);
+    border-radius: 22px;
+    background: rgba(3, 4, 11, 0.6);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.xu-chat__form:focus-within {
+    border-color: rgba(34, 211, 238, 0.6);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.14);
+}
+
+.xu-chat__form textarea {
+    flex: 1;
+    min-width: 0;
+    max-height: 96px;
+    padding: 7px 0;
+    border: 0;
+    background: transparent;
+    color: var(--xu-fg-1);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+}
+
+.xu-chat__form textarea::placeholder {
+    color: #a78bfa;
+    opacity: 0.85;
+}
+
+.xu-chat__form textarea:focus-visible {
+    outline: none;
+}
+
+.xu-chat__form button {
+    width: 38px;
+    height: 38px;
+}
+
+.xu-chat__form button:disabled {
+    opacity: 0.45;
+    cursor: default;
+    transform: none;
+    filter: none;
+}
+
+.xu-chat__foot {
+    margin: 0;
+    padding: 7px 16px 11px;
+    color: var(--xu-fg-3);
+    font-size: 10.5px;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    .xu-chat {
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: min(80vh, 640px);
+        height: min(80dvh, 640px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        border-bottom: 0;
+        border-radius: 22px 22px 0 0;
+        transform: translateY(48px);
+        transform-origin: 50% 100%;
+    }
+
+    /* The sheet has the screen: the flight behind it must not scroll away
+       when the keyboard comes up. */
+    .xu-chatting,
+    .xu-chatting body {
+        overflow: hidden;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .xu-chat {
+        transform: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .xu-chat__avatar,
+    .xu-chat__msg.is-new,
+    .xu-guide.is-talking .xu-guide__line {
+        animation: none;
+    }
 }
 
 @keyframes xu-float {
@@ -3902,13 +4644,31 @@ a.xu-card:focus-visible::after,
     }
 
     .xu-ring {
-        --cw: 190px;
-        --ch: 106px;
-        top: 50%;
+        top: 42%;
     }
 
     .xu-menu__info {
-        min-height: 92px;
+        min-height: 150px;
+        gap: 6px;
+    }
+
+    .xu-menu__desc {
+        font-size: 13.5px;
+        line-height: 1.6;
+    }
+
+    .xu-menu__desc small {
+        display: none;
+    }
+
+    .xu-menu__points li {
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+
+    .xu-menu__go {
+        padding: 10px 18px;
+        font-size: 13px;
     }
 
     .xu-menu__keys {
@@ -3954,7 +4714,7 @@ a.xu-card:focus-visible::after,
         min-height: 0;
     }
 
-    .xu-menu__about,
+    .xu-menu__desc,
     .xu-menu__keys {
         display: none;
     }
