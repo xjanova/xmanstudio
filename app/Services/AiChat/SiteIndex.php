@@ -41,6 +41,9 @@ class SiteIndex
     /** @var array<string, int>|null how many pages carry each description */
     private ?array $descriptionCounts = null;
 
+    /** @var array<string, array{title: string, headings: string, body: string, all: string}>|null */
+    private ?array $haystacks = null;
+
     public function __construct(private SiteMap $siteMap) {}
 
     public function file(): string
@@ -209,57 +212,90 @@ class SiteIndex
     }
 
     /**
-     * The pages that say most about these words, best first.
+     * The words that point somewhere in particular. A word on a third of the
+     * site ("ราคา", "xman") names no page: "อันนี้ราคาเท่าไหร่" is about the
+     * open page, not whichever page says ราคา most. Without an index to judge
+     * by, every word is kept.
      *
-     * Each word counts for more the fewer pages use it (so "ราคา", which every
-     * pricing page has, does not drown out "tping"), and more again in a title
-     * or heading than in the body.
+     * @param  array<int, string>  $keywords
+     * @return array<int, string>
+     */
+    public function specific(array $keywords): array
+    {
+        $haystacks = $this->haystacks();
+        $total = count($haystacks);
+
+        if ($total < 6) {
+            return $keywords;
+        }
+
+        return array_values(array_filter($keywords, function (string $word) use ($haystacks, $total) {
+            $holders = 0;
+            foreach ($haystacks as $h) {
+                if (str_contains($h['all'], $word)) {
+                    $holders++;
+                }
+            }
+
+            return $holders <= $total / 3;
+        }));
+    }
+
+    /**
+     * The pages that are about these words, best first.
+     *
+     * A page must carry one of the words in its title or a heading — a word
+     * that only turns up in the body ("ราคาคุ้มค่า" on the rental page) is not
+     * what the page is about. Each word counts for more the fewer pages use it,
+     * and a page in the same part of the site as the one the visitor has open
+     * (/tping/install-guide beside /tping/pricing) comes first on a tie.
      *
      * @param  array<int, string>  $keywords
      * @param  array<int, string>  $except  paths to leave out (the page the visitor is on)
      * @return array<int, array<string, mixed>>
      */
-    public function search(array $keywords, int $limit = 2, array $except = []): array
+    public function search(array $keywords, int $limit = 2, array $except = [], ?string $near = null): array
     {
-        $pages = array_diff_key($this->pages(), array_flip($except));
+        $haystacks = array_diff_key($this->haystacks(), array_flip($except));
 
-        if ($keywords === [] || $pages === []) {
+        if ($keywords === [] || $haystacks === []) {
             return [];
         }
 
-        $haystacks = [];
-        foreach ($pages as $path => $page) {
-            $haystacks[$path] = [
-                'title' => mb_strtolower($page['title'] . ' ' . $page['h1'] . ' ' . $path),
-                'headings' => mb_strtolower(implode(' ', $page['headings'])),
-                'body' => mb_strtolower($page['description'] . ' ' . $page['text']),
-            ];
-        }
-
-        $total = count($pages);
+        $total = count($haystacks);
+        $section = $near !== null ? strtok(trim($near, '/'), '/') : false;
         $scores = [];
+        $named = [];
 
         foreach ($keywords as $word) {
-            $holders = array_filter($haystacks, fn (array $h) => str_contains($h['title'] . ' ' . $h['headings'] . ' ' . $h['body'], $word));
-
-            // A word on a third of the site ("ราคา", "xman") points at no page in particular:
-            // "อันนี้ราคาเท่าไหร่" is about the open page, not whichever page says ราคา most.
-            if ($holders === [] || ($total >= 6 && count($holders) > $total / 3)) {
+            $holders = array_filter($haystacks, fn (array $h) => str_contains($h['all'], $word));
+            if ($holders === []) {
                 continue;
             }
 
             $rarity = log(1 + $total / count($holders));
 
             foreach ($holders as $path => $h) {
-                $weight = (str_contains($h['title'], $word) ? 3 : 0)
-                    + (str_contains($h['headings'], $word) ? 2 : 0)
-                    + min(3, substr_count($h['body'], $word));
+                $inTitle = str_contains($h['title'], $word);
+                $inHeadings = str_contains($h['headings'], $word);
+                $named[$path] = ($named[$path] ?? false) || $inTitle || $inHeadings;
+
+                $weight = ($inTitle ? 3 : 0) + ($inHeadings ? 2 : 0) + min(3, substr_count($h['body'], $word));
                 $scores[$path] = ($scores[$path] ?? 0) + $weight * $rarity;
+            }
+        }
+
+        foreach ($scores as $path => $score) {
+            if (empty($named[$path])) {
+                unset($scores[$path]);
+            } elseif ($section !== false && $section !== '' && strtok(trim($path, '/'), '/') === $section) {
+                $scores[$path] = $score * 1.5;
             }
         }
 
         arsort($scores);
 
+        $pages = $this->pages();
         $best = [];
         foreach (array_slice($scores, 0, $limit, true) as $path => $score) {
             if ($score > 0) {
@@ -268,6 +304,24 @@ class SiteIndex
         }
 
         return $best;
+    }
+
+    /** @return array<string, array{title: string, headings: string, body: string, all: string}> lowercased text of each page, by path */
+    private function haystacks(): array
+    {
+        if ($this->haystacks !== null) {
+            return $this->haystacks;
+        }
+
+        $haystacks = [];
+        foreach ($this->pages() as $path => $page) {
+            $title = mb_strtolower($page['title'] . ' ' . $page['h1'] . ' ' . $path);
+            $headings = mb_strtolower(implode(' ', $page['headings']));
+            $body = mb_strtolower($page['description'] . ' ' . $page['text']);
+            $haystacks[$path] = ['title' => $title, 'headings' => $headings, 'body' => $body, 'all' => $title . ' ' . $headings . ' ' . $body];
+        }
+
+        return $this->haystacks = $haystacks;
     }
 
     /** @return array<string, mixed> */
@@ -299,5 +353,6 @@ class SiteIndex
 
         $this->data = $data;
         $this->descriptionCounts = null;
+        $this->haystacks = null;
     }
 }

@@ -87,10 +87,18 @@ class CurrentPage
     /** Query parameters that describe what is shown (a filter, a tab) and carry no secrets. */
     private const SAFE_QUERY = ['category', 'search', 'q', 'status', 'type', 'tab', 'plan', 'view', 'page'];
 
+    /** What the last described page is about ("Tping", "ราคาจดโดเมน"), for the prompt's closing reminder. */
+    private string $subject = '';
+
     public function __construct(
         private SiteIndex $index,
         private SiteMap $siteMap,
     ) {}
+
+    public function subject(): string
+    {
+        return $this->subject;
+    }
 
     /**
      * @param  array{path?: mixed, url?: mixed, title?: mixed, page?: mixed, session?: ?string}  $input
@@ -98,6 +106,7 @@ class CurrentPage
     public function describe(array $input, ?User $user): string
     {
         $path = $this->path($input['path'] ?? null, $input['url'] ?? null);
+        $this->subject = '';
 
         if ($path === null) {
             return '';
@@ -133,6 +142,11 @@ class CurrentPage
         }
 
         $facts = $route ? $this->facts($route, $user, $input['session'] ?? null) : [];
+        // A product page is about its product; any other page about what its title says.
+        if ($this->subject === '') {
+            $this->subject = $indexed !== null ? SiteIndex::label($indexed) : PageText::clean($title, 80);
+        }
+
         if ($facts !== []) {
             $lines[] = 'ข้อมูลจริงจากระบบเกี่ยวกับสิ่งที่อยู่บนหน้านี้ (เชื่อถือได้ ใช้ตอบก่อนข้อความบนหน้าจอ):';
             array_push($lines, ...$facts);
@@ -231,6 +245,9 @@ class CurrentPage
         }
 
         $name = (string) $route->getName();
+        if (str_starts_with($name, 'generated::')) {
+            $name = '';     // an unnamed route, as named by route:cache
+        }
 
         if (isset(self::KINDS[$name])) {
             return self::KINDS[$name];
@@ -280,15 +297,23 @@ class CurrentPage
 
             if ($name === 'services.show') {
                 $service = Service::where('slug', $param('slug'))->first();
+                if ($service === null) {
+                    return ['(ไม่พบบริการนี้ในระบบ — อาจปิดไปแล้ว)'];
+                }
+                $this->subject = $service->name_th ?: $service->name;
 
-                return $service ? [CatalogFacts::service($service, detailed: true)] : ['(ไม่พบบริการนี้ในระบบ — อาจปิดไปแล้ว)'];
+                return [CatalogFacts::service($service, detailed: true)];
             }
 
             if ($name === 'service.detail') {
                 $category = QuotationCategory::where('key', $param('categoryKey'))->first();
                 $option = $category?->options()->where('key', $param('optionKey'))->first();
+                if ($option === null) {
+                    return [];
+                }
+                $this->subject = $option->name_th ?: $option->name;
 
-                return $option ? ['หมวด: ' . ($category->name_th ?: $category->name), CatalogFacts::quotationOption($option, $category, detailed: true)] : [];
+                return ['หมวด: ' . ($category->name_th ?: $category->name), CatalogFacts::quotationOption($option, $category, detailed: true)];
             }
 
             if (in_array($name, ['cart.index', 'orders.checkout'], true)) {
@@ -328,7 +353,13 @@ class CurrentPage
     {
         $product = $slug !== null ? Product::with('category')->where('slug', $slug)->first() : null;
 
-        return $product ? [CatalogFacts::product($product, detailed: true)] : ['(ไม่พบสินค้านี้ในระบบ — อาจปิดการขายไปแล้ว)'];
+        if ($product === null) {
+            return ['(ไม่พบสินค้านี้ในระบบ — อาจปิดการขายไปแล้ว)'];
+        }
+
+        $this->subject = $product->name;
+
+        return [CatalogFacts::product($product, detailed: true)];
     }
 
     /** The product an app's own pages (/tping/pricing …) are about. @return array<int, string> */

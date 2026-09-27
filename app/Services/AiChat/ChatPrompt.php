@@ -48,6 +48,11 @@ class ChatPrompt
         $currentPage = $this->page->describe($page, $user);
         $path = $this->page->pathOf($page) ?? '';
 
+        // "หน้านี้…", "อันนี้…", "this one…" is about the open page, and nothing a word search
+        // turns up elsewhere may stand beside it. Otherwise only words that name something.
+        $pointsAtPage = $currentPage !== '' && preg_match('/นี้|นี่|this page|this one|\bhere\b/iu', $question);
+        $keywords = $pointsAtPage ? [] : $this->index->specific(Keywords::extract($question));
+
         $parts = [
             $this->persona(),
             $this->rules(),
@@ -58,10 +63,10 @@ class ChatPrompt
             $this->siteMapSection($user),
             $this->company(),
             $this->knowledge->buildFullKnowledge(),
-            $this->knowledge->search($question),
-            $this->relatedPages($question, $path),
+            $this->knowledge->searchKeywords($keywords),
+            $this->relatedPages($keywords, $path),
             $this->adminAdditions(),
-            $this->reminder($user, $path),
+            $this->reminder($user, $path, $this->page->subject()),
         ];
 
         return implode("\n\n", array_filter($parts, fn ($part) => trim((string) $part) !== ''));
@@ -225,16 +230,20 @@ INTENT;
         return implode("\n", $lines);
     }
 
-    /** The public pages that say most about this question, besides the one already open. */
-    private function relatedPages(string $question, string $currentPath): string
+    /**
+     * The public pages that are about what the question names, besides the one already open.
+     *
+     * @param  array<int, string>  $keywords
+     */
+    private function relatedPages(array $keywords, string $currentPath): string
     {
-        $pages = $this->index->search(Keywords::extract($question), 2, $currentPath !== '' ? [$currentPath] : []);
+        $pages = $this->index->search($keywords, 2, $currentPath !== '' ? [$currentPath] : [], $currentPath ?: null);
 
         if ($pages === []) {
             return '';
         }
 
-        $lines = ['=== หน้าเว็บที่เกี่ยวกับคำถามนี้ (เนื้อหาจริงจากหน้าเว็บ) ==='];
+        $lines = ['=== หน้าอื่นในเว็บที่อาจเกี่ยวกับคำถาม (เนื้อหาจริงจากหน้าเว็บ ใช้เมื่อคำถามพูดถึงเรื่องนั้น) ==='];
         foreach ($pages as $page) {
             $lines[] = '[' . SiteIndex::label($page, $page['path']) . '] ' . $page['path'];
             if ($page['headings'] !== []) {
@@ -279,15 +288,24 @@ INTENT;
         return implode("\n\n", $parts);
     }
 
-    /** Said last, where the model reads it right before it answers. */
-    private function reminder(?User $user, string $path): string
+    /**
+     * Said last, where the model reads it right before it answers: who is
+     * asking, and that a question naming nothing else is about the open page.
+     */
+    private function reminder(?User $user, string $path, string $subject): string
     {
         $who = $user === null
             ? 'ผู้เยี่ยมชมที่ยังไม่ได้เข้าสู่ระบบ'
             : 'คุณ' . VisitorContext::firstName($user) . ($user->isAdmin() ? ' (ทีมงาน/แอดมิน)' : ' (ลูกค้า)');
 
-        return '=== ย้ำก่อนตอบ === ตอนนี้ ' . self::botName() . ' กำลังคุยกับ' . $who
-            . ($path !== '' ? ' ซึ่งเปิดหน้า ' . $path . ' อยู่' : '')
-            . ' — ตอบให้ตรงกับคนนี้และหน้านี้ ด้วยข้อมูลจริงจากระบบข้างบนเท่านั้น';
+        $line = '=== ย้ำก่อนตอบ === ตอนนี้ ' . self::botName() . ' กำลังคุยกับ' . $who;
+
+        if ($path !== '') {
+            $about = $subject !== '' ? ' เรื่อง "' . $subject . '"' : '';
+            $line .= ' ซึ่งเปิดหน้า ' . $path . $about . ' อยู่ — คำถามที่ไม่ได้เอ่ยชื่อสินค้า/บริการอื่น (เช่น "หน้านี้" "อันนี้" "แพ็กเกจไหนคุ้ม" "ซื้อยังไง") หมายถึงสิ่งบนหน้านี้'
+                . ($about !== '' ? $about : '');
+        }
+
+        return $line . ' — ตอบให้ตรงกับคนนี้และหน้านี้ ด้วยข้อมูลจริงจากระบบข้างบนเท่านั้น';
     }
 }

@@ -279,7 +279,9 @@ class SiteMap
             $name = $route->getName();
             $uri = trim($route->uri(), '/');
 
-            if ($name === null || ! in_array('GET', $route->methods(), true) || $route->parameterNames() !== []) {
+            // `route:cache` names every unnamed route "generated::…": those are still unnamed
+            // (redirects like /support, JSON like /quotation/services), not pages.
+            if ($name === null || str_starts_with($name, 'generated::') || ! in_array('GET', $route->methods(), true) || $route->parameterNames() !== []) {
                 continue;
             }
 

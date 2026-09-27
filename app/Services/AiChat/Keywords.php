@@ -28,10 +28,23 @@ class Keywords
         'ผม', 'หนู', 'คุณ', 'นี้', 'นั้น', 'นี่', 'นั่น', 'อันนี้', 'ตัวนี้', 'แบบ', 'ยัง', 'ไม่', 'ใช่', 'เอง',
         'ทำ', 'การ', 'ความ', 'อยู่', 'แต่', 'ถ้า', 'เพราะ', 'ว่า', 'ซึ่ง', 'โดย', 'จาก', 'ใน', 'บน', 'ต้อง',
         'สวัสดี', 'ขอบคุณ', 'หา', 'เห็น', 'ดู', 'เอา', 'ใคร', 'เมื่อไหร่', 'ทำไม', 'หรอ', 'เหรอ',
+        // In a chat these point at the page or ask for a verdict; they name nothing
+        'หน้า', 'สุด', 'ที่สุด', 'แนะนำ', 'ตัว', 'อัน', 'ใช้', 'มาก', 'ดี', 'กว่า', 'ดีกว่า', 'ค่อย', 'เหมาะ', 'ไง',
         // English
         'the', 'is', 'a', 'an', 'and', 'or', 'what', 'how', 'do', 'does', 'you', 'have', 'has', 'can', 'about',
         'this', 'that', 'to', 'of', 'for', 'in', 'on', 'it', 'me', 'my', 'your', 'are', 'there', 'any', 'much',
         'please', 'with', 'be', 'i', 'we', 'hi', 'hello', 'thanks',
+    ];
+
+    /**
+     * Words of the site's trade that ICU's dictionary cuts apart ("แพ็กเกจ"
+     * comes out as "แพ็ก|เกจ", "ติดตั้ง" as "ติด|ตั้ง"): taken out of a Thai
+     * run whole, before the dictionary sees it. Longest first.
+     */
+    private const WHOLE_WORDS = [
+        'แอพพลิเคชั่น', 'แอปพลิเคชัน', 'ลืมรหัสผ่าน', 'ใบเสนอราคา', 'กระเป๋าเงิน', 'ใบแจ้งหนี้', 'โปรโมชั่น',
+        'โปรโมชัน', 'รหัสผ่าน', 'รายเดือน', 'ทดลองใช้', 'แพ็กเกจ', 'แพ็คเกจ', 'ไลเซ้นส์', 'ไลเซนส์', 'บล็อกเชน',
+        'ตลอดชีพ', 'ใบเสร็จ', 'ต่ออายุ', 'เติมเงิน', 'แชทบอท', 'ติดตั้ง', 'แอดมิน', 'คลาวด์', 'รายปี',
     ];
 
     /** @return array<int, string> */
@@ -68,6 +81,25 @@ class Keywords
 
     /** @return array<int, string> */
     private static function thaiWords(string $run): array
+    {
+        $whole = [];
+        foreach (self::WHOLE_WORDS as $word) {
+            if (str_contains($run, $word)) {
+                $whole[] = $word;
+                $run = str_replace($word, ' ', $run);
+            }
+        }
+
+        $words = $whole;
+        foreach (preg_split('/\s+/u', $run, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $piece) {
+            array_push($words, ...self::dictionaryWords($piece));
+        }
+
+        return $words;
+    }
+
+    /** @return array<int, string> */
+    private static function dictionaryWords(string $run): array
     {
         if (class_exists(IntlBreakIterator::class)) {
             $iterator = IntlBreakIterator::createWordInstance('th');

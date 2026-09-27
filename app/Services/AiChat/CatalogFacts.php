@@ -304,11 +304,52 @@ class CatalogFacts
         return implode(', ', $labels);
     }
 
-    /** Text out of stored HTML, on one line, capped. */
+    /**
+     * Text out of stored content, on one line, capped. The content is HTML, or
+     * the page builder's JSON blocks ([{"type":"heading","content":…}, …]),
+     * which reached the assistant raw — braces, icon names and colour codes.
+     */
     public static function plain(?string $html, int $max): string
     {
-        $text = html_entity_decode(strip_tags(str_replace(['<br', '</p>', '</li>'], [' <br', ' </p>', ' </li>'], (string) $html)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $html = (string) $html;
+        $start = ltrim($html)[0] ?? '';
+
+        if ($start === '[' || $start === '{') {
+            $blocks = json_decode($html, true);
+            if (is_array($blocks)) {
+                $html = implode(' · ', self::blockText($blocks));
+            }
+        }
+
+        $text = html_entity_decode(strip_tags(str_replace(['<br', '</p>', '</li>'], [' <br', ' </p>', ' </li>'], $html)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         return PageText::clean($text, $max);
+    }
+
+    /**
+     * The words of page-builder blocks: their headings, text, card titles and
+     * list items — not their icons, colours or sizes.
+     *
+     * @return array<int, string>
+     */
+    private static function blockText(mixed $node, string $key = ''): array
+    {
+        if (is_string($node)) {
+            $wanted = in_array($key, ['content', 'title', 'text', 'label', 'description', 'caption', 'question', 'answer', 'item'], true);
+
+            return $wanted && trim($node) !== '' ? [trim($node)] : [];
+        }
+
+        if (! is_array($node)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($node as $childKey => $child) {
+            $childKey = is_int($childKey) ? ($key === 'items' ? 'item' : $key) : (string) $childKey;
+            array_push($out, ...self::blockText($child, $childKey));
+        }
+
+        return $out;
     }
 }

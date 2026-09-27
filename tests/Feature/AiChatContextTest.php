@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\RentalPackage;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\AiChat\SiteIndex;
@@ -274,6 +275,41 @@ class AiChatContextTest extends TestCase
         $this->assertStringContainsString('ข้อมูลจริงจากระบบเกี่ยวกับสิ่งที่อยู่บนหน้านี้', $prompt);
         $this->assertStringContainsString('ราคา License: รายเดือน 399 บาท', $prompt);
         $this->assertStringContainsString('วิธีซื้อ: เลือกแพ็กเกจที่ /tping/pricing', $prompt);
+    }
+
+    public function test_a_question_pointing_at_the_page_is_not_pulled_elsewhere(): void
+    {
+        // Production, 2026-09-27: on Tping's pricing page, "หน้านี้คืออะไร แพ็กเกจไหนคุ้มสุด"
+        // was answered with the rental packages, which a word search on "แพ็กเกจ" put beside it.
+        $this->product();
+        RentalPackage::create(['name' => 'Starter', 'name_th' => 'แพ็กเกจเริ่มต้นทดสอบ', 'price' => 990, 'is_active' => true]);
+
+        $this->ask('/products/demo-app', ['messages' => [['role' => 'user', 'content' => 'หน้านี้คืออะไร แพ็กเกจไหนคุ้มสุดคะ']]])->assertOk();
+
+        $prompt = $this->prompt();
+        $this->assertStringNotContainsString('=== รายการที่ชื่อตรงกับคำในคำถาม', $prompt);
+        $this->assertStringContainsString('ซึ่งเปิดหน้า /products/demo-app เรื่อง "Demo App" อยู่', $prompt);
+    }
+
+    public function test_a_question_naming_another_product_gets_that_products_details(): void
+    {
+        $this->product();
+        $this->product(['name' => 'Other Thing', 'slug' => 'other-thing', 'short_description' => 'อีกตัว']);
+
+        $this->ask('/products/demo-app', ['messages' => [['role' => 'user', 'content' => 'แล้ว Other Thing ราคาเท่าไหร่']]])->assertOk();
+
+        preg_match('/=== รายการที่ชื่อตรงกับคำในคำถาม.*?(?=\n\n)/su', $this->prompt(), $section);
+        $this->assertNotEmpty($section, 'the named product gets its own detailed section');
+        $this->assertStringContainsString('- Other Thing: อีกตัว', $section[0]);
+    }
+
+    public function test_the_word_search_reads_names_not_marketing_copy(): void
+    {
+        $this->product(['name' => 'Plain Tool', 'slug' => 'plain-tool', 'short_description' => 'เครื่องมือ', 'description' => 'ใช้คู่กับ Zyxwidget ได้ดี']);
+
+        $this->ask('/', ['messages' => [['role' => 'user', 'content' => 'Zyxwidget คืออะไร']]])->assertOk();
+
+        $this->assertStringNotContainsString('=== รายการที่ชื่อตรงกับคำในคำถาม', $this->prompt());
     }
 
     public function test_a_coming_soon_product_is_never_sold_as_available(): void

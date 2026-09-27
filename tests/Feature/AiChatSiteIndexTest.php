@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\AiChat\CatalogFacts;
 use App\Services\AiChat\Keywords;
 use App\Services\AiChat\PageText;
 use App\Services\AiChat\SiteIndex;
@@ -148,11 +149,29 @@ HTML;
         $pages['/tping/pricing'] = ['title' => 'ซื้อ License - Tping', 'headings' => ['Tping'], 'text' => 'Tping รายเดือน ราคา 399'];
         $this->writeIndex($pages);
 
-        $found = $this->index()->search(Keywords::extract('ราคา Tping เท่าไหร่คะ'));
+        $index = $this->index();
+        $found = $index->search($index->specific(Keywords::extract('ราคา Tping เท่าไหร่คะ')));
         $this->assertSame('/tping/pricing', $found[0]['path']);
 
         // Only the word every page has: that is a question about the open page, not a search.
-        $this->assertSame([], $this->index()->search(Keywords::extract('อันนี้ราคาเท่าไหร่คะ')));
+        $this->assertSame([], $index->specific(Keywords::extract('อันนี้ราคาเท่าไหร่คะ')));
+    }
+
+    public function test_a_page_is_found_by_what_it_is_about_and_its_neighbours_come_first(): void
+    {
+        $this->writeIndex([
+            '/rental' => ['title' => 'แพ็กเกจเช่าใช้งาน', 'text' => 'ราคาคุ้มค่า พร้อมบริการ'],
+            '/tping/install-guide' => ['title' => 'วิธีติดตั้ง Tping', 'text' => 'ขั้นตอน'],
+            '/localvpn/install-guide' => ['title' => 'วิธีติดตั้ง LocalVPN', 'text' => 'ขั้นตอน'],
+        ]);
+        $index = $this->index();
+
+        // "คุ้ม" is only in the rental page's body copy: that page is not about it.
+        $this->assertSame([], $index->search(['คุ้ม']));
+
+        // Asked from Tping's pricing page, Tping's guide wins the tie.
+        $found = $index->search(['ติดตั้ง'], 2, ['/tping/pricing'], '/tping/pricing');
+        $this->assertSame('/tping/install-guide', $found[0]['path']);
     }
 
     public function test_keywords_split_thai_from_latin_and_drop_the_fillers(): void
@@ -163,6 +182,32 @@ HTML;
         $this->assertContains('ราคา', $words);
         $this->assertNotContains('คะ', $words);
         $this->assertNotContains('เท่าไหร่', $words);
+    }
+
+    public function test_keywords_keep_trade_words_whole_and_drop_the_verdict_words(): void
+    {
+        // ICU alone cuts these into "แพ็ก|เกจ" and "ติด|ตั้ง", which match anything.
+        $words = Keywords::extract('หน้านี้แพ็กเกจไหนคุ้มสุด ติดตั้งยังไง');
+
+        $this->assertContains('แพ็กเกจ', $words);
+        $this->assertContains('ติดตั้ง', $words);
+        $this->assertContains('คุ้ม', $words);
+        foreach (['แพ็ก', 'เกจ', 'ติด', 'หน้า', 'สุด'] as $piece) {
+            $this->assertNotContains($piece, $words, $piece);
+        }
+    }
+
+    public function test_page_builder_blocks_become_plain_words(): void
+    {
+        $json = json_encode([
+            ['type' => 'heading', 'level' => 'h2', 'content' => 'เพลงประกอบ AI'],
+            ['type' => 'feature-card', 'icon' => 'lightning', 'iconColor' => '#f59e0b', 'title' => 'รวดเร็ว', 'content' => 'เสร็จใน 3 วัน', 'style' => ['bgColor' => '#fff']],
+            ['type' => 'list', 'items' => ['ลิขสิทธิ์เต็ม', 'แก้ไขได้']],
+        ], JSON_UNESCAPED_UNICODE);
+
+        $text = CatalogFacts::plain($json, 500);
+
+        $this->assertSame('เพลงประกอบ AI · รวดเร็ว · เสร็จใน 3 วัน · ลิขสิทธิ์เต็ม · แก้ไขได้', $text);
     }
 
     public function test_the_promotion_rule_lives_in_one_place(): void

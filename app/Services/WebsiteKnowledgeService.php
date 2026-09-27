@@ -40,8 +40,21 @@ class WebsiteKnowledgeService
      */
     public function search(string $query): string
     {
-        $keywords = Keywords::extract($query);
+        return $this->searchKeywords(Keywords::extract($query));
+    }
 
+    /**
+     * The catalogue entries a question names, in detail.
+     *
+     * Matched on names only (name, name_th, slug, and a product's one-line
+     * summary), never long descriptions: "แพ็กเกจไหนคุ้มสุด" once matched a
+     * dozen AI-music services on "สุด" in their marketing copy and the assistant
+     * answered about those instead of the page the visitor had open.
+     *
+     * @param  array<int, string>  $keywords  already cut down to specific words (SiteIndex::specific)
+     */
+    public function searchKeywords(array $keywords): string
+    {
         if (empty($keywords)) {
             return '';
         }
@@ -69,7 +82,7 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        return "=== ข้อมูลจากเว็บไซต์ที่ตรงกับคำถามนี้ (ใช้ข้อมูลนี้ในการตอบ) ===\n" . $combined;
+        return "=== รายการที่ชื่อตรงกับคำในคำถาม (รายละเอียดเพิ่มเติม — ใช้เมื่อผู้ใช้ถามถึงรายการเหล่านี้ ถ้าถามถึงสิ่งบนหน้าที่เปิดอยู่ ให้ยึดหน้านั้น) ===\n" . $combined;
     }
 
     /**
@@ -135,7 +148,7 @@ class WebsiteKnowledgeService
     {
         $items = $this->searchModels(
             Service::class,
-            ['name', 'name_th', 'description', 'description_th'],
+            ['name', 'name_th', 'slug'],
             $keywords,
             fn ($q) => $q->where('is_active', true)
         );
@@ -156,7 +169,7 @@ class WebsiteKnowledgeService
     {
         $items = $this->searchModels(
             Product::class,
-            ['name', 'slug', 'description', 'short_description'],
+            ['name', 'slug', 'short_description'],
             $keywords,
             fn ($q) => $q->onWebsite()->where('is_active', true)->with('category')
         );
@@ -177,7 +190,7 @@ class WebsiteKnowledgeService
     {
         $items = $this->searchModels(
             RentalPackage::class,
-            ['name', 'name_th', 'description', 'description_th'],
+            ['name', 'name_th'],
             $keywords,
             fn ($q) => $q->where('is_active', true)
         );
@@ -198,7 +211,7 @@ class WebsiteKnowledgeService
     {
         $items = $this->searchModels(
             QuotationOption::class,
-            ['name', 'name_th', 'description', 'description_th', 'long_description', 'long_description_th'],
+            ['name', 'name_th', 'key'],
             $keywords,
             fn ($q) => $q->where('is_active', true)->with('category')
         );
@@ -220,7 +233,7 @@ class WebsiteKnowledgeService
     {
         $items = $this->searchModels(
             Coupon::class,
-            ['code', 'name', 'description'],
+            ['code', 'name'],
             $keywords,
             fn ($q) => $q->where('is_active', true)
         );
@@ -244,7 +257,7 @@ class WebsiteKnowledgeService
     {
         $items = $this->searchModels(
             Banner::class,
-            ['title', 'description'],
+            ['title'],
             $keywords,
             fn ($q) => $q->where('enabled', true)
         )->filter(fn (Banner $banner) => $banner->isActive());
