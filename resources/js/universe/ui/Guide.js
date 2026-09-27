@@ -13,6 +13,16 @@ import { clamp, damp, easeInOutCubic, lerp } from '../lib/math.js';
  *
  * Dense stops (the service grid, the footer) and phones get her compact
  * form: a round portrait in the corner with the speech bubble beside it.
+ *
+ * Where the browser can show transparent video, each still comes alive: a
+ * clip per pose loops while she holds it (breathing, blinking, hair in the
+ * wind, the galaxy in her hand turning), she talks when she speaks, thinks
+ * while the visitor types a question, reacts when poked, and now and then
+ * does something on her own — a heart, a kiss, a shy giggle. The clips are
+ * Grok image-to-video renders of the stills on green, keyed to VP9 WebM with
+ * alpha (docs/UNIVERSE_GUIDE_CLIPS.md). Frame 0 of each is its still, so a
+ * clip takes over from the picture without a jump; the stills stay as the
+ * fallback (Safari draws VP9 alpha black, Save-Data, clips still loading).
  */
 
 // h: height as a share of the screen; side: the edge she keeps to; x: gap from
@@ -42,6 +52,48 @@ const HEAD_X = { welcome: 0.5, present: 0.52, moon: 0.57, cheer: 0.47, bye: 0.42
 
 // Bottom edge of the HUD bar (universe.css --xu-hud-h, 68px; 60px on phones).
 const HUD_BOTTOM = 68;
+
+// Her clips. base: the still whose picture is frame 0. loop: forward-and-back
+// forever (baked into the file); otherwise played once, then back to the
+// pose's loop. pad: rendered with room around her (universe.css .is-padded).
+const CLIPS = {
+    idle: { base: 'welcome', loop: true },
+    talk: { base: 'welcome', loop: true },
+    present: { base: 'present', loop: true },
+    cheer: { base: 'cheer', loop: true, pad: true },
+    wave: { base: 'bye', loop: true },
+    moon: { base: 'moon', loop: true, pad: true },
+    fly: { base: 'fly', loop: true, pad: true },
+    think: { base: 'welcome', loop: true, pad: true },
+    heart: { base: 'welcome', pad: true },
+    kiss: { base: 'welcome', pad: true },
+    shy: { base: 'welcome', pad: true },
+    surprise: { base: 'welcome', pad: true },
+};
+
+// The loop she plays while holding each pose.
+const LOOP = { welcome: 'idle', present: 'present', cheer: 'cheer', bye: 'wave', moon: 'moon', fly: 'fly' };
+
+// The one-off moves are drawn from `welcome`, and cut in from any standing pose.
+const STANDING = ['welcome', 'present', 'cheer', 'bye'];
+const POKES = ['surprise', 'heart', 'kiss', 'shy'];
+const FIDGETS = ['heart', 'kiss', 'shy'];
+
+/** Can this browser show her clips? WebKit draws VP9's alpha channel as black. */
+function clipsAllowed() {
+    const nav = window.navigator;
+    const ua = nav.userAgent || '';
+    const webkitOnly = /iP(hone|ad|od)/.test(ua) || (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|Firefox|FxiOS/.test(ua));
+    if (webkitOnly || nav.connection?.saveData) return false;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return false;
+    const v = document.createElement('video');
+    return !!(v.canPlayType?.('video/webm; codecs="vp09.00.10.08"') || v.canPlayType?.('video/webm; codecs="vp9"'));
+}
+
+const pick = (list, not) => {
+    const pool = list.filter((x) => x !== not);
+    return pool[Math.floor(Math.random() * pool.length)];
+};
 
 export class Guide {
     constructor({ root, journey, sound, onClick, onAsk }) {
@@ -92,6 +144,36 @@ export class Guide {
         }
         this.avatar.querySelector('img')?.addEventListener('error', () => this.avatar.remove());
 
+        // Her clips: loaded when first wanted, played on top of the still they start from.
+        this.clips = {};
+        this.clipsOn = clipsAllowed();
+        for (const el of root.querySelectorAll('video[data-clip]')) {
+            const spec = CLIPS[el.dataset.clip];
+            if (!spec || !this.clipsOn) {
+                el.remove();
+                continue;
+            }
+            const clip = { name: el.dataset.clip, el, ...spec, ready: false, broken: false };
+            el.muted = true;
+            el.loop = !!spec.loop;
+            el.classList.toggle('is-padded', !!spec.pad);
+            el.addEventListener('canplay', () => (clip.ready = true));
+            // A clip that will not load or play just leaves her the still.
+            el.addEventListener('error', () => (clip.broken = true));
+            el.addEventListener('ended', () => {
+                if (this.move?.clip === clip) this.endMove();
+            });
+            this.clips[clip.name] = clip;
+        }
+        this.layer = null; // the picture or clip on top
+        this.z = 1;
+        this.move = null; // the one-off move playing, { clip }
+        this.lastMove = '';
+        this.nextFidget = 0;
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.layer?.tagName === 'VIDEO') this.layer.pause();
+        });
+
         // Anchored at the middle of her feet: cx (centre x), by (bottom y), h (height), px.
         this.cur = { cx: 0, by: 0, h: 0, pose: 'welcome', mirror: false };
         this.compact = false;
@@ -120,6 +202,8 @@ export class Guide {
             this.hop = 1;
             this.sayUntil = performance.now() / 1000 + 4;
             sound.hover(0.4, 9);
+            // Standing, she reacts: a start, a heart, a kiss or a giggle.
+            if (STANDING.includes(this.pose) && !this.flight && !this.move) this.startMove(pick(POKES, this.lastMove));
         };
         const open = (e) => {
             e.preventDefault();
@@ -140,20 +224,102 @@ export class Guide {
         return parseFloat(this.poses[pose]?.dataset.aspect) || (pose === 'fly' ? 1.5 : pose === 'moon' ? 1 : 0.667);
     }
 
-    /** Start loading poses before they are needed (they are ~200 KB each). */
+    /** Start loading poses (~200 KB each) and their loops (~1.3 MB) before they are needed. */
     preload(...names) {
         for (const name of names) {
             const img = this.poses[name];
             if (img && !img.getAttribute('src') && img.dataset.src) img.src = img.dataset.src;
+            this.loadClip(LOOP[name]);
         }
+    }
+
+    /** A phone-shaped screen (the same test as placeFor). */
+    get phone() {
+        return window.innerWidth < 760 || window.innerHeight > window.innerWidth * 1.15;
+    }
+
+    /** Start loading a clip, the first time it is wanted. */
+    loadClip(name) {
+        const clip = this.clips[name];
+        if (!clip || clip.el.getAttribute('src') || !clip.el.dataset.src) return;
+        // Not on a phone: she is mostly a portrait in the corner there, and it is their data.
+        if (this.phone) return;
+        clip.el.preload = 'auto';
+        clip.el.src = clip.el.dataset.src;
     }
 
     setPose(name) {
         if (this.pose === name) return;
         this.pose = name;
         this.preload(name);
-        for (const [key, img] of Object.entries(this.poses)) img.classList.toggle('is-on', key === name);
         this.root.classList.toggle('is-missing', this.poses[name]?.dataset.broken === '1');
+    }
+
+    /**
+     * Put a picture or clip on top. It fades in over the last one, which stays
+     * opaque underneath until it has (two half-faded layers would let the
+     * stars show through her). A clip starts from frame 0: its still.
+     */
+    showLayer(el) {
+        if (!el || this.layer === el) return;
+        const prev = this.layer;
+        this.layer = el;
+        clearTimeout(el.offTimer);
+        el.style.zIndex = String(++this.z);
+        el.classList.add('is-on');
+        if (el.tagName === 'VIDEO') {
+            el.currentTime = 0;
+            el.play()?.catch((err) => {
+                // A pause before playback began (hyperspace, the next layer) is not a failure;
+                // a refusal to play at all (a power saver's autoplay block) leaves her the stills.
+                if (err?.name === 'AbortError') return;
+                const clip = this.clips[el.dataset.clip];
+                if (clip) clip.broken = true;
+            });
+        }
+        if (prev) {
+            prev.offTimer = setTimeout(() => {
+                if (this.layer === prev) return;
+                prev.classList.remove('is-on');
+                if (prev.tagName === 'VIDEO') prev.pause();
+            }, 260);
+        }
+    }
+
+    /** The clip she should be playing in this pose, or null for the still. */
+    wantedClip(pose, talking) {
+        if (!this.clipsOn || this.phone) return null;
+        if (this.move) return this.move.clip;
+        let name = LOOP[pose];
+        // Listening while the visitor types a question to her; talking while her line shows.
+        if (pose === 'welcome' && this.bubbleHeld) name = 'think';
+        else if (pose === 'welcome' && talking) name = 'talk';
+        const clip = this.clips[name];
+        if (!clip) return null;
+        this.loadClip(name);
+        return clip.ready && !clip.broken ? clip : null;
+    }
+
+    /** Play a one-off move (a poke's reaction or a fidget), if its clip is in. */
+    startMove(name) {
+        const clip = this.clips[name];
+        if (!clip?.ready || clip.broken) {
+            this.loadClip(name);
+            return false;
+        }
+        const dur = Number.isFinite(clip.el.duration) ? clip.el.duration : 8;
+        this.move = { clip, until: performance.now() / 1000 + dur + 1.5 };
+        this.lastMove = name;
+        if (this.layer === clip.el) {
+            clip.el.currentTime = 0;
+            clip.el.play()?.catch(() => {});
+        }
+        return true;
+    }
+
+    endMove() {
+        this.move = null;
+        this.nextFidget = 0;
     }
 
     /** Where she should be for this stop and progress. */
@@ -196,6 +362,9 @@ export class Guide {
         this.shown = true;
         this.root.classList.add('is-on');
         this.preload('welcome', 'fly', 'present');
+        this.loadClip('talk');
+        // Her one-off moves come in later, one at a time, once the page has settled.
+        this.nextLoad = performance.now() / 1000 + 6;
         Object.assign(this.cur, { cx: window.innerWidth / 2, by: window.innerHeight * 0.52, h: 70, pose: 'fly', mirror: false });
         this.key = '';
         this.entering = true;
@@ -281,8 +450,19 @@ export class Guide {
 
         const tgt = this.target;
         if (!tgt) return;
+        const now = performance.now() / 1000;
+        if (this.clipsOn && !this.phone && now > (this.nextLoad ?? Infinity)) {
+            const next = [...POKES, 'think'].find((name) => !this.clips[name]?.el.getAttribute('src'));
+            if (next) this.loadClip(next);
+            this.nextLoad = next ? now + 2.5 : Infinity;
+        }
+        if (this.move && now > this.move.until) this.endMove();
+
         if (tgt.compact) {
+            // The body is hidden in the corner portrait: the still, and no clip running.
             this.setPose(tgt.pose);
+            if (this.move) this.endMove();
+            this.showLayer(this.poses[tgt.pose]);
             this.bubble.style.transform = '';
             return;
         }
@@ -333,6 +513,28 @@ export class Guide {
         }
 
         this.setPose(pose);
+
+        // A flight, a sitting pose or hyperspace ends a move.
+        if (this.move && (flying || !STANDING.includes(pose) || !calm)) this.endMove();
+        // Now and then, standing idle, she does something on her own.
+        const idle = !this.flight && !flying && calm && !talking && !this.bubbleHeld && s.cruise < 0.2 && STANDING.includes(pose);
+        if (!idle || this.move) {
+            if (!this.move) this.nextFidget = 0;
+        } else if (!this.nextFidget) {
+            this.nextFidget = s.time + 9 + Math.random() * 9;
+        } else if (s.time > this.nextFidget) {
+            this.nextFidget = this.startMove(pick(FIDGETS, this.lastMove)) ? 0 : s.time + 4;
+        }
+        const clip = this.wantedClip(pose, talking);
+        this.showLayer(clip ? clip.el : this.poses[pose]);
+        // Out of sight (hyperspace, the menu, the chat, a hidden tab): the clip waits.
+        const layer = this.layer;
+        if (layer?.tagName === 'VIDEO') {
+            const unseen = !calm || document.hidden || this.root.classList.contains('is-chatting');
+            if (unseen && !layer.paused) layer.pause();
+            else if (!unseen && layer.paused && !layer.ended) layer.play()?.catch(() => {});
+        }
+
         const k = this.flight ? 1 : 1 - Math.exp(-4.5 * s.dt);
         this.cur.cx = lerp(this.cur.cx, cx, k);
         this.cur.by = lerp(this.cur.by, by, k);

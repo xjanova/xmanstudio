@@ -6,6 +6,11 @@
     (drawn with ChatGPT). Poses other than the first load on demand: Guide.js
     copies data-src into src the first time it needs one.
 
+    The clips beside them (guide/clips/*.webm, transparent VP9) bring the
+    poses to life where the browser can show them; Guide.js removes them where
+    it cannot. How they are made: docs/UNIVERSE_GUIDE_CLIPS.md. Re-encoded a
+    clip under the same name? Bump $xuClipV: Cloudflare keeps the old one.
+
     Her pictures are decorative: what she says at each stop is also said by the
     page itself. Clicking her opens the menu, which the menu button does for
     keyboard users.
@@ -16,6 +21,8 @@
 --}}
 @php
     $xuGuide = asset('artwork/universe/guide');
+    $xuClipV = 1;
+    $xuClips = ['idle', 'talk', 'present', 'cheer', 'wave', 'moon', 'fly', 'think', 'heart', 'kiss', 'shy', 'surprise'];
     $xuChatOn = (bool) \App\Models\Setting::getValue('ai_chat_enabled', false);
     $xuBotName = \App\Models\Setting::getValue('ai_bot_name', 'AI Assistant');
     $xuGuideLines = [
@@ -37,6 +44,9 @@
         <span class="xu-guide__aura"></span>
         @foreach(['welcome', 'fly', 'present', 'moon', 'cheer', 'bye'] as $pose)
             <img data-pose="{{ $pose }}" data-src="{{ $xuGuide }}/{{ $pose }}.webp" alt="" decoding="async" draggable="false">
+        @endforeach
+        @foreach($xuClips as $clip)
+            <video data-clip="{{ $clip }}" data-src="{{ $xuGuide }}/clips/{{ $clip }}.webm?v={{ $xuClipV }}" muted playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1"></video>
         @endforeach
         <span class="xu-guide__hit"></span>
     </div>

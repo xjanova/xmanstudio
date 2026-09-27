@@ -189,6 +189,25 @@ class UniverseHomeTest extends TestCase
         $this->assertSame(UniverseHome::classicUrl(), $config['classicUrl']);
     }
 
+    public function test_every_picture_and_clip_of_the_guide_is_in_the_repository(): void
+    {
+        $html = $this->home()->assertOk()->getContent();
+
+        preg_match_all('#data-src="([^"]*/artwork/universe/guide/[^"]+)"#', $html, $m);
+        $clips = array_values(array_filter($m[1], fn ($url) => str_contains($url, '.webm')));
+        $this->assertNotEmpty($clips, 'The guide asks for no clips');
+        foreach ($m[1] as $url) {
+            $this->assertFileExists(public_path(ltrim(parse_url($url, PHP_URL_PATH), '/')));
+        }
+
+        // Guide.js removes a <video> it has no entry for, and cannot play an entry without one.
+        preg_match_all('#<video data-clip="([a-z]+)"#', $html, $page);
+        $js = file_get_contents(resource_path('js/universe/ui/Guide.js'));
+        $this->assertSame(1, preg_match('#const CLIPS = \{(.*?)\n\};#s', $js, $block));
+        preg_match_all('#^\s{4}([a-z]+): \{#m', $block[1], $known);
+        $this->assertEqualsCanonicalizing($known[1], $page[1]);
+    }
+
     public function test_an_admin_can_switch_the_universe_off_and_on(): void
     {
         $admin = User::where('role', 'admin')->first();

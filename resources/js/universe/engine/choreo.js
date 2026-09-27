@@ -74,3 +74,35 @@ export function platforms(p, n) {
 export function deck(p, n) {
     return smoothstep(0.1, 0.9, p) * Math.max(0, n - 1);
 }
+
+// ---- beats: where one flick of the wheel or finger parks (engine/Snap.js) ----
+
+/** x such that smoothstep(0, 1, x) = y. */
+const unsmooth = (y) => 0.5 - Math.sin(Math.asin(1 - 2 * clamp(y)) / 3);
+
+/** Each number finished and labelled, then why-us beside the mark. */
+export function originBeats() {
+    const statsEnd = FIRST + SLOT * 4;
+    return [0, 1, 2, 3].map((k) => FIRST + SLOT * (k + 0.42)).concat(statsEnd + 0.19);
+}
+
+/**
+ * Each planet with its card fully shown (q - k in [0.32, 0.8]). Early in that
+ * window: the last planet must stay short of the point where Journey.current
+ * already counts the next stop (u + 0.08).
+ */
+export function platformBeats(n) {
+    return Array.from({ length: Math.max(1, n) }, (_, k) => (k + 0.45) / Math.max(1, n));
+}
+
+/** Each review card on top of the deck, inside the stop's shown window. */
+export function deckBeats(n) {
+    if (n < 2) return [0.3];
+    return Array.from({ length: n }, (_, d) => clamp(0.1 + 0.8 * unsmooth(d / (n - 1)), 0.24, 0.86));
+}
+
+/** Each page of the product rail (Stations.js slides it over smoothstep(0.14, 0.86, p)). */
+export function railBeats(pages) {
+    if (pages < 2) return [0.3];
+    return Array.from({ length: pages }, (_, j) => clamp(0.14 + 0.72 * unsmooth(j / (pages - 1)), 0.26, 0.82));
+}

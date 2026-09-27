@@ -17,6 +17,7 @@ import { Sound } from './audio/Sound.js';
 import { Engine } from './engine/Engine.js';
 import { Journey } from './engine/Journey.js';
 import { introStart } from './engine/Path.js';
+import { Snap } from './engine/Snap.js';
 import { platforms as platformChoreo } from './engine/choreo.js';
 import { clamp, damp, easeInOutSine, nextFrame, sleep, smoothstep } from './lib/math.js';
 import { ANCHORS } from './world/anchors.js';
@@ -124,12 +125,22 @@ async function boot() {
     };
 
     // ---- navigation helpers --------------------------------------------
-    const jump = (index, p = null) => {
-        const j = journey.jumpTo(index, p);
-        if (!j) return;
+    const jump = (index, p = null, opts = {}) => {
+        const j = journey.jumpTo(index, p, opts);
+        if (!j) return null;
         engine.holdGovernor(j.duration * 1000 + 800);
         if (j.screens > 2.2) sound.warp(Math.min(j.duration * 0.8, 1.8), true);
+        return j;
     };
+
+    // One wheel notch, flick, swipe or arrow key = the next stop (engine/Snap.js).
+    const snap = new Snap({
+        journey,
+        go: jump,
+        enabled: () => state.entered && !state.menuOpen && !state.launching,
+    });
+    snap.layout();
+    if (window.__xu) window.__xu.snap = snap;
 
     // Give the page back if a launch never leaves it: Stop pressed, a network
     // error, a download link. Otherwise the white-out and the click lock stay.
@@ -155,7 +166,7 @@ async function boot() {
         launchTimer = setTimeout(abortLaunch, 6000);
     };
 
-    const hud = new Hud({ journey, sound, onJump: (i) => jump(i) });
+    const hud = new Hud({ journey, sound, onJump: (i) => snap.toStation(i) });
     hud.setSound(sound.enabled);
 
     let chat = null; // ui/Chat.js, below
@@ -239,7 +250,7 @@ async function boot() {
         if (a.dataset.xuJump) {
             e.preventDefault();
             const i = journey.stations.findIndex((st) => st.type === a.dataset.xuJump);
-            if (i >= 0) jump(i);
+            if (i >= 0) snap.toStation(i);
             return;
         }
         if (a.closest('#xu-menu')) return; // the ring handles its own
@@ -284,6 +295,7 @@ async function boot() {
         laidOut = { w, h };
         const u = journey.u;
         journey.layout(layoutInfo());
+        snap.layout();
         world.setLayout(layoutInfo());
         stations.relayout();
         if (state.entered) {

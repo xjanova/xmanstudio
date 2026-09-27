@@ -1,5 +1,5 @@
 import { CatmullRomCurve3 } from 'three';
-import { clamp, damp, easeInOutCubic, lerp, smoothstep } from '../lib/math.js';
+import { clamp, damp, easeInOutCubic, easeOutCubic, lerp, smoothstep } from '../lib/math.js';
 import { DWELL, buildKeyframes } from './Path.js';
 
 /**
@@ -133,21 +133,28 @@ export class Journey {
         return clamp(Math.floor(this.u + 0.08), 0, this.n - 1);
     }
 
-    /** Fly to a stop: scrolls there over a time that grows with the distance. */
-    jumpTo(index, p = null, { locked = false } = {}) {
+    /**
+     * Fly to a stop: scrolls there over a time that grows with the distance.
+     * `pace` ([base s, s per screen, max s]) lets the one-flick stops
+     * (Snap.js) fly faster than a long menu jump.
+     */
+    jumpTo(index, p = null, { locked = false, pace = null } = {}) {
         const st = this.stations[clamp(index, 0, this.n - 1)];
         const at = p ?? DWELL[st.type] ?? 0.3;
         const to = Math.round(st.top + st.height * at);
         const from = window.scrollY;
         const screens = Math.abs(to - from) / window.innerHeight;
         if (screens < 0.02) return null;
+        const [base, perScreen, max] = pace ?? [0.85, 0.1, 2.8];
         this.jump = {
             from,
             to,
             t: 0,
-            duration: clamp(0.85 + screens * 0.1, 0.9, 2.8),
+            duration: clamp(base + screens * perScreen, Math.min(0.9, base + 0.05), max),
             screens,
             locked,
+            // Turned around mid-flight: leave at speed instead of stopping to ease in again.
+            ease: this.jump ? easeOutCubic : easeInOutCubic,
         };
         return this.jump;
     }
@@ -155,7 +162,7 @@ export class Journey {
     stepJump(dt) {
         const j = this.jump;
         j.t = Math.min(1, j.t + dt / j.duration);
-        window.scrollTo(0, lerp(j.from, j.to, easeInOutCubic(j.t)));
+        window.scrollTo(0, lerp(j.from, j.to, j.ease(j.t)));
         if (j.t >= 1) this.jump = null;
     }
 

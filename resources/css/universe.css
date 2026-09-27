@@ -3477,7 +3477,9 @@ a.xu-card:focus-visible::after,
     will-change: transform;
 }
 
-.xu-guide__body img {
+/* Her pictures and clips, stacked: ui/Guide.js fades the one it needs in on top. */
+.xu-guide__body img,
+.xu-guide__body video {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -3486,15 +3488,26 @@ a.xu-card:focus-visible::after,
     opacity: 0;
     user-select: none;
     -webkit-user-drag: none;
+    pointer-events: none;
     filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.42)) drop-shadow(0 18px 34px rgba(0, 0, 0, 0.55));
     transition: opacity 0.22s ease;
 }
 
-.xu-guide__body img.is-on {
+/* A clip rendered with room around her (8% of the still on every side). */
+.xu-guide__body video.is-padded {
+    top: -8%;
+    left: -8%;
+    width: 116%;
+    height: 116%;
+}
+
+.xu-guide__body img.is-on,
+.xu-guide__body video.is-on {
     opacity: 1;
 }
 
-.xu-guide__body.is-flying img {
+.xu-guide__body.is-flying img,
+.xu-guide__body.is-flying video {
     filter: drop-shadow(0 0 22px rgba(34, 211, 238, 0.55)) drop-shadow(0 0 40px rgba(232, 121, 249, 0.3));
 }
 
