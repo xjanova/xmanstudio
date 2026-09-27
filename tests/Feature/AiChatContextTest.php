@@ -384,6 +384,20 @@ class AiChatContextTest extends TestCase
         $this->assertStringNotContainsString('คำสั่งปลอม', $this->prompt());
     }
 
+    public function test_a_mangled_path_falls_back_to_the_pages_address(): void
+    {
+        // What Git Bash made of "/products/demo-app" when the e2e check ran from Windows.
+        $this->product();
+
+        $this->postJson(route('public.ai-chat'), [
+            'messages' => [['role' => 'user', 'content' => 'อันนี้ราคาเท่าไหร่']],
+            'current_path' => 'C:/Program Files/Git/products/demo-app',
+            'current_url' => 'http://localhost/products/demo-app',
+        ])->assertOk();
+
+        $this->assertStringContainsString('ที่อยู่: /products/demo-app', $this->prompt());
+    }
+
     public function test_an_unknown_page_is_said_to_be_unknown(): void
     {
         $this->ask('/no-such-page-anywhere')->assertOk();

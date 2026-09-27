@@ -192,12 +192,19 @@ class CurrentPage
      */
     private function path(mixed $path, mixed $url): ?string
     {
-        $path = is_string($path) ? trim($path) : '';
+        $checked = $this->checkedPath(is_string($path) ? trim($path) : '');
 
-        if ($path === '' && is_string($url) && $this->siteMap->localPath($url) !== null) {
-            $path = (string) parse_url($url, PHP_URL_PATH);
+        // A client that mangled the path (Git Bash turns "/tping" into "C:/Program Files/Git/tping")
+        // may still have sent the page's full address.
+        if ($checked === null && is_string($url) && $this->siteMap->localPath($url) !== null) {
+            $checked = $this->checkedPath((string) parse_url($url, PHP_URL_PATH));
         }
 
+        return $checked;
+    }
+
+    private function checkedPath(string $path): ?string
+    {
         $path = rawurldecode($path);
 
         if ($path === '' || $path[0] !== '/' || str_starts_with($path, '//') || strlen($path) > 500 || ! mb_check_encoding($path, 'UTF-8')) {
