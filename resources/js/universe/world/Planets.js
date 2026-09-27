@@ -40,10 +40,14 @@ export const PLANET_STYLES = {
     stack: { style: 6, a: '#6b3a12', b: '#e8b36a', c: '#22d3ee', atmo: '#ffd479' },
 };
 
+// One program per style (PLANET_STYLE, #defined by planetMaterial): as one
+// shader branching on a uniform, all seven surfaces were compiled into every
+// planet, and on Windows (ANGLE -> Direct3D, which unrolls every noise loop
+// in every branch) that single program took 2.5-7 s to build on each visit
+// the browser had not kept it from.
 const PLANET_FRAG = /* glsl */ `
     ${NOISE}
     uniform float uTime;
-    uniform float uStyle;
     uniform float uSeed;
     uniform vec3 uA;
     uniform vec3 uB;
@@ -72,7 +76,7 @@ const PLANET_FRAG = /* glsl */ `
         vec3 base;
         vec3 emit = vec3(0.0);
 
-        if (uStyle < 0.5) {
+        #if PLANET_STYLE == 0
             // domains
             float land = smoothstep(0.5, 0.57, xuFbm(p * 2.6 + uSeed));
             base = mix(uA, uB, land) * (0.7 + 0.3 * xuFbm(p * 9.0 + uSeed));
@@ -81,7 +85,7 @@ const PLANET_FRAG = /* glsl */ `
             emit += uC * grid * (0.35 + 0.65 * (1.0 - day) + sweep * 1.5);
             float city = step(0.982, xuHash(floor(p * 110.0) + uSeed)) * land;
             emit += vec3(1.0, 0.82, 0.55) * city * (1.0 - day) * 2.4;
-        } else if (uStyle < 1.5) {
+        #elif PLANET_STYLE == 1
             // vps
             float b = xuFbm(vec3(p.y * 9.0, p.y * 3.0, uSeed) + xuNoise(p * 3.0) * 0.6);
             base = mix(uA, uB, smoothstep(0.35, 0.7, b));
@@ -89,14 +93,14 @@ const PLANET_FRAG = /* glsl */ `
             float lanes = lineAt(p.y * 16.0, 30.0);
             float pulse = smoothstep(0.93, 1.0, fract(lon / 6.2831 * 5.0 - t * (0.15 + fract(lane * 0.37) * 0.3) + lane * 0.37));
             emit += uC * lanes * (0.2 + pulse * 3.0);
-        } else if (uStyle < 2.5) {
+        #elif PLANET_STYLE == 2
             // xdreamer
             float w = xuFbm(p * 2.0 + vec3(0.0, t * 0.02, uSeed));
             float bands = max(0.0, sin(p.y * 15.0 + w * 5.5 + t * 0.05) * 0.5 + 0.5);
             base = mix(uA, uB, bands);
             base = mix(base, uC, smoothstep(0.62, 0.95, xuFbm(p * 5.0 + w + uSeed)) * 0.55);
             emit += uB * pow(bands, 6.0) * 0.12;
-        } else if (uStyle < 3.5) {
+        #elif PLANET_STYLE == 3
             // brainx
             base = uA * (0.6 + 0.4 * xuFbm(p * 3.0 + uSeed));
             vec3 q = p * 4.6 + uSeed;
@@ -120,14 +124,14 @@ const PLANET_FRAG = /* glsl */ `
             float node = 1.0 - smoothstep(0.0, 0.13, sqrt(d1));
             float fire = max(0.0, 0.5 + 0.5 * sin(sqrt(d1) * 16.0 - t * 3.2 + xuHash(cell) * 6.2831));
             emit += uB * edge * (0.3 + pow(fire, 3.0) * 1.6) + uC * node * (1.0 + fire);
-        } else if (uStyle < 4.5) {
+        #elif PLANET_STYLE == 4
             // metalx
             float ridge = 1.0 - abs(xuFbm(p * 3.2 + uSeed) * 2.0 - 1.0);
             float cracks = smoothstep(0.8, 0.97, ridge);
             base = mix(uA, uB, xuFbm(p * 6.0 + uSeed)) * 0.7;
             float beat = 0.55 + 0.45 * pow(max(0.0, 0.5 + 0.5 * sin(t * 4.4)), 10.0);
             emit += uC * cracks * 2.6 * beat + uC * pow(ridge, 6.0) * 0.4;
-        } else if (uStyle < 5.5) {
+        #elif PLANET_STYLE == 5
             // academy
             float n = xuFbm(p * 4.0 + uSeed);
             base = mix(uA, uB, n);
@@ -136,7 +140,7 @@ const PLANET_FRAG = /* glsl */ `
             base = mix(base, vec3(0.96, 0.98, 1.0), smoothstep(0.7, 0.9, abs(p.y)));
             float glint = step(0.994, xuHash(floor(p * 140.0) + uSeed));
             emit += uC * glint * (0.6 + 0.4 * sin(t * 3.0 + xuHash(floor(p * 140.0)) * 20.0));
-        } else {
+        #else
             // stack — banded amber giant with a storm
             float w = xuFbm(p * 1.6 + vec3(0.0, t * 0.015, uSeed));
             float bands = sin(p.y * 11.0 + w * 4.2) * 0.5 + 0.5;
@@ -145,7 +149,7 @@ const PLANET_FRAG = /* glsl */ `
             float storm = smoothstep(0.24, 0.05, distance(p, spot) + (xuFbm(p * 8.0) - 0.5) * 0.1);
             base = mix(base, vec3(0.95, 0.55, 0.3), storm * 0.8);
             emit += uC * smoothstep(0.93, 1.0, abs(p.y)) * 0.25;
-        }
+        #endif
 
         vec3 col = base * (0.03 + day * 0.78) + emit * 0.85;
         float fres = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.0);
@@ -170,10 +174,9 @@ const PLANET_VERT = /* glsl */ `
 export function planetMaterial(key, { octaves = 5, seed = 1, light = new Vector3(0.6, 0.35, 0.7) } = {}) {
     const spec = PLANET_STYLES[key];
     return new ShaderMaterial({
-        defines: { FBM_OCTAVES: octaves },
+        defines: { FBM_OCTAVES: octaves, PLANET_STYLE: spec.style },
         uniforms: {
             uTime: { value: 0 },
-            uStyle: { value: spec.style },
             uSeed: { value: seed },
             uA: { value: new Color(spec.a) },
             uB: { value: new Color(spec.b) },

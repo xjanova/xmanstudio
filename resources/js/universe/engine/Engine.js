@@ -285,12 +285,26 @@ export class Engine {
         this.composer.render(0.016);
     }
 
+    /**
+     * Compile every material before the first frame. The scene is always drawn
+     * into the composer's target (RenderPass), never straight to the canvas,
+     * and three.js builds a different program for a render target (no tone
+     * mapping, linear output): compiling against the canvas made a whole set
+     * of programs nothing ever drew with — seconds each on ANGLE/Direct3D —
+     * and left the real ones to compile, blocking, the first time each object
+     * came into view.
+     */
     async compile() {
+        const renderer = this.renderer;
+        const before = renderer.getRenderTarget();
+        renderer.setRenderTarget(this.composer.readBuffer);
         try {
-            if (this.renderer.compileAsync) await this.renderer.compileAsync(this.scene, this.camera);
-            else this.renderer.compile(this.scene, this.camera);
+            if (renderer.compileAsync) await renderer.compileAsync(this.scene, this.camera);
+            else renderer.compile(this.scene, this.camera);
         } catch {
-            this.renderer.compile(this.scene, this.camera);
+            renderer.compile(this.scene, this.camera);
+        } finally {
+            renderer.setRenderTarget(before);
         }
     }
 

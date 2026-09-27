@@ -19,6 +19,18 @@ export default defineConfig({
     // behind the storage link, all served again under /build/. The Laravel plugin's
     // `publicDirectory` above is what points the build at public_html.
     publicDir: false,
+    build: {
+        rolldownOptions: {
+            output: {
+                // three.js in a chunk of its own: its hash only moves when the
+                // library does, so a deploy that touches the universe's own code
+                // leaves returning visitors' copy (~150 KB gzipped) in their cache.
+                codeSplitting: {
+                    groups: [{ name: 'three', test: /[\\/]node_modules[\\/]three[\\/]/ }],
+                },
+            },
+        },
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],
