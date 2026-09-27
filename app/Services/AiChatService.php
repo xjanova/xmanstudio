@@ -417,7 +417,7 @@ class AiChatService
         }
 
         // Bot personality
-        $botName = Setting::get('ai_bot_name', 'AI Assistant');
+        $botName = Setting::get('ai_bot_name', 'น้อง Nova');
         $style = Setting::get('ai_response_style', 'professional');
         $language = Setting::get('ai_response_language', 'th');
         $length = Setting::get('ai_response_length', 'medium');

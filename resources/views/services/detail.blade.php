@@ -63,7 +63,7 @@
 
                     <!-- Price -->
                     @php
-                        $discount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
+                        $discount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
                         $salePrice = $option->price * (1 - $discount);
                     @endphp
                     <div class="mb-8">
@@ -232,7 +232,7 @@
                                 </p>
                             @endif
                             @php
-                                $relDiscount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
+                                $relDiscount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
                                 $relSalePrice = $related->price * (1 - $relDiscount);
                             @endphp
                             <div class="flex items-center justify-between">

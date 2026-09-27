@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\AiChat\ChatPrompt;
 use App\Services\AiChatService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
@@ -52,7 +53,7 @@ class AiSettingsController extends Controller
             'ai_presence_penalty' => Setting::getValue('ai_presence_penalty', 0),
 
             // AI Bot Behavior Settings
-            'ai_bot_name' => Setting::getValue('ai_bot_name', 'AI Assistant'),
+            'ai_bot_name' => Setting::getValue('ai_bot_name', ChatPrompt::DEFAULT_BOT_NAME),
             'ai_system_prompt' => Setting::getValue('ai_system_prompt', ''),
             'ai_response_language' => Setting::getValue('ai_response_language', 'th'),
             'ai_response_style' => Setting::getValue('ai_response_style', 'professional'),
@@ -162,7 +163,7 @@ class AiSettingsController extends Controller
         Setting::setValue('ai_presence_penalty', $request->ai_presence_penalty ?? 0, 'string', 'ai');
 
         // AI Bot Behavior Settings
-        Setting::setValue('ai_bot_name', $request->ai_bot_name ?? 'AI Assistant', 'string', 'ai');
+        Setting::setValue('ai_bot_name', trim((string) $request->ai_bot_name) ?: ChatPrompt::DEFAULT_BOT_NAME, 'string', 'ai');
         Setting::setValue('ai_system_prompt', $request->ai_system_prompt ?? '', 'text', 'ai');
         Setting::setValue('ai_response_language', $request->ai_response_language, 'string', 'ai');
         Setting::setValue('ai_response_style', $request->ai_response_style, 'string', 'ai');

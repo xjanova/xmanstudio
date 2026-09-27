@@ -17,14 +17,17 @@
 
     When the site's AI assistant is switched on (Setting ai_chat_enabled), her
     speech bubble carries an "ask me" field, and what is typed there opens a
-    chat with that assistant (resources/js/universe/ui/Chat.js), in her name.
+    chat with that assistant (resources/js/universe/ui/Chat.js), in her name:
+    the assistant IS น้อง Nova (App\Services\AiChat\ChatPrompt). Each question
+    goes with a snapshot of the screen (partials/ai-chat-page).
 --}}
 @php
     $xuGuide = asset('artwork/universe/guide');
     $xuClipV = 1;
     $xuClips = ['idle', 'talk', 'present', 'cheer', 'wave', 'moon', 'fly', 'think', 'heart', 'kiss', 'shy', 'surprise'];
     $xuChatOn = (bool) \App\Models\Setting::getValue('ai_chat_enabled', false);
-    $xuBotName = \App\Models\Setting::getValue('ai_bot_name', 'AI Assistant');
+    $xuBotName = \App\Services\AiChat\ChatPrompt::botName();
+    $xuGreetName = auth()->check() ? \App\Services\AiChat\VisitorContext::firstName(auth()->user()) : '';
     $xuGuideLines = [
         'core' => ['th' => 'ยินดีต้อนรับค่ะ! เลื่อนลงแล้วบินไปด้วยกันนะ', 'en' => 'Welcome aboard! Scroll down and fly with me'],
         'origin.0' => ['th' => 'ตัวเลขพวกนี้มาจากงานจริงทั้งหมดเลยนะ ✦', 'en' => 'Every one of these numbers is real work'],
@@ -67,7 +70,8 @@
 </div>
 
 @if($xuChatOn)
-    <section id="xu-chat" class="xu-chat" role="dialog" aria-labelledby="xu-chat-title" hidden>
+    @include('partials.ai-chat-page')
+    <section id="xu-chat" class="xu-chat" role="dialog" aria-labelledby="xu-chat-title" data-greet-name="{{ $xuGreetName }}" hidden>
         <header class="xu-chat__head">
             <img src="{{ $xuGuide }}/face.webp" alt="" class="xu-chat__avatar">
             <div class="xu-chat__who">

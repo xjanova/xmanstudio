@@ -5,7 +5,10 @@
  * other page uses).
  *
  * The conversation is kept in sessionStorage under the same key that button
- * uses, so it carries on when the visitor moves to another page.
+ * uses, so it carries on when the visitor moves to another page — but only for
+ * the same visitor: partials/ai-chat-page drops a member's conversation once
+ * they sign out or someone else signs in. Each question goes with a snapshot
+ * of the screen from the same partial, so she knows the page being read.
  *
  * Replies are drawn with DOM nodes, never innerHTML: the text comes from a
  * language model, and a model can be talked into writing markup. Only links
@@ -32,7 +35,10 @@ export class Chat {
         this.greeted = false;
         this.opener = null;
         this.token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        this.botName = root.querySelector('#xu-chat-title')?.textContent.trim() || '';
+        this.greetName = root.dataset.greetName || '';
 
+        window.xmanChatClaimHistory?.();
         try {
             const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
             if (Array.isArray(saved)) this.history = saved.filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
@@ -92,7 +98,9 @@ export class Chat {
             // Her hello is for the window only: it never goes to the assistant.
             if (!this.history.length && !first && !this.greeted) {
                 this.greeted = true;
-                this.append('assistant', 'สวัสดีค่ะ! อยากรู้เรื่องบริการ ผลิตภัณฑ์ หรือราคาอะไร ถามหนูได้เลยนะคะ ✦\nHi! Ask me anything about our services, products or prices.', true);
+                const who = this.greetName ? `คุณ${this.greetName}` : '';
+                const me = this.botName ? `${this.botName} เองค่ะ ` : '';
+                this.append('assistant', `สวัสดีค่ะ${who}! ${me}อยากรู้เรื่องบริการ ผลิตภัณฑ์ หรือราคาอะไร ถามหนูได้เลยนะคะ ✦\nHi! Ask me anything about our services, products or prices.`, true);
             }
         }
         if (first) this.ask(first);
@@ -170,6 +178,7 @@ export class Chat {
                     current_url: location.href,
                     current_path: location.pathname,
                     page_title: document.title,
+                    page: window.xmanPageSnapshot?.() ?? null,
                 }),
             });
             const data = await response.json().catch(() => ({}));

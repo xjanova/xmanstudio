@@ -5,8 +5,10 @@
 
 @if($aiChatEnabled)
 @php
-    $aiBotName = \App\Models\Setting::getValue('ai_bot_name', 'AI Assistant');
-    // The assistant wears the face of the home page's guide (partials/universe/guide).
+    $aiBotName = \App\Services\AiChat\ChatPrompt::botName();
+    // Her hello names a signed-in member ("สวัสดีค่ะคุณสมชาย"); she knows who she talks to.
+    $aiGreetName = auth()->check() ? \App\Services\AiChat\VisitorContext::firstName(auth()->user()) : '';
+    // The assistant is น้อง Nova, the home page's guide (partials/universe/guide), and wears her face.
     $aiFace = asset('artwork/universe/guide/face.webp');
 @endphp
 
@@ -442,7 +444,7 @@
 
 <div id="ai-chat-widget">
     {{-- Floating Avatar Button --}}
-    <button class="ai-chat-fab" id="aiChatFab" onclick="window.AiChat.toggle()" aria-label="Chat with AI">
+    <button class="ai-chat-fab" id="aiChatFab" onclick="window.AiChat.toggle()" aria-label="คุยกับ {{ $aiBotName }} / Chat with {{ $aiBotName }}">
         <img class="ai-fab-face" src="{{ $aiFace }}" alt="" width="60" height="60" decoding="async" draggable="false">
         <span class="ai-fab-badge" id="aiFabBadge" style="display:none"></span>
     </button>
@@ -483,6 +485,8 @@
     </div>
 </div>
 
+@include('partials.ai-chat-page')
+
 <script>
 (function() {
     'use strict';
@@ -490,6 +494,7 @@
     const CHAT_URL = '{{ route("public.ai-chat") }}';
     const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
     const BOT_NAME = @json($aiBotName);
+    const GREET_NAME = @json($aiGreetName);
     const BOT_FACE = @json($aiFace);
     const MAX_MESSAGES = 20;
     const STORAGE_KEY = 'ai_chat_history';
@@ -508,9 +513,10 @@
     const badge = document.getElementById('aiFabBadge');
     const statusEl = document.getElementById('aiChatStatus');
 
-    // Load from session storage
+    // Load from session storage — only a conversation this visitor may read (partials/ai-chat-page)
     function loadHistory() {
         try {
+            if (window.xmanChatClaimHistory) window.xmanChatClaimHistory();
             const stored = sessionStorage.getItem(STORAGE_KEY);
             if (stored) {
                 chatHistory = JSON.parse(stored);
@@ -724,6 +730,8 @@
                     current_url: window.location.href,
                     current_path: window.location.pathname,
                     page_title: document.title,
+                    // What is on screen, so she can answer about the page being read
+                    page: window.xmanPageSnapshot ? window.xmanPageSnapshot() : null,
                 }),
             });
 
@@ -736,7 +744,10 @@
                 appendMessageDOM('assistant', data.message, true);
                 saveHistory();
             } else {
-                appendMessageDOM('assistant', data.message || 'ขออภัย เกิดข้อผิดพลาด กรุณาลองใหม่', true);
+                // The controller's own refusals are written for visitors; a framework
+                // validation error ({message, errors}) is not.
+                const told = data.message && !data.errors ? data.message : '';
+                appendMessageDOM('assistant', told || 'ขออภัย เกิดข้อผิดพลาด กรุณาลองใหม่', true);
             }
         } catch (err) {
             hideTyping();
@@ -771,8 +782,9 @@
         if (!hasOpened) {
             hasOpened = true;
             if (chatHistory.length === 0) {
-                // Welcome message
-                const welcome = 'สวัสดีค่ะ! ฉันคือ ' + BOT_NAME + ' ผู้ช่วย AI ของ XMAN Studio ยินดีตอบคำถามเกี่ยวกับบริการ ผลิตภัณฑ์ และข้อมูลของเราค่ะ 😊';
+                // Welcome message (her hello stays in the window: it never goes to the assistant)
+                const welcome = 'สวัสดีค่ะ' + (GREET_NAME ? 'คุณ' + GREET_NAME : '') + '! ' + BOT_NAME
+                    + ' เองค่ะ ผู้ช่วย AI ของ XMAN Studio ถามเรื่องบริการ สินค้า ราคา หรือหน้าที่เปิดอยู่ตอนนี้ได้เลยนะคะ 😊';
                 appendMessageDOM('assistant', welcome, true);
             }
         }

@@ -10,25 +10,37 @@ use App\Models\QuotationOption;
 use App\Models\RentalPackage;
 use App\Models\Service;
 use App\Models\Setting;
+use App\Services\AiChat\CatalogFacts;
+use App\Services\AiChat\Keywords;
+use App\Services\AiChat\KnowledgeVersion;
+use App\Support\Quotation\Pricing;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Searches the website's internal content (products, services, etc.)
- * and returns formatted knowledge for the AI chatbot.
+ * What the site sells, from the database, for the AI chatbot: products and
+ * their licence plans, services and their promotion prices, rental packages,
+ * and the announcements on the site right now.
  *
  * Respects admin toggle settings:
  * - ai_use_product_data
  * - ai_use_service_data
+ *
+ * The full snapshot is cached under KnowledgeVersion, which moves on every
+ * save of these models (AppServiceProvider), so an admin's edit reaches the
+ * next answer instead of the one ten minutes later.
  */
 class WebsiteKnowledgeService
 {
+    /** Longest the snapshot lives even when no save moved the version (a bulk update fires no events). */
+    private const TTL_SECONDS = 3600;
+
     /**
      * Search website content by user query and return formatted context.
      * Only searches models that are enabled via admin toggles.
      */
     public function search(string $query): string
     {
-        $keywords = $this->extractKeywords($query);
+        $keywords = Keywords::extract($query);
 
         if (empty($keywords)) {
             return '';
@@ -57,13 +69,12 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        return "=== ข้อมูลจากเว็บไซต์ที่เกี่ยวข้องกับคำถาม (ใช้ข้อมูลนี้ในการตอบ) ===\n" . $combined;
+        return "=== ข้อมูลจากเว็บไซต์ที่ตรงกับคำถามนี้ (ใช้ข้อมูลนี้ในการตอบ) ===\n" . $combined;
     }
 
     /**
      * Build a full knowledge snapshot of active website content.
      * Only includes data that is enabled via admin toggles.
-     * Cached for 10 minutes to avoid repeated queries.
      */
     public function buildFullKnowledge(): string
     {
@@ -75,9 +86,9 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $cacheKey = 'chatbot_full_knowledge_' . ($useProducts ? '1' : '0') . '_' . ($useServices ? '1' : '0');
+        $cacheKey = 'chatbot_full_knowledge:v' . KnowledgeVersion::current() . ':' . ($useProducts ? '1' : '0') . ($useServices ? '1' : '0');
 
-        return Cache::remember($cacheKey, 600, function () use ($useProducts, $useServices) {
+        return Cache::remember($cacheKey, self::TTL_SECONDS, function () use ($useProducts, $useServices) {
             $parts = [];
 
             if ($useServices) {
@@ -89,34 +100,13 @@ class WebsiteKnowledgeService
             if ($useProducts) {
                 $parts[] = $this->getAllProducts();
                 $parts[] = $this->getAllRentalPackages();
+                $parts[] = $this->getActiveAnnouncements();
             }
 
             $combined = implode("\n", array_filter($parts));
 
-            return empty($combined) ? '' : "=== ข้อมูลบริการและสินค้าของเว็บไซต์ ===\n" . $combined;
+            return empty($combined) ? '' : "=== ข้อมูลสินค้าและบริการของเว็บไซต์ (ข้อมูลจริงจากระบบ ณ ตอนนี้) ===\n" . $combined;
         });
-    }
-
-    /**
-     * Extract meaningful Thai/English keywords from user query.
-     */
-    protected function extractKeywords(string $query): array
-    {
-        $stopWords = [
-            'ไหม', 'มั้ย', 'ครับ', 'ค่ะ', 'คะ', 'นะ', 'จ้า', 'จ๊ะ', 'หน่อย',
-            'ได้', 'ไหม', 'บ้าง', 'อะไร', 'ยังไง', 'อย่างไร', 'เท่าไหร่', 'กี่',
-            'มี', 'เป็น', 'คือ', 'ที่', 'ของ', 'ให้', 'กับ', 'และ', 'หรือ',
-            'จะ', 'ก็', 'แล้ว', 'ดี', 'สิ', 'เลย', 'ด้วย', 'กัน', 'ไป', 'มา',
-            'ถาม', 'อยาก', 'ต้องการ', 'the', 'is', 'a', 'an', 'and', 'or',
-            'what', 'how', 'do', 'you', 'have', 'can', 'about', 'this',
-        ];
-
-        $words = preg_split('/[\s,.\/?!;:()]+/u', mb_strtolower($query));
-        $words = array_filter($words, function ($w) use ($stopWords) {
-            return mb_strlen($w) >= 2 && ! in_array($w, $stopWords);
-        });
-
-        return array_values(array_unique($words));
     }
 
     protected function searchModels($modelClass, array $columns, array $keywords, ?callable $scope = null)
@@ -131,6 +121,7 @@ class WebsiteKnowledgeService
             foreach ($keywords as $keyword) {
                 $q->orWhere(function ($inner) use ($columns, $keyword) {
                     foreach ($columns as $col) {
+                        // Keywords::extract() keeps letters, digits and . + # - only: nothing here needs escaping.
                         $inner->orWhere($col, 'LIKE', "%{$keyword}%");
                     }
                 });
@@ -155,20 +146,7 @@ class WebsiteKnowledgeService
 
         $lines = ['[บริการ] (โปรโมชั่นลดราคาพิเศษ!)'];
         foreach ($items as $item) {
-            $name = $item->name_th ?: $item->name;
-            $desc = $item->description_th ?: $item->description;
-            $slug = $item->slug ?? '';
-            $discount = str_starts_with($slug, 'web') ? 0.50 : 0.70;
-            $discountLabel = str_starts_with($slug, 'web') ? 'ลด 50%' : 'ลด 70%';
-            if ($item->starting_price) {
-                $originalPrice = number_format($item->starting_price);
-                $salePrice = number_format($item->starting_price * (1 - $discount));
-                $price = "ราคาปกติ {$originalPrice} บาท → SALE {$discountLabel} เหลือ {$salePrice} บาท";
-            } else {
-                $price = '';
-            }
-            $features = $this->featureList($item->features_th) ?: $this->featureList($item->features);
-            $lines[] = "- {$name}: {$desc}" . ($price ? " ({$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
+            $lines[] = CatalogFacts::service($item, detailed: true);
         }
 
         return implode("\n", $lines);
@@ -180,7 +158,7 @@ class WebsiteKnowledgeService
             Product::class,
             ['name', 'slug', 'description', 'short_description'],
             $keywords,
-            fn ($q) => $q->where('is_active', true)
+            fn ($q) => $q->onWebsite()->where('is_active', true)->with('category')
         );
 
         if ($items->isEmpty()) {
@@ -189,9 +167,7 @@ class WebsiteKnowledgeService
 
         $lines = ['[สินค้า/ซอฟต์แวร์]'];
         foreach ($items as $item) {
-            $price = $item->price ? number_format($item->price) . ' บาท' : 'สอบถามราคา';
-            $features = $this->featureList($item->features);
-            $lines[] = "- {$item->name}: " . ($item->short_description ?: $item->description) . " (ราคา: {$price})" . ($features ? " | ฟีเจอร์: {$features}" : '');
+            $lines[] = CatalogFacts::product($item, detailed: true);
         }
 
         return implode("\n", $lines);
@@ -210,13 +186,9 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ['[แพ็กเกจเช่าใช้บริการ]'];
+        $lines = ['[แพ็กเกจเช่าใช้บริการ] สมัครที่ /rental'];
         foreach ($items as $item) {
-            $name = $item->name_th ?: $item->name;
-            $desc = $item->description_th ?: $item->description;
-            $price = number_format($item->price) . ' บาท';
-            $features = $this->featureList($item->features);
-            $lines[] = "- {$name}: {$desc} (ราคา: {$price})" . ($features ? " | รวม: {$features}" : '');
+            $lines[] = CatalogFacts::rentalPackage($item);
         }
 
         return implode("\n", $lines);
@@ -235,28 +207,10 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ['[บริการและตัวเลือกงาน] (โปรโมชั่นลดราคาพิเศษ!)'];
+        $lines = ['[บริการและตัวเลือกงาน] (โปรโมชั่นลดราคาพิเศษ! ยกเว้นบริการเสริม)'];
         foreach ($items as $item) {
-            $name = $item->name_th ?: $item->name;
-            $desc = $item->description_th ?: $item->description;
-            $catKey = $item->category ? $item->category->key : '';
-            $category = $item->category ? ($item->category->name_th ?: $item->category->name) : '';
-            // Add-ons are billed at full price — only the main service packages
-            // carry the promotion, so never run an add-on through the discount.
-            $isAddon = $item->category && $item->category->type === QuotationCategory::TYPE_ADDON;
-            $discount = str_starts_with($catKey, 'web') ? 0.50 : 0.70;
-            $discountLabel = str_starts_with($catKey, 'web') ? 'ลด 50%' : 'ลด 70%';
-            if ($item->price && $isAddon) {
-                $price = 'บริการเสริม ราคา ' . number_format($item->price) . ' บาท (ไม่เข้าร่วมโปรโมชั่น)';
-            } elseif ($item->price) {
-                $originalPrice = number_format($item->price);
-                $salePrice = number_format($item->price * (1 - $discount));
-                $price = "ราคาปกติ {$originalPrice} บาท → SALE {$discountLabel} เหลือ {$salePrice} บาท";
-            } else {
-                $price = '';
-            }
-            $features = $this->featureList($item->features_th) ?: $this->featureList($item->features);
-            $lines[] = "- {$name}" . ($category ? " (หมวด: {$category})" : '') . ": {$desc}" . ($price ? " ({$price})" : '') . ($features ? " | ฟีเจอร์: {$features}" : '');
+            $category = $item->category ? ' (หมวด: ' . ($item->category->name_th ?: $item->category->name) . ')' : '';
+            $lines[] = CatalogFacts::quotationOption($item, detailed: true) . $category;
         }
 
         return implode("\n", $lines);
@@ -293,7 +247,7 @@ class WebsiteKnowledgeService
             ['title', 'description'],
             $keywords,
             fn ($q) => $q->where('enabled', true)
-        );
+        )->filter(fn (Banner $banner) => $banner->isActive());
 
         if ($items->isEmpty()) {
             return '';
@@ -311,26 +265,14 @@ class WebsiteKnowledgeService
 
     protected function getAllServices(): string
     {
-        $items = Service::where('is_active', true)->orderBy('order')->get();
+        $items = Service::where('is_active', true)->ordered()->get();
         if ($items->isEmpty()) {
             return '';
         }
 
-        $lines = ['[บริการทั้งหมด] (โปรโมชั่นลดราคาพิเศษ!)'];
+        $lines = ['[บริการทั้งหมด] (โปรโมชั่นลดราคาพิเศษ!) ดูทั้งหมดที่ /services'];
         foreach ($items as $item) {
-            $name = $item->name_th ?: $item->name;
-            $desc = $item->description_th ?: $item->description;
-            $slug = $item->slug ?? '';
-            $discount = str_starts_with($slug, 'web') ? 0.50 : 0.70;
-            $discountLabel = str_starts_with($slug, 'web') ? 'ลด 50%' : 'ลด 70%';
-            if ($item->starting_price) {
-                $originalPrice = number_format($item->starting_price);
-                $salePrice = number_format($item->starting_price * (1 - $discount));
-                $price = "ราคาปกติ {$originalPrice} บาท → SALE {$discountLabel} เหลือ {$salePrice} บาท";
-            } else {
-                $price = '';
-            }
-            $lines[] = "- {$name}: {$desc}" . ($price ? " ({$price})" : '');
+            $lines[] = CatalogFacts::service($item);
         }
 
         return implode("\n", $lines);
@@ -338,15 +280,15 @@ class WebsiteKnowledgeService
 
     protected function getAllProducts(): string
     {
-        $items = Product::where('is_active', true)->get();
+        // onWebsite(): the app-only packs are sold inside the app, never listed here.
+        $items = Product::onWebsite()->where('is_active', true)->orderBy('is_coming_soon')->orderBy('name')->get();
         if ($items->isEmpty()) {
             return '';
         }
 
-        $lines = ['[สินค้า/ซอฟต์แวร์ทั้งหมด]'];
+        $lines = ['[สินค้า/ซอฟต์แวร์ทั้งหมด] (สินค้าที่ไม่อยู่ในรายการนี้ = ไม่ได้ขายบนเว็บตอนนี้) ดูทั้งหมดที่ /products'];
         foreach ($items as $item) {
-            $price = $item->price ? number_format($item->price) . ' บาท' : 'สอบถามราคา';
-            $lines[] = "- {$item->name}: " . ($item->short_description ?: $item->description) . " (ราคา: {$price})";
+            $lines[] = CatalogFacts::product($item);
         }
 
         return implode("\n", $lines);
@@ -359,12 +301,9 @@ class WebsiteKnowledgeService
             return '';
         }
 
-        $lines = ['[แพ็กเกจเช่าใช้บริการทั้งหมด]'];
+        $lines = ['[แพ็กเกจเช่าใช้บริการทั้งหมด] สมัครที่ /rental'];
         foreach ($items as $item) {
-            $name = $item->name_th ?: $item->name;
-            $price = number_format($item->price) . ' บาท';
-            $features = $this->featureList($item->features);
-            $lines[] = "- {$name}: {$price}" . ($features ? " | รวม: {$features}" : '');
+            $lines[] = CatalogFacts::rentalPackage($item);
         }
 
         return implode("\n", $lines);
@@ -376,30 +315,19 @@ class WebsiteKnowledgeService
         // separately by getAllQuotationAddons() at their full price.
         $items = QuotationCategory::where('is_active', true)
             ->services()
-            ->with(['options' => fn ($q) => $q->where('is_active', true)])
+            ->ordered()
+            ->with(['options' => fn ($q) => $q->where('is_active', true)->orderBy('order')])
             ->get();
         if ($items->isEmpty()) {
             return '';
         }
 
-        $lines = ['[หมวดบริการและตัวเลือกงาน] (โปรโมชั่นลดราคาพิเศษ!)'];
+        $lines = ['[หมวดบริการและตัวเลือกงาน] (โปรโมชั่นลดราคาพิเศษ!) ขอใบเสนอราคาได้ที่ /quote'];
         foreach ($items as $cat) {
-            $catName = $cat->name_th ?: $cat->name;
-            $catKey = $cat->key ?? '';
-            $discount = str_starts_with($catKey, 'web') ? 0.50 : 0.70;
-            $discountLabel = str_starts_with($catKey, 'web') ? 'ลด 50%' : 'ลด 70%';
-            $lines[] = "หมวด: {$catName} ({$discountLabel}!)";
+            $percent = (int) round(Pricing::saleDiscount($cat->key) * 100);
+            $lines[] = 'หมวด: ' . ($cat->name_th ?: $cat->name) . " (ลด {$percent}%!)";
             foreach ($cat->options as $opt) {
-                $optName = $opt->name_th ?: $opt->name;
-                $optDesc = $opt->description_th ?: $opt->description;
-                if ($opt->price) {
-                    $originalPrice = number_format($opt->price);
-                    $salePrice = number_format($opt->price * (1 - $discount));
-                    $price = "ราคาปกติ {$originalPrice} บาท → SALE เหลือ {$salePrice} บาท";
-                } else {
-                    $price = '';
-                }
-                $lines[] = "  - {$optName}: {$optDesc}" . ($price ? " ({$price})" : '');
+                $lines[] = CatalogFacts::quotationOption($opt, $cat);
             }
         }
 
@@ -412,46 +340,12 @@ class WebsiteKnowledgeService
      * Quoted at full price: the 50/70% promotion applies to the main service
      * packages only, so these must never be run through that discount.
      */
-    /**
-     * Flatten a features array into a short comma-separated list.
-     *
-     * `features` is JSON and arrives in two shapes: a plain list of strings, or
-     * a list of {icon, title, description} objects. imploding the second shape
-     * raises "Array to string conversion", which 500s the whole chat endpoint —
-     * so pull the label out of each entry instead of imploding blindly.
-     */
-    protected function featureList(mixed $features, int $limit = 5): string
-    {
-        if (! is_array($features)) {
-            return '';
-        }
-
-        $labels = [];
-
-        foreach (array_slice($features, 0, $limit) as $feature) {
-            if (is_scalar($feature)) {
-                $labels[] = (string) $feature;
-
-                continue;
-            }
-
-            if (is_array($feature)) {
-                $label = $feature['title'] ?? $feature['name'] ?? $feature['label'] ?? null;
-
-                if (is_scalar($label) && (string) $label !== '') {
-                    $labels[] = (string) $label;
-                }
-            }
-        }
-
-        return implode(', ', $labels);
-    }
-
     protected function getAllQuotationAddons(): string
     {
         $items = QuotationCategory::where('is_active', true)
             ->addons()
-            ->with(['options' => fn ($q) => $q->where('is_active', true)])
+            ->ordered()
+            ->with(['options' => fn ($q) => $q->where('is_active', true)->orderBy('order')])
             ->get();
         if ($items->isEmpty()) {
             return '';
@@ -462,11 +356,35 @@ class WebsiteKnowledgeService
             $lines[] = 'หมวดเสริม: ' . ($cat->name_th ?: $cat->name);
             foreach ($cat->options as $opt) {
                 $optName = $opt->name_th ?: $opt->name;
-                $price = $opt->price ? ' (' . number_format($opt->price) . ' บาท)' : '';
+                $price = $opt->price ? ' (' . CatalogFacts::money($opt->price) . ')' : '';
                 $lines[] = "  - {$optName}{$price}";
             }
         }
 
         return implode("\n", $lines);
+    }
+
+    /** The announcements and promotions the site is showing right now. */
+    protected function getActiveAnnouncements(): string
+    {
+        $items = Banner::where('enabled', true)->orderByDesc('priority')->limit(10)->get()
+            ->filter(fn (Banner $banner) => $banner->isActive() && trim((string) $banner->title . $banner->description) !== '');
+
+        if ($items->isEmpty()) {
+            return '';
+        }
+
+        $lines = ['[ประกาศ/โปรโมชั่นที่แสดงบนเว็บตอนนี้]'];
+        foreach ($items as $item) {
+            $lines[] = '- ' . trim((string) $item->title) . ($item->description ? ': ' . CatalogFacts::plain($item->description, 200) : '');
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /** Kept for WebsiteKnowledgeFeatureListTest; the logic lives in CatalogFacts. */
+    protected function featureList(mixed $features, int $limit = 5): string
+    {
+        return CatalogFacts::featureList($features, $limit);
     }
 }

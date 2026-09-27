@@ -1319,7 +1319,7 @@ class QuotationController extends Controller
         if ($categories->count() > 0) {
             foreach ($categories as $category) {
                 // Apply sale discount: web categories 50% off, others 70% off
-                $saleDiscount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
+                $saleDiscount = Pricing::saleDiscount($category->key);
 
                 $options = [];
                 foreach ($category->activeOptions as $option) {

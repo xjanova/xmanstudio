@@ -134,7 +134,7 @@
                     <p class="text-xs text-gray-400 mb-1">{{ $settings['ai_bot_name'] }} <span class="text-gray-300">&bull;</span> {{ $providerInfo['provider_name'] }}</p>
                     <div class="bg-gray-50 dark:bg-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
                         @if($isConfigured && $connOk)
-                            สวัสดีครับ! ผม <strong>{{ $settings['ai_bot_name'] }}</strong> พร้อมให้บริการแล้ว ลองพิมพ์ข้อความเพื่อทดสอบการสนทนาได้เลยครับ
+                            สวัสดีค่ะ! <strong>{{ $settings['ai_bot_name'] }}</strong> เองค่ะ พร้อมให้บริการแล้ว ลองพิมพ์ข้อความเพื่อทดสอบการสนทนาได้เลยนะคะ
                         @elseif($isConfigured && ! $connOk)
                             <span class="text-amber-600 dark:text-amber-400">ตั้งค่า {{ $providerInfo['provider_name'] }} แล้ว แต่เรียก API ไม่ผ่าน — {{ $connError ?: 'ไม่ทราบสาเหตุ' }} กรุณาตรวจสอบ <a href="{{ route('admin.ai-settings.index') }}" class="underline font-medium">หน้า AI Settings</a> ก่อนทดสอบครับ</span>
                         @else

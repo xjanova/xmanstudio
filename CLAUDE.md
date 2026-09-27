@@ -164,6 +164,7 @@ $seo->site_title;
 - The setup wizard (`/setup`) runs automatically if no admin user exists.
 - Custom tracking code (Google Analytics, Facebook Pixel, etc.) is injected via `Setting::getValue('custom_code_head')` in layouts.
 - Theme selection between standard and premium layouts is handled dynamically.
+- The AI chat (น้อง Nova, `POST /ai-chat`) builds its prompt from the live site on every question — who is asking, the page they have open, the route table, a crawled copy of every public page, the catalogue. Never hardcode pages, links or prices into it; see `docs/AI_CHAT.md`.
 - `sites/` holds static sites for OTHER sub-domains — no Laravel, no build step. The folder name IS the target domain; auto-deploy rsyncs `sites/<domain>/` into `/home/admin/domains/<domain>/public_html/`. Their assets are served `immutable` behind Cloudflare, so **any CSS/JS edit must bump the `?v=` stamp in the HTML that references it** or the old file is served for a year. See `sites/README.md`.
 
 ## Code Academy — Code Example Rules (CRITICAL)

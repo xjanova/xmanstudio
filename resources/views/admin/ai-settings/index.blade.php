@@ -515,7 +515,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ชื่อ Bot</label>
-                        <input type="text" name="ai_bot_name" value="{{ $settings['ai_bot_name'] }}" placeholder="AI Assistant"
+                        <input type="text" name="ai_bot_name" value="{{ $settings['ai_bot_name'] }}" placeholder="{{ \App\Services\AiChat\ChatPrompt::DEFAULT_BOT_NAME }}"
                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
                     </div>
 
@@ -617,8 +617,8 @@
 
                 <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                     <div>
-                        <label class="font-medium text-gray-900 dark:text-white">ประวัติการสั่งซื้อ</label>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">เฉพาะของลูกค้าที่ถาม</p>
+                        <label class="font-medium text-gray-900 dark:text-white">ประวัติการสั่งซื้อ / ข้อมูลบัญชี</label>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">เฉพาะของสมาชิกที่ถาม: ออเดอร์ License Wallet ตั๋วซัพพอร์ต (ไม่ส่งตัว License Key) — ชื่อและฐานะสมาชิกรู้เสมอแม้ปิด</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="ai_use_order_history" value="1" {{ $settings['ai_use_order_history'] ? 'checked' : '' }} class="sr-only peer">

@@ -6,9 +6,18 @@ use App\Events\NewOrderCreated;
 use App\Events\PaymentMatched;
 use App\Listeners\SendNewOrderFcmNotification;
 use App\Listeners\SendPaymentMatchedNotification;
+use App\Models\Banner;
+use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\PaymentSetting;
+use App\Models\Product;
+use App\Models\QuotationCategory;
+use App\Models\QuotationOption;
+use App\Models\RentalPackage;
+use App\Models\Service;
 use App\Observers\AiCreditOrderObserver;
+use App\Services\AiChat\KnowledgeVersion;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
@@ -42,6 +51,24 @@ class AppServiceProvider extends ServiceProvider
         // A paid AI-credit order gets its credits on AIXMAN whichever way it was paid — admin
         // approval, the SMS matcher, the Telegram bot — not only via the success page or Stripe.
         Order::observe(AiCreditOrderObserver::class);
+
+        $this->refreshAiChatKnowledgeOnCatalogueChanges();
+    }
+
+    /**
+     * The AI assistant quotes the catalogue from a cached snapshot. Any save or
+     * delete of what it quotes moves KnowledgeVersion, so the next question is
+     * answered from the new data instead of a copy up to an hour old.
+     */
+    private function refreshAiChatKnowledgeOnCatalogueChanges(): void
+    {
+        $catalogue = [Product::class, Category::class, Service::class, QuotationCategory::class,
+            QuotationOption::class, RentalPackage::class, Banner::class, Coupon::class];
+
+        foreach ($catalogue as $model) {
+            $model::saved(fn () => KnowledgeVersion::bump());
+            $model::deleted(fn () => KnowledgeVersion::bump());
+        }
     }
 
     /**

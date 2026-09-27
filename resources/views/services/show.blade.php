@@ -36,7 +36,7 @@
                 <p class="text-xl text-white/90 mb-6">{{ $service->description }}</p>
 
                 @php
-                    $svcDiscount = str_starts_with($service->slug ?? '', 'web') ? 0.50 : 0.70;
+                    $svcDiscount = \App\Support\Quotation\Pricing::saleDiscount($service->slug);
                 @endphp
                 @if($service->price_type === 'fixed')
                     <div class="mb-6">
