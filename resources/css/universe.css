@@ -3499,6 +3499,7 @@ a.xu-card:focus-visible::after,
     left: -8%;
     width: 116%;
     height: 116%;
+    max-width: none; /* a preflight's `video { max-width: 100% }` would shrink her */
 }
 
 .xu-guide__body img.is-on,

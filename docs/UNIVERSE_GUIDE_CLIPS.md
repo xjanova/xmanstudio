@@ -76,7 +76,16 @@ energetic prompts (`heart`, `shy`): the padding absorbs it.
   dedups the identical file: the request (`POST /rest/app-chat/conversations/new`,
   `mediaGenInput.imageToVideo.inputAssets`) carries one asset and no end
   frame. The clip drifts and never comes back (last vs first frame: 29 mean
-  abs on a 192 px-wide frame). Hence the ping-pong bake.
+  abs on a 192 px-wide frame). The shipped clips are baked ping-pong instead.
+  **Found afterwards (TPIX session, 2026-09-27):** clicking the attached
+  picture's thumbnail opens a role menu — First frame / Intermediate / Last
+  frame / **Loop** / Reference. Loop sends `referenceToVideo` with the same
+  asset as `firstFrameAsset` and `lastFrameAsset`, and the clip does come back
+  (first vs last 1.1–1.7 YAVG). A Loop clip can be keyed with `once` and set
+  `loop: true`, at half the file size of a ping-pong. First + Last with two
+  different pictures makes a transition between two poses.
+- The two unnamed `input[type=file]` on the composer belong to image edit:
+  a file dropped there starts a new post. Attach through `input[name=files]`.
 - **One click, two generations.** The composer fires `conversations/new`
   twice (`enableSideBySide`), which spends double quota. Wrapping
   `window.fetch` to let one through per submit keeps it to one (see the
