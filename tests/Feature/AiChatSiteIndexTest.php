@@ -194,6 +194,8 @@ HTML;
 
         $this->get('/terms')->assertOk()
             ->assertSee('น้อง Nova')
+            // The phone's bottom bar calls her by name too.
+            ->assertSee('<span class="bi-th">น้อง Nova</span><span class="bi-en">AI Chat</span>', false)
             ->assertSee('xmanPageSnapshot', false)
             ->assertSee('const GREET_NAME = "";', false);
 

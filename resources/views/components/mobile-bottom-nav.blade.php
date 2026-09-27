@@ -252,7 +252,7 @@
                 {{-- The AI assistant wears the home page guide's face (ai-chat-widget). --}}
                 <img src="{{ asset('artwork/universe/guide/face.webp') }}" alt="" width="56" height="56" decoding="async" draggable="false">
             </span>
-            <span class="mobile-nav-label">AI Chat</span>
+            <span class="mobile-nav-label"><x-bi :th="\App\Services\AiChat\ChatPrompt::botName()" en="AI Chat" layout="stack" /></span>
         </button>
         @else
         {{-- If AI chat disabled, show products instead --}}
