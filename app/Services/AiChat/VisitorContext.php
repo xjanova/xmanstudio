@@ -83,10 +83,24 @@ class VisitorContext
         return $name === '' ? 'สมาชิก' : Str::limit($name, self::NAME_LIMIT, '…');
     }
 
-    /** "สมชาย" of "สมชาย ใจดี" — what "คุณ…" is followed by in Thai. */
+    /**
+     * "สมชาย" of "สมชาย ใจดี" — what "คุณ…" is followed by in Thai. A title in
+     * front ("นาย สมชาย", "คุณสมชาย") is skipped, or the greeting would read
+     * "คุณนาย" or "คุณคุณสมชาย".
+     */
     public static function firstName(User $user): string
     {
-        return Str::limit(Str::before(self::name($user), ' '), 30, '');
+        $words = preg_split('/\s+/u', self::name($user), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $titles = ['นาย', 'นาง', 'นางสาว', 'น.ส.', 'ดร.', 'คุณ', 'mr', 'mr.', 'mrs', 'mrs.', 'ms', 'ms.', 'miss', 'dr', 'dr.'];
+
+        while (count($words) > 1 && in_array(mb_strtolower($words[0]), $titles, true)) {
+            array_shift($words);
+        }
+
+        $first = (string) ($words[0] ?? '');
+        $first = preg_replace('/^คุณ(?=\S)/u', '', $first) ?: $first;
+
+        return Str::limit($first, 30, '');
     }
 
     private function guest(): string

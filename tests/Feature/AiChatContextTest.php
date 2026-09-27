@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\AiChat\SiteIndex;
 use App\Services\AiChat\SiteMap;
+use App\Services\AiChat\VisitorContext;
 use App\Services\AiChatService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -183,6 +184,16 @@ class AiChatContextTest extends TestCase
         $this->actingAs($this->member())->ask()->assertOk();
 
         $this->assertStringNotContainsString('/admin/ai-settings', $this->prompt());
+    }
+
+    public function test_she_greets_by_first_name_without_the_title(): void
+    {
+        $first = fn (string $name) => VisitorContext::firstName(new User(['name' => $name]));
+
+        $this->assertSame('สมชาย', $first('สมชาย ใจดี'));
+        $this->assertSame('สมชาย', $first('นาย สมชาย ใจดี'));
+        $this->assertSame('สมศรี', $first('คุณสมศรี'));
+        $this->assertSame('John', $first('Mr. John Smith'));
     }
 
     public function test_a_name_cannot_pose_as_an_instruction(): void
