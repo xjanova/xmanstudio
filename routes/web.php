@@ -111,6 +111,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicChatController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SetupController;
@@ -617,6 +618,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order}/payment-status', [OrderController::class, 'checkPaymentStatus'])->name('orders.payment-status');
     Route::post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('orders.confirm-payment');
     Route::get('/orders/{order}/download', [OrderController::class, 'download'])->name('orders.download');
+    // ใบเสร็จรับเงิน PDF — เรนเดอร์กินซีพียู จำกัดอัตราไว้กันคนกดรัว
+    Route::get('/orders/{order}/receipt', [ReceiptController::class, 'download'])
+        ->middleware('throttle:20,1,order-receipt')->name('orders.receipt');
 
     // Customer Portal
     Route::prefix('my-account')->name('customer.')->group(function () {
@@ -1348,6 +1352,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [AdminOrderController::class, 'index'])->name('index');
         Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
+        Route::get('/{order}/receipt', [ReceiptController::class, 'adminDownload'])->name('receipt');
         Route::patch('/{order}/payment-status', [AdminOrderController::class, 'updatePaymentStatus'])->name('update-payment-status');
         Route::patch('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update-status');
     });

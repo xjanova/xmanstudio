@@ -16,10 +16,10 @@
     $rate = rtrim(rtrim(number_format((float) $doc['vat_rate'], 2), '0'), '.');
     $status = $quotation->status;
     $tone = match ($status) {
-        'accepted' => ['bg' => 'bg-emerald-500/15', 'border' => 'border-emerald-400/40', 'text' => 'text-emerald-200', 'label' => 'ตอบรับแล้ว'],
-        'rejected' => ['bg' => 'bg-slate-500/15', 'border' => 'border-slate-400/40', 'text' => 'text-slate-200', 'label' => 'ไม่รับข้อเสนอ'],
-        'paid' => ['bg' => 'bg-emerald-500/15', 'border' => 'border-emerald-400/40', 'text' => 'text-emerald-200', 'label' => 'ชำระเงินแล้ว'],
-        default => ['bg' => 'bg-sky-500/15', 'border' => 'border-sky-400/40', 'text' => 'text-sky-200', 'label' => 'รอคำตอบ'],
+        'accepted' => ['bg' => 'bg-emerald-500/15', 'border' => 'border-emerald-400/40', 'text' => 'text-emerald-200', 'label' => 'ตอบรับแล้ว', 'label_en' => 'Accepted'],
+        'rejected' => ['bg' => 'bg-slate-500/15', 'border' => 'border-slate-400/40', 'text' => 'text-slate-200', 'label' => 'ไม่รับข้อเสนอ', 'label_en' => 'Declined'],
+        'paid' => ['bg' => 'bg-emerald-500/15', 'border' => 'border-emerald-400/40', 'text' => 'text-emerald-200', 'label' => 'ชำระเงินแล้ว', 'label_en' => 'Paid'],
+        default => ['bg' => 'bg-sky-500/15', 'border' => 'border-sky-400/40', 'text' => 'text-sky-200', 'label' => 'รอคำตอบ', 'label_en' => 'Awaiting response'],
     };
     $expired = $quotation->isExpired();
 @endphp
@@ -29,19 +29,19 @@
     <div class="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/50 to-slate-950/85 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <p class="text-xs font-semibold tracking-[0.2em] uppercase text-blue-300/90 mb-2">ใบเสนอราคา · Quotation</p>
+        <p class="text-xs font-semibold tracking-[0.2em] uppercase text-blue-300/90 mb-2"><x-bi th="ใบเสนอราคา" en="Quotation" sep=" · " /></p>
         <h1 class="text-3xl sm:text-4xl font-black text-white mb-3">{{ $quotation->displayNumber() }}</h1>
         <p class="text-slate-300 text-base sm:text-lg mb-6">{{ $quotation->service_name }}</p>
 
         <div class="flex flex-wrap items-center gap-2">
             <span class="inline-flex items-center gap-2 rounded-full {{ $tone['bg'] }} border {{ $tone['border'] }} px-3 py-1.5 text-xs font-semibold {{ $tone['text'] }} backdrop-blur">
-                {{ $tone['label'] }}
+                <x-bi :th="$tone['label']" :en="$tone['label_en']" />
             </span>
             <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
-                เรียน {{ $quotation->customer_company ?: $quotation->customer_name }}
+                <span><x-bi th="เรียน" en="To" /> {{ $quotation->customer_company ?: $quotation->customer_name }}</span>
             </span>
             <span class="inline-flex items-center gap-1.5 rounded-full {{ $expired ? 'bg-red-500/20 border-red-400/40 text-red-100' : 'bg-white/10 border-white/15 text-white' }} border px-3 py-1.5 text-xs font-medium backdrop-blur">
-                {{ $expired ? 'หมดอายุแล้ว' : 'ยืนราคาถึง' }} {{ $doc['valid_until'] }}
+                <span>@if ($expired)<x-bi th="หมดอายุแล้ว" en="Expired" />@else<x-bi th="ยืนราคาถึง" en="Valid until" />@endif {{ $doc['valid_until'] }}</span>
             </span>
         </div>
     </div>
@@ -74,28 +74,28 @@
                     @endif
                     <div class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
                         @if ($companyInfo['address']){{ $companyInfo['address'] }}<br>@endif
-                        @if ($companyInfo['phone'])โทร {{ $companyInfo['phone'] }}@endif
+                        @if ($companyInfo['phone'])<x-bi th="โทร" en="Tel" /> {{ $companyInfo['phone'] }}@endif
                         @if ($companyInfo['phone'] && $companyInfo['email']) · @endif
                         @if ($companyInfo['email']){{ $companyInfo['email'] }}@endif
-                        @if ($companyInfo['tax_id'])<br>เลขประจำตัวผู้เสียภาษี {{ $companyInfo['tax_id'] }}@endif
+                        @if ($companyInfo['tax_id'])<br><x-bi th="เลขประจำตัวผู้เสียภาษี" en="Tax ID" /> {{ $companyInfo['tax_id'] }}@endif
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase">Quotation</div>
+                    <div class="text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase"><x-bi th="ใบเสนอราคา" en="Quotation" /></div>
                     <div class="font-mono text-sm font-bold text-gray-900 dark:text-white mt-0.5">{{ $quotation->quote_number }}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">ออกเมื่อ {{ $doc['quote_date'] }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1"><x-bi th="ออกเมื่อ" en="Issued" /> {{ $doc['quote_date'] }}</div>
                 </div>
             </div>
 
             <div class="px-5 sm:px-7 py-4 border-b border-gray-100 dark:border-gray-700">
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white">รายการในใบเสนอราคา</h2>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white"><x-bi th="รายการในใบเสนอราคา" en="Quotation items" layout="stack" /></h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead>
                         <tr class="text-left text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                            <th class="py-3 pl-5 sm:pl-7 pr-3 font-medium">รายการ</th>
-                            <th class="py-3 pr-5 sm:pr-7 font-medium text-right">จำนวนเงิน</th>
+                            <th class="py-3 pl-5 sm:pl-7 pr-3 font-medium"><x-bi th="รายการ" en="Description" /></th>
+                            <th class="py-3 pr-5 sm:pr-7 font-medium text-right"><x-bi k="common.amount" /></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -109,7 +109,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="2" class="py-8 text-center text-gray-500">ไม่มีรายการ</td></tr>
+                            <tr><td colspan="2" class="py-8 text-center text-gray-500"><x-bi th="ไม่มีรายการ" en="No items" /></td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -118,35 +118,35 @@
             {{-- ══ ยอดรวม ══ --}}
             <div class="px-5 sm:px-7 py-5 bg-gray-50 dark:bg-gray-900/40 border-t border-gray-100 dark:border-gray-700">
                 <div class="max-w-sm ml-auto space-y-2 text-sm">
-                    <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-300">รวมเป็นเงิน</span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['subtotal']) }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-300"><x-bi th="รวมเป็นเงิน" en="Subtotal" /></span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['subtotal']) }}</span></div>
 
                     @if ($doc['discount'] > 0)
-                        <div class="flex justify-between text-emerald-700 dark:text-emerald-300"><span>ส่วนลดขนาดงาน {{ $doc['discount_percent'] }}%</span><span class="tabular-nums">&minus;{{ $money($doc['discount']) }}</span></div>
+                        <div class="flex justify-between text-emerald-700 dark:text-emerald-300"><span><x-bi th="ส่วนลดขนาดงาน" en="Volume discount" /> {{ $doc['discount_percent'] }}%</span><span class="tabular-nums">&minus;{{ $money($doc['discount']) }}</span></div>
                     @endif
                     @if ($doc['rush_fee'] > 0)
-                        <div class="flex justify-between text-amber-700 dark:text-amber-300"><span>ค่าเร่งงาน {{ rtrim(rtrim(number_format(\App\Support\Quotation\Pricing::rushPercent(), 2), '0'), '.') }}%</span><span class="tabular-nums">{{ $money($doc['rush_fee']) }}</span></div>
+                        <div class="flex justify-between text-amber-700 dark:text-amber-300"><span><x-bi th="ค่าเร่งงาน" en="Rush fee" /> {{ rtrim(rtrim(number_format(\App\Support\Quotation\Pricing::rushPercent(), 2), '0'), '.') }}%</span><span class="tabular-nums">{{ $money($doc['rush_fee']) }}</span></div>
                     @endif
 
                     @if ($doc['vat_mode'] === 'inclusive')
-                        <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700"><span class="text-gray-600 dark:text-gray-300">มูลค่าสินค้า/บริการ</span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['amount_before_vat']) }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-300">ภาษีมูลค่าเพิ่ม {{ $rate }}%</span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['vat']) }}</span></div>
+                        <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700"><span class="text-gray-600 dark:text-gray-300"><x-bi th="มูลค่าสินค้า/บริการ" en="Value before VAT" /></span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['amount_before_vat']) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-300"><x-bi th="ภาษีมูลค่าเพิ่ม" en="VAT" /> {{ $rate }}%</span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['vat']) }}</span></div>
                     @elseif ($doc['vat_mode'] === 'exclusive')
                         @if ($doc['discount'] > 0 || $doc['rush_fee'] > 0)
-                            <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700"><span class="text-gray-600 dark:text-gray-300">ราคาหลังหักส่วนลด</span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['amount_before_vat']) }}</span></div>
+                            <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700"><span class="text-gray-600 dark:text-gray-300"><x-bi th="ราคาหลังหักส่วนลด" en="Price after discount" /></span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['amount_before_vat']) }}</span></div>
                         @endif
-                        <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-300">ภาษีมูลค่าเพิ่ม {{ $rate }}%</span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['vat']) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600 dark:text-gray-300"><x-bi th="ภาษีมูลค่าเพิ่ม" en="VAT" /> {{ $rate }}%</span><span class="tabular-nums text-gray-900 dark:text-white">{{ $money($doc['vat']) }}</span></div>
                     @else
-                        <div class="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-700"><span class="text-xs text-gray-500 dark:text-gray-400">ราคานี้ไม่มีภาษีมูลค่าเพิ่ม</span></div>
+                        <div class="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-700"><span class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="ราคานี้ไม่มีภาษีมูลค่าเพิ่ม" en="This price is not subject to VAT" /></span></div>
                     @endif
 
                     <div class="flex justify-between items-baseline pt-3 border-t-2 border-gray-900 dark:border-gray-200">
-                        <span class="font-bold text-gray-900 dark:text-white">จำนวนเงินรวมทั้งสิ้น</span>
+                        <span class="font-bold text-gray-900 dark:text-white"><x-bi th="จำนวนเงินรวมทั้งสิ้น" en="Grand total" /></span>
                         <span class="tabular-nums text-2xl font-bold text-blue-700 dark:text-blue-300">฿{{ $money($doc['grand_total']) }}</span>
                     </div>
 
                     @if ($doc['withholding_amount'] > 0)
-                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400"><span>หัก ณ ที่จ่าย {{ rtrim(rtrim(number_format((float) $doc['withholding_pct'], 2), '0'), '.') }}%</span><span class="tabular-nums">&minus;{{ $money($doc['withholding_amount']) }}</span></div>
-                        <div class="flex justify-between text-sm font-semibold text-gray-900 dark:text-white"><span>ยอดโอนสุทธิ</span><span class="tabular-nums">{{ $money($doc['net_payable']) }}</span></div>
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400"><span><x-bi th="หัก ณ ที่จ่าย" en="Withholding tax" /> {{ rtrim(rtrim(number_format((float) $doc['withholding_pct'], 2), '0'), '.') }}%</span><span class="tabular-nums">&minus;{{ $money($doc['withholding_amount']) }}</span></div>
+                        <div class="flex justify-between text-sm font-semibold text-gray-900 dark:text-white"><span><x-bi th="ยอดโอนสุทธิ" en="Net amount payable" /></span><span class="tabular-nums">{{ $money($doc['net_payable']) }}</span></div>
                     @endif
 
                     <p class="pt-2 text-xs text-gray-500 dark:text-gray-400 text-right">( {{ $doc['grand_total_words'] }} )</p>
@@ -159,12 +159,12 @@
             <a href="{{ route('quote.show.pdf', $quotation->public_token) }}"
                class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:-translate-y-0.5 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                ดาวน์โหลด PDF
+                <x-bi th="ดาวน์โหลด PDF" en="Download PDF" />
             </a>
             <button type="button" onclick="window.print()"
                     class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                พิมพ์
+                <x-bi k="common.print" />
             </button>
         </div>
 
@@ -172,8 +172,8 @@
         @if ($canRespond)
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden" x-data="{ mode: null }">
                 <div class="px-5 sm:px-7 py-5 border-b border-gray-100 dark:border-gray-700">
-                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">ตอบกลับใบเสนอราคานี้</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">กดปุ่มด้านล่างได้เลย ทีมงานจะได้รับแจ้งทันที</p>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white"><x-bi th="ตอบกลับใบเสนอราคานี้" en="Respond to this quotation" layout="stack" /></h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><x-bi th="กดปุ่มด้านล่างได้เลย ทีมงานจะได้รับแจ้งทันที" en="Choose an option below — our team is notified right away." /></p>
                 </div>
 
                 <div class="p-5 sm:p-7 space-y-4">
@@ -182,24 +182,24 @@
                                 :class="mode === 'accept' ? 'border-emerald-500 ring-2 ring-emerald-500/30' : 'border-gray-200 dark:border-gray-700'"
                                 class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-emerald-50 dark:bg-emerald-500/10 hover:border-emerald-400 transition text-center">
                             <svg class="w-7 h-7 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                            <span class="font-semibold text-emerald-900 dark:text-emerald-200">ตอบรับ</span>
-                            <span class="text-xs text-emerald-800/70 dark:text-emerald-200/70">เริ่มงานได้เลย</span>
+                            <span class="font-semibold text-emerald-900 dark:text-emerald-200"><x-bi th="ตอบรับ" en="Accept quotation" layout="stack" /></span>
+                            <span class="text-xs text-emerald-800/70 dark:text-emerald-200/70"><x-bi th="เริ่มงานได้เลย" en="Let's get started" layout="stack" /></span>
                         </button>
 
                         <button type="button" @click="mode = mode === 'negotiate' ? null : 'negotiate'"
                                 :class="mode === 'negotiate' ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-gray-200 dark:border-gray-700'"
                                 class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-amber-50 dark:bg-amber-500/10 hover:border-amber-400 transition text-center">
                             <svg class="w-7 h-7 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.9 9.9 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                            <span class="font-semibold text-amber-900 dark:text-amber-200">ขอต่อรอง</span>
-                            <span class="text-xs text-amber-800/70 dark:text-amber-200/70">บอกได้ว่าติดตรงไหน</span>
+                            <span class="font-semibold text-amber-900 dark:text-amber-200"><x-bi th="ขอต่อรอง" en="Request changes" layout="stack" /></span>
+                            <span class="text-xs text-amber-800/70 dark:text-amber-200/70"><x-bi th="บอกได้ว่าติดตรงไหน" en="Tell us what doesn't work" layout="stack" /></span>
                         </button>
 
                         <button type="button" @click="mode = mode === 'decline' ? null : 'decline'"
                                 :class="mode === 'decline' ? 'border-gray-500 ring-2 ring-gray-500/20' : 'border-gray-200 dark:border-gray-700'"
                                 class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-gray-50 dark:bg-gray-900/40 hover:border-gray-400 transition text-center">
                             <svg class="w-7 h-7 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            <span class="font-semibold text-gray-800 dark:text-gray-200">ยังไม่เอาตอนนี้</span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">ปิดใบนี้ไว้ก่อน</span>
+                            <span class="font-semibold text-gray-800 dark:text-gray-200"><x-bi th="ยังไม่เอาตอนนี้" en="Not right now" layout="stack" /></span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="ปิดใบนี้ไว้ก่อน" en="Close this quotation for now" layout="stack" /></span>
                         </button>
                     </div>
 
@@ -210,28 +210,28 @@
 
                         <div x-show="mode === 'negotiate'">
                             <label for="quote-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                อยากปรับตรงไหนครับ
+                                <x-bi th="อยากปรับตรงไหนครับ" en="What would you like to change?" />
                             </label>
                             <textarea id="quote-message" name="message" rows="3"
-                                      placeholder="เช่น ขอตัดรายการ SEO ออกก่อน หรืองบอยู่ที่ประมาณ 180,000"
+                                      placeholder="เช่น ขอตัดรายการ SEO ออกก่อน หรืองบอยู่ที่ประมาณ 180,000 / e.g. drop the SEO item for now, or our budget is about 180,000"
                                       class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">{{ old('message') }}</textarea>
                         </div>
 
                         <div x-show="mode === 'decline'">
                             <label for="quote-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                บอกเหตุผลสั้น ๆ ได้ถ้าสะดวก <span class="font-normal text-gray-500">ไม่บังคับ</span>
+                                <x-bi th="บอกเหตุผลสั้น ๆ ได้ถ้าสะดวก" en="A short reason, if you don't mind" /> <span class="font-normal text-gray-500"><x-bi k="common.optional" /></span>
                             </label>
                             <textarea id="quote-reason" name="message" rows="2"
                                       class="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white text-sm focus:border-blue-500 focus:ring-blue-500">{{ old('message') }}</textarea>
                         </div>
 
                         <p x-show="mode === 'accept'" class="text-sm text-gray-600 dark:text-gray-300">
-                            กดยืนยันแล้วเราจะล็อกราคาและขอบเขตงานตามใบนี้ แล้วติดต่อกลับเพื่อเริ่มงาน
+                            <x-bi th="กดยืนยันแล้วเราจะล็อกราคาและขอบเขตงานตามใบนี้ แล้วติดต่อกลับเพื่อเริ่มงาน" en="Once you confirm, we'll lock in the price and scope in this quotation and get back to you to start the work." />
                         </p>
 
                         <button type="submit"
                                 class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-                            ยืนยันคำตอบ
+                            <x-bi th="ยืนยันคำตอบ" en="Submit response" class="text-white" />
                         </button>
                     </form>
                 </div>
@@ -241,27 +241,26 @@
                 <p class="text-gray-700 dark:text-gray-200 font-medium">
                     @if ($quotation->isSuperseded())
                         {{-- ลูกค้าถือลิงก์เก่าไว้ ต้องบอกให้รู้ว่ามีฉบับใหม่ ไม่ใช่ปล่อยให้คิดว่าเราปิดงานไปแล้ว --}}
-                        ใบเสนอราคาฉบับนี้มีฉบับแก้ไขใหม่แทนแล้ว
+                        <x-bi th="ใบเสนอราคาฉบับนี้มีฉบับแก้ไขใหม่แทนแล้ว" en="This quotation has been replaced by a revised version." />
                     @elseif ($expired)
-                        ใบเสนอราคานี้หมดอายุแล้ว
+                        <x-bi th="ใบเสนอราคานี้หมดอายุแล้ว" en="This quotation has expired." />
                     @else
-                        ใบเสนอราคานี้มีคำตอบเรียบร้อยแล้ว — {{ $tone['label'] }}
+                        <x-bi :th="'ใบเสนอราคานี้มีคำตอบเรียบร้อยแล้ว — ' . $tone['label']" :en="'This quotation has already been answered — ' . $tone['label_en']" />
                     @endif
                 </p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     @if ($quotation->isSuperseded())
-                        ทีมงานส่งฉบับใหม่ไปที่อีเมลของคุณแล้ว ถ้าไม่ได้รับ
+                        <x-bi th="ทีมงานส่งฉบับใหม่ไปที่อีเมลของคุณแล้ว ถ้าไม่ได้รับ ติดต่อทีมงานได้ที่" en="We've emailed you the new version. If it hasn't arrived, reach our team via" />
                     @else
-                        ต้องการคุยต่อ
+                        <x-bi th="ต้องการคุยต่อ ติดต่อทีมงานได้ที่" en="Want to discuss further? Reach our team via" />
                     @endif
-                    ติดต่อทีมงานได้ที่
-                    <a href="{{ route('contact.show') }}" class="text-blue-600 dark:text-blue-400 hover:underline">หน้าติดต่อเรา</a>
+                    <a href="{{ route('contact.show') }}" class="text-blue-600 dark:text-blue-400 hover:underline"><x-bi th="หน้าติดต่อเรา" en="our contact page" /></a>
                 </p>
             </div>
         @endif
 
         <p class="text-xs text-gray-500 dark:text-gray-400 text-center">
-            ลิงก์นี้เป็นของใบเสนอราคาฉบับนี้โดยเฉพาะ กรุณาอย่าส่งต่อให้คนนอกองค์กร
+            <x-bi th="ลิงก์นี้เป็นของใบเสนอราคาฉบับนี้โดยเฉพาะ กรุณาอย่าส่งต่อให้คนนอกองค์กร" en="This link belongs to this quotation only. Please don't share it outside your organisation." />
         </p>
     </div>
 </div>

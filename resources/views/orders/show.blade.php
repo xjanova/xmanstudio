@@ -579,13 +579,24 @@
                         </div>
                     @endif
 
-                    @if($order->status === 'completed')
-                        <a href="{{ route('orders.download', $order) }}"
-                           class="mt-6 flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition shadow-lg">
+                    @if(\App\Support\OrderReceipt::available($order))
+                        <a href="{{ route('orders.receipt', $order) }}"
+                           class="mt-6 flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-700 hover:to-teal-700 font-semibold transition shadow-lg">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            <x-bi th="ดาวน์โหลดใบเสร็จ" en="Download receipt" class="text-white" />
+                            <x-bi th="ดาวน์โหลดใบเสร็จรับเงิน (PDF)" en="Download receipt (PDF)" class="text-white" />
+                        </a>
+                    @endif
+
+                    @if($order->status === 'completed')
+                        {{-- ไฟล์ .txt ของ License Key — เดิมปุ่มนี้เขียนว่า "ใบเสร็จ" ทั้งที่ได้ไฟล์คีย์ --}}
+                        <a href="{{ route('orders.download', $order) }}"
+                           class="mt-3 flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition shadow-lg">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                            </svg>
+                            <x-bi th="ดาวน์โหลด License Keys" en="Download license keys" class="text-white" />
                         </a>
                     @endif
 

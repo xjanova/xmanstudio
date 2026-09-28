@@ -3,6 +3,14 @@
 @section('title', $invoice->invoice_number . ' - XMAN Studio')
 
 @section('content')
+@php
+    // English half of RentalInvoice::getTypeLabel() — the model keeps the Thai
+    $typeEn = match ($invoice->type) {
+        \App\Models\RentalInvoice::TYPE_TAX_INVOICE => 'Tax Invoice',
+        \App\Models\RentalInvoice::TYPE_RECEIPT => 'Receipt',
+        default => 'Invoice',
+    };
+@endphp
 <div class="bg-gray-50 min-h-screen py-12">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Actions -->
@@ -12,7 +20,7 @@
             </a>
             <button onclick="window.print()"
                     class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
-                <x-bi th="พิมพ์ใบเสร็จ" en="Print Invoice" />
+                <x-bi :th="'พิมพ์' . $invoice->getTypeLabel()" :en="'Print ' . $typeEn" class="text-white" />
             </button>
         </div>
 
@@ -26,7 +34,7 @@
                         <p class="text-gray-500">IT Solutions & Software Development</p>
                     </div>
                     <div class="text-right">
-                        <h2 class="text-xl font-bold text-primary-600">{{ $invoice->getTypeLabel() }}</h2>
+                        <h2 class="text-xl font-bold text-primary-600"><x-bi :th="$invoice->getTypeLabel()" :en="$typeEn" layout="stack" /></h2>
                         <p class="text-gray-600">{{ $invoice->invoice_number }}</p>
                     </div>
                 </div>
@@ -139,7 +147,7 @@
                         $invFbName = \App\Models\Setting::getValue('contact_facebook_name', 'XMAN Enterprise');
                         $invLineId = \App\Models\Setting::getValue('contact_line_id', '@xmanstudio');
                     @endphp
-                    <p>Tel: {{ $invPhone }}{{ $invPhoneName ? " ({$invPhoneName})" : '' }} | Email: {{ $invEmail }}</p>
+                    <p><x-bi th="โทร" en="Tel" />: {{ $invPhone }}{{ $invPhoneName ? " ({$invPhoneName})" : '' }} | <x-bi k="common.email" />: {{ $invEmail }}</p>
                     <p>Facebook: {{ $invFbName }} | Line OA: {{ $invLineId }}</p>
                 </div>
             </div>

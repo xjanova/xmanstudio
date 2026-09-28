@@ -81,8 +81,8 @@ class LicenseService
         // match and an admin click). The second delivery waits on the order row, then finds the
         // first one's keys and renewals and does nothing: no second key, no second month added to
         // a renewed key, no second e-mail.
-        $generated = DB::transaction(function () use ($order) {
-            Order::whereKey($order->getKey())->lockForUpdate()->first();
+        $mail = DB::transaction(function () use ($order) {
+            $locked = Order::whereKey($order->getKey())->lockForUpdate()->first();
 
             $order->load('items.product');
             $generated = false;
@@ -143,10 +143,10 @@ class LicenseService
                 $order->update(['status' => 'completed']);
             }
 
-            return $generated;
+            return $generated || $this->claimReceiptOnlyMail($order, $locked);
         });
 
-        if ($generated && $order->customer_email && PaymentSetting::get('mail_enabled', true)) {
+        if ($mail && $order->customer_email && PaymentSetting::get('mail_enabled', true)) {
             try {
                 Mail::to($order->customer_email)
                     ->send(new PaymentConfirmedMail($order->fresh(['items.product', 'user'])));
@@ -157,6 +157,44 @@ class LicenseService
                 ]);
             }
         }
+    }
+
+    /**
+     * Whether a paid order with nothing to license (a service, a pack of credits) should get the
+     * payment-confirmed e-mail — the one that carries its receipt. Before, only an order that
+     * issued a key was mailed, so everyone else paid and heard nothing.
+     *
+     * Once per order: the stamp is written under the order-row lock the caller holds, so the
+     * second confirmation of the same payment finds it and stays quiet. A flow that keeps its
+     * metadata as a JSON string (Tping, SMS Checker, LocalVPN — they mail on their own) is left
+     * alone rather than having its metadata rewritten.
+     */
+    protected function claimReceiptOnlyMail(Order $order, ?Order $locked): bool
+    {
+        if (! $locked || $locked->payment_status !== 'paid') {
+            return false;
+        }
+
+        if (! $order->customer_email || ! PaymentSetting::get('mail_enabled', true)) {
+            return false;
+        }
+
+        if ($order->items->isEmpty() || $order->items->contains(fn ($item) => (bool) $item->product?->requires_license)) {
+            return false;
+        }
+
+        $metadata = $locked->metadata ?? [];
+        if (! is_array($metadata) || ! empty($metadata['receipt_mailed_at'])) {
+            return false;
+        }
+
+        $metadata['receipt_mailed_at'] = now()->toIso8601String();
+        $locked->update(['metadata' => $metadata]);
+
+        // The caller's copy too, or a later save of it would write the old metadata back.
+        $order->forceFill(['metadata' => $metadata])->syncOriginalAttribute('metadata');
+
+        return true;
     }
 
     /**

@@ -97,6 +97,15 @@ VAT ยังคงที่ 7% ใน `VatMode::DEFAULT_RATE` เพราะ�
 |---|---|---|
 | ใบเสนอราคา | `resources/views/quotation/pdf.blade.php` | `/quote/d/{token}/pdf` |
 | ใบแจ้งหนี้ | `resources/views/invoice/pdf.blade.php` | `/invoice/{token}/pdf`, `/admin/invoices/{id}/pdf` |
+| ใบเสร็จรับเงิน (คำสั่งซื้อในร้าน) | `resources/views/receipt/pdf.blade.php` ผ่าน `App\Support\OrderReceipt` | `/orders/{id}/receipt` (เจ้าของ, ต้องล็อกอิน), `/admin/orders/{id}/receipt` · แนบไปกับ `PaymentConfirmedMail` อัตโนมัติ |
+
+**ทุกเอกสารเป็นสองภาษาในใบเดียว** (ไทยนำ อังกฤษตัวเล็กสีจางตาม — `.en` / `.en-line` ในแต่ละเทมเพลต)
+จำนวนเงินตัวอักษรภาษาอังกฤษมาจาก `App\Support\AmountInWords::baht()` (เขียนเอง ไม่พึ่ง ext-intl)
+หัวกระดาษบริษัทของทั้งสามฉบับมาจาก `App\Support\Letterhead::info()` ที่เดียว
+
+ใบเสร็จออกได้เฉพาะ `payment_status = paid` เลขที่คือ `RC-<order_number>` (คำนวณ ไม่ได้เก็บ จึงคงที่เสมอ)
+คำสั่งซื้อที่ไม่มีสินค้าต้องออก License ได้อีเมลยืนยัน+ใบเสร็จหนึ่งครั้ง — กันส่งซ้ำด้วย
+`orders.metadata.receipt_mailed_at` ที่เขียนภายใต้ row lock ใน `LicenseService::claimReceiptOnlyMail()`
 
 **ทุกเอกสารต้องออกผ่าน `App\Support\ThaiPdf::view()` ห้ามเรียก `Pdf::loadView()` ตรง ๆ**
 (มีเทสต์ไล่ทุกคอนโทรลเลอร์ไม่ให้หลุด) เพราะ DomPDF ไม่ shape ภาษาไทย — ดู [ข้อ 8.6](#86-วรรณยุกต์ไทยซ้อนสระในเอกสาร-pdf)

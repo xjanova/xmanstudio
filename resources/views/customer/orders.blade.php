@@ -176,6 +176,17 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        @if(\App\Support\OrderReceipt::available($order))
+                            <a href="{{ route('orders.receipt', $order) }}"
+                               title="ดาวน์โหลดใบเสร็จรับเงิน (PDF) / Download receipt"
+                               aria-label="ดาวน์โหลดใบเสร็จรับเงิน / Download receipt"
+                               class="inline-flex items-center px-3 py-2 mr-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <x-bi th="ใบเสร็จ" en="Receipt" />
+                            </a>
+                        @endif
                         <a href="{{ route('customer.orders.show', $order) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
                             <x-bi k="common.view_details" />
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

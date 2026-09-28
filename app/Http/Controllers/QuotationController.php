@@ -15,6 +15,7 @@ use App\Services\PromptPayService;
 use App\Services\QuotationAcceptance;
 use App\Services\ThaiPaymentService;
 use App\Support\Alerts\BusinessAlerts;
+use App\Support\Letterhead;
 use App\Support\Quotation\Outcomes;
 use App\Support\Quotation\Pricing;
 use App\Support\Quotation\VatMode;
@@ -2146,36 +2147,7 @@ class QuotationController extends Controller
      */
     protected function getCompanyInfo(): array
     {
-        // These were hardcoded, and wrong on a document customers file for
-        // accounting: the website read xmanstudio.com, the address was just
-        // "กรุงเทพมหานคร", and the e-mail was a personal Gmail. The settings
-        // table already holds the real values — this reads them.
-        //
-        // tax_id has no setting behind it yet, and a made-up one on a tax
-        // document is worse than none, so an empty value means the line is
-        // left off entirely rather than printed as X-XXXX-XXXXX-XX-X.
-        // The real wordmark the admin uploaded, not a drawn letter. DomPDF
-        // cannot fetch a URL reliably, so the document gets an absolute file
-        // path and the web page gets the public one; either may be absent, and
-        // both templates fall back to type when it is.
-        $logo = Setting::getValue('site_logo');
-        $logoPath = $logo ? storage_path('app/public/' . $logo) : null;
-        $logoUsable = $logoPath && is_file($logoPath) && is_readable($logoPath);
-
-        return [
-            'logo_path' => $logoUsable ? $logoPath : null,
-            'logo_url' => $logo ? asset('storage/' . $logo) : null,
-            'name' => Setting::getValue('company_name', 'XMAN STUDIO'),
-            'tagline' => 'IT Solutions & Software Development',
-            'address' => trim((string) Setting::getValue('contact_address', '')),
-            'email' => trim((string) Setting::getValue('contact_email', ''))
-                ?: trim((string) Setting::getValue('company_email', '')),
-            'phone' => trim((string) Setting::getValue('contact_phone', ''))
-                ?: trim((string) Setting::getValue('company_phone', '')),
-            'website' => parse_url(config('app.url'), PHP_URL_HOST) ?: 'xman4289.com',
-            'line' => trim((string) Setting::getValue('contact_line_id', '')),
-            'tax_id' => trim((string) Setting::getValue('company_tax_id', '')),
-        ];
+        return Letterhead::info();
     }
 
     /**

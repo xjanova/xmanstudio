@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProjectInvoice;
-use App\Models\Setting;
+use App\Support\Letterhead;
 use App\Support\Quotation\VatMode;
 use App\Support\ThaiPdf;
 use Illuminate\Http\Request;
@@ -117,30 +117,12 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Who is issuing the document. Same source as the quotation's letterhead —
-     * the settings table, never a hardcoded address.
+     * Who is issuing the document — the same letterhead as the quotation.
      *
      * @return array<string, mixed>
      */
     protected function companyInfo(): array
     {
-        $logo = Setting::getValue('site_logo');
-        $logoPath = $logo ? storage_path('app/public/' . $logo) : null;
-        $logoUsable = $logoPath && is_file($logoPath) && is_readable($logoPath);
-
-        return [
-            'logo_path' => $logoUsable ? $logoPath : null,
-            'logo_url' => $logo ? asset('storage/' . $logo) : null,
-            'name' => Setting::getValue('company_name', 'XMAN STUDIO'),
-            'tagline' => 'IT Solutions & Software Development',
-            'address' => trim((string) Setting::getValue('contact_address', '')),
-            'email' => trim((string) Setting::getValue('contact_email', ''))
-                ?: trim((string) Setting::getValue('company_email', '')),
-            'phone' => trim((string) Setting::getValue('contact_phone', ''))
-                ?: trim((string) Setting::getValue('company_phone', '')),
-            'website' => parse_url(config('app.url'), PHP_URL_HOST) ?: 'xman4289.com',
-            'line' => trim((string) Setting::getValue('contact_line_id', '')),
-            'tax_id' => trim((string) Setting::getValue('company_tax_id', '')),
-        ];
+        return Letterhead::info();
     }
 }

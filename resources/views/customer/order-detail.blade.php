@@ -173,6 +173,20 @@
                     <span class="text-lg font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">{{ number_format($order->total ?? 0, 2) }} <x-bi th="บาท" en="THB" /></span>
                 </div>
             </div>
+
+            @if(\App\Support\OrderReceipt::available($order))
+                <a href="{{ route('orders.receipt', $order) }}"
+                   class="mt-5 flex items-center justify-center w-full px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 font-semibold transition-all shadow-lg hover:shadow-xl">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <x-bi th="ดาวน์โหลดใบเสร็จรับเงิน (PDF)" en="Download receipt (PDF)" class="text-white" />
+                </a>
+            @elseif($order->status !== 'cancelled')
+                <p class="mt-4 text-xs text-center text-gray-500 dark:text-gray-400">
+                    <x-bi th="ใบเสร็จรับเงินจะดาวน์โหลดได้หลังยืนยันการชำระเงิน" en="The receipt is available once payment is confirmed" />
+                </p>
+            @endif
         </div>
 
         <!-- Order Info -->

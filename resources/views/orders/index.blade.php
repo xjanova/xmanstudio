@@ -115,6 +115,16 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    @if(\App\Support\OrderReceipt::available($order))
+                                        <a href="{{ route('orders.receipt', $order) }}"
+                                           title="ดาวน์โหลดใบเสร็จรับเงิน (PDF) / Download receipt"
+                                           class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                            <x-bi th="ใบเสร็จ" en="Receipt" />
+                                        </a>
+                                    @endif
                                     <a href="{{ route('orders.show', $order) }}"
                                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition">
                                         <x-bi k="common.view_details" />
@@ -170,10 +180,18 @@
                                         <span class="ml-2 text-sm text-green-600 dark:text-green-400">-฿{{ number_format($order->discount, 2) }}</span>
                                     @endif
                                 </div>
-                                <a href="{{ route('orders.show', $order) }}"
-                                   class="inline-flex items-center px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition">
-                                    <x-bi k="common.view_details" class="text-white" />
-                                </a>
+                                <div class="flex items-center gap-2">
+                                    @if(\App\Support\OrderReceipt::available($order))
+                                        <a href="{{ route('orders.receipt', $order) }}"
+                                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition">
+                                            <x-bi th="ใบเสร็จ" en="Receipt" />
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('orders.show', $order) }}"
+                                       class="inline-flex items-center px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition">
+                                        <x-bi k="common.view_details" class="text-white" />
+                                    </a>
+                                </div>
                             </div>
                             @if($order->coupon_code)
                                 <div class="mt-3 pt-3 border-t dark:border-gray-700">
