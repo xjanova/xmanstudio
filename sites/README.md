@@ -88,5 +88,7 @@ rm -rf sites/xgameshub.xman4289.com && cp -a ../XgamesHub/out sites/xgameshub.xm
 ```
 
 - asset ใต้ `_next/static/` มีชื่อแบบ hash อยู่แล้ว **ไม่ต้องบัมพ์ `?v=`**
+- เทสต์ `BrainXDownloadTest` ห้ามมี `github.com` ในไฟล์ใต้ `sites/` — build ของ XgamesHub จัดการให้แล้ว
+  (`scripts/sanitize-export.mjs` รันอัตโนมัติหลัง `npm run build`) อย่าคัดลอก `out/` ที่ build ด้วยวิธีอื่น
 - `.htaccess` มาจาก `public/.htaccess` ของ XgamesHub (HTML/`.txt` no-cache, `_next/static` immutable)
 - deploy ไม่ใช้ `--delete` ไฟล์ hash เก่าจะค้างบนเซิร์ฟเวอร์ ไม่กระทบการทำงาน ลบเองได้ถ้าต้องการ
