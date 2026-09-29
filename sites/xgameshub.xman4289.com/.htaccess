@@ -1,0 +1,19 @@
+Options -Indexes
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+
+# No HTTPS redirect here: Cloudflare sits in front and terminates TLS, so an
+# origin-side redirect can loop. Same as the other xman4289 static sites.
+
+<IfModule mod_headers.c>
+  # HTML and Next's RSC payloads (.txt) are the map to everything else —
+  # never serve them stale.
+  <FilesMatch "\.(html|txt)$">
+    Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+  </FilesMatch>
+  # Build assets under /_next/static/ carry a content hash in their name,
+  # so the URL is the cache key and a long TTL is safe.
+  <If "%{REQUEST_URI} =~ m#^/_next/static/#">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </If>
+</IfModule>

@@ -60,6 +60,7 @@ sed -i "s/v=[0-9]\{12\}/v=$(date +%Y%m%d%H%M)/g" sites/product.xman4289.com/inde
 | `product.xman4289.com/` | `index.html` | หน้าแรก — กลุ่มดาวผลิตภัณฑ์ 16 ตัว วาดบน canvas 2D แบบ project เอง ไม่มี lib |
 | | `brainx.html` | หน้าขาย BrainX |
 | | `wiki.html` | wiki |
+| `xgameshub.xman4289.com/` | `index.html` | XgamesHub — ฮับเกมโลก 3D กับมาสคอต Nova (**ไฟล์ build แล้ว** ดูหมายเหตุด้านล่าง) |
 
 catalogue ของกลุ่มดาวและ grid หน้าแรกอ่านจาก `assets/js/products.js`
 เพิ่มสินค้า = เพิ่มหนึ่งแถวในนั้น ไม่ต้องแตะ layout
@@ -72,3 +73,20 @@ catalogue ของกลุ่มดาวและ grid หน้าแรก�
 ไม่ใช่ `/api/v1/product/<slug>/pricing` อย่างเดียว — API นั้นคืน 399/2500/5000
 เป็นค่า default ให้ทุกสินค้าที่ไม่มีราคากำหนดไว้ใน `ProductLicenseController`
 ราคาที่เป็นรายปี/รายเดือนให้บอกหน่วยไว้ในคำอธิบายด้วย เพราะ grid แสดงแค่ตัวเลข
+
+### `xgameshub.xman4289.com/` — ข้อยกเว้นเรื่อง "ไม่มี build step"
+
+โฟลเดอร์นี้เป็น **ผลลัพธ์จาก build** ของ Next.js (static export) — source จริงอยู่ที่
+[`xjanova/XgamesHub`](https://github.com/xjanova/XgamesHub) **อย่าแก้ไฟล์ในนี้ด้วยมือ**
+แก้ที่ repo นั้น แล้วอัปเดตที่นี่:
+
+```bash
+# ใน XgamesHub
+npm ci && npm run build
+# คัดลอกผลลัพธ์มาทับ (ลบของเดิมก่อน เพื่อไม่ให้ไฟล์ hash เก่าค้างใน repo)
+rm -rf sites/xgameshub.xman4289.com && cp -a ../XgamesHub/out sites/xgameshub.xman4289.com
+```
+
+- asset ใต้ `_next/static/` มีชื่อแบบ hash อยู่แล้ว **ไม่ต้องบัมพ์ `?v=`**
+- `.htaccess` มาจาก `public/.htaccess` ของ XgamesHub (HTML/`.txt` no-cache, `_next/static` immutable)
+- deploy ไม่ใช้ `--delete` ไฟล์ hash เก่าจะค้างบนเซิร์ฟเวอร์ ไม่กระทบการทำงาน ลบเองได้ถ้าต้องการ
