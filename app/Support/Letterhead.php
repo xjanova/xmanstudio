@@ -20,17 +20,14 @@ class Letterhead
     {
         // A fake tax number on a tax document is worse than none, so an empty
         // value means the line is left off entirely.
-        // The real wordmark the admin uploaded, not a drawn letter. DomPDF
-        // cannot fetch a URL reliably, so the document gets an absolute file
-        // path and the web page gets the public one; either may be absent, and
-        // the templates fall back to type when it is.
-        $logo = Setting::getValue('site_logo');
-        $logoPath = $logo ? storage_path('app/public/' . $logo) : null;
-        $logoUsable = $logoPath && is_file($logoPath) && is_readable($logoPath);
-
+        // The real wordmark the admin uploaded, not a drawn letter — the one for
+        // light grounds, as documents are white. DomPDF cannot fetch a URL
+        // reliably and drops a WebP's transparency, so the document gets an
+        // absolute path to a PNG and the web page gets the public URL; either may
+        // be absent, and the templates fall back to type when it is.
         return [
-            'logo_path' => $logoUsable ? $logoPath : null,
-            'logo_url' => $logo ? asset('storage/' . $logo) : null,
+            'logo_path' => BrandLogo::pngFile(),
+            'logo_url' => BrandLogo::url(),
             'name' => Setting::getValue('company_name', 'XMAN STUDIO'),
             'tagline' => 'IT Solutions & Software Development',
             'address' => trim((string) Setting::getValue('contact_address', '')),

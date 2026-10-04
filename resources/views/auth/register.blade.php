@@ -285,10 +285,10 @@
                 <!-- Logo -->
                 <div class="logo-container">
                     @php
-                        $siteLogo = \App\Models\Setting::getValue('site_logo');
+                        $siteLogo = \App\Support\BrandLogo::url();
                     @endphp
                     @if ($siteLogo)
-                        <img src="{{ asset('storage/' . $siteLogo) }}"
+                        <img src="{{ $siteLogo }}"
                              alt="โลโก้ / Logo"
                              class="logo-image">
                     @else

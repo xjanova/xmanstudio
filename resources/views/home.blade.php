@@ -60,13 +60,13 @@
 
             <!-- Main Title / Logo -->
             @php
-                $heroLogo = \App\Models\Setting::getValue('site_logo');
+                $heroLogo = \App\Support\BrandLogo::darkUrl();
             @endphp
             <h1 class="mb-8">
                 @if($heroLogo)
                     <div :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
                          style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;">
-                        <img src="{{ asset('storage/' . $heroLogo) }}" alt="XMAN STUDIO" class="mx-auto h-28 md:h-40 lg:h-52 w-auto drop-shadow-2xl">
+                        <img src="{{ $heroLogo }}" alt="XMAN STUDIO" class="mx-auto h-28 md:h-40 lg:h-52 w-auto drop-shadow-2xl">
                     </div>
                 @else
                     <span class="block text-5xl md:text-7xl lg:text-9xl font-black text-white tracking-tight hyperdrive-title"

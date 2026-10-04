@@ -12,7 +12,7 @@
     an ordinary nav rather than to a site with no navigation at all.
 --}}
 @php
-    $novaLogo = \App\Models\Setting::getValue('site_logo');
+    $novaLogo = \App\Support\BrandLogo::darkUrl();
 
     // Orbital menu items. `accent` drives the per-item glow via --nv-accent.
     // Shared with the 3D universe home's ring menu — edit them in HomeContent.
@@ -122,7 +122,7 @@
         <span class="nova-sr">เปิดเมนู / Open menu</span>
         <span class="nova-star-mini__glow" aria-hidden="true"></span>
         @if($novaLogo)
-            <img src="{{ asset('storage/' . $novaLogo) }}" alt="" class="nova-star-mini__logo">
+            <img src="{{ $novaLogo }}" alt="" class="nova-star-mini__logo">
         @else
             <span class="nova-star-mini__word" aria-hidden="true">X</span>
         @endif

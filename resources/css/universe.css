@@ -3387,9 +3387,10 @@ a.xu-card:focus-visible::after,
     width: clamp(240px, 34vw, 560px);
 }
 
+/* 48 px: the two-line lockup's S T U D I O line needs it to stay legible. */
 .xu-logo--hud .xu-logo__img {
     width: auto;
-    height: 40px;
+    height: 48px;
 }
 
 .xu-logo--hud .xu-logo__stars i:nth-child(n + 4) {

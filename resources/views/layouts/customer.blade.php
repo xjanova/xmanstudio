@@ -52,11 +52,11 @@
             <!-- Logo Section -->
             <div class="p-6 border-b border-gray-100 flex-shrink-0">
                 @php
-                    $siteLogo = \App\Models\Setting::getValue('site_logo');
+                    $siteLogo = \App\Support\BrandLogo::url();
                 @endphp
                 <a href="/" class="flex items-center gap-2">
                     @if($siteLogo)
-                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
+                        <img src="{{ $siteLogo }}" alt="XMAN STUDIO" class="h-12 w-auto">
                     @else
                         <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
                             <span class="text-white font-bold text-sm">X</span>

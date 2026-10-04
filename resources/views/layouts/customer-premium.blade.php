@@ -275,11 +275,11 @@
             <!-- Logo Section with Glow -->
             <div class="p-6 border-b border-indigo-500/20 flex-shrink-0">
                 @php
-                    $siteLogo = \App\Models\Setting::getValue('site_logo');
+                    $siteLogo = \App\Support\BrandLogo::darkUrl();
                 @endphp
                 <a href="/" class="flex items-center gap-3 group">
                     @if($siteLogo)
-                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
+                        <img src="{{ $siteLogo }}" alt="XMAN STUDIO" class="h-12 w-auto">
                     @else
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300">
                             <span class="text-white font-bold text-lg">X</span>

@@ -71,11 +71,14 @@
                 <div class="flex items-center min-w-0 flex-1">
                     <div class="flex-shrink-0 flex items-center">
                         @php
-                            $siteLogo = \App\Models\Setting::getValue('site_logo');
+                            $siteLogo = \App\Support\BrandLogo::url();
                         @endphp
                         <a href="/" class="flex items-center">
                             @if($siteLogo)
-                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
+                                {{-- The nav is white in light mode and grey-800 in dark mode: one logo for each.
+                                     Lazy, so the browser fetches only the one that is displayed. --}}
+                                <img src="{{ $siteLogo }}" alt="XMAN STUDIO" class="h-12 w-auto block dark:hidden" loading="lazy">
+                                <img src="{{ \App\Support\BrandLogo::darkUrl() }}" alt="XMAN STUDIO" class="h-12 w-auto hidden dark:block" loading="lazy">
                             @else
                                 <span class="ds-wordmark text-2xl font-black">
                                     XMAN STUDIO
@@ -150,10 +153,10 @@
                 <!-- Company Info -->
                 <div class="lg:col-span-1">
                     @php
-                        $siteLogo = \App\Models\Setting::getValue('site_logo');
+                        $siteLogo = \App\Support\BrandLogo::darkUrl();
                     @endphp
                     @if($siteLogo)
-                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-12 w-auto mb-4">
+                        <img src="{{ $siteLogo }}" alt="XMAN STUDIO" class="h-16 w-auto mb-4">
                     @else
                         <h3 class="ds-wordmark text-2xl font-black mb-4">XMAN STUDIO</h3>
                     @endif

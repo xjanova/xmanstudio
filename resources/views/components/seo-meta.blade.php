@@ -11,8 +11,9 @@
         $pageImage = $image;
         $pageImageType = 'image/png'; // Default for custom images
     } elseif ($seoSetting->og_image) {
-        // Serve uploaded image via route (no storage symlink needed)
-        $pageImage = route('og-image.site');
+        // Serve uploaded image via route (no storage symlink needed). The version makes a new
+        // upload a new URL: Facebook, LINE and X keep a shared image cached by its address.
+        $pageImage = route('og-image.site', ['v' => substr(md5($seoSetting->og_image), 0, 8)]);
         // Detect actual image type from file extension
         $ext = strtolower(pathinfo($seoSetting->og_image, PATHINFO_EXTENSION));
         $pageImageType = match($ext) {
@@ -86,8 +87,13 @@
 @endif
 
 <!-- Structured Data (JSON-LD) -->
+@php
+    // Google shows the Organization logo in results and wants it square: the favicon emblem,
+    // never a stored URL that can go stale (it pointed at a 404 /images/logo.png).
+    $orgLogo = \App\Support\BrandLogo::markUrl();
+@endphp
 @if($seoSetting->structured_data)
-{!! $seoSetting->getStructuredData() !!}
+{!! $seoSetting->getStructuredData($orgLogo && array_key_exists('logo', $seoSetting->structured_data) ? ['logo' => $orgLogo] : null) !!}
 @else
 <script type="application/ld+json">
 {
@@ -95,7 +101,7 @@
     "@type": "Organization",
     "name": "{{ $seoSetting->site_name ?? 'XMAN Studio' }}",
     "url": "{{ url('/') }}",
-    "logo": "{{ $pageImage }}",
+    "logo": "{{ $orgLogo ?: $pageImage }}",
     "description": "{{ $seoSetting->site_description ?? '' }}",
     "sameAs": []
 }

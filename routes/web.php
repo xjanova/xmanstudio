@@ -963,6 +963,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/branding', [BrandingSettingsController::class, 'index'])->name('branding.index');
     Route::post('/branding', [BrandingSettingsController::class, 'update'])->name('branding.update');
     Route::delete('/branding/logo', [BrandingSettingsController::class, 'deleteLogo'])->name('branding.logo.delete');
+    Route::delete('/branding/logo-dark', [BrandingSettingsController::class, 'deleteLogoDark'])->name('branding.logo-dark.delete');
     Route::delete('/branding/favicon', [BrandingSettingsController::class, 'deleteFavicon'])->name('branding.favicon.delete');
 
     // Contact Settings

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SeoSetting;
-use App\Models\Setting;
+use App\Support\BrandLogo;
 use App\Support\FontFile;
 use App\Support\ThaiShaper;
 use Illuminate\Http\Request;
@@ -21,7 +21,8 @@ class OgImageController extends Controller
         $subtitle = $request->query('subtitle', 'IT Solutions & Software Development');
 
         // v6: ก่อนหน้านี้วาดไทยโดยไม่ shape สระกับวรรณยุกต์ทับกัน รูปเก่าที่แคชไว้ต้องไม่ถูกเสิร์ฟต่อ
-        $cacheKey = 'og_image_v6_' . md5($title . $subtitle);
+        // v7: โลโก้สำหรับพื้นหลังมืด (ตัวอักษรเดิมเป็นสีดำ จมหายในพื้นกรมท่า)
+        $cacheKey = 'og_image_v7_' . md5($title . $subtitle);
 
         $imageData = Cache::remember($cacheKey, 3600, function () use ($title, $subtitle) {
             return $this->createImage($title, $subtitle);
@@ -62,7 +63,7 @@ class OgImageController extends Controller
     {
         $seo = SeoSetting::getInstance();
 
-        $imageData = Cache::remember('og_image_default_v6', 3600, function () use ($seo) {
+        $imageData = Cache::remember('og_image_default_v7', 3600, function () use ($seo) {
             return $this->createImage(
                 $seo->site_name ?: 'XMAN Studio',
                 'IT Solutions & Software Development'
@@ -164,11 +165,10 @@ class OgImageController extends Controller
         $lightGray = imagecolorallocate($img, 180, 190, 210);
         $cyan = imagecolorallocate($img, 0, 220, 255);
 
-        // Try loading admin logo
-        $logoPlaced = $this->drawAdminLogo($img, $width, $height);
-
-        // Calculate text Y position based on whether logo was placed
-        $textStartY = $logoPlaced ? 340 : 230;
+        // Try loading admin logo; the title goes under it, however tall the logo is
+        $logoBottom = $this->drawAdminLogo($img, $width);
+        $logoPlaced = $logoBottom !== null;
+        $textStartY = $logoPlaced ? $logoBottom + 82 : 230;
 
         try {
             if (! $fontBold || ! $fontRegular) {
@@ -212,21 +212,18 @@ class OgImageController extends Controller
         }
     }
 
-    private function drawAdminLogo($img, int $width, int $height): bool
+    /** @return int|null the y where the logo ends, or null when there is none to draw */
+    private function drawAdminLogo($img, int $width): ?int
     {
-        $siteLogo = Setting::getValue('site_logo');
-        if (! $siteLogo) {
-            return false;
-        }
-
-        $logoPath = storage_path('app/public/' . $siteLogo);
-        if (! is_file($logoPath) || ! is_readable($logoPath)) {
-            return false;
+        // The card is dark navy: the logo made for dark grounds, as a PNG GD can always read.
+        $logoPath = BrandLogo::pngFile(dark: true);
+        if (! $logoPath) {
+            return null;
         }
 
         $info = @getimagesize($logoPath);
         if (! $info) {
-            return false;
+            return null;
         }
 
         $logo = match ($info[2]) {
@@ -238,26 +235,26 @@ class OgImageController extends Controller
         };
 
         if (! $logo) {
-            return false;
+            return null;
         }
 
-        // Scale logo to fit nicely (max 200px tall, max 400px wide)
+        // Scale logo to fit nicely (max 180px tall, max 440px wide)
         $origW = imagesx($logo);
         $origH = imagesy($logo);
-        $maxW = 400;
-        $maxH = 200;
+        $maxW = 440;
+        $maxH = 180;
         $scale = min($maxW / $origW, $maxH / $origH, 1.0);
         $newW = (int) ($origW * $scale);
         $newH = (int) ($origH * $scale);
 
-        // Center horizontally, place in upper-center area
+        // Center horizontally, in the upper area; the text follows below it
         $destX = (int) (($width - $newW) / 2);
-        $destY = (int) (($height - $newH) / 2) - 80;
+        $destY = 130;
 
         imagecopyresampled($img, $logo, $destX, $destY, 0, 0, $newW, $newH, $origW, $origH);
         imagedestroy($logo);
 
-        return true;
+        return $destY + $newH;
     }
 
     /**
