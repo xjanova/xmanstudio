@@ -57,6 +57,8 @@ return [
         'localvpn' => 'localvpn.download.apk',
         'smschecker' => 'smschecker.download.apk',
         'tping' => 'tping.download.apk',
+        'thaiprompt-pos' => 'thaiprompt-pos.download',
+        'thaiprompt-pos-windows' => 'thaiprompt-pos-windows.download',
     ],
 
     /*
@@ -84,5 +86,7 @@ return [
         'localvpn' => 'Android',
         'smschecker' => 'Android',
         'tping' => 'Android',
+        'thaiprompt-pos' => 'Android',
+        'thaiprompt-pos-windows' => 'Windows',
     ],
 ];

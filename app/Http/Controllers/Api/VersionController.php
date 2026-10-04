@@ -249,6 +249,8 @@ class VersionController extends Controller
         'autotradex' => 'autotradex.download',
         'chanthra-studio' => 'chanthra-studio.download',
         'aipray' => 'aipray.download',
+        'thaiprompt-pos' => 'thaiprompt-pos.download',
+        'thaiprompt-pos-windows' => 'thaiprompt-pos-windows.download',
     ];
 
     /**

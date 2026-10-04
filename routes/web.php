@@ -119,6 +119,7 @@ use App\Http\Controllers\SharedWorkflowController;
 use App\Http\Controllers\SmsCheckerController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\ThaipromptPosController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Http\Controllers\VpsController;
@@ -1615,6 +1616,19 @@ Route::prefix('apps/aipray')->name('aipray.')->group(function () {
     Route::post('/donate', [AiprayController::class, 'storeDonation'])->name('donate.store');
     Route::post('/donation/confirm', [AiprayController::class, 'donationComplete'])->name('donation.confirm');
 });
+
+// ==================== Thai Prompt POS (แอปขายหน้าร้านของร้าน Thai Prompt — แจกฟรี ไม่ขาย) ====================
+// ตัวอัปเดตในแอปโหลดจากลิงก์ที่ update/check ให้ (https://xman4289.com เท่านั้น ไม่ตาม redirect ตรวจขนาด + sha256)
+// ไฟล์ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) ใช้ช่องส่งไฟล์ร่วมกับแอปอื่น — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
+// {version} = ตัวนั้นเป๊ะ ๆ ที่ update/check ประกาศ sha256 ไว้ · ไม่ใส่ = ตัวล่าสุด
+Route::get('/apps/thaiprompt-pos/download/{version?}', [ThaipromptPosController::class, 'android'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,thaiprompt-pos-download')
+    ->name('thaiprompt-pos.download');
+Route::get('/apps/thaiprompt-pos-windows/download/{version?}', [ThaipromptPosController::class, 'windows'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,thaiprompt-pos-windows-download')
+    ->name('thaiprompt-pos-windows.download');
 
 // ==================== KYC (ยืนยันตัวตน) ====================
 // ด่านเดียวกันสำหรับการรับ/ถอนเงิน และการเข้าถึงหมวดเนื้อหาสำหรับผู้ใหญ่บน aixman
