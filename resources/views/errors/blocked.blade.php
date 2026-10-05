@@ -109,7 +109,7 @@
         </p>
 
         {{-- The only link that is not behind this same block. --}}
-        <a class="btn" href="mailto:{{ config('mail.from.address') }}?subject=Blocked%20IP%20{{ urlencode((string) ($ip ?? '')) }}">
+        <a class="btn" href="mailto:{{ \App\Support\ContactLinks::email() }}?subject=Blocked%20IP%20{{ urlencode((string) ($ip ?? '')) }}">
             ติดต่อทีมงาน / Email support
         </a>
 

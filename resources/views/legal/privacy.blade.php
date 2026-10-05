@@ -187,7 +187,7 @@
             <div class="bg-gray-100 dark:bg-gray-700 rounded-xl p-6 mt-4">
                 <p class="font-semibold text-gray-900 dark:text-white text-lg mb-2">{{ config('app.name', 'XMAN Studio') }}</p>
                 <p class="text-gray-600 dark:text-gray-300">เจ้าหน้าที่คุ้มครองข้อมูลส่วนบุคคล (DPO)</p>
-                <p class="text-gray-600 dark:text-gray-300 mt-2">อีเมล: <a href="mailto:privacy@xmanstudio.com" class="text-primary-600 dark:text-primary-400 hover:underline">privacy@xmanstudio.com</a></p>
+                <p class="text-gray-600 dark:text-gray-300 mt-2">อีเมล: <a href="mailto:{{ \App\Support\ContactLinks::email() }}" class="text-primary-600 dark:text-primary-400 hover:underline">{{ \App\Support\ContactLinks::email() }}</a></p>
                 <p class="text-gray-600 dark:text-gray-300">เว็บไซต์: <a href="{{ url('/') }}" class="text-primary-600 dark:text-primary-400 hover:underline">{{ url('/') }}</a></p>
             </div>
 

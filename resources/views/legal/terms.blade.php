@@ -153,7 +153,7 @@
             </p>
             <div class="bg-gray-100 dark:bg-gray-700 rounded-xl p-4 mt-4">
                 <p class="font-semibold text-gray-900 dark:text-white">{{ config('app.name', 'XMAN Studio') }}</p>
-                <p class="text-gray-600 dark:text-gray-300">อีเมล: legal@xmanstudio.com</p>
+                <p class="text-gray-600 dark:text-gray-300">อีเมล: <a href="mailto:{{ \App\Support\ContactLinks::email() }}" class="text-primary-600 dark:text-primary-400 hover:underline">{{ \App\Support\ContactLinks::email() }}</a></p>
                 <p class="text-gray-600 dark:text-gray-300">เว็บไซต์: {{ url('/') }}</p>
             </div>
 

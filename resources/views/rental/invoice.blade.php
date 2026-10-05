@@ -143,7 +143,7 @@
                     @php
                         $invPhone = \App\Models\Setting::getValue('contact_phone', '080-6038278');
                         $invPhoneName = \App\Models\Setting::getValue('contact_phone_name', 'คุณกรณิภา');
-                        $invEmail = \App\Models\Setting::getValue('contact_email', 'xjanovax@gmail.com');
+                        $invEmail = \App\Support\ContactLinks::email();
                         $invFbName = \App\Models\Setting::getValue('contact_facebook_name', 'XMAN Enterprise');
                         $invLineId = \App\Models\Setting::getValue('contact_line_id', '@xmanstudio');
                     @endphp

@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\WebsiteKnowledgeService;
 use App\Support\AdminAlerts;
+use App\Support\ContactLinks;
 use Throwable;
 
 /**
@@ -211,7 +212,7 @@ INTENT;
 
         $contact = array_filter([
             'โทรศัพท์' => trim((string) Setting::getValue('contact_phone', '')) . (Setting::getValue('contact_phone_name', '') ? ' (' . Setting::getValue('contact_phone_name', '') . ')' : ''),
-            'อีเมล' => Setting::getValue('contact_email', ''),
+            'อีเมล' => ContactLinks::email(),
             'Facebook' => Setting::getValue('contact_facebook_name', ''),
             'LINE OA' => Setting::getValue('contact_line_id', ''),
             'YouTube' => Setting::getValue('contact_youtube_name', ''),

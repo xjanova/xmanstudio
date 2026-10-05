@@ -425,7 +425,7 @@
                     @php
                         $footerPhone = \App\Models\Setting::getValue('contact_phone', '080-6038278');
                         $footerPhoneName = \App\Models\Setting::getValue('contact_phone_name', 'คุณกรณิภา');
-                        $footerEmail = \App\Models\Setting::getValue('contact_email', 'xjanovax@gmail.com');
+                        $footerEmail = \App\Support\ContactLinks::email();
                         $footerFbName = \App\Models\Setting::getValue('contact_facebook_name', 'XMAN Enterprise');
                         $footerLineId = \App\Models\Setting::getValue('contact_line_id', '@xmanstudio');
                     @endphp

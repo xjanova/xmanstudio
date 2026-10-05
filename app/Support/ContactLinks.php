@@ -13,6 +13,27 @@ use App\Models\Setting;
  */
 class ContactLinks
 {
+    /** The support mailbox on our own domain; DirectAdmin forwards it to the owner's inbox. */
+    public const DEFAULT_EMAIL = 'support@xman4289.com';
+
+    /**
+     * The address customers write to: the one set at /admin/contact-settings, or the support
+     * mailbox. Pages used to fall back to a personal Gmail, the legal pages to an
+     * xmanstudio.com address the studio never owned, and the blocked-IP page to the
+     * no-reply sender, which has no mailbox at all.
+     */
+    public static function email(): string
+    {
+        try {
+            $email = trim((string) Setting::getValue('contact_email', ''));
+        } catch (\Throwable) {
+            // Settings unreachable (mid-migration, cache down): a contact line must still render.
+            $email = '';
+        }
+
+        return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : self::DEFAULT_EMAIL;
+    }
+
     /**
      * Channels that have an address, in display order.
      *

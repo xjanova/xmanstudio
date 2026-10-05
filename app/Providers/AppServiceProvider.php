@@ -18,9 +18,11 @@ use App\Models\RentalPackage;
 use App\Models\Service;
 use App\Observers\AiCreditOrderObserver;
 use App\Services\AiChat\KnowledgeVersion;
+use App\Support\ContactLinks;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -164,6 +166,15 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Exception $e) {
             // Database may not be available during migrations
         }
+
+        // Mail goes out from a no-reply address that has no mailbox, so a customer answering
+        // an order or quote e-mail got a bounce. Replies go to support instead — unless the
+        // message names its own Reply-To, as the contact form does with the visitor.
+        Event::listen(MessageSending::class, function (MessageSending $event) {
+            if ($event->message->getReplyTo() === []) {
+                $event->message->replyTo(ContactLinks::email());
+            }
+        });
     }
 
     protected function configureRateLimiting(): void
