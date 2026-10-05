@@ -6,8 +6,13 @@ ErrorDocument 404 /404.html
 # origin-side redirect can loop. Same as the other xman4289 static sites.
 
 <IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+
   # HTML and Next's RSC payloads (.txt) are the map to everything else —
-  # never serve them stale.
+  # never serve them stale. Covers the demos' index.html under /play/ too.
   <FilesMatch "\.(html|txt)$">
     Header set Cache-Control "no-cache, must-revalidate, max-age=0"
   </FilesMatch>
@@ -16,4 +21,18 @@ ErrorDocument 404 /404.html
   <If "%{REQUEST_URI} =~ m#^/_next/static/#">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </If>
+  # Nova's stills/clips carry ?v= (CLIP_V in src/components/nova/clips.ts) —
+  # bump it when a file is replaced under the same name: Cloudflare keys on the URL.
+  <If "%{REQUEST_URI} =~ m#^/nova/#">
+    Header set Cache-Control "public, max-age=2592000"
+  </If>
+  # Game art has no version stamp: keep it short so a replaced picture shows within a day.
+  <If "%{REQUEST_URI} =~ m#^/art/#">
+    Header set Cache-Control "public, max-age=86400"
+  </If>
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType video/webm .webm
+  AddType image/webp .webp
 </IfModule>
