@@ -35,7 +35,9 @@
                     <li><a href="{{ config('services.aixman.site_url') }}/gallery" target="_blank" rel="noopener noreferrer">XDreamer Gallery</a></li>
                     <li><a href="{{ route('code-academy') }}">Code Academy</a></li>
                     <li><a href="{{ route('metal-x.index') }}">Metal-X Project</a></li>
-                    <li><a href="{{ config('app.product_site_url') }}" target="_blank" rel="noopener noreferrer">BrainX</a></li>
+                    <li><a href="{{ config('app.xgameshub_url') }}" target="_blank" rel="noopener noreferrer">XMAN Games Hub</a></li>
+                    {{-- Same list as partials/nova-footer: BrainX has its own page on the product site. --}}
+                    <li><a href="{{ rtrim(config('app.product_site_url'), '/') }}/brainx.html" target="_blank" rel="noopener noreferrer">BrainX</a></li>
                 </ul>
             </div>
 

@@ -142,6 +142,10 @@ return [
 
     'product_site_url' => env('PRODUCT_SITE_URL', 'https://product.xman4289.com'),
 
+    // XMAN GAMES HUB, the studio's 3D games site (its own repo, xjanova/XgamesHub).
+    // Linked from every theme's main menu and footer next to the product site.
+    'xgameshub_url' => env('XGAMESHUB_URL', 'https://xgameshub.xman4289.com'),
+
     /*
     |--------------------------------------------------------------------------
     | Maintenance Mode Driver

@@ -274,8 +274,11 @@
                         <a href="{{ config('app.product_site_url') }}" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('products*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             <x-bi th="ผลิตภัณฑ์" en="Products" layout="stack" />
                         </a>
+                        <a href="{{ config('app.xgameshub_url') }}" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 text-indigo-200 hover:text-white hover:bg-white/5">
+                            <x-bi th="เกม" en="XgamesHub" layout="stack" />
+                        </a>
                         <a href="/rental" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('rental*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
-                            <x-bi th="เช่าบริการ" en="Rentals" layout="stack" />
+                            <x-bi th="เช่าใช้งาน" en="Rentals" layout="stack" />
                         </a>
                         <a href="/domains" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('domains*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             <x-bi th="จดโดเมน" en="Domains" layout="stack" />
@@ -286,7 +289,7 @@
                         <a href="/portfolio" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('portfolio*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             <x-bi th="ผลงาน" en="Portfolio" layout="stack" />
                         </a>
-                        <a href="/support" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('support*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
+                        <a href="{{ route('quote.index') }}" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('quote*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
                             <x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" layout="stack" />
                         </a>
                         <a href="/tracking" class="premium-nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 {{ request()->is('tracking*') ? 'active text-white bg-white/10' : 'text-indigo-200 hover:text-white hover:bg-white/5' }}">
@@ -373,21 +376,11 @@
                     <p class="text-indigo-300/60 mb-4"><x-bi th="ผู้เชี่ยวชาญด้าน IT Solutions ครบวงจร พัฒนาซอฟต์แวร์และบริการเทคโนโลยีสารสนเทศ" en="Your end-to-end IT Solutions experts — software development and information technology services." /></p>
                     <!-- Social Links -->
                     <div class="flex space-x-4">
-                        <a href="https://youtube.com/@metal-xproject" target="_blank" class="p-2 text-indigo-400 hover:text-red-400 hover:bg-white/5 rounded-lg transition-all duration-300">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                            </svg>
-                        </a>
-                        <a href="#" class="p-2 text-indigo-400 hover:text-green-400 hover:bg-white/5 rounded-lg transition-all duration-300">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
-                            </svg>
-                        </a>
-                        <a href="#" class="p-2 text-indigo-400 hover:text-blue-400 hover:bg-white/5 rounded-lg transition-all duration-300">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                            </svg>
-                        </a>
+                        @include('partials.footer-social', [
+                            'linkClass' => 'p-2 text-indigo-400 hover:bg-white/5 rounded-lg transition-all duration-300',
+                            'iconClass' => 'w-5 h-5',
+                            'hovers' => ['facebook' => 'hover:text-blue-400', 'youtube' => 'hover:text-red-400', 'line' => 'hover:text-green-400'],
+                        ])
                     </div>
                 </div>
 
@@ -410,11 +403,12 @@
                     <ul class="space-y-2">
                         <li><a href="/about" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เกี่ยวกับเรา" en="About Us" /></a></li>
                         <li><a href="/team" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ทีมงานและผู้บริหาร" en="Team & Management" /></a></li>
-                        <li><a href="/support" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" /></a></li>
-                        <li><a href="/rental" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เช่าบริการ" en="Rentals" /></a></li>
+                        <li><a href="{{ route('quote.index') }}" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ติดต่อ/สั่งซื้อ" en="Contact / Order" /></a></li>
+                        <li><a href="/rental" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เช่าใช้งาน" en="Rentals" /></a></li>
                         <li><a href="/domains" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="จดโดเมน" en="Domains" /></a></li>
                         <li><a href="/vps" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เช่า VPS" en="VPS hosting" /></a></li>
                         <li><a href="{{ config('app.product_site_url') }}" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ผลิตภัณฑ์" en="Products" /></a></li>
+                        <li><a href="{{ config('app.xgameshub_url') }}" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เกม" en="XgamesHub" /></a></li>
                         <li><a href="/portfolio" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ผลงาน" en="Portfolio" /></a></li>
                     </ul>
 
@@ -482,7 +476,7 @@
                     <div class="flex flex-wrap justify-center space-x-4 md:space-x-6 mt-4 md:mt-0">
                         <a href="/privacy" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors"><x-bi th="นโยบายความเป็นส่วนตัว" en="Privacy Policy" /></a>
                         <a href="/terms" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors"><x-bi th="ข้อกำหนดการใช้งาน" en="Terms of Service" /></a>
-                        <a href="/support" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors"><x-bi th="ติดต่อเรา" en="Contact Us" /></a>
+                        <a href="{{ route('quote.index') }}" class="text-indigo-300/60 hover:text-indigo-200 text-sm transition-colors"><x-bi th="ติดต่อเรา" en="Contact Us" /></a>
                     </div>
                 </div>
             </div>

@@ -78,6 +78,7 @@ class BuildMenuArtCommand extends Command
         'downloads' => ['th' => 'ดาวน์โหลด', 'en' => 'DOWNLOADS'],
         'metalx' => ['th' => 'เมทัล-เอ็กซ์', 'en' => 'METAL-X'],
         'xdreamer' => ['th' => 'เอ็กซ์ดรีมเมอร์', 'en' => 'X-DREAMER'],
+        'xgameshub' => ['th' => 'เกม 3 มิติ', 'en' => 'XGAMES HUB'],
     ];
 
     public function handle(): int

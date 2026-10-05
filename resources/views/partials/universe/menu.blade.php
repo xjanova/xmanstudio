@@ -1,7 +1,7 @@
 {{--
     The command ring — the universe's main menu.
 
-    The same ten destinations as Nova's star menu (HomeContent::menu()), on a
+    The same destinations as Nova's star menu (HomeContent::menu()), on a
     3D ring that spins with the wheel, a drag, the arrow keys or Tab. Every
     item is a real <a>: the ring is presentation, the links are the menu.
     Below it, the account row that the classic layouts carry in their header.
