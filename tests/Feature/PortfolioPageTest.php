@@ -20,7 +20,7 @@ class PortfolioPageTest extends TestCase
 
         foreach (array_merge(PortfolioContent::featured(), PortfolioContent::more()) as $project) {
             $page->assertSee($project['name']);
-            $page->assertSee('href="'.$project['url'].'"', false);
+            $page->assertSee('href="' . $project['url'] . '"', false);
             $this->assertStringStartsWith('https://', $project['url'], $project['id']);
         }
 
@@ -28,8 +28,8 @@ class PortfolioPageTest extends TestCase
         $page->assertDontSee('&amp;amp;', false);
 
         foreach (PortfolioContent::featured() as $project) {
-            $page->assertSee('id="case-'.$project['id'].'"', false);
-            $page->assertSee('href="#case-'.$project['id'].'"', false);
+            $page->assertSee('id="case-' . $project['id'] . '"', false);
+            $page->assertSee('href="#case-' . $project['id'] . '"', false);
         }
     }
 
@@ -39,7 +39,7 @@ class PortfolioPageTest extends TestCase
 
         $this->assertNotEmpty($files);
         foreach ($files as $file) {
-            $this->assertFileExists(public_path('artwork/portfolio/'.$file));
+            $this->assertFileExists(public_path('artwork/portfolio/' . $file));
         }
         $this->assertSame(count($files), count(array_unique($files)), 'a picture is listed twice');
     }
@@ -57,7 +57,7 @@ class PortfolioPageTest extends TestCase
     {
         $this->withoutVite()->get(route('portfolio'))
             ->assertOk()
-            ->assertSee('href="'.route('quote.index').'"', false)
-            ->assertSee('href="'.route('contact.show').'"', false);
+            ->assertSee('href="' . route('quote.index') . '"', false)
+            ->assertSee('href="' . route('contact.show') . '"', false);
     }
 }

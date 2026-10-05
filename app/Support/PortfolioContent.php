@@ -225,7 +225,7 @@ class PortfolioContent
     /** Public URL of a portfolio picture. */
     public static function img(string $file): string
     {
-        return asset('artwork/portfolio/'.$file).'?v='.self::IMG_V;
+        return asset('artwork/portfolio/' . $file) . '?v=' . self::IMG_V;
     }
 
     /** Every picture the page uses — the test checks they all exist. */
