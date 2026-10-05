@@ -70,6 +70,26 @@ class ThemeService
     public const DEFAULT_CUSTOMER_THEME = 'classic';
 
     /**
+     * Themes the admin panel can wear: the two that have an admin layout.
+     *
+     * Chosen at /admin/theme separately from the site theme and the member area's theme
+     * (owner, 2026-10-05). It used to follow the site theme, so Premium on the public site
+     * darkened the admin panel too, and Nova/Retro left it on Classic with no way to change it.
+     */
+    public const ADMIN_THEMES = [
+        'classic' => [
+            'name' => 'Classic',
+            'description' => 'พื้นสว่าง เรียบง่าย อ่านง่าย',
+        ],
+        'premium' => [
+            'name' => 'Premium',
+            'description' => 'พื้นมืด ไล่สี พร้อม animation',
+        ],
+    ];
+
+    public const DEFAULT_ADMIN_THEME = 'classic';
+
+    /**
      * Get site default theme
      */
     public static function getSiteDefaultTheme(): string
@@ -141,13 +161,35 @@ class ThemeService
     }
 
     /**
-     * Get admin layout path based on current theme
+     * The admin panel's theme — the same for every admin, set at /admin/theme (see ADMIN_THEMES).
+     */
+    public static function getAdminTheme(): string
+    {
+        $theme = Cache::remember('admin_theme', 3600, function () {
+            return Setting::getValue('admin_theme', self::DEFAULT_ADMIN_THEME);
+        });
+
+        return array_key_exists($theme, self::ADMIN_THEMES) ? $theme : self::DEFAULT_ADMIN_THEME;
+    }
+
+    public static function setAdminTheme(string $theme): bool
+    {
+        if (! array_key_exists($theme, self::ADMIN_THEMES)) {
+            return false;
+        }
+
+        Setting::setValue('admin_theme', $theme, 'string', 'appearance', 'Admin panel theme');
+        Cache::forget('admin_theme');
+
+        return true;
+    }
+
+    /**
+     * Get admin layout path based on the admin panel's theme (not the site theme)
      */
     public static function getAdminLayout(): string
     {
-        $theme = self::getCurrentTheme();
-
-        return match ($theme) {
+        return match (self::getAdminTheme()) {
             'premium' => 'layouts.admin-premium',
             default => 'layouts.admin',
         };

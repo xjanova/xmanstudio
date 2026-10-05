@@ -1302,6 +1302,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Theme Settings
     Route::get('/theme', [ThemeController::class, 'index'])->name('theme.index');
     Route::put('/theme', [ThemeController::class, 'update'])->name('theme.update');
+    Route::put('/theme/admin', [ThemeController::class, 'updateAdmin'])->name('theme.admin.update');
     Route::put('/theme/customer', [ThemeController::class, 'updateCustomer'])->name('theme.customer.update');
     Route::put('/theme/universe', [ThemeController::class, 'updateUniverse'])->name('theme.universe.update');
 

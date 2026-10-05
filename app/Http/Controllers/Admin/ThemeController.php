@@ -18,11 +18,13 @@ class ThemeController extends Controller
         // override to reconcile against.
         $currentTheme = ThemeService::getSiteDefaultTheme();
         $themes = ThemeService::getAvailableThemes();
+        $adminTheme = ThemeService::getAdminTheme();
+        $adminThemes = ThemeService::ADMIN_THEMES;
         $customerTheme = ThemeService::getCustomerTheme();
         $customerThemes = ThemeService::CUSTOMER_THEMES;
         $universeEnabled = UniverseHome::enabled();
 
-        return view('admin.theme.index', compact('currentTheme', 'themes', 'customerTheme', 'customerThemes', 'universeEnabled'));
+        return view('admin.theme.index', compact('currentTheme', 'themes', 'adminTheme', 'adminThemes', 'customerTheme', 'customerThemes', 'universeEnabled'));
     }
 
     /**
@@ -43,6 +45,26 @@ class ThemeController extends Controller
 
         return redirect()->route('admin.theme.index')
             ->with('error', 'ไม่สามารถเปลี่ยนธีมได้ กรุณาลองใหม่อีกครั้ง');
+    }
+
+    /**
+     * Update the admin panel's theme — separate from the site theme and the member area's theme
+     */
+    public function updateAdmin(Request $request)
+    {
+        $request->validate([
+            'admin_theme' => ['required', 'string', 'in:' . implode(',', array_keys(ThemeService::ADMIN_THEMES))],
+        ]);
+
+        $theme = $request->input('admin_theme');
+
+        if (ThemeService::setAdminTheme($theme)) {
+            return redirect()->route('admin.theme.index')
+                ->with('success', 'หลังบ้านแอดมินใช้ธีม "' . ThemeService::ADMIN_THEMES[$theme]['name'] . '" แล้ว');
+        }
+
+        return redirect()->route('admin.theme.index')
+            ->with('error', 'ไม่สามารถเปลี่ยนธีมหลังบ้านแอดมินได้ กรุณาลองใหม่อีกครั้ง');
     }
 
     /**

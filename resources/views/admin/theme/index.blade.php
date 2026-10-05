@@ -2,7 +2,7 @@
 
 @section('title', 'ตั้งค่าธีม')
 @section('page-title', 'ตั้งค่าธีม')
-@section('page-description', 'เลือกธีมของเว็บไซต์ และธีมหลังบ้านสมาชิก')
+@section('page-description', 'เลือกธีมของเว็บไซต์ ธีมหลังบ้านแอดมิน และธีมหลังบ้านสมาชิก')
 
 @section('content')
 <div class="max-w-5xl mx-auto">
@@ -26,7 +26,7 @@
                         </svg>
                         จัดการธีมระบบ
                     </h1>
-                    <p class="text-white/80 text-lg">กำหนดธีมของเว็บไซต์ และธีมหลังบ้านสมาชิกแยกกัน</p>
+                    <p class="text-white/80 text-lg">กำหนดธีมของเว็บไซต์ หลังบ้านแอดมิน และหลังบ้านสมาชิกแยกกัน</p>
                 </div>
                 <div class="hidden lg:block">
                     <div class="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center shadow-xl">
@@ -76,7 +76,7 @@
                 </svg>
                 <div>
                     <p class="text-sm text-indigo-700 dark:text-indigo-300">
-                        <strong>หมายเหตุ:</strong> ใช้กับทุกคนเหมือนกัน ไม่มีการตั้งธีมรายคน — มีผลกับหน้าเว็บและหน้าแอดมิน · Retro และ Nova เปลี่ยนเฉพาะหน้าแรก หน้าอื่นกับหน้าแอดมินใช้แบบ Classic · หลังบ้านสมาชิกตั้งแยกได้ที่ด้านล่างของหน้านี้
+                        <strong>หมายเหตุ:</strong> ใช้กับทุกคนเหมือนกัน ไม่มีการตั้งธีมรายคน — มีผลกับหน้าเว็บเท่านั้น · Retro และ Nova เปลี่ยนเฉพาะหน้าแรก หน้าอื่นใช้แบบ Classic · หลังบ้านแอดมินและหลังบ้านสมาชิกตั้งแยกได้ที่ด้านล่างของหน้านี้
                     </p>
                 </div>
             </div>
@@ -317,6 +317,68 @@
         </div>
     </form>
 
+    <!-- Admin Panel Theme — ตั้งแยกจากธีมเว็บไซต์ เปลี่ยนธีมหน้าเว็บแล้วหลังบ้านแอดมินต้องไม่เปลี่ยนตาม (เจ้าของ 2026-10-05) -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-12 animate-fade-in" style="animation-delay: 0.55s;">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">ธีมหลังบ้านแอดมิน</h2>
+                <p class="text-gray-500 dark:text-gray-400">หน้าแอดมินทุกหน้าใช้ธีม <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $adminThemes[$adminTheme]['name'] }}</span> — ไม่เปลี่ยนตามธีมของเว็บไซต์</p>
+            </div>
+        </div>
+
+        <form action="{{ route('admin.theme.admin.update') }}" method="POST" id="adminThemeForm">
+            @csrf
+            @method('PUT')
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                @foreach($adminThemes as $optionKey => $option)
+                    <label class="theme-card group cursor-pointer">
+                        <input type="radio" name="admin_theme" value="{{ $optionKey }}"
+                               class="sr-only peer"
+                               {{ $adminTheme === $optionKey ? 'checked' : '' }}>
+
+                        <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
+                                    {{ $adminTheme === $optionKey ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                    peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
+                                    hover:border-indigo-400">
+                            <!-- ภาพย่อหลังบ้านแอดมิน: เมนูข้างสีเข้ม + การ์ดสถิติ -->
+                            <div class="flex w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 {{ $optionKey === 'premium' ? 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900' : 'bg-gray-100' }}">
+                                <div class="w-6 {{ $optionKey === 'premium' ? 'bg-gradient-to-b from-indigo-950 to-purple-900' : 'bg-gray-900' }}"></div>
+                                <div class="flex-1 p-1.5 space-y-1">
+                                    <div class="grid grid-cols-3 gap-0.5">
+                                        <div class="h-3 rounded-sm {{ $optionKey === 'premium' ? 'bg-emerald-400/60' : 'bg-white border border-gray-200' }}"></div>
+                                        <div class="h-3 rounded-sm {{ $optionKey === 'premium' ? 'bg-blue-400/60' : 'bg-white border border-gray-200' }}"></div>
+                                        <div class="h-3 rounded-sm {{ $optionKey === 'premium' ? 'bg-purple-400/60' : 'bg-white border border-gray-200' }}"></div>
+                                    </div>
+                                    <div class="h-5 rounded {{ $optionKey === 'premium' ? 'bg-white/10' : 'bg-white border border-gray-200' }}"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900 dark:text-white">{{ $option['name'] }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $option['description'] }}</p>
+                            </div>
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="group inline-flex items-center px-8 py-4 border border-transparent text-base font-bold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    บันทึกธีมหลังบ้านแอดมิน
+                </button>
+            </div>
+        </form>
+    </div>
+
     <!-- Member Area Theme — ตั้งแยกจากธีมเว็บไซต์ เปลี่ยนธีมหน้าเว็บแล้วหลังบ้านของลูกค้าต้องไม่เปลี่ยนตาม (เจ้าของ 2026-09-24) -->
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-12 animate-fade-in" style="animation-delay: 0.6s;">
         <div class="flex items-center gap-4 mb-6">
@@ -477,6 +539,14 @@
 /* Theme card selection animation */
 .theme-card input[type="radio"]:checked + div {
     animation: selectPulse 0.3s ease-out;
+}
+
+/* The selected card's border and ring. admin-premium's own .bg-white / .shadow-lg rules sit outside
+   Tailwind's cascade layers, so they beat peer-checked:border-indigo-500 / ring-4 and every card
+   there looked unselected. */
+.theme-card input[type="radio"]:checked + div {
+    border-color: rgb(99 102 241) !important;
+    box-shadow: 0 0 0 4px rgb(99 102 241 / 0.3), 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
 }
 
 @keyframes selectPulse {
