@@ -33,6 +33,20 @@ class PortfolioPageTest extends TestCase
         }
     }
 
+    public function test_the_mobile_apps_are_shown_with_their_real_screens(): void
+    {
+        $page = $this->withoutVite()->get(route('portfolio'))->assertOk();
+
+        $page->assertSee('id="apps"', false);
+        foreach (PortfolioContent::apps() as $app) {
+            $page->assertSee($app['name']);
+            $this->assertNotEmpty($app['screens'], $app['id']);
+            foreach (array_slice($app['screens'], 0, 3) as $screen) {
+                $page->assertSee('artwork/portfolio/' . $screen['file'], false);
+            }
+        }
+    }
+
     public function test_every_picture_is_a_file_that_ships_with_the_site(): void
     {
         $files = PortfolioContent::files();

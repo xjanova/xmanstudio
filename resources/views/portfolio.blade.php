@@ -1,11 +1,12 @@
 @extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'ผลงานจริงของเรา - XMAN Studio')
-@section('meta_description', 'ผลงานที่เปิดใช้งานจริงของ XMAN Studio — ซูเปอร์แอป Thai Prompt, เว็บบริษัทกอย่งเชียงกรุ๊ป, ลูกโลกสภาพอากาศ ATMOS 3D, บล็อกเชนและกระดานเทรด TPIX และอีกมาก ภาพทั้งหมดแคปจากเว็บจริง')
+@section('meta_description', 'ผลงานที่เปิดใช้งานจริงของ XMAN Studio — ซูเปอร์แอป Thai Prompt, เว็บบริษัทกอย่งเชียงกรุ๊ป, ลูกโลกสภาพอากาศ ATMOS 3D, บล็อกเชนและกระดานเทรด TPIX, GenLotto Lab และแอปมือถือที่เราสร้าง ภาพทั้งหมดแคปจากหน้าจอจริง')
 
 @php
     $featured = \App\Support\PortfolioContent::featured();
     $more = \App\Support\PortfolioContent::more();
+    $apps = \App\Support\PortfolioContent::apps();
     $img = fn (string $file) => \App\Support\PortfolioContent::img($file);
     $liveCount = count($featured) + count($more);
 @endphp
@@ -61,8 +62,27 @@
     .pf-card-img { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
     .pf-grid-bg { background-image: linear-gradient(rgba(150, 170, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(150, 170, 255, 0.05) 1px, transparent 1px); background-size: 48px 48px; }
     .pf .bi-en { opacity: 0.6; }
+    /* mobile apps: three real screens fanned on a phone stage */
+    .pf-app { border: 1px solid rgba(255, 255, 255, 0.09); background: linear-gradient(180deg, rgba(20, 23, 44, 0.92), rgba(8, 9, 20, 0.96)); transition: border-color 0.3s, box-shadow 0.3s; }
+    .pf-app:hover { border-color: color-mix(in srgb, var(--a) 45%, transparent); box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.9), 0 0 60px -24px var(--a); }
+    .pf-app-stage { position: relative; height: 400px; overflow: hidden; background: radial-gradient(ellipse 70% 80% at 50% 25%, color-mix(in srgb, var(--a2) 70%, transparent), transparent 72%), radial-gradient(ellipse 40% 40% at 50% 70%, color-mix(in srgb, var(--a) 22%, transparent), transparent 70%); }
+    .pf-app-stage::after { content: ""; position: absolute; inset: auto 0 0; height: 30%; background: linear-gradient(0deg, rgba(10, 11, 24, 0.98), transparent); pointer-events: none; z-index: 5; }
+    .pf-app-phone {
+        position: absolute; left: 50%; top: 9%; width: min(38%, 212px); aspect-ratio: 390 / 844; border-radius: 28px; padding: 5px; margin: 0;
+        background: linear-gradient(160deg, #2c3148, #0b0d16);
+        box-shadow: 0 34px 60px -24px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08);
+        transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .pf-app-phone img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; border-radius: 23px; }
+    .pf-app-phone.pos-0 { z-index: 3; transform: translateX(-50%); box-shadow: 0 34px 60px -24px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 50px -16px var(--a); }
+    .pf-app-phone.pos-1 { z-index: 2; transform: translateX(-122%) translateY(7%) rotate(-8deg) scale(0.88); }
+    .pf-app-phone.pos-2 { z-index: 1; transform: translateX(22%) translateY(7%) rotate(8deg) scale(0.88); }
+    .pf-app:hover .pf-app-phone.pos-0 { transform: translateX(-50%) translateY(-4%); }
+    .pf-app:hover .pf-app-phone.pos-1 { transform: translateX(-132%) translateY(5%) rotate(-11deg) scale(0.88); }
+    .pf-app:hover .pf-app-phone.pos-2 { transform: translateX(32%) translateY(5%) rotate(11deg) scale(0.88); }
+    @media (max-width: 640px) { .pf-app-stage { height: 330px; } }
     @media (prefers-reduced-motion: reduce) {
-        .pf-browser, .pf-phone, .pf-card, .pf-card-img, .pf-btn { transition: none; }
+        .pf-browser, .pf-phone, .pf-card, .pf-card-img, .pf-btn, .pf-app-phone { transition: none; }
         .pf-live::before { animation: none; }
     }
 </style>
@@ -87,20 +107,24 @@
             </h1>
             <p class="mt-3 text-lg md:text-xl text-gray-400 font-medium">Real work, live right now.</p>
             <p class="mt-6 text-base md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                ทุกชิ้นด้านล่างคือเว็บที่เปิดใช้งานจริง กดเข้าไปดูได้ทุกตัว — ภาพทั้งหมดแคปจากหน้าจอจริง ไม่ใช่ภาพจำลอง
-                <span class="block text-sm text-gray-500 mt-1">Every project below is online — every picture is a real capture, not a mock-up.</span>
+                ทุกชิ้นด้านล่างคือเว็บและแอปที่เราสร้างและใช้งานจริง — ภาพทั้งหมดแคปจากหน้าจอจริง ไม่ใช่ภาพจำลอง
+                <span class="block text-sm text-gray-500 mt-1">Every site and app below is real and in use — every picture is a real capture, not a mock-up.</span>
             </p>
 
-            <div class="mt-10 grid grid-cols-3 max-w-2xl mx-auto rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm divide-x divide-white/10">
-                <div class="py-5 px-2">
+            <div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-px max-w-3xl mx-auto rounded-2xl overflow-hidden border border-white/10 bg-white/10 backdrop-blur-sm">
+                <div class="py-5 px-2 bg-[#0b0d1a]">
                     <div class="text-3xl md:text-4xl font-extrabold">{{ str_pad((string) $liveCount, 2, '0', STR_PAD_LEFT) }}</div>
                     <div class="mt-1 text-xs md:text-sm text-gray-400"><x-bi th="เว็บที่ใช้งานจริง" en="Live sites" layout="stack" /></div>
                 </div>
-                <div class="py-5 px-2">
+                <div class="py-5 px-2 bg-[#0b0d1a]">
+                    <div class="text-3xl md:text-4xl font-extrabold">{{ str_pad((string) count($apps), 2, '0', STR_PAD_LEFT) }}</div>
+                    <div class="mt-1 text-xs md:text-sm text-gray-400"><x-bi th="แอปมือถือ" en="Mobile apps" layout="stack" /></div>
+                </div>
+                <div class="py-5 px-2 bg-[#0b0d1a]">
                     <div class="text-3xl md:text-4xl font-extrabold">{{ str_pad((string) count($featured), 2, '0', STR_PAD_LEFT) }}</div>
                     <div class="mt-1 text-xs md:text-sm text-gray-400"><x-bi th="กรณีศึกษาเต็ม" en="Case studies" layout="stack" /></div>
                 </div>
-                <div class="py-5 px-2">
+                <div class="py-5 px-2 bg-[#0b0d1a]">
                     <div class="text-3xl md:text-4xl font-extrabold">100%</div>
                     <div class="mt-1 text-xs md:text-sm text-gray-400"><x-bi th="ภาพจากหน้าจอจริง" en="Real screenshots" layout="stack" /></div>
                 </div>
@@ -112,6 +136,7 @@
                         <span class="w-2 h-2 rounded-full" style="background: {{ $p['accent'] }}"></span>{{ $p['name'] }}
                     </a>
                 @endforeach
+                <a href="#apps" class="pf-chip hover:border-white/30 hover:text-white transition-colors"><x-bi th="แอปมือถือ" en="Apps" /> ↓</a>
                 <a href="#more-work" class="pf-chip hover:border-white/30 hover:text-white transition-colors"><x-bi th="ผลงานอื่น" en="More" /> ↓</a>
             </nav>
         </div>
@@ -217,6 +242,67 @@
             </div>
         </section>
     @endforeach
+
+    {{-- ================================================================ mobile apps --}}
+    @if (count($apps))
+        <section id="apps" class="relative py-16 md:py-24 scroll-mt-20 border-t border-white/5" aria-labelledby="apps-title">
+            <div class="pf-glow w-[700px] h-[420px] left-1/2 -translate-x-1/2 top-10 bg-violet-700/20"></div>
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto">
+                    <span class="pf-mono text-xs tracking-[0.25em] text-gray-400">MOBILE APPS</span>
+                    <h2 id="apps-title" class="mt-3 text-3xl md:text-5xl font-extrabold tracking-tight"><x-bi th="แอปมือถือที่เราสร้าง" en="Mobile apps we built" layout="stack" /></h2>
+                    <p class="mt-4 text-gray-300">ออกแบบและเขียนเองทุกหน้าจอ — ภาพด้านล่างแคปจากหน้าจอของแอปจริง</p>
+                    <p class="mt-1 text-sm text-gray-500">Designed and built in-house — every screen below is captured from the real app.</p>
+                </div>
+                <div class="mt-12 grid lg:grid-cols-2 gap-8">
+                    @foreach ($apps as $a)
+                        <article class="pf-app rounded-3xl overflow-hidden flex flex-col" style="--a: {{ $a['accent'] }}; --a2: {{ $a['accent2'] }}" aria-labelledby="app-title-{{ $a['id'] }}">
+                            <div class="pf-app-stage">
+                                @foreach (array_slice($a['screens'], 0, 3) as $k => $sc)
+                                    <figure class="pf-app-phone pos-{{ $k }}">
+                                        <img src="{{ $img($sc['file']) }}" width="540" height="1169" loading="lazy" decoding="async"
+                                             alt="{{ $a['name'] }} — {{ $sc['th'] }} (ภาพหน้าจอแอปจริง)">
+                                    </figure>
+                                @endforeach
+                            </div>
+                            <div class="relative z-10 -mt-10 p-6 md:p-8 flex flex-col flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="pf-chip pf-tag"><x-bi :th="$a['type_th']" :en="$a['type_en']" /></span>
+                                    @foreach ($a['platforms'] as $pl)
+                                        <span class="pf-chip pf-mono text-[11px]">{{ $pl }}</span>
+                                    @endforeach
+                                </div>
+                                <h3 id="app-title-{{ $a['id'] }}" class="mt-4 text-3xl font-extrabold tracking-tight">{{ $a['name'] }}</h3>
+                                <p class="mt-3 text-gray-200 leading-relaxed">{{ $a['summary_th'] }}</p>
+                                <p class="mt-1 text-sm text-gray-500">{{ $a['summary_en'] }}</p>
+                                <ul class="mt-5 grid sm:grid-cols-2 gap-x-4 gap-y-2">
+                                    @foreach ($a['features'] as $f)
+                                        <li class="flex gap-2 text-sm text-gray-300">
+                                            <svg class="w-4 h-4 mt-0.5 flex-none pf-accent" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            <span>{{ $f }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <div class="mt-5 flex flex-wrap gap-2">
+                                    @foreach ($a['stack'] as $t)
+                                        <span class="pf-chip pf-mono text-[11px]">{{ $t }}</span>
+                                    @endforeach
+                                </div>
+                                <p class="mt-4 text-xs text-gray-500">
+                                    <x-bi th="หน้าจอที่แสดง" en="Screens shown" />: {{ collect(array_slice($a['screens'], 0, 3))->pluck('th')->implode(' · ') }}
+                                </p>
+                                @if (! empty($a['link']))
+                                    <div class="mt-auto pt-6">
+                                        <a href="{{ $a['link']['href'] }}" target="_blank" rel="noopener" class="pf-btn pf-btn-ghost"><x-bi :th="$a['link']['th']" :en="$a['link']['en']" /> ↗</a>
+                                    </div>
+                                @endif
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
 
     {{-- ================================================================ more work --}}
     <section id="more-work" class="relative py-16 md:py-24 scroll-mt-20 border-t border-white/5">
