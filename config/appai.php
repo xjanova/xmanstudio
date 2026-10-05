@@ -60,4 +60,21 @@ return [
     |
     */
     'enabled' => filter_var(env('APP_AI_ENABLED', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Free keys need an account
+    |--------------------------------------------------------------------------
+    |
+    | check-machine hands a FREE key to any device that asks, so a free key on
+    | its own proves nothing about who is spending our AI budget - anyone can
+    | mint as many as they like, each with its own daily quota. A free key only
+    | reaches the proxy once a signed-in account has claimed it at /giggok/link,
+    | which ties the spending to a person we can switch off.
+    |
+    | Paid keys are unaffected. Set APP_AI_FREE_NEEDS_ACCOUNT=false to let
+    | unlinked free devices in (e.g. for a promotion).
+    |
+    */
+    'free_needs_account' => filter_var(env('APP_AI_FREE_NEEDS_ACCOUNT', true), FILTER_VALIDATE_BOOL),
 ];

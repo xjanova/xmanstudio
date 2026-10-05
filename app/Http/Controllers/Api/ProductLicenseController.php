@@ -50,6 +50,31 @@ class ProductLicenseController extends Controller
     ];
 
     /**
+     * Freemium apps: check-machine hands every new device a FREE license instead of answering
+     * "no license", so the app works on first launch without a key.
+     *
+     * GigGok (2026-10-05): the app itself is free; what is sold are avatar packs, owned per account
+     * through the pack store. Its license key is how the app identifies itself to /api/packs.
+     */
+    private const FREEMIUM_PRODUCTS = [
+        'localvpn',
+        'giggok',
+    ];
+
+    /**
+     * Features per license type where a product differs from the defaults in getFeaturesByType().
+     *
+     * GigGok's free license is the whole app — nothing is held back for a paid tier, so it must not
+     * report the demo set ('trial_mode'). LocalVPN is deliberately absent: its app still reads the
+     * default set for 'free'.
+     */
+    private const PRODUCT_FEATURES = [
+        'giggok' => [
+            'free' => ['all_features', 'pack_store', 'in_app_updates'],
+        ],
+    ];
+
+    /**
      * Get product by slug or fail
      */
     private function getProduct(string $productSlug): ?Product
@@ -838,9 +863,9 @@ class ProductLicenseController extends Controller
         }
 
         if (! $license) {
-            // LocalVPN freemium: auto-create a free license for new devices.
+            // Freemium (LocalVPN, GigGok): auto-create a free license for new devices.
             // Use firstOrCreate to prevent duplicates from concurrent requests.
-            if ($productSlug === 'localvpn') {
+            if (in_array($productSlug, self::FREEMIUM_PRODUCTS, true)) {
                 $license = LicenseKey::firstOrCreate(
                     [
                         'product_id' => $product->id,
@@ -1085,6 +1110,10 @@ class ProductLicenseController extends Controller
      */
     private function getFeaturesByType(string $productSlug, string $type): array
     {
+        if (isset(self::PRODUCT_FEATURES[$productSlug][$type])) {
+            return self::PRODUCT_FEATURES[$productSlug][$type];
+        }
+
         // Default features - can be customized per product
         $baseFeatures = [
             'demo' => ['basic_features', 'trial_mode'],

@@ -52,6 +52,14 @@ class AppAiController extends Controller
             return $this->fail('Invalid or expired license.', 401);
         }
 
+        // A free key is minted for any device that asks, so it says nothing
+        // about who pays for the tokens. See config/appai.php.
+        if ($license->license_type === LicenseKey::TYPE_FREE
+            && $license->user_id === null
+            && config('appai.free_needs_account', true)) {
+            return $this->fail('Link this device to your account first: xman4289.com/giggok/link', 403);
+        }
+
         $data = $request->validate([
             'messages' => 'required|array|min:1|max:' . config('appai.max_messages', 40),
             'messages.*.role' => 'required|string|in:system,user,assistant',

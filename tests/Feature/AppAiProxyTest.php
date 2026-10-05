@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\AppAiUsage;
-use App\Models\Category;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\User;
@@ -43,22 +42,8 @@ class AppAiProxyTest extends TestCase
             'appai.daily_limit' => 3,
         ]);
 
-        $category = Category::create([
-            'name' => 'Apps',
-            'slug' => 'apps',
-            'description' => 'Apps',
-        ]);
-
-        $this->appProduct = Product::create([
-            'category_id' => $category->id,
-            'name' => 'GigGok',
-            'slug' => 'giggok',
-            'description' => 'GigGok',
-            'price' => 0,
-            'stock' => 0,
-            'requires_license' => true,
-            'is_active' => true,
-        ]);
+        // A migration registers the app as a product (free, requires_license) — the same row production has
+        $this->appProduct = Product::where('slug', 'giggok')->sole();
     }
 
     protected function makeLicense(?Product $product = null): LicenseKey
@@ -161,6 +146,45 @@ class AppAiProxyTest extends TestCase
 
         // Otherwise a licence bought for any product spends our AI budget.
         $this->ask($this->makeLicense($other)->license_key)->assertStatus(401);
+    }
+
+    protected function makeFreeLicense(bool $linked): LicenseKey
+    {
+        return LicenseKey::create([
+            'product_id' => $this->appProduct->id,
+            'user_id' => $linked ? User::factory()->create()->id : null,
+            'license_key' => 'FREE-' . strtoupper(uniqid()),
+            'license_type' => LicenseKey::TYPE_FREE,
+            'status' => 'active',
+            'expires_at' => null,
+        ]);
+    }
+
+    public function test_an_unlinked_free_key_cannot_spend_the_ai_budget(): void
+    {
+        $this->fakeAi();
+
+        // Any device can mint one of these through check-machine.
+        $this->ask($this->makeFreeLicense(false)->license_key)
+            ->assertStatus(403)
+            ->assertJsonPath('error.message', 'Link this device to your account first: xman4289.com/giggok/link');
+
+        $this->assertDatabaseCount('app_ai_usages', 0);
+    }
+
+    public function test_a_free_key_claimed_by_an_account_can_use_the_assistant(): void
+    {
+        $this->fakeAi('สวัสดีค่ะ');
+
+        $this->ask($this->makeFreeLicense(true)->license_key)->assertOk();
+    }
+
+    public function test_the_account_requirement_can_be_switched_off(): void
+    {
+        $this->fakeAi('สวัสดีค่ะ');
+        config(['appai.free_needs_account' => false]);
+
+        $this->ask($this->makeFreeLicense(false)->license_key)->assertOk();
     }
 
     public function test_a_valid_license_gets_an_openai_shaped_answer(): void

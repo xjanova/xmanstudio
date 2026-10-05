@@ -98,6 +98,7 @@ use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainOrderController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\FaviconController;
+use App\Http\Controllers\GigGokController;
 use App\Http\Controllers\GpuNodeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvoiceController;
@@ -1615,6 +1616,27 @@ Route::prefix('apps/aipray')->name('aipray.')->group(function () {
     Route::get('/donate', [AiprayController::class, 'donate'])->name('donate');
     Route::post('/donate', [AiprayController::class, 'storeDonation'])->name('donate.store');
     Route::post('/donation/confirm', [AiprayController::class, 'donationComplete'])->name('donation.confirm');
+});
+
+// ==================== GigGok (Android) ====================
+// แอปฟรี หน้าสินค้าคือ /products/giggok · ผูกกับ giggok ตายตัว ห้ามทำเป็น {slug}
+// (จะเปิดให้โหลดสินค้าตัวอื่นที่ต้องซื้อก่อนได้ฟรี)
+Route::prefix('giggok')->name('giggok.')->group(function () {
+    // APK ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) ไม่ต้องล็อกอิน — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
+    // {version} = ตัวนั้นเป๊ะ ๆ ที่ตัวอัปเดตในแอปได้จาก update/check · ไม่ใส่ = ตัวล่าสุด
+    Route::get('/download/{version?}', [GigGokController::class, 'download'])
+        ->where('version', '[0-9A-Za-z.\-]+')
+        ->middleware('throttle:30,1,giggok-download')
+        ->name('download');
+
+    // ผูก License ของเครื่องกับบัญชี — ชุดตัวมายด์ที่ซื้อบนเว็บจึงขึ้นในแอป (PackController อ่าน license_keys.user_id)
+    Route::middleware('auth')->group(function () {
+        Route::get('/link', [GigGokController::class, 'showLink'])->name('link');
+        // คีย์สุ่ม 20 ตัว เดาไม่ได้อยู่แล้ว แต่ไม่มีเหตุให้ใครส่งฟอร์มนี้ถี่ ๆ
+        Route::post('/link', [GigGokController::class, 'link'])
+            ->middleware('throttle:10,10,giggok-link')
+            ->name('link.store');
+    });
 });
 
 // ==================== KYC (ยืนยันตัวตน) ====================

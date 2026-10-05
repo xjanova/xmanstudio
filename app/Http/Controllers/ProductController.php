@@ -166,6 +166,8 @@ class ProductController extends Controller
             'sms-payment-checker' => 'products.smspaymentchecker',
             // BrainX Cloud — the BrainX app links here to buy and to renew
             'brainx' => 'products.brainx',
+            // GigGok — a free app: a public APK download, not the generic page's ฿0 cart and Windows requirements
+            'giggok' => 'products.giggok',
         ];
 
         if (isset($customViews[$slug])) {
