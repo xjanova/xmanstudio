@@ -1,7 +1,7 @@
 @extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'ผลงานจริงของเรา - XMAN Studio')
-@section('meta_description', 'ผลงานที่เปิดใช้งานจริงของ XMAN Studio — ซูเปอร์แอป Thai Prompt, เว็บบริษัทกอย่งเชียงกรุ๊ป, ลูกโลกสภาพอากาศ ATMOS 3D, บล็อกเชนและกระดานเทรด TPIX, GenLotto Lab และแอปมือถือที่เราสร้าง ภาพทั้งหมดแคปจากหน้าจอจริง')
+@section('meta_description', 'ผลงานที่เปิดใช้งานจริงของ XMAN Studio — ซูเปอร์แอป Thai Prompt, เว็บบริษัทกอย่งเชียงกรุ๊ป, ลูกโลกสภาพอากาศ ATMOS 3D, บล็อกเชนและกระดานเทรด TPIX, GenLotto Lab, AquaChord และแอปมือถือที่เราสร้าง ภาพทั้งหมดแคปจากหน้าจอจริง')
 
 @php
     $featured = \App\Support\PortfolioContent::featured();

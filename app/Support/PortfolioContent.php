@@ -194,6 +194,39 @@ class PortfolioContent
                 'mobile' => 'genlotto-mobile.webp',
                 'links' => [],
             ],
+            [
+                'id' => 'aquachord',
+                'name' => 'AquaChord',
+                'url' => 'https://aquachord.online',
+                'domain' => 'aquachord.online',
+                'accent' => '#3df5d0',
+                'accent2' => '#4c1d95',
+                'type_th' => 'แกะคอร์ดเพลงด้วย AI',
+                'type_en' => 'AI chord studio',
+                'client_th' => 'ผลงานของ XMAN Studio — ใช้ฟรีบนเบราว์เซอร์ ติดตั้งเป็นแอปได้',
+                'client_en' => 'An XMAN Studio build — free in the browser, installable as an app',
+                'summary_th' => 'เลือกไฟล์เพลงแล้วให้ AI แกะคอร์ดและเนื้อร้องให้ วิเคราะห์ในเครื่องผู้ใช้ทั้งหมด ไม่อัปโหลดเสียงขึ้นเซิร์ฟเวอร์ ใช้ออฟไลน์ได้ มีน้อง Aqua เป็นไกด์',
+                'summary_en' => 'Pick a song and AI writes out its chords and lyrics, entirely on your device: no upload, works offline.',
+                'built' => [
+                    ['th' => 'ถอดคอร์ดจากไฟล์เสียง จับ BPM ชดเชยจูนเพี้ยน แยกเบส และหาคีย์', 'en' => 'Chords from audio: tempo, tuning offset, bass, key'],
+                    ['th' => 'ถอดเนื้อร้องด้วยโมเดล Whisper ที่รันในเบราว์เซอร์ แล้ววางคอร์ดเหนือคำร้อง', 'en' => 'In-browser Whisper lyrics with chords placed above'],
+                    ['th' => 'แผ่นคอร์ดเปลี่ยนคีย์และคาโป้ได้ เลื่อนอัตโนมัติ ฟังเสียงคอร์ด', 'en' => 'Chord sheets with transpose, capo, autoscroll and playback'],
+                    ['th' => 'ห้องคอร์ด: ท่าจับทุกคอร์ด 12 ราก × 15 ชนิด พร้อมคอร์ดในคีย์', 'en' => 'Chord Lab: every shape, 12 roots × 15 qualities'],
+                    ['th' => 'ไกด์มาสคอตเคลื่อนไหว ลูกแก้วน้ำ WebGL และติดตั้งเป็นแอป (PWA)', 'en' => 'An animated guide, a WebGL water orb, installable PWA'],
+                ],
+                'facts' => [
+                    ['value' => '100%', 'th' => 'วิเคราะห์ในเครื่อง ไม่อัปโหลดเสียง', 'en' => 'On-device, no upload'],
+                    ['value' => '60', 'th' => 'ชนิดคอร์ดที่ถอดได้', 'en' => 'Chord types detected'],
+                    ['value' => 'Offline', 'th' => 'ใช้ได้แม้ไม่มีเน็ต', 'en' => 'Works without a connection'],
+                ],
+                'stack' => ['JavaScript', 'Web Audio DSP', 'Whisper (transformers.js)', 'WebGL', 'PWA'],
+                'images' => [
+                    ['file' => 'aquachord-desktop.webp', 'th' => 'สตูดิโอแกะเพลง', 'en' => 'Studio'],
+                    ['file' => 'aquachord-lab-desktop.webp', 'th' => 'ห้องคอร์ด', 'en' => 'Chord Lab'],
+                ],
+                'mobile' => 'aquachord-mobile.webp',
+                'links' => [],
+            ],
         ];
     }
 
