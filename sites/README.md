@@ -51,27 +51,56 @@ sed -i "s/v=[0-9]\{12\}/v=$(date +%Y%m%d%H%M)/g" sites/product.xman4289.com/inde
 ```
 
 แต่ละหน้า HTML ถือ stamp ของตัวเอง บัมพ์เฉพาะหน้าที่อ้างถึงไฟล์ที่แก้ก็พอ
-(`index.html` → `home.js`, `products.js`; `brainx.html`, `wiki.html` → ของตัวเอง)
+(`index.html` → `hub.css` + `assets/js/hub/*` รวม `xph/shaders` ใน importmap;
+`classic.html` → `home.js`, `products.js`; `brainx.html`, `wiki.html` → ของตัวเอง)
+
+ไฟล์ที่ JS อ้างเองไม่ได้ผ่าน HTML มี stamp ของตัวเอง:
+- รูปสินค้า (`assets/art/`, `assets/shots/`, `assets/img/` ที่ catalog ชี้) → `IMG_V` ใน `assets/js/hub/catalog.js`
+- รูปและคลิปน้อง Nova (`assets/nova/`) → `NOVA_V` ใน `assets/js/hub/guide.js`
+- three.js อยู่ใน `assets/vendor/three-r186/` — **เวอร์ชันอยู่ในชื่อโฟลเดอร์** อัปเกรดเมื่อไหร่ให้สร้างโฟลเดอร์ใหม่
+  แล้วแก้ importmap ใน `index.html` ห้ามเขียนทับไฟล์ชื่อเดิม
 
 ## เว็บที่มีตอนนี้
 
 | โฟลเดอร์ | หน้าเว็บ | เนื้อหา |
 |---|---|---|
-| `product.xman4289.com/` | `index.html` | หน้าแรก — กลุ่มดาวผลิตภัณฑ์ 16 ตัว วาดบน canvas 2D แบบ project เอง ไม่มี lib |
+| `product.xman4289.com/` | `index.html` | **Product Hub** — คอนเซปต์เดียวกับ XgamesHub ธีมซอฟต์แวร์: จักรวาล 3D (three.js) หลังหน้า, สปอตไลต์ที่ "หน้าจอโฮโลแกรม" โชว์ภาพของโปรแกรม, คลังโปรแกรม, release log, สตูดิโอ และ**น้อง Nova** ของ xman4289.com เป็นไกด์ |
+| | `classic.html` | หน้าแรกแบบเก่า (กลุ่มดาว canvas 2D) — **เลิกใช้แล้วแต่เก็บไว้** ไม่มีลิงก์เข้า ตั้ง `noindex` |
 | | `brainx.html` | หน้าขาย BrainX |
 | | `wiki.html` | wiki |
 
-catalogue ของกลุ่มดาวและ grid หน้าแรกอ่านจาก `assets/js/products.js`
-เพิ่มสินค้า = เพิ่มหนึ่งแถวในนั้น ไม่ต้องแตะ layout
+### Product Hub (`index.html`)
 
-แต่ grid สินค้าท้ายหน้า `brainx.html` อ่านสำเนาของตัวเอง — `PRODUCTS` ใน
-`assets/js/site.js` แก้ราคา สถานะ "เร็ว ๆ นี้" หรือคำอธิบายต้องแก้ทั้งสองไฟล์
-และบัมพ์ `?v=` ทั้ง `index.html` และ `brainx.html`
+| ไฟล์ | ทำอะไร |
+|---|---|
+| `assets/js/hub/catalog.js` | **แหล่งข้อมูลเดียว** — สินค้า 16 ตัว (สถานะ/ราคา/แพลตฟอร์ม/ลิงก์/เวอร์ชัน/คำพูดของ Nova), 5 ตัวในสปอตไลต์, release log |
+| `assets/js/hub/app.js` | หน้าเว็บ: สปอตไลต์, ตัวกรอง, การ์ด, กล่องรายละเอียด, ค้นหา (Ctrl K หรือ `/`), ทัวร์ |
+| `assets/js/hub/guide.js` | น้อง Nova: ภาพนิ่ง + คลิป VP9 โปร่งใส, ฟองคำพูด, จิ้มแล้วมีปฏิกิริยา, ปุ่ม Motion |
+| `assets/js/hub/universe.js` + `shaders.js` | ฉาก 3D: ท้องฟ้าเนบิวลา, ดาวเคราะห์ (มีแบบ "ลายวงจร"), หน้าจอโปรแกรมโค้งที่หมุนได้, วงแหวนอักขระโค้ด, แกน X ของสตูดิโอที่ลากเส้นไปหาทุกโปรแกรม |
+| `assets/art/<id>.webp` | คีย์อาร์ตของสินค้า (สำเนาจาก `public_html/artwork/` ของ xmanstudio) |
+| `assets/shots/<id>/` | **ภาพหน้าจอจริง** — ตอนนี้มี WinXTools 9 ภาพ, BrainX ใช้ `assets/img/hero-hud.jpg` กับ `crop-galaxy.jpg` |
+| `assets/nova/` | สำเนาภาพ/คลิปน้อง Nova จาก `public_html/artwork/universe/guide/` (วิธีทำคลิป: `docs/UNIVERSE_GUIDE_CLIPS.md`) |
+
+- **เพิ่มสินค้า** = เพิ่มหนึ่ง entry ใน `PRODUCTS` + วางคีย์อาร์ตที่ `assets/art/<id>.webp` (16:9)
+- **เพิ่มภาพหน้าจอจริง** = วาง `.webp` ใน `assets/shots/<id>/` แล้วใส่ใน `shots` ของสินค้านั้น
+  สินค้าที่มี `shots` จะได้ป้าย LIVE CAPTURE, หน้าจอ 3D สลับภาพให้เอง, การ์ดเอาเมาส์ชี้แล้วเห็นภาพจริง, และแกลเลอรีในกล่องรายละเอียด
+- กล่องรายละเอียดถาม `https://xman4289.com/api/v1/products/<slug>/version` สด (CORS เปิด `*`)
+  แต่ throttle `60/นาที` ของ API นี้ **นับต่อ IP ร่วมกับการเช็กอัปเดตของแอปเดสก์ท็อป** จึงถามเฉพาะตอนเปิดกล่อง
+  และจำไว้ 10 นาทีต่อสินค้า — อย่าเปลี่ยนเป็นวนถามทุกการ์ดตอนโหลดหน้า
+- ปุ่มดาวน์โหลดชี้ route ของ xman4289.com เท่านั้น (กฎเจ้าของ: ห้ามลิงก์ GitHub) — changelog ที่ดึงมา
+  กรองบรรทัดที่มีคำว่า github หรือ URL ออกก่อนแสดง
+- เปิดดูในเครื่อง: `.claude/launch.json` มี `product-site` (python http.server port 8091)
+  ภาพ 3D ต้องดูผ่าน Chrome ที่มี GPU — Browser pane ในแอปวาด WebGL ไม่ได้
+
+`classic.html` อ่าน catalogue เก่าจาก `assets/js/products.js` — ไม่ต้องอัปเดตแล้ว
+แต่ grid สินค้าท้ายหน้า `brainx.html` ยังอ่านสำเนาของตัวเอง — `PRODUCTS` ใน `assets/js/site.js`
+แก้ราคา สถานะ "เร็ว ๆ นี้" หรือคำอธิบาย ต้องแก้ทั้ง `catalog.js` และ `site.js`
+และบัมพ์ stamp ของหน้าที่เกี่ยว
 
 ราคาให้เทียบกับที่ร้านขายจริง (หน้า `https://xman4289.com/products/<slug>`)
 ไม่ใช่ `/api/v1/product/<slug>/pricing` อย่างเดียว — API นั้นคืน 399/2500/5000
 เป็นค่า default ให้ทุกสินค้าที่ไม่มีราคากำหนดไว้ใน `ProductLicenseController`
-ราคาที่เป็นรายปี/รายเดือนให้บอกหน่วยไว้ในคำอธิบายด้วย เพราะ grid แสดงแค่ตัวเลข
+ราคาที่เป็นรายปี/รายเดือนให้บอกหน่วยไว้ในข้อความราคาด้วย
 
 ### `xgameshub.xman4289.com` ไม่อยู่ที่นี่แล้ว
 

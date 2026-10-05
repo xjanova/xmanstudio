@@ -79,7 +79,7 @@ database/
   migrations/        # ~67 migrations
 config/              # Laravel config files
 sites/              # Static sub-domain sites — NOT part of the Laravel app
-  product.xman4289.com/   # Product constellation + BrainX selling page
+  product.xman4289.com/   # Product hub (3D universe + Nova guide) + BrainX selling page
 ```
 
 ## Common Commands
