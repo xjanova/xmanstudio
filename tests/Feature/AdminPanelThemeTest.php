@@ -133,6 +133,20 @@ class AdminPanelThemeTest extends TestCase
         $this->assertStringNotContainsString('มีผลกับหน้าเว็บและหน้าแอดมิน', $html);
     }
 
+    public function test_every_theme_card_keeps_its_hidden_radio_inside_it(): void
+    {
+        // radio แบบ sr-only เป็น position:absolute — ถ้า label ไม่ relative มันไปอิง <body> แล้วลอยอยู่ไกลใต้การ์ด
+        // คลิกการ์ดแล้วเบราว์เซอร์เลื่อนทั้งหน้าไปหามัน layout หลุดจอ เหลือหน้าขาว (เจ้าของเจอบน prod 2026-10-05)
+        $html = $this->actingAs($this->admin())->get(route('admin.theme.index'))->assertOk()->getContent();
+
+        preg_match_all('#<label class="(theme-card[^"]*)"#', $html, $labels);
+
+        $this->assertCount(count(ThemeService::THEMES) + count(ThemeService::ADMIN_THEMES) + count(ThemeService::CUSTOMER_THEMES) + 2, $labels[1]);
+        foreach ($labels[1] as $classes) {
+            $this->assertContains('relative', explode(' ', $classes), "theme-card label without `relative`: {$classes}");
+        }
+    }
+
     // ── helpers ───────────────────────────────────────────────────────
 
     /** หน้าหนึ่งในหลังบ้านแอดมิน ใช้ layout ตามที่คาด — ดูจาก <body> ที่ต่างกันของสอง layout */

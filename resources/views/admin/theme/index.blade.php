@@ -97,13 +97,14 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
             @foreach($themes as $themeKey => $theme)
-                <label class="theme-card group cursor-pointer animate-fade-in" style="animation-delay: {{ 0.3 + ($loop->index * 0.1) }}s;">
+                {{-- Every theme-card label must stay `relative`: without it the sr-only radio is placed against <body>, far below the card, and clicking the card scrolls the whole h-screen layout out of view — a blank page. --}}
+                <label class="theme-card relative group cursor-pointer animate-fade-in" style="animation-delay: {{ 0.3 + ($loop->index * 0.1) }}s;">
                     <input type="radio" name="theme" value="{{ $themeKey }}"
                            class="sr-only peer"
                            {{ $currentTheme === $themeKey ? 'checked' : '' }}>
 
                     <div class="relative h-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border-3 transition-all duration-300
-                                {{ $currentTheme === $themeKey ? 'border-indigo-500 ring-4 ring-indigo-500/20 shadow-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                border-gray-200 dark:border-gray-700
                                 peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20 peer-checked:shadow-indigo-500/20
                                 hover:shadow-2xl hover:border-indigo-400 hover:-translate-y-2 transform">
 
@@ -337,13 +338,13 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 @foreach($adminThemes as $optionKey => $option)
-                    <label class="theme-card group cursor-pointer">
+                    <label class="theme-card relative group cursor-pointer">
                         <input type="radio" name="admin_theme" value="{{ $optionKey }}"
                                class="sr-only peer"
                                {{ $adminTheme === $optionKey ? 'checked' : '' }}>
 
                         <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
-                                    {{ $adminTheme === $optionKey ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                    border-gray-200 dark:border-gray-700
                                     peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
                                     hover:border-indigo-400">
                             <!-- ภาพย่อหลังบ้านแอดมิน: เมนูข้างสีเข้ม + การ์ดสถิติ -->
@@ -399,13 +400,13 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 @foreach($customerThemes as $optionKey => $option)
-                    <label class="theme-card group cursor-pointer">
+                    <label class="theme-card relative group cursor-pointer">
                         <input type="radio" name="customer_theme" value="{{ $optionKey }}"
                                class="sr-only peer"
                                {{ $customerTheme === $optionKey ? 'checked' : '' }}>
 
                         <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
-                                    {{ $customerTheme === $optionKey ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                    border-gray-200 dark:border-gray-700
                                     peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
                                     hover:border-indigo-400">
                             <!-- ภาพย่อหลังบ้าน: เมนูข้าง + เนื้อหา -->
@@ -468,13 +469,13 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 @foreach([1 => ['เปิด — ใช้หน้าแรก 3D', 'เครื่องที่รองรับเห็นจักรวาล 3D ที่เหลือเห็นหน้าเดิม'], 0 => ['ปิด — ใช้หน้าแรกของธีม', 'ทุกคนเห็นหน้าแรกของธีมเว็บไซต์']] as $value => [$label, $hint])
-                    <label class="theme-card group cursor-pointer">
+                    <label class="theme-card relative group cursor-pointer">
                         <input type="radio" name="home_universe" value="{{ $value }}"
                                class="sr-only peer"
                                {{ (int) $universeEnabled === $value ? 'checked' : '' }}>
 
                         <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
-                                    {{ (int) $universeEnabled === $value ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                    border-gray-200 dark:border-gray-700
                                     peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
                                     hover:border-indigo-400">
                             <!-- ภาพย่อ: จักรวาลกับดาวแกนกลาง หรือหน้าแรกแบบเรียบ -->
