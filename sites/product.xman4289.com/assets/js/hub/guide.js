@@ -28,11 +28,16 @@
       motion = stored ? stored === 'on' : !reduced;
       return motion;
     },
-    setMotion: function (on) {
+    /** auto: the page turned motion off by itself because this machine stutters */
+    setMotion: function (on, auto) {
       motion = !!on;
-      try { localStorage.setItem('xph.motion', on ? 'on' : 'off'); } catch (e) {}
+      try {
+        localStorage.setItem('xph.motion', on ? 'on' : 'off');
+        if (auto) localStorage.setItem('xph.motion.auto', '1');
+        else localStorage.removeItem('xph.motion.auto');
+      } catch (e) {}
       root.dataset.motion = on ? 'on' : 'off';
-      window.dispatchEvent(new Event('xph:motion'));
+      window.dispatchEvent(new CustomEvent('xph:motion', { detail: { auto: !!auto } }));
     },
     init: function () { root.dataset.motion = prefs.motion() ? 'on' : 'off'; },
   };
@@ -161,8 +166,7 @@
       im.src = BASE + 'stills/' + p + '.webp?v=' + NOVA_V;
       im.onerror = function () {
         if (p === 'welcome') wrap.classList.add('is-missing');
-        brokenStill[p] = true;
-        if (im.classList.contains('on')) { im.classList.remove('on'); stills.welcome.classList.add('on'); }
+        brokenStill[p] = true; // from now on the welcome picture stands in for this pose
       };
       stills[p] = im;
       figure.appendChild(im);
@@ -214,22 +218,51 @@
   var brokenStill = {};
   var brokenClip = {};
 
+  /**
+   * One picture or clip on top at a time, as on xman4289.com: the new layer fades
+   * in OVER the old one, which stays opaque until the fade is done and is then
+   * hidden. Nothing stays on underneath — a still left showing under a moving clip
+   * is a second Nova (a hand where the clip's hand has already moved away).
+   */
   function Figure(dom) {
-    var active = null;
+    var layer = null; // the img or video on top
     var wanted = 'idle';
     var z = 2;
     var videoOK = canPlayAlphaVideo();
 
+    function showLayer(el) {
+      if (!el || layer === el) return;
+      var prev = layer;
+      layer = el;
+      clearTimeout(el._off);
+      el.style.zIndex = String(++z);
+      el.classList.add('on');
+      if (prev) {
+        prev._off = setTimeout(function () {
+          if (layer === prev) return;
+          prev.classList.remove('on');
+          if (prev.tagName === 'VIDEO') prev.pause();
+        }, 260);
+      }
+    }
+
+    function stillFor(clip) {
+      return dom.stills[brokenStill[clip.still] ? 'welcome' : clip.still];
+    }
+
     function refresh() {
       videoOK = canPlayAlphaVideo();
-      if (!videoOK && active) {
-        active.classList.remove('on');
-        active.pause();
-        active = null;
-      }
+      // clips no longer allowed (motion off, narrow screen): back to the picture
+      if (!videoOK && layer && layer.tagName === 'VIDEO') showLayer(stillFor(CLIPS[layer.dataset.move || 'idle']));
     }
     window.addEventListener('resize', refresh);
     window.addEventListener('xph:motion', refresh);
+    document.addEventListener('visibilitychange', function () {
+      if (layer && layer.tagName === 'VIDEO') {
+        if (document.hidden) layer.pause();
+        else { var pr = layer.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      }
+    });
 
     // trickle-load the one-off moves after the page settles
     setTimeout(function () {
@@ -249,71 +282,55 @@
       })();
     }, 6000);
 
-    function sameStill(v, clip) {
-      return CLIPS[v.dataset.move || 'idle'].still === clip.still;
-    }
-
     /** Show a clip (or its still where clips cannot play). onEnd fires for one-off moves. */
     this.show = function (move, onEnd) {
       var clip = CLIPS[move];
       wanted = move;
-      var still = brokenStill[clip.still] ? 'welcome' : clip.still;
-      POSES.forEach(function (p) { dom.stills[p].classList.toggle('on', p === still); });
-
+      var still = stillFor(clip);
       var v = dom.videos[move];
+
       if (!videoOK || !v || brokenClip[move]) {
-        if (active && !sameStill(active, clip)) {
-          active.classList.remove('on');
-          active.pause();
-          active = null;
-        }
+        showLayer(still);
         if (onEnd) setTimeout(onEnd, 1600);
         return;
       }
 
       function start() {
         if (wanted !== move) return;
-        var prev = active;
         v.loop = clip.loop;
         v.onended = clip.loop ? null : function () { if (onEnd) onEnd(); };
         try { v.currentTime = 0; } catch (e) {}
-        v.style.zIndex = String(++z);
-        v.classList.add('on');
         var pr = v.play();
         if (pr && pr.catch) {
           pr.catch(function (e) {
             // AbortError = paused right after play(); not a broken clip
             if (!e || e.name !== 'AbortError') {
               brokenClip[move] = true;
-              v.classList.remove('on');
+              if (wanted === move) showLayer(still);
               if (onEnd) onEnd();
             }
           });
         }
-        active = v;
-        // the new clip fades in OVER the old one, which stays opaque until the fade is done
-        if (prev && prev !== v) {
-          setTimeout(function () {
-            if (active !== prev) { prev.classList.remove('on'); prev.pause(); }
-          }, 260);
-        }
+        showLayer(v);
       }
 
       if (!v.src) { v.src = v.dataset.src; v.load(); }
       if (v.readyState >= 3) start();
       else {
-        if (active && !sameStill(active, clip)) {
-          active.classList.remove('on');
-          active.pause();
-          active = null;
-        }
+        // until it is ready: keep the clip on top if it starts from the same picture, else the picture
+        if (!(layer && layer.tagName === 'VIDEO' && CLIPS[layer.dataset.move].still === clip.still)) showLayer(still);
         v.addEventListener('canplay', start, { once: true });
         v.addEventListener('error', function () {
           brokenClip[move] = true;
-          if (wanted === move && onEnd) onEnd();
+          if (wanted === move) {
+            showLayer(still);
+            if (onEnd) onEnd();
+          }
         }, { once: true });
       }
     };
+
+    showLayer(dom.stills.welcome);
   }
 
   /* ------------------------------------------------------------ the guide UI */
@@ -414,8 +431,10 @@
           }
         }, 32);
       }
-      if (line.react) playOnce(line.react, type);
-      else type();
+      // her reaction plays while the words type out (the reactions run 4–9 s:
+      // waiting for one to end before speaking felt like she ignored you)
+      if (line.react) playOnce(line.react);
+      type();
     });
 
     /* where she stands: beside the spotlight on wide screens, else the corner */

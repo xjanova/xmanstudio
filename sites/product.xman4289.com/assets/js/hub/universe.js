@@ -77,6 +77,8 @@ class HubEngine {
     this.h = 1;
     this.dpr = 1;
     this.slowFrames = 0;
+    // frame-rate watch: real time between frames, judged in 2.5 s windows
+    this.perf = { last: 0, t: 0, frames: 0, slow: 0, armedAt: 0, gaveUp: false };
     this.disposables = [];
     this.pointMats = [];
     this.lightDir = new THREE.Vector3(-0.62, 0.42, 0.66).normalize();
@@ -849,6 +851,9 @@ class HubEngine {
     if (this.running) return;
     this.running = true;
     this.timer.reset();
+    // the first seconds carry image decodes and late layout: don't judge the machine on them
+    this.perf.armedAt = performance.now() + 4000;
+    this.perf.last = 0;
     this.raf = requestAnimationFrame(this.frame);
   }
 
@@ -869,14 +874,14 @@ class HubEngine {
       this.update(animating ? dt : 0);
       this.render();
       this.needsRender = false;
-      if (this.motion) this.adapt(dt);
+      if (this.motion) this.adapt(dt, ts);
     }
     if (this.running && (this.motion || this.skyT < 1 || this.heroMix < 1 || this.screenMix < 1)) {
       this.raf = requestAnimationFrame(this.frame);
     }
   };
 
-  adapt(dt) {
+  adapt(dt, ts) {
     // Hold ~45 fps or better: step the pixel ratio down on slow machines.
     if (dt > 0.024) this.slowFrames++;
     else this.slowFrames = Math.max(0, this.slowFrames - 1);
@@ -884,6 +889,32 @@ class HubEngine {
       this.maxDpr = Math.max(1, this.dpr - 0.25);
       this.slowFrames = 0;
       this.resize();
+    }
+
+    // The floor: a machine that still stutters gets a still page instead (the
+    // owner's rule — a smooth still beats a jerky effect). Real time, not the
+    // clamped dt, or a 10 fps machine would read as 20.
+    const pf = this.perf;
+    const gap = pf.last ? ts - pf.last : 0;
+    pf.last = ts;
+    if (pf.gaveUp || ts < pf.armedAt || document.hidden || gap <= 0 || gap > 1000) return;
+    pf.t += gap;
+    pf.frames++;
+    if (pf.t < 2500) return;
+    const fps = (pf.frames * 1000) / pf.t;
+    pf.t = 0;
+    pf.frames = 0;
+    if (fps < 14) pf.slow += 2; // plainly too slow: one window is enough
+    else if (fps < 24) pf.slow += 1;
+    else pf.slow = 0;
+    // badly slow: drop straight to the lowest pixel ratio before giving up
+    if (fps < 24 && this.dpr > 1) {
+      this.maxDpr = 1;
+      this.resize();
+    }
+    if (pf.slow >= 2) {
+      pf.gaveUp = true;
+      window.dispatchEvent(new CustomEvent('xph:lowperf', { detail: { fps: Math.round(fps) } }));
     }
   }
 

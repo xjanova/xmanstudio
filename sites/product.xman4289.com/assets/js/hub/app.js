@@ -468,7 +468,19 @@
     $('.motion-glyph', motionBtn).textContent = on ? 'Ⅱ' : '▷';
   }
   motionBtn.addEventListener('click', function () { prefs.setMotion(!prefs.motion()); syncMotion(); });
+  window.addEventListener('xph:motion', syncMotion);
   syncMotion();
+
+  // the 3D layer says this machine stutters even at the lowest resolution: go still
+  window.addEventListener('xph:lowperf', function () {
+    if (!prefs.motion()) return;
+    prefs.setMotion(false, true);
+    guide.say({
+      text: 'เครื่องนี้เริ่มกระตุกนิดหน่อย โนวาเลยพักเอฟเฟกต์เป็นภาพนิ่งให้นะคะ ดูทุกอย่างได้ครบเหมือนเดิม อยากเปิดกลับกดปุ่ม Motion ได้เลย',
+      pose: 'welcome', priority: 3, hold: 6000,
+      chips: [{ label: 'เปิดเอฟเฟกต์กลับ', action: 'motionOn' }],
+    });
+  });
 
   /* ------------------------------------------------------------ release log */
 
@@ -690,6 +702,7 @@
       guide.say({ text: 'โอเคค่ะ! อยากให้ช่วยอะไรเมื่อไหร่ จิ้มโนวาได้เลยนะ', pose: 'welcome', priority: 3 });
     },
     random: random,
+    motionOn: function () { prefs.setMotion(true); },
     free: function () { applyFilter('free', null, { scroll: true }); },
     open: function (id) { openProduct(C.byId(id), false); },
     download: function (id) {
