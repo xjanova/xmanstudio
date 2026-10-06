@@ -11,6 +11,7 @@ use App\Services\AiChatService;
 use App\Services\AppAiBilling;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -81,15 +82,23 @@ class AppAiController extends Controller
     public const BRAINX_PAID_TYPES = [LicenseKey::TYPE_MONTHLY, LicenseKey::TYPE_YEARLY, LicenseKey::TYPE_LIFETIME];
 
     /**
-     * GET /api/ai/v1/brainx
+     * POST /api/ai/v1/brainx
      *
-     * The BrainX Cloud key of the account this device is linked to, so the app's
-     * Mind shares one brain with the Mind in BrainX on the owner's PC - same xman
-     * account, same storage, so no second payment and no key to type.
+     * Connects the app's Mind to the BrainX Cloud brain of the account this
+     * device is linked to, so it shares one brain with the Mind in BrainX on the
+     * owner's PC - same xman account, same storage, no second payment, no key
+     * to type.
      *
-     * Only to the account's own linked device (the bearer is that device's
-     * GigGok license), only a paid key that is active right now, never another
-     * account's. Not cacheable anywhere on the way.
+     * SECURITY: the BrainX key NEVER leaves this server. We sign in to the cloud
+     * here and hand the phone only a device token (bxc_...). A token is one
+     * device's, can be revoked from BrainX without touching the key, and dies
+     * with the subscription; the key is the account itself and cannot be
+     * rotated. The first version returned the key - anyone holding a phone's
+     * GigGok license (shown in settings, copied to the clipboard when linking)
+     * could have walked off with the whole brain.
+     *
+     * Only to the account's own linked device (bearer = that device's GigGok
+     * license), only for a paid key active right now, never another account's.
      */
     public function brainx(Request $request): JsonResponse
     {
@@ -108,33 +117,63 @@ class AppAiController extends Controller
             ]));
         }
 
-        $product = Product::where('slug', 'brainx')->first();
-        $key = $product ? LicenseKey::where('product_id', $product->id)
-            ->where('user_id', $license->user_id)
-            ->where('status', 'active')
-            ->whereIn('license_type', self::BRAINX_PAID_TYPES)
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            // lifetime first, then the one that lasts longest
-            ->orderByRaw('expires_at IS NULL DESC')
-            ->orderByDesc('expires_at')
-            ->first() : null;
-
+        $key = $this->brainxKeyFor($license->user_id);
         if (! $key) {
-            return $this->noStore(response()->json([
-                'linked' => true,
-                'active' => false,
-                'buy_url' => $buyUrl,
-            ]));
+            return $this->noStore(response()->json(['linked' => true, 'active' => false, 'buy_url' => $buyUrl]));
+        }
+
+        $device = $request->input('device_name');
+        $device = is_string($device) ? trim($device) : '';
+        $device = mb_substr(preg_replace('/[^\p{L}\p{N} ()._-]/u', '', $device) ?: 'GigGok', 0, 60);
+
+        try {
+            $res = Http::timeout(15)->acceptJson()
+                ->post(rtrim((string) config('services.brainx_cloud.url', 'https://serverbrain.xman4289.com'), '/') . '/api/cloud/login', [
+                    'licenseKey' => $key->license_key,
+                    'deviceName' => $device,
+                ]);
+        } catch (\Throwable $e) {
+            Log::warning('brainx cloud login unreachable', ['error' => $e->getMessage()]);
+
+            return $this->fail('BrainX Cloud cannot be reached right now - try again in a moment.', 503, 'cloud_unreachable');
+        }
+
+        if ($res->status() === 402) {
+            return $this->noStore(response()->json(['linked' => true, 'active' => false, 'expired' => true, 'buy_url' => $buyUrl]));
+        }
+        if ($res->status() === 401) {
+            // The cloud says the key is not (or no longer) valid for it
+            return $this->noStore(response()->json(['linked' => true, 'active' => false, 'buy_url' => $buyUrl]));
+        }
+        $token = $res->json('token');
+        if (! $res->successful() || ! is_string($token) || $token === '') {
+            Log::warning('brainx cloud login failed', ['status' => $res->status()]);
+
+            return $this->fail('BrainX Cloud could not sign this phone in - try again in a moment.', 502, 'cloud_failed');
         }
 
         return $this->noStore(response()->json([
             'linked' => true,
             'active' => true,
-            'key' => $key->license_key,
-            'license_type' => $key->license_type,
-            'expires_at' => $key->expires_at?->toIso8601String(),
+            'token' => $token,
+            'account' => $res->json('account'),
             'buy_url' => $buyUrl,
         ]));
+    }
+
+    /** The account's paid BrainX key that is active now - lifetime first, then the longest-lasting. */
+    protected function brainxKeyFor(int $userId): ?LicenseKey
+    {
+        $product = Product::where('slug', 'brainx')->first();
+
+        return $product ? LicenseKey::where('product_id', $product->id)
+            ->where('user_id', $userId)
+            ->where('status', 'active')
+            ->whereIn('license_type', self::BRAINX_PAID_TYPES)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->orderByRaw('expires_at IS NULL DESC')
+            ->orderByDesc('expires_at')
+            ->first() : null;
     }
 
     protected function noStore(JsonResponse $res): JsonResponse

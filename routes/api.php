@@ -580,6 +580,9 @@ Route::prefix('ai/v1')->middleware(['throttle:30,1,api-ai'])->group(function () 
     Route::post('/chat/completions', [AppAiController::class, 'chatCompletions']);
     // Credit, today's spend and the models we offer (with prices) for the app's settings screen
     Route::get('/account', [AppAiController::class, 'account']);
-    // The linked account's BrainX Cloud key: the app's Mind shares the PC Mind's brain
-    Route::get('/brainx', [AppAiController::class, 'brainx']);
+    // Sign the linked account's phone in to BrainX Cloud (token only - the key stays here):
+    // the app's Mind shares the PC Mind's brain. Each call is a cloud sign-in, and the cloud
+    // drops the account's oldest device token past 20 - so far fewer than the group allows,
+    // or a spammer could sign the owner's PC out
+    Route::post('/brainx', [AppAiController::class, 'brainx'])->middleware('throttle:6,1,api-ai-brainx');
 });
