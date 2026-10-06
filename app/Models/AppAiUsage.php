@@ -22,11 +22,16 @@ class AppAiUsage extends Model
         'chars_in',
         'chars_out',
         'ok',
+        'price',
+        'wallet_transaction_id',
+        'refunded',
         'ip_address',
     ];
 
     protected $casts = [
         'ok' => 'boolean',
+        'price' => 'decimal:2',
+        'refunded' => 'boolean',
         'message_count' => 'integer',
         'chars_in' => 'integer',
         'chars_out' => 'integer',
@@ -42,17 +47,9 @@ class AppAiUsage extends Model
         return $this->belongsTo(LicenseKey::class, 'license_key_id');
     }
 
-    /**
-     * Calls this license has made since midnight.
-     *
-     * Counts failed calls too. A caller hammering a broken request still costs
-     * us upstream attempts, and leaving failures uncounted turns "my key is
-     * wrong" into an unlimited retry loop against our account.
-     */
-    public static function todayFor(string $licenseKey): int
+    /** The wallet payment that paid for this call (null when the model was free). */
+    public function payment(): BelongsTo
     {
-        return static::where('license_key', $licenseKey)
-            ->where('created_at', '>=', now()->startOfDay())
-            ->count();
+        return $this->belongsTo(WalletTransaction::class, 'wallet_transaction_id');
     }
 }

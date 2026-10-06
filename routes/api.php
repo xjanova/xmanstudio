@@ -578,4 +578,6 @@ Route::prefix('packs')->middleware(['throttle:60,1,api-packs'])->group(function 
 // cap in AppAiUsage, which survives restarts and cache clears.
 Route::prefix('ai/v1')->middleware(['throttle:30,1,api-ai'])->group(function () {
     Route::post('/chat/completions', [AppAiController::class, 'chatCompletions']);
+    // Credit, today's spend and the models we offer (with prices) for the app's settings screen
+    Route::get('/account', [AppAiController::class, 'account']);
 });

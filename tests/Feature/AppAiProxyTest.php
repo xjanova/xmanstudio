@@ -5,8 +5,12 @@ namespace Tests\Feature;
 use App\Models\AppAiUsage;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\User;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use App\Services\AiChatService;
+use App\Services\AppAiBilling;
 use App\Services\InputSanitizerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -16,11 +20,11 @@ use Tests\TestCase;
 /**
  * The AI proxy the GigGok app calls instead of holding our OpenAI key.
  *
- * What is actually being defended here is the BILL. The key is safe by
- * construction - it never leaves the server - so the remaining risk is that
- * someone pulls a license key out of the app and spends our AI budget with it.
- * The daily cap is the thing standing in the way, so most of these tests exist
- * to prove that cap really fires rather than just looking wired up.
+ * Every message is paid from the user's wallet (THB) - no free quota. What is
+ * defended here is MONEY in both directions: we must never answer without
+ * being paid (a free message is our bill), and the user must never pay for an
+ * answer they did not get. Most tests exist to prove the charge and the refund
+ * really happen rather than just looking wired up.
  *
  * That distinction is not paranoia: a sibling project shipped a wallet guard
  * that showed up correctly in route:list and had never once run, because the
@@ -39,16 +43,29 @@ class AppAiProxyTest extends TestCase
         config([
             'packs.app_product_slug' => 'giggok',
             'appai.enabled' => true,
-            'appai.daily_limit' => 3,
         ]);
 
         // A migration registers the app as a product (free, requires_license) — the same row production has
         $this->appProduct = Product::where('slug', 'giggok')->sole();
+
+        $this->offer([
+            ['id' => 'gpt-6-luna', 'label' => 'Luna', 'price' => 0.5, 'enabled' => true],
+            ['id' => 'gpt-6.1-sol', 'label' => 'Sol', 'price' => 2, 'enabled' => true],
+            ['id' => 'gpt-6-astra', 'label' => 'Astra', 'price' => 9, 'enabled' => false],
+        ]);
     }
 
-    protected function makeLicense(?Product $product = null): LicenseKey
+    protected function offer(array $models, float $cap = 0): void
+    {
+        Setting::setValue(AppAiBilling::KEY_MODELS, $models, 'json', 'ai');
+        Setting::setValue(AppAiBilling::KEY_DAILY_CAP, (string) $cap, 'string', 'ai');
+        Setting::setValue(AppAiBilling::KEY_ENABLED, true, 'boolean', 'ai');
+    }
+
+    protected function makeLicense(?Product $product = null, float $balance = 100): LicenseKey
     {
         $user = User::factory()->create();
+        $this->fund($user->id, $balance);
 
         return LicenseKey::create([
             'product_id' => ($product ?? $this->appProduct)->id,
@@ -59,8 +76,25 @@ class AppAiProxyTest extends TestCase
         ]);
     }
 
+    protected function fund(int $userId, float $balance, bool $active = true): Wallet
+    {
+        return Wallet::create([
+            'user_id' => $userId,
+            'balance' => $balance,
+            'total_deposited' => $balance,
+            'total_spent' => 0,
+            'total_refunded' => 0,
+            'is_active' => $active,
+        ]);
+    }
+
+    protected function balanceOf(LicenseKey $license): float
+    {
+        return (float) Wallet::where('user_id', $license->user_id)->value('balance');
+    }
+
     /** Stand in for the real provider call so no test ever leaves the machine. */
-    protected function fakeAi(string $answer = 'สวัสดีค่ะ', bool $ok = true): void
+    protected function fakeAi(string $answer = 'สวัสดีค่ะ', bool $ok = true): object
     {
         $fake = new class($answer, $ok) extends AiChatService
         {
@@ -69,6 +103,8 @@ class AppAiProxyTest extends TestCase
             public ?string $seenSystem = null;
 
             public ?string $seenModel = null;
+
+            public int $calls = 0;
 
             public function __construct(public string $answer, public bool $ok)
             {
@@ -83,6 +119,7 @@ class AppAiProxyTest extends TestCase
 
             public function chat(array $messages, ?string $systemPrompt = null, ?string $modelOverride = null): array
             {
+                $this->calls++;
                 $this->seenMessages = $messages;
                 $this->seenSystem = $systemPrompt;
                 $this->seenModel = $modelOverride;
@@ -97,6 +134,8 @@ class AppAiProxyTest extends TestCase
         };
 
         $this->app->instance(AiChatService::class, $fake);
+
+        return $fake;
     }
 
     protected function askWithModel(string $key, string $model): TestResponse
@@ -118,6 +157,8 @@ class AppAiProxyTest extends TestCase
 
         return $req->postJson('/api/ai/v1/chat/completions', ['messages' => $messages]);
     }
+
+    // ── who may call at all ─────────────────────────────────────
 
     public function test_no_license_is_rejected(): void
     {
@@ -148,11 +189,17 @@ class AppAiProxyTest extends TestCase
         $this->ask($this->makeLicense($other)->license_key)->assertStatus(401);
     }
 
-    protected function makeFreeLicense(bool $linked): LicenseKey
+    protected function makeFreeLicense(bool $linked, float $balance = 100): LicenseKey
     {
+        $userId = null;
+        if ($linked) {
+            $userId = User::factory()->create()->id;
+            $this->fund($userId, $balance);
+        }
+
         return LicenseKey::create([
             'product_id' => $this->appProduct->id,
-            'user_id' => $linked ? User::factory()->create()->id : null,
+            'user_id' => $userId,
             'license_key' => 'FREE-' . strtoupper(uniqid()),
             'license_type' => LicenseKey::TYPE_FREE,
             'status' => 'active',
@@ -160,126 +207,204 @@ class AppAiProxyTest extends TestCase
         ]);
     }
 
-    public function test_an_unlinked_free_key_cannot_spend_the_ai_budget(): void
+    public function test_an_unlinked_key_cannot_use_the_assistant(): void
     {
-        $this->fakeAi();
+        $fake = $this->fakeAi();
 
-        // Any device can mint one of these through check-machine.
+        // No account = no wallet to charge. Any device can mint a free key.
         $this->ask($this->makeFreeLicense(false)->license_key)
             ->assertStatus(403)
+            ->assertJsonPath('error.code', 'not_linked')
             ->assertJsonPath('error.message', 'Link this device to your account first: xman4289.com/giggok/link');
 
+        $this->assertSame(0, $fake->calls);
         $this->assertDatabaseCount('app_ai_usages', 0);
     }
 
-    public function test_a_free_key_claimed_by_an_account_can_use_the_assistant(): void
+    public function test_an_unlinked_paid_key_cannot_either(): void
     {
-        $this->fakeAi('สวัสดีค่ะ');
+        // Paid keys used to pass without an owner. Now every message is charged
+        // to an account, so a key nobody claimed has nobody to charge.
+        $this->fakeAi();
+        $license = LicenseKey::create([
+            'product_id' => $this->appProduct->id,
+            'user_id' => null,
+            'license_key' => 'PAID-' . uniqid(),
+            'status' => 'active',
+        ]);
 
-        $this->ask($this->makeFreeLicense(true)->license_key)->assertOk();
+        $this->ask($license->license_key)->assertStatus(403);
     }
 
-    public function test_the_account_requirement_can_be_switched_off(): void
-    {
-        $this->fakeAi('สวัสดีค่ะ');
-        config(['appai.free_needs_account' => false]);
+    // ── money ───────────────────────────────────────────────────
 
-        $this->ask($this->makeFreeLicense(false)->license_key)->assertOk();
-    }
-
-    public function test_a_valid_license_gets_an_openai_shaped_answer(): void
+    public function test_each_message_is_charged_the_admins_price(): void
     {
+        $this->withoutMiddleware(ThrottleRequests::class);
         $this->fakeAi('สวัสดีค่ะ วันนี้เป็นยังไงบ้าง');
+        $license = $this->makeLicense(balance: 10);
 
-        $res = $this->ask($this->makeLicense()->license_key)->assertOk();
+        $res = $this->askWithModel($license->license_key, 'gpt-6.1-sol')->assertOk();
 
-        // The app parses choices[0].message.content and nothing else.
         $res->assertJsonPath('choices.0.message.content', 'สวัสดีค่ะ วันนี้เป็นยังไงบ้าง');
         $res->assertJsonPath('choices.0.message.role', 'assistant');
         $res->assertJsonPath('object', 'chat.completion');
+        $res->assertJsonPath('giggok_billing.charged', 2);
+        $res->assertJsonPath('giggok_billing.balance', 8);
+        $res->assertJsonPath('giggok_billing.currency', 'THB');
+        $this->assertSame(8.0, $this->balanceOf($license));
+
+        // The ledger shows what it was for, and the usage row points at it
+        $txn = WalletTransaction::where('user_id', $license->user_id)->sole();
+        $this->assertSame(WalletTransaction::TYPE_PAYMENT, $txn->type);
+        $this->assertSame(AppAiBilling::REFERENCE, $txn->reference_type);
+        $usage = AppAiUsage::sole();
+        $this->assertSame($txn->id, $usage->wallet_transaction_id);
+        $this->assertSame($usage->id, $txn->reference_id);
+        $this->assertTrue($usage->ok);
+        $this->assertSame('2.00', (string) $usage->price);
     }
 
-    public function test_the_persona_is_passed_through_as_the_system_prompt(): void
+    public function test_not_enough_credit_is_refused_before_anything_is_spent(): void
     {
-        // If the system message were dropped, AiChatService would fall back to
-        // the WEBSITE assistant's prompt and Mind would start answering as
-        // "XMAN Studio support" in her own app.
-        $this->fakeAi();
+        $fake = $this->fakeAi();
+        $license = $this->makeLicense(balance: 1);
 
-        $this->ask($this->makeLicense()->license_key, [
-            ['role' => 'system', 'content' => 'เธอชื่อมายด์ เป็นแฟนของเจ้าของ'],
-            ['role' => 'user', 'content' => 'หิวข้าว'],
-        ])->assertOk();
+        // 402 is what the app turns into "top up"; the link comes with it
+        $this->askWithModel($license->license_key, 'gpt-6.1-sol')
+            ->assertStatus(402)
+            ->assertJsonPath('error.code', 'insufficient_credit')
+            ->assertJsonPath('error.topup_url', url('/wallet/topup'));
 
-        $fake = $this->app->make(AiChatService::class);
-
-        $this->assertSame('เธอชื่อมายด์ เป็นแฟนของเจ้าของ', $fake->seenSystem);
-        // The system turn must not also be left in the message list.
-        $this->assertSame([['role' => 'user', 'content' => 'หิวข้าว']], $fake->seenMessages);
+        $this->assertSame(0, $fake->calls, 'must not call the model for free');
+        $this->assertSame(1.0, $this->balanceOf($license));
+        $this->assertDatabaseCount('app_ai_usages', 0);
     }
 
-    public function test_the_daily_cap_actually_stops_the_next_call(): void
+    public function test_a_user_with_no_wallet_at_all_gets_top_up_not_a_crash(): void
     {
-        // Throttle would answer 429 for its own reasons and hide whether the
-        // cap works at all - the two are indistinguishable from the status code.
-        $this->withoutMiddleware(ThrottleRequests::class);
         $this->fakeAi();
+        $user = User::factory()->create();
+        $license = LicenseKey::create([
+            'product_id' => $this->appProduct->id,
+            'user_id' => $user->id,
+            'license_key' => 'KEY-' . uniqid(),
+            'status' => 'active',
+        ]);
 
-        $key = $this->makeLicense()->license_key;
-
-        // daily_limit is 3 in setUp.
-        for ($i = 0; $i < 3; $i++) {
-            $this->ask($key)->assertOk();
-        }
-
-        $this->ask($key)->assertStatus(429);
-        $this->assertDatabaseCount('app_ai_usages', 3);
+        $this->ask($license->license_key)->assertStatus(402);
     }
 
-    public function test_one_licenses_spending_does_not_limit_another(): void
-    {
-        $this->withoutMiddleware(ThrottleRequests::class);
-        $this->fakeAi();
-
-        $spent = $this->makeLicense()->license_key;
-        for ($i = 0; $i < 3; $i++) {
-            $this->ask($spent)->assertOk();
-        }
-        $this->ask($spent)->assertStatus(429);
-
-        // The cap is per license, not global - one heavy user must not take
-        // the assistant away from everyone else.
-        $this->ask($this->makeLicense()->license_key)->assertOk();
-    }
-
-    public function test_failed_calls_are_counted_too(): void
+    public function test_a_failed_answer_is_refunded(): void
     {
         $this->withoutMiddleware(ThrottleRequests::class);
         $this->fakeAi(ok: false);
+        $license = $this->makeLicense(balance: 10);
 
-        $key = $this->makeLicense()->license_key;
+        $this->askWithModel($license->license_key, 'gpt-6.1-sol')
+            ->assertStatus(502)
+            ->assertJsonPath('error.message', 'The assistant could not answer just now. You were not charged.');
 
-        // A caller stuck retrying a broken request still costs us upstream
-        // attempts. Counting only successes turns that into a free loop.
-        $this->ask($key)->assertStatus(502);
-        $this->ask($key)->assertStatus(502);
-        $this->ask($key)->assertStatus(502);
-        $this->ask($key)->assertStatus(429);
-
-        $this->assertSame(3, AppAiUsage::where('license_key', $key)->count());
+        $this->assertSame(10.0, $this->balanceOf($license));
+        $usage = AppAiUsage::sole();
+        $this->assertFalse($usage->ok);
+        $this->assertTrue($usage->refunded);
+        $this->assertSame(1, WalletTransaction::where('type', WalletTransaction::TYPE_REFUND)->count());
     }
 
-    public function test_an_oversized_conversation_is_refused_before_it_is_sent(): void
+    public function test_a_suspended_wallet_is_refused(): void
+    {
+        $fake = $this->fakeAi();
+        $user = User::factory()->create();
+        $this->fund($user->id, 100, active: false);
+        $license = LicenseKey::create([
+            'product_id' => $this->appProduct->id,
+            'user_id' => $user->id,
+            'license_key' => 'KEY-' . uniqid(),
+            'status' => 'active',
+        ]);
+
+        $this->ask($license->license_key)->assertStatus(403)->assertJsonPath('error.code', 'wallet_inactive');
+        $this->assertSame(0, $fake->calls);
+    }
+
+    public function test_the_daily_cap_stops_spending_and_failures_do_not_count(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->offer([['id' => 'gpt-6-luna', 'label' => 'Luna', 'price' => 1, 'enabled' => true]], cap: 2);
+        $fake = $this->fakeAi();
+        $license = $this->makeLicense(balance: 100);
+
+        $this->ask($license->license_key)->assertOk();
+        $this->ask($license->license_key)->assertOk();
+        $this->ask($license->license_key)->assertStatus(429)->assertJsonPath('error.code', 'daily_cap');
+        $this->assertSame(98.0, $this->balanceOf($license));
+
+        // A refunded failure did not cost anything, so it must not eat the cap
+        $other = $this->makeLicense(balance: 100);
+        $fake->ok = false;
+        $this->ask($other->license_key)->assertStatus(502);
+        $fake->ok = true;
+        $this->ask($other->license_key)->assertOk();
+        $this->ask($other->license_key)->assertOk();
+    }
+
+    public function test_one_users_cap_does_not_limit_another(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->offer([['id' => 'gpt-6-luna', 'label' => 'Luna', 'price' => 1, 'enabled' => true]], cap: 1);
+        $this->fakeAi();
+
+        $spent = $this->makeLicense();
+        $this->ask($spent->license_key)->assertOk();
+        $this->ask($spent->license_key)->assertStatus(429);
+
+        $this->ask($this->makeLicense()->license_key)->assertOk();
+    }
+
+    // ── models: only what we offer ─────────────────────────────
+
+    public function test_an_offered_model_is_used_and_reported(): void
+    {
+        $fake = $this->fakeAi();
+
+        $this->askWithModel($this->makeLicense()->license_key, 'gpt-6.1-sol')
+            ->assertOk()
+            ->assertJsonPath('model', 'gpt-6.1-sol');
+
+        $this->assertSame('gpt-6.1-sol', $fake->seenModel);
+    }
+
+    public function test_a_switched_off_model_is_never_used(): void
+    {
+        $fake = $this->fakeAi();
+        $license = $this->makeLicense(balance: 100);
+
+        // Astra is configured but switched off: fall back to the first offer, at ITS price
+        $this->askWithModel($license->license_key, 'gpt-6-astra')
+            ->assertOk()
+            ->assertJsonPath('model', 'gpt-6-luna')
+            ->assertJsonPath('giggok_billing.charged', 0.5);
+
+        $this->assertSame('gpt-6-luna', $fake->seenModel);
+        $this->assertSame(99.5, $this->balanceOf($license));
+    }
+
+    public function test_nothing_offered_means_the_service_is_closed(): void
+    {
+        $this->offer([]);
+        $fake = $this->fakeAi();
+
+        $this->ask($this->makeLicense()->license_key)->assertStatus(503);
+        $this->assertSame(0, $fake->calls);
+    }
+
+    public function test_the_admin_switch_turns_the_proxy_off(): void
     {
         $this->fakeAi();
-        config(['appai.max_chars' => 100]);
+        Setting::setValue(AppAiBilling::KEY_ENABLED, false, 'boolean', 'ai');
 
-        $this->ask($this->makeLicense()->license_key, [
-            ['role' => 'user', 'content' => str_repeat('ก', 500)],
-        ])->assertStatus(422);
-
-        // Refused before spending anything upstream.
-        $this->assertDatabaseCount('app_ai_usages', 0);
+        $this->ask($this->makeLicense()->license_key)->assertStatus(503);
     }
 
     public function test_the_master_switch_turns_the_proxy_off(): void
@@ -290,41 +415,82 @@ class AppAiProxyTest extends TestCase
         $this->ask($this->makeLicense()->license_key)->assertStatus(503);
     }
 
-    public function test_a_requested_model_is_ignored_when_no_allowlist_is_set(): void
+    // ── the account screen ─────────────────────────────────────
+
+    public function test_account_shows_balance_today_and_only_offered_models(): void
     {
-        // The default. We pay for whatever gets picked, so opening this up has
-        // to be a deliberate act, not the state you land in by not configuring.
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->offer([
+            ['id' => 'gpt-6-luna', 'label' => 'Luna', 'price' => 0.5, 'enabled' => true],
+            ['id' => 'gpt-6-astra', 'label' => 'Astra', 'price' => 9, 'enabled' => false],
+        ], cap: 20);
         $this->fakeAi();
-        config(['appai.allowed_models' => []]);
+        $license = $this->makeLicense(balance: 10);
+        $this->ask($license->license_key)->assertOk();
 
-        $this->askWithModel($this->makeLicense()->license_key, 'gpt-4o')->assertOk();
+        $res = $this->withToken($license->license_key)->getJson('/api/ai/v1/account')->assertOk();
 
-        $this->assertNull($this->app->make(AiChatService::class)->seenModel);
+        $res->assertJsonPath('linked', true)
+            ->assertJsonPath('balance', 9.5)
+            ->assertJsonPath('currency', 'THB')
+            ->assertJsonPath('daily_cap', 20)
+            ->assertJsonPath('today.spent', 0.5)
+            ->assertJsonPath('today.messages', 1)
+            ->assertJsonPath('topup_url', url('/wallet/topup'))
+            ->assertJsonPath('default_model', 'gpt-6-luna')
+            ->assertJsonCount(1, 'models')
+            ->assertJsonPath('models.0.price', 0.5);
+        $this->assertStringNotContainsString('astra', $res->getContent());
     }
 
-    public function test_a_requested_model_is_used_when_it_is_on_the_allowlist(): void
+    public function test_an_unlinked_device_still_sees_prices_and_where_to_link(): void
     {
-        $this->fakeAi();
-        config(['appai.allowed_models' => ['gpt-4o-mini', 'gpt-4.1-mini']]);
+        $res = $this->withToken($this->makeFreeLicense(false)->license_key)
+            ->getJson('/api/ai/v1/account')->assertOk();
 
-        $res = $this->askWithModel($this->makeLicense()->license_key, 'gpt-4.1-mini')->assertOk();
-
-        $this->assertSame('gpt-4.1-mini', $this->app->make(AiChatService::class)->seenModel);
-        // The answer reports what actually replied, not what was asked for.
-        $res->assertJsonPath('model', 'gpt-4.1-mini');
+        $res->assertJsonPath('linked', false)
+            ->assertJsonPath('balance', 0)
+            ->assertJsonPath('link_url', url('/giggok/link'));
+        $this->assertNotEmpty($res->json('models'));
     }
 
-    public function test_a_model_off_the_allowlist_falls_back_instead_of_failing(): void
+    public function test_account_needs_a_valid_license(): void
+    {
+        $this->getJson('/api/ai/v1/account')->assertStatus(401);
+        $this->withToken('nope')->getJson('/api/ai/v1/account')->assertStatus(401);
+    }
+
+    // ── what reaches the model ─────────────────────────────────
+
+    public function test_the_persona_is_passed_through_as_the_system_prompt(): void
+    {
+        // If the system message were dropped, AiChatService would fall back to
+        // the WEBSITE assistant's prompt and Mind would start answering as
+        // "XMAN Studio support" in her own app.
+        $fake = $this->fakeAi();
+
+        $this->ask($this->makeLicense()->license_key, [
+            ['role' => 'system', 'content' => 'เธอชื่อมายด์ เป็นแฟนของเจ้าของ'],
+            ['role' => 'user', 'content' => 'หิวข้าว'],
+        ])->assertOk();
+
+        $this->assertSame('เธอชื่อมายด์ เป็นแฟนของเจ้าของ', $fake->seenSystem);
+        // The system turn must not also be left in the message list.
+        $this->assertSame([['role' => 'user', 'content' => 'หิวข้าว']], $fake->seenMessages);
+    }
+
+    public function test_an_oversized_conversation_is_refused_before_it_is_charged(): void
     {
         $this->fakeAi();
-        config(['appai.allowed_models' => ['gpt-4o-mini']]);
+        config(['appai.max_chars' => 100]);
+        $license = $this->makeLicense(balance: 10);
 
-        // Refusing the whole message over a model preference would be a worse
-        // trade than answering with ours - the app already says this can happen.
-        $res = $this->askWithModel($this->makeLicense()->license_key, 'o3-pro')->assertOk();
+        $this->ask($license->license_key, [
+            ['role' => 'user', 'content' => str_repeat('ก', 500)],
+        ])->assertStatus(422);
 
-        $this->assertNull($this->app->make(AiChatService::class)->seenModel);
-        $res->assertJsonPath('model', 'gpt-4o-mini');
+        $this->assertDatabaseCount('app_ai_usages', 0);
+        $this->assertSame(10.0, $this->balanceOf($license));
     }
 
     public function test_an_override_does_not_leak_into_later_calls(): void
@@ -364,11 +530,51 @@ class AppAiProxyTest extends TestCase
             }
         };
         $this->app->instance(AiChatService::class, $throwing);
+        $license = $this->makeLicense(balance: 10);
 
-        $res = $this->ask($this->makeLicense()->license_key)->assertStatus(502);
+        $res = $this->ask($license->license_key)->assertStatus(502);
 
         $body = $res->getContent();
         $this->assertStringNotContainsString('sk-proj-LEAKED-KEY', $body);
         $this->assertStringNotContainsString('upstream said no', $body);
+        // ...and the throw is refunded like any other failure
+        $this->assertSame(10.0, $this->balanceOf($license));
+    }
+
+    // ── admin ──────────────────────────────────────────────────
+
+    public function test_admin_saves_models_prices_and_cap(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->put(route('admin.ai-settings.app'), [
+            'appai_enabled' => '1',
+            'appai_daily_cap' => '50',
+            'models' => [
+                ['id' => 'gpt-6-luna', 'label' => 'ประหยัด', 'price' => '0.35', 'enabled' => '1'],
+                ['id' => '', 'label' => 'แถวว่าง', 'price' => '1'],
+                ['id' => 'gpt-6-astra', 'label' => 'แรงสุด', 'price' => '5'],
+                ['id' => 'gpt-6-luna', 'label' => 'ซ้ำ', 'price' => '9', 'enabled' => '1'],
+            ],
+        ])->assertRedirect(route('admin.ai-settings.index'));
+
+        $billing = app(AppAiBilling::class);
+        $this->assertSame(50.0, $billing->dailyCap());
+        $this->assertSame([
+            ['id' => 'gpt-6-luna', 'label' => 'ประหยัด', 'price' => 0.35, 'enabled' => true],
+            ['id' => 'gpt-6-astra', 'label' => 'แรงสุด', 'price' => 5.0, 'enabled' => false],
+        ], $billing->allModels());
+        // Only the switched-on one reaches the app
+        $this->assertSame([['id' => 'gpt-6-luna', 'label' => 'ประหยัด', 'price' => 0.35]], $billing->models());
+    }
+
+    public function test_the_settings_page_renders_the_app_section(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('admin.ai-settings.index'))
+            ->assertOk()
+            ->assertSee('GigGok · AI ในแอป', false)
+            ->assertSee('gpt-6-luna', false);
     }
 }
