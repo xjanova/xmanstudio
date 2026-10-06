@@ -77,6 +77,73 @@ class AppAiController extends Controller
         ]);
     }
 
+    /** License types that unlock BrainX Cloud - the cloud itself refuses demo/free keys. */
+    public const BRAINX_PAID_TYPES = [LicenseKey::TYPE_MONTHLY, LicenseKey::TYPE_YEARLY, LicenseKey::TYPE_LIFETIME];
+
+    /**
+     * GET /api/ai/v1/brainx
+     *
+     * The BrainX Cloud key of the account this device is linked to, so the app's
+     * Mind shares one brain with the Mind in BrainX on the owner's PC - same xman
+     * account, same storage, so no second payment and no key to type.
+     *
+     * Only to the account's own linked device (the bearer is that device's
+     * GigGok license), only a paid key that is active right now, never another
+     * account's. Not cacheable anywhere on the way.
+     */
+    public function brainx(Request $request): JsonResponse
+    {
+        $license = $this->resolveLicense($request);
+        if (! $license) {
+            return $this->fail('Invalid or expired license.', 401);
+        }
+
+        $buyUrl = url('/products/brainx');
+        if ($license->user_id === null) {
+            return $this->noStore(response()->json([
+                'linked' => false,
+                'active' => false,
+                'link_url' => url('/giggok/link'),
+                'buy_url' => $buyUrl,
+            ]));
+        }
+
+        $product = Product::where('slug', 'brainx')->first();
+        $key = $product ? LicenseKey::where('product_id', $product->id)
+            ->where('user_id', $license->user_id)
+            ->where('status', 'active')
+            ->whereIn('license_type', self::BRAINX_PAID_TYPES)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            // lifetime first, then the one that lasts longest
+            ->orderByRaw('expires_at IS NULL DESC')
+            ->orderByDesc('expires_at')
+            ->first() : null;
+
+        if (! $key) {
+            return $this->noStore(response()->json([
+                'linked' => true,
+                'active' => false,
+                'buy_url' => $buyUrl,
+            ]));
+        }
+
+        return $this->noStore(response()->json([
+            'linked' => true,
+            'active' => true,
+            'key' => $key->license_key,
+            'license_type' => $key->license_type,
+            'expires_at' => $key->expires_at?->toIso8601String(),
+            'buy_url' => $buyUrl,
+        ]));
+    }
+
+    protected function noStore(JsonResponse $res): JsonResponse
+    {
+        $res->headers->set('Cache-Control', 'no-store, private');
+
+        return $res;
+    }
+
     /**
      * POST /api/ai/v1/chat/completions
      */
