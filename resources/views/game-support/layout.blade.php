@@ -1,0 +1,6 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>@yield('title', 'ร่วมสร้างเกม') · XMAN Studio</title><meta name="description" content="สนับสนุนเกมของ XMAN Studio ดูยอดที่ตรวจสอบแล้ว แสดงความคิดเห็น โหวต และให้ดาว"><link rel="stylesheet" href="{{ asset('css/game-support.css') }}"></head>
+<body class="gs-public"><header class="gs-top"><a href="{{ route('game-support.index') }}"><strong>XMAN</strong> / GAME COMMUNITY</a><nav><a href="https://xgameshub.xman4289.com/">ลองเล่นเกม ↗</a>@auth <span>{{ auth()->user()->name }}</span> @else <a href="{{ route('login') }}">เข้าสู่ระบบ</a> @endauth</nav></header><main class="gs-wrap">
+@if(session('success'))<p class="gs-success" role="status">{{ session('success') }}</p>@endif
+@if($errors->any())<div class="gs-error" role="alert"><strong>กรุณาตรวจข้อมูลอีกครั้ง</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+@yield('content')
+</main><footer class="gs-wrap gs-muted">XMAN Studio · การสนับสนุนการพัฒนาโดยสมัครใจ · ยอดนับหลังตรวจเงินเข้า · สลิปไม่แสดงต่อสาธารณะ</footer><script src="{{ asset('js/game-support.js') }}" defer></script></body></html>
