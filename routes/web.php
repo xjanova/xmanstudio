@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/game-support.php';
+
 use App\Http\Controllers\Admin\AdPlacementController;
 use App\Http\Controllers\Admin\AdsTxtController;
 use App\Http\Controllers\Admin\AiCrawlController;
