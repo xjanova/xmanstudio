@@ -527,6 +527,13 @@ class OrderController extends Controller
      */
     public function confirmPayment(Request $request, Order $order)
     {
+        // Same ownership rule as show(): a slip goes only on your own order. Without it any
+        // signed-in account could mark a stranger's order "verifying" — and keep a DGX Spark
+        // reservation that is not theirs holding a set past its time.
+        if ((int) $order->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
         if ($order->payment_status !== 'pending') {
             return redirect()
                 ->back()
