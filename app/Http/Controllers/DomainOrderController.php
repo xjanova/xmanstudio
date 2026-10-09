@@ -174,8 +174,13 @@ class DomainOrderController extends Controller
             return back()->withInput()->with('error', 'เกิดข้อผิดพลาดที่ไม่คาดคิด ทีมงานได้รับแจ้งแล้ว กรุณาลองใหม่อีกครั้ง');
         }
 
-        return redirect()->route('customer.domains.show', $registration->id)
-            ->with('success', $this->outcomeMessage($registration));
+        $redirect = redirect()->route('customer.domains.show', $registration->id);
+
+        // A refused order is not a success: the domain page shows it in orange,
+        // with the refund and a "try again" button, so no green flash on top.
+        return $registration->status === DomainRegistration::STATUS_REFUNDED
+            ? $redirect
+            : $redirect->with('success', $this->outcomeMessage($registration));
     }
 
     /**

@@ -33,17 +33,6 @@
     {{-- ══════════ จ่ายเงินให้ผู้ให้บริการได้ไหม (ใช้ร่วมกับหน้า VPS) ══════════ --}}
     @include('admin.partials.upstream-billing', ['billing' => $billing ?? null])
 
-    {{-- Without a bot, an order refused by the registrar reaches the owner by e-mail only. --}}
-    @unless($telegramReady ?? true)
-        <div class="rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 px-5 py-4 text-sm text-sky-900 dark:text-sky-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <span>
-                <span class="font-semibold">ยังไม่ได้ตั้งค่าแจ้งเตือน Telegram</span> —
-                ตอนนี้ถ้าจดโดเมนไม่สำเร็จ ระบบแจ้งทางอีเมลแอดมินเท่านั้น (และแสดงในตาราง "คำสั่งซื้อที่ไม่สำเร็จ" ด้านล่าง)
-            </span>
-            <a href="{{ route('admin.alerts.index') }}" class="shrink-0 inline-flex items-center px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold transition">ตั้งค่า Telegram</a>
-        </div>
-    @endunless
-
     {{-- ══════════ คำสั่งซื้อที่ไม่สำเร็จ ══════════ --}}
     @if(($failed ?? collect())->isNotEmpty())
         <div class="{{ $card }} overflow-hidden">

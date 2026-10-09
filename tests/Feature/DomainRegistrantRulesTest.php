@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Services\DomainPurchaseException;
 use App\Services\DomainRegistrarService;
+use App\Services\DomainSearchService;
 use App\Support\WhoisContact;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -285,6 +286,68 @@ class DomainRegistrantRulesTest extends TestCase
         Mail::assertSent(AdminAlertMail::class, fn (AdminAlertMail $m) => $m->hasTo('owner@example.com'));
     }
 
+    /** A refused order lands on an orange "did not go through" card, not a green success banner. */
+    public function test_a_refused_order_page_is_orange_with_a_way_forward(): void
+    {
+        Http::fake([
+            '*availability*' => Http::response(['data' => [['domain' => 'mygame.online', 'is_available' => true]]]),
+            '*whois*' => Http::response(['id' => 900001]),
+            '*portfolio*' => Http::response(['message' => '[Billing:422] Payment failed'], 422),
+            '*' => Http::response([], 200),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->followingRedirects()
+            ->post(route('domains.register.store', 'mygame.online'), $this->thaiForm());
+
+        $response->assertOk()
+            ->assertSee('จดโดเมนไม่สำเร็จ')
+            ->assertSee('ลองจดอีกครั้ง')
+            ->assertSee('border-orange-300', false)
+            ->assertDontSee('ปิดอยู่ — กดเพื่อเปิด')
+            // the old green flash's wording
+            ->assertDontSee('ทีมงานได้รับแจ้งแล้วและกำลังตรวจสอบ');
+    }
+
+    /**
+     * Suggestions: the registrar wants `limit` (every call without it was a 422)
+     * and answers with bare names, which are then checked for availability.
+     */
+    public function test_name_suggestions_send_a_limit_and_check_what_comes_back(): void
+    {
+        DomainTld::updateOrCreate(['tld' => 'com'], [
+            'item_id_register' => 'test-domain-com-1y', 'cost_usd_cents' => 1099, 'renew_cost_usd_cents' => 1599, 'is_active' => true,
+        ]);
+        Cache::flush();
+
+        Http::fake(function (Request $request) {
+            $path = parse_url($request->url(), PHP_URL_PATH);
+
+            if (str_ends_with($path, '/alternatives-from-description')) {
+                return Http::response(['playxman.com', 'xmanarcade.online', 'nothere.zzz']);
+            }
+
+            if (str_ends_with($path, '/availability')) {
+                $label = $request->data()['domain'];
+
+                return Http::response(array_map(fn ($tld) => [
+                    'domain' => $label . '.' . $tld, 'is_available' => $label === 'playxman', 'is_alternative' => false,
+                ], $request->data()['tlds']));
+            }
+
+            return Http::response([], 200);
+        });
+
+        $result = app(DomainSearchService::class)->search('thai game hub');
+
+        Http::assertSent(fn (Request $r) => str_ends_with(parse_url($r->url(), PHP_URL_PATH), '/alternatives-from-description')
+            && ($r->data()['limit'] ?? null) > 0);
+        $this->assertSame(['playxman.com'], array_column($result['results'], 'domain'));
+        $this->assertSame(['xmanarcade.online'], array_column($result['unavailable'], 'domain'));
+        // A TLD we do not sell is never even checked.
+        Http::assertNotSent(fn (Request $r) => ($r->data()['domain'] ?? null) === 'nothere');
+    }
+
     public function test_the_admin_sees_why_an_order_failed(): void
     {
         Http::fake(['*' => Http::response([], 200)]);
@@ -302,7 +365,7 @@ class DomainRegistrantRulesTest extends TestCase
             ->assertSee('คำสั่งซื้อที่ไม่สำเร็จล่าสุด')
             ->assertSee('refused.online')
             ->assertSee('ทะเบียนไม่รับข้อมูลผู้ถือครอง (ช่อง: zip_th)')
-            ->assertSee('ยังไม่ได้ตั้งค่าแจ้งเตือน Telegram');
+            ->assertSee('ยังไม่ได้ตั้งค่าบอท Telegram');
     }
 
     /** The registrant form asks for a fresh token before sending, so a form left open is not a 419. */

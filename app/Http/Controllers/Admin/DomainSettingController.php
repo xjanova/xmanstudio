@@ -9,7 +9,6 @@ use App\Models\Setting;
 use App\Services\HostingerApiService;
 use App\Support\DomainPricing;
 use App\Support\DomainReminders;
-use App\Support\Telegram\TelegramBot;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -81,7 +80,6 @@ class DomainSettingController extends Controller
                 ->latest('updated_at')
                 ->limit(20)
                 ->get(),
-            'telegramReady' => TelegramBot::enabled(),
         ]);
     }
 

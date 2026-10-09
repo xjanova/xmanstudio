@@ -241,7 +241,7 @@
     {{-- ── แจ้งเตือนจะไปถึงแอดมินทางไหน ── --}}
     @if (! $telegramOn)
         <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-            <span>ยังไม่ได้ตั้งค่าบอท Telegram — แจ้งเตือน “ยอดเงิน/บัตรไม่ผ่าน” จะส่งทางอีเมลแทน</span>
+            <span>ยังไม่ได้ตั้งค่าบอท Telegram — แจ้งเตือน “ยอดเงิน/บัตรไม่ผ่าน” และคำสั่งซื้อที่ไม่สำเร็จ จะส่งทางอีเมลแอดมินแทน</span>
             <a href="{{ route('admin.alerts.index') }}"
                class="shrink-0 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold transition">
                 ตั้งค่าบอท Telegram

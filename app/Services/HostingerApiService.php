@@ -127,24 +127,28 @@ class HostingerApiService
      *
      * @return array<int,array<string,mixed>>|null
      */
-    public function suggestFromDescription(string $description, array $tlds = ['com']): ?array
+    public function suggestFromDescription(string $description, int $limit = 12): ?array
     {
+        // `limit` is required (every call without it was a 422) and the answer
+        // is a bare list of names — "playthai.gg" — with no availability, so
+        // the caller still has to check them.
         return $this->post('/api/domains/v1/availability/alternatives-from-description', [
             'description' => $description,
-            'tlds' => array_values($tlds),
+            'limit' => $limit,
         ]);
     }
 
     /**
-     * Names in the neighbourhood of one the customer already likes.
+     * Names in the neighbourhood of one the customer already likes: a bare
+     * list of names, any TLD, availability unknown.
      *
-     * @return array<int,array<string,mixed>>|null
+     * @return array<int,string>|null
      */
-    public function suggestFromDomain(string $domain, array $tlds = ['com']): ?array
+    public function suggestFromDomain(string $domain, int $limit = 12): ?array
     {
         return $this->post('/api/domains/v1/availability/alternatives-from-domain', [
             'domain' => $domain,
-            'tlds' => array_values($tlds),
+            'limit' => $limit,
         ]);
     }
 

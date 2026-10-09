@@ -11,6 +11,7 @@
     // กล่องพื้นอ่อนในพอร์ทัลต้องเขียนคู่ light/dark เสมอ — customer-premium
     // ทับพื้นด้วย !important แต่ไม่แตะสีตัวอักษร
     $card = 'rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
+    $orderFailed = in_array($domain->status, [\App\Models\DomainRegistration::STATUS_REFUNDED, \App\Models\DomainRegistration::STATUS_FAILED], true);
 @endphp
 
 <div class="space-y-6"
@@ -20,12 +21,7 @@
         'types'   => $editableTypes,
      ]))">
 
-    @if (session('success'))
-        <div class="rounded-xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 text-green-900 dark:text-green-200 px-4 py-3 text-sm animate-fade-in">{{ session('success') }}</div>
-    @endif
-    @if (session('error'))
-        <div class="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-900 dark:text-red-200 px-4 py-3 text-sm animate-fade-in">{{ session('error') }}</div>
-    @endif
+    {{-- Flash messages come from the member layout; repeating them here showed each one twice. --}}
 
     <a href="{{ route('customer.domains.index') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -57,7 +53,7 @@
                         @endif
                     </div>
                 </div>
-                @if($renewPrice)
+                @if($renewPrice && ! $orderFailed)
                     <div class="text-left lg:text-right shrink-0">
                         <p class="text-xs text-slate-400"><x-bi th="ค่าต่ออายุ" en="Renewal" /></p>
                         <p class="text-xl font-bold text-white">{{ $renewPrice }}<span class="text-sm font-normal text-slate-400">/<x-bi th="ปี" en="yr" /></span></p>
@@ -66,6 +62,41 @@
             </div>
         </div>
     </div>
+
+    {{-- จดไม่สำเร็จ: สีส้ม ไม่ใช่สีเขียวแบบสำเร็จ (เจ้าของสั่ง 2026-10-09) และบอกทางไปต่อ --}}
+    @if($orderFailed)
+        <div class="rounded-2xl border-2 border-orange-300 dark:border-orange-500/50 bg-orange-50 dark:bg-orange-500/10 p-5 sm:p-6">
+            <div class="flex items-start gap-3">
+                <svg class="w-7 h-7 shrink-0 text-orange-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.3 3.38c-.87 1.5.22 3.37 1.95 3.37h14.7c1.73 0 2.82-1.87 1.95-3.37L13.95 3.38c-.87-1.5-3.03-1.5-3.9 0L2.7 16.13zM12 15.75h.01"/>
+                </svg>
+                <div class="min-w-0">
+                    <p class="text-lg font-bold text-orange-900 dark:text-orange-200">
+                        <x-bi th="จดโดเมนไม่สำเร็จ" en="Registration did not go through" />
+                    </p>
+                    <p class="mt-1 text-sm text-orange-800 dark:text-orange-200/90">
+                        @if($domain->status === \App\Models\DomainRegistration::STATUS_REFUNDED)
+                            <x-bi th="คืนเงิน {{ number_format((float) $domain->price_thb, 2) }} ฿ เข้ากระเป๋าเงินของคุณแล้ว ทีมงานได้รับแจ้งและกำลังตรวจสอบ — ลองใหม่อีกครั้งในภายหลังได้เลย"
+                                  en="{{ number_format((float) $domain->price_thb, 2) }} ฿ is back in your wallet. Our team has been told and is looking into it — please try again later." />
+                        @else
+                            <x-bi th="ทีมงานกำลังตรวจสอบรายการนี้ และจะติดต่อกลับเรื่องเงินที่ชำระไว้"
+                                  en="Our team is checking this order and will get back to you about your payment." />
+                        @endif
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('domains.register', $domain->domain) }}"
+                           class="inline-flex items-center px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold shadow-sm transition">
+                            <x-bi th="ลองจดอีกครั้ง" en="Try again" />
+                        </a>
+                        <a href="{{ route('domains.index') }}"
+                           class="inline-flex items-center px-5 py-2.5 rounded-xl border border-orange-300 dark:border-orange-500/40 text-orange-800 dark:text-orange-200 text-sm font-semibold hover:bg-orange-100 dark:hover:bg-orange-500/10 transition">
+                            <x-bi th="ค้นหาชื่ออื่น" en="Search another name" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     @if($domain->status === \App\Models\DomainRegistration::STATUS_REGISTERING)
         <div class="rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-5 py-4 text-sm text-amber-900 dark:text-amber-200">
@@ -406,7 +437,9 @@
         </div>
     @endif
 
-    {{-- ══════════ การตั้งค่า ══════════ --}}
+    {{-- ══════════ การตั้งค่า ══════════
+         Not for an order that never became a domain: there is nothing to renew. --}}
+    @unless($orderFailed)
     <div class="grid sm:grid-cols-2 gap-4">
         <div class="{{ $card }} p-5">
             <h3 class="font-semibold text-slate-900 dark:text-white mb-1"><x-bi th="ต่ออายุอัตโนมัติ" en="Auto-renew" /></h3>
@@ -470,6 +503,7 @@
             </div>
         @endif
     </div>
+    @endunless
 
     {{-- ══════════ ย้ายโดเมนออก ══════════
          ให้รหัสย้ายโดยไม่ต้องอ้อนวอน โดเมนเป็นของลูกค้า ไม่ใช่ของเรา --}}
