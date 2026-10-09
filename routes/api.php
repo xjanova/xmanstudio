@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiprayApiController;
 use App\Http\Controllers\Api\AppAiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\GameItemRedeemController;
 use App\Http\Controllers\Api\GlobalTorrentController;
 use App\Http\Controllers\Api\GpuxMineNodeController;
 use App\Http\Controllers\Api\LicenseApiController;
@@ -586,3 +587,8 @@ Route::prefix('ai/v1')->middleware(['throttle:30,1,api-ai'])->group(function () 
     // or a spammer could sign the owner's PC out
     Route::post('/brainx', [AppAiController::class, 'brainx'])->middleware('throttle:6,1,api-ai-brainx');
 });
+
+// ==================== XGamesHub supporter items ====================
+// Browser games on xgameshub.xman4289.com redeem a supporter's item code here.
+// 80-bit codes cannot be guessed; the limit only keeps a broken game from hammering it.
+Route::post('/gameshub/redeem', GameItemRedeemController::class)->middleware('throttle:20,1,api-gameshub-redeem')->name('api.gameshub.redeem');

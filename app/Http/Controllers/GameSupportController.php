@@ -35,7 +35,9 @@ class GameSupportController extends Controller
             'stats' => collect($service->summary())->firstWhere('slug', $campaign->slug),
             'donors' => $campaign->donations()->where('status', 'approved')->where('publish_name', true)->latest('reviewed_at')->paginate(20, ['display_name', 'amount_satang', 'reward_snapshot', 'reward_status', 'reviewed_at'], 'donors'),
             'comments' => $campaign->comments()->where('status', 'approved')->latest()->paginate(20, ['display_name', 'body', 'created_at'], 'comments'),
-            'mine' => $request->user() ? $campaign->donations()->where('user_id', $request->user()->id)->latest()->limit(20)->get() : collect(),
+            'mine' => $request->user() ? $campaign->donations()->where('user_id', $request->user()->id)->with('entitlements.item')->latest()->limit(20)->get() : collect(),
+            'reviews' => $campaign->reviews()->where('status', 'approved')->with('user:id,name')->orderByDesc('is_featured')->orderByDesc('approved_at')->paginate(10, ['*'], 'reviews'),
+            'myReview' => $request->user() ? $campaign->reviews()->where('user_id', $request->user()->id)->first() : null,
             'myVote' => $request->user() ? DB::table('game_votes')->where('user_id', $request->user()->id)->value('game_campaign_id') : null,
             'myRating' => $request->user() ? DB::table('game_ratings')->where('user_id', $request->user()->id)->where('game_campaign_id', $campaign->id)->value('stars') : null,
         ]);

@@ -41,7 +41,7 @@
 @endphp
 
 {{-- Dashboard --}}
-<a href="{{ route('admin.game-support.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.game-support.*') ? $linkActive : $linkInactive }}">เกม · บริจาค / สลิป / รางวัล / ความเห็น</a>
+<a href="{{ route('admin.gameshub.dashboard') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.gameshub.*', 'admin.game-support.*') ? $linkActive : $linkInactive }}">XGamesHub · บริจาค ไอเท็ม รีวิว ความเห็น</a>
 <div class="pb-2 mb-1 border-b border-white/5 space-y-1">
     <a href="{{ route('admin.analytics.index') }}"
        class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.analytics*') ? $linkActive : $linkInactive }}">

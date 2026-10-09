@@ -1,7 +1,8 @@
 @extends('game-support.layout')
 @section('title', 'อันดับเกมและผู้สนับสนุน')
+@section('crumb', 'อันดับและทุกเกม')
 @section('content')
-<div class="gs-hero"><span class="gs-tag">BUILD THE NEXT WORLD</span><h1>เลือกเกมที่อยากให้ไปต่อ</h1><p>ช่วยด้วยการลองเล่น ฝากคำแนะนำ โหวต ให้ดาว หรือร่วมสนับสนุนการพัฒนา</p></div>
+<div class="gs-hero gs-art" style="--art: url('{{ asset('images/gameshub/community.webp') }}')"><span class="gs-tag">BUILD THE NEXT WORLD</span><h1>เลือกเกมที่อยากให้ไปต่อ</h1><p>ช่วยด้วยการลองเล่น ฝากคำแนะนำ โหวต ให้ดาว หรือร่วมสนับสนุนการพัฒนา</p></div>
 <div class="gs-grid gs-three">
 @foreach(['raised' => 'ยอดสนับสนุนที่ยืนยันแล้ว', 'votes' => 'เกมที่อยากให้ทำมากที่สุด', 'stars' => 'คะแนนดาวจากผู้เล่น'] as $metric => $label)
 <section class="gs-card"><h2>{{ $label }}</h2><ol class="gs-ranking">

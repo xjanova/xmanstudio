@@ -173,7 +173,13 @@ class GameSupportTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']));
         $data = ['slug' => 'breaker', 'name' => 'X-NOVA: BREAKER', 'goal' => 150000, 'active' => 1, 'tiers_json' => json_encode([['minimum' => 100, 'name' => 'NEW', 'rewards' => ['New reward']]])];
         $this->post('/admin/game-support/campaigns/breaker', $data)->assertSessionHasNoErrors();
-        $this->assertSame($original, $d->fresh()->reward_snapshot);
+        // MySQL returns JSON objects with its own key order; the content must not change
+        $canon = function (array $a): array {
+            ksort($a);
+
+            return $a;
+        };
+        $this->assertSame($canon($original), $canon($d->fresh()->reward_snapshot));
         $this->assertSame('NEW', GameCampaign::where('slug', 'breaker')->first()->tiers[0]['name']);
         $this->post('/admin/game-support/campaigns/breaker', array_replace($data, ['slug' => 'changed']))->assertSessionHasErrors('slug');
     }

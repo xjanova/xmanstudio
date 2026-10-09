@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GameDonation extends Model
 {
@@ -14,5 +15,11 @@ class GameDonation extends Model
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(GameCampaign::class, 'game_campaign_id');
+    }
+
+    /** In-game items granted when this donation was approved. */
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(GameEntitlement::class);
     }
 }
