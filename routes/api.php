@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\V1\SmsPaymentController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\VpnProxyController;
+use App\Http\Controllers\Api\WinxDiskBenchmarkController;
 use App\Http\Controllers\Api\WireguardController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\TelegramWebhookController;
@@ -248,6 +249,19 @@ Route::post('v1/product/gpuxmine/status', [GpuxMineNodeController::class, 'statu
     ->withoutMiddleware('throttle:api')
     ->middleware(['throttle:gpuxmine-status'])
     ->name('api.gpuxmine.status');
+
+// ==================== WinXTools — disk speed-test results ====================
+// The app uploads each finished disk speed test anonymously, and asks what other PCs measured
+// on the same drive model. No login and nothing personal: a random per-installation id, no IP
+// kept. Uploads: 20 an hour per IP (named limiter in AppServiceProvider) and 30 a day per
+// installation (counted from stored rows in the controller). Stats are cached ten minutes.
+Route::post('v1/product/winx-tools/disk-benchmarks', [WinxDiskBenchmarkController::class, 'store'])
+    ->middleware(['throttle:winx-disk-benchmarks'])
+    ->name('api.winx-tools.disk-benchmarks.store');
+
+Route::get('v1/product/winx-tools/disk-benchmarks/stats', [WinxDiskBenchmarkController::class, 'stats'])
+    ->middleware(['throttle:60,1,api-winx-disk-stats'])
+    ->name('api.winx-tools.disk-benchmarks.stats');
 
 Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1,api-product'])->group(function () {
     // Register device when app starts
