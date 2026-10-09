@@ -122,7 +122,8 @@ class GamesHubControlTest extends TestCase
         $this->postJson('/api/gameshub/redeem', ['game' => 'breaker', 'code' => $typed, 'device' => 'device-aaaa'])->assertOk()
             ->assertJson(['ok' => true, 'item' => ['key' => 'founder-badge'], 'devices_used' => 1, 'devices_max' => 2, 'already_on_this_device' => false]);
         $this->postJson('/api/gameshub/redeem', ['game' => 'breaker', 'code' => $e->code, 'device' => 'device-aaaa'])->assertOk()->assertJson(['devices_used' => 1, 'already_on_this_device' => true]);
-        $this->postJson('/api/gameshub/redeem', ['game' => 'breaker', 'code' => $e->code, 'device' => 'device-bbbb'])->assertOk()->assertJson(['devices_used' => 2]);
+        // the hub's redeem page sends no game; the answer says which game the item is for
+        $this->postJson('/api/gameshub/redeem', ['code' => $e->code, 'device' => 'device-bbbb'])->assertOk()->assertJson(['game' => 'breaker', 'game_name' => 'X-NOVA: BREAKER', 'devices_used' => 2]);
         $this->postJson('/api/gameshub/redeem', ['game' => 'breaker', 'code' => $e->code, 'device' => 'device-cccc'])->assertStatus(409)->assertJson(['error' => 'device_limit']);
         $this->postJson('/api/gameshub/redeem', ['game' => 'breaker', 'code' => 'XG-0000-0000-0000-0000', 'device' => 'device-aaaa'])->assertNotFound()->assertJson(['error' => 'invalid_code']);
         $this->postJson('/api/gameshub/redeem', ['game' => 'breaker', 'code' => $e->code])->assertStatus(422)->assertJson(['error' => 'invalid_request']);

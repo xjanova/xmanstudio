@@ -117,12 +117,13 @@ class GameItemService
     }
 
     /**
-     * Redeem a code for a game on one device. The same device asking again gets the same
-     * answer without using up another device slot.
+     * Redeem a code on one device. The same device asking again gets the same answer
+     * without using up another device slot. $game = null (the hub's own redeem page)
+     * accepts a code for any game and says which game it belongs to.
      *
      * @return array{status:int, body:array}
      */
-    public function redeem(string $game, string $code, string $device, ?string $ip): array
+    public function redeem(?string $game, string $code, string $device, ?string $ip): array
     {
         $fail = fn (int $status, string $error, string $message) => ['status' => $status, 'body' => ['ok' => false, 'error' => $error, 'message' => $message]];
 
@@ -132,7 +133,7 @@ class GameItemService
                 return $fail(404, 'invalid_code', 'ไม่พบโค้ดนี้ ตรวจตัวอักษรอีกครั้ง');
             }
             $item = $row->item()->with('campaign')->first();
-            if ($item->campaign->slug !== $game) {
+            if ($game !== null && $item->campaign->slug !== $game) {
                 return $fail(409, 'wrong_game', 'โค้ดนี้ใช้กับเกม ' . $item->campaign->name);
             }
             if ($row->status !== 'granted') {
@@ -150,7 +151,8 @@ class GameItemService
 
             return ['status' => 200, 'body' => [
                 'ok' => true,
-                'game' => $game,
+                'game' => $item->campaign->slug,
+                'game_name' => $item->campaign->name,
                 'item' => ['key' => $item->key, 'name' => $item->name, 'kind' => $item->kind, 'description' => $item->description, 'image_url' => $item->image_url],
                 'devices_used' => $row->redeem_count,
                 'devices_max' => $item->max_devices,
