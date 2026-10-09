@@ -1,5 +1,6 @@
 @extends('game-support.layout')
 @section('title', $campaign->name)
+@section('crumb', $campaign->name)
 @section('content')
 <a href="{{ route('game-support.index') }}">← อันดับและเกมทั้งหมด</a><div class="gs-hero"><span class="gs-tag">SUPPORT THE NEXT MISSION</span><h1>{{ $campaign->name }}</h1><p>{{ $campaign->description }}</p><div class="gs-metrics"><strong>฿{{ number_format($stats['raised'], 2) }}</strong><span>@if($stats['goal'])จากเป้า ฿{{ number_format($stats['goal']) }}@elseยังไม่กำหนดเป้าทุน@endif · {{ $stats['supporters'] }} ผู้สนับสนุน</span></div>@if($stats['goal'])<progress max="{{ $stats['goal'] }}" value="{{ min($stats['raised'], $stats['goal']) }}" aria-label="ยอดสนับสนุนที่ตรวจแล้ว"></progress>@endif</div>
 <div class="gs-grid"><section class="gs-card" id="donate"><h2>ร่วมสนับสนุนเกมนี้</h2><div class="gs-bank"><img src="{{ asset('images/banks/scb.svg') }}" alt="ธนาคารไทยพาณิชย์" width="150" height="45"><div><b>{{ $bank['name'] }}</b><p>{{ $bank['holder'] }}</p><strong class="gs-account">{{ $bank['account'] }}</strong><button type="button" data-copy="4111484769" class="gs-small">คัดลอกเลขบัญชี</button><span data-copy-status role="status"></span></div></div><p class="gs-muted">ใช้บัญชีบริษัทเดียวกันทุกเกม เลือกยอด โอนผ่านแอปธนาคาร แล้วแนบสลิปที่นี่ ตรวจชื่อผู้รับก่อนโอน เลขนี้เป็นบัญชีธนาคาร ไม่ใช่หมายเลขพร้อมเพย์</p>

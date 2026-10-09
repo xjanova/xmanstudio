@@ -1,5 +1,6 @@
 @extends('game-support.layout')
 @section('title', 'อันดับเกมและผู้สนับสนุน')
+@section('crumb', 'อันดับและทุกเกม')
 @section('content')
 <div class="gs-hero"><span class="gs-tag">BUILD THE NEXT WORLD</span><h1>เลือกเกมที่อยากให้ไปต่อ</h1><p>ช่วยด้วยการลองเล่น ฝากคำแนะนำ โหวต ให้ดาว หรือร่วมสนับสนุนการพัฒนา</p></div>
 <div class="gs-grid gs-three">
