@@ -46,6 +46,16 @@ per period (`hostingerinth-vps-kvm2-thb-1m`) and opaque — copy them from the c
 
 ## Traps (each was a real bug)
 
+- **WHOIS keys are the registrar's, and per country.** The API reference documents `whois_details`
+  as a bare object; until 2026-10-09 we sent `address1` / `zip` / `state` / `phone` / `country`, and
+  every first purchase would have been refused at the profile step, after the debit. The real keys,
+  read back from its 422s: `address` (ONE line ≤ 50 chars, a digit and a letter, no `/` or other
+  symbols), `city`, `country_code`, `phone_cc` + `phone_number` (digits only), `state_<cc>` (one of
+  its region names, e.g. `state_th` = `Bangkok`) and `zip_<cc>` (Hong Kong: `zip_general`). Thai text
+  is accepted. The rules and every country's region list live in `config/domain_whois.php`;
+  `App\Support\WhoisContact` builds the payload and checks it (form, and again before the debit). To
+  re-learn a rule, POST a profile with a deliberately invalid e-mail: a 422 creates nothing.
+
 - **202 is not "done".** A 202 purchase means payment is still clearing and the product was **not**
   set up. A domain then lands in the portfolio as `pending_setup` (paid, registered to nobody) and
   must be finished with `POST /portfolio/{domain}/setup`; a VPS lands in state `initial` and needs

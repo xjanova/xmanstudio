@@ -62,6 +62,9 @@ class HostingerApiService
     /** HTTP status of the last response, or null when no response came back. */
     protected ?int $lastStatus = null;
 
+    /** @var array<int,string> */
+    protected array $lastWhoisRejectedFields = [];
+
     protected string $apiToken;
 
     public function __construct()
@@ -328,11 +331,58 @@ class HostingerApiService
             $payload['tld_details'] = $tldDetails;
         }
 
-        $result = $this->post('/api/domains/v1/whois', $payload);
+        $this->lastWhoisRejectedFields = [];
+        $result = $this->request('post', '/api/domains/v1/whois', $payload, withStatus: true);
 
-        $id = $result['id'] ?? null;
+        if ($result === null) {
+            return null;
+        }
+
+        if ($result['status_code'] >= 400) {
+            $this->lastWhoisRejectedFields = self::rejectedFields($result['body'] ?? []);
+
+            return null;
+        }
+
+        $id = $result['body']['id'] ?? null;
 
         return is_numeric($id) ? (int) $id : null;
+    }
+
+    /**
+     * The WHOIS fields the last createWhoisProfile() was refused over.
+     *
+     * @return array<int,string>
+     */
+    public function lastWhoisRejectedFields(): array
+    {
+        return $this->lastWhoisRejectedFields;
+    }
+
+    /**
+     * Field names out of a 422 such as `"zip_th" must be enter a ZIP …`:
+     * the names only, never the text around them.
+     *
+     * @param  array<mixed>  $body
+     * @return array<int,string>
+     */
+    protected static function rejectedFields(array $body): array
+    {
+        $fields = [];
+
+        foreach ((array) ($body['errors'] ?? []) as $key => $messages) {
+            foreach ((array) $messages as $message) {
+                if (is_string($message) && preg_match('/^"([a-z_]{2,40})"/', $message, $m)) {
+                    $fields[] = $m[1];
+                }
+            }
+
+            if (is_string($key) && $key !== 'whois_details') {
+                $fields[] = $key;
+            }
+        }
+
+        return array_values(array_unique($fields));
     }
 
     /**

@@ -67,6 +67,7 @@ class DomainRegistrationTest extends TestCase
             'phone' => '812345678',
             'address1' => '1 Sukhumvit',
             'city' => 'Bangkok',
+            'state' => 'Bangkok',
             'zip' => '10110',
             'country' => 'TH',
         ]);
@@ -406,7 +407,7 @@ class DomainRegistrationTest extends TestCase
             'first_name' => 'Nid', 'last_name' => 'Noi',
             'email' => 'nid@example.com',
             'phone_country_code' => '+66', 'phone' => '811111111',
-            'address1' => '9 Rama IV', 'city' => 'Bangkok', 'zip' => '10500', 'country' => 'TH',
+            'address1' => '9 Rama IV', 'city' => 'Bangkok', 'state' => 'Bangkok', 'zip' => '10500', 'country' => 'TH',
             'accept_terms' => '1',
             // save_contact deliberately absent — the box was unticked.
         ]);

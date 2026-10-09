@@ -61,7 +61,7 @@
         @if($xuChatOn)
             <form class="xu-guide__ask" id="xu-guide-ask">
                 <label class="xu-sr" for="xu-guide-ask-input">ถามผู้ช่วย AI / Ask the AI assistant</label>
-                <input type="text" id="xu-guide-ask-input" maxlength="2000" autocomplete="off"
+                <input type="text" id="xu-guide-ask-input" class="field-bare" maxlength="2000" autocomplete="off"
                        placeholder="พิมพ์ถามหนูได้เลย · Ask me">
                 <button type="submit" aria-label="ส่ง / Send">@include('partials.nova-icon', ['name' => 'arrow'])</button>
             </form>
@@ -83,7 +83,7 @@
         <div class="xu-chat__log" id="xu-chat-log" role="log" aria-live="polite"></div>
         <form class="xu-chat__form" id="xu-chat-form">
             <label class="xu-sr" for="xu-chat-input">ข้อความ / Message</label>
-            <textarea id="xu-chat-input" rows="1" maxlength="2000" placeholder="พิมพ์ข้อความ... · Type a message"></textarea>
+            <textarea id="xu-chat-input" class="field-bare" rows="1" maxlength="2000" placeholder="พิมพ์ข้อความ... · Type a message"></textarea>
             <button type="submit" id="xu-chat-send" aria-label="ส่ง / Send">@include('partials.nova-icon', ['name' => 'arrow'])</button>
         </form>
         <p class="xu-chat__foot">ตอบโดย AI อาจคลาดเคลื่อนได้ · AI answers may be imperfect</p>

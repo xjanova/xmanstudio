@@ -32,6 +32,170 @@
 }
 
 /* ==========================================================================
+   Form fields: every text box, dropdown and text area on the site
+
+   The views were written for @tailwindcss/forms ("border-gray-300 rounded-md
+   shadow-sm" assumes its border and padding) and the plugin fell out in the
+   Tailwind 4 move, so fields rendered with no border and no padding: a faint
+   line on the page. These rules put a real field back, and a larger one:
+   16px text (which also stops iOS zooming in), about 50px tall, a border you
+   can see, a clear focus ring, and calm colours for browser autofill.
+
+   They sit in the base layer, so utilities still win: a page that sizes or
+   colours its own fields keeps its design. On a field, text-sm reads as 16px
+   and text-xs as 14px (the custom properties below) so the old small-text
+   classes stop shrinking what people type. Inputs that are deliberately bare
+   (border-0, bg-transparent, or .field-bare) are left alone.
+   ========================================================================== */
+@layer base {
+    input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent),
+    select:not(.field-bare, .border-0, .border-none, .bg-transparent),
+    textarea:not(.field-bare, .border-0, .border-none, .bg-transparent) {
+        --text-xs: 0.875rem;
+        --text-xs--line-height: 1.5;
+        --text-sm: 1rem;
+        --text-sm--line-height: 1.5;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        line-height: 1.5rem;
+        color: rgb(15 23 42);
+        background-color: #fff;
+        border: 1.5px solid rgb(203 213 225);
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    /* Autofill paints the field pale blue/yellow (white text on it in dark
+       mode is unreadable). Postponing that paint indefinitely keeps the
+       field's own colours. Scoped to autofilled fields only. */
+    input:-webkit-autofill,
+    select:-webkit-autofill,
+    textarea:-webkit-autofill {
+        transition: background-color 600000s 0s, color 600000s 0s;
+    }
+
+    input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent):hover,
+    select:not(.field-bare, .border-0, .border-none, .bg-transparent):hover,
+    textarea:not(.field-bare, .border-0, .border-none, .bg-transparent):hover {
+        border-color: rgb(148 163 184);
+    }
+
+    input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent):focus,
+    select:not(.field-bare, .border-0, .border-none, .bg-transparent):focus,
+    textarea:not(.field-bare, .border-0, .border-none, .bg-transparent):focus {
+        outline: none;
+        border-color: rgb(99 102 241);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--tw-ring-color, rgb(99 102 241)) 20%, transparent);
+    }
+
+    /* Wrong only once the person has had a go at it, never on a blank form. */
+    input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent):is(:user-invalid, [aria-invalid=true]),
+    select:not(.field-bare, .border-0, .border-none, .bg-transparent):is(:user-invalid, [aria-invalid=true]),
+    textarea:not(.field-bare, .border-0, .border-none, .bg-transparent):is(:user-invalid, [aria-invalid=true]) {
+        border-color: rgb(248 113 113);
+        box-shadow: 0 0 0 4px rgb(248 113 113 / 0.15);
+    }
+
+    input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent):is(:disabled, [readonly]),
+    select:not(.field-bare, .border-0, .border-none, .bg-transparent):disabled,
+    textarea:not(.field-bare, .border-0, .border-none, .bg-transparent):is(:disabled, [readonly]) {
+        color: rgb(100 116 139);
+        background-color: rgb(241 245 249);
+        cursor: not-allowed;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: rgb(148 163 184);
+    }
+
+    select:not([multiple], [size], .field-bare, .border-0, .border-none, .bg-transparent) {
+        appearance: none;
+        padding-right: 2.75rem;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.85rem center;
+        background-repeat: no-repeat;
+        background-size: 1.25rem 1.25rem;
+        cursor: pointer;
+    }
+
+    textarea:not(.field-bare, .border-0, .border-none, .bg-transparent) {
+        line-height: 1.65;
+    }
+
+    input[type=checkbox],
+    input[type=radio] {
+        width: 1.15rem;
+        height: 1.15rem;
+        accent-color: rgb(79 70 229);
+        cursor: pointer;
+    }
+
+    .dark input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent),
+    .dark select:not(.field-bare, .border-0, .border-none, .bg-transparent),
+    .dark textarea:not(.field-bare, .border-0, .border-none, .bg-transparent) {
+        color: #fff;
+        color-scheme: dark;
+        background-color: rgb(15 23 42 / 0.65);
+        border-color: rgb(71 85 105);
+        box-shadow: none;
+    }
+
+    .dark input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent):hover,
+    .dark select:not(.field-bare, .border-0, .border-none, .bg-transparent):hover,
+    .dark textarea:not(.field-bare, .border-0, .border-none, .bg-transparent):hover {
+        border-color: rgb(100 116 139);
+    }
+
+    .dark input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent):focus,
+    .dark select:not(.field-bare, .border-0, .border-none, .bg-transparent):focus,
+    .dark textarea:not(.field-bare, .border-0, .border-none, .bg-transparent):focus {
+        border-color: rgb(129 140 248);
+        box-shadow: 0 0 0 4px rgb(129 140 248 / 0.25);
+    }
+
+    .dark input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=file], [type=hidden], [type=submit], [type=button], [type=reset], [type=image], .field-bare, .border-0, .border-none, .bg-transparent):is(:disabled, [readonly]),
+    .dark select:not(.field-bare, .border-0, .border-none, .bg-transparent):disabled,
+    .dark textarea:not(.field-bare, .border-0, .border-none, .bg-transparent):is(:disabled, [readonly]) {
+        color: rgb(148 163 184);
+        background-color: rgb(30 41 59 / 0.6);
+    }
+
+    .dark input::placeholder,
+    .dark textarea::placeholder {
+        color: rgb(100 116 139);
+    }
+
+    .dark select:not([multiple], [size], .field-bare, .border-0, .border-none, .bg-transparent) {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    }
+
+    .dark input:-webkit-autofill {
+        -webkit-text-fill-color: #fff;
+    }
+}
+
+/* Labels, hints and messages around a field, for forms that want them. */
+@layer components {
+    .field-label {
+        @apply flex flex-wrap items-baseline gap-x-1.5 mb-2 text-[0.95rem] font-semibold text-slate-800 dark:text-slate-100;
+    }
+
+    .field-label .field-en {
+        @apply text-xs font-normal text-slate-500 dark:text-slate-400;
+    }
+
+    .field-hint {
+        @apply mt-1.5 text-[0.8rem] leading-relaxed text-slate-500 dark:text-slate-400;
+    }
+
+    .field-error {
+        @apply mt-1.5 flex items-start gap-1.5 text-sm font-medium text-red-600 dark:text-red-400;
+    }
+}
+
+/* ==========================================================================
    Custom Components
    ========================================================================== */
 @layer components {
