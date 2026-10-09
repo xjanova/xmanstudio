@@ -36,6 +36,48 @@ class GamesHubController extends Controller
         return count($parts) > 1 ? $first . ' ' . mb_substr(end($parts), 0, 1) . '.' : $first;
     }
 
+    /** Key art for a game, served by the hub itself. */
+    public static function artFor(string $slug): string
+    {
+        return rtrim(config('game-support.hub_origin'), '/') . (config('game-support.art')[$slug] ?? "/art/{$slug}.webp");
+    }
+
+    /**
+     * Sign-in and sign-up in the community's own frame. The forms post to the usual
+     * XMAN ID endpoints (same Turnstile and social sign-in); afterwards the member
+     * lands back on the community page they came from.
+     */
+    public function login(Request $request)
+    {
+        $this->rememberReturn($request);
+
+        return view('game-support.auth', ['mode' => 'login']);
+    }
+
+    public function register(Request $request)
+    {
+        $this->rememberReturn($request);
+
+        return view('game-support.auth', ['mode' => 'register']);
+    }
+
+    private function rememberReturn(Request $request): void
+    {
+        $back = (string) $request->query('back', '');
+        $base = url('/games-support');
+        // only pages of this community on this host; never the sign-in pages themselves
+        $community = $back === $base || str_starts_with($back, $base . '/');
+        $authPage = str_starts_with($back, $base . '/login') || str_starts_with($back, $base . '/register');
+        if ($community && ! $authPage) {
+            $request->session()->put('url.intended', $back);
+
+            return;
+        }
+        if (! str_starts_with((string) $request->session()->get('url.intended'), $base)) {
+            $request->session()->put('url.intended', route('game-support.index'));
+        }
+    }
+
     public function hub()
     {
         $campaigns = GameCampaign::get(['slug', 'hero_rank', 'hero_hidden']);

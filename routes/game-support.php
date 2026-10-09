@@ -20,7 +20,11 @@ Route::get('/games-support/summary.json', [GameSupportController::class, 'summar
 // read by the static XGamesHub site: announcements and the hero order
 Route::get('/games-support/hub.json', [GamesHubController::class, 'hub'])->middleware('throttle:120,1')->withoutMiddleware($stateless)->name('game-support.hub');
 Route::get('/games-support/my-items', [GamesHubController::class, 'myItems'])->middleware('auth')->name('game-support.my-items');
-Route::get('/games-support/{campaign}', [GameSupportController::class, 'show'])->name('game-support.show');
+Route::middleware('guest')->group(function () {
+    Route::get('/games-support/login', [GamesHubController::class, 'login'])->name('game-support.login');
+    Route::get('/games-support/register', [GamesHubController::class, 'register'])->name('game-support.register');
+});
+Route::get('/games-support/{campaign}', [GameSupportController::class, 'show'])->missing(fn () => response()->view('game-support.missing', [], 404))->name('game-support.show');
 Route::get('/games-support/{campaign}/reviews.json', [GamesHubController::class, 'reviewsJson'])->middleware('throttle:120,1')->withoutMiddleware($stateless)->name('game-support.reviews-json');
 Route::get('/games-support/{campaign}/join', fn (GameCampaign $campaign) => redirect()->route('game-support.show', $campaign))->middleware('auth')->name('game-support.join');
 Route::middleware(['auth', 'throttle:10,1'])->prefix('games-support/{campaign}')->name('game-support.')->group(function () {

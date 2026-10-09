@@ -57,6 +57,11 @@ class RegisteredUserController extends Controller
             $request->session()->put('autotradex_machine_id', $machineId);
         }
 
+        // signed up from the game community: back to the page they were on
+        if (str_starts_with((string) $request->session()->get('url.intended'), url('/games-support'))) {
+            return redirect()->intended();
+        }
+
         return redirect(route('profile.edit', absolute: false));
     }
 }

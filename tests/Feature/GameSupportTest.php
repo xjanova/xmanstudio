@@ -48,7 +48,7 @@ class GameSupportTest extends TestCase
     public function test_guest_cannot_write_and_non_admin_cannot_read_slips_or_approve(): void
     {
         $d = $this->donation();
-        $this->post('/games-support/breaker/donations', [])->assertRedirect(route('login'));
+        $this->post('/games-support/breaker/donations', [])->assertRedirect(route('game-support.login'));
         $this->actingAs(User::factory()->create())->get('/admin/game-support/donations/' . $d->id . '/slip')->assertForbidden();
         $this->post('/admin/game-support/donations/' . $d->id . '/review', $this->approval())->assertForbidden();
         $this->assertSame('pending', $d->fresh()->status);

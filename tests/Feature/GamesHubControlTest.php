@@ -233,4 +233,51 @@ class GamesHubControlTest extends TestCase
         }
         $this->get('/admin/gameshub/items?game=breaker')->assertSee('founder-badge');
     }
+
+    public function test_every_game_starts_with_tier_badges_that_issue_codes(): void
+    {
+        $this->assertSame(GameCampaign::count() * 5, GameItem::count());
+        $breaker = GameCampaign::where('slug', 'breaker')->firstOrFail();
+        $tiers = collect($breaker->tiers)->keyBy('name');
+        $this->assertSame(['supporter-salvager'], $tiers['SALVAGER']['items']);
+        $this->assertSame(['supporter-pathfinder', 'title-pathfinder'], $tiers['PATHFINDER']['items']);
+
+        $this->actingAs($this->admin());
+        $d = $this->donation(User::factory()->create(), 30000);
+        $this->assertSame('supporter-salvager', $d->reward_snapshot['items'][0]['key']);
+        $this->approve($d);
+        $this->assertSame('supporter-salvager', GameEntitlement::firstOrFail()->item->key);
+    }
+
+    public function test_krungsri_has_a_page_and_unknown_games_get_the_community_404(): void
+    {
+        $this->get('/games-support/krungsri')->assertOk()->assertSee('ขุนศึกกรุงศรี')->assertSee('/art/krungsri.webp', false);
+        $this->get('/games-support/no-such-game')->assertNotFound()->assertSee('SIGNAL LOST')->assertSee('gs-side', false);
+        GameCampaign::where('slug', 'snake')->update(['active' => false]);
+        $this->get('/games-support/snake')->assertNotFound()->assertSee('ยังไม่เปิดในศูนย์ชุมชน');
+    }
+
+    public function test_guests_sign_in_on_the_community_page_and_come_back(): void
+    {
+        $this->get('/games-support/my-items')->assertRedirect(route('game-support.login'));
+        $this->get('/games-support/login')->assertOk()->assertSee('เข้าสู่ระบบ XMAN ID')->assertSee('action="' . route('login') . '"', false);
+        $this->assertSame(url('/games-support/my-items'), session('url.intended'));
+
+        // a back link to another host is ignored
+        $this->get('/games-support/login?back=' . urlencode('https://evil.example/games-support'))->assertOk();
+        $this->assertStringStartsWith(url('/games-support'), session('url.intended'));
+
+        $this->get('/games-support/login?back=' . urlencode(url('/games-support/xnova')))->assertOk();
+        $user = User::factory()->create(['email' => 'pilot@example.com']);
+        $this->post(route('login'), ['email' => 'pilot@example.com', 'password' => 'password'])->assertRedirect(url('/games-support/xnova'));
+        $this->assertAuthenticatedAs($user);
+        $this->get('/games-support/login')->assertRedirect();
+    }
+
+    public function test_signing_up_from_the_community_returns_to_it(): void
+    {
+        $this->get('/games-support/register?back=' . urlencode(url('/games-support/breaker')))->assertOk()->assertSee('สมัคร XMAN ID');
+        $this->post(route('register'), ['name' => 'New Pilot', 'email' => 'new-pilot@example.com', 'password' => 'a-Long-pass-123!', 'password_confirmation' => 'a-Long-pass-123!'])
+            ->assertRedirect(url('/games-support/breaker'));
+    }
 }

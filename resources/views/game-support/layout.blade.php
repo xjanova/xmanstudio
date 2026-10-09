@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="{{ asset('css/game-support.css') }}?v=4">
+<link rel="stylesheet" href="{{ asset('css/game-support.css') }}?v=5">
 </head>
 <body class="gs-public">
 <div class="gs-nebula" aria-hidden="true"></div>
@@ -20,7 +20,7 @@
     <div class="gs-caption">YOUR GATEWAY TO PLAY</div>
     <nav class="gs-nav" aria-label="เมนูหลัก">
         <a href="{{ $hub }}/"><i>◇</i>Discover</a>
-        <a href="{{ $hub }}/?f=full#games"><i>★</i>Full games</a>
+        <a href="{{ $hub }}/?f=full#games"><i>★</i>Closed Beta</a>
         <a href="{{ $hub }}/?f=play#games"><i>▷</i>Play now</a>
         <a href="{{ $hub }}/?f=dev#games"><i>▧</i>In development</a>
         <a href="{{ $hub }}/?f=concept#games"><i>✳</i>Concept lab</a>
@@ -34,6 +34,9 @@
         <a href="{{ $hub }}/#devlog"><i>✎</i>Dev log</a>
         <a href="{{ $hub }}/#studio"><i>⌘</i>Meet the studio</a>
     </nav>
+    @auth
+        <form method="post" action="{{ route('logout') }}" class="gs-logout">@csrf<button type="submit">ออกจากระบบ {{ \Illuminate\Support\Str::limit(auth()->user()->name, 18) }}</button></form>
+    @endauth
     <div class="gs-note"><span>XMAN ORIGINALS</span><p>Small studio.<br><strong>Infinite worlds.</strong></p></div>
 </aside>
 <div class="gs-shell">
@@ -44,7 +47,7 @@
         @auth
             <a class="gs-pill" href="{{ route('game-support.my-items') }}"><i>✦</i><span>{{ auth()->user()->name }}</span></a>
         @else
-            <a class="gs-pill" href="{{ route('login') }}"><i>→</i><span>เข้าสู่ระบบ XMAN ID</span></a>
+            <a class="gs-pill" href="{{ route('game-support.login', ['back' => url()->full()]) }}"><i>→</i><span>เข้าสู่ระบบ XMAN ID</span></a>
         @endauth
         <a class="gs-pill" href="{{ $hub }}/"><i>←</i><span>หน้าหลัก</span></a>
     </header>

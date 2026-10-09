@@ -73,6 +73,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
         // stops being cheap for us and expensive for them.
         $middleware->prepend(BlockAbusiveIps::class);
 
+        // a guest on the game community signs in on the community's own page
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('games-support', 'games-support/*') ? route('game-support.login') : route('login'));
+
         // Configure rate limiting for specific operations
         $middleware->throttleApi();
     })
