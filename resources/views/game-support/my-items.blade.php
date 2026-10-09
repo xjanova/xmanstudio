@@ -3,7 +3,7 @@
 @section('crumb', 'ไอเท็มของฉัน')
 @section('content')
 <a href="{{ route('game-support.index') }}">← อันดับและเกมทั้งหมด</a>
-<div class="gs-hero"><span class="gs-tag">SUPPORTER ITEMS</span><h1>ไอเท็มและโค้ดของฉัน</h1><p>ไอเท็มที่ได้จากการสนับสนุนที่ทีมยืนยันแล้ว หรือที่ทีมมอบให้ กด "แลกบนเว็บเกม" หรือกรอกโค้ดที่ปุ่ม "แลกโค้ด" ใน XMAN GAMES HUB เกมบนฮับที่รองรับจะปลดล็อกให้เอง โค้ดหนึ่งใช้ได้ตามจำนวนเครื่องที่ระบุ อย่าแชร์โค้ดให้คนอื่น</p></div>
+<div class="gs-hero gs-art" style="--art: url('{{ asset('images/gameshub/items.webp') }}')"><span class="gs-tag">SUPPORTER ITEMS</span><h1>ไอเท็มและโค้ดของฉัน</h1><p>ไอเท็มที่ได้จากการสนับสนุนที่ทีมยืนยันแล้ว หรือที่ทีมมอบให้ กด "แลกบนเว็บเกม" หรือกรอกโค้ดที่ปุ่ม "แลกโค้ด" ใน XMAN GAMES HUB เกมบนฮับที่รองรับจะปลดล็อกให้เอง โค้ดหนึ่งใช้ได้ตามจำนวนเครื่องที่ระบุ อย่าแชร์โค้ดให้คนอื่น</p></div>
 @php($kinds = \App\Models\GameItem::KINDS)
 @forelse($entitlements->groupBy(fn ($e) => $e->item->campaign->name) as $game => $rows)
 <section class="gs-card"><h2>{{ $game }}</h2>

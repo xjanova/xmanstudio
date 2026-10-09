@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="{{ asset('css/game-support.css') }}?v=3">
+<link rel="stylesheet" href="{{ asset('css/game-support.css') }}?v=4">
 </head>
 <body class="gs-public">
 <div class="gs-nebula" aria-hidden="true"></div>
@@ -24,6 +24,7 @@
         <a href="{{ $hub }}/?f=play#games"><i>▷</i>Play now</a>
         <a href="{{ $hub }}/?f=dev#games"><i>▧</i>In development</a>
         <a href="{{ $hub }}/?f=concept#games"><i>✳</i>Concept lab</a>
+        <a href="{{ $hub }}/?f=roblox#games"><i>⬢</i>Roblox</a>
         <span class="gs-group">ร่วมสร้างเกม</span>
         <a href="{{ $hub }}/fund/hive-breach/"><i>♦</i>HIVE // BREACH: COREWAR</a>
         <a href="{{ $hub }}/fund/breaker/"><i>♦</i>X-NOVA: BREAKER</a>
@@ -31,6 +32,7 @@
         <a href="{{ route('game-support.my-items') }}" @class(['on' => request()->routeIs('game-support.my-items')])><i>✦</i>ไอเท็มของฉัน</a>
         <a href="{{ $hub }}/#redeem"><i>⌁</i>แลกโค้ดในฮับ</a>
         <a href="{{ $hub }}/#devlog"><i>✎</i>Dev log</a>
+        <a href="{{ $hub }}/#studio"><i>⌘</i>Meet the studio</a>
     </nav>
     <div class="gs-note"><span>XMAN ORIGINALS</span><p>Small studio.<br><strong>Infinite worlds.</strong></p></div>
 </aside>
