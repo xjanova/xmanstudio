@@ -265,7 +265,7 @@
   border: 1px solid var(--line);
   background:
     linear-gradient(90deg, rgba(7, 8, 15, 0.97) 0%, rgba(7, 8, 15, 0.88) 36%, rgba(7, 8, 15, 0.15) 72%),
-    var(--art) 70% center / cover no-repeat,
+    var(--art) var(--art-pos, 70% center) / cover no-repeat,
     var(--panel-solid);
   overflow: hidden;
 }
@@ -585,14 +585,178 @@
   user-select: all;
 }
 
-/* Laravel's default pagination markup, without its Tailwind classes */
-.gs-wrap nav[role="navigation"] {
-  margin-top: 14px;
+/* pagination (game-support._pagination) */
+.gs-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  font-family: var(--font-d);
   font-size: 14px;
 }
-.gs-wrap nav[role="navigation"] svg {
-  width: 18px;
-  height: 18px;
+.gs-public .gs-pages a,
+.gs-pages .off {
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+}
+.gs-pages .off {
+  color: var(--dim);
+  opacity: 0.6;
+}
+
+/* game cards on the index */
+.gs-game {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 0;
+  overflow: hidden;
+}
+.gs-thumb {
+  display: block;
+  width: calc(100% + 52px);
+  height: 150px;
+  margin: 0 -26px 14px;
+  object-fit: cover;
+  mask-image: linear-gradient(180deg, #000 55%, transparent);
+}
+.gs-game .gs-button {
+  margin-top: auto;
+}
+
+/* sign-in / sign-up */
+.gs-auth {
+  display: grid;
+  grid-template-columns: 1.1fr minmax(0, 460px);
+  gap: 22px;
+  align-items: stretch;
+}
+.gs-auth-art {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 520px;
+  margin-bottom: 22px;
+  padding: 30px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(0deg, rgba(7, 8, 15, 0.95) 0%, rgba(7, 8, 15, 0.2) 45%, rgba(7, 8, 15, 0) 70%),
+    var(--art) 65% center / cover no-repeat,
+    var(--panel-solid);
+}
+.gs-auth-art p {
+  max-width: 440px;
+  margin: 6px 0 0;
+  font-size: 17px;
+  color: #fff;
+}
+.gs-auth-card h1 {
+  margin: 8px 0 18px;
+  font-size: 28px;
+  color: #fff;
+}
+.gs-public .gs-auth-card button.gs-button {
+  width: 100%;
+}
+.gs-auth-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+/* the shared social sign-in component brings Tailwind class names; just enough of them */
+.gs-social .relative {
+  position: relative;
+}
+.gs-social .absolute {
+  position: absolute;
+}
+.gs-social .inset-0 {
+  inset: 0;
+}
+.gs-social .flex {
+  display: flex;
+}
+.gs-social .items-center {
+  align-items: center;
+}
+.gs-social .justify-center {
+  justify-content: center;
+}
+.gs-social .w-full {
+  width: 100%;
+}
+.gs-social .border-t {
+  border-top: 1px solid var(--line-strong);
+}
+.gs-social span.px-3 {
+  padding: 0 12px;
+  background: #0e1020;
+  color: var(--muted);
+  font-size: 13px;
+}
+.gs-social .mt-6 {
+  margin-top: 22px;
+}
+.gs-social .mt-4 {
+  margin-top: 14px;
+}
+.gs-social .space-y-3 > * + * {
+  margin-top: 10px;
+}
+.gs-public .gs-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-weight: 500;
+}
+.gs-public .gs-social a:hover {
+  border-color: var(--lime);
+  color: #fff;
+}
+.gs-social svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.gs-logout button {
+  width: 100%;
+  margin-top: 14px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: 13px var(--font-b);
+  text-align: left;
+  cursor: pointer;
+}
+.gs-logout button:hover {
+  color: #fff;
+  border-color: var(--line-strong);
+}
+.gs-hero.gs-lost {
+  --art-pos: 80% 22%;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.gs-lost .gs-presets {
+  margin-top: 18px;
+  align-items: center;
+  gap: 16px;
 }
 
 /* ---------------- tablet / phone ---------------- */
@@ -665,6 +829,13 @@
   }
   .gs-three {
     grid-template-columns: 1fr 1fr;
+  }
+  .gs-auth {
+    grid-template-columns: 1fr;
+  }
+  .gs-auth-art {
+    min-height: 260px;
+    margin-bottom: 0;
   }
 }
 @media (max-width: 760px) {

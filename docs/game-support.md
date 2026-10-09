@@ -89,3 +89,10 @@ The hub falls back to its built-in content when any of these fail.
 ### Deploy
 
 Run `php artisan migrate --force` (migration `2026_10_09_100000_create_gameshub_control_tables`: new `game_items`, `game_entitlements`, `game_item_redemptions`, `gameshub_announcements`; adds `hero_rank`, `hero_hidden` to `game_campaigns` and `moderation_note` to `game_comments`; nothing is dropped or rewritten). The public pages (`resources/views/game-support/layout.blade.php`) now use the hub's frame — sidebar + top bar linking back to xgameshub — and its palette (violet-black, lime, gold); `css/game-support.css` was rewritten for it (linked with `?v=4`, bump on every edit: assets are cached) and `images/gameshub/logo-v2.webp` is the hub's logo. Tests: `tests/Feature/GamesHubControlTest.php`.
+
+### Starter items, community sign-in, 404 (2026-10-09, later)
+
+- Migration `2026_10_09_120000_seed_gameshub_supporter_items` gives every campaign five items — `supporter-spark|salvager|wingmate|pathfinder` (badges) and `title-pathfinder` — and names them in the default tiers (PATHFINDER gets badge + title). Tiers an admin already gave items keep theirs. It also registers `krungsri`, which joined the hub after the catalogue migration. New hub games still need a campaign with the same slug, or their community link is the themed 404.
+- `/games-support/login` and `/games-support/register` are sign-in and sign-up in the community frame; the forms post to the usual `login` / `register` routes (same Turnstile and social providers). `?back=<community URL>` (same host, `/games-support/…` only) becomes the intended URL; guests hitting a community `auth` route are sent there by `redirectGuestsTo`. Registration from the community returns to that page instead of the profile page.
+- Unknown or paused games render `game-support.missing` (404) in the community frame; pagination uses `game-support._pagination`. Game pages and index cards show the hub's key art via `GamesHubController::artFor()` (`config('game-support.art')` overrides, else `/art/<slug>.webp`).
+- Stylesheet `?v=5`. Art in `public_html/images/gameshub/` was made with ChatGPT's image model.

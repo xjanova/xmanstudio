@@ -28,7 +28,9 @@ class GameSupportController extends Controller
 
     public function show(Request $request, GameCampaign $campaign, GameSupportService $service)
     {
-        abort_unless($campaign->active, 404);
+        if (! $campaign->active) {
+            return response()->view('game-support.missing', ['campaign' => $campaign], 404);
+        }
 
         return view('game-support.show', [
             'campaign' => $campaign, 'bank' => config('game-support.bank'),
