@@ -236,6 +236,19 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // /api/v1/product/winx-tools/disk-benchmarks — anonymous disk speed tests uploaded by WinXTools.
+        // Counted per address: before the body is validated there is nothing else to count by. The
+        // controller also holds each installation to 30 a day, counted from the stored rows.
+        RateLimiter::for('winx-disk-benchmarks', function (Request $request) {
+            return Limit::perHour(20)
+                ->by('winx-disk-bench:' . $request->ip())
+                ->response(fn (Request $request, array $headers) => response()->json([
+                    'success' => false,
+                    'error_code' => 'rate_limited',
+                    'message' => 'ส่งผลทดสอบถี่เกินไป — รอสักครู่แล้วส่งใหม่',
+                ], 429, $headers));
+        });
+
         RateLimiter::for('comment-moderation', function ($request) {
             return Limit::perMinute(30)
                 ->by($request->user()?->id ?: $request->ip())
