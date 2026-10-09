@@ -87,6 +87,13 @@
     <div class="warning-box">
         <strong>รอดำเนินการชำระเงิน</strong><br>
         <span style="color: #f3d7ae;">กรุณาชำระเงินจำนวน <strong>฿{{ number_format($order->total, 2) }}</strong> ตามวิธีการที่เลือกไว้</span>
+        @if(\App\Support\DgxSparkCampaign::isOrder($order))
+            <br><span style="color: #f3d7ae;">
+                ชุด DGX Spark: โอนเงินและแนบสลิปที่ <a href="{{ route('orders.show', $order) }}" style="color: #fbbf24;">หน้าคำสั่งซื้อ</a>
+                ภายใน <strong>{{ \App\Support\DgxSparkCampaign::thaiDateTime(\App\Support\DgxSparkCampaign::holdExpiresAt($order)) }}</strong>
+                — เลยเวลานี้การจองจะถูกยกเลิกอัตโนมัติ
+            </span>
+        @endif
     </div>
     @endif
 

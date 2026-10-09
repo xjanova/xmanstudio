@@ -26,6 +26,9 @@
         </div>
     </div>
 
+    {{-- The main campaign (DGX Spark bundle) — renders nothing when switched off in the admin. --}}
+    @include('partials.campaign.dgx-spark-home')
+
     @include('partials.nova-hero')
     @include('partials.nova-stats')
     @include('partials.nova-services')

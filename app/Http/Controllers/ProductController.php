@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\Service;
 use App\Services\LicenseService;
+use App\Support\DgxSparkCampaign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -98,6 +99,12 @@ class ProductController extends Controller
 
     public function show($slug)
     {
+        // The DGX Spark bundle has no product page of its own — its campaign page is the only
+        // place it is described and sold.
+        if ($slug === DgxSparkCampaign::config('product_slug')) {
+            return redirect()->route('campaign.dgx-spark');
+        }
+
         $product = Product::where('slug', $slug)
             ->where('is_active', true)
             ->firstOrFail();

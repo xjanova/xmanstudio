@@ -4,6 +4,9 @@
 @section('description', 'XMAN Studio — Blockchain, AI, Web & Mobile development. Bangkok · Est. MMXVIII')
 
 @section('content')
+    {{-- The main campaign (DGX Spark bundle) — renders nothing when switched off in the admin. --}}
+    @include('partials.campaign.dgx-spark-home')
+
     @include('partials.retro-hero')
 
     {{-- Ticker --}}

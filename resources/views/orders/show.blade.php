@@ -72,6 +72,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Order Details -->
             <div class="lg:col-span-2 space-y-6">
+                @if(\App\Support\DgxSparkCampaign::isOrder($order))
+                    @include('orders.partials.dgx-spark-panel', ['order' => $order])
+                @endif
+
                 <!-- Items -->
                 <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
