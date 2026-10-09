@@ -33,6 +33,66 @@
     {{-- ══════════ จ่ายเงินให้ผู้ให้บริการได้ไหม (ใช้ร่วมกับหน้า VPS) ══════════ --}}
     @include('admin.partials.upstream-billing', ['billing' => $billing ?? null])
 
+    {{-- Without a bot, an order refused by the registrar reaches the owner by e-mail only. --}}
+    @unless($telegramReady ?? true)
+        <div class="rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 px-5 py-4 text-sm text-sky-900 dark:text-sky-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span>
+                <span class="font-semibold">ยังไม่ได้ตั้งค่าแจ้งเตือน Telegram</span> —
+                ตอนนี้ถ้าจดโดเมนไม่สำเร็จ ระบบแจ้งทางอีเมลแอดมินเท่านั้น (และแสดงในตาราง "คำสั่งซื้อที่ไม่สำเร็จ" ด้านล่าง)
+            </span>
+            <a href="{{ route('admin.alerts.index') }}" class="shrink-0 inline-flex items-center px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold transition">ตั้งค่า Telegram</a>
+        </div>
+    @endunless
+
+    {{-- ══════════ คำสั่งซื้อที่ไม่สำเร็จ ══════════ --}}
+    @if(($failed ?? collect())->isNotEmpty())
+        <div class="{{ $card }} overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">คำสั่งซื้อที่ไม่สำเร็จล่าสุด ({{ $failed->count() }})</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ลูกค้าได้เงินคืนเข้ากระเป๋าแล้วทุกรายการที่สถานะ "คืนเงินแล้ว" · กดดูรายละเอียดเพื่ออ่านคำตอบจากผู้ให้บริการ</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-900/50 text-left">
+                        <tr>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">โดเมน</th>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">ลูกค้า</th>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">สาเหตุ</th>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300 text-right">ยอด</th>
+                            <th class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">เมื่อ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                        @foreach($failed as $r)
+                            @php $badge = $r->statusBadge(); @endphp
+                            <tr class="align-top">
+                                <td class="px-4 py-3">
+                                    <span class="block font-medium text-gray-900 dark:text-white">{{ $r->domain }}</span>
+                                    <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-semibold {{ $badge['classes'] }}">{{ $badge['label_th'] }}</span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="block text-gray-900 dark:text-white">{{ $r->user?->name ?? '—' }}</span>
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $r->user?->email }}</span>
+                                </td>
+                                <td class="px-4 py-3 max-w-md">
+                                    <span class="block font-medium text-red-700 dark:text-red-300">{{ $r->failureSummary() ?? '—' }}</span>
+                                    @if($r->last_error)
+                                        <details class="mt-1">
+                                            <summary class="cursor-pointer text-xs text-gray-500 dark:text-gray-400">รายละเอียด</summary>
+                                            <code class="mt-1 block whitespace-pre-wrap break-all text-xs text-gray-600 dark:text-gray-400">{{ \Illuminate\Support\Str::limit($r->last_error, 600) }}</code>
+                                        </details>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-right text-gray-900 dark:text-white whitespace-nowrap">{{ number_format($r->price_thb, 0) }} ฿</td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">{{ $r->updated_at->copy()->timezone('Asia/Bangkok')->format('d/m/Y H:i') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
     {{-- ══════════ ตัวเลขสรุป ══════════ --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         @php
@@ -496,7 +556,12 @@
                             <tr>
                                 <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $r->domain }}</td>
                                 <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $r->user?->email ?? '—' }}</td>
-                                <td class="px-4 py-3"><code class="text-xs">{{ $r->status }}</code></td>
+                                <td class="px-4 py-3">
+                                    <code class="text-xs">{{ $r->status }}</code>
+                                    @if($r->failureSummary())
+                                        <span class="block text-xs text-amber-700 dark:text-amber-300 mt-0.5">{{ $r->failureSummary() }}</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-right text-gray-900 dark:text-white">{{ number_format($r->price_thb, 0) }} ฿</td>
                                 <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $r->created_at->diffForHumans(null, true) }}</td>
                             </tr>

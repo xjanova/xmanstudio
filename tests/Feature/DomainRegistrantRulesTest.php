@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AdminAlertMail;
 use App\Models\DomainContact;
 use App\Models\DomainRegistration;
 use App\Models\DomainTld;
@@ -15,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
@@ -263,6 +265,55 @@ class DomainRegistrantRulesTest extends TestCase
         $this->assertSame('นายิกา', WhoisContact::name('นายิกา'));
         $this->assertSame('SW1A 1AA', WhoisContact::zip('sw1a1aa', 'GB'));
         $this->assertSame('100-0001', WhoisContact::zip('1000001', 'JP'));
+    }
+
+    /** No Telegram bot: a refused order still reaches the owner, by e-mail — not only card trouble. */
+    public function test_a_refused_order_is_mailed_to_the_admin_when_telegram_is_off(): void
+    {
+        Mail::fake();
+        Setting::setValue('contact_email', 'owner@example.com');
+        Http::fake([
+            '*availability*' => Http::response(['data' => [['domain' => 'mygame.online', 'is_available' => true]]]),
+            '*whois*' => Http::response(['id' => 900001]),
+            '*portfolio*' => Http::response(['message' => 'Domain cannot be registered'], 422),
+            '*' => Http::response([], 200),
+        ]);
+
+        $this->actingAs($this->user)->post(route('domains.register.store', 'mygame.online'), $this->thaiForm());
+
+        $this->assertSame(DomainRegistration::STATUS_REFUNDED, DomainRegistration::firstOrFail()->status);
+        Mail::assertSent(AdminAlertMail::class, fn (AdminAlertMail $m) => $m->hasTo('owner@example.com'));
+    }
+
+    public function test_the_admin_sees_why_an_order_failed(): void
+    {
+        Http::fake(['*' => Http::response([], 200)]);
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        DomainRegistration::create([
+            'user_id' => $this->user->id, 'domain' => 'refused.online', 'tld' => 'online',
+            'status' => DomainRegistration::STATUS_REFUNDED,
+            'price_thb' => 60, 'cost_usd_cents' => 4000, 'fx_rate' => 1, 'idempotency_key' => 'refused-1',
+            'last_error' => 'whois profile could not be created upstream (refused: zip_th)',
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.domains.index'))
+            ->assertOk()
+            ->assertSee('คำสั่งซื้อที่ไม่สำเร็จล่าสุด')
+            ->assertSee('refused.online')
+            ->assertSee('ทะเบียนไม่รับข้อมูลผู้ถือครอง (ช่อง: zip_th)')
+            ->assertSee('ยังไม่ได้ตั้งค่าแจ้งเตือน Telegram');
+    }
+
+    /** The registrant form asks for a fresh token before sending, so a form left open is not a 419. */
+    public function test_a_long_open_form_can_fetch_a_fresh_token(): void
+    {
+        $token = $this->actingAs($this->user)->getJson(route('csrf.refresh'))
+            ->assertOk()
+            ->json('token');
+
+        $this->assertIsString($token);
+        $this->assertGreaterThan(20, strlen($token));
     }
 
     public function test_the_form_offers_autofill_hints_and_the_registrars_provinces(): void

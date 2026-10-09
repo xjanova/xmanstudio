@@ -315,6 +315,16 @@
                 this.termsMissing = !this.$refs.terms.checked;
                 if (this.termsMissing) return stop(this.$refs.terms);
                 this.submitting = true;
+
+                // A form left open past the session's lifetime carries a dead
+                // token and comes back as 419 with everything typed lost. Ask
+                // for a fresh one first; if that fails, send what we have.
+                event.preventDefault();
+                fetch(cfg.csrfUrl, { credentials: 'same-origin', headers: { Accept: 'application/json' }, cache: 'no-store' })
+                    .then((r) => (r.ok ? r.json() : null))
+                    .then((j) => { if (j && j.token) form.querySelector('input[name=_token]').value = j.token; })
+                    .catch(() => {})
+                    .finally(() => HTMLFormElement.prototype.submit.call(form));
             },
         }));
     });
@@ -414,6 +424,7 @@
                   'account' => $accountPrefill,
                   'addressMax' => $addressMax,
                   'serverErrors' => (object) $serverErrors,
+                  'csrfUrl' => route('csrf.refresh'),
               ]))"
               @submit="onSubmit($event)">
             @csrf

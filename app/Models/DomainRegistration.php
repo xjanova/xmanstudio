@@ -428,6 +428,31 @@ class DomainRegistration extends Model
     }
 
     /**
+     * Why an order did not go through, in Thai, for the admin's list. Read
+     * from last_error, which is written by the registrar service — so this
+     * follows its wording. Null when there is nothing to explain.
+     */
+    public function failureSummary(): ?string
+    {
+        $error = strtolower((string) $this->last_error);
+
+        if ($error === '') {
+            return null;
+        }
+
+        return match (true) {
+            str_contains($error, 'whois profile') => 'ทะเบียนไม่รับข้อมูลผู้ถือครอง'
+                . (preg_match('/refused: ([a-z_, ]+)/', $error, $m) ? ' (ช่อง: ' . trim($m[1]) . ')' : ''),
+            str_contains($error, 'http 402') || (bool) preg_match('/payment|insufficient|balance|funds|card|billing|declined/', $error) => 'บัตร/ยอดเงินที่ผู้ให้บริการตัดไม่ผ่าน',
+            str_contains($error, 'did not go out') => 'ติดต่อผู้ให้บริการไม่ได้ (คำสั่งไม่ได้ออกไป)',
+            str_contains($error, 'outcome unknown') => 'ไม่ได้รับคำตอบจากผู้ให้บริการ — ระบบกำลังตามผล',
+            str_contains($error, 'not available') || str_contains($error, 'taken') => 'โดเมนถูกจดไปก่อน',
+            str_contains($error, 'rejected') => 'ผู้ให้บริการปฏิเสธคำสั่ง',
+            default => 'ไม่สำเร็จ — ดูรายละเอียด',
+        };
+    }
+
+    /**
      * The key that makes a double-tap lose at the unique index instead of at
      * a balance check that has already gone stale.
      *

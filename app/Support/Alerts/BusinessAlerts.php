@@ -654,7 +654,10 @@ final class BusinessAlerts
             url: self::adminUrl('admin.domains.index'),
             urlLabel: 'เปิดหลังบ้านโดเมน',
             category: 'orders',
-        ), $isPaymentProblem ? 60 : 720, mailIfUnheard: $isPaymentProblem);
+            // Every refused order is mailed while there is no Telegram bot, not only
+            // the card case: a customer who paid and got a refund is something the
+            // owner must hear about (the first one went unseen for weeks).
+        ), $isPaymentProblem ? 60 : 720, mailIfUnheard: true);
     }
 
     /** An order the registrar took our money for and will not finish. A person has to look. */
@@ -677,7 +680,7 @@ final class BusinessAlerts
             url: self::adminUrl('admin.domains.index'),
             urlLabel: 'เปิดหลังบ้านโดเมน',
             category: 'orders',
-        ), 720);
+        ), 720, mailIfUnheard: true);
     }
 
     public static function domainExpired(DomainRegistration $domain): void

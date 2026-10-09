@@ -375,6 +375,11 @@ Route::get('/services/{slug}', [ProductController::class, 'serviceDetail'])->nam
 // Rental packages (public view)
 Route::get('/rental', [RentalController::class, 'index'])->name('rental.index');
 
+// โทเคนฟอร์มใบใหม่ สำหรับฟอร์มยาวที่ลูกค้าอาจเปิดค้างไว้ (ฟอร์มจดโดเมน) ขอก่อนกดส่ง:
+// session หมดใน 120 นาที แล้วฟอร์มเดิมจะโดน 419 พร้อมข้อมูลที่กรอกไว้หายหมด (เจอจริง 2026-10-09)
+Route::get('/csrf-token', fn () => response()->json(['token' => csrf_token()])->header('Cache-Control', 'no-store'))
+    ->middleware('throttle:30,1,csrf-refresh')->name('csrf.refresh');
+
 // ==================== จดโดเมน ====================
 // ร้านขายโดเมนของเราเอง ลูกค้าจ่ายเป็นบาท เราไปจดให้ในนามของเขา
 // /domains/search เรียก API ที่คิดเงินเป็นครั้งและมีเพดาน 90 ครั้ง/นาที
