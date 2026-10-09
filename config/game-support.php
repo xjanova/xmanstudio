@@ -3,6 +3,11 @@
 return [
     'bank' => ['code' => 'SCB', 'name' => 'ธนาคารไทยพาณิชย์', 'account' => '411-148476-9', 'holder' => 'บริษัท เอ็กซ์แมน เอนเตอร์ไพรส์ จำกัด'],
     'hub_origin' => env('GAME_SUPPORT_HUB_ORIGIN', 'https://xgameshub.xman4289.com'),
+    // logos on the hub (hub_origin + path); every other game uses /art/logos/<slug>.webp
+    'logos' => [
+        'hive-breach' => '/art/corewar-logo.webp',
+        'breaker' => '/art/breaker/logo.webp',
+    ],
     // key art on the hub (hub_origin + path); every other game uses /art/<slug>.webp
     'art' => [
         'hive-breach' => '/art/hive-corewar.webp',

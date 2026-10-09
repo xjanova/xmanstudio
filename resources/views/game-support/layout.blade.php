@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="{{ asset('css/game-support.css') }}?v=5">
+<link rel="stylesheet" href="{{ asset('css/game-support.css') }}?v=6">
 </head>
 <body class="gs-public">
 <div class="gs-nebula" aria-hidden="true"></div>

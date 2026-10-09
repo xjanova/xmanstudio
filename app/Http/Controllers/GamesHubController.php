@@ -42,6 +42,12 @@ class GamesHubController extends Controller
         return rtrim(config('game-support.hub_origin'), '/') . (config('game-support.art')[$slug] ?? "/art/{$slug}.webp");
     }
 
+    /** A game's logo, served by the hub itself. */
+    public static function logoFor(string $slug): string
+    {
+        return rtrim(config('game-support.hub_origin'), '/') . (config('game-support.logos')[$slug] ?? "/art/logos/{$slug}.webp");
+    }
+
     /**
      * Sign-in and sign-up in the community's own frame. The forms post to the usual
      * XMAN ID endpoints (same Turnstile and social sign-in); afterwards the member

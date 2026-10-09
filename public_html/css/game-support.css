@@ -256,21 +256,55 @@
   margin: 0;
   color: #d5d8e8;
 }
-/* hero with key art on the right, text over the dark left side */
+/* hero with key art: the picture is never cropped — a blurred copy fills the banner and
+   the whole image sits on the right, so nobody loses their head */
 .gs-hero.gs-art {
-  min-height: 300px;
+  position: relative;
+  isolation: isolate;
+  min-height: 340px;
   margin: 6px 0 26px;
   padding: 44px 40px;
   border-radius: 22px;
   border: 1px solid var(--line);
-  background:
-    linear-gradient(90deg, rgba(7, 8, 15, 0.97) 0%, rgba(7, 8, 15, 0.88) 36%, rgba(7, 8, 15, 0.15) 72%),
-    var(--art) var(--art-pos, 70% center) / cover no-repeat,
-    var(--panel-solid);
+  background: var(--panel-solid);
   overflow: hidden;
 }
+.gs-hero.gs-art::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  z-index: -2;
+  background: var(--art) center / cover no-repeat;
+  filter: blur(36px) saturate(1.3) brightness(0.32);
+}
+.gs-hero.gs-art::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 66%;
+  z-index: -1;
+  background: var(--art) right center / contain no-repeat;
+  mask-image: linear-gradient(90deg, transparent, #000 32%);
+}
 .gs-hero.gs-art p {
-  max-width: 560px;
+  max-width: 520px;
+}
+.gs-hero-logo {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  max-height: 150px;
+  object-fit: contain;
+  object-position: left center;
+  filter: drop-shadow(0 4px 18px #000a);
+}
+.gs-logo {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  height: 64px;
+  object-fit: contain;
+  object-position: left center;
 }
 .gs-tag {
   display: inline-block;
@@ -617,7 +651,9 @@
 .gs-thumb {
   display: block;
   width: calc(100% + 52px);
-  height: 150px;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-position: 50% 15%;
   margin: 0 -26px 14px;
   object-fit: cover;
   mask-image: linear-gradient(180deg, #000 55%, transparent);
@@ -645,7 +681,7 @@
   border: 1px solid var(--line);
   background:
     linear-gradient(0deg, rgba(7, 8, 15, 0.95) 0%, rgba(7, 8, 15, 0.2) 45%, rgba(7, 8, 15, 0) 70%),
-    var(--art) 65% center / cover no-repeat,
+    var(--art) 65% 15% / cover no-repeat,
     var(--panel-solid);
 }
 .gs-auth-art p {
@@ -747,7 +783,6 @@
   border-color: var(--line-strong);
 }
 .gs-hero.gs-lost {
-  --art-pos: 80% 22%;
   min-height: 420px;
   display: flex;
   flex-direction: column;
@@ -834,7 +869,8 @@
     grid-template-columns: 1fr;
   }
   .gs-auth-art {
-    min-height: 260px;
+    min-height: 0;
+    aspect-ratio: 3 / 2;
     margin-bottom: 0;
   }
 }
@@ -871,11 +907,15 @@
   .gs-account {
     font-size: 24px;
   }
+  /* phones: the whole picture on top (3:2), the text below it */
   .gs-hero.gs-art {
-    padding: 160px 20px 24px;
-    background:
-      linear-gradient(180deg, rgba(7, 8, 15, 0) 0%, rgba(7, 8, 15, 0.7) 45%, rgba(7, 8, 15, 0.98) 70%),
-      var(--art) 60% top / auto 260px no-repeat,
-      var(--panel-solid);
+    padding: calc((100vw - 28px) / 1.5 - 24px) 18px 22px;
+  }
+  .gs-hero.gs-art::after {
+    inset: 0 0 auto 0;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    background-position: center top;
+    mask-image: linear-gradient(180deg, #000 72%, transparent);
   }
 }
