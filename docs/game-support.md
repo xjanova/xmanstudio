@@ -48,3 +48,44 @@ No preview users, slips, donation totals, .env credentials or SQLite fixtures ar
 `tests/Feature/GameSupportTest.php` covers private storage, approval conditions, integer amounts, cross-game duplicate slips/references, repeated review/fulfillment, voided totals, anonymous donor privacy, role authorization, reward snapshots, stable slugs, movable votes, editable ratings, moderated/escaped comments and paused campaigns. Run with the repository's normal PHPUnit command and testing database. Do not run RefreshDatabase against live databases.
 
 Local verification: PHP 8.3, SQLite in-memory, 14 tests / 102 assertions; Pint; route cache and Blade cache. Browser QA used an isolated local SQLite preview with a synthetic image clearly marked NO MONEY TRANSFERRED to verify upload → review → donor/reward/feedback and aggregate API behavior.
+
+## XGamesHub back office (`/admin/gameshub`)
+
+One admin section controls everything xgameshub.xman4289.com shows that is not baked into its static build. Sidebar → **XGamesHub · บริจาค ไอเท็ม รีวิว ความเห็น**. Tabs:
+
+| Tab | Route | What |
+| --- | --- | --- |
+| ภาพรวม | `admin.gameshub.dashboard` | pending slips / reviews / comments, approved total, item codes issued and redeemed, live announcements |
+| สลิปบริจาค | `admin.game-support.index` (`/admin/game-support`) | the slip review above, unchanged rules; shows the in-game items each donation grants |
+| ไอเท็มผู้สนับสนุน | `admin.gameshub.items` | per-game item catalogue, manual grants (by member e-mail, reason required), code lookup by code / e-mail / name, revoke |
+| รีวิว | `admin.gameshub.reviews` | approve / reject (reason required) / pin, one by one or in bulk |
+| ความเห็น | `admin.gameshub.comments` | publish / hide with an optional team note, one by one or in bulk |
+| เกม · รางวัล · ฮีโร่ | `admin.gameshub.games` | campaign details and reward tiers (JSON) plus the hub hero order / hidden flag |
+| ประกาศบนฮับ | `admin.gameshub.announcements` | notices shown above the hub's hero, with optional start / end (entered in Thai time, stored UTC) |
+
+### Donation → in-game items
+
+1. Add the item under ไอเท็มผู้สนับสนุน. `key` is what the game's code checks (`a-z 0-9 - _`), and never changes once saved; deactivate instead of deleting. `max_devices` = how many devices one code unlocks.
+2. Name the item in a tier: `{"minimum": 300, "name": "SALVAGER", "rewards": ["…"], "items": ["founder-badge"]}`. Unknown keys are refused.
+3. A donation snapshots the tier including item keys and names. Approving the slip creates one `game_entitlements` row per item **in the same transaction** with an 80-bit code (`XG-XXXX-XXXX-XXXX-XXXX`, Crockford base32). The unique `(game_donation_id, game_item_id)` index makes a second approval impossible to double-grant. Voiding the donation revokes its codes.
+4. The member sees codes on `/games-support/my-items` and in "รายการของฉัน" on the game page. Codes are stored encrypted (shown to the owner and admins) plus a SHA-256 hash for lookup.
+5. The game redeems: `POST /api/gameshub/redeem` `{game, code, device}` — open CORS, no cookies, `throttle:20,1`. Answers `200 {ok, item{key,name,kind,description,image_url}, devices_used, devices_max, already_on_this_device}` or `404 invalid_code`, `409 wrong_game`, `409 device_limit`, `410 revoked`, `422 invalid_request`, each with a Thai `message`. The same device asking again does not use another slot. Device ids and IPs are stored only as HMAC hashes.
+   Browser games can include `https://xgameshub.xman4289.com/sdk/xman-items.js` (`XmanItems.forGame(id).redeem(code)` / `.owns(key)`). Games that share this database (e.g. Krungsri) may read `game_entitlements` directly. Items should stay cosmetic — titles, badges, skins, passes — never paid power.
+
+### Reviews
+
+Player reviews use the shared polymorphic `reviews` table with `reviewable_type = App\Models\GameCampaign`. One review per member per game (`POST /games-support/{slug}/review`, own `throttle:5,60,gs-review` key). The stars also upsert `game_ratings`, so the average updates at once; the text shows only after approval. Editing sends it back to pending and unpins it. Public names are shortened (`Somchai J.`); e-mails never leave the server. The existing `/admin/reviews` page also lists these rows.
+
+### What the static hub reads
+
+All three are public, aggregate, CORS-limited to `GAME_SUPPORT_HUB_ORIGIN`, `Cache-Control: public, max-age=60/30`, and skip the session middleware (no cookies, no session files per visitor):
+
+- `/games-support/summary.json` — totals per game (now also `review_count`).
+- `/games-support/hub.json` — `{announcements[≤3 live], hero: {order: [slugs by hero_rank], hidden: [slugs]}}`.
+- `/games-support/{slug}/reviews.json` — average, counts, the 30 newest approved reviews (pinned first) and `write_url`.
+
+The hub falls back to its built-in content when any of these fail.
+
+### Deploy
+
+Run `php artisan migrate --force` (migration `2026_10_09_100000_create_gameshub_control_tables`: new `game_items`, `game_entitlements`, `game_item_redemptions`, `gameshub_announcements`; adds `hero_rank`, `hero_hidden` to `game_campaigns` and `moderation_note` to `game_comments`; nothing is dropped or rewritten). `css/game-support.css` gained `.gs-code` (the layout links it with `?v=2`). Tests: `tests/Feature/GamesHubControlTest.php`.
