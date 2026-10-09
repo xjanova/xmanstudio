@@ -83,7 +83,8 @@ class GamesHubControlTest extends TestCase
         app(GameItemService::class)->grantForDonation($d->fresh(), $admin->id);
         $this->assertSame(1, GameEntitlement::count());
 
-        $this->actingAs($donor)->get('/games-support/my-items')->assertOk()->assertSee($e->code)->assertSee('ตรา Founder');
+        $this->actingAs($donor)->get('/games-support/my-items')->assertOk()->assertSee($e->code)->assertSee('ตรา Founder')
+            ->assertSee('https://xgameshub.xman4289.com/#redeem=' . $e->code, false);
         $this->get('/games-support/breaker')->assertOk()->assertSee($e->code);
         $this->actingAs(User::factory()->create())->get('/games-support/my-items')->assertOk()->assertDontSee($e->code);
 
