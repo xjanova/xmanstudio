@@ -174,8 +174,16 @@ class GameSupportTest extends TestCase
         $data = ['slug' => 'breaker', 'name' => 'X-NOVA: BREAKER', 'goal' => 150000, 'active' => 1, 'tiers_json' => json_encode([['minimum' => 100, 'name' => 'NEW', 'rewards' => ['New reward']]])];
         $this->post('/admin/game-support/campaigns/breaker', $data)->assertSessionHasNoErrors();
         // MySQL returns JSON objects with its own key order; the content must not change
-        $canon = function (array $a): array {
-            ksort($a);
+        $canon = function (array $a) use (&$canon): array {
+            foreach ($a as &$value) {
+                if (is_array($value)) {
+                    $value = $canon($value);
+                }
+            }
+            unset($value);
+            if (! array_is_list($a)) {
+                ksort($a);
+            }
 
             return $a;
         };
