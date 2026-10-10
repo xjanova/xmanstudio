@@ -15,16 +15,20 @@ use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
 use App\Models\RentalPackage;
+use App\Models\RentalPayment;
 use App\Models\Service;
+use App\Models\User;
 use App\Observers\AiCreditOrderObserver;
 use App\Services\AiChat\KnowledgeVersion;
 use App\Support\ContactLinks;
+use App\Support\PaymentSlips;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -53,6 +57,9 @@ class AppServiceProvider extends ServiceProvider
         // A paid AI-credit order gets its credits on AIXMAN whichever way it was paid — admin
         // approval, the SMS matcher, the Telegram bot — not only via the success page or Stripe.
         Order::observe(AiCreditOrderObserver::class);
+
+        // A payment slip opens for the customer who sent it, or for an admin (PaymentSlipController).
+        Gate::define('view-payment-slip', fn (User $user, Order|RentalPayment $owner) => PaymentSlips::canView($user, $owner));
 
         $this->refreshAiChatKnowledgeOnCatalogueChanges();
     }

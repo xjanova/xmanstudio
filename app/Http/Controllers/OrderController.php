@@ -18,6 +18,7 @@ use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Support\PaymentSlips;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -527,6 +528,12 @@ class OrderController extends Controller
      */
     public function confirmPayment(Request $request, Order $order)
     {
+        // A slip goes only on your own order, by the same rule as show(): without this any
+        // signed-in account could attach a picture to a stranger's order and turn it "verifying".
+        if ((int) $order->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
         if ($order->payment_status !== 'pending') {
             return redirect()
                 ->back()
@@ -560,8 +567,13 @@ class OrderController extends Controller
             'payment_slip' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
-        // Store payment slip
-        $path = $request->file('payment_slip')->store('payment-slips', 'public');
+        // Kept off the web root; the order pages show it through PaymentSlipController
+        $path = PaymentSlips::store($request->file('payment_slip'));
+        if ($path === null) {
+            return redirect()
+                ->back()
+                ->with('error', 'บันทึกสลิปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
 
         $order->update([
             'payment_slip' => $path,

@@ -478,7 +478,7 @@
                             <p class="text-gray-500 dark:text-gray-400 mt-2"><x-bi th="เราได้รับหลักฐานการชำระเงินแล้ว และกำลังดำเนินการตรวจสอบ" en="We have received your payment proof and are verifying it." /></p>
                             @if($order->payment_slip)
                                 <div class="mt-4">
-                                    <img src="{{ asset('storage/' . $order->payment_slip) }}" alt="Payment Slip" class="max-w-xs mx-auto rounded-xl shadow-lg">
+                                    <img src="{{ route('payment-slips.order', $order) }}" alt="Payment Slip" class="max-w-xs mx-auto rounded-xl shadow-lg">
                                 </div>
                             @endif
                         </div>

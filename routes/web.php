@@ -110,6 +110,7 @@ use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PackShopController;
+use App\Http\Controllers\PaymentSlipController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicChatController;
@@ -586,6 +587,13 @@ Route::get('/ads.txt', function () {
 // Banner tracking (public routes)
 Route::post('/banners/{banner}/track-view', [BannerController::class, 'trackView'])->name('banners.track-view');
 Route::post('/banners/{banner}/track-click', [BannerController::class, 'trackClick'])->name('banners.track-click');
+
+// Payment slips: private files, opened only by the customer who sent the slip or by an admin.
+// Outside the auth group on purpose: a guest gets the same 404 as a stranger, not a login page.
+Route::middleware('throttle:60,1,payment-slips')->prefix('payment-slips')->name('payment-slips.')->group(function () {
+    Route::get('/orders/{order}', [PaymentSlipController::class, 'order'])->whereNumber('order')->name('order');
+    Route::get('/rentals/{payment}', [PaymentSlipController::class, 'rental'])->whereNumber('payment')->name('rental');
+});
 
 /*
 |--------------------------------------------------------------------------

@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\VpsInstance;
 use App\Models\WalletTopup;
 use App\Support\AdminAlerts;
+use App\Support\PaymentSlips;
 use App\Support\Telegram\BotActions;
 use App\Support\UpstreamBilling;
 use Carbon\CarbonInterface;
@@ -22,7 +23,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -203,7 +203,7 @@ final class BusinessAlerts
             urlLabel: 'เปิดใบสั่งซื้อ',
             category: 'orders',
             buttons: $decidable ? BotActions::decisionButtons('o', $order->id) : [],
-            photo: $open ? self::slipPath($slip) : null,
+            photo: $open ? PaymentSlips::localPath($slip) : null,
         );
     }
 
@@ -221,9 +221,7 @@ final class BusinessAlerts
     /** The slip on an order — on the row (cart checkout) or in its metadata (product checkouts). */
     public static function orderSlip(Order $order): ?string
     {
-        $slip = $order->payment_slip ?: (self::meta($order)['payment_slip'] ?? null);
-
-        return is_string($slip) && $slip !== '' ? $slip : null;
+        return PaymentSlips::forOrder($order);
     }
 
     /**
@@ -411,7 +409,7 @@ final class BusinessAlerts
             urlLabel: 'เปิดรายการค่าเช่า',
             category: 'orders',
             buttons: $open ? BotActions::decisionButtons('r', $payment->id) : [],
-            photo: $open ? self::slipPath($payment->transfer_slip_url) : null,
+            photo: $open ? PaymentSlips::localPath($payment->transfer_slip_url) : null,
         );
     }
 
@@ -1243,29 +1241,6 @@ final class BusinessAlerts
         } catch (Throwable) {
             return url('/admin');
         }
-    }
-
-    /**
-     * The slip image on the public disk, as a real path we are willing to upload — only inside the
-     * public storage folder (the value comes from a row, and a row is not a place to trust paths from).
-     */
-    private static function slipPath(?string $stored): ?string
-    {
-        if (! $stored) {
-            return null;
-        }
-        try {
-            $relative = ltrim(preg_replace('~^(https?://[^/]+)?/?storage/~', '', $stored) ?? '', '/');
-            $root = realpath(Storage::disk('public')->path(''));
-            $real = realpath(Storage::disk('public')->path($relative));
-        } catch (Throwable) {
-            return null;
-        }
-        if ($root === false || $real === false || ! str_starts_with($real, $root . DIRECTORY_SEPARATOR) || ! is_file($real)) {
-            return null;
-        }
-
-        return filesize($real) <= 10 * 1024 * 1024 && preg_match('/\.(jpe?g|png|webp)$/i', $real) ? $real : null;
     }
 
     /**
