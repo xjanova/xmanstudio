@@ -60,7 +60,8 @@
             <tr>
                 <td>{{ $item->product->name ?? $item->product_name }}</td>
                 <td style="text-align: center;">{{ $item->quantity }}</td>
-                <td style="text-align: right;">฿{{ number_format($item->total, 2) }}</td>
+                {{-- subtotal: order_items has no `total` column, which printed ฿0.00 on every line --}}
+                <td style="text-align: right;">฿{{ number_format($item->subtotal, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -86,6 +87,13 @@
     <div class="warning-box">
         <strong>รอดำเนินการชำระเงิน</strong><br>
         <span style="color: #f3d7ae;">กรุณาชำระเงินจำนวน <strong>฿{{ number_format($order->total, 2) }}</strong> ตามวิธีการที่เลือกไว้</span>
+        @if(\App\Support\DgxSparkCampaign::isOrder($order))
+            <br><span style="color: #f3d7ae;">
+                ชุด DGX Spark: โอนเงินและแนบสลิปที่ <a href="{{ route('orders.show', $order) }}" style="color: #fbbf24;">หน้าคำสั่งซื้อ</a>
+                ภายใน <strong>{{ \App\Support\DgxSparkCampaign::thaiDateTime(\App\Support\DgxSparkCampaign::holdExpiresAt($order)) }}</strong>
+                — เลยเวลานี้การจองจะถูกยกเลิกอัตโนมัติ
+            </span>
+        @endif
     </div>
     @endif
 

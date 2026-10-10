@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Services\LicenseService;
+use App\Support\DgxSparkCampaign;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 
@@ -30,6 +31,15 @@ class CartController extends Controller
         // A product switched off in the admin is off sale — its page is already a
         // 404, and a hand-made POST must not buy it either.
         abort_unless($product->is_active, 404);
+
+        // The DGX Spark bundle is sold only through its own page: the 20-set cap, VAT included in
+        // its price, bank transfer only, no coupon or commission. Even if someone switches the
+        // product on in the admin, the cart must not become a way around all of that.
+        if (DgxSparkCampaign::isCampaignProduct($product)) {
+            return $request->wantsJson()
+                ? response()->json(['success' => false, 'message' => 'สั่งชุดนี้ได้ที่หน้าแคมเปญเท่านั้น'], 422)
+                : redirect()->route('campaign.dgx-spark');
+        }
 
         $request->validate([
             'quantity' => 'integer|min:1|max:99',

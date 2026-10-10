@@ -16,6 +16,10 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Main Order Info -->
     <div class="lg:col-span-2 space-y-6">
+        @if(\App\Support\DgxSparkCampaign::isOrder($order))
+            @include('orders.partials.dgx-spark-panel', ['order' => $order, 'portal' => true])
+        @endif
+
         <!-- Order Header Card -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
             <div class="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-6">

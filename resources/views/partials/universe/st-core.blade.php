@@ -36,5 +36,20 @@
                 <span>สำรวจบริการ <small>Explore services</small></span>
             </a>
         </div>
+
+        {{-- The main campaign (DGX Spark bundle) — the first stop's own link, for screens too
+             narrow for the promo pill in the HUD. Nothing when switched off in the admin. --}}
+        @if(\App\Support\DgxSparkCampaign::enabled() && \App\Support\DgxSparkCampaign::product())
+            @php $xuCampaign = \App\Support\DgxSparkCampaign::availability(); @endphp
+            <a href="{{ route('campaign.dgx-spark') }}" class="xu-campaign xu-r" style="--i: 5;">
+                <span class="xu-campaign__tag">แคมเปญหลัก</span>
+                <span class="xu-campaign__text"><b>NVIDIA DGX Spark</b> + CluadeX &amp; BrainX ตลอดชีพ</span>
+                <span class="xu-campaign__meta">
+                    {{ \App\Support\DgxSparkCampaign::baht(\App\Support\DgxSparkCampaign::price()) }}
+                    · {{ $xuCampaign['remaining'] > 0 ? 'เหลือ ' . $xuCampaign['remaining'] . '/' . $xuCampaign['cap'] . ' ชุด' : 'จองครบแล้ว' }}
+                </span>
+                <span class="xu-campaign__go" aria-hidden="true">→</span>
+            </a>
+        @endif
     </div>
 </section>

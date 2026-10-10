@@ -29,6 +29,9 @@
     @keyframes sale-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 </style>
 
+{{-- The main campaign (DGX Spark bundle) — renders nothing when switched off in the admin. --}}
+@include('partials.campaign.dgx-spark-home')
+
 <!-- Hero Section with Fireflies -->
 <div class="relative h-screen overflow-hidden bg-gradient-to-b from-gray-950 via-black to-gray-950" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)" style="contain: layout style paint;">
     <!-- Generated backdrop artwork -->

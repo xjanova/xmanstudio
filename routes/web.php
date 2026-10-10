@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
+use App\Http\Controllers\Admin\DgxSparkCampaignController as AdminDgxSparkCampaignController;
 use App\Http\Controllers\Admin\DomainSettingController;
 use App\Http\Controllers\Admin\DonationController;
 use App\Http\Controllers\Admin\EmailSettingController;
@@ -97,6 +98,7 @@ use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\Customer\VpsController as CustomerVpsController;
 use App\Http\Controllers\CustomerPortalController;
+use App\Http\Controllers\DgxSparkCampaignController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainOrderController;
 use App\Http\Controllers\DownloadController;
@@ -228,6 +230,14 @@ Route::get('/', function () {
 
     return app(HomeController::class)->index();
 })->name('home');
+
+// Main campaign: NVIDIA DGX Spark + lifetime CluadeX + BrainX, 20 sets (config/campaigns.php).
+// The CluadeX desktop app links to https://xman4289.com/dgx-spark — keep this exact path, no aliases.
+// Ordering needs an account (the licenses are issued to it) and takes bank transfer / PromptPay only.
+Route::get('/dgx-spark', [DgxSparkCampaignController::class, 'show'])->name('campaign.dgx-spark');
+Route::post('/dgx-spark/order', [DgxSparkCampaignController::class, 'order'])
+    ->middleware(['auth', 'throttle:10,10,dgx-order', 'turnstile:checkout'])
+    ->name('campaign.dgx-spark.order');
 
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
@@ -1715,6 +1725,14 @@ Route::middleware('auth')->prefix('gpuxmine')->name('gpuxmine.')->group(function
         ->whereNumber('id')->name('rename');
     Route::delete('/{id}', [GpuNodeController::class, 'forget'])
         ->whereNumber('id')->name('forget');
+});
+
+// แคมเปญ DGX Spark — ราคาอ้างอิง JIB (ราคาชุด = JIB + ส่วนต่าง), ชุดที่เหลือ, สถานะจัดส่งของแต่ละออเดอร์
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/campaigns/dgx-spark', [AdminDgxSparkCampaignController::class, 'index'])->name('campaigns.dgx-spark');
+    Route::put('/campaigns/dgx-spark', [AdminDgxSparkCampaignController::class, 'update'])->name('campaigns.dgx-spark.update');
+    Route::put('/campaigns/dgx-spark/orders/{order}/fulfillment', [AdminDgxSparkCampaignController::class, 'fulfillment'])
+        ->name('campaigns.dgx-spark.fulfillment');
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {

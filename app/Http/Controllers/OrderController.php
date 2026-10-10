@@ -13,6 +13,7 @@ use App\Models\OrderItem;
 use App\Models\PaymentSetting;
 use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
+use App\Services\DgxSparkOrderService;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
@@ -527,10 +528,25 @@ class OrderController extends Controller
      */
     public function confirmPayment(Request $request, Order $order)
     {
+        // Same ownership rule as show(): a slip goes only on your own order. Without it any
+        // signed-in account could mark a stranger's order "verifying" — and keep a DGX Spark
+        // reservation that is not theirs holding a set past its time.
+        if ((int) $order->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
         if ($order->payment_status !== 'pending') {
             return redirect()
                 ->back()
                 ->with('error', 'คำสั่งซื้อนี้ไม่อยู่ในสถานะรอชำระเงิน');
+        }
+
+        // A DGX Spark reservation past its hold: the slip is still taken while a set is free,
+        // refused (and the reservation cancelled) once the 20 sets went to other customers.
+        if ($refusal = app(DgxSparkOrderService::class)->refuseLateSlip($order)) {
+            return redirect()
+                ->back()
+                ->with('error', $refusal);
         }
 
         // Block slip upload if unique amount has expired

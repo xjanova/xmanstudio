@@ -107,6 +107,19 @@ class LicenseService
                     continue;
                 }
 
+                // Lifetime of a renewable product (BrainX Cloud in the DGX Spark bundle): the key the
+                // buyer already pays for by the month becomes lifetime, so their cloud account keeps
+                // its notes. Nothing to upgrade → a new lifetime key below, as for any product.
+                if ($item->product->isRenewable() && $licenseType === LicenseKey::TYPE_LIFETIME) {
+                    $upgraded = $this->upgradeToLifetime($order, $item);
+
+                    if ($upgraded !== null) {
+                        $generated = $upgraded || $generated;
+
+                        continue;
+                    }
+                }
+
                 $existingCount = LicenseKey::where('order_id', $order->id)
                     ->where('product_id', $item->product_id)
                     ->count();
@@ -254,6 +267,83 @@ class LicenseService
             'user_id' => $order->user_id,
             'expires_at' => $this->addTerm(now(), $licenseType, $units),
         ]);
+
+        return true;
+    }
+
+    /**
+     * Make the buyer's own term key of a renewable product lifetime — the same key, so a BrainX
+     * Cloud account (a hash of the key) keeps its notes. Recorded as a renewal row like any
+     * extension: its unique order_item_id stops a payment confirmed twice from doing it twice,
+     * and the order page and e-mail find the key through it.
+     *
+     * @return bool|null true: upgraded now · false: this order already delivered it ·
+     *                   null: no key to upgrade (guest, first purchase, every key revoked or
+     *                   already lifetime) — the caller issues a new lifetime key
+     */
+    private function upgradeToLifetime(Order $order, OrderItem $item): ?bool
+    {
+        $issuedBefore = LicenseKey::withTrashed()
+            ->where('order_id', $order->id)
+            ->where('product_id', $item->product_id)
+            ->exists();
+
+        if ($issuedBefore || LicenseRenewal::where('order_item_id', $item->id)->exists()) {
+            return false;
+        }
+
+        $target = $this->findRenewalTarget(
+            $order->user_id,
+            $item->product,
+            $this->requirementsOf($item)['renew_license_id'] ?? null,
+            true
+        );
+
+        if (! $target) {
+            return null;
+        }
+
+        $previousExpiry = $target->expires_at;
+        $previousType = $target->license_type;
+
+        try {
+            DB::transaction(function () use ($target, $order, $item, $previousExpiry, $previousType) {
+                LicenseRenewal::create([
+                    'license_key_id' => $target->id,
+                    'order_id' => $order->id,
+                    'order_item_id' => $item->id,
+                    'user_id' => $order->user_id,
+                    'license_type' => LicenseKey::TYPE_LIFETIME,
+                    'units' => 1,
+                    'days_added' => 0,
+                    'previous_expires_at' => $previousExpiry,
+                    'expires_at' => null,
+                ]);
+
+                $target->update([
+                    'license_type' => LicenseKey::TYPE_LIFETIME,
+                    'expires_at' => null,
+                    'status' => LicenseKey::STATUS_ACTIVE,
+                ]);
+
+                LicenseActivity::log(
+                    $target,
+                    LicenseActivity::ACTION_EXTENDED,
+                    LicenseActivity::ACTOR_SYSTEM,
+                    $order->user_id,
+                    null,
+                    "อัปเกรดเป็นตลอดชีพจากคำสั่งซื้อ #{$order->order_number}",
+                    [
+                        'order_id' => $order->id,
+                        'license_type' => LicenseKey::TYPE_LIFETIME,
+                        'previous_type' => $previousType,
+                        'previous_expiry' => $previousExpiry?->toISOString(),
+                    ]
+                );
+            });
+        } catch (UniqueConstraintViolationException) {
+            return false;
+        }
 
         return true;
     }
