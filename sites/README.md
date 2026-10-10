@@ -102,7 +102,9 @@ sed -i "s/v=[0-9]\{12\}/v=$(date +%Y%m%d%H%M)/g" sites/product.xman4289.com/inde
 เป็นค่า default ให้ทุกสินค้าที่ไม่มีราคากำหนดไว้ใน `ProductLicenseController`
 ราคาที่เป็นรายปี/รายเดือนให้บอกหน่วยไว้ในข้อความราคาด้วย
 
-### `xgameshub.xman4289.com` ไม่อยู่ที่นี่แล้ว
+### XgamesHub (`xmangameshub.online`, เดิม `xgameshub.xman4289.com`) ไม่อยู่ที่นี่แล้ว
+
+ย้ายไป `xmangameshub.online` เมื่อ 2026-10-10 — path เดิมของโดเมนเก่าบนเซิร์ฟเวอร์เป็น symlink ไปที่ใหม่ และโดเมนเก่ายังเสิร์ฟไฟล์ชุดเดียวกัน (แอปกรุงศรีบน Android เรียก API ที่นั่น) ห้ามลบโดเมนเก่าใน DirectAdmin
 
 ตั้งแต่ 2026-10-05 repo `xjanova/XgamesHub` deploy ตัวเอง (workflow **Release & Deploy**:
 merge เข้า main → build → rsync ด้วยคีย์ที่ล็อก `rrsync` ไว้เฉพาะ web root ของโดเมนนั้น → GitHub Release)
