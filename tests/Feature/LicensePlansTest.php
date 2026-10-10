@@ -52,6 +52,7 @@ class LicensePlansTest extends TestCase
 
     public function test_the_prices_the_owner_settled_on(): void
     {
+        $this->assertSame(['monthly' => 199, 'yearly' => 1990, 'lifetime' => 9900], LicensePlans::for('anti-x'));
         $this->assertSame(['monthly' => 299, 'yearly' => 1990, 'lifetime' => 19900], LicensePlans::for('autotradex'));
         $this->assertSame(['yearly' => 199, 'lifetime' => 1999], LicensePlans::for('cluadex-ai-coding-assistant'));
         $this->assertSame(['yearly' => 199], LicensePlans::for('winx-tools'));

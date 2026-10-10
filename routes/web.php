@@ -82,6 +82,7 @@ use App\Http\Controllers\Admin\VpsSettingController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
+use App\Http\Controllers\AntiXController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
@@ -414,6 +415,14 @@ Route::get('/winx-tools/download/{version?}', [WinXToolsController::class, 'down
     ->where('version', '[0-9A-Za-z.\-]+')
     ->middleware('throttle:30,1,winx-download')
     ->name('winx-tools.download');
+
+// Anti X (Windows Server) - zip เดียวทั้ง Free/Pro (Pro ปลดในแอปด้วย license key) · แอปอัปเดตตัวเองผ่าน URL นี้
+// release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ (token ของสินค้าในหน้า admin) ห้าม redirect ไป GitHub
+// ผูกกับ anti-x ตายตัว ห้ามทำเป็น {slug} · {version} = ตัวนั้นเป๊ะ ๆ ที่ update/check ประกาศ sha256 ไว้
+Route::get('/anti-x/download/{version?}', [AntiXController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,anti-x-download')
+    ->name('anti-x.download');
 
 // Services
 Route::get('/services', [ProductController::class, 'services'])->name('services.index');

@@ -47,6 +47,7 @@ return [
     |
     */
     'app_routes' => [
+        'anti-x' => 'anti-x.download',
         'autotradex' => 'autotradex.download',
         'brainx' => 'brainx.download',
         'chanthra-studio' => 'chanthra-studio.download',
@@ -75,6 +76,7 @@ return [
     |
     */
     'app_platforms' => [
+        'anti-x' => 'Windows',
         'autotradex' => 'Windows',
         'brainx' => 'Windows',
         'chanthra-studio' => 'Windows',
