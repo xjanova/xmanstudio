@@ -109,7 +109,8 @@
                     <a href="{{ route('products.index') }}" class="text-primary-600 dark:text-primary-400 hover:underline">
                         &larr; <x-bi th="เลือกสินค้าเพิ่ม" en="Continue Shopping" />
                     </a>
-                    <form action="{{ route('cart.index') }}" method="POST">
+                    <form action="{{ route('cart.clear') }}" method="POST"
+                          onsubmit="return confirm('ล้างสินค้าทั้งหมดในตะกร้า? / Remove every item from the cart?')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="text-red-600 dark:text-red-400 hover:underline">
