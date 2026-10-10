@@ -7,6 +7,7 @@ use App\Models\DomainTld;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -68,6 +69,33 @@ class DomainManagementTest extends TestCase
 
         $response->assertSuccessful();
         $response->assertSee('owned-example.com');
+    }
+
+    public function test_a_fresh_domain_with_an_empty_zone_gets_the_dns_editor(): void
+    {
+        // The first real sale (2026-10-10) came back with an empty zone, and
+        // the page said it could not read DNS and hid the editor — so the
+        // customer had no way to add their first record.
+        $response = $this->actingAs($this->owner)->get("/my-account/domains/{$this->domain->id}");
+
+        $response->assertSuccessful();
+        $response->assertSee('action="' . route('customer.domains.dns', $this->domain->id) . '"', false);
+        $response->assertDontSee('อ่านการตั้งค่า DNS ไม่ได้ในขณะนี้');
+    }
+
+    public function test_a_zone_that_cannot_be_read_says_so(): void
+    {
+        Http::swap(new Factory);
+        Http::fake([
+            '*/api/dns/v1/zones/*' => Http::response(['message' => 'down'], 500),
+            '*' => Http::response([], 200),
+        ]);
+
+        $response = $this->actingAs($this->owner)->get("/my-account/domains/{$this->domain->id}");
+
+        $response->assertSuccessful();
+        $response->assertSee('อ่านการตั้งค่า DNS ไม่ได้ในขณะนี้');
+        $response->assertDontSee('action="' . route('customer.domains.dns', $this->domain->id) . '"', false);
     }
 
     // ───────────────────────────────────────────── somebody else's domain

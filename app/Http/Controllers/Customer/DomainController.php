@@ -62,9 +62,8 @@ class DomainController extends Controller
         // Records are read live rather than cached: a customer who just
         // changed one and reloads must see what they changed, not a copy
         // from before it.
-        $records = $domain->isUsable()
-            ? $this->groupRecords($this->api->getDnsRecords($domain->domain))
-            : [];
+        $zone = $domain->isUsable() ? $this->api->getDnsRecords($domain->domain) : [];
+        $records = $this->groupRecords($zone);
 
         return view('customer.domains.show', [
             'domain' => $domain,
@@ -74,7 +73,10 @@ class DomainController extends Controller
             'renewPriceRaw' => $domain->tldRecord?->renewPriceThb() ?? 0.0,
             'renewals' => $domain->renewals()->get(),
             'canRenew' => $domain->canRenew(),
-            'dnsUnavailable' => $domain->isUsable() && $records === [],
+            // Only a failed read is "unavailable". A freshly registered domain
+            // has an empty zone, and treating that as an error hid the editor
+            // the customer needed to add their very first record.
+            'dnsUnavailable' => $zone === null,
             'details' => $domain->isUsable() ? $this->details($domain) : [],
             'forwarding' => $domain->isUsable() ? $this->forwardingFor($domain) : null,
             'snapshots' => $domain->isUsable() ? $this->snapshotsFor($domain) : [],
