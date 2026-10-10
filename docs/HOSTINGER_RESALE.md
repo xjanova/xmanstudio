@@ -108,6 +108,12 @@ per period (`hostingerinth-vps-kvm2-thb-1m`) and opaque — copy them from the c
   so a wrong or premature pair changes nothing. The way back uses `own_nameservers`, captured at
   registration only (`refreshFromUpstream(justRegistered: true)`) — our `*.dns-parking.com` pair differs
   per account (ns1/ns2 answer NXDOMAIN for our zones), and the daily sync overwrites `nameservers`.
+- **The customer's own Cloudflare, by their token** (`cloudflare_connections`, `Customer\CloudflareController`).
+  The link (`CloudflareApiService::tokenTemplateUrl()`) pre-ticks Account Settings read + Zone/DNS/Zone
+  Settings edit. "Move automatically" creates the zone, copies our records into it ONLY when it is empty
+  (SRV/CAA are listed back, not copied; TTL < 60 becomes auto), then sets the assigned pair. Quick-setup
+  templates (`App\Support\CloudflareTemplates`) replace only clashing records. The token is encrypted,
+  hidden, in `dontFlash`, and never logged.
 - **First period vs renewal.** VPS and many TLDs are much dearer from the second period. Every price
   on the site says which one it is ("ปีแรก / ปีต่อไป", "เดือนแรก / เดือนถัดไป"), and renewals are
   charged at the renewal cost — never the first-period price again.

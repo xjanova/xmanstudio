@@ -273,7 +273,7 @@
             $ownDns = $domain->usesOwnDns();
             $canComeBack = ! $ownDns && count($domain->own_nameservers ?? []) >= 2;
         @endphp
-        <div class="{{ $card }} p-6" x-data="{ open: false, cf: @js(old('cloudflare_ns') !== null) }">
+        <div class="{{ $card }} p-6" x-data="{ open: false, cf: @js(old('cloudflare_ns') !== null || session('cf_open') === true) }">
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div class="min-w-0">
                     <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
@@ -327,54 +327,123 @@
             </div>
 
             @unless($onCloudflare)
-                {{-- Cloudflare ให้ nameserver คนละคู่ในแต่ละบัญชี ไม่มีคู่มาตรฐาน
-                     ระบบจึงถาม Cloudflare เองก่อนสลับว่าเพิ่มเว็บแล้วและวางคู่ถูก --}}
-                <form method="POST" action="{{ route('customer.domains.cloudflare', $domain->id) }}" x-show="cf" x-cloak
-                      class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700 space-y-4"
-                      x-data="{ sending: false }" @submit="sending = true">
-                    @csrf
-                    <ol class="space-y-3 text-sm text-slate-700 dark:text-slate-300">
-                        <li class="flex gap-3">
-                            <span class="shrink-0 w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-xs font-bold flex items-center justify-center">1</span>
-                            <div class="min-w-0">
-                                <p>
-                                    <x-bi th="ที่ Cloudflare (ฟรี): Add a site → พิมพ์" en="At Cloudflare (free): Add a site → type" />
-                                    <span class="font-mono font-semibold">{{ $domain->domain }}</span>
-                                    <x-bi th="→ เลือกแพ็กเกจ Free · Cloudflare จะคัดลอกเรคคอร์ด DNS เดิมไปให้ ตรวจว่าครบก่อน"
-                                          en="→ pick the Free plan. Cloudflare copies your current DNS records — check they are all there." />
+                <div x-show="cf" x-cloak class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700 space-y-5">
+                    @if($cloudflare)
+                        {{-- เชื่อม API แล้ว: ปุ่มเดียวจบ ไม่ต้องคัดลอกอะไร --}}
+                        <form method="POST" action="{{ route('customer.domains.cloudflare-move', $domain->id) }}"
+                              x-data="{ sending: false, ask: @js('ย้าย ' . $domain->domain . ' ไปใช้ DNS ที่ Cloudflare? ระบบจะคัดลอกเรคคอร์ดปัจจุบันไปให้ แล้วเปลี่ยน nameserver — จากนั้นแก้ DNS ที่ Cloudflare') }"
+                              @submit="if (! confirm(ask)) { $event.preventDefault(); return } sending = true"
+                              class="rounded-xl border border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/10 p-4 space-y-3">
+                            @csrf
+                            <p class="text-sm text-slate-800 dark:text-slate-200">
+                                <x-bi th="เชื่อมกับ Cloudflare แล้ว" en="Connected to Cloudflare" />
+                                (<span class="font-semibold">{{ $cloudflare->account_name }}</span>) —
+                                <x-bi th="กดปุ่มเดียว ระบบจะเพิ่มเว็บนี้ใน Cloudflare ของคุณ คัดลอกเรคคอร์ด DNS ปัจจุบันไปให้ แล้วชี้ nameserver ให้เอง"
+                                      en="one click adds this site to your Cloudflare, copies the current DNS records across and points the nameservers for you." />
+                            </p>
+                            @if($cfZone)
+                                <p class="text-xs text-slate-600 dark:text-slate-400">
+                                    <x-bi th="มีเว็บนี้ใน Cloudflare ของคุณแล้ว" en="This site is already in your Cloudflare" />
+                                    ({{ $cfZone['status'] }}) · {{ implode(', ', $cfZone['name_servers']) }}
                                 </p>
-                                <a href="https://dash.cloudflare.com/?to=/:account/add-site" target="_blank" rel="noopener noreferrer"
-                                   class="mt-2 inline-flex items-center gap-1.5 text-orange-600 dark:text-orange-400 font-semibold hover:underline">
-                                    <x-bi th="เปิด Cloudflare เพื่อเพิ่มเว็บ" en="Open Cloudflare to add the site" />
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                </a>
+                            @elseif($cfError)
+                                <p class="text-xs text-red-700 dark:text-red-300">{{ $cfError }}</p>
+                            @endif
+                            <button type="submit" :disabled="sending"
+                                    class="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition disabled:opacity-50">
+                                <span x-show="!sending"><x-bi th="ย้ายไป Cloudflare อัตโนมัติ" en="Move to Cloudflare automatically" /></span>
+                                <span x-show="sending" x-cloak><x-bi th="กำลังตั้งค่าที่ Cloudflare…" en="Setting up at Cloudflare…" /></span>
+                            </button>
+                        </form>
+                    @else
+                        {{-- ยังไม่เชื่อม: ลิงก์สร้าง token ที่ติ๊กสิทธิ์ไว้ให้แล้ว + ช่องวาง token --}}
+                        <form method="POST" action="{{ route('customer.domains.cloudflare-connect') }}"
+                              x-data="{ sending: false }" @submit="sending = true"
+                              class="rounded-xl border border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/10 p-4 space-y-3">
+                            @csrf
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                <x-bi th="แบบอัตโนมัติ (แนะนำ) — เชื่อม Cloudflare ครั้งเดียว ใช้ได้ทุกโดเมน"
+                                      en="Automatic (recommended) — connect Cloudflare once, use it for every domain" />
+                            </p>
+                            <ol class="space-y-2 text-sm text-slate-700 dark:text-slate-300 list-decimal pl-5">
+                                <li>
+                                    <a href="{{ $cfTokenUrl }}" target="_blank" rel="noopener noreferrer" class="text-orange-600 dark:text-orange-400 font-semibold hover:underline">
+                                        <x-bi th="เปิดหน้าสร้าง API token ที่ Cloudflare" en="Open Cloudflare's create-token page" />
+                                    </a>
+                                    — <x-bi th="สิทธิ์ถูกติ๊กไว้ให้แล้ว เลื่อนลงกด Continue to summary → Create Token"
+                                            en="the permissions are already ticked: scroll down, Continue to summary → Create Token" />
+                                </li>
+                                <li><x-bi th="คัดลอก token ที่ได้มาวางที่นี่ (Cloudflare แสดงแค่ครั้งเดียว)" en="Copy the token and paste it here (Cloudflare shows it once)" /></li>
+                            </ol>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="password" name="cloudflare_token" required minlength="20" maxlength="200" autocomplete="off" spellcheck="false"
+                                       placeholder="Cloudflare API token"
+                                       class="w-full sm:flex-1 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm font-mono focus:border-orange-500 focus:ring-orange-500">
+                                <button type="submit" :disabled="sending"
+                                        class="shrink-0 px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition disabled:opacity-50">
+                                    <span x-show="!sending"><x-bi th="เชื่อมต่อ" en="Connect" /></span>
+                                    <span x-show="sending" x-cloak><x-bi th="กำลังตรวจ token…" en="Checking token…" /></span>
+                                </button>
                             </div>
-                        </li>
-                        <li class="flex gap-3">
-                            <span class="shrink-0 w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-xs font-bold flex items-center justify-center">2</span>
-                            <div class="min-w-0 flex-1">
-                                <p class="mb-2">
-                                    <x-bi th="คัดลอก nameserver ที่ Cloudflare ให้ (ลงท้าย .ns.cloudflare.com) มาวางที่นี่ — ชื่อเดียวก็พอ ระบบหาอีกชื่อให้เอง"
-                                          en="Copy the nameservers Cloudflare gives you (ending .ns.cloudflare.com) and paste them here — one is enough, we find the other." />
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                <x-bi th="token เก็บแบบเข้ารหัส ไม่แสดงกลับ ใช้ทำแค่สิ่งที่คุณกดเท่านั้น และยกเลิกได้ทุกเมื่อ"
+                                      en="The token is stored encrypted, never shown again, used only for what you click, and can be removed any time." />
+                            </p>
+                        </form>
+                    @endif
+
+                    <details class="group" @if(old('cloudflare_ns') !== null) open @endif>
+                        <summary class="cursor-pointer text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                            <x-bi th="หรือเพิ่มเว็บที่ Cloudflare เองแล้ววางชื่อ nameserver" en="Or add the site at Cloudflare yourself and paste a nameserver" />
+                        </summary>
+                        <form method="POST" action="{{ route('customer.domains.cloudflare', $domain->id) }}"
+                              class="space-y-4 pt-3"
+                              x-data="{ sending: false }" @submit="sending = true">
+                            @csrf
+                            <ol class="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+                                <li class="flex gap-3">
+                                    <span class="shrink-0 w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-xs font-bold flex items-center justify-center">1</span>
+                                    <div class="min-w-0">
+                                        <p>
+                                            <x-bi th="ที่ Cloudflare (ฟรี): Add a site → พิมพ์" en="At Cloudflare (free): Add a site → type" />
+                                            <span class="font-mono font-semibold">{{ $domain->domain }}</span>
+                                            <x-bi th="→ เลือกแพ็กเกจ Free · Cloudflare จะคัดลอกเรคคอร์ด DNS เดิมไปให้ ตรวจว่าครบก่อน"
+                                                  en="→ pick the Free plan. Cloudflare copies your current DNS records — check they are all there." />
+                                        </p>
+                                        <a href="https://dash.cloudflare.com/?to=/:account/add-site" target="_blank" rel="noopener noreferrer"
+                                           class="mt-2 inline-flex items-center gap-1.5 text-orange-600 dark:text-orange-400 font-semibold hover:underline">
+                                            <x-bi th="เปิด Cloudflare เพื่อเพิ่มเว็บ" en="Open Cloudflare to add the site" />
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                        </a>
+                                    </div>
+                                </li>
+                                <li class="flex gap-3">
+                                    <span class="shrink-0 w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-xs font-bold flex items-center justify-center">2</span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="mb-2">
+                                            <x-bi th="คัดลอก nameserver ที่ Cloudflare ให้ (ลงท้าย .ns.cloudflare.com) มาวางที่นี่ — ชื่อเดียวก็พอ ระบบหาอีกชื่อให้เอง"
+                                                  en="Copy the nameservers Cloudflare gives you (ending .ns.cloudflare.com) and paste them here — one is enough, we find the other." />
+                                        </p>
+                                        <textarea name="cloudflare_ns" rows="2" required maxlength="2000"
+                                                  placeholder="xxxx.ns.cloudflare.com&#10;yyyy.ns.cloudflare.com"
+                                                  class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm font-mono focus:border-orange-500 focus:ring-orange-500">{{ old('cloudflare_ns') }}</textarea>
+                                    </div>
+                                </li>
+                            </ol>
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <button type="submit" :disabled="sending"
+                                        class="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition disabled:opacity-50">
+                                    <span x-show="!sending"><x-bi th="ชี้ nameserver ไป Cloudflare" en="Point nameservers to Cloudflare" /></span>
+                                    <span x-show="sending" x-cloak><x-bi th="กำลังตรวจกับ Cloudflare…" en="Checking with Cloudflare…" /></span>
+                                </button>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    <x-bi th="เราถาม Cloudflare ก่อนว่าเพิ่มเว็บแล้วและเป็นคู่ที่ถูก ถ้าไม่ตรงจะไม่เปลี่ยนอะไร เว็บไม่ดับ"
+                                          en="We check with Cloudflare first that the site is added and the pair is right. If not, nothing changes." />
                                 </p>
-                                <textarea name="cloudflare_ns" rows="2" required maxlength="2000"
-                                          placeholder="xxxx.ns.cloudflare.com&#10;yyyy.ns.cloudflare.com"
-                                          class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm font-mono focus:border-orange-500 focus:ring-orange-500">{{ old('cloudflare_ns') }}</textarea>
                             </div>
-                        </li>
-                    </ol>
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                        <button type="submit" :disabled="sending"
-                                class="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition disabled:opacity-50">
-                            <span x-show="!sending"><x-bi th="ชี้ nameserver ไป Cloudflare" en="Point nameservers to Cloudflare" /></span>
-                            <span x-show="sending" x-cloak><x-bi th="กำลังตรวจกับ Cloudflare…" en="Checking with Cloudflare…" /></span>
-                        </button>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
-                            <x-bi th="เราถาม Cloudflare ก่อนว่าเพิ่มเว็บแล้วและเป็นคู่ที่ถูก ถ้าไม่ตรงจะไม่เปลี่ยนอะไร เว็บไม่ดับ"
-                                  en="We check with Cloudflare first that the site is added and the pair is right. If not, nothing changes." />
-                        </p>
-                    </div>
-                </form>
+                        </form>
+                    </details>
+                </div>
             @endunless
 
             <form method="POST" action="{{ route('customer.domains.nameservers', $domain->id) }}" x-show="open" x-cloak class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700">
@@ -395,6 +464,134 @@
                 </button>
             </form>
         </div>
+
+        {{-- ══════════ ตั้งค่าด่วนผ่าน Cloudflare ══════════
+             ใช้ได้เมื่อเชื่อม Cloudflare แล้วและมีเว็บนี้ในบัญชีของลูกค้า
+             เทมเพลตแทนที่เฉพาะเรคคอร์ดที่ชนกัน ที่เหลือไม่แตะ --}}
+        @if($cloudflare)
+            <div class="{{ $card }} p-6" x-data="{ t: @js(old('template')) }">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div class="min-w-0">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                            <x-bi th="ตั้งค่าด่วน (Cloudflare)" en="Quick setup (Cloudflare)" />
+                        </h2>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">
+                            <x-bi th="เลือกว่าเว็บหรืออีเมลของคุณอยู่ที่ไหน ระบบตั้ง DNS และค่าที่ Cloudflare ให้ครบในคลิกเดียว แทนที่เฉพาะเรคคอร์ดที่ชนกัน"
+                                  en="Pick where your site or mail lives and we set the DNS and Cloudflare settings in one click, replacing only what clashes." />
+                        </p>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            Cloudflare: <span class="font-semibold">{{ $cloudflare->account_name }}</span>
+                            · token ••••{{ $cloudflare->token_hint }}
+                        </p>
+                    </div>
+                    <form method="POST" action="{{ route('customer.domains.cloudflare-disconnect') }}" class="shrink-0"
+                          onsubmit="return confirm('ยกเลิกการเชื่อม Cloudflare? token จะถูกลบจากระบบเรา (โดเมนที่ย้ายไปแล้วยังอยู่ที่ Cloudflare ตามเดิม)')">
+                        @csrf
+                        <button type="submit" class="text-sm text-red-600 dark:text-red-400 hover:underline">
+                            <x-bi th="ยกเลิกการเชื่อม" en="Disconnect" />
+                        </button>
+                    </form>
+                </div>
+
+                @if(! $cfZone)
+                    <div class="mt-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+                        @if($cfError)
+                            {{ $cfError }}
+                        @else
+                            <x-bi th="ยังไม่มีเว็บนี้ใน Cloudflare ของคุณ — กด “ชี้ไป Cloudflare” แล้ว “ย้ายไป Cloudflare อัตโนมัติ” ก่อน"
+                                  en="This site is not in your Cloudflare yet — use “Point to Cloudflare”, then “Move to Cloudflare automatically” first." />
+                        @endif
+                    </div>
+                @else
+                    @if($domain->usesOwnDns())
+                        <p class="mt-4 rounded-lg bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 px-4 py-3 text-sm text-sky-900 dark:text-sky-200">
+                            <x-bi th="ตอนนี้โดเมนยังใช้ DNS ของเรา — ตั้งค่าที่นี่ไว้ก่อนได้ จะมีผลเมื่อย้ายไป Cloudflare แล้ว"
+                                  en="The domain still uses our DNS — you can set this up now; it takes effect once you move to Cloudflare." />
+                        </p>
+                    @endif
+                    <div class="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        @foreach($cfTemplates as $key => $tpl)
+                            <button type="button" @click="t = (t === @js($key) ? null : @js($key))"
+                                    :class="t === @js($key) ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-800 dark:text-orange-200' : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-orange-300'"
+                                    class="text-left rounded-lg border px-3 py-2.5 text-sm font-medium transition">
+                                {{ $tpl['label_th'] }}
+                                <span class="block text-xs font-normal text-slate-500 dark:text-slate-400">{{ $tpl['label_en'] }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+
+                    @foreach($cfTemplates as $key => $tpl)
+                        <form method="POST" action="{{ route('customer.domains.cloudflare-template', $domain->id) }}"
+                              x-show="t === @js($key)" x-cloak
+                              x-data="{ sending: false, ask: @js('ตั้งค่า “' . $tpl['label_th'] . '” ให้ ' . $domain->domain . ' ที่ Cloudflare? เรคคอร์ดเดิมที่ชนกันจะถูกแทนที่') }"
+                              @submit="if (! confirm(ask)) { $event.preventDefault(); return } sending = true"
+                              class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700 space-y-4">
+                            @csrf
+                            <input type="hidden" name="template" value="{{ $key }}">
+                            <p class="text-sm text-slate-700 dark:text-slate-300">
+                                <x-bi :th="$tpl['desc_th']" :en="$tpl['desc_en']" />
+                            </p>
+
+                            @foreach($tpl['fields'] as $field)
+                                <label class="block">
+                                    <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        <x-bi :th="$field['label_th']" :en="$field['label_en']" />
+                                    </span>
+                                    @if($field['type'] === 'vps')
+                                        @if($myVps->isEmpty())
+                                            <span class="block text-sm text-amber-700 dark:text-amber-300">
+                                                <x-bi th="ยังไม่มี VPS ที่มี IP ในบัญชีนี้ — ใช้แบบ “เซิร์ฟเวอร์ / โฮสต์อื่น (IP)” แทน" en="No VPS with an IP on this account yet — use “another server (IP)” instead." />
+                                            </span>
+                                        @else
+                                            <select name="vps_id" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm">
+                                                @foreach($myVps as $vps)
+                                                    <option value="{{ $vps->id }}" @selected((string) old('vps_id') === (string) $vps->id)>
+                                                        {{ $vps->hostname ?: $vps->plan_name }} — {{ $vps->ipv4 }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        @endif
+                                    @elseif($field['type'] === 'select')
+                                        <select name="{{ $field['name'] }}" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm">
+                                            @foreach($field['options'] as $value => $label)
+                                                <option value="{{ $value }}" @selected(old($field['name']) === $value)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        <span class="flex items-center gap-2">
+                                            <input type="text" name="{{ $field['name'] }}" value="{{ old('template') === $key ? old($field['name']) : '' }}"
+                                                   placeholder="{{ $field['placeholder'] ?? '' }}" @unless($field['optional'] ?? false) required @endunless
+                                                   maxlength="300" autocomplete="off" spellcheck="false"
+                                                   class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm font-mono">
+                                            @if(! empty($field['suffix']))
+                                                <span class="shrink-0 text-sm font-mono text-slate-500 dark:text-slate-400">{{ $field['suffix'] }}</span>
+                                            @endif
+                                        </span>
+                                    @endif
+                                </label>
+                            @endforeach
+
+                            <div class="rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 px-4 py-3">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                                    <x-bi th="สิ่งที่จะตั้ง" en="What gets set" />
+                                </p>
+                                <ul class="space-y-0.5 font-mono text-xs text-slate-700 dark:text-slate-300">
+                                    @foreach($tpl['preview'] as $line)
+                                        <li>{{ $line }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+
+                            <button type="submit" :disabled="sending"
+                                    class="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition disabled:opacity-50">
+                                <span x-show="!sending"><x-bi th="ตั้งค่าเลย" en="Apply" /></span>
+                                <span x-show="sending" x-cloak><x-bi th="กำลังตั้งค่า…" en="Applying…" /></span>
+                            </button>
+                        </form>
+                    @endforeach
+                @endif
+            </div>
+        @endif
 
         {{-- ══════════ ส่งต่อโดเมน (redirect) ══════════
              ใช้ได้โดยไม่ต้องมีโฮสติ้ง — ชี้ชื่อเว็บไปเพจ Facebook ร้านบน Shopee หรือเว็บเก่า --}}

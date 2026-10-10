@@ -93,6 +93,7 @@ use App\Http\Controllers\ChanthraStudioWebController;
 use App\Http\Controllers\CluadeXWebController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AffiliateController;
+use App\Http\Controllers\Customer\CloudflareController as CustomerCloudflareController;
 use App\Http\Controllers\Customer\DomainController as CustomerDomainController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
@@ -702,6 +703,16 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('id')->middleware('throttle:10,10,domain-cloudflare')->name('cloudflare');
             Route::post('/{id}/own-dns', [CustomerDomainController::class, 'useOwnDns'])
                 ->whereNumber('id')->middleware('throttle:10,10,domain-own-dns')->name('own-dns');
+            // Cloudflare ของลูกค้าเอง ผ่าน API token ที่ลูกค้าสร้าง: เชื่อมครั้งเดียวใช้ได้ทุกโดเมน
+            // ย้ายไป Cloudflare แบบไม่ต้องคัดลอกอะไร และตั้งค่าด่วนตามเทมเพลต
+            Route::post('/cloudflare/connect', [CustomerCloudflareController::class, 'connect'])
+                ->middleware('throttle:10,10,cloudflare-connect')->name('cloudflare-connect');
+            Route::post('/cloudflare/disconnect', [CustomerCloudflareController::class, 'disconnect'])
+                ->middleware('throttle:10,10,cloudflare-disconnect')->name('cloudflare-disconnect');
+            Route::post('/{id}/cloudflare/move', [CustomerCloudflareController::class, 'move'])
+                ->whereNumber('id')->middleware('throttle:5,10,cloudflare-move')->name('cloudflare-move');
+            Route::post('/{id}/cloudflare/template', [CustomerCloudflareController::class, 'applyTemplate'])
+                ->whereNumber('id')->middleware('throttle:20,10,cloudflare-template')->name('cloudflare-template');
             // รหัสย้ายโดเมนออก — ของลับ ขอถี่ ๆ ไม่ได้
             Route::post('/{id}/auth-code', [CustomerDomainController::class, 'authCode'])
                 ->whereNumber('id')->middleware('throttle:5,10,domain-auth-code')->name('auth-code');

@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\CloudflareConnection;
 use App\Models\DomainRegistration;
+use App\Models\VpsInstance;
+use App\Services\CloudflareApiService;
 use App\Services\DomainPurchaseException;
 use App\Services\DomainRegistrarService;
 use App\Services\HostingerApiService;
+use App\Support\CloudflareTemplates;
 use App\Support\DnsProbe;
 use App\Support\DomainPricing;
 use App\Support\DomainReminders;
@@ -70,8 +74,19 @@ class DomainController extends Controller
         $zone = $ownDns ? $this->api->getDnsRecords($domain->domain) : [];
         $records = $this->groupRecords($zone);
 
+        $cloudflare = CloudflareConnection::forUser($request->user()->id);
+        $cfState = $cloudflare && $domain->isUsable() ? $this->cloudflareState($cloudflare, $domain) : ['zone' => null, 'error' => null];
+
         return view('customer.domains.show', [
             'domain' => $domain,
+            'cloudflare' => $cloudflare,
+            'cfZone' => $cfState['zone'],
+            'cfError' => $cfState['error'],
+            'cfTemplates' => CloudflareTemplates::all(),
+            'cfTokenUrl' => CloudflareApiService::tokenTemplateUrl(),
+            'myVps' => $cloudflare
+                ? VpsInstance::where('user_id', $request->user()->id)->whereNotNull('ipv4')->get(['id', 'hostname', 'plan_name', 'ipv4'])
+                : collect(),
             'records' => $records,
             'editableTypes' => self::EDITABLE_TYPES,
             'renewPrice' => $this->renewPriceFor($domain),
@@ -86,6 +101,42 @@ class DomainController extends Controller
             'forwarding' => $domain->isUsable() ? $this->forwardingFor($domain) : null,
             'snapshots' => $ownDns ? $this->snapshotsFor($domain) : [],
         ]);
+    }
+
+    /**
+     * Is this domain a zone in the customer's Cloudflare, and in what state?
+     * A minute of cache keeps a page reload from costing a Cloudflare call;
+     * failures are not cached, so a fixed token shows at once.
+     *
+     * @return array{zone:?array<string,mixed>, error:?string}
+     */
+    protected function cloudflareState(CloudflareConnection $cloudflare, DomainRegistration $domain): array
+    {
+        $key = CloudflareController::zoneCacheKey($cloudflare->user_id, $domain->domain);
+
+        if (is_array($cached = Cache::get($key))) {
+            return $cached;
+        }
+
+        $api = $cloudflare->api();
+        $zone = $api->findZone($domain->domain);
+
+        if (! $zone && $api->lastError()) {
+            return ['zone' => null, 'error' => $api->lastError()];
+        }
+
+        $state = [
+            'zone' => $zone ? [
+                'id' => (string) $zone['id'],
+                'status' => (string) ($zone['status'] ?? ''),
+                'name_servers' => DomainRegistration::normaliseNameservers($zone['name_servers'] ?? []),
+            ] : null,
+            'error' => null,
+        ];
+
+        Cache::put($key, $state, 60);
+
+        return $state;
     }
 
     /**
