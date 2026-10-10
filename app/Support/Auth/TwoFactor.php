@@ -43,6 +43,16 @@ final class TwoFactor
             && (int) $request->session()->get(self::SESSION_KEY) === (int) $user->id;
     }
 
+    /**
+     * Whether this session may use an admin power now: it has passed the second step, or the step
+     * is not required of an admin who has not set it up. The answer gate() gives, as a yes/no for
+     * an admin power reached outside /admin (opening a customer's payment slip).
+     */
+    public static function passed(Request $request, User $user): bool
+    {
+        return self::enabled($user) ? self::verified($request, $user) : ! self::required();
+    }
+
     public static function markVerified(Request $request, User $user): void
     {
         // A new session id for the new level of trust, as at sign-in.

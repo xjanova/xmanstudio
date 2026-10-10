@@ -8,6 +8,7 @@ use App\Models\UserRental;
 use App\Services\RentalService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Support\PaymentSlips;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -201,7 +202,11 @@ class RentalController extends Controller
             ->where('status', RentalPayment::STATUS_PENDING)
             ->firstOrFail();
 
-        $path = $request->file('slip')->store('payment-slips', 'public');
+        // Kept off the web root; the admin rental list opens it through PaymentSlipController
+        $path = PaymentSlips::store($request->file('slip'));
+        if ($path === null) {
+            return back()->with('error', 'บันทึกสลิปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
 
         $payment->update([
             'transfer_slip_url' => $path,
