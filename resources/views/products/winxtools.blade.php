@@ -207,15 +207,15 @@
         ],
         [
             'key' => 'tricks', 'img' => 'windows-tricks.webp', 'pro' => true, 'name' => 'Windows Tricks', 'short' => 'ทริกลับตามเวอร์ชันเครื่อง',
-            'th' => 'รวมทริกและคำสั่งลับของ Windows แยกเป็นหมวด และเลือกเฉพาะที่ใช้ได้กับเวอร์ชัน Windows ของเครื่องคุณ กดใช้ได้ทันที',
-            'en' => 'Windows secret tricks and commands by category, matched to your exact Windows version.',
-            'points' => [],
+            'th' => 'รวมทริกและคำสั่งลับของ Windows แยกเป็นหมวด โชว์เวอร์ชันและฮาร์ดแวร์จริงของเครื่อง และบอกว่าทริกไหนใช้กับเครื่องคุณได้ ทุกทริกเช็กสถานะจริงก่อน และย้อนกลับได้ด้วยปุ่ม Restore default',
+            'en' => 'Windows secret tricks by category, matched to your exact version and hardware. Every trick checks the real state of the PC first and can be undone with Restore default.',
+            'points' => ['12 หมวด: Gaming · Explorer & Taskbar · Look & Input · Privacy & Ads · Performance · Power & Startup · Network · Windows Update · Security · Storage · Repair & Reports · Windows Tools'],
         ],
         [
             'key' => 'uninstall', 'img' => null, 'pro' => false, 'name' => 'Deep Uninstaller', 'short' => 'ถอนแล้วเก็บกวาดต่อ',
             'th' => 'ถอนโปรแกรมแล้วตามเก็บสิ่งที่โปรแกรมทิ้งไว้ ทั้งไฟล์และรายการ registry ที่ค้างอยู่',
-            'en' => 'Uninstalls programs and cleans up what they leave behind.',
-            'points' => [],
+            'en' => 'Uninstalls programs and cleans up the files and registry keys they leave behind.',
+            'points' => ['Deep Clean หาไฟล์และ registry ที่ค้างหลังถอน', 'Force Remove สำหรับโปรแกรมที่ถอนตามปกติไม่ออก'],
         ],
     ];
 
@@ -245,16 +245,25 @@
             'points' => [],
         ],
         [
-            'key' => 'tools', 'img' => null, 'pro' => true, 'name' => 'Network Tools', 'short' => '8 เครื่องมือวิเคราะห์เน็ต',
-            'th' => 'ชุดเครื่องมือวิเคราะห์ปัญหาเน็ตครบในที่เดียว',
-            'en' => 'Diagnostic tools for network troubleshooting.',
-            'points' => ['Ping · Traceroute · DNS Lookup · Port Scanner · Whois · Speed Test · Route Table · ARP Table'],
+            'key' => 'tools', 'img' => 'network-tools.webp', 'pro' => true, 'name' => 'Network Tools', 'short' => '16 เครื่องมือในหน้าเดียว',
+            'th' => 'ชุดเครื่องมือวิเคราะห์และแก้ปัญหาเน็ต 16 ตัวรวมไว้ในหน้าเดียว',
+            'en' => '16 diagnostic and analysis tools for network troubleshooting, on one page.',
+            'points' => [
+                'วินิจฉัย: Ping · Traceroute · DNS Lookup · Port Scanner · Whois',
+                'ความปลอดภัย: SSL Checker · HTTP Headers',
+                'ข้อมูลเครือข่าย: My IP · Subnet Calculator · IP Converter · ARP Table · Route Table · Network Stats',
+                'เครื่องมืออื่น: Packet Sender · Wake-on-LAN · Speed Test',
+            ],
         ],
         [
             'key' => 'proxy', 'img' => null, 'pro' => true, 'name' => 'Free Proxy', 'short' => 'พร็อกซีฟรีต่างประเทศ',
             'th' => 'ท่องเว็บผ่านพร็อกซีสาธารณะฟรีในประเทศอื่น เลือกตามประเทศแล้วเชื่อมต่อในคลิกเดียว',
             'en' => 'Browse through a free public proxy in another country.',
-            'points' => ['ไม่ใช่ VPN และไม่เข้ารหัส อย่าใช้กับรหัสผ่านหรือข้อมูลสำคัญ'],
+            'points' => [
+                'ทดสอบพร็อกซีผ่าน HTTPS ก่อนเชื่อมต่อ แล้วบอก IP ขาออกจริงกับความหน่วง (และเตือนถ้าออกจริงคนละประเทศ)',
+                'ตัดการเชื่อมต่อแล้วคืนค่าพร็อกซีเดิมของ Windows ให้ แม้โปรแกรมถูกปิดกลางคัน',
+                'ไม่ใช่ VPN และไม่เข้ารหัส อย่าใช้กับรหัสผ่านหรือข้อมูลสำคัญ',
+            ],
         ],
         [
             'key' => 'rules', 'img' => null, 'pro' => true, 'name' => 'Automation Rules', 'short' => 'ตั้งกฎให้ทำงานเอง',
@@ -670,7 +679,7 @@
                             <span class="text-gray-300"><x-bi th="/ ปี" en="year" /></span>
                         </div>
                         <ul class="space-y-2.5 text-gray-100 text-sm mb-8 flex-1">
-                            @foreach(['Disk Speed Test', 'สแกนแบดบล็อก (Bad block scan)', 'Disk Space', 'Smart CPU + Efficiency mode ใน 1-Click', 'Windows Tricks', 'Network Monitor จำกัด/บล็อกรายแอป', 'Packet Monitor', 'Network Tools 8 ตัว', 'Free Proxy', 'Automation Rules'] as $item)
+                            @foreach(['Disk Speed Test', 'สแกนแบดบล็อก (Bad block scan)', 'Disk Space', 'Smart CPU + Efficiency mode ใน 1-Click', 'Windows Tricks', 'Network Monitor จำกัด/บล็อกรายแอป', 'Packet Monitor', 'Network Tools 16 ตัว', 'Free Proxy', 'Automation Rules'] as $item)
                                 <li class="flex gap-3"><span class="wxt-tick" style="background:linear-gradient(140deg,#ffcf3a,#ff8a1f);color:#1a1004">✓</span><span>{{ $item }}</span></li>
                             @endforeach
                         </ul>
