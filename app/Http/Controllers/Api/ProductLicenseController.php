@@ -33,6 +33,8 @@ class ProductLicenseController extends Controller
     private const TRIAL_DAYS = [
         // แอปบอกลูกค้าไว้ว่าทดลอง Pro ได้ 48 ชั่วโมง
         'winx-tools' => 2,
+        // BrainX Pro (แอปเดสก์ท็อป) ทดลองได้ 7 วัน — key ที่ซื้อของ `brainx` ใบเดียวปลดทั้ง Pro และ Cloud
+        'brainx' => 7,
     ];
 
     /**
@@ -47,6 +49,8 @@ class ProductLicenseController extends Controller
      */
     private const HARDWARE_BOUND_TRIAL_PRODUCTS = [
         'winx-tools',
+        // BrainX บน Windows: machine_id เปลี่ยนเมื่อลง Windows ใหม่เหมือน WinXTools
+        'brainx',
     ];
 
     /**

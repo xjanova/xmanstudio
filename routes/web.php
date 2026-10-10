@@ -85,6 +85,7 @@ use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
 use App\Http\Controllers\BrainXDownloadController;
+use App\Http\Controllers\BrainXUpdateController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\ChanthraStudioWebController;
@@ -133,9 +134,14 @@ use App\Models\SeoSetting;
 use App\Models\TeamMember;
 use App\Models\User;
 use App\Support\Auth\LoginLog;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /*
 |--------------------------------------------------------------------------
@@ -245,6 +251,36 @@ Route::post('/api/download/{slug}/{version?}', [DownloadController::class, 'apiD
 Route::get('/brainx/download', [BrainXDownloadController::class, 'download'])
     ->middleware('throttle:6,60,brainx-download')
     ->name('brainx.download');
+
+// BrainX desktop updates — the app's Velopack update source is https://xman4289.com/brainx/download/
+// (trailing slash). The feed and its signature come byte for byte from one GitHub release; a package
+// is streamed only when that feed lists it (see BrainXUpdateController). Each has its own throttle,
+// none of them shares the installer's 6 an hour. {file} needs a segment, so it never matches
+// /brainx/download itself, and the two fixed names are registered before it.
+// Apps, not browsers: no session is started and no cookie set for what every install polls.
+Route::prefix('brainx/download')
+    ->name('brainx.update.')
+    ->withoutMiddleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        // GET only; without a session it has nothing to check, and its XSRF cookie needs one
+        ValidateCsrfToken::class,
+    ])
+    ->group(function () {
+        Route::get('/releases.win.json', [BrainXUpdateController::class, 'feed'])
+            ->middleware('throttle:60,1,brainx-update-feed')
+            ->name('feed');
+        Route::get('/releases.win.json.sig', [BrainXUpdateController::class, 'signature'])
+            ->middleware('throttle:60,1,brainx-update-signature')
+            ->name('signature');
+        // ~150 MB a package (a delta is smaller); one update fetches one full or a few deltas.
+        Route::get('/{file}', [BrainXUpdateController::class, 'package'])
+            ->where('file', '[A-Za-z0-9_][A-Za-z0-9._-]{0,199}')
+            ->middleware('throttle:20,60,brainx-update-package')
+            ->name('package');
+    });
 
 // AutoTradeX - Direct purchase from app
 Route::prefix('autotradex')->name('autotradex.')->group(function () {
