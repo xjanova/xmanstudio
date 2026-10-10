@@ -246,6 +246,8 @@ class VersionController extends Controller
      */
     private const PUBLIC_DOWNLOAD_ROUTES = [
         'winx-tools' => 'winx-tools.download',
+        // Anti X: release ใน repo private — ไฟล์ผ่านเซิร์ฟเวอร์ด้วย token ของสินค้า ไม่มีลิงก์ GitHub ถึงแอป
+        'anti-x' => 'anti-x.download',
         'autotradex' => 'autotradex.download',
         'chanthra-studio' => 'chanthra-studio.download',
         'aipray' => 'aipray.download',

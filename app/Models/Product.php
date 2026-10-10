@@ -19,10 +19,12 @@ class Product extends Model
     public const LIFETIME_LICENSE_SLUGS = [];
 
     /**
-     * สินค้าที่ขายเป็นรายเดือนเท่านั้น — ปุ่มซื้อที่ไม่ส่ง license_type มาก็ต้องได้คีย์รายเดือน
-     * ไม่ใช่รายปีที่เป็นค่าตั้งต้น (BrainX Cloud ฿399/เดือน)
+     * สินค้าที่ราคาในแถว (products.price) คือราคารายเดือน — ปุ่มซื้อที่ไม่ส่ง license_type มา
+     * (เช่น POST ที่ทำขึ้นเอง) จ่ายราคานั้น จึงต้องได้คีย์รายเดือน ไม่ใช่รายปีที่เป็นค่าตั้งต้น
+     * BrainX Cloud ขายรายเดือนอย่างเดียว ฿399 · Anti X ขายสามแบบแต่ราคาในแถวคือ ฿199 ของรายเดือน
+     * (คีย์รายปีในราคารายเดือน = ส่วนลดที่ไม่มีใครตั้งใจให้)
      */
-    public const MONTHLY_LICENSE_SLUGS = ['brainx'];
+    public const MONTHLY_LICENSE_SLUGS = ['brainx', 'anti-x'];
 
     protected $fillable = [
         'category_id',

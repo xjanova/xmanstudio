@@ -222,6 +222,9 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['GET', route('winx-tools.download', ['version' => '1.0.2'])],
             ['HEAD', route('winx-tools.download', ['version' => '1.0.2'])],
             ['GET', route('winx-tools.download', ['version' => '1.0.2', 'from' => 'app'])],
+            ['GET', route('anti-x.download')],
+            ['GET', route('anti-x.download', ['version' => '1.2.0'])],
+            ['HEAD', route('anti-x.download', ['version' => '1.2.0'])],
             ['GET', route('cluadex.download')],
             ['GET', route('gpuxmine.download')],
             ['GET', route('brainx.download')],
@@ -250,6 +253,7 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             '/tping/download/apkx', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
             '/apps/aipray', '/apps/aipray/donate', '/chanthra-studio', '/chanthra-studio/manual', '/autotradex/pricing', // หน้าของแอปที่โหลดฟรี
             '/brainx', '/brainx/downloads',
+            '/products/anti-x', '/anti-x', '/anti-x/downloads',
         ] as $url) {
             $this->assertFalse($matches('GET', $url), "GET {$url} ต้องไม่อยู่ในกฎนี้");
         }

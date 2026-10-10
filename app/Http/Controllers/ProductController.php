@@ -175,6 +175,8 @@ class ProductController extends Controller
             'brainx' => 'products.brainx',
             // GigGok — a free app: a public APK download, not the generic page's ฿0 cart and Windows requirements
             'giggok' => 'products.giggok',
+            // Anti X — the app's "ซื้อ Pro" opens this page: three terms through the cart + the public download
+            'anti-x' => 'products.antix',
         ];
 
         if (isset($customViews[$slug])) {

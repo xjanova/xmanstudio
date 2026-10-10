@@ -36,6 +36,7 @@ return [
     |
     */
     'plans' => [
+        'anti-x' => ['monthly' => 199, 'yearly' => 1990, 'lifetime' => 9900],
         'autotradex' => ['monthly' => 299, 'yearly' => 1990, 'lifetime' => 19900],
         'brainx' => ['monthly' => 399],
         'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
@@ -56,5 +57,5 @@ return [
     | /smschecker, /autotradex) that ties the purchase to the app's machine id.
     |
     */
-    'cart_products' => ['brainx', 'cluadex-ai-coding-assistant', 'sms-payment-checker', 'winx-tools'],
+    'cart_products' => ['anti-x', 'brainx', 'cluadex-ai-coding-assistant', 'sms-payment-checker', 'winx-tools'],
 ];

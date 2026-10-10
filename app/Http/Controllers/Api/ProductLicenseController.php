@@ -35,6 +35,9 @@ class ProductLicenseController extends Controller
         'winx-tools' => 2,
         // BrainX Pro (แอปเดสก์ท็อป) ทดลองได้ 7 วัน — key ที่ซื้อของ `brainx` ใบเดียวปลดทั้ง Pro และ Cloud
         'brainx' => 7,
+        // Anti X (กันเจาะเซิร์ฟเวอร์ Windows) ทดลอง Pro ได้ 14 วัน — เจ้าของกำหนด 2026-10-10
+        // ไม่ใช่ freemium: ไม่มีคีย์ที่จ่ายแล้ว ตัวแอปเองให้ส่วนฟรี (ตัวจับพื้นฐาน) ไม่ต้องให้ check-machine แจกคีย์ FREE
+        'anti-x' => 14,
     ];
 
     /**
@@ -51,6 +54,8 @@ class ProductLicenseController extends Controller
         'winx-tools',
         // BrainX บน Windows: machine_id เปลี่ยนเมื่อลง Windows ใหม่เหมือน WinXTools
         'brainx',
+        // Anti X บน Windows Server: ลงเครื่องใหม่/คืนค่า snapshot ได้ machine_id ใหม่ แต่ฮาร์ดแวร์เดิม
+        'anti-x',
     ];
 
     /**

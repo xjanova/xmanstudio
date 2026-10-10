@@ -61,6 +61,7 @@ class CustomerDownloadCenterTest extends TestCase
     public static function appDownloads(): array
     {
         return [
+            'Anti X' => ['anti-x', '/anti-x/download'],
             'AutoTradeX' => ['autotradex', '/autotradex/download'],
             'Chanthra Studio' => ['chanthra-studio', '/chanthra-studio/download'],
             'CluadeX' => ['cluadex-ai-coding-assistant', '/cluadex/download'],
@@ -167,6 +168,7 @@ class CustomerDownloadCenterTest extends TestCase
     public static function appPlatforms(): array
     {
         return [
+            'Anti X' => ['anti-x', 'Windows'],
             'AutoTradeX' => ['autotradex', 'Windows'],
             'BrainX' => ['brainx', 'Windows'],
             'Chanthra Studio' => ['chanthra-studio', 'Windows'],
