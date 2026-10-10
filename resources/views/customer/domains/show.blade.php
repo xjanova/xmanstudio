@@ -356,40 +356,8 @@
                             </button>
                         </form>
                     @else
-                        {{-- ยังไม่เชื่อม: ลิงก์สร้าง token ที่ติ๊กสิทธิ์ไว้ให้แล้ว + ช่องวาง token --}}
-                        <form method="POST" action="{{ route('customer.domains.cloudflare-connect') }}"
-                              x-data="{ sending: false }" @submit="sending = true"
-                              class="rounded-xl border border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/10 p-4 space-y-3">
-                            @csrf
-                            <p class="text-sm font-semibold text-slate-900 dark:text-white">
-                                <x-bi th="แบบอัตโนมัติ (แนะนำ) — เชื่อม Cloudflare ครั้งเดียว ใช้ได้ทุกโดเมน"
-                                      en="Automatic (recommended) — connect Cloudflare once, use it for every domain" />
-                            </p>
-                            <ol class="space-y-2 text-sm text-slate-700 dark:text-slate-300 list-decimal pl-5">
-                                <li>
-                                    <a href="{{ $cfTokenUrl }}" target="_blank" rel="noopener noreferrer" class="text-orange-600 dark:text-orange-400 font-semibold hover:underline">
-                                        <x-bi th="เปิดหน้าสร้าง API token ที่ Cloudflare" en="Open Cloudflare's create-token page" />
-                                    </a>
-                                    — <x-bi th="สิทธิ์ถูกติ๊กไว้ให้แล้ว เลื่อนลงกด Continue to summary → Create Token"
-                                            en="the permissions are already ticked: scroll down, Continue to summary → Create Token" />
-                                </li>
-                                <li><x-bi th="คัดลอก token ที่ได้มาวางที่นี่ (Cloudflare แสดงแค่ครั้งเดียว)" en="Copy the token and paste it here (Cloudflare shows it once)" /></li>
-                            </ol>
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <input type="password" name="cloudflare_token" required minlength="20" maxlength="200" autocomplete="off" spellcheck="false"
-                                       placeholder="Cloudflare API token"
-                                       class="w-full sm:flex-1 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm font-mono focus:border-orange-500 focus:ring-orange-500">
-                                <button type="submit" :disabled="sending"
-                                        class="shrink-0 px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition disabled:opacity-50">
-                                    <span x-show="!sending"><x-bi th="เชื่อมต่อ" en="Connect" /></span>
-                                    <span x-show="sending" x-cloak><x-bi th="กำลังตรวจ token…" en="Checking token…" /></span>
-                                </button>
-                            </div>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
-                                <x-bi th="token เก็บแบบเข้ารหัส ไม่แสดงกลับ ใช้ทำแค่สิ่งที่คุณกดเท่านั้น และยกเลิกได้ทุกเมื่อ"
-                                      en="The token is stored encrypted, never shown again, used only for what you click, and can be removed any time." />
-                            </p>
-                        </form>
+                        {{-- ยังไม่เชื่อม: ลิงก์สร้าง token ที่ติ๊กสิทธิ์ไว้ให้แล้ว + คู่มือทีละขั้น + ช่องวาง token --}}
+                        @include('customer.domains.partials.cloudflare-connect')
                     @endif
 
                     <details class="group" @if(old('cloudflare_ns') !== null) open @endif>
@@ -464,6 +432,21 @@
                 </button>
             </form>
         </div>
+
+        {{-- โดเมนอยู่บน Cloudflare แล้ว (เช่นย้ายด้วยการวางชื่อ) แต่ยังไม่เชื่อม API:
+             ที่เดียวที่จะเชื่อมได้ เพราะแผง "ชี้ไป Cloudflare" ซ่อนไปแล้ว --}}
+        @if(! $cloudflare && $onCloudflare)
+            <div class="{{ $card }} p-6 space-y-3">
+                <h2 class="text-lg font-bold text-slate-900 dark:text-white">
+                    <x-bi th="ตั้งค่าด่วน (Cloudflare)" en="Quick setup (Cloudflare)" />
+                </h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400">
+                    <x-bi th="เชื่อม Cloudflare ของคุณครั้งเดียว แล้วเลือกตั้งค่าเว็บ อีเมล และความปลอดภัยได้ในคลิกเดียว"
+                          en="Connect your Cloudflare once, then set up the site, mail and security in one click." />
+                </p>
+                @include('customer.domains.partials.cloudflare-connect', ['intro' => 'เชื่อม Cloudflare เพื่อใช้ตั้งค่าด่วน / Connect Cloudflare to use quick setup'])
+            </div>
+        @endif
 
         {{-- ══════════ ตั้งค่าด่วนผ่าน Cloudflare ══════════
              ใช้ได้เมื่อเชื่อม Cloudflare แล้วและมีเว็บนี้ในบัญชีของลูกค้า
@@ -812,6 +795,40 @@
         @endif
     </div>
     @endunless
+
+    {{-- ══════════ ผู้ถือครองโดเมน (WHOIS) ══════════
+         ข้อมูลที่ทะเบียนสากลถือว่าเป็นเจ้าของ — ดูและแก้ได้เอง --}}
+    @if($domain->isUsable())
+        @php
+            $registrant = $domain->contact;
+            $upstreamOwner = $details['owner_whois_id'] ?? null;
+            $ownerPending = $registrant && $registrant->remote_whois_id && $upstreamOwner
+                && (string) $upstreamOwner !== (string) $registrant->remote_whois_id;
+        @endphp
+        <div class="{{ $card }} p-5">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">
+                        <x-bi th="ผู้ถือครองโดเมน (WHOIS)" en="Domain registrant (WHOIS)" />
+                    </h3>
+                    @if($registrant)
+                        <p class="text-sm text-slate-800 dark:text-slate-200">{{ $registrant->fullName() }}@if($registrant->organization) · {{ $registrant->organization }}@endif</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">{{ $registrant->email }} · {{ $registrant->city }}, {{ $registrant->country }}</p>
+                    @endif
+                    @if($ownerPending)
+                        <p class="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                            <x-bi th="กำลังเปลี่ยนที่ทะเบียน — ถ้าเปลี่ยนชื่อหรืออีเมลเจ้าของ กรุณากดยืนยันในอีเมลจากทะเบียน"
+                                  en="Change in progress at the registry — if the owner's name or e-mail changed, approve it from the registry's e-mail." />
+                        </p>
+                    @endif
+                </div>
+                <a href="{{ route('customer.domains.registrant', $domain->id) }}"
+                   class="shrink-0 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center">
+                    <x-bi th="แก้ไขข้อมูลผู้ถือครอง" en="Edit registrant" />
+                </a>
+            </div>
+        </div>
+    @endif
 
     {{-- ══════════ ย้ายโดเมนออก ══════════
          ให้รหัสย้ายโดยไม่ต้องอ้อนวอน โดเมนเป็นของลูกค้า ไม่ใช่ของเรา --}}

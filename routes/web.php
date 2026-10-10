@@ -96,6 +96,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AffiliateController;
 use App\Http\Controllers\Customer\CloudflareController as CustomerCloudflareController;
 use App\Http\Controllers\Customer\DomainController as CustomerDomainController;
+use App\Http\Controllers\Customer\DomainRegistrantController as CustomerDomainRegistrantController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\Customer\VpsController as CustomerVpsController;
@@ -714,6 +715,11 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('id')->middleware('throttle:10,10,domain-own-dns')->name('own-dns');
             // Cloudflare ของลูกค้าเอง ผ่าน API token ที่ลูกค้าสร้าง: เชื่อมครั้งเดียวใช้ได้ทุกโดเมน
             // ย้ายไป Cloudflare แบบไม่ต้องคัดลอกอะไร และตั้งค่าด่วนตามเทมเพลต
+            // แก้ข้อมูลผู้ถือครอง (WHOIS) ของโดเมนที่จดแล้ว — ฟอร์มและกฎเดียวกับหน้าจด
+            Route::get('/{id}/registrant', [CustomerDomainRegistrantController::class, 'edit'])
+                ->whereNumber('id')->name('registrant');
+            Route::post('/{id}/registrant', [CustomerDomainRegistrantController::class, 'update'])
+                ->whereNumber('id')->middleware('throttle:5,10,domain-registrant')->name('registrant.update');
             Route::post('/cloudflare/connect', [CustomerCloudflareController::class, 'connect'])
                 ->middleware('throttle:10,10,cloudflare-connect')->name('cloudflare-connect');
             Route::post('/cloudflare/disconnect', [CustomerCloudflareController::class, 'disconnect'])

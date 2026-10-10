@@ -791,6 +791,8 @@ class DomainController extends Controller
             'is_locked' => array_key_exists('is_locked', $raw) ? (bool) $raw['is_locked'] : null,
             'is_lockable' => (bool) ($raw['is_lockable'] ?? true),
             'transfer_locked_until' => $until && $until->isFuture() ? $until : null,
+            // Lags the customer's edit until the registry applies it.
+            'owner_whois_id' => $raw['domain_contacts']['owner_id'] ?? null,
         ];
     }
 

@@ -314,6 +314,20 @@ class CloudflareConnectionTest extends TestCase
             ->assertDontSee('ตั้งค่าด่วน (Cloudflare)');
     }
 
+    public function test_a_domain_already_on_cloudflare_can_still_be_connected_with_the_guide(): void
+    {
+        $this->domain->update(['nameservers' => self::CLOUDFLARE]);
+
+        $this->actingAs($this->owner)->get($this->page())
+            ->assertSee('action="' . route('customer.domains.cloudflare-connect') . '"', false)
+            ->assertSee('ดูวิธีเอา token ทีละขั้น')
+            ->assertSee('images/guides/cloudflare-token-3.jpg', false);
+
+        foreach ([1, 2, 3] as $step) {
+            $this->assertFileExists(public_path("images/guides/cloudflare-token-{$step}.jpg"));
+        }
+    }
+
     public function test_plan_keeps_identical_extras_and_clears_clashes(): void
     {
         $built = CloudflareTemplates::build('github_pages', ['user' => 'octocat'], 'shop-example.online');

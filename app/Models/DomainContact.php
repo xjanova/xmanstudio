@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\WhoisContact;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -107,5 +108,70 @@ class DomainContact extends Model
         $number = ltrim(preg_replace('/\D/', '', (string) $this->phone), '0');
 
         return '+' . $cc . $number;
+    }
+
+    /**
+     * A registrant form, stored the way the registrar will read it — the
+     * province as its spelling, digits-only phone — so the row on file is the
+     * record that went upstream, not a draft of it. Used by both the order
+     * form and the "edit registrant" form.
+     *
+     * @param  array<string,mixed>  $data  validated form input
+     * @return array<string,mixed>
+     */
+    public static function formAttributes(array $data): array
+    {
+        $country = strtoupper((string) $data['country']);
+        $phoneCc = WhoisContact::phoneCc($data['phone_country_code'], $country);
+
+        return [
+            'label' => $data['organization'] ?? null,
+            'first_name' => WhoisContact::name($data['first_name']),
+            'last_name' => WhoisContact::name($data['last_name']),
+            'organization' => filled($data['organization'] ?? null) ? trim($data['organization']) : null,
+            'email' => trim($data['email']),
+            'phone_country_code' => '+' . $phoneCc,
+            'phone' => WhoisContact::phoneNumber($data['phone'], $phoneCc),
+            'address1' => trim($data['address1']),
+            'address2' => filled($data['address2'] ?? null) ? trim($data['address2']) : null,
+            'city' => WhoisContact::city($data['city']),
+            'state' => WhoisContact::region($country, $data['state'] ?? null),
+            'zip' => WhoisContact::zip($data['zip'], $country),
+            'country' => $country,
+        ];
+    }
+
+    /**
+     * Would these attributes put anything different on the registry?
+     *
+     * @param  array<string,mixed>  $attributes  from formAttributes()
+     */
+    public function differsFrom(array $attributes): bool
+    {
+        foreach (['first_name', 'last_name', 'organization', 'email', 'phone_country_code', 'phone', 'address1', 'address2', 'city', 'state', 'zip', 'country'] as $field) {
+            if ((string) ($this->{$field} ?? '') !== (string) ($attributes[$field] ?? '')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Changing who the owner IS — name, organisation or e-mail — is what the
+     * registry treats as a change of registrant: it asks for e-mail
+     * confirmation and holds transfers for 60 days. An address fix is not.
+     *
+     * @param  array<string,mixed>  $attributes  from formAttributes()
+     */
+    public function ownerChangesWith(array $attributes): bool
+    {
+        foreach (['first_name', 'last_name', 'organization', 'email'] as $field) {
+            if (mb_strtolower(trim((string) ($this->{$field} ?? ''))) !== mb_strtolower(trim((string) ($attributes[$field] ?? '')))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

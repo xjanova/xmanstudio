@@ -216,28 +216,10 @@ class DomainOrderController extends Controller
         // option on the next order. Unticked means kept, but not offered.
         $keepVisible = (bool) ($data['save_contact'] ?? false);
         $first = DomainContact::where('user_id', $userId)->doesntExist();
-        $country = strtoupper($data['country']);
-        $phoneCc = WhoisContact::phoneCc($data['phone_country_code'], $country);
 
-        // Stored the way the registrar will read it — the province as its
-        // spelling, digits-only phone — so the row on file is the record
-        // that went upstream, not a draft of it.
-        return DomainContact::create([
+        return DomainContact::create(DomainContact::formAttributes($data) + [
             'hidden_from_picker' => ! $keepVisible,
             'user_id' => $userId,
-            'label' => $data['organization'] ?? null,
-            'first_name' => WhoisContact::name($data['first_name']),
-            'last_name' => WhoisContact::name($data['last_name']),
-            'organization' => $data['organization'] ?? null,
-            'email' => trim($data['email']),
-            'phone_country_code' => '+' . $phoneCc,
-            'phone' => WhoisContact::phoneNumber($data['phone'], $phoneCc),
-            'address1' => trim($data['address1']),
-            'address2' => filled($data['address2'] ?? null) ? trim($data['address2']) : null,
-            'city' => WhoisContact::city($data['city']),
-            'state' => WhoisContact::region($country, $data['state'] ?? null),
-            'zip' => WhoisContact::zip($data['zip'], $country),
-            'country' => $country,
             'is_default' => $first,
         ]);
     }
