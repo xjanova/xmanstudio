@@ -263,8 +263,8 @@ class PortfolioContent
             [
                 'id' => 'xgameshub',
                 'name' => 'XMAN GAMES HUB',
-                'url' => 'https://xgameshub.xman4289.com',
-                'domain' => 'xgameshub.xman4289.com',
+                'url' => 'https://xmangameshub.online',
+                'domain' => 'xmangameshub.online',
                 'accent' => '#c0ff4b',
                 'type_th' => 'ฮับเกม 3 มิติ',
                 'type_en' => '3D games hub',

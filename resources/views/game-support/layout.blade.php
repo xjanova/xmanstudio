@@ -14,7 +14,7 @@
 </head>
 <body class="gs-public">
 <div class="gs-nebula" aria-hidden="true"></div>
-{{-- the same frame as xgameshub.xman4289.com: sidebar + top bar, links lead back into the hub --}}
+{{-- the same frame as the hub (xmangameshub.online): sidebar + top bar, links lead back into the hub --}}
 <aside class="gs-side" id="gs-menu" data-open="0">
     <a class="gs-brand" href="{{ $hub }}/" aria-label="XMAN GAMES HUB หน้าแรก"><img src="{{ asset('images/gameshub/logo-v2.webp') }}" alt="XMAN GAMES HUB" width="760" height="314"></a>
     <div class="gs-caption">YOUR GATEWAY TO PLAY</div>

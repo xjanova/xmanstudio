@@ -603,6 +603,6 @@ Route::prefix('ai/v1')->middleware(['throttle:30,1,api-ai'])->group(function () 
 });
 
 // ==================== XGamesHub supporter items ====================
-// Browser games on xgameshub.xman4289.com redeem a supporter's item code here.
+// Browser games on xmangameshub.online redeem a supporter's item code here.
 // 80-bit codes cannot be guessed; the limit only keeps a broken game from hammering it.
 Route::post('/gameshub/redeem', GameItemRedeemController::class)->middleware('throttle:20,1,api-gameshub-redeem')->name('api.gameshub.redeem');

@@ -6,6 +6,7 @@ use App\Models\GameCampaign;
 use App\Models\GameComment;
 use App\Models\GameDonation;
 use App\Services\GameSupportService;
+use App\Support\HubOrigin;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ class GameSupportController extends Controller
     public function summary(GameSupportService $service)
     {
         return response()->json(['games' => $service->summary(), 'updated_at' => now()->toIso8601String()])
-            ->header('Access-Control-Allow-Origin', config('game-support.hub_origin'))->header('Cache-Control', 'public, max-age=30');
+            ->header('Access-Control-Allow-Origin', HubOrigin::forRequest())->header('Vary', 'Origin')->header('Cache-Control', 'public, max-age=30');
     }
 
     public function show(Request $request, GameCampaign $campaign, GameSupportService $service)

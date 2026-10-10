@@ -37,7 +37,7 @@ The catalog migration registers 29 current GamesHub entries with BREAKER goal 15
 
 1. Deploy this backend before GamesHub frontend. Use the existing deployment/migration process and database backup; the migration creates only five new `game_*` tables and seeds campaigns. It does not alter checkout, Aipray donations, wallets or unrelated settings.
 2. Run `php artisan migrate --force`; publish the three static assets `css/game-support.css`, `js/game-support.js`, `images/banks/scb.svg` as part of the normal repository deployment. Standard route/view caching is supported.
-3. `GAME_SUPPORT_HUB_ORIGIN` defaults to `https://xgameshub.xman4289.com` and controls the aggregate JSON CORS origin. No credentialed cross-site writes are supported. Local QA overrides it to `http://127.0.0.1:3107` only in the isolated preview environment.
+3. `GAME_SUPPORT_HUB_ORIGIN` defaults to `https://xmangameshub.online` (the hub's home since 2026-10-10) and controls the aggregate JSON CORS origin; `GAME_SUPPORT_LEGACY_HUB_ORIGINS` (default `https://xgameshub.xman4289.com`, comma-separated) are also answered while the old domain still serves the same files — `App\Support\HubOrigin` echoes the caller's origin when it is one of these. No credentialed cross-site writes are supported. Local QA overrides it to `http://127.0.0.1:3107` only in the isolated preview environment.
 4. GamesHub `NEXT_PUBLIC_XMAN_STUDIO_URL` defaults to `https://xman4289.com`. Publish its campaign site after verifying this portal and summary endpoint are reachable, admin review permissions work and the company bank recipient is correct in the banking app.
 5. SCB logo is the official asset from https://www.scb.co.th/getmedia/d5d9617f-8bd7-4c55-ac23-9b8e6a97b945/logo-scb-desktop.svg. Its use identifies the receiving bank; do not suggest bank endorsement.
 
@@ -51,7 +51,7 @@ Local verification: PHP 8.3, SQLite in-memory, 14 tests / 102 assertions; Pint; 
 
 ## XGamesHub back office (`/admin/gameshub`)
 
-One admin section controls everything xgameshub.xman4289.com shows that is not baked into its static build. Sidebar → **XGamesHub · บริจาค ไอเท็ม รีวิว ความเห็น**. Tabs:
+One admin section controls everything xmangameshub.online shows that is not baked into its static build. Sidebar → **XGamesHub · บริจาค ไอเท็ม รีวิว ความเห็น**. Tabs:
 
 | Tab | Route | What |
 | --- | --- | --- |
@@ -70,7 +70,7 @@ One admin section controls everything xgameshub.xman4289.com shows that is not b
 3. A donation snapshots the tier including item keys and names. Approving the slip creates one `game_entitlements` row per item **in the same transaction** with an 80-bit code (`XG-XXXX-XXXX-XXXX-XXXX`, Crockford base32). The unique `(game_donation_id, game_item_id)` index makes a second approval impossible to double-grant. Voiding the donation revokes its codes.
 4. The member sees codes on `/games-support/my-items` and in "รายการของฉัน" on the game page. Codes are stored encrypted (shown to the owner and admins) plus a SHA-256 hash for lookup.
 5. The game redeems: `POST /api/gameshub/redeem` `{game?, code, device}` (without `game` — the hub's own redeem dialog — any game's code is accepted and the answer names the game in `game` / `game_name`) — open CORS, no cookies, `throttle:20,1`. Answers `200 {ok, item{key,name,kind,description,image_url}, devices_used, devices_max, already_on_this_device}` or `404 invalid_code`, `409 wrong_game`, `409 device_limit`, `410 revoked`, `422 invalid_request`, each with a Thai `message`. The same device asking again does not use another slot. Device ids and IPs are stored only as HMAC hashes.
-   Browser games can include `https://xgameshub.xman4289.com/sdk/xman-items.js` (`XmanItems.forGame(id).redeem(code)` / `.owns(key)`). Games that share this database (e.g. Krungsri) may read `game_entitlements` directly. Items should stay cosmetic — titles, badges, skins, passes — never paid power.
+   Browser games can include `https://xmangameshub.online/sdk/xman-items.js` (`XmanItems.forGame(id).redeem(code)` / `.owns(key)`). Games that share this database (e.g. Krungsri) may read `game_entitlements` directly. Items should stay cosmetic — titles, badges, skins, passes — never paid power.
 
 ### Reviews
 

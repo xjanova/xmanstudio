@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 /**
  * POST /api/gameshub/redeem {game?, code, device} — called by the games themselves
- * (browser games on xgameshub.xman4289.com/play/<id>/), so it is open to any origin,
+ * (browser games on xmangameshub.online/play/<id>/), so it is open to any origin,
  * carries no cookies, and answers in JSON with a Thai message the game can show as is.
  */
 class GameItemRedeemController extends Controller

@@ -6,6 +6,7 @@ use App\Models\GameCampaign;
 use App\Models\GameEntitlement;
 use App\Models\GamesHubAnnouncement;
 use App\Models\Review;
+use App\Support\HubOrigin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,8 @@ class GamesHubController extends Controller
     private function hubJson(array $body): JsonResponse
     {
         return response()->json($body)
-            ->header('Access-Control-Allow-Origin', config('game-support.hub_origin'))
+            ->header('Access-Control-Allow-Origin', HubOrigin::forRequest())
+            ->header('Vary', 'Origin')
             ->header('Cache-Control', 'public, max-age=60');
     }
 

@@ -42,7 +42,7 @@ class GameSupportTest extends TestCase
     {
         $this->get('/games-support')->assertOk()->assertSee('อันดับ')->assertSee('X-NOVA: BREAKER');
         $this->get('/games-support/breaker')->assertOk()->assertSee('411-148476-9')->assertSee('150,000')->assertDontSee('Private pilot');
-        $this->get('/games-support/summary.json')->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://xgameshub.xman4289.com')->assertJsonFragment(['slug' => 'breaker', 'raised' => 0]);
+        $this->get('/games-support/summary.json')->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://xmangameshub.online')->assertJsonFragment(['slug' => 'breaker', 'raised' => 0]);
     }
 
     public function test_guest_cannot_write_and_non_admin_cannot_read_slips_or_approve(): void
