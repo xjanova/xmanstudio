@@ -108,6 +108,11 @@ class DgxSparkCampaignTest extends TestCase
 
     public function test_missing_media_falls_back_and_the_video_block_is_hidden(): void
     {
+        // Point every media slot at a file that is not there (the real images ship with the page)
+        foreach (array_keys(config('campaigns.dgx_spark.media')) as $slot) {
+            config(["campaigns.dgx_spark.media.{$slot}" => "images/campaign/dgx-spark/missing-{$slot}.jpg"]);
+        }
+
         $this->get('/dgx-spark')
             ->assertOk()
             ->assertDontSee('<video', false)
@@ -116,6 +121,8 @@ class DgxSparkCampaignTest extends TestCase
 
     public function test_the_media_appear_once_their_files_are_there(): void
     {
+        // The real video lives in storage on the server; here a stand-in next to the images
+        config(['campaigns.dgx_spark.media.video' => 'images/campaign/dgx-spark/promo.mp4']);
         $dir = public_path('images/campaign/dgx-spark');
         $files = ['hero-16x9.jpg', 'square-1x1.jpg', 'story-9x16.jpg', 'promo.mp4', 'promo-poster.jpg'];
         $made = [];
@@ -141,6 +148,49 @@ class DgxSparkCampaignTest extends TestCase
         } finally {
             array_map('unlink', $made);
         }
+    }
+
+    public function test_the_page_shows_the_real_screens_the_service_promised_in_the_promo_and_the_chapters(): void
+    {
+        config(['campaigns.dgx_spark.media.video' => 'images/campaign/dgx-spark/promo.mp4']);
+        $video = public_path('images/campaign/dgx-spark/promo.mp4');
+        $made = ! is_file($video) && file_put_contents($video, 'x') !== false;
+
+        try {
+            $html = $this->get('/dgx-spark')->assertOk()->getContent();
+        } finally {
+            if ($made) {
+                unlink($video);
+            }
+        }
+
+        // Real screens (frames of the promo's recordings, shipped with the page)
+        foreach (['screen-cluadex-app.webp', 'screen-universe.webp', 'screen-continue.webp', 'screen-cowork.webp'] as $file) {
+            $this->assertStringContainsString("/images/campaign/dgx-spark/{$file}?v=", $html);
+        }
+        $this->assertStringContainsString('ต่องานเมื่อวาน', $html);
+
+        // The promo's fine print sends viewers here for the service scope and conditions (p6)
+        $this->assertStringContainsString('id="service"', $html);
+        $this->assertStringContainsString('<h3>ประกันงานติดตั้ง + ซอฟต์แวร์ 1 ปีเต็ม</h3>', $html);
+        $this->assertStringContainsString('บริการพิเศษตลอดอายุการใช้งาน', $html);
+        $this->assertStringContainsString('<h3>Hot service 24 ชม.</h3>', $html);
+        $this->assertStringContainsString('฿900', $html);
+        $this->assertStringContainsString('ปกติ ฿3,000/เดือน', $html);
+        $this->assertStringContainsString('ลด 70%', $html);
+
+        // Chapters beside the video, and the product gallery is marked as illustration
+        $this->assertStringContainsString('data-t="83"', $html);
+        $this->assertStringContainsString('ภาพประกอบเพื่อการโฆษณา', $html);
+    }
+
+    public function test_the_showcase_rows_disappear_without_their_screens(): void
+    {
+        foreach (['screen_cluadex_app', 'screen_universe', 'screen_continue', 'screen_cowork'] as $slot) {
+            config(["campaigns.dgx_spark.media.{$slot}" => "images/campaign/dgx-spark/missing-{$slot}.webp"]);
+        }
+
+        $this->get('/dgx-spark')->assertOk()->assertDontSee('id="real"', false)->assertSee('id="service"', false);
     }
 
     public function test_a_guest_is_asked_to_sign_in_and_cannot_post_an_order(): void

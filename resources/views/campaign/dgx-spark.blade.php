@@ -95,8 +95,22 @@
                         {{ $closedReason ? 'ดูสถานะการสั่งจอง' : 'สั่งจองชุดนี้' }}
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
-                    <a href="#included" class="dgx-btn dgx-btn--ghost">ดูสิ่งที่ได้รับ</a>
+                    @if($media['video'])
+                        <a href="#video" class="dgx-btn dgx-btn--ghost">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+                            ดูคลิปแนะนำ 3 นาที
+                        </a>
+                    @else
+                        <a href="#included" class="dgx-btn dgx-btn--ghost">ดูสิ่งที่ได้รับ</a>
+                    @endif
                 </div>
+
+                <ul class="dgx-hero__chips" aria-label="จุดเด่นของชุด">
+                    <li><b>128 GB</b> unified memory</li>
+                    <li><b>1 PFLOP</b> FP4</li>
+                    <li><b>4 TB</b> NVMe</li>
+                    <li><b>CluadeX + BrainX</b> ตลอดชีพ</li>
+                </ul>
             </div>
 
             {{-- The 16:9 key visual fills the hero's right half by itself; without it, the square
@@ -126,12 +140,36 @@
 
     {{-- ═══════════════════════════ VIDEO (only when the file exists) ═══════════════════════════ --}}
     @if($media['video'])
-        <section class="dgx-section dgx-video" aria-label="วิดีโอแนะนำ">
+        @php $chapters = Dgx::config('video_chapters', []); @endphp
+        <section id="video" class="dgx-section dgx-section--alt dgx-video" aria-labelledby="dgx-video-title">
+            <div class="dgx-video__glow" aria-hidden="true"></div>
             <div class="dgx-wrap">
-                <video class="dgx-video__player" controls playsinline preload="none"
-                       @if($media['poster']) poster="{{ $media['poster'] }}" @endif>
-                    <source src="{{ $media['video'] }}" type="video/mp4">
-                </video>
+                <p class="dgx-kicker">วิดีโอแนะนำ · 2:52</p>
+                <h2 id="dgx-video-title" class="dgx-h2">Nova พาชมชุดนี้ <span class="dgx-grad">ตั้งแต่ตัวเครื่องจนถึงหน้าจอจริง</span></h2>
+                <p class="dgx-lead">ตัวเครื่อง ความเร็ว ราคา แล้วไปดู CluadeX กับ BrainX ทำงานจริงบนหน้าจอ — คลิกหัวข้อด้านข้างเพื่อข้ามไปช่วงที่สนใจ</p>
+
+                <div class="dgx-video__grid">
+                    <div class="dgx-video__frame">
+                        <video id="dgx-video-player" class="dgx-video__player" controls playsinline preload="metadata"
+                               @if($media['poster']) poster="{{ $media['poster'] }}" @endif>
+                            <source src="{{ $media['video'] }}" type="video/mp4">
+                        </video>
+                    </div>
+                    @if($chapters)
+                        <div class="dgx-chapters-wrap">
+                        <ol class="dgx-chapters" aria-label="สารบัญวิดีโอ">
+                            @foreach($chapters as [$at, $label])
+                                <li>
+                                    <button type="button" class="dgx-chapters__btn" data-t="{{ $at }}">
+                                        <span class="dgx-chapters__time">{{ intdiv($at, 60) }}:{{ str_pad((string) ($at % 60), 2, '0', STR_PAD_LEFT) }}</span>
+                                        <span>{{ $label }}</span>
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ol>
+                        </div>
+                    @endif
+                </div>
             </div>
         </section>
     @endif
@@ -189,6 +227,146 @@
                         <li>มีคีย์ BrainX Cloud รายเดือนอยู่แล้ว? ระบบอัปเกรดคีย์เดิมเป็นตลอดชีพ ข้อมูลอยู่ครบ</li>
                     </ul>
                 </article>
+            </div>
+        </div>
+    </section>
+
+    {{-- ═══════════════════════════ REAL SCREENS (each row only when its frames exist) ═══════════════════════════ --}}
+    @php
+        $showcase = array_values(array_filter([
+            [
+                'id' => 'cluadex', 'accent' => 'cx', 'tag' => 'CluadeX · AI เขียนโค้ดบน Windows',
+                'title' => 'พิมพ์สั่งงานเป็นภาษาไทย แล้ว AI ลงมือให้เอง',
+                'text' => 'CluadeX เปิดโปรเจกต์ของคุณ อ่านโค้ด แก้ไฟล์ และรันคำสั่งให้เองทีละขั้น ภาษาไทยทั้งแอป ใช้โมเดลที่รันบน DGX Spark หรือใช้ร่วมกับ Claude ก็ได้',
+                'points' => [
+                    'อ่าน แก้ และสร้างไฟล์ รัน build / test ให้เอง เห็นทุกขั้นที่ AI ทำบนหน้าจอ',
+                    'คุณเลือกได้ว่าจะให้แก้ไฟล์ได้เลย หรือต้องถามก่อนทุกครั้ง',
+                    'ใช้โมเดลบน DGX Spark ผ่านเครือข่ายในออฟฟิศ หรือสลับไปใช้ Claude / OpenAI / Gemini ด้วยคีย์ของคุณ',
+                ],
+                'main' => $media['screen_cluadex_app'], 'back' => $media['screen_cluadex'],
+                'alt' => 'หน้าจอ CluadeX: พิมพ์สั่งงานภาษาไทยในโปรเจกต์เกม แล้ว AI เริ่มอ่านโค้ด',
+            ],
+            [
+                'id' => 'brainx', 'accent' => 'bx', 'tag' => 'BrainX · สมองกลางของ AI',
+                'title' => 'สมองกลางที่ Claude, Codex และ CluadeX เปิดอ่านก่อนลงมือ',
+                'text' => 'ทุกโน้ตคือดาว เส้นแสงคือความรู้ที่โยงข้ามโปรเจกต์ BrainX จำทุกโปรเจกต์ที่คุณเชื่อมเข้ามา AI ทุกตัวใช้สมองเดียวกัน และดาวจะแวบให้เห็นทุกครั้งที่ AI ใช้สมอง',
+                'points' => [
+                    'จำงานทุกโปรเจกต์ เชื่อมโยงความรู้ข้ามโปรเจกต์',
+                    'ย้อนดูได้ว่าเคยแก้อะไร ทำไม และแก้ไว้ที่ไหน',
+                    'BrainX Cloud ตลอดชีพ ให้ Claude ใช้ความรู้ของคุณได้ทุกที่ผ่าน Remote MCP',
+                ],
+                'main' => $media['screen_universe'], 'back' => $media['screen_dashboard'],
+                'alt' => 'หน้าจอ BrainX: สมองแบบจักรวาล 3 มิติ แต่ละจุดคือโน้ต',
+            ],
+            [
+                'id' => 'continue', 'accent' => 'gold', 'tag' => 'BrainX × CluadeX',
+                'title' => 'เปิดแชทใหม่ ไม่ต้องเล่าใหม่ — พิมพ์แค่ "ต่องานเมื่อวาน"',
+                'text' => 'AI ถามสมองแล้วสรุปงานที่ค้างให้ เคยแก้แล้วก็หยิบโน้ตเดิมมาใช้ บอกชื่อโน้ตให้ตรวจย้อนได้ และถ้ายังไม่แน่ใจว่างานไหน AI จะถามก่อน แทนที่จะเดาแล้วทำผิดชิ้น',
+                'points' => [
+                    'ไม่ต้องเล่า context ใหม่ทุกครั้งที่เปิดแชท',
+                    'อ้างชื่อโน้ตจริง ตรวจย้อนได้ทุกคำตอบ',
+                    'ช่วยลดงานซ้ำ และไม่พังจุดเดิมที่เคยแก้',
+                ],
+                'main' => $media['screen_continue'], 'back' => null,
+                'alt' => 'หน้าจอ CluadeX ตอบ "ต่องานเมื่อวาน" โดยค้นจาก BrainX (เบลอชื่องานลูกค้า)',
+                'fine' => 'ภาพจริงจากการใช้งาน เบลอชื่องานลูกค้า · AI รู้เฉพาะสิ่งที่บันทึกในสมองแล้ว',
+            ],
+            [
+                'id' => 'cowork', 'accent' => 'violet', 'tag' => 'Cowork Room ใน BrainX',
+                'title' => 'ห้อง Cowork: AI หลายตัวทำงานร่วมกันต่อหน้าคุณ',
+                'text' => 'Claude, Codex และ CluadeX มีโต๊ะของตัวเอง คุยกันให้เห็น บอร์ดงานบอกว่าใครทำอะไร และประวัติงานย้อนดูได้แยกตามโปรเจกต์',
+                'points' => [
+                    'ทีม XMAN Studio ติดตั้ง BrainX + ห้อง Cowork บนพีซี Windows ของคุณ',
+                    'เห็นว่า AI ตัวไหนกำลังทำงานอะไรอยู่ ไม่ต้องสลับหน้าต่างไล่ดู',
+                    'ใช้บัญชีหรือแพ็กเกจ AI ของคุณเอง',
+                ],
+                'main' => $media['screen_cowork'], 'back' => $media['screen_cowork_panel'],
+                'alt' => 'หน้าจอห้อง Cowork ใน BrainX: AI แต่ละตัวมีโต๊ะของตัวเอง',
+                'fine' => 'AI แต่ละตัวใช้บัญชีหรือแพ็กเกจของคุณเอง (ค่าบริการ AI ไม่รวมในชุด)',
+            ],
+        ], fn ($row) => $row['main']));
+    @endphp
+    @if($showcase)
+        <section id="real" class="dgx-section dgx-section--alt dgx-real" aria-labelledby="dgx-real-title">
+            <div class="dgx-wrap">
+                <p class="dgx-kicker">ภาพจากหน้าจอจริง</p>
+                <h2 id="dgx-real-title" class="dgx-h2">ซอฟต์แวร์ 2 ตัวในชุด <span class="dgx-grad">ทำงานจริงหน้าตาแบบนี้</span></h2>
+                <p class="dgx-lead">ไม่ใช่ภาพจำลอง — ทุกภาพตัดจากการอัดหน้าจอ CluadeX และ BrainX ตอนใช้งานจริง</p>
+
+                @foreach($showcase as $i => $row)
+                    <article id="real-{{ $row['id'] }}" class="dgx-feature dgx-feature--{{ $row['accent'] }} {{ $i % 2 ? 'is-flipped' : '' }}">
+                        <div class="dgx-feature__copy">
+                            <p class="dgx-feature__tag">{{ $row['tag'] }}</p>
+                            <h3 class="dgx-feature__title">{{ $row['title'] }}</h3>
+                            <p class="dgx-feature__text">{{ $row['text'] }}</p>
+                            <ul class="dgx-list">
+                                @foreach($row['points'] as $point)
+                                    <li>{{ $point }}</li>
+                                @endforeach
+                            </ul>
+                            @if(! empty($row['fine']))
+                                <p class="dgx-note">*{{ $row['fine'] }}</p>
+                            @endif
+                        </div>
+                        <figure class="dgx-shot {{ $row['back'] ? 'has-back' : '' }}">
+                            @if($row['back'])
+                                <img src="{{ $row['back'] }}" alt="" class="dgx-shot__back" width="1600" height="900" loading="lazy" decoding="async">
+                            @endif
+                            <img src="{{ $row['main'] }}" alt="{{ $row['alt'] }}" class="dgx-shot__main" width="1600" height="900" loading="lazy" decoding="async">
+                        </figure>
+                    </article>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    {{-- ═══════════════════════════ AFTER-SALES SERVICE (the promo's fine print points here) ═══════════════════════════ --}}
+    @php
+        $hot = Dgx::config('hot_service', []);
+        $hotPrice = (int) ($hot['price'] ?? 0);
+        $hotRegular = (int) ($hot['regular'] ?? 0);
+        $hotOff = $hotRegular > 0 && $hotPrice > 0 ? (int) round((1 - $hotPrice / $hotRegular) * 100) : 0;
+    @endphp
+    <section id="service" class="dgx-section dgx-service" aria-labelledby="dgx-service-title">
+        <div class="dgx-wrap">
+            <p class="dgx-kicker">ซื้อผ่าน XMAN Studio</p>
+            <h2 id="dgx-service-title" class="dgx-h2">ซื้อชุดนี้ ไม่ปล่อยให้งมเอง</h2>
+            <p class="dgx-lead">รายการบริการ ขอบเขต ระยะเวลา และเงื่อนไข ของผู้ซื้อชุด DGX Spark ทุกชุด</p>
+
+            <div class="dgx-svc">
+                <article class="dgx-svc__card">
+                    <span class="dgx-svc__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></span>
+                    <h3>ติดตั้งและตั้งค่าให้</h3>
+                    <p>ทีม XMAN Studio ติดตั้ง BrainX + ห้อง Cowork บนพีซี Windows ของคุณ พร้อมตั้งค่า CluadeX ให้เริ่มใช้งานได้</p>
+                    <p class="dgx-svc__meta">ครั้งเดียวหลังรับเครื่อง · นัดวันเวลากับทีมเรา</p>
+                </article>
+                <article class="dgx-svc__card">
+                    <span class="dgx-svc__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+                    <h3>ประกันงานติดตั้ง + ซอฟต์แวร์ 1 ปีเต็ม</h3>
+                    <p>ภายใน 1 ปีนับจากวันติดตั้ง ถ้าระบบที่เราติดตั้ง หรือ CluadeX / BrainX ใช้งานไม่ได้ตามที่ควร เราแก้ให้โดยไม่มีค่าใช้จ่าย</p>
+                    <p class="dgx-svc__meta">ประกันตัวเครื่องเป็นไปตามเงื่อนไขผู้จัดจำหน่าย (1 ปี ศูนย์ไทย)</p>
+                </article>
+                <article class="dgx-svc__card">
+                    <span class="dgx-svc__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-9A5.3 5.3 0 0 1 12 6a5.3 5.3 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z"/></svg></span>
+                    <h3>บริการพิเศษตลอดอายุการใช้งาน</h3>
+                    <p>อัปเดต CluadeX และ BrainX เวอร์ชันใหม่ตลอดอายุ License และสอบถามการใช้งานกับทีมเราได้ตลอดอายุการใช้งานของชุด</p>
+                    <p class="dgx-svc__meta">ผ่าน LINE OA หรืออีเมล ในเวลาทำการ</p>
+                </article>
+                @if($hotPrice)
+                    <article class="dgx-svc__card dgx-svc__card--hot">
+                        <span class="dgx-svc__badge">สิทธิ์แลกซื้อ{{ $hotOff ? ' · ลด ' . $hotOff . '%' : '' }}</span>
+                        <span class="dgx-svc__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span>
+                        <h3>Hot service 24 ชม.</h3>
+                        <p>แจ้งปัญหาได้ตลอด 24 ชั่วโมง เฉพาะผู้ซื้อชุดนี้</p>
+                        <p class="dgx-svc__price">
+                            <b>{{ Dgx::baht($hotPrice) }}</b><span>/เดือน</span>
+                            @if($hotRegular)
+                                <s>ปกติ {{ Dgx::baht($hotRegular) }}/เดือน</s>
+                            @endif
+                        </p>
+                        <p class="dgx-svc__meta">ไม่บังคับ · สมัครได้หลังรับเครื่อง ผ่าน<a href="{{ route('contact.show') }}">หน้าติดต่อเรา</a></p>
+                    </article>
+                @endif
             </div>
         </div>
     </section>
@@ -297,6 +475,26 @@
                 <div><dt>การรับประกัน</dt><dd>1 ปี ศูนย์ไทย ผ่านผู้จัดจำหน่ายในประเทศไทย</dd></div>
             </dl>
             <p class="dgx-note">สเปกตามข้อมูลผู้ผลิตและผู้จัดจำหน่าย อาจเปลี่ยนแปลงตามล็อตสินค้า</p>
+
+            @php
+                $gallery = array_values(array_filter([
+                    ['src' => $media['gallery_side'], 'alt' => 'ด้านข้างของเครื่อง ขนาดวางบนโต๊ะทำงาน', 'cap' => 'ขนาดวางบนโต๊ะ'],
+                    ['src' => $media['gallery_ports'], 'alt' => 'พอร์ตด้านหลัง: USB-C, HDMI, 10 GbE และ QSFP', 'cap' => 'พอร์ตด้านหลัง'],
+                    ['src' => $media['gallery_rear'], 'alt' => 'มุมด้านหลังของเครื่องบนโต๊ะ', 'cap' => 'มุมด้านหลัง'],
+                    ['src' => $media['gallery_office'], 'alt' => 'เครื่องวางในออฟฟิศคู่กับพีซีที่รัน CluadeX', 'cap' => 'อยู่ในออฟฟิศคุณ'],
+                ], fn ($g) => $g['src']));
+            @endphp
+            @if($gallery)
+                <div class="dgx-gallery">
+                    @foreach($gallery as $g)
+                        <figure>
+                            <img src="{{ $g['src'] }}" alt="{{ $g['alt'] }}" width="800" height="1200" loading="lazy" decoding="async">
+                            <figcaption>{{ $g['cap'] }}</figcaption>
+                        </figure>
+                    @endforeach
+                </div>
+                <p class="dgx-note">ภาพประกอบเพื่อการโฆษณา สีและรายละเอียดของเครื่องจริงอาจต่างจากภาพ</p>
+            @endif
         </div>
     </section>
 
@@ -556,7 +754,15 @@
 
             <details>
                 <summary>การรับประกันเป็นอย่างไร</summary>
-                <p>ตัวเครื่องรับประกัน 1 ปีโดยศูนย์ในประเทศไทยผ่านผู้จัดจำหน่าย นับจากวันที่ซื้อ หากเครื่องมีปัญหา แจ้งเราพร้อมเลขคำสั่งซื้อ เราช่วยประสานการเคลมให้ ส่วน License ของ CluadeX และ BrainX Cloud เป็นแบบตลอดชีพ ไม่มีวันหมดอายุ</p>
+                <p>มี 2 ส่วน: ตัวเครื่องรับประกัน 1 ปีโดยศูนย์ในประเทศไทยผ่านผู้จัดจำหน่าย นับจากวันที่ซื้อ หากเครื่องมีปัญหา แจ้งเราพร้อมเลขคำสั่งซื้อ เราช่วยประสานการเคลมให้ · งานติดตั้งและซอฟต์แวร์ (CluadeX, BrainX, ห้อง Cowork ที่เราติดตั้ง) XMAN Studio รับประกันเอง 1 ปีเต็มนับจากวันติดตั้ง ใช้งานไม่ได้ตามที่ควรเราแก้ให้โดยไม่มีค่าใช้จ่าย ส่วน License ของ CluadeX และ BrainX Cloud เป็นแบบตลอดชีพ ไม่มีวันหมดอายุ</p>
+            </details>
+            <details>
+                <summary>บริการหลังการขายมีอะไรบ้าง</summary>
+                <p>ทุกชุดได้: ติดตั้ง BrainX + ห้อง Cowork และตั้งค่า CluadeX บนพีซี Windows ของคุณ (ครั้งเดียวหลังรับเครื่อง นัดวันเวลากับทีมเรา) · ประกันงานติดตั้งและซอฟต์แวร์ 1 ปีเต็ม · อัปเดตซอฟต์แวร์และสอบถามการใช้งานได้ตลอดอายุการใช้งานของชุด ผ่าน LINE OA หรืออีเมลในเวลาทำการ · และสิทธิ์แลกซื้อ Hot service แจ้งปัญหาได้ 24 ชั่วโมง ดู<a href="#service">รายละเอียดบริการ</a></p>
+            </details>
+            <details>
+                <summary>Hot service 24 ชม. คืออะไร ต้องซื้อไหม</summary>
+                <p>เป็นบริการเสริมที่ไม่บังคับ ให้แจ้งปัญหาได้ตลอด 24 ชั่วโมง ผู้ซื้อชุดนี้แลกซื้อได้ในราคาพิเศษ{{ $hotPrice ? ' ' . Dgx::baht($hotPrice) . '/เดือน' : '' }}{{ $hotRegular ? ' (ปกติ ' . Dgx::baht($hotRegular) . '/เดือน)' : '' }} สมัครได้หลังรับเครื่องผ่าน<a href="{{ route('contact.show') }}">หน้าติดต่อเรา</a> ไม่สมัครก็ยังได้บริการอื่นในชุดครบ</p>
             </details>
             <details>
                 <summary>ได้รับเครื่องเมื่อไร</summary>
@@ -593,10 +799,31 @@
         </div>
     </section>
 
+    {{-- ═══════════════════════════ CLOSING (Nova, as at the end of the promo) ═══════════════════════════ --}}
+    <section class="dgx-closing {{ $media['nova'] ? 'has-nova' : '' }}" aria-labelledby="dgx-closing-title"
+             @if($media['nova']) style="--dgx-nova: url('{{ $media['nova'] }}')" @endif>
+        <div class="dgx-closing__bg" aria-hidden="true"></div>
+        <div class="dgx-wrap dgx-closing__grid">
+            <div class="dgx-closing__copy">
+                <p class="dgx-eyebrow"><span class="dgx-dot" aria-hidden="true"></span>เหลือ {{ $remaining }} จาก {{ $cap }} ชุด</p>
+                <h2 id="dgx-closing-title" class="dgx-closing__title">ไอเทมแรร์แบบนี้ <span class="dgx-grad">ช้าไปอาจไม่ทันนะคะ</span></h2>
+                <p class="dgx-closing__quote">“สั่งจองไว้เลย ก่อน Nova แอบเก็บไว้เองสักเครื่อง ขอให้บิลด์ผ่านทุกรอบนะคะ”</p>
+                <p class="dgx-closing__price">{{ $priceText }} <small>{{ $vatIncluded ? 'รวม VAT แล้ว' : '+ VAT 7%' }} · DGX Spark + CluadeX + BrainX Cloud ตลอดชีพ</small></p>
+                <div class="dgx-hero__cta">
+                    <a href="#order" class="dgx-btn dgx-btn--primary">
+                        {{ $closedReason ? 'ดูสถานะการสั่งจอง' : 'สั่งจองชุดนี้' }}
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                    <a href="{{ route('contact.show') }}" class="dgx-btn dgx-btn--ghost">สอบถามก่อนซื้อ</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer class="dgx-legal">
         <div class="dgx-wrap">
             <p>NVIDIA, DGX และ DGX Spark เป็นเครื่องหมายการค้าของ NVIDIA Corporation · XMAN Studio ไม่ได้เป็นตัวแทนหรือพันธมิตรของ NVIDIA — เครื่องในชุดนี้จัดหาจากผู้จัดจำหน่ายในประเทศไทยพร้อมประกันศูนย์</p>
-            <p>ชื่อผลิตภัณฑ์และเครื่องหมายการค้าอื่นเป็นของเจ้าของแต่ละราย · ผลทดสอบความเร็วเป็นข้อมูลจากแหล่งอ้างอิงภายนอก</p>
+            <p>ชื่อผลิตภัณฑ์และเครื่องหมายการค้าอื่นเป็นของเจ้าของแต่ละราย · ผลทดสอบความเร็วเป็นข้อมูลจากแหล่งอ้างอิงภายนอก · ภาพตัวเครื่องเป็นภาพประกอบ ภาพหน้าจอ CluadeX และ BrainX เป็นภาพจริง</p>
         </div>
     </footer>
 </div>
@@ -700,8 +927,83 @@
     .dgx-meter__bar .is-sold { background: var(--dgx-gold); }
     .dgx-meter__bar .is-reserved { background: repeating-linear-gradient(45deg, rgba(245,200,107,.75) 0 4px, rgba(245,200,107,.35) 4px 8px); }
 
-    /* video */
-    .dgx-video__player { display: block; width: 100%; max-height: 80vh; border-radius: var(--dgx-radius); border: 1px solid var(--dgx-line); background: #000; }
+    /* hero chips */
+    .dgx-hero__chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
+    .dgx-hero__chips li { padding: 6px 12px; border-radius: 999px; background: rgba(5, 7, 12, .55); border: 1px solid var(--dgx-line); font-size: 13px; color: var(--dgx-fg-2); backdrop-filter: blur(6px); }
+    .dgx-hero__chips b { color: #fff; }
+
+    /* video + chapters */
+    .dgx-video { position: relative; overflow: hidden; }
+    .dgx-video__glow { position: absolute; inset: -10% -10% auto; height: 80%; pointer-events: none;
+        background: radial-gradient(45% 60% at 25% 45%, rgba(139, 92, 246, .22), transparent 70%), radial-gradient(40% 55% at 85% 30%, rgba(34, 211, 238, .14), transparent 70%); }
+    .dgx-video .dgx-wrap { position: relative; }
+    .dgx-video__grid { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: stretch; }
+    .dgx-video__frame { padding: 1px; border-radius: var(--dgx-radius); background: linear-gradient(135deg, rgba(34, 211, 238, .7), rgba(139, 92, 246, .55) 50%, rgba(232, 121, 249, .6)); box-shadow: 0 40px 100px -40px rgba(139, 92, 246, .75); }
+    .dgx-video__player { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: calc(var(--dgx-radius) - 1px); background: #000; }
+    .dgx-chapters-wrap { position: relative; min-height: 240px; }
+    .dgx-chapters { position: absolute; inset: 0; margin: 0; padding: 8px; list-style: none; overflow-y: auto; border-radius: var(--dgx-radius); background: rgba(5, 7, 12, .6); border: 1px solid var(--dgx-line); scrollbar-width: thin; }
+    .dgx-chapters__btn { display: flex; gap: 12px; width: 100%; padding: 9px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--dgx-fg-2); font: inherit; font-size: 14.5px; line-height: 1.45; text-align: left; cursor: pointer; transition: background .15s ease, color .15s ease; }
+    .dgx-chapters__btn:hover, .dgx-chapters__btn:focus-visible { background: rgba(255, 255, 255, .06); color: #fff; outline: none; }
+    .dgx-chapters__btn.is-active { background: rgba(34, 211, 238, .1); color: #fff; box-shadow: inset 2px 0 0 var(--dgx-cyan); }
+    .dgx-chapters__time { flex: none; min-width: 2.9em; font-variant-numeric: tabular-nums; color: var(--dgx-cyan); font-weight: 700; }
+
+    /* real screens */
+    .dgx-feature { --c: var(--dgx-cyan); --rgb: 34, 211, 238; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(28px, 5vw, 64px); align-items: center; margin-top: clamp(52px, 8vw, 96px); }
+    .dgx-feature--bx { --c: #a78bfa; --rgb: 139, 92, 246; }
+    .dgx-feature--gold { --c: var(--dgx-gold); --rgb: 245, 200, 107; }
+    .dgx-feature--violet { --c: #f0abfc; --rgb: 232, 121, 249; }
+    .dgx-feature.is-flipped { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); }
+    .dgx-feature.is-flipped .dgx-feature__copy { order: 2; }
+    .dgx-feature__tag { display: inline-block; margin: 0 0 14px; padding: 4px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--c); background: rgba(var(--rgb), .1); border: 1px solid rgba(var(--rgb), .35); }
+    .dgx-feature__title { margin: 0 0 12px; font-size: clamp(23px, 2.7vw, 32px); line-height: 1.3; font-weight: 800; color: #fff; }
+    .dgx-feature__text { margin: 0 0 18px; color: var(--dgx-fg-2); font-size: 16px; }
+    .dgx-shot { position: relative; margin: 0; }
+    .dgx-shot::before { content: ""; position: absolute; inset: 8% 6%; z-index: 0; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--rgb), .45), transparent); filter: blur(34px); }
+    .dgx-shot img { display: block; width: 100%; height: auto; border-radius: 14px; }
+    .dgx-shot__main { position: relative; z-index: 2; border: 1px solid rgba(var(--rgb), .35); box-shadow: 0 40px 90px -36px rgba(0, 0, 0, .9), 0 0 0 1px rgba(255, 255, 255, .04); }
+    .dgx-shot.has-back { padding: 11% 0 0 0; }
+    .dgx-shot.has-back .dgx-shot__main { width: 90%; }
+    .dgx-shot__back { position: absolute; z-index: 1; top: 0; right: 0; width: 56% !important; opacity: .55; border: 1px solid var(--dgx-line); transform: rotate(1.5deg); }
+    .dgx-feature.is-flipped .dgx-shot.has-back .dgx-shot__main { margin-left: auto; }
+    .dgx-feature.is-flipped .dgx-shot__back { right: auto; left: 0; transform: rotate(-1.5deg); }
+
+    /* after-sales service */
+    .dgx-svc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 8px; }
+    .dgx-svc__card { position: relative; display: flex; flex-direction: column; padding: 24px 22px 20px; border-radius: var(--dgx-radius); background: var(--dgx-panel); border: 1px solid var(--dgx-line); }
+    .dgx-svc__card h3 { margin: 14px 0 8px; font-size: 18px; line-height: 1.35; color: #fff; }
+    .dgx-svc__card p { margin: 0 0 12px; color: var(--dgx-fg-2); font-size: 14.5px; }
+    .dgx-svc__card p.dgx-svc__meta { margin: auto 0 0; padding-top: 12px; border-top: 1px dashed var(--dgx-line); font-size: 13px; color: var(--dgx-fg-3); }
+    .dgx-svc__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, rgba(34, 211, 238, .18), rgba(139, 92, 246, .2)); color: #a5f3fc; }
+    .dgx-svc__icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .dgx-svc__card--hot { border-color: rgba(245, 200, 107, .5); background: linear-gradient(180deg, rgba(245, 200, 107, .11), rgba(245, 200, 107, .02)); box-shadow: 0 30px 70px -40px rgba(245, 200, 107, .65); }
+    .dgx-svc__card--hot .dgx-svc__icon { background: rgba(245, 200, 107, .16); color: var(--dgx-gold); }
+    .dgx-svc__badge { position: absolute; top: -12px; right: 16px; padding: 4px 12px; border-radius: 999px; background: linear-gradient(95deg, #f5c86b, #fb7185); color: #1a0f05; font-size: 12.5px; font-weight: 800; }
+    .dgx-svc__card p.dgx-svc__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 0 0 12px; }
+    .dgx-svc__price b { font-size: 32px; line-height: 1.1; color: var(--dgx-gold); }
+    .dgx-svc__price span { color: var(--dgx-fg-2); font-size: 14px; }
+    .dgx-svc__price s { flex-basis: 100%; color: var(--dgx-fg-3); font-size: 13.5px; }
+
+    /* product gallery */
+    .dgx-gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 32px; }
+    .dgx-gallery figure { position: relative; margin: 0; overflow: hidden; border-radius: 16px; border: 1px solid var(--dgx-line); background: #000; }
+    .dgx-gallery img { display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; transition: transform .6s ease; }
+    .dgx-gallery figure:hover img { transform: scale(1.04); }
+    .dgx-gallery figcaption { position: absolute; inset: auto 0 0; padding: 32px 14px 12px; background: linear-gradient(transparent, rgba(5, 7, 12, .88)); font-size: 13.5px; font-weight: 700; color: #fff; }
+
+    /* closing with Nova */
+    .dgx-closing { position: relative; isolation: isolate; overflow: hidden; padding: clamp(80px, 11vw, 150px) 0; border-top: 1px solid var(--dgx-line); }
+    .dgx-closing__bg { position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 80% at 80% 50%, rgba(139, 92, 246, .35), transparent 70%), linear-gradient(180deg, #070a14, #05070c); }
+    .dgx-closing.has-nova .dgx-closing__bg { background: linear-gradient(90deg, rgba(5, 7, 12, .97) 0%, rgba(5, 7, 12, .86) 38%, rgba(5, 7, 12, .1) 72%), var(--dgx-nova) 85% center / cover no-repeat, #05070c; }
+    .dgx-closing__copy { max-width: 600px; }
+    .dgx-closing__title { margin: 0 0 14px; font-size: clamp(30px, 4.6vw, 54px); line-height: 1.18; font-weight: 800; letter-spacing: -.01em; color: #fff; }
+    .dgx-closing__title .dgx-grad { display: block; }
+    .dgx-closing__quote { margin: 0 0 20px; max-width: 46ch; font-size: 17px; color: #e9d5ff; }
+    .dgx-closing__price { margin: 0; font-size: clamp(30px, 3.6vw, 40px); font-weight: 800; line-height: 1.15; color: var(--dgx-gold); }
+    .dgx-closing__price small { display: block; margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--dgx-fg-2); }
+
+    /* scroll reveal (added by the script; nothing is hidden without it) */
+    .dgx-reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s ease; }
+    .dgx-reveal.is-in { opacity: 1; transform: none; }
 
     /* included cards */
     .dgx-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
@@ -836,6 +1138,12 @@
         .dgx-cards, .dgx-why { grid-template-columns: minmax(0, 1fr); }
         .dgx-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .dgx-spec { grid-template-columns: minmax(0, 1fr); }
+        .dgx-video__grid { grid-template-columns: minmax(0, 1fr); }
+        .dgx-chapters-wrap { min-height: 0; }
+        .dgx-chapters { position: static; max-height: 300px; }
+        .dgx-feature, .dgx-feature.is-flipped { grid-template-columns: minmax(0, 1fr); }
+        .dgx-feature.is-flipped .dgx-feature__copy { order: 0; }
+        .dgx-svc, .dgx-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 640px) {
         .dgx-wrap { padding: 0 16px; }
@@ -849,9 +1157,44 @@
         .dgx-spec > div { grid-template-columns: 7.5em 1fr; }
         .dgx-hero__cta .dgx-btn { flex: 1 1 100%; }
         .dgx-cells { gap: 4px; }
+        .dgx-svc { grid-template-columns: minmax(0, 1fr); }
+        .dgx-gallery { gap: 10px; }
+        .dgx-closing { padding-top: 78vw; }
+        .dgx-closing.has-nova .dgx-closing__bg { background: linear-gradient(180deg, rgba(5, 7, 12, 0) 0%, rgba(5, 7, 12, .7) 40%, #05070c 58%), var(--dgx-nova) 78% top / auto 62% no-repeat, #05070c; }
     }
     @media (prefers-reduced-motion: reduce) {
-        .dgx-btn, .dgx-faq summary::after { transition: none; }
+        .dgx-btn, .dgx-faq summary::after, .dgx-gallery img, .dgx-chapters__btn { transition: none; }
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    (() => {
+        // Chapters: jump the promo to a chapter and mark the one playing
+        const video = document.getElementById('dgx-video-player');
+        const buttons = [...document.querySelectorAll('.dgx-chapters__btn')];
+        if (video && buttons.length) {
+            buttons.forEach((b) => b.addEventListener('click', () => {
+                video.currentTime = Number(b.dataset.t);
+                video.play().catch(() => {});
+            }));
+            video.addEventListener('timeupdate', () => {
+                let current = null;
+                for (const b of buttons) if (video.currentTime + 0.25 >= Number(b.dataset.t)) current = b;
+                buttons.forEach((b) => b.classList.toggle('is-active', b === current));
+            });
+        }
+
+        // Fade the showcase rows, service cards and gallery in as they scroll into view
+        if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+            if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+        }), { rootMargin: '0px 0px -8% 0px' });
+        document.querySelectorAll('.dgx-feature, .dgx-svc__card, .dgx-gallery figure').forEach((el) => {
+            el.classList.add('dgx-reveal');
+            io.observe(el);
+        });
+    })();
+</script>
 @endpush

@@ -51,13 +51,10 @@ class DgxSparkCampaignController extends Controller
             'paymentMethods' => DgxSparkCampaign::paymentMethods(),
             'openOrder' => $user ? $this->orders->openOrderFor($user) : null,
             'user' => $user,
-            'media' => [
-                'hero' => DgxSparkCampaign::mediaUrl('hero'),
-                'square' => DgxSparkCampaign::mediaUrl('square'),
-                'story' => DgxSparkCampaign::mediaUrl('story'),
-                'video' => DgxSparkCampaign::mediaUrl('video'),
-                'poster' => DgxSparkCampaign::mediaUrl('poster'),
-            ],
+            // Every configured slot: its URL when the file is there, null otherwise
+            'media' => collect(array_keys(DgxSparkCampaign::config('media', [])))
+                ->mapWithKeys(fn (string $slot) => [$slot => DgxSparkCampaign::mediaUrl($slot)])
+                ->all(),
             'cluadexLifetimePrice' => LicensePlans::price('cluadex-ai-coding-assistant', 'lifetime'),
             'brainxMonthlyPrice' => LicensePlans::price('brainx', 'monthly'),
         ]);

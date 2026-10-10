@@ -66,13 +66,52 @@ return [
         'payment_methods' => ['bank_transfer', 'promptpay'],
 
         // Media produced separately. Paths are under the web root (public_html/); a missing file
-        // falls back to a CSS gradient (images) or hides the block (video).
+        // falls back to a CSS gradient (images) or hides the block (video / showcase screens).
+        // The video is too big for git: it is uploaded to storage/app/public/videos/dgx-spark/ on the
+        // server (served through the public storage link, like the WinXTools intro).
+        // screen_* are frames of the promo's real screen recordings, client names already blurred.
         'media' => [
             'hero' => 'images/campaign/dgx-spark/hero-16x9.jpg',
             'square' => 'images/campaign/dgx-spark/square-1x1.jpg',
             'story' => 'images/campaign/dgx-spark/story-9x16.jpg',
-            'video' => 'images/campaign/dgx-spark/promo.mp4',
+            'video' => 'storage/videos/dgx-spark/promo-1080p.mp4',
             'poster' => 'images/campaign/dgx-spark/promo-poster.jpg',
+            'screen_cluadex' => 'images/campaign/dgx-spark/screen-cluadex.webp',
+            'screen_cluadex_app' => 'images/campaign/dgx-spark/screen-cluadex-app.webp',
+            'screen_universe' => 'images/campaign/dgx-spark/screen-universe.webp',
+            'screen_dashboard' => 'images/campaign/dgx-spark/screen-dashboard.webp',
+            'screen_continue' => 'images/campaign/dgx-spark/screen-continue.webp',
+            'screen_cowork' => 'images/campaign/dgx-spark/screen-cowork.webp',
+            'screen_cowork_panel' => 'images/campaign/dgx-spark/screen-cowork-panel.webp',
+            'gallery_side' => 'images/campaign/dgx-spark/gallery-side.webp',
+            'gallery_rear' => 'images/campaign/dgx-spark/gallery-rear.webp',
+            'gallery_ports' => 'images/campaign/dgx-spark/gallery-ports.webp',
+            'gallery_office' => 'images/campaign/dgx-spark/gallery-office.webp',
+            'nova' => 'images/campaign/dgx-spark/nova-closing.webp',
+        ],
+
+        // The promo video's chapters (seconds into promo-1080p.mp4) for the chapter list beside it.
+        'video_chapters' => [
+            [0, 'Nova แนะนำชุด DGX Spark'],
+            [9, 'ซูเปอร์คอมพิวเตอร์ขนาดวางบนโต๊ะ'],
+            [34, 'รันโมเดลระดับ 120B ในเครื่องเอง'],
+            [53, 'พอร์ตครบ ต่อหลายเครื่องได้'],
+            [64, 'ในชุดได้อะไร ราคาเท่าไร'],
+            [76, 'AI ลืมงานเมื่อวาน? ทำงานซ้ำ?'],
+            [83, 'CluadeX — สั่งงานภาษาไทย AI ลงมือเอง'],
+            [95, 'BrainX — สมองกลางของ AI'],
+            [107, '"ต่องานเมื่อวาน" ไม่ต้องเล่าใหม่'],
+            [118, 'ห้อง Cowork — AI ทำงานเป็นทีม'],
+            [139, 'บริการหลังการขาย'],
+            [154, 'สั่งซื้อที่ไหน'],
+            [160, 'Nova ฝากไว้ก่อนจาก'],
+        ],
+
+        // After-sales service promised in the promo (p6), spelled out on the page — the video's fine print
+        // sends viewers here for the scope and conditions.
+        'hot_service' => [
+            'price' => 900,       // THB per month, for buyers of this bundle
+            'regular' => 3000,    // THB per month, the normal rate
         ],
 
         // Measured throughput published by others — shown as "ผลทดสอบจากแหล่งอ้างอิง", never as
