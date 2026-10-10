@@ -77,10 +77,11 @@ class ReleaseDownloadStreamer
             return response('', 200, $this->headers($filename, $version->file_size));
         }
 
+        $context = ['product_id' => $version->product_id, 'version' => $version->version];
         $slot = $this->takeSlot();
 
         try {
-            $upstream = $this->open($sources, $version);
+            $upstream = $this->open($sources, $context);
         } catch (\Throwable $e) {
             $slot?->release();
 
@@ -103,7 +104,63 @@ class ReleaseDownloadStreamer
         $body = $upstream->toPsrResponse()->getBody();
 
         return new StreamedResponse(
-            fn () => $this->pipe($body, $slot, $length, $version),
+            fn () => $this->pipe($body, $slot, $length, $context),
+            200,
+            $this->headers($filename, $length),
+        );
+    }
+
+    /**
+     * Stream one file of a GitHub release that is not a ProductVersion — the BrainX app's Velopack
+     * update packages, which the app asks for by the names in its own feed (BrainXUpdateFeed).
+     *
+     * Same rules as respond(): the bytes pass through this server, never a redirect, nothing of
+     * GitHub's reaches the response, and the download takes a place in the same site-wide pool.
+     *
+     * @param  string  $url  https://github.com/{owner}/{repo}/releases/download/{tag}/{file} — nothing else is fetched
+     * @param  ?int  $expectedSize  what the caller was told the file weighs; the HEAD answer (GitHub is not asked)
+     * @param  array<string, mixed>  $context  what the logs say the file is
+     *
+     * @throws DownloadUnavailableException not a release file / cannot be fetched / every place taken
+     */
+    public function respondWithReleaseFile(Request $request, string $url, string $filename, ?int $expectedSize, array $context = []): Response
+    {
+        if (! $this->isReleaseFileLink($url) || str_contains($url, '/releases/latest/')) {
+            throw DownloadUnavailableException::missing();
+        }
+
+        if ($request->isMethod('HEAD')) {
+            return response('', 200, $this->headers($filename, $expectedSize));
+        }
+
+        $slot = $this->takeSlot();
+
+        try {
+            $upstream = $this->open([['url' => $url, 'token' => null, 'via' => 'release-link']], $context);
+        } catch (\Throwable $e) {
+            $slot?->release();
+
+            throw $e;
+        }
+
+        $length = $this->contentLength($upstream);
+
+        if ($length !== null && $expectedSize && $length !== $expectedSize) {
+            // The real size goes out: a client that checks the file (Velopack checks SHA1/SHA256) refuses
+            // a wrong one either way, and a Content-Length that lies would cut it short or run over.
+            Log::warning('download: the release file is not the size it was announced at', $context + [
+                'upstream' => $length,
+                'announced' => $expectedSize,
+            ]);
+        }
+
+        // GitHub always says how big a release file is; if it ever did not, the size the caller was
+        // told is promised instead, and pipe() holds the stream to it.
+        $length ??= $expectedSize;
+        $body = $upstream->toPsrResponse()->getBody();
+
+        return new StreamedResponse(
+            fn () => $this->pipe($body, $slot, $length, $context),
             200,
             $this->headers($filename, $length),
         );
@@ -213,13 +270,14 @@ class ReleaseDownloadStreamer
      * เปิดไฟล์จากที่แรกที่ใช้ได้ — ได้สถานะและ header แล้ว แต่ยังไม่ได้อ่านเนื้อไฟล์
      *
      * @param  list<array{url: string, token: ?string, via: string}>  $sources
+     * @param  array<string, mixed>  $about  what the logs say the file is
      *
      * @throws DownloadUnavailableException ทุกทางล้มเหลว
      */
-    private function open(array $sources, ProductVersion $version): ClientResponse
+    private function open(array $sources, array $about): ClientResponse
     {
         foreach ($sources as $source) {
-            $context = ['product_id' => $version->product_id, 'version' => $version->version, 'via' => $source['via']];
+            $context = $about + ['via' => $source['via']];
 
             try {
                 $response = $this->request($source['url'], $source['token']);
@@ -295,7 +353,7 @@ class ReleaseDownloadStreamer
     /**
      * ส่งเนื้อไฟล์ต่อให้ลูกค้าทีละก้อน — รันใน callback ของ StreamedResponse หลังส่ง header ไปแล้ว
      */
-    private function pipe(StreamInterface $body, ?Lock $slot, ?int $length, ProductVersion $version): void
+    private function pipe(StreamInterface $body, ?Lock $slot, ?int $length, array $context): void
     {
         // ลูกค้าปิดหน้าต่างกลางทาง: ให้ลูปรู้ตัวแล้วเลิกเอง จะได้ปิดต้นทางและคืนช่อง (PHP ตัดจบเองจะข้าม finally)
         ignore_user_abort(true);
@@ -326,9 +384,7 @@ class ReleaseDownloadStreamer
                 if ($length !== null && $sent + strlen($chunk) > $length) {
                     // Apache เชื่อ Content-Length ของเรา (public_html/.htaccess) — byte ที่เกินจะถูกอ่านเป็นต้น
                     // response ถัดไปบน connection เดียวกัน จึงส่งแค่ที่ประกาศไว้แล้วเลิก
-                    Log::warning('download: ต้นทางส่งเกินขนาดที่ประกาศ ตัดที่ Content-Length', [
-                        'product_id' => $version->product_id,
-                        'version' => $version->version,
+                    Log::warning('download: ต้นทางส่งเกินขนาดที่ประกาศ ตัดที่ Content-Length', $context + [
                         'expected' => $length,
                     ]);
                     $chunk = substr($chunk, 0, $length - $sent);
@@ -356,9 +412,7 @@ class ReleaseDownloadStreamer
 
         if ($length !== null && $sent < $length && ! connection_aborted()) {
             // Content-Length บอกขนาดไว้แล้ว เบราว์เซอร์/แอปจึงรู้ว่าไฟล์ขาด ไม่เอาไฟล์เสียไปติดตั้ง
-            Log::warning('download: ต้นทางหยุดส่งก่อนครบไฟล์', [
-                'product_id' => $version->product_id,
-                'version' => $version->version,
+            Log::warning('download: ต้นทางหยุดส่งก่อนครบไฟล์', $context + [
                 'sent' => $sent,
                 'expected' => $length,
             ]);
