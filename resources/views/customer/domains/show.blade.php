@@ -119,7 +119,27 @@
                 </p>
             </div>
 
-            @if($dnsUnavailable)
+            @if(! $domain->usesOwnDns())
+                {{-- nameserver ชี้ไปที่อื่นแล้ว โซนของเราไม่มีใครถาม — แก้ที่นี่ก็ไม่มีผล --}}
+                <div class="px-6 py-8 text-center space-y-3">
+                    <p class="text-sm text-slate-700 dark:text-slate-300">
+                        @if($domain->usesCloudflare())
+                            <x-bi th="ตอนนี้ DNS ของโดเมนนี้อยู่ที่ Cloudflare — เพิ่มหรือแก้เรคคอร์ดที่ Cloudflare"
+                                  en="This domain's DNS now lives at Cloudflare — add or change records there." />
+                        @else
+                            <x-bi th="ตอนนี้ DNS ของโดเมนนี้อยู่ที่ผู้ให้บริการที่คุณตั้งไว้ใน Nameservers ด้านล่าง — แก้เรคคอร์ดที่นั่น"
+                                  en="This domain's DNS now lives with the provider in Nameservers below — change records there." />
+                        @endif
+                    </p>
+                    @if($domain->usesCloudflare())
+                        <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition">
+                            <x-bi th="เปิด Cloudflare" en="Open Cloudflare" />
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
+                    @endif
+                </div>
+            @elseif($dnsUnavailable)
                 <div class="px-6 py-8 text-center">
                     <p class="text-sm text-slate-600 dark:text-slate-400">
                         <x-bi th="อ่านการตั้งค่า DNS ไม่ได้ในขณะนี้ กรุณารีเฟรชอีกครั้ง หากยังไม่ได้กรุณาแจ้งทีมงาน"
@@ -248,15 +268,31 @@
         </div>
 
         {{-- ══════════ Nameservers ══════════ --}}
-        <div class="{{ $card }} p-6" x-data="{ open: false }">
-            <div class="flex items-start justify-between gap-4">
+        @php
+            $onCloudflare = $domain->usesCloudflare();
+            $ownDns = $domain->usesOwnDns();
+            $canComeBack = ! $ownDns && count($domain->own_nameservers ?? []) >= 2;
+        @endphp
+        <div class="{{ $card }} p-6" x-data="{ open: false, cf: @js(old('cloudflare_ns') !== null) }">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div class="min-w-0">
                     <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
                         <x-bi th="Nameservers" en="Nameservers" />
+                        @if($onCloudflare)
+                            <span class="ml-1 align-middle px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-800 dark:text-orange-300 text-xs font-semibold">Cloudflare</span>
+                        @endif
                     </h2>
                     <p class="text-sm text-slate-600 dark:text-slate-400">
-                        <x-bi th="ตอนนี้ DNS ดูแลโดยเรา ถ้าอยากย้ายไปใช้ Cloudflare หรือที่อื่น เปลี่ยนได้เอง"
-                              en="DNS is handled by us right now. Want Cloudflare or somewhere else? Change it yourself." />
+                        @if($onCloudflare)
+                            <x-bi th="ตอนนี้ DNS อยู่ที่ Cloudflare กลับมาใช้ DNS ของเราได้ทุกเมื่อด้วยปุ่มเดียว"
+                                  en="DNS is at Cloudflare now. Come back to ours any time, in one click." />
+                        @elseif($ownDns)
+                            <x-bi th="ตอนนี้ DNS ดูแลโดยเรา ย้ายไปใช้ Cloudflare ได้ในปุ่มเดียว หรือใส่ nameserver ของที่อื่นเองก็ได้"
+                                  en="DNS is handled by us right now. Move to Cloudflare in one click, or enter another provider's nameservers." />
+                        @else
+                            <x-bi th="ตอนนี้ DNS อยู่ที่ผู้ให้บริการที่คุณตั้งไว้"
+                                  en="DNS is with the provider you set." />
+                        @endif
                     </p>
                     @if($domain->nameservers)
                         <ul class="mt-3 space-y-1 font-mono text-sm text-slate-700 dark:text-slate-300">
@@ -266,11 +302,80 @@
                         </ul>
                     @endif
                 </div>
-                <button type="button" @click="open = !open"
-                        class="shrink-0 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition">
-                    <x-bi th="เปลี่ยน" en="Change" />
-                </button>
+                <div class="flex flex-wrap gap-2 shrink-0">
+                    @unless($onCloudflare)
+                        <button type="button" @click="cf = !cf; open = false"
+                                class="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition">
+                            <x-bi th="ชี้ไป Cloudflare" en="Point to Cloudflare" />
+                        </button>
+                    @endunless
+                    @if($canComeBack)
+                        <form method="POST" action="{{ route('customer.domains.own-dns', $domain->id) }}"
+                              onsubmit="return confirm('กลับมาใช้ DNS ของเรา? เรคคอร์ดที่ตั้งไว้ที่ Cloudflare จะไม่มีผลอีก ให้ตั้งที่หน้านี้แทน')">
+                            @csrf
+                            <button type="submit"
+                                    class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                                <x-bi th="กลับมาใช้ DNS ของเรา" en="Back to our DNS" />
+                            </button>
+                        </form>
+                    @endif
+                    <button type="button" @click="open = !open; cf = false"
+                            class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                        <x-bi th="ใส่เอง" en="Enter manually" />
+                    </button>
+                </div>
             </div>
+
+            @unless($onCloudflare)
+                {{-- Cloudflare ให้ nameserver คนละคู่ในแต่ละบัญชี ไม่มีคู่มาตรฐาน
+                     ระบบจึงถาม Cloudflare เองก่อนสลับว่าเพิ่มเว็บแล้วและวางคู่ถูก --}}
+                <form method="POST" action="{{ route('customer.domains.cloudflare', $domain->id) }}" x-show="cf" x-cloak
+                      class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700 space-y-4"
+                      x-data="{ sending: false }" @submit="sending = true">
+                    @csrf
+                    <ol class="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+                        <li class="flex gap-3">
+                            <span class="shrink-0 w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-xs font-bold flex items-center justify-center">1</span>
+                            <div class="min-w-0">
+                                <p>
+                                    <x-bi th="ที่ Cloudflare (ฟรี): Add a site → พิมพ์" en="At Cloudflare (free): Add a site → type" />
+                                    <span class="font-mono font-semibold">{{ $domain->domain }}</span>
+                                    <x-bi th="→ เลือกแพ็กเกจ Free · Cloudflare จะคัดลอกเรคคอร์ด DNS เดิมไปให้ ตรวจว่าครบก่อน"
+                                          en="→ pick the Free plan. Cloudflare copies your current DNS records — check they are all there." />
+                                </p>
+                                <a href="https://dash.cloudflare.com/?to=/:account/add-site" target="_blank" rel="noopener noreferrer"
+                                   class="mt-2 inline-flex items-center gap-1.5 text-orange-600 dark:text-orange-400 font-semibold hover:underline">
+                                    <x-bi th="เปิด Cloudflare เพื่อเพิ่มเว็บ" en="Open Cloudflare to add the site" />
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                </a>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="shrink-0 w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-xs font-bold flex items-center justify-center">2</span>
+                            <div class="min-w-0 flex-1">
+                                <p class="mb-2">
+                                    <x-bi th="คัดลอก nameserver ที่ Cloudflare ให้ (ลงท้าย .ns.cloudflare.com) มาวางที่นี่ — ชื่อเดียวก็พอ ระบบหาอีกชื่อให้เอง"
+                                          en="Copy the nameservers Cloudflare gives you (ending .ns.cloudflare.com) and paste them here — one is enough, we find the other." />
+                                </p>
+                                <textarea name="cloudflare_ns" rows="2" required maxlength="2000"
+                                          placeholder="xxxx.ns.cloudflare.com&#10;yyyy.ns.cloudflare.com"
+                                          class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white text-sm font-mono focus:border-orange-500 focus:ring-orange-500">{{ old('cloudflare_ns') }}</textarea>
+                            </div>
+                        </li>
+                    </ol>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <button type="submit" :disabled="sending"
+                                class="px-5 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition disabled:opacity-50">
+                            <span x-show="!sending"><x-bi th="ชี้ nameserver ไป Cloudflare" en="Point nameservers to Cloudflare" /></span>
+                            <span x-show="sending" x-cloak><x-bi th="กำลังตรวจกับ Cloudflare…" en="Checking with Cloudflare…" /></span>
+                        </button>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            <x-bi th="เราถาม Cloudflare ก่อนว่าเพิ่มเว็บแล้วและเป็นคู่ที่ถูก ถ้าไม่ตรงจะไม่เปลี่ยนอะไร เว็บไม่ดับ"
+                                  en="We check with Cloudflare first that the site is added and the pair is right. If not, nothing changes." />
+                        </p>
+                    </div>
+                </form>
+            @endunless
 
             <form method="POST" action="{{ route('customer.domains.nameservers', $domain->id) }}" x-show="open" x-cloak class="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700">
                 @csrf
@@ -303,6 +408,12 @@
                         <x-bi th="ให้คนที่พิมพ์ชื่อเว็บนี้ ถูกพาไปยังเพจ Facebook ร้านออนไลน์ หรือเว็บอื่นทันที ไม่ต้องมีโฮสติ้ง"
                               en="Send everyone who types this domain straight to a Facebook page, an online shop or another site — no hosting needed." />
                     </p>
+                    @unless($ownDns)
+                        <p class="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                            <x-bi th="ใช้ได้เฉพาะตอนที่โดเมนใช้ DNS ของเรา — ตอนนี้ตั้งการส่งต่อที่ผู้ให้บริการ DNS ปัจจุบันแทน (Cloudflare: Rules → Redirect Rules)"
+                                  en="Works only while the domain uses our DNS — set forwarding at your current DNS provider instead (Cloudflare: Rules → Redirect Rules)." />
+                        </p>
+                    @endunless
                     @if($forwarding)
                         <p class="mt-3 text-sm text-slate-700 dark:text-slate-300">
                             <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold mr-1">

@@ -102,6 +102,12 @@ per period (`hostingerinth-vps-kvm2-thb-1m`) and opaque — copy them from the c
 - **Never show the supplier's name to customers**: templates mentioning it are dropped, the default
   `srvNNN.hstgr.cloud` hostname never replaces the customer's, plan names are ours (`VPS Business`,
   not `KVM 2`), `last_error` is hidden from serialisation.
+- **There is no standard Cloudflare pair, and ours is per account too.** "Point to Cloudflare"
+  (`/my-account/domains/{id}`) asks the pasted `*.ns.cloudflare.com` server itself (`App\Support\DnsProbe`):
+  a site still pending at Cloudflare is answered only on its assigned pair and REFUSED on every other,
+  so a wrong or premature pair changes nothing. The way back uses `own_nameservers`, captured at
+  registration only (`refreshFromUpstream(justRegistered: true)`) — our `*.dns-parking.com` pair differs
+  per account (ns1/ns2 answer NXDOMAIN for our zones), and the daily sync overwrites `nameservers`.
 - **First period vs renewal.** VPS and many TLDs are much dearer from the second period. Every price
   on the site says which one it is ("ปีแรก / ปีต่อไป", "เดือนแรก / เดือนถัดไป"), and renewals are
   charged at the renewal cost — never the first-period price again.

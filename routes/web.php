@@ -697,6 +697,11 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('id')->middleware('throttle:30,10,domain-dns')->name('dns');
             Route::post('/{id}/nameservers', [CustomerDomainController::class, 'updateNameservers'])
                 ->whereNumber('id')->middleware('throttle:10,10,domain-nameservers')->name('nameservers');
+            // ชี้ไป Cloudflare ปุ่มเดียว (ตรวจกับ Cloudflare ก่อนสลับ) และปุ่มกลับมาใช้ DNS ของเรา
+            Route::post('/{id}/cloudflare', [CustomerDomainController::class, 'useCloudflare'])
+                ->whereNumber('id')->middleware('throttle:10,10,domain-cloudflare')->name('cloudflare');
+            Route::post('/{id}/own-dns', [CustomerDomainController::class, 'useOwnDns'])
+                ->whereNumber('id')->middleware('throttle:10,10,domain-own-dns')->name('own-dns');
             // รหัสย้ายโดเมนออก — ของลับ ขอถี่ ๆ ไม่ได้
             Route::post('/{id}/auth-code', [CustomerDomainController::class, 'authCode'])
                 ->whereNumber('id')->middleware('throttle:5,10,domain-auth-code')->name('auth-code');

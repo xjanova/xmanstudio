@@ -7,6 +7,7 @@ use App\Models\DomainRegistration;
 use App\Services\DomainPurchaseException;
 use App\Services\DomainRegistrarService;
 use App\Services\HostingerApiService;
+use App\Support\DnsProbe;
 use App\Support\DomainPricing;
 use App\Support\DomainReminders;
 use Carbon\Carbon;
@@ -34,6 +35,7 @@ class DomainController extends Controller
     public function __construct(
         protected HostingerApiService $api,
         protected DomainRegistrarService $registrar,
+        protected DnsProbe $dns,
     ) {}
 
     public function index(Request $request): View
@@ -62,7 +64,10 @@ class DomainController extends Controller
         // Records are read live rather than cached: a customer who just
         // changed one and reloads must see what they changed, not a copy
         // from before it.
-        $zone = $domain->isUsable() ? $this->api->getDnsRecords($domain->domain) : [];
+        // Once the nameservers point elsewhere our zone answers nobody, so
+        // it is neither read nor offered for editing.
+        $ownDns = $domain->isUsable() && $domain->usesOwnDns();
+        $zone = $ownDns ? $this->api->getDnsRecords($domain->domain) : [];
         $records = $this->groupRecords($zone);
 
         return view('customer.domains.show', [
@@ -79,7 +84,7 @@ class DomainController extends Controller
             'dnsUnavailable' => $zone === null,
             'details' => $domain->isUsable() ? $this->details($domain) : [],
             'forwarding' => $domain->isUsable() ? $this->forwardingFor($domain) : null,
-            'snapshots' => $domain->isUsable() ? $this->snapshotsFor($domain) : [],
+            'snapshots' => $ownDns ? $this->snapshotsFor($domain) : [],
         ]);
     }
 
@@ -350,6 +355,128 @@ class DomainController extends Controller
         $domain->update(['nameservers' => $servers]);
 
         return back()->with('success', 'เปลี่ยน nameserver แล้ว อาจใช้เวลาถึง 24 ชั่วโมงจึงจะมีผลทั่วโลก');
+    }
+
+    /**
+     * Point the domain at Cloudflare in one click.
+     *
+     * The customer adds the site in their own Cloudflare account (we never
+     * touch it) and pastes what Cloudflare shows — one name is enough, the
+     * whole block is fine. Cloudflare gives every account its own pair and
+     * there is no standard one, so the pair is asked of Cloudflare itself
+     * before anything changes: a pending site is served only on its assigned
+     * pair and refused on every other, and a domain pointed at a pair that
+     * does not serve it loses its website and mail until someone notices.
+     */
+    public function useCloudflare(Request $request, int $id): RedirectResponse
+    {
+        $domain = $this->findOwned($request, $id);
+
+        if (! $domain->isUsable()) {
+            return back()->with('error', 'โดเมนนี้ยังใช้งานไม่ได้');
+        }
+
+        $validated = $request->validate([
+            'cloudflare_ns' => ['required', 'string', 'max:2000'],
+        ], [
+            'cloudflare_ns.required' => 'วางชื่อ nameserver ที่ Cloudflare ให้มาก่อน',
+        ]);
+
+        preg_match_all('/\b([a-z0-9-]+\.ns\.cloudflare\.com)\b/i', $validated['cloudflare_ns'], $m);
+        $pasted = DomainRegistration::normaliseNameservers($m[1]);
+
+        if ($pasted === []) {
+            return back()->withInput()->with('error', 'ไม่พบชื่อ nameserver ของ Cloudflare ในข้อความที่วาง — ต้องลงท้ายด้วย .ns.cloudflare.com เช่นที่ Cloudflare แสดงในขั้น "Replace your nameservers"');
+        }
+
+        if (count($pasted) > 2) {
+            return back()->withInput()->with('error', 'วางมาเกิน 2 ชื่อ — Cloudflare ให้แค่ 2 ชื่อต่อโดเมน กรุณาคัดลอกเฉพาะของโดเมนนี้');
+        }
+
+        // Ask each pasted server until one answers for this domain.
+        $assigned = null;
+        $couldNotAsk = false;
+
+        foreach ($pasted as $server) {
+            $answer = $this->dns->nameservers($domain->domain, $server);
+
+            if ($answer['status'] === DnsProbe::OK) {
+                $assigned = $answer['nameservers'];
+                break;
+            }
+
+            $couldNotAsk = $couldNotAsk || $answer['status'] === DnsProbe::FAILED;
+        }
+
+        if ($assigned === null) {
+            return back()->withInput()->with('error', $couldNotAsk
+                ? 'ตรวจสอบกับ Cloudflare ไม่สำเร็จ ยังไม่ได้เปลี่ยนอะไร กรุณาลองใหม่อีกครั้งในอีกสักครู่'
+                : 'Cloudflare ยังไม่รู้จัก ' . $domain->domain . ' บน nameserver ที่วาง — เพิ่มเว็บนี้ใน Cloudflare ก่อน (Add a site) แล้วคัดลอก nameserver ที่ Cloudflare ให้สำหรับโดเมนนี้ ยังไม่ได้เปลี่ยนอะไร');
+        }
+
+        $cloudflare = array_values(array_filter($assigned, fn ($ns) => str_ends_with($ns, '.ns.cloudflare.com')));
+
+        if (count($cloudflare) < 2 || array_diff($pasted, $cloudflare) !== []) {
+            return back()->withInput()->with('error', 'nameserver ที่วางไม่ใช่คู่ที่ Cloudflare กำหนดให้ ' . $domain->domain
+                . ' (Cloudflare กำหนด: ' . implode(', ', $assigned) . ') ยังไม่ได้เปลี่ยนอะไร');
+        }
+
+        if (DomainRegistration::normaliseNameservers($domain->nameservers) === $cloudflare) {
+            return back()->with('success', 'โดเมนนี้ชี้ไป Cloudflare อยู่แล้ว');
+        }
+
+        if (! $this->api->updateNameservers($domain->domain, $cloudflare)) {
+            return back()->withInput()->with('error', 'เปลี่ยน nameserver ไม่สำเร็จ ยังใช้ DNS เดิมอยู่ กรุณาลองใหม่อีกครั้ง');
+        }
+
+        $domain->update(['nameservers' => $cloudflare]);
+        Cache::forget($this->detailsCacheKey($domain));
+
+        Log::info('[CustomerDomain] nameservers pointed at Cloudflare', [
+            'registration_id' => $domain->id,
+            'user_id' => $request->user()->id,
+            'nameservers' => $cloudflare,
+        ]);
+
+        return back()->with('success', 'ชี้ nameserver ไป Cloudflare แล้ว (' . implode(', ', $cloudflare) . ') '
+            . '— Cloudflare จะตรวจพบภายในไม่กี่นาทีถึง 24 ชั่วโมง แล้วส่งอีเมลแจ้งว่าเปิดใช้งาน จากนี้แก้ DNS ที่ Cloudflare');
+    }
+
+    /**
+     * Come back from Cloudflare (or anywhere) to our DNS and its panel.
+     */
+    public function useOwnDns(Request $request, int $id): RedirectResponse
+    {
+        $domain = $this->findOwned($request, $id);
+
+        if (! $domain->isUsable()) {
+            return back()->with('error', 'โดเมนนี้ยังใช้งานไม่ได้');
+        }
+
+        $own = DomainRegistration::normaliseNameservers($domain->own_nameservers);
+
+        if (count($own) < 2) {
+            return back()->with('error', 'ไม่พบ nameserver เดิมของโดเมนนี้ กรุณาแจ้งทีมงานเพื่อดำเนินการให้');
+        }
+
+        if ($domain->usesOwnDns()) {
+            return back()->with('success', 'โดเมนนี้ใช้ DNS ของเราอยู่แล้ว');
+        }
+
+        if (! $this->api->updateNameservers($domain->domain, $own)) {
+            return back()->with('error', 'เปลี่ยน nameserver ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
+
+        $domain->update(['nameservers' => $own]);
+        Cache::forget($this->detailsCacheKey($domain));
+
+        Log::info('[CustomerDomain] nameservers back to our DNS', [
+            'registration_id' => $domain->id,
+            'user_id' => $request->user()->id,
+        ]);
+
+        return back()->with('success', 'กลับมาใช้ DNS ของเราแล้ว เรคคอร์ดในหน้านี้จะกลับมามีผลภายใน 24 ชั่วโมง '
+            . '— ถ้าเคยแก้อะไรไว้ที่ Cloudflare อย่าลืมตั้งที่นี่ให้ตรงกันด้วย');
     }
 
     /**
