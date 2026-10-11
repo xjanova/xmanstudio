@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\LocalVpnWebController;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductVersion;
@@ -201,12 +202,24 @@ class VersionController extends Controller
         }
 
         $currentVersion = $request->query('current_version', '0.0.0');
-        $hasUpdate = version_compare($currentVersion, $latestVersion->version, '<');
+        $platform = strtolower((string) $request->query('platform', ''));
+
+        // 2026-10-11 — LocalVPN บน Windows ติดตั้งจาก Setup .exe ใน release เดียวกัน ไม่ใช่ APK: route, ขนาด และ sha256
+        // ของตัวติดตั้งเอง · release ที่ยังไม่มีตัวติดตั้ง (ไฟล์ยังขึ้นไม่ครบ) = ยังไม่มีอะไรให้ Windows อัปเดต
+        $windowsInstaller = $productSlug === 'localvpn' && $platform === 'windows';
+        $file = $windowsInstaller
+            ? LocalVpnWebController::windowsInstaller($latestVersion)
+            : ['name' => $latestVersion->download_filename, 'size' => $latestVersion->file_size, 'sha256' => $latestVersion->sha256];
+
+        $hasUpdate = $file !== null && version_compare($currentVersion, $latestVersion->version, '<');
 
         // Build download URL — use public APK download route (proxy through our server)
         $downloadUrl = '';
         if ($hasUpdate) {
-            if ($productSlug === 'tping') {
+            if ($windowsInstaller) {
+                // ระบุเวอร์ชันเป๊ะ ๆ ให้ไฟล์ตรงกับ sha256 ที่ส่งไปคู่กัน · แอปรู้จักลิงก์ /download/windows ว่าเป็นตัวติดตั้งที่รันได้
+                $downloadUrl = route('localvpn.download.windows', ['version' => $latestVersion->version]);
+            } elseif ($productSlug === 'tping') {
                 $downloadUrl = url('/tping/download/apk');
             } elseif ($productSlug === 'smschecker') {
                 $downloadUrl = url('/smschecker/download/apk');
@@ -221,6 +234,7 @@ class VersionController extends Controller
         // จึงไล่ย้อนหลังไม่ได้ว่าเครื่องนั้นเคยเช็คไหม ส่ง version อะไรมา ตอบว่าอะไรกลับไป
         Log::info('product update check', [
             'product' => $productSlug,
+            'platform' => $platform !== '' ? $platform : null,
             'current_version' => $currentVersion,
             'latest_version' => $latestVersion->version,
             'has_update' => $hasUpdate,
@@ -233,10 +247,10 @@ class VersionController extends Controller
             'latest_version' => $latestVersion->version,
             'download_url' => $downloadUrl,
             'changelog' => $latestVersion->changelog ?? '',
-            // 2026-09-23 — ของเวอร์ชันล่าสุด ให้แอปตรวจไฟล์ที่โหลดมาก่อนติดตั้ง (null = ไม่ทราบ)
-            'sha256' => $latestVersion->sha256,
-            'file_size' => $latestVersion->file_size,
-            'filename' => $latestVersion->download_filename,
+            // 2026-09-23 — ของไฟล์ที่แอปนี้จะโหลด ให้ตรวจไฟล์ก่อนติดตั้ง (null = ไม่ทราบ)
+            'sha256' => $file['sha256'] ?? null,
+            'file_size' => $file['size'] ?? null,
+            'filename' => $file['name'] ?? null,
         ]);
     }
 

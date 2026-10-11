@@ -177,7 +177,7 @@ class CustomerDownloadCenterTest extends TestCase
             'WinXTools' => ['winx-tools', 'Windows'],
             'Aipray' => ['aipray', 'Android'],
             'GigGok' => ['giggok', 'Android'],
-            'LocalVPN' => ['localvpn', 'Android'],
+            'LocalVPN' => ['localvpn', 'Android, Windows'],
             'SMS Checker' => ['smschecker', 'Android'],
             'Tping' => ['tping', 'Android'],
         ];

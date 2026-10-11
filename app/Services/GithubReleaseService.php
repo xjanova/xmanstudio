@@ -139,7 +139,7 @@ class GithubReleaseService
 
         $remote = ltrim($tag, 'vV');
 
-        if ($current && $current->version === $remote) {
+        if ($current && $current->version === $remote && ! $this->filesChanged($current, $release)) {
             return $current;
         }
 
@@ -162,6 +162,22 @@ class GithubReleaseService
 
             return $current;
         }
+    }
+
+    /**
+     * tag เดิม แต่ไฟล์ใน release ไม่ตรงกับที่บันทึกไว้ — ต้อง sync ซ้ำ แม้เลขเวอร์ชันไม่เปลี่ยน
+     *
+     * release ของ LocalVPN ถูกสร้างก่อนแล้วไฟล์ทยอยขึ้นตามมา (APK, ตัวติดตั้ง Windows, zip) ถ้าบังเอิญ sync
+     * ตอนไฟล์ยังขึ้นไม่ครบ ตัวติดตั้งจะไม่มีวันถูกบันทึกจนกว่าจะมี release ใหม่ (cron ของแอปที่ปิด auto_sync ไม่ช่วย)
+     * และเวอร์ชันที่ sync ไว้ก่อนมีคอลัมน์ assets (null) ได้รายการไฟล์ครั้งแรกจากตรงนี้
+     * release ที่ไม่เหลือไฟล์เลยไม่นับ — ห้ามล้างไฟล์ที่ส่งให้ลูกค้าอยู่ทิ้งเพราะ release ถูกแก้
+     */
+    private function filesChanged(ProductVersion $version, array $release): bool
+    {
+        $names = fn (array $assets) => collect($assets)->pluck('name')->map(fn ($name) => strtolower((string) $name))->sort()->values()->all();
+        $files = $this->releaseAssets($release);
+
+        return $files !== [] && $names($version->assets ?? []) !== $names($files);
     }
 
     /**
@@ -362,6 +378,9 @@ class GithubReleaseService
             $data['sha256'] = $sha256;
         }
 
+        // ไฟล์อื่นของ release เดียวกัน (ตัวติดตั้ง Windows ของ LocalVPN คู่กับ APK) — ส่งและตรวจได้แบบไฟล์หลัก
+        $data['assets'] = $this->releaseAssets($release);
+
         // Deactivate previous versions
         ProductVersion::where('product_id', $product->id)
             ->where('version', '!=', $version)
@@ -371,6 +390,30 @@ class GithubReleaseService
             ['product_id' => $product->id, 'version' => $version],
             $data
         );
+    }
+
+    /**
+     * ทุกไฟล์ที่อัปโหลดเสร็จแล้วใน release — ชื่อ ขนาด sha256 และที่ดึงไฟล์ (ลิงก์ตรง + API ของ asset แบบเดียวกับไฟล์หลัก)
+     *
+     * ไฟล์ที่ยังอัปโหลดไม่เสร็จ (state "open") ไม่นับ: ขนาด/sha256 ยังไม่ใช่ของจริง เมื่อขึ้นครบ filesChanged() จะเห็นเอง
+     *
+     * @return list<array{name: string, size: ?int, sha256: ?string, download_url: ?string, api_url: ?string}>
+     */
+    protected function releaseAssets(array $release): array
+    {
+        return collect($release['assets'] ?? [])
+            ->filter(fn ($asset) => is_array($asset)
+                && is_string($asset['name'] ?? null)
+                && ($asset['state'] ?? 'uploaded') === 'uploaded')
+            ->map(fn (array $asset) => [
+                'name' => $asset['name'],
+                'size' => isset($asset['size']) ? (int) $asset['size'] : null,
+                'sha256' => $this->sha256FromDigest($asset['digest'] ?? null),
+                'download_url' => $asset['browser_download_url'] ?? null,
+                'api_url' => $asset['url'] ?? null,
+            ])
+            ->values()
+            ->all();
     }
 
     /**
