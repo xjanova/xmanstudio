@@ -40,7 +40,8 @@
         <div class="relative max-w-7xl mx-auto">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold text-white mb-4">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
-                <p class="text-gray-400">ใช้ฟรีตลอด หรืออัพเกรดเพื่อปลดล็อกสมาชิกในวง 50 คน</p>
+                <p class="text-gray-400">ใช้ฟรีตลอด หรืออัปเกรด Pro — ลดปิงเกม · สมาชิกในวง 50 คน · VPN ทุกประเทศ · 1 คีย์ใช้ได้ 2 เครื่อง (PC + มือถือ)</p>
+                <p class="mt-2 text-sm"><a href="{{ route('products.show', 'localvpn') }}" class="text-cyan-400 hover:text-cyan-300">ดูรายละเอียด LocalVPN ทั้งหมด →</a></p>
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -70,7 +71,7 @@
                         </li>
                         <li class="flex items-center text-gray-300">
                             <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            VPN มุดประเทศ (3 ประเทศ)
+                            VPN เฉพาะประเทศฟรี · ส่งไฟล์ · Torrent
                         </li>
                     </ul>
                     <a href="{{ route('localvpn.download') }}" class="block text-center text-white text-sm py-3 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 rounded-xl transition-all font-medium">
@@ -162,7 +163,7 @@
                 </div>
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
                     <h3 class="font-semibold text-white mb-2">ฟรีกับแพ็กเกจเสียเงินต่างกันอย่างไร?</h3>
-                    <p class="text-gray-400 text-sm">แพ็กเกจฟรีรองรับสมาชิกในวง LAN สูงสุด 5 คน แพ็กเกจเสียเงินรองรับสูงสุด 50 คน พร้อมซัพพอร์ตพรีเมียม</p>
+                    <p class="text-gray-400 text-sm">แพ็กเกจฟรีรองรับสมาชิกในวง LAN สูงสุด 5 คน ใช้ VPN ได้เฉพาะประเทศฟรี ส่งไฟล์และ Torrent ได้ — Pro ปลดลดปิงเกม สมาชิกสูงสุด 50 คน และ VPN ทุกประเทศ 1 คีย์ใช้ได้ 2 เครื่อง (PC + มือถือ) · เครื่องใหม่ทดลอง Pro ฟรี 30 วัน ครั้งเดียวต่อเครื่อง</p>
                 </div>
                 <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
                     <h3 class="font-semibold text-white mb-2">ชำระเงินอย่างไร?</h3>

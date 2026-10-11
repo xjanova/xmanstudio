@@ -57,6 +57,7 @@ class LicensePlansTest extends TestCase
         $this->assertSame(['yearly' => 199, 'lifetime' => 1999], LicensePlans::for('cluadex-ai-coding-assistant'));
         $this->assertSame(['yearly' => 199], LicensePlans::for('winx-tools'));
         $this->assertSame(['monthly' => 399], LicensePlans::for('brainx'));
+        $this->assertSame(['monthly' => 199, 'yearly' => 1990, 'lifetime' => 4990], LicensePlans::for('localvpn'));
         $this->assertSame([], LicensePlans::for('aipray'));
     }
 
@@ -182,9 +183,11 @@ class LicensePlansTest extends TestCase
     {
         $this->licensed('localvpn');
 
+        // 1,990 against 12 × 199 = 16.7 %
         $this->get('/localvpn/pricing')->assertOk()
-            ->assertSee('฿399')->assertSee('฿2,500')->assertSee('฿5,000')
-            ->assertSee('ประหยัด 47%');
+            ->assertSee('฿199')->assertSee('฿1,990')->assertSee('฿4,990')
+            ->assertSee('ประหยัด 16%')
+            ->assertDontSee('฿399')->assertDontSee('฿2,500')->assertDontSee('฿5,000');
     }
 
     public function test_autotradex_sells_at_the_same_price_on_the_web_and_in_the_app(): void

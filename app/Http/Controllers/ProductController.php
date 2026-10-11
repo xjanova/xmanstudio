@@ -150,9 +150,6 @@ class ProductController extends Controller
         if ($slug === 'smschecker') {
             return redirect()->route('smschecker.detail');
         }
-        if ($slug === 'localvpn') {
-            return redirect()->route('localvpn.detail');
-        }
         // ลิงก์ในแอปและใน release notes ชี้มาที่ /products/chanthra-studio — หน้าจริงของมันคือหน้า Chanthra
         if ($slug === 'chanthra-studio') {
             return redirect()->route('chanthra-studio.detail');
@@ -177,6 +174,8 @@ class ProductController extends Controller
             'giggok' => 'products.giggok',
             // Anti X — the app's "ซื้อ Pro" opens this page: three terms through the cart + the public download
             'anti-x' => 'products.antix',
+            // LocalVPN (Windows + Android) — the product page; /localvpn redirects here
+            'localvpn' => 'products.localvpn',
         ];
 
         if (isset($customViews[$slug])) {

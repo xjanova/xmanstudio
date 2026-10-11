@@ -187,6 +187,31 @@ class LicenseKey extends Model
         return 'DEMO-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4));
     }
 
+    /**
+     * The FREE key of a freemium app (LocalVPN, GigGok) on one machine — created the first time,
+     * found again after that. firstOrCreate, so two requests at once still leave one key.
+     */
+    public static function freeFor(Product $product, string $machineId, ?string $drmId = null, ?string $androidId = null): self
+    {
+        return self::firstOrCreate(
+            [
+                'product_id' => $product->id,
+                'machine_id' => $machineId,
+                'license_type' => self::TYPE_FREE,
+                'status' => self::STATUS_ACTIVE,
+            ],
+            [
+                'license_key' => 'FREE-' . strtoupper(Str::random(20)),
+                'machine_fingerprint' => $machineId,
+                'activated_at' => now(),
+                'max_activations' => 1,
+                'activations' => 1,
+                'drm_id' => $drmId,
+                'android_id' => $androidId,
+            ]
+        );
+    }
+
     public function activateOnMachine(string $machineId, string $fingerprint): bool
     {
         if ($this->machine_id && $this->machine_id !== $machineId) {

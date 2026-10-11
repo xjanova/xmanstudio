@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
-use App\Models\Product;
+use App\Support\LocalVpnLicenses;
 use App\Support\SqlDialect;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -1032,29 +1032,9 @@ class GlobalTorrentController extends Controller
      */
     private function validateDeviceAuth(Request $request): ?LicenseKey
     {
-        $licenseKey = $request->input('license_key');
-        $machineId = $request->input('machine_id');
-
-        if (! $licenseKey || ! $machineId) {
-            return null;
-        }
-
-        $product = Product::where('slug', 'localvpn')->where('requires_license', true)->first();
-        if (! $product) {
-            return null;
-        }
-
-        $license = LicenseKey::where('license_key', $licenseKey)
-            ->where('product_id', $product->id)
-            ->where('machine_id', $machineId)
-            ->where('status', 'active')
-            ->first();
-
-        if (! $license || $license->isExpired()) {
-            return null;
-        }
-
-        return $license;
+        // The key must be this machine's (a seat of a two-device key counts). Torrent is part of the
+        // free tier: a trial or term that just ended carries on under the machine's FREE key.
+        return LocalVpnLicenses::forDeviceWithKey($request->input('license_key'), $request->input('machine_id'));
     }
 
     /**

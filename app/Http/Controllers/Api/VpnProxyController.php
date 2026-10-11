@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\LicenseKey;
-use App\Models\Product;
 use App\Models\Setting;
+use App\Support\LocalVpnLicenses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -40,21 +39,9 @@ class VpnProxyController extends Controller
             return response()->json(['success' => false, 'error' => 'machine_id required'], 400);
         }
 
-        // Determine license tier — find the best active non-expired license
-        $isPremium = false;
-        $product = Product::where('slug', 'localvpn')->first();
-        if ($product) {
-            $license = LicenseKey::where('product_id', $product->id)
-                ->where('machine_id', $machineId)
-                ->where('status', 'active')
-                ->whereNotIn('license_type', ['free', 'demo'])
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-                })
-                ->first();
-
-            $isPremium = $license !== null;
-        }
+        // Pro = a paid key or the running 30-day trial on this machine (a seat of a two-device key too).
+        // 'demo' used to be left out, so trial users saw only the free countries.
+        $isPremium = LocalVpnLicenses::machineHasPremium($machineId);
 
         // Prefer health-checked servers (pre-validated by vpn:health-check cron)
         // Fall back to raw cached servers if health-check hasn't run yet
