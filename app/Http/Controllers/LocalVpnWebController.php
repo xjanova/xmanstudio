@@ -46,10 +46,10 @@ class LocalVpnWebController extends Controller
             'duration_days' => 30,
             'license_type' => 'monthly',
             'features' => [
-                'สร้างวง LAN เสมือนไม่จำกัด',
+                'ลดปิงเกม (Game Ping Booster)',
                 'สมาชิกในวงสูงสุด 50 คน',
-                'เข้ารหัส WireGuard',
                 'VPN มุดประเทศทุกประเทศ',
+                '1 คีย์ใช้ได้ 2 เครื่อง (PC + มือถือ)',
                 'ซัพพอร์ตมาตรฐาน',
             ],
         ],
@@ -59,12 +59,11 @@ class LocalVpnWebController extends Controller
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
-                'สร้างวง LAN เสมือนไม่จำกัด',
+                'ลดปิงเกม (Game Ping Booster)',
                 'สมาชิกในวงสูงสุด 50 คน',
-                'เข้ารหัส WireGuard',
                 'VPN มุดประเทศทุกประเทศ',
+                '1 คีย์ใช้ได้ 2 เครื่อง (PC + มือถือ)',
                 'ซัพพอร์ตพรีเมียม',
-                'อัพเดทก่อนใคร',
             ],
         ],
         'lifetime' => [
@@ -73,13 +72,12 @@ class LocalVpnWebController extends Controller
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
-                'สร้างวง LAN เสมือนไม่จำกัด',
+                'ลดปิงเกม (Game Ping Booster)',
                 'สมาชิกในวงสูงสุด 50 คน',
-                'เข้ารหัส WireGuard',
                 'VPN มุดประเทศทุกประเทศ',
+                '1 คีย์ใช้ได้ 2 เครื่อง (PC + มือถือ)',
                 'ซัพพอร์ตพรีเมียม',
-                'อัพเดทตลอดชีพ',
-                'ใช้ได้หลายเครื่อง',
+                'จ่ายครั้งเดียว ใช้ได้ตลอด',
             ],
         ],
     ];
@@ -91,25 +89,13 @@ class LocalVpnWebController extends Controller
     }
 
     /**
-     * Show LocalVPN detail / landing page
+     * /localvpn — the product page lives at /products/localvpn now (Windows + Android, trial, Free vs
+     * Pro, the three plans through the cart). Old links and the app's "buy" button
+     * (/localvpn#monthly) land there; the browser keeps the #fragment across the redirect.
      */
     public function detail()
     {
-        $product = Product::where('slug', 'localvpn')->first();
-        $version = null;
-
-        if ($product) {
-            $version = ProductVersion::where('product_id', $product->id)
-                ->where('is_active', true)
-                ->orderByDesc('version')
-                ->first();
-        }
-
-        return view('localvpn.detail', [
-            'pricing' => self::pricedPlans(),
-            'product' => $product,
-            'version' => $version,
-        ]);
+        return redirect()->route('products.show', 'localvpn');
     }
 
     /**
@@ -433,10 +419,11 @@ class LocalVpnWebController extends Controller
     ): ?LicenseKey {
         try {
             $licenseService = app(LicenseService::class);
+            // One key runs on a PC and a phone (config/licenses.php devices_per_key) — every plan alike
             $licenses = $licenseService->generateLicenses(
                 $planInfo['license_type'],
                 1,
-                $planInfo['license_type'] === 'lifetime' ? 3 : 1,
+                LicensePlans::devicesPerKey('localvpn'),
                 $product->id
             );
 

@@ -4,17 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
-use App\Models\Product;
 use App\Models\WireguardClient;
 use App\Models\WireguardServer;
 use App\Services\LocalVpnFleet\ExitAccess;
 use App\Services\LocalVpnFleet\MachineLicenses;
 use App\Services\WireguardService;
 use App\Support\LocalVpnFleet\FleetPolicy;
-use App\Support\SqlDialect;
+use App\Support\LocalVpnLicenses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class WireguardController extends Controller
 {
@@ -273,73 +271,19 @@ class WireguardController extends Controller
     }
 
     /**
-     * Validate device authentication (mirrors LocalVpnRelayController logic).
+     * The device's key: the one it sent if it holds it, else its best key, else its FREE key (created).
      */
     private function validateDeviceAuth(Request $request): ?LicenseKey
     {
-        $licenseKey = $request->input('license_key');
-        $machineId = $request->input('machine_id');
-
-        if (! $machineId) {
-            return null;
-        }
-
-        $product = Product::where('slug', 'localvpn')->where('requires_license', true)->first();
-        if (! $product) {
-            return null;
-        }
-
-        // Try license_key + machine_id first (paid users)
-        if ($licenseKey) {
-            $license = LicenseKey::where('license_key', $licenseKey)
-                ->where('product_id', $product->id)
-                ->where('machine_id', $machineId)
-                ->where('status', 'active')
-                ->first();
-
-            if ($license && ! $license->isExpired()) {
-                return $license;
-            }
-        }
-
-        // Fallback: find any active non-expired license for this machine_id
-        $typeOrder = ['lifetime', 'yearly', 'monthly', 'weekly', 'daily', 'free', 'demo'];
-
-        $license = LicenseKey::where('product_id', $product->id)
-            ->where('machine_id', $machineId)
-            ->where('status', 'active')
-            ->orderByRaw(SqlDialect::field('license_type', $typeOrder), $typeOrder)
-            ->get()
-            ->first(fn ($l) => ! $l->isExpired());
-
-        if ($license) {
-            return $license;
-        }
-
-        // Self-healing: auto-create free license if none exists
-        return LicenseKey::firstOrCreate(
-            [
-                'product_id' => $product->id,
-                'machine_id' => $machineId,
-                'license_type' => 'free',
-                'status' => 'active',
-            ],
-            [
-                'license_key' => 'FREE-' . strtoupper(Str::random(20)),
-                'machine_fingerprint' => $machineId,
-                'activated_at' => now(),
-                'max_activations' => 1,
-                'activations' => 1,
-            ]
-        );
+        return LocalVpnLicenses::forDevice($request->input('license_key'), $request->input('machine_id'));
     }
 
     /**
-     * Check if a license is premium (non-free, non-demo, not expired).
+     * Pro (every country): a paid key or the running 30-day trial — the trial is the full Pro app
+     * (owner 2026-10-11). It used to leave 'demo' out, so trial users saw only the free countries.
      */
     private function isPremiumLicense(LicenseKey $license): bool
     {
-        return ! in_array($license->license_type, ['free', 'demo'])
-            && ! $license->isExpired();
+        return LocalVpnLicenses::isPremium($license);
     }
 }

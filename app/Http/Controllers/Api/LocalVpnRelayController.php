@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
-use App\Models\Product;
 use App\Models\Setting;
 use App\Models\VpnNetwork;
 use App\Models\VpnNetworkMember;
 use App\Models\VpnRelaySession;
 use App\Models\VpnTrafficLog;
 use App\Services\LocalVpnFleet\RelayTicketIssuer;
-use App\Support\SqlDialect;
+use App\Support\LocalVpnLicenses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -89,7 +88,8 @@ class LocalVpnRelayController extends Controller
             ], 422);
         }
 
-        $maxMembersLimit = (int) Setting::getValue('localvpn_max_members_per_network', '10');
+        // The Pro ceiling (the app offers up to 50); a free owner's network still stops at 5 on join
+        $maxMembersLimit = (int) Setting::getValue('localvpn_max_members_per_network', '50');
         $requestedMax = $request->input('max_members', $maxMembersLimit);
 
         $network = VpnNetwork::create([
@@ -279,29 +279,11 @@ class LocalVpnRelayController extends Controller
             ], 409);
         }
 
-        // Freemium: check if network owner has a paid license
-        // Free users are limited to 5 members per network
-        $ownerHasPaidLicense = false;
-        if ($network->owner_user_id) {
-            $ownerHasPaidLicense = LicenseKey::where('user_id', $network->owner_user_id)
-                ->where('status', 'active')
-                ->where('license_type', '!=', 'free')
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
-                ->exists();
-        } else {
-            // Owner has no user_id — check by machine_id via owner_device_id
-            $ownerHasPaidLicense = LicenseKey::where('machine_id', $network->owner_device_id)
-                ->where('status', 'active')
-                ->where('license_type', '!=', 'free')
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
-                ->exists();
-        }
+        // Freemium: a network whose owner runs Pro (a paid LocalVPN key or the running 30-day trial)
+        // takes up to its max_members; a free owner's network stops at 5 members.
+        // Only LocalVPN keys count — it used to accept a paid key of ANY product the owner had.
+        $ownerHasPaidLicense = LocalVpnLicenses::userHasPremium($network->owner_user_id)
+            || LocalVpnLicenses::machineHasPremium($network->owner_device_id);
 
         if (! $ownerHasPaidLicense) {
             $currentMemberCount = VpnNetworkMember::where('network_id', $network->id)->count();
@@ -717,66 +699,14 @@ class LocalVpnRelayController extends Controller
 
     // ==================== Private Helpers ====================
 
+    /**
+     * The device's key: the one it sent if this machine holds it (a seat of a two-device key
+     * included), else its best usable key — paid, then a running trial, then FREE — and when it
+     * has none, its FREE key, created here (firstOrCreate: the 30-second heartbeat calls this too).
+     */
     private function validateDeviceAuth(Request $request): ?LicenseKey
     {
-        $licenseKey = $request->input('license_key');
-        $machineId = $request->input('machine_id');
-
-        if (! $machineId) {
-            return null;
-        }
-
-        $product = Product::where('slug', 'localvpn')->where('requires_license', true)->first();
-        if (! $product) {
-            return null;
-        }
-
-        // Try license_key + machine_id first (paid users)
-        if ($licenseKey) {
-            $license = LicenseKey::where('license_key', $licenseKey)
-                ->where('product_id', $product->id)
-                ->where('machine_id', $machineId)
-                ->where('status', 'active')
-                ->first();
-
-            if ($license && ! $license->isExpired()) {
-                return $license;
-            }
-        }
-
-        // Fallback: find any active non-expired license for this machine_id.
-        // Prioritize paid > free > demo to avoid picking expired demo when free exists.
-        $typeOrder = ['lifetime', 'yearly', 'monthly', 'weekly', 'daily', 'free', 'demo'];
-
-        $license = LicenseKey::where('product_id', $product->id)
-            ->where('machine_id', $machineId)
-            ->where('status', 'active')
-            ->orderByRaw(SqlDialect::field('license_type', $typeOrder), $typeOrder)
-            ->get()
-            ->first(fn ($l) => ! $l->isExpired());
-
-        if ($license) {
-            return $license;
-        }
-
-        // Self-healing: auto-create free license ONLY if none exists at all.
-        // Use firstOrCreate to prevent duplicates from concurrent requests
-        // (e.g., heartbeat every 30s calling validateDeviceAuth).
-        return LicenseKey::firstOrCreate(
-            [
-                'product_id' => $product->id,
-                'machine_id' => $machineId,
-                'license_type' => 'free',
-                'status' => 'active',
-            ],
-            [
-                'license_key' => 'FREE-' . strtoupper(Str::random(20)),
-                'machine_fingerprint' => $machineId,
-                'activated_at' => now(),
-                'max_activations' => 1,
-                'activations' => 1,
-            ]
-        );
+        return LocalVpnLicenses::forDevice($request->input('license_key'), $request->input('machine_id'));
     }
 
     private function formatMember(VpnNetworkMember $member): array
