@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
 use App\Http\Controllers\Admin\LocalVpnController;
+use App\Http\Controllers\Admin\LocalVpnFleetController;
 use App\Http\Controllers\Admin\LoginSecurityController;
 use App\Http\Controllers\Admin\MetalXAiController;
 use App\Http\Controllers\Admin\MetalXAnalyticsController;
@@ -1648,6 +1649,24 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/traffic', [LocalVpnController::class, 'trafficLogs'])->name('traffic');
         Route::get('/settings', [LocalVpnController::class, 'settings'])->name('settings');
         Route::post('/settings', [LocalVpnController::class, 'updateSettings'])->name('settings.update');
+
+        // ==================== Relay Fleet (nodes, policy, cost) ====================
+        Route::prefix('fleet')->name('fleet.')->group(function () {
+            Route::get('/', [LocalVpnFleetController::class, 'nodes'])->name('nodes');
+            Route::get('/nodes/create', [LocalVpnFleetController::class, 'createNode'])->name('nodes.create');
+            Route::post('/nodes', [LocalVpnFleetController::class, 'storeNode'])->name('nodes.store');
+            Route::get('/nodes/{node}/edit', [LocalVpnFleetController::class, 'editNode'])->name('nodes.edit');
+            Route::put('/nodes/{node}', [LocalVpnFleetController::class, 'updateNode'])->name('nodes.update');
+            Route::post('/nodes/{node}/rotate-secret', [LocalVpnFleetController::class, 'rotateSecret'])->name('nodes.rotate');
+            Route::post('/nodes/{node}/toggle', [LocalVpnFleetController::class, 'toggleNode'])->name('nodes.toggle');
+            Route::delete('/nodes/{node}', [LocalVpnFleetController::class, 'destroyNode'])->name('nodes.delete');
+            Route::get('/policy', [LocalVpnFleetController::class, 'policy'])->name('policy');
+            Route::post('/policy', [LocalVpnFleetController::class, 'updatePolicy'])->name('policy.update');
+            Route::post('/game-profiles', [LocalVpnFleetController::class, 'storeGameProfile'])->name('game-profiles.store');
+            Route::put('/game-profiles/{profile}', [LocalVpnFleetController::class, 'updateGameProfile'])->name('game-profiles.update');
+            Route::delete('/game-profiles/{profile}', [LocalVpnFleetController::class, 'destroyGameProfile'])->name('game-profiles.delete');
+            Route::get('/cost', [LocalVpnFleetController::class, 'cost'])->name('cost');
+        });
 
         // ==================== BitTorrent Management ====================
         Route::prefix('torrent')->name('torrent.')->group(function () {
