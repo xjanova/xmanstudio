@@ -35,6 +35,9 @@ class LocalVpnWebController extends Controller
 
     private const WALLET_DISCOUNT_PERCENT = 10;
 
+    /** ตัวติดตั้ง Windows (Inno Setup) ในทุก release — ชื่อตามที่ .github/workflows/release.yml ของแอปตั้ง */
+    private const WINDOWS_INSTALLER = 'LocalVPN-Setup-v%s.exe';
+
     /**
      * The plans this page offers: names, durations, features. What each one
      * costs is in config/licenses.php; pricedPlans() puts the two together.
@@ -165,18 +168,12 @@ class LocalVpnWebController extends Controller
     public function downloadPage()
     {
         $product = Product::where('slug', 'localvpn')->first();
-        $version = null;
-
-        if ($product) {
-            $version = ProductVersion::where('product_id', $product->id)
-                ->where('is_active', true)
-                ->orderByDesc('version')
-                ->first();
-        }
+        $version = $product ? $this->activeVersion($product) : null;
 
         return view('localvpn.download', [
             'product' => $product,
             'version' => $version,
+            'windowsInstaller' => $version ? self::windowsInstaller($version) : null,
         ]);
     }
 
@@ -195,12 +192,48 @@ class LocalVpnWebController extends Controller
             return $this->downloadUnavailable($request, route('localvpn.download'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
         }
 
-        $version = ProductVersion::where('product_id', $product->id)
+        return $this->serveApk($request, $product, $this->activeVersion($product), route('localvpn.download'), 'LocalVPN');
+    }
+
+    /**
+     * ตัวติดตั้ง Windows ของ LocalVPN (LocalVPN-Setup-v{เวอร์ชัน}.exe) — ไฟล์ใน release เดียวกับ APK ส่งจาก xman4289.com เอง
+     * ผ่าน ReleaseDownloadStreamer ห้าม redirect ไป GitHub (กฎเจ้าของ 2026-09-24)
+     *
+     * GET /localvpn/download/windows/{version?} — ตัวอัปเดตในแอปบน Windows (update/check?platform=windows) ระบุเวอร์ชัน
+     * ให้ไฟล์ตรงกับ sha256 ที่ประกาศไว้ · ไม่ระบุ (ปุ่มในหน้าโหลด) = ตัวที่ active แบบเดียวกับ APK
+     */
+    public function downloadWindows(Request $request, ?string $version = null)
+    {
+        $product = Product::where('slug', 'localvpn')->first();
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, route('localvpn.download'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        $release = $version !== null ? $this->releaseFor($product, $version) : $this->activeVersion($product);
+        $installer = $release ? self::windowsInstaller($release) : null;
+
+        return $this->serveRelease($request, $product, $installer ? $release->withReleaseAsset($installer) : null, route('localvpn.download'));
+    }
+
+    /**
+     * ตัวติดตั้ง Windows ในไฟล์ของเวอร์ชันนี้ — null เมื่อ release ไม่มี หรือ sync ไว้ก่อนเริ่มเก็บรายการไฟล์
+     * update/check ใช้ตัวเดียวกันประกาศขนาดและ sha256 ให้แอปบน Windows
+     *
+     * @return ?array{name: string, size: ?int, sha256: ?string, download_url: ?string, api_url: ?string}
+     */
+    public static function windowsInstaller(ProductVersion $version): ?array
+    {
+        return $version->releaseAsset(sprintf(self::WINDOWS_INSTALLER, $version->version));
+    }
+
+    /** เวอร์ชันที่หน้าเว็บกับปุ่มโหลดของ LocalVPN ส่งให้ลูกค้า: ตัวที่ active */
+    private function activeVersion(Product $product): ?ProductVersion
+    {
+        return ProductVersion::where('product_id', $product->id)
             ->where('is_active', true)
             ->orderByDesc('version')
             ->first();
-
-        return $this->serveApk($request, $product, $version, route('localvpn.download'), 'LocalVPN');
     }
 
     /**

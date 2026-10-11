@@ -240,6 +240,9 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['HEAD', route('tping.download.apk')],
             ['GET', route('smschecker.download.apk')],
             ['GET', route('localvpn.download.apk')],
+            ['GET', route('localvpn.download.windows')],
+            ['GET', route('localvpn.download.windows', ['version' => '1.0.40'])],
+            ['HEAD', route('localvpn.download.windows', ['version' => '1.0.40'])],
             ['GET', route('download.product', ['slug' => 'some-desktop-app', 'version' => '2.0.0'])],
             ['POST', route('download.api', ['slug' => 'some-desktop-app'])],
             ['POST', route('download.api', ['slug' => 'some-desktop-app', 'version' => '2.0.0'])],
@@ -250,7 +253,7 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
         foreach ([
             route('download.page', ['slug' => 'some-desktop-app']), // หน้า HTML
             '/tping/download', '/smschecker/download', '/localvpn/download', '/tping/install-guide', // หน้าของแอป APK
-            '/tping/download/apkx', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
+            '/tping/download/apkx', '/localvpn/download/windowsx', '/tping/download/windows', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
             '/apps/aipray', '/apps/aipray/donate', '/chanthra-studio', '/chanthra-studio/manual', '/autotradex/pricing', // หน้าของแอปที่โหลดฟรี
             '/brainx', '/brainx/downloads',
             '/products/anti-x', '/anti-x', '/anti-x/downloads',

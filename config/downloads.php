@@ -85,7 +85,7 @@ return [
         'winx-tools' => 'Windows',
         'aipray' => 'Android',
         'giggok' => 'Android',
-        'localvpn' => 'Android',
+        'localvpn' => 'Android, Windows',
         'smschecker' => 'Android',
         'tping' => 'Android',
     ],
