@@ -18,6 +18,9 @@ use Illuminate\Support\Str;
 
 class LocalVpnRelayController extends Controller
 {
+    /** `v<wire version>:<base64 X25519 public key>`; the server only relays it. */
+    private const P2P_KEY_RULE = ['nullable', 'string', 'max:64', 'regex:/^v\d{1,3}:[A-Za-z0-9+\/]{43}=$/'];
+
     /**
      * Create a new VPN network.
      * POST /api/v1/localvpn/networks
@@ -34,6 +37,7 @@ class LocalVpnRelayController extends Controller
             'license_key' => 'nullable|string',
             'machine_id' => 'required|string|max:255',
             'device_id' => 'nullable|string|max:255',
+            'p2p_key' => self::P2P_KEY_RULE,
         ]);
 
         // Validate license + device
@@ -113,6 +117,7 @@ class LocalVpnRelayController extends Controller
             'virtual_ip' => $virtualIp,
             'public_ip' => $request->ip(),
             'public_port' => $request->input('public_port'),
+            'p2p_key' => $request->input('p2p_key'),
             'is_online' => true,
             'last_heartbeat_at' => now(),
             'joined_at' => now(),
@@ -210,6 +215,7 @@ class LocalVpnRelayController extends Controller
             'password' => 'nullable|string',
             'public_ip' => 'nullable|ip',
             'public_port' => 'nullable|integer|min:1|max:65535',
+            'p2p_key' => self::P2P_KEY_RULE,
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -250,6 +256,7 @@ class LocalVpnRelayController extends Controller
                 'device_id' => $request->input('device_id'),
                 'public_ip' => $request->input('public_ip', $request->ip()),
                 'public_port' => $request->input('public_port'),
+                'p2p_key' => $request->input('p2p_key'),
                 'is_online' => true,
                 'last_heartbeat_at' => now(),
             ]);
@@ -323,6 +330,7 @@ class LocalVpnRelayController extends Controller
             'virtual_ip' => $virtualIp,
             'public_ip' => $request->input('public_ip', $request->ip()),
             'public_port' => $request->input('public_port'),
+            'p2p_key' => $request->input('p2p_key'),
             'is_online' => true,
             'last_heartbeat_at' => now(),
             'joined_at' => now(),
@@ -423,6 +431,7 @@ class LocalVpnRelayController extends Controller
             'public_port' => 'nullable|integer|min:1|max:65535',
             'vpn_gateway_country' => 'nullable|string|size:2',
             'vpn_gateway_hostname' => 'nullable|string|max:255',
+            'p2p_key' => self::P2P_KEY_RULE,
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -453,12 +462,13 @@ class LocalVpnRelayController extends Controller
             return response()->json(['success' => false, 'error' => 'Not a member of this network.'], 404);
         }
 
-        // Update heartbeat + VPN gateway status
+        // Update heartbeat + VPN gateway status + P2P public key
         $member->updateHeartbeat(
             $request->input('public_ip', $request->ip()),
             $request->input('public_port'),
             $request->input('vpn_gateway_country'),
-            $request->input('vpn_gateway_hostname')
+            $request->input('vpn_gateway_hostname'),
+            $request->input('p2p_key')
         );
 
         // Mark stale members as offline
@@ -870,6 +880,7 @@ class LocalVpnRelayController extends Controller
             'public_port' => $member->public_port,
             'vpn_gateway_country' => $member->vpn_gateway_country,
             'vpn_gateway_hostname' => $member->vpn_gateway_hostname,
+            'p2p_key' => $member->p2p_key,
             'is_online' => $member->is_online,
             'last_heartbeat_at' => $member->last_heartbeat_at?->toISOString(),
             'joined_at' => $member->joined_at?->toISOString(),
