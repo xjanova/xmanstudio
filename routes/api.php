@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\GlobalTorrentController;
 use App\Http\Controllers\Api\GpuxMineNodeController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\LocalVpnFileController;
+use App\Http\Controllers\Api\LocalVpnGameProfileController;
+use App\Http\Controllers\Api\LocalVpnNodeController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
 use App\Http\Controllers\Api\PackController;
 use App\Http\Controllers\Api\ProductLicenseController;
@@ -498,7 +500,13 @@ Route::prefix('aipray')->middleware(['throttle:60,1,api-aipray'])->group(functio
 });
 
 // ==================== LocalVPN Relay API ====================
-Route::prefix('v1/localvpn')->middleware(['throttle:120,1,api-localvpn'])->group(function () {
+// Quota per device, not per address: players behind one café router or a Thai ISP's CGNAT
+// share an IP, and the old 120/min per IP (plus throttle:api's 60/min per IP) answered their
+// heartbeats and signal polls with 429. See the 'localvpn' limiter in AppServiceProvider.
+Route::prefix('v1/localvpn')
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:localvpn'])
+    ->group(function () {
     Route::post('/networks', [LocalVpnRelayController::class, 'createNetwork']);
     Route::get('/networks', [LocalVpnRelayController::class, 'listNetworks']);
     Route::post('/networks/join', [LocalVpnRelayController::class, 'joinNetwork']);
@@ -548,7 +556,18 @@ Route::prefix('v1/localvpn')->middleware(['throttle:120,1,api-localvpn'])->group
     Route::post('/wireguard/register', [WireguardController::class, 'register']);
     Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
     Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
+
+    // Game server ranges for the ping-booster split tunnel (cached 5 min)
+    Route::get('/game-profiles', [LocalVpnGameProfileController::class, 'index'])->name('api.localvpn.game-profiles');
 });
+
+// Relay-fleet nodes report usage and pull their config every 10 s, authenticated by an HMAC
+// over their own secret (docs/RELAY_FLEET.md). Own limiter keyed by node id + address, so app
+// traffic sharing the per-IP ceilings can never starve it, and nobody else can burn its quota.
+Route::post('v1/localvpn/node/sync', [LocalVpnNodeController::class, 'sync'])
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:localvpn-node'])
+    ->name('api.localvpn.node.sync');
 
 // WireGuard admin status (requires authentication)
 Route::prefix('v1/localvpn')->middleware(['auth:sanctum', 'throttle:30,1,api-localvpn-auth'])->group(function () {

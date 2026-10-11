@@ -236,6 +236,47 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // /api/v1/localvpn/* — the LocalVPN app: heartbeat every 15 s, signal polls, file lists.
+        // Players behind one café router or a Thai ISP's CGNAT share an address, so the budget is
+        // per device: the machine_id the app sends (body, query or X-Device-Id) together with the
+        // address — a network peer who learns your machine_id still can't burn your quota from
+        // elsewhere. A looser per-address ceiling stops anyone minting machine_ids to dodge it.
+        RateLimiter::for('localvpn', function (Request $request) {
+            $device = $request->input('machine_id')
+                ?? $request->input('source_machine_id')
+                ?? $request->header('X-Device-Id');
+            $device = is_string($device) && $device !== '' ? mb_substr($device, 0, 128) : null;
+            $tooMany = fn (Request $request, array $headers) => response()->json([
+                'success' => false,
+                'error' => 'ส่งคำขอถี่เกินไป — รอสักครู่แล้วลองใหม่',
+                'code' => 'RATE_LIMIT_EXCEEDED',
+            ], 429, $headers);
+
+            return [
+                Limit::perMinute(240)
+                    ->by('lv-device:' . ($device !== null ? sha1($device) : 'ip') . '|' . $request->ip())
+                    ->response($tooMany),
+                Limit::perMinute(2000)->by('lv-ip:' . $request->ip())->response($tooMany),
+            ];
+        });
+
+        // /api/v1/localvpn/node/sync — relay-fleet nodes, one sync every 10 s. Keyed by the claimed
+        // node id and the address it comes from, so forged requests from elsewhere cannot use up a
+        // real node's budget; the per-address ceiling caps anyone cycling through ids.
+        RateLimiter::for('localvpn-node', function (Request $request) {
+            $node = (string) $request->header('X-Node-Id', '');
+            $node = preg_match('/^\d{1,10}$/', $node) ? $node : 'invalid';
+            $tooMany = fn (Request $request, array $headers) => response()->json([
+                'ok' => false,
+                'error' => 'rate-limited',
+            ], 429, $headers);
+
+            return [
+                Limit::perMinute(60)->by('lv-node:' . $node . '|' . $request->ip())->response($tooMany),
+                Limit::perMinute(600)->by('lv-node-ip:' . $request->ip())->response($tooMany),
+            ];
+        });
+
         // /api/v1/product/winx-tools/disk-benchmarks — anonymous disk speed tests uploaded by WinXTools.
         // Counted per address: before the body is validated there is nothing else to count by. The
         // controller also holds each installation to 30 a day, counted from the stored rows.

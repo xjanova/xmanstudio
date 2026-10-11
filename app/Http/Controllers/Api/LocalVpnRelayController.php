@@ -10,6 +10,7 @@ use App\Models\VpnNetwork;
 use App\Models\VpnNetworkMember;
 use App\Models\VpnRelaySession;
 use App\Models\VpnTrafficLog;
+use App\Services\LocalVpnFleet\RelayTicketIssuer;
 use App\Support\SqlDialect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -474,10 +475,15 @@ class LocalVpnRelayController extends Controller
             ->get()
             ->map(fn ($p) => $this->formatMember($p));
 
+        // LVR1 relay ticket for when hole punching fails (docs/RELAY_FLEET.md). Never allowed
+        // to break the heartbeat itself: any fault here just means no relay this round.
+        $relay = rescue(fn () => app(RelayTicketIssuer::class)->forMember($member, $license), null);
+
         return response()->json([
             'success' => true,
             'peers' => $peers,
             'network_active' => $network->is_active,
+            'relay' => $relay,
         ]);
     }
 
@@ -525,102 +531,16 @@ class LocalVpnRelayController extends Controller
     }
 
     /**
-     * Relay data between peers (when P2P fails).
-     * POST /api/v1/localvpn/relay
+     * POST /api/v1/localvpn/relay — retired.
+     *
+     * It only ever logged byte counts and never delivered the data to the
+     * other peer, while writing two rows per packet. Relaying now happens over
+     * UDP on the fleet's LVR1 nodes (ticket in the heartbeat). Old apps still
+     * call this, so it answers 410 straight away: no validation, no database.
      */
-    public function relayData(Request $request): JsonResponse
+    public function relayData(): JsonResponse
     {
-        $request->validate([
-            'slug' => 'required|string',
-            'source_machine_id' => 'required|string|max:255',
-            'license_key' => 'nullable|string',
-            'target_virtual_ip' => 'required|string',
-            'data' => 'required|string|max:65536', // base64 encoded
-        ]);
-
-        // Validate auth using source_machine_id as machine_id
-        $request->merge(['machine_id' => $request->input('source_machine_id')]);
-        $license = $this->validateDeviceAuth($request);
-        if (! $license) {
-            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
-        }
-
-        $network = VpnNetwork::where('slug', $request->input('slug'))->active()->first();
-
-        if (! $network) {
-            return response()->json(['success' => false, 'error' => 'Network not found or inactive.'], 404);
-        }
-
-        $sourceMember = VpnNetworkMember::where('network_id', $network->id)
-            ->where('machine_id', $request->input('source_machine_id'))
-            ->first();
-
-        if (! $sourceMember) {
-            return response()->json(['success' => false, 'error' => 'Source is not a member.'], 403);
-        }
-
-        $targetMember = VpnNetworkMember::where('network_id', $network->id)
-            ->where('virtual_ip', $request->input('target_virtual_ip'))
-            ->where('is_online', true)
-            ->first();
-
-        if (! $targetMember) {
-            return response()->json(['success' => false, 'error' => 'Target member not found or offline.'], 404);
-        }
-
-        // Check data relay limit
-        $dataLimitMb = (int) Setting::getValue('localvpn_data_relay_limit_mb', '100');
-        $dataBytes = strlen(base64_decode($request->input('data'), true) ?: '');
-
-        // Check daily usage
-        $todayBytes = VpnTrafficLog::where('network_id', $network->id)
-            ->where('action', 'data_relay')
-            ->where('created_at', '>=', now()->startOfDay())
-            ->sum('bytes');
-
-        if (($todayBytes + $dataBytes) > ($dataLimitMb * 1024 * 1024)) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Daily relay data limit exceeded.',
-            ], 429);
-        }
-
-        // Find or create relay session
-        $session = VpnRelaySession::firstOrCreate(
-            [
-                'network_id' => $network->id,
-                'source_member_id' => $sourceMember->id,
-                'target_member_id' => $targetMember->id,
-                'is_active' => true,
-            ],
-            [
-                'started_at' => now(),
-                'bytes_relayed' => 0,
-            ]
-        );
-
-        $session->increment('bytes_relayed', $dataBytes);
-
-        // Log relay
-        VpnTrafficLog::create([
-            'network_id' => $network->id,
-            'member_id' => $sourceMember->id,
-            'action' => 'data_relay',
-            'bytes' => $dataBytes,
-            'ip_address' => $request->ip(),
-            'created_at' => now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'relayed_bytes' => $dataBytes,
-            'target' => [
-                'display_name' => $targetMember->display_name,
-                'virtual_ip' => $targetMember->virtual_ip,
-                'public_ip' => $targetMember->public_ip,
-                'public_port' => $targetMember->public_port,
-            ],
-        ]);
+        return response()->json(['success' => false, 'error' => 'relay moved to UDP'], 410);
     }
 
     /**
