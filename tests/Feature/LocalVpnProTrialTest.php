@@ -149,6 +149,16 @@ class LocalVpnProTrialTest extends TestCase
         $this->demo('a', self::PC_HASH)->assertForbidden()->assertJsonPath('error_code', 'TRIAL_ALREADY_USED');
     }
 
+    public function test_the_device_record_alone_remembers_a_used_trial(): void
+    {
+        // the DEMO key was deleted in the admin; the device row still counts its attempt
+        $demo = $this->demo('a', null)->json('data.license_key');
+        LicenseKey::where('license_key', $demo)->delete();
+        $this->travel(31)->days();
+
+        $this->demo('a', null)->assertForbidden()->assertJsonPath('error_code', 'TRIAL_ALREADY_USED');
+    }
+
     public function test_reinstalling_does_not_restart_the_trial_on_the_same_hardware(): void
     {
         $this->registerDevice('a', self::PC_HASH)->assertOk();
