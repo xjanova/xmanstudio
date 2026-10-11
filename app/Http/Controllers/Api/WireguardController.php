@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\WireguardClient;
 use App\Models\WireguardServer;
+use App\Services\LocalVpnFleet\ExitAccess;
+use App\Services\LocalVpnFleet\MachineLicenses;
 use App\Services\WireguardService;
+use App\Support\LocalVpnFleet\FleetPolicy;
 use App\Support\LocalVpnLicenses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +18,7 @@ class WireguardController extends Controller
 {
     public function __construct(
         private readonly WireguardService $wireguard,
+        private readonly ExitAccess $exits,
     ) {}
 
     /**
@@ -41,16 +45,28 @@ class WireguardController extends Controller
         }
 
         $isPremium = $this->isPremiumLicense($license);
-        $countryCode = $request->input('country_code');
+        $countryCode = $request->input('country_code') ? strtoupper($request->input('country_code')) : null;
         $serverId = $request->input('server_id');
+        $machineId = $request->input('machine_id');
 
         // Enforce country restriction for free users
         $freeCountries = ['TH', 'JP', 'US', 'KR', 'SG', 'IN', 'GB', 'DE', 'AU', 'CA'];
 
+        // Exits on fleet nodes follow the fleet policy (vpn mode = Pro only, game mode = tiers
+        // with game: true, node budget, daily exit cap); the web server's own exit keeps the
+        // free-country rule.
+        $allowed = fn (WireguardServer $server) => $server->isNodeManaged()
+            ? $this->exits->refusal($server, $machineId, $license) === null
+            : ($isPremium || in_array($server->country_code, $freeCountries));
+
         // If a specific server ID is given, verify access
-        if ($serverId && ! $isPremium) {
+        if ($serverId) {
             $targetServer = WireguardServer::find($serverId);
-            if ($targetServer && ! in_array($targetServer->country_code, $freeCountries)) {
+            if ($targetServer && $targetServer->isNodeManaged()) {
+                if ($refusal = $this->exits->refusal($targetServer, $machineId, $license)) {
+                    return response()->json(['success' => false, 'error' => $refusal['error']], $refusal['status']);
+                }
+            } elseif ($targetServer && ! $isPremium && ! in_array($targetServer->country_code, $freeCountries)) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Premium subscription required for this server.',
@@ -58,24 +74,39 @@ class WireguardController extends Controller
             }
         }
 
-        // If a country code is specified, verify access
-        if ($countryCode && ! $isPremium && ! in_array(strtoupper($countryCode), $freeCountries)) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Premium subscription required for this country.',
-            ], 403);
-        }
-
-        // If a country code is specified but no server ID, find server in that country
         if ($countryCode && ! $serverId) {
-            $server = $this->wireguard->findBestServer($countryCode, $isPremium);
+            $inCountry = WireguardServer::active()->healthy()->where('country_code', $countryCode)->get();
+            $fleetOnly = $inCountry->isNotEmpty() && $inCountry->every(fn (WireguardServer $s) => $s->isNodeManaged());
+
+            // Only fleet nodes serve this country and none will take this device: say why,
+            // instead of quietly connecting it somewhere else.
+            if ($fleetOnly && ! $inCountry->contains($allowed)) {
+                $refusal = $this->exits->refusal($inCountry->first(), $machineId, $license);
+
+                return response()->json([
+                    'success' => false,
+                    'error' => $refusal['error'] ?? 'เซิร์ฟเวอร์นี้เต็มชั่วคราว กรุณาลองใหม่ภายหลัง',
+                ], $refusal['status'] ?? 503);
+            }
+
+            // If a country code is specified, verify access
+            if (! $fleetOnly && ! $isPremium && ! in_array($countryCode, $freeCountries)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Premium subscription required for this country.',
+                ], 403);
+            }
+
+            // Find a server in that country
+            $server = $this->wireguard->findBestServer($countryCode, $isPremium, $allowed);
             $serverId = $server?->id;
         }
 
         $result = $this->wireguard->registerClient(
-            $request->input('machine_id'),
+            $machineId,
             $request->input('public_key'),
             $serverId,
+            $allowed,
         );
 
         if (! $result['success']) {
@@ -117,12 +148,18 @@ class WireguardController extends Controller
         // Free countries (same as VPN proxy)
         $freeCountries = ['TH', 'JP', 'US', 'KR', 'SG', 'IN', 'GB', 'DE', 'AU', 'CA'];
 
-        $allServers = WireguardServer::active()->healthy()->get();
+        $allServers = WireguardServer::active()->healthy()->with('node')->get()
+            // Fleet exits whose node has gone quiet are not offered at all.
+            ->filter(fn (WireguardServer $server) => ! $server->isNodeManaged() || $this->exits->usable($server));
+
+        $policy = FleetPolicy::current();
+        $tier = app(MachineLicenses::class)->tierFor($request->input('machine_id'), $license);
 
         $available = [];
         $locked = [];
 
         foreach ($allServers as $server) {
+            $mode = $server->node?->exitMode();
             $serverData = [
                 'id' => $server->id,
                 'name' => $server->name,
@@ -131,9 +168,14 @@ class WireguardController extends Controller
                 'endpoint' => $server->endpoint,
                 'load' => $server->getCurrentLoad(),
                 'is_healthy' => $server->is_healthy,
+                'mode' => $mode,
             ];
 
-            if ($isPremium || in_array($server->country_code, $freeCountries)) {
+            $open = $server->isNodeManaged()
+                ? ExitAccess::tierAllowed($mode, $tier, $policy)
+                : ($isPremium || in_array($server->country_code, $freeCountries));
+
+            if ($open) {
                 $available[] = $serverData;
             } else {
                 $locked[] = $serverData;
