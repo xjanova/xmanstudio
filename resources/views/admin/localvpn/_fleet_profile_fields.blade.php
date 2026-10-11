@@ -26,6 +26,11 @@
     </div>
 </div>
 <div>
+    <label class="block text-xs font-medium text-gray-700 mb-1">จุดวัดปิง (ไม่บังคับ)</label>
+    <input type="text" name="probe_host" maxlength="32" placeholder="43.229.65.10:443" value="{{ $useOld ? old('probe_host') : $profile->probe_host }}" class="{{ $input }} text-sm font-mono">
+    <p class="mt-1 text-xs text-gray-500">IPv4 ในช่วง CIDR ด้านล่างที่ตอบ TCP (เช่นเซิร์ฟเวอร์ล็อกอินของเกม) — แอปใช้วัดปิงผ่าน game exit</p>
+</div>
+<div>
     <label class="block text-xs font-medium text-gray-700 mb-1">CIDR (บรรทัดละหนึ่ง)</label>
     <textarea name="cidrs" rows="6" required placeholder="# ตัวอย่าง&#10;43.229.64.0/18" class="{{ $input }} font-mono text-xs">{{ $useOld ? old('cidrs') : $profile->cidrs }}</textarea>
 </div>

@@ -410,10 +410,12 @@ class LocalVpnFleetController extends Controller
             'slug' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/', Rule::unique('vpn_game_profiles', 'slug')->ignore($profile?->id)],
             'region' => ['nullable', 'string', 'max:64'],
             'cidrs' => ['required', 'string', 'max:60000'],
+            'probe_host' => ['nullable', 'string', 'max:32', 'regex:/^\d{1,3}(\.\d{1,3}){3}(:\d{1,5})?$/'],
             'enabled' => ['nullable', 'boolean'],
             'sort' => ['nullable', 'integer', 'min:-100000', 'max:100000'],
         ], [
             'slug.regex' => 'slug ใช้ได้เฉพาะ a-z 0-9 และขีด เช่น rov-sea',
+            'probe_host.regex' => 'จุดวัดปิงต้องเป็น IPv4 หรือ IPv4:พอร์ต เช่น 43.229.65.10:443',
         ]);
 
         $validator->after(function (Validator $v) use ($request) {
@@ -427,6 +429,23 @@ class LocalVpnFleetController extends Controller
             if (count($cidrs) > 2000) {
                 $v->errors()->add('cidrs', 'มี CIDR ได้ไม่เกิน 2000 บรรทัดต่อโปรไฟล์');
             }
+
+            // The exit forwards only to the profile's ranges: a probe outside
+            // them could never answer through it.
+            $probe = trim((string) $request->input('probe_host'));
+            if ($probe !== '' && $cidrs !== []) {
+                [$ip, $port] = array_pad(explode(':', $probe, 2), 2, '443');
+                $inside = false;
+                foreach ($cidrs as $cidr) {
+                    $inside = $inside || Ipv4Cidr::contains($cidr, $ip);
+                }
+                if (! $inside) {
+                    $v->errors()->add('probe_host', 'จุดวัดปิงต้องอยู่ในช่วง CIDR ของเกมนี้');
+                }
+                if ((int) $port < 1 || (int) $port > 65535) {
+                    $v->errors()->add('probe_host', 'พอร์ตต้องอยู่ระหว่าง 1–65535');
+                }
+            }
         });
 
         $data = $validator->validateWithBag($bag);
@@ -436,6 +455,7 @@ class LocalVpnFleetController extends Controller
             'slug' => $data['slug'],
             'region' => $data['region'] ?? null,
             'cidrs' => str_replace("\r\n", "\n", trim($data['cidrs'])),
+            'probe_host' => ($data['probe_host'] ?? '') !== '' ? trim($data['probe_host']) : null,
             'enabled' => (bool) ($data['enabled'] ?? false),
             'sort' => (int) ($data['sort'] ?? 0),
         ];

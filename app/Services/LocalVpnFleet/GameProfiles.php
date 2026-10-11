@@ -19,7 +19,7 @@ final class GameProfiles
 
     private const TTL_SECONDS = 300;
 
-    /** @return list<array{slug: string, name: string, region: ?string, cidrs: list<string>}> */
+    /** @return list<array{slug: string, name: string, region: ?string, cidrs: list<string>, probe_host: ?string}> */
     public static function publicList(): array
     {
         return Cache::remember(self::PUBLIC_KEY, self::TTL_SECONDS, fn () => VpnGameProfile::enabled()
@@ -31,6 +31,7 @@ final class GameProfiles
                 'name' => $profile->name,
                 'region' => $profile->region,
                 'cidrs' => $profile->cidrList(),
+                'probe_host' => $profile->probe_host,
             ])
             ->filter(fn (array $profile) => $profile['cidrs'] !== [])
             ->values()

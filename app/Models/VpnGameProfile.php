@@ -17,6 +17,7 @@ class VpnGameProfile extends Model
         'slug',
         'region',
         'cidrs',
+        'probe_host',
         'enabled',
         'sort',
     ];

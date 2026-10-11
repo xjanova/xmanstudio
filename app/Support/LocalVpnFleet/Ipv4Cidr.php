@@ -103,6 +103,20 @@ final class Ipv4Cidr
         return [array_keys($cidrs), $errors];
     }
 
+    /** Whether IPv4 $ip lies inside "a.b.c.d/n". */
+    public static function contains(string $cidr, string $ip): bool
+    {
+        [$net, $prefix] = array_pad(explode('/', $cidr, 2), 2, '32');
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false
+            || filter_var($net, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+            return false;
+        }
+        [$start, $end] = self::range($net, (int) $prefix);
+        $long = ip2long($ip);
+
+        return $long >= $start && $long <= $end;
+    }
+
     /** @return array{0: int, 1: int} first and last address as integers */
     private static function range(string $ip, int $prefix): array
     {

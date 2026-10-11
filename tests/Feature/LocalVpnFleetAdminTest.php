@@ -226,6 +226,18 @@ class LocalVpnFleetAdminTest extends TestCase
         $saved = VpnGameProfile::firstOrFail();
         $this->assertSame(['43.229.64.0/18', '103.6.0.0/16'], $saved->cidrList());
 
+        // The probe must sit inside the ranges the exit forwards.
+        $this->actingAs($this->admin)
+            ->put(route('admin.localvpn.fleet.game-profiles.update', $saved), $profile + ['cidrs' => '43.229.64.0/18', 'probe_host' => '8.8.8.8:443'])
+            ->assertSessionHasErrorsIn('profileUpdate', ['probe_host']);
+        $this->actingAs($this->admin)
+            ->put(route('admin.localvpn.fleet.game-profiles.update', $saved), $profile + ['cidrs' => '43.229.64.0/18', 'probe_host' => 'login.example.com'])
+            ->assertSessionHasErrorsIn('profileUpdate', ['probe_host']);
+        $this->actingAs($this->admin)
+            ->put(route('admin.localvpn.fleet.game-profiles.update', $saved), $profile + ['cidrs' => "43.229.64.0/18\n103.6.0.0/16", 'probe_host' => '43.229.65.10:7000'])
+            ->assertSessionHasNoErrors();
+        $this->assertSame('43.229.65.10:7000', $saved->refresh()->probe_host);
+
         $this->actingAs($this->admin)
             ->put(route('admin.localvpn.fleet.game-profiles.update', $saved), $profile + ['cidrs' => '172.16.0.0/12'])
             ->assertSessionHasErrorsIn('profileUpdate', ['cidrs']);

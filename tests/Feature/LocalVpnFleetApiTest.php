@@ -64,15 +64,15 @@ class LocalVpnFleetApiTest extends TestCase
         $this->getJson('/api/v1/localvpn/game-profiles')->assertOk()->assertExactJson(['profiles' => []]);
 
         VpnGameProfile::create(['name' => 'RoV', 'slug' => 'rov', 'region' => 'SEA', 'cidrs' => "# Garena\n43.229.64.0/18\n103.6.0.0/16", 'sort' => 2]);
-        VpnGameProfile::create(['name' => 'Valorant', 'slug' => 'valorant', 'region' => 'SG', 'cidrs' => '43.229.65.0/24', 'sort' => 1]);
+        VpnGameProfile::create(['name' => 'Valorant', 'slug' => 'valorant', 'region' => 'SG', 'cidrs' => '43.229.65.0/24', 'probe_host' => '43.229.65.10:443', 'sort' => 1]);
         VpnGameProfile::create(['name' => 'Hidden', 'slug' => 'hidden', 'cidrs' => '8.8.8.0/24', 'enabled' => false]);
 
         $this->getJson('/api/v1/localvpn/game-profiles')
             ->assertOk()
             ->assertHeader('Cache-Control')
             ->assertExactJson(['profiles' => [
-                ['slug' => 'valorant', 'name' => 'Valorant', 'region' => 'SG', 'cidrs' => ['43.229.65.0/24']],
-                ['slug' => 'rov', 'name' => 'RoV', 'region' => 'SEA', 'cidrs' => ['43.229.64.0/18', '103.6.0.0/16']],
+                ['slug' => 'valorant', 'name' => 'Valorant', 'region' => 'SG', 'cidrs' => ['43.229.65.0/24'], 'probe_host' => '43.229.65.10:443'],
+                ['slug' => 'rov', 'name' => 'RoV', 'region' => 'SEA', 'cidrs' => ['43.229.64.0/18', '103.6.0.0/16'], 'probe_host' => null],
             ]]);
     }
 }
