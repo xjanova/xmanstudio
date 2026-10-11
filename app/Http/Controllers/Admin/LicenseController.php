@@ -7,6 +7,7 @@ use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Services\LicenseService;
+use App\Support\LicenseSeats;
 use Illuminate\Http\Request;
 
 class LicenseController extends Controller
@@ -288,6 +289,11 @@ class LicenseController extends Controller
             'machine_id' => null,
             'machine_fingerprint' => null,
         ]);
+
+        // A key that runs on several devices (LocalVPN: PC + phone) frees its other seats too
+        if ($license->product) {
+            LicenseSeats::releaseAll($license, $license->product);
+        }
 
         LicenseActivity::log(
             $license,

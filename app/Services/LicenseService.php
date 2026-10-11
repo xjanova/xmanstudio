@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentSetting;
 use App\Models\Product;
+use App\Support\LicensePlans;
 use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -138,7 +139,8 @@ class LicenseService
                 };
 
                 $toGenerate = $item->quantity - $existingCount;
-                $licenses = $this->generateLicenses($licenseType, $toGenerate, 1, $item->product_id);
+                // 1 device per key, unless the product sells more (config/licenses.php devices_per_key — LocalVPN: 2)
+                $licenses = $this->generateLicenses($licenseType, $toGenerate, LicensePlans::devicesPerKey($item->product->slug), $item->product_id);
 
                 foreach ($licenses as $license) {
                     LicenseKey::where('id', $license['id'])->update([

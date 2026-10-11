@@ -40,7 +40,8 @@ return [
         'autotradex' => ['monthly' => 299, 'yearly' => 1990, 'lifetime' => 19900],
         'brainx' => ['monthly' => 399],
         'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
-        'localvpn' => ['monthly' => 399, 'yearly' => 2500, 'lifetime' => 5000],
+        // LocalVPN Pro — owner 2026-10-11 (was 399 / 2,500 / 5,000)
+        'localvpn' => ['monthly' => 199, 'yearly' => 1990, 'lifetime' => 4990],
         'sms-payment-checker' => ['monthly' => 990, 'yearly' => 9900, 'lifetime' => 29900],
         'smschecker' => ['monthly' => 499, 'yearly' => 4990, 'lifetime' => 29000],
         'tping' => ['monthly' => 399, 'yearly' => 2500, 'lifetime' => 5000],
@@ -53,9 +54,28 @@ return [
     |--------------------------------------------------------------------------
     |
     | POST /cart/add with a license_type is accepted only for these. The rest
-    | of the table above has a checkout of its own (/tping, /localvpn,
-    | /smschecker, /autotradex) that ties the purchase to the app's machine id.
+    | of the table above has a checkout of its own (/tping, /smschecker,
+    | /autotradex) that ties the purchase to the app's machine id. LocalVPN
+    | sells both ways: /products/localvpn through the cart (the key is typed
+    | into the app), /localvpn/checkout for the app's own machine-bound flow.
     |
     */
-    'cart_products' => ['anti-x', 'brainx', 'cluadex-ai-coding-assistant', 'sms-payment-checker', 'winx-tools'],
+    'cart_products' => ['anti-x', 'brainx', 'cluadex-ai-coding-assistant', 'localvpn', 'sms-payment-checker', 'winx-tools'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Devices one purchased key runs on
+    |--------------------------------------------------------------------------
+    |
+    | A paid key of a product listed here runs on that many devices at once
+    | (LocalVPN: a PC and a phone). Every key the store issues for it gets this
+    | max_activations, and the product license API binds the extra devices as
+    | seats of the same key (App\Support\LicenseSeats). A product missing here
+    | stays one key = one machine, exactly as before. Trial and free keys are
+    | always one device.
+    |
+    */
+    'devices_per_key' => [
+        'localvpn' => 2,
+    ],
 ];
