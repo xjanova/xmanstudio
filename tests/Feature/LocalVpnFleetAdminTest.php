@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\VpnGameProfile;
 use App\Models\VpnNode;
 use App\Models\WireguardServer;
+use App\Support\LocalVpnFleet\FleetClock;
 use App\Support\LocalVpnFleet\FleetPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -256,7 +257,7 @@ class LocalVpnFleetAdminTest extends TestCase
     {
         $this->actingAs($this->admin)->post(route('admin.localvpn.fleet.nodes.store'), $this->nodeForm(['roles' => ['relay']]));
         $node = VpnNode::firstOrFail();
-        $today = \App\Support\LocalVpnFleet\FleetClock::today();
+        $today = FleetClock::today();
         DB::table('vpn_node_usage_daily')->insert(['node_id' => $node->id, 'date' => $today, 'nic_tx' => 5_000_000_000, 'nic_rx' => 1_000_000_000]);
         DB::table('vpn_user_usage_daily')->insert(['date' => $today, 'kind' => 'relay', 'machine_id' => 'heavy-user-pc', 'bytes' => 3_000_000_000]);
 

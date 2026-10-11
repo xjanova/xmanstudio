@@ -16,6 +16,7 @@ use App\Support\LocalVpnFleet\Ipv4Cidr;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -209,7 +210,7 @@ class LocalVpnFleetController extends Controller
 
     // ==================== Helpers ====================
 
-    /** @return \Illuminate\Support\Collection<int, object> */
+    /** @return Collection<int, object> */
     private function topUsers(string $kind, string $since)
     {
         $rows = VpnUserUsageDaily::query()

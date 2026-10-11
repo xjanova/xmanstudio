@@ -507,59 +507,59 @@ Route::prefix('v1/localvpn')
     ->withoutMiddleware('throttle:api')
     ->middleware(['throttle:localvpn'])
     ->group(function () {
-    Route::post('/networks', [LocalVpnRelayController::class, 'createNetwork']);
-    Route::get('/networks', [LocalVpnRelayController::class, 'listNetworks']);
-    Route::post('/networks/join', [LocalVpnRelayController::class, 'joinNetwork']);
-    Route::post('/networks/leave', [LocalVpnRelayController::class, 'leaveNetwork']);
-    Route::post('/heartbeat', [LocalVpnRelayController::class, 'heartbeat']);
-    Route::get('/networks/{slug}/members', [LocalVpnRelayController::class, 'getMembers']);
-    Route::post('/relay', [LocalVpnRelayController::class, 'relayData']);
-    Route::delete('/networks/{slug}', [LocalVpnRelayController::class, 'deleteNetwork']);
+        Route::post('/networks', [LocalVpnRelayController::class, 'createNetwork']);
+        Route::get('/networks', [LocalVpnRelayController::class, 'listNetworks']);
+        Route::post('/networks/join', [LocalVpnRelayController::class, 'joinNetwork']);
+        Route::post('/networks/leave', [LocalVpnRelayController::class, 'leaveNetwork']);
+        Route::post('/heartbeat', [LocalVpnRelayController::class, 'heartbeat']);
+        Route::get('/networks/{slug}/members', [LocalVpnRelayController::class, 'getMembers']);
+        Route::post('/relay', [LocalVpnRelayController::class, 'relayData']);
+        Route::delete('/networks/{slug}', [LocalVpnRelayController::class, 'deleteNetwork']);
 
-    // P2P signaling
-    Route::get('/stun', [LocalVpnRelayController::class, 'stun']);
-    Route::post('/signal', [LocalVpnRelayController::class, 'signal']);
-    Route::post('/signal/poll', [LocalVpnRelayController::class, 'pollSignals']);
+        // P2P signaling
+        Route::get('/stun', [LocalVpnRelayController::class, 'stun']);
+        Route::post('/signal', [LocalVpnRelayController::class, 'signal']);
+        Route::post('/signal/poll', [LocalVpnRelayController::class, 'pollSignals']);
 
-    // File sharing (network-wide registry)
-    Route::post('/files/share', [LocalVpnFileController::class, 'share']);
-    Route::get('/files/{slug}', [LocalVpnFileController::class, 'index']);
-    Route::delete('/files/{fileId}', [LocalVpnFileController::class, 'destroy']);
-    Route::post('/files/seed', [LocalVpnFileController::class, 'registerSeeder']);
-    Route::get('/files/{fileId}/seeders', [LocalVpnFileController::class, 'seeders']);
+        // File sharing (network-wide registry)
+        Route::post('/files/share', [LocalVpnFileController::class, 'share']);
+        Route::get('/files/{slug}', [LocalVpnFileController::class, 'index']);
+        Route::delete('/files/{fileId}', [LocalVpnFileController::class, 'destroy']);
+        Route::post('/files/seed', [LocalVpnFileController::class, 'registerSeeder']);
+        Route::get('/files/{fileId}/seeders', [LocalVpnFileController::class, 'seeders']);
 
-    // Global Torrent
-    Route::get('/torrent/categories', [GlobalTorrentController::class, 'categories']);
-    Route::get('/torrent/files/{categorySlug}', [GlobalTorrentController::class, 'listFiles']);
-    Route::get('/torrent/file/{fileId}', [GlobalTorrentController::class, 'fileDetail']);
-    Route::post('/torrent/upload', [GlobalTorrentController::class, 'uploadFile']);
-    Route::post('/torrent/seed', [GlobalTorrentController::class, 'registerSeeder']);
-    Route::post('/torrent/heartbeat', [GlobalTorrentController::class, 'heartbeat']);
-    Route::get('/torrent/file/{fileId}/seeders', [GlobalTorrentController::class, 'getSeeders']);
-    Route::get('/torrent/leaderboard', [GlobalTorrentController::class, 'leaderboard']);
-    Route::match(['get', 'post'], '/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
-    Route::get('/torrent/trophies', [GlobalTorrentController::class, 'trophies']);
-    Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
-    Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
-    Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
+        // Global Torrent
+        Route::get('/torrent/categories', [GlobalTorrentController::class, 'categories']);
+        Route::get('/torrent/files/{categorySlug}', [GlobalTorrentController::class, 'listFiles']);
+        Route::get('/torrent/file/{fileId}', [GlobalTorrentController::class, 'fileDetail']);
+        Route::post('/torrent/upload', [GlobalTorrentController::class, 'uploadFile']);
+        Route::post('/torrent/seed', [GlobalTorrentController::class, 'registerSeeder']);
+        Route::post('/torrent/heartbeat', [GlobalTorrentController::class, 'heartbeat']);
+        Route::get('/torrent/file/{fileId}/seeders', [GlobalTorrentController::class, 'getSeeders']);
+        Route::get('/torrent/leaderboard', [GlobalTorrentController::class, 'leaderboard']);
+        Route::match(['get', 'post'], '/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
+        Route::get('/torrent/trophies', [GlobalTorrentController::class, 'trophies']);
+        Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
+        Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
+        Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
 
-    // Torrent relay (server-mediated P2P download)
-    Route::post('/torrent/relay/request', [GlobalTorrentController::class, 'relayRequest']);
-    Route::post('/torrent/relay/poll', [GlobalTorrentController::class, 'relayPoll']);
-    Route::post('/torrent/relay/chunk', [GlobalTorrentController::class, 'relayChunk']);
-    Route::post('/torrent/relay/fetch', [GlobalTorrentController::class, 'relayFetch']);
+        // Torrent relay (server-mediated P2P download)
+        Route::post('/torrent/relay/request', [GlobalTorrentController::class, 'relayRequest']);
+        Route::post('/torrent/relay/poll', [GlobalTorrentController::class, 'relayPoll']);
+        Route::post('/torrent/relay/chunk', [GlobalTorrentController::class, 'relayChunk']);
+        Route::post('/torrent/relay/fetch', [GlobalTorrentController::class, 'relayFetch']);
 
-    // VPN Proxy (country bypass)
-    Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
+        // VPN Proxy (country bypass)
+        Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
 
-    // WireGuard VPN
-    Route::post('/wireguard/register', [WireguardController::class, 'register']);
-    Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
-    Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
+        // WireGuard VPN
+        Route::post('/wireguard/register', [WireguardController::class, 'register']);
+        Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
+        Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
 
-    // Game server ranges for the ping-booster split tunnel (cached 5 min)
-    Route::get('/game-profiles', [LocalVpnGameProfileController::class, 'index'])->name('api.localvpn.game-profiles');
-});
+        // Game server ranges for the ping-booster split tunnel (cached 5 min)
+        Route::get('/game-profiles', [LocalVpnGameProfileController::class, 'index'])->name('api.localvpn.game-profiles');
+    });
 
 // Relay-fleet nodes report usage and pull their config every 10 s, authenticated by an HMAC
 // over their own secret (docs/RELAY_FLEET.md). Own limiter keyed by node id + address, so app
