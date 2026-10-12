@@ -472,7 +472,7 @@
     <section class="py-16" id="download">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl font-bold text-white mb-4">ดาวน์โหลด {{ $product->name }}</h2>
-            <p class="text-gray-400 mb-8 max-w-2xl mx-auto">ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นใช้งานได้ทันที</p>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto">{{ $product->isComingSoon() ? 'ผลิตภัณฑ์นี้ยังเป็น Coming Soon — เปิดให้ดาวน์โหลดเมื่อเปิดตัว' : 'ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นใช้งานได้ทันที' }}</p>
 
             <div class="bg-gray-800/50 rounded-2xl p-8 border border-gray-700 max-w-xl mx-auto mb-8">
                 <div class="flex items-center justify-between mb-6">
@@ -493,6 +493,9 @@
                     </div>
                 @endif
 
+                @if($product->isComingSoon())
+                    <x-coming-soon-download :product="$product" />
+                @else
                 @auth
                     @if($hasPurchased)
                         {{-- User has purchased - show download button --}}
@@ -523,6 +526,7 @@
                         ดูแพคเกจ
                     </a>
                 @endauth
+                @endif
             </div>
 
             <p class="text-gray-500 text-sm">
@@ -607,7 +611,9 @@
                     </ul>
 
                     <div class="mt-6 pt-6 border-t border-gray-700">
-                        @if(!$product->is_custom)
+                        @if($product->isComingSoon())
+                            <x-coming-soon-download :product="$product" label="Coming Soon — ยังไม่เปิดขาย" class="w-full" />
+                        @elseif(!$product->is_custom)
                             <form action="{{ route('cart.add', $product) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
@@ -674,7 +680,9 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl font-bold text-white mb-4">พร้อมเริ่มต้นใช้งาน?</h2>
             <p class="text-gray-400 mb-8 max-w-2xl mx-auto">
-                @if($product->requires_license)
+                @if($product->isComingSoon())
+                    {{ $product->name }} ยังเป็น Coming Soon — ยังไม่เปิดขายและดาวน์โหลด ติดต่อเราเพื่อรับแจ้งเตือนเมื่อเปิดตัว
+                @elseif($product->requires_license)
                     เลือกแพ็กเกจ License ที่เหมาะกับความต้องการของคุณ หรือติดต่อเราสำหรับข้อมูลเพิ่มเติม
                 @else
                     ดาวน์โหลดและเริ่มต้นใช้งาน {{ $product->name }} ได้ทันที
@@ -682,7 +690,9 @@
             </p>
 
             <div class="flex flex-wrap justify-center gap-4">
-                @if(!$product->is_custom)
+                @if($product->isComingSoon())
+                    <x-coming-soon-download :product="$product" label="Coming Soon — ยังไม่เปิดขาย" />
+                @elseif(!$product->is_custom)
                     <form action="{{ route('cart.add', $product) }}" method="POST" class="inline">
                         @csrf
                         <input type="hidden" name="quantity" value="1">

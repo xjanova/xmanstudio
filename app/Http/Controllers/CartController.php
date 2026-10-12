@@ -32,6 +32,16 @@ class CartController extends Controller
         // 404, and a hand-made POST must not buy it either.
         abort_unless($product->is_active, 404);
 
+        // Coming Soon is not on sale yet: its page shows the label instead of a buy button, and a
+        // hand-made POST must not buy it either (owner, 2026-10-12).
+        if ($product->isComingSoon()) {
+            $message = 'ผลิตภัณฑ์นี้ยังเป็น Coming Soon — ยังไม่เปิดขาย';
+
+            return $request->wantsJson()
+                ? response()->json(['success' => false, 'message' => $message], 422)
+                : redirect()->route('products.show', $product->slug)->with('error', $message);
+        }
+
         // The DGX Spark bundle is sold only through its own page: the 20-set cap, VAT included in
         // its price, bank transfer only, no coupon or commission. Even if someone switches the
         // product on in the admin, the cart must not become a way around all of that.

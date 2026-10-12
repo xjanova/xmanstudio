@@ -89,6 +89,11 @@ class PackController extends Controller
             return response()->json(['error' => 'Pack not found'], 404);
         }
 
+        // Coming Soon: nothing to download yet, bought or not (owner, 2026-10-12)
+        if ($avatarPack->product->isComingSoon()) {
+            return response()->json(['error' => 'Coming soon: this pack is not available for download yet', 'coming_soon' => true], 403);
+        }
+
         $free = (float) $avatarPack->product->price <= 0;
         $license = $this->resolveLicense($request);
 
@@ -149,6 +154,8 @@ class PackController extends Controller
      */
     public function file(ProductVersion $version)
     {
+        abort_if((bool) $version->product?->isComingSoon(), 403, 'Coming soon');
+
         $disk = Storage::disk(config('packs.disk', 'local'));
 
         if (! $version->storage_path || ! $disk->exists($version->storage_path)) {

@@ -79,9 +79,15 @@
                         @endforeach
                     </ul>
 
-                    <a href="/cart/add/chanthra-studio?plan={{ $key }}" class="block text-center {{ $key === 'yearly' ? 'gold-cta font-display italic text-lg' : '' }} px-6 py-4 rounded-lg" style="{{ $key === 'yearly' ? '' : 'color: var(--text-1); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,213,179,0.08);' }}">
-                        ซื้อ {{ $p['name_th'] }}
-                    </a>
+                    @if($comingSoon)
+                        <span class="block text-center px-6 py-4 rounded-lg" style="color: var(--gold); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,213,179,0.08); cursor: not-allowed;" role="status" aria-disabled="true" data-coming-soon>
+                            Coming Soon — ยังไม่เปิดขาย
+                        </span>
+                    @else
+                        <a href="/cart/add/chanthra-studio?plan={{ $key }}" class="block text-center {{ $key === 'yearly' ? 'gold-cta font-display italic text-lg' : '' }} px-6 py-4 rounded-lg" style="{{ $key === 'yearly' ? '' : 'color: var(--text-1); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,213,179,0.08);' }}">
+                            ซื้อ {{ $p['name_th'] }}
+                        </a>
+                    @endif
                 </div>
             @endforeach
         </div>

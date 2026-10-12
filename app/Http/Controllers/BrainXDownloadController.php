@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Services\BrainXInstaller;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Http\Request;
@@ -25,6 +26,13 @@ class BrainXDownloadController extends Controller
 {
     public function download(Request $request, BrainXInstaller $installer)
     {
+        // BrainX set to Coming Soon in the admin: no installer for anyone (owner, 2026-10-12)
+        if (Product::slugIsComingSoon('brainx')) {
+            return $request->wantsJson()
+                ? response()->json(['success' => false, 'error' => 'Coming soon: this product is not available for download yet', 'coming_soon' => true], 403)
+                : redirect()->route('products.show', 'brainx')->with('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
+        }
+
         $file = $installer->latest();
 
         if ($file === null) {

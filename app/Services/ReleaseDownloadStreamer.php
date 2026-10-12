@@ -55,10 +55,16 @@ class ReleaseDownloadStreamer
      *
      * @param  ?string  $fallbackName  ชื่อไฟล์เมื่อไม่รู้ชื่อจริง (เวอร์ชันสร้างมือที่มีแค่ลิงก์ API) — นามสกุลกำหนด Content-Type
      *
-     * @throws DownloadUnavailableException ไม่มีไฟล์ / ดึงไม่ได้ / ช่องส่งเต็ม
+     * @throws DownloadUnavailableException ไม่มีไฟล์ / ดึงไม่ได้ / ช่องส่งเต็ม / สินค้ายังเป็น Coming Soon
      */
     public function respond(Request $request, ProductVersion $version, ?GithubSetting $setting, ?string $fallbackName = null): Response
     {
+        // Coming Soon = ไม่มีไฟล์ให้ใคร ไม่ว่าจะมาจากปุ่ม ลิงก์ API หรือตัวอัปเดตในแอป (กฎเจ้าของ 2026-10-12)
+        // ด่านสุดท้ายที่ทุกทางผ่าน — controller แต่ละตัวกันไว้ก่อนแล้ว ที่นี่กันทางที่ลืม
+        if ($version->product?->isComingSoon()) {
+            throw DownloadUnavailableException::comingSoon();
+        }
+
         $sources = $this->sources($version, $setting);
 
         if ($sources === []) {

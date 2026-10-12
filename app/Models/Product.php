@@ -26,6 +26,13 @@ class Product extends Model
      */
     public const MONTHLY_LICENSE_SLUGS = ['brainx', 'anti-x', 'localvpn'];
 
+    /**
+     * สินค้าที่ตั้งเป็น Coming Soon ห้ามโหลดได้จากทุกจุด (กฎเจ้าของ 2026-10-12): ปุ่มทุกหน้า, /download/{slug},
+     * หน้าโหลดของแอปแต่ละตัว, API เวอร์ชัน/อัปเดต, ศูนย์ดาวน์โหลดของลูกค้า — ทุกที่ขึ้นป้าย Coming Soon แทน
+     * ด่านสุดท้ายอยู่ที่ ReleaseDownloadStreamer::respond() ซึ่งไฟล์ทุกไฟล์ต้องผ่าน
+     */
+    public const COMING_SOON_DOWNLOAD_MESSAGE = 'ผลิตภัณฑ์นี้ยังเป็น Coming Soon — ยังไม่เปิดให้ดาวน์โหลด';
+
     protected $fillable = [
         'category_id',
         'name',
@@ -106,10 +113,15 @@ class Product extends Model
      *
      * The app's own route first (config/downloads.php → app_routes), which streams the file from
      * this site. Anything else goes to the licence-checked /download/{slug} page, but only with an
-     * active version to hand out: that page answers 404 without one.
+     * active version to hand out: that page answers 404 without one. A product still "coming soon"
+     * has nothing to download at all (owner, 2026-10-12) — the card shows the Coming Soon label.
      */
     public function downloadUrl(): ?string
     {
+        if ($this->isComingSoon()) {
+            return null;
+        }
+
         $route = config('downloads.app_routes', [])[$this->slug] ?? null;
 
         // A route this site does not register must not take the whole page down with it
@@ -186,6 +198,12 @@ class Product extends Model
         }
 
         return true;
+    }
+
+    /** The product with this slug exists and is still coming soon (for downloads tied to a slug, not a row). */
+    public static function slugIsComingSoon(string $slug): bool
+    {
+        return (bool) static::where('slug', $slug)->first()?->isComingSoon();
     }
 
     /**
