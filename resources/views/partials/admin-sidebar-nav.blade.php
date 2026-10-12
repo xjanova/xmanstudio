@@ -19,6 +19,13 @@
         $pendingPaymentOrders = $pendingTopups = $activeDevices = $pendingOrders = $onlineVpnDevices = 0;
     }
 
+    // ออเดอร์แคมเปญ DGX Spark ที่รอเจ้าของ (สลิปรอตรวจ + ชำระแล้วรอสั่งเครื่อง) — แยก try เหมือนกัน
+    try {
+        $dgxActions = \App\Support\DgxSparkCampaign::needsActionCount();
+    } catch (\Throwable $e) {
+        $dgxActions = 0;
+    }
+
     // รายได้ GPUxMINE ที่รอแอดมินตัดสิน — ไม่มีใครกดก็ไม่มีวันจ่าย (แยก try: ตารางนี้พังต้องไม่ลากตัวเลขอื่นเป็นศูนย์)
     try {
         $gpuxmineReview = \App\Models\GpuJobEarning::where('status', \App\Models\GpuJobEarning::STATUS_REVIEW)->count();
@@ -47,6 +54,14 @@
        class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.analytics*') ? $linkActive : $linkInactive }}">
         <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Analytics
+    </a>
+    <a href="{{ route('admin.campaigns.dgx-spark') }}"
+       class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.campaigns.*') ? $linkActive : $linkInactive }}">
+        <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+        แคมเปญ DGX Spark · ออเดอร์
+        @if($dgxActions > 0)
+        <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full" title="รอตรวจสลิป / รอสั่งเครื่อง">{{ $dgxActions }}</span>
+        @endif
     </a>
     <a href="{{ route('admin.mockup') }}"
        class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.mockup') ? $linkActive : $linkInactive }}">
@@ -460,7 +475,7 @@
 </div>
 
 {{-- ใบเสนอราคา & คำสั่งซื้อ --}}
-<div x-data="{ open: {{ request()->routeIs('admin.quotations.list') || request()->routeIs('admin.quotations.detail') || request()->routeIs('admin.orders.*') || request()->routeIs('admin.campaigns.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.quotations.list') || request()->routeIs('admin.quotations.detail') || request()->routeIs('admin.orders.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ใบเสนอราคา</span>
         @if($pendingQuotations > 0)<span class="bg-indigo-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingQuotations }}</span>@endif
@@ -480,10 +495,6 @@
             @if($pendingPaymentOrders > 0)
             <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingPaymentOrders }}</span>
             @endif
-        </a>
-        <a href="{{ route('admin.campaigns.dgx-spark') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.campaigns.*') ? $linkActive : $linkInactive }}">
-            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
-            แคมเปญ DGX Spark
         </a>
     </div>
 </div>

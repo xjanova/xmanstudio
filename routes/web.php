@@ -1777,10 +1777,14 @@ Route::middleware('auth')->prefix('gpuxmine')->name('gpuxmine.')->group(function
         ->whereNumber('id')->name('forget');
 });
 
-// แคมเปญ DGX Spark — ราคาอ้างอิง JIB (ราคาชุด = JIB + ส่วนต่าง), ชุดที่เหลือ, สถานะจัดส่งของแต่ละออเดอร์
+// แคมเปญ DGX Spark — ออเดอร์ทั้งหมด (ตรวจสลิป อนุมัติ/ปฏิเสธ สั่งเครื่อง จัดส่ง), จำนวนชุด (รวมที่ขายนอกเว็บ),
+// ราคาอ้างอิง JIB (ราคาชุด = JIB + ส่วนต่าง)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/campaigns/dgx-spark', [AdminDgxSparkCampaignController::class, 'index'])->name('campaigns.dgx-spark');
     Route::put('/campaigns/dgx-spark', [AdminDgxSparkCampaignController::class, 'update'])->name('campaigns.dgx-spark.update');
+    Route::put('/campaigns/dgx-spark/stock', [AdminDgxSparkCampaignController::class, 'stock'])->name('campaigns.dgx-spark.stock');
+    Route::put('/campaigns/dgx-spark/orders/{order}/payment', [AdminDgxSparkCampaignController::class, 'payment'])
+        ->name('campaigns.dgx-spark.payment');
     Route::put('/campaigns/dgx-spark/orders/{order}/fulfillment', [AdminDgxSparkCampaignController::class, 'fulfillment'])
         ->name('campaigns.dgx-spark.fulfillment');
 });

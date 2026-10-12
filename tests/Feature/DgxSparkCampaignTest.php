@@ -569,6 +569,190 @@ class DgxSparkCampaignTest extends TestCase
         $this->actingAs($buyer)->get(route('customer.orders.show', $order))->assertOk()->assertSee('TH0123456789');
     }
 
+    // ── sets sold outside the website ────────────────────────────────
+
+    public function test_sets_sold_outside_the_website_count_as_sold_and_the_page_says_so(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.campaigns.dgx-spark.stock'), ['offline_sold' => 2])
+            ->assertSessionHas('success', fn ($message) => str_contains($message, 'เหลือ 18 จาก 20 ชุด'));
+
+        $this->assertSame(['cap' => 20, 'sold' => 2, 'reserved' => 0, 'remaining' => 18], DgxSparkCampaign::availability());
+
+        $this->get('/dgx-spark')
+            ->assertOk()
+            ->assertSee('เหลือ <b>18</b> จาก 20 ชุด', false)
+            ->assertSee('ชำระแล้ว 2')
+            ->assertSee('ชำระแล้วรวม 2 ชุดที่ลูกค้าสั่งซื้อผ่านช่องทางอื่นนอกเว็บไซต์');
+        $this->classicHome()->assertSee('เหลือ <b>18</b> จาก 20 ชุด', false);
+
+        // Without sets sold outside, the page does not mention other channels
+        $this->actingAs($admin)->put(route('admin.campaigns.dgx-spark.stock'), ['offline_sold' => 0])->assertSessionHas('success');
+        $this->get('/dgx-spark')->assertSee('เหลือ <b>20</b> จาก 20 ชุด', false)->assertDontSee('ช่องทางอื่นนอกเว็บไซต์');
+    }
+
+    public function test_the_sets_sold_outside_cannot_oversell_the_website(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->reservation(payment: 'paid', status: 'completed');
+        for ($i = 0; $i < 17; $i++) {
+            $this->reservation();
+        }
+
+        // 18 taken on the website: at most 2 more can have gone elsewhere
+        $this->actingAs($admin)->put(route('admin.campaigns.dgx-spark.stock'), ['offline_sold' => 3])->assertSessionHasErrors('offline_sold');
+        $this->actingAs($admin)->put(route('admin.campaigns.dgx-spark.stock'), ['offline_sold' => -1])->assertSessionHasErrors('offline_sold');
+        $this->assertSame(0, DgxSparkCampaign::offlineSold());
+
+        $this->actingAs($admin)->put(route('admin.campaigns.dgx-spark.stock'), ['offline_sold' => 2])->assertSessionHas('success');
+        $this->assertSame(['cap' => 20, 'sold' => 3, 'reserved' => 17, 'remaining' => 0], DgxSparkCampaign::availability());
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('campaign.dgx-spark.order'), $this->form())
+            ->assertSessionHas('error', fn ($message) => str_contains($message, 'จองครบ'));
+        $this->assertSame(18, Order::count());
+
+        $this->actingAs(User::factory()->create())->put(route('admin.campaigns.dgx-spark.stock'), ['offline_sold' => 0])->assertForbidden();
+    }
+
+    // ── the owner's order desk ───────────────────────────────────────
+
+    public function test_the_owner_checks_the_slip_and_approves_it_on_the_campaign_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $buyer = User::factory()->create();
+        $order = $this->reservation(payment: 'verifying', buyer: $buyer);
+        $order->update(['payment_slip' => 'payment-slips/dgx-slip.jpg']);
+
+        // The order waits for the owner: on the menu badge, and the desk opens on it with its slip
+        $this->actingAs($admin)->get(route('admin.campaigns.dgx-spark'))
+            ->assertOk()
+            ->assertSee('#' . $order->order_number)
+            ->assertSee('storage/payment-slips/dgx-slip.jpg', false)
+            ->assertSee('อนุมัติการชำระเงิน')
+            ->assertSee('แคมเปญ DGX Spark · ออเดอร์');
+        $this->assertSame(1, DgxSparkCampaign::needsActionCount());
+
+        $this->actingAs($admin)
+            ->put(route('admin.campaigns.dgx-spark.payment', $order), ['action' => 'approve'])
+            ->assertSessionHas('success');
+
+        $order->refresh();
+        $this->assertSame('paid', $order->payment_status);
+        $this->assertSame('to_order', DgxSparkCampaign::adminStage($order));
+        $keys = LicenseKey::where('order_id', $order->id)->get();
+        $this->assertCount(2, $keys);
+        $this->assertSame(['lifetime'], $keys->pluck('license_type')->unique()->values()->all());
+
+        // Still waiting for the owner — now to order the unit; the keys are on the desk
+        $this->assertSame(1, DgxSparkCampaign::needsActionCount());
+        $this->actingAs($admin)->get(route('admin.campaigns.dgx-spark', ['tab' => 'to_order']))
+            ->assertOk()
+            ->assertSee($keys->first()->license_key);
+
+        // A second press does not approve twice
+        $this->actingAs($admin)
+            ->put(route('admin.campaigns.dgx-spark.payment', $order), ['action' => 'approve'])
+            ->assertSessionHas('error');
+        $this->assertCount(2, LicenseKey::where('order_id', $order->id)->get());
+
+        $this->actingAs($admin)->put(route('admin.campaigns.dgx-spark.fulfillment', $order), ['status' => 'ordered'])->assertSessionHas('success');
+        $this->assertSame(0, DgxSparkCampaign::needsActionCount());
+    }
+
+    public function test_rejecting_a_slip_cancels_the_reservation_and_frees_its_set(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $order = $this->reservation(payment: 'verifying');
+
+        $this->actingAs($admin)
+            ->put(route('admin.campaigns.dgx-spark.payment', $order), ['action' => 'reject', 'note' => 'ยอดไม่เข้า'])
+            ->assertSessionHas('success');
+
+        $order->refresh();
+        $this->assertSame('rejected', $order->payment_status);
+        $this->assertSame('cancelled', $order->status);
+        $this->assertStringContainsString('ยอดไม่เข้า', $order->notes);
+        $this->assertSame(20, DgxSparkCampaign::availability()['remaining']);
+        $this->assertSame(0, LicenseKey::where('order_id', $order->id)->count());
+
+        // A paid order is not cancelled from the desk (a refund goes through the order page)
+        $paid = $this->reservation(payment: 'paid', status: 'completed');
+        $this->actingAs($admin)->put(route('admin.campaigns.dgx-spark.payment', $paid), ['action' => 'reject'])->assertSessionHas('error');
+        $this->assertSame('paid', $paid->fresh()->payment_status);
+    }
+
+    public function test_a_late_payer_is_approved_only_while_a_set_is_free(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $late = $this->reservation(createdHoursAgo: 49);
+        for ($i = 0; $i < 20; $i++) {
+            $this->reservation();
+        }
+
+        $this->actingAs($admin)
+            ->put(route('admin.campaigns.dgx-spark.payment', $late), ['action' => 'approve'])
+            ->assertSessionHas('error', fn ($message) => str_contains($message, 'ชุดเต็ม'));
+        $this->assertSame('pending', $late->fresh()->payment_status);
+        $this->assertSame(0, LicenseKey::where('order_id', $late->id)->count());
+
+        Order::where('id', '!=', $late->id)->latest('id')->first()->update(['payment_status' => 'rejected', 'status' => 'cancelled']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.campaigns.dgx-spark.payment', $late), ['action' => 'approve'])
+            ->assertSessionHas('success');
+        $this->assertSame('paid', $late->fresh()->payment_status);
+    }
+
+    public function test_the_desk_sorts_orders_by_what_they_wait_for(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $pending = $this->reservation();
+        $verifying = $this->reservation(payment: 'verifying');
+        $toOrder = $this->reservation(payment: 'paid', status: 'completed');
+        $shipped = $this->reservation(payment: 'paid', status: 'completed');
+        $shipped->update(['metadata' => ['campaign' => DgxSparkCampaign::KEY, 'fulfillment' => ['status' => 'shipped', 'tracking' => 'TH42']]]);
+        $cancelled = $this->reservation(payment: 'rejected', status: 'cancelled');
+
+        $expect = [
+            'action' => [$verifying, $toOrder],
+            'pending' => [$pending],
+            'verifying' => [$verifying],
+            'to_order' => [$toOrder],
+            'shipped' => [$shipped],
+            'cancelled' => [$cancelled],
+            'all' => [$pending, $verifying, $toOrder, $shipped, $cancelled],
+        ];
+        $everyone = [$pending, $verifying, $toOrder, $shipped, $cancelled];
+
+        foreach ($expect as $tab => $listed) {
+            $html = $this->actingAs($admin)->get(route('admin.campaigns.dgx-spark', ['tab' => $tab]))->assertOk()->getContent();
+            foreach ($everyone as $order) {
+                $this->assertSame(
+                    in_array($order, $listed, true),
+                    str_contains($html, 'id="order-' . $order->id . '"'),
+                    "tab {$tab}, order {$order->order_number}"
+                );
+            }
+        }
+
+        // Search by the customer's phone or order number
+        $this->actingAs($admin)->get(route('admin.campaigns.dgx-spark', ['tab' => 'all', 'q' => $shipped->order_number]))
+            ->assertSee('id="order-' . $shipped->id . '"', false)
+            ->assertDontSee('id="order-' . $pending->id . '"', false);
+
+        // Only campaign orders, only admins
+        $other = Order::create([
+            'user_id' => $admin->id, 'order_number' => 'ORD-OTHER', 'customer_name' => 'x', 'customer_email' => 'x@example.test',
+            'subtotal' => 1, 'tax' => 0, 'total' => 1, 'payment_method' => 'bank_transfer', 'payment_status' => 'verifying', 'status' => 'pending',
+        ]);
+        $this->actingAs($admin)->put(route('admin.campaigns.dgx-spark.payment', $other), ['action' => 'approve'])->assertNotFound();
+        $this->actingAs(User::factory()->create())->put(route('admin.campaigns.dgx-spark.payment', $verifying), ['action' => 'approve'])->assertForbidden();
+        $this->assertSame('verifying', $verifying->fresh()->payment_status);
+    }
+
     // ── home page ────────────────────────────────────────────────────
 
     public function test_the_home_page_leads_with_the_campaign(): void
