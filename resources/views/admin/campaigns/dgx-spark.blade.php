@@ -166,8 +166,14 @@
                             </div>
 
                             @if ($order->payment_slip)
-                                <a href="{{ asset('storage/' . $order->payment_slip) }}" target="_blank" rel="noopener" class="inline-block">
-                                    <img src="{{ asset('storage/' . $order->payment_slip) }}" alt="สลิปของ #{{ $order->order_number }}" loading="lazy"
+                                @php
+                                    // สลิปย้ายออกจาก web root ได้ (PR 458: route payment-slips.order) — ใช้ route นั้นเมื่อมี
+                                    $slipUrl = \Illuminate\Support\Facades\Route::has('payment-slips.order')
+                                        ? route('payment-slips.order', $order)
+                                        : asset('storage/' . $order->payment_slip);
+                                @endphp
+                                <a href="{{ $slipUrl }}" target="_blank" rel="noopener" class="inline-block">
+                                    <img src="{{ $slipUrl }}" alt="สลิปของ #{{ $order->order_number }}" loading="lazy"
                                          class="h-40 w-auto rounded-lg border border-gray-200 dark:border-gray-600 object-contain bg-gray-50">
                                 </a>
                             @elseif ($open)
