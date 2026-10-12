@@ -18,6 +18,7 @@
     $sold = $availability['sold'];
     $reserved = $availability['reserved'];
     $remaining = $availability['remaining'];
+    $offlineSold = Dgx::offlineSold();
     $priceText = Dgx::baht($price);
     $referenceText = Dgx::baht($referencePrice);
     $referenceDateText = Dgx::thaiDate($referenceDate);
@@ -548,6 +549,9 @@
                 </ul>
                 <p class="dgx-note">
                     นับจากคำสั่งซื้อจริงในระบบ: ชุดที่ชำระแล้ว และการจองที่ยังอยู่ในเวลาชำระ {{ $holdHours }} ชั่วโมง
+                    @if($offlineSold > 0)
+                        (ชำระแล้วรวม {{ $offlineSold }} ชุดที่ลูกค้าสั่งซื้อผ่านช่องทางอื่นนอกเว็บไซต์)
+                    @endif
                     การจองที่ไม่ชำระภายในเวลา ระบบยกเลิกอัตโนมัติและคืนชุดนั้นให้คนถัดไป
                 </p>
             </div>
