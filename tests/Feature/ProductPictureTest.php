@@ -112,6 +112,21 @@ class ProductPictureTest extends TestCase
         $this->assertSame([], $migration->seed(Storage::disk('public')));
     }
 
+    public function test_skidrow_killer_shows_the_hub_picture_instead_of_its_logo(): void
+    {
+        $this->product('skidrow-killer', [
+            'image' => 'products/skidrow-killer/logo.png',
+            'images' => ['products/skidrow-killer/screenshot-1.png'],
+        ]);
+
+        (require database_path('migrations/2026_10_12_150000_skidrow_killer_shows_the_hub_picture.php'))->up();
+
+        $product = Product::where('slug', 'skidrow-killer')->first();
+        $this->assertNull($product->image);
+        $this->assertSame(asset('artwork/hub/skidrow-killer.webp'), $product->artwork_url);
+        $this->assertSame(['products/skidrow-killer/screenshot-1.png'], $product->images);
+    }
+
     public function test_every_real_picture_is_a_960x540_cut(): void
     {
         foreach (['anti-x', 'cluadex-ai-coding-assistant', 'localvpn', 'winx-tools', 'aipray'] as $slug) {

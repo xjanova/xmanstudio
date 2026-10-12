@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Support\LicensePlans;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -31,7 +32,9 @@ class ProductCatalogController extends Controller
             ->all());
 
         return response()
-            ->json(['success' => true, 'products' => $products])
+            // plans: the shop's one price table (config/licenses.php) — the hub fills every price it
+            // shows from it, including BrainX Cloud's, which has no product row of its own.
+            ->json(['success' => true, 'plans' => (object) array_map(fn ($terms) => (object) $terms, config('licenses.plans', [])), 'products' => $products])
             ->header('Cache-Control', 'public, max-age=300');
     }
 
@@ -52,6 +55,8 @@ class ProductCatalogController extends Controller
             'name' => $product->name,
             'status' => $status,
             'price' => (float) $product->price,
+            // The license terms it sells and their prices; {} when it sells none (an empty array would be []).
+            'plans' => (object) LicensePlans::for($product->slug),
             'image_url' => $image !== null && str_starts_with($image, '/') ? url($image) : $image,
             'real_image' => $product->hasRealImage(),
             'url' => route('products.show', $product->slug),

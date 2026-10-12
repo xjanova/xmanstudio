@@ -73,6 +73,25 @@ class ProductCatalogApiTest extends TestCase
         $this->assertArrayNotHasKey('zz-pack', $catalog);
     }
 
+    public function test_it_carries_the_shops_one_price_table(): void
+    {
+        config(['licenses.plans.autotradex' => ['monthly' => 349, 'yearly' => 1990]]);
+        $this->product('autotradex', ['price' => 19900]);
+        $this->product('postx-agent', ['price' => 7990, 'is_coming_soon' => true]);
+
+        $json = $this->getJson('/api/v1/catalog')->assertOk();
+        $catalog = collect($json->json('products'))->keyBy('slug');
+
+        $this->assertSame(['monthly' => 349, 'yearly' => 1990], $catalog['autotradex']['plans']);
+        $this->assertEquals(19900, $catalog['autotradex']['price']);
+        // No terms: an object, not a list, so the hub can read it the same way
+        $this->assertStringContainsString('"plans":{}', $json->getContent());
+        $this->assertEquals(7990, $catalog['postx-agent']['price']);
+        // The whole table, BrainX Cloud's included (it has no product row of its own)
+        $this->assertSame(['monthly' => 399], $json->json('plans.brainx'));
+        $this->assertSame(['monthly' => 349, 'yearly' => 1990], $json->json('plans.autotradex'));
+    }
+
     public function test_every_url_is_absolute(): void
     {
         $this->product('tping');
