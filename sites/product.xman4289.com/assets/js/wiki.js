@@ -143,10 +143,19 @@ function cloudNote() {
   });
 }
 
+/** BrainX itself: Coming Soon until the shop sells it (owner, 2026-10-12: no download, free or not,
+    until that changes). The page ships Coming Soon; [data-brainx="live"] parts appear once it is on sale. */
+function brainxGate() {
+  const c = window.XPH && window.XPH.catalog;
+  const bx = c && c.byId('brainx');
+  const live = !!bx && bx.status === 'live';
+  document.querySelectorAll('[data-brainx]').forEach(el => { el.hidden = (el.getAttribute('data-brainx') === 'live') !== live; });
+}
+
 function boot() {
   document.documentElement.classList.add('js');
-  cloudNote(); render(); language(); motion();
-  addEventListener('xph:catalog', () => { cloudNote(); sync(); });
+  brainxGate(); cloudNote(); render(); language(); motion();
+  addEventListener('xph:catalog', () => { brainxGate(); cloudNote(); sync(); });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

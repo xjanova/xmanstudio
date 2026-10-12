@@ -38,26 +38,27 @@
      the page tints the spotlight, card glow and timeline with it.
      planet: 0 banded giant · 1 continents · 2 crystal faults · 3 circuit world
      shop: the product's slug in the shop (xman4289.com/products/<shop>), the key
-     the live catalogue is matched on. null = the shop does not list it (BrainX
-     the desktop app is free and not a shop row; `brainx-cloud` is another thing). */
+     the live catalogue is matched on. null = the shop does not list it. BrainX is
+     production's `brainx-cloud` row: Coming Soon there = no download anywhere here,
+     free or not, until the owner changes it (2026-10-12). */
   var PRODUCTS = [
     {
       id: 'brainx', name: 'BrainX', sub: 'NEURAL KNOWLEDGE ENGINE', cat: 'ai',
-      status: 'live', free: true, price: 'แอปฟรี[[ · Cloud {from}{addonSoon}]]',
+      status: 'soon', free: false, price: '[[BrainX Cloud {from}]]',
       plansKey: 'brainx', plans: { monthly: 399 }, addon: { shop: 'brainx-cloud', soon: true },
       platforms: ['Windows', 'Cloud'], tags: ['3D knowledge graph', 'Semantic search', 'MCP hub', 'Cloud sync'],
       palette: ['#8b5cf6', '#1a1240', '#67e8f9'], planet: 2,
       art: art('brainx'), shots: [img('/assets/img/hero-hud.jpg'), img('/assets/img/crop-galaxy.jpg')],
       tagline: 'สมองที่สองที่มองเห็นได้ ให้ AI ทุกตัวใช้ความรู้ของคุณ',
       pitch: ['กราฟความรู้ 3 มิติ ค้นด้วยความหมาย', 'และเป็นศูนย์กลาง MCP ให้เอเจนต์ AI ทุกตัว'],
-      desc: 'สมองที่สองที่มองเห็นได้ เก็บโน้ตเป็นกราฟความรู้ 3 มิติ ค้นด้วยความหมาย และเป็นศูนย์กลาง MCP ให้ Claude และเอเจนต์ AI ทุกตัวดึงความรู้ของคุณไปใช้ แอปบน Windows ใช้ฟรี[[ ส่วน BrainX Cloud {terms}{addonSoon}]] ใช้กับ Claude ได้ทุกที่',
+      desc: 'สมองที่สองที่มองเห็นได้ เก็บโน้ตเป็นกราฟความรู้ 3 มิติ ค้นด้วยความหมาย และเป็นศูนย์กลาง MCP ให้ Claude และเอเจนต์ AI ทุกตัวดึงความรู้ของคุณไปใช้ แอปบน Windows[[ ส่วน BrainX Cloud {terms}]] ใช้กับ Claude ได้ทุกที่',
       features: ['กราฟความรู้ 3 มิติ', 'ค้นหาด้วยความหมาย', 'ศูนย์กลาง MCP ให้เอเจนต์ AI', 'Remote MCP ผ่าน BrainX Cloud', 'พื้นที่ส่วนตัว 1 GB ต่อบัญชี', 'เลือกเองว่าจะอัปโหลดโฟลเดอร์ไหน'],
       href: '/brainx.html', hrefLabel: 'ดูหน้า BrainX', external: false,
-      download: SHOP + '/brainx/download', downloadLabel: 'ดาวน์โหลดแอปฟรี',
-      shop: null, api: null, version: null, released: '2026-09-24',
+      download: SHOP + '/brainx/download', downloadLabel: 'ดาวน์โหลดแอป',
+      shop: 'brainx-cloud', api: null, version: null, released: null,
       nova: [
         'BrainX คือสมองที่สองของเราเอง~ โน้ตทุกอันกลายเป็นดาวในกราฟ 3 มิติเลยนะ ✦',
-        'อยากให้ Claude จำทุกอย่างที่คุณจดไว้? BrainX ทำได้ แอปบนเครื่องใช้ฟรีด้วยค่ะ!',
+        'อยากให้ Claude จำทุกอย่างที่คุณจดไว้? BrainX ทำได้ กำลังจะเปิดให้ใช้เร็ว ๆ นี้ รอติดตามนะคะ!',
         'ภาพหน้าจอตรงนี้เป็นของจริงจากแอปเลยนะ ไม่ได้แต่งขึ้นมา ✌',
       ],
     },
@@ -349,7 +350,7 @@
   ];
 
   var FEATURED = [
-    { id: 'brainx', hook: 'สมองที่สองแบบ 3 มิติ', sector: 'BUILD · LIVE', node: 'NEURAL CORE' },
+    { id: 'brainx', hook: 'สมองที่สองแบบ 3 มิติ', sector: 'BUILD · SOON', node: 'NEURAL CORE' },
     { id: 'winx-tools', hook: 'คุมเน็ตถึงระดับ kernel', sector: 'BUILD · v1.0.2', node: 'SYSTEM LAYER' },
     { id: 'cluadex', hook: 'AI โค้ดบนเครื่องคุณ', sector: 'BUILD · v3.0.54', node: 'CODE FORGE' },
     { id: 'chanthra-studio', hook: 'สตูดิโอวิดีโอ AI', sector: 'BUILD · v0.11.0', node: 'LUNAR ATELIER' },
@@ -363,7 +364,6 @@
     { id: 'chanthra-studio', v: '0.11.0', date: '2026-09-24', title: 'Node flow รันงานได้จริง', items: ['ติดตั้งและรัน ComfyUI ในแอปได้เอง', 'Node flow ครบทุกโหนด พร้อมเทมเพลต', 'สร้างเพลงบน GPU แทนการจ่ายรายเพลง', 'อัปเดตในแอปจาก xman4289.com'] },
     { id: 'aipray', v: '1.2.5', date: '2026-09-24', title: 'อัปเดตในแอปได้แล้ว', items: ['อัปเดตเวอร์ชันใหม่ได้จากในแอปเลย', 'บทสวด 20+ บท ใช้ออฟไลน์ได้'] },
     { id: 'winx-tools', v: '1.0.2', date: '2026-09-24', title: 'แพ็กเกจมีลายเซ็นดิจิทัล', items: ['ตรวจลายเซ็นก่อนติดตั้งอัปเดตทุกครั้ง', 'ผู้ใช้เดิมอัปเดตได้ใน Settings → Updates'] },
-    { id: 'brainx', v: null, date: '2026-09-24', title: 'เปิดตัว BrainX Cloud', items: ['Remote MCP ใช้กับ Claude ได้ทุกที่', 'แอปบนเครื่องดาวน์โหลดฟรีจาก xman4289.com'] },
     { id: 'autotradex', v: '0.3.0', date: '2026-09-24', title: 'รุ่น Portable', items: ['รุ่น Portable ไม่ต้องติดตั้ง .NET', 'รองรับ Windows 10/11 x64'] },
     { id: 'cluadex', v: '3.0.54', date: '2026-08-31', title: 'ตัวติดตั้งใหม่ อัปเดตเองเบื้องหลัง', items: ['อัปเดตแบบ delta เบื้องหลัง ใช้ตอนเปิดใหม่', 'ยังมีรุ่น Portable แตกไฟล์แล้วใช้ได้เลย'] },
     { id: 'localvpn', v: '1.0.39', date: '2026-04-01', title: 'License + Auto Update', items: ['ระบบ License และอัปเดตอัตโนมัติ', 'WireGuard + NAT traversal'] },

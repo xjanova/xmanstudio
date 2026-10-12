@@ -11,6 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/site.css?v=202609241343">
 <link rel="stylesheet" href="/assets/css/wiki.css?v=202609241343">
+<!-- BrainX is Coming Soon until the shop sells it: [data-brainx="live"] parts stay hidden till then (wiki.js brainxGate) -->
+<style>[data-brainx][hidden]{display:none!important}</style>
 </head>
 <body class="wiki">
 <canvas id="bg-galaxy" aria-hidden="true"></canvas>
@@ -78,12 +80,14 @@
       <div class="cta-glow" aria-hidden="true"></div>
       <h2 data-th="อ่านจบแล้ว ลองของจริงเลย" data-en="Read enough? Try the real thing.">อ่านจบแล้ว ลองของจริงเลย</h2>
       <!-- BrainX Cloud's price: the shop's `brainx` plan via assets/js/hub/catalog.js (wiki.js cloudNote); these are today's numbers -->
-      <p id="cloud-note"
+      <p data-brainx="soon" data-th="BrainX กำลังจะเปิดให้ใช้ ตอนนี้ยังดาวน์โหลดไม่ได้" data-en="BrainX is coming soon — it cannot be downloaded yet.">BrainX กำลังจะเปิดให้ใช้ ตอนนี้ยังดาวน์โหลดไม่ได้</p>
+      <p id="cloud-note" data-brainx="live" hidden
          data-tpl-th="แอป BrainX ใช้ฟรีบนเครื่องคุณ · BrainX Cloud[[ {terms}]]{addonSoon} ให้ Claude ทุกเครื่องใช้สมองก้อนเดียวกัน"
          data-tpl-en="The BrainX app is free on your machine · BrainX Cloud[[, {terms},]]{addonSoon} puts the same brain in front of every Claude you use."
          data-th="แอป BrainX ใช้ฟรีบนเครื่องคุณ · BrainX Cloud ฿399/เดือน (เร็ว ๆ นี้) ให้ Claude ทุกเครื่องใช้สมองก้อนเดียวกัน" data-en="The BrainX app is free on your machine · BrainX Cloud, ฿399/month, (coming soon) puts the same brain in front of every Claude you use.">แอป BrainX ใช้ฟรีบนเครื่องคุณ · BrainX Cloud ฿399/เดือน (เร็ว ๆ นี้) ให้ Claude ทุกเครื่องใช้สมองก้อนเดียวกัน</p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="https://xman4289.com/brainx/download" rel="nofollow"><span data-th="ดาวน์โหลดแอปฟรี" data-en="Get the free app">ดาวน์โหลดแอปฟรี</span></a>
+        <span class="btn btn-ghost" role="note" style="cursor:default" data-brainx="soon" data-th="Coming Soon · เร็ว ๆ นี้" data-en="Coming soon">Coming Soon · เร็ว ๆ นี้</span>
+        <a class="btn btn-primary" href="https://xman4289.com/brainx/download" rel="nofollow" data-brainx="live" hidden><span data-th="ดาวน์โหลดแอปฟรี" data-en="Get the free app">ดาวน์โหลดแอปฟรี</span></a>
         <a class="btn btn-ghost" href="/brainx.html#pricing" data-th="ดูราคา" data-en="See pricing">ดูราคา</a>
       </div>
     </div>
@@ -101,8 +105,8 @@
   </div>
 </footer>
 
-<script src="/assets/js/hub/catalog.js?v=202610122124" defer></script>
+<script src="/assets/js/hub/catalog.js?v=202610122217" defer></script>
 <script src="/assets/js/wiki-data.js?v=202609241343" defer></script>
-<script src="/assets/js/wiki.js?v=202610122107" defer></script>
+<script src="/assets/js/wiki.js?v=202610122217" defer></script>
 </body>
 </html>

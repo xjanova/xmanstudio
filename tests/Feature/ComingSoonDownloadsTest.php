@@ -135,6 +135,21 @@ class ComingSoonDownloadsTest extends TestCase
         $this->get('/brainx/download/BrainX-1.0.0-full.nupkg')->assertForbidden();
     }
 
+    public function test_brainx_listed_as_brainx_cloud_and_coming_soon_hands_out_no_installer(): void
+    {
+        // Production lists BrainX as `brainx-cloud`; a check on `brainx` alone let the installer
+        // through (owner, 2026-10-12: "ยังดาวโหลด brainx ได้ทั้งๆที่ coming soon").
+        Product::where('slug', 'brainx')->update(['is_coming_soon' => false]);
+        Product::updateOrCreate(['slug' => 'brainx-cloud'], [
+            'category_id' => $this->category->id, 'name' => 'BrainX Cloud', 'description' => 'x',
+            'price' => 399, 'stock' => 0, 'is_active' => true, 'is_coming_soon' => true,
+        ]);
+
+        $this->get('/brainx/download')->assertRedirect(route('products.show', 'brainx-cloud'))
+            ->assertSessionHas('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
+        $this->getJson('/brainx/download')->assertForbidden()->assertJsonPath('coming_soon', true);
+    }
+
     public function test_the_product_page_and_the_download_center_show_the_label_instead_of_a_button(): void
     {
         [$product, , $buyer] = $this->boughtComingSoon('xcluade-agent');

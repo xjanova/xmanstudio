@@ -324,7 +324,7 @@ const CODEX = [
    hubId: the row's product in the hub's catalogue; its chip, {terms}/{from} tokens and
    coming-soon state come from there (the shop's numbers, live). */
 const PRODUCTS = [
-  ['BrainX','Neural Knowledge Engine','AI & Automation',0,0,'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ + MCP hub สำหรับเอเจนต์ทุกตัว แอปใช้ฟรี[[ · BrainX Cloud {terms}{addonSoon}]]','A second brain you can see: a 3D knowledge graph and an MCP hub for every agent you use. The app is free[[; BrainX Cloud is {terms}{addonSoon}]].','#6cf0ff',1,'brainx'],
+  ['BrainX','Neural Knowledge Engine','AI & Automation',399,1,'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ + MCP hub สำหรับเอเจนต์ทุกตัว[[ · BrainX Cloud {terms}]]','A second brain you can see: a 3D knowledge graph and an MCP hub for every agent you use[[; BrainX Cloud is {terms}]].','#6cf0ff',1,'brainx'],
   ['AutoTradeX','Crypto Arbitrage Bot','Software',19900,0,'บอทเทรด Crypto Arbitrage อัตโนมัติ รองรับ 6 Exchange ชั้นนำ พร้อมโหมดทดลองและระบบจัดการความเสี่ยง','Automated crypto arbitrage across 6 major exchanges, with simulation mode and risk controls.','#57e08a',0,'autotradex'],
   ['PostXAgent','AI Brand Promotion','AI & Automation',7990,1,'โพสต์อัตโนมัติ 9 แพลตฟอร์ม พร้อม Web Automation ที่เรียนรู้เองและซ่อมตัวเองได้','Auto-posting across 9 platforms with self-learning, self-repairing web automation.','#8b7cf6',0,'postx-agent'],
   ['Live x Shop Pro','Live Commerce Platform','E-Commerce',5990,1,'รวมแชท Facebook/TikTok/LINE อ่านสลิปด้วย AI OCR ตรวจสลิปปลอม เชื่อมขนส่งครบ','Unified Facebook/TikTok/LINE chat, AI OCR slip reading, fraud detection and courier integration.','#e8825a',0,'livexshop-pro'],
@@ -459,6 +459,10 @@ function cloudPlan() {
       ? `<b>฿${terms[term].toLocaleString('en-US')}</b><i data-th="${unit[0]}" data-en="${unit[1]}">${unit[0]}</i>`
       : `<b data-th="ดูราคาที่ร้าน" data-en="See the shop">ดูราคาที่ร้าน</b>`;
   }
+  // BrainX itself (the app and its download): Coming Soon until the shop sells it — the owner,
+  // 2026-10-12: no download, free or not, until that changes. The page ships in its Coming Soon
+  // state; the [data-brainx="live"] parts appear only once the shop's brainx-cloud row is on sale.
+  brainxGate(c);
   // every "subscribe" button on the page: a link to the shop only while it sells BrainX Cloud
   const row = c && c.live && c.live.rows && c.live.rows['brainx-cloud'];
   const onSale = !!row && row.status === 'on_sale';
@@ -470,6 +474,13 @@ function cloudPlan() {
       ? `<a class="btn btn-primary" href="https://xman4289.com/products/brainx-cloud" data-cloud-cta="${esc(lab)}" data-th="${esc(th + (from ? ' — ' + from : ''))}" data-en="${esc(en + (fromEn ? ' — ' + fromEn : ''))}">${esc(th)}</a>`
       : `<span class="btn btn-ghost" role="note" style="cursor:default" data-cloud-cta="${esc(lab)}" data-th="${th === 'สมัคร' ? 'Coming Soon · เร็ว ๆ นี้' : 'BrainX Cloud · เร็ว ๆ นี้'}" data-en="${th === 'สมัคร' ? 'Coming soon' : 'BrainX Cloud · coming soon'}">Coming Soon</span>`;
   });
+}
+
+/** Show the parts written for BrainX on sale, or for BrainX Coming Soon (the default). */
+function brainxGate(c) {
+  const bx = c && c.byId('brainx');
+  const live = !!bx && bx.status === 'live';
+  $$('[data-brainx]').forEach(el => { el.hidden = (el.getAttribute('data-brainx') === 'live') !== live; });
 }
 
 /* ══ boot ══

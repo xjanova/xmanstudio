@@ -26,11 +26,14 @@ class BrainXDownloadController extends Controller
 {
     public function download(Request $request, BrainXInstaller $installer)
     {
-        // BrainX set to Coming Soon in the admin: no installer for anyone (owner, 2026-10-12)
-        if (Product::slugIsComingSoon('brainx')) {
+        // BrainX set to Coming Soon in the admin: no installer for anyone — free or not — until the
+        // owner changes it (2026-10-12). Production's row is `brainx-cloud`, so both are checked.
+        // The update feed (BrainXUpdateController) is for apps already installed and stays as it is:
+        // the owner closed new downloads only.
+        if ($row = Product::brainxComingSoonRow()) {
             return $request->wantsJson()
                 ? response()->json(['success' => false, 'error' => 'Coming soon: this product is not available for download yet', 'coming_soon' => true], 403)
-                : redirect()->route('products.show', 'brainx')->with('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
+                : redirect()->route('products.show', $row->slug)->with('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
         }
 
         $file = $installer->latest();

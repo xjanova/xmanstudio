@@ -7,9 +7,9 @@
    from that catalogue — its numbers and the shop's live data — not from this row.
    priceTHB stays as the fallback (0 = free to start: the chip keeps saying free). */
 window.PRODUCTS = [
- ['BrainX','Neural Knowledge Engine','AI & Automation',0,0,
-  'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ ค้นด้วยความหมาย และเป็นศูนย์กลาง MCP ให้เอเจนต์ AI ทุกตัว แอปใช้ฟรี[[ · BrainX Cloud {terms}{addonSoon}]]',
-  'A second brain you can see: a 3D knowledge graph, semantic retrieval, and an MCP hub for every AI agent you use. The app is free[[; BrainX Cloud is {terms}{addonSoon}]].',
+ ['BrainX','Neural Knowledge Engine','AI & Automation',399,1,
+  'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ ค้นด้วยความหมาย และเป็นศูนย์กลาง MCP ให้เอเจนต์ AI ทุกตัว[[ · BrainX Cloud {terms}]]',
+  'A second brain you can see: a 3D knowledge graph, semantic retrieval, and an MCP hub for every AI agent you use[[; BrainX Cloud is {terms}]].',
   '#6cf0ff','/brainx.html','brainx'],
  ['AutoTradeX','Crypto Arbitrage Bot','Software',19900,0,
   'บอทเทรด arbitrage อัตโนมัติ 6 exchange พร้อมโหมดทดลองและระบบจัดการความเสี่ยง',

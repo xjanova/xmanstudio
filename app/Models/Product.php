@@ -200,6 +200,18 @@ class Product extends Model
         return true;
     }
 
+    /**
+     * BrainX's rows in the shop: the code sells it as `brainx`, while production lists it as
+     * `brainx-cloud` — a check on `brainx` alone found no row and let the installer through.
+     */
+    public const BRAINX_SLUGS = ['brainx', 'brainx-cloud'];
+
+    /** BrainX is Coming Soon while any of its rows is (owner, 2026-10-12: no download, free or not, until that changes). */
+    public static function brainxComingSoonRow(): ?self
+    {
+        return static::whereIn('slug', self::BRAINX_SLUGS)->get()->first(fn (self $product) => $product->isComingSoon());
+    }
+
     /** The product with this slug exists and is still coming soon (for downloads tied to a slug, not a row). */
     public static function slugIsComingSoon(string $slug): bool
     {

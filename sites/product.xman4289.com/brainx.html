@@ -15,6 +15,8 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/site.css?v=202610112132">
 <link rel="stylesheet" href="/assets/css/pricing.css?v=202610112132">
+<!-- BrainX is Coming Soon until the shop sells it: [data-brainx="live"] parts stay hidden till then (site.js brainxGate) -->
+<style>[data-brainx][hidden]{display:none!important}</style>
 </head>
 <body>
 
@@ -326,9 +328,10 @@
   <div class="wrap">
     <div class="sec-head reveal" style="text-align:center;margin-inline:auto">
       <span class="kicker" data-th="ราคา" data-en="Pricing">ราคา</span>
-      <h2 data-th="แอปใช้ฟรี ไม่ต้องมีคีย์" data-en="The app is free. No key required.">แอปใช้ฟรี ไม่ต้องมีคีย์</h2>
+      <h2><span data-brainx="soon" data-th="BrainX · เร็ว ๆ นี้" data-en="BrainX · coming soon">BrainX · เร็ว ๆ นี้</span><span data-brainx="live" hidden data-th="แอปใช้ฟรี ไม่ต้องมีคีย์" data-en="The app is free. No key required.">แอปใช้ฟรี ไม่ต้องมีคีย์</span></h2>
       <!-- the price comes from the shop's `brainx` plan via assets/js/hub/catalog.js (site.js cloudPlan); these are today's numbers -->
-      <p class="sec-lede" id="cloud-lede" style="margin-inline:auto"
+      <p class="sec-lede" data-brainx="soon" style="margin-inline:auto" data-th="BrainX กำลังจะเปิดให้ใช้ ตอนนี้ยังดาวน์โหลดไม่ได้ — เปิดเมื่อไหร่จะแจ้งที่หน้านี้" data-en="BrainX is coming soon. It cannot be downloaded yet — this page will say when it opens.">BrainX กำลังจะเปิดให้ใช้ ตอนนี้ยังดาวน์โหลดไม่ได้ — เปิดเมื่อไหร่จะแจ้งที่หน้านี้</p>
+      <p class="sec-lede" id="cloud-lede" data-brainx="live" hidden style="margin-inline:auto"
          data-tpl-th="คีย์ BrainX Cloud[[ {terms}]] เพิ่มสิ่งที่แอปฟรีไม่มี: สมองบนคลาวด์ที่ Claude ทุกเครื่องใช้ได้ และการอัปเดตอัตโนมัติ{addonSoon}"
          data-tpl-en="A BrainX Cloud key[[, {terms},]] adds what the free app does not have: a cloud brain every Claude can use, and automatic updates.{addonSoon}"
          data-th="คีย์ BrainX Cloud ฿399/เดือน เพิ่มสิ่งที่แอปฟรีไม่มี: สมองบนคลาวด์ที่ Claude ทุกเครื่องใช้ได้ และการอัปเดตอัตโนมัติ (เร็ว ๆ นี้)"
@@ -338,15 +341,17 @@
     <div class="plans">
       <article class="plan plan-free reveal">
         <span class="plan-n" data-th="แอป BrainX" data-en="BrainX app">แอป BrainX</span>
-        <div class="plan-p"><b data-th="ฟรี" data-en="Free">ฟรี</b></div>
-        <p data-th="ใช้ได้เลยโดยไม่ต้องมีคีย์ — สมองที่สองบนเครื่องคุณเอง" data-en="No key needed — your second brain, on your own machine.">ใช้ได้เลยโดยไม่ต้องมีคีย์ — สมองที่สองบนเครื่องคุณเอง</p>
+        <div class="plan-p"><b data-brainx="soon" data-th="เร็ว ๆ นี้" data-en="Coming soon">เร็ว ๆ นี้</b><b data-brainx="live" hidden data-th="ฟรี" data-en="Free">ฟรี</b></div>
+        <p data-brainx="soon" data-th="สมองที่สองบนเครื่องคุณเอง — กำลังจะเปิดให้ใช้" data-en="Your second brain, on your own machine — coming soon.">สมองที่สองบนเครื่องคุณเอง — กำลังจะเปิดให้ใช้</p>
+        <p data-brainx="live" hidden data-th="ใช้ได้เลยโดยไม่ต้องมีคีย์ — สมองที่สองบนเครื่องคุณเอง" data-en="No key needed — your second brain, on your own machine.">ใช้ได้เลยโดยไม่ต้องมีคีย์ — สมองที่สองบนเครื่องคุณเอง</p>
         <ul><li data-th="กราฟความรู้ 3 มิติ ค้นแบบ hybrid และ Agent Bus" data-en="3D knowledge graph, hybrid search and the Agent Bus">กราฟความรู้ 3 มิติ ค้นแบบ hybrid และ Agent Bus</li>
             <li data-th="เป็น MCP server ให้ AI ที่คุณใช้ต่อเข้ามา" data-en="An MCP server for the agents you already use">เป็น MCP server ให้ AI ที่คุณใช้ต่อเข้ามา</li>
             <li data-th="โน้ตยังเป็น Markdown บนดิสก์ของคุณ" data-en="Your notes stay Markdown on your own disk">โน้ตยังเป็น Markdown บนดิสก์ของคุณ</li>
             <li data-th="Windows 10/11 · ภาษาไทยและอังกฤษ" data-en="Windows 10/11 · Thai and English">Windows 10/11 · ภาษาไทยและอังกฤษ</li>
             <li class="no" data-th="ไม่มีอัปเดตอัตโนมัติ" data-en="No automatic updates">ไม่มีอัปเดตอัตโนมัติ</li>
             <li class="no" data-th="ขึ้นคลาวด์ไม่ได้" data-en="No cloud brain">ขึ้นคลาวด์ไม่ได้</li></ul>
-        <a class="btn btn-ghost" href="https://xman4289.com/brainx/download" rel="nofollow" data-th="ดาวน์โหลดสำหรับ Windows" data-en="Download for Windows">ดาวน์โหลดสำหรับ Windows</a>
+        <span class="btn btn-ghost" role="note" style="cursor:default" data-brainx="soon" data-th="Coming Soon · เร็ว ๆ นี้" data-en="Coming soon">Coming Soon · เร็ว ๆ นี้</span>
+        <a class="btn btn-ghost" href="https://xman4289.com/brainx/download" rel="nofollow" data-brainx="live" hidden data-th="ดาวน์โหลดสำหรับ Windows" data-en="Download for Windows">ดาวน์โหลดสำหรับ Windows</a>
       </article>
 
       <article class="plan plan-best reveal" data-d="1">
@@ -392,7 +397,8 @@
       <span class="kicker" data-th="เริ่มต้น" data-en="Get started">เริ่มต้น</span>
       <h2 data-th="เอาความรู้ที่คุณสะสมมาทั้งชีวิต มาทำให้มันใช้งานได้จริง"
           data-en="Take everything you have ever written, and make it usable.">เอาความรู้ที่คุณสะสมมาทั้งชีวิต มาทำให้มันใช้งานได้จริง</h2>
-      <p data-th="แอป BrainX ทำงานบนเครื่องคุณและใช้ฟรี ไม่ต้องสมัครสมาชิกเพื่อเข้าถึงโน้ตของตัวเอง ข้อมูลจะออกจากเครื่องก็ต่อเมื่อคุณเลือกโฟลเดอร์ขึ้น BrainX Cloud เอง"
+      <p data-brainx="soon" data-th="BrainX ทำงานบนเครื่องคุณ ข้อมูลจะออกจากเครื่องก็ต่อเมื่อคุณเลือกโฟลเดอร์ขึ้น BrainX Cloud เอง — กำลังจะเปิดให้ใช้เร็ว ๆ นี้" data-en="BrainX runs on your machine — data leaves it only when you choose folders for BrainX Cloud. Coming soon.">BrainX ทำงานบนเครื่องคุณ ข้อมูลจะออกจากเครื่องก็ต่อเมื่อคุณเลือกโฟลเดอร์ขึ้น BrainX Cloud เอง — กำลังจะเปิดให้ใช้เร็ว ๆ นี้</p>
+      <p data-brainx="live" hidden data-th="แอป BrainX ทำงานบนเครื่องคุณและใช้ฟรี ไม่ต้องสมัครสมาชิกเพื่อเข้าถึงโน้ตของตัวเอง ข้อมูลจะออกจากเครื่องก็ต่อเมื่อคุณเลือกโฟลเดอร์ขึ้น BrainX Cloud เอง"
          data-en="The BrainX app runs on your machine, free. No subscription just to reach your own notes — data leaves the machine only when you choose folders for BrainX Cloud.">แอป BrainX ทำงานบนเครื่องคุณและใช้ฟรี ไม่ต้องสมัครสมาชิกเพื่อเข้าถึงโน้ตของตัวเอง ข้อมูลจะออกจากเครื่องก็ต่อเมื่อคุณเลือกโฟลเดอร์ขึ้น BrainX Cloud เอง</p>
       <div class="hero-cta">
         <span class="btn btn-ghost" role="note" style="cursor:default" data-cloud-cta="สมัคร BrainX Cloud|Get BrainX Cloud" data-th="BrainX Cloud · เร็ว ๆ นี้" data-en="BrainX Cloud · coming soon">BrainX Cloud · เร็ว ๆ นี้</span>
@@ -422,7 +428,7 @@
   </div>
 </footer>
 
-<script src="/assets/js/hub/catalog.js?v=202610122124" defer></script>
-<script src="/assets/js/site.js?v=202610122119" defer></script>
+<script src="/assets/js/hub/catalog.js?v=202610122217" defer></script>
+<script src="/assets/js/site.js?v=202610122217" defer></script>
 </body>
 </html>
