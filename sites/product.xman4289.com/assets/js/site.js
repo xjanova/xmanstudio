@@ -320,23 +320,26 @@ const CODEX = [
     <p>Local embeddings want Ollama installed, but it is optional — the system falls back to keyword retrieval on its own.</p>`],
 ];
 
+/* [name, sub, category, priceTHB, comingSoon, descTH, descEN, colour, flagship, hubId] —
+   hubId: the row's product in the hub's catalogue; its chip, {terms}/{from} tokens and
+   coming-soon state come from there (the shop's numbers, live). */
 const PRODUCTS = [
-  ['BrainX','Neural Knowledge Engine','AI & Automation',0,0,'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ + MCP hub สำหรับเอเจนต์ทุกตัว แอปใช้ฟรี · BrainX Cloud ฿399/เดือน','A second brain you can see: a 3D knowledge graph and an MCP hub for every agent you use. The app is free; BrainX Cloud is ฿399/month.','#6cf0ff',1],
-  ['AutoTradeX','Crypto Arbitrage Bot','Software',19900,0,'บอทเทรด Crypto Arbitrage อัตโนมัติ รองรับ 6 Exchange ชั้นนำ พร้อมโหมดทดลองและระบบจัดการความเสี่ยง','Automated crypto arbitrage across 6 major exchanges, with simulation mode and risk controls.','#57e08a',0],
-  ['PostXAgent','AI Brand Promotion','AI & Automation',7990,1,'โพสต์อัตโนมัติ 9 แพลตฟอร์ม พร้อม Web Automation ที่เรียนรู้เองและซ่อมตัวเองได้','Auto-posting across 9 platforms with self-learning, self-repairing web automation.','#8b7cf6',0],
-  ['Live x Shop Pro','Live Commerce Platform','E-Commerce',5990,1,'รวมแชท Facebook/TikTok/LINE อ่านสลิปด้วย AI OCR ตรวจสลิปปลอม เชื่อมขนส่งครบ','Unified Facebook/TikTok/LINE chat, AI OCR slip reading, fraud detection and courier integration.','#e8825a',0],
-  ['XcluadeAgent','GitHub Sync + AI Auto-Fix','AI & Automation',3490,1,'ซิงก์ release อัตโนมัติ พร้อม AI 6 โหมด ย้อนกลับเองเมื่อพัง แจ้งเตือน 5 ช่องทาง','Automated release sync with six AI modes, auto-rollback on failure and five notification channels.','#7dd3fc',0],
-  ['SpiderX','P2P Mesh Network','Network & Security',2990,1,'เครือข่ายกระจายศูนย์ เข้ารหัส End-to-End ไม่มีเซิร์ฟเวอร์กลาง ไม่ต้องลงทะเบียน','Decentralised end-to-end encrypted mesh — no central server, no registration.','#57e08a',0],
-  ['PhoneX Manager','Android Service Suite','Mobile Tools',1990,1,'Flash ROM, Backup, FRP Bypass, IMEI Tools รองรับ Qualcomm, MTK, Samsung, Xiaomi','Flashing, backup, FRP bypass and IMEI tools for Qualcomm, MediaTek, Samsung and Xiaomi.','#8b7cf6',0],
-  ['WinXTools','Network & System Control','System Utilities',199,0,'ดู bandwidth แยกโปรเซส คุมระดับ kernel ด้วย WFP ถอนโปรแกรมลึกถึง registry มีรุ่นฟรี · Pro ฿199 ต่อปี','Per-process bandwidth, kernel-level WFP control and a deep uninstaller that reaches the registry. Free edition; Pro is ฿199 per year.','#6cf0ff',0],
+  ['BrainX','Neural Knowledge Engine','AI & Automation',0,0,'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ + MCP hub สำหรับเอเจนต์ทุกตัว แอปใช้ฟรี[[ · BrainX Cloud {terms}{addonSoon}]]','A second brain you can see: a 3D knowledge graph and an MCP hub for every agent you use. The app is free[[; BrainX Cloud is {terms}{addonSoon}]].','#6cf0ff',1,'brainx'],
+  ['AutoTradeX','Crypto Arbitrage Bot','Software',19900,0,'บอทเทรด Crypto Arbitrage อัตโนมัติ รองรับ 6 Exchange ชั้นนำ พร้อมโหมดทดลองและระบบจัดการความเสี่ยง','Automated crypto arbitrage across 6 major exchanges, with simulation mode and risk controls.','#57e08a',0,'autotradex'],
+  ['PostXAgent','AI Brand Promotion','AI & Automation',7990,1,'โพสต์อัตโนมัติ 9 แพลตฟอร์ม พร้อม Web Automation ที่เรียนรู้เองและซ่อมตัวเองได้','Auto-posting across 9 platforms with self-learning, self-repairing web automation.','#8b7cf6',0,'postx-agent'],
+  ['Live x Shop Pro','Live Commerce Platform','E-Commerce',5990,1,'รวมแชท Facebook/TikTok/LINE อ่านสลิปด้วย AI OCR ตรวจสลิปปลอม เชื่อมขนส่งครบ','Unified Facebook/TikTok/LINE chat, AI OCR slip reading, fraud detection and courier integration.','#e8825a',0,'livexshop-pro'],
+  ['XcluadeAgent','GitHub Sync + AI Auto-Fix','AI & Automation',3490,1,'ซิงก์ release อัตโนมัติ พร้อม AI 6 โหมด ย้อนกลับเองเมื่อพัง แจ้งเตือน 5 ช่องทาง','Automated release sync with six AI modes, auto-rollback on failure and five notification channels.','#7dd3fc',0,'xcluade-agent'],
+  ['SpiderX','P2P Mesh Network','Network & Security',2990,1,'เครือข่ายกระจายศูนย์ เข้ารหัส End-to-End ไม่มีเซิร์ฟเวอร์กลาง ไม่ต้องลงทะเบียน','Decentralised end-to-end encrypted mesh — no central server, no registration.','#57e08a',0,'spiderx'],
+  ['PhoneX Manager','Android Service Suite','Mobile Tools',1990,1,'Flash ROM, Backup, FRP Bypass, IMEI Tools รองรับ Qualcomm, MTK, Samsung, Xiaomi','Flashing, backup, FRP bypass and IMEI tools for Qualcomm, MediaTek, Samsung and Xiaomi.','#8b7cf6',0,'phonex-manager'],
+  ['WinXTools','Network & System Control','System Utilities',199,0,'ดู bandwidth แยกโปรเซส คุมระดับ kernel ด้วย WFP ถอนโปรแกรมลึกถึง registry มีรุ่นฟรี[[ · Pro {terms}]]','Per-process bandwidth, kernel-level WFP control and a deep uninstaller that reaches the registry. Free edition[[; Pro is {terms}]].','#6cf0ff',0,'winx-tools'],
   ['SMS Payment Checker','WooCommerce Plugin','WordPress Plugins',990,1,'ตรวจเงินเข้าจาก SMS ธนาคาร 15+ แห่ง จับคู่ออเดอร์อัตโนมัติ เข้ารหัส AES-256-GCM','Reads bank SMS from 15+ Thai banks, matches orders automatically, AES-256-GCM encrypted.','#57e08a',0],
   ['SmsChecker','Bank SMS Automation','Mobile Tools',499,1,'ตรวจ SMS ธนาคาร 14+ แห่ง อนุมัติออเดอร์เรียลไทม์ ต่อหลายเซิร์ฟเวอร์พร้อมกัน','Detects bank SMS from 14+ banks, approves orders in real time, multi-server capable.','#e8825a',0],
-  ['Tping','Android Auto-Typer','Mobile Tools',399,0,'บันทึกขั้นตอนแล้วเล่นซ้ำได้ถึง 999 รอบ มีโหมดเกมพร้อม crosshair overlay ทดลองฟรี 24 ชม. · ฿399 ต่อเดือน','Record a sequence and replay it up to 999 times, with a game mode and crosshair overlay. Free 24-hour trial; ฿399 per month.','#7dd3fc',0],
-  ['Skidrow Killer','Malware Scanner','Security Software',299,1,'สแกนมัลแวร์เรียลไทม์ วิเคราะห์พฤติกรรมด้วย AI เฝ้า registry และบล็อกเซิร์ฟเวอร์ C2','Real-time malware scanning with AI behavioural analysis, registry watch and C2 blocking.','#e8825a',0],
-  ['CluadeX','AI Coding Assistant','AI & Automation',199,0,'ผู้ช่วยเขียนโค้ดที่รันบนเครื่องคุณ 5 ผู้ให้บริการ AI, 28 เครื่องมือ, 22+ โมเดลในเครื่อง มีรุ่นฟรี · License ฿199 ต่อปี','A coding assistant that runs on your machine: 5 AI providers, 28 agent tools, 22+ local models. Free edition; a licence is ฿199 per year.','#8b7cf6',0],
-  ['GPUsharX','Decentralised GPU Sharing','Cloud & Computing',0,1,'แชร์การ์ดจอสร้างรายได้ ผู้แชร์ได้ 90% พร้อมระบบกันโกงหลายชั้น','Rent out your GPU and keep 90% of the revenue, with multi-layer anti-cheat.','#6cf0ff',0],
-  ['LocalVPN','Virtual LAN over Internet','Network Tools',0,0,'สร้างวง LAN เสมือนข้ามอินเทอร์เน็ต เข้ารหัสด้วย WireGuard ทะลุ NAT ได้ ใช้ฟรีสูงสุด 5 คน · ทดลอง Pro ฟรี 30 วัน · Pro เริ่ม ฿199 ต่อเดือน','A virtual LAN across the internet, WireGuard-encrypted, with NAT traversal. Free for up to 5 members, with a 30-day Pro trial; Pro starts at ฿199 per month.','#57e08a',0],
-  ['Aipray','Buddhist Chanting Companion','Software',0,0,'บทสวด 20+ บท AI ฟังเสียงจับตำแหน่งอัตโนมัติ นับรอบให้ ใช้ออฟไลน์ได้ ฟรีตลอดไป','20+ chants with AI listening that tracks your place and counts repetitions. Offline. Free forever.','#e8825a',0],
+  ['Tping','Android Auto-Typer','Mobile Tools',399,0,'บันทึกขั้นตอนแล้วเล่นซ้ำได้ถึง 999 รอบ มีโหมดเกมพร้อม crosshair overlay ทดลองฟรี 24 ชม.[[ · {terms}]]','Record a sequence and replay it up to 999 times, with a game mode and crosshair overlay. Free 24-hour trial[[; then {terms}]].','#7dd3fc',0,'tping'],
+  ['Skidrow Killer','Malware Scanner','Security Software',299,1,'สแกนมัลแวร์เรียลไทม์ วิเคราะห์พฤติกรรมด้วย AI เฝ้า registry และบล็อกเซิร์ฟเวอร์ C2','Real-time malware scanning with AI behavioural analysis, registry watch and C2 blocking.','#e8825a',0,'skidrow-killer'],
+  ['CluadeX','AI Coding Assistant','AI & Automation',199,0,'ผู้ช่วยเขียนโค้ดที่รันบนเครื่องคุณ 5 ผู้ให้บริการ AI, 28 เครื่องมือ, 22+ โมเดลในเครื่อง มีรุ่นฟรี[[ · License {terms}]]','A coding assistant that runs on your machine: 5 AI providers, 28 agent tools, 22+ local models. Free edition[[; a licence is {terms}]].','#8b7cf6',0,'cluadex'],
+  ['GPUsharX','Decentralised GPU Sharing','Cloud & Computing',0,1,'แชร์การ์ดจอสร้างรายได้ ผู้แชร์ได้ 90% พร้อมระบบกันโกงหลายชั้น','Rent out your GPU and keep 90% of the revenue, with multi-layer anti-cheat.','#6cf0ff',0,'gpusharx'],
+  ['LocalVPN','Virtual LAN over Internet','Network Tools',0,0,'สร้างวง LAN เสมือนข้ามอินเทอร์เน็ต เข้ารหัสด้วย WireGuard ทะลุ NAT ได้ ใช้ฟรีสูงสุด 5 คน · ทดลอง Pro ฟรี 30 วัน[[ · Pro {from}]]','A virtual LAN across the internet, WireGuard-encrypted, with NAT traversal. Free for up to 5 members, with a 30-day Pro trial[[; Pro {from}]].','#57e08a',0,'localvpn'],
+  ['Aipray','Buddhist Chanting Companion','Software',0,0,'บทสวด 20+ บท AI ฟังเสียงจับตำแหน่งอัตโนมัติ นับรอบให้ ใช้ออฟไลน์ได้ ฟรีตลอดไป','20+ chants with AI listening that tracks your place and counts repetitions. Offline. Free forever.','#e8825a',0,'aipray'],
 ];
 
 function render() {
@@ -380,7 +383,11 @@ function render() {
   const pg = $('#prod-grid');
   const draw = (filter) => {
     if (!pg) return;
-    pg.innerHTML = PRODUCTS.filter(p => filter === '*' || p[2] === filter).map(([n, sub, cat, price, soon, dTh, dEn, col, hero]) => `
+    pg.innerHTML = PRODUCTS.filter(p => filter === '*' || p[2] === filter).map(([n, sub, cat, price, soon0, dTh0, dEn0, col, hero, id]) => {
+      const hp = CAT() && id ? CAT().byId(id) : null;
+      const soon = hp ? hp.status !== 'live' : soon0;
+      const dTh = fillTok(dTh0, id, 'th'), dEn = fillTok(dEn0, id, 'en');
+      return `
       <article class="prod reveal${hero ? ' prod-hero' : ''}" style="--tint:${col}22;--tint2:${col}">
         <div class="prod-top">
           <div class="prod-ico">${esc(n.slice(0, 2).toUpperCase())}</div>
@@ -391,15 +398,20 @@ function render() {
         <p data-th="${esc(dTh)}" data-en="${esc(dEn)}">${esc(dTh)}</p>
         <div class="prod-foot">
           <span class="prod-cat">${esc(cat)}</span>
-          <span class="prod-price${!price ? ' free' : ''}" data-th="${price ? '฿' + price.toLocaleString() : (price === 0 ? 'ฟรี' : 'สอบถาม')}" data-en="${price ? '฿' + price.toLocaleString() : (price === 0 ? 'Free' : 'Enquire')}">${price ? '฿' + price.toLocaleString() : 'ฟรี'}</span>
+          <span class="prod-price${!price ? ' free' : ''}" data-th="${esc(chip(price, id, 'th'))}" data-en="${esc(chip(price, id, 'en'))}">${esc(chip(price, id, 'th'))}</span>
         </div>
-      </article>`).join('');
+      </article>`;
+    }).join('');
     syncLang(); window.__revealWatch?.();
   };
+  let shown = '*';
+  cloudPlan();
   draw('*');
   $$('.fchip').forEach(b => b.addEventListener('click', () => {
-    $$('.fchip').forEach(x => x.classList.remove('on')); b.classList.add('on'); draw(b.dataset.f);
+    $$('.fchip').forEach(x => x.classList.remove('on')); b.classList.add('on'); shown = b.dataset.f; draw(shown);
   }));
+  // the hub's catalogue laid the shop's live prices / status on after the first paint
+  addEventListener('xph:catalog', () => { cloudPlan(); draw(shown); });
 
   function syncLang() {
     const l = th() ? 'data-th' : 'data-en';
@@ -415,6 +427,50 @@ function render() {
   syncLang();
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+/* Prices come from the hub's catalogue (assets/js/hub/catalog.js, loaded before
+   this file): the same numbers as product.xman4289.com's hub, and the shop's live
+   prices and status once they arrive. A grid row names its hub product at p[9]. */
+const CAT = () => (window.XPH && window.XPH.catalog) || null;
+const unTok = (t) => String(t).replace(/\[\[[\s\S]*?\]\]/g, '').replace(/\{\w+\}/g, '');
+const fillTok = (t, id, lang) => { const c = CAT(); return c ? c.fill(t, id, lang) : unTok(t); };
+function chip(price, id, lang) {
+  const c = CAT(), th = lang === 'th';
+  if (c && id && c.byId(id) && price !== 0) { const s = c.short(id, lang); if (s) return s; }
+  return price ? '฿' + price.toLocaleString() : (price === 0 ? (th ? 'ฟรี' : 'Free') : (th ? 'สอบถาม' : 'Enquire'));
+}
+
+/* BrainX Cloud on this page: its price from the shop's `brainx` plan, and its
+   button only while the shop sells it (the row brainx-cloud). Coming Soon: a
+   label, not a link — nothing here can be bought before the shop sells it. */
+function cloudPlan() {
+  const c = CAT();
+  const lede = $('#cloud-lede'), price = $('#cloud-price');
+  if (lede) {
+    lede.setAttribute('data-th', fillTok(lede.getAttribute('data-tpl-th'), 'brainx', 'th'));
+    lede.setAttribute('data-en', fillTok(lede.getAttribute('data-tpl-en'), 'brainx', 'en'));
+  }
+  const bx = c && c.byId('brainx');
+  const terms = (bx && bx.plans) || {};
+  const term = ['monthly', 'yearly', 'lifetime'].find(k => terms[k]);
+  const unit = { monthly: ['/ เดือน', '/ month'], yearly: ['/ ปี', '/ year'], lifetime: ['ตลอดชีพ', 'lifetime'] }[term];
+  if (price) {
+    price.innerHTML = term
+      ? `<b>฿${terms[term].toLocaleString('en-US')}</b><i data-th="${unit[0]}" data-en="${unit[1]}">${unit[0]}</i>`
+      : `<b data-th="ดูราคาที่ร้าน" data-en="See the shop">ดูราคาที่ร้าน</b>`;
+  }
+  // every "subscribe" button on the page: a link to the shop only while it sells BrainX Cloud
+  const row = c && c.live && c.live.rows && c.live.rows['brainx-cloud'];
+  const onSale = !!row && row.status === 'on_sale';
+  const from = c && c.short('brainx', 'th'), fromEn = c && c.short('brainx', 'en');
+  $$('[data-cloud-cta]').forEach(el => {
+    const lab = el.getAttribute('data-cloud-cta');
+    const [th, en] = lab.split('|');
+    el.outerHTML = onSale
+      ? `<a class="btn btn-primary" href="https://xman4289.com/products/brainx-cloud" data-cloud-cta="${esc(lab)}" data-th="${esc(th + (from ? ' — ' + from : ''))}" data-en="${esc(en + (fromEn ? ' — ' + fromEn : ''))}">${esc(th)}</a>`
+      : `<span class="btn btn-ghost" role="note" style="cursor:default" data-cloud-cta="${esc(lab)}" data-th="${th === 'สมัคร' ? 'Coming Soon · เร็ว ๆ นี้' : 'BrainX Cloud · เร็ว ๆ นี้'}" data-en="${th === 'สมัคร' ? 'Coming soon' : 'BrainX Cloud · coming soon'}">Coming Soon</span>`;
+  });
+}
 
 /* ══ boot ══
    The `js` class is set FIRST and unconditionally: it is what arms the

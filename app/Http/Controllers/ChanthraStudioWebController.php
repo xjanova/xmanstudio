@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 
 /**
@@ -23,11 +24,15 @@ class ChanthraStudioWebController extends Controller
 
     private const PRODUCT_SLUG = 'chanthra-studio';
 
-    private const PRICING = [
+    /**
+     * The plans the pages offer: names, durations, features. What each one costs is in
+     * config/licenses.php, the shop's one price table (product.xman4289.com prints it too);
+     * pricedPlans() puts the two together.
+     */
+    private const PLANS = [
         'monthly' => [
             'name' => 'Monthly',
             'name_th' => 'รายเดือน',
-            'price' => 399,
             'duration_days' => 30,
             'license_type' => 'monthly',
             'features' => [
@@ -42,20 +47,17 @@ class ChanthraStudioWebController extends Controller
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 2500,
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
                 'ทุกอย่างใน Monthly +',
                 'Priority support',
                 'อัพเดทก่อนใคร',
-                'ประหยัด ~48% (≈฿208/เดือน)',
             ],
         ],
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 7500,
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
@@ -66,6 +68,19 @@ class ChanthraStudioWebController extends Controller
             ],
         ],
     ];
+
+    /** PLANS with each price from config/licenses.php — and the yearly saving worked out from them. */
+    private static function pricedPlans(): array
+    {
+        $plans = LicensePlans::priced(self::PRODUCT_SLUG, self::PLANS);
+        $saving = LicensePlans::yearlySaving(self::PRODUCT_SLUG);
+
+        if ($saving !== null && isset($plans['yearly'])) {
+            $plans['yearly']['features'][] = 'ประหยัด ' . $saving . '% (≈฿' . number_format(intdiv($plans['yearly']['price'], 12)) . '/เดือน)';
+        }
+
+        return $plans;
+    }
 
     public function detail()
     {
@@ -87,7 +102,7 @@ class ChanthraStudioWebController extends Controller
         }
 
         return view('chanthrastudio.detail', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'product' => $product,
             'version' => $version,
             'hasPurchased' => $hasPurchased,
@@ -105,7 +120,7 @@ class ChanthraStudioWebController extends Controller
     public function pricing()
     {
         return view('chanthrastudio.pricing', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'comingSoon' => Product::slugIsComingSoon(self::PRODUCT_SLUG),
         ]);
     }

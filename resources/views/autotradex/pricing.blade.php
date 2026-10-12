@@ -75,7 +75,7 @@
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold text-white mb-4">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
-                <p class="text-gray-400">เริ่มต้นด้วย Trial 30 วันฟรี หรือเลือกแพ็กเกจที่ตรงใจ</p>
+                <p class="text-gray-400">เริ่มต้นด้วย Trial 7 วันฟรี หรือเลือกแพ็กเกจที่ตรงใจ</p>
                 @if(isset($earlyBird) && $earlyBird['eligible'])
                 <p class="text-yellow-400 font-semibold mt-2">🎉 รับส่วนลด {{ $earlyBird['discount_percent'] }}% สำหรับทุกแพ็กเกจ!</p>
                 @endif

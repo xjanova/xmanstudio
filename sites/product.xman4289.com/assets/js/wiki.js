@@ -132,9 +132,21 @@ function motion() {
   }, { passive: true });
 }
 
+/* BrainX Cloud's price from the hub's catalogue (assets/js/hub/catalog.js): the
+   shop's `brainx` plan, live once the shop answers. */
+function cloudNote() {
+  const el = $('#cloud-note'), c = window.XPH && window.XPH.catalog;
+  if (!el) return;
+  ['th', 'en'].forEach(l => {
+    const t = el.getAttribute('data-tpl-' + l);
+    if (t) el.setAttribute('data-' + l, c ? c.fill(t, 'brainx', l) : t.replace(/\[\[[\s\S]*?\]\]/g, '').replace(/\{\w+\}/g, ''));
+  });
+}
+
 function boot() {
   document.documentElement.classList.add('js');
-  render(); language(); motion();
+  cloudNote(); render(); language(); motion();
+  addEventListener('xph:catalog', () => { cloudNote(); sync(); });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

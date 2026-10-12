@@ -43,13 +43,14 @@
   var PRODUCTS = [
     {
       id: 'brainx', name: 'BrainX', sub: 'NEURAL KNOWLEDGE ENGINE', cat: 'ai',
-      status: 'live', free: true, price: 'แอปฟรี · Cloud ฿399/เดือน',
+      status: 'live', free: true, price: 'แอปฟรี[[ · Cloud {from}{addonSoon}]]',
+      plansKey: 'brainx', plans: { monthly: 399 }, addon: { shop: 'brainx-cloud', soon: true },
       platforms: ['Windows', 'Cloud'], tags: ['3D knowledge graph', 'Semantic search', 'MCP hub', 'Cloud sync'],
       palette: ['#8b5cf6', '#1a1240', '#67e8f9'], planet: 2,
       art: art('brainx'), shots: [img('/assets/img/hero-hud.jpg'), img('/assets/img/crop-galaxy.jpg')],
       tagline: 'สมองที่สองที่มองเห็นได้ ให้ AI ทุกตัวใช้ความรู้ของคุณ',
       pitch: ['กราฟความรู้ 3 มิติ ค้นด้วยความหมาย', 'และเป็นศูนย์กลาง MCP ให้เอเจนต์ AI ทุกตัว'],
-      desc: 'สมองที่สองที่มองเห็นได้ เก็บโน้ตเป็นกราฟความรู้ 3 มิติ ค้นด้วยความหมาย และเป็นศูนย์กลาง MCP ให้ Claude และเอเจนต์ AI ทุกตัวดึงความรู้ของคุณไปใช้ แอปบน Windows ใช้ฟรี ส่วน BrainX Cloud ฿399 ต่อเดือน ใช้กับ Claude ได้ทุกที่',
+      desc: 'สมองที่สองที่มองเห็นได้ เก็บโน้ตเป็นกราฟความรู้ 3 มิติ ค้นด้วยความหมาย และเป็นศูนย์กลาง MCP ให้ Claude และเอเจนต์ AI ทุกตัวดึงความรู้ของคุณไปใช้ แอปบน Windows ใช้ฟรี[[ ส่วน BrainX Cloud {terms}{addonSoon}]] ใช้กับ Claude ได้ทุกที่',
       features: ['กราฟความรู้ 3 มิติ', 'ค้นหาด้วยความหมาย', 'ศูนย์กลาง MCP ให้เอเจนต์ AI', 'Remote MCP ผ่าน BrainX Cloud', 'พื้นที่ส่วนตัว 1 GB ต่อบัญชี', 'เลือกเองว่าจะอัปโหลดโฟลเดอร์ไหน'],
       href: '/brainx.html', hrefLabel: 'ดูหน้า BrainX', external: false,
       download: SHOP + '/brainx/download', downloadLabel: 'ดาวน์โหลดแอปฟรี',
@@ -62,7 +63,7 @@
     },
     {
       id: 'winx-tools', name: 'WinXTools', sub: 'NETWORK & SYSTEM CONTROL', cat: 'system',
-      status: 'live', free: true, price: 'มีรุ่นฟรี · Pro ฿199/ปี',
+      status: 'live', free: true, price: 'มีรุ่นฟรี[[ · Pro {from}]]', plans: { yearly: 199 },
       platforms: ['Windows'], tags: ['.NET', 'Kernel-level WFP', 'Per-app bandwidth', 'TH / EN'],
       palette: ['#22d3ee', '#0a1f3d', '#38bdf8'], planet: 3,
       art: art('winx-tools'),
@@ -72,7 +73,7 @@
       ].map(function (n) { return img('/assets/shots/winx/' + n + '.webp'); }),
       tagline: 'ดู bandwidth แยกโปรเซส คุมเครือข่ายถึงระดับ kernel',
       pitch: ['ดู bandwidth แยกทีละโปรแกรม คุมระดับ kernel ด้วย WFP', 'ล้างเครื่อง เร่ง RAM ถอนโปรแกรมลึกถึง registry'],
-      desc: 'เครื่องมือคุมเครือข่ายและระบบ Windows ในตัวเดียว ดู bandwidth แยกตามโปรเซสแบบเรียลไทม์ จำกัดความเร็วรายโปรแกรมระดับ kernel ด้วย WFP มีตัวถอนโปรแกรมที่ตามลบถึง registry ตัวล้างเครื่อง ตัวเร่ง RAM และโหมดเกมเมอร์ มีรุ่นฟรี ส่วน Pro ฿199 ต่อปี',
+      desc: 'เครื่องมือคุมเครือข่ายและระบบ Windows ในตัวเดียว ดู bandwidth แยกตามโปรเซสแบบเรียลไทม์ จำกัดความเร็วรายโปรแกรมระดับ kernel ด้วย WFP มีตัวถอนโปรแกรมที่ตามลบถึง registry ตัวล้างเครื่อง ตัวเร่ง RAM และโหมดเกมเมอร์ มีรุ่นฟรีใช้ได้ตลอด ทดลอง Pro ฟรี 48 ชั่วโมง[[ ส่วน Pro {terms}]]',
       features: ['Bandwidth แยกตามโปรเซส', 'คุมระดับ kernel ด้วย WFP', 'จำกัดความเร็วรายโปรแกรม', 'ถอนโปรแกรม + ล้าง registry', 'System cleaner + RAM optimizer', 'Packet / network monitor'],
       href: SHOP + '/products/winx-tools', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/winx-tools/download', downloadLabel: 'ดาวน์โหลดฟรี',
@@ -80,18 +81,18 @@
       nova: [
         'WinXTools ดูได้เลยว่าโปรแกรมไหนแอบใช้เน็ตเยอะ แล้วจำกัดได้ทีละตัวด้วยนะ!',
         'ภาพที่หมุนอยู่บนจอเป็นหน้าจอจริงของ WinXTools ทั้งหมดเลยค่ะ ดูได้ครบทุกหน้า',
-        'มีรุ่นฟรีให้ลองก่อน ชอบแล้วค่อยอัป Pro ปีละ 199 บาทเองค่ะ ✦',
+        'มีรุ่นฟรีให้ลองก่อน ชอบแล้วค่อยอัป Pro {from}เองค่ะ ✦',
       ],
     },
     {
       id: 'cluadex', name: 'CluadeX', sub: 'AI CODING ASSISTANT', cat: 'ai',
-      status: 'live', free: true, price: 'มีรุ่นฟรี · License ฿199/ปี',
+      status: 'live', free: true, price: 'มีรุ่นฟรี[[ · License {from}]]', plans: { yearly: 199, lifetime: 1999 },
       platforms: ['Windows'], tags: ['Local GGUF', '5 AI providers', '28 agent tools', 'Private by design'],
       palette: ['#6366f1', '#121436', '#a5b4fc'], planet: 3,
       art: art('cluadex'), shots: [],
       tagline: 'ผู้ช่วยเขียนโค้ดที่รันบนเครื่องคุณ ข้อมูลไม่ออกนอกเครื่อง',
       pitch: ['ผู้ช่วยเขียนโค้ด AI ที่รันบนเครื่องคุณ', '5 ผู้ให้บริการ AI · 28 เครื่องมือ · 22+ โมเดลในเครื่อง'],
-      desc: 'ผู้ช่วยเขียนโค้ด AI ที่ทำงานบนเครื่องคุณ ข้อมูลเป็นส่วนตัว 100% ใช้ได้ทั้งโมเดล GGUF ในเครื่อง Ollama, OpenAI, Anthropic และ Gemini มี 28 เครื่องมือแบบเอเจนต์ Plan mode, TODO tracking และรีวิวโค้ด ภาษาไทย/อังกฤษ มีรุ่นฟรี ส่วน License ฿199 ต่อปี',
+      desc: 'ผู้ช่วยเขียนโค้ด AI ที่ทำงานบนเครื่องคุณ ข้อมูลเป็นส่วนตัว 100% ใช้ได้ทั้งโมเดล GGUF ในเครื่อง Ollama, OpenAI, Anthropic และ Gemini มี 28 เครื่องมือแบบเอเจนต์ Plan mode, TODO tracking และรีวิวโค้ด ภาษาไทย/อังกฤษ มีรุ่นฟรี[[ ส่วน License {terms}]]',
       features: ['Local GGUF + Ollama', 'OpenAI / Anthropic / Gemini', '28 agent tools', 'Plan mode + TODO tracking', 'Code review', 'อัปเดตตัวเองแบบ delta'],
       href: SHOP + '/cluadex', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/cluadex/download', downloadLabel: 'ดาวน์โหลดฟรี',
@@ -103,13 +104,13 @@
     },
     {
       id: 'chanthra-studio', name: 'Chanthra Studio', sub: 'AI VIDEO ATELIER', cat: 'creative',
-      status: 'soon', free: false, price: 'เริ่ม ฿399/เดือน · ฿2,500/ปี',
+      status: 'soon', free: false, price: '{from}', plans: { monthly: 399, yearly: 2500, lifetime: 7500 },
       platforms: ['Windows'], tags: ['ComfyUI', 'Node flow', 'TTS + LLM script', 'Auto-post'],
       palette: ['#f5c56b', '#2a1846', '#c084fc'], planet: 0,
       art: art('chanthra-studio'), shots: [],
       tagline: 'สตูดิโอวิดีโอ AI — เขียนบท ถ่ายช็อต ใส่เสียง ตัดต่อ ในแอปเดียว',
       pitch: ['script · shot · score · stitch ครบในแอปเดียว', 'ใช้ ComfyUI ในเครื่อง หรือ provider บนคลาวด์'],
-      desc: 'สตูดิโอวิดีโอ AI บน Windows ดีไซน์แบบ lunar atelier — เขียนบทด้วย LLM สร้างช็อตด้วย ComfyUI ในเครื่องหรือ provider บนคลาวด์ ใส่เสียงพากย์ TTS เรนเดอร์ด้วย ffmpeg แล้วโพสต์อัตโนมัติ ต่อโหนดได้ด้วย node-flow editor ราคา ฿399/เดือน, ฿2,500/ปี หรือ ฿7,500 ตลอดชีพ',
+      desc: 'สตูดิโอวิดีโอ AI บน Windows ดีไซน์แบบ lunar atelier — เขียนบทด้วย LLM สร้างช็อตด้วย ComfyUI ในเครื่องหรือ provider บนคลาวด์ ใส่เสียงพากย์ TTS เรนเดอร์ด้วย ffmpeg แล้วโพสต์อัตโนมัติ ต่อโหนดได้ด้วย node-flow editor[[ ราคา {terms}]]',
       features: ['ComfyUI ในเครื่อง หรือเช่า GPU', 'Node-flow graph editor', 'เขียนบทด้วย LLM', 'เสียงพากย์ TTS', 'Storyboard Auto Pilot', 'โพสต์ Facebook อัตโนมัติ'],
       href: SHOP + '/chanthra-studio', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: null, downloadLabel: null,
@@ -139,13 +140,13 @@
     },
     {
       id: 'autotradex', name: 'AutoTradeX', sub: 'CRYPTO ARBITRAGE BOT', cat: 'commerce',
-      status: 'live', free: false, price: '฿19,900',
+      status: 'live', free: false, price: 'ทดลองฟรี 7 วัน[[ · {from}]]', plans: { monthly: 299, yearly: 1990, lifetime: 19900 },
       platforms: ['Windows'], tags: ['.NET 8', '6 exchanges', 'Simulation mode', 'Risk controls'],
       palette: ['#34d399', '#0b2420', '#a3e635'], planet: 1,
       art: art('autotradex'), shots: [],
       tagline: 'บอทเทรด arbitrage อัตโนมัติ 6 exchange พร้อมโหมดทดลอง',
       pitch: ['ไล่ส่วนต่างราคาข้าม 6 exchange แบบเรียลไทม์', 'ทดลองเทรดโดยไม่ใช้เงินจริงก่อนได้'],
-      desc: 'บอทเทรด crypto arbitrage อัตโนมัติ ดูราคาเรียลไทม์จาก 6 exchange ชั้นนำ มีโหมด simulation ให้ทดลองโดยไม่เสียเงินจริง โหมด live trading, ติดตามกำไรขาดทุนพร้อมกราฟ บันทึกประวัติการเทรด และระบบจัดการความเสี่ยง',
+      desc: 'บอทเทรด crypto arbitrage อัตโนมัติ ดูราคาเรียลไทม์จาก 6 exchange ชั้นนำ มีโหมด simulation ให้ทดลองโดยไม่เสียเงินจริง โหมด live trading, ติดตามกำไรขาดทุนพร้อมกราฟ บันทึกประวัติการเทรด และระบบจัดการความเสี่ยง ทดลองฟรี 7 วัน[[ แล้วเลือกแพ็กเกจ {terms}]]',
       features: ['ราคาเรียลไทม์ 6 exchange', 'Simulation mode', 'Live trading', 'P&L tracking + charts', 'Trade history', 'Risk management'],
       href: SHOP + '/products/autotradex', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: null, downloadLabel: null,
@@ -157,13 +158,13 @@
     },
     {
       id: 'tping', name: 'Tping', sub: 'ANDROID AUTO-TYPER', cat: 'mobile',
-      status: 'live', free: false, price: '฿399/เดือน · ทดลองฟรี 24 ชม.',
+      status: 'live', free: false, price: '[[{from} · ]]ทดลองฟรี 24 ชม.', plans: { monthly: 399, yearly: 2500, lifetime: 5000 },
       platforms: ['Android'], tags: ['Floating overlay', 'Record & replay', 'Game mode', 'Data profiles'],
       palette: ['#22d3ee', '#0b2236', '#5eead4'], planet: 1,
       art: art('tping'), shots: [],
       tagline: 'บันทึกขั้นตอนแล้วเล่นซ้ำได้ถึง 999 รอบ ใช้ได้ทุกแอป',
       pitch: ['บันทึกขั้นตอนครั้งเดียว เล่นซ้ำได้ถึง 999 รอบ', 'มีโหมดเกมพร้อม crosshair overlay'],
-      desc: 'แอปช่วยพิมพ์และกดอัตโนมัติบน Android บันทึกขั้นตอนครั้งเดียวแล้วเล่นซ้ำได้ 1–999 รอบ จัดการชุดข้อมูลหลายชุด มีโหมดเกมพร้อม crosshair overlay และหน้าต่างลอยที่ใช้ได้ทุกแอป ทดลองฟรี 24 ชั่วโมง แล้ว ฿399 ต่อเดือน',
+      desc: 'แอปช่วยพิมพ์และกดอัตโนมัติบน Android บันทึกขั้นตอนครั้งเดียวแล้วเล่นซ้ำได้ 1–999 รอบ จัดการชุดข้อมูลหลายชุด มีโหมดเกมพร้อม crosshair overlay และหน้าต่างลอยที่ใช้ได้ทุกแอป ทดลองฟรี 24 ชั่วโมง[[ แล้ว {terms}]]',
       features: ['บันทึกขั้นตอนอัตโนมัติ', 'เล่นซ้ำ 1–999 รอบ', 'Data profiles หลายชุด', 'โหมดเกม + crosshair', 'Floating overlay', 'Export / Import workflow'],
       href: SHOP + '/tping', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/tping/download', dlPage: true, downloadLabel: 'ทดลองฟรี 24 ชม.',
@@ -193,13 +194,13 @@
     },
     {
       id: 'localvpn', name: 'LocalVPN', sub: 'VIRTUAL LAN OVER INTERNET', cat: 'network',
-      status: 'live', free: true, price: 'ฟรี 5 คน · Pro เริ่ม ฿199/เดือน',
+      status: 'live', free: true, price: 'ฟรี 5 คน[[ · Pro {from}]]', plans: { monthly: 199, yearly: 1990, lifetime: 4990 },
       platforms: ['Android', 'Windows'], tags: ['WireGuard', 'NAT traversal', 'LAN games', 'Private networks'],
       palette: ['#60a5fa', '#0d1b3d', '#c084fc'], planet: 1,
       art: art('localvpn'), shots: [],
       tagline: 'สร้างวง LAN เสมือนข้ามอินเทอร์เน็ต เข้ารหัส WireGuard',
       pitch: ['คอม Windows กับมือถือ Android อยู่วงแลนเดียวกัน แม้อยู่คนละที่', 'เข้ารหัส WireGuard ทะลุ NAT ได้ทุกเครือข่าย'],
-      desc: 'สร้างวง LAN เสมือนผ่านอินเทอร์เน็ต ให้คอม Windows และมือถือ Android เชื่อมกันเหมือนอยู่วงแลนเดียว สแกนหาเครือข่ายที่เปิดให้เข้าร่วม ตั้งรหัสเพื่อความส่วนตัว ส่งข้อมูลถึงกันตรง ๆ เข้ารหัสด้วย WireGuard และทะลุ NAT ได้ เครื่องใหม่ทดลอง Pro ฟรี 30 วัน ครบแล้วใช้รุ่นฟรีต่อได้สูงสุด 5 คนต่อวง ส่วน Pro รองรับ 50 คนต่อวง 1 คีย์ใช้ได้ 2 เครื่อง ราคา ฿199/เดือน, ฿1,990/ปี หรือ ฿4,990 ตลอดชีพ',
+      desc: 'สร้างวง LAN เสมือนผ่านอินเทอร์เน็ต ให้คอม Windows และมือถือ Android เชื่อมกันเหมือนอยู่วงแลนเดียว สแกนหาเครือข่ายที่เปิดให้เข้าร่วม ตั้งรหัสเพื่อความส่วนตัว ส่งข้อมูลถึงกันตรง ๆ เข้ารหัสด้วย WireGuard และทะลุ NAT ได้ เครื่องใหม่ทดลอง Pro ฟรี 30 วัน ครบแล้วใช้รุ่นฟรีต่อได้สูงสุด 5 คนต่อวง ส่วน Pro รองรับ 50 คนต่อวง 1 คีย์ใช้ได้ 2 เครื่อง[[ ราคา {terms}]]',
       features: ['วง LAN เสมือนข้ามเน็ต', 'สแกนหาเครือข่าย', 'ตั้งรหัสเครือข่าย', 'เห็นทุกอุปกรณ์ในวง', 'WireGuard', 'NAT traversal'],
       href: SHOP + '/localvpn', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/localvpn/download', dlPage: true, downloadLabel: 'ดาวน์โหลดฟรี',
@@ -211,13 +212,13 @@
     },
     {
       id: 'anti-x', name: 'Anti X', sub: 'WINDOWS SERVER INTRUSION GUARD', cat: 'system',
-      status: 'live', free: true, price: 'ฟรีพื้นฐาน · Pro เริ่ม ฿199/เดือน',
+      status: 'live', free: true, price: 'ฟรีพื้นฐาน[[ · Pro {from}]]', plans: { monthly: 199, yearly: 1990, lifetime: 9900 },
       platforms: ['Windows', 'Server'], tags: ['Windows service', 'RDP · SSH · DB guard', 'Per-IP firewall', 'Threat feeds'],
       palette: ['#38bdf8', '#0a1838', '#f5c56b'], planet: 2,
       art: art('anti-x'), shots: [],
       tagline: 'กันการเจาะเซิร์ฟเวอร์ Windows แบบเรียลไทม์ บล็อกทีละ IP ไม่ล็อกตัวเอง',
       pitch: ['บล็อกการเดารหัส RDP · SSH · ฐานข้อมูล และการสแกนพอร์ตแบบเรียลไทม์', 'บล็อกทีละ IP ไม่ปิดพอร์ต RDP คนที่ต่ออยู่ไม่โดนบล็อก'],
-      desc: 'ระบบกันการเจาะเซิร์ฟเวอร์ Windows แบบเรียลไทม์ ทำงานเป็นบริการ Windows ตลอดเวลาแม้ปิดหน้าจอหรือตัด RDP ไปแล้ว อ่าน event log และทราฟฟิกของเครื่องสด ๆ แล้วบล็อก IP ที่เดารหัส RDP / SSH / ฐานข้อมูล สแกนพอร์ต แตะพอร์ตอันตราย ยิงหาช่องโหว่เว็บ หรืออยู่ในรายชื่อ IP อันตราย ด้วย Windows Firewall ทีละ IP — ไม่ปิดพอร์ต RDP ทั้งพอร์ต และคนที่กำลังต่อ RDP อยู่ไม่โดนบล็อก รุ่นฟรีมีตัวจับพื้นฐานใช้ได้ตลอด ส่วน Pro ปลดตัวจับขั้นสูงทั้งหมดพร้อมจับเครื่องที่ถูกเจาะ ทดลอง Pro ฟรี 14 วัน แล้ว ฿199/เดือน, ฿1,990/ปี หรือ ฿9,900 ตลอดชีพ',
+      desc: 'ระบบกันการเจาะเซิร์ฟเวอร์ Windows แบบเรียลไทม์ ทำงานเป็นบริการ Windows ตลอดเวลาแม้ปิดหน้าจอหรือตัด RDP ไปแล้ว อ่าน event log และทราฟฟิกของเครื่องสด ๆ แล้วบล็อก IP ที่เดารหัส RDP / SSH / ฐานข้อมูล สแกนพอร์ต แตะพอร์ตอันตราย ยิงหาช่องโหว่เว็บ หรืออยู่ในรายชื่อ IP อันตราย ด้วย Windows Firewall ทีละ IP — ไม่ปิดพอร์ต RDP ทั้งพอร์ต และคนที่กำลังต่อ RDP อยู่ไม่โดนบล็อก รุ่นฟรีมีตัวจับพื้นฐานใช้ได้ตลอด ส่วน Pro ปลดตัวจับขั้นสูงทั้งหมดพร้อมจับเครื่องที่ถูกเจาะ ทดลอง Pro ฟรี 14 วัน[[ แล้ว {terms}]]',
       features: ['บล็อกเดารหัส RDP / SSH / ฐานข้อมูล', 'บล็อกสแกนพอร์ต + พอร์ตอันตราย', 'ไม่ปิดพอร์ต RDP ไม่ล็อกผู้ดูแล', 'ยิงหาช่องโหว่เว็บ · IP อันตราย (Pro)', 'จับเครื่องที่ถูกเจาะ (Pro)', 'อัปเดตในตัว ตรวจลายเซ็นก่อนติดตั้ง'],
       href: SHOP + '/products/anti-x', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/anti-x/download', downloadLabel: 'ดาวน์โหลดฟรี',
@@ -249,7 +250,7 @@
     },
     {
       id: 'postx-agent', name: 'PostXAgent', sub: 'AI BRAND PROMOTION', cat: 'ai',
-      status: 'soon', free: false, price: '฿7,990',
+      status: 'soon', free: false, price: '{price}', amount: 7990,
       platforms: ['Windows', 'Android'], tags: ['9 platforms', 'Self-learning automation', 'AI content', 'Account pool'],
       palette: ['#a78bfa', '#1a1440', '#f0abfc'], planet: 2,
       art: art('postx-agent'), shots: [],
@@ -263,7 +264,7 @@
     },
     {
       id: 'livexshop-pro', name: 'Live x Shop Pro', sub: 'LIVE COMMERCE', cat: 'commerce',
-      status: 'soon', free: false, price: '฿5,990',
+      status: 'soon', free: false, price: '{price}', amount: 5990,
       platforms: ['Windows', 'Mobile'], tags: ['WPF + MAUI', 'SignalR', 'AI slip OCR', 'Courier links'],
       palette: ['#fb7185', '#2a0f24', '#fbbf24'], planet: 0,
       art: art('livexshop-pro'), shots: [],
@@ -277,7 +278,7 @@
     },
     {
       id: 'xcluade-agent', name: 'XcluadeAgent', sub: 'RELEASE SYNC + AI AUTO-FIX', cat: 'ai',
-      status: 'soon', free: false, price: '฿3,490',
+      status: 'soon', free: false, price: '{price}', amount: 3490,
       platforms: ['Server', 'Web'], tags: ['6 AI modes', 'Auto-rollback', 'Multi-project', '5 alert channels'],
       palette: ['#7dd3fc', '#0c1a33', '#a78bfa'], planet: 3,
       art: art('xcluade-agent'), shots: [],
@@ -291,7 +292,7 @@
     },
     {
       id: 'spiderx', name: 'SpiderX', sub: 'P2P MESH NETWORK', cat: 'network',
-      status: 'soon', free: false, price: '฿2,990',
+      status: 'soon', free: false, price: '{price}', amount: 2990,
       platforms: ['Windows', 'Mac', 'Mobile'], tags: ['No central server', 'X25519 + AES-256-GCM', 'Encrypted calls', 'P2P files'],
       palette: ['#2dd4bf', '#08201f', '#818cf8'], planet: 2,
       art: art('spiderx'), shots: [],
@@ -305,7 +306,7 @@
     },
     {
       id: 'phonex-manager', name: 'PhoneX Manager', sub: 'ANDROID SERVICE SUITE', cat: 'mobile',
-      status: 'soon', free: false, price: '฿1,990',
+      status: 'soon', free: false, price: '{price}', amount: 1990,
       platforms: ['Windows'], tags: ['ADB / Fastboot', 'Qualcomm · MTK', 'Samsung · Xiaomi', 'Scrcpy mirror'],
       palette: ['#818cf8', '#141a3a', '#67e8f9'], planet: 3,
       art: art('phonex-manager'), shots: [],
@@ -319,7 +320,7 @@
     },
     {
       id: 'skidrow-killer', name: 'Skidrow Killer', sub: 'MALWARE SCANNER', cat: 'system',
-      status: 'soon', free: false, price: '฿299',
+      status: 'soon', free: false, price: '{price}', amount: 299,
       platforms: ['Windows'], tags: ['Real-time', 'Behaviour analysis', 'Registry watch', 'C2 blocking'],
       palette: ['#f43f5e', '#250a14', '#c084fc'], planet: 2,
       art: art('skidrow-killer'), shots: [],
@@ -369,15 +370,125 @@
     { id: 'tping', v: '1.2.102', date: '2026-03-25', title: 'Captcha puzzle อัตโนมัติ', items: ['แก้ captcha แบบเลื่อนชิ้นส่วนอัตโนมัติ', 'Export / Import workflow + Cloud sync'] },
   ];
 
+  /* ---------------------------------------------------------------- prices
+     A product's numbers live in ONE place: `plans` (THB per term, the shop's
+     config/licenses.php → plans, keyed by `plansKey`, default `shop`) or
+     `amount` (a single price, products.price). Every text that states a price is
+     a template, rendered from those numbers here and again when the live shop
+     data arrives:
+       {monthly} {yearly} {lifetime} {price}  one number, "฿1,990"
+       {terms}  every term sold, "฿299/เดือน, ฿1,990/ปี หรือ ฿19,900 ตลอดชีพ"
+       {from}   "เริ่ม ฿299/เดือน" (just "฿199/ปี" when one term is sold)
+       {addonSoon} " (เร็ว ๆ นี้)" while an add-on's own shop row is not on sale
+     [[ … ]] is a clause that disappears when a number in it is missing, so a term
+     the shop stops selling leaves no "฿0" or gap behind. A line whose number is
+     missing outside [[ ]] is dropped (features, Nova's lines). */
+  var TERMS = [
+    { k: 'monthly', th: '/เดือน', en: '/month' },
+    { k: 'yearly', th: '/ปี', en: '/year' },
+    { k: 'lifetime', th: ' ตลอดชีพ', en: ' lifetime' },
+  ];
+
+  /** ฿1,990 — whole baht without decimals, else two. */
+  function baht(n) {
+    var s = Math.round(n) === n ? String(n) : n.toFixed(2);
+    return '฿' + s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  /** Only the terms the hub knows, as positive numbers. */
+  function cleanTerms(o) {
+    var t = {};
+    if (o && typeof o === 'object') {
+      TERMS.forEach(function (d) {
+        var v = Number(o[d.k]);
+        if (isFinite(v) && v > 0) t[d.k] = v;
+      });
+    }
+    return t;
+  }
+
+  /** The values a template can ask for, in Thai or English. null = not sold. */
+  function priceVals(p, lang) {
+    var en = lang === 'en';
+    var plans = p.plans || {};
+    var list = TERMS.filter(function (d) { return plans[d.k]; }).map(function (d) { return baht(plans[d.k]) + (en ? d.en : d.th); });
+    if (!list.length && p.amount > 0) list = [baht(p.amount)];
+    var last = list[list.length - 1];
+    var v = {
+      price: p.amount > 0 ? baht(p.amount) : null,
+      terms: !list.length ? null : list.length === 1 ? last : list.slice(0, -1).join(', ') + (en ? ' or ' : ' หรือ ') + last,
+      from: !list.length ? null : list.length === 1 ? last : (en ? 'from ' : 'เริ่ม ') + list[0],
+      addonSoon: p.addon && p.addon.soon ? (en ? ' (coming soon)' : ' (เร็ว ๆ นี้)') : '',
+    };
+    TERMS.forEach(function (d) { v[d.k] = plans[d.k] ? baht(plans[d.k]) : null; });
+    return v;
+  }
+
+  /** Fill a template; null when a number outside [[ ]] is missing. */
+  function render(tpl, vals) {
+    if (typeof tpl !== 'string') return tpl;
+    var missing = false;
+    var fill = function (s) {
+      return s.replace(/\{(\w+)\}/g, function (m, k) {
+        var v = vals[k];
+        if (v == null) { missing = true; return ''; }
+        return v;
+      });
+    };
+    var out = tpl.replace(/\[\[([\s\S]*?)\]\]/g, function (m, inner) {
+      var outer = missing;
+      missing = false;
+      var r = fill(inner);
+      var drop = missing;
+      missing = outer;
+      return drop ? '' : r;
+    });
+    out = fill(out);
+    return missing ? null : out.replace(/ {2,}/g, ' ').trim();
+  }
+
+  /** A template with every number taken out (the last resort, never "undefined"). */
+  function strip(tpl) {
+    return String(tpl || '').replace(/\[\[[\s\S]*?\]\]/g, '').replace(/\{\w+\}/g, '').replace(/ {2,}/g, ' ').trim();
+  }
+
+  /** Every price-bearing text of a product, from its numbers and status as they are now. */
+  function renderProduct(p) {
+    var t = p.tpl;
+    var v = priceVals(p, 'th');
+    var sold = !!(v.terms);
+    var label = render(t.price, v);
+    // written as free, but the shop now asks a price: say the shop's price
+    if (!/\{/.test(t.price) && !(p.plans && Object.keys(p.plans).length) && p.amount > 0 && !(p.base.amount > 0)) label = v.price;
+    p.price = label || v.from || (sold ? strip(t.price) : 'ดูราคาที่หน้าสินค้า');
+    p.tagline = render(t.tagline, v) || strip(t.tagline);
+    p.desc = render(t.desc, v) || strip(t.desc);
+    p.pitch = t.pitch.map(function (s) { return render(s, v) || strip(s); });
+    p.features = t.features.map(function (s) { return render(s, v); }).filter(function (s) { return s; });
+    var nova = t.nova.map(function (s) { return render(s, v); }).filter(function (s) { return s; });
+    if (!nova.length) nova = [p.name + ' — ' + p.tagline];
+    p.nova = p.status === p.base.status ? nova : flippedLines(p, p.status);
+  }
+
   var byId = {};
   PRODUCTS.forEach(function (p, i) {
     p.index = i;
     byId[p.id] = p;
+    p.plans = p.plans ? cleanTerms(p.plans) : null;
+    p.amount = p.amount > 0 ? p.amount : 0;
+    if (p.addon) p.addon = { shop: p.addon.shop, soon: !!p.addon.soon };
+    // the authored texts are templates; p.price / desc / … hold them rendered
+    p.tpl = {
+      price: p.price, tagline: p.tagline, desc: p.desc,
+      pitch: p.pitch.slice(), features: p.features.slice(), nova: p.nova.slice(),
+    };
     // what this file says, so the live data is always applied to it and never on top of itself
     p.base = {
-      status: p.status, shots: p.shots.slice(), nova: p.nova.slice(), version: p.version, released: p.released,
+      status: p.status, shots: p.shots.slice(), version: p.version, released: p.released,
       download: p.download, downloadLabel: p.downloadLabel, dlPage: !!p.dlPage,
+      plans: p.plans ? Object.assign({}, p.plans) : null, amount: p.amount, addonSoon: p.addon ? p.addon.soon : false,
     };
+    renderProduct(p);
   });
   var catOf = {};
   CATS.forEach(function (c) { catOf[c.id] = c; c.count = PRODUCTS.filter(function (p) { return p.cat === c.id; }).length; });
@@ -405,6 +516,11 @@
      - download_url: fills a product that has no `download` here, only while it is
        live and only an https address on xman4289.com. A download written here is
        never swapped for another one.
+     - prices: the top-level `plans` (the shop's whole terms table, so `brainx` is
+       there without a product row) wins for each product's `plansKey`: a term it no
+       longer lists goes, and a key it drops takes every term with it. A row's
+       own `plans` is used when the table is missing; its
+       `price` is the single price of a product sold without terms.
      - a product the shop does not list keeps what this file says.
      One request per page load at most, kept 10 minutes in sessionStorage; never
      waited on: the page renders from this file, then `xph:catalog` says what
@@ -458,10 +574,23 @@
       : [p.name + ' ตอนนี้เป็น Coming Soon ค่ะ ยังดาวน์โหลดหรือซื้อไม่ได้นะ เปิดเมื่อไหร่โนวาจะบอกเลย~'];
   }
 
-  /** Lay the shop's rows over this file. Returns the ids whose status, pictures, version or download changed. */
-  function applyLive(rows) {
+  /** The terms a product sells now, from the shop's table (or its row), else as written here. */
+  function liveTerms(p, row, table) {
+    var key = p.plansKey !== undefined ? p.plansKey : p.shop;
+    if (key && table && Object.prototype.hasOwnProperty.call(table, key)) return cleanTerms(table[key]);
+    if (row && row.plans && Object.keys(cleanTerms(row.plans)).length) return cleanTerms(row.plans);
+    // the table is here and no longer lists the product: it sells no term any more
+    if (key && table && p.base.plans) return {};
+    return p.base.plans ? Object.assign({}, p.base.plans) : null;
+  }
+
+  /** Lay the shop's answer over this file. Returns the ids whose status, pictures, version, download or prices changed. */
+  function applyLive(data) {
+    var rows = data.products || [];
+    var table = data.plans && typeof data.plans === 'object' && !Array.isArray(data.plans) ? data.plans : null;
     var bySlug = {};
     rows.forEach(function (r) { if (r && typeof r.slug === 'string') bySlug[r.slug] = r; });
+    live.rows = bySlug;
     var changed = [];
     PRODUCTS.forEach(function (p) {
       var b = p.base;
@@ -473,7 +602,10 @@
       // a download written here stays; the shop's only fills a gap, and only while it is on sale
       var shopDl = !b.download && status === 'live' ? liveDownload(row) : null;
       var download = b.download || shopDl;
-      var sig = function (q) { return [q.status, q.shots.join('\n'), q.version, q.download].join('|'); };
+      var price = row && row.price != null && row.price !== '' && isFinite(Number(row.price)) && Number(row.price) >= 0 ? Number(row.price) : b.amount;
+      var sig = function (q) {
+        return [q.status, q.shots.join('\n'), q.version, q.download, q.price, q.desc, q.features.join('\n'), q.nova.join('\n')].join('|');
+      };
       var before = sig(p);
       p.status = status;
       p.shots = shots;
@@ -482,7 +614,13 @@
       p.download = download;
       p.downloadLabel = shopDl ? shopDlLabel(p) : b.downloadLabel;
       p.dlPage = shopDl ? false : b.dlPage;
-      p.nova = status === b.status ? b.nova.slice() : flippedLines(p, status);
+      p.plans = liveTerms(p, row, table);
+      p.amount = price;
+      if (p.addon) {
+        var ar = bySlug[p.addon.shop];
+        p.addon.soon = ar && STATUS[ar.status] ? STATUS[ar.status] !== 'live' : b.addonSoon;
+      }
+      renderProduct(p);
       if (sig(p) !== before) changed.push(p.id);
     });
     recount();
@@ -493,7 +631,7 @@
     try {
       var c = JSON.parse(sessionStorage.getItem(LIVE_KEY) || 'null');
       var age = c ? Date.now() - c.at : -1;
-      if (c && Array.isArray(c.products) && age >= 0 && age < LIVE_TTL) return c.products;
+      if (c && Array.isArray(c.products) && age >= 0 && age < LIVE_TTL) return { products: c.products, plans: c.plans || null };
     } catch (e) {}
     return null;
   }
@@ -503,10 +641,11 @@
     return {
       slug: r.slug, status: r.status, image_url: r.image_url, real_image: r.real_image === true,
       version: typeof r.version === 'string' ? r.version : null, download_url: typeof r.download_url === 'string' ? r.download_url : null,
+      price: r.price != null ? r.price : null, plans: r.plans && typeof r.plans === 'object' ? r.plans : null,
     };
   }
 
-  var live = { source: 'static', changed: [] };
+  var live = { source: 'static', changed: [], rows: {} };
 
   function fetchLive() {
     if (!window.fetch) return;
@@ -517,10 +656,13 @@
       .then(function (j) {
         clearTimeout(timer);
         if (!j || j.success !== true || !Array.isArray(j.products)) return;
-        var rows = j.products.filter(function (r) { return r && typeof r.slug === 'string'; }).map(slim);
-        try { sessionStorage.setItem(LIVE_KEY, JSON.stringify({ at: Date.now(), products: rows })); } catch (e) {}
+        var data = {
+          products: j.products.filter(function (r) { return r && typeof r.slug === 'string'; }).map(slim),
+          plans: j.plans && typeof j.plans === 'object' && !Array.isArray(j.plans) ? j.plans : null,
+        };
+        try { sessionStorage.setItem(LIVE_KEY, JSON.stringify({ at: Date.now(), products: data.products, plans: data.plans })); } catch (e) {}
         live.source = 'fresh';
-        live.changed = applyLive(rows);
+        live.changed = applyLive(data);
         if (live.changed.length) window.dispatchEvent(new CustomEvent('xph:catalog', { detail: { changed: live.changed.slice() } }));
       })
       .catch(function () { clearTimeout(timer); });
@@ -542,5 +684,17 @@
     cat: function (id) { return catOf[id]; },
     counts: counts,
     live: live,
+    /** For the other pages (classic.html, brainx.html): a text with price tokens, filled from a product's
+        numbers in Thai or English — the same table, the same live data. */
+    fill: function (tpl, id, lang) {
+      var p = byId[id];
+      if (!p) return strip(tpl);
+      return render(tpl, priceVals(p, lang)) || strip(tpl);
+    },
+    /** The short price for a grid chip: "เริ่ม ฿299/เดือน", "฿199/ปี", "฿7,990"; null when nothing is sold. */
+    short: function (id, lang) {
+      var p = byId[id];
+      return p ? priceVals(p, lang).from : null;
+    },
   };
 })();

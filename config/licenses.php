@@ -40,6 +40,8 @@ return [
         'autotradex' => ['monthly' => 299, 'yearly' => 1990, 'lifetime' => 19900],
         'brainx' => ['monthly' => 399],
         'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
+        // Chanthra Studio — moved here from ChanthraStudioWebController::PRICING (2026-10-12) so the hub prints it too
+        'chanthra-studio' => ['monthly' => 399, 'yearly' => 2500, 'lifetime' => 7500],
         // LocalVPN Pro — owner 2026-10-11 (was 399 / 2,500 / 5,000)
         'localvpn' => ['monthly' => 199, 'yearly' => 1990, 'lifetime' => 4990],
         'sms-payment-checker' => ['monthly' => 990, 'yearly' => 9900, 'lifetime' => 29900],

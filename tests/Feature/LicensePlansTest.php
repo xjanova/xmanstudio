@@ -58,6 +58,7 @@ class LicensePlansTest extends TestCase
         $this->assertSame(['yearly' => 199], LicensePlans::for('winx-tools'));
         $this->assertSame(['monthly' => 399], LicensePlans::for('brainx'));
         $this->assertSame(['monthly' => 199, 'yearly' => 1990, 'lifetime' => 4990], LicensePlans::for('localvpn'));
+        $this->assertSame(['monthly' => 399, 'yearly' => 2500, 'lifetime' => 7500], LicensePlans::for('chanthra-studio'));
         $this->assertSame([], LicensePlans::for('aipray'));
     }
 
@@ -177,6 +178,19 @@ class LicensePlansTest extends TestCase
         $this->get('/tping/checkout/monthly')->assertOk()->assertSee('฿450');
         // a term the table stopped selling is gone from checkout too
         $this->get('/tping/checkout/lifetime')->assertNotFound();
+    }
+
+    public function test_chanthra_studio_pages_price_from_the_table(): void
+    {
+        $this->get('/chanthra-studio/pricing')->assertOk()
+            ->assertSee('฿399')->assertSee('฿2,500')->assertSee('฿7,500')
+            ->assertSee('ประหยัด 47%');
+
+        // its prices used to live in its own controller; a change in the table reaches its pages now
+        config()->set('licenses.plans.chanthra-studio', ['monthly' => 450, 'yearly' => 3000]);
+
+        $this->get('/chanthra-studio/pricing')->assertOk()
+            ->assertSee('฿450')->assertSee('฿3,000')->assertDontSee('฿7,500')->assertDontSee('฿2,500');
     }
 
     public function test_localvpn_premium_prices_from_the_table(): void
