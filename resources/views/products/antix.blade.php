@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('anti-x'); @endphp
 
 @section('title', 'Anti X — กันการเจาะเซิร์ฟเวอร์ Windows แบบเรียลไทม์ · ฟรีพื้นฐาน · Pro เริ่ม ฿' . number_format(\App\Support\LicensePlans::price('anti-x', 'monthly')) . '/เดือน | XMAN Studio')
 @section('meta_description', 'Anti X บล็อกการเดารหัส RDP/SSH/ฐานข้อมูล สแกนพอร์ต ยิงหาช่องโหว่ และ IP อันตรายแบบเรียลไทม์ พร้อมจับเครื่องที่ถูกเจาะ ไม่ปิดพอร์ต RDP ไม่ล็อกตัวเอง ฟรีพื้นฐาน ทดลอง Pro ฟรี 14 วัน · Real-time intrusion blocking for Windows servers.')
@@ -152,11 +154,15 @@
                     </p>
 
                     <div class="flex flex-wrap items-center gap-3">
+                        @if($csDownload)
+                            <span class="atx-btn-main inline-flex items-center gap-2 px-7 py-4 rounded-xl font-extrabold text-lg transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ route('anti-x.download') }}"
                            class="atx-btn-main inline-flex items-center gap-2 px-7 py-4 rounded-xl font-extrabold text-lg transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                         </a>
+                        @endif
                         <a href="#pricing" class="atx-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">
                             {{ $ownsAntiX ? 'ซื้อ License เพิ่ม' : 'ซื้อ Pro' }} — เริ่ม ฿{{ $monthly }}/เดือน
                         </a>
@@ -312,9 +318,13 @@
                         @endforeach
                     </ul>
                     {{-- ไฟล์เดียวกับ Pro — Pro ปลดล็อกในแอปด้วย license key --}}
+                    @if($csDownload)
+                        <span class="atx-btn-main block w-full py-3.5 text-center rounded-xl font-extrabold transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('anti-x.download') }}" class="atx-btn-main block w-full py-3.5 text-center rounded-xl font-extrabold transition">
                         <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                     </a>
+                    @endif
                 </div>
 
                 @foreach($plans as $term => $plan)
@@ -448,10 +458,14 @@
             <p class="text-lg text-gray-300 mb-1">ดาวน์โหลดรุ่นฟรีได้ทันที หรือปลดตัวจับขั้นสูงทั้งหมดด้วย Pro เริ่มเพียง ฿{{ $monthly }} ต่อเดือน</p>
             <p class="text-sm text-gray-500 mb-9">Shut the door before anyone walks in.</p>
             <div class="flex flex-wrap justify-center gap-3">
+                @if($csDownload)
+                    <span class="atx-btn-main inline-flex items-center gap-2 px-8 py-4 rounded-xl font-extrabold text-lg transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ route('anti-x.download') }}" class="atx-btn-main inline-flex items-center gap-2 px-8 py-4 rounded-xl font-extrabold text-lg transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                 </a>
+                @endif
                 <a href="#pricing" class="atx-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">ดูแผน Pro</a>
                 @if($ownsAntiX)
                     <a href="{{ route('customer.licenses') }}" class="atx-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-semibold transition">ดูคีย์ License ของฉัน</a>

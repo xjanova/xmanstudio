@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('localvpn'); @endphp
 
 @section('title', 'ซื้อ License - LocalVPN')
 
@@ -74,9 +76,13 @@
                             VPN เฉพาะประเทศฟรี · ส่งไฟล์ · Torrent
                         </li>
                     </ul>
+                    @if($csDownload)
+                        <span class="block text-center text-white text-sm py-3 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 rounded-xl transition-all font-medium" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('localvpn.download') }}" class="block text-center text-white text-sm py-3 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 rounded-xl transition-all font-medium">
                         ดาวน์โหลดฟรี
                     </a>
+                    @endif
                 </div>
 
                 <!-- Monthly Card -->

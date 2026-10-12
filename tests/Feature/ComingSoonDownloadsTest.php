@@ -172,6 +172,50 @@ class ComingSoonDownloadsTest extends TestCase
         $this->assertStringNotContainsString('data-coming-soon', $this->actingAs($buyer)->get(route('products.show', 'xcluade-agent'))->getContent());
     }
 
+    /**
+     * Every app's own pages: set to Coming Soon, none of them links to the app's file any more and
+     * each shows the label where the download button was. Navigation to a download page ("back
+     * to the download page", "read the guide") stays — that page itself shows the label.
+     *
+     * @return array<string, array{0: string, 1: list<string>, 2: list<string>}> slug, pages, file URLs
+     */
+    public static function appPages(): array
+    {
+        return [
+            'CluadeX' => ['cluadex-ai-coding-assistant', ['/cluadex', '/cluadex/pricing', '/products/cluadex-ai-coding-assistant'], ['/cluadex/download', '/download/cluadex-ai-coding-assistant']],
+            'Tping' => ['tping', ['/tping', '/tping/pricing', '/tping/download', '/tping/install-guide'], ['/tping/download/apk']],
+            'SMS Checker' => ['smschecker', ['/smschecker', '/smschecker/pricing', '/smschecker/download'], ['/smschecker/download/apk']],
+            'LocalVPN' => ['localvpn', ['/products/localvpn', '/localvpn/pricing', '/localvpn/download', '/localvpn/install-guide'], ['/localvpn/download/apk', '/localvpn/download/windows']],
+            'Anti X' => ['anti-x', ['/products/anti-x'], ['/anti-x/download']],
+            'WinXTools' => ['winx-tools', ['/products/winx-tools'], ['/winx-tools/download']],
+            'GigGok' => ['giggok', ['/products/giggok'], ['/giggok/download']],
+            'AutoTradeX' => ['autotradex', ['/products/autotradex'], ['/autotradex/download']],
+            'Aipray' => ['aipray', ['/apps/aipray'], ['/apps/aipray/download']],
+            'GPUxMINE' => ['gpuxmine', ['/gpuxmine'], ['/gpuxmine/download']],
+        ];
+    }
+
+    /** @dataProvider appPages */
+    public function test_an_apps_own_pages_show_the_label_instead_of_its_download(string $slug, array $pages, array $files): void
+    {
+        $this->product($slug, comingSoon: true);
+        $this->actingAs(User::factory()->create());
+
+        foreach ($pages as $page) {
+            $html = $this->get($page)->assertOk()->getContent();
+
+            foreach ($files as $file) {
+                $this->assertStringNotContainsString('href="' . url($file), $html, "{$page} still links to {$file}");
+            }
+            $this->assertStringContainsString('data-coming-soon', $html, $page);
+            $this->assertStringContainsString('Coming Soon', $html, $page);
+        }
+
+        // And when the app is open, the same pages offer the download again
+        Product::where('slug', $slug)->update(['is_coming_soon' => false]);
+        $this->assertStringNotContainsString('data-coming-soon', $this->get($pages[0])->assertOk()->getContent(), $pages[0]);
+    }
+
     // ── helpers ──────────────────────────────────────────────────────
 
     private function product(string $slug, bool $comingSoon): Product

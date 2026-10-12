@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('winx-tools'); @endphp
 
 @section('title', 'WinXTools 1.1 — ดูแลวินโดวส์ครบในโปรแกรมเดียว · ฟรี 8 เครื่องมือ · Pro ฿' . number_format(\App\Support\LicensePlans::price('winx-tools', 'yearly')) . '/ปี | XMAN Studio')
 @section('meta_description', 'WinXTools 1.1: Defrag 3D ดูดิสก์หมุนจริง, 1-Click Full Optimize, ทดสอบความเร็วดิสก์, สแกนแบดบล็อก, Smart CPU, ล้างขยะรวม CapCut และคุมเน็ตทุกแอป ฟรี 8 เครื่องมือ Pro ฿' . number_format(\App\Support\LicensePlans::price('winx-tools', 'yearly')) . '/ปี ทดลอง Pro ฟรี 48 ชั่วโมง · Windows care in one app for Windows 10/11.')
@@ -359,11 +361,15 @@
                     </p>
 
                     <div class="flex flex-wrap items-center gap-3">
+                        @if($csDownload)
+                            <span class="wxt-btn-main inline-flex items-center gap-2 px-7 py-4 rounded-xl font-extrabold text-lg transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ route('winx-tools.download') }}"
                            class="wxt-btn-main inline-flex items-center gap-2 px-7 py-4 rounded-xl font-extrabold text-lg transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                         </a>
+                        @endif
                         {{-- Pro = license รายปี · ราคามาจาก config/licenses.php 'plans' ไม่ใช่จากฟอร์ม --}}
                         <form action="{{ route('cart.add', $product) }}" method="POST">
                             @csrf
@@ -661,9 +667,13 @@
                         @endforeach
                     </ul>
                     {{-- ไฟล์เดียวกับ Pro — Pro ปลดล็อกในแอปด้วย license key --}}
+                    @if($csDownload)
+                        <span class="wxt-btn-main block w-full py-3.5 text-center rounded-xl font-extrabold transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('winx-tools.download') }}" class="wxt-btn-main block w-full py-3.5 text-center rounded-xl font-extrabold transition">
                         <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                     </a>
+                    @endif
                 </div>
 
                 <div class="relative rounded-[1.1rem] p-px bg-gradient-to-br from-amber-300/80 via-orange-500/40 to-lime-300/60 shadow-[0_30px_90px_-30px_rgba(255,160,40,.45)]">
@@ -820,10 +830,14 @@
             <p class="text-lg text-gray-300 mb-1">ดาวน์โหลดรุ่นฟรีได้ทันที หรือปลดล็อกทุกฟีเจอร์ด้วย Pro เพียง ฿{{ $proPrice }} ต่อปี</p>
             <p class="text-sm text-gray-500 mb-9">Let's make your PC fast again.</p>
             <div class="flex flex-wrap justify-center gap-3">
+                @if($csDownload)
+                    <span class="wxt-btn-main inline-flex items-center gap-2 px-8 py-4 rounded-xl font-extrabold text-lg transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ route('winx-tools.download') }}" class="wxt-btn-main inline-flex items-center gap-2 px-8 py-4 rounded-xl font-extrabold text-lg transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                 </a>
+                @endif
                 <form action="{{ route('cart.add', $product) }}" method="POST">
                     @csrf
                     <input type="hidden" name="quantity" value="1">
