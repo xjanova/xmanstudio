@@ -740,6 +740,24 @@
     }
 }
 
+/* Products: at most three across, so the nine cards on sale fill a 3x3 and each
+   real screenshot is large enough to read instead of four thumbnails and an orphan. */
+.nova-grid--3 {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+    .nova-grid--3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .nova-grid--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 .nova-card {
     position: relative;
     display: flex;

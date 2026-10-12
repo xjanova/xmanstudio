@@ -1,5 +1,6 @@
 {{-- Nova products — real rows from the `products` table, passed in by
-     HomeController as $featuredProducts (is_active, newest 6).
+     HomeController as $featuredProducts (on sale now, newest 9).
+     Pictures: HomeContent::productArt — a real screenshot or the app's logo.
      The section is skipped entirely when the catalogue is empty so a fresh
      install never renders an empty grid. --}}
 @if(isset($featuredProducts) && $featuredProducts->isNotEmpty())
@@ -24,9 +25,12 @@
             </p>
         </header>
 
-        <div class="nova-grid">
+        <div class="nova-grid nova-grid--3">
             @foreach($featuredProducts as $product)
-                @php $accent = $novaAccents[$loop->index % count($novaAccents)]; @endphp
+                @php
+                    $accent = $novaAccents[$loop->index % count($novaAccents)];
+                    $novaArt = \App\Support\HomeContent::productArt($product);
+                @endphp
                 <a href="{{ route('products.show', $product->slug) }}"
                    class="nova-card nova-reveal"
                    style="--nv-accent: {{ $accent }}; transition-delay: {{ $loop->index * 0.05 }}s;">
@@ -36,8 +40,8 @@
                     @endif
 
                     <span class="nova-card__thumb">
-                        @if($product->artwork_url)
-                            <img src="{{ $product->artwork_url }}"
+                        @if($novaArt)
+                            <img src="{{ $novaArt }}"
                                  alt="{{ $product->name }}"
                                  loading="lazy" decoding="async">
                         @else

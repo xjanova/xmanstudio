@@ -1,9 +1,8 @@
 {{--
-    Stop 4 — the product nebula: real rows from $featuredProducts (active,
-    on the website, newest six). The card track slides sideways as the
+    Stop 4 — the product nebula: real rows from $featuredProducts (on sale
+    now, on the website, newest nine). The card track slides sideways as the
     visitor scrolls on. Only included when there is something to show.
-    Pictures: key art drawn for this page where there is some, else the
-    product's own (HomeContent::productArt).
+    Pictures: a real screenshot or the app's own logo (HomeContent::productArt).
 --}}
 <section id="xu-products" class="xu-st" data-station="products" data-len="2.1"
          data-label-th="เนบิวลาผลิตภัณฑ์" data-label-en="Products" aria-labelledby="xu-products-title">

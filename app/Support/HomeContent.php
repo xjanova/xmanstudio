@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Storage;
+
 /**
  * What the home page says, in one place.
  *
@@ -236,19 +238,30 @@ class HomeContent
     }
 
     /**
-     * A product card's picture on the universe home: the key art drawn for it
-     * (public_html/artwork/universe/products/{slug}.webp) when there is one, else the product's own.
+     * A product card's picture on both home pages, under "ซอฟต์แวร์ที่พร้อมใช้งานจริง".
+     *
+     * The owner (2026-10-12): the pictures there must be the software as it really is. So it is
+     * public_html/images/products/cards/{slug}.webp — a 960x540 cut of a real screenshot, or the
+     * app's own logo where no screenshot exists yet — else the image uploaded in the admin, else
+     * nothing (the card shows the name's initials). Never the drawn key art of artwork/product/,
+     * which artwork_url falls back to: it pictures the idea, not the program.
      */
     public static function productArt(object $product): ?string
     {
         $slug = (string) ($product->slug ?? '');
-        $file = 'artwork/universe/products/' . $slug . '.webp';
+        $file = 'images/products/cards/' . $slug . '.webp';
 
         if (preg_match('/^[a-z0-9-]+$/', $slug) === 1 && is_file(public_path($file))) {
             return asset($file);
         }
 
-        return $product->artwork_url ?: null;
+        $image = (string) ($product->image ?? '');
+
+        if ($image === '') {
+            return null;
+        }
+
+        return preg_match('#^https?://#i', $image) === 1 ? $image : Storage::url($image);
     }
 
     /**

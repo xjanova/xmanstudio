@@ -15,10 +15,12 @@ class HomeController extends Controller
         // onWebsite(): avatar packs are sold inside the GigGok app and would
         // otherwise show up here as "newest products", since they are the most
         // recently created rows in the table.
+        // available(): the section is headed "ready to use for real", so only
+        // what a visitor can buy or download today — never a Coming Soon row.
         $featuredProducts = Product::onWebsite()
-            ->where('is_active', true)
+            ->available()
             ->orderBy('created_at', 'desc')
-            ->take(6)
+            ->take(9)
             ->get();
 
         $featuredReviews = Review::approved()
