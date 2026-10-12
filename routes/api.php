@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\LocalVpnGameProfileController;
 use App\Http\Controllers\Api\LocalVpnNodeController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
 use App\Http\Controllers\Api\PackController;
+use App\Http\Controllers\Api\ProductCatalogController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\StripeController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -353,6 +354,10 @@ Route::prefix('v1/products')->middleware(['throttle:60,1,api-products'])->group(
     // Validate license key
     Route::post('/validate-license', [VersionController::class, 'validateLicense']);
 });
+
+// What product.xman4289.com shows of each product: on sale or not, picture, version (public, CORS *).
+Route::get('/v1/catalog', [ProductCatalogController::class, 'index'])
+    ->middleware('throttle:60,1,api-catalog');
 
 // ==================== Coupon API Routes ====================
 // These routes are used during checkout to validate and apply coupons

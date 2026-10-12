@@ -90,8 +90,8 @@
                     <div class="relative">
                         <div class="bg-gradient-to-br from-primary-500/20 to-purple-500/20 rounded-2xl p-8 border border-primary-500/30">
                             <div class="aspect-video bg-gray-800 rounded-xl flex items-center justify-center overflow-hidden">
-                                @if($product->image)
-                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                                @if($product->artwork_url)
+                                    <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
                                 @else
                                     <div class="text-center">
                                         <svg class="w-24 h-24 mx-auto text-primary-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,8 +171,8 @@
                     @foreach($relatedProducts as $related)
                     <div class="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700">
                         <div class="aspect-video bg-gray-700">
-                            @if($related->image)
-                                <img src="{{ Storage::url($related->image) }}" alt="{{ $related->name }}" class="w-full h-full object-cover">
+                            @if($related->artwork_url)
+                                <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}" class="w-full h-full object-cover">
                             @endif
                         </div>
                         <div class="p-4">

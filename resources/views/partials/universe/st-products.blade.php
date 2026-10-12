@@ -2,7 +2,7 @@
     Stop 4 — the product nebula: real rows from $featuredProducts (on sale
     now, on the website, newest nine). The card track slides sideways as the
     visitor scrolls on. Only included when there is something to show.
-    Pictures: a real screenshot or the app's own logo (HomeContent::productArt).
+    Pictures: Product::artwork_url — the real one set in the admin, else product.xman4289.com's.
 --}}
 <section id="xu-products" class="xu-st" data-station="products" data-len="2.1"
          data-label-th="เนบิวลาผลิตภัณฑ์" data-label-en="Products" aria-labelledby="xu-products-title">
@@ -26,7 +26,7 @@
                 @foreach($featuredProducts as $product)
                     @php
                         $xuAccent = ['#22d3ee', '#8b5cf6', '#e879f9', '#34d399', '#fb7185', '#ffd479'][$loop->index % 6];
-                        $xuArt = \App\Support\HomeContent::productArt($product);
+                        $xuArt = $product->artwork_url;
                     @endphp
                     <a href="{{ route('products.show', $product->slug) }}"
                        class="xu-card xu-prod xu-r"

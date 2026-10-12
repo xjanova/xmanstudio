@@ -346,6 +346,11 @@ class DgxSparkCampaign
             return 'แคมเปญนี้ปิดรับคำสั่งซื้อแล้ว';
         }
 
+        // The bundle's product set to Coming Soon in the admin: not on sale yet (owner, 2026-10-12)
+        if (self::product()?->isComingSoon()) {
+            return ComingSoonPurchase::MESSAGE;
+        }
+
         if (self::problems() !== []) {
             return 'ขณะนี้ยังไม่เปิดรับคำสั่งซื้อ กรุณาติดต่อเราเพื่อสอบถาม';
         }

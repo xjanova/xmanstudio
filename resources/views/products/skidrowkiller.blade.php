@@ -664,8 +664,8 @@
                         <a href="{{ route('products.show', $related->slug) }}"
                            class="group bg-gray-800/50 rounded-2xl overflow-hidden border border-gray-700/50 hover:border-red-500/50 transition-all hover:transform hover:-translate-y-2 backdrop-blur-sm">
                             <div class="aspect-video bg-gray-700 overflow-hidden">
-                                @if($related->image)
-                                    <img src="{{ Storage::url($related->image) }}" alt="{{ $related->name }}"
+                                @if($related->artwork_url)
+                                    <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}"
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-500/20 to-orange-500/20">

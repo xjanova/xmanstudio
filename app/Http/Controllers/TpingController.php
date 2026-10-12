@@ -15,6 +15,7 @@ use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -147,6 +148,11 @@ class TpingController extends Controller
             abort(404, 'Product not found');
         }
 
+        // Coming Soon = not on sale yet (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
+        }
+
         $machineId = $request->query('machine_id') ?? session('tping_machine_id');
         $planInfo = self::pricedPlans()[$plan];
 
@@ -178,6 +184,13 @@ class TpingController extends Controller
             abort(404, 'Plan not found');
         }
 
+        $product = Product::where('slug', 'tping')->firstOrFail();
+
+        // A hand-made POST must not buy it either — before the wallet is touched or an order made
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
@@ -187,7 +200,6 @@ class TpingController extends Controller
         ]);
 
         $machineId = $validated['machine_id'] ?? session('tping_machine_id');
-        $product = Product::where('slug', 'tping')->firstOrFail();
         $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
 

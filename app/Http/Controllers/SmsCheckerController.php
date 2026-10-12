@@ -15,6 +15,7 @@ use App\Services\GithubReleaseService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -127,6 +128,12 @@ class SmsCheckerController extends Controller
         }
 
         $product = Product::where('slug', 'smschecker')->firstOrFail();
+
+        // On sale (above) but still Coming Soon = not on sale yet either (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
+        }
+
         $machineId = $request->query('machine_id') ?? session('smschecker_machine_id');
         $planInfo = self::pricedPlans()[$plan];
 
@@ -154,6 +161,13 @@ class SmsCheckerController extends Controller
             abort(404, 'Plan not found');
         }
 
+        $product = Product::where('slug', 'smschecker')->firstOrFail();
+
+        // A hand-made POST must not buy it either — before the wallet is touched or an order made
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
@@ -163,7 +177,6 @@ class SmsCheckerController extends Controller
         ]);
 
         $machineId = $validated['machine_id'] ?? session('smschecker_machine_id');
-        $product = Product::where('slug', 'smschecker')->firstOrFail();
         $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
 

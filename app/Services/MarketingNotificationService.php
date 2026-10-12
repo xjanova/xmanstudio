@@ -307,13 +307,16 @@ class MarketingNotificationService
      */
     public function buildProductFlexMessage($product): array
     {
+        // The product's one picture (Product::artwork_url); LINE needs an absolute URL.
+        $picture = $product->artwork_url;
+
         return [
             'altText' => "สินค้าใหม่: {$product->name}",
             'contents' => [
                 'type' => 'bubble',
-                'hero' => $product->image ? [
+                'hero' => $picture ? [
                     'type' => 'image',
-                    'url' => asset('storage/' . $product->image),
+                    'url' => str_starts_with($picture, '/') ? url($picture) : $picture,
                     'size' => 'full',
                     'aspectRatio' => '20:13',
                     'aspectMode' => 'cover',

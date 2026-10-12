@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Services\LicenseService;
+use App\Support\ComingSoonPurchase;
 use App\Support\DgxSparkCampaign;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
@@ -34,12 +35,8 @@ class CartController extends Controller
 
         // Coming Soon is not on sale yet: its page shows the label instead of a buy button, and a
         // hand-made POST must not buy it either (owner, 2026-10-12).
-        if ($product->isComingSoon()) {
-            $message = 'ผลิตภัณฑ์นี้ยังเป็น Coming Soon — ยังไม่เปิดขาย';
-
-            return $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => $message], 422)
-                : redirect()->route('products.show', $product->slug)->with('error', $message);
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
         }
 
         // The DGX Spark bundle is sold only through its own page: the 20-set cap, VAT included in

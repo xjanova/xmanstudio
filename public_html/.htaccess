@@ -35,3 +35,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# product.xman4289.com draws product pictures from here into a WebGL canvas (/api/v1/catalog),
+# which a cross-origin image taints unless it is served with CORS. Public pictures only.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(webp|png|jpe?g|gif)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>

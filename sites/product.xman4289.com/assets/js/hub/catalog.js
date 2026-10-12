@@ -9,13 +9,17 @@
  * (checked 2026-10-05). Prices follow the shop page, not the pricing API
  * (that one returns 399/2500/5000 defaults for products without their own).
  *
+ * The shop also answers live (GET /api/v1/catalog, matched on each product's
+ * `shop` slug): its status wins over the one written here, and a real picture
+ * set in its admin goes first in `shots`. See "live shop data" below.
+ *
  * Images referenced from here carry IMG_V: bump it when you replace a file
  * under the same name (assets are cached `immutable` behind Cloudflare).
  */
 (function () {
   'use strict';
 
-  var IMG_V = '202610051200';
+  var IMG_V = '202610121835';
   var SHOP = 'https://xman4289.com';
   var art = function (id) { return '/assets/art/' + id + '.webp?v=' + IMG_V; };
   var img = function (path) { return path + '?v=' + IMG_V; };
@@ -32,7 +36,10 @@
 
   /* palette: [glow, deep, accent] — the 3D scene bakes the planet from it and
      the page tints the spotlight, card glow and timeline with it.
-     planet: 0 banded giant · 1 continents · 2 crystal faults · 3 circuit world */
+     planet: 0 banded giant · 1 continents · 2 crystal faults · 3 circuit world
+     shop: the product's slug in the shop (xman4289.com/products/<shop>), the key
+     the live catalogue is matched on. null = the shop does not list it (BrainX
+     the desktop app is free and not a shop row; `brainx-cloud` is another thing). */
   var PRODUCTS = [
     {
       id: 'brainx', name: 'BrainX', sub: 'NEURAL KNOWLEDGE ENGINE', cat: 'ai',
@@ -46,7 +53,7 @@
       features: ['กราฟความรู้ 3 มิติ', 'ค้นหาด้วยความหมาย', 'ศูนย์กลาง MCP ให้เอเจนต์ AI', 'Remote MCP ผ่าน BrainX Cloud', 'พื้นที่ส่วนตัว 1 GB ต่อบัญชี', 'เลือกเองว่าจะอัปโหลดโฟลเดอร์ไหน'],
       href: '/brainx.html', hrefLabel: 'ดูหน้า BrainX', external: false,
       download: SHOP + '/brainx/download', downloadLabel: 'ดาวน์โหลดแอปฟรี',
-      api: null, version: null, released: '2026-09-24',
+      shop: null, api: null, version: null, released: '2026-09-24',
       nova: [
         'BrainX คือสมองที่สองของเราเอง~ โน้ตทุกอันกลายเป็นดาวในกราฟ 3 มิติเลยนะ ✦',
         'อยากให้ Claude จำทุกอย่างที่คุณจดไว้? BrainX ทำได้ แอปบนเครื่องใช้ฟรีด้วยค่ะ!',
@@ -69,10 +76,10 @@
       features: ['Bandwidth แยกตามโปรเซส', 'คุมระดับ kernel ด้วย WFP', 'จำกัดความเร็วรายโปรแกรม', 'ถอนโปรแกรม + ล้าง registry', 'System cleaner + RAM optimizer', 'Packet / network monitor'],
       href: SHOP + '/products/winx-tools', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/winx-tools/download', downloadLabel: 'ดาวน์โหลดฟรี',
-      api: 'winx-tools', version: '1.0.2', released: '2026-09-24',
+      shop: 'winx-tools', api: 'winx-tools', version: '1.0.2', released: '2026-09-24',
       nova: [
         'WinXTools ดูได้เลยว่าโปรแกรมไหนแอบใช้เน็ตเยอะ แล้วจำกัดได้ทีละตัวด้วยนะ!',
-        'ภาพที่หมุนอยู่บนจอเป็นหน้าจอจริงของ WinXTools ทั้งหมดเลยค่ะ เก้าหน้าเต็ม ๆ',
+        'ภาพที่หมุนอยู่บนจอเป็นหน้าจอจริงของ WinXTools ทั้งหมดเลยค่ะ ดูได้ครบทุกหน้า',
         'มีรุ่นฟรีให้ลองก่อน ชอบแล้วค่อยอัป Pro ปีละ 199 บาทเองค่ะ ✦',
       ],
     },
@@ -88,7 +95,7 @@
       features: ['Local GGUF + Ollama', 'OpenAI / Anthropic / Gemini', '28 agent tools', 'Plan mode + TODO tracking', 'Code review', 'อัปเดตตัวเองแบบ delta'],
       href: SHOP + '/cluadex', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/cluadex/download', downloadLabel: 'ดาวน์โหลดฟรี',
-      api: 'cluadex-ai-coding-assistant', version: '3.0.54', released: '2026-08-31',
+      shop: 'cluadex-ai-coding-assistant', api: 'cluadex-ai-coding-assistant', version: '3.0.54', released: '2026-08-31',
       nova: [
         'CluadeX เขียนโค้ดเป็นเพื่อนคุณได้ทั้งคืน แถมไม่ส่งโค้ดออกนอกเครื่องเลยนะ',
         'ใช้โมเดลในเครื่องก็ได้ ต่อ Claude หรือ GPT ก็ได้ เลือกตามใจเลยค่ะ!',
@@ -106,7 +113,7 @@
       features: ['ComfyUI ในเครื่อง หรือเช่า GPU', 'Node-flow graph editor', 'เขียนบทด้วย LLM', 'เสียงพากย์ TTS', 'Storyboard Auto Pilot', 'โพสต์ Facebook อัตโนมัติ'],
       href: SHOP + '/chanthra-studio', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: null, downloadLabel: null,
-      api: 'chanthra-studio', version: '0.11.0', released: '2026-09-24',
+      shop: 'chanthra-studio', api: 'chanthra-studio', version: '0.11.0', released: '2026-09-24',
       nova: [
         'Chanthra Studio คือสตูดิโอทำวิดีโอด้วย AI ธีมพระจันทร์สีทอง สวยเหมือนโนวาเลย~',
         'ใส่ไอเดียไปบรรทัดเดียว ได้ทั้งบท ภาพ เสียง แล้วตัดต่อเป็นคลิปให้ค่ะ ✦',
@@ -124,7 +131,7 @@
       features: ['รับงาน AI ตามสเปกการ์ด', 'กำหนดเพดานกำลังไฟ', 'ตั้งตารางเวลาแชร์', 'คืนการ์ดทันทีเมื่อเปิดเกม', 'รายได้เทียบค่าไฟเรียลไทม์', 'อัปเดตตัวเองอัตโนมัติ'],
       href: SHOP + '/products/gpuxmine', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: null, downloadLabel: null,
-      api: 'gpuxmine', version: '0.1.18', released: '2026-09-25',
+      shop: 'gpuxmine', api: 'gpuxmine', version: '0.1.18', released: '2026-09-25',
       nova: [
         'การ์ดจอว่างอยู่เฉย ๆ เหรอ? ให้ GPUxMINE พามันไปทำงาน AI แล้วรับเงินกลับมาเลย!',
         'เปิดเกมเมื่อไหร่ มันคืนการ์ดให้ทันทีนะ ไม่แย่งเฟรมเรตแน่นอนค่ะ',
@@ -142,7 +149,7 @@
       features: ['ราคาเรียลไทม์ 6 exchange', 'Simulation mode', 'Live trading', 'P&L tracking + charts', 'Trade history', 'Risk management'],
       href: SHOP + '/products/autotradex', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: null, downloadLabel: null,
-      api: 'autotradex', version: '0.3.0', released: '2026-09-24',
+      shop: 'autotradex', api: 'autotradex', version: '0.3.0', released: '2026-09-24',
       nova: [
         'AutoTradeX จับส่วนต่างราคาข้าม exchange ให้อัตโนมัติ มีโหมดทดลองก่อนใช้เงินจริงด้วยนะ',
         'ลองโหมด simulation ก่อนเสมอนะคะ ใจเย็น ๆ ตลาดคริปโตไม่หนีไปไหน ✦',
@@ -160,7 +167,7 @@
       features: ['บันทึกขั้นตอนอัตโนมัติ', 'เล่นซ้ำ 1–999 รอบ', 'Data profiles หลายชุด', 'โหมดเกม + crosshair', 'Floating overlay', 'Export / Import workflow'],
       href: SHOP + '/tping', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/tping/download', dlPage: true, downloadLabel: 'ทดลองฟรี 24 ชม.',
-      api: 'tping', version: '1.2.102', released: '2026-03-25',
+      shop: 'tping', api: 'tping', version: '1.2.102', released: '2026-03-25',
       nova: [
         'งานกรอกซ้ำ ๆ ทั้งวัน ให้ Tping จำแล้วกดแทนได้เลย มือจะได้พักบ้างนะ',
         'โหมดเกมมี crosshair ลอยบนจอด้วยค่ะ ลองฟรี 24 ชั่วโมงก่อนก็ได้!',
@@ -178,7 +185,7 @@
       features: ['บทสวด 20+ บท', 'AI จับตำแหน่งจากเสียง', 'นับรอบ + สั่นเตือน', 'บันทึกประวัติการสวด', 'ใช้ออฟไลน์ได้', 'อัปเดตในแอป'],
       href: SHOP + '/apps/aipray', hrefLabel: 'ดูหน้าแอป', external: true,
       download: SHOP + '/apps/aipray/download', downloadLabel: 'ดาวน์โหลด APK ฟรี',
-      api: 'aipray', version: '1.2.5', released: '2026-09-24',
+      shop: 'aipray', api: 'aipray', version: '1.2.5', released: '2026-09-24',
       nova: [
         'Aipray ฟังเสียงสวดแล้วเลื่อนบทตามให้เอง ไม่ต้องคอยปัดจอเลยค่ะ 🙏',
         'แอปนี้ฟรีตลอดไปนะ เป็นของขวัญจากทีมเราเลย ✦',
@@ -196,10 +203,48 @@
       features: ['วง LAN เสมือนข้ามเน็ต', 'สแกนหาเครือข่าย', 'ตั้งรหัสเครือข่าย', 'เห็นทุกอุปกรณ์ในวง', 'WireGuard', 'NAT traversal'],
       href: SHOP + '/localvpn', hrefLabel: 'ดูหน้าสินค้า', external: true,
       download: SHOP + '/localvpn/download', dlPage: true, downloadLabel: 'ดาวน์โหลดฟรี',
-      api: 'localvpn', version: '1.0.39', released: '2026-04-01',
+      shop: 'localvpn', api: 'localvpn', version: '1.0.39', released: '2026-04-01',
       nova: [
         'อยากเล่นเกม LAN กับเพื่อนที่อยู่คนละจังหวัด? LocalVPN จัดให้ค่ะ!',
         'เข้ารหัสด้วย WireGuard ด้วยนะ ปลอดภัย แถมใช้ฟรีได้ถึง 5 คน ✌',
+      ],
+    },
+    {
+      id: 'anti-x', name: 'Anti X', sub: 'WINDOWS SERVER INTRUSION GUARD', cat: 'system',
+      status: 'live', free: true, price: 'ฟรีพื้นฐาน · Pro เริ่ม ฿199/เดือน',
+      platforms: ['Windows', 'Server'], tags: ['Windows service', 'RDP · SSH · DB guard', 'Per-IP firewall', 'Threat feeds'],
+      palette: ['#38bdf8', '#0a1838', '#f5c56b'], planet: 2,
+      art: art('anti-x'), shots: [],
+      tagline: 'กันการเจาะเซิร์ฟเวอร์ Windows แบบเรียลไทม์ บล็อกทีละ IP ไม่ล็อกตัวเอง',
+      pitch: ['บล็อกการเดารหัส RDP · SSH · ฐานข้อมูล และการสแกนพอร์ตแบบเรียลไทม์', 'บล็อกทีละ IP ไม่ปิดพอร์ต RDP คนที่ต่ออยู่ไม่โดนบล็อก'],
+      desc: 'ระบบกันการเจาะเซิร์ฟเวอร์ Windows แบบเรียลไทม์ ทำงานเป็นบริการ Windows ตลอดเวลาแม้ปิดหน้าจอหรือตัด RDP ไปแล้ว อ่าน event log และทราฟฟิกของเครื่องสด ๆ แล้วบล็อก IP ที่เดารหัส RDP / SSH / ฐานข้อมูล สแกนพอร์ต แตะพอร์ตอันตราย ยิงหาช่องโหว่เว็บ หรืออยู่ในรายชื่อ IP อันตราย ด้วย Windows Firewall ทีละ IP — ไม่ปิดพอร์ต RDP ทั้งพอร์ต และคนที่กำลังต่อ RDP อยู่ไม่โดนบล็อก รุ่นฟรีมีตัวจับพื้นฐานใช้ได้ตลอด ส่วน Pro ปลดตัวจับขั้นสูงทั้งหมดพร้อมจับเครื่องที่ถูกเจาะ ทดลอง Pro ฟรี 14 วัน แล้ว ฿199/เดือน, ฿1,990/ปี หรือ ฿9,900 ตลอดชีพ',
+      features: ['บล็อกเดารหัส RDP / SSH / ฐานข้อมูล', 'บล็อกสแกนพอร์ต + พอร์ตอันตราย', 'ไม่ปิดพอร์ต RDP ไม่ล็อกผู้ดูแล', 'ยิงหาช่องโหว่เว็บ · IP อันตราย (Pro)', 'จับเครื่องที่ถูกเจาะ (Pro)', 'อัปเดตในตัว ตรวจลายเซ็นก่อนติดตั้ง'],
+      href: SHOP + '/products/anti-x', hrefLabel: 'ดูหน้าสินค้า', external: true,
+      download: SHOP + '/anti-x/download', downloadLabel: 'ดาวน์โหลดฟรี',
+      shop: 'anti-x', api: 'anti-x', version: '1.4.0', released: null,
+      nova: [
+        'Anti X เฝ้าเซิร์ฟเวอร์ Windows ให้ทั้งคืน ใครมาเดารหัส RDP โดนบล็อกทีละ IP เลยค่ะ!',
+        'ไม่ต้องกลัวล็อกตัวเองนะ Anti X ไม่ปิดพอร์ต RDP และคนที่ต่ออยู่ไม่มีวันโดนบล็อกค่ะ',
+        'รุ่นฟรีใช้ได้ตลอดเลย อยากได้ตัวจับขั้นสูงค่อยลอง Pro ฟรี 14 วันก่อนก็ได้ ✦',
+      ],
+    },
+    {
+      id: 'giggok', name: 'GigGok', sub: '3D AI SECRETARY', cat: 'mobile',
+      status: 'live', free: true, price: 'ใช้ฟรี · ไม่ต้องสมัคร',
+      platforms: ['Android'], tags: ['3D avatar', 'On-device Gemma', 'Voice chat', 'Answers calls'],
+      palette: ['#e879f9', '#1c0f33', '#2dd4bf'], planet: 0,
+      art: art('giggok'), shots: [],
+      tagline: 'เลขาสาว 3D บนมือถือ คุยได้ พูดได้ รับสายแทน ข้อมูลไม่ออกนอกเครื่อง',
+      pitch: ['เลขาสาว 3D คุยด้วยเสียง ตอบเป็นเสียง รับสายแทนได้', 'สมองในเครื่อง (Gemma) บทสนทนาไม่ออกนอกเครื่อง'],
+      desc: 'เลขาสาว 3D บนมือถือ Android ผู้ช่วยส่วนตัวที่มีตัวตนจริงบนหน้าจอ คุยด้วยเสียงได้และตอบกลับเป็นเสียง ช่วยรับสายและรับฝากเรื่องแทนคุณ สมองหลักทำงานในเครื่อง (Gemma) ใช้ GPU ของมือถือได้ บทสนทนาและข้อมูลส่วนตัวไม่ต้องส่งออกนอกเครื่อง ใช้ฟรี ไม่ต้องสมัครสมาชิก ทุกเครื่องได้ License ฟรีอัตโนมัติ ส่วนชุดตัวมายด์ซื้อแยกได้ในร้านชุดในแอป',
+      features: ['อวาตาร์ 3D ขยับปากตามเสียง', 'สมองในเครื่อง (Gemma) ใช้ GPU ได้', 'ไมค์ถอดเสียงในเครื่อง', 'รับสายแทน รับฝากเรื่อง', 'อ่านปฏิทินของเครื่อง', 'อัปเดตในตัว ตรวจ SHA-256'],
+      href: SHOP + '/products/giggok', hrefLabel: 'ดูหน้าแอป', external: true,
+      download: SHOP + '/giggok/download', downloadLabel: 'ดาวน์โหลด APK ฟรี',
+      shop: 'giggok', api: 'giggok', version: '0.1.48', released: null,
+      nova: [
+        'GigGok คือเลขาสาว 3D บนมือถือ คุยด้วยเสียงได้ แถมรับสายแทนให้ด้วยนะคะ~',
+        'สมองของเธอทำงานในเครื่องเลย บทสนทนาไม่ต้องส่งออกนอกมือถือค่ะ ✦',
+        'โหลด APK ไปใช้ฟรีได้เลย ไม่ต้องสมัครสมาชิกด้วยนะ!',
       ],
     },
     {
@@ -213,7 +258,7 @@
       desc: 'ระบบโปรโมตแบรนด์ด้วย AI โพสต์อัตโนมัติ 9 แพลตฟอร์ม จัดการบัญชีเป็นพูลพร้อมหมุนเวียนและสลับเมื่อโดนจำกัด web automation แบบเรียนรู้เอง มีโหมดสอน และซ่อมขั้นตอนเองเมื่อหน้าเว็บเปลี่ยน สร้างคอนเทนต์ด้วย Ollama, Gemini, GPT-4 หรือ Claude',
       features: ['โพสต์ 9 แพลตฟอร์ม', 'Account pool + rotation', 'Auto-failover', 'Teaching mode', 'Self-repair workflow', 'AI content generation'],
       href: SHOP + '/products/postx-agent', hrefLabel: 'ดูหน้าสินค้า', external: true,
-      download: null, downloadLabel: null, api: null, version: null, released: null,
+      download: null, downloadLabel: null, shop: 'postx-agent', api: null, version: null, released: null,
       nova: ['PostXAgent จะโพสต์ให้แบรนด์คุณทั้ง 9 แพลตฟอร์มโดยไม่ต้องนั่งกดเอง กำลังเก็บงานค่ะ!'],
     },
     {
@@ -227,7 +272,7 @@
       desc: 'แพลตฟอร์มไลฟ์ขายของครบวงจร รวมแชทจาก Facebook Live, TikTok Live และ LINE OA อ่านสลิปโอนเงินด้วย AI OCR จับสลิปปลอม ยืนยันยอดจาก SMS ธนาคาร มี POS หน้าร้าน สต็อก บาร์โค้ด และเชื่อมขนส่ง Kerry, Flash, J&T พร้อม OBS overlay ระหว่างไลฟ์',
       features: ['รวมแชท 3 แพลตฟอร์ม', 'AI OCR อ่านสลิป', 'จับสลิปปลอม', 'POS + สต็อก', 'เชื่อมขนส่ง', 'OBS overlay'],
       href: SHOP + '/products/livexshop-pro', hrefLabel: 'ดูหน้าสินค้า', external: true,
-      download: null, downloadLabel: null, api: null, version: null, released: null,
+      download: null, downloadLabel: null, shop: 'livexshop-pro', api: null, version: null, released: null,
       nova: ['แม่ค้าไลฟ์สดต้องชอบ Live x Shop Pro แน่ ๆ สลิปปลอมผ่านไม่ได้เลยค่ะ!'],
     },
     {
@@ -241,7 +286,7 @@
       desc: 'บริการซิงก์ release ขึ้นเซิร์ฟเวอร์อัตโนมัติ พร้อมผู้ช่วย AI 6 โหมด (Ollama, Claude, OpenAI) จัดการได้ไม่จำกัดโปรเจกต์ สำรองข้อมูลก่อนทุกครั้ง ย้อนกลับเองเมื่อตรวจพบปัญหา แจ้งเตือน 5 ช่องทาง Discord, Telegram, LINE, Slack และอีเมล รองรับ Laravel, Node.js, React/Vue, Django, .NET',
       features: ['Release sync อัตโนมัติ', 'AI 6 โหมด', 'Auto-rollback', 'Backup ก่อนทุก sync', 'แจ้งเตือน 5 ช่องทาง', 'CLI + web dashboard'],
       href: SHOP + '/products/xcluade-agent', hrefLabel: 'ดูหน้าสินค้า', external: true,
-      download: null, downloadLabel: null, api: null, version: null, released: null,
+      download: null, downloadLabel: null, shop: 'xcluade-agent', api: null, version: null, released: null,
       nova: ['XcluadeAgent ดูแลการ deploy แทนคุณ ถ้าพังก็ย้อนกลับเองนะ นอนหลับสบายเลย~'],
     },
     {
@@ -255,7 +300,7 @@
       desc: 'เครือข่าย P2P mesh แบบกระจายศูนย์ ไม่มีเซิร์ฟเวอร์กลาง ไม่ต้องลงทะเบียน เข้ารหัสปลายทางถึงปลายทางด้วย X25519 + AES-256-GCM พร้อม perfect forward secrecy มีแชท โทรเสียง กลุ่ม แชร์ไฟล์แบบ P2P และ virtual LAN สำหรับเล่นเกม ทะลุ NAT ได้',
       features: ['ไม่มีเซิร์ฟเวอร์กลาง', 'E2E X25519 + AES-GCM', 'Perfect forward secrecy', 'แชท + โทรเสียง', 'แชร์ไฟล์ P2P', 'Virtual LAN'],
       href: SHOP + '/products/spiderx', hrefLabel: 'ดูหน้าสินค้า', external: true,
-      download: null, downloadLabel: null, api: null, version: null, released: null,
+      download: null, downloadLabel: null, shop: 'spiderx', api: null, version: null, released: null,
       nova: ['SpiderX คุยกันได้โดยไม่ผ่านเซิร์ฟเวอร์ใครเลย ส่วนตัวสุด ๆ ค่ะ 🕸'],
     },
     {
@@ -269,7 +314,7 @@
       desc: 'ชุดเครื่องมือจัดการอุปกรณ์ Android ครบวงจร ตรวจเครื่องอัตโนมัติผ่าน ADB/Fastboot แฟลชรอมหลายโหมด สำรองแบบเลือกพาร์ทิชัน แก้ boot image จัดการ GPT/MBR เครื่องมือ IMEI ลบแอปขยะ มี hex editor, ADB terminal, logcat และ screen mirroring',
       features: ['Auto-detect ผ่าน ADB/Fastboot', 'Flash ROM หลายโหมด', 'Partition backup', 'Boot image editor', 'IMEI tools', 'Screen mirroring'],
       href: SHOP + '/products/phonex-manager', hrefLabel: 'ดูหน้าสินค้า', external: true,
-      download: null, downloadLabel: null, api: null, version: null, released: null,
+      download: null, downloadLabel: null, shop: 'phonex-manager', api: null, version: null, released: null,
       nova: ['ร้านซ่อมมือถือต้องมี PhoneX Manager ไว้สักตัว ทำได้ครบจบในโปรแกรมเดียวค่ะ'],
     },
     {
@@ -283,7 +328,7 @@
       desc: 'สแกนมัลแวร์พร้อมป้องกันแบบเรียลไทม์ วิเคราะห์พฤติกรรมที่น่าสงสัย สแกนลึกหลายระดับด้วย heuristics เฝ้าการแก้ไข registry และบล็อกการเชื่อมต่อไปยังเซิร์ฟเวอร์ควบคุม (C2) ปกป้องเครื่องจากไฟล์แครก โทรจัน และโปรแกรมอันตราย',
       features: ['Real-time protection', 'Behavioural analysis', 'Deep scan + heuristics', 'Registry monitoring', 'Network protection', 'C2 blocking'],
       href: SHOP + '/products/skidrow-killer', hrefLabel: 'ดูหน้าสินค้า', external: true,
-      download: null, downloadLabel: null, api: null, version: null, released: null,
+      download: null, downloadLabel: null, shop: 'skidrow-killer', api: null, version: null, released: null,
       nova: ['โหลดของแครกมาแล้วใจไม่ดี? Skidrow Killer ช่วยตรวจให้ค่ะ แต่ซื้อของแท้ดีที่สุดนะ~'],
     },
     {
@@ -297,7 +342,7 @@
       desc: 'แพลตฟอร์มแชร์ GPU แบบกระจายศูนย์ ผู้แชร์ได้ 90% ของรายได้ ค่าแพลตฟอร์ม 10% มีเว็บแพลตฟอร์มพร้อมแดชบอร์ด กระจายงานตามคิวอัจฉริยะ คำนวณรายได้ตามการมีส่วนร่วม ถอนเงินได้ และระบบกันโกงด้วย hardware fingerprint, งานตรวจสุ่ม และ proof-of-work',
       features: ['ผู้แชร์รับ 90%', 'Job queue อัจฉริยะ', 'Benchmark อัตโนมัติ', 'ระบบถอนเงิน', 'Hardware fingerprint', 'Proof-of-work challenges'],
       href: SHOP + '/products/gpusharx', hrefLabel: 'ดูหน้าสินค้า', external: true,
-      download: null, downloadLabel: null, api: null, version: null, released: null,
+      download: null, downloadLabel: null, shop: 'gpusharx', api: null, version: null, released: null,
       nova: ['GPUsharX คือตลาดเช่าการ์ดจอของเรา ผู้แชร์ได้ส่วนแบ่งตั้ง 90% เลยค่ะ!'],
     },
   ];
@@ -325,17 +370,170 @@
   ];
 
   var byId = {};
-  PRODUCTS.forEach(function (p, i) { p.index = i; byId[p.id] = p; });
+  PRODUCTS.forEach(function (p, i) {
+    p.index = i;
+    byId[p.id] = p;
+    // what this file says, so the live data is always applied to it and never on top of itself
+    p.base = {
+      status: p.status, shots: p.shots.slice(), nova: p.nova.slice(), version: p.version, released: p.released,
+      download: p.download, downloadLabel: p.downloadLabel, dlPage: !!p.dlPage,
+    };
+  });
   var catOf = {};
   CATS.forEach(function (c) { catOf[c.id] = c; c.count = PRODUCTS.filter(function (p) { return p.cat === c.id; }).length; });
 
-  var counts = {
-    all: PRODUCTS.length,
-    live: PRODUCTS.filter(function (p) { return p.status === 'live'; }).length,
-    free: PRODUCTS.filter(function (p) { return p.free; }).length,
-    soon: PRODUCTS.filter(function (p) { return p.status === 'soon'; }).length,
-    shots: PRODUCTS.reduce(function (n, p) { return n + p.shots.length; }, 0),
-  };
+  // one object for the whole page: the live data updates it in place
+  var counts = {};
+  function recount() {
+    counts.all = PRODUCTS.length;
+    counts.live = PRODUCTS.filter(function (p) { return p.status === 'live'; }).length;
+    counts.free = PRODUCTS.filter(function (p) { return p.free; }).length;
+    counts.soon = PRODUCTS.filter(function (p) { return p.status === 'soon'; }).length;
+    counts.shots = PRODUCTS.reduce(function (n, p) { return n + p.shots.length; }, 0);
+  }
+  recount();
+
+  /* ---------------------------------------------------------------- live shop data
+     GET /api/v1/catalog (CORS *) → { success, products: [{ slug, status, image_url,
+     real_image, version, download_url, url, … }] }, matched on `shop`:
+     - status: on_sale → live; coming_soon / off_sale → soon. The shop wins.
+     - real_image: image_url is a real screenshot set in the shop's admin → it goes
+       first in `shots` (LIVE CAPTURE badge, card hover, dialog gallery, 3D screen).
+       real_image false = only the shop's fallback art: ignored, the hub's art stays.
+     - version: the latest active version wins over the one written here (null =
+       keep this file's). Its release date is not sent, so a newer one shows none.
+     - download_url: fills a product that has no `download` here, only while it is
+       live and only an https address on xman4289.com. A download written here is
+       never swapped for another one.
+     - a product the shop does not list keeps what this file says.
+     One request per page load at most, kept 10 minutes in sessionStorage; never
+     waited on: the page renders from this file, then `xph:catalog` says what
+     changed. Any failure (offline, 404, timeout, bad JSON) leaves this file as is. */
+  var LIVE_URL = SHOP + '/api/v1/catalog';
+  var LIVE_KEY = 'xph.catalog';
+  var LIVE_TTL = 10 * 60 * 1000;
+  var STATUS = { on_sale: 'live', coming_soon: 'soon', off_sale: 'soon' };
+
+  /** A real picture's URL, only if it is one: an https address (relative ones are the shop's). */
+  function realImage(row) {
+    if (!row || row.real_image !== true || typeof row.image_url !== 'string' || !row.image_url) return null;
+    try {
+      var u = new URL(row.image_url, SHOP);
+      return u.protocol === 'https:' ? u.href : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** A version string that reads as one ("1.4.0", "0.11.0-beta"); a leading "v" is dropped. */
+  function liveVersion(row) {
+    if (!row || typeof row.version !== 'string') return null;
+    var v = row.version.trim().replace(/^v/i, '');
+    return /^[0-9][0-9A-Za-z.+-]{0,31}$/.test(v) ? v : null;
+  }
+
+  /** The shop's public download, only if it is served by xman4289.com (owner's rule: never GitHub). */
+  function liveDownload(row) {
+    if (!row || typeof row.download_url !== 'string' || !row.download_url) return null;
+    try {
+      var u = new URL(row.download_url);
+      var host = u.hostname.toLowerCase();
+      var ours = host === 'xman4289.com' || /\.xman4289\.com$/.test(host);
+      return u.protocol === 'https:' && ours && !/github/i.test(u.href) ? u.href : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** The button for a download the shop supplied, worded like the ones written above. */
+  function shopDlLabel(p) {
+    var apk = p.platforms.length === 1 && p.platforms[0] === 'Android';
+    return (apk ? 'ดาวน์โหลด APK' : 'ดาวน์โหลด') + (p.free ? (apk ? ' ฟรี' : 'ฟรี') : '');
+  }
+
+  /** Nova's lines for a product the shop has moved off the status this file wrote it for. */
+  function flippedLines(p, status) {
+    return status === 'live'
+      ? [p.name + ' เปิดให้ใช้แล้วนะคะ! ' + p.tagline, 'ดูรายละเอียดของ ' + p.name + ' ได้ที่หน้าสินค้าเลยค่ะ ข้อมูลสดจากร้านนะ ✦']
+      : [p.name + ' ตอนนี้เป็น Coming Soon ค่ะ ยังดาวน์โหลดหรือซื้อไม่ได้นะ เปิดเมื่อไหร่โนวาจะบอกเลย~'];
+  }
+
+  /** Lay the shop's rows over this file. Returns the ids whose status, pictures, version or download changed. */
+  function applyLive(rows) {
+    var bySlug = {};
+    rows.forEach(function (r) { if (r && typeof r.slug === 'string') bySlug[r.slug] = r; });
+    var changed = [];
+    PRODUCTS.forEach(function (p) {
+      var b = p.base;
+      var row = p.shop ? bySlug[p.shop] : null;
+      var status = row && STATUS[row.status] ? STATUS[row.status] : b.status;
+      var real = realImage(row);
+      var shots = real ? [real].concat(b.shots.filter(function (s) { return s !== real; })) : b.shots.slice();
+      var version = liveVersion(row) || b.version;
+      // a download written here stays; the shop's only fills a gap, and only while it is on sale
+      var shopDl = !b.download && status === 'live' ? liveDownload(row) : null;
+      var download = b.download || shopDl;
+      var sig = function (q) { return [q.status, q.shots.join('\n'), q.version, q.download].join('|'); };
+      var before = sig(p);
+      p.status = status;
+      p.shots = shots;
+      p.version = version;
+      p.released = version === b.version ? b.released : null;
+      p.download = download;
+      p.downloadLabel = shopDl ? shopDlLabel(p) : b.downloadLabel;
+      p.dlPage = shopDl ? false : b.dlPage;
+      p.nova = status === b.status ? b.nova.slice() : flippedLines(p, status);
+      if (sig(p) !== before) changed.push(p.id);
+    });
+    recount();
+    return changed;
+  }
+
+  function readCache() {
+    try {
+      var c = JSON.parse(sessionStorage.getItem(LIVE_KEY) || 'null');
+      var age = c ? Date.now() - c.at : -1;
+      if (c && Array.isArray(c.products) && age >= 0 && age < LIVE_TTL) return c.products;
+    } catch (e) {}
+    return null;
+  }
+
+  /** Only what the hub reads, so the cache stays small. */
+  function slim(r) {
+    return {
+      slug: r.slug, status: r.status, image_url: r.image_url, real_image: r.real_image === true,
+      version: typeof r.version === 'string' ? r.version : null, download_url: typeof r.download_url === 'string' ? r.download_url : null,
+    };
+  }
+
+  var live = { source: 'static', changed: [] };
+
+  function fetchLive() {
+    if (!window.fetch) return;
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
+    fetch(LIVE_URL, { headers: { Accept: 'application/json' }, credentials: 'omit', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        clearTimeout(timer);
+        if (!j || j.success !== true || !Array.isArray(j.products)) return;
+        var rows = j.products.filter(function (r) { return r && typeof r.slug === 'string'; }).map(slim);
+        try { sessionStorage.setItem(LIVE_KEY, JSON.stringify({ at: Date.now(), products: rows })); } catch (e) {}
+        live.source = 'fresh';
+        live.changed = applyLive(rows);
+        if (live.changed.length) window.dispatchEvent(new CustomEvent('xph:catalog', { detail: { changed: live.changed.slice() } }));
+      })
+      .catch(function () { clearTimeout(timer); });
+  }
+
+  // a fresh copy from this session is laid on before anything renders; else ask the shop once
+  var cached = readCache();
+  if (cached) {
+    live.source = 'cache';
+    live.changed = applyLive(cached);
+  } else {
+    fetchLive();
+  }
 
   window.XPH = window.XPH || {};
   window.XPH.catalog = {
@@ -343,5 +541,6 @@
     byId: function (id) { return byId[id]; },
     cat: function (id) { return catOf[id]; },
     counts: counts,
+    live: live,
   };
 })();

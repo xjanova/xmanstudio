@@ -609,6 +609,17 @@ main {
   border-color: #fff;
   transform: translateY(-2px);
 }
+/* Coming Soon: a label where the download / buy button would be — not a link, so it does not move */
+.button.soon-tag {
+  background: rgba(24, 18, 48, 0.82);
+  border-color: rgba(167, 139, 250, 0.55);
+  color: #ddd1ff;
+  font-family: var(--font-m);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  cursor: default;
+  user-select: none;
+}
 .caret::after {
   content: "▍";
   margin-left: 2px;

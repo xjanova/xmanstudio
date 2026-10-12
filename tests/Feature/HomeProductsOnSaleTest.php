@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\ThemeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -43,11 +44,13 @@ class HomeProductsOnSaleTest extends TestCase
 
     private function product(string $name, array $attributes = []): Product
     {
-        return Product::create([
+        // updateOrCreate: the migrations seed a few rows (tping, localvpn).
+        return Product::updateOrCreate(['slug' => $attributes['slug'] ?? Str::slug($name)], [
             'category_id' => $this->category->id,
             'name' => $name,
-            'slug' => Str::slug($name),
             'description' => $name,
+            'image' => null,
+            'is_coming_soon' => false,
             'price' => 199,
             'stock' => 0,
             'is_active' => true,
@@ -98,35 +101,27 @@ class HomeProductsOnSaleTest extends TestCase
         $this->assertStringContainsString('Zz App 10<', $section);
     }
 
-    public function test_a_card_shows_the_real_picture_and_not_the_drawn_key_art(): void
+    public function test_a_card_shows_the_real_picture_else_the_product_hubs(): void
     {
-        // Both pictures exist in the repository for WinXTools: the real dashboard cut and the
-        // drawn key art that artwork_url falls back to.
-        $this->assertFileExists(public_path('artwork/product/winx-tools.webp'));
-        Product::create([
-            'category_id' => $this->category->id,
-            'name' => 'WinXTools',
-            'slug' => 'winx-tools',
-            'description' => 'WinXTools',
-            'price' => 199,
-            'stock' => 0,
-            'is_active' => true,
-        ]);
+        $this->product('WinXTools', ['slug' => 'winx-tools', 'image' => 'products/real/winx-tools.webp']);
+        // No real picture yet: the one from product.xman4289.com.
+        $this->product('Tping', ['slug' => 'tping']);
 
         $section = $this->productsSection();
 
-        $this->assertStringContainsString('images/products/cards/winx-tools.webp', $section);
+        $this->assertStringContainsString(Storage::url('products/real/winx-tools.webp'), $section);
         $this->assertStringNotContainsString('artwork/product/winx-tools.webp', $section);
+        $this->assertStringContainsString(asset('artwork/hub/tping.webp'), $section);
     }
 
-    public function test_the_universe_card_shows_the_same_real_picture(): void
+    public function test_the_universe_card_shows_the_same_picture(): void
     {
         // Not saved: the migrations already seed a localvpn row.
-        $product = new Product(['name' => 'LocalVPN', 'slug' => 'localvpn', 'price' => 199, 'is_active' => true]);
+        $product = new Product(['name' => 'LocalVPN', 'slug' => 'localvpn', 'price' => 199, 'is_active' => true, 'image' => 'products/real/localvpn.webp']);
 
         $html = view('partials.universe.st-products', ['featuredProducts' => collect([$product])])->render();
 
-        $this->assertStringContainsString('images/products/cards/localvpn.webp', $html);
+        $this->assertStringContainsString(Storage::url('products/real/localvpn.webp'), $html);
         $this->assertStringNotContainsString('artwork/universe/products/localvpn.webp', $html);
     }
 }

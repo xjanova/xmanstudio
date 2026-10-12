@@ -19,6 +19,7 @@ use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Support\ComingSoonPurchase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +60,12 @@ class OrderController extends Controller
         }
 
         $cart->load('items.product');
+
+        // A product can turn Coming Soon after it went into the cart — not on sale (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusalForCart($cart)) {
+            return $refused;
+        }
+
         $paymentMethods = $this->paymentService->getSupportedMethods();
 
         // Handle coupon removal via query parameter
@@ -142,6 +149,12 @@ class OrderController extends Controller
         }
 
         $cart->load('items.product');
+
+        // Checked again here: the checkout page may have been opened before the product turned
+        // Coming Soon, and a hand-made POST never saw that page at all (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusalForCart($cart)) {
+            return $refused;
+        }
 
         try {
             DB::beginTransaction();

@@ -277,35 +277,54 @@ class Product extends Model
     }
 
     /**
-     * Image to show on product cards and hero sections.
+     * The product's picture, everywhere it is shown: the home pages, /products, the product
+     * pages, the cart, the menu, the customer area, the admin, and product.xman4289.com
+     * (through /api/v1/catalog).
      *
-     * Falls back to the in-house artwork set (public_html/artwork/product/<slug>.webp)
-     * when the product has no uploaded image, so a card never renders as the bare
-     * generic placeholder icon. Returns null only when neither exists.
-     *
-     * The per-request static cache keeps this to one directory scan even when a
-     * listing renders dozens of products.
+     * The owner (2026-10-12): the picture is the real one set in the admin — a screenshot of
+     * the program as it is. Until a product has one, it shows its picture from
+     * product.xman4289.com (public_html/artwork/hub/<slug>.webp, copies of that site's
+     * assets/art), else the older artwork set (public_html/artwork/product/<slug>.webp).
+     * Returns null only when there is nothing at all.
      */
     public function getArtworkUrlAttribute(): ?string
     {
         if ($this->image) {
-            return Storage::url($this->image);
+            return preg_match('#^https?://#i', $this->image) === 1 ? $this->image : Storage::url($this->image);
         }
 
-        static $available = null;
+        return static::defaultArtworkUrl((string) $this->slug);
+    }
 
-        if ($available === null) {
-            $dir = public_path('artwork/product');
-            $available = is_dir($dir)
-                ? array_flip(array_map(
-                    fn ($f) => pathinfo($f, PATHINFO_FILENAME),
-                    glob($dir . '/*.webp') ?: []
-                ))
-                : [];
+    /** A real picture has been set in the admin (artwork_url is not just the default art). */
+    public function hasRealImage(): bool
+    {
+        return (bool) $this->image;
+    }
+
+    /**
+     * The picture a product shows while it has no real one — see getArtworkUrlAttribute().
+     * The per-request static cache keeps this to one scan of each folder even when a listing
+     * renders dozens of products.
+     */
+    public static function defaultArtworkUrl(string $slug): ?string
+    {
+        static $sets = null;
+
+        if ($sets === null) {
+            $sets = [];
+            foreach (['artwork/hub', 'artwork/product'] as $folder) {
+                $files = glob(public_path($folder) . '/*.webp') ?: [];
+                $sets[$folder] = array_flip(array_map(fn ($f) => pathinfo($f, PATHINFO_FILENAME), $files));
+            }
         }
 
-        return isset($available[$this->slug])
-            ? asset('artwork/product/' . $this->slug . '.webp')
-            : null;
+        foreach ($sets as $folder => $slugs) {
+            if (isset($slugs[$slug])) {
+                return asset($folder . '/' . $slug . '.webp');
+            }
+        }
+
+        return null;
     }
 }

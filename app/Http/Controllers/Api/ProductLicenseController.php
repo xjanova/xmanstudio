@@ -1684,8 +1684,8 @@ class ProductLicenseController extends Controller
                 ],
                 // {} ไม่ใช่ [] เมื่อว่าง — แอปอ่าน plans เป็น object/map เสมอ
                 'plans' => $plans ?: new \stdClass,
-                // หน้าเว็บที่ซื้อได้ — null ถ้าสินค้าปิดขายอยู่ (หน้าสินค้าตอบ 404)
-                'purchase_url' => $product->is_active ? route('products.show', $product->slug) : null,
+                // หน้าเว็บที่ซื้อได้ — null ถ้าสินค้าปิดขายอยู่ (หน้าสินค้าตอบ 404) หรือยังเป็น Coming Soon (ยังไม่เปิดขาย 2026-10-12)
+                'purchase_url' => $product->isAvailable() ? route('products.show', $product->slug) : null,
             ],
         ]);
     }

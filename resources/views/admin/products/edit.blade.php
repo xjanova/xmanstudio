@@ -221,11 +221,16 @@
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">รูปภาพหลัก</label>
 
-                    @if($product->image)
+                    {{-- This picture is the one every page shows, and product.xman4289.com too (Product::artwork_url). --}}
+                    @if($product->artwork_url)
                     <div class="mb-4">
                         <div class="relative inline-block">
-                            <img src="{{ asset('storage/' . $product->image) }}" class="max-h-64 rounded-xl border border-gray-200 dark:border-gray-600" loading="lazy">
-                            <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">รูปภาพปัจจุบัน</div>
+                            <img src="{{ $product->artwork_url }}" class="max-h-64 rounded-xl border border-gray-200 dark:border-gray-600" loading="lazy">
+                            @if($product->hasRealImage())
+                                <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">รูปภาพปัจจุบัน (รูปจริง) — ทุกหน้าและ product.xman4289.com ใช้รูปนี้</div>
+                            @else
+                                <div class="mt-2 text-sm text-amber-600 dark:text-amber-400">ยังไม่มีรูปจริง — ตอนนี้ทุกหน้าใช้รูปตั้งต้นนี้ (จาก product.xman4289.com) อัปโหลดภาพหน้าจอจริงของโปรแกรมเพื่อแทนที่</div>
+                            @endif
                         </div>
                     </div>
                     @endif

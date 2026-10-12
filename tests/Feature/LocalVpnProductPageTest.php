@@ -258,7 +258,8 @@ class LocalVpnProductPageTest extends TestCase
         $html = $this->get('/products')->assertOk()->getContent();
 
         $this->assertStringContainsString('href="' . route('products.show', 'localvpn') . '"', $html);
-        $this->assertStringContainsString(asset('artwork/product/localvpn.webp'), $html);
+        // Its picture, the one every page shows (Product::artwork_url).
+        $this->assertStringContainsString($this->product->fresh()->artwork_url, $html);
 
         $start = strpos($html, 'href="' . route('products.show', 'localvpn') . '"');
         $card = substr($html, $start, 6000);
