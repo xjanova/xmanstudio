@@ -1,4 +1,6 @@
 @extends($customerLayout ?? 'layouts.customer')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('autotradex'); @endphp
 
 @section('title', 'License Details - ' . ($license->product?->name ?? 'License'))
 @section('page-title', 'License Details')
@@ -252,6 +254,9 @@
 
                 @if($license->product && $license->product->slug === 'autotradex')
                 {{-- ไฟล์ส่งจาก xman4289.com เอง ห้ามลิงก์ไป GitHub (กฎเจ้าของ 2026-09-24) --}}
+                @if($csDownload)
+                    <span class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:via-violet-600 hover:to-pink-600 font-semibold shadow-lg transition-all" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ route('autotradex.download') }}"
                    class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:via-violet-600 hover:to-pink-600 font-semibold shadow-lg transition-all">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,6 +264,7 @@
                     </svg>
                     Download Software
                 </a>
+                @endif
                 @endif
 
                 <a href="{{ route('customer.downloads') }}"

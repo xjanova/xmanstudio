@@ -185,7 +185,7 @@
     $('#spot-sector').textContent = f.sector;
     $('#spot-node').textContent = f.node;
     var st = $('#spot-status');
-    st.textContent = p.status === 'live' ? (p.version ? 'LIVE · v' + p.version : 'LIVE · SHIPPING') : 'IN DEVELOPMENT';
+    st.textContent = p.status === 'live' ? (p.version ? 'LIVE · v' + p.version : 'LIVE · SHIPPING') : 'COMING SOON';
     st.classList.toggle('soon', p.status !== 'live');
     $('#spotlight-stage').setAttribute('aria-label', 'หน้าจอของ ' + p.name + ' ลากเพื่อหมุน');
     $('#fb-title').textContent = p.name;
@@ -290,7 +290,7 @@
     { id: 'all', label: 'ทั้งหมด' },
     { id: 'live', label: 'ใช้งานได้แล้ว' },
     { id: 'free', label: 'ใช้ฟรีได้' },
-    { id: 'soon', label: 'กำลังพัฒนา' },
+    { id: 'soon', label: 'เร็ว ๆ นี้ (Coming Soon)' },
   ];
   var FILTER_LINES = {
     live: { text: 'โปรแกรมที่ใช้งานได้แล้วมี ' + counts.live + ' ตัว ดาวน์โหลดหรือซื้อได้ทันทีเลยค่ะ!', pose: 'cheer' },
@@ -322,7 +322,7 @@
   var cardsEl = $('#cards');
   function cardHtml(p) {
     var c = C.cat(p.cat);
-    var badges = '<span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ IN DEV') + '</span>' +
+    var badges = '<span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ COMING SOON') + '</span>' +
       (p.free ? '<span class="badge free">FREE</span>' : '');
     return '<div class="rise card-wrap"><article class="card" data-id="' + p.id + '" style="--accent:' + p.palette[2] + ';--accent2:' + p.palette[0] + '">' +
       '<button type="button" class="card-hit" aria-label="ดูรายละเอียด ' + esc(p.name) + '"></button>' +
@@ -532,7 +532,7 @@
       box.innerHTML = '<span class="term">$ xman version ' + esc(p.id) + ' → v' + esc(v.version) + '</span>' +
         'เวอร์ชันล่าสุด <b>v' + esc(v.version) + '</b>' + (v.file_size_formatted ? ' · ' + esc(v.file_size_formatted) : '') + esc(date) +
         (items.length ? '<ul>' + items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' : '') +
-        '<small>ข้อมูลสดจาก xman4289.com · ไฟล์ดาวน์โหลดส่งจาก xman4289.com เท่านั้น</small>';
+        '<small>' + (p.status === 'live' ? 'ข้อมูลสดจาก xman4289.com · ไฟล์ดาวน์โหลดส่งจาก xman4289.com เท่านั้น' : 'Coming Soon — ยังไม่เปิดให้ดาวน์โหลด') + '</small>';
     };
     var fallback = function () {
       var note = $('#detail-ver small');
@@ -567,14 +567,14 @@
     } else if (p.status === 'live') {
       verLine = '<span class="term">$ xman status ' + esc(p.id) + ' → live</span>ใช้งานได้แล้ว · ' + esc(p.price);
     } else {
-      verLine = '<span class="term">$ xman status ' + esc(p.id) + ' → building…</span>กำลังพัฒนา — ติดตามและจองสิทธิ์ได้ที่หน้าสินค้า';
+      verLine = '<span class="term">$ xman status ' + esc(p.id) + ' → coming soon</span>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด ติดตามได้ที่หน้าสินค้า';
     }
     inner.innerHTML =
       '<button type="button" class="detail-close" aria-label="ปิด">×</button>' +
       '<div class="detail-visual">' +
         '<div class="dv-main' + (isShot ? ' is-shot' : '') + '"><img id="dv-img" src="' + pics[0] + '" alt="ภาพของ ' + esc(p.name) + '">' +
           '<div class="dv-fade"></div>' +
-          '<div class="detail-state"><span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ IN DEV') + '</span>' + (p.free ? '<span class="badge free">FREE</span>' : '') + '</div>' +
+          '<div class="detail-state"><span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ COMING SOON') + '</span>' + (p.free ? '<span class="badge free">FREE</span>' : '') + '</div>' +
           (isShot ? '<span class="dv-cap" id="dv-cap">◉ LIVE CAPTURE · ภาพหน้าจอจริง 01 / ' + pad2(pics.length) + '</span>' : '') +
         '</div>' +
         (pics.length > 1 ? '<div class="dv-thumbs" role="group" aria-label="ภาพหน้าจอ">' + pics.map(function (s, i) {

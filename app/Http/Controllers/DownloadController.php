@@ -30,6 +30,10 @@ class DownloadController extends Controller
             abort(404, 'Product not found');
         }
 
+        if ($product->isComingSoon()) {
+            return $this->comingSoon($request, $product);
+        }
+
         // Get the requested version or latest
         if ($version) {
             $productVersion = ProductVersion::where('product_id', $product->id)
@@ -136,6 +140,10 @@ class DownloadController extends Controller
             abort(404, 'Product not found');
         }
 
+        if ($product->isComingSoon()) {
+            return $this->comingSoon($request, $product);
+        }
+
         // Get the requested version or latest
         if ($version) {
             $productVersion = ProductVersion::where('product_id', $product->id)
@@ -206,6 +214,10 @@ class DownloadController extends Controller
             ], 404);
         }
 
+        if ($product->isComingSoon()) {
+            return $this->comingSoonJson();
+        }
+
         // Get the requested version or latest
         if ($version) {
             $productVersion = ProductVersion::where('product_id', $product->id)
@@ -268,6 +280,29 @@ class DownloadController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * สินค้ายังเป็น Coming Soon — ห้ามโหลด (กฎเจ้าของ 2026-10-12) แม้ซื้อแล้วหรือมี License
+     * เบราว์เซอร์กลับหน้าสินค้าซึ่งขึ้นป้าย Coming Soon · แอปได้ JSON 403
+     */
+    private function comingSoon(Request $request, Product $product)
+    {
+        if ($request->wantsJson()) {
+            return $this->comingSoonJson();
+        }
+
+        return redirect()->route('products.show', $product->slug)->with('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
+    }
+
+    private function comingSoonJson()
+    {
+        return response()->json([
+            'success' => false,
+            'error' => 'Coming soon: this product is not available for download yet',
+            'coming_soon' => true,
+            'message' => Product::COMING_SOON_DOWNLOAD_MESSAGE,
+        ], 403);
     }
 
     /**

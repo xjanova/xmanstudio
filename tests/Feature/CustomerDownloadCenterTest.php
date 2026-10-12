@@ -107,6 +107,25 @@ class CustomerDownloadCenterTest extends TestCase
         $this->assertStringNotContainsString('<button', $section);
     }
 
+    /** กฎเจ้าของ 2026-10-12: Coming Soon = โหลดไม่ได้จากทุกจุด แม้มี License แล้ว — การ์ดขึ้นป้ายแทนปุ่ม */
+    public function test_a_coming_soon_card_shows_the_label_and_no_download(): void
+    {
+        $user = User::factory()->create();
+        foreach (['chanthra-studio', 'spiderx'] as $slug) {
+            $product = $this->productWithRelease($slug);
+            $product->update(['is_coming_soon' => true]);
+            $this->licensedTo($user, $product);
+        }
+
+        $section = $this->licensedSoftware($user);
+
+        $this->assertSame(2, substr_count($section, 'data-coming-soon'));
+        $this->assertStringContainsString('Coming Soon', $section);
+        $this->assertStringNotContainsString('/chanthra-studio/download', $section);
+        $this->assertStringNotContainsString('/download/spiderx', $section);
+        $this->assertSame(0, substr_count($section, '<a '));
+    }
+
     public function test_brainx_gets_its_own_download_once_this_site_serves_one(): void
     {
         $user = User::factory()->create();
@@ -363,6 +382,9 @@ class CustomerDownloadCenterTest extends TestCase
     private function productWithRelease(string $slug): Product
     {
         $product = $this->product($slug);
+        // เปิดตัวแล้ว — สินค้า Coming Soon ไม่มีปุ่มโหลด (ดู test_a_coming_soon_card_shows_the_label_and_no_download)
+        // Chanthra ลงทะเบียนเป็น Coming Soon ใน migration
+        $product->update(['is_coming_soon' => false]);
         $this->release($product, '1.0.0');
 
         return $product;

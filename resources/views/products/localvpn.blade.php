@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('localvpn'); @endphp
 
 @section('title', 'LocalVPN — LAN เสมือนผ่านอินเทอร์เน็ต + ลดปิงเกม · Windows และ Android · ทดลอง Pro ฟรี 30 วัน · Pro เริ่ม ฿' . number_format(\App\Support\LicensePlans::price('localvpn', 'monthly') ?? 0) . '/เดือน | XMAN Studio')
 @section('meta_description', 'LocalVPN ต่อคอมกับมือถือของเพื่อนเป็นวง LAN เดียวกันผ่านอินเทอร์เน็ต เล่นเกมโหมด LAN และส่งไฟล์เหมือนนั่งข้างกัน พร้อมตัวลดปิงเกมที่วัดเส้นทางจริงก่อนแนะนำ และ VPN เลือกประเทศ สำหรับ Windows และ Android ทดลอง Pro ฟรี 30 วัน แล้วใช้รุ่นฟรีต่อได้')
@@ -253,14 +255,22 @@
                     </p>
 
                     <div class="flex flex-wrap gap-4">
+                        @if($csDownload)
+                            <span class="lvp-btn text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ $windowsUrl }}" class="lvp-btn text-lg">
                             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.1 10.4 4v7.1H3V5.1Zm0 13.8 7.4 1.1v-7H3v5.9ZM11.3 3.9 21 2.5v8.6h-9.7V3.9Zm0 16.2 9.7 1.4v-8.5h-9.7v7.1Z"/></svg>
                             <span class="text-left">ดาวน์โหลดสำหรับ Windows<small>Windows 10/11 · 64-bit</small></span>
                         </a>
+                        @endif
+                        @if($csDownload)
+                            <span class="lvp-btn-glass text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ $androidUrl }}" class="lvp-btn-glass text-lg">
                             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48 19.44 6.3a.38.38 0 0 0-.66-.38l-1.86 3.22a11.4 11.4 0 0 0-9.84 0L5.22 5.92a.38.38 0 0 0-.66.38L6.4 9.48A10.8 10.8 0 0 0 1 18h22a10.8 10.8 0 0 0-5.4-8.52ZM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Z"/></svg>
                             <span class="text-left">ดาวน์โหลดสำหรับ Android<small>ไฟล์ APK · Android 7.0+</small></span>
                         </a>
+                        @endif
                     </div>
 
                     <p class="mt-6 text-base">
@@ -441,8 +451,16 @@
                     </ul>
                     {{-- ไฟล์เดียวกับ Pro — Pro ปลดในแอปด้วย License key --}}
                     <div class="grid gap-3">
+                        @if($csDownload)
+                            <span class="lvp-btn w-full" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ $windowsUrl }}" class="lvp-btn w-full">ดาวน์โหลด Windows</a>
+                        @endif
+                        @if($csDownload)
+                            <span class="lvp-btn-glass w-full" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ $androidUrl }}" class="lvp-btn-glass w-full">ดาวน์โหลด Android</a>
+                        @endif
                     </div>
                 </div>
 
@@ -525,7 +543,11 @@
                         <li class="flex gap-3"><span class="lvp-tick">✓</span><span>ขอสิทธิ์ผู้ดูแลระบบครั้งเดียวตอนติดตั้ง เพื่อลงบริการเครือข่ายและการ์ดเครือข่ายเสมือน (Wintun)</span></li>
                         <li class="flex gap-3"><span class="lvp-tick">✓</span><span>ต่ออินเทอร์เน็ตตอนเปิดครั้งแรก เพื่อลงทะเบียนเครื่องและเริ่มทดลอง Pro</span></li>
                     </ul>
+                    @if($csDownload)
+                        <span class="lvp-btn w-full text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ $windowsUrl }}" class="lvp-btn w-full text-lg">ดาวน์โหลดสำหรับ Windows</a>
+                    @endif
                 </div>
                 <div class="lvp-glass p-7 flex flex-col">
                     <div class="flex items-center gap-4 mb-5">
@@ -540,7 +562,11 @@
                         <li class="flex gap-3"><span class="lvp-tick">✓</span><span>อนุญาตการติดตั้งแอปจากไฟล์ (APK) ในเครื่องครั้งแรก</span></li>
                         <li class="flex gap-3"><span class="lvp-tick">✓</span><span>อนุญาตการเชื่อมต่อ VPN เมื่อแอปถาม</span></li>
                     </ul>
+                    @if($csDownload)
+                        <span class="lvp-btn-glass w-full text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ $androidUrl }}" class="lvp-btn-glass w-full text-lg">ดาวน์โหลดสำหรับ Android</a>
+                    @endif
                 </div>
             </div>
             <p class="mt-6 text-center text-sm lvp-muted">
@@ -589,8 +615,16 @@
             <h2 class="text-3xl md:text-5xl font-bold mb-4">ชวนเพื่อนมาเข้าวงเดียวกัน</h2>
             <p class="text-lg lvp-muted mb-8">ทดลอง Pro ฟรี 30 วันบนทุกเครื่องใหม่ แล้วเลือกเองว่าจะใช้รุ่นฟรีต่อหรืออัป Pro เริ่ม ฿{{ $monthly }}/เดือน</p>
             <div class="flex flex-wrap justify-center gap-4">
+                @if($csDownload)
+                    <span class="lvp-btn text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ $windowsUrl }}" class="lvp-btn text-lg">ดาวน์โหลด Windows</a>
+                @endif
+                @if($csDownload)
+                    <span class="lvp-btn-glass text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ $androidUrl }}" class="lvp-btn-glass text-lg">ดาวน์โหลด Android</a>
+                @endif
                 <a href="#pricing" class="lvp-btn-gold text-lg">ดูแผน Pro</a>
             </div>
             <p class="lvp-muted text-sm mt-7">Windows 10/11 x64 · Android 7.0+ · ทดลอง Pro 30 วัน · 1 คีย์ = {{ $devices }} เครื่อง</p>

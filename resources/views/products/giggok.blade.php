@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('giggok'); @endphp
 
 @section('title', 'GigGok — เลขาสาว 3D บนมือถือ ดาวน์โหลดฟรี | XMAN Studio')
 @section('meta_description', $product->short_description ?: 'GigGok เลขาสาว 3D ผู้ช่วยส่วนตัวบนมือถือ ดาวน์โหลดฟรี')
@@ -44,6 +46,9 @@
                     <p class="text-xl text-gray-200 max-w-2xl mx-auto mb-8">{{ $product->short_description }}</p>
                 @endif
 
+                @if($csDownload)
+                    <span class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 text-white font-bold text-lg rounded-2xl shadow-lg shadow-fuchsia-500/25 transition-all transform hover:scale-105" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ route('giggok.download') }}"
                    class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 text-white font-bold text-lg rounded-2xl shadow-lg shadow-fuchsia-500/25 transition-all transform hover:scale-105">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,6 +56,7 @@
                     </svg>
                     ดาวน์โหลด APK
                 </a>
+                @endif
 
                 <p class="text-gray-400 text-sm mt-4">
                     @if($latestVersion)

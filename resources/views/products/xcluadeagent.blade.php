@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('cluadex-ai-coding-assistant'); @endphp
 
 @section('title', $product->name . ' | XMAN Studio')
 
@@ -115,11 +117,15 @@
 
                     <!-- CTA Buttons -->
                     <div class="flex flex-wrap gap-4">
+                        @if($csDownload)
+                            <span class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ route('download.page', $product->slug) }}"
                            class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             ดาวน์โหลดฟรี
                         </a>
+                        @endif
                         <a href="#pricing"
                            class="inline-flex items-center px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
@@ -475,10 +481,14 @@
                         <li class="flex items-center text-gray-500">{!! $crossIcon !!} Agent Tools เต็ม</li>
                         <li class="flex items-center text-gray-500">{!! $crossIcon !!} ซัพพอร์ตพรีเมียม</li>
                     </ul>
+                    @if($csDownload)
+                        <span class="block w-full text-center py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('download.page', $product->slug) }}"
                        class="block w-full text-center py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all">
                         ดาวน์โหลดฟรี
                     </a>
+                    @endif
                 </div>
 
                 <!-- Yearly Plan -->
@@ -499,10 +509,14 @@
                         <li class="flex items-center text-gray-300">{!! $checkIcon !!} อัปเดตฟรี 1 ปี</li>
                     </ul>
                     @if(auth()->check() && $hasPurchased)
+                        @if($csDownload)
+                            <span class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ route('customer.downloads') }}"
                            class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25">
                             ดาวน์โหลดเลย
                         </a>
+                        @endif
                     @else
                         <form action="{{ route('cart.add', $product) }}" method="POST">
                             @csrf
@@ -531,10 +545,14 @@
                         <li class="flex items-center text-amber-300">{!! $checkIcon !!} อัปเดตฟรีตลอดชีพ</li>
                     </ul>
                     @if(auth()->check() && $hasPurchased)
+                        @if($csDownload)
+                            <span class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ route('customer.downloads') }}"
                            class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25">
                             ดาวน์โหลดเลย
                         </a>
+                        @endif
                     @else
                         <form action="{{ route('cart.add', $product) }}" method="POST">
                             @csrf

@@ -91,18 +91,22 @@ class ChanthraStudioWebController extends Controller
             'product' => $product,
             'version' => $version,
             'hasPurchased' => $hasPurchased,
+            'comingSoon' => (bool) $product?->isComingSoon(),
         ]);
     }
 
     public function manual()
     {
-        return view('chanthrastudio.manual');
+        return view('chanthrastudio.manual', [
+            'comingSoon' => Product::slugIsComingSoon(self::PRODUCT_SLUG),
+        ]);
     }
 
     public function pricing()
     {
         return view('chanthrastudio.pricing', [
             'pricing' => self::PRICING,
+            'comingSoon' => Product::slugIsComingSoon(self::PRODUCT_SLUG),
         ]);
     }
 
@@ -113,7 +117,7 @@ class ChanthraStudioWebController extends Controller
      * · ระบุ = ตัวนั้นเป๊ะ ๆ (ลิงก์ที่ update/check ส่งให้ตัวอัปเดตในแอป คู่กับ sha256 ของเวอร์ชันนั้น)
      *
      * เดิม 302 ไปหน้า releases บน GitHub = ลูกค้าเห็น repo · กฎเจ้าของ (2026-09-24) ห้ามเด็ดขาด
-     * สินค้ายังเป็น "เร็ว ๆ นี้" (ซื้อไม่ได้) ก็โหลดได้ — ตัวแอปฟรี ที่ขายคือ License key
+     * สินค้ายังเป็น Coming Soon = โหลดไม่ได้ (กฎเจ้าของ 2026-10-12 แทนกฎเดิม "เร็ว ๆ นี้ก็โหลดได้") — serveRelease กันให้
      * ไฟล์ไหนเป็นตัวดาวน์โหลดกำหนดที่ asset_pattern ของ GitHub setting ในหน้า admin ไม่ใช่ในโค้ด
      */
     public function downloadPage(Request $request, ?string $version = null)

@@ -38,7 +38,7 @@
                             @else
                                 <span class="xu-prod__initials" aria-hidden="true">{{ mb_strtoupper(mb_substr($product->name, 0, 2)) }}</span>
                             @endif
-                            @if($product->is_coming_soon)
+                            @if($product->isComingSoon())
                                 <span class="xu-badge xu-badge--soon">เร็วๆ นี้ / Soon</span>
                             @endif
                         </span>
@@ -52,7 +52,7 @@
                                 <p class="xu-prod__desc">ดูรายละเอียดผลิตภัณฑ์และแพ็กเกจราคาทั้งหมด</p>
                             @endif
                             <span class="xu-prod__foot">
-                                @if($product->is_coming_soon)
+                                @if($product->isComingSoon())
                                     <span class="xu-price xu-price--soon">กำลังจะเปิดตัว <small>Coming soon</small></span>
                                 @elseif($product->price > 0)
                                     <span class="xu-price">฿{{ number_format($product->price, 0) }} <small>THB</small></span>

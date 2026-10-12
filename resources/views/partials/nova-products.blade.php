@@ -31,7 +31,7 @@
                    class="nova-card nova-reveal"
                    style="--nv-accent: {{ $accent }}; transition-delay: {{ $loop->index * 0.05 }}s;">
 
-                    @if($product->is_coming_soon)
+                    @if($product->isComingSoon())
                         <span class="nova-badge nova-badge--soon">เร็วๆ นี้ / Soon</span>
                     @endif
 
@@ -57,7 +57,7 @@
                         <p class="nova-card__body">ดูรายละเอียดผลิตภัณฑ์และแพ็กเกจราคาทั้งหมด</p>
                     @endif
 
-                    @if($product->is_coming_soon)
+                    @if($product->isComingSoon())
                         <div class="nova-price" style="color:var(--nv-fg-3);font-size:15px;">
                             กำลังจะเปิดตัว <span class="nova-price__unit">Coming soon</span>
                         </div>

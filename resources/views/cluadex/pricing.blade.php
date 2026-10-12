@@ -1,4 +1,6 @@
 @extends('layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('cluadex-ai-coding-assistant'); @endphp
 
 @section('title', 'CluadeX Pro - แพ็กเกจราคา | XMAN Studio')
 
@@ -64,9 +66,13 @@
             <x-page-art art="team-cta" :opacity="14" :scrim="false" />
             <div class="relative text-center">
                 <p class="text-gray-500 text-sm">ทุกแพ็กเกจรวม: อัพเดทอัตโนมัติ, Bug Report, ซัพพอร์ตจาก XMAN Studio</p>
+                @if($csDownload)
+                    <span class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ route('cluadex.download') }}" class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1">
                     หรือ ดาวน์โหลดเวอร์ชันฟรี →
                 </a>
+                @endif
             </div>
         </div>
     </div>
