@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PaymentSetting;
 use App\Models\Product;
 use App\Models\TpixPayment;
 use App\Models\TpixPriceSnapshot;
@@ -49,6 +50,7 @@ class TpixPaymentTest extends TestCase
         Mail::fake();
         $this->fakeTpixChain();
         $this->enableTpixPayments();
+        $this->seedTwap();
 
         $category = Category::firstOrCreate(['slug' => 'software'], ['name' => 'Software', 'description' => 'x']);
         $this->product = Product::create([
@@ -72,7 +74,8 @@ class TpixPaymentTest extends TestCase
         $this->assertSame('0.100000000000', $spot['price_usd']);
         $this->assertSame('32.500000', $spot['usd_thb']);
         $this->assertSame('3.250000000000', $spot['price_thb']);
-        $this->assertSame(1, TpixPriceSnapshot::count());
+        $this->assertSame('3.250000000000', $spot['quote_rate_thb']);
+        $this->assertSame(TpixPriceService::SOURCE_LIVE, TpixPriceSnapshot::latest('created_at')->value('source'));
 
         // Cloudflare refuses the RPC without a User-Agent
         Http::assertSent(fn (Request $r) => str_contains($r->url(), 'rpc.tpix.online')
@@ -103,23 +106,74 @@ class TpixPaymentTest extends TestCase
         $this->assertTrue($payment->expires_at->isFuture());
     }
 
-    public function test_a_quote_uses_the_recent_average_when_it_is_lower_than_a_pumped_spot(): void
+    public function test_a_quote_uses_the_usd_twap_when_it_is_lower_than_a_pumped_spot(): void
     {
-        foreach ([10, 20, 25] as $minutesAgo) {
-            TpixPriceSnapshot::create(['price_usd' => '0.08', 'usd_thb' => '31.25', 'price_thb' => '2.5', 'created_at' => now()->subMinutes($minutesAgo)]);
-        }
+        TpixPriceSnapshot::query()->delete();
+        $this->seedTwap('0.08');
 
         $order = $this->order();
         $payment = app(TpixPaymentService::class)->createQuote(TpixPayment::PURPOSE_ORDER, $order, $order->user, '1000.00');
 
-        // average of 2.5, 2.5, 2.5 and the new 3.25 snapshot = 2.6875 < 3.25 spot
-        $this->assertSame('2.687500000000', (string) TpixMath::dec($payment->rate_thb)->toScale(12));
-        $this->assertTrue(TpixMath::dec($payment->amount_tpix)->isGreaterThan('372.0930'));
+        // TWAP of the USD price: (0.08 × 3 + the new 0.10) / 4 = 0.085 < 0.10 spot → × 32.5 = ฿2.7625
+        $this->assertSame('2.762500000000', (string) TpixMath::dec($payment->rate_thb)->toScale(12));
+        $this->assertTrue(TpixMath::dec($payment->amount_tpix)->isGreaterThan('361.9910'));
+        $this->assertTrue(TpixMath::dec($payment->amount_tpix)->isLessThan('361.9911'));
+    }
+
+    public function test_no_quote_until_the_twap_exists(): void
+    {
+        TpixPriceSnapshot::query()->delete();
+        $order = $this->order();
+
+        $this->assertNull(app(TpixPriceService::class)->quoteRateThb());
+        $this->assertNull(app(TpixPriceService::class)->forDisplay(1000));
+
+        $this->expectExceptionMessage('ราคาเฉลี่ย');
+        app(TpixPaymentService::class)->createQuote(TpixPayment::PURPOSE_ORDER, $order, $order->user, '1000.00');
+    }
+
+    public function test_an_amount_beyond_the_pool_is_refused_with_the_limit(): void
+    {
+        // 19.99 USDT × 5 × 32.5 = ฿3,248.37 per quote at most
+        $order = $this->order(subtotal: 5000, total: 5000, itemPrice: 5000);
+
+        $this->expectExceptionMessage('ยอดนี้เกินสภาพคล่องของตลาด TPIX ตอนนี้ — ชำระด้วย TPIX ได้สูงสุด 3,248.37 บาทต่อรายการ');
+        app(TpixPaymentService::class)->createQuote(TpixPayment::PURPOSE_ORDER, $order, $order->user, '5000.00');
+    }
+
+    public function test_a_broken_token0_answer_gives_no_price(): void
+    {
+        $this->token0Raw = '0x';
+        $this->assertNull(app(TpixPriceService::class)->spot(fresh: true));
+
+        $this->token0Raw = '0x' . str_repeat('0', 64);
+        $this->assertNull(app(TpixPriceService::class)->spot(fresh: true));
+    }
+
+    public function test_tests_never_reach_the_network_unless_they_fake_it(): void
+    {
+        config(['tpix_pay.allow_network_in_tests' => false]);
+        Http::fake();
+
+        $this->assertNull(app(TpixPriceService::class)->spot(fresh: true));
+        Http::assertNothingSent();
+    }
+
+    public function test_pages_only_read_the_cache_and_one_request_refreshes_it(): void
+    {
+        Cache::flush();
+        Cache::add('tpix_pay:spot:refreshing', 1, 15); // another request is reading the chain right now
+        Http::fake();
+
+        $this->assertNull(app(TpixPriceService::class)->forDisplay(1000));
+        Http::assertNothingSent();
     }
 
     public function test_no_quote_and_no_price_tag_without_a_usd_thb_rate(): void
     {
         $this->fxDown = true;
+        // Rows whose rate was itself a fallback never stand in for a live rate
+        TpixPriceSnapshot::query()->update(['source' => TpixPriceService::SOURCE_FX_STALE]);
 
         $this->assertNull(app(TpixPriceService::class)->forDisplay(1000));
 
@@ -131,11 +185,16 @@ class TpixPaymentTest extends TestCase
     public function test_a_rate_fetched_within_a_day_still_quotes_when_the_feeds_are_down_but_an_older_one_does_not(): void
     {
         $this->fxDown = true;
-        TpixPriceSnapshot::create(['price_usd' => '0.1', 'usd_thb' => '33.000000', 'price_thb' => '3.3', 'created_at' => now()->subHours(23)]);
+        TpixPriceSnapshot::query()->update(['source' => TpixPriceService::SOURCE_FX_STALE]);
+        $live = TpixPriceSnapshot::create(['price_usd' => '0.1', 'usd_thb' => '33.000000', 'price_thb' => '3.3', 'source' => TpixPriceService::SOURCE_LIVE, 'created_at' => now()->subHours(23)]);
 
-        $this->assertSame('33.000000', app(TpixPriceService::class)->spot(fresh: true)['usd_thb']);
+        $spot = app(TpixPriceService::class)->spot(fresh: true);
+        $this->assertSame('33.000000', $spot['usd_thb']);
+        $this->assertFalse($spot['fx_live']);
+        // This minute's read is recorded, marked as priced with a fallback rate
+        $this->assertSame(TpixPriceService::SOURCE_FX_STALE, TpixPriceSnapshot::latest('created_at')->value('source'));
 
-        TpixPriceSnapshot::query()->update(['created_at' => now()->subHours(25)]);
+        $live->update(['created_at' => now()->subHours(25)]);
         Cache::flush();
 
         $this->assertNull(app(TpixPriceService::class)->spot(fresh: true));
@@ -186,16 +245,35 @@ class TpixPaymentTest extends TestCase
 
     public function test_products_priced_in_tpix_are_quoted_at_that_price_with_vat_in_proportion(): void
     {
-        $this->product->update(['price_tpix' => '100']);
+        $this->product->update(['price_tpix' => '400']); // above its market value (฿1000 ≈ 307.69 TPIX)
         $order = $this->order(subtotal: 1000, total: 1070); // + 7% VAT
 
         $fixed = app(TpixPriceService::class)->fixedTotalForOrder($order);
-        $this->assertSame('107.0000', $fixed);
+        $this->assertSame('428.0000', $fixed);
 
         $payment = app(TpixPaymentService::class)->createQuote(TpixPayment::PURPOSE_ORDER, $order, $order->user, '1070.00', $fixed);
-        $this->assertTrue(TpixMath::dec($payment->amount_tpix)->isGreaterThan('107'));
-        $this->assertTrue(TpixMath::dec($payment->amount_tpix)->isLessThan('107.0001'));
+        $this->assertTrue(TpixMath::dec($payment->amount_tpix)->isGreaterThan('428'));
+        $this->assertTrue(TpixMath::dec($payment->amount_tpix)->isLessThan('428.0001'));
         $this->assertTrue($payment->meta['fixed_price']);
+    }
+
+    public function test_a_fixed_price_below_the_market_is_never_what_anyone_pays(): void
+    {
+        // Coins bought cheap at a stale fixed price, then the order cancelled → the full THB would
+        // have come back to the wallet. The market value is the floor, line by line.
+        $this->product->update(['price_tpix' => '100']);
+        $order = $this->order(subtotal: 1000, total: 1070);
+
+        $this->assertSame('329.2308', app(TpixPriceService::class)->fixedTotalForOrder($order)); // 1070 / 3.25
+
+        $payment = app(TpixPaymentService::class)->createQuote(TpixPayment::PURPOSE_ORDER, $order, $order->user, '1070.00', '107');
+        $this->assertTrue(TpixMath::dec($payment->amount_tpix)->isGreaterThan('329.2307'));
+        $this->assertArrayNotHasKey('fixed_price', $payment->meta);
+
+        // The price tag shows the market price, not the lower fixed one
+        $tag = app(TpixPriceService::class)->forDisplay(1000, '100');
+        $this->assertSame('307.6924', $tag['tpix']);
+        $this->assertFalse($tag['fixed']);
     }
 
     public function test_a_line_sold_at_another_price_than_the_tpix_price_converts_at_market(): void
@@ -377,7 +455,7 @@ class TpixPaymentTest extends TestCase
 
         $this->assertSame('unknown', $outcome['result']);
         $this->assertSame(TpixPayment::STATUS_PENDING, $payment->fresh()->status);
-        $this->assertContains(self::txHash('later'), $payment->fresh()->meta['candidate_txs']);
+        $this->assertContains(self::txHash('later'), $payment->fresh()->meta['submitted_hashes']);
 
         // The node comes back, the transfer is there: the scanner picks the pasted hash up
         $this->rpcDown = false;
@@ -388,20 +466,193 @@ class TpixPaymentTest extends TestCase
         $this->assertSame('paid', $order->fresh()->payment_status);
     }
 
-    public function test_the_scanner_finds_a_transfer_nobody_pasted(): void
+    public function test_the_scanner_finds_a_transfer_nobody_pasted_by_walking_the_blocks(): void
     {
         [$order, $payment] = $this->quotedOrder();
         $hash = self::txHash('qr');
+
+        // Zero-value spam to the shop costs nothing on a gas-0 chain — it must not bury the payment
+        foreach (range(1, 60) as $i) {
+            $this->mineTransfer(self::txHash("spam-{$i}"), '0', 950 + intdiv($i, 4), now()->timestamp);
+        }
         $this->mineTransfer($hash, $payment->amount_wei, 990, now()->timestamp);
-        $this->explorerItems = [[
-            'hash' => $hash, 'value' => $payment->amount_wei, 'status' => 'ok', 'result' => 'success',
-            'timestamp' => now()->toIso8601String(), 'to' => ['hash' => $this->shopAddress],
-        ]];
 
         $this->artisan('tpix:pay-scan')->assertSuccessful();
 
         $this->assertSame(TpixPayment::STATUS_PAID, $payment->fresh()->status);
         $this->assertSame('paid', $order->fresh()->payment_status);
+        $this->assertSame(1000, TpixPaymentService::scanCursor());
+        // Blocks were fetched in JSON-RPC batches of 40
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'rpc.tpix.online') && array_is_list($r->data()) && count($r->data()) === 40);
+    }
+
+    public function test_with_no_open_quote_the_scanner_only_follows_the_head(): void
+    {
+        $this->artisan('tpix:pay-scan')->assertSuccessful();
+
+        $this->assertSame(1000, TpixPaymentService::scanCursor());
+        Http::assertNotSent(fn (Request $r) => array_is_list($r->data()) && $r->data() !== []);
+    }
+
+    public function test_a_block_the_node_leaves_out_stops_the_walk_just_before_it(): void
+    {
+        [$order, $payment] = $this->quotedOrder();
+        $this->mineTransfer(self::txHash('after-gap'), $payment->amount_wei, 990, now()->timestamp);
+        $this->missingBlocks = [500];
+
+        $this->artisan('tpix:pay-scan')->assertSuccessful();
+        $this->assertSame(499, TpixPaymentService::scanCursor());
+        $this->assertSame(TpixPayment::STATUS_PENDING, $payment->fresh()->status);
+
+        // The node has it again: the next run resumes at block 500 and finds the payment
+        $this->missingBlocks = [];
+        $this->artisan('tpix:pay-scan')->assertSuccessful();
+        $this->assertSame(TpixPayment::STATUS_PAID, $payment->fresh()->status);
+    }
+
+    public function test_one_run_walks_at_most_900_blocks(): void
+    {
+        $this->quotedOrder();
+        $this->latestBlock = 5000;
+        PaymentSetting::set(TpixPaymentService::CURSOR_KEY, 1000, ['group' => 'tpix_scan', 'type' => 'integer', 'label' => 'x']);
+
+        $this->artisan('tpix:pay-scan')->assertSuccessful();
+
+        $this->assertSame(1900, TpixPaymentService::scanCursor());
+    }
+
+    public function test_one_bad_payment_cannot_stop_the_others_in_a_scan(): void
+    {
+        [$badOrder, $bad] = $this->quotedOrder();
+        [$order, $good] = $this->quotedOrder();
+        // Something about this row makes delivery throw
+        $bad->forceFill(['payable_type' => 'App\\Models\\NoSuchModel'])->save();
+        $this->mineTransfer(self::txHash('bad'), $bad->amount_wei, 990, now()->timestamp);
+        $this->mineTransfer(self::txHash('good'), $good->amount_wei, 990, now()->timestamp);
+
+        $this->artisan('tpix:pay-scan')->assertSuccessful();
+
+        $this->assertSame(TpixPayment::STATUS_PAID, $good->fresh()->status);
+        $this->assertSame('paid', $order->fresh()->payment_status);
+        $this->assertNotContains($bad->fresh()->status, [TpixPayment::STATUS_PAID, TpixPayment::STATUS_CREDITED_WALLET]);
+    }
+
+    public function test_a_transaction_still_in_the_mempool_is_not_bound_and_a_replacement_can_pay(): void
+    {
+        [$order, $payment] = $this->quotedOrder();
+        $stuck = self::txHash('stuck');
+        $this->mineTransfer($stuck, $payment->amount_wei, null, now()->timestamp);
+
+        $outcome = app(TpixPaymentService::class)->submitTx($payment, $stuck);
+
+        $this->assertSame('unknown', $outcome['result']);
+        $this->assertSame('not_mined', $outcome['reason']);
+        $payment->refresh();
+        $this->assertNull($payment->tx_hash);
+        $this->assertSame(TpixPayment::STATUS_PENDING, $payment->status);
+        $this->assertContains($stuck, $payment->meta['submitted_hashes']);
+
+        // The wallet sped it up with a new hash: that one pays, the stuck one never locked the quote
+        $replacement = self::txHash('replacement');
+        $this->mineTransfer($replacement, $payment->amount_wei, 990, now()->timestamp);
+
+        $this->assertSame('paid', app(TpixPaymentService::class)->submitTx($payment, $replacement)['result']);
+        $this->assertSame($replacement, $payment->fresh()->tx_hash);
+        $this->assertSame('paid', $order->fresh()->payment_status);
+    }
+
+    public function test_only_five_pasted_hashes_are_remembered(): void
+    {
+        [, $payment] = $this->quotedOrder();
+
+        foreach (range(1, 7) as $i) {
+            $this->mineTransfer(self::txHash("pending-{$i}"), $payment->amount_wei, null, now()->timestamp);
+            app(TpixPaymentService::class)->submitTx($payment, self::txHash("pending-{$i}"));
+        }
+
+        $this->assertCount(5, $payment->fresh()->meta['submitted_hashes']);
+    }
+
+    public function test_a_wallet_credit_is_never_more_than_the_coins_are_worth_now(): void
+    {
+        [$order, $payment] = $this->quotedOrder();
+        $order->update(['status' => 'cancelled', 'payment_status' => 'rejected']);
+
+        // The price halves before the coins arrive: the quote rate takes the lower live price,
+        // 0.05 × 32.5 = ฿1.625, so the 307.69… TPIX are worth ฿500.00 now — not the quote's ฿1000
+        $this->reserveUsdtUnits = '9995000';
+        Cache::flush();
+        $this->app->forgetScopedInstances();
+
+        $hash = self::txHash('cheap-coins');
+        $this->mineTransfer($hash, $payment->amount_wei, 990, now()->timestamp);
+        $this->assertSame('credited_wallet', app(TpixPaymentService::class)->submitTx($payment, $hash)['result']);
+
+        $this->assertSame('500.00', (string) Wallet::where('user_id', $order->user_id)->value('balance'));
+        $this->assertSame('500.00', TpixMath::thb($payment->fresh()->credited_thb));
+    }
+
+    public function test_without_a_price_to_value_the_coins_the_credit_waits_for_the_admin(): void
+    {
+        [$order, $payment] = $this->quotedOrder();
+        $order->update(['status' => 'cancelled', 'payment_status' => 'rejected']);
+        $this->fxDown = true;
+        TpixPriceSnapshot::query()->delete();
+        Cache::flush();
+        $this->app->forgetScopedInstances();
+
+        $hash = self::txHash('no-price');
+        $this->mineTransfer($hash, $payment->amount_wei, 990, now()->timestamp);
+        $this->assertSame('held', app(TpixPaymentService::class)->submitTx($payment, $hash)['result']);
+        $this->assertSame(TpixPayment::STATUS_HELD, $payment->fresh()->status);
+        $this->assertNull(Wallet::where('user_id', $order->user_id)->value('balance'));
+
+        // Prices are back: the admin credits it (the coins' value now, capped at the quote's THB)
+        $this->fxDown = false;
+        $this->seedTwap();
+        Cache::flush();
+        $this->app->forgetScopedInstances();
+
+        $this->assertSame('credited_wallet', app(TpixPaymentService::class)->approveHeld($payment)['result']);
+        $this->assertSame('1000.00', (string) Wallet::where('user_id', $order->user_id)->value('balance'));
+    }
+
+    public function test_over_the_daily_auto_credit_cap_the_coins_wait_for_the_admin(): void
+    {
+        config(['tpix_pay.auto_credit_daily_cap_thb' => 500]);
+        [$order, $payment] = $this->quotedOrder();
+        $order->update(['status' => 'cancelled', 'payment_status' => 'rejected']);
+
+        $hash = self::txHash('over-cap');
+        $this->mineTransfer($hash, $payment->amount_wei, 990, now()->timestamp);
+
+        $this->assertSame('held', app(TpixPaymentService::class)->submitTx($payment, $hash)['result']);
+        $this->assertNull(Wallet::where('user_id', $order->user_id)->value('balance'));
+        $this->assertStringContainsString('daily', $payment->fresh()->failure_reason);
+    }
+
+    public function test_a_second_quote_paid_on_one_top_up_is_credited_at_most_its_value(): void
+    {
+        $user = User::factory()->create();
+        $wallet = Wallet::getOrCreateForUser($user->id);
+        $topup = WalletTopup::create([
+            'wallet_id' => $wallet->id, 'user_id' => $user->id, 'topup_id' => WalletTopup::generateTopupId(),
+            'amount' => 500, 'bonus_amount' => 0, 'total_amount' => 500,
+            'payment_method' => 'tpix', 'status' => WalletTopup::STATUS_PENDING,
+        ]);
+        $service = app(TpixPaymentService::class);
+        $first = $service->createQuote(TpixPayment::PURPOSE_WALLET_TOPUP, $topup, $user, '500.00');
+        $second = $service->createQuote(TpixPayment::PURPOSE_WALLET_TOPUP, $topup, $user, '500.00');
+
+        $this->mineTransfer(self::txHash('first'), $first->amount_wei, 990, now()->timestamp);
+        $this->mineTransfer(self::txHash('second'), $second->amount_wei, 991, now()->timestamp);
+
+        $this->assertSame('paid', $service->submitTx($first, self::txHash('first'))['result']);
+        $this->assertSame('credited_wallet', $service->submitTx($second, self::txHash('second'))['result']);
+
+        // ฿500 from the top-up + the second quote's coins at today's rate (≥ ฿500.00, capped at ฿500)
+        $this->assertSame('1000.00', (string) $wallet->fresh()->balance);
+        $this->assertSame('500.00', TpixMath::thb($second->fresh()->credited_thb));
     }
 
     public function test_a_wallet_top_up_paid_in_tpix_is_approved_with_its_bonus_rules(): void

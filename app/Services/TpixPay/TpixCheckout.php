@@ -20,11 +20,45 @@ class TpixCheckout
 {
     public const METHOD = 'tpix';
 
-    /** Offer TPIX: switched on, an address to receive at, and a price right now. */
+    /** Offer TPIX: switched on, an address to receive at, and a quotable price right now (TWAP included). */
     public static function available(): bool
     {
         return app(TpixPaySettings::class)->acceptsPayments()
-            && app(TpixPriceService::class)->spot() !== null;
+            && app(TpixPriceService::class)->quoteRateThb() !== null;
+    }
+
+    /**
+     * Why an amount cannot be paid in TPIX right now (Thai, for the customer), or null when it can.
+     * Checked before a checkout creates its order, so a refused TPIX payment leaves nothing behind.
+     */
+    public static function refusal(string|int|float $thb): ?string
+    {
+        if (! self::available()) {
+            return 'ขณะนี้ยังชำระด้วยเหรียญ TPIX ไม่ได้ กรุณาเลือกช่องทางอื่น';
+        }
+
+        $max = app(TpixPriceService::class)->spot()['max_quote_thb'] ?? null;
+        if ($max !== null && TpixMath::dec(TpixMath::thb($thb))->isGreaterThan($max)) {
+            return self::overPoolMessage($max);
+        }
+
+        return null;
+    }
+
+    /** For a checkout: back to the form with the reason when TPIX was chosen and cannot take this amount. */
+    public static function refuse(?string $method, string|int|float $thb): ?RedirectResponse
+    {
+        if ($method !== self::METHOD || ($reason = self::refusal($thb)) === null) {
+            return null;
+        }
+
+        return redirect()->back()->withInput()->with('error', $reason);
+    }
+
+    public static function overPoolMessage(string $maxThb): string
+    {
+        return 'ยอดนี้เกินสภาพคล่องของตลาด TPIX ตอนนี้ — ชำระด้วย TPIX ได้สูงสุด '
+            . number_format((float) $maxThb, 2) . ' บาทต่อรายการ';
     }
 
     /**

@@ -69,6 +69,12 @@ class AiCreditCheckoutController extends Controller
         ]);
 
         $price = (int) $package['price_thb'];
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $price)) {
+            return $refused;
+        }
         $metadata = [
             'source' => 'xdreamer',
             'package_slug' => $package['slug'],

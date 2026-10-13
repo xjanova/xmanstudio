@@ -49,6 +49,11 @@ return new class extends Migration
             $table->unsignedBigInteger('block_number')->nullable();
             $table->unsignedInteger('confirmations')->default(0);
 
+            // THB actually put in the wallet when the coins could not go to their order/top-up
+            // (capped at the coins' value; summed per day for the auto-credit cap — a real column,
+            // not a JSON path: json_extract on MariaDB answers 'true' as a string)
+            $table->decimal('credited_thb', 14, 2)->nullable();
+
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('paid_at')->nullable();

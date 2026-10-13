@@ -40,6 +40,12 @@ class TpixPaySettings
         return max(5, (int) $this->values()['ttl']);
     }
 
+    /** A quote may be worth at most this many times the pool's USDT side (see config tpix_pay.max_pool_ratio). */
+    public function maxPoolRatio(): float
+    {
+        return max(0.1, (float) $this->values()['max_pool_ratio']);
+    }
+
     /** Customers may be offered TPIX: switched on and somewhere to send it. (A price is checked separately.) */
     public function acceptsPayments(): bool
     {
@@ -60,7 +66,7 @@ class TpixPaySettings
     /**
      * Save what the admin page sent (already validated).
      *
-     * @param  array{enabled:bool, address:?string, confirmations:int, ttl:int}  $values
+     * @param  array{enabled:bool, address:?string, confirmations:int, ttl:int, max_pool_ratio?:float}  $values
      */
     public function save(array $values): void
     {
@@ -76,6 +82,9 @@ class TpixPaySettings
         ]);
         PaymentSetting::set('tpix_quote_ttl_minutes', (int) $values['ttl'], [
             'group' => 'tpix', 'type' => 'integer', 'label' => 'อายุใบเสนอราคา TPIX (นาที)',
+        ]);
+        PaymentSetting::set('tpix_max_pool_ratio', (float) ($values['max_pool_ratio'] ?? config('tpix_pay.max_pool_ratio', 5)), [
+            'group' => 'tpix', 'type' => 'float', 'label' => 'ยอดต่อรายการสูงสุด (เท่าของ USDT ในพูล)',
         ]);
 
         $this->forget();
@@ -93,6 +102,7 @@ class TpixPaySettings
             'address' => null,
             'confirmations' => (int) config('tpix_pay.confirmations', 3),
             'ttl' => (int) config('tpix_pay.quote_ttl_minutes', 30),
+            'max_pool_ratio' => (float) config('tpix_pay.max_pool_ratio', 5),
         ];
 
         try {
@@ -101,6 +111,7 @@ class TpixPaySettings
             $values['address'] = $rows['tpix_receive_address'] ?? null;
             $values['confirmations'] = (int) ($rows['tpix_confirmations'] ?? $values['confirmations']);
             $values['ttl'] = (int) ($rows['tpix_quote_ttl_minutes'] ?? $values['ttl']);
+            $values['max_pool_ratio'] = (float) ($rows['tpix_max_pool_ratio'] ?? $values['max_pool_ratio']);
         } catch (Throwable) {
             // No table yet (a fresh install mid-migration): TPIX simply stays off
         }

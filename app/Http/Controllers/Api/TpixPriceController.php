@@ -21,14 +21,14 @@ class TpixPriceController extends Controller
     public function show(TpixPriceService $prices, TpixPaySettings $settings): JsonResponse
     {
         $spot = $prices->spot();
-        $accepts = $settings->acceptsPayments() && $spot !== null;
+        $accepts = $settings->acceptsPayments() && ($spot['quote_rate_thb'] ?? null) !== null;
 
         $chain = [
             'symbol' => config('tpix_pay.symbol'),
             'chain_id' => (int) config('tpix_pay.chain_id'),
             'decimals' => (int) config('tpix_pay.decimals'),
             'payments_enabled' => $accepts,
-            'prices_shown' => $settings->showsPrices() && $spot !== null,
+            'prices_shown' => $settings->showsPrices() && ($spot['quote_rate_thb'] ?? null) !== null,
             'receive_address' => $accepts ? $settings->receiveAddress() : null,
             'explorer_url' => config('tpix_pay.explorer_url'),
         ];
@@ -46,8 +46,12 @@ class TpixPriceController extends Controller
             'data' => $chain + [
                 'price_usd' => $spot['price_usd'],
                 'price_thb' => $spot['price_thb'],
+                // null until the 30-minute average exists — no quotes and no price tags until then
                 'quote_rate_thb' => $spot['quote_rate_thb'],
+                'twap_usd' => $spot['twap_usd'],
                 'usd_thb' => $spot['usd_thb'],
+                'usd_thb_live' => $spot['fx_live'],
+                'max_quote_thb' => $spot['max_quote_thb'],
                 'source' => $spot['source'],
                 'pair_address' => config('tpix_pay.pair_address'),
                 'updated_at' => Carbon::createFromTimestamp($spot['at'])->toIso8601String(),

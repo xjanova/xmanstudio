@@ -168,6 +168,9 @@
                 <template x-if="status === 'late'">
                     <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">ได้รับเหรียญหลังหมดเวลาชำระ — ทีมงานจะตรวจสอบแล้วดำเนินการให้ (ส่งของหรือคืนเป็นเงินใน Wallet)</p>
                 </template>
+                <template x-if="status === 'held'">
+                    <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">ได้รับเหรียญแล้ว แต่รายการนี้ปิดไปก่อน — ทีมงานจะอนุมัติการเติมมูลค่าเหรียญเข้า Wallet ให้</p>
+                </template>
                 <template x-if="status === 'pending' || status === 'expired'">
                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -256,7 +259,7 @@ function tpixPay(cfg) {
                     this.messageOk = false;
                 } else {
                     this.message = d.message || (d.errors ? Object.values(d.errors)[0][0] : 'ตรวจสอบไม่สำเร็จ');
-                    this.messageOk = ['paid', 'credited_wallet', 'settled', 'confirming', 'late', 'unknown'].includes(d.result);
+                    this.messageOk = ['paid', 'credited_wallet', 'held', 'settled', 'confirming', 'late', 'unknown'].includes(d.result);
                     this.apply(d);
                 }
             } catch (e) {

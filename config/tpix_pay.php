@@ -45,13 +45,35 @@ return [
     // `late` for the admin); the quote's exact amount stays reserved until then.
     'late_grace_minutes' => 120,
 
-    // Pages read the price at most this often; the chain is asked once per period, not per page.
-    'display_cache_seconds' => 60,
+    // Pages only ever read the cached price; the scanner refreshes it every minute and it is kept a
+    // little longer than that (≥ 70 s), so a page never waits on the chain.
+    'display_cache_seconds' => 90,
 
-    // Quotes use the lower of the live price and the average of this window, so pumping the thin
-    // pool for a minute does not buy a cheap quote.
+    // Quotes use the lower of the live pool price (USD) and its average over this window (TWAP),
+    // and no quote is made without that average: pumping the thin pool (~$20 deep — a few USDT
+    // doubles the price) for a minute must not buy a cheap quote.
     'average_window_minutes' => 30,
     'average_min_snapshots' => 3,
+
+    // One quote may be worth at most this many times the pool's USDT side (admin can change it):
+    // a payment far larger than the market behind the price is refused, not priced off a toy pool.
+    'max_pool_ratio' => 5,
+
+    // A quote reuses a pool read at most this old (seconds); older means one fresh read first.
+    'quote_spot_max_age_seconds' => 30,
+
+    // Coins that arrive outside the normal flow (order already paid/cancelled, a second quote on
+    // one top-up) are credited to the wallet automatically only up to this much per customer per
+    // day (THB), at the coins' value now; anything beyond waits for the admin.
+    'auto_credit_daily_cap_thb' => (float) env('TPIX_PAY_AUTO_CREDIT_DAILY_CAP', 5000),
+
+    // The scanner walks blocks (JSON-RPC batches) rather than paging the explorer: zero-value
+    // transfers cost nothing on a gas-0 chain, so explorer pages can be flooded.
+    'scan_max_blocks' => 900,
+    'scan_batch_size' => 40,
+
+    // Tests never touch the real chain or FX feeds unless a test fakes them and opts in.
+    'allow_network_in_tests' => false,
 
     // USD→THB. Payments never fall back to a typed-in rate: with no live rate and none fetched in
     // the last fx_max_age_hours, nothing is quoted and the pages hide their TPIX prices.

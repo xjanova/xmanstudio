@@ -29,6 +29,7 @@ class TpixPriceTagPagesTest extends TestCase
         $this->withoutVite();
         $this->fakeTpixChain();
         $this->enableTpixPayments();
+        $this->seedTwap();
 
         // Without an admin every page redirects to the setup wizard
         User::factory()->create(['role' => 'admin']);

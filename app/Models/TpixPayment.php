@@ -30,6 +30,12 @@ class TpixPayment extends Model
     /** A matching transfer that arrived after the quote expired — parked for the admin, never auto-fulfilled. */
     public const STATUS_LATE = 'late';
 
+    /**
+     * Received and verified, but the wallet credit it would need is not automatic (no price to value
+     * the coins right now, or over the customer's daily auto-credit cap) — waits for the admin.
+     */
+    public const STATUS_HELD = 'held';
+
     public const STATUS_EXPIRED = 'expired';
 
     public const STATUS_CANCELLED = 'cancelled';
@@ -38,7 +44,7 @@ class TpixPayment extends Model
 
     public const STATUSES = [
         self::STATUS_PENDING, self::STATUS_CONFIRMING, self::STATUS_PAID, self::STATUS_CREDITED_WALLET,
-        self::STATUS_LATE, self::STATUS_EXPIRED, self::STATUS_CANCELLED, self::STATUS_FAILED,
+        self::STATUS_LATE, self::STATUS_HELD, self::STATUS_EXPIRED, self::STATUS_CANCELLED, self::STATUS_FAILED,
     ];
 
     public const PURPOSE_ORDER = 'order';
@@ -66,6 +72,7 @@ class TpixPayment extends Model
         'from_address',
         'block_number',
         'confirmations',
+        'credited_thb',
         'submitted_at',
         'expires_at',
         'paid_at',
@@ -103,6 +110,12 @@ class TpixPayment extends Model
         return in_array($this->status, [self::STATUS_PAID, self::STATUS_CREDITED_WALLET], true);
     }
 
+    /** Nothing on the chain changes it any more: delivered, credited, or received and waiting for the admin. */
+    public function isFinal(): bool
+    {
+        return $this->isSettled() || $this->status === self::STATUS_HELD;
+    }
+
     /** The customer may still send the amount (the scanner keeps looking past this, until the grace ends). */
     public function isPayable(): bool
     {
@@ -137,6 +150,7 @@ class TpixPayment extends Model
             self::STATUS_PAID => 'ชำระแล้ว',
             self::STATUS_CREDITED_WALLET => 'เข้ากระเป๋าเงินแล้ว',
             self::STATUS_LATE => 'โอนหลังหมดเวลา (รอแอดมิน)',
+            self::STATUS_HELD => 'ได้รับเหรียญแล้ว (รอแอดมินอนุมัติ)',
             self::STATUS_EXPIRED => 'หมดเวลา',
             self::STATUS_CANCELLED => 'ยกเลิก',
             self::STATUS_FAILED => 'ไม่สำเร็จ',

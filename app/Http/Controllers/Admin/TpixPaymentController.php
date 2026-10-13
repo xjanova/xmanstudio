@@ -45,6 +45,7 @@ class TpixPaymentController extends Controller
                 'address' => $settings->receiveAddress(),
                 'confirmations' => $settings->confirmations(),
                 'ttl' => $settings->quoteTtlMinutes(),
+                'max_pool_ratio' => $settings->maxPoolRatio(),
             ],
             'spot' => $prices->spot(),
             'lastSnapshot' => TpixPriceSnapshot::latest('created_at')->first(),
@@ -59,6 +60,7 @@ class TpixPaymentController extends Controller
             'tpix_receive_address' => ['nullable', 'required_if:tpix_enabled,1', 'regex:' . TpixPaySettings::ADDRESS_PATTERN],
             'tpix_confirmations' => ['required', 'integer', 'min:1', 'max:64'],
             'tpix_quote_ttl_minutes' => ['required', 'integer', 'min:5', 'max:240'],
+            'tpix_max_pool_ratio' => ['required', 'numeric', 'min:0.1', 'max:100'],
         ], [
             'tpix_receive_address.required_if' => 'เปิดรับชำระด้วย TPIX ต้องใส่ที่อยู่กระเป๋ารับเหรียญ',
             'tpix_receive_address.regex' => 'ที่อยู่กระเป๋าต้องเป็น 0x ตามด้วยตัวอักษรฐานสิบหก 40 ตัว',
@@ -69,6 +71,7 @@ class TpixPaymentController extends Controller
             'address' => $validated['tpix_receive_address'] ?? '',
             'confirmations' => (int) $validated['tpix_confirmations'],
             'ttl' => (int) $validated['tpix_quote_ttl_minutes'],
+            'max_pool_ratio' => (float) $validated['tpix_max_pool_ratio'],
         ]);
 
         return redirect()->route('admin.tpix-payments.index')->with('success', 'บันทึกการตั้งค่าการชำระด้วย TPIX แล้ว');
@@ -99,6 +102,14 @@ class TpixPaymentController extends Controller
         $ok = in_array($outcome['result'], ['paid', 'credited_wallet', 'settled'], true);
 
         return back()->with($ok ? 'success' : 'error', "#{$tpixPayment->reference}: {$outcome['message']}");
+    }
+
+    /** Received, but its wallet credit was not automatic (no price / over the daily cap): the admin credits it. */
+    public function approveHeld(TpixPayment $tpixPayment, TpixPaymentService $service): RedirectResponse
+    {
+        $outcome = $service->approveHeld($tpixPayment);
+
+        return back()->with($outcome['result'] === 'credited_wallet' ? 'success' : 'error', "#{$tpixPayment->reference}: {$outcome['message']}");
     }
 
     public function cancel(TpixPayment $tpixPayment, TpixPaymentService $service): RedirectResponse

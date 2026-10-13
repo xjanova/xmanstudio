@@ -1530,6 +1530,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/{tpixPayment}/recheck', [AdminTpixPaymentController::class, 'recheck'])
             ->middleware('throttle:30,1,admin-tpix-recheck')->name('recheck');
         Route::post('/{tpixPayment}/accept-late', [AdminTpixPaymentController::class, 'acceptLate'])->name('accept-late');
+        Route::post('/{tpixPayment}/approve-held', [AdminTpixPaymentController::class, 'approveHeld'])->name('approve-held');
         Route::post('/{tpixPayment}/cancel', [AdminTpixPaymentController::class, 'cancel'])->name('cancel');
     });
 

@@ -17,12 +17,16 @@ use Throwable;
  * The real, current price of TPIX — read from the chain's own DEX pool (WTPIX/USDT), times the
  * live USD→THB rate. No price is ever typed in.
  *
- * - spot(): the pool price, cached for display_cache_seconds and read at most once per request, so
- *   a page with fifty price tags asks the chain at most once a minute. Snapshotted once a minute.
- * - quote rate: the LOWER of the live THB price and the last half hour's average (when there are
- *   enough snapshots). The pool is thin; pumping it for a minute must not buy a cheap quote.
- * - forDisplay(): the price tag. Never throws, returns null whenever there is no trustworthy price —
- *   the tag then simply is not shown.
+ * The pool is thin (about $20 deep: a few USDT doubles the price and can be held for minutes), so:
+ * - a quote uses the LOWER of the live pool price and its 30-minute average (TWAP, on the USD price),
+ *   and there is no quote at all until that average exists (≥ 3 one-minute snapshots);
+ * - one quote may be worth at most max_pool_ratio × the pool's USDT side.
+ *
+ * Reading:
+ * - spot(): the cached price. Pages never wait on the chain — the scanner refreshes the cache every
+ *   minute; when it is empty, ONE request refreshes it (a cache lock) and the others show no tag.
+ * - spotForQuote(): the cached price when it is at most 30 s old, otherwise one fresh read.
+ * - forDisplay(): the price tag. Never throws; null whenever there is no trustworthy price.
  *
  * Bound as a scoped singleton (AppServiceProvider) so the per-request memo is per request.
  */
@@ -32,9 +36,18 @@ class TpixPriceService
 
     public const FX_CACHE_KEY = 'tpix_pay:fx';
 
+    private const REFRESH_LOCK = 'tpix_pay:spot:refreshing';
+
     private const GET_RESERVES = '0x0902f1ac';
 
     private const TOKEN0 = '0x0dfe1681';
+
+    /** Snapshot sources: FX read live / FX was a fallback / no FX at all (USD price only, for the TWAP) */
+    public const SOURCE_LIVE = 'dex';
+
+    public const SOURCE_FX_STALE = 'dex_fx_stale';
+
+    public const SOURCE_NO_FX = 'dex_no_fx';
 
     private bool $loaded = false;
 
@@ -47,8 +60,9 @@ class TpixPriceService
     ) {}
 
     /**
-     * @return array{price_usd:string, usd_thb:string, price_thb:string, quote_rate_thb:string,
-     *               reserve_tpix:string, reserve_usdt:string, source:string, at:int}|null
+     * @return array{price_usd:string, twap_usd:?string, usd_thb:string, fx_live:bool, price_thb:string,
+     *               quote_rate_thb:?string, max_quote_thb:string, reserve_tpix:string, reserve_usdt:string,
+     *               source:string, at:int}|null
      */
     public function spot(bool $fresh = false): ?array
     {
@@ -63,6 +77,13 @@ class TpixPriceService
 
                 return $this->memo = $cached['spot'];
             }
+
+            // Nothing cached: one request reads the chain, every other one shows no price meanwhile
+            if (! Cache::add(self::REFRESH_LOCK, 1, 15)) {
+                $this->loaded = true;
+
+                return $this->memo = null;
+            }
         }
 
         try {
@@ -72,19 +93,34 @@ class TpixPriceService
             $spot = null;
         }
 
-        // Kept a little longer than the scheduler's one-minute refresh (tpix:pay-scan reads it fresh),
-        // so a page view practically never waits on the chain itself. A failure is remembered
-        // briefly too, so a dead node is not asked once per page view.
+        // A failure is remembered briefly too, so a dead node is not asked once per page view
         Cache::put(self::SPOT_CACHE_KEY, ['spot' => $spot], $spot !== null
-            ? max(5, (int) config('tpix_pay.display_cache_seconds', 60)) + 30
+            ? max(70, (int) config('tpix_pay.display_cache_seconds', 90))
             : 15);
+
+        if (! $fresh) {
+            Cache::forget(self::REFRESH_LOCK);
+        }
 
         $this->loaded = true;
 
         return $this->memo = $spot;
     }
 
-    /** THB per 1 TPIX a new quote uses, or null when there is no trustworthy price. */
+    /** The price a new quote uses: the cached read when it is fresh enough, else one read now. */
+    public function spotForQuote(): ?array
+    {
+        $spot = $this->spot();
+        $maxAge = (int) config('tpix_pay.quote_spot_max_age_seconds', 30);
+
+        if ($spot !== null && $spot['at'] >= now()->timestamp - $maxAge) {
+            return $spot;
+        }
+
+        return $this->spot(fresh: true);
+    }
+
+    /** THB per 1 TPIX a new quote would use right now, or null (no price, or no TWAP yet). */
     public function quoteRateThb(): ?string
     {
         return $this->spot()['quote_rate_thb'] ?? null;
@@ -102,30 +138,34 @@ class TpixPriceService
     }
 
     /**
-     * The price tag: how much $thb is in TPIX right now, or the product's fixed TPIX price.
+     * The price tag: how much $thb is in TPIX right now. A product's fixed TPIX price is shown only
+     * when it is not below that (a fixed price under the market value is never what anyone pays).
      * null = show nothing (feature off, no price, nothing to price). Never throws.
      *
-     * @return array{tpix:string, tpix_formatted:string, fixed:bool, rate_thb:?string,
-     *               rate_formatted:?string, price_usd:?string, updated_at:?Carbon}|null
+     * @return array{tpix:string, tpix_formatted:string, fixed:bool, rate_thb:string,
+     *               rate_formatted:string, price_usd:?string, updated_at:?Carbon}|null
      */
     public function forDisplay(string|int|float|null $thb, string|int|float|null $fixedTpix = null): ?array
     {
         try {
-            if (! $this->settings->showsPrices()) {
+            if (! $this->settings->showsPrices() || $thb === null || $thb === '' || ! TpixMath::dec($thb)->isPositive()) {
                 return null;
             }
 
             $spot = $this->spot();
             $rate = $spot['quote_rate_thb'] ?? null;
-
-            if ($fixedTpix !== null && $fixedTpix !== '' && TpixMath::dec($fixedTpix)->isPositive()) {
-                $tpix = (string) TpixMath::dec($fixedTpix)->toScale(4, RoundingMode::Ceiling);
-                $fixed = true;
-            } elseif ($rate !== null && $thb !== null && $thb !== '' && TpixMath::dec($thb)->isPositive()) {
-                $tpix = $this->thbToTpix($thb, $rate);
-                $fixed = false;
-            } else {
+            if ($rate === null) {
                 return null;
+            }
+
+            $tpix = $this->thbToTpix($thb, $rate);
+            $fixed = false;
+            if ($fixedTpix !== null && $fixedTpix !== '' && TpixMath::dec($fixedTpix)->isPositive()) {
+                $fixedValue = TpixMath::dec($fixedTpix)->toScale(4, RoundingMode::Ceiling);
+                if ($fixedValue->isGreaterThanOrEqualTo($tpix)) {
+                    $tpix = (string) $fixedValue;
+                    $fixed = true;
+                }
             }
 
             return [
@@ -133,7 +173,7 @@ class TpixPriceService
                 'tpix_formatted' => TpixMath::formatTpix($tpix),
                 'fixed' => $fixed,
                 'rate_thb' => $rate,
-                'rate_formatted' => $rate !== null ? self::formatRate($rate) : null,
+                'rate_formatted' => self::formatRate($rate),
                 'price_usd' => $spot['price_usd'] ?? null,
                 'updated_at' => isset($spot['at']) ? Carbon::createFromTimestamp($spot['at']) : null,
             ];
@@ -147,29 +187,36 @@ class TpixPriceService
     /**
      * The order's total in TPIX when every line is a product the admin priced in TPIX, at the price
      * that TPIX price was set against (a licence term priced differently converts at market).
-     * VAT and a coupon move it in the same proportion as they move the THB total.
      */
-    public function fixedTotalForOrder(Order $order): ?string
+    public function fixedTotalForOrder(Order $order, ?string $rateThb = null): ?string
     {
         $order->loadMissing('items.product');
 
-        return $this->fixedTotalForLines($order->items, $order->subtotal ?? 0, $order->total ?? 0);
+        return $this->fixedTotalForLines($order->items, $order->subtotal ?? 0, $order->total ?? 0, $rateThb);
     }
 
     /**
-     * The same for any lines with ->product, ->price and ->quantity (order items, cart items), so the
-     * checkout shows the amount the quote will ask for.
+     * The same for any lines with ->product, ->price and ->quantity (order items, cart items).
+     *
+     * Each line is the HIGHER of its fixed TPIX price and its THB value at the quote rate — VAT and a
+     * coupon move both in the same proportion as they move the THB total. A fixed price below the
+     * market would let coins bought cheap pay for an order whose cancellation then credits the full
+     * THB to the wallet. No rate → no fixed total (it could not be checked against the market).
      *
      * @param  iterable<object>  $lines
      */
-    public function fixedTotalForLines(iterable $lines, string|int|float $subtotal, string|int|float $total): ?string
+    public function fixedTotalForLines(iterable $lines, string|int|float $subtotal, string|int|float $total, ?string $rateThb = null): ?string
     {
-        if (! TpixMath::dec(TpixMath::thb($subtotal))->isPositive()) {
+        $rateThb ??= $this->quoteRateThb();
+        if ($rateThb === null || ! TpixMath::dec(TpixMath::thb($subtotal))->isPositive()) {
             return null;
         }
 
+        $rate = TpixMath::dec($rateThb);
+        $ratio = TpixMath::dec(TpixMath::thb($total))->dividedBy(TpixMath::thb($subtotal), 18, RoundingMode::HalfUp);
         $sum = BigDecimal::zero();
         $any = false;
+
         foreach ($lines as $line) {
             $product = $line->product;
             if (! $product || $product->price_tpix === null || ! TpixMath::dec($product->price_tpix)->isPositive()) {
@@ -178,22 +225,19 @@ class TpixPriceService
             if (! TpixMath::dec(TpixMath::thb($line->price))->isEqualTo(TpixMath::dec(TpixMath::thb($product->price)))) {
                 return null;
             }
-            $sum = $sum->plus(TpixMath::dec($product->price_tpix)->multipliedBy((int) $line->quantity));
+
+            $quantity = (int) $line->quantity;
+            $fixedLine = TpixMath::dec($product->price_tpix)->multipliedBy($quantity)->multipliedBy($ratio);
+            $marketLine = TpixMath::dec(TpixMath::thb($line->price))->multipliedBy($quantity)->multipliedBy($ratio)
+                ->dividedBy($rate, 18, RoundingMode::Ceiling);
+            $sum = $sum->plus($fixedLine->isGreaterThan($marketLine) ? $fixedLine : $marketLine);
             $any = true;
         }
 
-        if (! $any) {
-            return null;
-        }
-
-        return (string) $sum->multipliedBy(TpixMath::thb($total))
-            ->dividedBy(TpixMath::thb($subtotal), 4, RoundingMode::Ceiling);
+        return $any ? (string) $sum->toScale(4, RoundingMode::Ceiling) : null;
     }
 
-    /**
-     * The TPIX price for an API payload (catalog, pricing, packs): a 4-decimal string, or null when the
-     * pages would show none. Additive fields — apps that do not know them ignore them.
-     */
+    /** The TPIX price for an API payload: a 4-decimal string, or null when the pages would show none. */
     public function apiPrice(string|int|float|null $thb, string|int|float|null $fixedTpix = null): ?string
     {
         return $this->forDisplay($thb, $fixedTpix)['tpix'] ?? null;
@@ -206,7 +250,8 @@ class TpixPriceService
      */
     public function apiRate(): ?array
     {
-        if (! $this->settings->showsPrices() || ($spot = $this->spot()) === null) {
+        $spot = $this->settings->showsPrices() ? $this->spot() : null;
+        if ($spot === null || ($spot['quote_rate_thb'] ?? null) === null) {
             return null;
         }
 
@@ -227,6 +272,12 @@ class TpixPriceService
         return TpixMath::format($rate, $rate->compareTo(10) >= 0 ? 2 : 4);
     }
 
+    /** Tests never reach the real chain or FX feeds unless they fake them and opt in. */
+    private function networkAllowed(): bool
+    {
+        return ! app()->runningUnitTests() || (bool) config('tpix_pay.allow_network_in_tests');
+    }
+
     /**
      * @return array<string, mixed>|null
      *
@@ -234,9 +285,17 @@ class TpixPriceService
      */
     private function readSpot(): ?array
     {
+        if (! $this->networkAllowed()) {
+            return null;
+        }
+
         $pair = config('tpix_pay.pair_address');
+
+        // token0 must be one of the pair's two tokens, or the reserves would be read upside down
+        // (a bare "0x" answer would flip them and the price would explode)
+        $token0Raw = $this->rpc->ethCall($pair, self::TOKEN0);
+        $token0 = strlen($token0Raw) >= 42 ? '0x' . strtolower(substr($token0Raw, -40)) : '';
         $reserves = substr($this->rpc->ethCall($pair, self::GET_RESERVES), 2);
-        $token0 = '0x' . strtolower(substr($this->rpc->ethCall($pair, self::TOKEN0), -40));
 
         if (strlen($reserves) < 128) {
             throw new TpixRpcException('getReserves returned too little data');
@@ -248,7 +307,7 @@ class TpixPriceService
         [$tpixRaw, $usdtRaw] = match ($token0) {
             strtolower(config('tpix_pay.wtpix_address')) => [$reserve0, $reserve1],
             strtolower(config('tpix_pay.usdt_address')) => [$reserve1, $reserve0],
-            default => throw new TpixRpcException('the pair is not WTPIX/USDT (token0 ' . $token0 . ')'),
+            default => throw new TpixRpcException('the pair is not WTPIX/USDT (token0 ' . ($token0 ?: 'empty') . ')'),
         };
 
         $reserveTpix = BigDecimal::ofUnscaledValue($tpixRaw, 18);
@@ -260,24 +319,32 @@ class TpixPriceService
             return null;
         }
 
-        $usdThb = $this->usdThb();
-        if ($usdThb === null) {
+        $priceUsd = $reserveUsdt->dividedBy($reserveTpix, 12, RoundingMode::HalfUp);
+        $fx = $this->usdThb();
+
+        // Every read is snapshotted (at most once a minute), FX or not: the TWAP is on the USD price
+        $this->snapshot($priceUsd, $fx, $reserveTpix, $reserveUsdt);
+
+        if ($fx === null) {
             return null;
         }
 
-        $priceUsd = $reserveUsdt->dividedBy($reserveTpix, 12, RoundingMode::HalfUp);
-        $priceThb = $priceUsd->multipliedBy($usdThb)->toScale(12, RoundingMode::HalfUp);
-
-        $this->snapshot($priceUsd, $usdThb, $priceThb, $reserveTpix, $reserveUsdt);
+        $usdThb = TpixMath::dec($fx['rate']);
+        $twapUsd = $this->twapUsd();
+        $quoteUsd = $twapUsd === null ? null : ($twapUsd->isLessThan($priceUsd) ? $twapUsd : $priceUsd);
 
         return [
             'price_usd' => (string) $priceUsd,
-            'usd_thb' => $usdThb,
-            'price_thb' => (string) $priceThb,
-            'quote_rate_thb' => $this->quoteRateFrom($priceThb),
+            'twap_usd' => $twapUsd !== null ? (string) $twapUsd : null,
+            'usd_thb' => $fx['rate'],
+            'fx_live' => $fx['live'],
+            'price_thb' => (string) $priceUsd->multipliedBy($usdThb)->toScale(12, RoundingMode::HalfUp),
+            'quote_rate_thb' => $quoteUsd !== null ? (string) $quoteUsd->multipliedBy($usdThb)->toScale(12, RoundingMode::HalfUp) : null,
+            'max_quote_thb' => (string) $reserveUsdt->multipliedBy((string) $this->settings->maxPoolRatio())
+                ->multipliedBy($usdThb)->toScale(2, RoundingMode::Down),
             'reserve_tpix' => (string) $reserveTpix,
             'reserve_usdt' => (string) $reserveUsdt,
-            'source' => 'dex',
+            'source' => $fx['live'] ? self::SOURCE_LIVE : self::SOURCE_FX_STALE,
             'at' => now()->timestamp,
         ];
     }
@@ -291,16 +358,19 @@ class TpixPriceService
     }
 
     /**
-     * USD→THB: a live feed, refreshed hourly. When every feed is down, the last rate fetched within
-     * fx_max_age_hours (cache, then the snapshots); after that, none — never a typed-in number.
+     * USD→THB: a live feed, refreshed hourly (`live`). When every feed is down, the last rate fetched
+     * live within fx_max_age_hours — the cache, then a snapshot whose rate was live — marked not live.
+     * After that, none: never a typed-in number.
+     *
+     * @return array{rate:string, live:bool}|null
      */
-    private function usdThb(): ?string
+    private function usdThb(): ?array
     {
         $cached = Cache::get(self::FX_CACHE_KEY);
         $age = is_array($cached) ? now()->timestamp - (int) ($cached['at'] ?? 0) : PHP_INT_MAX;
 
         if (is_array($cached) && $age < (int) config('tpix_pay.fx_refresh_minutes', 60) * 60) {
-            return $cached['rate'];
+            return ['rate' => $cached['rate'], 'live' => true];
         }
 
         foreach ((array) config('tpix_pay.fx_urls', []) as $url) {
@@ -309,7 +379,7 @@ class TpixPriceService
                     ->acceptJson()
                     ->timeout(6)
                     ->get($url);
-                $thb = $response->successful() ? ($response->json('rates.THB')) : null;
+                $thb = $response->successful() ? $response->json('rates.THB') : null;
             } catch (Throwable) {
                 $thb = null;
             }
@@ -318,21 +388,27 @@ class TpixPriceService
                 $rate = number_format((float) $thb, 6, '.', '');
                 Cache::forever(self::FX_CACHE_KEY, ['rate' => $rate, 'at' => now()->timestamp]);
 
-                return $rate;
+                return ['rate' => $rate, 'live' => true];
             }
         }
 
         $maxAge = (int) config('tpix_pay.fx_max_age_hours', 24) * 3600;
         if (is_array($cached) && $age < $maxAge) {
-            return $cached['rate'];
+            return ['rate' => $cached['rate'], 'live' => false];
         }
 
-        $last = TpixPriceSnapshot::where('created_at', '>=', now()->subSeconds($maxAge))->latest('created_at')->value('usd_thb');
+        // Only a row read with a live rate may stand in: a stale row would keep a dead rate alive forever
+        $last = TpixPriceSnapshot::where('source', self::SOURCE_LIVE)
+            ->whereNotNull('usd_thb')
+            ->where('created_at', '>=', now()->subSeconds($maxAge))
+            ->latest('created_at')
+            ->value('usd_thb');
 
-        return $last !== null ? (string) TpixMath::dec($last)->toScale(6, RoundingMode::HalfUp) : null;
+        return $last !== null ? ['rate' => (string) TpixMath::dec($last)->toScale(6, RoundingMode::HalfUp), 'live' => false] : null;
     }
 
-    private function snapshot(BigDecimal $priceUsd, string $usdThb, BigDecimal $priceThb, BigDecimal $reserveTpix, BigDecimal $reserveUsdt): void
+    /** @param  array{rate:string, live:bool}|null  $fx */
+    private function snapshot(BigDecimal $priceUsd, ?array $fx, BigDecimal $reserveTpix, BigDecimal $reserveUsdt): void
     {
         try {
             if (TpixPriceSnapshot::where('created_at', '>=', now()->subSeconds(55))->exists()) {
@@ -341,11 +417,11 @@ class TpixPriceService
 
             TpixPriceSnapshot::create([
                 'price_usd' => (string) $priceUsd,
-                'usd_thb' => $usdThb,
-                'price_thb' => (string) $priceThb,
+                'usd_thb' => $fx['rate'] ?? null,
+                'price_thb' => $fx !== null ? (string) $priceUsd->multipliedBy($fx['rate'])->toScale(12, RoundingMode::HalfUp) : null,
                 'reserve_tpix' => (string) $reserveTpix,
                 'reserve_usdt' => (string) $reserveUsdt,
-                'source' => 'dex',
+                'source' => $fx === null ? self::SOURCE_NO_FX : ($fx['live'] ? self::SOURCE_LIVE : self::SOURCE_FX_STALE),
                 'created_at' => now(),
             ]);
         } catch (Throwable $e) {
@@ -353,21 +429,21 @@ class TpixPriceService
         }
     }
 
-    private function quoteRateFrom(BigDecimal $spotThb): string
+    /** The pool's average USD price over the window, or null with fewer than the minimum snapshots. */
+    private function twapUsd(): ?BigDecimal
     {
         $values = TpixPriceSnapshot::where('created_at', '>=', now()->subMinutes((int) config('tpix_pay.average_window_minutes', 30)))
-            ->pluck('price_thb');
+            ->pluck('price_usd');
 
         if ($values->count() < (int) config('tpix_pay.average_min_snapshots', 3)) {
-            return (string) $spotThb;
+            return null;
         }
 
         $sum = BigDecimal::zero();
         foreach ($values as $value) {
             $sum = $sum->plus(TpixMath::dec($value));
         }
-        $average = $sum->dividedBy($values->count(), 12, RoundingMode::HalfUp);
 
-        return (string) ($average->isLessThan($spotThb) ? $average : $spotThb);
+        return $sum->dividedBy($values->count(), 12, RoundingMode::HalfUp);
     }
 }

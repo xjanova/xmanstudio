@@ -3,6 +3,7 @@
 namespace App\Services\TpixPay;
 
 use App\Models\Order;
+use App\Models\PaymentSetting;
 use App\Models\TpixPayment;
 use App\Models\User;
 use App\Models\Wallet;
@@ -11,12 +12,11 @@ use App\Services\LineNotifyService;
 use App\Services\OrderPaymentService;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -26,23 +26,29 @@ use Throwable;
  *
  * Nothing the browser says is believed. A customer (or MetaMask) only points at a transaction hash;
  * the chain's own RPC decides: the transfer went to the shop's address, on chain 4289, for exactly
- * the quoted wei, it succeeded, it is buried under enough blocks, and it happened inside the quote's
- * window. One transfer pays one quote (unique tx_hash). No two open quotes ask for the same wei
- * (unique open_key), so a transfer found by amount belongs to exactly one quote.
+ * the quoted wei, it is MINED with a successful receipt, buried under enough blocks, and inside the
+ * quote's window. Only then is the hash bound to the quote (unique tx_hash: one transfer pays one
+ * quote). A hash that is not mined yet is only remembered and re-checked — binding a mempool hash
+ * would let a dropped, replaced or deliberately stuck transaction lock the quote for good.
+ * No two open quotes ask for the same wei (unique open_key), so a transfer found by amount belongs
+ * to exactly one quote.
  *
- * Money is never silently lost:
+ * Money is never silently lost, and never more than arrived:
  * - the chain cannot be reached → the quote stays where it was and is checked again next minute;
  * - a transfer after the quote expired → `late`, held for the admin (never auto-fulfilled);
- * - an order already paid or cancelled by the time its transfer lands → the THB goes to the
- *   customer's wallet (`credited_wallet`).
- * Settling takes the quote's row lock, so the scanner, the status poll and an admin re-check
- * arriving together fulfil once.
+ * - coins for an order already paid or cancelled (or a second quote on one top-up) → the wallet,
+ *   but only the coins' value now (capped at the quote's THB) and within the customer's daily
+ *   auto-credit cap; otherwise `held` for the admin.
+ * Settling takes the quote's row lock (no chain or FX calls inside it), so the scanner, the status
+ * poll and an admin re-check arriving together fulfil once.
  */
 class TpixPaymentService
 {
     private const TAG_UNIT = '0.00000001';
 
     private const MAX_TAG = 9999;
+
+    public const CURSOR_KEY = 'tpix_scan_cursor';
 
     public function __construct(
         private TpixRpcClient $rpc,
@@ -51,8 +57,8 @@ class TpixPaymentService
     ) {}
 
     /**
-     * Make a quote. $fixedTpixTotal (from TpixPriceService::fixedTotalForOrder) replaces the market
-     * conversion when the admin priced every line in TPIX.
+     * Make a quote. $fixedTpixTotal (from TpixPriceService::fixedTotalForOrder) is honoured only where
+     * it is not below the market value of the THB amount.
      *
      * @param  array<string, mixed>  $meta
      *
@@ -73,19 +79,28 @@ class TpixPaymentService
             throw new TpixQuoteException('ยอดชำระต้องมากกว่า 0 บาท');
         }
 
-        $spot = $this->prices->spot();
+        $spot = $this->prices->spotForQuote();
+        if ($spot === null) {
+            throw new TpixQuoteException('ราคา TPIX ไม่พร้อมใช้งานในขณะนี้ กรุณาลองใหม่อีกครั้งหรือเลือกช่องทางอื่น');
+        }
+        if (($spot['quote_rate_thb'] ?? null) === null) {
+            throw new TpixQuoteException('ระบบกำลังเก็บราคาเฉลี่ยของ TPIX — กรุณาลองใหม่ในอีกไม่กี่นาที หรือเลือกช่องทางอื่น');
+        }
+        if (TpixMath::dec($thb)->isGreaterThan($spot['max_quote_thb'])) {
+            throw new TpixQuoteException(TpixCheckout::overPoolMessage($spot['max_quote_thb']));
+        }
+
+        $rate = $spot['quote_rate_thb'];
+        $base = TpixMath::dec($this->prices->thbToTpix($thb, $rate));
+        $meta['spot_price_thb'] = $spot['price_thb'];
 
         if ($fixedTpixTotal !== null && TpixMath::dec($fixedTpixTotal)->isPositive()) {
-            $base = TpixMath::dec($fixedTpixTotal)->toScale(4, RoundingMode::Ceiling);
-            $rate = (string) TpixMath::dec($thb)->dividedBy($base, 12, RoundingMode::HalfUp);
-            $meta['fixed_price'] = true;
-        } else {
-            if ($spot === null) {
-                throw new TpixQuoteException('ราคา TPIX ไม่พร้อมใช้งานในขณะนี้ กรุณาลองใหม่อีกครั้งหรือเลือกช่องทางอื่น');
+            $fixed = TpixMath::dec($fixedTpixTotal)->toScale(4, RoundingMode::Ceiling);
+            if ($fixed->isGreaterThan($base)) {
+                $base = $fixed;
+                $rate = (string) TpixMath::dec($thb)->dividedBy($base, 12, RoundingMode::HalfUp);
+                $meta['fixed_price'] = true;
             }
-            $rate = $spot['quote_rate_thb'];
-            $base = TpixMath::dec($this->prices->thbToTpix($thb, $rate));
-            $meta['spot_price_thb'] = $spot['price_thb'];
         }
 
         if (! $base->isPositive()) {
@@ -111,8 +126,8 @@ class TpixPaymentService
                     'purpose' => $purpose,
                     'amount_thb' => $thb,
                     'rate_thb' => $rate,
-                    'price_usd' => $spot['price_usd'] ?? null,
-                    'usd_thb' => $spot['usd_thb'] ?? null,
+                    'price_usd' => $spot['price_usd'],
+                    'usd_thb' => $spot['usd_thb'],
                     'amount_wei' => $wei,
                     'amount_tpix' => (string) $tpix,
                     'receive_address' => $address,
@@ -132,7 +147,7 @@ class TpixPaymentService
 
     /**
      * The customer (or their wallet) says "I paid with this transaction". Checked against the chain
-     * at once; when the node does not know it yet, kept as a candidate the scanner keeps checking.
+     * at once; until it is mined it is only remembered (at most 5) and the scanner keeps checking it.
      *
      * @return array{result:string, reason?:string, message:string}
      */
@@ -150,8 +165,8 @@ class TpixPaymentService
 
         if ($outcome['result'] === 'unknown') {
             $meta = $payment->fresh()->meta ?? [];
-            $candidates = array_values(array_unique(array_merge($meta['candidate_txs'] ?? [], [$hash])));
-            $meta['candidate_txs'] = array_slice($candidates, -5);
+            $hashes = array_values(array_unique(array_merge($meta['submitted_hashes'] ?? [], [$hash])));
+            $meta['submitted_hashes'] = array_slice($hashes, -5);
             $payment->forceFill(['meta' => $meta])->save();
         }
 
@@ -173,7 +188,7 @@ class TpixPaymentService
 
         $payment->refresh();
 
-        if ($payment->isSettled()) {
+        if ($payment->isFinal()) {
             return $this->outcome('settled');
         }
 
@@ -209,15 +224,11 @@ class TpixPaymentService
                 return $this->outcome('rejected', 'wrong_amount');
             }
 
-            $chain = [
-                'tx_hash' => $hash,
-                'from_address' => strtolower((string) ($tx['from'] ?? '')) ?: null,
-            ];
-
+            // Not mined (or no receipt yet): nothing is bound. A dropped or replaced transaction must
+            // not hold the quote; the hash is re-checked until it is mined.
             $receipt = empty($tx['blockNumber']) ? null : $this->rpc->getTransactionReceipt($hash);
             if ($receipt === null) {
-                // In the mempool: claim the transaction for this quote and wait for it to be mined
-                return $this->hold($payment, $chain + ['confirmations' => 0], TpixPayment::STATUS_CONFIRMING);
+                return $this->outcome('unknown', 'not_mined');
             }
 
             if (strtolower((string) ($receipt['status'] ?? '')) !== '0x1') {
@@ -237,7 +248,9 @@ class TpixPaymentService
             return $this->outcome('unknown', 'rpc');
         }
 
-        $chain += [
+        $chain = [
+            'tx_hash' => $hash,
+            'from_address' => strtolower((string) ($tx['from'] ?? '')) ?: null,
             'block_number' => $blockNumber,
             'confirmations' => max(0, $latest - $blockNumber + 1),
         ];
@@ -257,39 +270,40 @@ class TpixPaymentService
             return $this->hold($payment, $chain, $late ? TpixPayment::STATUS_LATE : TpixPayment::STATUS_CONFIRMING);
         }
 
-        return $this->settle($payment, $chain);
+        return $this->settle($payment, $chain, byAdmin: $acceptLate);
     }
 
     /**
-     * The scanner: look on the explorer for transfers matching open quotes (RPC still decides),
-     * re-check the confirming ones and the hashes customers pasted before the node knew them.
+     * The scanner: walk the new blocks for transfers to the shop's address(es) that match open quotes
+     * (RPC still decides), re-check the confirming ones and the hashes customers pasted before they
+     * were mined. Each transfer and each quote is isolated: one bad row cannot stop the minute's run.
      *
-     * @return array{checked:int, settled:int}
+     * @return array{checked:int, settled:int, blocks:int}
      */
     public function detectPending(): array
     {
-        $stats = ['checked' => 0, 'settled' => 0];
+        $stats = ['checked' => 0, 'settled' => 0, 'blocks' => 0];
 
-        $open = $this->openQuotes()->get();
-        foreach ($open->groupBy('receive_address') as $address => $payments) {
-            $this->matchFromExplorer((string) $address, $payments, $stats);
+        try {
+            $this->walkBlocks($stats);
+        } catch (Throwable $e) {
+            Log::warning('TPIX block walk stopped, will resume from its cursor', ['error' => $e->getMessage()]);
         }
 
-        $followUps = TpixPayment::where('status', TpixPayment::STATUS_CONFIRMING)->whereNotNull('tx_hash')->get();
-        foreach ($followUps as $payment) {
-            $this->count($this->verify($payment, $payment->tx_hash), $stats);
+        foreach (TpixPayment::where('status', TpixPayment::STATUS_CONFIRMING)->whereNotNull('tx_hash')->get() as $payment) {
+            $this->isolated(fn () => $this->count($this->verify($payment, $payment->tx_hash), $stats), $payment);
         }
 
-        foreach ($open as $payment) {
-            foreach (($payment->fresh()?->meta['candidate_txs'] ?? []) as $hash) {
-                $this->count($this->verify($payment, $hash), $stats);
+        foreach ($this->openQuotes()->get() as $payment) {
+            foreach ($payment->meta['submitted_hashes'] ?? [] as $hash) {
+                $this->isolated(fn () => $this->count($this->verify($payment, $hash), $stats), $payment);
             }
         }
 
         return $stats;
     }
 
-    /** The same search for one quote — the pay page's status poll asks this every few seconds. */
+    /** The pay page's status poll: re-check this quote's confirming transaction or pasted hashes. */
     public function detectFor(TpixPayment $payment): void
     {
         $payment->refresh();
@@ -300,17 +314,15 @@ class TpixPaymentService
             return;
         }
 
-        if (! in_array($payment->status, [TpixPayment::STATUS_PENDING, TpixPayment::STATUS_EXPIRED], true) || ! $payment->open_key) {
+        if (! in_array($payment->status, [TpixPayment::STATUS_PENDING, TpixPayment::STATUS_EXPIRED], true)) {
             return;
         }
 
-        $stats = ['checked' => 0, 'settled' => 0];
-        foreach ($payment->meta['candidate_txs'] ?? [] as $hash) {
-            $this->count($this->verify($payment, $hash), $stats);
-        }
-
-        if (! $payment->fresh()->isSettled()) {
-            $this->matchFromExplorer($payment->receive_address, collect([$payment]), $stats);
+        foreach ($payment->meta['submitted_hashes'] ?? [] as $hash) {
+            if ($payment->fresh()->isFinal()) {
+                return;
+            }
+            $this->verify($payment, $hash);
         }
     }
 
@@ -349,6 +361,35 @@ class TpixPaymentService
         });
     }
 
+    /**
+     * Admin: credit a `held` payment to the wallet — the coins' value now, capped at the quote's THB
+     * (the daily auto-credit cap is what the admin is overriding). Stays held while there is no price.
+     *
+     * @return array{result:string, reason?:string, message:string}
+     */
+    public function approveHeld(TpixPayment $payment): array
+    {
+        $rate = $this->prices->quoteRateThb();
+
+        $status = DB::transaction(function () use ($payment, $rate) {
+            $locked = TpixPayment::whereKey($payment->getKey())->lockForUpdate()->first();
+            if (! $locked || $locked->status !== TpixPayment::STATUS_HELD) {
+                return null;
+            }
+
+            $status = $this->creditOrHold($locked, 'แอดมินอนุมัติ', $rate, byAdmin: true);
+            $locked->update(['status' => $status]);
+
+            return $status;
+        });
+
+        return match ($status) {
+            TpixPayment::STATUS_CREDITED_WALLET => $this->outcome('credited_wallet'),
+            TpixPayment::STATUS_HELD => $this->outcome('held', 'no_price'),
+            default => $this->outcome('rejected', 'not_held'),
+        };
+    }
+
     /** Quotes the scanner still looks for by amount. */
     public function openQuotes()
     {
@@ -357,19 +398,134 @@ class TpixPaymentService
             ->where('expires_at', '>', now()->subMinutes($this->graceMinutes()));
     }
 
-    /**
-     * Is this order still waiting for its money? (Otherwise a TPIX transfer for it goes to the wallet.)
-     */
+    /** Is this order still waiting for its money? (Otherwise a TPIX transfer for it goes to the wallet.) */
     public static function orderIsPayable(Order $order): bool
     {
         return in_array($order->payment_status, ['pending', 'verifying'], true)
             && ! in_array($order->status, ['cancelled', 'completed'], true);
     }
 
+    /** The last block the scanner has looked at, or null before its first run. */
+    public static function scanCursor(): ?int
+    {
+        $value = PaymentSetting::get(self::CURSOR_KEY);
+
+        return is_numeric($value) ? (int) $value : null;
+    }
+
     // ── internals ────────────────────────────────────────────────────
 
     /**
-     * Claim the transaction for this quote without settling it yet (confirming / late).
+     * From the cursor up to the chain's head (at most scan_max_blocks per run), fetching blocks with
+     * their transactions in JSON-RPC batches; native transfers with a value to a receive address are
+     * matched against open quotes by exact wei. A block the node did not return stops the walk with
+     * the cursor just before it. With no open quotes the cursor just follows the head.
+     *
+     * @param  array{checked:int, settled:int, blocks:int}  $stats
+     */
+    private function walkBlocks(array &$stats): void
+    {
+        $latest = $this->rpc->blockNumber();
+        $open = $this->openQuotes()->get();
+
+        if ($open->isEmpty()) {
+            $this->saveCursor($latest);
+
+            return;
+        }
+
+        $maxBlocks = max(1, (int) config('tpix_pay.scan_max_blocks', 900));
+        $batchSize = max(1, (int) config('tpix_pay.scan_batch_size', 40));
+        $cursor = self::scanCursor();
+        if ($cursor === null || $cursor > $latest) {
+            $cursor = max(0, $latest - $maxBlocks);
+        }
+
+        $to = min($latest, $cursor + $maxBlocks);
+        $addresses = $open->pluck('receive_address')->map(fn ($a) => strtolower((string) $a))->unique()->all();
+
+        for ($start = $cursor + 1; $start <= $to; $start += $batchSize) {
+            $end = min($to, $start + $batchSize - 1);
+            $calls = [];
+            for ($n = $start; $n <= $end; $n++) {
+                $calls[] = ['eth_getBlockByNumber', ['0x' . dechex($n), true]];
+            }
+
+            $blocks = $this->rpc->batch($calls);
+
+            foreach (range($start, $end) as $i => $number) {
+                $block = $blocks[$i] ?? null;
+                if (! is_array($block) || ! isset($block['timestamp'])) {
+                    $this->saveCursor($number - 1);
+
+                    return;
+                }
+
+                $minedAt = Carbon::createFromTimestamp(TpixRpcClient::hexToInt($block['timestamp']));
+                foreach ((array) ($block['transactions'] ?? []) as $tx) {
+                    if (! is_array($tx) || ! in_array(strtolower((string) ($tx['to'] ?? '')), $addresses, true)) {
+                        continue;
+                    }
+
+                    $this->isolated(function () use ($open, $tx, $minedAt, &$stats) {
+                        $value = TpixMath::hexToDecimal((string) ($tx['value'] ?? '0x0'));
+                        if ($value === '0') {
+                            return; // zero-value spam costs nothing on a gas-0 chain
+                        }
+                        $this->matchTransfer($open, strtolower((string) $tx['to']), $value, strtolower((string) ($tx['hash'] ?? '')), $minedAt, $stats);
+                    });
+                }
+                $stats['blocks']++;
+            }
+
+            $this->saveCursor($end);
+        }
+    }
+
+    /**
+     * @param  EloquentCollection<int, TpixPayment>  $open
+     * @param  array{checked:int, settled:int, blocks:int}  $stats
+     */
+    private function matchTransfer(EloquentCollection $open, string $to, string $value, string $hash, Carbon $minedAt, array &$stats): void
+    {
+        if (! preg_match('/^0x[0-9a-f]{64}$/', $hash) || TpixPayment::where('tx_hash', $hash)->exists()) {
+            return;
+        }
+
+        $match = $open->first(fn (TpixPayment $p) => strtolower($p->receive_address) === $to
+            && TpixMath::equal($p->amount_wei, $value)
+            && $minedAt->gte($p->created_at->copy()->subSeconds(30))
+            && $minedAt->lte($p->expires_at->copy()->addMinutes($this->graceMinutes())));
+
+        if ($match) {
+            $this->count($this->verify($match, $hash), $stats);
+        }
+    }
+
+    private function saveCursor(int $block): void
+    {
+        PaymentSetting::set(self::CURSOR_KEY, max(0, $block), [
+            'group' => 'tpix_scan',
+            'type' => 'integer',
+            'label' => 'บล็อกล่าสุดที่ตัวสแกน TPIX ตรวจแล้ว',
+        ]);
+    }
+
+    /** Run one row's work; an exception is logged and the run goes on with the next row. */
+    private function isolated(callable $work, ?TpixPayment $payment = null): void
+    {
+        try {
+            $work();
+        } catch (Throwable $e) {
+            Log::error('TPIX scan: one item failed, the rest go on', [
+                'payment' => $payment?->reference,
+                'error' => class_basename($e) . ': ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Bind a MINED, successful transaction to this quote without settling it yet (confirming / late).
      *
      * @param  array<string, mixed>  $chain
      * @return array{result:string, reason?:string, message:string}
@@ -379,7 +535,7 @@ class TpixPaymentService
         try {
             $held = DB::transaction(function () use ($payment, $chain, $status) {
                 $locked = TpixPayment::whereKey($payment->getKey())->lockForUpdate()->first();
-                if (! $locked || $locked->isSettled()) {
+                if (! $locked || $locked->isFinal()) {
                     return false;
                 }
 
@@ -417,17 +573,20 @@ class TpixPaymentService
     }
 
     /**
-     * Mark paid and deliver, under the quote's row lock (idempotent).
+     * Mark paid and deliver, under the quote's row lock (idempotent). The rate a possible wallet credit
+     * needs is read BEFORE the lock is taken — no chain or FX call while a row is locked.
      *
      * @param  array<string, mixed>  $chain
      * @return array{result:string, reason?:string, message:string}
      */
-    private function settle(TpixPayment $payment, array $chain): array
+    private function settle(TpixPayment $payment, array $chain, bool $byAdmin = false): array
     {
+        $creditRate = $this->prices->quoteRateThb();
+
         try {
-            $status = DB::transaction(function () use ($payment, $chain) {
+            $status = DB::transaction(function () use ($payment, $chain, $creditRate, $byAdmin) {
                 $locked = TpixPayment::whereKey($payment->getKey())->lockForUpdate()->first();
-                if (! $locked || $locked->isSettled()) {
+                if (! $locked || $locked->isFinal()) {
                     return null;
                 }
 
@@ -435,7 +594,7 @@ class TpixPaymentService
                 $locked->fill($chain + ['paid_at' => now(), 'open_key' => null, 'failure_reason' => null]);
                 $locked->save();
 
-                $status = $this->fulfil($locked);
+                $status = $this->fulfil($locked, $creditRate, $byAdmin);
                 $locked->update(['status' => $status]);
 
                 return $status;
@@ -451,11 +610,15 @@ class TpixPaymentService
         $payment->refresh();
         $this->announce($payment);
 
-        return $this->outcome($status === TpixPayment::STATUS_PAID ? 'paid' : 'credited_wallet');
+        return $this->outcome(match ($status) {
+            TpixPayment::STATUS_PAID => 'paid',
+            TpixPayment::STATUS_HELD => 'held',
+            default => 'credited_wallet',
+        });
     }
 
     /** Deliver what was paid for; returns the final status. Runs inside settle()'s transaction. */
-    private function fulfil(TpixPayment $payment): string
+    private function fulfil(TpixPayment $payment, ?string $creditRate, bool $byAdmin): string
     {
         $payable = $payment->payable;
         $note = "[TPIX] ชำระ {$payment->tpixDisplay()} TPIX · tx {$payment->tx_hash}";
@@ -471,9 +634,7 @@ class TpixPaymentService
                 return TpixPayment::STATUS_PAID;
             }
 
-            $this->creditWallet($payment, "คำสั่งซื้อ #{$payable->order_number} ไม่อยู่ในสถานะรอชำระแล้ว");
-
-            return TpixPayment::STATUS_CREDITED_WALLET;
+            return $this->creditOrHold($payment, "คำสั่งซื้อ #{$payable->order_number} ไม่อยู่ในสถานะรอชำระแล้ว", $creditRate, $byAdmin);
         }
 
         if ($payment->purpose === TpixPayment::PURPOSE_WALLET_TOPUP && $payable instanceof WalletTopup) {
@@ -482,103 +643,64 @@ class TpixPaymentService
             }
         }
 
-        // The order/top-up is gone or already settled another way: the money still belongs to the customer
-        $this->creditWallet($payment, $payment->purpose === TpixPayment::PURPOSE_WALLET_TOPUP
+        // The order/top-up is gone or already settled another way: the coins still belong to the customer
+        return $this->creditOrHold($payment, $payment->purpose === TpixPayment::PURPOSE_WALLET_TOPUP
             ? 'รายการเติมเงินถูกยกเลิกหรือดำเนินการไปแล้ว'
-            : 'ไม่พบคำสั่งซื้อที่รอชำระ');
-
-        return TpixPayment::STATUS_CREDITED_WALLET;
+            : 'ไม่พบคำสั่งซื้อที่รอชำระ', $creditRate, $byAdmin);
     }
 
-    private function creditWallet(TpixPayment $payment, string $why): void
+    /**
+     * Put the coins' value in the wallet, or hold them for the admin.
+     *
+     * The credit is what actually arrived, valued now (amount_tpix × the current quote rate, rounded
+     * down to the satang) and never more than the quote's THB: coins bought cheap must not come back
+     * as more baht than they are worth. No price → held. Over the customer's daily auto-credit cap →
+     * held (the admin can still approve it).
+     */
+    private function creditOrHold(TpixPayment $payment, string $why, ?string $rate, bool $byAdmin): string
     {
+        if ($rate === null) {
+            $payment->failure_reason = 'held: no TPIX price to value the coins';
+
+            return TpixPayment::STATUS_HELD;
+        }
+
+        $value = TpixMath::dec(TpixMath::fromWei((string) $payment->amount_wei))->multipliedBy($rate)->toScale(2, RoundingMode::Down);
+        $credit = $value->isLessThan(TpixMath::thb($payment->amount_thb)) ? $value : TpixMath::dec(TpixMath::thb($payment->amount_thb));
+
+        if (! $credit->isPositive()) {
+            $payment->failure_reason = 'held: the coins are worth less than 0.01 THB now';
+
+            return TpixPayment::STATUS_HELD;
+        }
+
+        if (! $byAdmin) {
+            $today = TpixPayment::where('user_id', $payment->user_id)
+                ->where('status', TpixPayment::STATUS_CREDITED_WALLET)
+                ->where('paid_at', '>=', now()->startOfDay())
+                ->sum('credited_thb');
+            $cap = (string) config('tpix_pay.auto_credit_daily_cap_thb', 5000);
+
+            if (TpixMath::dec(TpixMath::thb((string) $today))->plus($credit)->isGreaterThan(TpixMath::thb($cap))) {
+                $payment->failure_reason = 'held: over the daily automatic wallet-credit cap';
+
+                return TpixPayment::STATUS_HELD;
+            }
+        }
+
         Wallet::getOrCreateForUser($payment->user_id)->deposit(
-            (float) $payment->amount_thb,
+            (float) (string) $credit,
             "เงินจากการชำระ TPIX #{$payment->reference} ({$why})",
             'tpix',
             $payment->reference,
             null,
-            ['tpix_payment_id' => $payment->id, 'tx_hash' => $payment->tx_hash, 'amount_tpix' => $payment->tpixDisplay()],
+            ['tpix_payment_id' => $payment->id, 'tx_hash' => $payment->tx_hash, 'amount_tpix' => $payment->tpixDisplay(), 'rate_thb' => $rate],
         );
-    }
 
-    /**
-     * @param  Collection<int, TpixPayment>  $payments
-     * @param  array{checked:int, settled:int}  $stats
-     */
-    private function matchFromExplorer(string $address, Collection $payments, array &$stats): void
-    {
-        $since = $payments->min('created_at')->copy()->subSeconds(30);
+        $payment->credited_thb = (string) $credit;
+        $payment->failure_reason = null;
 
-        try {
-            $transfers = $this->explorerTransfers($address, $since);
-        } catch (Throwable $e) {
-            Log::info('TPIX explorer unreachable, will retry', ['error' => $e->getMessage()]);
-
-            return;
-        }
-
-        foreach ($transfers as $transfer) {
-            $match = $payments->first(fn (TpixPayment $p) => TpixMath::equal($p->amount_wei, $transfer['value'])
-                && $transfer['at']->gte($p->created_at->copy()->subSeconds(30))
-                && $transfer['at']->lte($p->expires_at->copy()->addMinutes($this->graceMinutes())));
-
-            if ($match && ! TpixPayment::where('tx_hash', $transfer['hash'])->exists()) {
-                $this->count($this->verify($match, $transfer['hash']), $stats);
-            }
-        }
-    }
-
-    /**
-     * Transfers into $address on the explorer (Blockscout API v2), newest first, back to $since.
-     *
-     * @return list<array{hash:string, value:string, at:Carbon}>
-     */
-    private function explorerTransfers(string $address, Carbon $since): array
-    {
-        $url = rtrim(config('tpix_pay.explorer_url'), '/') . '/api/v2/addresses/' . $address . '/transactions';
-        $query = ['filter' => 'to'];
-        $found = [];
-
-        for ($page = 0; $page < 5; $page++) {
-            $response = Http::withHeaders(['User-Agent' => config('tpix_pay.user_agent')])
-                ->acceptJson()
-                ->timeout(8)
-                ->get($url, $query);
-
-            if (! $response->successful()) {
-                throw new TpixRpcException('explorer HTTP ' . $response->status());
-            }
-
-            $reachedSince = false;
-            foreach ((array) $response->json('items', []) as $item) {
-                $at = isset($item['timestamp']) ? Carbon::parse($item['timestamp']) : null;
-                if ($at === null) {
-                    continue;
-                }
-                if ($at->lt($since)) {
-                    $reachedSince = true;
-
-                    continue;
-                }
-
-                $hash = strtolower((string) ($item['hash'] ?? ''));
-                $value = (string) ($item['value'] ?? '');
-                $ok = ($item['status'] ?? null) === 'ok' || ($item['result'] ?? null) === 'success';
-
-                if ($ok && preg_match('/^0x[0-9a-f]{64}$/', $hash) && ctype_digit($value)) {
-                    $found[] = ['hash' => $hash, 'value' => $value, 'at' => $at];
-                }
-            }
-
-            $next = $response->json('next_page_params');
-            if ($reachedSince || ! is_array($next) || $next === []) {
-                break;
-            }
-            $query = ['filter' => 'to'] + $next;
-        }
-
-        return $found;
+        return TpixPayment::STATUS_CREDITED_WALLET;
     }
 
     /** @param  array<string, mixed>  $tx */
@@ -620,12 +742,12 @@ class TpixPaymentService
 
     /**
      * @param  array{result:string}  $outcome
-     * @param  array{checked:int, settled:int}  $stats
+     * @param  array<string, int>  $stats
      */
     private function count(array $outcome, array &$stats): void
     {
         $stats['checked']++;
-        if (in_array($outcome['result'], ['paid', 'credited_wallet'], true)) {
+        if (in_array($outcome['result'], ['paid', 'credited_wallet', 'held'], true)) {
             $stats['settled']++;
         }
     }
@@ -633,7 +755,7 @@ class TpixPaymentService
     /** Tell the admin (LINE), as a card payment does. */
     private function announce(TpixPayment $payment): void
     {
-        $this->notifyAdmin("🪙 ชำระด้วย TPIX สำเร็จ!\n"
+        $this->notifyAdmin(($payment->status === TpixPayment::STATUS_HELD ? "⚠️ ได้รับ TPIX — รอแอดมินอนุมัติเครดิต\n" : "🪙 ชำระด้วย TPIX สำเร็จ!\n")
             . "━━━━━━━━━━━━━━━\n"
             . '🧾 ' . $payment->purposeLabel() . "\n"
             . '💰 ฿' . number_format((float) $payment->amount_thb, 2) . ' = ' . $payment->tpixDisplay() . " TPIX\n"
@@ -656,7 +778,10 @@ class TpixPaymentService
     {
         $message = match ($reason ?? $result) {
             'paid' => 'ชำระเงินสำเร็จ ขอบคุณครับ',
-            'credited_wallet' => 'ได้รับเหรียญแล้ว — รายการนี้ชำระ/ยกเลิกไปก่อนหน้า ระบบจึงเติมยอดเป็นเงินเข้า Wallet ของคุณ',
+            'credited_wallet' => 'ได้รับเหรียญแล้ว — รายการนี้ชำระ/ยกเลิกไปก่อนหน้า ระบบจึงเติมมูลค่าเหรียญเป็นเงินเข้า Wallet ของคุณ',
+            'held' => 'ได้รับเหรียญแล้ว — รอทีมงานอนุมัติการเติมเงินเข้า Wallet',
+            'no_price' => 'ยังไม่มีราคา TPIX สำหรับคิดมูลค่าเหรียญ — ลองอนุมัติใหม่อีกครั้งภายหลัง',
+            'not_held' => 'รายการนี้ไม่ได้รอการอนุมัติ',
             'settled' => 'รายการนี้ชำระเรียบร้อยแล้ว',
             'confirming' => 'พบธุรกรรมแล้ว กำลังรอการยืนยันบนเชน',
             'late' => 'ได้รับธุรกรรมหลังหมดเวลาชำระ — ทีมงานจะตรวจสอบและดำเนินการให้',
@@ -664,6 +789,7 @@ class TpixPaymentService
             'tx_used' => 'ธุรกรรมนี้ถูกใช้ชำระรายการอื่นไปแล้ว',
             'other_tx' => 'รายการนี้ผูกกับธุรกรรมอื่นอยู่แล้ว',
             'not_found' => 'ยังไม่พบธุรกรรมนี้บน TPIX Chain — ระบบจะตรวจซ้ำให้อัตโนมัติ',
+            'not_mined' => 'ธุรกรรมนี้ยังไม่ถูกบันทึกลงบล็อก — ระบบจะตรวจซ้ำให้อัตโนมัติ',
             'rpc' => 'ตรวจสอบกับเชนไม่ได้ชั่วคราว ระบบจะลองใหม่ให้อัตโนมัติ',
             'wrong_to' => 'ธุรกรรมนี้ไม่ได้โอนเข้าที่อยู่รับเงินของร้าน',
             'wrong_chain' => 'ธุรกรรมนี้ไม่ได้อยู่บน TPIX Chain (chain id 4289)',

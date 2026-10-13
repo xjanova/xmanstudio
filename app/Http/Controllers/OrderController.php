@@ -186,6 +186,14 @@ class OrderController extends Controller
 
             $total = max(0, $subtotal + $tax - $discount);
 
+            // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+            // average yet, or more than the TPIX market behind the price can carry)
+            if ($request->payment_method === TpixCheckout::METHOD && ($refusal = TpixCheckout::refusal($total))) {
+                DB::rollBack();
+
+                return redirect()->back()->withInput()->with('error', $refusal);
+            }
+
             // Handle wallet payment
             $paymentStatus = 'pending';
             $orderStatus = 'pending';

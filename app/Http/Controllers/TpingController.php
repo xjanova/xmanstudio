@@ -204,6 +204,12 @@ class TpingController extends Controller
         $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
 
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $planInfo['price'])) {
+            return $refused;
+        }
+
         // === Calculate price & discount ===
         $subtotal = $planInfo['price'];
         $discount = 0;

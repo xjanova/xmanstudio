@@ -120,6 +120,12 @@ class WalletController extends Controller
             'payment_method' => 'required|in:' . implode(',', $allowedMethods),
         ]);
 
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $validated['amount'])) {
+            return $refused;
+        }
+
         $wallet = Wallet::getOrCreateForUser(auth()->id());
 
         // Calculate bonus

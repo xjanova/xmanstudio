@@ -41,6 +41,7 @@ class TpixPayWebTest extends TestCase
         $this->withoutVite();
         $this->fakeTpixChain();
         $this->enableTpixPayments();
+        $this->seedTwap();
 
         // Without an admin every page redirects to the setup wizard
         $this->admin = User::factory()->create(['role' => 'admin']);
@@ -247,15 +248,36 @@ class TpixPayWebTest extends TestCase
             ->assertDontSee('data-tpix-price', false);
     }
 
-    public function test_a_fixed_tpix_price_is_shown_as_is(): void
+    public function test_a_fixed_tpix_price_is_shown_as_is_when_it_is_not_below_the_market(): void
     {
-        $this->product->update(['price_tpix' => '250']);
+        $this->product->update(['price_tpix' => '400']);
 
         $this->get(route('products.show', $this->product->slug))
             ->assertOk()
-            ->assertSee('250.00 TPIX')
-            ->assertDontSee('≈ 250.00 TPIX')
+            ->assertSee('400.00 TPIX')
+            ->assertDontSee('≈ 400.00 TPIX')
             ->assertSee('ราคาคงที่');
+
+        // Below the market (฿1000 ≈ 307.69 TPIX) the tag shows the market price instead
+        $this->product->update(['price_tpix' => '250']);
+        $this->get(route('products.show', $this->product->slug))
+            ->assertOk()
+            ->assertSee('≈ 307.69 TPIX')
+            ->assertDontSee('250.00 TPIX');
+    }
+
+    public function test_a_checkout_larger_than_the_tpix_market_is_refused_before_any_order_exists(): void
+    {
+        $this->product->update(['price' => 5000]); // ฿5,350 with VAT > ฿3,248.37 (5 × 19.99 USDT × 32.5)
+        $buyer = User::factory()->create();
+        $this->actingAs($buyer)->post(route('cart.add', $this->product), ['quantity' => 1]);
+
+        $this->actingAs($buyer)->post(route('orders.store'), $this->checkoutForm('tpix'))
+            ->assertRedirect()
+            ->assertSessionHas('error', 'ยอดนี้เกินสภาพคล่องของตลาด TPIX ตอนนี้ — ชำระด้วย TPIX ได้สูงสุด 3,248.37 บาทต่อรายการ');
+
+        $this->assertSame(0, Order::count());
+        $this->assertSame(0, TpixPayment::count());
     }
 
     public function test_the_price_tag_reads_the_chain_once_per_minute_not_once_per_tag(): void
@@ -324,12 +346,12 @@ class TpixPayWebTest extends TestCase
         $this->actingAs($this->admin)->get(route('admin.tpix-payments.index'))->assertOk()->assertSee('1 TPIX = ฿3.2500');
 
         $this->actingAs($this->admin)->put(route('admin.tpix-payments.settings.update'), [
-            'tpix_enabled' => '1', 'tpix_receive_address' => '0x123', 'tpix_confirmations' => 3, 'tpix_quote_ttl_minutes' => 30,
+            'tpix_enabled' => '1', 'tpix_receive_address' => '0x123', 'tpix_confirmations' => 3, 'tpix_quote_ttl_minutes' => 30, 'tpix_max_pool_ratio' => 5,
         ])->assertSessionHasErrors('tpix_receive_address');
 
         $checksummed = '0x52908400098527886E0F7030069857D2E4169EE7';
         $this->actingAs($this->admin)->put(route('admin.tpix-payments.settings.update'), [
-            'tpix_enabled' => '1', 'tpix_receive_address' => $checksummed, 'tpix_confirmations' => 5, 'tpix_quote_ttl_minutes' => 20,
+            'tpix_enabled' => '1', 'tpix_receive_address' => $checksummed, 'tpix_confirmations' => 5, 'tpix_quote_ttl_minutes' => 20, 'tpix_max_pool_ratio' => 2.5,
         ])->assertSessionHasNoErrors();
 
         $settings = app(TpixPaySettings::class);
@@ -337,6 +359,7 @@ class TpixPayWebTest extends TestCase
         $this->assertSame(strtolower($checksummed), $settings->receiveAddress());
         $this->assertSame(5, $settings->confirmations());
         $this->assertSame(20, $settings->quoteTtlMinutes());
+        $this->assertSame(2.5, $settings->maxPoolRatio());
 
         $this->actingAs(User::factory()->create())->get(route('admin.tpix-payments.index'))->assertForbidden();
     }

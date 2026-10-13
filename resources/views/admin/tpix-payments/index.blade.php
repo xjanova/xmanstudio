@@ -13,7 +13,8 @@
         <div class="text-right text-white">
             @if($spot)
                 <p class="text-3xl font-extrabold">1 TPIX = ฿{{ \App\Services\TpixPay\TpixPriceService::formatRate($spot['price_thb']) }}</p>
-                <p class="text-sm text-amber-50">${{ \App\Services\TpixPay\TpixMath::format($spot['price_usd'], 6) }} · USD/THB {{ $spot['usd_thb'] }} · ใบเสนอราคาใช้ ฿{{ \App\Services\TpixPay\TpixPriceService::formatRate($spot['quote_rate_thb']) }}</p>
+                <p class="text-sm text-amber-50">${{ \App\Services\TpixPay\TpixMath::format($spot['price_usd'], 6) }} · เฉลี่ย 30 นาที {{ $spot['twap_usd'] ? '$' . \App\Services\TpixPay\TpixMath::format($spot['twap_usd'], 6) : 'ยังไม่พอ' }} · USD/THB {{ $spot['usd_thb'] }}{{ $spot['fx_live'] ? '' : ' (สำรอง)' }}</p>
+                <p class="text-sm text-amber-50">ใบเสนอราคาใช้ {{ $spot['quote_rate_thb'] ? '฿' . \App\Services\TpixPay\TpixPriceService::formatRate($spot['quote_rate_thb']) : '— (รอค่าเฉลี่ยครบ ยังไม่รับชำระ)' }} · สูงสุด ฿{{ number_format((float) $spot['max_quote_thb'], 2) }}/รายการ</p>
                 <p class="text-xs text-amber-100">พูล: {{ \App\Services\TpixPay\TpixMath::format($spot['reserve_tpix'], 2) }} TPIX / {{ \App\Services\TpixPay\TpixMath::format($spot['reserve_usdt'], 2) }} USDT</p>
             @else
                 <p class="text-xl font-bold">ราคาไม่พร้อมใช้งาน</p>
@@ -68,6 +69,12 @@
                        class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">โอนหลังหมดเวลาจะพักเป็น "late" ให้แอดมินตัดสิน (ระบบยังมองหาอีก {{ config('tpix_pay.late_grace_minutes') }} นาที)</p>
             </div>
+            <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ยอดต่อรายการสูงสุด (เท่าของ USDT ในพูล)</label>
+                <input type="number" name="tpix_max_pool_ratio" min="0.1" max="100" step="0.1" value="{{ old('tpix_max_pool_ratio', $settings['max_pool_ratio']) }}"
+                       class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">พูลตื้นมาก (USDT ไม่กี่ตัวก็ดันราคาได้) — ยอดชำระหนึ่งรายการต้องไม่เกินค่านี้ × USDT ในพูล × USD/THB</p>
+            </div>
         </div>
 
         <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold shadow-lg hover:from-amber-600 hover:to-orange-600 transition">บันทึก</button>
@@ -79,7 +86,8 @@
         <p>• ยอดชำระ = ยอดบาท ÷ ราคา (ใช้ราคาที่ต่ำกว่าระหว่างราคาสดกับค่าเฉลี่ย 30 นาที กันคนปั่นพูล) ปัดขึ้น 4 ตำแหน่ง + เศษท้ายเฉพาะรายการ</p>
         <p>• ระบบตรวจกับเชนเอง: โอนเข้าที่อยู่ร้าน · chain 4289 · ยอดตรงทุก wei · สำเร็จ · ยืนยันครบ · อยู่ในเวลา</p>
         <p>• ธุรกรรมหนึ่งใช้ได้กับรายการเดียว · คำสั่งซื้อที่ชำระ/ยกเลิกไปแล้ว → เงินเข้า Wallet ลูกค้า</p>
-        <p>• สแกนทุกนาที (<code class="text-xs">tpix:pay-scan</code>) · snapshot ล่าสุด: {{ $lastSnapshot?->created_at?->copy()->timezone('Asia/Bangkok')->format('d/m/Y H:i:s') ?? '—' }}</p>
+        <p>• สแกนบล็อกทุกนาที (<code class="text-xs">tpix:pay-scan</code>) · บล็อกล่าสุดที่ตรวจ: {{ \App\Services\TpixPay\TpixPaymentService::scanCursor() ?? '—' }} · snapshot ล่าสุด: {{ $lastSnapshot?->created_at?->copy()->timezone('Asia/Bangkok')->format('d/m/Y H:i:s') ?? '—' }}</p>
+        <p>• เหรียญที่เข้ามานอกขั้นตอนปกติ (คำสั่งซื้อปิดไปแล้ว) เข้า Wallet ตามมูลค่าเหรียญตอนนี้ ไม่เกินยอดบาท และไม่เกิน ฿{{ number_format((float) config('tpix_pay.auto_credit_daily_cap_thb'), 0) }}/คน/วัน — เกินนั้นรอแอดมินอนุมัติ</p>
         <p>• สินค้าตั้ง "ราคา TPIX คงที่" ได้ที่หน้าแก้ไขสินค้า</p>
     </div>
 </div>
@@ -129,7 +137,7 @@
                         $badge = match ($payment->status) {
                             'paid', 'credited_wallet' => 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
                             'confirming' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-                            'late' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+                            'late', 'held' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
                             'pending' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
                             default => 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
                         };
@@ -183,6 +191,15 @@
                                     @csrf
                                     <button class="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600">รับเงิน (late)</button>
                                 </form>
+                            @endif
+                            @if($payment->status === 'held')
+                                <form method="POST" action="{{ route('admin.tpix-payments.approve-held', $payment) }}" class="inline" onsubmit="return confirm('เติมมูลค่าเหรียญตอนนี้ (ไม่เกินยอดบาทของรายการ) เข้า Wallet ลูกค้า?')">
+                                    @csrf
+                                    <button class="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600">อนุมัติเครดิต</button>
+                                </form>
+                            @endif
+                            @if($payment->credited_thb)
+                                <p class="text-xs text-gray-500 dark:text-gray-400">เข้า Wallet ฿{{ number_format((float) $payment->credited_thb, 2) }}</p>
                             @endif
                             @if(in_array($payment->status, ['pending', 'expired'], true))
                                 <form method="POST" action="{{ route('admin.tpix-payments.cancel', $payment) }}" class="inline" onsubmit="return confirm('ยกเลิกยอดชำระนี้? ถ้าลูกค้าโอนมาภายหลัง จะพักเป็น late ให้ตัดสิน')">

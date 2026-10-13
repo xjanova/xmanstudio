@@ -85,7 +85,7 @@ class TpixPayController extends Controller
             return response()->json($outcome + $this->statusPayload($tpixPayment->fresh()));
         }
 
-        $ok = in_array($outcome['result'], ['paid', 'credited_wallet', 'settled', 'confirming', 'late', 'unknown'], true);
+        $ok = in_array($outcome['result'], ['paid', 'credited_wallet', 'held', 'settled', 'confirming', 'late', 'unknown'], true);
 
         return redirect()->route('tpix-pay.show', $tpixPayment)->with($ok ? 'success' : 'error', $outcome['message']);
     }
