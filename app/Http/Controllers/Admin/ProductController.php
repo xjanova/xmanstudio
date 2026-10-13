@@ -66,6 +66,8 @@ class ProductController extends Controller
             'features' => 'nullable|array',
             'features.*' => 'string',
             'price' => 'required|numeric|min:0',
+            // Optional fixed TPIX price; empty = THB converted at the live TPIX DEX price
+            'price_tpix' => 'nullable|numeric|min:0|max:1000000000000',
             'category_id' => 'nullable|exists:categories,id',
             'stock' => 'nullable|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
@@ -86,6 +88,7 @@ class ProductController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
         $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
+        $validated['price_tpix'] = is_numeric($validated['price_tpix'] ?? null) && (float) $validated['price_tpix'] > 0 ? $validated['price_tpix'] : null;
 
         // Clean features - remove empty strings
         if (isset($validated['features'])) {
@@ -151,6 +154,8 @@ class ProductController extends Controller
             'features' => 'nullable|array',
             'features.*' => 'string',
             'price' => 'required|numeric|min:0',
+            // Optional fixed TPIX price; empty = THB converted at the live TPIX DEX price
+            'price_tpix' => 'nullable|numeric|min:0|max:1000000000000',
             'category_id' => 'nullable|exists:categories,id',
             'stock' => 'nullable|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
@@ -173,6 +178,7 @@ class ProductController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
         $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
         $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
+        $validated['price_tpix'] = is_numeric($validated['price_tpix'] ?? null) && (float) $validated['price_tpix'] > 0 ? $validated['price_tpix'] : null;
 
         // Clean features - remove empty strings
         if (isset($validated['features'])) {

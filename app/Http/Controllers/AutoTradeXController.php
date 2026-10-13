@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
@@ -171,7 +172,7 @@ class AutoTradeXController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer',
+            'payment_method' => 'required|in:promptpay,bank_transfer' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:64',
         ]);
 
@@ -248,6 +249,11 @@ class AutoTradeXController extends Controller
             $this->markEarlyBirdUsed($machineId);
         }
 
+        // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            return TpixCheckout::redirectForOrder($order, route('autotradex.payment-success', $order->id));
+        }
+
         // Redirect to payment page
         return redirect()->route('autotradex.payment', [
             'order' => $order->id,
@@ -264,6 +270,11 @@ class AutoTradeXController extends Controller
         // Verify order belongs to current user or is guest
         if ($order->user_id && auth()->id() !== $order->user_id) {
             abort(403);
+        }
+
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
         }
 
         $metadata = json_decode($order->metadata ?? '{}', true);

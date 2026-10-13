@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PaymentSetting;
+use App\Services\TpixPay\TpixCheckout;
 
 class PaymentFeeService
 {
@@ -76,7 +77,8 @@ class PaymentFeeService
      */
     public function getAllMethodFees(): array
     {
-        $methods = ['promptpay', 'bank_transfer', 'card', 'stripe'];
+        // tpix: no fee settings of its own (gas on TPIX Chain is 0), so it reads as free
+        $methods = ['promptpay', 'bank_transfer', 'card', 'stripe', TpixCheckout::METHOD];
         $result = [];
 
         foreach ($methods as $method) {
@@ -130,6 +132,14 @@ class PaymentFeeService
                 'name' => 'Stripe (บัตรเครดิต/เดบิต)',
                 'icon' => 'stripe',
                 ...$this->calculateFee('stripe', 0),
+            ];
+        }
+
+        if (TpixCheckout::available()) {
+            $methods[TpixCheckout::METHOD] = [
+                'name' => 'เหรียญ TPIX',
+                'icon' => 'tpix',
+                ...$this->calculateFee(TpixCheckout::METHOD, 0),
             ];
         }
 

@@ -55,6 +55,7 @@
                                     <span class="xu-price xu-price--soon">กำลังจะเปิดตัว <small>Coming soon</small></span>
                                 @elseif($product->price > 0)
                                     <span class="xu-price">฿{{ number_format($product->price, 0) }} <small>THB</small></span>
+                                    <x-tpix-price variant="plain" :thb="$product->price" :tpix="$product->price_tpix" style="font-size:12px;opacity:.85;" />
                                 @else
                                     <span class="xu-price xu-price--free">ฟรี <small>Free</small></span>
                                 @endif

@@ -15,6 +15,7 @@ use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
@@ -278,7 +279,7 @@ class LocalVpnWebController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer,wallet',
+            'payment_method' => 'required|in:promptpay,bank_transfer,wallet' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:255',
         ]);
 
@@ -407,6 +408,11 @@ class LocalVpnWebController extends Controller
                 return redirect()->route('localvpn.payment-success', $result->id);
             }
 
+            // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+            if ($validated['payment_method'] === TpixCheckout::METHOD) {
+                return TpixCheckout::redirectForOrder($result, route('localvpn.payment-success', $result->id));
+            }
+
             return redirect()->route('localvpn.payment', ['order' => $result->id]);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'INSUFFICIENT_BALANCE') {
@@ -519,6 +525,11 @@ class LocalVpnWebController extends Controller
     {
         if (auth()->id() !== $order->user_id) {
             abort(403);
+        }
+
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
         }
 
         $metadata = $order->metadata ?? [];

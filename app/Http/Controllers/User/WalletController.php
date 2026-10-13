@@ -13,6 +13,9 @@ use App\Services\PaymentFeeService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
+use App\Services\TpixPay\TpixPriceService;
+use App\Services\TpixPay\TpixQuoteException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -68,10 +71,14 @@ class WalletController extends Controller
                 'promptpay' => Setting::getValue('wallet_payment_promptpay', true),
                 'truemoney' => Setting::getValue('wallet_payment_truemoney', true),
                 'stripe' => StripeService::isEnabled(),
+                'tpix' => TpixCheckout::available(),
             ],
         ];
 
-        return view('user.wallet.topup', compact('wallet', 'bonusTiers', 'settings', 'paymentFees'));
+        // THB per TPIX the quote will use, for the live "≈ … TPIX" next to the amount box
+        $tpixRate = $settings['payment_methods']['tpix'] ? app(TpixPriceService::class)->quoteRateThb() : null;
+
+        return view('user.wallet.topup', compact('wallet', 'bonusTiers', 'settings', 'paymentFees', 'tpixRate'));
     }
 
     /**
@@ -103,6 +110,9 @@ class WalletController extends Controller
         }
         if (StripeService::isEnabled()) {
             $allowedMethods[] = 'stripe';
+        }
+        if (TpixCheckout::available()) {
+            $allowedMethods[] = TpixCheckout::METHOD;
         }
 
         $validated = $request->validate([
@@ -144,6 +154,19 @@ class WalletController extends Controller
                     'payment_display_amount' => $uniqueAmount->unique_amount,
                 ]);
             }
+        }
+
+        // TPIX: quote the amount at the live price, then the pay page (a top-up with no quote yet can
+        // get one from its status page)
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            try {
+                $payment = TpixCheckout::quoteForTopup($topup);
+            } catch (TpixQuoteException $e) {
+                return redirect()->route('user.wallet.topup-status', $topup)->with('error', $e->getMessage());
+            }
+
+            return redirect()->route('tpix-pay.show', $payment)
+                ->with('success', "สร้างรายการเติมเงิน #{$topup->topup_id} แล้ว — โอนเหรียญ TPIX ตามยอดด้านล่างภายในเวลาที่กำหนด");
         }
 
         // Handle Stripe payment - create PaymentIntent
@@ -259,9 +282,11 @@ class WalletController extends Controller
             $stripeFeeInfo = $stripeService->calculateStripeFee($topup->amount);
         }
 
+        $tpixQuote = $topup->payment_method === TpixCheckout::METHOD ? TpixCheckout::latestQuoteFor($topup) : null;
+
         return view('user.wallet.topup-status', compact(
             'topup', 'wallet', 'uniqueAmount', 'bankAccounts', 'promptpayNumber', 'promptpayName',
-            'promptpayQR', 'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo'
+            'promptpayQR', 'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo', 'tpixQuote'
         ));
     }
 

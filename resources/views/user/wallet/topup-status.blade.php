@@ -241,6 +241,31 @@
                         </div>
                     @endif
                 </div>
+                @elseif($topup->payment_method === 'tpix')
+                {{-- TPIX: the exact amount is on the pay page (one quote at a time, at the price of the moment) --}}
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+                    <h3 class="text-lg font-semibold text-amber-800 dark:text-amber-200">ชำระด้วยเหรียญ TPIX</h3>
+                </div>
+                <div class="p-6 text-center">
+                    @if(($tpixQuote ?? null) && $tpixQuote->isSettled())
+                        <p class="text-green-600 dark:text-green-400 font-semibold">{{ $tpixQuote->statusLabel() }} — {{ $tpixQuote->tpixDisplay() }} TPIX</p>
+                        @if($tpixQuote->explorerTxUrl())
+                            <a href="{{ $tpixQuote->explorerTxUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm text-amber-600 dark:text-amber-400 hover:underline">ดูธุรกรรมบน TPIX Explorer ↗</a>
+                        @endif
+                    @elseif(($tpixQuote ?? null) && ($tpixQuote->isPayable() || in_array($tpixQuote->status, ['confirming', 'late'], true)))
+                        <a href="{{ route('tpix-pay.show', $tpixQuote) }}"
+                           class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-lg hover:from-orange-600 hover:to-amber-600 transition">
+                            {{ $tpixQuote->isPayable() ? 'ไปหน้าชำระ TPIX (' . $tpixQuote->tpixDisplay() . ' TPIX)' : 'ดูสถานะการโอน — ' . $tpixQuote->statusLabel() }}
+                        </a>
+                    @elseif($topup->status === 'pending')
+                        <form method="POST" action="{{ route('user.wallet.tpix-quote', $topup) }}">
+                            @csrf
+                            <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-lg hover:from-orange-600 hover:to-amber-600 transition">
+                                {{ ($tpixQuote ?? null) ? 'ขอยอดชำระ TPIX ใหม่ตามราคาปัจจุบัน' : 'รับยอดชำระ TPIX' }}
+                            </button>
+                        </form>
+                    @endif
+                </div>
                 @elseif($topup->payment_method !== 'stripe')
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
                     <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 flex items-center">

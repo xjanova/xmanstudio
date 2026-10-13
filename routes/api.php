@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PackController;
 use App\Http\Controllers\Api\ProductCatalogController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\StripeController;
+use App\Http\Controllers\Api\TpixPriceController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BugReportController;
 use App\Http\Controllers\Api\V1\DataProfileController;
@@ -358,6 +359,10 @@ Route::prefix('v1/products')->middleware(['throttle:60,1,api-products'])->group(
 // What product.xman4289.com shows of each product: on sale or not, picture, version (public, CORS *).
 Route::get('/v1/catalog', [ProductCatalogController::class, 'index'])
     ->middleware('throttle:60,1,api-catalog');
+
+// The TPIX price the shop charges by (TPIX DEX pool × live USD→THB), for the apps (public)
+Route::get('/v1/tpix/price', [TpixPriceController::class, 'show'])
+    ->middleware('throttle:60,1,api-tpix-price');
 
 // ==================== Coupon API Routes ====================
 // These routes are used during checkout to validate and apply coupons

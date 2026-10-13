@@ -19,6 +19,7 @@ use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -132,7 +133,8 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card,wallet,stripe',
+            // tpix only while it can actually be paid (switched on, an address, a live price)
+            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card,wallet,stripe' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'nullable|string|max:20',
@@ -360,6 +362,11 @@ class OrderController extends Controller
                 ]);
             }
 
+            // TPIX: quote the order's total at the live price and send the customer to the pay page
+            if ($request->payment_method === TpixCheckout::METHOD) {
+                return TpixCheckout::redirectForOrder($order);
+            }
+
             // Redirect based on payment method
             if ($stripeClientSecret) {
                 return redirect()
@@ -530,9 +537,12 @@ class OrderController extends Controller
             $stripeFeeInfo = $stripeService->calculateStripeFee($order->total);
         }
 
+        // TPIX: what became of the order's latest quote (the page links to it, or offers a new one)
+        $tpixQuote = $order->payment_method === TpixCheckout::METHOD ? TpixCheckout::latestQuoteFor($order) : null;
+
         return view('orders.show', compact(
             'order', 'paymentInfo', 'bankAccounts', 'promptpayNumber', 'promptpayName',
-            'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo'
+            'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo', 'tpixQuote'
         ));
     }
 

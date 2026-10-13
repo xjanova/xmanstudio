@@ -480,6 +480,7 @@
                             <span class="lvp-display text-5xl font-bold">฿{{ number_format($prices[$term]) }}</span>
                             <span class="lvp-muted">{{ $plan['unit'] }}</span>
                         </div>
+                        <x-tpix-price variant="detail" :thb="$prices[$term]" class="-mt-4 mb-6" />
                         <ul class="space-y-2.5 text-sm mb-8 flex-1">
                             <li class="flex gap-3"><span class="lvp-tick lvp-tick-pro">✓</span><span>ทุกอย่างในรุ่นฟรี</span></li>
                             <li class="flex gap-3"><span class="lvp-tick lvp-tick-pro">✓</span><span>ลดปิงเกม + ปรับแต่ง Windows</span></li>

@@ -31,6 +31,7 @@
                 <div class="text-center mb-6">
                     <h3 class="text-lg font-bold {{ $planKey === 'yearly' ? 'text-indigo-400' : ($planKey === 'lifetime' ? 'text-yellow-400' : 'text-gray-400') }}">{{ $plan['name_th'] }}</h3>
                     <div class="text-5xl font-black text-white mt-3">฿{{ number_format($plan['price']) }}</div>
+                    <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$plan['price']" /></div>
                     <div class="text-gray-500 mt-1">{{ $planKey === 'lifetime' ? 'จ่ายครั้งเดียว' : '/' . ($planKey === 'monthly' ? 'เดือน' : 'ปี') }}</div>
                     @if($planKey === 'yearly')
                     <div class="text-green-400 text-sm mt-1">≈ ฿{{ number_format(round($plan['price']/12)) }}/เดือน</div>

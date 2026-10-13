@@ -406,6 +406,30 @@
                                         </p>
                                     </div>
                                 </div>
+                            @elseif($order->payment_method === 'tpix')
+                                {{-- TPIX: the exact amount lives on the pay page (one quote at a time, at the price of the moment) --}}
+                                <div class="text-center py-4">
+                                    <p class="text-gray-600 dark:text-gray-400 mb-2">ชำระด้วยเหรียญ TPIX บน TPIX Chain ตามราคาตลาดปัจจุบัน</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white">฿{{ number_format($order->total, 2) }}</p>
+                                    <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$order->total" /></div>
+                                    @if(($tpixQuote ?? null) && $tpixQuote->isPayable())
+                                        <a href="{{ route('tpix-pay.show', $tpixQuote) }}"
+                                           class="mt-5 inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-lg hover:from-orange-600 hover:to-amber-600 transition">
+                                            ไปหน้าชำระ TPIX ({{ $tpixQuote->tpixDisplay() }} TPIX)
+                                        </a>
+                                    @elseif(($tpixQuote ?? null) && in_array($tpixQuote->status, ['confirming', 'late'], true))
+                                        <a href="{{ route('tpix-pay.show', $tpixQuote) }}" class="mt-5 inline-block text-amber-600 dark:text-amber-400 font-semibold hover:underline">
+                                            ดูสถานะการโอน — {{ $tpixQuote->statusLabel() }}
+                                        </a>
+                                    @elseif((int) $order->user_id === (int) auth()->id())
+                                        <form method="POST" action="{{ route('orders.tpix-quote', $order) }}" class="mt-5">
+                                            @csrf
+                                            <button type="submit" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-lg hover:from-orange-600 hover:to-amber-600 transition">
+                                                {{ $tpixQuote ? 'ขอยอดชำระ TPIX ใหม่ตามราคาปัจจุบัน' : 'รับยอดชำระ TPIX' }}
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             @elseif($order->payment_method === 'stripe' && isset($stripeClientSecret) && isset($stripePublishableKey))
                                 @if(isset($stripeFeeInfo) && $stripeFeeInfo['fee'] > 0)
                                 <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-2 text-sm">
@@ -440,7 +464,7 @@
                             @endif
 
                             <!-- Upload Payment Slip (only show for bank_transfer/promptpay non-SMS orders) -->
-                            @if(!$order->usesSmsPayment() && $order->payment_method !== 'stripe')
+                            @if(!$order->usesSmsPayment() && ! in_array($order->payment_method, ['stripe', 'tpix'], true))
                             <div class="mt-6 pt-6 border-t dark:border-gray-700">
                                 <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3"><x-bi th="แนบหลักฐานการชำระเงิน" en="Attach payment proof" /></h3>
                                 <form action="{{ route('orders.confirm-payment', $order) }}" method="POST" enctype="multipart/form-data">
@@ -500,6 +524,9 @@
                             @if($order->paid_at)
                                 <p class="text-sm text-gray-400 dark:text-gray-500 mt-2"><x-bi th="ชำระเมื่อ" en="Paid at" />: {{ $order->paid_at->format('d/m/Y H:i') }}</p>
                             @endif
+                            @if(($tpixQuote ?? null) && $tpixQuote->isSettled() && $tpixQuote->explorerTxUrl())
+                                <p class="text-sm mt-2"><a href="{{ $tpixQuote->explorerTxUrl() }}" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">ชำระ {{ $tpixQuote->tpixDisplay() }} TPIX — ดูธุรกรรมบน TPIX Explorer ↗</a></p>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -555,6 +582,10 @@
                                 @elseif($order->payment_method === 'bank_transfer')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                         <x-bi th="โอนเงิน" en="Bank transfer" />
+                                    </span>
+                                @elseif($order->payment_method === 'tpix')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
+                                        เหรียญ TPIX
                                     </span>
                                 @else
                                     {{ $order->payment_method }}

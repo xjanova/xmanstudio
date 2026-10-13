@@ -255,6 +255,7 @@
                     <div class="text-4xl font-black text-white mb-1">
                         <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['monthly']['price']) }}
                     </div>
+                    <x-tpix-price variant="detail" :thb="$pricing['monthly']['price'] ?? null" class="-mt-1 mb-2" />
                     <p class="text-gray-500 text-sm mb-6">{{ $pricing['monthly']['duration_days'] }} วัน</p>
                     <ul class="space-y-2 mb-8 text-sm text-left">
                         @foreach($pricing['monthly']['features'] as $feature)
@@ -278,6 +279,7 @@
                     <div class="text-4xl font-black text-violet-400 mb-1">
                         <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['yearly']['price']) }}
                     </div>
+                    <x-tpix-price variant="detail" :thb="$pricing['yearly']['price'] ?? null" class="-mt-1 mb-2" />
                     <p class="text-gray-500 text-sm mb-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
                     <span class="inline-block text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full mb-6">ประหยัด {{ \App\Support\LicensePlans::yearlySaving('tping') }}%</span>
                     <ul class="space-y-2 mb-8 text-sm text-left">
@@ -299,6 +301,7 @@
                     <div class="text-4xl font-black text-emerald-400 mb-1">
                         <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['lifetime']['price']) }}
                     </div>
+                    <x-tpix-price variant="detail" :thb="$pricing['lifetime']['price'] ?? null" class="-mt-1 mb-2" />
                     <p class="text-yellow-400 text-sm mb-6">ไม่มีวันหมดอายุ</p>
                     <ul class="space-y-2 mb-8 text-sm text-left">
                         @foreach($pricing['lifetime']['features'] as $feature)

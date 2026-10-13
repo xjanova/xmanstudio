@@ -8,6 +8,7 @@ use App\Models\UserRental;
 use App\Services\RentalService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -51,7 +52,12 @@ class RentalController extends Controller
                 ->with('warning', 'คุณมีแพ็กเกจที่ยังใช้งานอยู่');
         }
 
-        $paymentMethods = $this->paymentService->getSupportedMethods();
+        // A rental is paid through a RentalPayment, which TPIX does not settle (TPIX pays orders and
+        // wallet top-ups) — so the TPIX choice the shared list carries is not offered here.
+        $paymentMethods = array_values(array_filter(
+            $this->paymentService->getSupportedMethods(),
+            fn (array $method) => $method['id'] !== TpixCheckout::METHOD,
+        ));
 
         return view('rental.checkout', compact('package', 'paymentMethods'));
     }

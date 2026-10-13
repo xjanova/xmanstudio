@@ -8,6 +8,7 @@ use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductDevice;
+use App\Services\TpixPay\TpixPriceService;
 use App\Support\LicensePlans;
 use App\Support\LicenseSeats;
 use Illuminate\Http\Request;
@@ -1665,6 +1666,11 @@ class ProductLicenseController extends Controller
 
         // เฉพาะแผนที่ผลิตภัณฑ์นี้ขายจริง ตามลำดับในตารางราคา (config/licenses.php 'plans')
         // สินค้าที่ไม่ขายแผนไหนเลย (Aipray ฟรี, ตัวที่ยังไม่เปิดขาย) ได้ plans ว่าง ไม่ใช่ราคาที่แต่งขึ้น
+        // TPIX (additive, only while TPIX prices are shown — the payload is otherwise unchanged):
+        // each plan's price in TPIX at the live TPIX DEX price, and the rate behind them
+        $tpix = app(TpixPriceService::class);
+        $tpixRate = $tpix->apiRate();
+
         $plans = [];
         foreach (LicensePlans::for($product->slug) as $type => $price) {
             $plans[$type] = [
@@ -1672,7 +1678,7 @@ class ProductLicenseController extends Controller
                 'currency' => LicensePlans::CURRENCY,
                 'duration_days' => self::PLAN_DURATION_DAYS[$type],
                 'features' => $this->getFeaturesByType($productSlug, $type),
-            ];
+            ] + ($tpixRate !== null ? ['price_tpix' => $tpix->apiPrice($price)] : []);
         }
 
         return response()->json([
@@ -1686,7 +1692,7 @@ class ProductLicenseController extends Controller
                 'plans' => $plans ?: new \stdClass,
                 // หน้าเว็บที่ซื้อได้ — null ถ้าสินค้าปิดขายอยู่ (หน้าสินค้าตอบ 404) หรือยังเป็น Coming Soon (ยังไม่เปิดขาย 2026-10-12)
                 'purchase_url' => $product->isAvailable() ? route('products.show', $product->slug) : null,
-            ],
+            ] + ($tpixRate !== null ? ['tpix' => $tpixRate] : []),
         ]);
     }
 

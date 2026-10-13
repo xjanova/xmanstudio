@@ -82,6 +82,7 @@
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">{{ $pricing['monthly']['name_th'] }}</h3>
                         <div class="text-4xl font-black text-white">฿{{ number_format($pricing['monthly']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['monthly']['price']" /></div>
                         <p class="text-gray-500 text-sm mt-1">{{ $pricing['monthly']['duration_days'] }} วัน</p>
                     </div>
                     <ul class="space-y-3 mb-6 text-sm">
@@ -108,6 +109,7 @@
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">{{ $pricing['yearly']['name_th'] }}</h3>
                         <div class="text-4xl font-black text-violet-400">฿{{ number_format($pricing['yearly']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['yearly']['price']" /></div>
                         <p class="text-gray-500 text-sm mt-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
                         <span class="inline-block mt-2 text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full">ประหยัด {{ \App\Support\LicensePlans::yearlySaving('tping') }}%</span>
                     </div>
@@ -130,6 +132,7 @@
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">{{ $pricing['lifetime']['name_th'] }}</h3>
                         <div class="text-4xl font-black text-emerald-400">฿{{ number_format($pricing['lifetime']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['lifetime']['price']" /></div>
                         <p class="text-yellow-400 text-sm mt-1">ไม่มีวันหมดอายุ</p>
                     </div>
                     <ul class="space-y-3 mb-6 text-sm">

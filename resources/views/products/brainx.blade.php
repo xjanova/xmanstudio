@@ -66,6 +66,7 @@
                                 <span class="text-4xl font-black text-white">฿{{ $monthlyPrice }}</span>
                                 <span class="text-gray-300 text-sm"><x-bi th="/ เดือน" en="month" /></span>
                             </div>
+                            <x-tpix-price variant="detail" :thb="$monthlyPrice" />
                             <p class="text-violet-200/80 text-sm mt-1"><x-bi th="ต่ออายุแล้วใช้คีย์เดิม" en="Renewing keeps the same key" /></p>
                         </div>
 

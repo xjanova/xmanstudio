@@ -301,6 +301,7 @@
                                                     <x-bi :th="$copy['first_th']" :en="$copy['first_en']" />
                                                 </p>
                                                 <p class="mt-0.5 text-3xl font-bold text-slate-900 dark:text-white">{{ $price['first'] }}</p>
+                                                <x-tpix-price :thb="$price['first_thb'] ?? null" />
                                                 @if($multiMonth)
                                                     <p class="text-xs text-slate-500 dark:text-slate-400">
                                                         <x-bi th="เฉลี่ย" en="avg." /> <span class="whitespace-nowrap">{{ $price['first_monthly'] }}</span>/<x-bi th="เดือน" en="mo" />
