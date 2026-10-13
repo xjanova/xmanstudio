@@ -46,8 +46,15 @@
         <label class="flex items-center gap-3">
             <input type="hidden" name="tpix_enabled" value="0">
             <input type="checkbox" name="tpix_enabled" value="1" class="w-5 h-5 rounded text-amber-600 focus:ring-amber-500" {{ old('tpix_enabled', $settings['enabled']) ? 'checked' : '' }}>
-            <span class="text-gray-800 dark:text-gray-200 font-medium">เปิดรับชำระด้วยเหรียญ TPIX และแสดงราคา TPIX ทุกหน้าสินค้า</span>
+            <span class="text-gray-800 dark:text-gray-200 font-medium">เปิดรับชำระด้วยเหรียญ TPIX</span>
         </label>
+
+        <label class="flex items-center gap-3">
+            <input type="hidden" name="tpix_show_prices" value="0">
+            <input type="checkbox" name="tpix_show_prices" value="1" class="w-5 h-5 rounded text-amber-600 focus:ring-amber-500" {{ old('tpix_show_prices', $settings['show_prices']) ? 'checked' : '' }}>
+            <span class="text-gray-800 dark:text-gray-200 font-medium">แสดงราคาเป็น TPIX บนหน้าสินค้าทุกหน้า</span>
+        </label>
+        <p class="-mt-3 text-xs text-gray-500 dark:text-gray-400">แยกจากการรับชำระ — แสดงราคาได้แม้ยังไม่เปิดรับชำระ (ราคาจากพูล TPIX DEX ซ่อนเองเมื่อไม่มีราคาที่เชื่อถือได้)</p>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ที่อยู่กระเป๋ารับเหรียญ (TPIX Chain)</label>

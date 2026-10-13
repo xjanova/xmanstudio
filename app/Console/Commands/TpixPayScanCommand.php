@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\TpixPriceSnapshot;
 use App\Services\TpixPay\TpixPaymentService;
 use App\Services\TpixPay\TpixPaySettings;
 use App\Services\TpixPay\TpixPriceService;
@@ -30,6 +31,10 @@ class TpixPayScanCommand extends Command
 
         $stats = $payments->detectPending();
         $expiry = $payments->expireStale();
+
+        // Prices now show by default, so a snapshot is written every minute (1,440 a day). Only the
+        // last half hour (TWAP) and the last day (FX fallback) are ever read; a week is plenty.
+        TpixPriceSnapshot::where('created_at', '<', now()->subDays(7))->delete();
 
         $this->line("blocks {$stats['blocks']}, checked {$stats['checked']}, settled {$stats['settled']}, expired {$expiry['expired']}, released {$expiry['released']}");
 

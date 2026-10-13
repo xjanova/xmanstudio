@@ -42,6 +42,7 @@ class TpixPaymentController extends Controller
             'payments' => $query->paginate(25)->withQueryString(),
             'settings' => [
                 'enabled' => $settings->enabled(),
+                'show_prices' => $settings->showsPrices(),
                 'address' => $settings->receiveAddress(),
                 'confirmations' => $settings->confirmations(),
                 'ttl' => $settings->quoteTtlMinutes(),
@@ -57,6 +58,7 @@ class TpixPaymentController extends Controller
     {
         $validated = $request->validate([
             'tpix_enabled' => ['boolean'],
+            'tpix_show_prices' => ['boolean'],
             'tpix_receive_address' => ['nullable', 'required_if:tpix_enabled,1', 'regex:' . TpixPaySettings::ADDRESS_PATTERN],
             'tpix_confirmations' => ['required', 'integer', 'min:1', 'max:64'],
             'tpix_quote_ttl_minutes' => ['required', 'integer', 'min:5', 'max:240'],
@@ -68,6 +70,7 @@ class TpixPaymentController extends Controller
 
         $settings->save([
             'enabled' => $request->boolean('tpix_enabled'),
+            'show_prices' => $request->boolean('tpix_show_prices'),
             'address' => $validated['tpix_receive_address'] ?? '',
             'confirmations' => (int) $validated['tpix_confirmations'],
             'ttl' => (int) $validated['tpix_quote_ttl_minutes'],
