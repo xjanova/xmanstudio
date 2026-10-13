@@ -46,6 +46,7 @@
                 <span class="xu-campaign__text"><b>NVIDIA DGX Spark</b> + CluadeX &amp; BrainX ตลอดชีพ</span>
                 <span class="xu-campaign__meta">
                     {{ \App\Support\DgxSparkCampaign::baht(\App\Support\DgxSparkCampaign::price()) }}
+                    <x-tpix-price variant="plain" :thb="\App\Support\DgxSparkCampaign::totals(\App\Support\DgxSparkCampaign::price())['total']" />
                     · {{ $xuCampaign['remaining'] > 0 ? 'เหลือ ' . $xuCampaign['remaining'] . '/' . $xuCampaign['cap'] . ' ชุด' : 'จองครบแล้ว' }}
                 </span>
                 <span class="xu-campaign__go" aria-hidden="true">→</span>

@@ -260,6 +260,7 @@
                         {{-- the entry plan and its price, from config/licenses.php --}}
                         @php $proTerm = array_key_first($pricing); @endphp
                         <div class="text-4xl font-black text-indigo-400 mt-2">฿{{ number_format($pricing[$proTerm]['price']) }}<span class="text-base text-gray-400">{{ $proTerm === 'lifetime' ? ' จ่ายครั้งเดียว' : '/' . ($proTerm === 'monthly' ? 'เดือน' : 'ปี') }}</span></div>
+                        <x-tpix-price variant="detail" :thb="$pricing[$proTerm]['price'] ?? null" />
                         @endif
                     </div>
                     <ul class="space-y-2.5 text-gray-300 text-sm">

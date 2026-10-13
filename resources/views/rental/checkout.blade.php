@@ -64,6 +64,7 @@
                                 <span class="font-semibold text-gray-900"><x-bi th="รวมทั้งสิ้น" en="Total" /></span>
                                 <span class="text-2xl font-bold text-primary-600" id="totalAmount">฿{{ number_format($package->price) }}</span>
                             </div>
+                            <div class="text-right"><x-tpix-price variant="detail" :thb="$package->price" /></div>
                         </div>
                     </div>
 

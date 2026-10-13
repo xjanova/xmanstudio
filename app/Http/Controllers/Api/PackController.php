@@ -8,6 +8,7 @@ use App\Models\DownloadLog;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use App\Services\TpixPay\TpixPriceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -33,11 +34,17 @@ class PackController extends Controller
      */
     public function index(): JsonResponse
     {
+        $tpix = app(TpixPriceService::class);
+
         $packs = AvatarPack::active()
             ->with(['product.versions'])
             ->get()
             ->filter(fn (AvatarPack $p) => $p->product?->is_active)
-            ->map(fn (AvatarPack $p) => $p->toCatalogueArray())
+            // price_tpix (additive): the price in TPIX at the live TPIX DEX price, or the pack's fixed
+            // TPIX price; null while TPIX prices are off
+            ->map(fn (AvatarPack $p) => $p->toCatalogueArray() + [
+                'price_tpix' => $tpix->apiPrice($p->product?->price, $p->product?->price_tpix),
+            ])
             ->values();
 
         return response()->json(['packs' => $packs]);

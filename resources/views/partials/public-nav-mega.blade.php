@@ -40,7 +40,7 @@
     // packs take over the nav on EVERY public page. The cache also means a
     // wrong entry sticks around for 10 minutes after the data is fixed.
     $megaProducts = \Illuminate\Support\Facades\Cache::remember('nav_mega_products', 600, function () {
-        return \App\Models\Product::onWebsite()->available()->latest()->take(3)->get(['id', 'name', 'slug', 'image', 'price']);
+        return \App\Models\Product::onWebsite()->available()->latest()->take(3)->get(['id', 'name', 'slug', 'image', 'price', 'price_tpix']);
     });
 @endphp
 
@@ -173,6 +173,7 @@
                             <span class="xm-mega__product-name">{{ $product->name }}</span>
                             @if($product->price > 0)
                                 <span class="xm-mega__product-price">฿{{ number_format($product->price, 0) }}</span>
+                                <x-tpix-price variant="plain" :thb="$product->price" :tpix="$product->price_tpix" class="xm-mega__product-price" style="font-size:11px;opacity:.8;" />
                             @endif
                         </span>
                     </a>

@@ -129,8 +129,10 @@
                         @if(isset($pricing['monthly']) && $pricing['monthly']['discount_amount'] > 0)
                             <div class="text-2xl text-gray-500 line-through">฿{{ number_format($pricing['monthly']['original_price']) }}</div>
                             <div class="text-4xl font-black text-green-400">฿{{ number_format($pricing['monthly']['discounted_price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['monthly']['discounted_price']" /></div>
                         @else
                             <div class="text-4xl font-black text-white">฿{{ number_format($pricing['monthly']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['monthly']['price']" /></div>
                         @endif
                         <p class="text-gray-500 text-sm mt-1">ต่อเดือน</p>
                     </div>
@@ -179,9 +181,11 @@
                         @if(isset($pricing['yearly']) && $pricing['yearly']['discount_amount'] > 0)
                             <div class="text-2xl text-gray-500 line-through">฿{{ number_format($pricing['yearly']['original_price']) }}</div>
                             <div class="text-4xl font-black text-green-400">฿{{ number_format($pricing['yearly']['discounted_price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['yearly']['discounted_price']" /></div>
                             <p class="text-gray-500 text-sm mt-1">ต่อปี <span class="text-green-400">(ประหยัด ฿{{ number_format($pricing['yearly']['discount_amount']) }})</span></p>
                         @else
                             <div class="text-4xl font-black text-white">฿{{ number_format($pricing['yearly']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['yearly']['price']" /></div>
                             <p class="text-gray-500 text-sm mt-1">ต่อปี <span class="text-green-400">(ประหยัด {{ \App\Support\LicensePlans::yearlySaving('autotradex') }}%)</span></p>
                         @endif
                     </div>
@@ -234,9 +238,11 @@
                         @if(isset($pricing['lifetime']) && $pricing['lifetime']['discount_amount'] > 0)
                             <div class="text-2xl text-gray-500 line-through">฿{{ number_format($pricing['lifetime']['original_price']) }}</div>
                             <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">฿{{ number_format($pricing['lifetime']['discounted_price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['lifetime']['discounted_price']" /></div>
                             <p class="text-green-400 text-sm mt-1 font-semibold">ประหยัด ฿{{ number_format($pricing['lifetime']['discount_amount']) }}!</p>
                         @else
                             <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">฿{{ number_format($pricing['lifetime']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['lifetime']['price']" /></div>
                         @endif
                         <p class="text-gray-500 text-sm mt-1">จ่ายครั้งเดียว</p>
                     </div>

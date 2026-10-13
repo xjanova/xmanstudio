@@ -67,6 +67,7 @@
                             ฿{{ number_format($product->price, 0) }}
                             <span class="nova-price__unit">THB</span>
                         </div>
+                        <x-tpix-price :thb="$product->price" :tpix="$product->price_tpix" />
                     @else
                         <div class="nova-price" style="color:var(--nv-mint);">
                             ฟรี <span class="nova-price__unit">Free</span>

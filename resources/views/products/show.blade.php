@@ -209,6 +209,7 @@
                                     </span>
                                 @endif
                             </div>
+                            <x-tpix-price variant="detail" :thb="$product->price" :tpix="$product->price_tpix" class="mt-2" />
                         @endif
                     </div>
 
@@ -664,6 +665,7 @@
                                 @endif
                                 @if(!$related->is_custom)
                                     <p class="text-primary-400 font-bold text-lg">฿{{ number_format($related->price, 0) }}</p>
+                                    <x-tpix-price :thb="$related->price" :tpix="$related->price_tpix" />
                                 @else
                                     <p class="text-gray-400">สอบถามราคา</p>
                                 @endif
