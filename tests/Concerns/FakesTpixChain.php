@@ -87,10 +87,11 @@ trait FakesTpixChain
         });
     }
 
-    protected function enableTpixPayments(?string $address = null, bool $enabled = true, float $maxPoolRatio = 5): void
+    protected function enableTpixPayments(?string $address = null, bool $enabled = true, float $maxPoolRatio = 5, bool $showPrices = true): void
     {
         app(TpixPaySettings::class)->save([
             'enabled' => $enabled,
+            'show_prices' => $showPrices,
             'address' => $address ?? $this->shopAddress,
             'confirmations' => 3,
             'ttl' => 30,

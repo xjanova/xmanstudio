@@ -486,6 +486,16 @@ class TpixPaymentTest extends TestCase
         Http::assertSent(fn (Request $r) => str_contains($r->url(), 'rpc.tpix.online') && array_is_list($r->data()) && count($r->data()) === 40);
     }
 
+    public function test_the_scanner_keeps_a_week_of_price_snapshots(): void
+    {
+        $old = TpixPriceSnapshot::create(['price_usd' => '0.1', 'source' => TpixPriceService::SOURCE_LIVE, 'created_at' => now()->subDays(8)]);
+
+        $this->artisan('tpix:pay-scan')->assertSuccessful();
+
+        $this->assertNull($old->fresh());
+        $this->assertTrue(TpixPriceSnapshot::where('created_at', '>=', now()->subMinute())->exists());
+    }
+
     public function test_with_no_open_quote_the_scanner_only_follows_the_head(): void
     {
         $this->artisan('tpix:pay-scan')->assertSuccessful();

@@ -52,10 +52,14 @@ class TpixPaySettings
         return $this->enabled() && $this->receiveAddress() !== null;
     }
 
-    /** Prices in TPIX are shown when the switch is on (an address is not needed to show a price). */
+    /**
+     * Show TPIX prices next to THB prices on the product pages and in the apps (owner, 2026-10-13:
+     * on every product page, even before payments are switched on). Its own switch, on unless the
+     * admin turned it off — independent of taking payments and of the receive address.
+     */
     public function showsPrices(): bool
     {
-        return $this->enabled();
+        return (bool) $this->values()['show_prices'];
     }
 
     public function forget(): void
@@ -66,12 +70,15 @@ class TpixPaySettings
     /**
      * Save what the admin page sent (already validated).
      *
-     * @param  array{enabled:bool, address:?string, confirmations:int, ttl:int, max_pool_ratio?:float}  $values
+     * @param  array{enabled:bool, address:?string, confirmations:int, ttl:int, max_pool_ratio?:float, show_prices?:bool}  $values
      */
     public function save(array $values): void
     {
         PaymentSetting::set('tpix_enabled', (bool) $values['enabled'], [
             'group' => 'tpix', 'type' => 'boolean', 'label' => 'เปิดรับชำระด้วยเหรียญ TPIX',
+        ]);
+        PaymentSetting::set('tpix_show_prices', (bool) ($values['show_prices'] ?? true), [
+            'group' => 'tpix', 'type' => 'boolean', 'label' => 'แสดงราคาเป็น TPIX บนหน้าสินค้าทุกหน้า',
         ]);
         PaymentSetting::set('tpix_receive_address', trim((string) $values['address']), [
             'group' => 'tpix', 'type' => 'string', 'label' => 'ที่อยู่กระเป๋ารับเหรียญ TPIX',
@@ -99,6 +106,8 @@ class TpixPaySettings
 
         $values = [
             'enabled' => false,
+            // On when nobody has saved it yet: the owner wants the TPIX price on every page
+            'show_prices' => true,
             'address' => null,
             'confirmations' => (int) config('tpix_pay.confirmations', 3),
             'ttl' => (int) config('tpix_pay.quote_ttl_minutes', 30),
@@ -108,6 +117,7 @@ class TpixPaySettings
         try {
             $rows = PaymentSetting::where('group', 'tpix')->get()->mapWithKeys(fn ($s) => [$s->key => $s->typed_value]);
             $values['enabled'] = (bool) ($rows['tpix_enabled'] ?? false);
+            $values['show_prices'] = (bool) ($rows['tpix_show_prices'] ?? true);
             $values['address'] = $rows['tpix_receive_address'] ?? null;
             $values['confirmations'] = (int) ($rows['tpix_confirmations'] ?? $values['confirmations']);
             $values['ttl'] = (int) ($rows['tpix_quote_ttl_minutes'] ?? $values['ttl']);

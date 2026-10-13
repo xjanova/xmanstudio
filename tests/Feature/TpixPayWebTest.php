@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Order;
+use App\Models\PaymentSetting;
 use App\Models\Product;
 use App\Models\TpixPayment;
 use App\Models\TpixPriceSnapshot;
@@ -239,13 +240,62 @@ class TpixPayWebTest extends TestCase
             ->assertDontSee('data-tpix-price', false);
     }
 
-    public function test_the_price_tag_is_hidden_while_tpix_is_switched_off(): void
+    public function test_the_price_tag_is_hidden_when_the_admin_turns_tpix_prices_off(): void
     {
-        $this->enableTpixPayments(enabled: false);
+        $this->enableTpixPayments(showPrices: false);
 
         $this->get(route('products.show', $this->product->slug))
             ->assertOk()
             ->assertDontSee('data-tpix-price', false);
+    }
+
+    public function test_tpix_prices_show_by_default_even_before_payments_are_switched_on(): void
+    {
+        // Payments off, and nobody has ever saved the price switch (as on production today)
+        $this->enableTpixPayments(enabled: false);
+        PaymentSetting::where('key', 'tpix_show_prices')->delete();
+        app(TpixPaySettings::class)->forget();
+
+        $this->get(route('products.show', $this->product->slug))
+            ->assertOk()
+            ->assertSee('data-tpix-price', false)
+            ->assertSee('≈ 307.69 TPIX');
+
+        $this->getJson('/api/v1/tpix/price')
+            ->assertOk()
+            ->assertJsonPath('data.prices_shown', true)
+            ->assertJsonPath('data.payments_enabled', false)
+            ->assertJsonPath('data.receive_address', null);
+
+        // Showing a price does not mean taking payment: the checkout does not offer TPIX
+        $buyer = User::factory()->create();
+        $this->actingAs($buyer)->post(route('cart.add', $this->product), ['quantity' => 1]);
+        $this->actingAs($buyer)->get(route('orders.checkout'))->assertOk()->assertDontSee('value="tpix"', false);
+        $this->actingAs($buyer)->post(route('orders.store'), $this->checkoutForm('tpix'))->assertSessionHasErrors('payment_method');
+    }
+
+    public function test_the_admin_turns_the_tpix_prices_off_and_on(): void
+    {
+        $form = ['tpix_enabled' => '0', 'tpix_receive_address' => '', 'tpix_confirmations' => 3, 'tpix_quote_ttl_minutes' => 30, 'tpix_max_pool_ratio' => 5];
+
+        $this->actingAs($this->admin)->get(route('admin.tpix-payments.index'))
+            ->assertOk()
+            ->assertSee('แสดงราคาเป็น TPIX บนหน้าสินค้าทุกหน้า');
+
+        $this->actingAs($this->admin)->put(route('admin.tpix-payments.settings.update'), $form + ['tpix_show_prices' => '0'])
+            ->assertSessionHasNoErrors();
+        $this->assertFalse(app(TpixPaySettings::class)->showsPrices());
+        $this->get(route('products.show', $this->product->slug))->assertOk()->assertDontSee('data-tpix-price', false);
+
+        $this->actingAs($this->admin)->put(route('admin.tpix-payments.settings.update'), $form + ['tpix_show_prices' => '1'])
+            ->assertSessionHasNoErrors();
+        $settings = app(TpixPaySettings::class);
+        $this->assertTrue($settings->showsPrices());
+        $this->assertFalse($settings->acceptsPayments());
+        $this->get(route('products.show', $this->product->slug))->assertOk()->assertSee('data-tpix-price', false);
+
+        $this->actingAs($this->admin)->put(route('admin.tpix-payments.settings.update'), $form + ['tpix_show_prices' => 'maybe'])
+            ->assertSessionHasErrors('tpix_show_prices');
     }
 
     public function test_a_fixed_tpix_price_is_shown_as_is_when_it_is_not_below_the_market(): void
@@ -310,6 +360,7 @@ class TpixPayWebTest extends TestCase
         $this->enableTpixPayments(enabled: false);
         $this->getJson('/api/v1/tpix/price')
             ->assertOk()
+            ->assertJsonPath('data.prices_shown', true)
             ->assertJsonPath('data.payments_enabled', false)
             ->assertJsonPath('data.receive_address', null);
 
@@ -351,7 +402,7 @@ class TpixPayWebTest extends TestCase
 
         $checksummed = '0x52908400098527886E0F7030069857D2E4169EE7';
         $this->actingAs($this->admin)->put(route('admin.tpix-payments.settings.update'), [
-            'tpix_enabled' => '1', 'tpix_receive_address' => $checksummed, 'tpix_confirmations' => 5, 'tpix_quote_ttl_minutes' => 20, 'tpix_max_pool_ratio' => 2.5,
+            'tpix_enabled' => '1', 'tpix_show_prices' => '1', 'tpix_receive_address' => $checksummed, 'tpix_confirmations' => 5, 'tpix_quote_ttl_minutes' => 20, 'tpix_max_pool_ratio' => 2.5,
         ])->assertSessionHasNoErrors();
 
         $settings = app(TpixPaySettings::class);
