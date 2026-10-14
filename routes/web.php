@@ -85,6 +85,7 @@ use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\AntiXController;
+use App\Http\Controllers\MacDockController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
@@ -427,6 +428,22 @@ Route::get('/anti-x/download/{version?}', [AntiXController::class, 'download'])
     ->where('version', '[0-9A-Za-z.\-]+')
     ->middleware('throttle:30,1,anti-x-download')
     ->name('anti-x.download');
+
+// MacDock (Windows) - แอปฟรี zip เดียว · แอปอัปเดตตัวเองผ่าน URL นี้ (เฉพาะเครื่องที่มีไลเซ่นฟรี)
+// release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ ห้าม redirect ไป GitHub · ผูกกับ macdock ตายตัว ห้ามทำเป็น {slug}
+Route::get('/macdock/download/{version?}', [MacDockController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,macdock-download')
+    ->name('macdock.download');
+
+// ไลเซ่นฟรีของ MacDock: แอปเปิดหน้านี้พร้อม machine_id → ล็อกอิน/สมัคร → กดยืนยัน = คีย์ FREE ผูกกับบัญชี + เครื่อง
+Route::middleware('auth')->group(function () {
+    Route::get('/products/macdock/free-license', [MacDockController::class, 'showFreeLicense'])
+        ->name('macdock.free-license');
+    Route::post('/products/macdock/free-license', [MacDockController::class, 'claimFreeLicense'])
+        ->middleware('throttle:10,10,macdock-free-license')
+        ->name('macdock.free-license.store');
+});
 
 // Services
 Route::get('/services', [ProductController::class, 'services'])->name('services.index');

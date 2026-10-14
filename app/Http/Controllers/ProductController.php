@@ -176,6 +176,8 @@ class ProductController extends Controller
             'anti-x' => 'products.antix',
             // LocalVPN (Windows + Android) — the product page; /localvpn redirects here
             'localvpn' => 'products.localvpn',
+            // MacDock — a free Windows app: the zip download + how the free licence turns on updates
+            'macdock' => 'products.macdock',
         ];
 
         if (isset($customViews[$slug])) {

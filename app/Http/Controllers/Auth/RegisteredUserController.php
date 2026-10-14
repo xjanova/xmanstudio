@@ -57,10 +57,12 @@ class RegisteredUserController extends Controller
             $request->session()->put('autotradex_machine_id', $machineId);
         }
 
-        // signed up from the game community, or from "สมัครเพื่อสั่งจอง" on the DGX Spark
-        // campaign: back to the page they were on
+        // signed up from the game community, from "สมัครเพื่อสั่งจอง" on the DGX Spark campaign,
+        // or from MacDock's "รับไลเซ่นฟรี" (the page carries the PC's machine_id): back to the page they were on
         $intended = (string) $request->session()->get('url.intended');
-        if (str_starts_with($intended, url('/games-support')) || str_starts_with($intended, url('/dgx-spark'))) {
+        if (str_starts_with($intended, url('/games-support'))
+            || str_starts_with($intended, url('/dgx-spark'))
+            || str_starts_with($intended, url('/products/macdock/free-license'))) {
             return redirect()->intended();
         }
 
