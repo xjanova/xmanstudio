@@ -225,6 +225,9 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['GET', route('anti-x.download')],
             ['GET', route('anti-x.download', ['version' => '1.2.0'])],
             ['HEAD', route('anti-x.download', ['version' => '1.2.0'])],
+            ['GET', route('macdock.download')],
+            ['GET', route('macdock.download', ['version' => '1.0.0'])],
+            ['HEAD', route('macdock.download', ['version' => '1.0.0'])],
             ['GET', route('cluadex.download')],
             ['GET', route('gpuxmine.download')],
             ['GET', route('brainx.download')],
@@ -254,6 +257,7 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             '/apps/aipray', '/apps/aipray/donate', '/chanthra-studio', '/chanthra-studio/manual', '/autotradex/pricing', // หน้าของแอปที่โหลดฟรี
             '/brainx', '/brainx/downloads',
             '/products/anti-x', '/anti-x', '/anti-x/downloads',
+            '/products/macdock', '/products/macdock/free-license', '/macdock',
         ] as $url) {
             $this->assertFalse($matches('GET', $url), "GET {$url} ต้องไม่อยู่ในกฎนี้");
         }

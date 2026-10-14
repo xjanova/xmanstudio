@@ -272,6 +272,8 @@ class VersionController extends Controller
         'chanthra-studio' => 'chanthra-studio.download',
         'aipray' => 'aipray.download',
         'giggok' => 'giggok.download',
+        // MacDock: release ใน repo private เหมือน Anti X — ตัวอัปเดตในแอปโหลด {version} เป๊ะ ๆ จากที่นี่
+        'macdock' => 'macdock.download',
     ];
 
     /**
