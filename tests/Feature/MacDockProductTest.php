@@ -199,6 +199,27 @@ class MacDockProductTest extends TestCase
             ->assertDontSee($key);
     }
 
+    public function test_the_claimed_key_shows_in_my_licenses_though_it_has_no_order(): void
+    {
+        $user = User::factory()->create();
+        $stranger = User::factory()->create();
+        $this->registerDevice('a');
+        $this->claim($user, 'a');
+        $license = $this->keys()->sole();
+        $this->assertNull($license->order_id);
+
+        $this->actingAs($user)->get(route('customer.licenses'))
+            ->assertOk()
+            ->assertSee('MacDock')
+            ->assertSee(route('customer.licenses.show', $license));
+
+        $this->actingAs($user)->get(route('customer.licenses.show', $license))->assertOk();
+
+        $this->actingAs($stranger)->get(route('customer.licenses'))
+            ->assertOk()
+            ->assertDontSee(route('customer.licenses.show', $license));
+    }
+
     public function test_confirming_again_keeps_the_same_key(): void
     {
         $user = User::factory()->create();
