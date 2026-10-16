@@ -278,6 +278,8 @@ class TpingController extends Controller
             'custom_requirements' => json_encode([
                 'license_type' => $planInfo['license_type'],
                 'duration_days' => $planInfo['duration_days'],
+                // Same seats as the wallet path: a lifetime key runs on 3 devices
+                'max_activations' => $planInfo['license_type'] === 'lifetime' ? 3 : 1,
             ]),
         ]);
 

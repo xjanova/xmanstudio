@@ -50,7 +50,18 @@ class TpixPayController extends Controller
             'requoteUrl' => $this->requoteUrl($payment),
             'returnUrl' => $this->returnUrl($payment),
             'requiredConfirmations' => app(TpixPaySettings::class)->confirmations(),
+            'metamaskLink' => self::metamaskDeepLink($request),
         ]);
+    }
+
+    /**
+     * Opens this pay page inside the MetaMask mobile app's browser (where window.ethereum exists):
+     * https://metamask.app.link/dapp/<host><path>. Built from the request itself, so it always
+     * points back at this site.
+     */
+    public static function metamaskDeepLink(Request $request): string
+    {
+        return 'https://metamask.app.link/dapp/' . $request->getHttpHost() . $request->getBaseUrl() . $request->getPathInfo();
     }
 
     /** The pay page asks every few seconds; at most one chain/explorer look per quote per 8 seconds. */

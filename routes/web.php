@@ -77,6 +77,7 @@ use App\Http\Controllers\Admin\TelegramAlertController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowController;
 use App\Http\Controllers\Admin\TpixPaymentController as AdminTpixPaymentController;
+use App\Http\Controllers\Admin\TpixReportController as AdminTpixReportController;
 use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\TwoFactorController as AdminTwoFactorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -1543,6 +1544,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // TPIX payments: the switch + receive address, every quote, and re-check / accept-late / cancel
     Route::prefix('tpix-payments')->name('tpix-payments.')->group(function () {
         Route::get('/', [AdminTpixPaymentController::class, 'index'])->name('index');
+        Route::get('/reports', [AdminTpixReportController::class, 'index'])->name('reports');
+        Route::get('/reports/csv', [AdminTpixReportController::class, 'csv'])
+            ->middleware('throttle:10,1,admin-tpix-report-csv')->name('reports.csv');
         Route::put('/settings', [AdminTpixPaymentController::class, 'updateSettings'])->name('settings.update');
         Route::post('/{tpixPayment}/recheck', [AdminTpixPaymentController::class, 'recheck'])
             ->middleware('throttle:30,1,admin-tpix-recheck')->name('recheck');

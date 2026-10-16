@@ -234,6 +234,9 @@ class AutoTradeXController extends Controller
             'quantity' => 1,
             'price' => $finalPrice,
             'subtotal' => $finalPrice,
+            // The plan's term: without it LicenseService falls back to the product default (yearly)
+            // and a monthly or lifetime buyer would get a one-year key
+            'custom_requirements' => json_encode(['license_type' => $planInfo['license_type']]),
         ]);
 
         // Affiliate commission tracking
