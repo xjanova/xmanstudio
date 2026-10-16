@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\TpixPayController;
 use App\Models\Category;
+use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\PaymentSetting;
 use App\Models\Product;
@@ -14,6 +16,7 @@ use App\Services\TpixPay\TpixMath;
 use App\Services\TpixPay\TpixPaymentService;
 use App\Services\TpixPay\TpixPaySettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -215,6 +218,94 @@ class TpixPayWebTest extends TestCase
 
         // The product's own payment page sends a TPIX order back to where it can be paid
         $this->actingAs($buyer)->get(route('tping.payment', $order))->assertRedirect(route('orders.show', $order));
+    }
+
+    /**
+     * A TPIX payment is approved automatically through OrderPaymentService, so what the app's own
+     * checkout put on the order must be enough to deliver the right key: the plan's term, the
+     * plan's seats, and the device that started the purchase.
+     *
+     * @return array{0: Order, 1: LicenseKey}
+     */
+    private function payAppCheckoutInTpix(string $slug, string $path, string $machineId, string $hashSeed): array
+    {
+        // A deep pool, so a lifetime plan fits under the per-quote limit (same 0.10 USD price)
+        $this->reserveTpixWei = '1999000000000000000000000';
+        $this->reserveUsdtUnits = '199900000000';
+
+        Product::updateOrCreate(['slug' => $slug], [
+            'category_id' => $this->product->category_id,
+            'name' => ucfirst($slug),
+            'description' => 'x',
+            'price' => 990,
+            'requires_license' => true,
+            'is_active' => true,
+            'is_coming_soon' => false,
+        ]);
+        $buyer = User::factory()->create();
+
+        $this->actingAs($buyer)->post($path, $this->checkoutForm('tpix') + ['machine_id' => $machineId])
+            ->assertRedirect(route('tpix-pay.show', TpixPayment::sole()));
+
+        $payment = TpixPayment::sole();
+        $hash = self::txHash($hashSeed);
+        $this->mineTransfer($hash, $payment->amount_wei, 990, now()->timestamp);
+        $this->actingAs($buyer)->postJson(route('tpix-pay.submit', $payment), ['tx_hash' => $hash])
+            ->assertOk()->assertJsonPath('result', 'paid');
+
+        $order = Order::sole();
+
+        return [$order, LicenseKey::where('order_id', $order->id)->sole()];
+    }
+
+    public function test_tping_lifetime_paid_in_tpix_gets_a_lifetime_key_with_three_seats_on_the_buying_device(): void
+    {
+        [$order, $key] = $this->payAppCheckoutInTpix('tping', '/tping/checkout/lifetime', 'HWID-TPING-1', 'tping-life');
+
+        $this->assertSame('paid', $order->fresh()->payment_status);
+        $this->assertSame('lifetime', $key->license_type);
+        $this->assertNull($key->expires_at);
+        $this->assertSame(3, (int) $key->max_activations);
+        $this->assertSame('HWID-TPING-1', $key->machine_id);
+    }
+
+    public function test_autotradex_monthly_paid_in_tpix_gets_a_monthly_key_not_a_yearly_one(): void
+    {
+        [, $key] = $this->payAppCheckoutInTpix('autotradex', '/autotradex/checkout/monthly', 'HWID-ATX-1', 'atx-month');
+
+        $this->assertSame('monthly', $key->license_type);
+        $this->assertTrue($key->expires_at->between(now()->addDays(29), now()->addDays(31)));
+        $this->assertSame('HWID-ATX-1', $key->machine_id);
+    }
+
+    public function test_the_pay_page_offers_to_open_itself_in_the_metamask_app(): void
+    {
+        [$order, $payment] = $this->quotedOrder();
+        $buyer = $order->user;
+
+        $this->actingAs($buyer)->get(route('tpix-pay.show', $payment))
+            ->assertOk()
+            ->assertSee('เปิดในแอป MetaMask')
+            ->assertSee('metamask.app.link', false);
+
+        $request = Request::create(route('tpix-pay.show', $payment));
+        $this->assertSame(
+            'https://metamask.app.link/dapp/' . $request->getHttpHost() . '/pay/tpix/' . $payment->reference,
+            TpixPayController::metamaskDeepLink($request),
+        );
+    }
+
+    public function test_the_autotradex_pricing_api_carries_tpix_prices_and_says_whether_tpix_is_payable(): void
+    {
+        $this->getJson('/api/v1/autotradex/pricing')
+            ->assertOk()
+            ->assertJsonPath('data.tpix.chain_id', 4289)
+            ->assertJsonPath('data.tpix.payments_enabled', true)
+            ->assertJsonStructure(['data' => ['plans' => ['monthly' => ['price', 'price_tpix'], 'yearly' => ['price_tpix'], 'lifetime' => ['price_tpix']]]]);
+
+        $this->enableTpixPayments(enabled: false);
+        $this->app->forgetScopedInstances();
+        $this->getJson('/api/v1/catalog')->assertOk()->assertJsonPath('tpix.payments_enabled', false);
     }
 
     // ── the price tag ────────────────────────────────────────────────

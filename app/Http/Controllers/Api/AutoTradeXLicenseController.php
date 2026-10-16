@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AutoTradeXDevice;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use App\Services\TpixPay\TpixPriceService;
 use App\Support\LicensePlans;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -986,6 +987,11 @@ class AutoTradeXLicenseController extends Controller
     {
         $baseUrl = config('app.url');
 
+        // TPIX (additive, only while TPIX prices are shown): each paid plan in TPIX at the live price
+        $tpix = app(TpixPriceService::class);
+        $tpixRate = $tpix->apiRate();
+        $inTpix = fn (string $plan) => $tpixRate !== null ? ['price_tpix' => $tpix->apiPrice(self::pricedPlans()[$plan]['original'])] : [];
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -1007,7 +1013,7 @@ class AutoTradeXLicenseController extends Controller
                         'features' => self::MONTHLY_FEATURES,
                         'exchanges' => self::EXCHANGES['monthly'],
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/monthly",
-                    ],
+                    ] + $inTpix('monthly'),
                     'yearly' => [
                         'name' => 'Yearly',
                         'duration' => '365 days',
@@ -1017,7 +1023,7 @@ class AutoTradeXLicenseController extends Controller
                         'exchanges' => self::EXCHANGES['yearly'],
                         'save_percent' => LicensePlans::yearlySaving(self::PRODUCT_SLUG),
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/yearly",
-                    ],
+                    ] + $inTpix('yearly'),
                     'lifetime' => [
                         'name' => 'Lifetime',
                         'duration' => 'Forever',
@@ -1026,9 +1032,9 @@ class AutoTradeXLicenseController extends Controller
                         'features' => self::LIFETIME_FEATURES,
                         'exchanges' => self::EXCHANGES['lifetime'],
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/lifetime",
-                    ],
+                    ] + $inTpix('lifetime'),
                 ],
-            ],
+            ] + ($tpixRate !== null ? ['tpix' => $tpixRate] : []),
         ]);
     }
 

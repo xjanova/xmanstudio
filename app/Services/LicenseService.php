@@ -140,7 +140,12 @@ class LicenseService
 
                 $toGenerate = $item->quantity - $existingCount;
                 // 1 device per key, unless the product sells more (config/licenses.php devices_per_key — LocalVPN: 2)
-                $licenses = $this->generateLicenses($licenseType, $toGenerate, LicensePlans::devicesPerKey($item->product->slug), $item->product_id);
+                // An app checkout may sell more seats per key (Tping/SMS Checker lifetime: 3)
+                $devices = LicensePlans::devicesPerKey($item->product->slug);
+                if (isset($requirements['max_activations']) && is_int($requirements['max_activations'])) {
+                    $devices = max($devices, min(10, $requirements['max_activations']));
+                }
+                $licenses = $this->generateLicenses($licenseType, $toGenerate, $devices, $item->product_id);
 
                 foreach ($licenses as $license) {
                     LicenseKey::where('id', $license['id'])->update([

@@ -246,7 +246,7 @@ class TpixPriceService
     /**
      * The rate block an API payload carries next to its TPIX prices, or null while none are shown.
      *
-     * @return array{symbol:string, chain_id:int, price_thb:string, quote_rate_thb:string, price_usd:string, updated_at:string}|null
+     * @return array{symbol:string, chain_id:int, price_thb:string, quote_rate_thb:string, price_usd:string, updated_at:string, payments_enabled:bool}|null
      */
     public function apiRate(): ?array
     {
@@ -262,6 +262,9 @@ class TpixPriceService
             'quote_rate_thb' => $spot['quote_rate_thb'],
             'price_usd' => $spot['price_usd'],
             'updated_at' => Carbon::createFromTimestamp($spot['at'])->toIso8601String(),
+            // Prices can be shown before payments are switched on: an app offers "pay with TPIX"
+            // only when this is true (the purchase page then lists TPIX after login)
+            'payments_enabled' => $this->settings->acceptsPayments(),
         ];
     }
 

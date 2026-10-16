@@ -151,8 +151,14 @@ class OrderPaymentService
         $this->licenses->generateLicensesForOrder($order);
 
         // Bind machine_id from order metadata (for LocalVPN and similar products)
+        // Some checkouts (Tping, SMS Checker, AutoTradeX, AI credits) store metadata as a JSON string
         $metadata = $order->metadata ?? [];
-        $machineId = $metadata['machine_id'] ?? null;
+        if (is_string($metadata)) {
+            $metadata = json_decode($metadata, true);
+        }
+        $machineId = is_array($metadata) && is_string($metadata['machine_id'] ?? null) && $metadata['machine_id'] !== ''
+            ? $metadata['machine_id']
+            : null;
 
         if ($machineId) {
             $licenses = LicenseKey::where('order_id', $order->id)

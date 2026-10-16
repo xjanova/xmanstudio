@@ -26,6 +26,7 @@
         'explorerUrl' => rtrim(config('tpix_pay.explorer_url'), '/'),
         'csrf' => csrf_token(),
         'isOwner' => (int) $payment->user_id === (int) auth()->id(),
+        'metamaskLink' => $metamaskLink,
     ];
 @endphp
 
@@ -115,14 +116,23 @@
                 </div>
                 <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">ค่าแก๊สบน TPIX Chain เป็น 0 — ส่งยอดตามด้านบนได้เต็มจำนวน อย่าโอนจากเครือข่ายอื่น</p>
 
-                <template x-if="isOwner && (status === 'pending' || status === 'expired')">
+                {{-- Only while the quote can still be paid: a transfer to an expired quote waits for the admin --}}
+                <template x-if="isOwner && status === 'pending' && secondsLeft > 0">
                     <div class="mt-5">
-                        <button type="button" @click="payWithWallet()" :disabled="busy"
+                        <button type="button" x-show="hasWallet" @click="payWithWallet()" :disabled="busy"
                                 class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-lg hover:from-orange-600 hover:to-amber-600 transition disabled:opacity-60 disabled:cursor-wait">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                             <span x-text="busy ? 'กำลังเปิดกระเป๋า…' : 'จ่ายด้วย MetaMask'"></span>
                         </button>
-                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" x-show="!hasWallet">ไม่พบกระเป๋าในเบราว์เซอร์นี้ — สแกน QR ด้วยแอปกระเป๋าบนมือถือ หรือโอนเองแล้ววางเลขธุรกรรมด้านล่าง</p>
+                        {{-- No wallet in this browser (e.g. Chrome/Safari on a phone): open this page inside the MetaMask app --}}
+                        <div x-show="!hasWallet">
+                            <a :href="metamaskLink" rel="noopener"
+                               class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-lg hover:from-orange-600 hover:to-amber-600 transition">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                เปิดในแอป MetaMask
+                            </a>
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">ไม่พบกระเป๋าในเบราว์เซอร์นี้ — กดปุ่มด้านบนเพื่อเปิดหน้านี้ในแอป MetaMask บนมือถือ (เข้าสู่ระบบอีกครั้งในแอป) หรือสแกน QR ด้วยแอปกระเป๋า หรือโอนเองแล้ววางเลขธุรกรรมด้านล่าง</p>
+                        </div>
                     </div>
                 </template>
             </div>
@@ -147,7 +157,7 @@
         <div class="lg:col-span-2 space-y-6">
             {{-- QR (EIP-681) --}}
             @if($qrSvg)
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 text-center">
+                <div x-show="status === 'pending' && secondsLeft > 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 text-center">
                     <div class="inline-block rounded-xl bg-white p-3">{!! $qrSvg !!}</div>
                     <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">สแกนด้วยแอปกระเป๋าที่รองรับลิงก์ชำระ EIP-681 (เช่น MetaMask) — ที่อยู่ เครือข่าย และยอดจะถูกกรอกให้ ตรวจยอดอีกครั้งก่อนกดส่ง</p>
                 </div>
@@ -271,8 +281,8 @@ function tpixPay(cfg) {
         },
         async payWithWallet() {
             if (!window.ethereum) {
-                this.message = 'ไม่พบ MetaMask ในเบราว์เซอร์นี้';
-                this.messageOk = false;
+                // No injected wallet (a phone browser): continue inside the MetaMask app
+                window.location.href = this.metamaskLink;
                 return;
             }
             this.busy = true;
