@@ -23,10 +23,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 // Quality tiers. `dpr` caps the device pixel ratio, `bloomScale` is the bloom
 // buffer's size relative to the screen, `density` scales particle counts.
-// The glow is a wide blur, so its buffer can be a lot smaller than the screen
-// before anyone could tell.
+// Not lower for looks' sake: the bloom blurs a fixed number of texels, so a
+// smaller buffer spreads the glow wider on screen.
 export const TIERS = {
-    high: { dpr: 2, msaa: 4, bloom: true, bloomScale: 0.6, density: 1 },
+    high: { dpr: 2, msaa: 4, bloom: true, bloomScale: 0.8, density: 1 },
     mid: { dpr: 1.5, msaa: 0, bloom: true, bloomScale: 0.6, density: 0.7 },
     low: { dpr: 1.25, msaa: 0, bloom: false, bloomScale: 0.3, density: 0.45 },
 };
