@@ -95,10 +95,14 @@ class HubEngine {
     this.mouseS = new THREE.Vector2();
     this.scrollS = 0;
     this.fovKick = 0;
+    // Frame pacing (see pace()): vsync is the display's measured frame time in ms.
+    this.pacing = { vsync: 1000 / 60, lastRaw: 0, count: 0, active: performance.now(), idle: false };
 
     const small = Math.min(window.innerWidth, window.innerHeight) < 700;
     this.maxDpr = small ? 1.4 : 1.75;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, alpha: false, powerPreference: 'high-performance' });
+    // Near 2x pixels the edges are already smooth: MSAA there only costs bandwidth.
+    const aa = !small && (window.devicePixelRatio || 1) < 1.75;
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: aa, alpha: false, powerPreference: 'high-performance' });
     this.renderer.setClearColor(0x04050c, 1);
     const ext = this.renderer.extensions;
     this.texType = ext.has('EXT_color_buffer_float') || ext.has('EXT_color_buffer_half_float') ? THREE.HalfFloatType : THREE.UnsignedByteType;
@@ -882,6 +886,7 @@ class HubEngine {
   }
 
   pointer(x, y) {
+    this.wake();
     this.mouse.set(x, y);
     if (!this.motion) this.mouseS.copy(this.mouse);
   }
@@ -892,7 +897,13 @@ class HubEngine {
     if (on && this.running && !this.raf) this.raf = requestAnimationFrame(this.frame);
   }
 
+  /** Something moved: draw at the full pace for a while. */
+  wake() {
+    this.pacing.active = performance.now();
+  }
+
   invalidate() {
+    this.wake();
     this.needsRender = true;
     if (this.running && !this.raf) this.raf = requestAnimationFrame(this.frame);
   }
@@ -941,8 +952,33 @@ class HubEngine {
 
   /* ------------------------------------------------------------------ frame */
 
+  /**
+   * Pacing. A 120/144 Hz screen would otherwise get every vsync drawn — over
+   * twice the work of 60 Hz for motion nobody can tell apart — so draw on every
+   * nth vsync to land near 60; and once nothing has moved for a few seconds the
+   * slow drift that is left looks the same at ~30. Everything is time-based, so
+   * speeds stay as they are. Returns whether this vsync draws.
+   */
+  pace(ts, transition) {
+    const p = this.pacing;
+    const raw = ts - p.lastRaw;
+    p.lastRaw = ts;
+    if (raw > 2 && raw < 50) p.vsync = p.vsync * 0.95 + raw * 0.05;
+    if (transition || this.needsRender) p.active = ts;
+    p.idle = ts - p.active > 3500;
+    const every = Math.max(1, Math.floor(1000 / p.vsync / (p.idle ? 28 : 55)));
+    if (++p.count < every) return false;
+    p.count = 0;
+    return true;
+  }
+
   frame = (ts) => {
     this.raf = 0;
+    const transition = this.skyT < 1 || this.heroMix < 1 || this.screenMix < 1;
+    if (this.running && this.motion && !this.pace(ts, transition)) {
+      this.raf = requestAnimationFrame(this.frame);
+      return;
+    }
     this.timer.update(ts);
     const dt = Math.min(this.timer.getDelta(), 0.05);
     const animating = this.motion || this.skyT < 1 || this.heroMix < 1 || this.screenMix < 1;
@@ -950,7 +986,9 @@ class HubEngine {
       this.update(animating ? dt : 0);
       this.render();
       this.needsRender = false;
-      if (this.motion) this.adapt(dt, ts);
+      // Idle frames run at half pace on purpose: not a sign of a slow machine.
+      if (this.motion && !this.pacing.idle) this.adapt(dt, ts);
+      else this.perf.last = 0;
     }
     if (this.running && (this.motion || this.skyT < 1 || this.heroMix < 1 || this.screenMix < 1)) {
       this.raf = requestAnimationFrame(this.frame);
