@@ -141,6 +141,110 @@ jobs:
           echo "Security check failed after 4 attempts"
           exit 1
 
+  # Run every migration from scratch on servers configured the way production
+  # behaves. The tests job's stock MySQL 8.0 has explicit_defaults_for_timestamp
+  # ON, so a NOT NULL timestamp with no default passes there — production
+  # refused exactly that with "1067 Invalid default value" (v1.0.704, the
+  # two_factor_trusted_devices table). With the setting OFF, MySQL gives the
+  # column an implicit '0000-00-00' default, and the NO_ZERO_DATE that
+  # Laravel's 'strict' connection sets rejects it. MariaDB before 10.10 has it
+  # OFF by default. No services: block, because services cannot pass server
+  # flags to the container.
+  migrations-strict:
+    name: Migrations (${{ matrix.name }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: MySQL 8.0, explicit_defaults_for_timestamp OFF
+            connection: mysql
+            image: mysql:8.0
+            flags: --explicit-defaults-for-timestamp=OFF
+            env_prefix: MYSQL
+          - name: MariaDB 10.6
+            connection: mariadb
+            image: mariadb:10.6
+            flags: ''
+            env_prefix: MARIADB
+
+    env:
+      DB_CONNECTION: ${{ matrix.connection }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: testing
+      DB_USERNAME: root
+      DB_PASSWORD: password
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Start database server
+        run: |
+          docker run -d --name db -p 3306:3306 \
+            -e ${{ matrix.env_prefix }}_ROOT_PASSWORD=password \
+            -e ${{ matrix.env_prefix }}_DATABASE=testing \
+            ${{ matrix.image }} ${{ matrix.flags }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, bcmath, intl, gd, exif, iconv
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Laravel application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Wait for the database to be ready
+        run: |
+          for i in $(seq 1 45); do
+            if php -r 'new PDO("mysql:host=127.0.0.1;port=3306;dbname=testing", "root", "password");' 2>/dev/null; then
+              echo "Database is ready"
+              exit 0
+            fi
+            echo "Waiting for the database... ($i/45)"
+            sleep 2
+          done
+          echo "Database did not become ready in time"
+          docker logs db | tail -30
+          exit 1
+
+      - name: Show server settings
+        run: |
+          php -r '$p = new PDO("mysql:host=127.0.0.1;port=3306;dbname=testing", "root", "password");
+            foreach ($p->query("SELECT VERSION() v, @@explicit_defaults_for_timestamp e") as $r) {
+              echo "version={$r["v"]} explicit_defaults_for_timestamp={$r["e"]}\n";
+            }'
+
+      - name: Run all migrations
+        run: php artisan migrate --force
+
+      - name: Fail if any migration is still pending
+        run: |
+          php artisan migrate:status | tee /tmp/migrate-status.txt
+          if grep -q "Pending" /tmp/migrate-status.txt; then
+            echo "::error::Migrations still pending after migrate"
+            exit 1
+          fi
+
   build-check:
     name: Build Assets Check
     runs-on: ubuntu-latest
@@ -174,7 +278,7 @@ jobs:
   auto-release:
     name: Auto Release
     runs-on: ubuntu-latest
-    needs: [tests, code-quality, build-check]
+    needs: [tests, code-quality, migrations-strict, build-check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     # Prevent race conditions - only one release at a time
     concurrency:
