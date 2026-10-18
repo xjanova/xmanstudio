@@ -1098,6 +1098,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->name('two-factor.recovery-codes');
         Route::post('/two-factor/reset', [AdminTwoFactorController::class, 'reset'])
             ->middleware('throttle:10,1,admin-2fa-reset')->name('two-factor.reset');
+        Route::delete('/two-factor/devices', [AdminTwoFactorController::class, 'forgetAllDevices'])
+            ->name('two-factor.devices.forget-all');
+        Route::delete('/two-factor/devices/{device}', [AdminTwoFactorController::class, 'forgetDevice'])
+            ->name('two-factor.devices.forget');
     });
 
     // Redis Settings
