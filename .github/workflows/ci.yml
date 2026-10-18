@@ -159,18 +159,18 @@ jobs:
       matrix:
         include:
           - name: MySQL 8.0, explicit_defaults_for_timestamp OFF
-            connection: mysql
             image: mysql:8.0
             flags: --explicit-defaults-for-timestamp=OFF
             env_prefix: MYSQL
           - name: MariaDB 10.6
-            connection: mariadb
             image: mariadb:10.6
             flags: ''
             env_prefix: MARIADB
 
     env:
-      DB_CONNECTION: ${{ matrix.connection }}
+      # The 'mysql' connection on both servers: Laravel's 'mariadb' grammar
+      # emits a native uuid column type that only MariaDB 10.7+ understands.
+      DB_CONNECTION: mysql
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
       DB_DATABASE: testing
