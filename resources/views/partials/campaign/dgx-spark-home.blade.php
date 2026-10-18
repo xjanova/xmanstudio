@@ -25,6 +25,7 @@
             </span>
             <span class="dgxh__side">
                 <span class="dgxh__price">{{ $dgxhPrice }} <small>{{ $dgxhVat ? 'รวม VAT' : '+ VAT' }}</small></span>
+                <x-tpix-price variant="plain" :thb="\App\Support\DgxSparkCampaign::totals(\App\Support\DgxSparkCampaign::price())['total']" style="display:block;font-size:12px;color:#fbbf24;" />
                 <span class="dgxh__left">
                     @if($dgxhAvailability['remaining'] > 0)
                         เหลือ <b>{{ $dgxhAvailability['remaining'] }}</b> จาก {{ $dgxhAvailability['cap'] }} ชุด

@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
@@ -171,7 +172,7 @@ class AutoTradeXController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer',
+            'payment_method' => 'required|in:promptpay,bank_transfer' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:64',
         ]);
 
@@ -184,6 +185,12 @@ class AutoTradeXController extends Controller
 
         // Use discounted price if eligible
         $finalPrice = $planInfo['discounted_price'];
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $finalPrice)) {
+            return $refused;
+        }
         $originalPrice = $planInfo['original_price'];
         $discountAmount = $planInfo['discount_amount'];
 
@@ -227,6 +234,9 @@ class AutoTradeXController extends Controller
             'quantity' => 1,
             'price' => $finalPrice,
             'subtotal' => $finalPrice,
+            // The plan's term: without it LicenseService falls back to the product default (yearly)
+            // and a monthly or lifetime buyer would get a one-year key
+            'custom_requirements' => json_encode(['license_type' => $planInfo['license_type']]),
         ]);
 
         // Affiliate commission tracking
@@ -248,6 +258,11 @@ class AutoTradeXController extends Controller
             $this->markEarlyBirdUsed($machineId);
         }
 
+        // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            return TpixCheckout::redirectForOrder($order, route('autotradex.payment-success', $order->id));
+        }
+
         // Redirect to payment page
         return redirect()->route('autotradex.payment', [
             'order' => $order->id,
@@ -264,6 +279,11 @@ class AutoTradeXController extends Controller
         // Verify order belongs to current user or is guest
         if ($order->user_id && auth()->id() !== $order->user_id) {
             abort(403);
+        }
+
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
         }
 
         $metadata = json_decode($order->metadata ?? '{}', true);

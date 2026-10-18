@@ -41,6 +41,8 @@ class Product extends Model
         'short_description',
         'features',
         'price',
+        // An optional fixed TPIX price the admin set; empty = THB converted at the live rate
+        'price_tpix',
         'image',
         'images',
         'sku',
@@ -62,6 +64,7 @@ class Product extends Model
         'is_coming_soon' => 'boolean',
         'coming_soon_until' => 'datetime',
         'price' => 'decimal:2',
+        'price_tpix' => 'decimal:8',
     ];
 
     public function category(): BelongsTo

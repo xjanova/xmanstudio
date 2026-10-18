@@ -15,6 +15,7 @@ use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
@@ -195,13 +196,19 @@ class TpingController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer,wallet',
+            'payment_method' => 'required|in:promptpay,bank_transfer,wallet' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:64',
         ]);
 
         $machineId = $validated['machine_id'] ?? session('tping_machine_id');
         $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $planInfo['price'])) {
+            return $refused;
+        }
 
         // === Calculate price & discount ===
         $subtotal = $planInfo['price'];
@@ -271,6 +278,8 @@ class TpingController extends Controller
             'custom_requirements' => json_encode([
                 'license_type' => $planInfo['license_type'],
                 'duration_days' => $planInfo['duration_days'],
+                // Same seats as the wallet path: a lifetime key runs on 3 devices
+                'max_activations' => $planInfo['license_type'] === 'lifetime' ? 3 : 1,
             ]),
         ]);
 
@@ -315,6 +324,11 @@ class TpingController extends Controller
                 $affiliate, $order->total, $order->id, $order->user_id,
                 'tping', $order->id, "Tping {$planInfo['name']} License"
             );
+        }
+
+        // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            return TpixCheckout::redirectForOrder($order, route('tping.payment-success', $order->id));
         }
 
         return redirect()->route('tping.payment', [
@@ -425,6 +439,11 @@ class TpingController extends Controller
     {
         if ($order->user_id && auth()->id() !== $order->user_id) {
             abort(403);
+        }
+
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
         }
 
         $metadata = json_decode($order->metadata ?? '{}', true);

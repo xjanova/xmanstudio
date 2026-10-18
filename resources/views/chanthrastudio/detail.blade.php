@@ -287,6 +287,7 @@
                         @endif
                         <div class="font-mono text-xs tracking-widest mb-2" style="color: var(--gold);">{{ strtoupper($p['name']) }}</div>
                         <div class="font-display italic text-5xl mb-1" style="color: var(--text-1);">฿{{ number_format($p['price']) }}</div>
+                        <x-tpix-price variant="detail" :thb="$p['price'] ?? null" />
                         <div class="font-mono text-xs mb-6" style="color: var(--text-3);">
                             {{ $p['duration_days'] ? $p['duration_days'] . ' days' : 'one-time · perpetual' }}
                         </div>

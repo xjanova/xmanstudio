@@ -344,6 +344,7 @@
                                 <span class="text-5xl font-black text-white">฿{{ number_format($prices[$term]) }}</span>
                                 <span class="text-gray-300">{{ $plan['unit'] }}</span>
                             </div>
+                            <x-tpix-price variant="detail" :thb="$prices[$term]" class="-mt-4 mb-6" />
                             <ul class="space-y-2.5 text-gray-100 text-sm mb-8 flex-1">
                                 <li class="flex gap-3"><span class="atx-tick atx-tick-pro">✓</span><span>ทุกอย่างในรุ่นฟรี</span></li>
                                 <li class="flex gap-3"><span class="atx-tick atx-tick-pro">✓</span><span>ตัวจับขั้นสูงทั้งหมด + จับเครื่องที่ถูกเจาะ</span></li>

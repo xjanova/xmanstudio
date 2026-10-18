@@ -15,6 +15,7 @@ use App\Services\GithubReleaseService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
@@ -172,13 +173,19 @@ class SmsCheckerController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer,wallet',
+            'payment_method' => 'required|in:promptpay,bank_transfer,wallet' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:64',
         ]);
 
         $machineId = $validated['machine_id'] ?? session('smschecker_machine_id');
         $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $planInfo['price'])) {
+            return $refused;
+        }
 
         $subtotal = $planInfo['price'];
         $discount = 0;
@@ -244,6 +251,8 @@ class SmsCheckerController extends Controller
             'custom_requirements' => json_encode([
                 'license_type' => $planInfo['license_type'],
                 'duration_days' => $planInfo['duration_days'],
+                // Same seats as the wallet path: a lifetime key runs on 3 devices
+                'max_activations' => $planInfo['license_type'] === 'lifetime' ? 3 : 1,
             ]),
         ]);
 
@@ -280,6 +289,11 @@ class SmsCheckerController extends Controller
                 $affiliate, $order->total, $order->id, $order->user_id,
                 'smschecker', $order->id, "SmsChecker {$planInfo['name']} License"
             );
+        }
+
+        // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            return TpixCheckout::redirectForOrder($order, route('smschecker.payment-success', $order->id));
         }
 
         return redirect()->route('smschecker.payment', ['order' => $order->id]);
@@ -373,6 +387,11 @@ class SmsCheckerController extends Controller
     {
         if ($order->user_id && auth()->id() !== $order->user_id) {
             abort(403);
+        }
+
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
         }
 
         $metadata = json_decode($order->metadata ?? '{}', true);

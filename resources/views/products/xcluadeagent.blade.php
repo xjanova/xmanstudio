@@ -499,6 +499,7 @@
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">รายปี</h3>
                         <div class="text-4xl font-black text-white">฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'yearly')) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price($product->slug, 'yearly')" /></div>
                         <p class="text-gray-500 text-sm mt-1">365 วัน</p>
                     </div>
                     <ul class="space-y-3 mb-8 text-sm">
@@ -535,6 +536,7 @@
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">ตลอดชีพ</h3>
                         <div class="text-4xl font-black text-white">฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'lifetime')) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price($product->slug, 'lifetime')" /></div>
                         <p class="text-amber-400 text-sm mt-1">ไม่มีวันหมดอายุ</p>
                     </div>
                     <ul class="space-y-3 mb-8 text-sm">

@@ -486,6 +486,7 @@
                                                     {{ number_format($salePrice, 0) }}
                                                 </span>
                                                 <span class="text-sm text-gray-500 ml-1">฿</span>
+                                                <div><x-tpix-price :thb="$salePrice" /></div>
                                             </div>
 
                                             <a href="{{ route('service.detail', [$category->key, $option->key]) }}"

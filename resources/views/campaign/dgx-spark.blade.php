@@ -73,6 +73,7 @@
                     <div>
                         <span class="dgx-hero__amount">{{ $priceText }}</span>
                         <span class="dgx-hero__vat">{{ $vatIncluded ? 'รวม VAT แล้ว' : '+ VAT 7%' }}</span>
+                        <x-tpix-price variant="plain" :thb="$totals['total']" style="display:block;margin-top:4px;font-size:14px;color:#fbbf24;" />
                     </div>
                     <p class="dgx-hero__ref">
                         ราคาอ้างอิงตัวเครื่องที่ {{ $reference['store'] }} {{ $referenceText }} ณ {{ $referenceDateText }}
@@ -505,6 +506,7 @@
             <div class="dgx-price">
                 <p class="dgx-kicker">ราคา</p>
                 <h2 id="dgx-price-title" class="dgx-h2">{{ $priceText }} <small>{{ $vatIncluded ? 'รวม VAT 7% แล้ว' : '+ VAT 7%' }}</small></h2>
+                <p style="margin-top:4px;font-size:15px;color:#fbbf24;"><x-tpix-price variant="plain" :thb="$totals['total']" /></p>
 
                 <dl class="dgx-price__rows">
                     <div>
@@ -593,6 +595,7 @@
                         <div class="dgx-summary__row is-muted"><span>VAT 7%</span><span>฿{{ number_format($totals['tax'], 2) }}</span></div>
                     @endif
                     <div class="dgx-summary__row is-total"><span>ยอดชำระ</span><span>฿{{ number_format($totals['total'], 2) }}</span></div>
+                    <div class="dgx-summary__row is-muted"><span></span><span><x-tpix-price variant="plain" :thb="$totals['total']" /></span></div>
                 </div>
                 <p class="dgx-note">1 คำสั่งซื้อ = 1 ชุด · ต้องการหลายชุด สั่งชุดถัดไปได้หลังยืนยันยอดชุดแรก หรือ <a href="{{ route('contact.show') }}">ติดต่อเรา</a></p>
             </div>
@@ -812,7 +815,7 @@
                 <p class="dgx-eyebrow"><span class="dgx-dot" aria-hidden="true"></span>เหลือ {{ $remaining }} จาก {{ $cap }} ชุด</p>
                 <h2 id="dgx-closing-title" class="dgx-closing__title">ไอเทมแรร์แบบนี้ <span class="dgx-grad">ช้าไปอาจไม่ทันนะคะ</span></h2>
                 <p class="dgx-closing__quote">“สั่งจองไว้เลย ก่อน Nova แอบเก็บไว้เองสักเครื่อง ขอให้บิลด์ผ่านทุกรอบนะคะ”</p>
-                <p class="dgx-closing__price">{{ $priceText }} <small>{{ $vatIncluded ? 'รวม VAT แล้ว' : '+ VAT 7%' }} · DGX Spark + CluadeX + BrainX Cloud ตลอดชีพ</small></p>
+                <p class="dgx-closing__price">{{ $priceText }} <x-tpix-price variant="plain" :thb="$totals['total']" style="font-size:.5em;color:#fbbf24;" /> <small>{{ $vatIncluded ? 'รวม VAT แล้ว' : '+ VAT 7%' }} · DGX Spark + CluadeX + BrainX Cloud ตลอดชีพ</small></p>
                 <div class="dgx-hero__cta">
                     <a href="#order" class="dgx-btn dgx-btn--primary">
                         {{ $closedReason ? 'ดูสถานะการสั่งจอง' : 'สั่งจองชุดนี้' }}

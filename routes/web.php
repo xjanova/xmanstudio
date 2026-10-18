@@ -76,6 +76,8 @@ use App\Http\Controllers\Admin\TeamMemberController;
 use App\Http\Controllers\Admin\TelegramAlertController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowController;
+use App\Http\Controllers\Admin\TpixPaymentController as AdminTpixPaymentController;
+use App\Http\Controllers\Admin\TpixReportController as AdminTpixReportController;
 use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\TwoFactorController as AdminTwoFactorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -113,6 +115,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KycController;
 use App\Http\Controllers\LocalVpnWebController;
+use App\Http\Controllers\MacDockController;
 use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\OrderController;
@@ -130,6 +133,7 @@ use App\Http\Controllers\SmsCheckerController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TpingController;
+use App\Http\Controllers\TpixPayController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Http\Controllers\VpsController;
 use App\Http\Controllers\WinXToolsController;
@@ -426,6 +430,22 @@ Route::get('/anti-x/download/{version?}', [AntiXController::class, 'download'])
     ->middleware('throttle:30,1,anti-x-download')
     ->name('anti-x.download');
 
+// MacDock (Windows) - แอปฟรี zip เดียว · แอปอัปเดตตัวเองผ่าน URL นี้ (เฉพาะเครื่องที่มีไลเซ่นฟรี)
+// release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ ห้าม redirect ไป GitHub · ผูกกับ macdock ตายตัว ห้ามทำเป็น {slug}
+Route::get('/macdock/download/{version?}', [MacDockController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,macdock-download')
+    ->name('macdock.download');
+
+// ไลเซ่นฟรีของ MacDock: แอปเปิดหน้านี้พร้อม machine_id → ล็อกอิน/สมัคร → กดยืนยัน = คีย์ FREE ผูกกับบัญชี + เครื่อง
+Route::middleware('auth')->group(function () {
+    Route::get('/products/macdock/free-license', [MacDockController::class, 'showFreeLicense'])
+        ->name('macdock.free-license');
+    Route::post('/products/macdock/free-license', [MacDockController::class, 'claimFreeLicense'])
+        ->middleware('throttle:10,10,macdock-free-license')
+        ->name('macdock.free-license.store');
+});
+
 // Services
 Route::get('/services', [ProductController::class, 'services'])->name('services.index');
 Route::get('/services/{slug}', [ProductController::class, 'serviceDetail'])->name('services.show');
@@ -684,6 +704,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order}/payment-status', [OrderController::class, 'checkPaymentStatus'])->name('orders.payment-status');
     Route::post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('orders.confirm-payment');
     Route::get('/orders/{order}/download', [OrderController::class, 'download'])->name('orders.download');
+
+    // Pay with TPIX coin: the pay page, its status poll, "I paid with this tx", and a fresh quote
+    // for an order whose last one expired. Only the quote's owner may use them (TpixPayController).
+    Route::get('/pay/tpix/{tpixPayment}', [TpixPayController::class, 'show'])->name('tpix-pay.show');
+    Route::get('/pay/tpix/{tpixPayment}/status', [TpixPayController::class, 'status'])
+        ->middleware('throttle:40,1,tpix-pay-status')->name('tpix-pay.status');
+    Route::post('/pay/tpix/{tpixPayment}/tx', [TpixPayController::class, 'submit'])
+        ->middleware('throttle:10,1,tpix-pay-submit')->name('tpix-pay.submit');
+    Route::post('/orders/{order}/tpix', [TpixPayController::class, 'quoteOrder'])
+        ->middleware('throttle:10,1,tpix-pay-quote')->name('orders.tpix-quote');
     // ใบเสร็จรับเงิน PDF — เรนเดอร์กินซีพียู จำกัดอัตราไว้กันคนกดรัว
     Route::get('/orders/{order}/receipt', [ReceiptController::class, 'download'])
         ->middleware('throttle:20,1,order-receipt')->name('orders.receipt');
@@ -848,6 +878,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/topup/{topup}/status', [UserWalletController::class, 'topupStatus'])->name('topup-status');
         Route::get('/topup/{topup}/check-status', [UserWalletController::class, 'checkTopupStatus'])->name('check-topup-status');
         Route::post('/topup/{topup}/regenerate', [UserWalletController::class, 'regenerateUniqueAmount'])->name('regenerate-amount');
+        Route::post('/topup/{topup}/tpix', [TpixPayController::class, 'quoteTopup'])
+            ->middleware('throttle:10,1,tpix-pay-quote-topup')->name('tpix-quote');
         Route::get('/transactions', [UserWalletController::class, 'transactions'])->name('transactions');
         Route::delete('/topup/{topup}', [UserWalletController::class, 'cancelTopup'])->name('cancel-topup');
         Route::get('/bonus-preview', [UserWalletController::class, 'bonusPreview'])->name('bonus-preview');
@@ -1511,6 +1543,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/topups/{topup}/debug', [AdminWalletController::class, 'debugTopup'])->name('topups.debug');
         Route::get('/settings', [AdminWalletController::class, 'settings'])->name('settings');
         Route::put('/settings', [AdminWalletController::class, 'updateSettings'])->name('settings.update');
+    });
+
+    // TPIX payments: the switch + receive address, every quote, and re-check / accept-late / cancel
+    Route::prefix('tpix-payments')->name('tpix-payments.')->group(function () {
+        Route::get('/', [AdminTpixPaymentController::class, 'index'])->name('index');
+        Route::get('/reports', [AdminTpixReportController::class, 'index'])->name('reports');
+        Route::get('/reports/csv', [AdminTpixReportController::class, 'csv'])
+            ->middleware('throttle:10,1,admin-tpix-report-csv')->name('reports.csv');
+        Route::put('/settings', [AdminTpixPaymentController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/{tpixPayment}/recheck', [AdminTpixPaymentController::class, 'recheck'])
+            ->middleware('throttle:30,1,admin-tpix-recheck')->name('recheck');
+        Route::post('/{tpixPayment}/accept-late', [AdminTpixPaymentController::class, 'acceptLate'])->name('accept-late');
+        Route::post('/{tpixPayment}/approve-held', [AdminTpixPaymentController::class, 'approveHeld'])->name('approve-held');
+        Route::post('/{tpixPayment}/cancel', [AdminTpixPaymentController::class, 'cancel'])->name('cancel');
     });
 
     // User Management

@@ -688,6 +688,7 @@
                             <span class="text-5xl font-black text-white">฿{{ $proPrice }}</span>
                             <span class="text-gray-300"><x-bi th="/ ปี" en="year" /></span>
                         </div>
+                        <x-tpix-price variant="detail" :thb="$proYearly" class="-mt-4 mb-6" />
                         <ul class="space-y-2.5 text-gray-100 text-sm mb-8 flex-1">
                             @foreach(['Disk Speed Test', 'สแกนแบดบล็อก (Bad block scan)', 'Disk Space', 'Smart CPU + Efficiency mode ใน 1-Click', 'Windows Tricks', 'Network Monitor จำกัด/บล็อกรายแอป', 'Packet Monitor', 'Network Tools 16 ตัว', 'Free Proxy', 'Automation Rules'] as $item)
                                 <li class="flex gap-3"><span class="wxt-tick" style="background:linear-gradient(140deg,#ffcf3a,#ff8a1f);color:#1a1004">✓</span><span>{{ $item }}</span></li>

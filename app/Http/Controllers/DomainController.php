@@ -115,6 +115,8 @@ class DomainController extends Controller
             ->map(fn (DomainTld $t) => [
                 'tld' => $t->tld,
                 'price' => DomainPricing::format($t->registerPriceThb()),
+                // The raw THB number, for the TPIX price beside it (<x-tpix-price>)
+                'price_thb' => $t->registerPriceThb(),
                 // Beside every first-year price, what the years after it cost.
                 // Several registries price year one as a promotion and year two
                 // at several times that; a chip showing only the first number

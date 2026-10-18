@@ -103,9 +103,12 @@ class HomeProductsOnSaleTest extends TestCase
 
     public function test_a_card_shows_the_real_picture_else_the_product_hubs(): void
     {
-        $this->product('WinXTools', ['slug' => 'winx-tools', 'image' => 'products/real/winx-tools.webp']);
+        // Newest, so neither is pushed out of the nine by a product the migrations seed.
+        $this->product('WinXTools', ['slug' => 'winx-tools', 'image' => 'products/real/winx-tools.webp'])
+            ->forceFill(['created_at' => now()->addMinute()])->save();
         // No real picture yet: the one from product.xman4289.com.
-        $this->product('Tping', ['slug' => 'tping']);
+        $this->product('Tping', ['slug' => 'tping'])
+            ->forceFill(['created_at' => now()->addMinutes(2)])->save();
 
         $section = $this->productsSection();
 

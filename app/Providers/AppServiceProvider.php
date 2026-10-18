@@ -18,6 +18,8 @@ use App\Models\RentalPackage;
 use App\Models\Service;
 use App\Observers\AiCreditOrderObserver;
 use App\Services\AiChat\KnowledgeVersion;
+use App\Services\TpixPay\TpixPaySettings;
+use App\Services\TpixPay\TpixPriceService;
 use App\Support\ContactLinks;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
@@ -37,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // Bilingual (TH + EN) global helpers: bi(), bi_th(), bi_en().
         require_once app_path('helpers.php');
+
+        // TPIX prices render on many cards per page: the settings and the pool price are read once
+        // per request (scoped), not once per price tag.
+        $this->app->scoped(TpixPaySettings::class);
+        $this->app->scoped(TpixPriceService::class);
     }
 
     /**
