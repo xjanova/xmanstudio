@@ -114,7 +114,7 @@ class DecoyController extends Controller
                 $out .= '\\r';
             } elseif ($b === 10) {
                 $out .= '\\n';
-            } elseif ($b >= 0x20 && $b < 0x7f) {
+            } elseif ($b >= 0x20 && $b < 0x7F) {
                 $out .= $s[$i];
             } else {
                 $out .= '\\x' . sprintf('%02x', $b);

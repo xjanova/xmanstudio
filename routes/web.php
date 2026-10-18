@@ -104,6 +104,7 @@ use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\Customer\VpsController as CustomerVpsController;
 use App\Http\Controllers\CustomerPortalController;
+use App\Http\Controllers\DecoyController;
 use App\Http\Controllers\DgxSparkCampaignController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainOrderController;
@@ -147,6 +148,7 @@ use App\Support\Auth\LoginLog;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -1895,6 +1897,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 // and blocked here at once. Never add a real route (login / admin) to this list.
 // Disabled in config → the controller returns the normal 404, so these look dead.
 foreach ((array) config('decoy.paths', []) as $decoyPath) {
-    Route::match(['get', 'post'], $decoyPath, [\App\Http\Controllers\DecoyController::class, 'handle'])
-        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+    Route::match(['get', 'post'], $decoyPath, [DecoyController::class, 'handle'])
+        ->withoutMiddleware([VerifyCsrfToken::class]);
 }
