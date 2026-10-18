@@ -165,7 +165,10 @@ class VpnProxyController extends Controller
             foreach (self::VPNGATE_APIS as $apiUrl) {
                 try {
                     $response = Http::timeout(5)->connectTimeout(3)
-                        ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'])
+                        ->withHeaders([
+                            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            'Accept-Encoding' => 'gzip',
+                        ])
                         ->get($apiUrl);
 
                     if ($response->successful() && strlen($response->body()) > 100) {
