@@ -296,7 +296,8 @@ class WinXToolsDistributionTest extends TestCase
 
         // ไม่มี header ของต้นทางติดออกไป (ETag/x-ms-*/x-github-*) และไม่มีคำว่า github ที่ไหนเลย
         $this->assertNoTraceOfGithub($response);
-        $response->assertHeaderMissing('ETag');
+        // an ETag may go out (the release's sha256, for resuming with If-Range) but never the CDN's own
+        $this->assertNotSame('"0x8DCB7C0FFEE"', $response->headers->get('ETag'));
         $response->assertHeaderMissing('x-ms-request-id');
 
         // repo public: โหลดจากลิงก์ไฟล์ตรง ไม่ถาม API (preventStrayRequests กันไว้) ไม่มี token
