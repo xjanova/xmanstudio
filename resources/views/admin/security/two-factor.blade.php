@@ -29,8 +29,51 @@
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">เปิดใช้งานอยู่</span>
                 <span class="text-gray-600 dark:text-gray-300">รหัสสำรองที่ยังไม่ได้ใช้: <strong>{{ $remaining }}</strong> ชุด</span>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">ทุกครั้งที่เข้าหลังบ้านใน session ใหม่ ระบบจะถามรหัส 6 หลักจากแอป · ทำมือถือหาย ใช้รหัสสำรองแทนได้ชุดละครั้ง</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">ทุกครั้งที่เข้าหลังบ้านใน session ใหม่ ระบบจะถามรหัส 6 หลักจากแอป@if($trustDays > 0) (ยกเว้นเครื่องที่ติ๊ก "จดจำเครื่องนี้" ไว้ไม่เกิน {{ $trustDays }} วัน)@endif · ทำมือถือหาย ใช้รหัสสำรองแทนได้ชุดละครั้ง</p>
         </div>
+
+        @if($trustDays > 0)
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+                <div class="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                        <h3 class="font-semibold text-gray-900 dark:text-white">เครื่องที่จดจำไว้</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">เบราว์เซอร์เหล่านี้ไม่ต้องกรอกรหัส 6 หลัก (ยังต้องใช้รหัสผ่านตามปกติ) · ย้ายมือถือเครื่องใหม่ = ลืมทั้งหมดอัตโนมัติ</p>
+                    </div>
+                    @if($devices->isNotEmpty())
+                        <form method="POST" action="{{ route('admin.security.two-factor.devices.forget-all') }}"
+                              onsubmit="return confirm('ลืมเครื่องที่จดจำไว้ทั้งหมด? ทุกเครื่องรวมเครื่องนี้จะถูกถามรหัสอีกครั้ง')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="shrink-0 px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700">ลืมทุกเครื่อง</button>
+                        </form>
+                    @endif
+                </div>
+
+                @forelse($devices as $device)
+                    <div class="flex items-center justify-between gap-4 py-3 border-t border-gray-100 dark:border-gray-700">
+                        <div class="min-w-0">
+                            <div class="font-medium text-gray-900 dark:text-white">
+                                {{ $device->label ?: 'เบราว์เซอร์' }}
+                                @if($device->id === $currentDeviceId)
+                                    <span class="ml-2 inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">เครื่องนี้</span>
+                                @endif
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                ใช้ล่าสุด {{ $device->last_used_at?->diffForHumans() ?? '—' }} · IP {{ $device->ip ?? '—' }} · หมดอายุ {{ $device->expires_at->format('d/m/Y') }}
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ route('admin.security.two-factor.devices.forget', $device) }}"
+                              onsubmit="return confirm('ถอนเครื่องนี้? ครั้งหน้าเบราว์เซอร์นี้จะถูกถามรหัสอีก')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="shrink-0 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">ถอน</button>
+                        </form>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700 pt-3">ยังไม่มี — ติ๊ก "จดจำเครื่องนี้" ตอนกรอกรหัส 6 หลักครั้งถัดไป</p>
+                @endforelse
+            </div>
+        @endif
 
         @if($freshCodes)
             <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">

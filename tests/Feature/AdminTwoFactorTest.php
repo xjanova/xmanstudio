@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\LoginAttempt;
+use App\Models\TwoFactorTrustedDevice;
 use App\Models\User;
 use App\Support\Auth\Totp;
 use App\Support\Auth\TwoFactor;
@@ -227,7 +228,126 @@ class AdminTwoFactorTest extends TestCase
         $this->actingAs($enrolled)->get('/admin/users')->assertRedirect(route('two-factor.challenge'));
     }
 
+    // ────────────────────────────────────────────── remembered browsers
+
+    public function test_a_remembered_browser_skips_the_code_in_a_new_session(): void
+    {
+        [$admin, $secret] = $this->enrolledAdmin();
+        $cookie = $this->passWithRemember($admin, $secret);
+
+        $this->flushSession();
+        $this->actingAs($admin)->withCookie(TwoFactor::TRUST_COOKIE, $cookie)
+            ->get('/admin/users')->assertOk();
+
+        $this->assertSame('2fa-device', LoginAttempt::latest('id')->firstOrFail()->method);
+        $this->assertNotNull(TwoFactorTrustedDevice::firstOrFail()->last_used_at);
+    }
+
+    public function test_without_the_tick_a_new_session_is_asked_again(): void
+    {
+        [$admin, $secret] = $this->enrolledAdmin();
+
+        $this->actingAs($admin)->get('/admin/users');
+        $this->post(route('two-factor.verify'), ['code' => $this->codeFor($secret)])
+            ->assertCookieMissing(TwoFactor::TRUST_COOKIE);
+
+        $this->assertSame(0, TwoFactorTrustedDevice::count());
+
+        $this->flushSession();
+        $this->actingAs($admin)->get('/admin/users')->assertRedirect(route('two-factor.challenge'));
+    }
+
+    public function test_a_cookie_that_is_forged_expired_or_someone_elses_is_ignored(): void
+    {
+        [$admin, $secret] = $this->enrolledAdmin();
+        [$other] = $this->enrolledAdmin();
+        $cookie = $this->passWithRemember($admin, $secret);
+        [$id] = explode('|', $cookie);
+
+        $tries = [
+            'someone else' => [$other, $cookie],
+            'wrong token' => [$admin, $id . '|' . str_repeat('a', 64)],
+            'garbage' => [$admin, 'not-a-cookie'],
+        ];
+
+        foreach ($tries as $label => [$user, $value]) {
+            $this->flushSession();
+            $this->actingAs($user)->withCookie(TwoFactor::TRUST_COOKIE, $value)
+                ->get('/admin/users')->assertRedirect(route('two-factor.challenge'), $label);
+        }
+
+        TwoFactorTrustedDevice::query()->update(['expires_at' => now()->subMinute()]);
+        $this->flushSession();
+        $this->actingAs($admin)->withCookie(TwoFactor::TRUST_COOKIE, $cookie)
+            ->get('/admin/users')->assertRedirect(route('two-factor.challenge'));
+    }
+
+    public function test_a_new_authenticator_retires_every_remembered_browser(): void
+    {
+        [$admin, $secret] = $this->enrolledAdmin();
+        $cookie = $this->passWithRemember($admin, $secret);
+
+        // Even a row that survived (the secret was swapped some other way) no longer matches.
+        $admin->forceFill(['two_factor_secret' => Totp::generateSecret()])->save();
+        $this->flushSession();
+        $this->actingAs($admin)->withCookie(TwoFactor::TRUST_COOKIE, $cookie)
+            ->get('/admin/users')->assertRedirect(route('two-factor.challenge'));
+
+        $this->artisan('security:2fa-reset', ['email' => $admin->email, '--force' => true])->assertSuccessful();
+        $this->assertSame(0, TwoFactorTrustedDevice::count());
+    }
+
+    public function test_the_owner_can_forget_one_browser_or_all_but_not_another_admins(): void
+    {
+        [$admin, $secret] = $this->enrolledAdmin();
+        [$other, $otherSecret] = $this->enrolledAdmin();
+        $this->passWithRemember($other, $otherSecret);
+        $this->flushSession();
+        $cookie = $this->passWithRemember($admin, $secret);
+        [$id] = explode('|', $cookie);
+        $othersDevice = TwoFactorTrustedDevice::where('user_id', $other->id)->firstOrFail();
+
+        $this->get(route('admin.security.two-factor.show'))->assertOk()->assertSee('เครื่องที่จดจำไว้');
+
+        $this->delete(route('admin.security.two-factor.devices.forget', $othersDevice))->assertNotFound();
+        $this->assertModelExists($othersDevice);
+
+        $this->delete(route('admin.security.two-factor.devices.forget', (int) $id))
+            ->assertRedirect(route('admin.security.two-factor.show'));
+        $this->assertSame(0, TwoFactorTrustedDevice::where('user_id', $admin->id)->count());
+
+        TwoFactor::trustDevice(request(), $admin);
+        TwoFactor::trustDevice(request(), $admin);
+        $this->delete(route('admin.security.two-factor.devices.forget-all'));
+        $this->assertSame(0, TwoFactorTrustedDevice::where('user_id', $admin->id)->count());
+        $this->assertSame(1, TwoFactorTrustedDevice::count(), 'the other admin keeps theirs');
+    }
+
+    public function test_trust_days_zero_hides_the_option(): void
+    {
+        config(['security.two_factor.trust_days' => 0]);
+        [$admin, $secret] = $this->enrolledAdmin();
+
+        $this->actingAs($admin)->get(route('two-factor.challenge'))->assertDontSee('remember_device');
+        $this->post(route('two-factor.verify'), ['code' => $this->codeFor($secret), 'remember_device' => '1'])
+            ->assertCookieMissing(TwoFactor::TRUST_COOKIE);
+        $this->assertSame(0, TwoFactorTrustedDevice::count());
+    }
+
     // ────────────────────────────────────────────── helpers
+
+    /** Pass the second step with "remember this device" ticked; returns the cookie value. */
+    private function passWithRemember(User $admin, string $secret): string
+    {
+        Cache::forget('two_factor.last_step.' . $admin->id);
+
+        $this->actingAs($admin)->get(route('two-factor.challenge'))->assertSee('remember_device');
+
+        $response = $this->post(route('two-factor.verify'), ['code' => $this->codeFor($secret), 'remember_device' => '1'])
+            ->assertCookie(TwoFactor::TRUST_COOKIE);
+
+        return (string) $response->getCookie(TwoFactor::TRUST_COOKIE)->getValue();
+    }
 
     private function admin(): User
     {
