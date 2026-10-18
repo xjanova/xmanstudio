@@ -1887,3 +1887,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/nodes/{id}/resync', [GpuxMineController::class, 'resync'])->whereNumber('id')->name('resync');
     });
 });
+
+// ── Honeypot decoy logins (config/decoy.php) ─────────────────────────────────
+// Paths real visitors never reach — the WordPress / phpMyAdmin / Joomla URLs that
+// only automated scanners probe for. Any hit is a bot looking for a CMS we do not
+// run: it is logged as evidence (Anti X tails it and bans the address everywhere)
+// and blocked here at once. Never add a real route (login / admin) to this list.
+// Disabled in config → the controller returns the normal 404, so these look dead.
+foreach ((array) config('decoy.paths', []) as $decoyPath) {
+    Route::match(['get', 'post'], $decoyPath, [\App\Http\Controllers\DecoyController::class, 'handle'])
+        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+}
