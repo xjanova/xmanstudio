@@ -23,7 +23,9 @@ return new class extends Migration
             $table->string('label', 120)->nullable();
             $table->string('ip', 45)->nullable();
             $table->timestamp('last_used_at')->nullable();
-            $table->timestamp('expires_at');
+            // dateTime, not timestamp: a NOT NULL timestamp with no default is refused by
+            // production MySQL ("Invalid default value") — SQLite in the tests never notices.
+            $table->dateTime('expires_at');
             $table->timestamps();
 
             $table->index(['user_id', 'expires_at']);
