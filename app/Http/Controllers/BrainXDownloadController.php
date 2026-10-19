@@ -24,16 +24,20 @@ use Illuminate\Support\Facades\Log;
  */
 class BrainXDownloadController extends Controller
 {
+    /** What a visitor turned away during Coming Soon reads — and how a current user gets the file anyway. */
+    public const COMING_SOON_EXISTING_USERS = 'BrainX ยังเป็น Coming Soon — ยังไม่เปิดให้ดาวน์โหลดสำหรับผู้ใช้ใหม่ · ผู้ใช้เดิม: เข้าสู่ระบบด้วยบัญชีที่มีคีย์ BrainX แล้วดาวน์โหลดได้';
+
     public function download(Request $request, BrainXInstaller $installer)
     {
-        // BrainX set to Coming Soon in the admin: no installer for anyone — free or not — until the
-        // owner changes it (2026-10-12). Production's row is `brainx-cloud`, so both are checked.
-        // The update feed (BrainXUpdateController) is for apps already installed and stays as it is:
-        // the owner closed new downloads only.
-        if ($row = Product::brainxComingSoonRow()) {
+        // BrainX set to Coming Soon in the admin closes the installer to NEW people (2026-10-12).
+        // Someone who already uses it — an account holding a BrainX key, or an admin — still gets
+        // it, to reinstall or set up another PC (owner, 2026-10-19). Production's row is
+        // `brainx-cloud`, so both slugs are checked. The update feed (BrainXUpdateController) is
+        // only reached by apps already installed and is never closed.
+        if (($row = Product::brainxComingSoonRow()) && ! Product::isExistingBrainxUser($request->user())) {
             return $request->wantsJson()
                 ? response()->json(['success' => false, 'error' => 'Coming soon: this product is not available for download yet', 'coming_soon' => true], 403)
-                : redirect()->route('products.show', $row->slug)->with('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
+                : redirect()->route('products.show', $row->slug)->with('error', self::COMING_SOON_EXISTING_USERS);
         }
 
         $file = $installer->latest();

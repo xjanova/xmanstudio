@@ -308,6 +308,17 @@
                 @endif
                 @endif
 
+                @if($license->product && in_array($license->product->slug, \App\Models\Product::BRAINX_SLUGS, true))
+                {{-- The holder of a BrainX key gets the installer even while BrainX is Coming Soon (owner, 2026-10-19) --}}
+                <a href="{{ route('brainx.download') }}" rel="nofollow"
+                   class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl hover:from-violet-700 hover:to-indigo-700 font-semibold shadow-lg transition-all">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <x-bi th="ดาวน์โหลด BrainX สำหรับ Windows" en="Download BrainX for Windows" class="text-white" />
+                </a>
+                @endif
+
                 <a href="{{ route('customer.downloads') }}"
                    class="w-full flex items-center justify-center px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-all">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
