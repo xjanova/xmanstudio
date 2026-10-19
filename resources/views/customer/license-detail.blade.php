@@ -122,10 +122,15 @@
                         </p>
                     </div>
 
-                    @if(($cloudGb = \App\Support\CloudStorage::totalGb($license)) !== null)
+                    @if($cloudStorage ?? null)
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
                         <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">Cloud space · พื้นที่คลาวด์</label>
-                        <p class="text-gray-900 dark:text-white font-medium">{{ $cloudGb }} GB</p>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ $cloudStorage['total'] }} GB</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" data-cloud-breakdown>
+                            <x-bi th="แพ็กเกจ" en="Plan" /> {{ $cloudStorage['base'] }} GB
+                            @if($cloudStorage['purchased'] > 0) + <x-bi th="ซื้อเพิ่ม" en="add-ons" /> {{ $cloudStorage['purchased'] }} GB @endif
+                            @if($cloudStorage['bonus'] > 0) + <x-bi th="จากทีมงาน" en="from our team" /> {{ $cloudStorage['bonus'] }} GB @endif
+                        </p>
                     </div>
                     @endif
                 </div>
@@ -257,6 +262,35 @@
                 <p class="text-xs text-center text-gray-500 dark:text-gray-400">
                     <x-bi th="ใช้คีย์เดิม เวลาบวกต่อจากวันหมดอายุ" en="Same key, time adds on from its expiry" />
                 </p>
+                @endif
+
+                @if(! empty($cloudStorage['packs']))
+                {{-- Cloud space packs for THIS key (config/licenses.php → cloud_storage). Paid once, the
+                     space stays with the key through every renewal. The price comes from the cart. --}}
+                <div class="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 p-4" data-cloud-packs>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                        <x-bi th="เพิ่มพื้นที่คลาวด์" en="Add cloud space" />
+                    </p>
+                    <div class="grid grid-cols-3 gap-2">
+                        @foreach($cloudStorage['packs'] as $gb => $price)
+                        <form action="{{ route('cart.add', $cloudStorage['addonProduct']) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="storage_gb" value="{{ $gb }}">
+                            <input type="hidden" name="license" value="{{ $license->id }}">
+                            <input type="hidden" name="buy_now" value="1">
+                            <button type="submit"
+                                    class="w-full px-2 py-2 rounded-lg bg-white dark:bg-gray-800 border border-sky-300 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-900/40 text-center transition">
+                                <span class="block font-bold text-sky-700 dark:text-sky-300">+{{ $gb }} GB</span>
+                                <span class="block text-xs text-gray-600 dark:text-gray-300">฿{{ number_format($price) }}</span>
+                            </button>
+                        </form>
+                        @endforeach
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                        <x-bi th="จ่ายครั้งเดียว พื้นที่อยู่กับคีย์นี้ตลอด ต่ออายุกี่ครั้งก็ยังอยู่" en="Paid once — the space stays with this key through every renewal" />
+                    </p>
+                </div>
                 @endif
 
                 @if($license->product && $license->product->slug === 'autotradex')

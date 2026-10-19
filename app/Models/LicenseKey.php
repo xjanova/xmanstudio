@@ -101,6 +101,12 @@ class LicenseKey extends Model
         return $this->hasMany(LicenseRenewal::class);
     }
 
+    /** Cloud space packs the customer bought for this key (App\Support\CloudStorage). */
+    public function storageAddons(): HasMany
+    {
+        return $this->hasMany(LicenseStorageAddon::class);
+    }
+
     /**
      * The keys an order delivered: the ones it issued, and the ones it renewed.
      *

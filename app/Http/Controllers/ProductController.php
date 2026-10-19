@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\Service;
 use App\Services\LicenseService;
+use App\Support\CloudStorage;
 use App\Support\DgxSparkCampaign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -103,6 +104,12 @@ class ProductController extends Controller
         // place it is described and sold.
         if ($slug === DgxSparkCampaign::config('product_slug')) {
             return redirect()->route('campaign.dgx-spark');
+        }
+
+        // A cloud space pack is bought for one key, so it is sold from the customer's license
+        // page, where the key is — the login page first for a guest.
+        if (in_array($slug, CloudStorage::addonProductSlugs(), true)) {
+            return redirect()->route('customer.licenses');
         }
 
         $product = Product::where('slug', $slug)

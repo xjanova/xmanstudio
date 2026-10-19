@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ProjectOrder;
 use App\Models\RentalInvoice;
 use App\Models\RentalPayment;
 use App\Models\SupportTicket;
 use App\Models\UserRental;
 use App\Services\LicenseService;
+use App\Support\CloudStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -162,7 +164,31 @@ class CustomerPortalController extends Controller
                 ->renewalTargetFor(Auth::id(), $license->product, $license->id)
                 ?->is($license);
 
-        return view('customer.license-detail', compact('license', 'canRenew'));
+        // A cloud product (BrainX Cloud): the space this key carries, part by part, and the packs
+        // the customer can buy for it — only those that still fit under max_extra_gb, and none
+        // for a revoked key (the cart refuses those anyway)
+        $cloudStorage = null;
+        $slug = $license->product?->slug;
+        if (CloudStorage::offers($slug)) {
+            $addonProduct = ($addonSlug = CloudStorage::addonProductSlug($slug))
+                ? Product::where('slug', $addonSlug)->where('is_active', true)->first()
+                : null;
+            $room = CloudStorage::roomLeftGb($license);
+            $canBuy = $addonProduct && in_array($license->status, [LicenseKey::STATUS_ACTIVE, LicenseKey::STATUS_EXPIRED], true);
+
+            $cloudStorage = [
+                'base' => CloudStorage::baseGb($slug),
+                'purchased' => CloudStorage::purchasedGb($license),
+                'bonus' => max(0, (int) $license->extra_storage_gb),
+                'total' => CloudStorage::totalGb($license),
+                'addonProduct' => $addonProduct,
+                'packs' => $canBuy
+                    ? array_filter(CloudStorage::addons($slug), fn ($price, $gb) => $gb <= $room, ARRAY_FILTER_USE_BOTH)
+                    : [],
+            ];
+        }
+
+        return view('customer.license-detail', compact('license', 'canRenew', 'cloudStorage'));
     }
 
     /**

@@ -78,6 +78,10 @@
                                         <span class="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
                                             {{ ucfirst($reqs['license_type']) }}
                                         </span>
+                                    @elseif($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements))
+                                        <span class="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300">
+                                            +{{ $storagePack }} GB <x-bi th="พื้นที่คลาวด์" en="cloud space" />
+                                        </span>
                                     @endif
                                 @endif
                             </div>

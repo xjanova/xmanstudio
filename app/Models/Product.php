@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CloudStorage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -255,7 +256,10 @@ class Product extends Model
             $sub->select('id')
                 ->from('categories')
                 ->whereIn('slug', Category::APP_ONLY_SLUGS);
-        });
+        })
+            // A cloud space pack is bought from the customer's own license page, for one key
+            // (config/licenses.php → cloud_storage) — it means nothing on its own in a listing
+            ->whereNotIn('slug', CloudStorage::addonProductSlugs());
     }
 
     /**

@@ -92,8 +92,21 @@ return [
     | cloud_storage_bytes and the product's server enforces it
     | (App\Support\CloudStorage). A product missing here has no cloud space.
     |
+    | addons are the packs the customer buys for one of their own keys from
+    | its license page — GB => price in THB, paid once. The space stays with
+    | the key for as long as the key lives, renewals included (owner,
+    | 2026-10-19). They are sold through the cart as product addon_product
+    | (created by a migration, never listed in the store); what was bought and
+    | what the admin added together stay within max_extra_gb.
+    |
     */
     'cloud_storage' => [
-        'brainx' => ['base_gb' => 4, 'max_extra_gb' => 1024],
+        'brainx' => [
+            'base_gb' => 4,
+            'max_extra_gb' => 1024,
+            'addon_product' => 'brainx-cloud-storage',
+            // owner 2026-10-19
+            'addons' => [4 => 99, 12 => 249, 28 => 499],
+        ],
     ],
 ];

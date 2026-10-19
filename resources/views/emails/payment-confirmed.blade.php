@@ -57,7 +57,7 @@
         <tbody>
             @foreach($order->items as $item)
             <tr>
-                <td>{{ $item->product->name ?? $item->product_name }}</td>
+                <td>{{ $item->product->name ?? $item->product_name }}@if($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements)) (+{{ $storagePack }} GB)@endif</td>
                 <td style="text-align: center;">{{ $item->quantity }}</td>
                 {{-- subtotal: order_items has no `total` column, which printed ฿0.00 on every line --}}
                 <td style="text-align: right;">฿{{ number_format($item->subtotal, 2) }}</td>

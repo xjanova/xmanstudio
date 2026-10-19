@@ -183,7 +183,7 @@
                             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
                                 <div class="flex-1">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $item->product->name }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">x {{ $item->quantity }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">@if($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements))+{{ $storagePack }} GB @endif x {{ $item->quantity }}</p>
                                 </div>
                                 <span class="text-sm font-semibold text-gray-900 dark:text-white">฿{{ number_format($item->price * $item->quantity, 2) }}</span>
                             </div>

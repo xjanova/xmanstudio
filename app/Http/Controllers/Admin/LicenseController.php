@@ -361,8 +361,12 @@ class LicenseController extends Controller
             abort(404);
         }
 
+        // Packs the customer bought stay theirs: the admin sets only their own extra, and the
+        // two together stay within max_extra_gb
+        $purchased = CloudStorage::purchasedGb($license);
+
         $validated = $request->validate([
-            'extra_storage_gb' => 'required|integer|min:0|max:' . CloudStorage::maxExtraGb($slug),
+            'extra_storage_gb' => 'required|integer|min:0|max:' . max(0, CloudStorage::maxExtraGb($slug) - $purchased),
         ]);
 
         $before = (int) $license->extra_storage_gb;
@@ -372,7 +376,7 @@ class LicenseController extends Controller
         }
 
         $license->update(['extra_storage_gb' => $after]);
-        $base = CloudStorage::baseGb($slug);
+        $base = CloudStorage::baseGb($slug) + $purchased;
 
         LicenseActivity::log(
             $license,
@@ -381,7 +385,13 @@ class LicenseController extends Controller
             auth()->id(),
             null,
             'พื้นที่คลาวด์ ' . ($base + $before) . ' GB → ' . ($base + $after) . ' GB',
-            ['base_gb' => $base, 'previous_extra_gb' => $before, 'extra_gb' => $after, 'total_gb' => $base + $after]
+            [
+                'base_gb' => CloudStorage::baseGb($slug),
+                'purchased_gb' => $purchased,
+                'previous_extra_gb' => $before,
+                'extra_gb' => $after,
+                'total_gb' => $base + $after,
+            ]
         );
 
         return redirect()
