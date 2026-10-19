@@ -215,6 +215,27 @@ class Product extends Model
         return static::whereIn('slug', self::BRAINX_SLUGS)->get()->first(fn (self $product) => $product->isComingSoon());
     }
 
+    /**
+     * Someone who already uses BrainX: an admin, or an account holding a key of any BrainX row (any
+     * status — a lapsed key is still a user coming back). While BrainX is Coming Soon these people
+     * still get the installer; everyone else waits (owner, 2026-10-19: "ปิด coming soon ก็ต้อง
+     * download ได้สำหรับคนที่ใช้อยู่ก่อนแล้ว").
+     */
+    public static function isExistingBrainxUser(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return LicenseKey::where('user_id', $user->id)
+            ->whereHas('product', fn ($q) => $q->whereIn('slug', self::BRAINX_SLUGS))
+            ->exists();
+    }
+
     /** The product with this slug exists and is still coming soon (for downloads tied to a slug, not a row). */
     public static function slugIsComingSoon(string $slug): bool
     {

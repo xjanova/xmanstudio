@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\DownloadUnavailableException;
-use App\Models\Product;
 use App\Services\BrainXUpdateFeed;
 use App\Services\ReleaseDownloadStreamer;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +17,10 @@ use Symfony\Component\HttpFoundation\Response;
  *   GET /brainx/download/releases.win.json.sig  the CI's signature over those exact bytes, byte for byte
  *   GET /brainx/download/{file}                 a package the feed lists, streamed through this server
  *
+ * Coming Soon never closes these: only an app that is already installed asks for them, and the owner
+ * wants people who already use BrainX to keep getting updates while it is closed to new people
+ * (2026-10-19 — replaces "no update for anyone" of 2026-10-12). The installer has its own rule.
+ *
  * Every answer here is for the app, not a person, so failures are JSON. GET /brainx/download itself
  * (the installer, BrainXDownloadController) is a different route and keeps its own throttle.
  */
@@ -27,10 +30,6 @@ class BrainXUpdateController extends Controller
 
     public function feed(): Response
     {
-        if ($closed = $this->comingSoon()) {
-            return $closed;
-        }
-
         $pair = $this->feed->current();
 
         if ($pair === null) {
@@ -42,10 +41,6 @@ class BrainXUpdateController extends Controller
 
     public function signature(): Response
     {
-        if ($closed = $this->comingSoon()) {
-            return $closed;
-        }
-
         $pair = $this->feed->current();
 
         if ($pair === null) {
@@ -57,10 +52,6 @@ class BrainXUpdateController extends Controller
 
     public function package(Request $request, ReleaseDownloadStreamer $streamer, string $file): Response
     {
-        if ($closed = $this->comingSoon()) {
-            return $closed;
-        }
-
         $pair = $this->feed->current();
 
         if ($pair === null) {
@@ -97,14 +88,6 @@ class BrainXUpdateController extends Controller
             'Cache-Control' => 'no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);
-    }
-
-    /** BrainX set to Coming Soon in the admin: no update for anyone (owner, 2026-10-12). */
-    private function comingSoon(): ?JsonResponse
-    {
-        return Product::slugIsComingSoon('brainx')
-            ? $this->fail(403, 'Coming soon: this product is not available for download yet')
-            : null;
     }
 
     private function unavailable(): JsonResponse

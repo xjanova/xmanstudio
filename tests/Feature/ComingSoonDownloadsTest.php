@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Exceptions\DownloadUnavailableException;
+use App\Http\Controllers\BrainXDownloadController;
 use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\DownloadLog;
@@ -28,7 +29,9 @@ use Tests\TestCase;
  *   — /download/{slug}, /download/{slug}/{version}, POST /api/download/{slug} refuse
  *   — each app's own download route (here WinXTools) refuses, as JSON for the app
  *   — the version / update APIs hand out no link and no update
- *   — the BrainX installer and its update feed refuse once BrainX is set to Coming Soon
+ *   — the BrainX installer refuses NEW people once BrainX is set to Coming Soon, while someone who
+ *     already uses BrainX (a key holder, an admin) still gets it, and the update feed of apps
+ *     already installed never closes (owner, 2026-10-19)
  *   — ReleaseDownloadStreamer, which every file passes through, refuses on its own
  *   — the product page and the customer's Download Center show the label instead of a button
  *   — once coming_soon_until has passed, everything opens again without anyone touching it
@@ -124,15 +127,86 @@ class ComingSoonDownloadsTest extends TestCase
         }
     }
 
-    public function test_brainx_set_to_coming_soon_stops_its_installer_and_update_feed(): void
+    public function test_brainx_set_to_coming_soon_turns_new_people_away_from_its_installer(): void
     {
         Product::where('slug', 'brainx')->firstOrFail()->update(['is_coming_soon' => true]);
 
-        $this->get('/brainx/download')->assertRedirect(route('products.show', 'brainx'));
+        $this->get('/brainx/download')->assertRedirect(route('products.show', 'brainx'))
+            ->assertSessionHas('error', BrainXDownloadController::COMING_SOON_EXISTING_USERS);
         $this->getJson('/brainx/download')->assertForbidden()->assertJsonPath('coming_soon', true);
-        $this->get('/brainx/download/releases.win.json')->assertForbidden();
-        $this->get('/brainx/download/releases.win.json.sig')->assertForbidden();
-        $this->get('/brainx/download/BrainX-1.0.0-full.nupkg')->assertForbidden();
+
+        // Signed in, but never used BrainX (no key of it — a key of another app does not count)
+        $stranger = User::factory()->create();
+        LicenseKey::create([
+            'product_id' => $this->product('winx-tools', comingSoon: false)->id, 'user_id' => $stranger->id,
+            'license_key' => LicenseKey::generateKey(), 'license_type' => 'yearly', 'status' => 'active', 'expires_at' => now()->addYear(),
+        ]);
+        $this->actingAs($stranger)->getJson('/brainx/download')->assertForbidden()->assertJsonPath('coming_soon', true);
+    }
+
+    public function test_someone_who_already_uses_brainx_still_gets_the_installer_while_it_is_coming_soon(): void
+    {
+        $brainx = Product::where('slug', 'brainx')->firstOrFail();
+        $brainx->update(['is_coming_soon' => true]);
+        // The installer is fetched from the release only once the gate let the request through
+        Http::fake(['*' => Http::response('', 500)]);
+
+        $user = User::factory()->create();
+        LicenseKey::create([
+            'product_id' => $brainx->id, 'user_id' => $user->id, 'license_key' => LicenseKey::generateKey(),
+            // a lapsed key is still someone coming back
+            'license_type' => 'monthly', 'status' => 'expired', 'expires_at' => now()->subMonth(),
+        ]);
+
+        $this->actingAs($user)->getJson('/brainx/download')
+            ->assertStatus(503)                       // past the gate: the (faked) release is what failed
+            ->assertJsonMissingPath('coming_soon');
+
+        $admin = User::where('role', 'admin')->firstOrFail();
+        $this->actingAs($admin)->getJson('/brainx/download')->assertStatus(503)->assertJsonMissingPath('coming_soon');
+    }
+
+    public function test_a_key_holder_of_brainx_cloud_counts_as_an_existing_user_too(): void
+    {
+        Product::where('slug', 'brainx')->update(['is_coming_soon' => false]);
+        $cloud = Product::updateOrCreate(['slug' => 'brainx-cloud'], [
+            'category_id' => $this->category->id, 'name' => 'BrainX Cloud', 'description' => 'x',
+            'price' => 399, 'stock' => 0, 'is_active' => true, 'is_coming_soon' => true,
+        ]);
+        Http::fake(['*' => Http::response('', 500)]);
+        $user = User::factory()->create();
+        LicenseKey::create([
+            'product_id' => $cloud->id, 'user_id' => $user->id, 'license_key' => LicenseKey::generateKey(),
+            'license_type' => 'monthly', 'status' => 'active', 'expires_at' => now()->addMonth(),
+        ]);
+
+        $this->actingAs($user)->getJson('/brainx/download')->assertStatus(503)->assertJsonMissingPath('coming_soon');
+    }
+
+    public function test_the_update_feed_of_installed_apps_stays_open_while_brainx_is_coming_soon(): void
+    {
+        Product::where('slug', 'brainx')->firstOrFail()->update(['is_coming_soon' => true]);
+        Http::fake(['*' => Http::response('', 500)]);
+
+        // Not 403: the feed went on to the release (faked down here), exactly as when BrainX is open
+        foreach (['releases.win.json', 'releases.win.json.sig', 'BrainX-1.0.0-full.nupkg'] as $file) {
+            $this->get("/brainx/download/{$file}")->assertStatus(503);
+        }
+    }
+
+    public function test_a_brainx_key_holder_sees_the_download_on_their_license_page(): void
+    {
+        $brainx = Product::where('slug', 'brainx')->firstOrFail();
+        $brainx->update(['is_coming_soon' => true]);
+        $user = User::factory()->create();
+        $key = LicenseKey::create([
+            'product_id' => $brainx->id, 'user_id' => $user->id, 'license_key' => LicenseKey::generateKey(),
+            'license_type' => 'monthly', 'status' => 'active', 'expires_at' => now()->addMonth(),
+        ]);
+
+        $this->actingAs($user)->get(route('customer.licenses.show', $key))
+            ->assertOk()
+            ->assertSee(route('brainx.download'), false);
     }
 
     public function test_brainx_listed_as_brainx_cloud_and_coming_soon_hands_out_no_installer(): void
@@ -146,7 +220,7 @@ class ComingSoonDownloadsTest extends TestCase
         ]);
 
         $this->get('/brainx/download')->assertRedirect(route('products.show', 'brainx-cloud'))
-            ->assertSessionHas('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
+            ->assertSessionHas('error', BrainXDownloadController::COMING_SOON_EXISTING_USERS);
         $this->getJson('/brainx/download')->assertForbidden()->assertJsonPath('coming_soon', true);
     }
 
