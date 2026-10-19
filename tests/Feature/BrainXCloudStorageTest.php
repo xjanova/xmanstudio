@@ -142,7 +142,7 @@ class BrainXCloudStorageTest extends TestCase
         $log = LicenseActivity::where('license_id', $key->id)->where('action', LicenseActivity::ACTION_STORAGE_CHANGED)->sole();
         $this->assertSame($admin->id, $log->user_id);
         // assertEquals, not assertSame: MySQL's JSON column hands the keys back in its own order
-        $this->assertEquals(['base_gb' => 4, 'previous_extra_gb' => 0, 'extra_gb' => 28, 'total_gb' => 32], $log->metadata);
+        $this->assertEquals(['base_gb' => 4, 'purchased_gb' => 0, 'previous_extra_gb' => 0, 'extra_gb' => 28, 'total_gb' => 32], $log->metadata);
         $this->assertSame('ปรับพื้นที่คลาวด์', $log->action_label);
 
         $this->getJson("/api/v1/product/brainx/status/{$key->license_key}")

@@ -343,11 +343,12 @@
         @if(\App\Support\CloudStorage::offers($license->product?->slug))
         @php
             $storageBase = \App\Support\CloudStorage::baseGb($license->product->slug);
-            $storageMaxExtra = \App\Support\CloudStorage::maxExtraGb($license->product->slug);
+            $storagePurchased = \App\Support\CloudStorage::purchasedGb($license);
+            $storageMaxExtra = max(0, \App\Support\CloudStorage::maxExtraGb($license->product->slug) - $storagePurchased);
             $storageExtra = (int) $license->extra_storage_gb;
         @endphp
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700"
-             x-data="{ extra: {{ $storageExtra }}, base: {{ $storageBase }}, current: {{ $storageExtra }} }">
+             x-data="{ extra: {{ $storageExtra }}, base: {{ $storageBase + $storagePurchased }}, current: {{ $storageExtra }} }">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
                 <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
@@ -355,8 +356,10 @@
                 พื้นที่คลาวด์
             </h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                แพ็กเกจเริ่มต้น {{ $storageBase }} GB + เพิ่มให้คีย์นี้ {{ $storageExtra }} GB =
-                <span class="font-semibold text-gray-900 dark:text-white">{{ $storageBase + $storageExtra }} GB</span>
+                แพ็กเกจเริ่มต้น {{ $storageBase }} GB
+                @if($storagePurchased > 0) + ลูกค้าซื้อเพิ่ม {{ $storagePurchased }} GB @endif
+                + เพิ่มให้คีย์นี้ {{ $storageExtra }} GB =
+                <span class="font-semibold text-gray-900 dark:text-white">{{ $storageBase + $storagePurchased + $storageExtra }} GB</span>
                 · เซิร์ฟเวอร์ใช้ค่าใหม่ภายใน 1 ชั่วโมง
             </p>
             <form action="{{ route('admin.licenses.storage', $license) }}" method="POST"
@@ -367,7 +370,7 @@
                         @if($add <= $storageMaxExtra)
                         <button type="button" @click="extra = {{ $add }}"
                                 class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/30 text-sm font-medium transition">
-                            {{ $storageBase + $add }} GB
+                            {{ $storageBase + $storagePurchased + $add }} GB
                         </button>
                         @endif
                     @endforeach

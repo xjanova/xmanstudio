@@ -119,6 +119,10 @@
                                                 <span class="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
                                                     License: <x-bi th="{{ $termLabels[$licenseTerm][0] ?? $licenseTerm }}" en="{{ $termLabels[$licenseTerm][1] ?? ucfirst($licenseTerm) }}" />
                                                 </span>
+                                            @elseif($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements))
+                                                <span class="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300">
+                                                    +{{ $storagePack }} GB <x-bi th="พื้นที่คลาวด์" en="cloud space" />
+                                                </span>
                                             @elseif($item->custom_requirements)
                                                 <div class="mt-3 border border-blue-200 dark:border-blue-700 rounded-lg overflow-hidden">
                                                     <div class="bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 flex items-center">
