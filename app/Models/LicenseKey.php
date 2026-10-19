@@ -30,6 +30,7 @@ class LicenseKey extends Model
         'android_id',
         'max_activations',
         'activations',
+        'extra_storage_gb',
         'metadata',
     ];
 
@@ -37,6 +38,7 @@ class LicenseKey extends Model
         'activated_at' => 'datetime',
         'expires_at' => 'datetime',
         'last_validated_at' => 'datetime',
+        'extra_storage_gb' => 'integer',
         'metadata' => 'array',
     ];
 

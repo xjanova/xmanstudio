@@ -9,6 +9,7 @@ use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductDevice;
 use App\Services\TpixPay\TpixPriceService;
+use App\Support\CloudStorage;
 use App\Support\LicensePlans;
 use App\Support\LicenseSeats;
 use Illuminate\Http\Request;
@@ -1287,7 +1288,7 @@ class ProductLicenseController extends Controller
                 'days_remaining' => $license->daysRemaining(),
                 'is_expired' => $license->isExpired(),
                 'features' => $this->getFeaturesByType($productSlug, $license->license_type),
-            ],
+            ] + CloudStorage::apiFields($license->setRelation('product', $product)),
         ]);
     }
 
@@ -1632,6 +1633,8 @@ class ProductLicenseController extends Controller
             ], 404);
         }
 
+        // cloud_storage_bytes: the space this key carries on the product's cloud (BrainX Cloud
+        // enforces it, App\Support\CloudStorage) — absent for a product without cloud space
         return response()->json([
             'success' => true,
             'data' => [
@@ -1646,7 +1649,7 @@ class ProductLicenseController extends Controller
                 'days_remaining' => $license->daysRemaining(),
                 'activations' => $license->activations,
                 'max_activations' => $license->max_activations,
-            ],
+            ] + CloudStorage::apiFields($license->setRelation('product', $product)),
         ]);
     }
 

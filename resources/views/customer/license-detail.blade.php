@@ -121,6 +121,13 @@
                             {{ $license->activation_count }} / {{ $license->max_activations ?? '∞' }}
                         </p>
                     </div>
+
+                    @if(($cloudGb = \App\Support\CloudStorage::totalGb($license)) !== null)
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">Cloud space · พื้นที่คลาวด์</label>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ $cloudGb }} GB</p>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

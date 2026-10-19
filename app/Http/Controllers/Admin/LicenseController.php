@@ -7,6 +7,7 @@ use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Services\LicenseService;
+use App\Support\CloudStorage;
 use App\Support\LicenseSeats;
 use Illuminate\Http\Request;
 
@@ -343,6 +344,49 @@ class LicenseController extends Controller
         return redirect()
             ->back()
             ->with('success', "ขยายเวลา License '{$license->license_key}' ไปถึง {$newExpiry->format('d/m/Y')}");
+    }
+
+    /**
+     * Set the cloud space added to one key on top of its plan's base. The
+     * product's server picks the new total up at its next license check
+     * (BrainX Cloud: within the hour). Lowering it below what the customer
+     * already stores never deletes anything — the server only refuses new
+     * uploads until they are back under it.
+     */
+    public function storage(Request $request, LicenseKey $license)
+    {
+        $license->loadMissing('product');
+        $slug = $license->product?->slug;
+        if (! CloudStorage::offers($slug)) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'extra_storage_gb' => 'required|integer|min:0|max:' . CloudStorage::maxExtraGb($slug),
+        ]);
+
+        $before = (int) $license->extra_storage_gb;
+        $after = (int) $validated['extra_storage_gb'];
+        if ($before === $after) {
+            return redirect()->back()->with('success', 'พื้นที่คลาวด์ไม่เปลี่ยน');
+        }
+
+        $license->update(['extra_storage_gb' => $after]);
+        $base = CloudStorage::baseGb($slug);
+
+        LicenseActivity::log(
+            $license,
+            LicenseActivity::ACTION_STORAGE_CHANGED,
+            LicenseActivity::ACTOR_ADMIN,
+            auth()->id(),
+            null,
+            'พื้นที่คลาวด์ ' . ($base + $before) . ' GB → ' . ($base + $after) . ' GB',
+            ['base_gb' => $base, 'previous_extra_gb' => $before, 'extra_gb' => $after, 'total_gb' => $base + $after]
+        );
+
+        return redirect()
+            ->back()
+            ->with('success', "พื้นที่คลาวด์ของ License '{$license->license_key}' เป็น " . ($base + $after) . ' GB แล้ว (มีผลกับเซิร์ฟเวอร์ภายใน 1 ชั่วโมง)');
     }
 
     /**
