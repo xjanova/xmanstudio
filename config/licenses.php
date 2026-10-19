@@ -80,4 +80,20 @@ return [
     'devices_per_key' => [
         'localvpn' => 2,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cloud space a key carries
+    |--------------------------------------------------------------------------
+    |
+    | Every key of a product listed here starts with base_gb of cloud space;
+    | the admin can add up to max_extra_gb more to one key (admin ▸ License ▸
+    | พื้นที่คลาวด์). The status/validate API reports the total as
+    | cloud_storage_bytes and the product's server enforces it
+    | (App\Support\CloudStorage). A product missing here has no cloud space.
+    |
+    */
+    'cloud_storage' => [
+        'brainx' => ['base_gb' => 4, 'max_extra_gb' => 1024],
+    ],
 ];

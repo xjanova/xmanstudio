@@ -339,6 +339,55 @@
             @endif
         </div>
 
+        <!-- Cloud Storage Card (products with cloud space, e.g. BrainX Cloud) -->
+        @if(\App\Support\CloudStorage::offers($license->product?->slug))
+        @php
+            $storageBase = \App\Support\CloudStorage::baseGb($license->product->slug);
+            $storageMaxExtra = \App\Support\CloudStorage::maxExtraGb($license->product->slug);
+            $storageExtra = (int) $license->extra_storage_gb;
+        @endphp
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700"
+             x-data="{ extra: {{ $storageExtra }}, base: {{ $storageBase }}, current: {{ $storageExtra }} }">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                </svg>
+                พื้นที่คลาวด์
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                แพ็กเกจเริ่มต้น {{ $storageBase }} GB + เพิ่มให้คีย์นี้ {{ $storageExtra }} GB =
+                <span class="font-semibold text-gray-900 dark:text-white">{{ $storageBase + $storageExtra }} GB</span>
+                · เซิร์ฟเวอร์ใช้ค่าใหม่ภายใน 1 ชั่วโมง
+            </p>
+            <form action="{{ route('admin.licenses.storage', $license) }}" method="POST"
+                  @submit="if (Number(extra) < current && !confirm('ลดพื้นที่จาก ' + (base + current) + ' GB เหลือ ' + (base + Number(extra)) + ' GB?\nโน้ตที่มีอยู่ไม่ถูกลบ แต่ถ้าใช้เกินแล้ว ลูกค้าจะอัปโหลดเพิ่มไม่ได้จนกว่าจะลบให้ต่ำกว่าโควตา')) $event.preventDefault()">
+                @csrf
+                <div class="grid grid-cols-4 gap-2 mb-4">
+                    @foreach([0, 4, 12, 28] as $add)
+                        @if($add <= $storageMaxExtra)
+                        <button type="button" @click="extra = {{ $add }}"
+                                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/30 text-sm font-medium transition">
+                            {{ $storageBase + $add }} GB
+                        </button>
+                        @endif
+                    @endforeach
+                </div>
+                <div class="flex gap-4 items-center">
+                    <label for="extraStorageGb" class="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">เพิ่ม (GB)</label>
+                    <input type="number" name="extra_storage_gb" id="extraStorageGb" min="0" max="{{ $storageMaxExtra }}" step="1" x-model="extra" required
+                           class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-700 dark:text-white">
+                    <span class="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">รวม <span x-text="base + (Number(extra) || 0)"></span> GB</span>
+                    <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl hover:from-sky-600 hover:to-blue-700 font-medium shadow-lg transition">
+                        บันทึก
+                    </button>
+                </div>
+                @error('extra_storage_gb')
+                    <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ $message }}</p>
+                @enderror
+            </form>
+        </div>
+        @endif
+
         <!-- Extend License Card -->
         @if($license->license_type !== 'lifetime' && $license->status !== 'revoked')
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
