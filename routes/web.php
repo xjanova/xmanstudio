@@ -123,6 +123,7 @@ use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PackShopController;
+use App\Http\Controllers\PaymentSlipController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicChatController;
@@ -135,6 +136,7 @@ use App\Http\Controllers\SharedWorkflowController;
 use App\Http\Controllers\SmsCheckerController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\ThaipromptPosController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\TpixPayController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
@@ -681,6 +683,13 @@ Route::get('/ads.txt', function () {
 // Banner tracking (public routes)
 Route::post('/banners/{banner}/track-view', [BannerController::class, 'trackView'])->name('banners.track-view');
 Route::post('/banners/{banner}/track-click', [BannerController::class, 'trackClick'])->name('banners.track-click');
+
+// Payment slips: private files, opened only by the customer who sent the slip or by an admin.
+// Outside the auth group on purpose: a guest gets the same 404 as a stranger, not a login page.
+Route::middleware('throttle:60,1,payment-slips')->prefix('payment-slips')->name('payment-slips.')->group(function () {
+    Route::get('/orders/{order}', [PaymentSlipController::class, 'order'])->whereNumber('order')->name('order');
+    Route::get('/rentals/{payment}', [PaymentSlipController::class, 'rental'])->whereNumber('payment')->name('rental');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -1682,6 +1691,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/', [AiprayDashboardController::class, 'index'])->name('dashboard');
         Route::get('/dataset', [AiprayDatasetController::class, 'index'])->name('dataset.index');
         Route::get('/dataset/{sample}', [AiprayDatasetController::class, 'show'])->name('dataset.show');
+        Route::get('/dataset/{sample}/audio', [AiprayDatasetController::class, 'audio'])->name('dataset.audio');
         Route::put('/dataset/{sample}', [AiprayDatasetController::class, 'update'])->name('dataset.update');
         Route::delete('/dataset/{sample}', [AiprayDatasetController::class, 'destroy'])->name('dataset.destroy');
         Route::post('/dataset/bulk-action', [AiprayDatasetController::class, 'bulkAction'])->name('dataset.bulk');
@@ -1689,6 +1699,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/record/store', [AiprayRecordController::class, 'store'])->name('record.store');
         Route::get('/training', [AiprayTrainingController::class, 'index'])->name('training.index');
         Route::post('/training/start', [AiprayTrainingController::class, 'start'])->name('training.start');
+        Route::post('/training/gpu/start', [AiprayTrainingController::class, 'gpuStart'])->name('training.gpu.start');
+        Route::post('/training/{job}/gpu/cancel', [AiprayTrainingController::class, 'gpuCancel'])->name('training.gpu.cancel');
         Route::get('/training/{job}/progress', [AiprayTrainingController::class, 'progress'])->name('training.progress');
         Route::post('/training/{job}/stop', [AiprayTrainingController::class, 'stop'])->name('training.stop');
         Route::post('/training/{job}/resume', [AiprayTrainingController::class, 'resume'])->name('training.resume');
@@ -1783,6 +1795,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 // ==================== Aipray Public Pages ====================
 Route::prefix('apps/aipray')->name('aipray.')->group(function () {
     Route::get('/', [AiprayController::class, 'show'])->name('show');
+    // Linked from the app's consent notice (Aipray lib/config/privacy.dart).
+    Route::get('/privacy', [AiprayController::class, 'privacy'])->name('privacy');
     // APK ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
     // {version} = ตัวนั้นเป๊ะ ๆ ที่ตัวอัปเดตในแอปได้จาก update/check · ไม่ใส่ = ตัวล่าสุด
     Route::get('/download/{version?}', [AiprayController::class, 'download'])
@@ -1814,6 +1828,19 @@ Route::prefix('giggok')->name('giggok.')->group(function () {
             ->name('link.store');
     });
 });
+
+// ==================== Thai Prompt POS (แอปขายหน้าร้านของร้าน Thai Prompt — แจกฟรี ไม่ขาย) ====================
+// ตัวอัปเดตในแอปโหลดจากลิงก์ที่ update/check ให้ (https://xman4289.com เท่านั้น ไม่ตาม redirect ตรวจขนาด + sha256)
+// ไฟล์ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) ใช้ช่องส่งไฟล์ร่วมกับแอปอื่น — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
+// {version} = ตัวนั้นเป๊ะ ๆ ที่ update/check ประกาศ sha256 ไว้ · ไม่ใส่ = ตัวล่าสุด
+Route::get('/apps/thaiprompt-pos/download/{version?}', [ThaipromptPosController::class, 'android'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,thaiprompt-pos-download')
+    ->name('thaiprompt-pos.download');
+Route::get('/apps/thaiprompt-pos-windows/download/{version?}', [ThaipromptPosController::class, 'windows'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,thaiprompt-pos-windows-download')
+    ->name('thaiprompt-pos-windows.download');
 
 // ==================== KYC (ยืนยันตัวตน) ====================
 // ด่านเดียวกันสำหรับการรับ/ถอนเงิน และการเข้าถึงหมวดเนื้อหาสำหรับผู้ใหญ่บน aixman

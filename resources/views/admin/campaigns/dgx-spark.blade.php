@@ -167,10 +167,8 @@
 
                             @if ($order->payment_slip)
                                 @php
-                                    // สลิปย้ายออกจาก web root ได้ (PR 458: route payment-slips.order) — ใช้ route นั้นเมื่อมี
-                                    $slipUrl = \Illuminate\Support\Facades\Route::has('payment-slips.order')
-                                        ? route('payment-slips.order', $order)
-                                        : asset('storage/' . $order->payment_slip);
+                                    // สลิปอยู่นอก web root — เปิดผ่าน route ที่ตรวจสิทธิ์เท่านั้น (ไม่มี /storage/ ให้ fallback แล้ว)
+                                    $slipUrl = route('payment-slips.order', $order);
                                 @endphp
                                 <a href="{{ $slipUrl }}" target="_blank" rel="noopener" class="inline-block">
                                     <img src="{{ $slipUrl }}" alt="สลิปของ #{{ $order->order_number }}" loading="lazy"

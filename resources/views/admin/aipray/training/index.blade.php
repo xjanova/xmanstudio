@@ -78,10 +78,9 @@
                     <label for="base_model" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Base Model</label>
                     <select id="base_model" name="base_model" required
                         class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-yellow-500 focus:border-yellow-500 text-sm">
-                        <option value="openai/whisper-small">Whisper Small</option>
-                        <option value="openai/whisper-medium">Whisper Medium</option>
-                        <option value="openai/whisper-large-v3">Whisper Large v3</option>
-                        <option value="wav2vec2-base">Wav2Vec2 Base</option>
+                        @foreach(['whisper-tiny' => 'Whisper Tiny', 'whisper-base' => 'Whisper Base', 'whisper-small' => 'Whisper Small', 'whisper-medium' => 'Whisper Medium'] as $value => $label)
+                            <option value="{{ $value }}" {{ old('base_model', 'whisper-small') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
                     </select>
                     @error('base_model') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -116,6 +115,109 @@
                 @if(($mlHealth ?? 'unknown') !== 'healthy')
                     <p class="text-xs text-red-500 text-center mt-2">ML service must be healthy to start training.</p>
                 @endif
+            </form>
+        </div>
+
+        {{-- Rented GPU (SimplePod) --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 mt-8">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">เทรนบน GPU เช่า</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">เช่าเครื่องเฉพาะตอนเทรน แล้วคืนเครื่องทันทีเมื่อจบ ล้มเหลว หมดเวลา หรือเกินงบ</p>
+
+            @if($gpu['error'])
+                <p class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-xs text-red-700 dark:text-red-300">
+                    อ่านสถานะข้อมูลเสียงไม่ได้ — ตรวจว่ารัน <code>php artisan migrate</code> แล้ว (รายละเอียดอยู่ใน log)
+                </p>
+            @elseif(! $gpu['enabled'])
+                <p class="mb-4 rounded-lg bg-gray-50 dark:bg-gray-900 p-3 text-xs text-gray-600 dark:text-gray-300">
+                    ปิดอยู่ — ยังไม่ได้ตั้ง <code>{{ implode(', ', $gpu['missing']) }}</code> ใน .env
+                    (<code>AIPRAY_TRAINER_REF</code> = branch หรือ commit ของ repo Aipray ที่มีตัวเทรนใน training/ml-service — ไม่ใช่ main เพราะ push ขึ้น main ของ Aipray คือการออก APK)
+                </p>
+            @endif
+
+            @php $r = $gpu['readiness']; $ready = $r['ready'] ?? false; @endphp
+            @if($r)
+            <div class="mb-4 rounded-lg p-3 text-sm {{ $r['ready'] ? 'bg-green-50 dark:bg-green-900/20' : 'bg-amber-50 dark:bg-amber-900/20' }}">
+                <p class="font-semibold mb-2">{{ $r['ready'] ? 'ข้อมูลเสียงพอสำหรับเทรนจริงแล้ว' : 'ข้อมูลเสียงยังไม่พอสำหรับเทรนจริง' }}</p>
+                @foreach([
+                    ['เสียงที่ใช้เทรนได้', $r['samples'], $r['targets']['min_samples'], 'ชิ้น'],
+                    ['ผู้ร่วมบริจาคเสียง', $r['contributors'], $r['targets']['min_contributors'], 'คน'],
+                    ['บรรทัดที่มีเสียง ≥ ' . $r['targets']['min_samples_per_line'] . ' ชิ้น', $r['lines_covered'], (int) ceil($r['lines_total'] * $r['targets']['min_line_coverage']), 'บรรทัด'],
+                ] as [$label, $have, $need, $unit])
+                    <div class="mb-1">
+                        <div class="flex justify-between text-xs"><span>{{ $label }}</span><span>{{ number_format($have) }} / {{ number_format($need) }} {{ $unit }}</span></div>
+                        <div class="h-1.5 rounded bg-gray-200 dark:bg-gray-700">
+                            <div class="h-1.5 rounded {{ $have >= $need && $need > 0 ? 'bg-green-500' : 'bg-amber-500' }}" style="width: {{ $need > 0 ? min(100, (int) floor($have / $need * 100)) : 0 }}%"></div>
+                        </div>
+                    </div>
+                @endforeach
+                @if($r['lines_total'] === 0)
+                    <p class="text-xs text-amber-700 mt-1">ยังไม่ได้นำเข้าบทสวด: <code>php artisan aipray:import-chants</code></p>
+                @endif
+            </div>
+            @endif
+
+            @if($gpu['estimate'])
+                @php $e = $gpu['estimate']; @endphp
+                <dl class="grid grid-cols-2 gap-y-1 text-sm mb-4">
+                    <dt class="text-gray-500">เสียงที่ใช้เทรนได้</dt><dd class="text-right">{{ number_format($e['samples']) }} ชิ้น · {{ $e['audio_hours'] }} ชม.</dd>
+                    <dt class="text-gray-500">เครื่อง</dt><dd class="text-right">{{ $e['offer'] ? $e['offer']['gpu'] : 'ราคาประมาณ' }} · ${{ $e['price_per_hour'] }}/ชม.</dd>
+                    <dt class="text-gray-500">เวลา GPU (Small, 5 epochs)</dt><dd class="text-right">~{{ $e['gpu_hours'] }} ชม.</dd>
+                    <dt class="text-gray-500">ค่าใช้จ่ายโดยประมาณ</dt><dd class="text-right font-semibold">${{ $e['low_usd'] }}–${{ $e['high_usd'] }}</dd>
+                </dl>
+                <p class="text-xs text-gray-400 mb-4">ประมาณจาก {{ $e['samples_per_second'] }} ชิ้น/วินาที ยังไม่ได้วัดจากการรันจริง</p>
+            @endif
+
+            @if($gpu['active'])
+                @php $run = $gpu['active']; @endphp
+                <div class="mb-4 rounded-lg border border-yellow-300 p-3 text-sm">
+                    <p>งาน #{{ $run->id }} · <strong>{{ $run->gpu_state }}</strong> {{ $run->gpu_offer ? '· ' . $run->gpu_offer : '' }}</p>
+                    <p class="text-gray-500">ใช้ไปแล้ว ${{ $run->gpuCostSoFar() }} จากงบ ${{ $run->max_cost_usd }}</p>
+                    <form action="{{ route('admin.aipray.training.gpu.cancel', $run) }}" method="POST" class="mt-2"
+                          onsubmit="return confirm('ยกเลิกงานนี้และคืนเครื่องทันที?')">
+                        @csrf
+                        <button class="text-red-600 hover:underline text-sm">ยกเลิกและคืนเครื่อง</button>
+                    </form>
+                </div>
+            @endif
+
+            <form action="{{ route('admin.aipray.training.gpu.start') }}" method="POST" class="space-y-3"
+                  x-data="{ trial: {{ old('trial') ? 'true' : 'false' }} }">
+                @csrf
+                <input type="text" name="name" required placeholder="ชื่องาน" value="{{ old('name') }}"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm">
+                <div class="grid grid-cols-2 gap-3">
+                    <select name="base_model" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm">
+                        @foreach(['whisper-tiny', 'whisper-base', 'whisper-small', 'whisper-medium'] as $model)
+                            <option value="{{ $model }}" {{ $model === 'whisper-small' ? 'selected' : '' }}>{{ $model }}</option>
+                        @endforeach
+                    </select>
+                    <input type="number" name="epochs" value="5" min="1" max="30" title="Epochs"
+                        class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm">
+                    <input type="number" name="batch_size" value="16" min="1" max="64" title="Batch size"
+                        class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm">
+                    <input type="number" name="learning_rate" value="0.00001" step="0.000001" min="0.0000001" max="0.01" title="Learning rate"
+                        class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm">
+                </div>
+                <label class="block text-sm text-gray-700 dark:text-gray-300">งบสูงสุด (USD) — เกินนี้จะหยุดและคืนเครื่อง
+                    <input type="number" name="max_cost_usd" step="0.5" min="1" max="200" required
+                        value="{{ old('max_cost_usd', $gpu['estimate'] ? max(1, ceil($gpu['estimate']['high_usd'] * 1.2)) : 5) }}"
+                        class="mt-1 w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm">
+                </label>
+                @if($r && ! $ready)
+                    <label class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <input type="checkbox" name="trial" value="1" x-model="trial" class="mt-1">
+                        เทรนทดลอง — ข้อมูลยังไม่ถึงเกณฑ์ ใช้ตรวจว่าระบบทำงานครบ หรือวัดความเร็วจริง (ใช้ whisper-base 1–2 epoch และงบต่ำ)
+                    </label>
+                @endif
+                <label class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <input type="checkbox" name="confirm_cost" value="1" required class="mt-1">
+                    ยืนยันให้เช่าเครื่องและคิดเงินไม่เกินงบข้างบน
+                </label>
+                <button type="submit" class="w-full px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg disabled:opacity-40"
+                    @if($gpu['enabled'] && ! $gpu['active'] && ! $ready) :disabled="!trial" @endif
+                    {{ ! $gpu['enabled'] || $gpu['active'] || ! $ready ? 'disabled' : '' }}>
+                    <span x-text="trial ? 'เช่า GPU และเทรนทดลอง' : 'เช่า GPU และเริ่มเทรน'">เช่า GPU และเริ่มเทรน</span>
+                </button>
             </form>
         </div>
     </div>

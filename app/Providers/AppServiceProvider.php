@@ -15,18 +15,22 @@ use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
 use App\Models\RentalPackage;
+use App\Models\RentalPayment;
 use App\Models\Service;
+use App\Models\User;
 use App\Observers\AiCreditOrderObserver;
 use App\Services\AiChat\KnowledgeVersion;
 use App\Services\TpixPay\TpixPaySettings;
 use App\Services\TpixPay\TpixPriceService;
 use App\Support\ContactLinks;
+use App\Support\PaymentSlips;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -60,6 +64,9 @@ class AppServiceProvider extends ServiceProvider
         // A paid AI-credit order gets its credits on AIXMAN whichever way it was paid — admin
         // approval, the SMS matcher, the Telegram bot — not only via the success page or Stripe.
         Order::observe(AiCreditOrderObserver::class);
+
+        // A payment slip opens for the customer who sent it, or for an admin (PaymentSlipController).
+        Gate::define('view-payment-slip', fn (User $user, Order|RentalPayment $owner) => PaymentSlips::canView($user, $owner));
 
         $this->refreshAiChatKnowledgeOnCatalogueChanges();
     }
@@ -221,6 +228,25 @@ class AppServiceProvider extends ServiceProvider
                         'code' => 'RATE_LIMIT_EXCEEDED',
                     ], 429);
                 });
+        });
+
+        // POST /api/aipray/contributors/erase — Aipray "delete my voice": cheap to call, destructive
+        // when it works. Counted per phone (contributor_id) and address, so phones behind one CGNAT
+        // address do not lock each other out of a PDPA erase; the per-address ceiling stops anyone
+        // minting contributor_ids to dodge it. The route skips throttle:api, whose per-address
+        // bucket also counts the app's uploads.
+        RateLimiter::for('aipray-erase', function (Request $request) {
+            $contributor = $request->input('contributor_id');
+            $contributor = is_string($contributor) ? mb_substr($contributor, 0, 64) : '';
+            $tooMany = fn (Request $request, array $headers) => response()->json([
+                'error' => 'Too many erase requests. Please wait before trying again.',
+                'code' => 'RATE_LIMIT_EXCEEDED',
+            ], 429, $headers);
+
+            return [
+                Limit::perMinute(5)->by('aipray-erase:' . sha1($contributor) . '|' . $request->ip())->response($tooMany),
+                Limit::perMinute(30)->by('aipray-erase-ip:' . $request->ip())->response($tooMany),
+            ];
         });
 
         // /api/v1/product/gpuxmine/status — โปรแกรม GPUxMINE ถามทุกสามนาที (เร็วสุดทุกสิบห้าวินาที

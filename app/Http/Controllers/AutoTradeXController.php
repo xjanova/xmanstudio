@@ -8,11 +8,11 @@ use App\Models\BankAccount;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\AffiliateCommissionService;
-use App\Services\ImageService;
 use App\Services\ThaiPaymentService;
 use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
+use App\Support\PaymentSlips;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -373,10 +373,11 @@ class AutoTradeXController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        // Store the payment slip
-        $slipPath = app(ImageService::class)->storeAsWebp(
-            $request->file('payment_slip'), 'payment-slips/autotradex',
-        );
+        // Store the payment slip, off the web root (App\Support\PaymentSlips)
+        $slipPath = PaymentSlips::storeAsWebp($request->file('payment_slip'), 'autotradex');
+        if ($slipPath === null) {
+            return back()->with('error', 'บันทึกสลิปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
 
         // Update order with payment info
         $metadata = json_decode($order->metadata ?? '{}', true);

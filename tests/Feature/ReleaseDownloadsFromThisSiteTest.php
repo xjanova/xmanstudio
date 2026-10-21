@@ -242,6 +242,11 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['GET', route('aipray.download')],
             ['GET', route('aipray.download', ['version' => '1.2.4'])],
             ['HEAD', route('aipray.download', ['version' => '1.2.4'])],
+            ['GET', route('thaiprompt-pos.download')],
+            ['GET', route('thaiprompt-pos.download', ['version' => '2.0.2'])],
+            ['HEAD', route('thaiprompt-pos.download', ['version' => '2.0.2'])],
+            ['GET', route('thaiprompt-pos-windows.download')],
+            ['GET', route('thaiprompt-pos-windows.download', ['version' => '2.0.2'])],
             ['GET', route('tping.download.apk')],
             ['HEAD', route('tping.download.apk')],
             ['GET', route('smschecker.download.apk')],
@@ -261,6 +266,7 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             '/brainx', '/brainx/downloads',
             '/products/anti-x', '/anti-x', '/anti-x/downloads',
             '/products/macdock', '/products/macdock/free-license', '/macdock',
+            '/apps/thaiprompt-pos', '/apps/thaiprompt-pos-windows', '/apps/thaiprompt-pos/downloads', '/apps/thaiprompt-pos-mac/download',
         ] as $url) {
             $this->assertFalse($matches('GET', $url), "GET {$url} ต้องไม่อยู่ในกฎนี้");
         }
