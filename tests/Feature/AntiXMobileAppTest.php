@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\DownloadLog;
 use App\Models\GithubSetting;
 use App\Models\LicenseKey;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Models\User;
@@ -268,7 +270,66 @@ class AntiXMobileAppTest extends TestCase
         $this->get('/products/anti-x-mobile')->assertRedirect(route('products.show', 'anti-x') . '#mobile');
     }
 
+    public function test_the_download_page_of_the_app_needs_no_sign_in_and_no_purchase(): void
+    {
+        $this->makeVersion('0.3.0');
+
+        // ก่อนแก้: /download/anti-x-mobile พาไปหน้า login (owner, 2026-10-21)
+        $html = $this->get('/download/anti-x-mobile')->assertOk()->getContent();
+        $this->assertStringContainsString('data-free-download', $html);
+        $this->assertStringContainsString('href="' . route('anti-x-mobile.download', '0.3.0') . '"', $html);
+        $this->assertStringNotContainsString('เข้าสู่ระบบเพื่อดาวน์โหลด', $html);
+        $this->assertStringNotContainsStringIgnoringCase('github', $html);
+
+        $this->actingAs(User::factory()->create());
+        $this->assertStringContainsString('data-free-download', $this->get('/download/anti-x-mobile')->assertOk()->getContent());
+    }
+
+    public function test_an_anti_x_buyer_finds_the_app_on_the_anti_x_download_page_and_in_the_download_center(): void
+    {
+        $this->makeVersion('0.3.0');
+        $antiX = Product::where('slug', 'anti-x')->firstOrFail();
+        ProductVersion::create([
+            'product_id' => $antiX->id, 'version' => '1.14.0', 'github_release_id' => 9300,
+            'download_url' => 'https://github.com/xjanova/antix/releases/download/v1.14.0/AntiX-1.14.0-win-x64.zip',
+            'download_filename' => 'AntiX-1.14.0-win-x64.zip', 'file_size' => 1024, 'is_active' => true, 'synced_at' => now(),
+        ]);
+        $buyer = User::factory()->create();
+        $this->buyAntiX($buyer, $antiX);
+
+        $page = $this->actingAs($buyer)->get('/download/anti-x')->assertOk()->getContent();
+        $this->assertStringContainsString('data-mobile-companion', $page);
+        $this->assertStringContainsString('href="' . route('anti-x-mobile.download', '0.3.0') . '"', $page);
+        $this->assertStringContainsString('เวอร์ชัน 0.3.0', $page);
+
+        $center = $this->actingAs($buyer)->get(route('customer.downloads'))->assertOk()->getContent();
+        $this->assertStringContainsString('Anti X Mobile', $center);
+        $this->assertStringContainsString('href="' . route('anti-x-mobile.download') . '"', $center);
+
+        // แอปปิดอยู่ (เร็วๆ นี้) = ไม่มีลิงก์
+        $this->product->update(['is_coming_soon' => true]);
+        $page = $this->actingAs($buyer)->get('/download/anti-x')->assertOk()->getContent();
+        $this->assertStringContainsString('data-mobile-companion', $page);
+        $this->assertStringNotContainsString(route('anti-x-mobile.download', '0.3.0'), $page);
+    }
+
     // ── helpers ─────────────────────────────────────────────────────────
+
+    private function buyAntiX(User $user, Product $antiX): void
+    {
+        $order = Order::create([
+            'order_number' => 'ORD-' . uniqid(), 'user_id' => $user->id, 'customer_name' => $user->name, 'customer_email' => $user->email,
+            'customer_phone' => '0800000000', 'subtotal' => $antiX->price, 'total' => $antiX->price, 'status' => 'completed', 'payment_status' => 'paid',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id, 'product_id' => $antiX->id, 'product_name' => $antiX->name,
+            'price' => $antiX->price, 'quantity' => 1, 'subtotal' => $antiX->price,
+        ]);
+        LicenseKey::create([
+            'product_id' => $antiX->id, 'order_id' => $order->id, 'user_id' => $user->id, 'license_key' => LicenseKey::generateKey(),
+            'status' => LicenseKey::STATUS_ACTIVE, 'license_type' => 'yearly', 'expires_at' => now()->addYear(),
+        ]);
+    }
 
     private function migration(): object
     {
