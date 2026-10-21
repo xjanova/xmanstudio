@@ -611,38 +611,89 @@ sudo systemctl restart nginx
 
 **ถูกสร้างด้วย ❤️ โดย XMAN Studio**
 
-**GPUxMINE round 2 — referral auto-pay, rollback, wallet cash-out.** No order with aixman or the
-relay is required (aixman does not read the new columns or table). Deploy after round 1
-(`feat/sharing-complete`) and run the migrations: `wallet_withdrawals` (new table) and
-`2026_09_26_100001` (reversal columns, and `'reversed'` appended to
-`affiliate_commissions.status` — read from `information_schema` and appended, so a value added
-to that enum by hand survives).
+**GPUxMINE round 2 — referral auto-pay, rollback, wallet cash-out.** Round 1 is live (v1.0.640+).
+This branch ships on its own: it reads no setting that only aixman round 2 writes (it uses the
+`referral_satang` aixman already stores on every `gpu_job_earnings` row), and the desktop app's
+round 2 only *reads* the new `withdraw_url` / `withdrawal_pending_satang` fields of `/status`
+(an old app ignores them; a new app against an old site just hides its cash-out button). Deploy
+order: this first, then GpuXmine round 2 whenever; aixman round 2 is independent of both.
 
-1. Referral commissions are paid into the referrer's wallet by `gpuxmine:settle-earnings`, with no
-   admin approval. The first run after the deploy also pays every GPUxMINE commission round 1
-   left `pending` for an admin. To look at them before deploying (read only):
+The deploy runs two migrations, both checked on strict MySQL 8 / MariaDB 10.6 on top of every
+later migration: `wallet_withdrawals` (new table) and `2026_09_26_100001` (reversal columns, and
+`'reversed'` appended to `affiliate_commissions.status` — read from `information_schema` and
+appended, so a value added to that enum by hand survives).
+
+**What changes the moment it is live**
+
+- `/wallet/withdraw` opens for every user whose KYC is approved (it is on by default — switch
+  "เปิดรับคำขอถอนเงิน" off on `/admin/wallets/settings` first if you want to open it later). The whole
+  wallet balance can be asked for, ฿100 minimum, one open request per user; nothing leaves the
+  bank until an admin presses "เริ่มโอน" and records the transfer.
+
+**What the first hourly `gpuxmine:settle-earnings` run pays (and every run after it)**
+
+1. As before, earnings past their hold go to the machine owners' wallets. New: the referral share
+   of each payout batch becomes one `affiliate_commissions` row per referrer **and is paid into
+   the referrer's wallet in the same transaction** (`wallet_transactions` type `earning`,
+   `transaction_id` `GXA{commission id}`), instead of waiting for an admin.
+2. Then the backlog sweep pays every row that matches all of: `source_type = 'gpuxmine'`,
+   `status = 'pending'`, the affiliate's `status = 'active'`, the referrer's `users.is_active`
+   true or NULL, and the referrer's wallet active or not created yet (it is created). Oldest id
+   first, at most 500 per run; the rest go in the following hours. Each one: wallet +amount
+   (`total_deposited` untouched), the row → `paid` with `paid_at` and `wallet_transaction_id`,
+   the affiliate's `total_paid` +amount and `total_pending` −amount. No e-mail is sent for these
+   (only the admin page's approve button sends one). Rows of referrers who cannot be paid stay
+   `pending` and are paid by the first run after their account or wallet is opened again — or
+   reject them. Other affiliate sources (orders, products) are not touched: they still wait for
+   an admin.
+
+   To see exactly what that sweep will pay (read only, run it right before the deploy):
 
    ```sql
-   SELECT id, affiliate_id, commission_amount, created_at FROM affiliate_commissions
-    WHERE source_type = 'gpuxmine' AND status = 'pending' ORDER BY id;
+   SELECT c.id, c.affiliate_id, a.user_id, c.commission_amount, c.created_at
+     FROM affiliate_commissions c
+     JOIN affiliates a ON a.id = c.affiliate_id
+     JOIN users u ON u.id = a.user_id
+     LEFT JOIN wallets w ON w.user_id = u.id
+    WHERE c.source_type = 'gpuxmine' AND c.status = 'pending'
+      AND a.status = 'active' AND (u.is_active = 1 OR u.is_active IS NULL)
+      AND (w.id IS NULL OR w.is_active = 1)
+    ORDER BY c.id;
    ```
 
    Reject any you do not want paid on `/admin/affiliates/commissions` before deploying. After it,
-   a paid one can still be taken back there ("เรียกคืน") while the referrer has not cashed it out.
-2. Admins take back a paid earning on `/admin/gpuxmine/earnings` and a paid commission on
-   `/admin/affiliates/commissions` — once each, reason of 10+ characters, and only while the
-   wallet's available balance covers it (money held by a pending withdrawal does not count).
-   Taking back an earning also takes that job's referral share by default (a ticked box): from
-   the referrer's wallet if the commission was paid (refused whole if the referrer cashed it out —
-   untick to take only the owner's part), or cut from a commission still waiting so the sweep
-   never pays it; a commission taken back later takes only what is left.
-3. Cash-out: users ask on `/wallet/withdraw` (KYC required; paid only to the KYC bank account),
-   the amount is held at once, and admins work it under การเงิน → คำขอถอนเงิน in three steps:
-   press "เริ่มโอน" (the user can no longer cancel, and only now the page shows the full account
-   number), transfer in the banking app, then record the transfer reference and/or slip — or
-   reject (hold returned). Never transfer before pressing "เริ่มโอน": until then the user can still
-   cancel and get the hold back. The request page also shows the wallet's balance and where its
-   money came from (earnings, referrals, top-ups and their bonus, last top-up), with a warning when
-   the cash-out is larger than the net GPUxMINE income. The minimum per request is set on
-   `/admin/wallets/settings` (falls back to `WALLET_WITHDRAW_MIN_BAHT`, default 100); the same page
-   can pause new requests. New requests raise a Telegram card (alert category "orders").
+   a paid one can still be taken back there ("เรียกคืน") while the referrer has not spent or
+   cashed it out.
+
+**Rollback (take back) — the rules**
+
+- Admins take back a paid earning on `/admin/gpuxmine/earnings` and a paid commission on
+  `/admin/affiliates/commissions` — once each, reason of 10+ characters, one `adjustment` row in
+  the same wallet (`GXV…` / `GXVR…` / `GXAV…`) linked back to what it reverses.
+- It goes through only while the wallet's *current available balance* covers the whole amount;
+  otherwise it is refused and nothing moves — a balance never goes negative through a take-back.
+  Money held by an open withdrawal request is not available. The check is on the balance, not on
+  which baht came from which job: a user who cashed out an earning and later topped up can have
+  that earning taken back from the top-up.
+- Taking back an earning also takes that job's referral share by default (a ticked box): from the
+  referrer's wallet if the commission was paid (refused whole if the referrer no longer has it —
+  untick to take only the owner's part), or cut from a commission still waiting so the sweep never
+  pays it; a commission taken back later takes only what is left.
+
+**Cash-out — how admins work a request** (การเงิน → คำขอถอนเงิน)
+
+- The destination is the bank account approved with the user's KYC; only when the KYC has no
+  bank account does the user type one (bank or PromptPay) — the page and the Telegram card then
+  say "กรอกเอง", and the KYC name is shown next to it to compare.
+- Three steps: press "เริ่มโอน" (the user can no longer cancel; only now the full account number
+  shows), transfer in the banking app, then record the transfer reference and/or slip — or reject
+  (the hold is returned once). Never transfer before pressing "เริ่มโอน": until then the user can
+  still cancel and get the hold back. Never reject after transferring: the hold would go back too.
+- "เริ่มโอน" is refused while the wallet is negative, frozen, or the user's account is disabled.
+- The request page shows where the wallet's money came from (GPUxMINE earnings and referrals,
+  take-backs, top-ups with their bonus and the TPIX share, other bonuses, last top-up) and warns
+  when the cash-out is larger than the net GPUxMINE income, when part of the money came from TPIX
+  coins, and when there was a top-up in the last 7 days (card chargebacks).
+- The minimum per request is set on `/admin/wallets/settings` (falls back to
+  `WALLET_WITHDRAW_MIN_BAHT`, default 100); the same page pauses new requests. New requests
+  raise a Telegram card (alert category "orders") with the account number masked.
