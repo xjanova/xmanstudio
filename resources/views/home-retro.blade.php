@@ -4,6 +4,9 @@
 @section('description', 'XMAN Studio — Blockchain, AI, Web & Mobile development. Bangkok · Est. MMXVIII')
 
 @section('content')
+    {{-- The main campaign (DGX Spark bundle) — renders nothing when switched off in the admin. --}}
+    @include('partials.campaign.dgx-spark-home')
+
     @include('partials.retro-hero')
 
     {{-- Ticker --}}
@@ -35,4 +38,6 @@
             <div style="font-family:var(--font-ui);font-size:11px;letter-spacing:.3em;color:var(--tron-gold);text-transform:uppercase;">— XMAN STUDIO · BANGKOK —</div>
         </div>
     </section>
+    {{-- The way back into the 3D XMAN Universe home (App\Support\UniverseHome). --}}
+    @include('partials.universe.switch')
 @endsection

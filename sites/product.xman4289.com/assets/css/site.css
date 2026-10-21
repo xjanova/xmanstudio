@@ -354,6 +354,15 @@ h1{font-size:clamp(38px,6.6vw,86px);font-weight:800;
   .art-bg img{opacity:.3;width:120vw;left:-20%}
   .cdx-in{padding-left:6px}
 }
+/* A phone cannot fit wordmark, tag, language switch and CTA on one row, and
+   the CTA was what gave way — squeezed into a three-line pill. On the product
+   pages the tag steps aside instead. The home page is left alone: there the
+   tag is half of the name "XMAN STUDIO", and nowrap alone widened its row. */
+@media (max-width:480px){
+  body:not(.home)>.nav{gap:16px}
+  body:not(.home)>.nav .brand-by{display:none}
+  body:not(.home)>.nav .btn-sm{white-space:nowrap}
+}
 @media (prefers-reduced-motion:reduce){
   /* DELAY has to go too, not just duration. Zeroing only the duration still
      left every staggered element sitting at opacity 0 for up to 0.42s — so a

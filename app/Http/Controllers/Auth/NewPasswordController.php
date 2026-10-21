@@ -46,6 +46,9 @@ class NewPasswordController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    // A reset is how an account created through Google, LINE
+                    // or Telegram gets its first real password.
+                    'password_set_at' => now(),
                 ])->save();
 
                 event(new PasswordReset($user));

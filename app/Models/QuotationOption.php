@@ -25,6 +25,15 @@ class QuotationOption extends Model
         'image',
         'order',
         'is_active',
+        // The selling logic the builder runs on. Without these in $fillable
+        // the admin form would post them and Eloquent would drop them without
+        // a word.
+        'is_core',
+        'requires',
+        'suggested_for',
+        'reason_th',
+        'reason',
+        'duration_days',
     ];
 
     protected $casts = [
@@ -35,6 +44,10 @@ class QuotationOption extends Model
         'features_th' => 'array',
         'steps' => 'array',
         'steps_th' => 'array',
+        'is_core' => 'boolean',
+        'requires' => 'array',
+        'suggested_for' => 'array',
+        'duration_days' => 'integer',
     ];
 
     /**

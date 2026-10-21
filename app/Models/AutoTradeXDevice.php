@@ -156,8 +156,10 @@ class AutoTradeXDevice extends Model
      */
     public function findRelatedByHardware(): Collection
     {
+        // An Eloquent collection, as declared — collect() is a Support one and made
+        // register-device answer 500 for any machine that sent no hardware hash.
         if (! $this->hardware_hash) {
-            return collect();
+            return $this->newCollection();
         }
 
         return self::where('id', '!=', $this->id)

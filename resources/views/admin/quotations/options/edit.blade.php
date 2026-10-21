@@ -359,6 +359,8 @@
             </div>
         </div>
 
+        @include('admin.quotations.options._selling-rules')
+
         <!-- Actions -->
         <div class="flex justify-end gap-4 mt-6">
             <a href="{{ route('admin.quotations.options.index') }}"

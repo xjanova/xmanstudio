@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Mail\PaymentConfirmedMail;
 use App\Models\BankAccount;
 use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\PaymentSetting;
 use App\Models\Product;
-use App\Models\ProductVersion;
 use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
 use App\Services\GithubReleaseService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
+use App\Support\ComingSoonPurchase;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * SmsChecker Web Controller
@@ -30,13 +31,18 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class SmsCheckerController extends Controller
 {
+    use ServesReleaseDownloads;
+
     private const WALLET_DISCOUNT_PERCENT = 10;
 
-    private const PRICING = [
+    /**
+     * The plans this page offers: names, durations, features. What each one
+     * costs is in config/licenses.php; pricedPlans() puts the two together.
+     */
+    private const PLANS = [
         'monthly' => [
             'name' => 'Monthly',
             'name_th' => 'รายเดือน',
-            'price' => 499,
             'duration_days' => 30,
             'license_type' => 'monthly',
             'features' => [
@@ -48,7 +54,6 @@ class SmsCheckerController extends Controller
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 4990,
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
@@ -61,7 +66,6 @@ class SmsCheckerController extends Controller
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 29000,
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
@@ -74,8 +78,16 @@ class SmsCheckerController extends Controller
         ],
     ];
 
+    /** PLANS with each price from config/licenses.php — only the terms the store sells. */
+    private static function pricedPlans(): array
+    {
+        return LicensePlans::priced('smschecker', self::PLANS);
+    }
+
     public function detail(GithubReleaseService $github)
     {
+        $this->abortUnlessOnSale();
+
         $product = Product::where('slug', 'smschecker')->first();
 
         $version = null;
@@ -86,7 +98,7 @@ class SmsCheckerController extends Controller
         }
 
         return view('smschecker.detail', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'product' => $product,
             'version' => $version,
         ]);
@@ -94,6 +106,8 @@ class SmsCheckerController extends Controller
 
     public function pricing(Request $request)
     {
+        $this->abortUnlessOnSale();
+
         $machineId = $request->query('machine_id') ?? session('smschecker_machine_id');
 
         if ($machineId) {
@@ -102,19 +116,27 @@ class SmsCheckerController extends Controller
 
         return view('smschecker.pricing', [
             'machineId' => $machineId,
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
         ]);
     }
 
     public function checkout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        $this->abortUnlessOnSale();
+
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
         $product = Product::where('slug', 'smschecker')->firstOrFail();
+
+        // On sale (above) but still Coming Soon = not on sale yet either (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
+        }
+
         $machineId = $request->query('machine_id') ?? session('smschecker_machine_id');
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
 
         $wallet = auth()->check() ? Wallet::getOrCreateForUser(auth()->id()) : null;
         $walletDiscount = (int) floor($planInfo['price'] * self::WALLET_DISCOUNT_PERCENT / 100);
@@ -134,22 +156,36 @@ class SmsCheckerController extends Controller
 
     public function processCheckout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        $this->abortUnlessOnSale();
+
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
+        }
+
+        $product = Product::where('slug', 'smschecker')->firstOrFail();
+
+        // A hand-made POST must not buy it either — before the wallet is touched or an order made
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
         }
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer,wallet',
+            'payment_method' => 'required|in:promptpay,bank_transfer,wallet' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:64',
         ]);
 
         $machineId = $validated['machine_id'] ?? session('smschecker_machine_id');
-        $product = Product::where('slug', 'smschecker')->firstOrFail();
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $planInfo['price'])) {
+            return $refused;
+        }
 
         $subtotal = $planInfo['price'];
         $discount = 0;
@@ -215,6 +251,8 @@ class SmsCheckerController extends Controller
             'custom_requirements' => json_encode([
                 'license_type' => $planInfo['license_type'],
                 'duration_days' => $planInfo['duration_days'],
+                // Same seats as the wallet path: a lifetime key runs on 3 devices
+                'max_activations' => $planInfo['license_type'] === 'lifetime' ? 3 : 1,
             ]),
         ]);
 
@@ -251,6 +289,11 @@ class SmsCheckerController extends Controller
                 $affiliate, $order->total, $order->id, $order->user_id,
                 'smschecker', $order->id, "SmsChecker {$planInfo['name']} License"
             );
+        }
+
+        // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            return TpixCheckout::redirectForOrder($order, route('smschecker.payment-success', $order->id));
         }
 
         return redirect()->route('smschecker.payment', ['order' => $order->id]);
@@ -308,11 +351,13 @@ class SmsCheckerController extends Controller
                 ]);
             }
 
+            // The license is out, so the order is complete (as LicenseService does for every other
+            // checkout). Left at processing, every "has this customer bought it?" check said no.
             $metadata = json_decode($order->metadata ?? '{}', true);
             $metadata['license_key'] = $license->license_key;
             $metadata['license_id'] = $license->id;
             $metadata['hwid_bound'] = ! empty($machineId);
-            $order->update(['metadata' => json_encode($metadata)]);
+            $order->update(['metadata' => json_encode($metadata), 'status' => 'completed']);
 
             // Send payment confirmed email with license keys
             if ($order->customer_email && PaymentSetting::get('mail_enabled', true)) {
@@ -344,9 +389,14 @@ class SmsCheckerController extends Controller
             abort(403);
         }
 
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
+        }
+
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         $paymentService = app(ThaiPaymentService::class);
         $paymentInfo = null;
@@ -407,7 +457,7 @@ class SmsCheckerController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
         $licenses = LicenseKey::where('order_id', $order->id)->get();
 
         return view('smschecker.payment-success', [
@@ -420,6 +470,8 @@ class SmsCheckerController extends Controller
 
     public function buyRedirect(Request $request)
     {
+        $this->abortUnlessOnSale();
+
         $plan = $request->query('plan');
         $machineId = $request->query('machine_id');
 
@@ -446,6 +498,8 @@ class SmsCheckerController extends Controller
 
     public function downloadPage(GithubReleaseService $github)
     {
+        $this->abortUnlessOnSale();
+
         $product = Product::where('slug', 'smschecker')->first();
 
         $version = null;
@@ -460,79 +514,38 @@ class SmsCheckerController extends Controller
         ]);
     }
 
-    public function downloadApk(GithubReleaseService $github)
+    /**
+     * APK ของ SMS Checker — ไฟล์ส่งจาก xman4289.com เอง ลูกค้าไม่เห็น GitHub (ReleaseDownloadStreamer)
+     * และจองที่ในช่องส่งไฟล์ร่วมของทั้งเว็บ (config/downloads.php) เหมือนแอปอื่น
+     *
+     * GET /smschecker/download/apk — ตัวเช็คอัปเดตในแอปส่งลูกค้ามาที่นี่ จึงเปิดอยู่แม้ปิดขาย
+     * (ไม่เรียก abortUnlessOnSale — ลูกค้าที่ถือ license อยู่ต้องอัปเดตได้)
+     */
+    public function downloadApk(Request $request)
     {
-        $product = Product::where('slug', 'smschecker')->firstOrFail();
-        // ต้องตรงกับเวอร์ชันที่ API เช็คอัพเดทโฆษณาไว้เป๊ะ ไม่งั้นจะบอกลูกค้าว่ามี 2.0.176
+        $product = Product::where('slug', 'smschecker')->first();
+        $backTo = $this->apkBackTo($request, $product);
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, $backTo, 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        // ต้องตรงกับเวอร์ชันที่ API เช็คอัพเดทโฆษณาไว้เป๊ะ (latestVersionFresh ตัวเดียวกัน) ไม่งั้นจะบอกลูกค้าว่ามี 2.0.176
         // แต่เสิร์ฟไฟล์เก่ากว่า → ติดตั้งไม่ได้เพราะ Android กัน downgrade
-        $version = $github->latestVersionFresh($product);
-
-        if (! $version || ! $version->github_release_url) {
-            return redirect()->route('smschecker.download')
-                ->with('error', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
-        }
-
-        $githubSetting = $product->githubSetting;
-
-        if (! $githubSetting) {
-            return redirect()->route('smschecker.download')
-                ->with('error', 'ระบบดาวน์โหลดยังไม่พร้อม');
-        }
-
-        return $this->proxyGithubDownload($githubSetting, $version);
+        return $this->serveApk($request, $product, $this->latestRelease($product), $backTo, 'SmsChecker');
     }
 
-    protected function proxyGithubDownload($githubSetting, ProductVersion $productVersion): StreamedResponse
+    /**
+     * ส่งไฟล์ไม่ได้ พาเบราว์เซอร์ไปหน้าที่เปิดได้จริงพร้อมข้อความ — ระหว่างปิดขายหน้า SMS Checker ทุกหน้าตอบ 404
+     * คนที่ล็อกอินอยู่มาจากศูนย์ดาวน์โหลด (ทางเดียวที่ยังมีปุ่มนี้) จึงกลับไปที่นั่น · คนอื่นไปหน้าแรก
+     */
+    private function apkBackTo(Request $request, ?Product $product): string
     {
-        $token = $githubSetting->github_token_decrypted;
-        $assetUrl = $productVersion->github_release_url;
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-            'Accept' => 'application/octet-stream',
-            'User-Agent' => 'XMAN-SmsChecker-Download-Proxy',
-        ])->withOptions([
-            'allow_redirects' => false,
-        ])->get($assetUrl);
-
-        if ($response->status() === 302) {
-            $downloadUrl = $response->header('Location');
-        } else {
-            $downloadUrl = $assetUrl;
-        }
-
-        $filename = $productVersion->download_filename ?? 'SmsChecker-v' . $productVersion->version . '.apk';
-        $fileSize = $productVersion->file_size;
-
-        return new StreamedResponse(function () use ($downloadUrl, $token) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
-                echo $data;
-                flush();
-
-                return strlen($data);
-            });
-
-            if (strpos($downloadUrl, 'github.com') !== false) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer ' . $token,
-                    'Accept: application/octet-stream',
-                    'User-Agent: XMAN-SmsChecker-Download-Proxy',
-                ]);
-            }
-
-            curl_exec($ch);
-            curl_close($ch);
-        }, 200, [
-            'Content-Type' => 'application/vnd.android.package-archive',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Content-Length' => $fileSize,
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
+        return match (true) {
+            (bool) $product?->is_active => route('smschecker.download'),
+            $request->user() !== null => route('customer.downloads'),
+            default => route('home'),
+        };
     }
 
     protected function generateOrderNumber(): string
@@ -541,5 +554,20 @@ class SmsCheckerController extends Controller
         $random = strtoupper(Str::random(4));
 
         return $prefix . '-' . $random;
+    }
+
+    /**
+     * Sales are closed until the owner says otherwise (2026-09-23: the prices on
+     * the pages and in the code disagreed). Every page that shows or sells the
+     * product answers 404 while the smschecker product is switched off in
+     * แอดมิน → สินค้า; switching it back on reopens them, no deploy needed.
+     *
+     * Deliberately NOT gated: the APK download (the app's own update check points
+     * there, and 8 customers hold active licences), the licence API, and the
+     * payment pages of orders already placed.
+     */
+    private function abortUnlessOnSale(): void
+    {
+        abort_unless(Product::where('slug', 'smschecker')->where('is_active', true)->exists(), 404);
     }
 }

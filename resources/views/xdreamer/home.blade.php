@@ -45,6 +45,7 @@
         'slug'  => $p['slug'] ?? null,
         'name'  => $p['name'],
         'price' => ((int) $p['price_thb']) === 0 ? 'ฟรี' : '฿'.number_format((int) $p['price_thb']),
+        'thb'   => (int) $p['price_thb'],
         'note'  => $p['note'] ?? '/ เดือน',
         'feats' => $p['features'] ?? [],
         'hue'   => (int) ($p['hue'] ?? 220),
@@ -445,6 +446,9 @@
                 <div style="font-size:44px;font-weight:300;color:#fff;letter-spacing:-0.02em;">{{ $t['price'] }}</div>
                 <div style="font-size:14px;color:#64748b;">{{ $t['note'] }}</div>
             </div>
+            @if($t['thb'] > 0)
+                <div style="font-size:13px;color:#fbbf24;margin:-20px 0 24px;"><x-tpix-price variant="plain" :thb="$t['thb']" /></div>
+            @endif
             <ul style="list-style:none;padding:0;margin:0 0 32px;">
                 @foreach($t['feats'] as $f)
                 <li style="font-size:14px;color:rgba(226,232,240,0.8);margin-bottom:10px;display:flex;gap:10px;font-weight:300;">

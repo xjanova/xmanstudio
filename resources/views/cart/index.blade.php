@@ -64,6 +64,18 @@
                                             @endif
                                             <div>
                                                 <div class="font-medium text-gray-900 dark:text-white">{{ $item->product->name }}</div>
+                                                @if($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements))
+                                                    {{-- quantity = packs, all added to the one key picked on the license page --}}
+                                                    <div class="text-xs text-sky-600 dark:text-sky-400 mt-0.5">
+                                                        +{{ $storagePack }} GB <x-bi th="ต่อชิ้น · เพิ่มให้คีย์ที่คุณเลือก" en="each · added to the key you picked" />
+                                                    </div>
+                                                @endif
+                                                @if($item->product->isRenewable())
+                                                    {{-- quantity = months on one key, not a number of keys --}}
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                        <x-bi th="จำนวน = จำนวนเดือน · มีคีย์อยู่แล้วจะต่ออายุคีย์เดิม" en="Quantity = months · extends your key if you have one" />
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
@@ -81,6 +93,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-white">
                                         {{ number_format($item->price * $item->quantity, 2) }} บาท / THB
+                                        <div><x-tpix-price :thb="$item->price * $item->quantity" :tpix="app(\App\Services\TpixPay\TpixPriceService::class)->fixedTotalForLines([$item], $item->price * $item->quantity, $item->price * $item->quantity)" /></div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <form action="{{ route('cart.remove', $item) }}" method="POST">
@@ -103,7 +116,8 @@
                     <a href="{{ route('products.index') }}" class="text-primary-600 dark:text-primary-400 hover:underline">
                         &larr; <x-bi th="เลือกสินค้าเพิ่ม" en="Continue Shopping" />
                     </a>
-                    <form action="{{ route('cart.index') }}" method="POST">
+                    <form action="{{ route('cart.clear') }}" method="POST"
+                          onsubmit="return confirm('ล้างสินค้าทั้งหมดในตะกร้า? / Remove every item from the cart?')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="text-red-600 dark:text-red-400 hover:underline">
@@ -127,6 +141,7 @@
                             <span><x-bi th="ยอดรวมทั้งหมด" en="Grand Total" /></span>
                             <span>{{ number_format($cart->total, 2) }} บาท / THB</span>
                         </div>
+                        <div class="text-right"><x-tpix-price variant="detail" :thb="$cart->total" :tpix="app(\App\Services\TpixPay\TpixPriceService::class)->fixedTotalForLines($cart->items, $cart->total, $cart->total)" /></div>
                     </div>
 
                     <a href="{{ route('orders.checkout') }}"

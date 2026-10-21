@@ -39,7 +39,7 @@
         <form method="POST"
               action="{{ $pack->exists ? route('admin.packs.update', $pack) : route('admin.packs.store') }}"
               enctype="multipart/form-data"
-              x-data="{ kind: '{{ old('kind', $pack->kind ?? 'character') }}' }">
+              x-data="{ kind: @js(old('kind', $pack->kind ?? 'character')) }">
             @csrf
             @if($pack->exists) @method('PUT') @endif
 

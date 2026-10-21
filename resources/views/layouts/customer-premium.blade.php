@@ -275,11 +275,11 @@
             <!-- Logo Section with Glow -->
             <div class="p-6 border-b border-indigo-500/20 flex-shrink-0">
                 @php
-                    $siteLogo = \App\Models\Setting::getValue('site_logo');
+                    $siteLogo = \App\Support\BrandLogo::darkUrl();
                 @endphp
                 <a href="/" class="flex items-center gap-3 group">
                     @if($siteLogo)
-                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
+                        <img src="{{ $siteLogo }}" alt="XMAN STUDIO" class="h-12 w-auto">
                     @else
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300">
                             <span class="text-white font-bold text-lg">X</span>
@@ -336,6 +336,50 @@
                     </div>
                     <span class="text-indigo-100"><x-bi k="common.wallet" /></span>
                 </a>
+                {{-- เครื่องที่คนเอาการ์ดจอมาแชร์ — แถบเมนูนี้มีสองไฟล์ (customer และ
+                     customer-premium) ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                {{-- โดเมนที่ลูกค้าจดกับเรา ตั้งค่า DNS เองได้ — สองไฟล์ × สองบล็อก = สี่จุด --}}
+                <a href="{{ route('customer.domains.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.domains.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-cyan-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="โดเมนของฉัน" en="My domains" /></span>
+                </a>
+                {{-- เซิร์ฟเวอร์ที่ลูกค้าเช่า — สองไฟล์ × สองบล็อก = สี่จุด เหมือนโดเมน --}}
+                <a href="{{ route('customer.vps.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.vps.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-cyan-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="VPS ของฉัน" en="My servers" /></span>
+                </a>
+                <a href="{{ route('gpuxmine.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('gpuxmine.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" /></span>
+                </a>
+                {{-- ยืนยันตัวตน — สองไฟล์เหมือนกัน ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                <a href="{{ route('kyc.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('kyc.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2.5l7.5 3v6c0 4.6-3.1 8.6-7.5 10-4.4-1.4-7.5-5.4-7.5-10v-6l7.5-3z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9.2 12l2.1 2.1 4.2-4.2"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="ยืนยันตัวตน" en="Verify identity" /></span>
+                    @if (auth()->user()?->kyc_status === 'approved')
+                        <svg class="w-4 h-4 ml-auto shrink-0 text-emerald-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
+                </a>
+
 
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-indigo-400/50 uppercase tracking-wider"><x-bi th="ธุรกรรม" en="Transactions" /></p>
 
@@ -674,6 +718,50 @@
                     </div>
                     <span class="text-indigo-100"><x-bi k="common.wallet" /></span>
                 </a>
+                {{-- เครื่องที่คนเอาการ์ดจอมาแชร์ — แถบเมนูนี้มีสองไฟล์ (customer และ
+                     customer-premium) ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                {{-- โดเมนที่ลูกค้าจดกับเรา ตั้งค่า DNS เองได้ — สองไฟล์ × สองบล็อก = สี่จุด --}}
+                <a href="{{ route('customer.domains.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.domains.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-cyan-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="โดเมนของฉัน" en="My domains" /></span>
+                </a>
+                {{-- เซิร์ฟเวอร์ที่ลูกค้าเช่า — สองไฟล์ × สองบล็อก = สี่จุด เหมือนโดเมน --}}
+                <a href="{{ route('customer.vps.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('customer.vps.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-cyan-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="VPS ของฉัน" en="My servers" /></span>
+                </a>
+                <a href="{{ route('gpuxmine.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('gpuxmine.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center mr-3 shadow-lg">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" /></span>
+                </a>
+                {{-- ยืนยันตัวตน — สองไฟล์เหมือนกัน ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                <a href="{{ route('kyc.index') }}" class="premium-nav-item flex items-center px-4 py-3 rounded-lg {{ request()->routeIs('kyc.*') ? 'active bg-white/10' : '' }}">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mr-3 shadow-lg shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2.5l7.5 3v6c0 4.6-3.1 8.6-7.5 10-4.4-1.4-7.5-5.4-7.5-10v-6l7.5-3z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9.2 12l2.1 2.1 4.2-4.2"/>
+                        </svg>
+                    </div>
+                    <span class="text-indigo-100"><x-bi th="ยืนยันตัวตน" en="Verify identity" /></span>
+                    @if (auth()->user()?->kyc_status === 'approved')
+                        <svg class="w-4 h-4 ml-auto shrink-0 text-emerald-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
+                </a>
+
 
                 <div class="pt-2 pb-1">
                     <p class="px-4 text-xs font-semibold text-indigo-400/50 uppercase"><x-bi th="ธุรกรรม" en="Transactions" /></p>

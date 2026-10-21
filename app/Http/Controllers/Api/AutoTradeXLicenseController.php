@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AutoTradeXDevice;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use App\Services\TpixPay\TpixPriceService;
+use App\Support\LicensePlans;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -109,22 +111,18 @@ class AutoTradeXLicenseController extends Controller
     private const EARLY_BIRD_DISCOUNT_PERCENT = 20;
 
     /**
-     * Pricing (THB)
+     * The plans and their prices, from config/licenses.php: the same numbers
+     * the /autotradex pricing page and checkout charge.
+     *
+     * @return array<string, array{original: int, currency: string}>
      */
-    private const PRICING = [
-        'monthly' => [
-            'original' => 299,
-            'currency' => 'THB',
-        ],
-        'yearly' => [
-            'original' => 1990,
-            'currency' => 'THB',
-        ],
-        'lifetime' => [
-            'original' => 19900,
-            'currency' => 'THB',
-        ],
-    ];
+    private static function pricedPlans(): array
+    {
+        return array_map(
+            fn (int $price) => ['original' => $price, 'currency' => LicensePlans::CURRENCY],
+            LicensePlans::for('autotradex')
+        );
+    }
 
     /**
      * Get features based on license type
@@ -419,7 +417,7 @@ class AutoTradeXLicenseController extends Controller
         $discountInfo = $this->checkEarlyBirdDiscount($device);
         $pricing = [];
 
-        foreach (self::PRICING as $plan => $priceInfo) {
+        foreach (self::pricedPlans() as $plan => $priceInfo) {
             $originalPrice = $priceInfo['original'];
             $finalPrice = $originalPrice;
             $discount = null;
@@ -989,6 +987,11 @@ class AutoTradeXLicenseController extends Controller
     {
         $baseUrl = config('app.url');
 
+        // TPIX (additive, only while TPIX prices are shown): each paid plan in TPIX at the live price
+        $tpix = app(TpixPriceService::class);
+        $tpixRate = $tpix->apiRate();
+        $inTpix = fn (string $plan) => $tpixRate !== null ? ['price_tpix' => $tpix->apiPrice(self::pricedPlans()[$plan]['original'])] : [];
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -1005,33 +1008,33 @@ class AutoTradeXLicenseController extends Controller
                     'monthly' => [
                         'name' => 'Monthly',
                         'duration' => '30 days',
-                        'price' => self::PRICING['monthly']['original'],
-                        'currency' => self::PRICING['monthly']['currency'],
+                        'price' => self::pricedPlans()['monthly']['original'],
+                        'currency' => self::pricedPlans()['monthly']['currency'],
                         'features' => self::MONTHLY_FEATURES,
                         'exchanges' => self::EXCHANGES['monthly'],
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/monthly",
-                    ],
+                    ] + $inTpix('monthly'),
                     'yearly' => [
                         'name' => 'Yearly',
                         'duration' => '365 days',
-                        'price' => self::PRICING['yearly']['original'],
-                        'currency' => self::PRICING['yearly']['currency'],
+                        'price' => self::pricedPlans()['yearly']['original'],
+                        'currency' => self::pricedPlans()['yearly']['currency'],
                         'features' => self::YEARLY_FEATURES,
                         'exchanges' => self::EXCHANGES['yearly'],
-                        'save_percent' => 44, // (299*12 - 1990) / (299*12) * 100 ≈ 44%
+                        'save_percent' => LicensePlans::yearlySaving(self::PRODUCT_SLUG),
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/yearly",
-                    ],
+                    ] + $inTpix('yearly'),
                     'lifetime' => [
                         'name' => 'Lifetime',
                         'duration' => 'Forever',
-                        'price' => self::PRICING['lifetime']['original'],
-                        'currency' => self::PRICING['lifetime']['currency'],
+                        'price' => self::pricedPlans()['lifetime']['original'],
+                        'currency' => self::pricedPlans()['lifetime']['currency'],
                         'features' => self::LIFETIME_FEATURES,
                         'exchanges' => self::EXCHANGES['lifetime'],
                         'purchase_url' => "{$baseUrl}/autotradex/checkout/lifetime",
-                    ],
+                    ] + $inTpix('lifetime'),
                 ],
-            ],
+            ] + ($tpixRate !== null ? ['tpix' => $tpixRate] : []),
         ]);
     }
 

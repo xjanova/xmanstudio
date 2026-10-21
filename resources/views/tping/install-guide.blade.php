@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('tping'); @endphp
 
 @section('title', 'วิธีติดตั้ง Tping - คู่มือฉบับสมบูรณ์')
 
@@ -456,10 +458,14 @@
 
         {{-- CTA --}}
         <div class="text-center space-y-4">
+            @if($csDownload)
+                <span class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-violet-500 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all hover:-translate-y-0.5 text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+            @else
             <a href="{{ route('tping.download') }}" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-violet-500 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all hover:-translate-y-0.5 text-lg">
                 <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 ดาวน์โหลด Tping ตอนนี้เลย
             </a>
+            @endif
             <p class="text-indigo-400 text-sm">
                 ต้องการความช่วยเหลือ?
                 <a href="https://line.me/ti/p/@xmanstudio" class="text-violet-400 hover:text-violet-300 underline" target="_blank">ติดต่อ LINE @xmanstudio</a>

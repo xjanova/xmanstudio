@@ -3,12 +3,14 @@
 namespace App\Mail;
 
 use App\Models\Order;
+use App\Support\OrderReceipt;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class PaymentConfirmedMail extends Mailable
 {
@@ -16,15 +18,12 @@ class PaymentConfirmedMail extends Mailable
 
     public Order $order;
 
-    public ?string $invoicePath = null;
-
     /**
      * Create a new message instance.
      */
-    public function __construct(Order $order, ?string $invoicePath = null)
+    public function __construct(Order $order)
     {
         $this->order = $order;
-        $this->invoicePath = $invoicePath;
     }
 
     /**
@@ -46,25 +45,37 @@ class PaymentConfirmedMail extends Mailable
             view: 'emails.payment-confirmed',
             with: [
                 'order' => $this->order,
+                'hasReceipt' => $this->order->exists && OrderReceipt::available($this->order),
             ],
         );
     }
 
     /**
-     * Get the attachments for the message.
+     * The receipt PDF, rendered now rather than lazily: a failure to print must cost the
+     * customer the attachment, never the e-mail itself — it carries their license keys.
      *
      * @return array<int, Attachment>
      */
     public function attachments(): array
     {
-        if ($this->invoicePath && file_exists($this->invoicePath)) {
-            return [
-                Attachment::fromPath($this->invoicePath)
-                    ->as('invoice-' . $this->order->order_number . '.pdf')
-                    ->withMime('application/pdf'),
-            ];
+        if (! $this->order->exists || ! OrderReceipt::available($this->order)) {
+            return [];
         }
 
-        return [];
+        try {
+            $pdf = OrderReceipt::pdf($this->order)->output();
+        } catch (\Throwable $e) {
+            Log::error('Receipt PDF could not be attached to the payment e-mail', [
+                'order_id' => $this->order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+
+        return [
+            Attachment::fromData(fn () => $pdf, OrderReceipt::filename($this->order))
+                ->withMime('application/pdf'),
+        ];
     }
 }

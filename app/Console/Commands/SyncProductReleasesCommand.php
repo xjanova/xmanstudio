@@ -54,8 +54,28 @@ class SyncProductReleasesCommand extends Command
 
         $synced = 0;
         $failed = 0;
+        $skipped = 0;
 
         foreach ($products as $product) {
+            $setting = $product->githubSetting;
+
+            // GitHub บอกว่าโควตาหมด — ถามไปก็ได้ 403 และกินโควตาที่เพิ่งคืนมา (GithubReleaseService log ไว้แล้วครั้งเดียว)
+            if ($until = $github->quotaPausedUntil($setting)) {
+                $skipped++;
+                $this->line("{$product->slug}: ข้าม — โควตา GitHub หมดถึง {$until->copy()->timezone('Asia/Bangkok')->format('H:i')} น.");
+
+                continue;
+            }
+
+            // ไม่มี token = โควตาร่วม 60 ครั้ง/ชม. ของทั้งเซิร์ฟเวอร์ — ถามห่างขึ้น และไม่ถามซ้ำถ้า read-through เพิ่งถามไป
+            // สั่งมือ (--force / --product) ถามเสมอ
+            if (! $manual && $github->usesSharedQuota($setting) && $github->checkedRecently($setting)) {
+                $skipped++;
+                $this->line("{$product->slug}: ข้าม — เพิ่งตรวจไปไม่ถึง " . GithubReleaseService::TOKENLESS_SYNC_MINUTES . ' นาที');
+
+                continue;
+            }
+
             // ค่าเดิมก่อน sync — ใช้ดูว่ารอบนี้มีของใหม่จริงไหม
             $before = optional($product->latestVersion())->version;
 
@@ -77,14 +97,18 @@ class SyncProductReleasesCommand extends Command
                 // ผลิตภัณฑ์เดียวพังต้องไม่ทำให้ตัวอื่นไม่ได้ sync
                 $failed++;
                 $this->error("{$product->slug}: {$e->getMessage()}");
-                Log::warning('product release sync failed', [
-                    'product' => $product->slug,
-                    'error' => $e->getMessage(),
-                ]);
+
+                // โควตาเพิ่งหมดกลางรอบ — การพักถูก log ไว้แล้วครั้งเดียว ไม่ log ซ้ำ
+                if (! $github->quotaPausedUntil($setting)) {
+                    Log::warning('product release sync failed', [
+                        'product' => $product->slug,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         }
 
-        $this->info("เสร็จ — sync {$synced} ผลิตภัณฑ์, ล้มเหลว {$failed}");
+        $this->info("เสร็จ — sync {$synced} ผลิตภัณฑ์, ล้มเหลว {$failed}, ข้าม {$skipped}");
 
         return self::SUCCESS;
     }

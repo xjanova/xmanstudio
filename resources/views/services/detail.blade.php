@@ -16,7 +16,7 @@
                 <ol class="flex items-center space-x-2 text-gray-400">
                     <li><a href="{{ route('home') }}" class="hover:text-white transition">หน้าแรก</a></li>
                     <li>/</li>
-                    <li><a href="{{ route('support.index') }}" class="hover:text-white transition">บริการ</a></li>
+                    <li><a href="{{ route('quote.index') }}" class="hover:text-white transition">บริการ</a></li>
                     <li>/</li>
                     <li class="text-white">{{ $category->name_th ?? $category->name }}</li>
                     <li>/</li>
@@ -63,7 +63,7 @@
 
                     <!-- Price -->
                     @php
-                        $discount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
+                        $discount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
                         $salePrice = $option->price * (1 - $discount);
                     @endphp
                     <div class="mb-8">
@@ -75,6 +75,7 @@
                             <span class="text-4xl font-bold">{{ number_format($salePrice, 0) }}</span>
                             <span class="text-xl">฿</span>
                         </div>
+                        <x-tpix-price variant="detail" :thb="$salePrice" class="mt-2" />
                     </div>
 
                     <!-- Short Description -->
@@ -86,11 +87,11 @@
 
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-4 mb-8">
-                        <a href="{{ route('support.index') }}#quotation-form"
+                        <a href="{{ route('quote.index') }}#quotation-form"
                            class="px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
                             สั่งซื้อบริการนี้
                         </a>
-                        <a href="{{ route('support.index') }}"
+                        <a href="{{ route('quote.index') }}"
                            class="px-8 py-4 border-2 border-gray-600 hover:border-primary-500 rounded-xl font-semibold text-lg transition-all">
                             เลือกบริการอื่น
                         </a>
@@ -232,7 +233,7 @@
                                 </p>
                             @endif
                             @php
-                                $relDiscount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
+                                $relDiscount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
                                 $relSalePrice = $related->price * (1 - $relDiscount);
                             @endphp
                             <div class="flex items-center justify-between">
@@ -241,6 +242,7 @@
                                     <span class="text-2xl font-bold text-red-400">
                                         {{ number_format($relSalePrice, 0) }} ฿
                                     </span>
+                                    <x-tpix-price :thb="$relSalePrice" />
                                 </div>
                                 <span class="text-primary-400 group-hover:translate-x-2 transition-transform">→</span>
                             </div>
@@ -257,11 +259,11 @@
             <h2 class="text-4xl font-bold mb-6">พร้อมที่จะเริ่มต้นแล้วหรือยัง?</h2>
             <p class="text-xl mb-8 text-white/90">ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี</p>
             <div class="flex flex-wrap gap-4 justify-center">
-                <a href="{{ route('support.index') }}#quotation-form"
+                <a href="{{ route('quote.index') }}#quotation-form"
                    class="px-8 py-4 bg-white text-primary-600 hover:bg-gray-100 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
                     สั่งซื้อเลย
                 </a>
-                <a href="{{ route('support.index') }}"
+                <a href="{{ route('quote.index') }}"
                    class="px-8 py-4 border-2 border-white hover:bg-white/10 rounded-xl font-semibold text-lg transition-all">
                     ดูบริการทั้งหมด
                 </a>

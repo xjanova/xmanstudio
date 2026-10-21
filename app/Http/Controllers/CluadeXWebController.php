@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 
 /**
@@ -14,54 +16,49 @@ use Illuminate\Http\Request;
  */
 class CluadeXWebController extends Controller
 {
+    use ServesReleaseDownloads;
+
     private const PRODUCT_SLUG = 'cluadex-ai-coding-assistant';
 
-    private const PRICING = [
-        'monthly' => [
-            'name' => 'Monthly',
-            'name_th' => 'รายเดือน',
-            'price' => 199,
-            'duration_days' => 30,
-            'license_type' => 'monthly',
-            'features' => [
-                'OpenAI, Anthropic, Gemini providers',
-                'Git/GitHub Integration (12+ commands)',
-                'Plugin System (20+ plugins)',
-                'Web Fetch & Context Memory',
-                'Smart Code Editing & Review',
-                'Auto-Update',
-                'ซัพพอร์ตมาตรฐาน',
-            ],
-        ],
+    /**
+     * The plans the store sells, as the product page (/products/cluadex-ai-coding-assistant)
+     * describes them. What each one costs is in config/licenses.php; pricedPlans()
+     * puts the two together. There is no monthly plan: the store sells a year or a lifetime.
+     */
+    private const PLANS = [
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 899,
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
-                'ทุกอย่างใน Monthly +',
-                'Priority Support',
-                'อัพเดทก่อนใคร',
-                'ประหยัด 63% (≈฿75/เดือน)',
+                'ฟีเจอร์ทั้งหมด',
+                '5 AI Providers',
+                '28 Agent Tools',
+                'ซัพพอร์ตพรีเมียม',
+                'อัปเดตฟรี 1 ปี',
             ],
         ],
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 4999,
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
-                'ทุกอย่างใน Yearly +',
-                'VIP Support ตลอดชีพ',
-                'Early Access ฟีเจอร์ใหม่',
-                'อัพเดทตลอดชีพ',
-                'ใช้ได้หลายเครื่อง',
-                'จ่ายครั้งเดียว ไม่มีค่าใช้จ่ายเพิ่ม',
+                'ฟีเจอร์ทั้งหมด',
+                '5 AI Providers',
+                '28 Agent Tools',
+                'ซัพพอร์ตพรีเมียม',
+                'อัปเดตฟรีตลอดชีพ',
             ],
         ],
     ];
+
+    /** PLANS with each price from config/licenses.php — only the terms the store sells. */
+    private static function pricedPlans(): array
+    {
+        return LicensePlans::priced(self::PRODUCT_SLUG, self::PLANS);
+    }
 
     /**
      * Show CluadeX landing page
@@ -86,7 +83,7 @@ class CluadeXWebController extends Controller
         }
 
         return view('cluadex.detail', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'product' => $product,
             'version' => $version,
             'hasPurchased' => $hasPurchased,
@@ -105,16 +102,29 @@ class CluadeXWebController extends Controller
         }
 
         return view('cluadex.pricing', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'machineId' => $machineId,
+            // the cart sells the licence — each plan's button posts its term there,
+            // exactly as the product page does
+            'product' => Product::where('slug', self::PRODUCT_SLUG)->where('is_active', true)->first(),
         ]);
     }
 
     /**
-     * Download page — redirect to GitHub releases
+     * ดาวน์โหลดฟรี — ไฟล์ของเวอร์ชันล่าสุดส่งจาก xman4289.com เอง
+     *
+     * เดิม redirect ไปหน้า releases บน GitHub = ลูกค้าเห็น repo · กฎเจ้าของ (2026-09-24) ห้ามเด็ดขาด
+     * ไฟล์ไหนเป็น "ตัวดาวน์โหลด" กำหนดที่ asset_pattern ของ GitHub setting ในหน้า admin
+     * (ตัวเดียวกับที่ update/check ประกาศ) ไม่ใช่ในโค้ด
      */
-    public function downloadPage()
+    public function downloadPage(Request $request)
     {
-        return redirect('https://github.com/xjanova/cluadeX/releases/latest');
+        $product = Product::where('slug', self::PRODUCT_SLUG)->where('is_active', true)->first();
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, route('cluadex.detail'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        return $this->serveRelease($request, $product, $this->latestRelease($product), route('cluadex.detail'));
     }
 }

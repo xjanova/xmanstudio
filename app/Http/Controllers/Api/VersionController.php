@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\Product;
+use App\Models\ProductVersion;
 use App\Services\GithubReleaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,10 +51,9 @@ class VersionController extends Controller
                 'changelog' => $version->changelog,
                 'released_at' => $version->synced_at?->toIso8601String(),
             ],
-            'download_url' => route('download.product', [
-                'slug' => $product->slug,
-                'version' => $version->version,
-            ]),
+            // Coming Soon: บอกเวอร์ชันได้ แต่ไม่มีลิงก์โหลด (กฎเจ้าของ 2026-10-12)
+            'coming_soon' => $product->isComingSoon(),
+            'download_url' => $this->downloadUrlFor($product, $version),
         ]);
     }
 
@@ -82,6 +82,7 @@ class VersionController extends Controller
                 'name' => $product->name,
                 'slug' => $product->slug,
             ],
+            'coming_soon' => $product->isComingSoon(),
             'versions' => $versions->map(function ($v) use ($product) {
                 return [
                     'version' => $v->version,
@@ -91,10 +92,7 @@ class VersionController extends Controller
                     'changelog' => $v->changelog,
                     'is_active' => $v->is_active,
                     'released_at' => $v->synced_at?->toIso8601String(),
-                    'download_url' => route('download.product', [
-                        'slug' => $product->slug,
-                        'version' => $v->version,
-                    ]),
+                    'download_url' => $this->downloadUrlFor($product, $v),
                 ];
             }),
         ]);
@@ -130,7 +128,9 @@ class VersionController extends Controller
         }
 
         $currentVersion = $request->input('current_version');
-        $hasUpdate = version_compare($currentVersion, $latestVersion->version, '<');
+        // Coming Soon: ไม่มีอะไรให้อัปเดต — ไฟล์ยังโหลดไม่ได้ (กฎเจ้าของ 2026-10-12)
+        $comingSoon = $product->isComingSoon();
+        $hasUpdate = ! $comingSoon && version_compare($currentVersion, $latestVersion->version, '<');
 
         // Check license if provided
         $licenseValid = false;
@@ -153,6 +153,7 @@ class VersionController extends Controller
             'current_version' => $currentVersion,
             'latest_version' => $latestVersion->version,
             'has_update' => $hasUpdate,
+            'coming_soon' => $comingSoon,
             'update' => $hasUpdate ? [
                 'version' => $latestVersion->version,
                 'filename' => $latestVersion->download_filename,
@@ -160,15 +161,13 @@ class VersionController extends Controller
                 'file_size_formatted' => $latestVersion->file_size_formatted,
                 'changelog' => $latestVersion->changelog,
                 'released_at' => $latestVersion->synced_at?->toIso8601String(),
-                'download_url' => route('download.product', [
-                    'slug' => $product->slug,
-                    'version' => $latestVersion->version,
-                ]),
+                'download_url' => $this->downloadUrlFor($product, $latestVersion),
+                'sha256' => $latestVersion->sha256,
             ] : null,
             'license' => [
                 'valid' => $licenseValid,
                 'status' => $licenseStatus,
-                'can_download' => $licenseValid,
+                'can_download' => $licenseValid && ! $comingSoon,
             ],
         ]);
     }
@@ -190,6 +189,20 @@ class VersionController extends Controller
             ], 404);
         }
 
+        // Coming Soon: ตอบ "ไม่มีอัปเดต" ไม่ยื่นลิงก์ และไม่ถาม GitHub (กฎเจ้าของ 2026-10-12)
+        if ($product->isComingSoon()) {
+            return response()->json([
+                'has_update' => false,
+                'latest_version' => '',
+                'download_url' => '',
+                'changelog' => '',
+                'sha256' => null,
+                'file_size' => null,
+                'filename' => null,
+                'coming_soon' => true,
+            ]);
+        }
+
         // 2026-07-28 — read-through แบบ NetWix: ถ้า GitHub มี tag ใหม่กว่าที่ DB รู้
         // จะดึงเข้ามาให้เลยในคำขอนี้ (cache 5 นาที) เว็บจึงตรงกับ GitHub เองเสมอ
         // ไม่ต้องรอ cron และไม่ต้องมีใครกดปุ่ม Sync
@@ -201,6 +214,9 @@ class VersionController extends Controller
                 'latest_version' => '',
                 'download_url' => '',
                 'changelog' => '',
+                'sha256' => null,
+                'file_size' => null,
+                'filename' => null,
             ]);
         }
 
@@ -217,10 +233,7 @@ class VersionController extends Controller
             } elseif ($productSlug === 'localvpn') {
                 $downloadUrl = url('/localvpn/download/apk');
             } else {
-                $downloadUrl = route('download.product', [
-                    'slug' => $product->slug,
-                    'version' => $latestVersion->version,
-                ]);
+                $downloadUrl = $this->downloadUrlFor($product, $latestVersion);
             }
         }
 
@@ -240,6 +253,51 @@ class VersionController extends Controller
             'latest_version' => $latestVersion->version,
             'download_url' => $downloadUrl,
             'changelog' => $latestVersion->changelog ?? '',
+            // 2026-09-23 — ของเวอร์ชันล่าสุด ให้แอปตรวจไฟล์ที่โหลดมาก่อนติดตั้ง (null = ไม่ทราบ)
+            'sha256' => $latestVersion->sha256,
+            'file_size' => $latestVersion->file_size,
+            'filename' => $latestVersion->download_filename,
+        ]);
+    }
+
+    /**
+     * แอปฟรีที่มีหน้าโหลดสาธารณะ (ไม่ต้องล็อกอิน ไฟล์ส่งจาก xman4289.com เอง) — slug → ชื่อ route ที่รับ {version}
+     * ตัวอัปเดตในแอปเหล่านี้โหลดเองโดยไม่มี session จึงใช้ download.product (ต้องล็อกอิน + ซื้อ) ไม่ได้
+     */
+    private const PUBLIC_DOWNLOAD_ROUTES = [
+        'winx-tools' => 'winx-tools.download',
+        // Anti X: release ใน repo private — ไฟล์ผ่านเซิร์ฟเวอร์ด้วย token ของสินค้า ไม่มีลิงก์ GitHub ถึงแอป
+        'anti-x' => 'anti-x.download',
+        // Anti X Mobile: APK ฟรีทุกคน release ใน repo private เหมือน Anti X
+        'anti-x-mobile' => 'anti-x-mobile.download',
+        'autotradex' => 'autotradex.download',
+        'chanthra-studio' => 'chanthra-studio.download',
+        'aipray' => 'aipray.download',
+        'giggok' => 'giggok.download',
+        // MacDock: release ใน repo private เหมือน Anti X — ตัวอัปเดตในแอปโหลด {version} เป๊ะ ๆ จากที่นี่
+        'macdock' => 'macdock.download',
+    ];
+
+    /**
+     * ลิงก์ดาวน์โหลดของเวอร์ชันนี้ที่แอปของผลิตภัณฑ์นั้นใช้ได้จริง
+     *
+     * download.product ต้องล็อกอินและซื้อก่อน — แอปที่โหลดฟรี (PUBLIC_DOWNLOAD_ROUTES) ชี้ไปหน้าโหลดสาธารณะของมัน
+     * ระบุเวอร์ชันเป๊ะ ๆ ให้ไฟล์ตรงกับ sha256 ที่ส่งไปคู่กัน · ห้ามคืนลิงก์ GitHub (กฎเจ้าของ 2026-09-24)
+     * สินค้ายังเป็น Coming Soon = null: ยังไม่มีลิงก์ให้ใคร (กฎเจ้าของ 2026-10-12)
+     */
+    private function downloadUrlFor(Product $product, ProductVersion $version): ?string
+    {
+        if ($product->isComingSoon()) {
+            return null;
+        }
+
+        if ($route = self::PUBLIC_DOWNLOAD_ROUTES[$product->slug] ?? null) {
+            return route($route, ['version' => $version->version]);
+        }
+
+        return route('download.product', [
+            'slug' => $product->slug,
+            'version' => $version->version,
         ]);
     }
 

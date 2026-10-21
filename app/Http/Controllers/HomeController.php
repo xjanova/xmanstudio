@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
 use App\Services\ThemeService;
+use App\Support\UniverseHome;
 
 class HomeController extends Controller
 {
@@ -14,15 +15,12 @@ class HomeController extends Controller
         // onWebsite(): avatar packs are sold inside the GigGok app and would
         // otherwise show up here as "newest products", since they are the most
         // recently created rows in the table.
+        // available(): the section is headed "ready to use for real", so only
+        // what a visitor can buy or download today — never a Coming Soon row.
         $featuredProducts = Product::onWebsite()
-            ->where('is_active', true)
+            ->available()
             ->orderBy('created_at', 'desc')
-            ->take(6)
-            ->get();
-
-        $categories = Category::onWebsite()
-            ->where('is_active', true)
-            ->orderBy('order')
+            ->take(9)
             ->get();
 
         $featuredReviews = Review::approved()
@@ -30,6 +28,18 @@ class HomeController extends Controller
             ->with(['user', 'reviewable'])
             ->latest()
             ->limit(6)
+            ->get();
+
+        // The 3D XMAN Universe, for browsers that can run it. Its own page
+        // sends a device that cannot back here with ?view=classic, and that
+        // visitor gets the theme's home below, unchanged.
+        if (UniverseHome::shouldServe(request())) {
+            return view('home-universe', compact('featuredProducts', 'featuredReviews'));
+        }
+
+        $categories = Category::onWebsite()
+            ->where('is_active', true)
+            ->orderBy('order')
             ->get();
 
         // Retro and Nova each get their own landing page; classic/premium

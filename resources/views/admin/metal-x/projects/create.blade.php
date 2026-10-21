@@ -95,7 +95,7 @@
             </h3>
 
             {{-- Media Mode Selector --}}
-            <div x-data="{ mediaMode: '{{ old('media_mode', 'images') }}' }" class="space-y-4">
+            <div x-data="{ mediaMode: @js(old('media_mode', 'images')) }" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ประเภทสื่อ</label>
                     <div class="flex flex-wrap gap-3">

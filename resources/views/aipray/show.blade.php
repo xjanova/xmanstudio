@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('aipray'); @endphp
 
 @section('title', 'Aipray - สวดมนต์อัจฉริยะ')
 @section('meta_description', 'Aipray - แอปสวดมนต์อัจฉริยะ พร้อม AI ช่วยนำสวด ใช้งานฟรีตลอดไป')
@@ -41,11 +43,15 @@
 
             {{-- Download Button --}}
             <div class="mt-4">
+                @if($csDownload)
+                    <span class="inline-flex items-center px-8 py-4 gold-gradient text-gray-900 font-bold text-lg rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ $downloadUrl }}"
                    class="inline-flex items-center px-8 py-4 gold-gradient text-gray-900 font-bold text-lg rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     ดาวน์โหลด APK
                 </a>
+                @endif
                 <p class="text-gray-500 text-sm mt-3">Android 5.0 ขึ้นไป</p>
             </div>
         </div>
@@ -71,7 +77,11 @@
     @endif
 
     {{-- Changelog Section --}}
-    @if(!empty($changelog))
+    @php
+        // ลูกค้าต้องไม่รู้ repo (กฎเจ้าของ 2026-09-24) — ล้างลิงก์ GitHub ก่อนแสดง (ข้อความที่ล้างแล้วผ่านซ้ำก็เท่าเดิม)
+        $releaseNotes = \App\Support\ReleaseNotes::forCustomers($changelog ?? null, \App\Support\ReleaseNotes::studioAccounts());
+    @endphp
+    @if($releaseNotes)
     <section class="max-w-4xl mx-auto px-4 py-16 bg-gray-900">
         <h2 class="text-2xl sm:text-3xl font-bold text-center mb-12 text-white">
             <span class="gold-text">บันทึก</span>การเปลี่ยนแปลง
@@ -80,7 +90,8 @@
             <div class="prose prose-invert prose-sm sm:prose-base max-w-none
                         prose-headings:gold-text prose-a:gold-text prose-strong:text-gray-100
                         prose-ul:text-gray-300 prose-li:text-gray-300">
-                {!! $changelog !!}
+                {{-- release notes เป็น markdown: แปลงเป็น HTML เอง ตัด HTML ดิบทิ้ง (เดิม {!! !!} ตรง ๆ = script ใน release รันบนหน้าเว็บได้) --}}
+                {!! Str::markdown($releaseNotes, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
             </div>
         </div>
     </section>

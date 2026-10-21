@@ -40,6 +40,11 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">ชำระแล้ว</p>
             <p class="text-2xl font-bold text-emerald-600">{{ $counts['paid'] }}</p>
         </a>
+        <a href="{{ route('admin.quotations.list', ['follow_up' => 1]) }}" class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow border border-gray-100 dark:border-gray-700 hover:shadow-lg transition md:col-span-2 {{ request()->boolean('follow_up') ? 'ring-2 ring-amber-500' : '' }}">
+            <p class="text-sm text-gray-500 dark:text-gray-400">ต้องตาม — ส่งแล้วยังไม่มีคำตอบ</p>
+            <p class="text-2xl font-bold text-amber-600">{{ $counts['follow_up'] }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">เรียงจากที่เงียบนานที่สุด · ระบบเตือนลูกค้าเองหนึ่งครั้งก่อนหมดอายุ 3 วัน</p>
+        </a>
     </div>
 
     <!-- Search & Filters -->
@@ -90,6 +95,9 @@
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">ประเภท</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">สถานะ</th>
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">โครงการ</th>
+                        @if (request()->boolean('follow_up'))
+                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">เงียบมาแล้ว</th>
+                        @endif
                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">วันที่</th>
                         <th class="px-4 py-3"></th>
                     </tr>
@@ -98,7 +106,10 @@
                     @forelse($quotations as $q)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                         <td class="px-4 py-3">
-                            <a href="{{ route('admin.quotations.detail', $q) }}" class="font-mono text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">{{ $q->quote_number }}</a>
+                            <a href="{{ route('admin.quotations.detail', $q) }}" class="font-mono text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">{{ $q->displayNumber() }}</a>
+                            @if ($q->isSuperseded())
+                                <div class="text-[10px] text-gray-400">มีฉบับใหม่แทนแล้ว</div>
+                            @endif
                         </td>
                         <td class="px-4 py-3">
                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $q->customer_name }}</div>
@@ -142,6 +153,19 @@
                                 <span class="text-xs text-gray-400">-</span>
                             @endif
                         </td>
+                        @if (request()->boolean('follow_up'))
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            @php $silent = $q->daysSinceSent(); $left = $q->daysLeft(); @endphp
+                            <div class="text-sm font-semibold {{ $silent !== null && $silent >= 7 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white' }}">
+                                {{ $silent === null ? '-' : ($silent === 0 ? 'วันนี้' : $silent . ' วัน') }}
+                            </div>
+                            <div class="text-xs {{ $left < 0 ? 'text-red-500' : ($left <= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400') }}">
+                                {{ $left < 0 ? 'หมดอายุแล้ว' : 'ยืนราคาอีก ' . $left . ' วัน' }}
+                                @if ($q->viewed_at) · เปิดดูแล้ว @else · ยังไม่เปิด @endif
+                                @if ($q->follow_up_sent_at) · เตือนแล้ว @endif
+                            </div>
+                        </td>
+                        @endif
                         <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $q->created_at->format('d/m/Y H:i') }}</td>
                         <td class="px-4 py-3">
                             <a href="{{ route('admin.quotations.detail', $q) }}" class="px-3 py-1.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 transition">ดูรายละเอียด</a>
@@ -149,7 +173,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="px-4 py-12 text-center">
+                        <td colspan="{{ request()->boolean('follow_up') ? 10 : 9 }}" class="px-4 py-12 text-center">
                             <p class="text-gray-500 dark:text-gray-400 font-medium">ไม่พบใบเสนอราคา</p>
                         </td>
                     </tr>

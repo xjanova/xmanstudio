@@ -399,6 +399,85 @@ crontab -e
 * * * * * cd /var/www/xmanstudio && php artisan schedule:run >> /dev/null 2>&1
 ```
 
+**On DirectAdmin** (Advanced Features → Cron Jobs) the entry must be every minute too:
+Minute `*`, Hour `*`, Day of Month `*`, Month `*`, Day of Week `*`, command
+`cd /path/to/xmanstudio && php artisan schedule:run >> /dev/null 2>&1`.
+Do not use `*/5` — the scheduler only runs what is due at the minute it is called, so a
+five-minute cron silently turns every "every minute" task into "every five minutes" and skips
+tasks pinned to a minute it never lands on.
+
+GPUxMINE depends on two of those tasks (`routes/console.php`):
+
+| Task | Schedule | What stops if it does not run |
+|------|----------|-------------------------------|
+| `gpuxmine:sync-nodes` | every minute (`* * * * *`) | Machines never reach aixman, suspensions and removals are not passed on, stuck retirements are not retried |
+| `gpuxmine:settle-earnings` | hourly (`0 * * * *`) | Earnings stay `pending` forever and never reach the owners' XMAN wallets |
+
+Check it after every deploy, and whenever someone says their machine gets no work or their
+earnings are not arriving:
+
+```bash
+php artisan gpuxmine:doctor          # exit 1 when something is broken
+php artisan gpuxmine:doctor --strict # also exit 1 on warnings
+```
+
+It checks the relay and aixman settings (`GPUXMINE_RELAY_URL`, `GPUXMINE_RELAY_ADMIN_KEY`,
+`AIXMAN_API_BASE`, `AIXMAN_WEBHOOK_SECRET` — which must equal aixman's `XMAN_WEBHOOK_SECRET`),
+that the relay answers with the admin key, that aixman accepts the secret (without writing
+anything there), that the migrations have run, that both tasks are scheduled and that the cron
+really ran them recently, and whether any earnings are stuck past the hold or waiting for an
+admin at `/admin/gpuxmine/earnings`. It never prints a secret.
+
+**GPUxMINE deploy order — aixman first (required), then this app, then the relay token split.**
+
+0. Before deploying aixman, check the tunnel address every machine has on file. The new aixman
+   refuses (HTTP 400) any address that is not `https://`, and machines paired while the relay's
+   proxy was set up wrong stored `http://` or an address without `:8443`. Read only:
+
+   ```sql
+   SELECT id, worker_id, tunnel_endpoint FROM gpu_nodes
+    WHERE deleted_at IS NULL AND paired_at IS NOT NULL
+      AND tunnel_endpoint NOT LIKE 'https://relay.xman4289.com:8443/w/%';
+   ```
+
+   It should return no rows. Any it does return cannot be updated at aixman from the moment aixman
+   is deployed until this app is: this app sends them with the address built from
+   `GPUXMINE_RELAY_URL` and `gpuxmine:sync-nodes` rewrites the stored value within a minute of its
+   deploy. Keep the two deploys close together. `php artisan gpuxmine:doctor` reports the same rows
+   under "ปลายทางอุโมงค์" (fail when any is not https).
+1. Deploy aixman's `feat/sharing-complete` first. This app sends aixman its machines every
+   ten minutes even when nothing changed, and whenever a machine's `accepting` flag flips — that
+   is what brings back a machine aixman dropped. The aixman on `main` rewrites a machine that is
+   rendering to `warming` every time it hears about it, and its reaper then kills warming workers
+   older than an hour, so it must not receive those pushes. This app tells the two apart by the
+   `worker.lastError` key in aixman's reply (only the new one sends it) and holds back the timed
+   and `accepting` pushes until it sees it, but that is a safety net: the intended order is aixman
+   first.
+2. Deploy this app and run the migrations.
+3. The relay (GpuXmine) can go before or after. Until it is upgraded: suspending a machine cannot
+   cut its relay connection (aixman is told the machine is offline and suspended, so no work is
+   sent), and a removed or banned machine's worker cannot be deleted at the relay — those rows
+   are marked `awaiting-relay` and `gpuxmine:sync-nodes` deletes them once the relay has the
+   command. `php artisan gpuxmine:doctor` counts them.
+4. Last, split the tokens. Set `Relay__IssueTunnelTokens=true` on the relay and restart it, then
+   give every machine enrolled before the split its own aixman tunnel token:
+
+   ```bash
+   php artisan gpuxmine:rotate-tunnel-tokens --dry-run   # what would change
+   php artisan gpuxmine:rotate-tunnel-tokens             # rotate, store, push to aixman
+   ```
+
+   Use this command, not `POST /admin/workers/{id}/rotate?only=tunnel` by hand: from the moment
+   the relay answers, the old token no longer opens the tunnel, and only this command stores the
+   new one and hands it to aixman in the same step. It skips machines rendering for a customer
+   (`--include-busy` to override) and is safe to run again until nothing is left.
+
+A referral share nobody can take any more (the referrer's affiliate account was suspended or
+deleted between the job and the payout, or the referrer is the owner) goes back to the machine's
+owner in the same wallet entry as the job, by default. `GPUXMINE_UNPAID_REFERRAL=platform` keeps it
+instead. Either way the row records it (`referral_unpaid_satang`, `referral_unpaid_to`) and the
+admin pages show the total.
+
 ---
 
 ## Performance Optimization

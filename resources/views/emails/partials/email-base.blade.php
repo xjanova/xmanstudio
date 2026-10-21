@@ -4,10 +4,10 @@
     $appUrl = \App\Models\PaymentSetting::get('email_site_url', config('app.url'));
     $fromEmail = config('mail.from.address', 'noreply@xman4289.com');
 
-    // The logo carries a white stroke around every letter, so it reads cleanly
-    // on this dark ground and needs no separate dark-mode file. Priority:
+    // This design is dark, so it carries the logo made for dark grounds — as a PNG, because
+    // Outlook cannot show the WebP the Branding page stores. Priority:
     // 1) email_logo_url override, 2) the site logo, 3) the text wordmark.
-    $siteLogo = \App\Models\Setting::getValue('site_logo');
+    $siteLogo = \App\Support\BrandLogo::pngPath(dark: true);
     $emailLogoUrl = \App\Models\PaymentSetting::get('email_logo_url');
     $logoUrl = $emailLogoUrl ?: ($siteLogo ? rtrim($appUrl, '/') . '/storage/' . $siteLogo : null);
 @endphp

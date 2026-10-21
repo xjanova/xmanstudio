@@ -15,6 +15,7 @@ class BrandingSettingsController extends Controller
     {
         $settings = [
             'site_logo' => Setting::getValue('site_logo'),
+            'site_logo_dark' => Setting::getValue('site_logo_dark'),
             'site_favicon' => Setting::getValue('site_favicon'),
         ];
 
@@ -25,11 +26,15 @@ class BrandingSettingsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'logo_dark' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
             'favicon' => 'nullable|image|mimes:png,jpg,jpeg,ico,svg|max:512',
         ], [
             'logo.image' => 'ไฟล์โลโก้ต้องเป็นรูปภาพเท่านั้น',
             'logo.mimes' => 'โลโก้ต้องเป็นไฟล์ประเภท: png, jpg, jpeg, svg, webp',
             'logo.max' => 'ขนาดไฟล์โลโก้ต้องไม่เกิน 2MB',
+            'logo_dark.image' => 'ไฟล์โลโก้พื้นหลังมืดต้องเป็นรูปภาพเท่านั้น',
+            'logo_dark.mimes' => 'โลโก้พื้นหลังมืดต้องเป็นไฟล์ประเภท: png, jpg, jpeg, svg, webp',
+            'logo_dark.max' => 'ขนาดไฟล์โลโก้พื้นหลังมืดต้องไม่เกิน 2MB',
             'favicon.image' => 'ไฟล์ favicon ต้องเป็นรูปภาพเท่านั้น',
             'favicon.mimes' => 'Favicon ต้องเป็นไฟล์ประเภท: png, jpg, jpeg, ico, svg',
             'favicon.max' => 'ขนาดไฟล์ favicon ต้องไม่เกิน 512KB',
@@ -48,11 +53,23 @@ class BrandingSettingsController extends Controller
             // Handle logo upload
             if ($request->hasFile('logo')) {
                 $oldLogo = Setting::getValue('site_logo');
+                // 1200 px keeps the logo sharp on the 3D home's hero at 2x DPR.
                 $logoPath = $imageService->replaceWithWebp(
-                    $request->file('logo'), $oldLogo, 'branding', maxWidth: 800,
+                    $request->file('logo'), $oldLogo, 'branding', maxWidth: 1200,
                 );
                 if ($logoPath) {
                     Setting::setValue('site_logo', $logoPath, 'string', 'branding', 'เส้นทางของโลโก้เว็บไซต์', true);
+                }
+            }
+
+            // The variant with light lettering, for dark grounds (App\Support\BrandLogo::darkUrl()).
+            if ($request->hasFile('logo_dark')) {
+                $oldLogoDark = Setting::getValue('site_logo_dark');
+                $logoDarkPath = $imageService->replaceWithWebp(
+                    $request->file('logo_dark'), $oldLogoDark, 'branding', maxWidth: 1200,
+                );
+                if ($logoDarkPath) {
+                    Setting::setValue('site_logo_dark', $logoDarkPath, 'string', 'branding', 'เส้นทางของโลโก้สำหรับพื้นหลังมืด', true);
                 }
             }
 
@@ -90,6 +107,25 @@ class BrandingSettingsController extends Controller
             return redirect()
                 ->route('admin.branding.index')
                 ->with('success', 'ลบโลโก้เรียบร้อยแล้ว');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('admin.branding.index')
+                ->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+        }
+    }
+
+    public function deleteLogoDark()
+    {
+        try {
+            $oldLogoDark = Setting::getValue('site_logo_dark');
+            if ($oldLogoDark) {
+                Storage::disk('public')->delete($oldLogoDark);
+                Setting::setValue('site_logo_dark', null, 'string', 'branding');
+            }
+
+            return redirect()
+                ->route('admin.branding.index')
+                ->with('success', 'ลบโลโก้พื้นหลังมืดเรียบร้อยแล้ว');
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.branding.index')

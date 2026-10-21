@@ -9,6 +9,7 @@ use App\Models\ProjectOrder;
 use App\Models\ProjectTimeline;
 use App\Models\Quotation;
 use App\Models\User;
+use App\Services\QuotationAcceptance;
 use Illuminate\Http\Request;
 
 class ProjectOrderController extends Controller
@@ -250,7 +251,7 @@ class ProjectOrderController extends Controller
             'is_public' => 'boolean',
             'notify_customer' => 'boolean',
             'attachments' => 'nullable|array',
-            'attachments.*' => 'file|max:10240', // 10MB max
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt,mp4|max:10240', // 10MB max; no svg/html: they run script from the public disk
         ]);
 
         $attachments = [];
@@ -420,47 +421,23 @@ class ProjectOrderController extends Controller
 
     /**
      * Create project from quotation
+     *
+     * Delegates to QuotationAcceptance so this button, the status dropdown and
+     * the customer's own "ตอบรับ" all produce the same project and the same
+     * instalment invoices — they used to produce three slightly different things.
      */
-    public function createFromQuotation(Quotation $quotation)
+    public function createFromQuotation(Quotation $quotation, QuotationAcceptance $acceptance)
     {
-        // Check if project already exists
         if (ProjectOrder::where('quotation_id', $quotation->id)->exists()) {
             return redirect()
                 ->route('admin.projects.index')
                 ->with('error', 'โครงการจากใบเสนอราคานี้ถูกสร้างไปแล้ว');
         }
 
-        // Create project from quotation
-        $project = ProjectOrder::create([
-            'user_id' => $quotation->user_id,
-            'quotation_id' => $quotation->id,
-            'project_name' => $quotation->service_name ?? $quotation->service_type,
-            'project_description' => $quotation->project_description,
-            'project_type' => $quotation->service_type,
-            'total_price' => $quotation->grand_total,
-        ]);
-
-        // Create features from service options
-        if ($quotation->service_options) {
-            foreach ($quotation->service_options as $index => $option) {
-                $project->features()->create([
-                    'name' => is_array($option) ? ($option['name'] ?? $option) : $option,
-                    'order' => $index,
-                ]);
-            }
-        }
-
-        // Create initial timeline
-        $project->timeline()->create([
-            'title' => 'สร้างโครงการจากใบเสนอราคา',
-            'description' => "สร้างจากใบเสนอราคา #{$quotation->quote_number}",
-            'event_date' => now(),
-            'type' => 'start',
-            'is_completed' => true,
-        ]);
+        $project = $acceptance->projectFor($quotation);
 
         return redirect()
             ->route('admin.projects.edit', $project)
-            ->with('success', 'สร้างโครงการจากใบเสนอราคาเรียบร้อยแล้ว กรุณากรอกรายละเอียดเพิ่มเติม');
+            ->with('success', 'สร้างโครงการจากใบเสนอราคาเรียบร้อยแล้ว พร้อมใบแจ้งหนี้งวดแรก กรุณากรอกรายละเอียดเพิ่มเติม');
     }
 }

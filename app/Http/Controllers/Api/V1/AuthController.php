@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
 use App\Models\User;
+use App\Support\Alerts\SecurityAlerts;
+use App\Support\Auth\LoginLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -28,6 +30,12 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
+            // The same books as the sign-in form. Without this the API was a quiet
+            // second door: no Turnstile, no failure counter, no IP block and no
+            // card in the admin chat — for a password that works on the website too.
+            SecurityAlerts::failedLogin($request->email, $request->ip(), $user);
+            LoginLog::failed($request->email, $user, 'api');
+
             throw ValidationException::withMessages([
                 'email' => ['อีเมลหรือรหัสผ่านไม่ถูกต้อง'],
             ]);
@@ -39,6 +47,9 @@ class AuthController extends Controller
                 'message' => 'บัญชีถูกระงับ',
             ], 403);
         }
+
+        LoginLog::success($user, 'api');
+        SecurityAlerts::adminLogin($user, $request->ip(), $request->userAgent());
 
         $token = $user->createToken($request->device_name)->plainTextToken;
 
@@ -189,6 +200,22 @@ class AuthController extends Controller
         $user = $request->user();
         if (! $user) {
             return response()->json(['success' => false, 'message' => 'ยังไม่ได้เข้าสู่ระบบ'], 401);
+        }
+
+        // This link signs a browser in with no password and no Turnstile. Fine for a
+        // customer opening their dashboard from the app; never how an admin session
+        // may start. A device token is minted from a licence key plus a machine id
+        // (deviceAuth above), so an admin who owns a licence would otherwise be one
+        // leaked key away from handing out the admin panel.
+        if ($user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'บัญชีผู้ดูแลระบบต้องเข้าสู่ระบบผ่านหน้าเว็บด้วยรหัสผ่านเท่านั้น',
+            ], 403);
+        }
+
+        if (! $user->is_active) {
+            return response()->json(['success' => false, 'message' => 'บัญชีถูกระงับ'], 403);
         }
 
         // Generate a one-time token (stored in cache for 5 minutes)

@@ -18,6 +18,20 @@
         $pendingCommissions = $totalUsers = $newBugReports = $pendingQuotations = 0;
         $pendingPaymentOrders = $pendingTopups = $activeDevices = $pendingOrders = $onlineVpnDevices = 0;
     }
+
+    // ออเดอร์แคมเปญ DGX Spark ที่รอเจ้าของ (สลิปรอตรวจ + ชำระแล้วรอสั่งเครื่อง) — แยก try เหมือนกัน
+    try {
+        $dgxActions = \App\Support\DgxSparkCampaign::needsActionCount();
+    } catch (\Throwable $e) {
+        $dgxActions = 0;
+    }
+
+    // รายได้ GPUxMINE ที่รอแอดมินตัดสิน — ไม่มีใครกดก็ไม่มีวันจ่าย (แยก try: ตารางนี้พังต้องไม่ลากตัวเลขอื่นเป็นศูนย์)
+    try {
+        $gpuxmineReview = \App\Models\GpuJobEarning::where('status', \App\Models\GpuJobEarning::STATUS_REVIEW)->count();
+    } catch (\Throwable $e) {
+        $gpuxmineReview = 0;
+    }
 @endphp
 
 {{-- Menu link helper class --}}
@@ -34,20 +48,48 @@
 @endphp
 
 {{-- Dashboard --}}
+<a href="{{ route('admin.gameshub.dashboard') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.gameshub.*', 'admin.game-support.*') ? $linkActive : $linkInactive }}">XGamesHub · บริจาค ไอเท็ม รีวิว ความเห็น</a>
 <div class="pb-2 mb-1 border-b border-white/5 space-y-1">
     <a href="{{ route('admin.analytics.index') }}"
        class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.analytics*') ? $linkActive : $linkInactive }}">
         <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Analytics
     </a>
+    <a href="{{ route('admin.campaigns.dgx-spark') }}"
+       class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.campaigns.*') ? $linkActive : $linkInactive }}">
+        <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+        แคมเปญ DGX Spark · ออเดอร์
+        @if($dgxActions > 0)
+        <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full" title="รอตรวจสลิป / รอสั่งเครื่อง">{{ $dgxActions }}</span>
+        @endif
+    </a>
     <a href="{{ route('admin.mockup') }}"
        class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.mockup') ? $linkActive : $linkInactive }}">
         <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-        Premium Dashboard
+        ตัวอย่างแดชบอร์ด (ข้อมูลสมมติ)
     </a>
 </div>
 
 {{-- การเช่า --}}
+{{-- ระบบขายโดเมน: token ราคา และนามสกุลที่เปิดขาย --}}
+<div x-data="{ open: {{ request()->routeIs('admin.domains.*', 'admin.vps.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
+        <span>โดเมน & VPS</span>
+        <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </button>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
+        <a href="{{ route('admin.domains.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.domains.*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+            โดเมน · ตั้งค่าและราคา
+        </a>
+        {{-- เช่า VPS: แพ็กเกจ ราคา เครื่องของลูกค้า และสถานะบัตรที่ใช้จ่ายผู้ให้บริการ --}}
+        <a href="{{ route('admin.vps.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.vps.*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/></svg>
+            เช่า VPS
+        </a>
+    </div>
+</div>
+
 <div x-data="{ open: {{ request()->routeIs('admin.rentals.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>การเช่า</span>
@@ -194,9 +236,40 @@
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Traffic Logs
         </a>
+        <a href="{{ route('admin.localvpn.fleet.nodes') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.localvpn.fleet.*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+            Relay Fleet
+        </a>
         <a href="{{ route('admin.localvpn.settings') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.localvpn.settings') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             ตั้งค่า
+        </a>
+    </div>
+</div>
+
+{{-- GPUxMINE: เครื่องที่คนแชร์การ์ดจอ และรายได้ที่ต้องมีคนตัดสิน --}}
+<div x-data="{ open: {{ request()->routeIs('admin.gpuxmine.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+    <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
+        <span>
+            <svg class="w-3 h-3 inline-block mr-1 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+            GPUxMINE
+            @if($gpuxmineReview > 0)
+            <span class="ml-1 bg-orange-600 text-white text-[10px] px-1.5 py-0.5 rounded-full normal-case">{{ $gpuxmineReview }}</span>
+            @endif
+        </span>
+        <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </button>
+    <div x-show="open" x-collapse class="{{ $subMenuClass }}">
+        <a href="{{ route('admin.gpuxmine.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.gpuxmine.index', 'admin.gpuxmine.show') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+            เครื่องในเครือข่าย
+        </a>
+        <a href="{{ route('admin.gpuxmine.earnings') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.gpuxmine.earnings*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            รายได้ · คิวตรวจ
+            @if($gpuxmineReview > 0)
+            <span class="ml-auto bg-orange-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $gpuxmineReview }}</span>
+            @endif
         </a>
     </div>
 </div>
@@ -364,6 +437,10 @@
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
             ตัวเลือก & ราคา
         </a>
+        <a href="{{ route('admin.quotations.pricing') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.quotations.pricing*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+            เงื่อนไขราคา
+        </a>
         <a href="{{ route('admin.projects.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.projects*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
             จัดการโครงการ
@@ -423,7 +500,7 @@
 </div>
 
 {{-- การเงิน --}}
-<div x-data="{ open: {{ request()->routeIs('admin.wallets.*') || request()->routeIs('admin.coupons*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.wallets.*') || request()->routeIs('admin.coupons*') || request()->routeIs('admin.tpix-payments.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>การเงิน</span>
         @if($pendingTopups > 0)<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingTopups }}</span>@endif
@@ -456,6 +533,14 @@
         <a href="{{ route('admin.wallets.settings') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.wallets.settings') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             ตั้งค่า Wallet
+        </a>
+        <a href="{{ route('admin.tpix-payments.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.tpix-payments.*') && ! request()->routeIs('admin.tpix-payments.reports*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8 8.5h8M12 8.5v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            ชำระด้วย TPIX
+        </a>
+        <a href="{{ route('admin.tpix-payments.reports') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.tpix-payments.reports*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+            รายงาน TPIX
         </a>
         <a href="{{ route('admin.coupons.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.coupons*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
@@ -502,7 +587,7 @@
 </div>
 
 {{-- การตั้งค่า --}}
-<div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ai-crawl*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') || request()->routeIs('admin.redis-settings*') || request()->routeIs('admin.email-settings*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.theme*') || request()->routeIs('admin.branding*') || request()->routeIs('admin.contact-settings*') || request()->routeIs('admin.payment-settings*') || request()->routeIs('admin.custom-code*') || request()->routeIs('admin.ads-txt*') || request()->routeIs('admin.seo*') || request()->routeIs('admin.ai-crawl*') || request()->routeIs('admin.ads*') || request()->routeIs('admin.banners*') || request()->routeIs('admin.ai-settings*') || request()->routeIs('admin.ai-playground*') || request()->routeIs('admin.turnstile*') || request()->routeIs('admin.social-login*') || request()->routeIs('admin.security.*') || request()->routeIs('admin.redis-settings*') || request()->routeIs('admin.email-settings*') || request()->routeIs('admin.alerts*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>ตั้งค่า</span>
         <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -527,6 +612,10 @@
         <a href="{{ route('admin.email-settings.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.email-settings*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             อีเมล (Resend)
+        </a>
+        <a href="{{ route('admin.alerts.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.alerts*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" viewBox="0 0 24 24" fill="currentColor"><path d="M21.4 4.1 2.9 11.2c-1.3.5-1.3 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.1.9.8.9.5 0 .7-.2 1-.5l2.3-2.2 4.8 3.5c.9.5 1.5.2 1.7-.8l3.2-15c.3-1.3-.5-1.9-1.6-1.4ZM8.9 13.9l9.6-6.1c.5-.3.9-.1.5.2l-8.2 7.4-.3 3.4-1.6-4.9Z"/></svg>
+            แจ้งเตือน Telegram
         </a>
         <a href="{{ route('admin.custom-code.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.custom-code*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
@@ -563,6 +652,18 @@
         <a href="{{ route('admin.turnstile.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.turnstile*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             Turnstile
+        </a>
+        <a href="{{ route('admin.social-login.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.social-login*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            เข้าสู่ระบบด้วยโซเชียล
+        </a>
+        <a href="{{ route('admin.security.logins.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.security.logins*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            ตรวจสอบการเข้าสู่ระบบ
+        </a>
+        <a href="{{ route('admin.security.two-factor.show') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.security.two-factor*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            ยืนยันตัวตน 2 ขั้น
         </a>
         <a href="{{ route('admin.redis-settings.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.redis-settings*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>

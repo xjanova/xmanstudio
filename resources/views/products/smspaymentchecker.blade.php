@@ -325,8 +325,9 @@
                     <h3 class="text-xl font-bold text-white mb-2">Monthly</h3>
                     <p class="text-gray-400 mb-6">For testing and small shops</p>
                     <div class="mb-6">
-                        <span class="text-4xl font-black text-white">990</span>
+                        <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'monthly')) }}</span>
                         <span class="text-gray-400 ml-2">THB/month</span>
+                        <x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price('sms-payment-checker', 'monthly')" />
                     </div>
                     <ul class="space-y-3 mb-8">
                         <li class="flex items-center text-gray-300">
@@ -350,7 +351,6 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="license_type" value="monthly">
-                        <input type="hidden" name="price" value="990">
                         <button type="submit" class="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-all">
                             Get Monthly
                         </button>
@@ -365,8 +365,9 @@
                     <h3 class="text-xl font-bold text-white mb-2">Yearly</h3>
                     <p class="text-gray-400 mb-6">Best value for growing businesses</p>
                     <div class="mb-2">
-                        <span class="text-4xl font-black text-white">9,900</span>
+                        <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'yearly')) }}</span>
                         <span class="text-gray-400 ml-2">THB/year</span>
+                        <x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price('sms-payment-checker', 'yearly')" />
                     </div>
                     <p class="text-emerald-400 text-sm mb-6">Save 17% vs monthly</p>
                     <ul class="space-y-3 mb-8">
@@ -391,7 +392,6 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="license_type" value="yearly">
-                        <input type="hidden" name="price" value="9900">
                         <button type="submit" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/25">
                             Get Yearly
                         </button>
@@ -403,8 +403,9 @@
                     <h3 class="text-xl font-bold text-white mb-2">Lifetime</h3>
                     <p class="text-gray-400 mb-6">One-time payment, forever access</p>
                     <div class="mb-6">
-                        <span class="text-4xl font-black text-white">29,900</span>
+                        <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'lifetime')) }}</span>
                         <span class="text-gray-400 ml-2">THB</span>
+                        <x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price('sms-payment-checker', 'lifetime')" />
                     </div>
                     <ul class="space-y-3 mb-8">
                         <li class="flex items-center text-gray-300">
@@ -428,7 +429,6 @@
                         @csrf
                         <input type="hidden" name="quantity" value="1">
                         <input type="hidden" name="license_type" value="lifetime">
-                        <input type="hidden" name="price" value="29900">
                         <button type="submit" class="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-all">
                             Get Lifetime
                         </button>
@@ -575,7 +575,7 @@
                         Buy License - {{ number_format($product->price, 0) }} THB
                     </button>
                 </form>
-                <a href="{{ route('support.index') }}" class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
+                <a href="{{ route('quote.index') }}" class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
                     Contact Us
                 </a>
             </div>
@@ -597,8 +597,8 @@
                         <a href="{{ route('products.show', $related->slug) }}"
                            class="group bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700 hover:border-emerald-500/50 transition-all hover:transform hover:scale-[1.02]">
                             <div class="aspect-video bg-gray-700 overflow-hidden">
-                                @if($related->image)
-                                    <img src="{{ Storage::url($related->image) }}" alt="{{ $related->name }}"
+                                @if($related->artwork_url)
+                                    <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}"
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-500/20 to-teal-500/20">
@@ -612,6 +612,7 @@
                                 <h3 class="font-bold text-white group-hover:text-emerald-400 transition-colors mb-2">{{ $related->name }}</h3>
                                 @if(!$related->is_custom)
                                     <p class="text-emerald-400 font-bold text-lg">{{ number_format($related->price, 0) }} THB</p>
+                                    <x-tpix-price :thb="$related->price" :tpix="$related->price_tpix" />
                                 @else
                                     <p class="text-gray-400">Contact for pricing</p>
                                 @endif

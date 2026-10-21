@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\SmsCheckerDevice;
+use App\Support\Alerts\SecurityAlerts;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -35,6 +36,7 @@ class VerifySmsCheckerDevice
                 'ip' => $request->ip(),
                 'api_key_prefix' => substr($apiKey, 0, 8) . '...',
             ]);
+            SecurityAlerts::probe('SMS Payment API', 'มีคนใช้ API key ที่ไม่มีอยู่จริง', $request->ip());
 
             return response()->json([
                 'success' => false,
@@ -48,6 +50,7 @@ class VerifySmsCheckerDevice
                 'status' => $device->status,
                 'ip' => $request->ip(),
             ]);
+            SecurityAlerts::probe('SMS Payment API', 'เครื่องที่ถูกปิดใช้งาน (' . $device->status . ') ยังพยายามส่งข้อมูล', $request->ip());
 
             return response()->json([
                 'success' => false,
@@ -76,7 +79,7 @@ class VerifySmsCheckerDevice
         // - notify: SMS notification
         // - approve/reject: order approval ต้องไม่ถูก block
         // - orders/match: SMS matching ต้องทำงานได้ทันทีเมื่อรับ SMS
-        $criticalPaths = ['register-device', 'debug-report', 'debug-topup', 'register-fcm-token', 'notify', 'notify-action', 'approve', 'reject', 'orders/match'];
+        $criticalPaths = ['register-device', 'debug-report', 'register-fcm-token', 'notify', 'notify-action', 'approve', 'reject', 'orders/match'];
         $isCritical = false;
         foreach ($criticalPaths as $path) {
             if (str_contains($request->path(), $path)) {

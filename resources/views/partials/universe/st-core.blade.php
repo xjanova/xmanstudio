@@ -1,0 +1,56 @@
+{{-- Stop 1 — the XMAN core: the star the flight starts from. Copy from nova-hero. --}}
+<section id="xu-core" class="xu-st" data-station="core" data-len="1.35"
+         data-label-th="แกนกลาง" data-label-en="Core" aria-labelledby="xu-core-title">
+    <div class="xu-panel xu-core">
+        @if($xuLogoUrl)
+            {{-- Big and glinting, in the empty sky above the headline. --}}
+            <div class="xu-core__logo xu-r" style="--i: 0;">
+                @include('partials.universe.logo', ['src' => $xuLogoUrl, 'class' => 'xu-logo--hero'])
+            </div>
+        @endif
+        <p class="xu-eyebrow xu-r" style="--i: 0;">
+            <span class="xu-eyebrow__dot" aria-hidden="true"></span>
+            XMAN Studio · IT Solutions ครบวงจร · Since 2018
+        </p>
+
+        <h1 id="xu-core-title" class="xu-core__title">
+            <span class="xu-core__th xu-r" style="--i: 1;">สร้างสรรค์นวัตกรรมดิจิทัล</span>
+            <span class="xu-core__en xu-grad xu-r" style="--i: 2;">Engineering the Digital Frontier</span>
+        </h1>
+
+        <p class="xu-core__tags xu-r" style="--i: 3;">
+            <span style="--c: #22d3ee;">Blockchain</span>
+            <span style="--c: #8b5cf6;">AI</span>
+            <span style="--c: #e879f9;">Web &amp; Mobile</span>
+            <span style="--c: #34d399;">IoT</span>
+            <span style="--c: #fb7185;">Music AI</span>
+            <span style="--c: #ffd479;">Security</span>
+        </p>
+
+        <div class="xu-core__cta xu-r" style="--i: 4;">
+            <a href="{{ route('quote.index') }}" class="xu-btn xu-btn--primary">
+                <span>เริ่มโปรเจคของคุณ <small>Start a project</small></span>
+                @include('partials.nova-icon', ['name' => 'arrow'])
+            </a>
+            <a href="#xu-services" class="xu-btn xu-btn--ghost" data-xu-jump="services">
+                <span>สำรวจบริการ <small>Explore services</small></span>
+            </a>
+        </div>
+
+        {{-- The main campaign (DGX Spark bundle) — the first stop's own link, for screens too
+             narrow for the promo pill in the HUD. Nothing when switched off in the admin. --}}
+        @if(\App\Support\DgxSparkCampaign::enabled() && \App\Support\DgxSparkCampaign::product())
+            @php $xuCampaign = \App\Support\DgxSparkCampaign::availability(); @endphp
+            <a href="{{ route('campaign.dgx-spark') }}" class="xu-campaign xu-r" style="--i: 5;">
+                <span class="xu-campaign__tag">แคมเปญหลัก</span>
+                <span class="xu-campaign__text"><b>NVIDIA DGX Spark</b> + CluadeX &amp; BrainX ตลอดชีพ</span>
+                <span class="xu-campaign__meta">
+                    {{ \App\Support\DgxSparkCampaign::baht(\App\Support\DgxSparkCampaign::price()) }}
+                    <x-tpix-price variant="plain" :thb="\App\Support\DgxSparkCampaign::totals(\App\Support\DgxSparkCampaign::price())['total']" />
+                    · {{ $xuCampaign['remaining'] > 0 ? 'เหลือ ' . $xuCampaign['remaining'] . '/' . $xuCampaign['cap'] . ' ชุด' : 'จองครบแล้ว' }}
+                </span>
+                <span class="xu-campaign__go" aria-hidden="true">→</span>
+            </a>
+        @endif
+    </div>
+</section>

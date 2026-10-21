@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Mail\PaymentConfirmedMail;
 use App\Models\BankAccount;
 use App\Models\LicenseKey;
@@ -14,13 +15,14 @@ use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
+use App\Support\ComingSoonPurchase;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Tping Web Controller
@@ -30,6 +32,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class TpingController extends Controller
 {
+    use ServesReleaseDownloads;
+
     /**
      * Wallet payment discount percentage.
      * When paying with wallet, users get this % off.
@@ -37,13 +41,13 @@ class TpingController extends Controller
     private const WALLET_DISCOUNT_PERCENT = 10;
 
     /**
-     * License pricing information
+     * The plans this page offers: names, durations, features. What each one
+     * costs is in config/licenses.php; pricedPlans() puts the two together.
      */
-    private const PRICING = [
+    private const PLANS = [
         'monthly' => [
             'name' => 'Monthly',
             'name_th' => 'รายเดือน',
-            'price' => 399,
             'duration_days' => 30,
             'license_type' => 'monthly',
             'features' => [
@@ -55,7 +59,6 @@ class TpingController extends Controller
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 2500,
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
@@ -68,7 +71,6 @@ class TpingController extends Controller
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 5000,
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
@@ -80,6 +82,12 @@ class TpingController extends Controller
             ],
         ],
     ];
+
+    /** PLANS with each price from config/licenses.php — only the terms the store sells. */
+    private static function pricedPlans(): array
+    {
+        return LicensePlans::priced('tping', self::PLANS);
+    }
 
     /**
      * Show Tping detail / landing page
@@ -99,7 +107,7 @@ class TpingController extends Controller
         }
 
         return view('tping.detail', [
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
             'product' => $product,
             'version' => $version,
         ]);
@@ -120,7 +128,7 @@ class TpingController extends Controller
 
         return view('tping.pricing', [
             'machineId' => $machineId,
-            'pricing' => self::PRICING,
+            'pricing' => self::pricedPlans(),
         ]);
     }
 
@@ -131,7 +139,7 @@ class TpingController extends Controller
      */
     public function checkout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
@@ -141,8 +149,13 @@ class TpingController extends Controller
             abort(404, 'Product not found');
         }
 
+        // Coming Soon = not on sale yet (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
+        }
+
         $machineId = $request->query('machine_id') ?? session('tping_machine_id');
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
 
         // Load wallet for authenticated user
         $wallet = auth()->check() ? Wallet::getOrCreateForUser(auth()->id()) : null;
@@ -168,22 +181,34 @@ class TpingController extends Controller
      */
     public function processCheckout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
+        }
+
+        $product = Product::where('slug', 'tping')->firstOrFail();
+
+        // A hand-made POST must not buy it either — before the wallet is touched or an order made
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
         }
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer,wallet',
+            'payment_method' => 'required|in:promptpay,bank_transfer,wallet' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:64',
         ]);
 
         $machineId = $validated['machine_id'] ?? session('tping_machine_id');
-        $product = Product::where('slug', 'tping')->firstOrFail();
-        $planInfo = self::PRICING[$plan];
+        $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $planInfo['price'])) {
+            return $refused;
+        }
 
         // === Calculate price & discount ===
         $subtotal = $planInfo['price'];
@@ -253,6 +278,8 @@ class TpingController extends Controller
             'custom_requirements' => json_encode([
                 'license_type' => $planInfo['license_type'],
                 'duration_days' => $planInfo['duration_days'],
+                // Same seats as the wallet path: a lifetime key runs on 3 devices
+                'max_activations' => $planInfo['license_type'] === 'lifetime' ? 3 : 1,
             ]),
         ]);
 
@@ -297,6 +324,11 @@ class TpingController extends Controller
                 $affiliate, $order->total, $order->id, $order->user_id,
                 'tping', $order->id, "Tping {$planInfo['name']} License"
             );
+        }
+
+        // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            return TpixCheckout::redirectForOrder($order, route('tping.payment-success', $order->id));
         }
 
         return redirect()->route('tping.payment', [
@@ -365,12 +397,14 @@ class TpingController extends Controller
                 ]);
             }
 
-            // Store license key in order metadata for easy display
+            // Store license key in order metadata for easy display, and complete the order: its
+            // license is out (as LicenseService does for every other checkout). Left at processing,
+            // every "has this customer bought it?" check told the buyer to buy it first.
             $metadata = json_decode($order->metadata ?? '{}', true);
             $metadata['license_key'] = $license->license_key;
             $metadata['license_id'] = $license->id;
             $metadata['hwid_bound'] = ! empty($machineId);
-            $order->update(['metadata' => json_encode($metadata)]);
+            $order->update(['metadata' => json_encode($metadata), 'status' => 'completed']);
 
             // Send payment confirmed email with license keys
             if ($order->customer_email && PaymentSetting::get('mail_enabled', true)) {
@@ -407,9 +441,14 @@ class TpingController extends Controller
             abort(403);
         }
 
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
+        }
+
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         $paymentService = app(ThaiPaymentService::class);
         $paymentInfo = null;
@@ -483,7 +522,7 @@ class TpingController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         // Load license keys for this order (available for wallet payments)
         $licenses = LicenseKey::where('order_id', $order->id)->get();
@@ -530,7 +569,7 @@ class TpingController extends Controller
     }
 
     // ================================================================
-    // APK Download — proxied from GitHub (no GitHub URL exposed)
+    // APK Download — streamed from this site (no GitHub URL exposed)
     // ================================================================
 
     /**
@@ -584,119 +623,26 @@ class TpingController extends Controller
     }
 
     /**
-     * Stream APK download proxied through our server.
-     * Users never see or reach GitHub.
+     * APK ของ Tping — ไฟล์ส่งจาก xman4289.com เอง ลูกค้าไม่เห็น GitHub (ReleaseDownloadStreamer)
+     * และจองที่ในช่องส่งไฟล์ร่วมของทั้งเว็บ (config/downloads.php) เหมือนแอปอื่น
      *
-     * GET /tping/download/apk
+     * GET /tping/download/apk — ตัวอัปเดตในแอป (update/check) ก็ชี้มาที่นี่
+     * เวอร์ชันที่ส่งยังเป็นกฎเดิมของ Tping: ตัวที่ active
      */
-    public function downloadApk()
+    public function downloadApk(Request $request)
     {
-        $product = Product::where('slug', 'tping')->firstOrFail();
+        $product = Product::where('slug', 'tping')->first();
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, route('tping.download'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
         $version = ProductVersion::where('product_id', $product->id)
             ->where('is_active', true)
             ->orderByDesc('version')
             ->first();
 
-        if (! $version || ! $version->github_release_url) {
-            return redirect()->route('tping.download')
-                ->with('error', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
-        }
-
-        $githubSetting = $product->githubSetting;
-
-        if (! $githubSetting) {
-            return redirect()->route('tping.download')
-                ->with('error', 'ระบบดาวน์โหลดยังไม่พร้อม');
-        }
-
-        // Proxy the download
-        return $this->proxyGithubDownload($githubSetting, $version);
-    }
-
-    /**
-     * Proxy download from GitHub (same pattern as DownloadController).
-     */
-    protected function proxyGithubDownload($githubSetting, ProductVersion $productVersion): StreamedResponse
-    {
-        $token = $githubSetting->github_token_decrypted;
-        $assetUrl = $productVersion->github_release_url;
-        $filename = $productVersion->download_filename ?? 'Tping-v' . $productVersion->version . '.apk';
-        $fileSize = $productVersion->file_size;
-
-        // For public repos without token: use browser_download_url (direct download)
-        if (empty($token)) {
-            $browserUrl = $productVersion->browser_download_url
-                ?? "https://github.com/{$githubSetting->github_owner}/{$githubSetting->github_repo}/releases/download/v{$productVersion->version}/{$filename}";
-
-            return new StreamedResponse(function () use ($browserUrl) {
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $browserUrl);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'User-Agent: XMAN-Tping-Download-Proxy',
-                ]);
-                curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
-                    echo $data;
-                    flush();
-
-                    return strlen($data);
-                });
-                curl_exec($ch);
-                curl_close($ch);
-            }, 200, [
-                'Content-Type' => 'application/vnd.android.package-archive',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                'Content-Length' => $fileSize,
-                'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                'Pragma' => 'no-cache',
-                'Expires' => '0',
-            ]);
-        }
-
-        // Private repo: use API URL with token to get redirect URL
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-            'Accept' => 'application/octet-stream',
-            'User-Agent' => 'XMAN-Tping-Download-Proxy',
-        ])->withOptions([
-            'allow_redirects' => false,
-        ])->get($assetUrl);
-
-        if ($response->status() === 302) {
-            $downloadUrl = $response->header('Location');
-        } else {
-            $downloadUrl = $assetUrl;
-        }
-
-        return new StreamedResponse(function () use ($downloadUrl, $token) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
-                echo $data;
-                flush();
-
-                return strlen($data);
-            });
-
-            if (strpos($downloadUrl, 'github.com') !== false) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer ' . $token,
-                    'Accept: application/octet-stream',
-                    'User-Agent: XMAN-Tping-Download-Proxy',
-                ]);
-            }
-
-            curl_exec($ch);
-            curl_close($ch);
-        }, 200, [
-            'Content-Type' => 'application/vnd.android.package-archive',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Content-Length' => $fileSize,
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
+        return $this->serveApk($request, $product, $version, route('tping.download'), 'Tping');
     }
 
     protected function generateOrderNumber(): string

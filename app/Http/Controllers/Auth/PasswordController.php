@@ -22,6 +22,10 @@ class PasswordController extends Controller
 
         $request->user()->update([
             'password' => Hash::make($validated['password']),
+            // Marks the account as having a password its owner knows, which is
+            // what lets them unlink a social provider without locking
+            // themselves out (App\Support\Auth\SocialAuth::canUnlink).
+            'password_set_at' => now(),
         ]);
 
         return back()->with('status', 'password-updated');

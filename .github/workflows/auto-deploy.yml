@@ -86,8 +86,10 @@ jobs:
             echo "🚀 Starting deployment to ${DEPLOY_PATH}"
             cd "${DEPLOY_PATH}"
 
-            # Backup .env
-            cp .env .env.backup.$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+            # Backup .env — owner-only, like .env itself. The shell's umask made every
+            # backup world-readable (664), and this box also runs a www-data PHP pool.
+            ( umask 077 && cp .env ".env.backup.$(date +%Y%m%d_%H%M%S)" ) 2>/dev/null || true
+            chmod 600 .env 2>/dev/null || true
 
             # Pull latest code
             echo "📥 Pulling latest code..."
@@ -102,8 +104,32 @@ jobs:
             }
 
             # Run migrations (if any)
+            # A failed migration FAILS the deploy. It used to be echoed as a
+            # "non-fatal warning": v1.0.704 went out green with the
+            # two_factor_trusted_devices table missing (MySQL 1067, invalid
+            # default for a NOT NULL timestamp) and the admin 2FA page
+            # answered 500. The new code is already checked out by now, so
+            # the failure is only recorded here; the build, caches and
+            # restarts below still run so the site matches the code it is
+            # running, and the step exits non-zero at the very end.
             echo "🗃️ Running migrations..."
-            php artisan migrate --force 2>&1 || echo "⚠️ Migration warnings (non-fatal)"
+            MIGRATION_ERROR=""
+            if ! php artisan migrate --force 2>&1; then
+              MIGRATION_ERROR="php artisan migrate failed (see the output above)"
+            fi
+
+            # Anything still Pending means a table or column the code expects
+            # is not there, whatever migrate's exit code said.
+            if ! MIGRATE_STATUS=$(php artisan migrate:status 2>&1); then
+              echo "$MIGRATE_STATUS"
+              MIGRATION_ERROR="${MIGRATION_ERROR:-php artisan migrate:status failed}"
+            elif echo "$MIGRATE_STATUS" | grep -q "Pending"; then
+              echo "❌ Migrations still pending after migrate:"
+              echo "$MIGRATE_STATUS" | grep "Pending"
+              MIGRATION_ERROR="${MIGRATION_ERROR:-migrations still pending after migrate}"
+            else
+              echo "✓ All migrations ran"
+            fi
 
             # Build front-end assets (Vite) so public_html/build/ has the
             # fresh CSS/JS hashes. Skipped if node is not on PATH.
@@ -219,6 +245,16 @@ jobs:
             sudo systemctl restart php8.2-fpm 2>/dev/null || \
             sudo systemctl restart php-fpm 2>/dev/null || \
             echo "⚠️ Could not restart PHP-FPM"
+
+            if [ -n "$MIGRATION_ERROR" ]; then
+              echo ""
+              echo "::error title=Migration failed::${MIGRATION_ERROR}. The new code is live but the database schema is behind it."
+              echo "❌❌❌ DEPLOY FAILED: ${MIGRATION_ERROR}"
+              echo "The new code is live but the database schema is behind it."
+              echo "A failed migration is not recorded, so it runs again on the next deploy —"
+              echo "but MySQL DDL does not roll back: check for a half-created table first."
+              exit 1
+            fi
 
             echo "✅ Deployment completed successfully!"
 

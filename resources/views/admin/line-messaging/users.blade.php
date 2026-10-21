@@ -77,7 +77,7 @@
                     @endif
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <button type="button" onclick="openEditModal({{ $user->id }}, '{{ $user->name }}', '{{ $user->line_uid ?? '' }}', '{{ $user->line_display_name ?? '' }}')"
+                    <button type="button" onclick="openEditModal({{ $user->id }}, @js($user->name), @js($user->line_uid ?? ''), @js($user->line_display_name ?? ''))"
                             class="text-primary-600 hover:text-primary-800">
                         แก้ไข
                     </button>

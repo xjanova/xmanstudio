@@ -8,6 +8,9 @@ use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
 use App\Models\UniquePaymentAmount;
 use App\Models\WalletTopup;
+use App\Support\Alerts\Alert;
+use App\Support\Alerts\BusinessAlerts;
+use App\Support\Alerts\SecurityAlerts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -36,6 +39,9 @@ class SmsPaymentService
                     'nonce' => $payload['nonce'],
                     'device_id' => $device->device_id,
                 ]);
+                // A correctly signed message seen before: a replay, or the app re-sending after a
+                // timeout. Worth a look either way — replaying a credit SMS is how you fake a payment.
+                SecurityAlerts::forged('SMS Payment', 'ได้รับ SMS ซ้ำ (nonce ถูกใช้แล้ว)', $ipAddress, ['เครื่อง' => (string) $device->device_id], Alert::WARNING);
 
                 return [
                     'success' => false,
@@ -78,6 +84,10 @@ class SmsPaymentService
             $matched = false;
             if ($notification->type === 'credit') {
                 $matched = $notification->attemptMatch();
+                if (! $matched) {
+                    // Money in the bank that no open bill claims — a late payer, a wrong amount.
+                    BusinessAlerts::unmatchedCredit($notification);
+                }
             }
 
             $this->log('info', 'SMS Payment notification processed', [

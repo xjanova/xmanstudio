@@ -193,7 +193,7 @@
                                         {{ $playlist->is_active ? 'ปิด' : 'เปิด' }}
                                     </button>
                                 </form>
-                                <button type="button" onclick="confirmDelete({{ $playlist->id }}, '{{ addslashes($playlist->title) }}')"
+                                <button type="button" onclick="confirmDelete({{ $playlist->id }}, @js($playlist->title))"
                                         class="px-3 py-1.5 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">ลบ</button>
                             </div>
                         </td>

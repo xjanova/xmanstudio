@@ -4,19 +4,40 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LineLoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Auth\YouTubeOAuthController;
 use Illuminate\Support\Facades\Route;
 
-// LINE Login Routes
-Route::get('auth/line', [LineLoginController::class, 'redirect'])->name('line.redirect');
-Route::get('auth/line/callback', [LineLoginController::class, 'callback'])->name('line.callback');
-Route::post('auth/line/unlink', [LineLoginController::class, 'unlink'])->name('line.unlink')->middleware('auth');
+// Social sign-in. The redirects are throttled because each one costs us an
+// outbound call to the provider, and the callbacks because a signed Telegram
+// payload or a stolen OAuth code should not be replayable at speed.
+Route::middleware('throttle:20,1,social-login')->group(function () {
+    // LINE
+    Route::get('auth/line', [LineLoginController::class, 'redirect'])->name('line.redirect');
+    Route::get('auth/line/callback', [LineLoginController::class, 'callback'])->name('line.callback');
+
+    // Google
+    Route::get('auth/google', [GoogleLoginController::class, 'redirect'])->name('google.redirect');
+    Route::get('auth/google/callback', [GoogleLoginController::class, 'callback'])->name('google.callback');
+
+    // Telegram — the widget posts the signed profile straight here, so there
+    // is no redirect step of our own to name.
+    Route::get('auth/telegram/callback', [TelegramLoginController::class, 'callback'])->name('telegram.callback');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('auth/line/unlink', [LineLoginController::class, 'unlink'])->name('line.unlink');
+    Route::post('auth/google/unlink', [GoogleLoginController::class, 'unlink'])->name('google.unlink');
+    Route::post('auth/telegram/unlink', [TelegramLoginController::class, 'unlink'])->name('telegram.unlink');
+    Route::post('auth/telegram/link', [TelegramLoginController::class, 'linkStart'])->name('telegram.link');
+});
 
 // YouTube OAuth Routes (Admin only)
 Route::middleware('auth')->group(function () {
@@ -46,7 +67,7 @@ Route::middleware('guest')->group(function () {
     // can walk an address list unchecked. Turnstile is the same protection the
     // other public POSTs already carry.
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
-        ->middleware(['throttle:5,1', 'turnstile:password'])
+        ->middleware(['throttle:5,1,forgot-password', 'turnstile:password'])
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
@@ -55,7 +76,7 @@ Route::middleware('guest')->group(function () {
     // Guessing a 64-char token is hopeless, but an unlimited POST here is still
     // free CPU for whoever wants to spend our bcrypt budget.
     Route::post('reset-password', [NewPasswordController::class, 'store'])
-        ->middleware('throttle:5,1')
+        ->middleware('throttle:5,1,reset-password')
         ->name('password.store');
 });
 
@@ -64,11 +85,11 @@ Route::middleware('auth')->group(function () {
         ->name('verification.notice');
 
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
+        ->middleware(['signed', 'throttle:6,1,verify-email'])
         ->name('verification.verify');
 
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-        ->middleware('throttle:6,1')
+        ->middleware('throttle:6,1,verification-send')
         ->name('verification.send');
 
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])

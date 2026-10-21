@@ -21,6 +21,9 @@ class ContactSettingsController extends Controller
             'contact_youtube_name' => Setting::getValue('contact_youtube_name', ''),
             'contact_youtube_url' => Setting::getValue('contact_youtube_url', ''),
             'contact_address' => Setting::getValue('contact_address', ''),
+            // พิมพ์ลงหัวใบเสนอราคา/ใบแจ้งหนี้ ไม่ได้โชว์ในหน้าติดต่อเรา
+            'company_name' => Setting::getValue('company_name', ''),
+            'company_tax_id' => Setting::getValue('company_tax_id', ''),
         ];
 
         return view('admin.contact.index', compact('settings'));
@@ -39,6 +42,14 @@ class ContactSettingsController extends Controller
             'contact_youtube_name' => 'nullable|string|max:255',
             'contact_youtube_url' => 'nullable|url|max:500',
             'contact_address' => 'nullable|string|max:500',
+            'company_name' => 'nullable|string|max:255',
+            // 13 หลักตามบัตรผู้เสียภาษี ยอมให้พิมพ์ขีดคั่นได้เพราะคนพิมพ์ตามที่เห็นบนเอกสาร
+            // แต่ต้องนับเป็น 13 หลักจริง — เลขผิดบนเอกสารภาษีแย่กว่าไม่ใส่เลย
+            'company_tax_id' => ['nullable', 'string', 'max:25', function (string $attribute, mixed $value, callable $fail) {
+                if (strlen(preg_replace('/\D/', '', (string) $value)) !== 13) {
+                    $fail('เลขประจำตัวผู้เสียภาษีต้องเป็นตัวเลข 13 หลัก (ใส่ขีดคั่นได้)');
+                }
+            }],
         ]);
 
         $fields = [
@@ -52,6 +63,8 @@ class ContactSettingsController extends Controller
             'contact_youtube_name',
             'contact_youtube_url',
             'contact_address',
+            'company_name',
+            'company_tax_id',
         ];
 
         foreach ($fields as $field) {

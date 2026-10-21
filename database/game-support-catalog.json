@@ -1,0 +1,176 @@
+[
+  {
+    "slug": "xnova",
+    "name": "X-NOVA",
+    "goal": 0,
+    "description": "อัปเกรดยาน ฝ่าเนบิวลา และท้าทายบอสจักรกล"
+  },
+  {
+    "slug": "umbra",
+    "name": "NOVA·UMBRA",
+    "goal": 0,
+    "description": "เดินทางผ่านโลกแห่งเงาและปริศนาแสง"
+  },
+  {
+    "slug": "theone",
+    "name": "THE ONE",
+    "goal": 0,
+    "description": "ผจญภัยกับโนวาในโลกแฟนตาซีแห่งดวงดาว"
+  },
+  {
+    "slug": "chanthra",
+    "name": "MAE MO CHANTHRA",
+    "goal": 0,
+    "description": "ตามแม่หมอจันทราฝ่าหมอกในภพใหม่ แพลตฟอร์มเงาแนว LIMBO"
+  },
+  {
+    "slug": "tetrisvs",
+    "name": "TetrisVS",
+    "goal": 0,
+    "description": "เรียงบล็อก แข่งกับ AI และวางแผนชนะคู่ต่อสู้"
+  },
+  {
+    "slug": "breaker",
+    "name": "X-NOVA: BREAKER",
+    "goal": 150000,
+    "description": "ยิงชิ้นส่วนศัตรูมาติดยาน แล้วดีดสวนกลับ"
+  },
+  {
+    "slug": "snake",
+    "name": "SNAKE.IO",
+    "goal": 0,
+    "description": "หนอนออนไลน์สามมิติ กินแล้วโต หลบให้รอด แข่งกับเพื่อนหรือบอท"
+  },
+  {
+    "slug": "8ball",
+    "name": "8 BALL POOL",
+    "goal": 0,
+    "description": "แทงพูล 8 ลูกกับ AI หรือชวนเพื่อนแข่งบนเครื่องเดียว"
+  },
+  {
+    "slug": "snooker",
+    "name": "SNOOKER 2D",
+    "goal": 0,
+    "description": "สนุ๊กเกอร์และ 9-Ball แบบ 2 มิติ เล็ง ชาร์จแรง แล้วแทงลงหลุม"
+  },
+  {
+    "slug": "tetris",
+    "name": "TETRIS CLASSIC",
+    "goal": 0,
+    "description": "เรียงบล็อก ทำคอมโบ และเอาตัวรอดจากแถวขยะที่ดันขึ้นมา"
+  },
+  {
+    "slug": "space-shooter",
+    "name": "SPACE SHOOTER",
+    "goal": 0,
+    "description": "ขับยานยิงฝูงศัตรูให้ร่วงก่อนจะหลุดผ่านแนวป้องกัน"
+  },
+  {
+    "slug": "rollabrain",
+    "name": "ROLLABRAIN",
+    "goal": 0,
+    "description": "กลิ้งลูกบอลเก็บคิวบ์เรืองแสงให้ครบในสนามปิด"
+  },
+  {
+    "slug": "maze",
+    "name": "MAZE CHASE",
+    "goal": 0,
+    "description": "เก็บจุดให้ครบ หลบผี และกินพลังเพื่อสวนกลับ"
+  },
+  {
+    "slug": "rublicx",
+    "name": "RUBLICX",
+    "goal": 0,
+    "description": "ฝึกแก้ลูกบาศก์ 2×2 และ 3×3 สแกนด้วยกล้อง แล้วให้ระบบหาวิธีแก้"
+  },
+  {
+    "slug": "runeward",
+    "name": "RUNEWARD",
+    "goal": 0,
+    "description": "วางป้อม ผสานรูน ปกป้องเกาะลอยฟ้า"
+  },
+  {
+    "slug": "lucky",
+    "name": "LUCKY ISLES",
+    "goal": 0,
+    "description": "ทอยเต๋า เลือกเส้นทาง สร้างอาณาจักรร้านค้า"
+  },
+  {
+    "slug": "neon",
+    "name": "NEON COVEN",
+    "goal": 0,
+    "description": "ต่อสู้ด้วยสกิลในโลกไซไฟโกธิค"
+  },
+  {
+    "slug": "cafe",
+    "name": "CAFÉ PROJECT",
+    "goal": 0,
+    "description": "ตกแต่งและบริหารร้านกาแฟในฝัน"
+  },
+  {
+    "slug": "juntra",
+    "name": "JUNTRA",
+    "goal": 0,
+    "description": "สัมผัสโลกไพ่ทาโรต์ในห้องพยากรณ์จันทรา"
+  },
+  {
+    "slug": "theone-sunkalp",
+    "name": "THE ONE · สูญกัป",
+    "goal": 0,
+    "description": "ARPG แฟนตาซีจีนโทนมืดในยุคสูญกัป มุมมองไอโซเมตริก"
+  },
+  {
+    "slug": "xenon",
+    "name": "XENON",
+    "goal": 0,
+    "description": "ยานยิงเบาแบบ 3 มิติ หมุนดูได้รอบทิศ"
+  },
+  {
+    "slug": "siam-speed",
+    "name": "SIAM SPEED",
+    "goal": 0,
+    "description": "ขับเที่ยวเมืองไทย แต่งรถ แล้วไปอวดเพื่อนที่ลานนัดริมทะเล"
+  },
+  {
+    "slug": "astral-pact",
+    "name": "ASTRAL PACT",
+    "goal": 0,
+    "description": "เรียงไพ่ธาตุ ปิดคอมโบ อัญเชิญสัตว์เทพ"
+  },
+  {
+    "slug": "type-nova",
+    "name": "TYPE//NOVA",
+    "goal": 0,
+    "description": "พิมพ์คำบนยานศัตรูเพื่อยิง ฝึกไทยและอังกฤษ"
+  },
+  {
+    "slug": "soi-riot",
+    "name": "SOI RIOT",
+    "goal": 0,
+    "description": "หลบ รับ ส่ง ปาอัดหน้า จนอีกทีมตาปลิ้น"
+  },
+  {
+    "slug": "paradox-pinball",
+    "name": "PARADOX PINBALL",
+    "goal": 0,
+    "description": "ยิงพินบอล หลอมของ สลับมิติ สู้มังกรทวงหนี้"
+  },
+  {
+    "slug": "lotus-ascension",
+    "name": "LOTUS ASCENSION",
+    "goal": 0,
+    "description": "สร้างสำนักเซียน ผูกพันธสัญญา ออกศึกวิชาประสาน"
+  },
+  {
+    "slug": "hive-breach",
+    "name": "HIVE // BREACH: COREWAR",
+    "goal": 500000,
+    "description": "ผู้พิทักษ์ 4 คนปกป้องแกนดาว ปะทะคอมมานเดอร์เอเลี่ยนที่บุกแบบ RTS"
+  },
+  {
+    "slug": "skyshard",
+    "name": "SKYSHARD",
+    "goal": 0,
+    "description": "ศึกรถรบรูนผลัดตายิง อ่านลม ปรับมุมและแรง"
+  }
+]

@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\ReleaseNotes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 
 class GithubSetting extends Model
@@ -29,6 +31,15 @@ class GithubSetting extends Model
     protected $hidden = [
         'github_token',
     ];
+
+    protected static function booted(): void
+    {
+        // ReleaseNotes ถอดชื่อบัญชีเรา (@xjanova, xjanova/<repo>) ออกจาก changelog — เพิ่มหรือเปลี่ยนบัญชีต้องมีผลทันที ไม่ใช่อีก 10 นาที
+        $forgetAccounts = fn () => Cache::forget(ReleaseNotes::ACCOUNTS_CACHE_KEY);
+
+        static::saved($forgetAccounts);
+        static::deleted($forgetAccounts);
+    }
 
     public function product(): BelongsTo
     {

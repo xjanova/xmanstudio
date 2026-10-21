@@ -1,581 +1,410 @@
+{{--
+    ใบเสนอราคา A4 — เอกสารมาตรฐานของ XMAN Studio
+
+    เรนเดอร์ด้วย DomPDF ซึ่ง **ไม่รองรับ flexbox และ grid** เลย์เอาต์ทั้งหน้าจึง
+    ใช้ตารางกับ float เท่านั้น ถ้าเผลอใส่ display:flex เข้าไป มันจะไม่พังให้เห็น
+    แต่กล่องจะเรียงทับกันเงียบ ๆ
+
+    ฟอนต์ Sarabun ต้องเป็นไฟล์จริงใน storage/fonts เท่านั้น ไฟล์ปลอมเคยทำให้
+    ภาษาไทยทั้งใบกลายเป็นสี่เหลี่ยมมาแล้ว — App\Support\FontFile ตรวจ magic bytes
+    ให้ตอนบูต
+--}}
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>ใบเสนอราคา {{ $quotation['quote_number'] }}</title>
+    <title>ใบเสนอราคา / Quotation {{ $quotation['quote_number'] }}</title>
     <style>
         @font-face {
             font-family: 'Sarabun';
             font-style: normal;
             font-weight: normal;
-            src: url({{ storage_path('fonts/Sarabun-Regular.ttf') }}) format('truetype');
+            src: url({{ storage_path('fonts/Sarabun-PUA-Regular.ttf') }}) format('truetype');
         }
         @font-face {
             font-family: 'Sarabun';
             font-style: normal;
             font-weight: bold;
-            src: url({{ storage_path('fonts/Sarabun-Bold.ttf') }}) format('truetype');
+            src: url({{ storage_path('fonts/Sarabun-PUA-Bold.ttf') }}) format('truetype');
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @page { margin: 0; }
 
         body {
             font-family: 'Sarabun', 'DejaVu Sans', sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 12px;
+            line-height: 1.55;
             color: #1f2937;
             background: #fff;
         }
 
-        .container {
-            padding: 40px;
+        .sheet { padding: 34px 40px 30px 40px; }
+
+        /* ── หัวกระดาษ ───────────────────────────────── */
+        .head { width: 100%; border-collapse: collapse; }
+        .head td { vertical-align: top; }
+        /* โลโก้จริงเป็นเวิร์ดมาร์กแนวนอน (919x243) จึงล็อกความสูงแล้วปล่อยกว้างเอง */
+        .brand-logo { height: 34px; width: auto; }
+        /* ใช้เฉพาะตอนที่ยังไม่ได้อัปโหลดโลโก้ในหน้าแอดมิน */
+        .brand-mark {
+            width: 42px; height: 42px; background: #1d4ed8; color: #fff;
+            text-align: center; font-size: 22px; font-weight: bold;
+            line-height: 1; padding-top: 7px; border-radius: 8px;
+        }
+        .brand-name { font-size: 17px; font-weight: bold; letter-spacing: .04em; color: #111827; }
+        .brand-sub { font-size: 10.5px; color: #4b5563; }
+        .brand-lines { font-size: 10px; color: #4b5563; line-height: 1.5; padding-top: 5px; }
+
+        .doc-title { font-size: 25px; font-weight: bold; color: #1d4ed8; text-align: right; line-height: 1.1; }
+        .doc-title-en { font-size: 10.5px; font-weight: bold; letter-spacing: .2em; color: #6b7280; text-align: right; }
+        .meta { border-collapse: collapse; float: right; margin-top: 9px; }
+        .meta td { font-size: 10.5px; padding: 1px 0 1px 8px; text-align: right; }
+        .meta .k { color: #4b5563; }
+        .meta .v { font-weight: bold; color: #111827; }
+
+        .rule { border-bottom: 2.5px solid #1d4ed8; margin: 12px 0 14px 0; }
+
+        /* ── กล่องข้อมูล ─────────────────────────────── */
+        .party { width: 100%; border-collapse: separate; border-spacing: 12px 0; margin-left: -12px; width: 103%; }
+        .party td { vertical-align: top; width: 50%; }
+        .box { border: 1px solid #e5e7eb; border-radius: 6px; padding: 9px 11px; }
+        .box-label { font-size: 9px; font-weight: bold; color: #1d4ed8; padding-bottom: 3px; }
+        .box-name { font-size: 13px; font-weight: bold; color: #111827; }
+        .box-lines { font-size: 10.5px; color: #374151; line-height: 1.55; padding-top: 2px; }
+
+        /* ── รายการ ──────────────────────────────────── */
+        .items { width: 100%; border-collapse: collapse; margin-top: 14px; }
+        .items th {
+            background: #1d4ed8; color: #fff; font-size: 10px; font-weight: bold;
+            padding: 7px 8px; border: 1px solid #1d4ed8;
+        }
+        .items td { padding: 7px 8px; border: 1px solid #d1d5db; font-size: 11.5px; vertical-align: top; }
+        .items tr.alt td { background: #f9fafb; }
+        .it-name { font-weight: bold; color: #111827; }
+        .it-desc { font-size: 10px; color: #4b5563; }
+        .num { text-align: right; }
+        .mid { text-align: center; }
+
+        /* ── สรุปยอด ─────────────────────────────────── */
+        .foot { width: 100%; border-collapse: collapse; margin-top: 13px; }
+        .foot > tbody > tr > td { vertical-align: top; }
+        .totals { width: 100%; border-collapse: collapse; }
+        .totals td { font-size: 11.5px; padding: 4px 9px; }
+        .totals .k { text-align: right; color: #374151; }
+        .totals .v { text-align: right; width: 108px; color: #111827; }
+        .totals .sep td { border-top: 1px solid #d1d5db; }
+        .totals .grand td { background: #1d4ed8; color: #fff; font-weight: bold; font-size: 13px; padding: 8px 9px; }
+        .totals .muted td { color: #6b7280; font-size: 10.5px; }
+
+        .words { margin-top: 9px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 6px 11px; }
+        .words-k { font-size: 10px; font-weight: bold; color: #1e40af; }
+        .words-v { font-size: 12px; font-weight: bold; color: #1e3a8a; }
+
+        /* ── เงื่อนไข + ลายเซ็น ──────────────────────── */
+        .terms-label { font-size: 9px; font-weight: bold; color: #1d4ed8; padding-bottom: 3px; }
+        .terms { font-size: 10px; color: #374151; line-height: 1.65; padding-left: 14px; }
+        .sign { width: 100%; border-collapse: separate; border-spacing: 10px 0; }
+        .sign td { width: 50%; text-align: center; vertical-align: bottom; }
+        .sign-space { height: 40px; }
+        .sign-line { border-top: 1px solid #6b7280; padding-top: 4px; font-size: 10px; color: #4b5563; }
+        .sign-date { font-size: 9.5px; color: #6b7280; }
+
+        .tail {
+            margin-top: 11px; padding-top: 7px; border-top: 1px solid #e5e7eb;
+            font-size: 9px; color: #4b5563;
         }
 
-        /* Header */
-        .header {
-            display: table;
-            width: 100%;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #0ea5e9;
-            padding-bottom: 20px;
-        }
-
-        .header-left {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-        }
-
-        .header-right {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-            text-align: right;
-        }
-
-        .company-name {
-            font-size: 32px;
-            font-weight: bold;
-            color: #0ea5e9;
-            margin-bottom: 5px;
-        }
-
-        .company-tagline {
-            font-size: 14px;
-            color: #6b7280;
-        }
-
-        .quote-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #1f2937;
-            margin-bottom: 10px;
-        }
-
-        .quote-number {
-            font-size: 16px;
-            color: #0ea5e9;
-            font-weight: bold;
-        }
-
-        /* Info Section */
-        .info-section {
-            display: table;
-            width: 100%;
-            margin-bottom: 30px;
-        }
-
-        .info-box {
-            display: table-cell;
-            width: 48%;
-            vertical-align: top;
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 8px;
-        }
-
-        .info-box.right {
-            margin-left: 4%;
-        }
-
-        .info-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        .info-content {
-            font-size: 14px;
-            color: #1f2937;
-        }
-
-        .info-content strong {
-            font-size: 16px;
-        }
-
-        /* Service Badge */
-        .service-badge {
-            background: linear-gradient(135deg, #0ea5e9, #6366f1);
-            color: #fff;
-            padding: 15px 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .service-badge h3 {
-            font-size: 20px;
-            margin-bottom: 5px;
-        }
-
-        .service-badge p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        /* Table */
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 25px;
-        }
-
-        .items-table th {
-            background: #1f2937;
-            color: #fff;
-            padding: 12px 15px;
-            text-align: left;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .items-table th:last-child {
-            text-align: right;
-        }
-
-        .items-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 14px;
-        }
-
-        .items-table td:last-child {
-            text-align: right;
-            font-weight: bold;
-        }
-
-        .items-table tr:nth-child(even) {
-            background: #f9fafb;
-        }
-
-        .items-table .item-name {
-            font-weight: bold;
-            color: #1f2937;
-        }
-
-        .items-table .item-desc {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .items-table .service-item td:first-child {
-            border-left: 3px solid #0ea5e9;
-        }
-
-        .items-table .additional-item td:first-child {
-            border-left: 3px solid #10b981;
-        }
-
-        /* Summary */
-        .summary-section {
-            display: table;
-            width: 100%;
-        }
-
-        .summary-notes {
-            display: table-cell;
-            width: 55%;
-            vertical-align: top;
-            padding-right: 30px;
-        }
-
-        .summary-totals {
-            display: table-cell;
-            width: 45%;
-            vertical-align: top;
-        }
-
-        .notes-box {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .notes-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #92400e;
-            margin-bottom: 8px;
-        }
-
-        .notes-content {
-            font-size: 12px;
-            color: #78350f;
-        }
-
-        .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .totals-table td {
-            padding: 8px 12px;
-            font-size: 14px;
-        }
-
-        .totals-table .label {
-            color: #6b7280;
-        }
-
-        .totals-table .value {
-            text-align: right;
-            font-weight: bold;
-            color: #1f2937;
-        }
-
-        .totals-table .discount .value {
-            color: #10b981;
-        }
-
-        .totals-table .rush-fee .value {
-            color: #f59e0b;
-        }
-
-        .totals-table .grand-total {
-            background: #0ea5e9;
-            color: #fff;
-        }
-
-        .totals-table .grand-total td {
-            padding: 15px 12px;
-            font-size: 18px;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .validity {
-            text-align: center;
-            font-size: 14px;
-            color: #6b7280;
-            margin-bottom: 25px;
-        }
-
-        .validity strong {
-            color: #dc2626;
-        }
-
-        .signature-section {
-            display: table;
-            width: 100%;
-            margin-top: 40px;
-        }
-
-        .signature-box {
-            display: table-cell;
-            width: 45%;
-            text-align: center;
-            padding: 0 20px;
-        }
-
-        .signature-line {
-            border-top: 1px solid #1f2937;
-            margin-top: 60px;
-            padding-top: 10px;
-        }
-
-        .signature-label {
-            font-size: 14px;
-            color: #6b7280;
-        }
-
-        /* Company Footer */
-        .company-footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 12px;
-            color: #6b7280;
-            padding-top: 20px;
-            border-top: 2px solid #0ea5e9;
-        }
-
-        .company-footer strong {
-            color: #0ea5e9;
-        }
-
-        /* Terms */
-        .terms {
-            margin-top: 30px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 8px;
-            font-size: 11px;
-            color: #6b7280;
-        }
-
-        .terms-title {
-            font-weight: bold;
-            color: #1f2937;
-            margin-bottom: 10px;
-        }
-
-        .terms ul {
-            padding-left: 15px;
-        }
-
-        .terms li {
-            margin-bottom: 3px;
-        }
-
-        .page-break {
-            page-break-after: always;
-        }
+        /* ── สองภาษา: ไทยนำ อังกฤษตามด้วยตัวเล็กสีจาง ── */
+        .en { font-size: .82em; font-weight: normal; color: #6b7280; }
+        .en-line { display: block; font-size: 8.5px; font-weight: normal; letter-spacing: .02em; color: #6b7280; }
+        .items th .en-line { color: #dbeafe; }
+        .totals .grand .en { color: #dbeafe; }
+        .box-label .en, .terms-label .en { color: #6b7280; letter-spacing: .04em; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-left">
-                <div class="company-name">{{ $companyInfo['name'] }}</div>
-                <div class="company-tagline">{{ $companyInfo['tagline'] }}</div>
-                <div style="margin-top: 10px; font-size: 12px; color: #6b7280;">
-                    {{ $companyInfo['address'] }}<br>
-                    Email: {{ $companyInfo['email'] }}<br>
-                    Line: {{ $companyInfo['line'] }}
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="quote-title">QUOTATION</div>
-                <div class="quote-title" style="font-size: 20px; color: #6b7280;">ใบเสนอราคา</div>
-                <div class="quote-number">#{{ $quotation['quote_number'] }}</div>
-            </div>
-        </div>
+@php
+    $c = $companyInfo;
+    $q = $quotation;
+    $mode = $q['vat_mode'] ?? 'exclusive';
+    $rate = rtrim(rtrim(number_format((float) ($q['vat_rate'] ?? 7), 2), '0'), '.');
+    $money = fn ($n) => number_format((float) $n, 2);
 
-        <!-- Info Section -->
-        <table style="width: 100%; margin-bottom: 30px;">
-            <tr>
-                <td style="width: 48%; vertical-align: top; padding: 20px; background: #f8fafc; border-radius: 8px;">
-                    <div class="info-title">ข้อมูลลูกค้า / Customer Information</div>
-                    <div class="info-content">
-                        <strong>{{ $quotation['customer']['name'] }}</strong><br>
-                        @if($quotation['customer']['company'])
-                            {{ $quotation['customer']['company'] }}<br>
-                        @endif
-                        {{ $quotation['customer']['email'] }}<br>
-                        {{ $quotation['customer']['phone'] }}
-                        @if($quotation['customer']['address'])
-                            <br>{{ $quotation['customer']['address'] }}
-                        @endif
+    // งวดชำระตามที่แอดมินตั้งไว้ (ค่าเริ่มต้น 50/25/25) คิดจากยอดสุทธิ
+    // งวดสุดท้ายรับเศษ ไม่งั้นทุกงวดรวมกันขาดไปหนึ่งสตางค์
+    $instalments = \App\Support\Quotation\Pricing::instalments((float) $q['grand_total']);
+    $pct = fn ($n) => rtrim(rtrim(number_format((float) $n, 2), '0'), '.');
+@endphp
+
+<div class="sheet">
+
+    @if (!empty($isPreview))
+        {{-- ดูก่อนส่ง — ต้องบอกให้ชัดว่ายังไม่ใช่เอกสารจริง ไม่งั้นมีคนเซฟไปใช้ตั้งเบิก --}}
+        <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:7px 12px; margin-bottom:12px;">
+            <span style="font-size:11px; font-weight:bold; color:#92400e;">ตัวอย่างเอกสาร · Preview</span>
+            <span style="font-size:11px; color:#92400e;"> &nbsp;— ยังไม่ได้ออกเลขที่จริง ยังไม่มีผลผูกพัน กดส่งเพื่อรับใบเสนอราคาฉบับจริงทางอีเมล</span>
+            <span class="en-line" style="color:#b45309;">Not yet numbered and not binding — submit to receive the official quotation by e-mail.</span>
+        </div>
+    @endif
+
+    {{-- ══ หัวกระดาษ ══ --}}
+    <table class="head">
+        <tr>
+            <td style="width: 58%;">
+                @if (!empty($c['logo_path']))
+                    {{-- โลโก้ที่อัปโหลดไว้จริงในหน้าแอดมิน (setting `site_logo`)
+                         ส่งเป็น path บนดิสก์ ไม่ใช่ URL — DomPDF ดึง URL ไม่ได้ถ้าไม่เปิด
+                         isRemoteEnabled และถึงเปิดก็ช้าและพังง่ายกว่า --}}
+                    <img src="{{ $c['logo_path'] }}" alt="{{ $c['name'] }}" class="brand-logo">
+                    <div class="brand-lines" style="padding-top: 7px;">
+                        @if ($c['address']){{ $c['address'] }}<br>@endif
+                        @if ($c['phone'])โทร/Tel. {{ $c['phone'] }}@endif
+                        @if ($c['phone'] && $c['email']) · @endif
+                        @if ($c['email']){{ $c['email'] }}@endif
+                        @if ($c['line'])<br>LINE {{ $c['line'] }}@endif
+                        @if ($c['tax_id'])<br>เลขประจำตัวผู้เสียภาษี / Tax ID {{ $c['tax_id'] }}@endif
                     </div>
-                </td>
-                <td style="width: 4%;"></td>
-                <td style="width: 48%; vertical-align: top; padding: 20px; background: #f8fafc; border-radius: 8px;">
-                    <div class="info-title">รายละเอียดใบเสนอราคา / Quote Details</div>
-                    <div class="info-content">
-                        <strong>วันที่ / Date:</strong> {{ $quotation['quote_date'] }}<br>
-                        <strong>ใช้ได้ถึง / Valid Until:</strong> {{ $quotation['valid_until'] }}<br>
-                        <strong>Timeline:</strong>
-                        @if($quotation['timeline'] === 'urgent')
-                            <span style="color: #dc2626;">เร่งด่วน / Urgent</span>
-                        @elseif($quotation['timeline'] === 'normal')
-                            ปกติ (2-3 เดือน) / Normal (2-3 months)
-                        @else
-                            ยืดหยุ่น / Flexible
-                        @endif
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Service Badge -->
-        <div class="service-badge">
-            <h3>{{ $quotation['service']['icon'] }} {{ $quotation['service']['name_th'] }}</h3>
-            <p>{{ $quotation['service']['name'] }}</p>
-        </div>
-
-        <!-- Items Table -->
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th style="width: 5%;">#</th>
-                    <th style="width: 60%;">รายการ / Description</th>
-                    <th style="width: 15%;">ประเภท / Type</th>
-                    <th style="width: 20%;">ราคา (บาท) / Price (THB)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($quotation['items'] as $index => $item)
-                <tr class="{{ $item['type'] === 'service' ? 'service-item' : 'additional-item' }}">
-                    <td>{{ $index + 1 }}</td>
-                    <td>
-                        <div class="item-name">{{ $item['name_th'] }}</div>
-                        <div class="item-desc">{{ $item['name'] }}</div>
-                    </td>
-                    <td>
-                        @if($item['type'] === 'service')
-                            <span style="color: #0ea5e9;">บริการหลัก / Main</span>
-                        @else
-                            <span style="color: #10b981;">เสริม / Add-on</span>
-                        @endif
-                    </td>
-                    <td>{{ number_format($item['price'], 2) }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-
-        <!-- Project Description -->
-        @if($quotation['project_description'])
-        <div style="margin-bottom: 25px; padding: 15px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-            <div style="font-weight: bold; color: #1e40af; margin-bottom: 8px;">รายละเอียดโปรเจค / Project Details</div>
-            <div style="font-size: 13px; color: #1e3a8a;">{{ $quotation['project_description'] }}</div>
-        </div>
-        @endif
-
-        <!-- Option Details -->
-        @if(!empty($quotation['option_details']))
-        @php $filteredDetails = collect($quotation['option_details'])->filter(fn($v) => !empty($v)); @endphp
-        @if($filteredDetails->isNotEmpty())
-        <div style="margin-bottom: 25px; padding: 15px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
-            <div style="font-weight: bold; color: #166534; margin-bottom: 10px;">รายละเอียดออฟชั่นเพิ่มเติม / Additional Options</div>
-            <table style="width: 100%; font-size: 12px; color: #14532d;">
-                @foreach($filteredDetails as $key => $value)
-                @php
-                    $parts = explode('.', $key);
-                    $fieldKey = $parts[1] ?? $key;
-                    $label = str_replace('_', ' ', ucfirst($fieldKey));
-                @endphp
-                <tr>
-                    <td style="padding: 4px 0; width: 40%; vertical-align: top; font-weight: bold;">{{ $label }}:</td>
-                    <td style="padding: 4px 0;">
-                        @if(is_array($value))
-                            {{ implode(', ', $value) }}
-                        @else
-                            {{ $value }}
-                        @endif
-                    </td>
-                </tr>
-                @endforeach
-            </table>
-        </div>
-        @endif
-        @endif
-
-        <!-- Summary Section -->
-        <div class="summary-section">
-            <div class="summary-notes">
-                <div class="notes-box">
-                    <div class="notes-title">หมายเหตุ / Notes</div>
-                    <div class="notes-content">
-                        - ราคานี้ยังไม่รวม VAT 7% / Prices exclude 7% VAT<br>
-                        - ราคาอาจเปลี่ยนแปลงตามขอบเขตงานจริง / Prices may change based on actual scope of work<br>
-                        - ใบเสนอราคานี้มีอายุ 30 วัน / This quotation is valid for 30 days
-                        @if($quotation['discount_percent'] > 0)
-                        <br>- ได้รับส่วนลดพิเศษ / Special discount applied {{ $quotation['discount_percent'] }}%
-                        @endif
-                    </div>
-                </div>
-            </div>
-            <div class="summary-totals">
-                <table class="totals-table">
+                @else
+                <table style="border-collapse: collapse;">
                     <tr>
-                        <td class="label">รวมก่อนส่วนลด / Subtotal</td>
-                        <td class="value">{{ number_format($quotation['subtotal'], 2) }}</td>
-                    </tr>
-                    @if($quotation['discount'] > 0)
-                    <tr class="discount">
-                        <td class="label">ส่วนลด / Discount ({{ $quotation['discount_percent'] }}%)</td>
-                        <td class="value">-{{ number_format($quotation['discount'], 2) }}</td>
-                    </tr>
-                    @endif
-                    @if($quotation['rush_fee'] > 0)
-                    <tr class="rush-fee">
-                        <td class="label">ค่าเร่งด่วน / Rush Fee (+25%)</td>
-                        <td class="value">+{{ number_format($quotation['rush_fee'], 2) }}</td>
-                    </tr>
-                    @endif
-                    <tr>
-                        <td class="label">รวมก่อน VAT / Total before VAT</td>
-                        <td class="value">{{ number_format($quotation['total_before_vat'], 2) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label">VAT 7%</td>
-                        <td class="value">{{ number_format($quotation['vat'], 2) }}</td>
-                    </tr>
-                    <tr class="grand-total">
-                        <td>รวมทั้งสิ้น / Grand Total</td>
-                        <td style="text-align: right;">{{ number_format($quotation['grand_total'], 2) }} บาท</td>
+                        <td style="width: 42px; vertical-align: top;"><div class="brand-mark">X</div></td>
+                        <td style="padding-left: 11px; vertical-align: top;">
+                            <div class="brand-name">{{ $c['name'] }}</div>
+                            <div class="brand-sub">{{ $c['tagline'] }}</div>
+                            <div class="brand-lines">
+                                @if ($c['address']){{ $c['address'] }}<br>@endif
+                                @if ($c['phone'])โทร/Tel. {{ $c['phone'] }}@endif
+                                @if ($c['phone'] && $c['email']) · @endif
+                                @if ($c['email']){{ $c['email'] }}@endif
+                                @if ($c['line'])<br>LINE {{ $c['line'] }}@endif
+                                {{-- เลขผู้เสียภาษีจะขึ้นก็ต่อเมื่อตั้งค่าไว้จริง
+                                     เลขปลอมบนเอกสารภาษีแย่กว่าไม่มีเลข --}}
+                                @if ($c['tax_id'])<br>เลขประจำตัวผู้เสียภาษี / Tax ID {{ $c['tax_id'] }}@endif
+                            </div>
+                        </td>
                     </tr>
                 </table>
-            </div>
-        </div>
+                @endif
+            </td>
+            <td style="width: 42%;">
+                <div class="doc-title">ใบเสนอราคา</div>
+                <div class="doc-title-en">QUOTATION</div>
+                <table class="meta">
+                    <tr><td class="k">เลขที่ <span class="en">No.</span></td><td class="v">{{ $q['quote_number'] }}</td></tr>
+                    <tr><td class="k">วันที่ <span class="en">Date</span></td><td class="v">{{ $q['quote_date'] }}</td></tr>
+                    <tr><td class="k">ยืนราคาถึง <span class="en">Valid until</span></td><td class="v" style="color:#b45309;">{{ $q['valid_until'] }}</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 
-        <!-- Terms -->
-        <div class="terms">
-            <div class="terms-title">เงื่อนไขและข้อกำหนด / Terms &amp; Conditions</div>
-            <ul>
-                <li>ชำระเงินงวดแรก 50% ก่อนเริ่มงาน งวดที่สอง 50% เมื่องานเสร็จสมบูรณ์ / First installment 50% before starting work, second installment 50% upon completion</li>
-                <li>ระยะเวลาการทำงานเริ่มนับหลังจากได้รับการยืนยันและชำระเงินงวดแรก / The project timeline begins after confirmation and payment of the first installment</li>
-                <li>ลูกค้าจะได้รับการ Revise ไม่เกิน 3 ครั้ง หากเกินจะคิดค่าใช้จ่ายเพิ่มเติม / Up to 3 revisions are included; additional revisions incur extra charges</li>
-                <li>ราคานี้ไม่รวมค่า Hosting, Domain และค่าบริการ Third-party อื่นๆ / Prices exclude Hosting, Domain and other third-party service fees</li>
-                <li>บริษัทสงวนสิทธิ์ในการเปลี่ยนแปลงราคาหากขอบเขตงานเปลี่ยนแปลง / The company reserves the right to change prices if the scope of work changes</li>
-            </ul>
-        </div>
+    <div style="clear: both;"></div>
+    <div class="rule"></div>
 
-        <!-- Footer -->
-        <div class="footer">
-            <div class="validity">
-                ใบเสนอราคานี้มีผลถึงวันที่ / This quotation is valid until <strong>{{ $quotation['valid_until'] }}</strong>
-            </div>
+    {{-- ══ คู่สัญญา ══ --}}
+    <table class="party">
+        <tr>
+            <td>
+                <div class="box">
+                    <div class="box-label">เสนอราคาแก่ <span class="en">PREPARED FOR</span></div>
+                    <div class="box-name">{{ $q['customer']['company'] ?: $q['customer']['name'] }}</div>
+                    <div class="box-lines">
+                        @if ($q['customer']['company']){{ $q['customer']['name'] }}<br>@endif
+                        @if ($q['customer']['address']){{ $q['customer']['address'] }}<br>@endif
+                        {{ $q['customer']['phone'] }} · {{ $q['customer']['email'] }}
+                        @if (!empty($q['customer']['tax_id']))<br>เลขผู้เสียภาษี / Tax ID {{ $q['customer']['tax_id'] }}@endif
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="box">
+                    <div class="box-label">รายละเอียดงาน <span class="en">PROJECT</span></div>
+                    <div class="box-name">{{ $q['service']['name_th'] ?: $q['service']['name'] }}</div>
+                    <div class="box-lines">
+                        ระยะเวลา <span class="en">Timeline</span>:
+                        @switch($q['timeline'])
+                            @case('urgent') เร่งด่วน <span class="en">Urgent</span> @break
+                            @case('flexible') ยืดหยุ่นได้ <span class="en">Flexible</span> @break
+                            @default ตามปกติ <span class="en">Standard</span>
+                        @endswitch
+                        @if (!empty($q['project_description']))
+                            <br>{{ \Illuminate\Support\Str::limit(trim($q['project_description']), 150) }}
+                        @endif
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
 
-            <table class="signature-section">
-                <tr>
-                    <td class="signature-box">
-                        <div class="signature-line">
-                            <div class="signature-label">ผู้เสนอราคา / Authorized Signature</div>
-                            <div style="margin-top: 5px; font-weight: bold;">XMAN STUDIO</div>
-                        </div>
+    {{-- ══ รายการ ══ --}}
+    <table class="items">
+        <thead>
+            <tr>
+                <th style="width: 30px;">#</th>
+                <th style="text-align: left;">รายการ<span class="en-line">Description</span></th>
+                <th style="width: 52px;">จำนวน<span class="en-line">Qty</span></th>
+                <th style="width: 92px;">ราคา/หน่วย<span class="en-line">Unit price</span></th>
+                <th style="width: 100px;">จำนวนเงิน<span class="en-line">Amount</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($q['items'] as $i => $item)
+                <tr class="{{ $i % 2 ? 'alt' : '' }}">
+                    <td class="mid">{{ $i + 1 }}</td>
+                    <td>
+                        <div class="it-name">{{ $item['name_th'] ?? $item['name'] ?? '-' }}</div>
+                        @if (!empty($item['description_th']) || !empty($item['description']))
+                            <div class="it-desc">{{ $item['description_th'] ?? $item['description'] }}</div>
+                        @endif
                     </td>
-                    <td style="width: 10%;"></td>
-                    <td class="signature-box">
-                        <div class="signature-line">
-                            <div class="signature-label">ผู้อนุมัติ / Customer Approval</div>
-                            <div style="margin-top: 5px; font-weight: bold;">{{ $quotation['customer']['name'] }}</div>
-                        </div>
-                    </td>
+                    <td class="mid">1</td>
+                    <td class="num">{{ $money($item['price'] ?? 0) }}</td>
+                    <td class="num" style="font-weight: bold;">{{ $money($item['price'] ?? 0) }}</td>
                 </tr>
-            </table>
-        </div>
+            @empty
+                <tr><td colspan="5" class="mid" style="color:#6b7280; padding: 16px;">ไม่มีรายการ / No items</td></tr>
+            @endforelse
+        </tbody>
+    </table>
 
-        <!-- Company Footer -->
-        <div class="company-footer">
-            <strong>{{ $companyInfo['name'] }}</strong> | {{ $companyInfo['tagline'] }}<br>
-            {{ $companyInfo['email'] }} | {{ $companyInfo['website'] }} | Line: {{ $companyInfo['line'] }}
-        </div>
+    {{-- ══ งวดชำระ + สรุปยอด ══ --}}
+    <table class="foot">
+        <tr>
+            <td style="width: 54%; padding-right: 12px;">
+                <div class="box">
+                    <div class="box-label">งวดการชำระเงิน <span class="en">PAYMENT SCHEDULE</span></div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; color: #374151;">
+                        @foreach ($instalments as $ins)
+                        <tr><td style="padding: 2px 0;">งวดที่ <span class="en">Instalment</span> {{ $ins['no'] }} · {{ $ins['label'] }}</td><td class="num">{{ $pct($ins['percent']) }}%</td><td class="num" style="width: 78px;">{{ $money($ins['amount']) }}</td></tr>
+                        @endforeach
+                    </table>
+                </div>
+            </td>
+            <td style="width: 46%;">
+                <table class="totals">
+                    <tr>
+                        <td class="k">รวมเป็นเงิน <span class="en">Subtotal</span></td>
+                        <td class="v">{{ $money($q['subtotal']) }}</td>
+                    </tr>
+
+                    @if ($q['discount'] > 0)
+                        <tr>
+                            <td class="k" style="color:#15803d;">ส่วนลดขนาดงาน <span class="en">Volume discount</span> {{ $q['discount_percent'] }}%</td>
+                            <td class="v" style="color:#15803d;">&minus;{{ $money($q['discount']) }}</td>
+                        </tr>
+                    @endif
+
+                    @if ($q['rush_fee'] > 0)
+                        <tr>
+                            <td class="k" style="color:#b45309;">ค่าเร่งงาน <span class="en">Rush fee</span> {{ $pct(\App\Support\Quotation\Pricing::rushPercent()) }}%</td>
+                            <td class="v" style="color:#b45309;">{{ $money($q['rush_fee']) }}</td>
+                        </tr>
+                    @endif
+
+                    {{-- ราคารวม VAT แล้ว: ต้องโชว์ "มูลค่าสินค้า/บริการ" ที่ถอดออกมา
+                         ไม่ใช่ยอดก่อนภาษีที่ลูกค้าไม่เคยเห็น --}}
+                    @if ($mode === 'inclusive')
+                        <tr class="sep">
+                            <td class="k">มูลค่าสินค้า/บริการ <span class="en">Net amount</span></td>
+                            <td class="v">{{ $money($q['amount_before_vat']) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="k">ภาษีมูลค่าเพิ่ม {{ $rate }}% <span class="en">VAT {{ $rate }}%</span></td>
+                            <td class="v">{{ $money($q['vat']) }}</td>
+                        </tr>
+                    @elseif ($mode === 'exclusive')
+                        @if ($q['discount'] > 0 || $q['rush_fee'] > 0)
+                            <tr class="sep">
+                                <td class="k">ราคาหลังหักส่วนลด <span class="en">After discount</span></td>
+                                <td class="v">{{ $money($q['amount_before_vat']) }}</td>
+                            </tr>
+                        @endif
+                        <tr>
+                            <td class="k">ภาษีมูลค่าเพิ่ม {{ $rate }}% <span class="en">VAT {{ $rate }}%</span></td>
+                            <td class="v">{{ $money($q['vat']) }}</td>
+                        </tr>
+                    @else
+                        <tr class="muted">
+                            <td class="k" colspan="2" style="text-align: right;">ราคานี้ไม่มีภาษีมูลค่าเพิ่ม <span class="en">No VAT applies</span></td>
+                        </tr>
+                    @endif
+
+                    <tr class="grand">
+                        <td style="text-align: right;">จำนวนเงินรวมทั้งสิ้น <span class="en">Grand total</span></td>
+                        <td style="text-align: right;">{{ $money($q['grand_total']) }}</td>
+                    </tr>
+
+                    @if ($q['withholding_amount'] > 0)
+                        <tr class="muted">
+                            <td class="k">หัก ณ ที่จ่าย <span class="en">Withholding tax</span> {{ rtrim(rtrim(number_format((float) $q['withholding_pct'], 2), '0'), '.') }}%</td>
+                            <td class="v">&minus;{{ $money($q['withholding_amount']) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="k" style="font-weight: bold;">ยอดโอนสุทธิ <span class="en">Net payable</span></td>
+                            <td class="v" style="font-weight: bold;">{{ $money($q['net_payable']) }}</td>
+                        </tr>
+                    @endif
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="words">
+        <span class="words-k">ตัวอักษร</span>
+        <span class="words-v">&nbsp; ( {{ $q['grand_total_words'] }} )</span>
+        <br>
+        <span class="words-k" style="color:#6b7280;">In words</span>
+        <span class="words-v" style="font-size: 11px;">&nbsp; ( {{ \App\Support\AmountInWords::baht((float) $q['grand_total']) }} )</span>
     </div>
+
+    {{-- ══ เงื่อนไข + ลายเซ็น ══ --}}
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+        <tr>
+            <td style="width: 58%; vertical-align: top; padding-right: 14px;">
+                <div class="terms-label">เงื่อนไข <span class="en">TERMS</span></div>
+                <ol class="terms">
+                    <li>ราคานี้ยืนยัน 30 วันนับจากวันที่ออกเอกสาร
+                        <span class="en-line">Prices are valid for 30 days from the date of issue.</span></li>
+                    <li>ราคารวมการแก้ไขตามขอบเขตงาน 2 รอบต่อการส่งมอบแต่ละงวด
+                        <span class="en-line">Includes two rounds of in-scope revisions per delivery.</span></li>
+                    <li>งานนอกขอบเขตคิดเพิ่มตามที่ตกลงเป็นลายลักษณ์อักษรก่อนเริ่มทำ
+                        <span class="en-line">Out-of-scope work is charged as agreed in writing before it starts.</span></li>
+                    <li>ค่าโดเมน ค่าเช่าเซิร์ฟเวอร์ และค่าบริการภายนอกรายปี ลูกค้าเป็นผู้รับผิดชอบ
+                        <span class="en-line">Domain, hosting and third-party annual fees are borne by the client.</span></li>
+                    <li>หักภาษี ณ ที่จ่ายตามที่กฎหมายกำหนด กรุณาแนบหนังสือรับรองการหักภาษี
+                        <span class="en-line">Withholding tax applies as required by law; please attach the certificate.</span></li>
+                </ol>
+            </td>
+            <td style="width: 42%; vertical-align: bottom;">
+                <table class="sign">
+                    <tr>
+                        <td>
+                            <div class="sign-space"></div>
+                            <div class="sign-line">ผู้เสนอราคา <span class="en">Quoted by</span></div>
+                            <div class="sign-date">วันที่ / Date ...... / ...... / ......</div>
+                        </td>
+                        <td>
+                            <div class="sign-space"></div>
+                            <div class="sign-line">ผู้อนุมัติสั่งซื้อ <span class="en">Approved by</span></div>
+                            <div class="sign-date">วันที่ / Date ...... / ...... / ......</div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="tail">
+        @if (!empty($q['public_url']))
+            เอกสารนี้ออกโดยระบบอัตโนมัติ ตรวจสอบสถานะและตอบรับได้ที่ / Check status and accept online at {{ $q['public_url'] }}
+        @else
+            เอกสารนี้ออกโดยระบบอัตโนมัติจาก / Issued automatically by {{ $c['website'] }}
+        @endif
+    </div>
+
+</div>
 </body>
 </html>

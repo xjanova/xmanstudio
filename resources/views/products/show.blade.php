@@ -108,7 +108,7 @@
                                 </p>
                             </div>
                         </div>
-                        <a href="{{ route('support.index') }}" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        <a href="{{ route('quote.index') }}" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
                             แจ้งเตือนเมื่อเปิดขาย
                         </a>
                     </div>
@@ -209,6 +209,7 @@
                                     </span>
                                 @endif
                             </div>
+                            <x-tpix-price variant="detail" :thb="$product->price" :tpix="$product->price_tpix" class="mt-2" />
                         @endif
                     </div>
 
@@ -251,7 +252,7 @@
                             </button>
                         </form>
                     @else
-                        <a href="{{ route('support.index') }}"
+                        <a href="{{ route('quote.index') }}"
                            class="block w-full text-center px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-primary-500/25 mb-8">
                             <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -472,7 +473,7 @@
     <section class="py-16" id="download">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl font-bold text-white mb-4">ดาวน์โหลด {{ $product->name }}</h2>
-            <p class="text-gray-400 mb-8 max-w-2xl mx-auto">ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นใช้งานได้ทันที</p>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto">{{ $product->isComingSoon() ? 'ผลิตภัณฑ์นี้ยังเป็น Coming Soon — เปิดให้ดาวน์โหลดเมื่อเปิดตัว' : 'ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นใช้งานได้ทันที' }}</p>
 
             <div class="bg-gray-800/50 rounded-2xl p-8 border border-gray-700 max-w-xl mx-auto mb-8">
                 <div class="flex items-center justify-between mb-6">
@@ -493,6 +494,9 @@
                     </div>
                 @endif
 
+                @if($product->isComingSoon())
+                    <x-coming-soon-download :product="$product" />
+                @else
                 @auth
                     @if($hasPurchased)
                         {{-- User has purchased - show download button --}}
@@ -523,6 +527,7 @@
                         ดูแพคเกจ
                     </a>
                 @endauth
+                @endif
             </div>
 
             <p class="text-gray-500 text-sm">
@@ -607,7 +612,9 @@
                     </ul>
 
                     <div class="mt-6 pt-6 border-t border-gray-700">
-                        @if(!$product->is_custom)
+                        @if($product->isComingSoon())
+                            <x-coming-soon-download :product="$product" label="Coming Soon — ยังไม่เปิดขาย" class="w-full" />
+                        @elseif(!$product->is_custom)
                             <form action="{{ route('cart.add', $product) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
@@ -617,7 +624,7 @@
                                 </button>
                             </form>
                         @else
-                            <a href="{{ route('support.index') }}"
+                            <a href="{{ route('quote.index') }}"
                                class="block w-full py-3 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white text-center font-bold rounded-xl transition-all">
                                 ติดต่อสอบถามราคา
                             </a>
@@ -640,8 +647,8 @@
                         <a href="{{ route('products.show', $related->slug) }}"
                            class="group bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700 hover:border-primary-500/50 transition-all hover:transform hover:scale-[1.02]">
                             <div class="aspect-video bg-gray-700 overflow-hidden">
-                                @if($related->image)
-                                    <img src="{{ Storage::url($related->image) }}" alt="{{ $related->name }}"
+                                @if($related->artwork_url)
+                                    <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}"
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-purple-500/20">
@@ -658,6 +665,7 @@
                                 @endif
                                 @if(!$related->is_custom)
                                     <p class="text-primary-400 font-bold text-lg">฿{{ number_format($related->price, 0) }}</p>
+                                    <x-tpix-price :thb="$related->price" :tpix="$related->price_tpix" />
                                 @else
                                     <p class="text-gray-400">สอบถามราคา</p>
                                 @endif
@@ -674,7 +682,9 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl font-bold text-white mb-4">พร้อมเริ่มต้นใช้งาน?</h2>
             <p class="text-gray-400 mb-8 max-w-2xl mx-auto">
-                @if($product->requires_license)
+                @if($product->isComingSoon())
+                    {{ $product->name }} ยังเป็น Coming Soon — ยังไม่เปิดขายและดาวน์โหลด ติดต่อเราเพื่อรับแจ้งเตือนเมื่อเปิดตัว
+                @elseif($product->requires_license)
                     เลือกแพ็กเกจ License ที่เหมาะกับความต้องการของคุณ หรือติดต่อเราสำหรับข้อมูลเพิ่มเติม
                 @else
                     ดาวน์โหลดและเริ่มต้นใช้งาน {{ $product->name }} ได้ทันที
@@ -682,7 +692,9 @@
             </p>
 
             <div class="flex flex-wrap justify-center gap-4">
-                @if(!$product->is_custom)
+                @if($product->isComingSoon())
+                    <x-coming-soon-download :product="$product" label="Coming Soon — ยังไม่เปิดขาย" />
+                @elseif(!$product->is_custom)
                     <form action="{{ route('cart.add', $product) }}" method="POST" class="inline">
                         @csrf
                         <input type="hidden" name="quantity" value="1">
@@ -696,7 +708,7 @@
                         </button>
                     </form>
                 @endif
-                <a href="{{ route('support.index') }}"
+                <a href="{{ route('quote.index') }}"
                    class="px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
                     ติดต่อสอบถาม
                 </a>

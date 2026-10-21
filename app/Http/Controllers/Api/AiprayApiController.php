@@ -9,6 +9,7 @@ use App\Models\AiprayChant;
 use App\Models\AiprayContributor;
 use App\Models\AiprayPrayerSession;
 use App\Models\AiprayTrainingJob;
+use App\Models\Product;
 use App\Services\AiprayAudioStorage;
 use App\Services\AiprayAutoLabeler;
 use Carbon\Carbon;
@@ -344,6 +345,11 @@ class AiprayApiController extends Controller
     {
         $aiModel = AiprayAiModel::findOrFail($model);
 
+        // Aipray set to Coming Soon: no file of it for anyone, like its APK (owner, 2026-10-12)
+        if (Product::slugIsComingSoon('aipray')) {
+            return response()->json(['success' => false, 'error' => 'Coming soon: this product is not available for download yet', 'coming_soon' => true], 403);
+        }
+
         if (! $aiModel->onnx_file_path || ! Storage::disk('local')->exists($aiModel->onnx_file_path)) {
             return response()->json(['error' => 'Model file not found'], 404);
         }
@@ -375,10 +381,15 @@ class AiprayApiController extends Controller
      */
     public function mlCallback(Request $request): JsonResponse
     {
-        $secret = $request->header('Authorization');
-        $expectedSecret = 'Bearer ' . config('services.aipray_ml.secret');
+        $configured = (string) config('services.aipray_ml.secret');
 
-        if (! $secret || ! $expectedSecret || ! hash_equals($expectedSecret, (string) $secret)) {
+        // Closed until a secret is set. 'Bearer ' alone was never empty, so the old
+        // "no secret configured" check could not fire.
+        if ($configured === '') {
+            return response()->json(['error' => 'ML callback not configured'], 503);
+        }
+
+        if (! hash_equals('Bearer ' . $configured, (string) $request->header('Authorization'))) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 

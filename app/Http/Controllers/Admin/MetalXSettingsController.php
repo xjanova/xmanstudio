@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MetalXVideo;
 use App\Models\Setting;
 use App\Services\AiChatService;
+use App\Support\ShellBinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -66,8 +67,8 @@ class MetalXSettingsController extends Controller
             'channel_name' => 'required|string|max:255',
             'channel_description' => 'nullable|string',
             'channel_url' => 'required|url',
-            'channel_logo' => 'nullable|image|max:2048',
-            'channel_banner' => 'nullable|image|max:2048',
+            'channel_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'channel_banner' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'channel_id' => 'nullable|string|max:50',
 
             // YouTube API
@@ -89,8 +90,9 @@ class MetalXSettingsController extends Controller
             'metalx_claude_key' => 'nullable|string|max:255',
 
             // FFmpeg
-            'ffmpeg_binary' => 'nullable|string|max:500',
-            'ffprobe_binary' => 'nullable|string|max:500',
+            // A program name or a path, nothing else — it is run through a shell.
+            'ffmpeg_binary' => ['nullable', 'string', 'max:500', 'regex:' . ShellBinary::PATTERN],
+            'ffprobe_binary' => ['nullable', 'string', 'max:500', 'regex:' . ShellBinary::PATTERN],
 
             // Video Defaults
             'metalx_video_resolution' => 'nullable|string|in:1920x1080,1280x720,3840x2160',

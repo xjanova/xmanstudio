@@ -21,6 +21,59 @@
 
         <div class="nova-grid nova-grid--2">
 
+            {{-- จดโดเมน — ขายในนามเรา จดเป็นชื่อลูกค้า คุม DNS เองได้ในหลังบ้าน --}}
+            <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#60a5fa;">
+                <span class="nova-card__media" aria-hidden="true">
+                    <img src="{{ asset('artwork/card-domains.webp') }}" alt="" loading="lazy" decoding="async">
+                </span>
+                <span class="nova-badge">ใหม่</span>
+                <span class="nova-card__icon" aria-hidden="true">
+                    @include('partials.nova-icon', ['name' => 'globe'])
+                </span>
+                <h3 class="nova-card__title">จดโดเมน / Domains</h3>
+                <span class="nova-card__en">Register &amp; manage your own domain</span>
+                <p class="nova-card__body">
+                    จดโดเมนกว่า 400 นามสกุล ราคาชัดเจนเป็นบาท ไม่มีค่าซ่อน
+                    จดในชื่อคุณเอง ย้ายออกได้ทุกเมื่อ และแก้ DNS เองได้จากหลังบ้าน
+                </p>
+                <div class="nova-eco__links">
+                    <a href="{{ route('domains.index') }}" class="nova-btn nova-btn--primary nova-btn--sm">
+                        ค้นหาชื่อโดเมน
+                    </a>
+                    <a href="{{ route('domains.pricing') }}" class="nova-btn nova-btn--ghost nova-btn--sm">
+                        ดูราคาทุกนามสกุล
+                    </a>
+                </div>
+            </article>
+
+            {{-- เช่า VPS — เครื่องจริง root เต็มสิทธิ์ จ่ายจากกระเป๋าเงิน จัดการเองในหลังบ้าน
+                 (การ์ดที่หกทำให้ตารางสองคอลัมน์เต็ม ไม่เหลือใบโดด ๆ ท้ายแถว) --}}
+            <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#2dd4bf;">
+                <span class="nova-card__media" aria-hidden="true">
+                    <img src="{{ asset('artwork/card-vps.webp') }}" alt="" loading="lazy" decoding="async">
+                </span>
+                <span class="nova-badge">ใหม่</span>
+                <span class="nova-card__icon" aria-hidden="true">
+                    @include('partials.nova-icon', ['name' => 'server'])
+                </span>
+                <h3 class="nova-card__title">เช่า VPS / Cloud servers</h3>
+                <span class="nova-card__en">Your own server, ready in minutes</span>
+                <p class="nova-card__body">
+                    เซิร์ฟเวอร์ส่วนตัว root เต็มสิทธิ์ NVMe SSD สำรองข้อมูลทุกสัปดาห์
+                    เลือก OS หรือแอปพร้อมใช้ได้กว่า 90 แบบ เปิด-ปิด ติดตั้งใหม่ และชี้โดเมนได้เองจากหน้าเว็บ
+                </p>
+                <div class="nova-eco__links">
+                    <a href="{{ route('vps.index') }}" class="nova-btn nova-btn--primary nova-btn--sm">
+                        ดูแพ็กเกจ VPS
+                    </a>
+                    @auth
+                        <a href="{{ route('customer.vps.index') }}" class="nova-btn nova-btn--ghost nova-btn--sm">
+                            VPS ของฉัน
+                        </a>
+                    @endauth
+                </div>
+            </article>
+
             {{-- XDreamer --}}
             <article class="nova-card nova-eco nova-reveal" style="--nv-accent:#f472b6;">
                 <span class="nova-card__media" aria-hidden="true">

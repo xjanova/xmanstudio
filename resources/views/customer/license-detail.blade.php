@@ -1,4 +1,6 @@
 @extends($customerLayout ?? 'layouts.customer')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('autotradex'); @endphp
 
 @section('title', 'License Details - ' . ($license->product?->name ?? 'License'))
 @section('page-title', 'License Details')
@@ -119,6 +121,18 @@
                             {{ $license->activation_count }} / {{ $license->max_activations ?? '∞' }}
                         </p>
                     </div>
+
+                    @if($cloudStorage ?? null)
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                        <label class="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1">Cloud space · พื้นที่คลาวด์</label>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ $cloudStorage['total'] }} GB</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" data-cloud-breakdown>
+                            <x-bi th="แพ็กเกจ" en="Plan" /> {{ $cloudStorage['base'] }} GB
+                            @if($cloudStorage['purchased'] > 0) + <x-bi th="ซื้อเพิ่ม" en="add-ons" /> {{ $cloudStorage['purchased'] }} GB @endif
+                            @if($cloudStorage['bonus'] > 0) + <x-bi th="จากทีมงาน" en="from our team" /> {{ $cloudStorage['bonus'] }} GB @endif
+                        </p>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -228,14 +242,116 @@
                 Quick Actions
             </h3>
             <div class="space-y-3">
+                @if($canRenew ?? false)
+                {{-- Renewable product (BrainX Cloud): pays for more time on THIS key — the same key,
+                     so nothing has to be re-entered anywhere. The price comes from the cart. --}}
+                <form action="{{ route('cart.add', $license->product) }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="quantity" value="1">
+                    <input type="hidden" name="license_type" value="{{ $license->product->defaultLicenseType() }}">
+                    <input type="hidden" name="renew_license" value="{{ $license->id }}">
+                    <input type="hidden" name="buy_now" value="1">
+                    <button type="submit"
+                            class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-700 hover:to-purple-700 font-semibold shadow-lg transition-all">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <x-bi th="ต่ออายุคีย์นี้" en="Renew this key" class="text-white" />
+                    </button>
+                </form>
+                <p class="text-xs text-center text-gray-500 dark:text-gray-400">
+                    <x-bi th="ใช้คีย์เดิม เวลาบวกต่อจากวันหมดอายุ" en="Same key, time adds on from its expiry" />
+                </p>
+                @endif
+
+                @if(! empty($cloudStorage['packs']))
+                {{-- Cloud space packs for THIS key (config/licenses.php → cloud_storage). Paid once, the
+                     space stays with the key through every renewal. The price comes from the cart. --}}
+                <div class="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 p-4" data-cloud-packs>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                        <x-bi th="เพิ่มพื้นที่คลาวด์" en="Add cloud space" />
+                    </p>
+                    <div class="grid grid-cols-3 gap-2">
+                        @foreach($cloudStorage['packs'] as $gb => $price)
+                        <form action="{{ route('cart.add', $cloudStorage['addonProduct']) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="storage_gb" value="{{ $gb }}">
+                            <input type="hidden" name="license" value="{{ $license->id }}">
+                            <input type="hidden" name="buy_now" value="1">
+                            <button type="submit"
+                                    class="w-full px-2 py-2 rounded-lg bg-white dark:bg-gray-800 border border-sky-300 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-900/40 text-center transition">
+                                <span class="block font-bold text-sky-700 dark:text-sky-300">+{{ $gb }} GB</span>
+                                <span class="block text-xs text-gray-600 dark:text-gray-300">฿{{ number_format($price) }}</span>
+                            </button>
+                        </form>
+                        @endforeach
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                        <x-bi th="จ่ายครั้งเดียว พื้นที่อยู่กับคีย์นี้ตลอด ต่ออายุกี่ครั้งก็ยังอยู่" en="Paid once — the space stays with this key through every renewal" />
+                    </p>
+                </div>
+                @endif
+
                 @if($license->product && $license->product->slug === 'autotradex')
-                <a href="https://github.com/xjanova/autotradex/releases/latest" target="_blank"
+                {{-- ไฟล์ส่งจาก xman4289.com เอง ห้ามลิงก์ไป GitHub (กฎเจ้าของ 2026-09-24) --}}
+                @if($csDownload)
+                    <span class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:via-violet-600 hover:to-pink-600 font-semibold shadow-lg transition-all" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
+                <a href="{{ route('autotradex.download') }}"
                    class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:via-violet-600 hover:to-pink-600 font-semibold shadow-lg transition-all">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
                     Download Software
                 </a>
+                @endif
+                @endif
+
+                @if($license->product && in_array($license->product->slug, \App\Models\Product::BRAINX_SLUGS, true))
+                {{-- The holder of a BrainX key gets the installer even while BrainX is Coming Soon (owner, 2026-10-19) --}}
+                <a href="{{ route('brainx.download') }}" rel="nofollow"
+                   class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl hover:from-violet-700 hover:to-indigo-700 font-semibold shadow-lg transition-all">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <x-bi th="ดาวน์โหลด BrainX สำหรับ Windows" en="Download BrainX for Windows" class="text-white" />
+                </a>
+                @endif
+
+                @if($license->product && $license->product->slug === 'anti-x')
+                {{-- ไฟล์ส่งจาก xman4289.com เอง ห้ามลิงก์ไป GitHub (กฎเจ้าของ 2026-09-24) · Coming Soon = ไม่มีลิงก์ --}}
+                @if($antiXDownload = $license->product->downloadUrl())
+                <a href="{{ $antiXDownload }}" data-antix-download
+                   class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl hover:from-cyan-700 hover:to-blue-700 font-semibold shadow-lg transition-all">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <x-bi th="ดาวน์โหลด Anti X (Windows)" en="Download Anti X (Windows)" class="text-white" />
+                </a>
+                @endif
+                @if(! empty($mobileOffer))
+                <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-4" data-mobile-offer>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                        <x-bi th="แอปมือถือ Anti X (Android) — ฟรี" en="Anti X mobile app (Android) — free" />
+                    </p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <x-bi th="ดูภาพรวม บล็อก/ปลดบล็อก และรับแจ้งเตือนบนมือถือ — ไลเซนส์ฟรีออกให้มือถือเองตอนเปิดครั้งแรก" en="Overview, block/unblock and alerts on your phone — its free licence is issued on first start" />
+                        @if($mobileOffer['version']) · v{{ $mobileOffer['version']->version }}@if($mobileOffer['version']->file_size) · {{ $mobileOffer['version']->file_size_formatted }}@endif @endif
+                    </p>
+                    @if($mobileOffer['url'])
+                    <a href="{{ $mobileOffer['url'] }}" data-mobile-download
+                       class="mt-3 w-full flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 font-semibold transition-all">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        <x-bi th="ดาวน์โหลดแอปมือถือ" en="Download the mobile app" class="text-white" />
+                    </a>
+                    @else
+                    <span class="mt-3 block text-center text-sm text-gray-500 dark:text-gray-400" data-coming-soon>เร็วๆ นี้</span>
+                    @endif
+                </div>
+                @endif
                 @endif
 
                 <a href="{{ route('customer.downloads') }}"

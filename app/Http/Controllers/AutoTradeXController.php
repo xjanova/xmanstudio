@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\AutoTradeXDevice;
 use App\Models\BankAccount;
 use App\Models\Order;
@@ -9,6 +10,9 @@ use App\Models\Product;
 use App\Services\AffiliateCommissionService;
 use App\Services\ImageService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
+use App\Support\ComingSoonPurchase;
+use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -19,37 +23,43 @@ use Illuminate\Support\Str;
  */
 class AutoTradeXController extends Controller
 {
+    use ServesReleaseDownloads;
+
     /**
      * Early bird discount percentage
      */
     private const EARLY_BIRD_DISCOUNT_PERCENT = 20;
 
     /**
-     * License pricing information
+     * The plans this page offers: names, durations, features. What each one
+     * costs is in config/licenses.php; pricedPlans() puts the two together.
      */
-    private const PRICING = [
+    private const PLANS = [
         'monthly' => [
             'name' => 'Monthly',
             'name_th' => 'รายเดือน',
-            'price' => 990,
             'duration_days' => 30,
             'license_type' => 'monthly',
         ],
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',
-            'price' => 7900,
             'duration_days' => 365,
             'license_type' => 'yearly',
         ],
         'lifetime' => [
             'name' => 'Lifetime',
             'name_th' => 'ตลอดชีพ',
-            'price' => 19900,
             'duration_days' => null, // Never expires
             'license_type' => 'lifetime',
         ],
     ];
+
+    /** PLANS with each price from config/licenses.php — only the terms the store sells. */
+    private static function pricedPlans(): array
+    {
+        return LicensePlans::priced('autotradex', self::PLANS);
+    }
 
     /**
      * Show pricing page
@@ -80,13 +90,33 @@ class AutoTradeXController extends Controller
     }
 
     /**
+     * ดาวน์โหลดฟรี — ไฟล์ส่งจาก xman4289.com เอง
+     *
+     * GET /autotradex/download/{version?} — ไม่ระบุ = ตัวล่าสุด · ระบุ = ตัวนั้นเป๊ะ ๆ (ลิงก์ที่ update/check ส่งให้แอป)
+     *
+     * เจ้าของเลือก (2026-09-24): ให้ทุกคนโหลดได้ ลองในแอปก่อนแล้วใส่ License Key เพื่อปลดล็อก แบบ CluadeX/WinXTools
+     * เดิมหน้าลูกค้าลิงก์ไปหน้า releases บน GitHub = ลูกค้าเห็น repo · กฎเจ้าของ (2026-09-24) ห้ามเด็ดขาด
+     * ไฟล์ไหนเป็นตัวดาวน์โหลด (ตัว portable) กำหนดที่ asset_pattern ของ GitHub setting ไม่ใช่ในโค้ด
+     */
+    public function download(Request $request, ?string $version = null)
+    {
+        $product = Product::where('slug', 'autotradex')->where('is_active', true)->first();
+
+        if (! $product) {
+            return $this->downloadUnavailable($request, route('autotradex.pricing'), 404, 'Product not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+        }
+
+        return $this->serveRelease($request, $product, $this->releaseFor($product, $version), route('products.show', 'autotradex'));
+    }
+
+    /**
      * Show checkout page for specific plan
      *
      * GET /autotradex/checkout/{plan}
      */
     public function checkout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
         }
 
@@ -94,6 +124,11 @@ class AutoTradeXController extends Controller
 
         if (! $product) {
             abort(404, 'Product not found');
+        }
+
+        // Coming Soon = not on sale yet (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
         }
 
         // Get machine_id from query string or session
@@ -122,20 +157,26 @@ class AutoTradeXController extends Controller
      */
     public function processCheckout(Request $request, string $plan)
     {
-        if (! isset(self::PRICING[$plan])) {
+        if (! array_key_exists($plan, self::pricedPlans())) {
             abort(404, 'Plan not found');
+        }
+
+        $product = Product::where('slug', 'autotradex')->firstOrFail();
+
+        // A hand-made POST must not buy it either, before anything is validated or created
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
         }
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer',
+            'payment_method' => 'required|in:promptpay,bank_transfer' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:64',
         ]);
 
         $machineId = $validated['machine_id'] ?? session('autotradex_machine_id');
-        $product = Product::where('slug', 'autotradex')->firstOrFail();
 
         // Check Early Bird eligibility and get discounted pricing
         $earlyBirdInfo = $this->checkEarlyBirdEligibility($machineId);
@@ -144,6 +185,12 @@ class AutoTradeXController extends Controller
 
         // Use discounted price if eligible
         $finalPrice = $planInfo['discounted_price'];
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $finalPrice)) {
+            return $refused;
+        }
         $originalPrice = $planInfo['original_price'];
         $discountAmount = $planInfo['discount_amount'];
 
@@ -187,6 +234,9 @@ class AutoTradeXController extends Controller
             'quantity' => 1,
             'price' => $finalPrice,
             'subtotal' => $finalPrice,
+            // The plan's term: without it LicenseService falls back to the product default (yearly)
+            // and a monthly or lifetime buyer would get a one-year key
+            'custom_requirements' => json_encode(['license_type' => $planInfo['license_type']]),
         ]);
 
         // Affiliate commission tracking
@@ -208,6 +258,11 @@ class AutoTradeXController extends Controller
             $this->markEarlyBirdUsed($machineId);
         }
 
+        // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            return TpixCheckout::redirectForOrder($order, route('autotradex.payment-success', $order->id));
+        }
+
         // Redirect to payment page
         return redirect()->route('autotradex.payment', [
             'order' => $order->id,
@@ -226,9 +281,14 @@ class AutoTradeXController extends Controller
             abort(403);
         }
 
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
+        }
+
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         $paymentService = app(ThaiPaymentService::class);
         $paymentInfo = null;
@@ -346,7 +406,7 @@ class AutoTradeXController extends Controller
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $plan = $metadata['plan'] ?? 'monthly';
-        $planInfo = self::PRICING[$plan] ?? self::PRICING['monthly'];
+        $planInfo = self::pricedPlans()[$plan] ?? self::pricedPlans()['monthly'];
 
         return view('autotradex.payment-success', [
             'order' => $order,
@@ -506,7 +566,7 @@ class AutoTradeXController extends Controller
     {
         $pricing = [];
 
-        foreach (self::PRICING as $key => $plan) {
+        foreach (self::pricedPlans() as $key => $plan) {
             $pricing[$key] = $plan;
             $pricing[$key]['original_price'] = $plan['price'];
 

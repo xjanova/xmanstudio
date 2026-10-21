@@ -164,7 +164,7 @@
                                         </form>
                                     @endif
                                     {{-- Delete --}}
-                                    <form method="POST" action="{{ route('admin.metal-x.content-plans.destroy', $plan) }}" class="inline" onsubmit="return confirm('ลบแผน &quot;{{ $plan->name }}&quot; หรือไม่?')">
+                                    <form method="POST" action="{{ route('admin.metal-x.content-plans.destroy', $plan) }}" class="inline" onsubmit="return confirm('ลบแผน &quot;' + @js($plan->name) + '&quot; หรือไม่?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" title="ลบ">

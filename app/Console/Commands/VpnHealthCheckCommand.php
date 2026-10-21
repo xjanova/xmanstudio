@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -38,6 +39,9 @@ class VpnHealthCheckCommand extends Command
             if (! empty($servers)) {
                 Cache::put(self::RAW_CACHE_KEY, $servers, 1800);
                 Cache::put(self::RAW_CACHE_KEY . '_stale', $servers, 604800);
+            } else {
+                // VPN Gate unreachable this round — re-check last week's list instead of giving up
+                $servers = Cache::get(self::RAW_CACHE_KEY . '_stale', []);
             }
         }
 
@@ -183,8 +187,15 @@ class VpnHealthCheckCommand extends Command
     private function fetchServers(): array
     {
         try {
-            $response = Http::timeout(10)->connectTimeout(5)
-                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'])
+            // The list is ~1.3 MB and the link to vpngate.net from the server is slow
+            // (10s once cut it off at 1.1 MB). This runs in a background cron, so give it time;
+            // gzip trims ~30% off the transfer.
+            $response = Http::timeout(60)->connectTimeout(10)
+                ->retry(2, 5000, fn ($e) => $e instanceof ConnectionException, throw: false)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept-Encoding' => 'gzip',
+                ])
                 ->get(self::VPNGATE_API);
 
             if (! $response->successful() || strlen($response->body()) < 100) {
@@ -237,6 +248,11 @@ class VpnHealthCheckCommand extends Command
             }
 
             return $servers;
+        } catch (ConnectionException $e) {
+            // A third-party site being slow is not our bug — the stale list covers it
+            Log::warning('[VPN Health Check] VPN Gate fetch failed: ' . $e->getMessage());
+
+            return [];
         } catch (\Exception $e) {
             report($e);
 

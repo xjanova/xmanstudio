@@ -1,7 +1,12 @@
 @extends('layouts.xdreamer')
 @section('title', 'สำเร็จ · '.$order->order_number.' · X-DREAMER')
 
-@php $hueShift = 70; $h = 220 + $hueShift; @endphp
+@php
+    $hueShift = 70; $h = 220 + $hueShift;
+    // Paid is payment_status, not status: an admin-approved order keeps status "processing".
+    $isPaid = in_array($order->payment_status, ['paid', 'confirmed'], true);
+    $delivered = ! empty($metadata['aixman_notified_at']);
+@endphp
 
 @section('content')
 <div style="padding:140px 24px 80px;max-width:720px;margin:0 auto;text-align:center;">
@@ -11,7 +16,7 @@
         display:grid;place-items:center;font-size:42px;color:#fff;">✓</div>
 
     <h1 style="font-size:clamp(36px, 5vw, 56px);font-weight:200;color:#fff;letter-spacing:-0.02em;margin:0;">
-        @if($order->status === 'processing')
+        @if(! $isPaid)
             ขอบคุณ — <span class="xdr-italic-th" style="font-style:italic;color:hsl({{ $h }},80%,75%);">รอการตรวจสอบ / Pending review</span>
         @else
             <span class="xdr-italic-th" style="font-style:italic;color:hsl({{ $h }},80%,75%);">เริ่มทอ</span>ความฝันได้เลย / Start weaving your dreams
@@ -19,14 +24,22 @@
     </h1>
 
     <p style="margin-top:18px;color:rgba(203,213,225,0.75);font-size:16px;font-weight:300;">
-        @if($order->status === 'processing')
+        @if(! $isPaid)
             เราได้รับสลิปของคุณแล้ว — ทีมงานจะตรวจสอบภายใน 30 นาที
             จากนั้นเครดิตจะถูกเพิ่มให้กับบัญชี AIXMAN ของคุณโดยอัตโนมัติ
             <br><span style="opacity:0.7;">We have received your slip — our team will verify it within 30 minutes, then your credits will be added to your AIXMAN account automatically.</span>
         @else
             เครดิต / Credits {{ number_format((int)($metadata['credits'] ?? 0)) }}
-            @if(($metadata['bonus_credits'] ?? 0) > 0)+ {{ number_format($metadata['bonus_credits']) }} โบนัส / bonus@endif
-            ถูกเพิ่มในบัญชีของคุณแล้ว / have been added to your account
+            {{-- "@endif" must stand apart: glued to a word ("bonus@endif") Blade reads it as text,
+                 the @if never closes, and the whole page fails to compile. --}}
+            @if(($metadata['bonus_credits'] ?? 0) > 0)
+                + {{ number_format((int) $metadata['bonus_credits']) }} โบนัส / bonus
+            @endif
+            @if($delivered)
+                ถูกเพิ่มในบัญชีของคุณแล้ว / have been added to your account
+            @else
+                กำลังเพิ่มเข้าบัญชี AIXMAN ของคุณ — ใช้เวลาไม่กี่นาที / are being added to your AIXMAN account — this takes a few minutes
+            @endif
         @endif
     </p>
 

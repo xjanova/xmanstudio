@@ -277,7 +277,7 @@
                     </td>
                     <td class="px-4 py-3 text-right">
                         <form action="{{ route('admin.metal-x.music-library.destroy', $track) }}" method="POST" class="inline"
-                              onsubmit="return confirm('ยืนยันลบเพลง &quot;{{ $track->title }}&quot;?')">
+                              onsubmit="return confirm('ยืนยันลบเพลง &quot;' + @js($track->title) + '&quot;?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20" title="ลบ">

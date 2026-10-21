@@ -72,6 +72,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Order Details -->
             <div class="lg:col-span-2 space-y-6">
+                @if(\App\Support\DgxSparkCampaign::isOrder($order))
+                    @include('orders.partials.dgx-spark-panel', ['order' => $order])
+                @endif
+
                 <!-- Items -->
                 <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
@@ -97,7 +101,29 @@
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                                         <td class="px-6 py-4">
                                             <div class="font-medium text-gray-900 dark:text-white">{{ $item->product->name ?? $item->product_name ?? 'สินค้าถูกลบ / Product removed' }}</div>
-                                            @if($item->custom_requirements)
+                                            @php
+                                                // A licence bought by term stores {"license_type": ...} here, not written
+                                                // requirements — show the term, like the customer portal does.
+                                                $requirements = $item->custom_requirements ? json_decode($item->custom_requirements, true) : null;
+                                                $licenseTerm = is_array($requirements) && ! array_is_list($requirements) && is_string($requirements['license_type'] ?? null)
+                                                    ? $requirements['license_type'] : null;
+                                                $termLabels = [
+                                                    'lifetime' => ['ตลอดชีพ', 'Lifetime'],
+                                                    'yearly' => ['รายปี', 'Yearly'],
+                                                    'monthly' => ['รายเดือน', 'Monthly'],
+                                                    'weekly' => ['รายสัปดาห์', 'Weekly'],
+                                                    'daily' => ['รายวัน', 'Daily'],
+                                                ];
+                                            @endphp
+                                            @if($licenseTerm)
+                                                <span class="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                                                    License: <x-bi th="{{ $termLabels[$licenseTerm][0] ?? $licenseTerm }}" en="{{ $termLabels[$licenseTerm][1] ?? ucfirst($licenseTerm) }}" />
+                                                </span>
+                                            @elseif($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements))
+                                                <span class="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300">
+                                                    +{{ $storagePack }} GB <x-bi th="พื้นที่คลาวด์" en="cloud space" />
+                                                </span>
+                                            @elseif($item->custom_requirements)
                                                 <div class="mt-3 border border-blue-200 dark:border-blue-700 rounded-lg overflow-hidden">
                                                     <div class="bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 flex items-center">
                                                         <svg class="w-4 h-4 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,9 +180,10 @@
                     </div>
                 </div>
 
-                <!-- License Keys (query directly from license_keys table) -->
+                <!-- License Keys — issued by this order, or renewed by it (a renewed key keeps the
+                     order_id of the order that first issued it) -->
                 @php
-                    $orderLicenses = \App\Models\LicenseKey::where('order_id', $order->id)->with('product')->get();
+                    $orderLicenses = \App\Models\LicenseKey::deliveredByOrder($order->id)->with('product')->get();
                 @endphp
                 @if($orderLicenses->isNotEmpty())
                     <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
@@ -172,6 +199,11 @@
                                     <div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $license->product->name ?? 'Product' }}</div>
                                         <div class="font-mono font-bold text-lg text-gray-900 dark:text-white">{{ $license->license_key }}</div>
+                                        @if($license->renewals->isNotEmpty())
+                                            <div class="text-xs font-medium text-green-700 dark:text-green-400 mt-1">
+                                                <x-bi th="ต่ออายุคีย์เดิมแล้ว — ใช้คีย์นี้ต่อได้เลย" en="Renewed — keep using this same key" />
+                                            </div>
+                                        @endif
                                         <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                             {{ $license->license_type === 'lifetime' ? 'ตลอดชีพ / Lifetime' : 'หมดอายุ / Expires: ' . ($license->expires_at ? $license->expires_at->format('d/m/Y') : '-') }}
                                         </div>
@@ -378,6 +410,30 @@
                                         </p>
                                     </div>
                                 </div>
+                            @elseif($order->payment_method === 'tpix')
+                                {{-- TPIX: the exact amount lives on the pay page (one quote at a time, at the price of the moment) --}}
+                                <div class="text-center py-4">
+                                    <p class="text-gray-600 dark:text-gray-400 mb-2">ชำระด้วยเหรียญ TPIX บน TPIX Chain ตามราคาตลาดปัจจุบัน</p>
+                                    <p class="text-2xl font-bold text-gray-900 dark:text-white">฿{{ number_format($order->total, 2) }}</p>
+                                    <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$order->total" /></div>
+                                    @if(($tpixQuote ?? null) && $tpixQuote->isPayable())
+                                        <a href="{{ route('tpix-pay.show', $tpixQuote) }}"
+                                           class="mt-5 inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-lg hover:from-orange-600 hover:to-amber-600 transition">
+                                            ไปหน้าชำระ TPIX ({{ $tpixQuote->tpixDisplay() }} TPIX)
+                                        </a>
+                                    @elseif(($tpixQuote ?? null) && in_array($tpixQuote->status, ['confirming', 'late'], true))
+                                        <a href="{{ route('tpix-pay.show', $tpixQuote) }}" class="mt-5 inline-block text-amber-600 dark:text-amber-400 font-semibold hover:underline">
+                                            ดูสถานะการโอน — {{ $tpixQuote->statusLabel() }}
+                                        </a>
+                                    @elseif((int) $order->user_id === (int) auth()->id())
+                                        <form method="POST" action="{{ route('orders.tpix-quote', $order) }}" class="mt-5">
+                                            @csrf
+                                            <button type="submit" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold shadow-lg hover:from-orange-600 hover:to-amber-600 transition">
+                                                {{ $tpixQuote ? 'ขอยอดชำระ TPIX ใหม่ตามราคาปัจจุบัน' : 'รับยอดชำระ TPIX' }}
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             @elseif($order->payment_method === 'stripe' && isset($stripeClientSecret) && isset($stripePublishableKey))
                                 @if(isset($stripeFeeInfo) && $stripeFeeInfo['fee'] > 0)
                                 <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-2 text-sm">
@@ -412,7 +468,7 @@
                             @endif
 
                             <!-- Upload Payment Slip (only show for bank_transfer/promptpay non-SMS orders) -->
-                            @if(!$order->usesSmsPayment() && $order->payment_method !== 'stripe')
+                            @if(!$order->usesSmsPayment() && ! in_array($order->payment_method, ['stripe', 'tpix'], true))
                             <div class="mt-6 pt-6 border-t dark:border-gray-700">
                                 <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-3"><x-bi th="แนบหลักฐานการชำระเงิน" en="Attach payment proof" /></h3>
                                 <form action="{{ route('orders.confirm-payment', $order) }}" method="POST" enctype="multipart/form-data">
@@ -472,6 +528,9 @@
                             @if($order->paid_at)
                                 <p class="text-sm text-gray-400 dark:text-gray-500 mt-2"><x-bi th="ชำระเมื่อ" en="Paid at" />: {{ $order->paid_at->format('d/m/Y H:i') }}</p>
                             @endif
+                            @if(($tpixQuote ?? null) && $tpixQuote->isSettled() && $tpixQuote->explorerTxUrl())
+                                <p class="text-sm mt-2"><a href="{{ $tpixQuote->explorerTxUrl() }}" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">ชำระ {{ $tpixQuote->tpixDisplay() }} TPIX — ดูธุรกรรมบน TPIX Explorer ↗</a></p>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -528,6 +587,10 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                         <x-bi th="โอนเงิน" en="Bank transfer" />
                                     </span>
+                                @elseif($order->payment_method === 'tpix')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
+                                        เหรียญ TPIX
+                                    </span>
                                 @else
                                     {{ $order->payment_method }}
                                 @endif
@@ -555,13 +618,24 @@
                         </div>
                     @endif
 
-                    @if($order->status === 'completed')
-                        <a href="{{ route('orders.download', $order) }}"
-                           class="mt-6 flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition shadow-lg">
+                    @if(\App\Support\OrderReceipt::available($order))
+                        <a href="{{ route('orders.receipt', $order) }}"
+                           class="mt-6 flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-700 hover:to-teal-700 font-semibold transition shadow-lg">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            <x-bi th="ดาวน์โหลดใบเสร็จ" en="Download receipt" class="text-white" />
+                            <x-bi th="ดาวน์โหลดใบเสร็จรับเงิน (PDF)" en="Download receipt (PDF)" class="text-white" />
+                        </a>
+                    @endif
+
+                    @if($order->status === 'completed')
+                        {{-- ไฟล์ .txt ของ License Key — เดิมปุ่มนี้เขียนว่า "ใบเสร็จ" ทั้งที่ได้ไฟล์คีย์ --}}
+                        <a href="{{ route('orders.download', $order) }}"
+                           class="mt-3 flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold transition shadow-lg">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                            </svg>
+                            <x-bi th="ดาวน์โหลด License Keys" en="Download license keys" class="text-white" />
                         </a>
                     @endif
 

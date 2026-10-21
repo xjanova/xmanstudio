@@ -8,7 +8,7 @@ use App\Models\Setting;
 use App\Models\SmsCheckerDevice;
 use App\Models\SmsPaymentNotification;
 use App\Services\FcmNotificationService;
-use App\Services\LicenseService;
+use App\Services\OrderPaymentService;
 use App\Services\SmsPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -409,29 +409,8 @@ class SmsPaymentController extends Controller
                 ->with('error', 'Order นี้ได้รับการยืนยันแล้ว');
         }
 
-        $order->update([
-            'sms_verification_status' => 'confirmed',
-            'sms_verified_at' => now(),
-            'payment_status' => 'paid',
-            'paid_at' => now(),
-        ]);
-
-        if ($order->smsNotification) {
-            $order->smsNotification->update(['status' => 'confirmed']);
-        }
-
-        // Auto-generate license keys for products that require them
-        $this->generateLicensesForOrder($order);
-
-        // Send FCM push to Android app so it updates immediately
-        try {
-            $this->fcmService->notifyOrderApproved($order);
-        } catch (\Exception $e) {
-            Log::error('FCM: Failed to send order_approved push', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        // Shared with the Telegram bot's approve button.
+        app(OrderPaymentService::class)->confirmSmsOrder($order);
 
         Log::info('Order payment manually confirmed by admin', [
             'order_id' => $order->id,
@@ -460,29 +439,8 @@ class SmsPaymentController extends Controller
 
         $reason = $request->input('reason', 'ปฏิเสธโดย Admin');
 
-        $order->update([
-            'sms_verification_status' => 'rejected',
-            'payment_status' => 'failed',
-            'notes' => ($order->notes ? $order->notes . "\n" : '') . '[SMS Rejected] ' . $reason,
-        ]);
-
-        if ($order->smsNotification) {
-            $order->smsNotification->update(['status' => 'rejected']);
-        }
-
-        if ($order->uniquePaymentAmount) {
-            $order->uniquePaymentAmount->cancel();
-        }
-
-        // Send FCM push to Android app so it updates immediately
-        try {
-            $this->fcmService->notifyOrderRejected($order);
-        } catch (\Exception $e) {
-            Log::error('FCM: Failed to send order_rejected push', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        // Shared with the Telegram bot's reject button.
+        app(OrderPaymentService::class)->rejectSmsOrder($order, $reason);
 
         Log::info('Order payment rejected by admin', [
             'order_id' => $order->id,
@@ -521,13 +479,5 @@ class SmsPaymentController extends Controller
         return redirect()
             ->back()
             ->with('success', "Cleanup เรียบร้อย: หมดอายุ {$stats['expired_amounts']} ยอด, ลบ {$stats['deleted_nonces']} nonces, หมดอายุ {$stats['expired_notifications']} notifications");
-    }
-
-    /**
-     * Auto-generate license keys for order items that require them.
-     */
-    private function generateLicensesForOrder(Order $order): void
-    {
-        app(LicenseService::class)->generateLicensesForOrder($order);
     }
 }

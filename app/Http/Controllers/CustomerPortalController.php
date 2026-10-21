@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ProjectOrder;
 use App\Models\RentalInvoice;
 use App\Models\RentalPayment;
 use App\Models\SupportTicket;
 use App\Models\UserRental;
+use App\Services\LicenseService;
+use App\Support\CloudStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,9 +32,8 @@ class CustomerPortalController extends Controller
             ->with('rentalPackage')
             ->get();
 
-        // Active Licenses (through orders)
-        $userOrderIds = Order::where('user_id', $user->id)->pluck('id');
-        $activeLicenses = LicenseKey::whereIn('order_id', $userOrderIds)
+        // Active Licenses (bought, or claimed free without an order)
+        $activeLicenses = $this->ownedLicenses($user->id)
             ->where('status', LicenseKey::STATUS_ACTIVE)
             ->where(function ($q) {
                 $q->whereNull('expires_at')
@@ -64,7 +66,7 @@ class CustomerPortalController extends Controller
         // Stats
         $stats = [
             'active_subscriptions' => $activeRentals->count(),
-            'active_licenses' => LicenseKey::whereIn('order_id', $userOrderIds)
+            'active_licenses' => $this->ownedLicenses($user->id)
                 ->where('status', LicenseKey::STATUS_ACTIVE)
                 ->count(),
             'total_orders' => Order::where('user_id', $user->id)->count(),
@@ -80,14 +82,14 @@ class CustomerPortalController extends Controller
             ->get();
 
         // Expiring/Expired Licenses
-        $expiringLicenses = LicenseKey::whereIn('order_id', $userOrderIds)
+        $expiringLicenses = $this->ownedLicenses($user->id)
             ->where('status', LicenseKey::STATUS_ACTIVE)
             ->where('license_type', '!=', 'lifetime')
             ->whereBetween('expires_at', [now(), now()->addDays(7)])
             ->with('product')
             ->get();
 
-        $expiredLicenses = LicenseKey::whereIn('order_id', $userOrderIds)
+        $expiredLicenses = $this->ownedLicenses($user->id)
             ->where('status', LicenseKey::STATUS_ACTIVE)
             ->where('license_type', '!=', 'lifetime')
             ->where('expires_at', '<=', now())
@@ -114,9 +116,8 @@ class CustomerPortalController extends Controller
     public function licenses(Request $request)
     {
         $user = Auth::user();
-        $userOrderIds = Order::where('user_id', $user->id)->pluck('id');
 
-        $query = LicenseKey::whereIn('order_id', $userOrderIds)
+        $query = $this->ownedLicenses($user->id)
             ->with('product');
 
         // Filter by status
@@ -132,14 +133,19 @@ class CustomerPortalController extends Controller
         $licenses = $query->orderBy('created_at', 'desc')->paginate(10);
 
         $stats = [
-            'total' => LicenseKey::whereIn('order_id', $userOrderIds)->count(),
-            'active' => LicenseKey::whereIn('order_id', $userOrderIds)
+            'total' => $this->ownedLicenses($user->id)->count(),
+            'active' => $this->ownedLicenses($user->id)
                 ->where('status', LicenseKey::STATUS_ACTIVE)->count(),
-            'expired' => LicenseKey::whereIn('order_id', $userOrderIds)
+            'expired' => $this->ownedLicenses($user->id)
                 ->where('status', LicenseKey::STATUS_EXPIRED)->count(),
         ];
 
-        return view('customer.licenses', compact('licenses', 'stats'));
+        // มีคีย์ Anti X = แนะนำแอปมือถือฟรี (คีย์ของแอปออกให้ต่อมือถือตอนเปิดครั้งแรก จึงไม่เป็นแถวในรายการนี้)
+        $mobileOffer = $this->ownedLicenses($user->id)->whereHas('product', fn ($q) => $q->where('slug', 'anti-x'))->exists()
+            ? Product::antiXMobileOffer()
+            : null;
+
+        return view('customer.licenses', compact('licenses', 'stats', 'mobileOffer'));
     }
 
     /**
@@ -154,7 +160,43 @@ class CustomerPortalController extends Controller
 
         $license->load('product', 'activations');
 
-        return view('customer.license-detail', compact('license'));
+        // A renewable product (BrainX Cloud): offer "renew" on this key when paying for it would
+        // extend this very key — the same test the payment applies, so the button never
+        // promises a renewal that turns into a new key
+        $canRenew = $license->product
+            && $license->product->is_active
+            && app(LicenseService::class)
+                ->renewalTargetFor(Auth::id(), $license->product, $license->id)
+                ?->is($license);
+
+        // A cloud product (BrainX Cloud): the space this key carries, part by part, and the packs
+        // the customer can buy for it — only those that still fit under max_extra_gb, and none
+        // for a revoked key (the cart refuses those anyway)
+        $cloudStorage = null;
+        $slug = $license->product?->slug;
+        if (CloudStorage::offers($slug)) {
+            $addonProduct = ($addonSlug = CloudStorage::addonProductSlug($slug))
+                ? Product::where('slug', $addonSlug)->where('is_active', true)->first()
+                : null;
+            $room = CloudStorage::roomLeftGb($license);
+            $canBuy = $addonProduct && in_array($license->status, [LicenseKey::STATUS_ACTIVE, LicenseKey::STATUS_EXPIRED], true);
+
+            $cloudStorage = [
+                'base' => CloudStorage::baseGb($slug),
+                'purchased' => CloudStorage::purchasedGb($license),
+                'bonus' => max(0, (int) $license->extra_storage_gb),
+                'total' => CloudStorage::totalGb($license),
+                'addonProduct' => $addonProduct,
+                'packs' => $canBuy
+                    ? array_filter(CloudStorage::addons($slug), fn ($price, $gb) => $gb <= $room, ARRAY_FILTER_USE_BOTH)
+                    : [],
+            ];
+        }
+
+        // คีย์ Anti X: ปุ่มโหลดตัวโปรแกรมบน Windows และแอปมือถือฟรี ในหน้าเดียวกัน
+        $mobileOffer = $license->product?->slug === 'anti-x' ? Product::antiXMobileOffer() : null;
+
+        return view('customer.license-detail', compact('license', 'canRenew', 'cloudStorage', 'mobileOffer'));
     }
 
     /**
@@ -280,6 +322,12 @@ class CustomerPortalController extends Controller
             ->filter()
             ->unique('id');
 
+        // มี Anti X = เห็นแอปมือถือ (ฟรี) ในศูนย์ดาวน์โหลดด้วย — คีย์ฟรีของแอปผูกกับมือถือ ไม่ใช่กับบัญชี จึงไม่มาทางไลเซนส์
+        if ($licensedProducts->contains('slug', 'anti-x') && ! $licensedProducts->contains('slug', 'anti-x-mobile')
+            && ($mobile = Product::where('slug', 'anti-x-mobile')->where('is_active', true)->first())) {
+            $licensedProducts->push($mobile);
+        }
+
         // Get products from active rentals (if rental includes software)
         $rentalProducts = UserRental::where('user_id', $user->id)
             ->where('status', UserRental::STATUS_ACTIVE)
@@ -332,6 +380,8 @@ class CustomerPortalController extends Controller
 
         $project->load([
             'members',
+            // งวดชำระของงาน — ลูกค้าต้องเห็นว่าจ่ายอะไรไปแล้ว และค้างงวดไหน
+            'invoices',
             'features' => function ($q) {
                 $q->orderBy('order');
             },
@@ -347,5 +397,17 @@ class CustomerPortalController extends Controller
         ]);
 
         return view('customer.project-detail', compact('project'));
+    }
+
+    /**
+     * Keys this account owns: those on its orders, and those put on the account directly
+     * without an order (a free key claimed on the web, e.g. MacDock — order_id is null).
+     */
+    private function ownedLicenses(int $userId)
+    {
+        return LicenseKey::where(function ($q) use ($userId) {
+            $q->where('user_id', $userId)
+                ->orWhereIn('order_id', Order::where('user_id', $userId)->select('id'));
+        });
     }
 }

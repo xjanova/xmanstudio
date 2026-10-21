@@ -1,13 +1,15 @@
-@extends($publicLayout ?? 'layouts.app')
+@extends($customerLayout ?? 'layouts.customer')
 
 @section('title', 'ประวัติธุรกรรม')
+@section('page-title')<x-bi th="ประวัติธุรกรรม" en="Transactions" />@endsection
+@section('page-description')<x-bi th="เงินเข้าออกทุกรายการ" en="Every credit and debit" />@endsection
 
 @section('content')
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="space-y-6">
     <!-- Gradient Header Banner -->
-    <div class="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 dark:from-purple-700 dark:via-purple-600 dark:to-indigo-700">
+    <div class="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 dark:from-purple-700 dark:via-purple-600 dark:to-indigo-700">
         <x-page-art art="hero-dashboard" :opacity="12" :scrim="false" fade="bottom" />
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="relative px-6 sm:px-8 py-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div class="mb-4 md:mb-0">
                     <nav class="flex items-center text-purple-200 text-sm mb-2">
@@ -43,7 +45,7 @@
         </div>
     </div>
 
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-5xl mx-auto">
         <!-- Summary Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-5">

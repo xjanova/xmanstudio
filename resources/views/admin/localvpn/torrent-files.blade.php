@@ -130,7 +130,7 @@
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('admin.localvpn.torrent.files.delete', $file) }}" class="inline"
-                                  onsubmit="return confirm('ลบไฟล์ \'{{ $file->file_name }}\'? การกระทำนี้ไม่สามารถย้อนกลับได้')">
+                                  onsubmit="return confirm('ลบไฟล์ \'' + @js($file->file_name) + '\'? การกระทำนี้ไม่สามารถย้อนกลับได้')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="ลบ">

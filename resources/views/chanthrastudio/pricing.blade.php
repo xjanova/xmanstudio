@@ -66,6 +66,7 @@
 
                     <div class="font-mono text-xs tracking-widest mb-2" style="color: var(--gold);">{{ strtoupper($p['name']) }}</div>
                     <div class="font-display italic text-6xl mb-1" style="color: var(--text-1);">฿{{ number_format($p['price']) }}</div>
+                    <x-tpix-price variant="detail" :thb="$p['price'] ?? null" />
                     <div class="font-mono text-xs mb-6" style="color: var(--text-3);">
                         {{ $p['duration_days'] ? $p['duration_days'] . ' days' : 'one-time · perpetual' }}
                     </div>
@@ -79,9 +80,15 @@
                         @endforeach
                     </ul>
 
-                    <a href="/cart/add/chanthra-studio?plan={{ $key }}" class="block text-center {{ $key === 'yearly' ? 'gold-cta font-display italic text-lg' : '' }} px-6 py-4 rounded-lg" style="{{ $key === 'yearly' ? '' : 'color: var(--text-1); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,213,179,0.08);' }}">
-                        ซื้อ {{ $p['name_th'] }}
-                    </a>
+                    @if($comingSoon)
+                        <span class="block text-center px-6 py-4 rounded-lg" style="color: var(--gold); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,213,179,0.08); cursor: not-allowed;" role="status" aria-disabled="true" data-coming-soon>
+                            Coming Soon — ยังไม่เปิดขาย
+                        </span>
+                    @else
+                        <a href="/cart/add/chanthra-studio?plan={{ $key }}" class="block text-center {{ $key === 'yearly' ? 'gold-cta font-display italic text-lg' : '' }} px-6 py-4 rounded-lg" style="{{ $key === 'yearly' ? '' : 'color: var(--text-1); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,213,179,0.08);' }}">
+                            ซื้อ {{ $p['name_th'] }}
+                        </a>
+                    @endif
                 </div>
             @endforeach
         </div>

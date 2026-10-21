@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\RentalPayment;
 use App\Models\WalletTopup;
-use App\Services\AixmanService;
+use App\Services\AiCreditDelivery;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\StripeService;
+use App\Support\Alerts\Alert;
+use App\Support\Alerts\SecurityAlerts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
@@ -28,6 +30,9 @@ class StripeWebhookController extends Controller
             Log::warning('Stripe webhook signature verification failed', [
                 'error' => $e->getMessage(),
             ]);
+            // Either a forged "payment succeeded", or our webhook secret no longer matches Stripe's —
+            // in which case real card payments are being dropped too.
+            SecurityAlerts::forged('Stripe webhook', 'ลายเซ็นไม่ถูกต้อง', $request->ip(), [], Alert::WARNING);
 
             return response('Invalid signature', 400);
         } catch (\Exception $e) {
@@ -206,37 +211,14 @@ class StripeWebhookController extends Controller
     }
 
     /**
-     * If the order is an AI Credits order (xdreamer source), notify AIXMAN
-     * so credits get topped up. Idempotent: marks `aixman_notified_at` in metadata.
+     * If the order is an AI Credits order (xdreamer source), send its credits to AIXMAN now.
+     * Once-only across every path — the success page, this webhook, admin approvals
+     * (see AiCreditDelivery).
      */
     protected function maybeNotifyAixman(Order $order): void
     {
-        $metadata = is_array($order->metadata)
-            ? $order->metadata
-            : (json_decode($order->metadata ?? '{}', true) ?: []);
-
-        if (($metadata['source'] ?? null) !== 'xdreamer') {
-            return;
-        }
-        if (! empty($metadata['aixman_notified_at'])) {
-            return;
-        }
-        if (! $order->user_id) {
-            Log::warning('AIXMAN webhook skipped — guest order has no user_id', ['order_id' => $order->id]);
-
-            return;
-        }
-
-        $ok = app(AixmanService::class)->notifyCreditPurchase(
-            (int) $order->user_id,
-            (string) ($metadata['package_slug'] ?? ''),
-            (int) $order->id,
-            (int) ($metadata['credits'] ?? 0),
-            (int) ($metadata['bonus_credits'] ?? 0),
-        );
-        if ($ok) {
-            $metadata['aixman_notified_at'] = now()->toISOString();
-            $order->update(['metadata' => json_encode($metadata)]);
+        if (AiCreditDelivery::isOwed($order)) {
+            app(AiCreditDelivery::class)->deliver($order);
         }
     }
 }

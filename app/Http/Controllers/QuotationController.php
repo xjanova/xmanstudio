@@ -2,18 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\QuotationMail;
 use App\Models\BankAccount;
 use App\Models\ProjectOrder;
 use App\Models\Quotation;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
+use App\Models\Setting;
 use App\Models\UniquePaymentAmount;
 use App\Services\LineNotifyService;
 use App\Services\PromptPayService;
+use App\Services\QuotationAcceptance;
 use App\Services\ThaiPaymentService;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\Alerts\BusinessAlerts;
+use App\Support\Letterhead;
+use App\Support\Quotation\Outcomes;
+use App\Support\Quotation\Pricing;
+use App\Support\Quotation\VatMode;
+use App\Support\ThaiPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class QuotationController extends Controller
@@ -1310,7 +1320,7 @@ class QuotationController extends Controller
         if ($categories->count() > 0) {
             foreach ($categories as $category) {
                 // Apply sale discount: web categories 50% off, others 70% off
-                $saleDiscount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
+                $saleDiscount = Pricing::saleDiscount($category->key);
 
                 $options = [];
                 foreach ($category->activeOptions as $option) {
@@ -1349,12 +1359,167 @@ class QuotationController extends Controller
             $formattedCategories = $this->servicePackages;
         }
 
-        return view('support.index', [
+        return view('quote.index', [
             'services' => $formattedCategories,
             'additionalOptions' => $this->addonGroups(),
             'optionDetailConfig' => $this->optionDetailConfig,
             'serviceOptionDetailConfig' => $this->serviceOptionDetailConfig,
+            // The single payload the new builder runs on. Everything above is
+            // kept because the PDF view and the detail pages still read it.
+            'catalogue' => $this->catalogue($formattedCategories),
+            'vatModes' => array_map(
+                fn (string $m) => ['key' => $m] + VatMode::label($m),
+                VatMode::all()
+            ),
         ]);
+    }
+
+    /**
+     * Everything the builder needs to render and price itself, in one shape.
+     *
+     * The page asks the visitor for an OUTCOME first, so the catalogue is
+     * indexed the way that question resolves: outcome → service category →
+     * its options, plus the add-on groups worth putting in front of that
+     * particular answer. Options carry their own reason and duration so a line
+     * can read as a decision instead of a SKU.
+     *
+     * @param  array<string, mixed>  $formattedServices  index()'s service map, sale prices already applied
+     * @return array<string, mixed>
+     */
+    protected function catalogue(array $formattedServices): array
+    {
+        // Per-option metadata lives on the rows so an admin can change the
+        // sales logic without a deploy. Options that predate those columns
+        // simply come back with the defaults.
+        $meta = QuotationOption::query()
+            ->get(['key', 'is_core', 'requires', 'suggested_for', 'reason_th', 'reason', 'duration_days'])
+            ->keyBy('key');
+
+        $services = [];
+        foreach ($formattedServices as $serviceKey => $service) {
+            $options = [];
+            foreach ($service['categories'] ?? [] as $group) {
+                foreach ($group['options'] ?? [] as $optionKey => $option) {
+                    $row = $meta->get($optionKey);
+                    $options[] = [
+                        'key' => $optionKey,
+                        'name_th' => $option['name_th'] ?? $option['name'] ?? $optionKey,
+                        'name' => $option['name'] ?? $optionKey,
+                        'price' => (float) ($option['price'] ?? 0),
+                        'original_price' => (float) ($option['original_price'] ?? 0),
+                        'sale_percent' => (int) ($option['sale_percent'] ?? 0),
+                        'desc_th' => $option['description_th'] ?? $option['description'] ?? '',
+                        'is_core' => (bool) ($row->is_core ?? false),
+                        'requires' => (array) ($row->requires ?? []),
+                        'suggested_for' => (array) ($row->suggested_for ?? []),
+                        'reason_th' => $row->reason_th ?? null,
+                        'duration_days' => (int) ($row->duration_days ?? 0),
+                    ];
+                }
+            }
+
+            $services[$serviceKey] = [
+                'key' => $serviceKey,
+                'name_th' => $service['name_th'] ?? $service['name'] ?? $serviceKey,
+                'name' => $service['name'] ?? $serviceKey,
+                'options' => $options,
+            ];
+        }
+
+        $addons = [];
+        foreach ($this->addonGroups() as $groupKey => $group) {
+            $options = [];
+            foreach ($group['options'] ?? [] as $optionKey => $option) {
+                $row = $meta->get($optionKey);
+                $options[] = [
+                    'key' => $optionKey,
+                    'name_th' => $option['name_th'] ?? $option['name'] ?? $optionKey,
+                    'name' => $option['name'] ?? $optionKey,
+                    'price' => (float) ($option['price'] ?? 0),
+                    // Add-ons carry is_core too: an admin marking one means
+                    // "tick it for me whenever this group is being offered".
+                    // Leaving it out of the payload made the flag do nothing
+                    // here while working on service options — a setting that
+                    // silently applies to only half the catalogue.
+                    'is_core' => (bool) ($row->is_core ?? false),
+                    'requires' => (array) ($row->requires ?? []),
+                    'suggested_for' => (array) ($row->suggested_for ?? []),
+                    'reason_th' => $row->reason_th ?? null,
+                    'duration_days' => (int) ($row->duration_days ?? 0),
+                ];
+            }
+
+            if ($options === []) {
+                continue;
+            }
+
+            $addons[$groupKey] = [
+                'key' => $groupKey,
+                'name_th' => $group['name_th'] ?? $group['name'] ?? $groupKey,
+                'name' => $group['name'] ?? $groupKey,
+                'options' => $options,
+            ];
+        }
+
+        // Only offer an outcome whose service category actually has options
+        // today — an empty one would be a dead end on the very first question.
+        $outcomes = [];
+        foreach (Outcomes::all() as $key => $outcome) {
+            // The catalogue table and the hardcoded fallback use different keys
+            // for the same service, and index() silently switches between them
+            // when the table is empty. Resolve here, once, and hand the page a
+            // key it can look up directly.
+            $categoryKey = null;
+            foreach ([$outcome['category'], $outcome['category_fallback'] ?? null] as $candidate) {
+                if ($candidate !== null && ! empty($services[$candidate]['options'])) {
+                    $categoryKey = $candidate;
+                    break;
+                }
+            }
+
+            // Nothing in the catalogue answers this outcome today — leave it
+            // out rather than offer a first question that dead-ends.
+            if ($categoryKey === null) {
+                continue;
+            }
+
+            // The overrides go on the LEFT: `+` keeps the left operand's value
+            // for a duplicate key, so putting them after $outcome would leave
+            // the unresolved category in place.
+            $outcomes[] = [
+                'key' => $key,
+                'category' => $categoryKey,
+                'suggested_addons' => array_values(array_intersect(
+                    $outcome['suggested_addons'],
+                    array_keys($addons)
+                )),
+            ] + $outcome;
+        }
+
+        return [
+            'outcomes' => $outcomes,
+            'services' => $services,
+            'addons' => $addons,
+            'discountTiers' => $this->discountTiers(),
+            'rushPercent' => Pricing::rushPercent(),
+            'paymentSplit' => Pricing::paymentSplit(),
+            'validDays' => Pricing::validDays(),
+        ];
+    }
+
+    /**
+     * Volume discount bands, as the totals apply them.
+     *
+     * Named here rather than buried in calculateQuotation so the page can tell
+     * the visitor how far off the next band they are — the difference between
+     * a discount that feels arbitrary and one that reads as a reason to add
+     * the thing they were hesitating over.
+     *
+     * @return array<int, array{from: int, percent: int}>
+     */
+    protected function discountTiers(): array
+    {
+        return Pricing::discountTiers();
     }
 
     /**
@@ -1376,10 +1541,10 @@ class QuotationController extends Controller
         $validated = $this->validateRequest($request);
         $quotation = $this->calculateQuotation($validated);
 
-        $pdf = Pdf::loadView('quotation.pdf', [
+        $pdf = ThaiPdf::view('quotation.pdf', [
             'quotation' => $quotation,
             'companyInfo' => $this->getCompanyInfo(),
-        ])->setPaper('a4', 'portrait');
+        ]);
 
         $filename = 'XMAN-Quotation-' . $quotation['quote_number'] . '.pdf';
 
@@ -1422,7 +1587,20 @@ class QuotationController extends Controller
             'status' => 'draft',
             'action_type' => $validated['action_type'],
             'payment_method' => $validated['payment_method'],
-            'valid_until' => now()->addDays(30),
+            'valid_until' => now()->addDays(Pricing::validDays()),
+
+            // Stored with the document, not looked up when it is printed: a
+            // quotation issued today must still read correctly after the rate
+            // or our registration status changes.
+            'vat_mode' => $quotationData['vat_mode'],
+            'vat_rate' => $quotationData['vat_rate'],
+            'amount_before_vat' => $quotationData['amount_before_vat'],
+            'withholding_pct' => $quotationData['withholding_pct'],
+            'withholding_amount' => $quotationData['withholding_amount'],
+            'outcome' => $quotationData['outcome'] ?? null,
+            // 64 hex characters, not the quote number: this is what goes in the
+            // e-mail, and anyone holding it can read the customer's prices.
+            'public_token' => Quotation::newPublicToken(),
         ]);
 
         // Send Line notification
@@ -1435,7 +1613,8 @@ class QuotationController extends Controller
             $responseData = [
                 'success' => true,
                 'message' => 'ได้รับคำสั่งซื้อแล้ว ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง',
-                'quote_number' => $quotation->quote_number,
+                // เลขที่พร้อมเวอร์ชัน: ฉบับแก้ไขใช้เลขเดิม ถ้าพิมพ์แต่เลขจะแยกไม่ออกว่าคนละฉบับ
+                'quote_number' => $quotation->displayNumber(),
                 'action' => 'order',
                 'payment_method' => $validated['payment_method'],
                 'grand_total' => $quotationData['grand_total'],
@@ -1470,18 +1649,287 @@ class QuotationController extends Controller
             $quotation->markAsSent();
             $lineNotify->notifyNewQuotation($quotationData);
 
+            $mailed = $this->mailQuotation($quotation);
+
             return response()->json([
                 'success' => true,
-                'message' => 'ส่งคำขอใบเสนอราคาแล้ว ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง',
+                'message' => $mailed
+                    ? 'ส่งใบเสนอราคาไปที่ ' . $quotation->customer_email . ' แล้ว ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง'
+                    : 'บันทึกคำขอแล้ว ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง',
                 'quote_number' => $quotation->quote_number,
                 'action' => 'quotation',
+                'mailed' => $mailed,
+                'document_url' => $quotation->publicUrl(),
             ]);
+        }
+    }
+
+    /**
+     * E-mail the quotation to the customer with the PDF attached.
+     *
+     * Never lets a mail failure take the submission down with it: the
+     * quotation is already saved and the team already has its Telegram card,
+     * so the worst case is a customer who has to open the link instead of the
+     * attachment. Returns whether it went, so the page can say which happened.
+     */
+    protected function mailQuotation(Quotation $quotation): bool
+    {
+        try {
+            $doc = $this->documentData($quotation);
+
+            $pdf = ThaiPdf::view('quotation.pdf', [
+                'quotation' => $doc,
+                'companyInfo' => $this->getCompanyInfo(),
+            ]);
+
+            Mail::to($quotation->customer_email)
+                ->send(new QuotationMail($quotation, $doc, $pdf->output()));
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Quotation e-mail failed: ' . $e->getMessage(), [
+                'quote_number' => $quotation->quote_number,
+                'to' => $quotation->customer_email,
+                'exception' => get_class($e),
+            ]);
+
+            return false;
         }
     }
 
     /**
      * Get all valid service type keys (hardcoded + database)
      */
+    /**
+     * The document as it would print, before anyone commits to anything.
+     *
+     * Deliberately NOT validateRequest(): a visitor wants to see what they are
+     * about to receive before handing over a name and an e-mail address, so
+     * the customer fields are optional here and stand in as placeholders. It
+     * stores nothing and issues no quote number that could be mistaken for a
+     * real one.
+     */
+    public function previewDocument(Request $request)
+    {
+        $validated = $request->validate([
+            'service_type' => 'required|string|in:' . implode(',', $this->getAllServiceTypeKeys()),
+            'service_options' => 'required|array|min:1',
+            'service_options.*' => 'string',
+            'additional_options' => 'nullable|array',
+            'additional_options.*' => 'string',
+            'timeline' => 'nullable|string|in:urgent,normal,flexible',
+            'vat_mode' => 'nullable|string|in:' . implode(',', VatMode::all()),
+            'withholding_pct' => 'nullable|numeric|min:0|max:15',
+            'customer_name' => 'nullable|string|max:255',
+            'customer_company' => 'nullable|string|max:255',
+            'customer_email' => 'nullable|string|max:255',
+            'customer_phone' => 'nullable|string|max:20',
+            'customer_address' => 'nullable|string|max:500',
+            'customer_tax_id' => 'nullable|string|max:20',
+            'project_description' => 'nullable|string|max:2000',
+        ]);
+
+        // A field the visitor never filled is absent from $validated entirely,
+        // not present-and-empty — reading it directly throws.
+        $quotation = $this->calculateQuotation(array_merge($validated, [
+            'customer_name' => ($validated['customer_name'] ?? '') ?: '[ชื่อผู้ติดต่อ]',
+            'customer_email' => ($validated['customer_email'] ?? '') ?: '[อีเมล]',
+            'customer_phone' => ($validated['customer_phone'] ?? '') ?: '[เบอร์โทร]',
+        ]));
+
+        // Say plainly that this is not a document anyone can act on.
+        $quotation['quote_number'] = 'ตัวอย่าง — ยังไม่ได้ออกเลขที่';
+        $quotation['public_url'] = null;
+
+        // Same template as the PDF, but a browser is rendering it this time,
+        // and a browser cannot open the absolute disk path DomPDF wants.
+        $company = $this->getCompanyInfo();
+        $company['logo_path'] = $company['logo_url'];
+
+        return response()
+            ->view('quotation.pdf', [
+                'quotation' => $quotation,
+                'companyInfo' => $company,
+                'isPreview' => true,
+            ])
+            ->header('X-Frame-Options', 'SAMEORIGIN');
+    }
+
+    /**
+     * The quotation as the customer sees it, opened from the e-mailed link.
+     */
+    public function showPublic(string $token)
+    {
+        $quotation = $this->quotationByToken($token);
+
+        $firstView = $quotation->viewed_at === null;
+        $quotation->markAsViewed();
+
+        if ($firstView) {
+            BusinessAlerts::quotationViewed($quotation);
+        }
+
+        return view('quote.document', [
+            'quotation' => $quotation,
+            'doc' => $this->documentData($quotation),
+            'companyInfo' => $this->getCompanyInfo(),
+            'canRespond' => $quotation->awaitingResponse(),
+        ]);
+    }
+
+    /**
+     * The same document as a PDF, from the stored figures rather than a
+     * recalculation — a quotation must not change price after it was sent.
+     */
+    public function downloadPublic(string $token)
+    {
+        $quotation = $this->quotationByToken($token);
+
+        $pdf = ThaiPdf::view('quotation.pdf', [
+            'quotation' => $this->documentData($quotation),
+            'companyInfo' => $this->getCompanyInfo(),
+        ]);
+
+        return $pdf->download('XMAN-Quotation-' . $quotation->quote_number . '.pdf');
+    }
+
+    /**
+     * Accept, ask to renegotiate, or decline.
+     */
+    public function respond(Request $request, string $token, QuotationAcceptance $acceptance)
+    {
+        $quotation = $this->quotationByToken($token);
+
+        $validated = $request->validate([
+            'action' => 'required|string|in:accept,negotiate,decline',
+            'message' => 'nullable|string|max:2000',
+        ], [
+            'action.in' => 'ไม่รู้จักคำตอบนี้',
+        ]);
+
+        if (! $quotation->awaitingResponse()) {
+            return back()->with('quote_error', $quotation->isExpired()
+                ? 'ใบเสนอราคานี้หมดอายุแล้ว กรุณาติดต่อทีมงานเพื่อขอใบใหม่'
+                : 'ใบเสนอราคานี้มีคำตอบไปแล้ว');
+        }
+
+        // Asking to renegotiate without saying what is wrong leaves the team
+        // with nothing to act on, so that one case needs words.
+        if ($validated['action'] === 'negotiate' && trim((string) ($validated['message'] ?? '')) === '') {
+            return back()->withInput()->with('quote_error', 'ช่วยบอกสั้น ๆ ว่าอยากปรับตรงไหน ทีมงานจะได้เสนอกลับได้ตรงจุด');
+        }
+
+        match ($validated['action']) {
+            'accept' => $quotation->markAsAccepted(),
+            'decline' => $quotation->markAsDeclined($validated['message'] ?? null),
+            default => $quotation->update(['customer_notes' => $validated['message']]),
+        };
+
+        // Accepting opens the job: the customer's press of the button is what
+        // creates the project and the first invoice, not an admin noticing the
+        // e-mail the next morning. Same service the admin side uses, so the
+        // paperwork is identical whichever way the answer arrives.
+        $firstInvoice = null;
+        if ($validated['action'] === 'accept') {
+            try {
+                $project = $acceptance->projectFor($quotation);
+                $firstInvoice = $project->invoices()
+                    ->where('installment_no', 1)
+                    ->whereNotNull('due_date')
+                    ->first();
+            } catch (\Throwable $e) {
+                // The customer's answer is recorded and the admin has been told;
+                // a failure to open the project must not lose the acceptance or
+                // show them an error for something that is ours to fix.
+                Log::error('Opening the project after acceptance failed: ' . $e->getMessage(), [
+                    'quote_number' => $quotation->quote_number,
+                    'exception' => get_class($e),
+                ]);
+            }
+        }
+
+        BusinessAlerts::quotationAnswered($quotation, $validated['action'], $validated['message'] ?? null);
+
+        return back()->with('quote_success', match ($validated['action']) {
+            'accept' => $firstInvoice
+                ? 'ขอบคุณครับ เปิดงานให้แล้ว — งวดแรก ' . number_format((float) $firstInvoice->amount, 2)
+                    . ' บาท กำหนดชำระ ' . $firstInvoice->due_date->format('d/m/Y')
+                    . ' ทีมงานจะส่งรายละเอียดการชำระเงินทางอีเมล'
+                : 'ขอบคุณครับ ทีมงานจะติดต่อกลับเพื่อเริ่มงานโดยเร็วที่สุด',
+            'decline' => 'รับทราบแล้ว ขอบคุณที่สละเวลาพิจารณา',
+            default => 'ส่งข้อความถึงทีมงานแล้ว จะติดต่อกลับพร้อมข้อเสนอใหม่',
+        });
+    }
+
+    /**
+     * Resolve a public token, in constant-ish time and without leaking which
+     * half of the address was wrong.
+     */
+    protected function quotationByToken(string $token): Quotation
+    {
+        // 64 hex characters — reject anything else before it reaches the query,
+        // so a scan cannot use response timing to learn the shape of the token.
+        abort_unless(preg_match('/^[0-9a-f]{64}$/', $token) === 1, 404);
+
+        return Quotation::where('public_token', $token)->firstOrFail();
+    }
+
+    /**
+     * Reshape a stored quotation into what the document templates expect.
+     *
+     * calculateQuotation() builds this from a form submission; this builds the
+     * same thing from the row, using ONLY the stored figures. Re-running the
+     * calculator here would silently reprice a document somebody already has
+     * in their inbox.
+     *
+     * @return array<string, mixed>
+     */
+    protected function documentData(Quotation $quotation): array
+    {
+        $mode = VatMode::normalise($quotation->vat_mode);
+        $grandTotal = (float) $quotation->grand_total;
+        $withholding = (float) $quotation->withholding_amount;
+
+        return [
+            'quote_number' => $quotation->quote_number,
+            'quote_date' => $quotation->created_at->format('d/m/Y'),
+            'valid_until' => $quotation->valid_until?->format('d/m/Y') ?? '-',
+            'customer' => [
+                'name' => $quotation->customer_name,
+                'company' => $quotation->customer_company ?? '',
+                'email' => $quotation->customer_email,
+                'phone' => $quotation->customer_phone,
+                'address' => $quotation->customer_address ?? '',
+                'tax_id' => '',
+            ],
+            'service' => [
+                'name' => $quotation->service_name,
+                'name_th' => $quotation->service_name,
+                'icon' => '',
+            ],
+            'items' => $quotation->service_options ?? [],
+            'project_description' => $quotation->project_description ?? '',
+            'option_details' => $quotation->option_details ?? [],
+            'timeline' => $quotation->timeline ?? 'normal',
+            'subtotal' => (float) $quotation->subtotal,
+            'discount_percent' => (int) $quotation->discount_percent,
+            'discount' => (float) $quotation->discount,
+            'rush_fee' => (float) $quotation->rush_fee,
+            'total_before_vat' => (float) $quotation->subtotal - (float) $quotation->discount + (float) $quotation->rush_fee,
+            'vat' => (float) $quotation->vat,
+            'grand_total' => $grandTotal,
+            'vat_mode' => $mode,
+            'vat_rate' => (float) ($quotation->vat_rate ?? VatMode::DEFAULT_RATE),
+            'vat_label' => VatMode::label($mode),
+            'amount_before_vat' => (float) ($quotation->amount_before_vat ?? $quotation->grand_total - $quotation->vat),
+            'withholding_pct' => (float) $quotation->withholding_pct,
+            'withholding_amount' => $withholding,
+            'net_payable' => round($grandTotal - $withholding, 2),
+            'grand_total_words' => VatMode::bahtText($grandTotal),
+            'public_url' => $quotation->publicUrl(),
+        ];
+    }
+
     protected function getAllServiceTypeKeys(): array
     {
         $keys = array_keys($this->servicePackages);
@@ -1514,6 +1962,15 @@ class QuotationController extends Controller
             'project_description' => 'nullable|string|max:2000',
             'timeline' => 'nullable|string|in:urgent,normal,flexible',
             'budget_range' => 'nullable|string',
+            // How the totals are to be read. Absent means the old behaviour,
+            // tax added on top, so links and bookmarks from before still price
+            // the same way.
+            'vat_mode' => 'nullable|string|in:' . implode(',', VatMode::all()),
+            // 3% is the rate for services; anything else is the customer
+            // telling us their own situation, so it is bounded, not free.
+            'withholding_pct' => 'nullable|numeric|min:0|max:15',
+            'customer_tax_id' => 'nullable|string|max:20',
+            'outcome' => 'nullable|string|in:' . implode(',', Outcomes::keys()),
         ]);
     }
 
@@ -1617,40 +2074,44 @@ class QuotationController extends Controller
             }
         }
 
-        // Calculate discount for large projects
-        $discount = 0;
-        $discountPercent = 0;
-        if ($subtotal >= 1000000) {
-            $discountPercent = 15;
-        } elseif ($subtotal >= 500000) {
-            $discountPercent = 10;
-        } elseif ($subtotal >= 200000) {
-            $discountPercent = 5;
-        }
-        $discount = $subtotal * ($discountPercent / 100);
+        // Volume discount — read from the same table the page shows the
+        // visitor, so "อีก 300,000 จะได้ 10%" can never disagree with the maths.
+        $discountPercent = Pricing::discountPercentFor($subtotal);
+        $discount = round($subtotal * ($discountPercent / 100), 2);
 
         // Rush fee for urgent timeline (calculated on discounted subtotal)
         $rushFee = 0;
         $afterDiscount = $subtotal - $discount;
         if (($data['timeline'] ?? '') === 'urgent') {
-            $rushFee = $afterDiscount * 0.25;
+            $rushFee = round($afterDiscount * (Pricing::rushPercent() / 100), 2);
         }
 
-        $total = $afterDiscount + $rushFee;
-        $vat = $total * 0.07;
-        $grandTotal = $total + $vat;
+        $total = round($afterDiscount + $rushFee, 2);
+
+        // The tax split is the mode's job, not an inline multiplication: under
+        // "ราคารวม VAT แล้ว" the figure above is the total, not the base.
+        $vatMode = VatMode::normalise($data['vat_mode'] ?? null);
+        $tax = VatMode::split($total, $vatMode);
+        $vat = $tax['vat'];
+        $grandTotal = $tax['total'];
+
+        // Withholding never changes what we invoice, only what arrives.
+        $withholdingPct = (float) ($data['withholding_pct'] ?? 0);
+        $withholding = VatMode::withholding($tax['base'], $withholdingPct);
 
         return [
             'quote_number' => 'QT-' . date('Ymd') . '-' . strtoupper(Str::random(4)),
             'quote_date' => now()->format('d/m/Y'),
-            'valid_until' => now()->addDays(30)->format('d/m/Y'),
+            'valid_until' => now()->addDays(Pricing::validDays())->format('d/m/Y'),
             'customer' => [
                 'name' => $data['customer_name'],
                 'company' => $data['customer_company'] ?? '',
                 'email' => $data['customer_email'],
                 'phone' => $data['customer_phone'],
                 'address' => $data['customer_address'] ?? '',
+                'tax_id' => $data['customer_tax_id'] ?? '',
             ],
+            'outcome' => $data['outcome'] ?? null,
             'service' => [
                 'name' => $service['name'],
                 'name_th' => $service['name_th'],
@@ -1667,6 +2128,17 @@ class QuotationController extends Controller
             'total_before_vat' => $total,
             'vat' => $vat,
             'grand_total' => $grandTotal,
+
+            // The tax story, spelled out, because the document and the
+            // accounting side both have to say the same thing about it.
+            'vat_mode' => $vatMode,
+            'vat_rate' => $tax['rate'],
+            'vat_label' => VatMode::label($vatMode),
+            'amount_before_vat' => $tax['base'],
+            'withholding_pct' => $withholdingPct,
+            'withholding_amount' => $withholding,
+            'net_payable' => round($grandTotal - $withholding, 2),
+            'grand_total_words' => VatMode::bahtText($grandTotal),
         ];
     }
 
@@ -1675,16 +2147,7 @@ class QuotationController extends Controller
      */
     protected function getCompanyInfo(): array
     {
-        return [
-            'name' => 'XMAN STUDIO',
-            'tagline' => 'IT Solutions & Software Development',
-            'address' => 'กรุงเทพมหานคร ประเทศไทย',
-            'email' => 'xjanovax@gmail.com',
-            'phone' => '080-6038278',
-            'website' => 'www.xmanstudio.com',
-            'line' => '@xmanstudio',
-            'tax_id' => 'X-XXXX-XXXXX-XX-X',
-        ];
+        return Letterhead::info();
     }
 
     /**
@@ -1769,7 +2232,7 @@ class QuotationController extends Controller
      */
     public function tracking()
     {
-        return view('support.tracking');
+        return view('quote.tracking');
     }
 
     /**
@@ -1799,7 +2262,7 @@ class QuotationController extends Controller
             ->limit(20)
             ->get();
 
-        return view('support.tracking', compact('quotations', 'projects', 'query'));
+        return view('quote.tracking', compact('quotations', 'projects', 'query'));
     }
 
     /**

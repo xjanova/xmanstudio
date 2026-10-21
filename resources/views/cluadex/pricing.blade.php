@@ -1,4 +1,6 @@
 @extends('layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('cluadex-ai-coding-assistant'); @endphp
 
 @section('title', 'CluadeX Pro - แพ็กเกจราคา | XMAN Studio')
 
@@ -18,17 +20,18 @@
             <p class="text-gray-400 mt-3 text-lg">ปลดล็อกฟีเจอร์ขั้นสูงทั้งหมด</p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
+        <div class="grid {{ count($pricing) >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 max-w-4xl mx-auto' }} gap-8">
             @foreach($pricing as $planKey => $plan)
             <div class="bg-gray-800/40 rounded-2xl p-8 border {{ $planKey === 'yearly' ? 'border-indigo-500/50 relative md:scale-105' : ($planKey === 'lifetime' ? 'border-yellow-500/30' : 'border-gray-700/50') }} hover:border-indigo-500/40 transition-all">
 
                 @if($planKey === 'yearly')
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-full shadow-lg">ประหยัด 63%</div>
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-full shadow-lg">แนะนำ</div>
                 @endif
 
                 <div class="text-center mb-6">
                     <h3 class="text-lg font-bold {{ $planKey === 'yearly' ? 'text-indigo-400' : ($planKey === 'lifetime' ? 'text-yellow-400' : 'text-gray-400') }}">{{ $plan['name_th'] }}</h3>
                     <div class="text-5xl font-black text-white mt-3">฿{{ number_format($plan['price']) }}</div>
+                    <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$plan['price']" /></div>
                     <div class="text-gray-500 mt-1">{{ $planKey === 'lifetime' ? 'จ่ายครั้งเดียว' : '/' . ($planKey === 'monthly' ? 'เดือน' : 'ปี') }}</div>
                     @if($planKey === 'yearly')
                     <div class="text-green-400 text-sm mt-1">≈ ฿{{ number_format(round($plan['price']/12)) }}/เดือน</div>
@@ -44,17 +47,18 @@
                     @endforeach
                 </ul>
 
-                @auth
-                <a href="{{ route('products.index') }}"
-                   class="block w-full text-center px-6 py-3 {{ $planKey === 'yearly' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25' : ($planKey === 'lifetime' ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 shadow-lg shadow-yellow-500/25' : 'bg-gray-700 hover:bg-gray-600') }} text-white font-bold rounded-xl transition-all transform hover:scale-105">
-                    เลือกแพ็กเกจ
-                </a>
-                @else
-                <a href="{{ route('login') }}"
-                   class="block w-full text-center px-6 py-3 {{ $planKey === 'yearly' ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : ($planKey === 'lifetime' ? 'bg-gradient-to-r from-yellow-600 to-amber-600' : 'bg-gray-700 hover:bg-gray-600') }} text-white font-bold rounded-xl transition-all">
-                    เข้าสู่ระบบเพื่อซื้อ
-                </a>
-                @endauth
+                @if($product)
+                {{-- The cart sells the licence at config/licenses.php's price, as the product page does --}}
+                <form action="{{ route('cart.add', $product) }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="quantity" value="1">
+                    <input type="hidden" name="license_type" value="{{ $planKey }}">
+                    <button type="submit"
+                            class="block w-full text-center px-6 py-3 {{ $planKey === 'yearly' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25' : ($planKey === 'lifetime' ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 shadow-lg shadow-yellow-500/25' : 'bg-gray-700 hover:bg-gray-600') }} text-white font-bold rounded-xl transition-all transform hover:scale-105">
+                        ซื้อ License {{ $plan['name_th'] }} - ฿{{ number_format($plan['price']) }}
+                    </button>
+                </form>
+                @endif
             </div>
             @endforeach
         </div>
@@ -63,9 +67,13 @@
             <x-page-art art="team-cta" :opacity="14" :scrim="false" />
             <div class="relative text-center">
                 <p class="text-gray-500 text-sm">ทุกแพ็กเกจรวม: อัพเดทอัตโนมัติ, Bug Report, ซัพพอร์ตจาก XMAN Studio</p>
-                <a href="https://github.com/xjanova/cluadeX/releases/latest" class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1">
+                @if($csDownload)
+                    <span class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
+                <a href="{{ route('cluadex.download') }}" class="text-green-400 hover:text-green-300 text-sm mt-3 inline-flex items-center gap-1">
                     หรือ ดาวน์โหลดเวอร์ชันฟรี →
                 </a>
+                @endif
             </div>
         </div>
     </div>

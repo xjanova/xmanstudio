@@ -202,6 +202,17 @@ class ProductDevice extends Model
      */
     public function findRelatedByDeviceIds(): Collection
     {
+        // ไม่มีทั้ง drm_id และ android_id = ไม่มีอะไรให้เทียบว่าเป็นเครื่องเดียวกัน
+        //
+        // เดิมไม่มีบรรทัดนี้: closure ข้างล่างไม่ได้เพิ่มเงื่อนไขอะไรเลย Laravel จึงทิ้ง nested where
+        // ทั้งก้อน → ได้ "ทุกเครื่อง" ของผลิตภัณฑ์นั้น แอปที่ไม่ส่งสองค่านี้ (แอป Windows เช่น WinXTools)
+        // จึงถูกตีว่าเป็นเครื่องเดียวกับทุกเครื่องที่เคยทดลอง: checkTrialAbuse() ติดธง suspicious
+        // แถมคัดลอกเวลา trial ของเครื่องคนอื่นมาใส่ — ทดลองได้แค่เครื่องแรกเครื่องเดียวของผลิตภัณฑ์
+        // (ตัดแค่ผลบวกปลอม เครื่องที่มี drm_id/android_id ตรงกันยังจับได้เหมือนเดิม)
+        if (! $this->drm_id && ! $this->android_id) {
+            return $this->newCollection();
+        }
+
         return self::where('id', '!=', $this->id)
             ->where('product_id', $this->product_id)
             ->where(function ($query) {

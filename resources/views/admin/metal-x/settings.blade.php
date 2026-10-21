@@ -120,7 +120,7 @@
         </div>
 
         {{-- Suno AI Music --}}
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6" x-data="{ sunoMode: '{{ old('suno_mode', $settings['suno_mode'] ?? 'api') }}' }">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6" x-data="{ sunoMode: @js(old('suno_mode', $settings['suno_mode'] ?? 'api')) }">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
                 Suno AI Music
@@ -297,7 +297,7 @@
                 </svg>
                 วิดีโอพื้นหลัง (Hero Background)
             </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" x-data="{ mode: '{{ old('metalx_hero_video_mode', $settings['metalx_hero_video_mode'] ?? 'featured') }}' }">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" x-data="{ mode: @js(old('metalx_hero_video_mode', $settings['metalx_hero_video_mode'] ?? 'featured')) }">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">โหมดการเล่น</label>
                     <select name="metalx_hero_video_mode" x-model="mode"

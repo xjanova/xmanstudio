@@ -221,11 +221,16 @@
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">รูปภาพหลัก</label>
 
-                    @if($product->image)
+                    {{-- This picture is the one every page shows, and product.xman4289.com too (Product::artwork_url). --}}
+                    @if($product->artwork_url)
                     <div class="mb-4">
                         <div class="relative inline-block">
-                            <img src="{{ asset('storage/' . $product->image) }}" class="max-h-64 rounded-xl border border-gray-200 dark:border-gray-600" loading="lazy">
-                            <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">รูปภาพปัจจุบัน</div>
+                            <img src="{{ $product->artwork_url }}" class="max-h-64 rounded-xl border border-gray-200 dark:border-gray-600" loading="lazy">
+                            @if($product->hasRealImage())
+                                <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">รูปภาพปัจจุบัน (รูปจริง) — ทุกหน้าและ product.xman4289.com ใช้รูปนี้</div>
+                            @else
+                                <div class="mt-2 text-sm text-amber-600 dark:text-amber-400">ยังไม่มีรูปจริง — ตอนนี้ทุกหน้าใช้รูปตั้งต้นนี้ (จาก product.xman4289.com) อัปโหลดภาพหน้าจอจริงของโปรแกรมเพื่อแทนที่</div>
+                            @endif
                         </div>
                     </div>
                     @endif
@@ -280,7 +285,7 @@
                                  :class="{'opacity-50': imagesToRemove.includes('{{ $image }}')}"
                                  loading="lazy">
                             <button type="button"
-                                    @click="markForRemoval('{{ $image }}')"
+                                    @click="markForRemoval(@js($image))"
                                     class="absolute top-2 right-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all"
                                     :class="imagesToRemove.includes('{{ $image }}') ? 'bg-green-500 text-white' : 'bg-red-500 text-white'">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" x-show="!imagesToRemove.includes('{{ $image }}')">
@@ -383,6 +388,8 @@
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    @include('admin.products.partials.tpix-price-field', ['value' => $product->price_tpix, 'thb' => $product->price])
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">จำนวนในสต็อก</label>

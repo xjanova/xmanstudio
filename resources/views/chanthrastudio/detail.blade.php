@@ -119,6 +119,15 @@
                     </p>
 
                     <div class="flex flex-wrap gap-3 mb-10">
+                        @if($comingSoon)
+                            <span class="px-8 py-4 rounded-xl font-display italic text-lg flex items-center gap-2 hairline" style="color: var(--gold); background: rgba(255,255,255,0.04); cursor: not-allowed;" role="status" aria-disabled="true" data-coming-soon>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Coming Soon — ยังไม่เปิดให้ดาวน์โหลด
+                            </span>
+                            <a href="{{ route('chanthra-studio.manual') }}" class="px-8 py-4 rounded-xl text-base font-mono text-sm hairline transition" style="color: var(--text-2); background: transparent;">
+                                อ่านคู่มือ →
+                            </a>
+                        @else
                         @auth
                             @if($hasPurchased)
                                 {{-- Returning customer: send them to their downloads page where the license key lives --}}
@@ -153,6 +162,7 @@
                                 อ่านคู่มือ →
                             </a>
                         @endauth
+                        @endif
                     </div>
 
                     {{-- Trust strip --}}
@@ -163,7 +173,7 @@
                         </span>
                         <span class="flex items-center gap-2">
                             <span class="inline-block w-1 h-1 rounded-full" style="background: var(--gold);"></span>
-                            Auto-update via GitHub Releases
+                            Auto-update ในแอป
                         </span>
                         <span class="flex items-center gap-2">
                             <span class="inline-block w-1 h-1 rounded-full" style="background: var(--gold);"></span>
@@ -241,7 +251,7 @@
                 ['icon' => '❍', 'title' => 'Library + Queue', 'desc' => 'เก็บคลิปทั้งหมดใน SQLite ใกล้ ๆ exe มี search + tags + thumbnails · queue เห็นความคืบหน้าจริงทุกชอต'],
                 ['icon' => '◐', 'title' => 'Render film', 'desc' => 'ต่อคลิปทั้ง project เป็น MP4 ผ่าน ffmpeg เลือก fps · audio track · voice take จาก Sound atelier ได้โดยตรง'],
                 ['icon' => '▶', 'title' => 'Node Flow editor', 'desc' => 'visual graph editor ในแอป สำหรับ ComfyUI workflow มี palette · drag-drop nodes · bezier wires · mini-map · auto-arrange'],
-                ['icon' => '⌘', 'title' => 'Auto-update', 'desc' => 'เช็ค GitHub Releases ทุกครั้งที่เปิดแอป มี progress bar + release notes ให้อ่าน ก่อนติดตั้ง — ต้องมี License key ที่ถูกต้อง'],
+                ['icon' => '⌘', 'title' => 'Auto-update', 'desc' => 'เช็คเวอร์ชันใหม่ทุกครั้งที่เปิดแอป มี progress bar + release notes ให้อ่าน ก่อนติดตั้ง — ต้องมี License key ที่ถูกต้อง'],
                 ['icon' => '☾', 'title' => 'License system', 'desc' => '1 key = 1 เครื่อง bound ด้วย HWID (CPU + Motherboard + Disk) ย้ายเครื่องผ่าน Deactivate ได้เอง'],
                 ['icon' => '※', 'title' => 'Privacy by default', 'desc' => 'API keys ทุก provider เข้ารหัสด้วย Windows DPAPI · settings + library อยู่บนเครื่องตัวเอง · zero telemetry'],
                 ['icon' => '✧', 'title' => 'Lunar atelier UI', 'desc' => 'Frameless 1640×1000 window กับ Mica gradient ทอง/ครามม่วง · Cormorant Garamond + IBM Plex font stack · per-row save feedback'],
@@ -277,6 +287,7 @@
                         @endif
                         <div class="font-mono text-xs tracking-widest mb-2" style="color: var(--gold);">{{ strtoupper($p['name']) }}</div>
                         <div class="font-display italic text-5xl mb-1" style="color: var(--text-1);">฿{{ number_format($p['price']) }}</div>
+                        <x-tpix-price variant="detail" :thb="$p['price'] ?? null" />
                         <div class="font-mono text-xs mb-6" style="color: var(--text-3);">
                             {{ $p['duration_days'] ? $p['duration_days'] . ' days' : 'one-time · perpetual' }}
                         </div>
@@ -306,12 +317,19 @@
                 เริ่มต้นภายใน <span style="color: var(--gold-hi);">5 นาที</span>
             </h2>
             <p class="text-lg mb-10" style="color: var(--text-2);">
-                ดาวน์โหลดเวอร์ชันล่าสุดจาก GitHub Releases · กรอก License key ที่ซื้อจาก xman4289.com · เริ่ม generate ได้เลย
+                ดาวน์โหลดเวอร์ชันล่าสุดจาก xman4289.com · กรอก License key ที่ซื้อจาก xman4289.com · เริ่ม generate ได้เลย
             </p>
             <div class="flex flex-wrap justify-center gap-3">
-                <a href="{{ route('chanthra-studio.download') }}" class="gold-cta px-8 py-4 rounded-xl font-display italic text-lg">
-                    ✦ ดาวน์โหลดเลย
-                </a>
+                @if($comingSoon)
+                    <span class="px-8 py-4 rounded-xl font-display italic text-lg flex items-center gap-2 hairline" style="color: var(--gold); background: rgba(255,255,255,0.04); cursor: not-allowed;" role="status" aria-disabled="true" data-coming-soon>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Coming Soon — ยังไม่เปิดให้ดาวน์โหลด
+                    </span>
+                @else
+                    <a href="{{ route('chanthra-studio.download') }}" class="gold-cta px-8 py-4 rounded-xl font-display italic text-lg">
+                        ✦ ดาวน์โหลดเลย
+                    </a>
+                @endif
                 <a href="{{ route('chanthra-studio.manual') }}" class="hairline px-8 py-4 rounded-xl font-display italic text-lg" style="color: var(--text-1); background: rgba(255,255,255,0.04);">
                     อ่านคู่มือก่อน →
                 </a>

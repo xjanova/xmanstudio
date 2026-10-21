@@ -9,7 +9,7 @@
                     ทีมพัฒนาซอฟต์แวร์และโซลูชั่น IT ครบวงจร<br>
                     <span style="color:var(--nv-fg-3);">Full-stack IT solutions · Bangkok · Est. 2018</span>
                 </p>
-                <a href="{{ route('support.index') }}" class="nova-card__cta" style="--nv-accent: var(--nv-cyan);">
+                <a href="{{ route('quote.index') }}" class="nova-card__cta" style="--nv-accent: var(--nv-cyan);">
                     ปรึกษาฟรี / Free consultation
                     @include('partials.nova-icon', ['name' => 'arrow'])
                 </a>
@@ -21,7 +21,10 @@
                     <li><a href="{{ route('services.index') }}">บริการทั้งหมด / All services</a></li>
                     <li><a href="{{ config('app.product_site_url') }}">ผลิตภัณฑ์ / Products</a></li>
                     <li><a href="{{ route('rental.index') }}">เช่าใช้งาน / Rental</a></li>
-                    <li><a href="{{ route('support.index') }}">ขอใบเสนอราคา / Get a quote</a></li>
+                    <li><a href="{{ route('domains.index') }}">จดโดเมน / Domains</a></li>
+                    <li><a href="{{ route('domains.pricing') }}">ราคาโดเมน / Domain pricing</a></li>
+                    <li><a href="{{ route('vps.index') }}">เช่า VPS / VPS hosting</a></li>
+                    <li><a href="{{ route('quote.index') }}">ขอใบเสนอราคา / Get a quote</a></li>
                     <li><a href="{{ route('contact.show') }}">ติดต่อเรา / Contact us</a></li>
                     <li><a href="{{ route('portfolio') }}">ผลงาน / Portfolio</a></li>
                 </ul>
@@ -34,7 +37,9 @@
                     <li><a href="{{ config('services.aixman.site_url') }}/gallery" target="_blank" rel="noopener noreferrer">XDreamer Gallery</a></li>
                     <li><a href="{{ route('code-academy') }}">Code Academy</a></li>
                     <li><a href="{{ route('metal-x.index') }}">Metal-X Project</a></li>
-                    <li><a href="{{ config('app.product_site_url') }}" target="_blank" rel="noopener noreferrer">BrainX</a></li>
+                    <li><a href="{{ config('app.xgameshub_url') }}" target="_blank" rel="noopener noreferrer">XMAN Games Hub</a></li>
+                    {{-- BrainX has its own page on the product site; the site's root is every product. --}}
+                    <li><a href="{{ rtrim(config('app.product_site_url'), '/') }}/brainx.html" target="_blank" rel="noopener noreferrer">BrainX</a></li>
                 </ul>
             </div>
 
@@ -45,7 +50,7 @@
                     <li><a href="{{ route('team') }}">ทีมงาน / Team</a></li>
                     <li><a href="{{ route('changelog') }}">อัปเดต / Changelog</a></li>
                     <li><a href="{{ route('tracking') }}">ติดตามงาน / Track order</a></li>
-                    <li><a href="{{ route('support.index') }}">ติดต่อ / Contact</a></li>
+                    <li><a href="{{ route('quote.index') }}">ติดต่อ / Contact</a></li>
                 </ul>
             </div>
 
@@ -56,6 +61,8 @@
                         <li><a href="{{ route('customer.dashboard') }}">แดชบอร์ด / Dashboard</a></li>
                         <li><a href="{{ route('customer.licenses') }}">ไลเซนส์ / Licenses</a></li>
                         <li><a href="{{ route('customer.orders') }}">คำสั่งซื้อ / Orders</a></li>
+                        <li><a href="{{ route('customer.domains.index') }}">โดเมนของฉัน / My domains</a></li>
+                        <li><a href="{{ route('customer.vps.index') }}">VPS ของฉัน / My servers</a></li>
                         <li><a href="{{ route('user.wallet.index') }}">กระเป๋าเงิน / Wallet</a></li>
                         {{-- customer.affiliate.register is POST-only; dashboard is the GET entry
                              point. Note the group is nested under the `customer.` prefix, so the

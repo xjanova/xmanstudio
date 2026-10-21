@@ -27,7 +27,14 @@
             <div>
                 <div style="font-size:11px;color:#a5f3fc;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:8px;">· <x-bi th="คำสั่งซื้อ" en="Order" /></div>
                 <div style="font-size:24px;color:#fff;font-weight:300;">{{ $metadata['package_name'] ?? 'AI Credits' }}</div>
-                <div style="font-size:13px;color:#94a3b8;margin-top:4px;">{{ number_format((int)($metadata['credits'] ?? 0)) }} credits @if(($metadata['bonus_credits'] ?? 0) > 0)+ {{ number_format($metadata['bonus_credits']) }} bonus@endif</div>
+                {{-- Keep "@endif" apart from the word before it: "bonus@endif" is read as text, the
+                     @if never closes, and this whole page fails to compile (it did, 2026-06-27 → 09-13). --}}
+                <div style="font-size:13px;color:#94a3b8;margin-top:4px;">
+                    {{ number_format((int)($metadata['credits'] ?? 0)) }} credits
+                    @if(($metadata['bonus_credits'] ?? 0) > 0)
+                        + {{ number_format((int) $metadata['bonus_credits']) }} bonus
+                    @endif
+                </div>
             </div>
             <div style="text-align:right;">
                 <div style="font-size:11px;color:#94a3b8;"><x-bi th="ยอดชำระ" en="Amount Due" /></div>

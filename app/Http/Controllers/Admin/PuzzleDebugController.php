@@ -252,7 +252,11 @@ class PuzzleDebugController extends Controller
      */
     public function trainMl(Request $request)
     {
-        $epochs = $request->input('epochs', 100);
+        // Goes into a shell command below, so it must be a number and nothing else.
+        $validated = $request->validate([
+            'epochs' => ['nullable', 'integer', 'min:1', 'max:1000'],
+        ]);
+        $epochs = (int) ($validated['epochs'] ?? 100);
         $mlDir = base_path('ml-services/puzzle-solver');
         $apiUrl = config('app.url') . '/api/v1/product/tping';
         $logFile = storage_path('logs/ml-training.log');
@@ -280,7 +284,9 @@ class PuzzleDebugController extends Controller
 
         // Fallback: run train.py directly via bash script
         // Uses bash to avoid PHP open_basedir restrictions on venv symlinks
-        $script = "cd {$mlDir} && source venv/bin/activate && python train.py --api-url {$apiUrl} --epochs {$epochs} 2>&1";
+        $script = 'cd ' . escapeshellarg($mlDir)
+            . ' && source venv/bin/activate && python train.py --api-url ' . escapeshellarg($apiUrl)
+            . ' --epochs ' . $epochs . ' 2>&1';
 
         Log::info("ML training: {$script}");
 
@@ -321,7 +327,10 @@ class PuzzleDebugController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        $days = $request->input('older_than_days', 30);
+        $validated = $request->validate([
+            'older_than_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
+        ]);
+        $days = (int) ($validated['older_than_days'] ?? 30);
         $cutoff = now()->subDays($days);
 
         $records = PuzzleDebugImage::where('created_at', '<', $cutoff)->get();

@@ -310,7 +310,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($records as $record)
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-400 transition"
-             onclick="window.location='{{ route('admin.puzzle-debug.show', $record) }}'">
+             onclick="window.location=@js(route('admin.puzzle-debug.show', $record))">
             <!-- Image Preview -->
             <div class="relative">
                 @if($record->image_paths && count($record->image_paths) > 0)

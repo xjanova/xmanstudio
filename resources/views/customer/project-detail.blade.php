@@ -115,6 +115,63 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Main Content -->
     <div class="lg:col-span-2 space-y-6">
+        {{-- งวดชำระ: เห็นเฉพาะงวดที่เรียกเก็บแล้ว งวดที่ยังไม่ถึงคิวไม่ต้องทำให้กังวล --}}
+        @php $shownInvoices = $project->invoices->where('status', '!=', 'scheduled'); @endphp
+        @if ($shownInvoices->isNotEmpty())
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/30 dark:to-emerald-900/30 flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <x-bi th="งวดการชำระเงิน" en="Payment schedule" />
+            </h2>
+
+            <div class="space-y-3">
+                @foreach ($shownInvoices as $inv)
+                    @php
+                        $tone = match (true) {
+                            $inv->isPaid() => 'border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20',
+                            $inv->status === 'void' => 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 opacity-70',
+                            $inv->isOverdue() => 'border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20',
+                            default => 'border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20',
+                        };
+                    @endphp
+                    <div class="rounded-xl border {{ $tone }} px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-gray-900 dark:text-white">{{ $inv->title }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                <span class="font-mono">{{ $inv->invoice_number }}</span>
+                                @if ($inv->isPaid())
+                                    · <span class="text-emerald-700 dark:text-emerald-400 font-semibold"><x-bi th="ชำระแล้ว" en="Paid" layout="inline" /> {{ $inv->paid_at?->format('d/m/Y') }}</span>
+                                @elseif ($inv->status === 'void')
+                                    · <x-bi th="ยกเลิกแล้ว" en="Cancelled" layout="inline" />
+                                @elseif ($inv->due_date)
+                                    · <span class="{{ $inv->isOverdue() ? 'text-red-600 dark:text-red-400 font-semibold' : '' }}"><x-bi th="กำหนดชำระ" en="Due" layout="inline" /> {{ $inv->due_date->format('d/m/Y') }}</span>
+                                @endif
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">฿{{ number_format((float) $inv->amount, 2) }}</p>
+                            <a href="{{ route('invoice.show', $inv->public_token) }}"
+                               class="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline">
+                                <x-bi th="เปิดใบแจ้งหนี้" en="View invoice" layout="inline" />
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-wrap justify-between gap-2 text-sm">
+                <span class="text-gray-500 dark:text-gray-400"><x-bi th="ชำระแล้วทั้งสิ้น" en="Total paid" layout="inline" /></span>
+                <span class="font-bold text-gray-900 dark:text-white tabular-nums">
+                    ฿{{ number_format((float) $project->paid_amount, 2) }} / ฿{{ number_format((float) $project->total_price, 2) }}
+                </span>
+            </div>
+        </div>
+        @endif
+
         <!-- Features -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">

@@ -29,6 +29,7 @@ function language() {
   $('#lang-toggle')?.addEventListener('click', () => {
     apply(root.getAttribute('data-lang') === 'th' ? 'en' : 'th');
     drawGrid(currentFilter);
+    window.__tipSync?.();
   });
   return () => root.getAttribute('data-lang') === 'th';
 }
@@ -289,18 +290,28 @@ function constellation() {
   /* Pulled out of pointermove so a tap can reach it too. `blunt` swaps the
      call to action, because on a touch screen the second tap is the one that
      opens the product. */
+  let tipBlunt = false;
   const select = (b, mx, my, blunt) => {
-    hover = b;
+    hover = b; tipBlunt = blunt;
     cv.style.cursor = b ? 'pointer' : 'grab';
     if (!b) { tip.hidden = true; return; }
     tipN.textContent = b.name;
-    tipD.textContent = isTH() ? b.p[5] : b.p[6];
+    tipD.textContent = descText(b.p, isTH());
+    /* Only a row marked coming soon is called that. A product on sale that has
+       no page here gets its price, as its grid card does — the old fallback
+       told every shipping product but the flagship it had not launched yet. */
     $('#tip-go').textContent = b.href
       ? (blunt ? (isTH() ? 'แตะอีกครั้งเพื่อเข้าไปดู' : 'tap again to enter')
                : (isTH() ? 'คลิกเพื่อเข้าไปดู' : 'click to enter'))
-      : (isTH() ? 'เร็ว ๆ นี้' : 'coming soon');
+      : soonOf(b.p) ? (isTH() ? 'เร็ว ๆ นี้' : 'coming soon')
+      : priceText(b.p[3], isTH(), b.p);
     tip.hidden = false;
     tip.style.left = mx + 'px'; tip.style.top = my + 'px';
+  };
+  /* A card pinned by a tap stays up while the language is switched; redraw it
+     in the new one instead of leaving the static "click to enter" there. */
+  window.__tipSync = () => {
+    if (hover && !tip.hidden) select(hover, parseFloat(tip.style.left), parseFloat(tip.style.top), tipBlunt);
   };
 
   cv.addEventListener('pointerdown', e => { dragging = true; moved = false; lx = e.clientX; ly = e.clientY; cv.setPointerCapture?.(e.pointerId); });
@@ -364,15 +375,33 @@ function constellation() {
 /* ── the grid ─────────────────────────────────────────────── */
 let currentFilter = '*';
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* One wording for a price, shared by the grid card and the orbit's hover card.
+   A row that names its hub product (p[9]) takes the price, the {terms}/{from}
+   tokens of its texts and its coming-soon state from the hub's catalogue
+   (assets/js/hub/catalog.js): the same numbers as the hub, and the shop's live
+   prices once they arrive. Without the catalogue the row's own number is used. */
+const CAT = () => (window.XPH && window.XPH.catalog) || null;
+const hubOf = (p) => { const c = CAT(); return c && p[9] ? c.byId(p[9]) : null; };
+function priceText(price, th, p) {
+  const c = CAT(), hp = p && hubOf(p);
+  if (hp && price !== 0) { const s = c.short(p[9], th ? 'th' : 'en'); if (s) return s; }
+  return price === null ? (th ? 'สอบถาม' : 'Enquire')
+       : price === 0   ? (th ? 'ฟรี' : 'Free')
+       : '฿' + price.toLocaleString();
+}
+function descText(p, th) {
+  const c = CAT(), t = th ? p[5] : p[6];
+  return c ? c.fill(t, p[9], th ? 'th' : 'en') : t.replace(/\[\[[\s\S]*?\]\]/g, '').replace(/\{\w+\}/g, '');
+}
+const soonOf = (p) => { const hp = hubOf(p); return hp ? hp.status !== 'live' : !!p[4]; };
 function drawGrid(filter) {
   currentFilter = filter;
   const pg = $('#prod-grid'); if (!pg) return;
   const th = isTH();
   pg.innerHTML = P.filter(p => filter === '*' || p[2] === filter).map(p => {
-    const [n, sub, cat, price, soon, dTh, dEn, col, href] = p;
-    const priceTxt = price === null ? (th ? 'สอบถาม' : 'Enquire')
-                   : price === 0   ? (th ? 'ฟรี' : 'Free')
-                   : '฿' + price.toLocaleString();
+    const [n, sub, cat, price, , , , col, href] = p;
+    const soon = soonOf(p);
+    const priceTxt = priceText(price, th, p);
     const tag = href ? `<span class="prod-soon" style="border-color:rgba(108,240,255,.5);color:#6cf0ff">${th?'เรือธง':'Flagship'}</span>`
               : soon ? `<span class="prod-soon">${th?'เร็ว ๆ นี้':'Coming soon'}</span>` : '';
     const open = href ? `<a class="prod-open" href="${href}">${th?'เข้าไปดู':'Enter'} →</a>` : '';
@@ -380,7 +409,7 @@ function drawGrid(filter) {
       ${href ? `<a class="prod-hit" href="${href}" aria-label="${esc(n)}"></a>` : ''}
       <div class="prod-top"><div class="prod-ico">${esc(n.slice(0,2).toUpperCase())}</div>${tag}</div>
       <h3>${esc(n)} <span style="color:var(--ink-3);font-weight:400;font-size:12px">${esc(sub)}</span></h3>
-      <p>${esc(th ? dTh : dEn)}</p>
+      <p>${esc(descText(p, th))}</p>
       <div class="prod-foot"><span class="prod-cat">${esc(cat)}</span>
         <span class="prod-price${price?'':' free'}">${priceTxt}</span></div>
       ${open}
@@ -424,6 +453,8 @@ function boot() {
   }
   isTH = language();
   grid(); motion(); sky(); constellation();
+  // the hub's catalogue laid the shop's live prices / status on after the first paint
+  addEventListener('xph:catalog', () => { drawGrid(currentFilter); window.__tipSync?.(); });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

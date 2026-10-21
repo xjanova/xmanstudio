@@ -213,6 +213,7 @@
                                             'order' => 'bg-blue-100 text-blue-800',
                                             'rental_payment' => 'bg-orange-100 text-orange-800',
                                             'autotradex' => 'bg-cyan-100 text-cyan-800',
+                                            'gpuxmine' => 'bg-emerald-100 text-emerald-800',
                                         ];
                                         $typeColor = $typeColors[$commission->source_type ?? ''] ?? 'bg-gray-100 text-gray-800';
                                     @endphp

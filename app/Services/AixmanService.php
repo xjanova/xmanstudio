@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Alerts\BusinessAlerts;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -202,6 +203,7 @@ class AixmanService
             Log::warning('AIXMAN webhook not configured — skipping notification', [
                 'user_id' => $userId, 'package' => $packageSlug, 'order_id' => $orderId,
             ]);
+            BusinessAlerts::aixmanCreditFailed($orderId, $packageSlug, $credits + $bonusCredits, 'ยังไม่ได้ตั้ง AIXMAN_WEBHOOK_URL / AIXMAN_WEBHOOK_SECRET');
 
             return false;
         }
@@ -230,12 +232,16 @@ class AixmanService
                 'status' => $resp->status(), 'body' => $resp->body(),
                 'user_id' => $userId, 'order_id' => $orderId,
             ]);
+            $reason = 'ai.xman4289.com ตอบ HTTP ' . $resp->status();
         } catch (\Throwable $e) {
             Log::error('AIXMAN credit webhook threw exception', [
                 'error' => $e->getMessage(),
                 'user_id' => $userId, 'order_id' => $orderId,
             ]);
+            $reason = 'ติดต่อ ai.xman4289.com ไม่ได้: ' . $e->getMessage();
         }
+
+        BusinessAlerts::aixmanCreditFailed($orderId, $packageSlug, $credits + $bonusCredits, $reason);
 
         return false;
     }

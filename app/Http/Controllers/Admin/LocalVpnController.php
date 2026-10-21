@@ -271,7 +271,7 @@ class LocalVpnController extends Controller
     {
         $settings = [
             'localvpn_max_networks_per_user' => Setting::getValue('localvpn_max_networks_per_user', '5'),
-            'localvpn_max_members_per_network' => Setting::getValue('localvpn_max_members_per_network', '10'),
+            'localvpn_max_members_per_network' => Setting::getValue('localvpn_max_members_per_network', '50'),
             'localvpn_heartbeat_interval' => Setting::getValue('localvpn_heartbeat_interval', '30'),
             'localvpn_session_timeout' => Setting::getValue('localvpn_session_timeout', '120'),
             'localvpn_data_relay_limit_mb' => Setting::getValue('localvpn_data_relay_limit_mb', '100'),

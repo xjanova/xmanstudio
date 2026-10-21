@@ -77,7 +77,7 @@
                                         class="h-10 w-16 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer">
                                     <div class="flex gap-2">
                                         @foreach(['#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#6b7280'] as $color)
-                                        <button type="button" onclick="document.getElementById('color').value = '{{ $color }}'"
+                                        <button type="button" onclick="document.getElementById('color').value = @js($color)"
                                             class="w-6 h-6 rounded-full border-2 border-white dark:border-gray-600 shadow-sm hover:scale-110 transition"
                                             style="background-color: {{ $color }}"></button>
                                         @endforeach
@@ -116,7 +116,7 @@
                             <div>
                                 <div class="flex items-center justify-between mb-3">
                                     <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ $groupName }}</h3>
-                                    <button type="button" onclick="toggleGroup('{{ $groupKey }}')" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                                    <button type="button" onclick="toggleGroup(@js($groupKey))" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">
                                         เลือกทั้งหมด
                                     </button>
                                 </div>

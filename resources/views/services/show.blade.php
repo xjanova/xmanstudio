@@ -36,7 +36,7 @@
                 <p class="text-xl text-white/90 mb-6">{{ $service->description }}</p>
 
                 @php
-                    $svcDiscount = str_starts_with($service->slug ?? '', 'web') ? 0.50 : 0.70;
+                    $svcDiscount = \App\Support\Quotation\Pricing::saleDiscount($service->slug);
                 @endphp
                 @if($service->price_type === 'fixed')
                     <div class="mb-6">
@@ -48,6 +48,7 @@
                             {{ number_format($service->price * (1 - $svcDiscount), 0) }}
                             <span class="text-lg">บาท</span>
                         </div>
+                        <x-tpix-price variant="detail" :thb="$service->price * (1 - $svcDiscount)" class="mt-1" />
                     </div>
                 @elseif($service->price_type === 'range')
                     <div class="mb-6">
@@ -59,6 +60,7 @@
                             เริ่มต้น {{ number_format($service->price_min * (1 - $svcDiscount), 0) }} - {{ number_format($service->price_max * (1 - $svcDiscount), 0) }}
                             <span class="text-lg">บาท</span>
                         </div>
+                        <x-tpix-price variant="detail" :thb="$service->price_min * (1 - $svcDiscount)" class="mt-1" />
                     </div>
                 @else
                     <div class="text-2xl font-bold mb-6">สอบถามราคา</div>
@@ -75,7 +77,7 @@
                         @endif
                     </div>
                 @else
-                    <a href="{{ route('support.index') }}"
+                    <a href="{{ route('quote.index') }}"
                        class="inline-block px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 font-semibold text-lg">
                         ขอใบเสนอราคา
                     </a>
@@ -144,7 +146,7 @@
             ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี และใบเสนอราคาที่ออกแบบมาเฉพาะสำหรับธุรกิจของคุณ
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{{ route('support.index') }}"
+            <a href="{{ route('quote.index') }}"
                class="inline-block px-8 py-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold text-lg">
                 ติดต่อเรา
             </a>

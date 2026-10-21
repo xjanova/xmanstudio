@@ -139,12 +139,40 @@ return [
 
     'aipray_ml' => [
         'url' => env('AIPRAY_ML_SERVICE_URL', 'http://localhost:8100'),
-        'secret' => env('AIPRAY_ML_SERVICE_SECRET', 'ml-service-secret-key'),
+        // No default. The old one was published with the code, which made it a
+        // password everyone had; with this unset the training callback answers 503.
+        'secret' => env('AIPRAY_ML_SERVICE_SECRET'),
         'timeout' => env('AIPRAY_ML_SERVICE_TIMEOUT', 300),
     ],
 
     // AIXMAN — AI generation platform (ai.xman4289.com, Next.js, shared DB)
     // See CLAUDE.md "Cross-Project Relationship with AIXMAN" section.
+    // GPUxMINE relay — ตัวรับสายจากเครื่องที่บ้านคน
+    //
+    // admin key นี้ออก worker ใหม่ได้ทั้งเครือข่าย XMAN Studio เป็นที่เดียว
+    // ที่ถือมัน เจ้าของเครื่องไม่เคยเห็น และ aixman ก็ไม่ต้องรู้จัก relay เลย
+    'gpuxmine' => [
+        'relay_url' => env('GPUXMINE_RELAY_URL'),
+        'admin_key' => env('GPUXMINE_RELAY_ADMIN_KEY'),
+
+        // เครื่องต่อบัญชี (D9) — บัญชีเดียวลงทะเบียนเครื่องได้ไม่จำกัดคือช่องให้
+        // สร้าง worker ปลอมเป็นกอง ทั้งถ่วง relay และแย่งคิวงาน 0 = ไม่จำกัด
+        'max_nodes_per_user' => (int) env('GPUXMINE_MAX_NODES_PER_USER', 10),
+
+        // ส่งสถานะเครื่องให้ aixman ซ้ำทุกกี่นาทีแม้ไม่มีอะไรเปลี่ยน — เผื่อ
+        // aixman ปิด worker ไปเองระหว่างนั้น (ดู GpuxMineNodeStateService)
+        'resync_minutes' => (int) env('GPUXMINE_RESYNC_MINUTES', 10),
+
+        // เงินจากงานแต่ละชิ้นพักไว้กี่ชั่วโมงก่อนเข้ากระเป๋า (D2) — ช่วงที่แอดมิน
+        // ยังระงับเครื่องที่ส่งผลงานปลอมทันก่อนเงินออก ดู gpuxmine:settle-earnings
+        'earning_hold_hours' => (int) env('GPUXMINE_EARNING_HOLD_HOURS', 24),
+
+        // ส่วนแบ่งผู้แนะนำที่ถึงวันโอนแล้วผู้แนะนำไม่ active (ถูกระงับ/ถูกลบ) ไปที่ไหน:
+        // owner = คืนเข้ากระเป๋าเจ้าของเครื่อง (ค่าเริ่มต้น — หักจากเขาตั้งแต่แรก)
+        // platform = แพลตฟอร์มเก็บ ทั้งสองแบบบันทึกลงแถวและเห็นในหน้าแอดมิน GPUxMINE
+        'unpaid_referral' => env('GPUXMINE_UNPAID_REFERRAL', 'owner'),
+    ],
+
     'aixman' => [
         'api_base' => env('AIXMAN_API_BASE', 'https://ai.xman4289.com'),
 

@@ -16,7 +16,8 @@ on:
 
 # NOTE: Laravel Scheduler ให้ตั้ง cron บน DirectAdmin แทน (ไม่ต้องใช้ GitHub Actions)
 # Cron Command: cd /path/to/xmanstudio && php artisan schedule:run >> /dev/null 2>&1
-# Schedule: Every 5 minutes (*/5 * * * *)
+# Schedule: Every minute (* * * * *) — ไม่ใช่ */5: งานที่ตั้งไว้ทุกนาที (เช่น gpuxmine:sync-nodes)
+# จะกลายเป็นทุกห้านาทีเงียบ ๆ ตรวจได้ด้วย php artisan gpuxmine:doctor (ดู DEPLOYMENT.md)
 
 jobs:
   queue-monitor:

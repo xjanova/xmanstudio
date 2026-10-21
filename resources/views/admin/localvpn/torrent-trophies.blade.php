@@ -152,7 +152,7 @@
                         </button>
                     </form>
                     <form method="POST" action="{{ route('admin.localvpn.torrent.trophies.delete', $trophy) }}"
-                          onsubmit="return confirm('ลบถ้วยรางวัล \'{{ $trophy->name }}\'?')" class="inline">
+                          onsubmit="return confirm('ลบถ้วยรางวัล \'' + @js($trophy->name) + '\'?')" class="inline">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="px-3 py-1 text-xs font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors">ลบ</button>

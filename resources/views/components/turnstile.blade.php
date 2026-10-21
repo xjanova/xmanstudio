@@ -1,14 +1,16 @@
+{{--
+    Cloudflare Turnstile widget.
+
+    Whether it renders is decided by App\Support\Turnstile — the same class the
+    VerifyTurnstile middleware asks. Never re-derive the condition here: if this
+    view and the middleware disagree, the middleware demands a token this widget
+    never produced and the form cannot be submitted at all.
+--}}
 @props(['section' => ''])
 
-@php
-    $enabled = \App\Models\Setting::getValue('turnstile_enabled', false);
-    $sectionEnabled = $section ? \App\Models\Setting::getValue("turnstile_{$section}", false) : true;
-    $siteKey = \App\Models\Setting::getValue('turnstile_site_key', '');
-@endphp
-
-@if($enabled && $sectionEnabled && $siteKey)
+@if(\App\Support\Turnstile::enabledFor($section))
     <div class="mb-4">
-        <div class="cf-turnstile" data-sitekey="{{ $siteKey }}" data-theme="auto"></div>
+        <div class="cf-turnstile" data-sitekey="{{ \App\Support\Turnstile::siteKey() }}" data-theme="auto"></div>
         @error('cf-turnstile-response')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
         @enderror

@@ -32,10 +32,16 @@ class Setting extends Model
         'claude_api_key',
         'gemini_api_key',
         'line_notify_token',
+        // LINE Messaging: the access token pushes messages as our bot, the secret
+        // is what proves a webhook really came from LINE.
+        'line_channel_access_token',
+        'line_channel_secret',
         'youtube_api_key',
         'youtube_client_id',
         'youtube_client_secret',
         'youtube_refresh_token',
+        'metalx_youtube_access_token',
+        'freepik_api_key',
         'suno_api_key',
         'groq_api_key',
         'smtp_password',
@@ -43,7 +49,26 @@ class Setting extends Model
         'stripe_secret_key',
         'paypal_secret',
         'turnstile_secret_key',
+        // Social sign-in: the Google secret can mint tokens for our OAuth
+        // client, and the Telegram bot token is the key that signs every
+        // login payload — whoever holds it can sign in as any Telegram user.
+        'google_login_client_secret',
+        'telegram_login_bot_token',
+        'line_login_channel_secret',
+        // Admin alerts over Telegram: whoever holds the token can impersonate the bot, and whoever
+        // holds the webhook secret can feed the bot fake admin commands.
+        'telegram_bot_token',
+        'telegram_webhook_secret',
+        // Domain registrar: this token can spend money — it places orders
+        // against our card and can transfer domains out of our account.
+        'hostinger_api_token',
     ];
+
+    /** @return array<int,string> keys stored encrypted — also what alert redaction hunts for */
+    public static function encryptedKeys(): array
+    {
+        return static::$encryptedKeys;
+    }
 
     /**
      * Get setting value by key

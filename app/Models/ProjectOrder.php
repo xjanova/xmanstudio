@@ -137,6 +137,14 @@ class ProjectOrder extends Model
         return $this->hasMany(ProjectFeature::class)->orderBy('order');
     }
 
+    /**
+     * The instalments to collect, in the order they are collected.
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(ProjectInvoice::class, 'project_order_id')->orderBy('installment_no');
+    }
+
     public function progress(): HasMany
     {
         return $this->hasMany(ProjectProgress::class)->orderByDesc('created_at');

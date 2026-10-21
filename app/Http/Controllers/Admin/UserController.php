@@ -11,6 +11,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\UserRental;
 use App\Models\Wallet;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +20,8 @@ use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
+    private const OWNER_ONLY = 'เฉพาะ Super Admin เท่านั้นที่กำหนดบทบาทและสิทธิ์ผู้ดูแลได้';
+
     /**
      * Display a listing of users
      */
@@ -96,6 +99,14 @@ class UserController extends Controller
             'role_ids.*' => ['exists:roles,id'],
             'is_active' => ['boolean'],
         ]);
+
+        if (! auth()->user()->isSuperAdmin()
+            && ($validated['role'] !== 'user' || ! empty($validated['role_ids']))) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', self::OWNER_ONLY);
+        }
 
         $user = User::create([
             'name' => $validated['name'],
@@ -197,11 +208,22 @@ class UserController extends Controller
             'marketing_line_enabled' => ['boolean'],
         ]);
 
-        // Prevent super_admin from being demoted by non-super_admin
-        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
-            return redirect()
-                ->back()
-                ->with('error', 'ไม่สามารถแก้ไข Super Admin ได้');
+        if ($refused = $this->refuseAdminTarget($user)) {
+            return $refused;
+        }
+
+        // Who holds power is the owner's call. users.edit is a permission to look
+        // after customers' accounts — without this it also let the holder set
+        // their own role to super_admin, or add themselves to any role.
+        if (! auth()->user()->isSuperAdmin()) {
+            $currentRoleIds = $user->roles()->pluck('roles.id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+            $requestedRoleIds = collect($validated['role_ids'] ?? [])->map(fn ($id) => (int) $id)->sort()->values()->all();
+
+            if ($validated['role'] !== $user->role || $requestedRoleIds !== $currentRoleIds) {
+                return redirect()
+                    ->back()
+                    ->with('error', self::OWNER_ONLY);
+            }
         }
 
         // Prevent removing last super_admin
@@ -248,11 +270,8 @@ class UserController extends Controller
                 ->with('error', 'ไม่สามารถลบบัญชีของตัวเองได้');
         }
 
-        // Prevent deleting super_admin by non-super_admin
-        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
-            return redirect()
-                ->back()
-                ->with('error', 'ไม่สามารถลบ Super Admin ได้');
+        if ($refused = $this->refuseAdminTarget($user)) {
+            return $refused;
         }
 
         // Prevent deleting last super_admin
@@ -285,11 +304,8 @@ class UserController extends Controller
                 ->with('error', 'ไม่สามารถปิดการใช้งานบัญชีของตัวเองได้');
         }
 
-        // Prevent toggling super_admin by non-super_admin
-        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
-            return redirect()
-                ->back()
-                ->with('error', 'ไม่สามารถปิดการใช้งาน Super Admin ได้');
+        if ($refused = $this->refuseAdminTarget($user)) {
+            return $refused;
         }
 
         $user->is_active = ! $user->is_active;
@@ -307,6 +323,10 @@ class UserController extends Controller
      */
     public function disconnectLine(User $user)
     {
+        if ($refused = $this->refuseAdminTarget($user)) {
+            return $refused;
+        }
+
         $user->line_uid = null;
         $user->line_display_name = null;
         $user->line_access_token = null;
@@ -399,9 +419,9 @@ class UserController extends Controller
 
         $users = User::whereIn('id', $userIds)->get();
 
-        // Filter out super_admins if current user is not super_admin
+        // Filter out every admin account if current user is not super_admin
         if (! auth()->user()->isSuperAdmin()) {
-            $users = $users->filter(fn ($user) => ! $user->isSuperAdmin());
+            $users = $users->filter(fn ($user) => ! $user->isAdmin());
         }
 
         $count = 0;
@@ -452,6 +472,10 @@ class UserController extends Controller
      */
     public function updateAvatar(Request $request, User $user)
     {
+        if ($refused = $this->refuseAdminTarget($user)) {
+            return $refused;
+        }
+
         $request->validate([
             'avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
         ]);
@@ -476,6 +500,10 @@ class UserController extends Controller
      */
     public function deleteAvatar(User $user)
     {
+        if ($refused = $this->refuseAdminTarget($user)) {
+            return $refused;
+        }
+
         if ($user->avatar) {
             Storage::disk('public')->delete($user->avatar);
             $user->avatar = null;
@@ -485,5 +513,25 @@ class UserController extends Controller
         return redirect()
             ->back()
             ->with('success', 'ลบรูปโปรไฟล์สำเร็จ');
+    }
+
+    /**
+     * An admin account may be changed only by the owner, or by its own holder.
+     *
+     * users.edit and users.delete are for looking after customers. Without this
+     * an admin holding them could reset another admin's password, switch them
+     * off or delete them — this used to guard super_admin accounts only.
+     */
+    private function refuseAdminTarget(User $user): ?RedirectResponse
+    {
+        $actor = auth()->user();
+
+        if ($actor->isSuperAdmin() || ! $user->isAdmin() || $user->id === $actor->id) {
+            return null;
+        }
+
+        return redirect()
+            ->back()
+            ->with('error', 'เฉพาะ Super Admin เท่านั้นที่แก้ไขบัญชีผู้ดูแลระบบคนอื่นได้');
     }
 }

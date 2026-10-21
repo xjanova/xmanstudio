@@ -1,16 +1,23 @@
 <?php
 
 use App\Http\Controllers\Api\AiprayApiController;
+use App\Http\Controllers\Api\AntiXPushController;
 use App\Http\Controllers\Api\AppAiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\GameItemRedeemController;
 use App\Http\Controllers\Api\GlobalTorrentController;
+use App\Http\Controllers\Api\GpuxMineNodeController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\LocalVpnFileController;
+use App\Http\Controllers\Api\LocalVpnGameProfileController;
+use App\Http\Controllers\Api\LocalVpnNodeController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
 use App\Http\Controllers\Api\PackController;
+use App\Http\Controllers\Api\ProductCatalogController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\StripeController;
+use App\Http\Controllers\Api\TpixPriceController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BugReportController;
 use App\Http\Controllers\Api\V1\DataProfileController;
@@ -19,8 +26,10 @@ use App\Http\Controllers\Api\V1\SmsPaymentController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\VpnProxyController;
+use App\Http\Controllers\Api\WinxDiskBenchmarkController;
 use App\Http\Controllers\Api\WireguardController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
+use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +43,15 @@ use Illuminate\Support\Facades\Storage;
 | Here is where you can register API routes for your application.
 |
 */
+
+// ==================== Admin Telegram bot ====================
+// Commands and button presses from the admin alert chat. Authenticated by the secret Telegram
+// echoes back in X-Telegram-Bot-Api-Secret-Token (set on /admin/alerts), not by the URL.
+// No per-IP throttle: every update arrives from Telegram's handful of IPs, so a stranger spamming
+// the bot would throttle the admin's own button presses. The controller limits per sender instead.
+Route::post('/telegram/webhook', TelegramWebhookController::class)
+    ->withoutMiddleware('throttle:api')
+    ->name('telegram.webhook');
 
 // ==================== Metal-X Freepik Image Upload ====================
 // Receives images from Freepik browser automation and saves to Laravel storage
@@ -70,7 +88,7 @@ Route::post('/metal-x/upload-image', function (Request $request) {
         'path' => $path,
         'size' => strlen($imageData),
     ]);
-})->middleware('throttle:60,1');
+})->middleware('throttle:60,1,api-metalx-upload');
 
 // Metal-X Import from URL — server downloads file directly from external URL
 // Protected by X-Admin-Token header (must match METAL_X_ADMIN_TOKEN env var)
@@ -105,7 +123,7 @@ Route::post('/metal-x/import-url', function (Request $request) {
         'success' => $exitCode === 0,
         'output' => trim($output),
     ]);
-})->middleware('throttle:30,1');
+})->middleware('throttle:30,1,api-metalx-import');
 
 // Health check for API
 Route::get('/health', function () {
@@ -120,7 +138,7 @@ Route::get('/health', function () {
 // These routes are used by desktop applications for license validation
 // Rate limited to 60 requests per minute per IP
 
-Route::prefix('v1/license')->middleware(['throttle:60,1'])->group(function () {
+Route::prefix('v1/license')->middleware(['throttle:60,1,api-license'])->group(function () {
     // Activate license on a machine
     Route::post('/activate', [LicenseApiController::class, 'activate']);
 
@@ -134,7 +152,7 @@ Route::prefix('v1/license')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/status/{licenseKey}', [LicenseApiController::class, 'status']);
 
     // Demo endpoints (rate limited more strictly)
-    Route::middleware(['throttle:10,1'])->group(function () {
+    Route::middleware(['throttle:10,1,api-license-demo'])->group(function () {
         Route::post('/demo', [LicenseApiController::class, 'startDemo']);
         Route::post('/demo/check', [LicenseApiController::class, 'checkDemo']);
     });
@@ -144,7 +162,7 @@ Route::prefix('v1/license')->middleware(['throttle:60,1'])->group(function () {
 // These routes are specifically for AutoTradeX desktop application
 // Rate limited to 60 requests per minute per IP
 
-Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function () {
+Route::prefix('v1/autotradex')->middleware(['throttle:60,1,api-autotradex'])->group(function () {
     // Register device automatically when app starts
     Route::post('/register-device', [AutoTradeXLicenseController::class, 'registerDevice']);
 
@@ -170,13 +188,13 @@ Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function ()
     Route::post('/verify-server', [AutoTradeXLicenseController::class, 'verifyServer']);
 
     // Demo endpoints (rate limited more strictly)
-    Route::middleware(['throttle:10,1'])->group(function () {
+    Route::middleware(['throttle:10,1,api-autotradex-demo'])->group(function () {
         Route::post('/demo', [AutoTradeXLicenseController::class, 'startDemo']);
         Route::post('/demo/check', [AutoTradeXLicenseController::class, 'checkDemo']);
     });
 
     // Reset device for Lifetime license holders (rate limited - 5 requests per day)
-    Route::middleware(['throttle:5,1440'])->group(function () {
+    Route::middleware(['throttle:5,1440,api-autotradex-reset'])->group(function () {
         Route::post('/reset-device', [AutoTradeXLicenseController::class, 'resetDevice']);
     });
 
@@ -191,7 +209,7 @@ Route::prefix('v1/autotradex')->middleware(['throttle:60,1'])->group(function ()
 // Token-based auth for mobile apps via Laravel Sanctum
 // Rate limited to 10 requests per minute per IP
 
-Route::prefix('v1/auth')->middleware(['throttle:10,1'])->group(function () {
+Route::prefix('v1/auth')->middleware(['throttle:10,1,api-auth'])->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/device', [AuthController::class, 'deviceAuth']);  // License-based device auth (no login required)
@@ -214,7 +232,48 @@ Route::prefix('v1/auth')->middleware(['throttle:10,1'])->group(function () {
 // Use /{productSlug}/ to specify the product
 // Rate limited to 60 requests per minute per IP
 
-Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(function () {
+// ==================== GPUxMINE — แลกรหัสจับคู่เป็นตัวตนของเครื่อง ====================
+// จำกัดหนักกว่าเส้นทางอื่น: การเดารหัส 8 ตัวคือการเดาสิทธิ์สร้าง worker
+// ในนามบัญชีคนอื่น 5 ครั้งต่อนาทีต่อไอพีทำให้การไล่เดาไม่คุ้มค่าเวลา
+Route::post('v1/product/gpuxmine/claim', [GpuxMineNodeController::class, 'claim'])
+    ->middleware(['throttle:5,1,api-gpuxmine-claim'])
+    ->name('api.gpuxmine.claim');
+
+// ยอดแนะนำเพื่อนของเจ้าของเครื่อง ให้โปรแกรมแสดงได้เอง
+// ยืนยันด้วย worker id + token ของ relay ในตัว request จึงไม่ต้องมี session
+Route::post('v1/product/gpuxmine/referral', [GpuxMineNodeController::class, 'referral'])
+    ->middleware(['throttle:30,1,api-gpuxmine-referral'])
+    ->name('api.gpuxmine.referral');
+
+// สถานะเครื่องที่ aixman เห็น และรายได้ของเจ้าของ ให้โปรแกรมแสดงเองได้ (C6)
+// ยืนยันตัวแบบเดียวกับ referral — โปรแกรมถามทุกสามนาทีระหว่างเปิดแชร์
+// โควตาต่อเครื่อง ไม่ใช่ต่อ IP (หลายเครื่องหลัง NAT เดียวกัน) — ดู AppServiceProvider
+// ถอด throttle:api (60 ต่อนาทีต่อ IP ของทั้งกลุ่ม api) ออกด้วย ไม่งั้นมันกลับมาเป็นเพดานต่อ IP
+// ที่ต่ำกว่าเดิม — gpuxmine-status มีเพดานต่อ IP ของตัวเองอยู่แล้ว
+Route::post('v1/product/gpuxmine/status', [GpuxMineNodeController::class, 'status'])
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:gpuxmine-status'])
+    ->name('api.gpuxmine.status');
+
+// ==================== WinXTools — disk speed-test results ====================
+// The app uploads each finished disk speed test anonymously, and asks what other PCs measured
+// on the same drive model. No login and nothing personal: a random per-installation id, no IP
+// kept. Uploads: 20 an hour per IP (named limiter in AppServiceProvider) and 30 a day per
+// installation (counted from stored rows in the controller). Stats are cached ten minutes.
+Route::post('v1/product/winx-tools/disk-benchmarks', [WinxDiskBenchmarkController::class, 'store'])
+    ->middleware(['throttle:winx-disk-benchmarks'])
+    ->name('api.winx-tools.disk-benchmarks.store');
+
+Route::get('v1/product/winx-tools/disk-benchmarks/stats', [WinxDiskBenchmarkController::class, 'stats'])
+    ->middleware(['throttle:60,1,api-winx-disk-stats'])
+    ->name('api.winx-tools.disk-benchmarks.stats');
+
+// Anti X PC → wake its paired phones (fixed, content-free message; 30 per hour per machine in the controller)
+Route::post('v1/product/anti-x/push', [AntiXPushController::class, 'send'])
+    ->middleware(['throttle:60,1,api-anti-x-push'])
+    ->name('api.anti-x.push');
+
+Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1,api-product'])->group(function () {
     // Register device when app starts
     Route::post('/register-device', [ProductLicenseController::class, 'registerDevice']);
 
@@ -237,12 +296,12 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
     Route::get('/pricing', [ProductLicenseController::class, 'pricing']);
 
     // Diagnostic reports from app (rate limited)
-    Route::middleware(['throttle:10,1'])->group(function () {
+    Route::middleware(['throttle:10,1,api-product-diagnostics'])->group(function () {
         Route::post('/diagnostics', [ProductLicenseController::class, 'storeDiagnostics']);
     });
 
     // Puzzle debug images for AI learning (rate limited)
-    Route::middleware(['throttle:20,1'])->group(function () {
+    Route::middleware(['throttle:20,1,api-product-debug-images'])->group(function () {
         Route::post('/debug-images', [PuzzleDebugController::class, 'store']);
         Route::post('/debug-images/feedback', [PuzzleDebugController::class, 'feedback']);
         Route::post('/debug-images/infer', [PuzzleDebugController::class, 'infer']);
@@ -254,7 +313,7 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
     });
 
     // Demo endpoints (rate limited more strictly)
-    Route::middleware(['throttle:10,1'])->group(function () {
+    Route::middleware(['throttle:10,1,api-product-demo'])->group(function () {
         Route::post('/demo', [ProductLicenseController::class, 'startDemo']);
         Route::post('/demo/check', [ProductLicenseController::class, 'checkDemo']);
     });
@@ -289,7 +348,7 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1'])->group(
 // These routes are used by desktop applications for version checking and updates
 // Rate limited to 60 requests per minute per IP
 
-Route::prefix('v1/products')->middleware(['throttle:60,1'])->group(function () {
+Route::prefix('v1/products')->middleware(['throttle:60,1,api-products'])->group(function () {
     // Get latest version for a product (public)
     Route::get('/{slug}/version', [VersionController::class, 'latest']);
 
@@ -303,11 +362,19 @@ Route::prefix('v1/products')->middleware(['throttle:60,1'])->group(function () {
     Route::post('/validate-license', [VersionController::class, 'validateLicense']);
 });
 
+// What product.xman4289.com shows of each product: on sale or not, picture, version (public, CORS *).
+Route::get('/v1/catalog', [ProductCatalogController::class, 'index'])
+    ->middleware('throttle:60,1,api-catalog');
+
+// The TPIX price the shop charges by (TPIX DEX pool × live USD→THB), for the apps (public)
+Route::get('/v1/tpix/price', [TpixPriceController::class, 'show'])
+    ->middleware('throttle:60,1,api-tpix-price');
+
 // ==================== Coupon API Routes ====================
 // These routes are used during checkout to validate and apply coupons
 // Requires authentication (web session or Sanctum token)
 
-Route::prefix('v1/coupons')->middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
+Route::prefix('v1/coupons')->middleware(['auth:sanctum', 'throttle:30,1,api-coupons'])->group(function () {
     // Validate coupon code and get discount amount
     Route::post('/validate', [CouponController::class, 'validate']);
 
@@ -322,7 +389,7 @@ Route::prefix('v1/coupons')->middleware(['auth:sanctum', 'throttle:30,1'])->grou
 // These routes handle Stripe PaymentIntent creation for checkout flows
 // Requires authentication via Sanctum
 
-Route::prefix('v1/stripe')->middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
+Route::prefix('v1/stripe')->middleware(['auth:sanctum', 'throttle:30,1,api-stripe'])->group(function () {
     Route::post('/payment-intent/order/{order}', [StripeController::class, 'createOrderPaymentIntent'])
         ->name('api.stripe.intent.order');
     Route::post('/payment-intent/topup/{topup}', [StripeController::class, 'createTopupPaymentIntent'])
@@ -338,7 +405,7 @@ Route::prefix('v1/stripe')->middleware(['auth:sanctum', 'throttle:30,1'])->group
 Route::prefix('v1/sms-payment')->group(function () {
     // Critical device endpoints - higher rate limit to ensure always works
     // These must succeed even when device is polling aggressively
-    Route::middleware(['smschecker.device', 'throttle:60,1'])->group(function () {
+    Route::middleware(['smschecker.device', 'throttle:60,1,api-sms-device-critical'])->group(function () {
         // Register/update device information (includes FCM token)
         Route::post('/register-device', [SmsPaymentController::class, 'registerDevice']);
 
@@ -354,13 +421,14 @@ Route::prefix('v1/sms-payment')->group(function () {
         // Debug report from Android app (temporary)
         Route::post('/debug-report', [SmsPaymentController::class, 'debugReport']);
 
-        // Debug: ตรวจสอบปัญหา topup approve
-        Route::get('/debug-topup', [SmsPaymentController::class, 'debugTopup']);
-        Route::post('/debug-topup-approve', [SmsPaymentController::class, 'debugTopupApprove']);
+        // debug-topup / debug-topup-approve were removed 2026-09-13: added for one incident in
+        // February, never called by the app, and the approve one could reset ANY top-up to
+        // pending and approve it again — crediting a wallet as often as it was called, with only
+        // a device API key. Top-up diagnostics live behind admin login: admin.wallets.topups.debug.
     });
 
     // Standard device endpoints - normal rate limit
-    Route::middleware(['smschecker.device', 'throttle:120,1'])->group(function () {
+    Route::middleware(['smschecker.device', 'throttle:120,1,api-sms-device'])->group(function () {
         // Check device status and pending count
         Route::get('/status', [SmsPaymentController::class, 'status']);
 
@@ -390,12 +458,15 @@ Route::prefix('v1/sms-payment')->group(function () {
     });
 
     // Web-authenticated endpoints (for checkout flow)
-    Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
-        // Generate unique payment amount for bank transfer
-        Route::post('/generate-amount', [SmsPaymentController::class, 'generateAmount']);
+    Route::middleware(['auth:sanctum', 'throttle:30,1,api-sms-web'])->group(function () {
+        // Generate unique payment amount for bank transfer. Admin-only: any customer
+        // token could reserve amounts for any transaction and drain the suffix pool,
+        // and the access logs show no client calling it (checkout generates its own).
+        Route::post('/generate-amount', [SmsPaymentController::class, 'generateAmount'])->middleware('admin');
 
-        // Get notification history (admin)
-        Route::get('/notifications', [SmsPaymentController::class, 'notifications']);
+        // Get notification history (admin) — every payment SMS the shop received: banks,
+        // amounts, account digits. auth:sanctum alone let any registered customer read it.
+        Route::get('/notifications', [SmsPaymentController::class, 'notifications'])->middleware('admin');
     });
 });
 
@@ -403,7 +474,7 @@ Route::prefix('v1/sms-payment')->group(function () {
 // These routes are used by mobile apps to submit bug reports and misclassification reports
 // Rate limited to 30 requests per minute per IP
 
-Route::prefix('v1/bug-reports')->middleware(['throttle:30,1'])->group(function () {
+Route::prefix('v1/bug-reports')->middleware(['throttle:30,1,api-bug-reports'])->group(function () {
     // Public endpoints (no authentication required)
 
     // Submit a single bug report
@@ -429,9 +500,9 @@ Route::prefix('v1/bug-reports')->middleware(['throttle:30,1'])->group(function (
 });
 
 // ==================== Aipray Flutter App API ====================
-Route::prefix('aipray')->middleware(['throttle:60,1'])->group(function () {
+Route::prefix('aipray')->middleware(['throttle:60,1,api-aipray'])->group(function () {
     Route::post('/sessions', [AiprayApiController::class, 'storeSession']);
-    Route::post('/audio/upload', [AiprayApiController::class, 'uploadAudio'])->middleware('throttle:20,1');
+    Route::post('/audio/upload', [AiprayApiController::class, 'uploadAudio'])->middleware('throttle:20,1,api-aipray-audio');
     Route::post('/chants/sync', [AiprayApiController::class, 'syncChants']);
     Route::get('/models/latest', [AiprayApiController::class, 'latestModel']);
     Route::get('/chants/community', [AiprayApiController::class, 'communityChants']);
@@ -455,60 +526,77 @@ Route::get('/aipray/ml/datasets/{job}', [AiprayApiController::class, 'downloadDa
     ->middleware('signed');
 
 // ==================== LocalVPN Relay API ====================
-Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () {
-    Route::post('/networks', [LocalVpnRelayController::class, 'createNetwork']);
-    Route::get('/networks', [LocalVpnRelayController::class, 'listNetworks']);
-    Route::post('/networks/join', [LocalVpnRelayController::class, 'joinNetwork']);
-    Route::post('/networks/leave', [LocalVpnRelayController::class, 'leaveNetwork']);
-    Route::post('/heartbeat', [LocalVpnRelayController::class, 'heartbeat']);
-    Route::get('/networks/{slug}/members', [LocalVpnRelayController::class, 'getMembers']);
-    Route::post('/relay', [LocalVpnRelayController::class, 'relayData']);
-    Route::delete('/networks/{slug}', [LocalVpnRelayController::class, 'deleteNetwork']);
+// Quota per device, not per address: players behind one café router or a Thai ISP's CGNAT
+// share an IP, and the old 120/min per IP (plus throttle:api's 60/min per IP) answered their
+// heartbeats and signal polls with 429. See the 'localvpn' limiter in AppServiceProvider.
+Route::prefix('v1/localvpn')
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:localvpn'])
+    ->group(function () {
+        Route::post('/networks', [LocalVpnRelayController::class, 'createNetwork']);
+        Route::get('/networks', [LocalVpnRelayController::class, 'listNetworks']);
+        Route::post('/networks/join', [LocalVpnRelayController::class, 'joinNetwork']);
+        Route::post('/networks/leave', [LocalVpnRelayController::class, 'leaveNetwork']);
+        Route::post('/heartbeat', [LocalVpnRelayController::class, 'heartbeat']);
+        Route::get('/networks/{slug}/members', [LocalVpnRelayController::class, 'getMembers']);
+        Route::post('/relay', [LocalVpnRelayController::class, 'relayData']);
+        Route::delete('/networks/{slug}', [LocalVpnRelayController::class, 'deleteNetwork']);
 
-    // P2P signaling
-    Route::get('/stun', [LocalVpnRelayController::class, 'stun']);
-    Route::post('/signal', [LocalVpnRelayController::class, 'signal']);
-    Route::post('/signal/poll', [LocalVpnRelayController::class, 'pollSignals']);
+        // P2P signaling
+        Route::get('/stun', [LocalVpnRelayController::class, 'stun']);
+        Route::post('/signal', [LocalVpnRelayController::class, 'signal']);
+        Route::post('/signal/poll', [LocalVpnRelayController::class, 'pollSignals']);
 
-    // File sharing (network-wide registry)
-    Route::post('/files/share', [LocalVpnFileController::class, 'share']);
-    Route::get('/files/{slug}', [LocalVpnFileController::class, 'index']);
-    Route::delete('/files/{fileId}', [LocalVpnFileController::class, 'destroy']);
-    Route::post('/files/seed', [LocalVpnFileController::class, 'registerSeeder']);
-    Route::get('/files/{fileId}/seeders', [LocalVpnFileController::class, 'seeders']);
+        // File sharing (network-wide registry)
+        Route::post('/files/share', [LocalVpnFileController::class, 'share']);
+        Route::get('/files/{slug}', [LocalVpnFileController::class, 'index']);
+        Route::delete('/files/{fileId}', [LocalVpnFileController::class, 'destroy']);
+        Route::post('/files/seed', [LocalVpnFileController::class, 'registerSeeder']);
+        Route::get('/files/{fileId}/seeders', [LocalVpnFileController::class, 'seeders']);
 
-    // Global Torrent
-    Route::get('/torrent/categories', [GlobalTorrentController::class, 'categories']);
-    Route::get('/torrent/files/{categorySlug}', [GlobalTorrentController::class, 'listFiles']);
-    Route::get('/torrent/file/{fileId}', [GlobalTorrentController::class, 'fileDetail']);
-    Route::post('/torrent/upload', [GlobalTorrentController::class, 'uploadFile']);
-    Route::post('/torrent/seed', [GlobalTorrentController::class, 'registerSeeder']);
-    Route::post('/torrent/heartbeat', [GlobalTorrentController::class, 'heartbeat']);
-    Route::get('/torrent/file/{fileId}/seeders', [GlobalTorrentController::class, 'getSeeders']);
-    Route::get('/torrent/leaderboard', [GlobalTorrentController::class, 'leaderboard']);
-    Route::match(['get', 'post'], '/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
-    Route::get('/torrent/trophies', [GlobalTorrentController::class, 'trophies']);
-    Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
-    Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
-    Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
+        // Global Torrent
+        Route::get('/torrent/categories', [GlobalTorrentController::class, 'categories']);
+        Route::get('/torrent/files/{categorySlug}', [GlobalTorrentController::class, 'listFiles']);
+        Route::get('/torrent/file/{fileId}', [GlobalTorrentController::class, 'fileDetail']);
+        Route::post('/torrent/upload', [GlobalTorrentController::class, 'uploadFile']);
+        Route::post('/torrent/seed', [GlobalTorrentController::class, 'registerSeeder']);
+        Route::post('/torrent/heartbeat', [GlobalTorrentController::class, 'heartbeat']);
+        Route::get('/torrent/file/{fileId}/seeders', [GlobalTorrentController::class, 'getSeeders']);
+        Route::get('/torrent/leaderboard', [GlobalTorrentController::class, 'leaderboard']);
+        Route::match(['get', 'post'], '/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
+        Route::get('/torrent/trophies', [GlobalTorrentController::class, 'trophies']);
+        Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
+        Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
+        Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
 
-    // Torrent relay (server-mediated P2P download)
-    Route::post('/torrent/relay/request', [GlobalTorrentController::class, 'relayRequest']);
-    Route::post('/torrent/relay/poll', [GlobalTorrentController::class, 'relayPoll']);
-    Route::post('/torrent/relay/chunk', [GlobalTorrentController::class, 'relayChunk']);
-    Route::post('/torrent/relay/fetch', [GlobalTorrentController::class, 'relayFetch']);
+        // Torrent relay (server-mediated P2P download)
+        Route::post('/torrent/relay/request', [GlobalTorrentController::class, 'relayRequest']);
+        Route::post('/torrent/relay/poll', [GlobalTorrentController::class, 'relayPoll']);
+        Route::post('/torrent/relay/chunk', [GlobalTorrentController::class, 'relayChunk']);
+        Route::post('/torrent/relay/fetch', [GlobalTorrentController::class, 'relayFetch']);
 
-    // VPN Proxy (country bypass)
-    Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
+        // VPN Proxy (country bypass)
+        Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
 
-    // WireGuard VPN
-    Route::post('/wireguard/register', [WireguardController::class, 'register']);
-    Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
-    Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
-});
+        // WireGuard VPN
+        Route::post('/wireguard/register', [WireguardController::class, 'register']);
+        Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
+        Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
+
+        // Game server ranges for the ping-booster split tunnel (cached 5 min)
+        Route::get('/game-profiles', [LocalVpnGameProfileController::class, 'index'])->name('api.localvpn.game-profiles');
+    });
+
+// Relay-fleet nodes report usage and pull their config every 10 s, authenticated by an HMAC
+// over their own secret (docs/RELAY_FLEET.md). Own limiter keyed by node id + address, so app
+// traffic sharing the per-IP ceilings can never starve it, and nobody else can burn its quota.
+Route::post('v1/localvpn/node/sync', [LocalVpnNodeController::class, 'sync'])
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:localvpn-node'])
+    ->name('api.localvpn.node.sync');
 
 // WireGuard admin status (requires authentication)
-Route::prefix('v1/localvpn')->middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
+Route::prefix('v1/localvpn')->middleware(['auth:sanctum', 'throttle:30,1,api-localvpn-auth'])->group(function () {
     Route::get('/wireguard/status', [WireguardController::class, 'status']);
 });
 
@@ -520,7 +608,7 @@ Route::prefix('v1/localvpn')->middleware(['auth:sanctum', 'throttle:30,1'])->gro
 // no login screen. /packs is public so someone who has bought nothing can
 // still see what is for sale.
 
-Route::prefix('packs')->middleware(['throttle:60,1'])->group(function () {
+Route::prefix('packs')->middleware(['throttle:60,1,api-packs'])->group(function () {
     // Public catalogue
     Route::get('/', [PackController::class, 'index']);
 
@@ -548,6 +636,18 @@ Route::prefix('packs')->middleware(['throttle:60,1'])->group(function () {
 //
 // Throttled per IP as a first wall; the real ceiling is the per-license daily
 // cap in AppAiUsage, which survives restarts and cache clears.
-Route::prefix('ai/v1')->middleware(['throttle:30,1'])->group(function () {
+Route::prefix('ai/v1')->middleware(['throttle:30,1,api-ai'])->group(function () {
     Route::post('/chat/completions', [AppAiController::class, 'chatCompletions']);
+    // Credit, today's spend and the models we offer (with prices) for the app's settings screen
+    Route::get('/account', [AppAiController::class, 'account']);
+    // Sign the linked account's phone in to BrainX Cloud (token only - the key stays here):
+    // the app's Mind shares the PC Mind's brain. Each call is a cloud sign-in, and the cloud
+    // drops the account's oldest device token past 20 - so far fewer than the group allows,
+    // or a spammer could sign the owner's PC out
+    Route::post('/brainx', [AppAiController::class, 'brainx'])->middleware('throttle:6,1,api-ai-brainx');
 });
+
+// ==================== XGamesHub supporter items ====================
+// Browser games on xmangameshub.online redeem a supporter's item code here.
+// 80-bit codes cannot be guessed; the limit only keeps a broken game from hammering it.
+Route::post('/gameshub/redeem', GameItemRedeemController::class)->middleware('throttle:20,1,api-gameshub-redeem')->name('api.gameshub.redeem');

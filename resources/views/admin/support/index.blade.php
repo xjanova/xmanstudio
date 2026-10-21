@@ -151,7 +151,7 @@
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($tickets as $ticket)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer transition-colors" onclick="window.location='{{ route('admin.support.show', $ticket) }}'">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer transition-colors" onclick="window.location=@js(route('admin.support.show', $ticket))">
                         <td class="px-6 py-4">
                             <div class="flex items-center">
                                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-600 flex items-center justify-center mr-4 shadow-md">

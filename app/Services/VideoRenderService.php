@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\MetalXVideoProject;
 use App\Models\Setting;
+use App\Support\ShellBinary;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -21,8 +22,9 @@ class VideoRenderService
 
     public function __construct()
     {
-        $this->ffmpeg = (string) Setting::getValue('ffmpeg_binary') ?: config('metalx.ffmpeg.binary', 'ffmpeg');
-        $this->ffprobe = (string) Setting::getValue('ffprobe_binary') ?: config('metalx.ffmpeg.ffprobe_binary', 'ffprobe');
+        // Both already quoted for the shell — see ShellBinary.
+        $this->ffmpeg = ShellBinary::ffmpeg();
+        $this->ffprobe = ShellBinary::ffprobe();
         $this->resolution = (string) Setting::getValue('metalx_video_resolution') ?: config('metalx.ffmpeg.default_resolution', '1920x1080');
         $this->fps = config('metalx.ffmpeg.default_fps', 30);
     }

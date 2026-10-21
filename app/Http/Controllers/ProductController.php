@@ -8,6 +8,9 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\QuotationCategory;
 use App\Models\Service;
+use App\Services\LicenseService;
+use App\Support\CloudStorage;
+use App\Support\DgxSparkCampaign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -97,6 +100,18 @@ class ProductController extends Controller
 
     public function show($slug)
     {
+        // The DGX Spark bundle has no product page of its own — its campaign page is the only
+        // place it is described and sold.
+        if ($slug === DgxSparkCampaign::config('product_slug')) {
+            return redirect()->route('campaign.dgx-spark');
+        }
+
+        // A cloud space pack is bought for one key, so it is sold from the customer's license
+        // page, where the key is — the login page first for a guest.
+        if (in_array($slug, CloudStorage::addonProductSlugs(), true)) {
+            return redirect()->route('customer.licenses');
+        }
+
         $product = Product::where('slug', $slug)
             ->where('is_active', true)
             ->firstOrFail();
@@ -131,6 +146,10 @@ class ProductController extends Controller
                 ->exists();
         }
 
+        // A renewable product (BrainX Cloud): the key buying it again would extend — the page
+        // offers "renew" on that key instead of selling what looks like a second one
+        $renewalKey = app(LicenseService::class)->renewalTargetFor(Auth::id(), $product);
+
         // Redirect products with dedicated pages
         if ($slug === 'tping') {
             return redirect()->route('tping.detail');
@@ -138,31 +157,45 @@ class ProductController extends Controller
         if ($slug === 'smschecker') {
             return redirect()->route('smschecker.detail');
         }
-        if ($slug === 'localvpn') {
-            return redirect()->route('localvpn.detail');
+        // ลิงก์ในแอปและใน release notes ชี้มาที่ /products/chanthra-studio — หน้าจริงของมันคือหน้า Chanthra
+        if ($slug === 'chanthra-studio') {
+            return redirect()->route('chanthra-studio.detail');
+        }
+        // แอปมือถือของ Anti X อยู่ในหน้า Anti X (ส่วน #mobile ที่มีปุ่มดาวน์โหลดฟรีให้ทุกคน) — ไม่ใช่หน้า ฿0 ทั่วไปที่มีตะกร้า
+        if ($slug === 'anti-x-mobile') {
+            return redirect()->to(route('products.show', 'anti-x') . '#mobile');
         }
 
-        // Custom views for each product
+        // Custom views, keyed by the product's real slug. Keys that matched no
+        // product ('xcluadeagent', 'live-x-shop-pro', 'winxtools', 'postxagent')
+        // were removed: they never showed a page, and switching them on would
+        // put pages nobody reviewed in front of customers.
         $customViews = [
             'autotradex' => 'products.autotradex',
             'spiderx' => 'products.spiderx',
-            'xcluadeagent' => 'products.xcluadeagent',
             'cluadex-ai-coding-assistant' => 'products.xcluadeagent',
             'phonex-manager' => 'products.phonexmanager',
-            'live-x-shop-pro' => 'products.livexshoppro',
-            'winxtools' => 'products.winxtools',
             'winx-tools' => 'products.winxtools',
-            'postxagent' => 'products.postxagent',
             'gpusharx' => 'products.gpusharx',
             'skidrow-killer' => 'products.skidrowkiller',
             'sms-payment-checker' => 'products.smspaymentchecker',
+            // BrainX Cloud — the BrainX app links here to buy and to renew
+            'brainx' => 'products.brainx',
+            // GigGok — a free app: a public APK download, not the generic page's ฿0 cart and Windows requirements
+            'giggok' => 'products.giggok',
+            // Anti X — the app's "ซื้อ Pro" opens this page: three terms through the cart + the public download
+            'anti-x' => 'products.antix',
+            // LocalVPN (Windows + Android) — the product page; /localvpn redirects here
+            'localvpn' => 'products.localvpn',
+            // MacDock — a free Windows app: the zip download + how the free licence turns on updates
+            'macdock' => 'products.macdock',
         ];
 
         if (isset($customViews[$slug])) {
-            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense', 'hasPurchased'));
+            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense', 'hasPurchased', 'renewalKey'));
         }
 
-        return view('products.show', compact('product', 'relatedProducts', 'userLicense', 'hasPurchased'));
+        return view('products.show', compact('product', 'relatedProducts', 'userLicense', 'hasPurchased', 'renewalKey'));
     }
 
     public function services()

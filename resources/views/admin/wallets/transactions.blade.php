@@ -44,6 +44,7 @@
                 <option value="refund" {{ request('type') === 'refund' ? 'selected' : '' }}>คืนเงิน</option>
                 <option value="bonus" {{ request('type') === 'bonus' ? 'selected' : '' }}>โบนัส</option>
                 <option value="adjustment" {{ request('type') === 'adjustment' ? 'selected' : '' }}>ปรับยอด</option>
+                <option value="earning" {{ request('type') === 'earning' ? 'selected' : '' }}>รายได้แชร์การ์ดจอ</option>
             </select>
         </div>
         <div class="md:w-48">
@@ -106,6 +107,7 @@
                             @elseif($transaction->type === 'payment') bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400
                             @elseif($transaction->type === 'refund') bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400
                             @elseif($transaction->type === 'bonus') bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400
+                            @elseif($transaction->type === 'earning') bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400
                             @else bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400
                             @endif">
                             {{ $transaction->type_label }}

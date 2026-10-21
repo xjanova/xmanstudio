@@ -52,11 +52,11 @@
             <!-- Logo Section -->
             <div class="p-6 border-b border-gray-100 flex-shrink-0">
                 @php
-                    $siteLogo = \App\Models\Setting::getValue('site_logo');
+                    $siteLogo = \App\Support\BrandLogo::url();
                 @endphp
                 <a href="/" class="flex items-center gap-2">
                     @if($siteLogo)
-                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN STUDIO" class="h-10 w-auto">
+                        <img src="{{ $siteLogo }}" alt="XMAN STUDIO" class="h-12 w-auto">
                     @else
                         <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
                             <span class="text-white font-bold text-sm">X</span>
@@ -104,6 +104,49 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
                     <x-bi k="common.wallet" layout="stack" />
+                </a>
+
+                {{-- โดเมนที่ลูกค้าจดกับเรา ตั้งค่า DNS เองได้จากที่นี่
+                     เมนูนี้อยู่ในสองไฟล์ × สองบล็อก = สี่จุด เหมือน GPUxMINE --}}
+                <a href="{{ route('customer.domains.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.domains.*') ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                    </svg>
+                    <x-bi th="โดเมนของฉัน" en="My domains" layout="stack" />
+                </a>
+                {{-- เซิร์ฟเวอร์ที่ลูกค้าเช่า — สองไฟล์ × สองบล็อก = สี่จุด เหมือนโดเมน --}}
+                <a href="{{ route('customer.vps.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.vps.*') ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/>
+                    </svg>
+                    <x-bi th="VPS ของฉัน" en="My servers" layout="stack" />
+                </a>
+
+                {{-- เครื่องที่คนเอาการ์ดจอมาแชร์ เข้าถึงได้จากเมนู ไม่ใช่ต้องจำ URL --}}
+                <a href="{{ route('gpuxmine.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('gpuxmine.*') ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-amber-500 hover:to-yellow-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                    </svg>
+                    <x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" layout="stack" />
+                </a>
+
+                {{-- ยืนยันตัวตน — ด่านของการรับ/ถอนเงิน เคยเข้าได้ด้วย URL เท่านั้น
+                     หน้านี้อยู่ในสองไฟล์เหมือน GPUxMINE — ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                <a href="{{ route('kyc.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('kyc.*') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-emerald-500/30' }}">
+                    <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2.5l7.5 3v6c0 4.6-3.1 8.6-7.5 10-4.4-1.4-7.5-5.4-7.5-10v-6l7.5-3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.2 12l2.1 2.1 4.2-4.2"/>
+                    </svg>
+                    <x-bi th="ยืนยันตัวตน" en="Verify identity" layout="stack" />
+                    @if (auth()->user()?->kyc_status === 'approved')
+                        <svg class="w-4 h-4 ml-auto shrink-0 text-emerald-500 group-hover:text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
                 </a>
 
                 <p class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"><x-bi th="ธุรกรรม" en="Transactions" /></p>
@@ -360,6 +403,46 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
                     <x-bi k="common.wallet" layout="stack" />
+                </a>
+                {{-- โดเมนที่ลูกค้าจดกับเรา ตั้งค่า DNS เองได้จากที่นี่
+                     เมนูนี้อยู่ในสองไฟล์ × สองบล็อก = สี่จุด เหมือน GPUxMINE --}}
+                <a href="{{ route('customer.domains.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.domains.*') ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                    </svg>
+                    <x-bi th="โดเมนของฉัน" en="My domains" layout="stack" />
+                </a>
+                {{-- เซิร์ฟเวอร์ที่ลูกค้าเช่า — สองไฟล์ × สองบล็อก = สี่จุด เหมือนโดเมน --}}
+                <a href="{{ route('customer.vps.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('customer.vps.*') ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-cyan-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="6" rx="2" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M7 7h.01M7 17h.01"/>
+                    </svg>
+                    <x-bi th="VPS ของฉัน" en="My servers" layout="stack" />
+                </a>
+
+                <a href="{{ route('gpuxmine.index') }}" class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 {{ request()->routeIs('gpuxmine.*') ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-amber-500 hover:to-yellow-500 hover:text-white hover:shadow-lg' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                    </svg>
+                    <x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" layout="stack" />
+                </a>
+
+                {{-- ยืนยันตัวตน — ด่านของการรับ/ถอนเงิน เคยเข้าได้ด้วย URL เท่านั้น
+                     หน้านี้อยู่ในสองไฟล์เหมือน GPUxMINE — ใส่ไฟล์เดียวแล้วเมนูหายไปครึ่งเว็บ --}}
+                <a href="{{ route('kyc.index') }}"
+                   class="flex items-center px-4 py-3 rounded-lg transition-all duration-300 group {{ request()->routeIs('kyc.*') ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-600 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-green-500 hover:text-white hover:shadow-lg hover:shadow-emerald-500/30' }}">
+                    <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2.5l7.5 3v6c0 4.6-3.1 8.6-7.5 10-4.4-1.4-7.5-5.4-7.5-10v-6l7.5-3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.2 12l2.1 2.1 4.2-4.2"/>
+                    </svg>
+                    <x-bi th="ยืนยันตัวตน" en="Verify identity" layout="stack" />
+                    @if (auth()->user()?->kyc_status === 'approved')
+                        <svg class="w-4 h-4 ml-auto shrink-0 text-emerald-500 group-hover:text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    @endif
                 </a>
 
                 <div class="pt-2 pb-1">

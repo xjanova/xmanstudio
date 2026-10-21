@@ -57,17 +57,19 @@
         <tbody>
             @foreach($order->items as $item)
             <tr>
-                <td>{{ $item->product->name ?? $item->product_name }}</td>
+                <td>{{ $item->product->name ?? $item->product_name }}@if($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements)) (+{{ $storagePack }} GB)@endif</td>
                 <td style="text-align: center;">{{ $item->quantity }}</td>
-                <td style="text-align: right;">฿{{ number_format($item->total, 2) }}</td>
+                {{-- subtotal: order_items has no `total` column, which printed ฿0.00 on every line --}}
+                <td style="text-align: right;">฿{{ number_format($item->subtotal, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
 
-    {{-- License Keys --}}
+    {{-- License Keys — the ones this order issued, and the ones it renewed (a renewed key
+         keeps the order_id of the order that first issued it) --}}
     @php
-        $licenseKeys = \App\Models\LicenseKey::where('order_id', $order->id)
+        $licenseKeys = \App\Models\LicenseKey::deliveredByOrder($order->id)
             ->where('status', 'active')
             ->with('product')
             ->get();
@@ -84,6 +86,11 @@
                 {{ $license->product->name ?? 'ผลิตภัณฑ์' }}
             </div>
             <div class="license-key-display">{{ $license->license_key }}</div>
+            @if($license->renewals->isNotEmpty())
+            <div class="license-meta" style="color: #34d399;">
+                ต่ออายุคีย์เดิมแล้ว ใช้คีย์นี้ต่อได้เลย ไม่ต้องกรอกใหม่ &bull; Renewed — keep using this same key
+            </div>
+            @endif
             <div class="license-meta">
                 ประเภท: {{ ucfirst($license->license_type) }}
                 @if($license->expires_at)
@@ -109,9 +116,13 @@
         @endif
     </div>
 
-    @if($licenseKeys->count() > 0)
+    @if(!empty($hasReceipt))
     <div style="background: #131a33; padding: 16px; border-radius: 8px; font-size: 13px; color: #8f9cc0; margin-top: 24px; text-align: center;">
-        ใบเสร็จรับเงินแนบมาพร้อมอีเมลนี้ หรือดาวน์โหลดได้ที่หน้าบัญชีของคุณ
+        &#128206; ใบเสร็จรับเงิน (PDF) แนบมาพร้อมอีเมลนี้
+        @if($order->user_id)
+            <br>หรือ <a href="{{ route('orders.receipt', $order) }}" style="color: #60a5fa;">ดาวน์โหลดใบเสร็จอีกครั้ง</a>
+            ได้ทุกเมื่อจากประวัติคำสั่งซื้อในบัญชีของคุณ
+        @endif
     </div>
     @endif
 @endsection

@@ -1,7 +1,7 @@
 @extends($adminLayout ?? 'layouts.admin')
 
-@section('title', 'ใบเสนอราคา #' . $quotation->quote_number)
-@section('page-title', 'ใบเสนอราคา #' . $quotation->quote_number)
+@section('title', 'ใบเสนอราคา #' . $quotation->displayNumber())
+@section('page-title', 'ใบเสนอราคา #' . $quotation->displayNumber())
 
 @section('content')
 <div class="space-y-6">
@@ -12,8 +12,16 @@
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 กลับไปรายการ
             </a>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">#{{ $quotation->quote_number }}</h1>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">#{{ $quotation->displayNumber() }}</h1>
             <p class="text-sm text-gray-500">สร้างเมื่อ {{ $quotation->created_at->format('d/m/Y H:i') }} &middot; ใช้ได้ถึง {{ $quotation->valid_until?->format('d/m/Y') ?? '-' }}</p>
+            @if ($quotation->isSuperseded())
+                <p class="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-2.5 py-1">
+                    ฉบับนี้ถูกแทนด้วยเวอร์ชันใหม่แล้ว — ลูกค้าตอบรับฉบับนี้ไม่ได้อีก
+                </p>
+            @endif
+            @if ($quotation->revision_note)
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">เหตุผลที่แก้: {{ $quotation->revision_note }}</p>
+            @endif
         </div>
         <div class="flex items-center gap-2">
             @php
@@ -190,6 +198,128 @@
                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm">
                 </form>
             </div>
+
+            {{-- ใบแจ้งหนี้รายงวด — ออกอัตโนมัติตอนตอบรับ --}}
+            @if ($invoices->isNotEmpty())
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">ใบแจ้งหนี้รายงวด</h3>
+                    @php
+                        $paidSum = $invoices->where('status', 'paid')->sum('amount');
+                        $billable = $invoices->where('status', '!=', 'void')->sum('amount');
+                    @endphp
+                    <span class="text-sm font-semibold text-gray-600 dark:text-gray-300 tabular-nums">
+                        เก็บแล้ว ฿{{ number_format($paidSum, 2) }} / ฿{{ number_format($billable, 2) }}
+                    </span>
+                </div>
+                <div class="space-y-3">
+                    @foreach ($invoices as $inv)
+                        @php
+                            $tone = match (true) {
+                                $inv->status === 'paid' => 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20',
+                                $inv->status === 'void' => 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 opacity-70',
+                                $inv->isOverdue() => 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20',
+                                $inv->status === 'issued' => 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20',
+                                default => 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800',
+                            };
+                        @endphp
+                        <div class="rounded-xl border {{ $tone }} px-4 py-3">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-mono text-xs font-bold text-gray-500 dark:text-gray-400">{{ $inv->invoice_number }}</span>
+                                        <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full
+                                            @if ($inv->status === 'paid') bg-emerald-100 text-emerald-700
+                                            @elseif ($inv->isOverdue()) bg-red-100 text-red-700
+                                            @elseif ($inv->status === 'issued') bg-amber-100 text-amber-700
+                                            @elseif ($inv->status === 'void') bg-gray-200 text-gray-600
+                                            @else bg-gray-100 text-gray-600 @endif">
+                                            {{ $inv->isOverdue() ? 'เกินกำหนด' : $inv->statusLabel() }}
+                                        </span>
+                                    </div>
+                                    <p class="font-semibold text-gray-900 dark:text-white mt-1">{{ $inv->title }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ rtrim(rtrim(number_format((float) $inv->percent, 2), '0'), '.') }}% ของยอดงาน
+                                        @if ($inv->due_date) · กำหนดชำระ {{ $inv->due_date->format('d/m/Y') }} @endif
+                                        @if ($inv->paid_at) · รับเงิน {{ $inv->paid_at->format('d/m/Y') }} @endif
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">฿{{ number_format((float) $inv->amount, 2) }}</div>
+                                    <a href="{{ route('admin.invoices.pdf', $inv) }}" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">ดาวน์โหลด PDF</a>
+                                </div>
+                            </div>
+
+                            @if ($inv->status !== 'paid' && $inv->status !== 'void')
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                @if ($inv->status === 'scheduled')
+                                <form method="POST" action="{{ route('admin.invoices.status', $inv) }}">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="status" value="issued">
+                                    <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition">เรียกเก็บงวดนี้</button>
+                                </form>
+                                @endif
+                                <form method="POST" action="{{ route('admin.invoices.status', $inv) }}"
+                                      onsubmit="return confirm('ยืนยันว่าได้รับเงินงวดนี้แล้ว? ยอดจะถูกบวกเข้าโครงการทันที')">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="status" value="paid">
+                                    <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">รับเงินแล้ว</button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.invoices.status', $inv) }}"
+                                      onsubmit="return confirm('ยกเลิกใบแจ้งหนี้งวดนี้?')">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="status" value="void">
+                                    <button class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">ยกเลิกงวด</button>
+                                </form>
+                            </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- ออกฉบับแก้ไข: ใช้ตอนลูกค้าขอต่อรอง เลขที่ใบเดิม เวอร์ชันใหม่ --}}
+            @if (! in_array($quotation->status, ['accepted', 'paid'], true) && ! $quotation->isSuperseded())
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">ออกฉบับแก้ไข</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    ลูกค้าขอต่อรอง? กดนี่จะได้เอกสารใหม่ที่ <strong>ใช้เลขที่เดิม</strong> แต่เป็น Rev. ถัดไป
+                    ฉบับปัจจุบันจะถูกปิดไม่ให้ตอบรับ แต่ยังเปิดอ่านได้
+                </p>
+                <form method="POST" action="{{ route('admin.quotations.revise', $quotation) }}" class="flex flex-col sm:flex-row gap-3"
+                      onsubmit="return confirm('ออกฉบับแก้ไขใหม่? ฉบับนี้จะตอบรับไม่ได้อีก')">
+                    @csrf
+                    <input type="text" name="revision_note" maxlength="500" placeholder="แก้เพราะอะไร (ไม่บังคับ) เช่น ลูกค้าขอตัดงานออกแบบ"
+                           class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm">
+                    <button type="submit" class="px-6 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition whitespace-nowrap">ออกฉบับแก้ไข</button>
+                </form>
+            </div>
+            @endif
+
+            {{-- ประวัติเวอร์ชัน โชว์เมื่อมีมากกว่าหนึ่งฉบับ --}}
+            @if ($versions->count() > 1)
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">ประวัติการแก้ไข</h3>
+                <div class="space-y-2">
+                    @foreach ($versions as $v)
+                        <a href="{{ route('admin.quotations.detail', $v) }}"
+                           class="flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm transition
+                                  {{ $v->id === $quotation->id
+                                     ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20'
+                                     : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40' }}">
+                            <span class="font-mono font-semibold text-gray-900 dark:text-white">{{ $v->displayNumber() }}</span>
+                            <span class="text-gray-500 dark:text-gray-400">
+                                ฿{{ number_format((float) $v->grand_total, 2) }} ·
+                                {{ $v->created_at->format('d/m/Y') }}
+                                @if ($v->isSuperseded()) · ถูกแทนแล้ว @endif
+                                @if ($v->id === $quotation->id) · ฉบับที่กำลังดู @endif
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+            @endif
 
             <!-- Notes -->
             @if($quotation->admin_notes || $quotation->customer_notes)

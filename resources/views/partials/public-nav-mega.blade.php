@@ -20,10 +20,13 @@
         // Keep pointing at the external product site, as the old bar did — the
         // internal catalogue is reachable from the Featured zone below.
         ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'url' => config('app.product_site_url'),  'art' => 'products',  'desc' => 'ซอฟต์แวร์พร้อมใช้'],
+        ['th' => 'เกม',         'en' => 'XgamesHub', 'url' => config('app.xgameshub_url'),     'art' => 'xgameshub', 'desc' => 'เกม 3 มิติ เล่นบนเว็บได้ทันที'],
         ['th' => 'เช่าใช้งาน',  'en' => 'Rentals',   'url' => route('rental.index'),           'art' => 'rental',    'desc' => 'จ่ายรายเดือน'],
+        ['th' => 'จดโดเมน',     'en' => 'Domains',   'url' => route('domains.index'),          'art' => 'domains',   'desc' => 'ชื่อเว็บในนามคุณ'],
+        ['th' => 'เช่า VPS',    'en' => 'VPS',       'url' => route('vps.index'),              'art' => 'vps',       'desc' => 'เซิร์ฟเวอร์ส่วนตัว root เต็มสิทธิ์'],
         ['th' => 'ผลงาน',       'en' => 'Portfolio', 'url' => url('/portfolio'),               'art' => 'portfolio', 'desc' => 'โปรเจคที่ส่งมอบแล้ว'],
         ['th' => 'ทีมงาน',      'en' => 'Team',      'url' => url('/team'),                    'art' => 'team',      'desc' => 'คนเบื้องหลัง'],
-        ['th' => 'ติดต่อ/สั่งซื้อ', 'en' => 'Contact', 'url' => route('support.index'),        'art' => 'support',   'desc' => 'ขอใบเสนอราคา'],
+        ['th' => 'ติดต่อ/สั่งซื้อ', 'en' => 'Contact', 'url' => route('quote.index'),        'art' => 'support',   'desc' => 'ขอใบเสนอราคา'],
         ['th' => 'ติดตามงาน',   'en' => 'Tracking',  'url' => url('/tracking'),                'art' => 'tracking',  'desc' => 'เช็คสถานะโปรเจค'],
         // Was in the old desktop bar; dropping it would have left donate
         // reachable only from the mobile menu.
@@ -37,7 +40,7 @@
     // packs take over the nav on EVERY public page. The cache also means a
     // wrong entry sticks around for 10 minutes after the data is fixed.
     $megaProducts = \Illuminate\Support\Facades\Cache::remember('nav_mega_products', 600, function () {
-        return \App\Models\Product::onWebsite()->available()->latest()->take(3)->get(['id', 'name', 'slug', 'image', 'price']);
+        return \App\Models\Product::onWebsite()->available()->latest()->take(3)->get(['id', 'name', 'slug', 'image', 'price', 'price_tpix']);
     });
 @endphp
 
@@ -92,15 +95,19 @@
                 <h3 class="xm-mega__title">สำรวจ <span>/ Explore</span></h3>
                 <div class="xm-mega__grid">
                     @foreach($megaExplore as $item)
+                        {{-- The label lives in the artwork (menu:build-art), so the
+                             card is the picture and nothing else. The words stay in
+                             the markup twice over: as the image's alt, and as
+                             .xm-mega__sr text that is clipped to nothing. Between
+                             them, a screen reader, a crawler and a visitor whose
+                             images failed all still get the same menu. --}}
                         <a href="{{ $item['url'] }}" class="xm-mega__card">
                             <span class="xm-mega__card-media">
-                                <img src="{{ asset('artwork/menu/' . $item['art'] . '.webp') }}" alt=""
+                                <img src="{{ asset('artwork/menu/labelled/' . $item['art'] . '.webp') }}"
+                                     alt="{{ $item['th'] }} / {{ $item['en'] }}"
                                      width="208" height="116" loading="lazy" decoding="async">
                             </span>
-                            <span class="xm-mega__card-body">
-                                <span class="xm-mega__card-th">{{ $item['th'] }}</span>
-                                <span class="xm-mega__card-desc">{{ $item['desc'] }}</span>
-                            </span>
+                            <span class="xm-mega__sr">{{ $item['th'] }} / {{ $item['en'] }} — {{ $item['desc'] }}</span>
                         </a>
                     @endforeach
                 </div>
@@ -166,6 +173,7 @@
                             <span class="xm-mega__product-name">{{ $product->name }}</span>
                             @if($product->price > 0)
                                 <span class="xm-mega__product-price">฿{{ number_format($product->price, 0) }}</span>
+                                <x-tpix-price variant="plain" :thb="$product->price" :tpix="$product->price_tpix" class="xm-mega__product-price" style="font-size:11px;opacity:.8;" />
                             @endif
                         </span>
                     </a>

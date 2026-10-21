@@ -100,7 +100,7 @@
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('admin.localvpn.networks.delete', $network) }}" class="inline"
-                                  onsubmit="return confirm('คุณแน่ใจหรือว่าต้องการลบเครือข่าย \'{{ $network->name }}\'? การกระทำนี้ไม่สามารถย้อนกลับได้')">
+                                  onsubmit="return confirm('คุณแน่ใจหรือว่าต้องการลบเครือข่าย \'' + @js($network->name) + '\'? การกระทำนี้ไม่สามารถย้อนกลับได้')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800" title="ลบ">

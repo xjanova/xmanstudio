@@ -16,7 +16,7 @@ class AiprayMlServiceClient
     public function __construct()
     {
         $this->baseUrl = rtrim(config('services.aipray_ml.url', 'http://localhost:8100'), '/');
-        $this->secret = config('services.aipray_ml.secret', '');
+        $this->secret = (string) config('services.aipray_ml.secret', '');
         $this->timeout = (int) config('services.aipray_ml.timeout', 300);
     }
 

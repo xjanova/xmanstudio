@@ -49,6 +49,13 @@ class WalletTransaction extends Model
 
     const TYPE_CASHBACK = 'cashback';
 
+    /**
+     * รายได้จากการแชร์การ์ดจอ GPUxMINE (gpuxmine:settle-earnings)
+     *
+     * แยกจาก deposit/bonus เพราะไม่ใช่เงินที่เจ้าของเติมเข้ามา — ไม่บวก total_deposited
+     */
+    const TYPE_EARNING = 'earning';
+
     const STATUS_PENDING = 'pending';
 
     const STATUS_COMPLETED = 'completed';
@@ -85,6 +92,7 @@ class WalletTransaction extends Model
             self::TYPE_BONUS => 'โบนัส',
             self::TYPE_ADJUSTMENT => 'ปรับยอด',
             self::TYPE_CASHBACK => 'เงินคืน',
+            self::TYPE_EARNING => 'รายได้แชร์การ์ดจอ',
             default => $this->type,
         };
     }
@@ -102,6 +110,7 @@ class WalletTransaction extends Model
             self::TYPE_BONUS => 'bi-gift-fill',
             self::TYPE_ADJUSTMENT => 'bi-sliders',
             self::TYPE_CASHBACK => 'bi-cash-coin',
+            self::TYPE_EARNING => 'bi-gpu-card',
             default => 'bi-circle-fill',
         };
     }
@@ -112,7 +121,7 @@ class WalletTransaction extends Model
     public function getTypeColorAttribute(): string
     {
         return match ($this->type) {
-            self::TYPE_DEPOSIT, self::TYPE_REFUND, self::TYPE_BONUS, self::TYPE_CASHBACK => 'success',
+            self::TYPE_DEPOSIT, self::TYPE_REFUND, self::TYPE_BONUS, self::TYPE_CASHBACK, self::TYPE_EARNING => 'success',
             self::TYPE_WITHDRAWAL, self::TYPE_PAYMENT => 'danger',
             self::TYPE_ADJUSTMENT => 'warning',
             default => 'secondary',

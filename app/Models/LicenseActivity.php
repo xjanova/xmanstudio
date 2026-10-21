@@ -32,6 +32,8 @@ class LicenseActivity extends Model
 
     public const ACTION_DELETED = 'deleted';
 
+    public const ACTION_STORAGE_CHANGED = 'storage_changed';
+
     // Actor types
     public const ACTOR_SYSTEM = 'system';
 
@@ -99,7 +101,10 @@ class LicenseActivity extends Model
             'actor_type' => $actorType,
             'machine_id' => $machineId,
             'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            // The column is varchar(255). A longer header (in-app browsers send long ones) made
+            // MySQL strict refuse the row, and with it whatever wrote the log — a licence
+            // renewal delivered in the same transaction as its activity row among them.
+            'user_agent' => ($agent = request()->userAgent()) !== null ? mb_substr($agent, 0, 255) : null,
             'metadata' => $metadata,
             'notes' => $notes,
         ]);
@@ -127,6 +132,7 @@ class LicenseActivity extends Model
             self::ACTION_MACHINE_RESET => 'รีเซ็ตเครื่อง',
             self::ACTION_FAILED_ACTIVATION => 'Activate ไม่สำเร็จ',
             self::ACTION_SUSPICIOUS => 'พบกิจกรรมน่าสงสัย',
+            self::ACTION_STORAGE_CHANGED => 'ปรับพื้นที่คลาวด์',
             default => $this->action,
         };
     }
@@ -148,6 +154,7 @@ class LicenseActivity extends Model
             self::ACTION_MACHINE_RESET => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
             self::ACTION_FAILED_ACTIVATION => 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
             self::ACTION_SUSPICIOUS => 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+            self::ACTION_STORAGE_CHANGED => 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z',
             default => 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
         };
     }
@@ -169,6 +176,7 @@ class LicenseActivity extends Model
             self::ACTION_MACHINE_RESET => 'from-orange-400 to-amber-600',
             self::ACTION_FAILED_ACTIVATION => 'from-red-400 to-rose-600',
             self::ACTION_SUSPICIOUS => 'from-red-500 to-pink-600',
+            self::ACTION_STORAGE_CHANGED => 'from-sky-400 to-blue-600',
             default => 'from-gray-400 to-gray-600',
         };
     }
