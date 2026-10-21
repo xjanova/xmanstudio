@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\TestCase;
@@ -57,6 +58,12 @@ class ThaipromptPosUpdatesTest extends TestCase
     /** release ล่าสุดที่ "GitHub" ตอบตอนนี้ — เทสต์เปลี่ยนค่านี้ได้ระหว่างทาง (CI แนบไฟล์ทีละแพลตฟอร์ม) */
     private ?array $latestRelease = null;
 
+    /** API ของ GitHub ต่อไม่ติด (timeout) */
+    private bool $githubApiDown = false;
+
+    /** ที่เก็บไฟล์ของ GitHub ต่อไม่ติด (timeout) */
+    private bool $githubFilesDown = false;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -68,16 +75,22 @@ class ThaipromptPosUpdatesTest extends TestCase
         Http::preventStrayRequests();
 
         Http::fake([
-            'api.github.com/repos/xjanova/posthaiprompt/releases/latest' => fn () => $this->latestRelease
-                ? Http::response($this->latestRelease)
-                : Http::response(['message' => 'Not Found'], 404),
+            'api.github.com/repos/xjanova/posthaiprompt/releases/latest' => fn () => match (true) {
+                $this->githubApiDown => Http::failedConnection('cURL error 28: Operation timed out'),
+                $this->latestRelease !== null => Http::response($this->latestRelease),
+                default => Http::response(['message' => 'Not Found'], 404),
+            },
             // ลิงก์ไฟล์ของ release → 302 ไป CDN → ไฟล์ พร้อม header ของต้นทางที่ห้ามหลุดถึงลูกค้า
-            'github.com/xjanova/posthaiprompt/releases/download/*.apk' => Http::response('', 302, [
-                'Location' => 'https://release-assets.githubusercontent.com/apk/609661907?X-Amz-Signature=abc',
-            ]),
-            'github.com/xjanova/posthaiprompt/releases/download/*.zip' => Http::response('', 302, [
-                'Location' => 'https://release-assets.githubusercontent.com/zip/609659758?X-Amz-Signature=abc',
-            ]),
+            'github.com/xjanova/posthaiprompt/releases/download/*.apk' => fn () => $this->githubFilesDown
+                ? Http::failedConnection('cURL error 28: Operation timed out')
+                : Http::response('', 302, [
+                    'Location' => 'https://release-assets.githubusercontent.com/apk/609661907?X-Amz-Signature=abc',
+                ]),
+            'github.com/xjanova/posthaiprompt/releases/download/*.zip' => fn () => $this->githubFilesDown
+                ? Http::failedConnection('cURL error 28: Operation timed out')
+                : Http::response('', 302, [
+                    'Location' => 'https://release-assets.githubusercontent.com/zip/609659758?X-Amz-Signature=abc',
+                ]),
             'release-assets.githubusercontent.com/apk/*' => fn () => $this->cdnFile(self::APK_BYTES, 'application/vnd.android.package-archive'),
             'release-assets.githubusercontent.com/zip/*' => fn () => $this->cdnFile(self::ZIP_BYTES, 'application/zip'),
         ]);
@@ -88,14 +101,16 @@ class ThaipromptPosUpdatesTest extends TestCase
     public function test_both_apps_are_registered_free_off_the_shop_and_read_their_own_file_from_one_release(): void
     {
         $expected = [
-            'thaiprompt-pos' => ['Thai Prompt POS (Android)', 'posthaiprompt-v*.apk'],
-            'thaiprompt-pos-windows' => ['Thai Prompt POS (Windows)', 'posthaiprompt-windows-v*.zip'],
+            'thaiprompt-pos' => ['ThaiPrompt POS', 'posthaiprompt-v*.apk'],
+            'thaiprompt-pos-windows' => ['ThaiPrompt POS Windows', 'posthaiprompt-windows-v*.zip'],
         ];
 
         foreach ($expected as $slug => [$name, $pattern]) {
             $product = Product::where('slug', $slug)->sole();
 
             $this->assertSame($name, $product->name);
+            // หน้า admin ตั้ง slug = Str::slug(ชื่อ) ทุกครั้งที่กดบันทึก — slug ต้องไม่หลุดจากที่แอปถามมา
+            $this->assertSame($slug, Str::slug($product->name), 'กดบันทึกในหน้า admin แล้ว slug ต้องยังเป็นของแอป');
             $this->assertSame('0.00', $product->price);
             $this->assertFalse($product->is_active, 'ปิดไว้ = ไม่ขึ้นหน้าร้านและตะกร้าไม่รับ');
             $this->assertFalse($product->is_coming_soon);
@@ -117,7 +132,7 @@ class ThaipromptPosUpdatesTest extends TestCase
         // ค่าที่เจ้าของตั้งเองในหน้า admin ต้องไม่ถูกเขียนทับตอน deploy รอบหน้า
         $setting->update(['asset_pattern' => 'posthaiprompt-v*-universal.apk']);
 
-        $migration = require database_path('migrations/2026_10_05_100000_register_thaiprompt_pos_products.php');
+        $migration = require database_path('migrations/2026_10_21_130000_register_thaiprompt_pos_products.php');
         $migration->up();
         $migration->up();
 
@@ -130,7 +145,7 @@ class ThaipromptPosUpdatesTest extends TestCase
 
     public function test_the_shop_never_lists_or_sells_them(): void
     {
-        $this->get('/products')->assertOk()->assertDontSee('Thai Prompt POS');
+        $this->get('/products')->assertOk()->assertDontSee('ThaiPrompt POS')->assertDontSee('Thai Prompt POS');
 
         foreach (['thaiprompt-pos', 'thaiprompt-pos-windows'] as $slug) {
             $product = Product::where('slug', $slug)->sole();
@@ -290,6 +305,60 @@ class ThaipromptPosUpdatesTest extends TestCase
 
         Http::assertNothingSent();
         $this->assertSame(0, DownloadLog::count());
+    }
+
+    public function test_a_broken_apk_download_resumes_with_only_the_missing_bytes(): void
+    {
+        // เน็ตร้านหลุดกลางไฟล์ 90 MB — ตัวอัปเดตขอต่อจากที่มีแล้ว (Range) ต้องได้ 206 เฉพาะส่วนที่ขาด
+        $this->version('thaiprompt-pos', '2.0.2', 'posthaiprompt-v2.0.2.apk', strlen(self::APK_BYTES), self::APK_SHA256);
+        $size = strlen(self::APK_BYTES);
+
+        $response = $this->get(self::SITE . '/apps/thaiprompt-pos/download/2.0.2', [
+            'Accept' => '*/*',
+            'Range' => 'bytes=5-',
+            'If-Range' => '"' . self::APK_SHA256 . '"',
+        ])
+            ->assertStatus(206)
+            ->assertHeader('Content-Type', 'application/vnd.android.package-archive')
+            ->assertHeader('Content-Range', 'bytes 5-' . ($size - 1) . '/' . $size)
+            ->assertHeader('Content-Length', (string) ($size - 5))
+            ->assertHeaderMissing('Location');
+
+        $this->assertSame(substr(self::APK_BYTES, 5), $response->streamedContent());
+        $this->assertNoTraceOfGithub($response);
+        // ต่อจากที่ค้าง = การโหลดครั้งเดิม ไม่นับซ้ำ
+        $this->assertSame(0, DownloadLog::count());
+    }
+
+    public function test_when_github_times_out_the_app_gets_the_known_version_or_a_clean_error(): void
+    {
+        $this->version('thaiprompt-pos', '2.0.2', 'posthaiprompt-v2.0.2.apk', strlen(self::APK_BYTES), self::APK_SHA256);
+        $this->version('thaiprompt-pos-windows', '2.0.2', 'posthaiprompt-windows-v2.0.2.zip', strlen(self::ZIP_BYTES), self::ZIP_SHA256);
+        $this->githubApiDown = true;
+
+        foreach (['thaiprompt-pos' => self::APK_BYTES, 'thaiprompt-pos-windows' => self::ZIP_BYTES] as $slug => $bytes) {
+            // API ต่อไม่ติด: update/check ตอบจากที่ DB รู้ ห้าม 500
+            $this->getJson(self::SITE . "/api/v1/product/{$slug}/update/check?current_version=2.0.1")
+                ->assertOk()
+                ->assertJsonPath('has_update', true)
+                ->assertJsonPath('latest_version', '2.0.2')
+                ->assertJsonPath('download_url', self::SITE . "/apps/{$slug}/download/2.0.2");
+
+            // ลิงก์ไม่ระบุเวอร์ชันถาม API ก่อน — ต่อไม่ติดก็ยังส่งตัวล่าสุดที่ DB รู้
+            $this->assertSame($bytes, $this->get("/apps/{$slug}/download", ['Accept' => '*/*'])->assertOk()->streamedContent());
+        }
+
+        // ที่เก็บไฟล์ต่อไม่ติดด้วย: แอปได้ JSON ที่อ่านออก ไม่มีร่องรอย GitHub · เบราว์เซอร์กลับหน้าแรกพร้อมข้อความ
+        $this->githubFilesDown = true;
+
+        $failed = $this->get('/apps/thaiprompt-pos/download/2.0.2', ['Accept' => '*/*'])
+            ->assertStatus(502)
+            ->assertExactJson(['success' => false, 'error' => 'Could not get the file, please try again later']);
+        $this->assertNoTraceOfGithub($failed);
+
+        $this->get('/apps/thaiprompt-pos-windows/download/2.0.2', ['Accept' => 'text/html'])
+            ->assertRedirect(url('/'))
+            ->assertSessionHas('error');
     }
 
     public function test_both_downloads_are_throttled_and_share_the_download_slots_with_the_other_apps(): void

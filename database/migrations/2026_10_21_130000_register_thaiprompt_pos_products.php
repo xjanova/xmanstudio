@@ -23,6 +23,13 @@ use Illuminate\Support\Facades\DB;
  * มีแถวสินค้าอยู่แล้ว = ไม่แตะแถวนั้น แค่เติม GitHub setting ถ้ายังไม่มี · รันซ้ำกี่รอบก็ได้ผลเท่าเดิม
  * repo เป็น public ไม่ต้องมี token (token ที่ตายแล้วแย่กว่าไม่มี — ดู 2026_09_18_000002)
  * auto_sync เปิด: cron (products:sync-releases) ดึง release ล่าสุดเข้ามาเอง หรือทันทีที่แอปเช็คอัปเดต (read-through)
+ *
+ * ⚠️ ชื่อสินค้าต้อง slug ออกมาเป็น slug ของแอปเป๊ะ ๆ ("ThaiPrompt POS" → thaiprompt-pos) — หน้า admin สร้าง slug
+ *    ใหม่จากชื่อทุกครั้งที่กดบันทึก (Admin\ProductController::update) ชื่อแบบ "Thai Prompt POS (Android)" จะได้
+ *    thai-prompt-pos-android แล้วตัวอัปเดตในแอปทั้งสองแพลตฟอร์มเจอ 404 เงียบ ๆ
+ *
+ * timestamp ใหม่กว่าทุก migration ที่ production รันไปแล้ว — CI (migrate จากศูนย์บน MySQL strict) จึงรันตัวนี้
+ * ตามลำดับเดียวกับ deploy จริง (ต่อท้ายสุด) ไม่ใช่แทรกกลางก่อนคอลัมน์ที่เพิ่มทีหลัง
  */
 return new class extends Migration
 {
@@ -33,7 +40,7 @@ return new class extends Migration
     private const APPS = [
         [
             'slug' => 'thaiprompt-pos',
-            'name' => 'Thai Prompt POS (Android)',
+            'name' => 'ThaiPrompt POS',
             'sku' => 'TPPOS-AND',
             'short_description' => 'แอปขายหน้าร้านสำหรับร้านค้า Thai Prompt บนมือถือและแท็บเล็ต Android — ใช้ฟรี',
             'platform' => 'Android',
@@ -42,7 +49,7 @@ return new class extends Migration
         ],
         [
             'slug' => 'thaiprompt-pos-windows',
-            'name' => 'Thai Prompt POS (Windows)',
+            'name' => 'ThaiPrompt POS Windows',
             'sku' => 'TPPOS-WIN',
             'short_description' => 'แอปขายหน้าร้านสำหรับร้านค้า Thai Prompt บนคอมพิวเตอร์ Windows — ใช้ฟรี',
             'platform' => 'Windows',

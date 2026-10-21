@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
  * {version} = ตัวนั้นเป๊ะ ๆ ที่ update/check ประกาศ sha256 ไว้ (แม้มีตัวใหม่ออกมาระหว่างนั้น) · ไม่ใส่ = ตัวล่าสุด
  *
  * ต่างจาก Aipray ตรงที่ไม่ดู is_active: สินค้าสองแถวนี้ปิดไว้โดยตั้งใจให้ไม่ขึ้นหน้าร้านและซื้อไม่ได้
- * (migration 2026_10_05_100000) · หยุดแจกเวอร์ชันไหน ให้ปิดเวอร์ชันนั้นในหน้า admin → เวอร์ชัน
+ * (migration 2026_10_21_130000) · หยุดแจกเวอร์ชันไหน ให้ปิดเวอร์ชันนั้นในหน้า admin → เวอร์ชัน
  */
 class ThaipromptPosController extends Controller
 {
