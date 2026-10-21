@@ -172,7 +172,10 @@ class ProductController extends Controller
             'coming_soon_until' => 'nullable|date',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']);
+        // The slug is the product's identity, not a copy of its name: download routes, the apps'
+        // update checks, licence APIs and config/downloads.php all look products up by it. Saving
+        // a price used to rename winx-tools to "winxtools" and aipray to
+        // "aipray-buddhist-chanting-companion", and every updater of that app got a silent 404.
         $validated['is_custom'] = $request->boolean('is_custom');
         $validated['requires_license'] = $request->boolean('requires_license');
         $validated['is_active'] = $request->boolean('is_active');
