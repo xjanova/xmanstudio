@@ -297,7 +297,15 @@ jobs:
       - name: Check if release needed
         id: check
         run: |
-          # Skip if last commit is from bot (version bump)
+          # Release from the newest main, not the commit that triggered this run.
+          # Back-to-back merges queue here one after another; each used to bump the
+          # VERSION of its own older checkout, so the second run computed the same
+          # number as the first and failed on "tag already exists".
+          git fetch origin main
+          git checkout -B main origin/main
+
+          # Skip if the newest main commit is already a release: an earlier run
+          # in this queue rebased onto this merge and released it.
           LAST_AUTHOR=$(git log -1 --format='%an')
           if [[ "$LAST_AUTHOR" == "github-actions[bot]" ]]; then
             echo "skip=true" >> $GITHUB_OUTPUT
