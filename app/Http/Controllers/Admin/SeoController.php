@@ -141,6 +141,14 @@ class SeoController extends Controller
             'priority' => '1.0',
         ];
 
+        // The main campaign (DGX Spark bundle)
+        $urls[] = [
+            'loc' => route('campaign.dgx-spark'),
+            'lastmod' => $now,
+            'changefreq' => 'daily',
+            'priority' => '0.9',
+        ];
+
         // Static pages
         $urls[] = [
             'loc' => route('products.index'),

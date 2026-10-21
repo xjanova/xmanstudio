@@ -203,6 +203,21 @@
                                 </div>
                             </label>
                             @endif
+                            @if(($settings['payment_methods']['tpix'] ?? false) && $tpixRate)
+                            <label class="relative">
+                                <input type="radio" class="peer hidden" name="payment_method" id="tpix" value="tpix" {{ old('payment_method') === 'tpix' ? 'checked' : '' }}>
+                                <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer transition-all duration-200 hover:border-amber-300 dark:hover:border-amber-600 peer-checked:border-amber-500 peer-checked:bg-amber-50 dark:peer-checked:bg-amber-900/30 peer-checked:ring-2 peer-checked:ring-amber-500/20">
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8.5h8M12 8.5v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                                        </div>
+                                        <p class="font-medium text-gray-900 dark:text-white">เหรียญ TPIX</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">1 TPIX = ฿{{ \App\Services\TpixPay\TpixPriceService::formatRate($tpixRate) }}</p>
+                                        <p class="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-1" id="tpixEstimate" data-rate="{{ $tpixRate }}"></p>
+                                    </div>
+                                </div>
+                            </label>
+                            @endif
                         </div>
                         @error('payment_method')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -272,6 +287,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update bonus on amount change
     amountInput.addEventListener('input', updateBonus);
+
+    // TPIX: the amount at the rate the quote will use, rounded up like the quote (the exact amount
+    // with its tag comes on the pay page)
+    const tpixEstimate = document.getElementById('tpixEstimate');
+    function updateTpixEstimate() {
+        if (!tpixEstimate) return;
+        const amount = parseFloat(amountInput.value) || 0;
+        const rate = parseFloat(tpixEstimate.dataset.rate) || 0;
+        tpixEstimate.textContent = amount > 0 && rate > 0
+            ? '≈ ' + (Math.ceil(amount / rate * 10000) / 10000).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 4}) + ' TPIX'
+            : '';
+    }
+    amountInput.addEventListener('input', updateTpixEstimate);
+    document.querySelectorAll('.quick-amount').forEach(btn => btn.addEventListener('click', updateTpixEstimate));
+    updateTpixEstimate();
 
     function updateBonus() {
         const amount = parseFloat(amountInput.value) || 0;

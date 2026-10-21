@@ -12,21 +12,11 @@
     an ordinary nav rather than to a site with no navigation at all.
 --}}
 @php
-    $novaLogo = \App\Models\Setting::getValue('site_logo');
+    $novaLogo = \App\Support\BrandLogo::darkUrl();
 
     // Orbital menu items. `accent` drives the per-item glow via --nv-accent.
-    $novaMenu = [
-        ['th' => 'หน้าหลัก',    'en' => 'Home',      'href' => url('/'),                  'accent' => '#22d3ee', 'icon' => 'home',  'art' => 'home'],
-        ['th' => 'บริการ',      'en' => 'Services',  'href' => route('services.index'),   'accent' => '#8b5cf6', 'icon' => 'grid',  'art' => 'services'],
-        ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'href' => config('app.product_site_url'), 'accent' => '#e879f9', 'icon' => 'cube',  'art' => 'products'],
-        ['th' => 'เช่าใช้งาน',  'en' => 'Rental',    'href' => route('rental.index'),     'accent' => '#34d399', 'icon' => 'clock', 'art' => 'rental'],
-        ['th' => 'จดโดเมน',     'en' => 'Domains',   'href' => route('domains.index'),    'accent' => '#60a5fa', 'icon' => 'globe', 'art' => 'domains'],
-        ['th' => 'เช่า VPS',    'en' => 'VPS',       'href' => route('vps.index'),        'accent' => '#2dd4bf', 'icon' => 'server', 'art' => 'vps'],
-        ['th' => 'สร้างภาพ AI', 'en' => 'XDreamer',  'href' => config('services.aixman.site_url'), 'accent' => '#f472b6', 'icon' => 'spark', 'art' => 'xdreamer'],
-        ['th' => 'เรียนโค้ด',   'en' => 'Academy',   'href' => route('code-academy'),     'accent' => '#38bdf8', 'icon' => 'book',  'art' => 'academy'],
-        ['th' => 'เพลง',        'en' => 'Metal-X',   'href' => route('metal-x.index'),    'accent' => '#fb7185', 'icon' => 'play',  'art' => 'metalx'],
-        ['th' => 'ติดต่อเรา',   'en' => 'Contact',   'href' => route('quote.index'),    'accent' => '#ffd479', 'icon' => 'chat',  'art' => 'contact'],
-    ];
+    // Shared with the 3D universe home's ring menu — edit them in HomeContent.
+    $novaMenu = \App\Support\HomeContent::menu();
 @endphp
 <!DOCTYPE html>
 <html lang="th" class="scroll-smooth">
@@ -132,7 +122,7 @@
         <span class="nova-sr">เปิดเมนู / Open menu</span>
         <span class="nova-star-mini__glow" aria-hidden="true"></span>
         @if($novaLogo)
-            <img src="{{ asset('storage/' . $novaLogo) }}" alt="" class="nova-star-mini__logo">
+            <img src="{{ $novaLogo }}" alt="" class="nova-star-mini__logo">
         @else
             <span class="nova-star-mini__word" aria-hidden="true">X</span>
         @endif

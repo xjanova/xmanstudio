@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Models\Product;
 use RuntimeException;
 
 /**
@@ -24,6 +25,12 @@ class DownloadUnavailableException extends RuntimeException
     public static function missing(): self
     {
         return new self(404, 'No file available for this version', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
+    }
+
+    /** สินค้ายังเป็น Coming Soon — ห้ามโหลดจากทุกจุดจนกว่าจะเปิด (กฎเจ้าของ 2026-10-12) */
+    public static function comingSoon(): self
+    {
+        return new self(403, 'Coming soon: this product is not available for download yet', Product::COMING_SOON_DOWNLOAD_MESSAGE);
     }
 
     /** มีไฟล์ แต่ดึงจากต้นทางไม่ได้ตอนนี้ — ลองใหม่ได้ */

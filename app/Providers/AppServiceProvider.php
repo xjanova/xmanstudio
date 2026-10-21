@@ -6,12 +6,25 @@ use App\Events\NewOrderCreated;
 use App\Events\PaymentMatched;
 use App\Listeners\SendNewOrderFcmNotification;
 use App\Listeners\SendPaymentMatchedNotification;
+use App\Models\Banner;
+use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\PaymentSetting;
+use App\Models\Product;
+use App\Models\QuotationCategory;
+use App\Models\QuotationOption;
+use App\Models\RentalPackage;
+use App\Models\Service;
 use App\Observers\AiCreditOrderObserver;
+use App\Services\AiChat\KnowledgeVersion;
+use App\Services\TpixPay\TpixPaySettings;
+use App\Services\TpixPay\TpixPriceService;
+use App\Support\ContactLinks;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -26,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // Bilingual (TH + EN) global helpers: bi(), bi_th(), bi_en().
         require_once app_path('helpers.php');
+
+        // TPIX prices render on many cards per page: the settings and the pool price are read once
+        // per request (scoped), not once per price tag.
+        $this->app->scoped(TpixPaySettings::class);
+        $this->app->scoped(TpixPriceService::class);
     }
 
     /**
@@ -42,6 +60,24 @@ class AppServiceProvider extends ServiceProvider
         // A paid AI-credit order gets its credits on AIXMAN whichever way it was paid — admin
         // approval, the SMS matcher, the Telegram bot — not only via the success page or Stripe.
         Order::observe(AiCreditOrderObserver::class);
+
+        $this->refreshAiChatKnowledgeOnCatalogueChanges();
+    }
+
+    /**
+     * The AI assistant quotes the catalogue from a cached snapshot. Any save or
+     * delete of what it quotes moves KnowledgeVersion, so the next question is
+     * answered from the new data instead of a copy up to an hour old.
+     */
+    private function refreshAiChatKnowledgeOnCatalogueChanges(): void
+    {
+        $catalogue = [Product::class, Category::class, Service::class, QuotationCategory::class,
+            QuotationOption::class, RentalPackage::class, Banner::class, Coupon::class];
+
+        foreach ($catalogue as $model) {
+            $model::saved(fn () => KnowledgeVersion::bump());
+            $model::deleted(fn () => KnowledgeVersion::bump());
+        }
     }
 
     /**
@@ -137,6 +173,15 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Exception $e) {
             // Database may not be available during migrations
         }
+
+        // Mail goes out from a no-reply address that has no mailbox, so a customer answering
+        // an order or quote e-mail got a bounce. Replies go to support instead — unless the
+        // message names its own Reply-To, as the contact form does with the visitor.
+        Event::listen(MessageSending::class, function (MessageSending $event) {
+            if ($event->message->getReplyTo() === []) {
+                $event->message->replyTo(ContactLinks::email());
+            }
+        });
     }
 
     protected function configureRateLimiting(): void
@@ -196,6 +241,60 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(10)->by('gxm-status:' . $worker . '|' . $request->ip())->response($tooMany),
                 Limit::perMinute(600)->by('gxm-status-ip:' . $request->ip())->response($tooMany),
             ];
+        });
+
+        // /api/v1/localvpn/* — the LocalVPN app: heartbeat every 15 s, signal polls, file lists.
+        // Players behind one café router or a Thai ISP's CGNAT share an address, so the budget is
+        // per device: the machine_id the app sends (body, query or X-Device-Id) together with the
+        // address — a network peer who learns your machine_id still can't burn your quota from
+        // elsewhere. A looser per-address ceiling stops anyone minting machine_ids to dodge it.
+        RateLimiter::for('localvpn', function (Request $request) {
+            $device = $request->input('machine_id')
+                ?? $request->input('source_machine_id')
+                ?? $request->header('X-Device-Id');
+            $device = is_string($device) && $device !== '' ? mb_substr($device, 0, 128) : null;
+            $tooMany = fn (Request $request, array $headers) => response()->json([
+                'success' => false,
+                'error' => 'ส่งคำขอถี่เกินไป — รอสักครู่แล้วลองใหม่',
+                'code' => 'RATE_LIMIT_EXCEEDED',
+            ], 429, $headers);
+
+            return [
+                Limit::perMinute(240)
+                    ->by('lv-device:' . ($device !== null ? sha1($device) : 'ip') . '|' . $request->ip())
+                    ->response($tooMany),
+                Limit::perMinute(2000)->by('lv-ip:' . $request->ip())->response($tooMany),
+            ];
+        });
+
+        // /api/v1/localvpn/node/sync — relay-fleet nodes, one sync every 10 s. Keyed by the claimed
+        // node id and the address it comes from, so forged requests from elsewhere cannot use up a
+        // real node's budget; the per-address ceiling caps anyone cycling through ids.
+        RateLimiter::for('localvpn-node', function (Request $request) {
+            $node = (string) $request->header('X-Node-Id', '');
+            $node = preg_match('/^\d{1,10}$/', $node) ? $node : 'invalid';
+            $tooMany = fn (Request $request, array $headers) => response()->json([
+                'ok' => false,
+                'error' => 'rate-limited',
+            ], 429, $headers);
+
+            return [
+                Limit::perMinute(60)->by('lv-node:' . $node . '|' . $request->ip())->response($tooMany),
+                Limit::perMinute(600)->by('lv-node-ip:' . $request->ip())->response($tooMany),
+            ];
+        });
+
+        // /api/v1/product/winx-tools/disk-benchmarks — anonymous disk speed tests uploaded by WinXTools.
+        // Counted per address: before the body is validated there is nothing else to count by. The
+        // controller also holds each installation to 30 a day, counted from the stored rows.
+        RateLimiter::for('winx-disk-benchmarks', function (Request $request) {
+            return Limit::perHour(20)
+                ->by('winx-disk-bench:' . $request->ip())
+                ->response(fn (Request $request, array $headers) => response()->json([
+                    'success' => false,
+                    'error_code' => 'rate_limited',
+                    'message' => 'ส่งผลทดสอบถี่เกินไป — รอสักครู่แล้วส่งใหม่',
+                ], 429, $headers));
         });
 
         RateLimiter::for('comment-moderation', function ($request) {

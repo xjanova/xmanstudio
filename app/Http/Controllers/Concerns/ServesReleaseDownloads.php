@@ -28,6 +28,10 @@ trait ServesReleaseDownloads
      */
     protected function serveRelease(Request $request, Product $product, ?ProductVersion $version, string $backTo, ?string $fallbackName = null): Response
     {
+        if ($product->isComingSoon()) {
+            return $this->comingSoonDownload($request, $backTo);
+        }
+
         if (! $version) {
             return $this->downloadUnavailable($request, $backTo, 404, 'Version not found', 'ยังไม่มีไฟล์สำหรับดาวน์โหลด กรุณาลองใหม่ภายหลัง');
         }
@@ -39,7 +43,11 @@ trait ServesReleaseDownloads
         }
 
         // HEAD (curl -I, link preview) ไม่ได้โหลดไฟล์ไปจริง ไม่นับเป็นการดาวน์โหลด
-        if (! $request->isMethod('HEAD')) {
+        // โหลดต่อจากที่ค้าง (206 ที่ไม่ได้เริ่มจาก byte 0) และ 416 ก็ไม่ใช่การโหลดใหม่ — นับครั้งเดียวต่อไฟล์
+        $resumed = $response->getStatusCode() === 416
+            || ($response->getStatusCode() === 206 && ! str_starts_with((string) $response->headers->get('Content-Range'), 'bytes 0-'));
+
+        if (! $request->isMethod('HEAD') && ! $resumed) {
             $this->logReleaseDownload($request, $product, $version);
         }
 
@@ -94,6 +102,14 @@ trait ServesReleaseDownloads
     {
         return ! $request->wantsJson()
             && str_contains((string) $request->header('Accept'), 'text/html');
+    }
+
+    /** สินค้ายังเป็น Coming Soon: แอปได้ JSON 403 · เบราว์เซอร์กลับหน้าสินค้า (ซึ่งขึ้นป้าย Coming Soon) พร้อมข้อความ */
+    protected function comingSoonDownload(Request $request, string $backTo): Response
+    {
+        $e = DownloadUnavailableException::comingSoon();
+
+        return $this->downloadUnavailable($request, $backTo, $e->status, $e->getMessage(), $e->customerMessage);
     }
 
     protected function downloadUnavailable(

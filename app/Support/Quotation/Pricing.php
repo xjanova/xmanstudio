@@ -41,6 +41,25 @@ class Pricing
 
     public const DEFAULT_DUE_DAYS = 7;
 
+    /** The standing promotion: web work 50% off, every other service 70% off. */
+    public const SALE_WEB_DISCOUNT = 0.50;
+
+    public const SALE_OTHER_DISCOUNT = 0.70;
+
+    /**
+     * The promotion's discount, as a fraction, for a service category key (or
+     * a Service slug): keys starting with "web" get 50%, everything else 70%.
+     *
+     * The services pages, the quotation form and the AI assistant all quote
+     * sale prices. Each used to carry its own copy of this rule, so the
+     * assistant could keep quoting an old promotion after the pages changed:
+     * change it here and all of them follow.
+     */
+    public static function saleDiscount(?string $key): float
+    {
+        return str_starts_with((string) $key, 'web') ? self::SALE_WEB_DISCOUNT : self::SALE_OTHER_DISCOUNT;
+    }
+
     /**
      * Volume discount bands, lowest threshold first.
      *

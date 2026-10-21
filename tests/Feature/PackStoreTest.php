@@ -41,8 +41,8 @@ class PackStoreTest extends TestCase
         ]);
 
         // The app itself is a product too; its license keys are what the app
-        // sends as a bearer token.
-        $this->appProduct = $this->makeProduct('giggok', 'GigGok', 0);
+        // sends as a bearer token. A migration registers it, so it is already here.
+        $this->appProduct = Product::where('slug', 'giggok')->sole();
     }
 
     protected function makeProduct(string $slug, string $name, float $price): Product

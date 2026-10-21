@@ -29,6 +29,9 @@
     @keyframes sale-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 </style>
 
+{{-- The main campaign (DGX Spark bundle) — renders nothing when switched off in the admin. --}}
+@include('partials.campaign.dgx-spark-home')
+
 <!-- Hero Section with Fireflies -->
 <div class="relative h-screen overflow-hidden bg-gradient-to-b from-gray-950 via-black to-gray-950" x-data="{ loaded: false }" x-init="setTimeout(() => loaded = true, 100)" style="contain: layout style paint;">
     <!-- Generated backdrop artwork -->
@@ -60,13 +63,13 @@
 
             <!-- Main Title / Logo -->
             @php
-                $heroLogo = \App\Models\Setting::getValue('site_logo');
+                $heroLogo = \App\Support\BrandLogo::darkUrl();
             @endphp
             <h1 class="mb-8">
                 @if($heroLogo)
                     <div :class="loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-150'"
                          style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;">
-                        <img src="{{ asset('storage/' . $heroLogo) }}" alt="XMAN STUDIO" class="mx-auto h-28 md:h-40 lg:h-52 w-auto drop-shadow-2xl">
+                        <img src="{{ $heroLogo }}" alt="XMAN STUDIO" class="mx-auto h-28 md:h-40 lg:h-52 w-auto drop-shadow-2xl">
                     </div>
                 @else
                     <span class="block text-5xl md:text-7xl lg:text-9xl font-black text-white tracking-tight hyperdrive-title"
@@ -748,6 +751,8 @@
     .hero-firefly-dot.hf-cyan { background: #22d3ee; box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px rgba(34,211,238,0.4); }
     .hero-firefly-dot.hf-pink { background: #f472b6; box-shadow: 0 0 4px 2px #f472b6, 0 0 10px 4px rgba(244,114,182,0.4); }
 </style>
+{{-- The way back into the 3D XMAN Universe home (App\Support\UniverseHome). --}}
+@include('partials.universe.switch', ['aboveBottomNav' => true])
 @endsection
 
 @push('scripts')

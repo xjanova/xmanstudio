@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\AppAiBillingException;
 use App\Http\Controllers\Controller;
 use App\Models\AppAiUsage;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Services\AiChatService;
+use App\Services\AppAiBilling;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -33,14 +36,159 @@ use Illuminate\Support\Facades\Log;
  */
 class AppAiController extends Controller
 {
-    public function __construct(protected AiChatService $chat) {}
+    public function __construct(
+        protected AiChatService $chat,
+        protected AppAiBilling $billing,
+    ) {}
+
+    /**
+     * GET /api/ai/v1/account
+     *
+     * Everything the app's settings screen shows about paying for AI: is this
+     * device linked to an account, the wallet balance, today's spend against the
+     * daily cap, where to top up, and the models we offer with their prices.
+     *
+     * The model list is returned even to an unlinked device so it can show the
+     * prices before the user decides to link and top up.
+     */
+    public function account(Request $request): JsonResponse
+    {
+        $license = $this->resolveLicense($request);
+        if (! $license) {
+            return $this->fail('Invalid or expired license.', 401);
+        }
+
+        $userId = $license->user_id;
+        $models = $this->billing->models();
+
+        return response()->json([
+            'enabled' => $this->billing->enabled(),
+            'linked' => $userId !== null,
+            'link_url' => url('/giggok/link'),
+            'topup_url' => $this->billing->topupUrl(),
+            'currency' => AppAiBilling::CURRENCY,
+            'balance' => $userId ? $this->billing->balance($userId) : 0,
+            'daily_cap' => $this->billing->dailyCap(),
+            'today' => [
+                'spent' => $userId ? $this->billing->spentToday($userId) : 0,
+                'messages' => $userId ? $this->billing->messagesToday($userId) : 0,
+            ],
+            'models' => $models,
+            'default_model' => $models[0]['id'] ?? null,
+        ]);
+    }
+
+    /** License types that unlock BrainX Cloud - the cloud itself refuses demo/free keys. */
+    public const BRAINX_PAID_TYPES = [LicenseKey::TYPE_MONTHLY, LicenseKey::TYPE_YEARLY, LicenseKey::TYPE_LIFETIME];
+
+    /**
+     * POST /api/ai/v1/brainx
+     *
+     * Connects the app's Mind to the BrainX Cloud brain of the account this
+     * device is linked to, so it shares one brain with the Mind in BrainX on the
+     * owner's PC - same xman account, same storage, no second payment, no key
+     * to type.
+     *
+     * SECURITY: the BrainX key NEVER leaves this server. We sign in to the cloud
+     * here and hand the phone only a device token (bxc_...). A token is one
+     * device's, can be revoked from BrainX without touching the key, and dies
+     * with the subscription; the key is the account itself and cannot be
+     * rotated. The first version returned the key - anyone holding a phone's
+     * GigGok license (shown in settings, copied to the clipboard when linking)
+     * could have walked off with the whole brain.
+     *
+     * Only to the account's own linked device (bearer = that device's GigGok
+     * license), only for a paid key active right now, never another account's.
+     */
+    public function brainx(Request $request): JsonResponse
+    {
+        $license = $this->resolveLicense($request);
+        if (! $license) {
+            return $this->fail('Invalid or expired license.', 401);
+        }
+
+        $buyUrl = url('/products/brainx');
+        if ($license->user_id === null) {
+            return $this->noStore(response()->json([
+                'linked' => false,
+                'active' => false,
+                'link_url' => url('/giggok/link'),
+                'buy_url' => $buyUrl,
+            ]));
+        }
+
+        $key = $this->brainxKeyFor($license->user_id);
+        if (! $key) {
+            return $this->noStore(response()->json(['linked' => true, 'active' => false, 'buy_url' => $buyUrl]));
+        }
+
+        $device = $request->input('device_name');
+        $device = is_string($device) ? trim($device) : '';
+        $device = mb_substr(preg_replace('/[^\p{L}\p{N} ()._-]/u', '', $device) ?: 'GigGok', 0, 60);
+
+        try {
+            $res = Http::timeout(15)->acceptJson()
+                ->post(rtrim((string) config('services.brainx_cloud.url', 'https://serverbrain.xman4289.com'), '/') . '/api/cloud/login', [
+                    'licenseKey' => $key->license_key,
+                    'deviceName' => $device,
+                ]);
+        } catch (\Throwable $e) {
+            Log::warning('brainx cloud login unreachable', ['error' => $e->getMessage()]);
+
+            return $this->fail('BrainX Cloud cannot be reached right now - try again in a moment.', 503, 'cloud_unreachable');
+        }
+
+        if ($res->status() === 402) {
+            return $this->noStore(response()->json(['linked' => true, 'active' => false, 'expired' => true, 'buy_url' => $buyUrl]));
+        }
+        if ($res->status() === 401) {
+            // The cloud says the key is not (or no longer) valid for it
+            return $this->noStore(response()->json(['linked' => true, 'active' => false, 'buy_url' => $buyUrl]));
+        }
+        $token = $res->json('token');
+        if (! $res->successful() || ! is_string($token) || $token === '') {
+            Log::warning('brainx cloud login failed', ['status' => $res->status()]);
+
+            return $this->fail('BrainX Cloud could not sign this phone in - try again in a moment.', 502, 'cloud_failed');
+        }
+
+        return $this->noStore(response()->json([
+            'linked' => true,
+            'active' => true,
+            'token' => $token,
+            'account' => $res->json('account'),
+            'buy_url' => $buyUrl,
+        ]));
+    }
+
+    /** The account's paid BrainX key that is active now - lifetime first, then the longest-lasting. */
+    protected function brainxKeyFor(int $userId): ?LicenseKey
+    {
+        $product = Product::where('slug', 'brainx')->first();
+
+        return $product ? LicenseKey::where('product_id', $product->id)
+            ->where('user_id', $userId)
+            ->where('status', 'active')
+            ->whereIn('license_type', self::BRAINX_PAID_TYPES)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->orderByRaw('expires_at IS NULL DESC')
+            ->orderByDesc('expires_at')
+            ->first() : null;
+    }
+
+    protected function noStore(JsonResponse $res): JsonResponse
+    {
+        $res->headers->set('Cache-Control', 'no-store, private');
+
+        return $res;
+    }
 
     /**
      * POST /api/ai/v1/chat/completions
      */
     public function chatCompletions(Request $request): JsonResponse
     {
-        if (! config('appai.enabled', true)) {
+        if (! $this->billing->enabled()) {
             return $this->fail('The assistant service is turned off right now.', 503);
         }
 
@@ -50,6 +198,12 @@ class AppAiController extends Controller
         // correct thing to say to a device whose license we cannot resolve.
         if (! $license) {
             return $this->fail('Invalid or expired license.', 401);
+        }
+
+        // Every message is paid from the wallet of the account this device is
+        // linked to - free key or paid. No account = nobody to charge.
+        if ($license->user_id === null) {
+            return $this->fail('Link this device to your account first: xman4289.com/giggok/link', 403, 'not_linked');
         }
 
         $data = $request->validate([
@@ -67,16 +221,11 @@ class AppAiController extends Controller
         }
 
         $key = (string) $request->bearerToken();
-        $used = AppAiUsage::todayFor($key);
-        $limit = (int) config('appai.daily_limit', 200);
 
-        // 429 is what the app turns into "rate limited", which is exactly what
-        // a spent quota is from the user's side.
-        if ($limit > 0 && $used >= $limit) {
-            return $this->fail("Daily limit reached ($limit messages). It resets at midnight.", 429);
-        }
-
-        if (! $this->chat->isConfigured()) {
+        // Only models the admin offers, at the admin's price. Nothing offered =
+        // the service is not open, whatever the master switch says.
+        $offer = $this->billing->pick($data['model'] ?? null);
+        if ($offer === null || ! $this->chat->isConfigured()) {
             return $this->fail('The assistant is not configured yet.', 503);
         }
 
@@ -99,9 +248,40 @@ class AppAiController extends Controller
             return $this->fail('There is nothing to answer.', 422);
         }
 
+        // Pay first (under a wallet lock), answer second, refund on failure -
+        // see AppAiBilling for why it is this way round.
+        try {
+            $payment = $this->billing->charge($license->user_id, $offer['price'], $offer['id']);
+        } catch (AppAiBillingException $e) {
+            return match ($e->reason) {
+                // 402 is what the app turns into "top up your credit"
+                AppAiBillingException::INSUFFICIENT => $this->fail(
+                    'Not enough credit. Top up at xman4289.com/wallet/topup', 402, $e->reason),
+                AppAiBillingException::DAILY_CAP => $this->fail(
+                    'Daily spending limit reached. It resets at midnight.', 429, $e->reason),
+                default => $this->fail('Your wallet is suspended. Please contact us.', 403, $e->reason),
+            };
+        }
+
+        // Written before the call, so a second message sent while this one is
+        // still thinking already counts against today's cap.
+        $usage = AppAiUsage::create([
+            'user_id' => $license->user_id,
+            'license_key_id' => $license->id,
+            'license_key' => $key,
+            'model' => $offer['id'],
+            'message_count' => count($turns),
+            'chars_in' => $chars,
+            'ok' => false,
+            'price' => $offer['price'],
+            'wallet_transaction_id' => $payment?->id,
+            'ip_address' => $request->ip(),
+        ]);
+        $payment?->update(['reference_id' => $usage->id]);
+
         $result = ['success' => false, 'message' => null];
         try {
-            $result = $this->chat->chat($turns, $system, $this->allowedModel($data['model'] ?? null));
+            $result = $this->chat->chat($turns, $system, $offer['id']);
         } catch (\Throwable $e) {
             // Never hand an upstream error text to the app: it can carry the
             // provider name, our model choice, and sometimes fragments of the
@@ -112,74 +292,71 @@ class AppAiController extends Controller
         $answer = is_string($result['message'] ?? null) ? trim($result['message']) : '';
         $ok = ($result['success'] ?? false) && $answer !== '';
 
-        // Logged whether it worked or not - see AppAiUsage::todayFor().
-        AppAiUsage::create([
-            'user_id' => $license->user_id,
-            'license_key_id' => $license->id,
-            'license_key' => $key,
+        $usage->update([
             'provider' => $result['provider'] ?? null,
-            'model' => $result['model'] ?? null,
-            'message_count' => count($turns),
-            'chars_in' => $chars,
+            'model' => $result['model'] ?? $offer['id'],
             'chars_out' => mb_strlen($answer),
             'ok' => $ok,
-            'ip_address' => $request->ip(),
         ]);
 
         if (! $ok) {
-            return $this->fail('The assistant could not answer just now.', 502);
+            // No answer = no charge
+            if ($payment) {
+                try {
+                    $this->billing->refund($payment, $usage->id);
+                    $usage->update(['refunded' => true]);
+                } catch (\Throwable $e) {
+                    Log::error('app ai refund failed', ['usage' => $usage->id, 'error' => $e->getMessage()]);
+                }
+            }
+
+            return $this->fail('The assistant could not answer just now. You were not charged.', 502);
         }
+
+        $userId = $license->user_id;
 
         // OpenAI's shape, because that is what the app already parses.
         return response()->json([
             'id' => 'giggok-' . uniqid(),
             'object' => 'chat.completion',
             'created' => now()->timestamp,
-            'model' => $result['model'] ?? ($data['model'] ?? 'unknown'),
+            'model' => $offer['id'],
             'choices' => [[
                 'index' => 0,
                 'message' => ['role' => 'assistant', 'content' => $answer],
                 'finish_reason' => 'stop',
             ]],
-            // Not token counts - we do not get them from every provider. This
-            // is the quota the app may want to show, named so it cannot be
-            // mistaken for OpenAI billing units.
-            'giggok_quota' => ['used' => $used + 1, 'limit' => $limit],
+            // What this message cost and what is left, so the app's credit bar
+            // moves without asking again. Named so it cannot be mistaken for
+            // OpenAI's own usage block.
+            'giggok_billing' => [
+                'charged' => $offer['price'],
+                'currency' => AppAiBilling::CURRENCY,
+                'balance' => $this->billing->balance($userId),
+                'spent_today' => $this->billing->spentToday($userId),
+                'daily_cap' => $this->billing->dailyCap(),
+            ],
         ]);
     }
 
     /**
-     * The model this request may actually use, or null to keep ours.
-     *
-     * The app has a free model picker, but we pay for whatever it picks and
-     * models differ in price by more than an order of magnitude - so a request
-     * only gets its choice if an admin has explicitly listed that model.
-     *
-     * An empty allowlist (the default) ignores the request silently rather than
-     * refusing it: the app already tells the user "if the service does not
-     * offer the model you picked, ours is used instead", and failing the whole
-     * message over a model preference would be a worse trade.
+     * Errors in OpenAI's shape too, so the app reads error.message - plus a
+     * stable code the app can branch on without parsing English.
      */
-    protected function allowedModel(?string $requested): ?string
+    protected function fail(string $message, int $status, ?string $code = null): JsonResponse
     {
-        $requested = trim((string) $requested);
-        $allowed = (array) config('appai.allowed_models', []);
-
-        if ($requested === '' || $allowed === []) {
-            return null;
+        $error = ['message' => $message, 'type' => 'giggok_proxy'];
+        if ($code !== null) {
+            $error['code'] = $code;
+            if ($code === AppAiBillingException::INSUFFICIENT) {
+                $error['topup_url'] = $this->billing->topupUrl();
+            }
+            if ($code === 'not_linked') {
+                $error['link_url'] = url('/giggok/link');
+            }
         }
 
-        return in_array($requested, $allowed, true) ? $requested : null;
-    }
-
-    /**
-     * Errors in OpenAI's shape too, so the app reads error.message.
-     */
-    protected function fail(string $message, int $status): JsonResponse
-    {
-        return response()->json([
-            'error' => ['message' => $message, 'type' => 'giggok_proxy'],
-        ], $status);
+        return response()->json(['error' => $error], $status);
     }
 
     /**

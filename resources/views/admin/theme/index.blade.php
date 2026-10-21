@@ -2,7 +2,7 @@
 
 @section('title', 'ตั้งค่าธีม')
 @section('page-title', 'ตั้งค่าธีม')
-@section('page-description', 'เลือกธีมของเว็บไซต์ และธีมหลังบ้านสมาชิก')
+@section('page-description', 'เลือกธีมของเว็บไซต์ ธีมหลังบ้านแอดมิน และธีมหลังบ้านสมาชิก')
 
 @section('content')
 <div class="max-w-5xl mx-auto">
@@ -26,7 +26,7 @@
                         </svg>
                         จัดการธีมระบบ
                     </h1>
-                    <p class="text-white/80 text-lg">กำหนดธีมของเว็บไซต์ และธีมหลังบ้านสมาชิกแยกกัน</p>
+                    <p class="text-white/80 text-lg">กำหนดธีมของเว็บไซต์ หลังบ้านแอดมิน และหลังบ้านสมาชิกแยกกัน</p>
                 </div>
                 <div class="hidden lg:block">
                     <div class="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center shadow-xl">
@@ -76,7 +76,7 @@
                 </svg>
                 <div>
                     <p class="text-sm text-indigo-700 dark:text-indigo-300">
-                        <strong>หมายเหตุ:</strong> ใช้กับทุกคนเหมือนกัน ไม่มีการตั้งธีมรายคน — มีผลกับหน้าเว็บและหน้าแอดมิน · Retro และ Nova เปลี่ยนเฉพาะหน้าแรก หน้าอื่นกับหน้าแอดมินใช้แบบ Classic · หลังบ้านสมาชิกตั้งแยกได้ที่ด้านล่างของหน้านี้
+                        <strong>หมายเหตุ:</strong> ใช้กับทุกคนเหมือนกัน ไม่มีการตั้งธีมรายคน — มีผลกับหน้าเว็บเท่านั้น · Retro และ Nova เปลี่ยนเฉพาะหน้าแรก หน้าอื่นใช้แบบ Classic · หลังบ้านแอดมินและหลังบ้านสมาชิกตั้งแยกได้ที่ด้านล่างของหน้านี้
                     </p>
                 </div>
             </div>
@@ -97,13 +97,14 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
             @foreach($themes as $themeKey => $theme)
-                <label class="theme-card group cursor-pointer animate-fade-in" style="animation-delay: {{ 0.3 + ($loop->index * 0.1) }}s;">
+                {{-- Every theme-card label must stay `relative`: without it the sr-only radio is placed against <body>, far below the card, and clicking the card scrolls the whole h-screen layout out of view — a blank page. --}}
+                <label class="theme-card relative group cursor-pointer animate-fade-in" style="animation-delay: {{ 0.3 + ($loop->index * 0.1) }}s;">
                     <input type="radio" name="theme" value="{{ $themeKey }}"
                            class="sr-only peer"
                            {{ $currentTheme === $themeKey ? 'checked' : '' }}>
 
                     <div class="relative h-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border-3 transition-all duration-300
-                                {{ $currentTheme === $themeKey ? 'border-indigo-500 ring-4 ring-indigo-500/20 shadow-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                border-gray-200 dark:border-gray-700
                                 peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20 peer-checked:shadow-indigo-500/20
                                 hover:shadow-2xl hover:border-indigo-400 hover:-translate-y-2 transform">
 
@@ -317,6 +318,68 @@
         </div>
     </form>
 
+    <!-- Admin Panel Theme — ตั้งแยกจากธีมเว็บไซต์ เปลี่ยนธีมหน้าเว็บแล้วหลังบ้านแอดมินต้องไม่เปลี่ยนตาม (เจ้าของ 2026-10-05) -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-12 animate-fade-in" style="animation-delay: 0.55s;">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">ธีมหลังบ้านแอดมิน</h2>
+                <p class="text-gray-500 dark:text-gray-400">หน้าแอดมินทุกหน้าใช้ธีม <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $adminThemes[$adminTheme]['name'] }}</span> — ไม่เปลี่ยนตามธีมของเว็บไซต์</p>
+            </div>
+        </div>
+
+        <form action="{{ route('admin.theme.admin.update') }}" method="POST" id="adminThemeForm">
+            @csrf
+            @method('PUT')
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                @foreach($adminThemes as $optionKey => $option)
+                    <label class="theme-card relative group cursor-pointer">
+                        <input type="radio" name="admin_theme" value="{{ $optionKey }}"
+                               class="sr-only peer"
+                               {{ $adminTheme === $optionKey ? 'checked' : '' }}>
+
+                        <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
+                                    border-gray-200 dark:border-gray-700
+                                    peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
+                                    hover:border-indigo-400">
+                            <!-- ภาพย่อหลังบ้านแอดมิน: เมนูข้างสีเข้ม + การ์ดสถิติ -->
+                            <div class="flex w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 {{ $optionKey === 'premium' ? 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900' : 'bg-gray-100' }}">
+                                <div class="w-6 {{ $optionKey === 'premium' ? 'bg-gradient-to-b from-indigo-950 to-purple-900' : 'bg-gray-900' }}"></div>
+                                <div class="flex-1 p-1.5 space-y-1">
+                                    <div class="grid grid-cols-3 gap-0.5">
+                                        <div class="h-3 rounded-sm {{ $optionKey === 'premium' ? 'bg-emerald-400/60' : 'bg-white border border-gray-200' }}"></div>
+                                        <div class="h-3 rounded-sm {{ $optionKey === 'premium' ? 'bg-blue-400/60' : 'bg-white border border-gray-200' }}"></div>
+                                        <div class="h-3 rounded-sm {{ $optionKey === 'premium' ? 'bg-purple-400/60' : 'bg-white border border-gray-200' }}"></div>
+                                    </div>
+                                    <div class="h-5 rounded {{ $optionKey === 'premium' ? 'bg-white/10' : 'bg-white border border-gray-200' }}"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900 dark:text-white">{{ $option['name'] }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $option['description'] }}</p>
+                            </div>
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="group inline-flex items-center px-8 py-4 border border-transparent text-base font-bold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    บันทึกธีมหลังบ้านแอดมิน
+                </button>
+            </div>
+        </form>
+    </div>
+
     <!-- Member Area Theme — ตั้งแยกจากธีมเว็บไซต์ เปลี่ยนธีมหน้าเว็บแล้วหลังบ้านของลูกค้าต้องไม่เปลี่ยนตาม (เจ้าของ 2026-09-24) -->
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-12 animate-fade-in" style="animation-delay: 0.6s;">
         <div class="flex items-center gap-4 mb-6">
@@ -337,13 +400,13 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 @foreach($customerThemes as $optionKey => $option)
-                    <label class="theme-card group cursor-pointer">
+                    <label class="theme-card relative group cursor-pointer">
                         <input type="radio" name="customer_theme" value="{{ $optionKey }}"
                                class="sr-only peer"
                                {{ $customerTheme === $optionKey ? 'checked' : '' }}>
 
                         <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
-                                    {{ $customerTheme === $optionKey ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-200 dark:border-gray-700' }}
+                                    border-gray-200 dark:border-gray-700
                                     peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
                                     hover:border-indigo-400">
                             <!-- ภาพย่อหลังบ้าน: เมนูข้าง + เนื้อหา -->
@@ -374,6 +437,87 @@
             </div>
         </form>
     </div>
+
+    <!-- XMAN Universe — หน้าแรกแบบ 3D เต็มจอ ซ้อนอยู่บนธีมเว็บไซต์: เครื่องที่ไม่รองรับ (ไม่มี WebGL2, ตั้งลดการเคลื่อนไหว, แรมน้อย) ได้หน้าแรกของธีมตามเดิมอัตโนมัติ -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mt-12 animate-fade-in" style="animation-delay: 0.7s;">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-400 via-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                    <ellipse cx="12" cy="12" rx="10" ry="4" stroke-width="1.6" transform="rotate(-30 12 12)"/>
+                    <ellipse cx="12" cy="12" rx="10" ry="4" stroke-width="1.6" transform="rotate(30 12 12)"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">หน้าแรกจักรวาล 3D — XMAN Universe</h2>
+                <p class="text-gray-500 dark:text-gray-400">
+                    เลื่อนเมาส์แล้วเดินทางผ่านจักรวาล XMAN พร้อมเมนูวงแหวนและเสียง —
+                    ตอนนี้ <span class="font-semibold {{ $universeEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-300' }}">{{ $universeEnabled ? 'เปิดอยู่' : 'ปิดอยู่' }}</span>
+                </p>
+            </div>
+        </div>
+
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+            เครื่องที่ไม่รองรับ (ไม่มีการ์ดจอที่ใช้ WebGL2 ได้, ตั้งค่าลดการเคลื่อนไหว, แรมน้อย หรือเปิดโหมดประหยัดเน็ต)
+            และบอทของ Google จะเห็นหน้าแรกของธีม <span class="font-semibold">{{ $themes[$currentTheme]['name'] ?? $currentTheme }}</span> ตามเดิมโดยอัตโนมัติ
+            ผู้เข้าชมสลับไป-มาเองได้จากปุ่มในหน้า
+        </p>
+
+        <form action="{{ route('admin.theme.universe.update') }}" method="POST" id="universeForm">
+            @csrf
+            @method('PUT')
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                @foreach([1 => ['เปิด — ใช้หน้าแรก 3D', 'เครื่องที่รองรับเห็นจักรวาล 3D ที่เหลือเห็นหน้าเดิม'], 0 => ['ปิด — ใช้หน้าแรกของธีม', 'ทุกคนเห็นหน้าแรกของธีมเว็บไซต์']] as $value => [$label, $hint])
+                    <label class="theme-card relative group cursor-pointer">
+                        <input type="radio" name="home_universe" value="{{ $value }}"
+                               class="sr-only peer"
+                               {{ (int) $universeEnabled === $value ? 'checked' : '' }}>
+
+                        <div class="relative h-full flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-3 transition-all duration-300
+                                    border-gray-200 dark:border-gray-700
+                                    peer-checked:border-indigo-500 peer-checked:ring-4 peer-checked:ring-indigo-500/20
+                                    hover:border-indigo-400">
+                            <!-- ภาพย่อ: จักรวาลกับดาวแกนกลาง หรือหน้าแรกแบบเรียบ -->
+                            <div class="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 {{ $value ? 'bg-gradient-to-br from-gray-950 via-indigo-950 to-fuchsia-950' : 'bg-gray-50' }}">
+                                @if($value)
+                                    <div class="absolute left-1/2 top-1/2 w-5 h-5 -ml-2.5 -mt-2.5 rounded-full bg-amber-200 shadow-[0_0_14px_4px_rgba(255,212,121,.7)]"></div>
+                                    <div class="absolute left-1/2 top-1/2 w-16 h-5 -ml-8 -mt-2.5 rounded-[50%] border border-cyan-300/70 rotate-[-18deg]"></div>
+                                    <div class="absolute left-2 top-2 w-1 h-1 rounded-full bg-white/80"></div>
+                                    <div class="absolute right-3 bottom-3 w-1 h-1 rounded-full bg-fuchsia-300"></div>
+                                    <div class="absolute right-5 top-3 w-0.5 h-0.5 rounded-full bg-cyan-200"></div>
+                                @else
+                                    <div class="p-1.5 space-y-1">
+                                        <div class="h-2 rounded bg-gray-300"></div>
+                                        <div class="h-3 rounded bg-white border border-gray-200"></div>
+                                        <div class="h-3 rounded bg-white border border-gray-200"></div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900 dark:text-white">{{ $label }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $hint }}</p>
+                            </div>
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap gap-4 text-sm">
+                    <a href="{{ url('/') }}" target="_blank" rel="noopener" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">ดูหน้าแรก ↗</a>
+                    <a href="{{ \App\Support\UniverseHome::classicUrl() }}" target="_blank" rel="noopener" class="font-semibold text-gray-600 dark:text-gray-300 hover:underline">ดูหน้าแรกแบบเดิม ↗</a>
+                </div>
+                <button type="submit"
+                        class="group inline-flex items-center px-8 py-4 border border-transparent text-base font-bold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    บันทึกหน้าแรก 3D
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 @push('scripts')
@@ -396,6 +540,14 @@
 /* Theme card selection animation */
 .theme-card input[type="radio"]:checked + div {
     animation: selectPulse 0.3s ease-out;
+}
+
+/* The selected card's border and ring. admin-premium's own .bg-white / .shadow-lg rules sit outside
+   Tailwind's cascade layers, so they beat peer-checked:border-indigo-500 / ring-4 and every card
+   there looked unselected. */
+.theme-card input[type="radio"]:checked + div {
+    border-color: rgb(99 102 241) !important;
+    box-shadow: 0 0 0 4px rgb(99 102 241 / 0.3), 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
 }
 
 @keyframes selectPulse {

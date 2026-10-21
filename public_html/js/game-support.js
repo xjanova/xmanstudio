@@ -1,0 +1,14 @@
+document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
+  const status = button.parentElement.querySelector('[data-copy-status]');
+  try { await navigator.clipboard.writeText(button.dataset.copy); status.textContent = 'คัดลอกเลขบัญชีแล้ว'; }
+  catch { status.textContent = 'คัดลอกเลขบัญชีด้านบนได้เลย'; }
+}));
+document.querySelectorAll('[data-amount]').forEach(button => button.addEventListener('click', () => {
+  const input = document.querySelector('#donation-amount'); if (input) { input.value = button.dataset.amount; input.focus(); }
+}));
+document.querySelectorAll('[data-menu]').forEach(button => button.addEventListener('click', () => {
+  const menu = document.getElementById(button.getAttribute('aria-controls'));
+  const open = menu.dataset.open !== '1';
+  menu.dataset.open = open ? '1' : '0';
+  button.setAttribute('aria-expanded', String(open));
+}));

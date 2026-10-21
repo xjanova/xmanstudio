@@ -1,4 +1,6 @@
 @extends($customerLayout ?? 'layouts.customer')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('gpuxmine'); @endphp
 
 @section('title', 'เครื่องของฉัน · GPUxMINE')
 @section('page-title')<x-bi th="เครื่องของฉัน (GPUxMINE)" en="My GPUs (GPUxMINE)" />@endsection
@@ -110,6 +112,9 @@
                                 <span x-show="sending" x-cloak><x-bi th="กำลังออกรหัส…" en="Issuing…" /></span>
                             </button>
                         </form>
+                        @if($csDownload)
+                            <span class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur border border-white/20 text-white text-sm font-medium hover:bg-white/20 transition-all" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ $downloadUrl }}" target="_blank" rel="noopener"
                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur border border-white/20 text-white text-sm font-medium hover:bg-white/20 transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,6 +122,7 @@
                             </svg>
                             <x-bi th="ดาวน์โหลดโปรแกรม" en="Download client" />
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>

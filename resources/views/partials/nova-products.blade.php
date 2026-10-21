@@ -1,5 +1,6 @@
 {{-- Nova products — real rows from the `products` table, passed in by
-     HomeController as $featuredProducts (is_active, newest 6).
+     HomeController as $featuredProducts (on sale now, newest 9).
+     Pictures: Product::artwork_url — the real one set in the admin, else product.xman4289.com's.
      The section is skipped entirely when the catalogue is empty so a fresh
      install never renders an empty grid. --}}
 @if(isset($featuredProducts) && $featuredProducts->isNotEmpty())
@@ -24,14 +25,14 @@
             </p>
         </header>
 
-        <div class="nova-grid">
+        <div class="nova-grid nova-grid--3">
             @foreach($featuredProducts as $product)
                 @php $accent = $novaAccents[$loop->index % count($novaAccents)]; @endphp
                 <a href="{{ route('products.show', $product->slug) }}"
                    class="nova-card nova-reveal"
                    style="--nv-accent: {{ $accent }}; transition-delay: {{ $loop->index * 0.05 }}s;">
 
-                    @if($product->is_coming_soon)
+                    @if($product->isComingSoon())
                         <span class="nova-badge nova-badge--soon">เร็วๆ นี้ / Soon</span>
                     @endif
 
@@ -57,7 +58,7 @@
                         <p class="nova-card__body">ดูรายละเอียดผลิตภัณฑ์และแพ็กเกจราคาทั้งหมด</p>
                     @endif
 
-                    @if($product->is_coming_soon)
+                    @if($product->isComingSoon())
                         <div class="nova-price" style="color:var(--nv-fg-3);font-size:15px;">
                             กำลังจะเปิดตัว <span class="nova-price__unit">Coming soon</span>
                         </div>
@@ -66,6 +67,7 @@
                             ฿{{ number_format($product->price, 0) }}
                             <span class="nova-price__unit">THB</span>
                         </div>
+                        <x-tpix-price :thb="$product->price" :tpix="$product->price_tpix" />
                     @else
                         <div class="nova-price" style="color:var(--nv-mint);">
                             ฟรี <span class="nova-price__unit">Free</span>

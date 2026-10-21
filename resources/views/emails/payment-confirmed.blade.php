@@ -57,7 +57,7 @@
         <tbody>
             @foreach($order->items as $item)
             <tr>
-                <td>{{ $item->product->name ?? $item->product_name }}</td>
+                <td>{{ $item->product->name ?? $item->product_name }}@if($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements)) (+{{ $storagePack }} GB)@endif</td>
                 <td style="text-align: center;">{{ $item->quantity }}</td>
                 {{-- subtotal: order_items has no `total` column, which printed ฿0.00 on every line --}}
                 <td style="text-align: right;">฿{{ number_format($item->subtotal, 2) }}</td>
@@ -116,9 +116,13 @@
         @endif
     </div>
 
-    @if($licenseKeys->count() > 0)
+    @if(!empty($hasReceipt))
     <div style="background: #131a33; padding: 16px; border-radius: 8px; font-size: 13px; color: #8f9cc0; margin-top: 24px; text-align: center;">
-        ใบเสร็จรับเงินแนบมาพร้อมอีเมลนี้ หรือดาวน์โหลดได้ที่หน้าบัญชีของคุณ
+        &#128206; ใบเสร็จรับเงิน (PDF) แนบมาพร้อมอีเมลนี้
+        @if($order->user_id)
+            <br>หรือ <a href="{{ route('orders.receipt', $order) }}" style="color: #60a5fa;">ดาวน์โหลดใบเสร็จอีกครั้ง</a>
+            ได้ทุกเมื่อจากประวัติคำสั่งซื้อในบัญชีของคุณ
+        @endif
     </div>
     @endif
 @endsection

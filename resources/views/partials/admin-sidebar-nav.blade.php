@@ -19,6 +19,13 @@
         $pendingPaymentOrders = $pendingTopups = $activeDevices = $pendingOrders = $onlineVpnDevices = 0;
     }
 
+    // ออเดอร์แคมเปญ DGX Spark ที่รอเจ้าของ (สลิปรอตรวจ + ชำระแล้วรอสั่งเครื่อง) — แยก try เหมือนกัน
+    try {
+        $dgxActions = \App\Support\DgxSparkCampaign::needsActionCount();
+    } catch (\Throwable $e) {
+        $dgxActions = 0;
+    }
+
     // รายได้ GPUxMINE ที่รอแอดมินตัดสิน — ไม่มีใครกดก็ไม่มีวันจ่าย (แยก try: ตารางนี้พังต้องไม่ลากตัวเลขอื่นเป็นศูนย์)
     try {
         $gpuxmineReview = \App\Models\GpuJobEarning::where('status', \App\Models\GpuJobEarning::STATUS_REVIEW)->count();
@@ -48,16 +55,25 @@
 @endphp
 
 {{-- Dashboard --}}
+<a href="{{ route('admin.gameshub.dashboard') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.gameshub.*', 'admin.game-support.*') ? $linkActive : $linkInactive }}">XGamesHub · บริจาค ไอเท็ม รีวิว ความเห็น</a>
 <div class="pb-2 mb-1 border-b border-white/5 space-y-1">
     <a href="{{ route('admin.analytics.index') }}"
        class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.analytics*') ? $linkActive : $linkInactive }}">
         <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Analytics
     </a>
+    <a href="{{ route('admin.campaigns.dgx-spark') }}"
+       class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.campaigns.*') ? $linkActive : $linkInactive }}">
+        <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+        แคมเปญ DGX Spark · ออเดอร์
+        @if($dgxActions > 0)
+        <span class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full" title="รอตรวจสลิป / รอสั่งเครื่อง">{{ $dgxActions }}</span>
+        @endif
+    </a>
     <a href="{{ route('admin.mockup') }}"
        class="flex items-center px-3 py-2 text-[13px] rounded-lg transition-all duration-200 border {{ request()->routeIs('admin.mockup') ? $linkActive : $linkInactive }}">
         <svg class="w-4 h-4 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-        Premium Dashboard
+        ตัวอย่างแดชบอร์ด (ข้อมูลสมมติ)
     </a>
 </div>
 
@@ -226,6 +242,10 @@
         <a href="{{ route('admin.localvpn.traffic') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.localvpn.traffic') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Traffic Logs
+        </a>
+        <a href="{{ route('admin.localvpn.fleet.nodes') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.localvpn.fleet.*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+            Relay Fleet
         </a>
         <a href="{{ route('admin.localvpn.settings') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.localvpn.settings') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -487,7 +507,7 @@
 </div>
 
 {{-- การเงิน --}}
-<div x-data="{ open: {{ request()->routeIs('admin.wallets.*') || request()->routeIs('admin.coupons*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
+<div x-data="{ open: {{ request()->routeIs('admin.wallets.*') || request()->routeIs('admin.coupons*') || request()->routeIs('admin.tpix-payments.*') ? 'true' : 'false' }} }" class="{{ $sectionClass }}">
     <button @click="open = !open" :class="open ? '{{ $headerBtnActiveClass }}' : '{{ $headerBtnClass }}'">
         <span>การเงิน</span>
         @if($pendingTopups + $pendingWithdrawals > 0)<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ $pendingTopups + $pendingWithdrawals }}</span>@endif
@@ -527,6 +547,14 @@
         <a href="{{ route('admin.wallets.settings') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.wallets.settings') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             ตั้งค่า Wallet
+        </a>
+        <a href="{{ route('admin.tpix-payments.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.tpix-payments.*') && ! request()->routeIs('admin.tpix-payments.reports*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8 8.5h8M12 8.5v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            ชำระด้วย TPIX
+        </a>
+        <a href="{{ route('admin.tpix-payments.reports') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.tpix-payments.reports*') ? $linkActive : $linkInactive }}">
+            <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+            รายงาน TPIX
         </a>
         <a href="{{ route('admin.coupons.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.coupons*') ? $linkActive : $linkInactive }}">
             <svg class="{{ $iconClass }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>

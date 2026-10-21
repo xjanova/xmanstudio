@@ -132,9 +132,30 @@ function motion() {
   }, { passive: true });
 }
 
+/* BrainX Cloud's price from the hub's catalogue (assets/js/hub/catalog.js): the
+   shop's `brainx` plan, live once the shop answers. */
+function cloudNote() {
+  const el = $('#cloud-note'), c = window.XPH && window.XPH.catalog;
+  if (!el) return;
+  ['th', 'en'].forEach(l => {
+    const t = el.getAttribute('data-tpl-' + l);
+    if (t) el.setAttribute('data-' + l, c ? c.fill(t, 'brainx', l) : t.replace(/\[\[[\s\S]*?\]\]/g, '').replace(/\{\w+\}/g, ''));
+  });
+}
+
+/** BrainX itself: Coming Soon until the shop sells it (owner, 2026-10-12: no download, free or not,
+    until that changes). The page ships Coming Soon; [data-brainx="live"] parts appear once it is on sale. */
+function brainxGate() {
+  const c = window.XPH && window.XPH.catalog;
+  const bx = c && c.byId('brainx');
+  const live = !!bx && bx.status === 'live';
+  document.querySelectorAll('[data-brainx]').forEach(el => { el.hidden = (el.getAttribute('data-brainx') === 'live') !== live; });
+}
+
 function boot() {
   document.documentElement.classList.add('js');
-  render(); language(); motion();
+  brainxGate(); cloudNote(); render(); language(); motion();
+  addEventListener('xph:catalog', () => { brainxGate(); cloudNote(); sync(); });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

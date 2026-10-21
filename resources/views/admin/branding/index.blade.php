@@ -90,54 +90,79 @@
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">โลโก้เว็บไซต์</h3>
         </div>
 
+        {{-- Delete buttons point at these forms through form="…": a form inside the upload form
+             would be dropped by the HTML parser and the button would post the upload instead. --}}
+        <form id="delete-logo-form" action="{{ route('admin.branding.logo.delete') }}" method="POST" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+        <form id="delete-logo-dark-form" action="{{ route('admin.branding.logo-dark.delete') }}" method="POST" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+
         <form action="{{ route('admin.branding.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
             <div class="space-y-6">
-                <!-- Current Logo Preview -->
-                @if($settings['site_logo'])
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">โลโก้ปัจจุบัน</label>
-                        <div class="flex items-center space-x-4">
-                            <div class="p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border border-gray-200 dark:border-gray-600 rounded-xl">
-                                <img src="{{ asset('storage/' . $settings['site_logo']) }}"
-                                     alt="Current Logo"
-                                     class="max-h-16 object-contain">
-                            </div>
-                            <form action="{{ route('admin.branding.logo.delete') }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                        onclick="return confirm('คุณแน่ใจหรือไม่ที่จะลบโลโก้นี้?')"
-                                        class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 font-medium shadow-lg text-sm">
-                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                    ลบโลโก้
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @else
-                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-2 border-dashed border-gray-300 dark:border-gray-500 rounded-xl p-8 text-center">
-                        <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-500 flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-gray-400 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        <p class="text-gray-500 dark:text-gray-400">ยังไม่มีโลโก้</p>
-                    </div>
-                @endif
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    โลโก้มี 2 แบบ: <strong>พื้นหลังสว่าง</strong> (ตัวอักษรสีเข้ม — เมนูโหมดสว่าง, หน้าเข้าสู่ระบบ, ระบบสมาชิก, ใบเสนอราคา/ใบเสร็จ PDF)
+                    และ <strong>พื้นหลังมืด</strong> (ตัวอักษรสีอ่อน — โหมดจักรวาล 3D, โหมดมืด, footer, หลังบ้าน, อีเมล, ภาพแชร์โซเชียล)
+                </p>
 
-                <!-- Logo Upload -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">อัปโหลดโลโก้ใหม่</label>
-                    <input type="file"
-                           name="logo"
-                           accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
-                           class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-fuchsia-500 file:to-pink-600 file:text-white hover:file:from-fuchsia-600 hover:file:to-pink-700 file:cursor-pointer file:shadow-lg file:transition-all file:duration-300">
-                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">รองรับไฟล์: PNG, JPG, JPEG, SVG, WEBP (ขนาดไม่เกิน 2MB)</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {{-- Light grounds --}}
+                    <div class="space-y-3">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">โลโก้สำหรับพื้นหลังสว่าง</label>
+                        <div class="h-32 p-4 bg-white border border-gray-200 dark:border-gray-600 rounded-xl flex items-center justify-center">
+                            @if($settings['site_logo'])
+                                <img src="{{ asset('storage/' . $settings['site_logo']) }}" alt="โลโก้พื้นหลังสว่าง" class="max-h-24 max-w-full object-contain">
+                            @else
+                                <span class="text-sm text-gray-400">ยังไม่มีโลโก้</span>
+                            @endif
+                        </div>
+                        <input type="file"
+                               name="logo"
+                               accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                               class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-fuchsia-500 file:to-pink-600 file:text-white hover:file:from-fuchsia-600 hover:file:to-pink-700 file:cursor-pointer file:shadow-lg file:transition-all file:duration-300">
+                        @if($settings['site_logo'])
+                            <button type="submit" form="delete-logo-form"
+                                    onclick="return confirm('คุณแน่ใจหรือไม่ที่จะลบโลโก้พื้นหลังสว่าง?')"
+                                    class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 font-medium shadow-lg text-sm">
+                                ลบโลโก้
+                            </button>
+                        @endif
+                    </div>
+
+                    {{-- Dark grounds --}}
+                    <div class="space-y-3">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">โลโก้สำหรับพื้นหลังมืด</label>
+                        <div class="h-32 p-4 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-gray-700 rounded-xl flex items-center justify-center">
+                            @if($settings['site_logo_dark'])
+                                <img src="{{ asset('storage/' . $settings['site_logo_dark']) }}" alt="โลโก้พื้นหลังมืด" class="max-h-24 max-w-full object-contain">
+                            @elseif($settings['site_logo'])
+                                <img src="{{ \App\Support\BrandLogo::darkUrl() }}" alt="โลโก้พื้นหลังมืด (สร้างอัตโนมัติ)" class="max-h-24 max-w-full object-contain">
+                            @else
+                                <span class="text-sm text-gray-400">ยังไม่มีโลโก้</span>
+                            @endif
+                        </div>
+                        <input type="file"
+                               name="logo_dark"
+                               accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                               class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-indigo-500 file:to-violet-600 file:text-white hover:file:from-indigo-600 hover:file:to-violet-700 file:cursor-pointer file:shadow-lg file:transition-all file:duration-300">
+                        @if($settings['site_logo_dark'])
+                            <button type="submit" form="delete-logo-dark-form"
+                                    onclick="return confirm('คุณแน่ใจหรือไม่ที่จะลบโลโก้พื้นหลังมืด? ระบบจะกลับไปใช้โลโก้พื้นหลังสว่างที่แปลงตัวอักษรเป็นสีขาวแทน')"
+                                    class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 font-medium shadow-lg text-sm">
+                                ลบโลโก้พื้นหลังมืด
+                            </button>
+                        @elseif($settings['site_logo'])
+                            <p class="text-xs text-gray-500 dark:text-gray-400">ยังไม่ได้อัปโหลด — ตอนนี้ใช้โลโก้พื้นหลังสว่างที่แปลงตัวอักษรสีดำเป็นสีขาวให้อัตโนมัติ</p>
+                        @endif
+                    </div>
                 </div>
+
+                <p class="text-xs text-gray-500 dark:text-gray-400">รองรับไฟล์: PNG, JPG, JPEG, SVG, WEBP (ขนาดไม่เกิน 2MB) — แนะนำ PNG พื้นหลังโปร่งใส กว้าง 1200px</p>
 
                 <div class="flex justify-end">
                     <button type="submit"
@@ -154,6 +179,10 @@
 
     <!-- Favicon Settings -->
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
+        <form id="delete-favicon-form" action="{{ route('admin.branding.favicon.delete') }}" method="POST" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
         <div class="flex items-center mb-6">
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center mr-4 shadow-lg">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,10 +206,7 @@
                                      alt="Current Favicon"
                                      class="h-8 w-8">
                             </div>
-                            <form action="{{ route('admin.branding.favicon.delete') }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
+                            <button type="submit" form="delete-favicon-form"
                                         onclick="return confirm('คุณแน่ใจหรือไม่ที่จะลบ favicon นี้?')"
                                         class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 font-medium shadow-lg text-sm">
                                     <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +214,6 @@
                                     </svg>
                                     ลบ Favicon
                                 </button>
-                            </form>
                         </div>
                     </div>
                 @else
@@ -238,11 +263,11 @@
                 <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
                     <li class="flex items-start">
                         <span class="w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                        <span><strong>โลโก้:</strong> แนะนำให้ใช้ไฟล์ PNG หรือ SVG พื้นหลังโปร่งใส ขนาดประมาณ 200-300px กว้าง</span>
+                        <span><strong>โลโก้:</strong> แนะนำ PNG พื้นหลังโปร่งใส กว้างประมาณ 1200px อัปโหลดทั้งแบบพื้นหลังสว่างและพื้นหลังมืดเพื่อให้ชัดทุกจุด</span>
                     </li>
                     <li class="flex items-start">
                         <span class="w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>
-                        <span><strong>Favicon:</strong> แนะนำให้ใช้ไฟล์ PNG ขนาด 32x32px หรือ ICO ขนาด 16x16px</span>
+                        <span><strong>Favicon:</strong> แนะนำ PNG สี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส 512x512px — ระบบย่อเป็น favicon.ico, ไอคอนแอป และโลโก้ที่ Google ใช้ให้เอง</span>
                     </li>
                     <li class="flex items-start">
                         <span class="w-2 h-2 rounded-full bg-blue-500 mr-2 mt-1.5 flex-shrink-0"></span>

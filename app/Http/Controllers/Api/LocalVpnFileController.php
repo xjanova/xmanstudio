@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
-use App\Models\Product;
 use App\Models\VpnFileSeeder;
 use App\Models\VpnNetwork;
 use App\Models\VpnNetworkMember;
 use App\Models\VpnSharedFile;
+use App\Support\LocalVpnLicenses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -273,44 +273,14 @@ class LocalVpnFileController extends Controller
         }
     }
 
+    /**
+     * File transfer is part of the free tier: the key the device sent if it holds it, else its best
+     * usable key, else its FREE key. It used to take the machine's first key whatever it was, so a
+     * device whose trial had ended could get its expired DEMO key back and be refused.
+     */
     private function validateDeviceAuth(Request $request): ?LicenseKey
     {
-        $licenseKey = $request->input('license_key');
-        $machineId = $request->input('machine_id');
-
-        if (! $machineId) {
-            return null;
-        }
-
-        $product = Product::where('slug', 'localvpn')->where('requires_license', true)->first();
-        if (! $product) {
-            return null;
-        }
-
-        // Try license_key + machine_id first (paid users)
-        if ($licenseKey) {
-            $license = LicenseKey::where('license_key', $licenseKey)
-                ->where('product_id', $product->id)
-                ->where('machine_id', $machineId)
-                ->where('status', 'active')
-                ->first();
-
-            if ($license && ! $license->isExpired()) {
-                return $license;
-            }
-        }
-
-        // Fallback: find any active license for this machine_id (free users)
-        $license = LicenseKey::where('product_id', $product->id)
-            ->where('machine_id', $machineId)
-            ->where('status', 'active')
-            ->first();
-
-        if (! $license || $license->isExpired()) {
-            return null;
-        }
-
-        return $license;
+        return LocalVpnLicenses::forDevice($request->input('license_key'), $request->input('machine_id'));
     }
 
     private function formatFile(VpnSharedFile $file): array

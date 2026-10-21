@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use App\Support\ContactLinks;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -72,7 +73,7 @@ class LineNotifyService
     protected function sendEmailFallback(string $message): bool
     {
         try {
-            $adminEmail = config('mail.admin_email', 'admin@xmanstudio.com');
+            $adminEmail = config('mail.admin_email') ?: ContactLinks::email();
 
             // Store notification in database instead if email fails
             Log::info('Notification stored: ' . $message);

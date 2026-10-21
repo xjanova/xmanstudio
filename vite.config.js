@@ -5,7 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            // universe.*: the 3D home page (home-universe.blade.php) — its own
+            // entry so three.js never ships with the rest of the site.
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/css/universe.css', 'resources/js/universe/main.js'],
             refresh: true,
             publicDirectory: 'public_html',
         }),
@@ -17,6 +19,18 @@ export default defineConfig({
     // behind the storage link, all served again under /build/. The Laravel plugin's
     // `publicDirectory` above is what points the build at public_html.
     publicDir: false,
+    build: {
+        rolldownOptions: {
+            output: {
+                // three.js in a chunk of its own: its hash only moves when the
+                // library does, so a deploy that touches the universe's own code
+                // leaves returning visitors' copy (~150 KB gzipped) in their cache.
+                codeSplitting: {
+                    groups: [{ name: 'three', test: /[\\/]node_modules[\\/]three[\\/]/ }],
+                },
+            },
+        },
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

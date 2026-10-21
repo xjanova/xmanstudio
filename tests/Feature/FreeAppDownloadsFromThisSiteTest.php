@@ -149,7 +149,7 @@ class FreeAppDownloadsFromThisSiteTest extends TestCase
 
     public function test_the_chanthra_download_comes_from_this_site(): void
     {
-        $product = Product::where('slug', 'chanthra-studio')->sole();
+        $product = $this->openChanthra();
         $this->release($product, 'chanthra-studio', '0.10.0', 'ChanthraStudio-v0.10.0-win-x64.zip');
         $this->fakeGithub('chanthra-studio', '0.10.0');
 
@@ -165,6 +165,7 @@ class FreeAppDownloadsFromThisSiteTest extends TestCase
     public function test_before_chanthra_has_a_release_the_button_goes_back_to_its_page(): void
     {
         // ยัง sync ไม่ทัน / GitHub ไม่ให้ release — ต้องไม่พาลูกค้าไป GitHub แทน
+        $this->openChanthra();
         Http::fake(['api.github.com/repos/xjanova/chanthra-studio/releases/latest' => Http::response(['message' => 'Not Found'], 404)]);
 
         $this->get('/chanthra-studio/download')
@@ -174,6 +175,8 @@ class FreeAppDownloadsFromThisSiteTest extends TestCase
 
     public function test_the_chanthra_pages_link_to_this_site_and_never_mention_github(): void
     {
+        $this->openChanthra();
+
         foreach (['/chanthra-studio', '/chanthra-studio/manual', '/chanthra-studio/pricing'] as $page) {
             $html = $this->get($page)->assertOk()->getContent();
 
@@ -183,6 +186,43 @@ class FreeAppDownloadsFromThisSiteTest extends TestCase
                 $this->assertStringContainsString('href="' . route('chanthra-studio.download') . '"', $html, $page);
             }
         }
+    }
+
+    /**
+     * กฎเจ้าของ 2026-10-12: สินค้าที่ตั้ง Coming Soon ห้ามโหลดได้จากทุกจุด (แทนกฎเดิม "เร็ว ๆ นี้ก็โหลดได้")
+     * Chanthra ลงทะเบียนเป็น Coming Soon — มี release แล้วก็ยังโหลดไม่ได้ และทุกหน้าขึ้นป้ายแทนปุ่ม
+     */
+    public function test_while_chanthra_is_coming_soon_nothing_downloads_and_its_pages_say_so(): void
+    {
+        $product = Product::where('slug', 'chanthra-studio')->sole();
+        $this->assertTrue($product->isComingSoon());
+        $this->release($product, 'chanthra-studio', '0.10.0', 'ChanthraStudio-v0.10.0-win-x64.zip');
+        $this->fakeGithub('chanthra-studio', '0.10.0');
+
+        // ปุ่มในเว็บ → กลับหน้า Chanthra พร้อมข้อความ · ตัวอัปเดตในแอป → JSON 403
+        $this->get('/chanthra-studio/download')
+            ->assertRedirect(route('chanthra-studio.detail'))
+            ->assertSessionHas('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
+        $this->get('/chanthra-studio/download/0.10.0', ['Accept' => '*/*'])->assertForbidden();
+        $this->getJson('/api/v1/product/chanthra-studio/update/check?current_version=0.0.1')
+            ->assertOk()
+            ->assertJsonPath('has_update', false)
+            ->assertJsonPath('download_url', '')
+            ->assertJsonPath('coming_soon', true);
+        $this->getJson('/api/v1/products/chanthra-studio/version')
+            ->assertOk()
+            ->assertJsonPath('download_url', null)
+            ->assertJsonPath('coming_soon', true);
+        $this->assertSame(0, DownloadLog::count());
+
+        foreach (['/chanthra-studio', '/chanthra-studio/manual', '/chanthra-studio/pricing'] as $page) {
+            $html = $this->get($page)->assertOk()->getContent();
+
+            $this->assertStringNotContainsString(route('chanthra-studio.download'), $html, $page);
+            $this->assertStringContainsString('data-coming-soon', $html, $page);
+            $this->assertStringContainsString('Coming Soon', $html, $page);
+        }
+        $this->assertStringNotContainsString('/cart/add/chanthra-studio', $this->get('/chanthra-studio/pricing')->getContent());
     }
 
     public function test_the_product_url_the_chanthra_app_opens_lands_on_the_chanthra_page(): void
@@ -270,7 +310,7 @@ class FreeAppDownloadsFromThisSiteTest extends TestCase
     {
         $apps = [
             ['product' => $this->autotradex(), 'repo' => 'autotradex', 'version' => '0.3.0', 'file' => 'AutoTradeX-v0.3.0-win-x64-portable.zip', 'route' => 'autotradex.download'],
-            ['product' => Product::where('slug', 'chanthra-studio')->sole(), 'repo' => 'chanthra-studio', 'version' => '0.10.0', 'file' => 'ChanthraStudio-v0.10.0-win-x64.zip', 'route' => 'chanthra-studio.download'],
+            ['product' => $this->openChanthra(), 'repo' => 'chanthra-studio', 'version' => '0.10.0', 'file' => 'ChanthraStudio-v0.10.0-win-x64.zip', 'route' => 'chanthra-studio.download'],
             ['product' => $this->aipray(), 'repo' => 'Aipray', 'version' => '1.2.4', 'file' => 'aipray-1.2.4-universal.apk', 'route' => 'aipray.download'],
         ];
 
@@ -300,7 +340,7 @@ class FreeAppDownloadsFromThisSiteTest extends TestCase
 
     public function test_a_versioned_download_is_that_exact_file_even_after_a_newer_release(): void
     {
-        $product = Product::where('slug', 'chanthra-studio')->sole();
+        $product = $this->openChanthra();
         // sync ปิดเวอร์ชันเก่าเมื่อตัวใหม่เข้ามา — แอปที่เพิ่งได้ sha256 ของตัวเก่าจาก update/check ต้องยังโหลดตัวนั้นได้
         $this->release($product, 'chanthra-studio', '0.9.0', 'ChanthraStudio-v0.9.0-win-x64.zip')->update(['is_active' => false]);
         $this->release($product, 'chanthra-studio', '0.10.0', 'ChanthraStudio-v0.10.0-win-x64.zip');
@@ -315,6 +355,15 @@ class FreeAppDownloadsFromThisSiteTest extends TestCase
     }
 
     // ── helpers ───────────────────────────────────────────────────────
+
+    /** Chanthra เปิดตัวแล้ว (ไม่ใช่ Coming Soon) — ทางโหลดของมันทำงานแบบแอปฟรีตัวอื่น */
+    private function openChanthra(): Product
+    {
+        $product = Product::where('slug', 'chanthra-studio')->sole();
+        $product->update(['is_coming_soon' => false]);
+
+        return $product;
+    }
 
     /** สินค้าแบบใน production (id 1) — GitHub setting ค่าเดียวกับที่ migration 2026_09_24_200000 ใส่ให้ */
     private function autotradex(bool $withGithub = true): Product

@@ -18,11 +18,11 @@
         <aside class="w-52 bg-gray-900 text-white flex-shrink-0 h-screen flex flex-col">
             <div class="px-3 py-3 flex-shrink-0 border-b border-gray-800">
                 @php
-                    $siteLogo = \App\Models\Setting::getValue('site_logo');
+                    $siteLogo = \App\Support\BrandLogo::darkUrl();
                 @endphp
                 <a href="/admin" class="flex items-center">
                     @if($siteLogo)
-                        <img src="{{ asset('storage/' . $siteLogo) }}" alt="XMAN Admin" class="h-7 w-auto">
+                        <img src="{{ $siteLogo }}" alt="XMAN Admin" class="h-11 w-auto">
                     @else
                         <span class="text-lg font-bold">XMAN Admin</span>
                     @endif

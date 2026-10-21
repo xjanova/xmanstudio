@@ -276,6 +276,7 @@
                                                     <span class="text-xs sm:text-sm text-gray-500 line-through ml-1">฿{{ number_format($product->original_price, 0) }}</span>
                                                 @endif
                                             </p>
+                                            <x-tpix-price :thb="$product->price" :tpix="$product->price_tpix" />
                                         </div>
                                     @endif
 

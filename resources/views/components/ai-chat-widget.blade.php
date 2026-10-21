@@ -5,7 +5,11 @@
 
 @if($aiChatEnabled)
 @php
-    $aiBotName = \App\Models\Setting::getValue('ai_bot_name', 'AI Assistant');
+    $aiBotName = \App\Services\AiChat\ChatPrompt::botName();
+    // Her hello names a signed-in member ("สวัสดีค่ะคุณสมชาย"); she knows who she talks to.
+    $aiGreetName = auth()->check() ? \App\Services\AiChat\VisitorContext::firstName(auth()->user()) : '';
+    // The assistant is น้อง Nova, the home page's guide (partials/universe/guide), and wears her face.
+    $aiFace = asset('artwork/universe/guide/face.webp');
 @endphp
 
 <style>
@@ -88,6 +92,44 @@
     }
     .ai-fab-avatar {
         animation: ai-float-bob 3s ease-in-out infinite;
+    }
+
+    /* The guide's portrait */
+    .ai-fab-face {
+        display: block;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 2px solid #ffd479;
+        object-fit: cover;
+        background: radial-gradient(circle at 50% 35%, #8b5cf6, #1e1b4b);
+        animation: ai-float-bob 3s ease-in-out infinite;
+    }
+    .ai-speaking .ai-fab-face,
+    .ai-msg-avatar.ai-speaking img {
+        animation: ai-face-talk 0.5s ease-in-out infinite;
+    }
+    @keyframes ai-face-talk {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-2px) scale(1.04); }
+    }
+    .ai-msg-avatar img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .ai-msg-bot .ai-msg-avatar,
+    .ai-typing .ai-msg-avatar {
+        border: 1.5px solid #ffd479;
+        background: #8b5cf6;
+    }
+    .ai-chat-header .ai-msg-avatar {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #ffd479;
+        background: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
     }
 
     /* Chat Window */
@@ -402,41 +444,8 @@
 
 <div id="ai-chat-widget">
     {{-- Floating Avatar Button --}}
-    <button class="ai-chat-fab" id="aiChatFab" onclick="window.AiChat.toggle()" aria-label="Chat with AI">
-        <svg class="ai-fab-avatar" width="44" height="44" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {{-- Head --}}
-            <circle cx="20" cy="20" r="18" fill="white" opacity="0.95"/>
-            <circle cx="20" cy="20" r="16.5" fill="url(#ai-fab-grad)" opacity="0.1"/>
-            {{-- Eyes --}}
-            <g class="ai-avatar-eyes">
-                <ellipse cx="13.5" cy="16" rx="2.5" ry="2.8" fill="#4f46e5"/>
-                <ellipse cx="26.5" cy="16" rx="2.5" ry="2.8" fill="#4f46e5"/>
-                {{-- Eye highlights --}}
-                <circle cx="14.5" cy="14.8" r="0.9" fill="white"/>
-                <circle cx="27.5" cy="14.8" r="0.9" fill="white"/>
-            </g>
-            {{-- Cheeks --}}
-            <ellipse cx="9" cy="21" rx="2.5" ry="1.5" fill="#f9a8d4" opacity="0.4"/>
-            <ellipse cx="31" cy="21" rx="2.5" ry="1.5" fill="#f9a8d4" opacity="0.4"/>
-            {{-- Mouth - idle (smile) --}}
-            <path class="ai-avatar-mouth-idle" d="M 14 23 Q 20 27 26 23" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-            {{-- Mouth - talking (animated ellipse) --}}
-            <ellipse class="ai-avatar-mouth-talk" cx="20" cy="24" rx="4" ry="1" fill="#4f46e5"/>
-            {{-- Bow ribbon (cute feminine) --}}
-            <g transform="translate(27, 4)">
-                <path d="M -5 0 Q -7 -4 -3 -5 Q 0 -6 0 -2 Q 0 -6 3 -5 Q 7 -4 5 0 Z" fill="#f472b6"/>
-                <ellipse cx="0" cy="-1" rx="1.2" ry="1.2" fill="#ec4899"/>
-                <path d="M -1 0 Q 0 3 1 0" stroke="#f472b6" stroke-width="0.8" fill="none"/>
-                <path d="M -2 0 Q -3 4 -1 3" stroke="#f472b6" stroke-width="0.6" fill="none"/>
-                <path d="M 2 0 Q 3 4 1 3" stroke="#f472b6" stroke-width="0.6" fill="none"/>
-            </g>
-            <defs>
-                <linearGradient id="ai-fab-grad" x1="0" y1="0" x2="40" y2="40">
-                    <stop stop-color="#7c3aed"/>
-                    <stop offset="1" stop-color="#4f46e5"/>
-                </linearGradient>
-            </defs>
-        </svg>
+    <button class="ai-chat-fab" id="aiChatFab" onclick="window.AiChat.toggle()" aria-label="คุยกับ {{ $aiBotName }} / Chat with {{ $aiBotName }}">
+        <img class="ai-fab-face" src="{{ $aiFace }}" alt="" width="60" height="60" decoding="async" draggable="false">
         <span class="ai-fab-badge" id="aiFabBadge" style="display:none"></span>
     </button>
 
@@ -445,20 +454,7 @@
         {{-- Header --}}
         <div class="ai-chat-header">
             <div class="ai-msg-avatar">
-                <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
-                    <circle cx="20" cy="20" r="18" fill="white" opacity="0.2"/>
-                    <g class="ai-avatar-eyes">
-                        <ellipse cx="13.5" cy="16" rx="2.2" ry="2.5" fill="white"/>
-                        <ellipse cx="26.5" cy="16" rx="2.2" ry="2.5" fill="white"/>
-                        <circle cx="14.3" cy="14.8" r="0.7" fill="rgba(255,255,255,0.5)"/>
-                        <circle cx="27.3" cy="14.8" r="0.7" fill="rgba(255,255,255,0.5)"/>
-                    </g>
-                    <path d="M 14 23 Q 20 27 26 23" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                    <g transform="translate(27, 4)">
-                        <path d="M -5 0 Q -7 -4 -3 -5 Q 0 -6 0 -2 Q 0 -6 3 -5 Q 7 -4 5 0 Z" fill="#f9a8d4" opacity="0.9"/>
-                        <ellipse cx="0" cy="-1" rx="1.2" ry="1.2" fill="#f472b6" opacity="0.9"/>
-                    </g>
-                </svg>
+                <img src="{{ $aiFace }}" alt="" width="40" height="40" decoding="async">
             </div>
             <div>
                 <div class="ai-chat-header-name">{{ $aiBotName }}</div>
@@ -476,7 +472,7 @@
 
         {{-- Input --}}
         <div class="ai-chat-input-area">
-            <textarea class="ai-chat-input" id="aiChatInput" placeholder="พิมพ์ข้อความ..." rows="1" maxlength="2000"></textarea>
+            <textarea class="ai-chat-input field-bare" id="aiChatInput" placeholder="พิมพ์ข้อความ..." rows="1" maxlength="2000"></textarea>
             <button class="ai-chat-send" id="aiChatSend" onclick="window.AiChat.send()" aria-label="Send message">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
@@ -489,6 +485,8 @@
     </div>
 </div>
 
+@include('partials.ai-chat-page')
+
 <script>
 (function() {
     'use strict';
@@ -496,6 +494,8 @@
     const CHAT_URL = '{{ route("public.ai-chat") }}';
     const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
     const BOT_NAME = @json($aiBotName);
+    const GREET_NAME = @json($aiGreetName);
+    const BOT_FACE = @json($aiFace);
     const MAX_MESSAGES = 20;
     const STORAGE_KEY = 'ai_chat_history';
 
@@ -513,9 +513,10 @@
     const badge = document.getElementById('aiFabBadge');
     const statusEl = document.getElementById('aiChatStatus');
 
-    // Load from session storage
+    // Load from session storage — only a conversation this visitor may read (partials/ai-chat-page)
     function loadHistory() {
         try {
+            if (window.xmanChatClaimHistory) window.xmanChatClaimHistory();
             const stored = sessionStorage.getItem(STORAGE_KEY);
             if (stored) {
                 chatHistory = JSON.parse(stored);
@@ -534,18 +535,15 @@
         } catch (e) { /* ignore */ }
     }
 
-    // Create avatar SVG for message bubbles
+    // The guide's portrait beside her messages
     function createMiniAvatar(speaking) {
         const div = document.createElement('div');
         div.className = 'ai-msg-avatar' + (speaking ? ' ai-speaking' : '');
-        div.innerHTML = '<svg width="30" height="30" viewBox="0 0 40 40" fill="none">' +
-            '<circle cx="20" cy="20" r="18" fill="#eef2ff"/>' +
-            '<g class="ai-avatar-eyes"><ellipse cx="13.5" cy="16" rx="2.2" ry="2.5" fill="#4f46e5"/><ellipse cx="26.5" cy="16" rx="2.2" ry="2.5" fill="#4f46e5"/><circle cx="14.3" cy="14.8" r="0.7" fill="white"/><circle cx="27.3" cy="14.8" r="0.7" fill="white"/></g>' +
-            '<ellipse cx="9" cy="21" rx="2" ry="1.2" fill="#f9a8d4" opacity="0.4"/><ellipse cx="31" cy="21" rx="2" ry="1.2" fill="#f9a8d4" opacity="0.4"/>' +
-            '<path class="ai-avatar-mouth-idle" d="M 14 23 Q 20 27 26 23" stroke="#4f46e5" stroke-width="1.5" stroke-linecap="round" fill="none"/>' +
-            '<ellipse class="ai-avatar-mouth-talk" cx="20" cy="24" rx="4" ry="1" fill="#4f46e5"/>' +
-            '<g transform="translate(27, 4)"><path d="M -5 0 Q -7 -4 -3 -5 Q 0 -6 0 -2 Q 0 -6 3 -5 Q 7 -4 5 0 Z" fill="#f472b6"/><ellipse cx="0" cy="-1" rx="1.2" ry="1.2" fill="#ec4899"/></g>' +
-            '</svg>';
+        const img = document.createElement('img');
+        img.src = BOT_FACE;
+        img.alt = '';
+        img.decoding = 'async';
+        div.appendChild(img);
         return div;
     }
 
@@ -582,29 +580,46 @@
         return msgEl;
     }
 
-    // Format text content with basic markdown + clickable links
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // A link on this site (http/https only), or null. "//other.host/..." is not ours.
+    function internalUrl(url) {
+        try {
+            var u = new URL(url, window.location.href);
+            if (u.hostname === window.location.hostname && (u.protocol === 'https:' || u.protocol === 'http:')) {
+                return u;
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    // Where link n waits while the text around it is escaped: control characters,
+    // which no reply text contains and no later step touches.
+    function linkMark(n) {
+        return '\u0001' + n + '\u0002';
+    }
+
+    // Format text content with basic markdown + clickable links.
+    // The text comes from a language model: every piece that reaches the HTML
+    // is escaped, link targets included.
     function formatContent(text) {
         if (!text) return '';
 
-        var baseHost = window.location.hostname;
         var linkStore = [];
 
         // Step 1: Extract markdown links BEFORE escaping [text](url)
         var processed = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, linkText, url) {
-            var isInternal = false;
-            try {
-                if (url.startsWith('/') || url.startsWith('./')) {
-                    isInternal = true;
-                } else {
-                    var linkUrl = new URL(url);
-                    isInternal = linkUrl.hostname === baseHost;
-                }
-            } catch(e) {
-                isInternal = url.startsWith('/');
-            }
-            if (isInternal) {
-                var placeholder = '%%LINK' + linkStore.length + '%%';
-                linkStore.push('<a href="' + url + '" class="ai-chat-link">📍 ' + linkText + '</a>');
+            var u = internalUrl(url);
+            if (u) {
+                var placeholder = linkMark(linkStore.length);
+                linkStore.push('<a href="' + escapeHtml(u.href) + '" class="ai-chat-link">📍 ' + escapeHtml(linkText) + '</a>');
                 return placeholder;
             }
             return linkText;
@@ -612,14 +627,12 @@
 
         // Step 2: Extract full URLs before escaping
         processed = processed.replace(/(https?:\/\/[^\s)\]]+)/g, function(url) {
-            try {
-                var u = new URL(url);
-                if (u.hostname === baseHost) {
-                    var placeholder = '%%LINK' + linkStore.length + '%%';
-                    linkStore.push('<a href="' + url + '" class="ai-chat-link">🔗 ' + u.pathname + '</a>');
-                    return placeholder;
-                }
-            } catch(e) {}
+            var u = internalUrl(url);
+            if (u) {
+                var placeholder = linkMark(linkStore.length);
+                linkStore.push('<a href="' + escapeHtml(u.href) + '" class="ai-chat-link">🔗 ' + escapeHtml(u.pathname) + '</a>');
+                return placeholder;
+            }
             return url;
         });
 
@@ -638,7 +651,8 @@
 
         // Step 5: Restore links from placeholders
         for (var i = 0; i < linkStore.length; i++) {
-            html = html.replace('%%LINK' + i + '%%', linkStore[i]);
+            // A function, so a "$&" in the link text is not read as a replacement pattern.
+            html = html.replace(linkMark(i), function() { return linkStore[i]; });
         }
 
         // Step 6: Paragraphs
@@ -716,6 +730,8 @@
                     current_url: window.location.href,
                     current_path: window.location.pathname,
                     page_title: document.title,
+                    // What is on screen, so she can answer about the page being read
+                    page: window.xmanPageSnapshot ? window.xmanPageSnapshot() : null,
                 }),
             });
 
@@ -728,7 +744,10 @@
                 appendMessageDOM('assistant', data.message, true);
                 saveHistory();
             } else {
-                appendMessageDOM('assistant', data.message || 'ขออภัย เกิดข้อผิดพลาด กรุณาลองใหม่', true);
+                // The controller's own refusals are written for visitors; a framework
+                // validation error ({message, errors}) is not.
+                const told = data.message && !data.errors ? data.message : '';
+                appendMessageDOM('assistant', told || 'ขออภัย เกิดข้อผิดพลาด กรุณาลองใหม่', true);
             }
         } catch (err) {
             hideTyping();
@@ -763,8 +782,9 @@
         if (!hasOpened) {
             hasOpened = true;
             if (chatHistory.length === 0) {
-                // Welcome message
-                const welcome = 'สวัสดีค่ะ! ฉันคือ ' + BOT_NAME + ' ผู้ช่วย AI ของ XMAN Studio ยินดีตอบคำถามเกี่ยวกับบริการ ผลิตภัณฑ์ และข้อมูลของเราค่ะ 😊';
+                // Welcome message (her hello stays in the window: it never goes to the assistant)
+                const welcome = 'สวัสดีค่ะ' + (GREET_NAME ? 'คุณ' + GREET_NAME : '') + '! ' + BOT_NAME
+                    + ' เองค่ะ ผู้ช่วย AI ของ XMAN Studio ถามเรื่องบริการ สินค้า ราคา หรือหน้าที่เปิดอยู่ตอนนี้ได้เลยนะคะ 😊';
                 appendMessageDOM('assistant', welcome, true);
             }
         }

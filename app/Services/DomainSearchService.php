@@ -35,6 +35,9 @@ class DomainSearchService
     /** How many suggestions to ask for beyond the exact match. */
     public const MAX_ALTERNATIVES = 12;
 
+    /** Suggested names from a description cost one availability call per label. */
+    public const MAX_SUGGESTION_LABELS = 5;
+
     public function __construct(
         protected HostingerApiService $api,
     ) {}
@@ -136,10 +139,10 @@ class DomainSearchService
      */
     protected function searchByDescription(string $input): array
     {
-        $tlds = $this->tldsToCheck(null);
+        $rows = $this->cached('desc:' . md5($input), function () use ($input) {
+            $names = $this->api->suggestFromDescription($input);
 
-        $rows = $this->cached('desc:' . md5($input) . ':' . implode(',', $tlds), function () use ($input, $tlds) {
-            return $this->api->suggestFromDescription($input, $tlds);
+            return $names === null ? null : $this->availabilityOf($names);
         });
 
         if ($rows === null) {
@@ -165,8 +168,12 @@ class DomainSearchService
     {
         $base = $label . '.' . ($tld ?: 'com');
 
-        $rows = $this->cached("alt:{$base}", function () use ($base, $tld) {
-            return $this->api->suggestFromDomain($base, $this->tldsToCheck($tld));
+        // Names only come back (no availability), so they are checked here.
+        // The availability call's own `with_alternatives` gave one name.
+        $rows = $this->cached("alt:{$base}", function () use ($base) {
+            $names = $this->api->suggestFromDomain($base);
+
+            return $names === null ? null : $this->availabilityOf($names);
         });
 
         if ($rows === null) {
@@ -176,6 +183,48 @@ class DomainSearchService
         $priced = $this->priceRows($rows);
 
         return array_slice(array_values($priced['available']), 0, self::MAX_ALTERNATIVES);
+    }
+
+    /**
+     * Availability rows for a list of suggested names ("playthai.gg", …).
+     *
+     * The suggestion endpoints answer with names only. Names on TLDs we do
+     * not sell are dropped first; the rest are checked one label at a time
+     * (the availability call takes one label and many TLDs), at most
+     * MAX_SUGGESTION_LABELS calls — the whole account shares 90 a minute.
+     *
+     * @param  array<int,mixed>  $names
+     * @return array<int,array<string,mixed>>
+     */
+    protected function availabilityOf(array $names): array
+    {
+        $catalogue = $this->catalogue();
+        $byLabel = [];
+
+        foreach ($names as $name) {
+            $name = strtolower(trim(is_array($name) ? (string) ($name['domain'] ?? '') : (string) $name));
+            [$label, $tld] = str_contains($name, '.') ? explode('.', $name, 2) : [$name, null];
+
+            if ($label === '' || ! $tld || ! ($catalogue[$tld]->item_id_register ?? null)) {
+                continue;
+            }
+
+            $byLabel[$label][] = $tld;
+        }
+
+        $rows = [];
+
+        foreach (array_slice($byLabel, 0, self::MAX_SUGGESTION_LABELS, true) as $label => $tlds) {
+            $checked = $this->api->checkAvailability((string) $label, array_values(array_unique($tlds)));
+
+            foreach ((array) $checked as $row) {
+                if (is_array($row)) {
+                    $rows[] = $row;
+                }
+            }
+        }
+
+        return $rows;
     }
 
     /**

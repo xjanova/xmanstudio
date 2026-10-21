@@ -66,7 +66,7 @@ class DomainAuditFixesTest extends TestCase
         $this->contact = DomainContact::create([
             'user_id' => $this->user->id, 'first_name' => 'Somchai', 'last_name' => 'Jaidee',
             'email' => 'somchai@example.com', 'phone_country_code' => '+66', 'phone' => '812345678',
-            'address1' => '1 Sukhumvit', 'city' => 'Bangkok', 'zip' => '10110', 'country' => 'TH',
+            'address1' => '1 Sukhumvit', 'city' => 'Bangkok', 'state' => 'Bangkok', 'zip' => '10110', 'country' => 'TH',
         ]);
 
         Wallet::getOrCreateForUser($this->user->id)->deposit(5000, 'test funding');

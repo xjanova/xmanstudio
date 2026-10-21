@@ -152,7 +152,7 @@ class ThaiPdfFontTest extends TestCase
 
     public function test_both_document_templates_use_the_shaped_font(): void
     {
-        foreach (['quotation/pdf', 'invoice/pdf'] as $view) {
+        foreach (['quotation/pdf', 'invoice/pdf', 'receipt/pdf'] as $view) {
             $source = file_get_contents(resource_path('views/' . $view . '.blade.php'));
 
             $this->assertStringContainsString('Sarabun-PUA-Regular.ttf', $source, $view . ' must embed the PUA font');

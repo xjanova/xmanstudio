@@ -118,6 +118,29 @@
     </form>
 </div>
 
+@if(! empty($mobileOffer))
+{{-- คีย์ของแอปมือถือออกให้ต่อมือถือ ไม่ใช่ต่อบัญชี จึงไม่เป็นแถวในตาราง — บอกไว้ตรงนี้ให้ผู้ที่มี Anti X --}}
+<div class="mb-6 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-5 flex flex-col sm:flex-row sm:items-center gap-4" data-mobile-offer>
+    <div class="flex-1">
+        <p class="font-semibold text-gray-900 dark:text-white">
+            <x-bi th="แอปมือถือ Anti X (Android) — ฟรีสำหรับผู้ใช้ Anti X" en="Anti X mobile app (Android) — free" />
+        </p>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <x-bi th="จับคู่กับเครื่องด้วย QR ในแอป Anti X · ไลเซนส์ฟรีออกให้มือถือเองตอนเปิดครั้งแรก" en="Pair it with a QR in Anti X · its free licence is issued on first start" />
+            @if($mobileOffer['version']) · v{{ $mobileOffer['version']->version }}@if($mobileOffer['version']->file_size) · {{ $mobileOffer['version']->file_size_formatted }}@endif @endif
+        </p>
+    </div>
+    @if($mobileOffer['url'])
+    <a href="{{ $mobileOffer['url'] }}" data-mobile-download
+       class="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 font-semibold shadow transition-all">
+        <x-bi th="ดาวน์โหลดแอปมือถือ" en="Download the mobile app" class="text-white" />
+    </a>
+    @else
+    <span class="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-500 text-sm" data-coming-soon>เร็วๆ นี้</span>
+    @endif
+</div>
+@endif
+
 <!-- License List -->
 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
     <!-- Desktop Table -->

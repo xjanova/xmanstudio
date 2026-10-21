@@ -3,11 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A WireGuard exit. Without vpn_node_id it is the web server's own wg0, driven
+ * here with `sudo wg set`. With vpn_node_id it runs on a fleet node: the node
+ * keeps its private key (none is stored here), reports its public key on each
+ * sync and pulls its peer set from the database.
+ */
 class WireguardServer extends Model
 {
     protected $fillable = [
+        'vpn_node_id',
         'name',
         'country_code',
         'country_name',
@@ -44,6 +52,17 @@ class WireguardServer extends Model
     public function clients(): HasMany
     {
         return $this->hasMany(WireguardClient::class, 'server_id');
+    }
+
+    public function node(): BelongsTo
+    {
+        return $this->belongsTo(VpnNode::class, 'vpn_node_id');
+    }
+
+    /** Runs on a fleet node, which manages its own wg0 — no local sudo calls. */
+    public function isNodeManaged(): bool
+    {
+        return $this->vpn_node_id !== null;
     }
 
     // ─── Scopes ───

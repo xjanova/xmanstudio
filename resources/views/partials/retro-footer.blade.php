@@ -17,7 +17,7 @@
             @foreach([
                 ['Services', ['Blockchain', 'Web Development', 'Mobile Apps', 'AI & ML', 'IoT Solutions']],
                 ['Studio',   ['Manifesto', 'Archives', 'The Team', 'Metal-X Records']],
-                ['Uplink',   ['080-6038-278', 'xjanovax@gmail.com', 'LINE @xmanstudio', 'Bangkok, Thailand']],
+                ['Uplink',   ['080-6038-278', \App\Support\ContactLinks::email(), 'LINE @xmanstudio', 'Bangkok, Thailand']],
             ] as $col)
                 <div>
                     <div style="font-family:var(--font-ui);font-size:10px;letter-spacing:.3em;color:var(--tron-gold);text-transform:uppercase;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(212,175,55,.25);">{{ $col[0] }}</div>

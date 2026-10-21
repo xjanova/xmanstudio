@@ -2,7 +2,7 @@
      `data-nova-star` is what the layout script binds to; the same attribute on
      any other element would also open the menu. --}}
 @php
-    $heroLogo = \App\Models\Setting::getValue('site_logo');
+    $heroLogo = \App\Support\BrandLogo::darkUrl();
 @endphp
 
 <section id="nova-hero" class="nova-hero">
@@ -55,7 +55,7 @@
             <span class="nova-star__ring" aria-hidden="true"></span>
             <span class="nova-star__core" aria-hidden="true">
                 @if($heroLogo)
-                    <img src="{{ asset('storage/' . $heroLogo) }}" alt="" class="nova-star__logo">
+                    <img src="{{ $heroLogo }}" alt="" class="nova-star__logo">
                 @else
                     <span class="nova-star__word nova-grad-core">XMAN</span>
                 @endif

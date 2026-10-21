@@ -195,7 +195,8 @@ class PackPurchaseTest extends TestCase
     public function test_after_paying_the_app_reports_the_pack_as_owned(): void
     {
         $user = User::factory()->create();
-        $appProduct = $this->makeProduct('giggok', 'GigGok', 0);
+        // Registered by migration, like on production
+        $appProduct = Product::where('slug', 'giggok')->sole();
         $pack = $this->makePack('nana-office');
 
         $appLicense = LicenseKey::create([

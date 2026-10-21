@@ -46,6 +46,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'stripe/webhook',
         ]);
 
+        // Written by JavaScript on the home page (3D universe or classic, see
+        // App\Support\UniverseHome), so it cannot carry Laravel's encryption.
+        $middleware->encryptCookies(except: [
+            'xu_mode',
+        ]);
+
         // Apply theme + affiliate tracking + AI crawl detection middleware to web routes
         $middleware->web(append: [
             AiCrawlDetector::class,
@@ -68,6 +74,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
         // stops being cheap for us and expensive for them.
         $middleware->prepend(BlockAbusiveIps::class);
 
+        // a guest on the game community signs in on the community's own page
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('games-support', 'games-support/*') ? route('game-support.login') : route('login'));
+
         // Configure rate limiting for specific operations
         $middleware->throttleApi();
     })
@@ -79,6 +88,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $exceptions->dontFlash([
             'telegram_bot_token',
             'hostinger_api_token',
+            // A customer's Cloudflare API token, pasted on the domain page.
+            'cloudflare_token',
             'root_password',
             'root_password_confirmation',
             'recovery_password',
@@ -123,11 +134,15 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
         // In production, don't expose internal errors
         $exceptions->render(function (Throwable $e, Request $request) {
-            // These are answers, not failures: "who are you?" (401) and "these
-            // fields are wrong" (422). Caught here they all left as a bare 500, so
-            // an app could not tell a wrong password from a crashed server, and
-            // every one was logged as an error with its trace.
-            if ($e instanceof AuthenticationException || $e instanceof ValidationException) {
+            // These are answers, not failures: "who are you?" (401), "these
+            // fields are wrong" (422), and a response the code already chose — a
+            // named rate limiter's own 429 arrives as an HttpResponseException.
+            // Caught here they all left as a bare 500, so an app could not tell a
+            // wrong password from a crashed server, nor "slow down" from "broken",
+            // and every one was logged as an error with its trace.
+            if ($e instanceof AuthenticationException
+                || $e instanceof ValidationException
+                || $e instanceof HttpResponseException) {
                 return null;
             }
 

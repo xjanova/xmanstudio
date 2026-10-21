@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppAiUsage;
 use App\Models\Setting;
+use App\Services\AiChat\ChatPrompt;
 use App\Services\AiChatService;
+use App\Services\AppAiBilling;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -52,7 +55,7 @@ class AiSettingsController extends Controller
             'ai_presence_penalty' => Setting::getValue('ai_presence_penalty', 0),
 
             // AI Bot Behavior Settings
-            'ai_bot_name' => Setting::getValue('ai_bot_name', 'AI Assistant'),
+            'ai_bot_name' => Setting::getValue('ai_bot_name', ChatPrompt::DEFAULT_BOT_NAME),
             'ai_system_prompt' => Setting::getValue('ai_system_prompt', ''),
             'ai_response_language' => Setting::getValue('ai_response_language', 'th'),
             'ai_response_style' => Setting::getValue('ai_response_style', 'professional'),
@@ -82,7 +85,69 @@ class AiSettingsController extends Controller
             'ai_sentiment_analysis' => Setting::getValue('ai_sentiment_analysis', false),
         ];
 
-        return view('admin.ai-settings.index', compact('settings'));
+        $billing = app(AppAiBilling::class);
+        $since = now()->startOfDay();
+        $week = now()->subDays(6)->startOfDay();
+        $appAi = [
+            'enabled' => (bool) Setting::getValue(AppAiBilling::KEY_ENABLED, true),
+            'master' => (bool) config('appai.enabled', true),
+            'daily_cap' => $billing->dailyCap(),
+            'models' => $billing->allModels(),
+            'today' => [
+                'messages' => AppAiUsage::where('created_at', '>=', $since)->where('ok', true)->count(),
+                'failed' => AppAiUsage::where('created_at', '>=', $since)->where('ok', false)->count(),
+                'revenue' => round((float) AppAiUsage::where('created_at', '>=', $since)
+                    ->where('refunded', false)->sum('price'), 2),
+                'users' => AppAiUsage::where('created_at', '>=', $since)->distinct()->count('user_id'),
+            ],
+            'week_revenue' => round((float) AppAiUsage::where('created_at', '>=', $week)
+                ->where('refunded', false)->sum('price'), 2),
+        ];
+
+        return view('admin.ai-settings.index', compact('settings', 'appAi'));
+    }
+
+    /**
+     * GigGok AI: which models the app may use, the price of one message for
+     * each (THB, paid from the user's wallet), and a per-user daily cap.
+     *
+     * A separate form from the big provider form above on purpose - saving
+     * prices must not need (or risk) re-submitting every provider key.
+     */
+    public function updateApp(Request $request)
+    {
+        $data = $request->validate([
+            'appai_daily_cap' => 'required|numeric|min:0|max:100000',
+            'models' => 'nullable|array|max:30',
+            'models.*.id' => 'nullable|string|max:128',
+            'models.*.label' => 'nullable|string|max:100',
+            'models.*.price' => 'nullable|numeric|min:0|max:10000',
+            'models.*.enabled' => 'nullable|boolean',
+        ]);
+
+        $models = [];
+        $seen = [];
+        foreach ($data['models'] ?? [] as $row) {
+            $id = trim((string) ($row['id'] ?? ''));
+            // Blank rows are the "add a model" slots left empty
+            if ($id === '' || isset($seen[$id])) {
+                continue;
+            }
+            $seen[$id] = true;
+            $models[] = [
+                'id' => $id,
+                'label' => trim((string) ($row['label'] ?? '')) ?: $id,
+                'price' => round((float) ($row['price'] ?? 0), 2),
+                'enabled' => (bool) ($row['enabled'] ?? false),
+            ];
+        }
+
+        Setting::setValue(AppAiBilling::KEY_ENABLED, $request->boolean('appai_enabled'), 'boolean', 'ai');
+        Setting::setValue(AppAiBilling::KEY_DAILY_CAP, (string) round((float) $data['appai_daily_cap'], 2), 'string', 'ai');
+        Setting::setValue(AppAiBilling::KEY_MODELS, $models, 'json', 'ai', 'GigGok AI: รุ่นที่เปิดให้แอปใช้ และราคาต่อข้อความ (บาท)');
+
+        return redirect()->route('admin.ai-settings.index')
+            ->with('success', 'บันทึกราคาและรุ่นของ GigGok AI เรียบร้อยแล้ว');
     }
 
     /**
@@ -162,7 +227,7 @@ class AiSettingsController extends Controller
         Setting::setValue('ai_presence_penalty', $request->ai_presence_penalty ?? 0, 'string', 'ai');
 
         // AI Bot Behavior Settings
-        Setting::setValue('ai_bot_name', $request->ai_bot_name ?? 'AI Assistant', 'string', 'ai');
+        Setting::setValue('ai_bot_name', trim((string) $request->ai_bot_name) ?: ChatPrompt::DEFAULT_BOT_NAME, 'string', 'ai');
         Setting::setValue('ai_system_prompt', $request->ai_system_prompt ?? '', 'text', 'ai');
         Setting::setValue('ai_response_language', $request->ai_response_language, 'string', 'ai');
         Setting::setValue('ai_response_style', $request->ai_response_style, 'string', 'ai');

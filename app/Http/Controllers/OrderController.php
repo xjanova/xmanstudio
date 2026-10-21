@@ -13,11 +13,14 @@ use App\Models\OrderItem;
 use App\Models\PaymentSetting;
 use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
+use App\Services\DgxSparkOrderService;
 use App\Services\LicenseService;
 use App\Services\LineNotifyService;
 use App\Services\SmsPaymentService;
 use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
+use App\Support\ComingSoonPurchase;
 use App\Support\Satang;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -59,6 +62,12 @@ class OrderController extends Controller
         }
 
         $cart->load('items.product');
+
+        // A product can turn Coming Soon after it went into the cart — not on sale (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusalForCart($cart)) {
+            return $refused;
+        }
+
         $paymentMethods = $this->paymentService->getSupportedMethods();
 
         // Handle coupon removal via query parameter
@@ -125,7 +134,8 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card,wallet,stripe',
+            // tpix only while it can actually be paid (switched on, an address, a live price)
+            'payment_method' => 'required|in:promptpay,bank_transfer,credit_card,wallet,stripe' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'nullable|string|max:20',
@@ -142,6 +152,12 @@ class OrderController extends Controller
         }
 
         $cart->load('items.product');
+
+        // Checked again here: the checkout page may have been opened before the product turned
+        // Coming Soon, and a hand-made POST never saw that page at all (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusalForCart($cart)) {
+            return $refused;
+        }
 
         try {
             DB::beginTransaction();
@@ -170,6 +186,14 @@ class OrderController extends Controller
             }
 
             $total = max(0, $subtotal + $tax - $discount);
+
+            // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+            // average yet, or more than the TPIX market behind the price can carry)
+            if ($request->payment_method === TpixCheckout::METHOD && ($refusal = TpixCheckout::refusal($total))) {
+                DB::rollBack();
+
+                return redirect()->back()->withInput()->with('error', $refusal);
+            }
 
             // Handle wallet payment
             $paymentStatus = 'pending';
@@ -360,6 +384,11 @@ class OrderController extends Controller
                 ]);
             }
 
+            // TPIX: quote the order's total at the live price and send the customer to the pay page
+            if ($request->payment_method === TpixCheckout::METHOD) {
+                return TpixCheckout::redirectForOrder($order);
+            }
+
             // Redirect based on payment method
             if ($stripeClientSecret) {
                 return redirect()
@@ -530,9 +559,12 @@ class OrderController extends Controller
             $stripeFeeInfo = $stripeService->calculateStripeFee($order->total);
         }
 
+        // TPIX: what became of the order's latest quote (the page links to it, or offers a new one)
+        $tpixQuote = $order->payment_method === TpixCheckout::METHOD ? TpixCheckout::latestQuoteFor($order) : null;
+
         return view('orders.show', compact(
             'order', 'paymentInfo', 'bankAccounts', 'promptpayNumber', 'promptpayName',
-            'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo'
+            'stripeClientSecret', 'stripePublishableKey', 'stripeFeeInfo', 'tpixQuote'
         ));
     }
 
@@ -541,10 +573,25 @@ class OrderController extends Controller
      */
     public function confirmPayment(Request $request, Order $order)
     {
+        // Same ownership rule as show(): a slip goes only on your own order. Without it any
+        // signed-in account could mark a stranger's order "verifying" — and keep a DGX Spark
+        // reservation that is not theirs holding a set past its time.
+        if ((int) $order->user_id !== (int) auth()->id() && ! auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
         if ($order->payment_status !== 'pending') {
             return redirect()
                 ->back()
                 ->with('error', 'คำสั่งซื้อนี้ไม่อยู่ในสถานะรอชำระเงิน');
+        }
+
+        // A DGX Spark reservation past its hold: the slip is still taken while a set is free,
+        // refused (and the reservation cancelled) once the 20 sets went to other customers.
+        if ($refusal = app(DgxSparkOrderService::class)->refuseLateSlip($order)) {
+            return redirect()
+                ->back()
+                ->with('error', $refusal);
         }
 
         // Block slip upload if unique amount has expired

@@ -1,24 +1,15 @@
 {{-- Nova stats + why-choose-us. Numbers and copy carried over from the
-     previous home page. --}}
+     previous home page; both lists are shared with the 3D universe home
+     (HomeContent). --}}
 <section class="nova-section nova-section--tight">
     <div class="nova-shell">
         <div class="nova-stats nova-reveal">
+            @foreach(\App\Support\HomeContent::stats() as $stat)
             <div class="nova-stat">
-                <div class="nova-stat__num nova-grad" data-nova-count="150" data-nova-suffix="+">150+</div>
-                <div class="nova-stat__label">โปรเจคสำเร็จ / Projects</div>
+                <div class="nova-stat__num nova-grad" data-nova-count="{{ $stat['value'] }}" data-nova-suffix="{{ $stat['suffix'] }}">{{ $stat['value'] . $stat['suffix'] }}</div>
+                <div class="nova-stat__label">{{ $stat['th'] }} / {{ $stat['en'] }}</div>
             </div>
-            <div class="nova-stat">
-                <div class="nova-stat__num nova-grad" data-nova-count="50" data-nova-suffix="+">50+</div>
-                <div class="nova-stat__label">ลูกค้าพึงพอใจ / Clients</div>
-            </div>
-            <div class="nova-stat">
-                <div class="nova-stat__num nova-grad" data-nova-count="8" data-nova-suffix="+">8+</div>
-                <div class="nova-stat__label">ปีประสบการณ์ / Years</div>
-            </div>
-            <div class="nova-stat">
-                <div class="nova-stat__num nova-grad" data-nova-count="24" data-nova-suffix="/7">24/7</div>
-                <div class="nova-stat__label">บริการตลอดเวลา / Support</div>
-            </div>
+            @endforeach
         </div>
     </div>
 </section>
@@ -48,16 +39,7 @@
 
         <ul class="nova-why__list nova-reveal">
             @php
-                $novaWhy = [
-                    ['icon' => 'shield', 'accent' => '#34d399', 'th' => 'คุณภาพระดับสากล',  'en' => 'International standards',
-                     'body' => 'พัฒนาตามมาตรฐาน International Best Practice'],
-                    ['icon' => 'clock',  'accent' => '#22d3ee', 'th' => 'ส่งมอบตรงเวลา',    'en' => 'On-time delivery',
-                     'body' => 'บริหารโปรเจคด้วยระบบ Agile ส่งมอบงานตามกำหนด'],
-                    ['icon' => 'chat',   'accent' => '#8b5cf6', 'th' => 'ซัพพอร์ตตลอด 24/7', 'en' => 'Round-the-clock support',
-                     'body' => 'ทีมซัพพอร์ตพร้อมช่วยเหลือทุกเวลา'],
-                    ['icon' => 'wrench', 'accent' => '#ffd479', 'th' => 'ดูแลต่อเนื่องหลังส่งมอบ', 'en' => 'Ongoing maintenance',
-                     'body' => 'อัปเดต แก้บั๊ก และปรับปรุงระบบให้ทันสมัยอยู่เสมอ'],
-                ];
+                $novaWhy = \App\Support\HomeContent::why();
             @endphp
             @foreach($novaWhy as $w)
                 <li class="nova-why__item" style="--nv-accent: {{ $w['accent'] }};">

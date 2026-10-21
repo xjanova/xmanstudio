@@ -30,6 +30,10 @@ class DownloadController extends Controller
             abort(404, 'Product not found');
         }
 
+        if ($product->isComingSoon()) {
+            return $this->comingSoon($request, $product);
+        }
+
         // Get the requested version or latest
         if ($version) {
             $productVersion = ProductVersion::where('product_id', $product->id)
@@ -128,12 +132,22 @@ class DownloadController extends Controller
     /**
      * Download page (with license check form)
      */
+    /**
+     * Apps anyone may download — no sign-in, no purchase (Anti X Mobile, owner 2026-10-21: "โหลดได้ทุกคน แม้แต่คนที่ไม่ได้ซื้อ").
+     * Their page offers this site's own public download route (config/downloads.php → app_routes).
+     */
+    public const FREE_FOR_EVERYONE = ['anti-x-mobile'];
+
     public function downloadPage(Request $request, string $slug, ?string $version = null)
     {
         $product = Product::where('slug', $slug)->first();
 
         if (! $product) {
             abort(404, 'Product not found');
+        }
+
+        if ($product->isComingSoon()) {
+            return $this->comingSoon($request, $product);
         }
 
         // Get the requested version or latest
@@ -147,6 +161,18 @@ class DownloadController extends Controller
 
         if (! $productVersion) {
             abort(404, 'Version not found');
+        }
+
+        if (in_array($product->slug, self::FREE_FOR_EVERYONE, true)) {
+            $route = config('downloads.app_routes', [])[$product->slug] ?? null;
+
+            return view('downloads.show', [
+                'product' => $product,
+                'productVersion' => $productVersion,
+                'hasValidLicense' => true,
+                'freeDownloadUrl' => $route ? route($route, $productVersion->version) : null,
+                'companion' => null,
+            ]);
         }
 
         $user = auth()->user();
@@ -185,7 +211,10 @@ class DownloadController extends Controller
             $hasValidLicense = (bool) $license;
         }
 
-        return view('downloads.show', compact('product', 'productVersion', 'hasValidLicense'));
+        // ซื้อ Anti X แล้วต้องเห็นแอปมือถือ (ฟรี) ในหน้าเดียวกัน
+        $companion = $product->slug === 'anti-x' ? Product::antiXMobileOffer() : null;
+
+        return view('downloads.show', compact('product', 'productVersion', 'hasValidLicense', 'companion'));
     }
 
     /**
@@ -204,6 +233,10 @@ class DownloadController extends Controller
                 'success' => false,
                 'error' => 'Product not found',
             ], 404);
+        }
+
+        if ($product->isComingSoon()) {
+            return $this->comingSoonJson();
         }
 
         // Get the requested version or latest
@@ -268,6 +301,29 @@ class DownloadController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * สินค้ายังเป็น Coming Soon — ห้ามโหลด (กฎเจ้าของ 2026-10-12) แม้ซื้อแล้วหรือมี License
+     * เบราว์เซอร์กลับหน้าสินค้าซึ่งขึ้นป้าย Coming Soon · แอปได้ JSON 403
+     */
+    private function comingSoon(Request $request, Product $product)
+    {
+        if ($request->wantsJson()) {
+            return $this->comingSoonJson();
+        }
+
+        return redirect()->route('products.show', $product->slug)->with('error', Product::COMING_SOON_DOWNLOAD_MESSAGE);
+    }
+
+    private function comingSoonJson()
+    {
+        return response()->json([
+            'success' => false,
+            'error' => 'Coming soon: this product is not available for download yet',
+            'coming_soon' => true,
+            'message' => Product::COMING_SOON_DOWNLOAD_MESSAGE,
+        ], 403);
     }
 
     /**

@@ -78,4 +78,13 @@ class LicensePlans
     {
         return in_array($slug, config('licenses.cart_products', []), true);
     }
+
+    /**
+     * How many devices one purchased key of this product runs on
+     * (config('licenses.devices_per_key')) — 1 for every product not listed there.
+     */
+    public static function devicesPerKey(string $slug): int
+    {
+        return max(1, (int) (config('licenses.devices_per_key', [])[$slug] ?? 1));
+    }
 }

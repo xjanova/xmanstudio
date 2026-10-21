@@ -62,6 +62,9 @@ class HostingerApiService
     /** HTTP status of the last response, or null when no response came back. */
     protected ?int $lastStatus = null;
 
+    /** @var array<int,string> */
+    protected array $lastWhoisRejectedFields = [];
+
     protected string $apiToken;
 
     public function __construct()
@@ -124,24 +127,28 @@ class HostingerApiService
      *
      * @return array<int,array<string,mixed>>|null
      */
-    public function suggestFromDescription(string $description, array $tlds = ['com']): ?array
+    public function suggestFromDescription(string $description, int $limit = 12): ?array
     {
+        // `limit` is required (every call without it was a 422) and the answer
+        // is a bare list of names — "playthai.gg" — with no availability, so
+        // the caller still has to check them.
         return $this->post('/api/domains/v1/availability/alternatives-from-description', [
             'description' => $description,
-            'tlds' => array_values($tlds),
+            'limit' => $limit,
         ]);
     }
 
     /**
-     * Names in the neighbourhood of one the customer already likes.
+     * Names in the neighbourhood of one the customer already likes: a bare
+     * list of names, any TLD, availability unknown.
      *
-     * @return array<int,array<string,mixed>>|null
+     * @return array<int,string>|null
      */
-    public function suggestFromDomain(string $domain, array $tlds = ['com']): ?array
+    public function suggestFromDomain(string $domain, int $limit = 12): ?array
     {
         return $this->post('/api/domains/v1/availability/alternatives-from-domain', [
             'domain' => $domain,
-            'tlds' => array_values($tlds),
+            'limit' => $limit,
         ]);
     }
 
@@ -328,11 +335,58 @@ class HostingerApiService
             $payload['tld_details'] = $tldDetails;
         }
 
-        $result = $this->post('/api/domains/v1/whois', $payload);
+        $this->lastWhoisRejectedFields = [];
+        $result = $this->request('post', '/api/domains/v1/whois', $payload, withStatus: true);
 
-        $id = $result['id'] ?? null;
+        if ($result === null) {
+            return null;
+        }
+
+        if ($result['status_code'] >= 400) {
+            $this->lastWhoisRejectedFields = self::rejectedFields($result['body'] ?? []);
+
+            return null;
+        }
+
+        $id = $result['body']['id'] ?? null;
 
         return is_numeric($id) ? (int) $id : null;
+    }
+
+    /**
+     * The WHOIS fields the last createWhoisProfile() was refused over.
+     *
+     * @return array<int,string>
+     */
+    public function lastWhoisRejectedFields(): array
+    {
+        return $this->lastWhoisRejectedFields;
+    }
+
+    /**
+     * Field names out of a 422 such as `"zip_th" must be enter a ZIP …`:
+     * the names only, never the text around them.
+     *
+     * @param  array<mixed>  $body
+     * @return array<int,string>
+     */
+    protected static function rejectedFields(array $body): array
+    {
+        $fields = [];
+
+        foreach ((array) ($body['errors'] ?? []) as $key => $messages) {
+            foreach ((array) $messages as $message) {
+                if (is_string($message) && preg_match('/^"([a-z_]{2,40})"/', $message, $m)) {
+                    $fields[] = $m[1];
+                }
+            }
+
+            if (is_string($key) && $key !== 'whois_details') {
+                $fields[] = $key;
+            }
+        }
+
+        return array_values(array_unique($fields));
     }
 
     /**
@@ -341,6 +395,26 @@ class HostingerApiService
     public function listWhoisProfiles(): ?array
     {
         return $this->get('/api/domains/v1/whois');
+    }
+
+    /**
+     * Repoint a registered domain's contact roles at another WHOIS profile.
+     *
+     * Processed asynchronously upstream. Changing the owner's name,
+     * organisation or e-mail starts the registry's IRTP confirmation (an
+     * e-mail the registrant must approve) and a 60-day transfer hold. The
+     * roles must all sit on one profile today — ours always do, since every
+     * registration sends the same profile for all four.
+     *
+     * @param  array<int,string>  $roles
+     */
+    public function changeWhoisProfile(string $domain, int $whoisId, array $roles = ['owner', 'admin', 'billing', 'tech']): bool
+    {
+        return $this->put('/api/domains/v1/whois/change', [
+            'new_whois_id' => $whoisId,
+            'domain' => $domain,
+            'change_for' => array_values($roles),
+        ]) !== null;
     }
 
     public function deleteWhoisProfile(int $whoisId): bool

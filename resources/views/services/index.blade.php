@@ -358,7 +358,7 @@
 
                                             <!-- Sale Badge -->
                                 <div class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg animate-pulse">
-                                    SALE {{ str_starts_with($category->key, 'web') ? '50%' : '70%' }}
+                                    SALE {{ (int) round(\App\Support\Quotation\Pricing::saleDiscount($category->key) * 100) }}%
                                 </div>
 
                                 <!-- Options Count Badge -->
@@ -473,7 +473,7 @@
 
                                         <!-- Price and Action -->
                                         @php
-                                            $discount = str_starts_with($category->key, 'web') ? 0.50 : 0.70;
+                                            $discount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
                                             $salePrice = $option->price * (1 - $discount);
                                         @endphp
                                         <div class="flex items-center justify-between mt-auto pt-4 border-t {{ $style['border'] }}">
@@ -486,6 +486,7 @@
                                                     {{ number_format($salePrice, 0) }}
                                                 </span>
                                                 <span class="text-sm text-gray-500 ml-1">฿</span>
+                                                <div><x-tpix-price :thb="$salePrice" /></div>
                                             </div>
 
                                             <a href="{{ route('service.detail', [$category->key, $option->key]) }}"

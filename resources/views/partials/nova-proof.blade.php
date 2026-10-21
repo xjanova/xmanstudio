@@ -1,19 +1,7 @@
 {{-- Nova tech stack + customer reviews. --}}
 @php
-    $novaTech = [
-        ['React',      'react/react-original'],
-        ['Flutter',    'flutter/flutter-original'],
-        ['Laravel',    'laravel/laravel-original'],
-        ['Node.js',    'nodejs/nodejs-original'],
-        ['Python',     'python/python-original'],
-        ['AWS',        'amazonwebservices/amazonwebservices-plain-wordmark'],
-        ['PHP',        'php/php-original'],
-        ['TypeScript', 'typescript/typescript-original'],
-        ['Docker',     'docker/docker-original'],
-        ['PostgreSQL', 'postgresql/postgresql-original'],
-        ['Tailwind',   'tailwindcss/tailwindcss-original'],
-        ['Solidity',   'solidity/solidity-original'],
-    ];
+    // Shared with the 3D universe home (HomeContent): the dev stack, then the AI models.
+    $novaTech = array_merge(\App\Support\HomeContent::tech(), \App\Support\HomeContent::aiTech());
 @endphp
 
 <section class="nova-section nova-section--tight">
@@ -35,11 +23,11 @@
         <div class="nova-marquee__track">
             @for($pass = 0; $pass < 2; $pass++)
                 <div style="display:flex;gap:16px;" @if($pass === 1) aria-hidden="true" @endif>
-                    @foreach($novaTech as [$label, $icon])
+                    @foreach($novaTech as [$label, $src, $invert])
                         <span class="nova-tech">
-                            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/{{ $icon }}.svg"
+                            <img src="{{ $src }}"
                                  alt="" loading="lazy" decoding="async"
-                                 @if($icon === 'amazonwebservices/amazonwebservices-plain-wordmark') style="filter:invert(1);" @endif>
+                                 @if($invert) style="filter:invert(1);" @endif>
                             {{ $label }}
                         </span>
                     @endforeach
