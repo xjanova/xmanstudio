@@ -444,6 +444,16 @@ Route::prefix('aipray')->middleware(['throttle:60,1'])->group(function () {
     Route::post('/ml/training-callback', [AiprayApiController::class, 'mlCallback']);
 });
 
+// Outside the group above: its IP-keyed limiter also counts uploads, which
+// would lock a phone out of erasing right after it chanted.
+Route::post('/aipray/contributors/erase', [AiprayApiController::class, 'eraseContributor'])
+    ->middleware('throttle:aipray-erase');
+
+// Training dataset for a rented GPU; the signed URL expires with the run.
+Route::get('/aipray/ml/datasets/{job}', [AiprayApiController::class, 'downloadDataset'])
+    ->name('aipray.ml.dataset')
+    ->middleware('signed');
+
 // ==================== LocalVPN Relay API ====================
 Route::prefix('v1/localvpn')->middleware(['throttle:120,1'])->group(function () {
     Route::post('/networks', [LocalVpnRelayController::class, 'createNetwork']);

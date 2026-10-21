@@ -59,6 +59,24 @@ Schedule::command('bugreports:cleanup')
         Log::error('[Bug Reports] Cleanup failed');
     });
 
+// Aipray: ลบเสียงสวดที่เก็บเกินระยะที่สัญญาไว้ในหน้าขอความยินยอมของแอป (PDPA)
+Schedule::command('aipray:prune-audio')
+    ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Aipray] Audio retention cleanup failed');
+    });
+
+// Aipray: ขับงานเทรนบน GPU เช่าทีละนาที และคืนเครื่องทุกกรณี (สำเร็จ ล้มเหลว หมดเวลา เกินงบ)
+Schedule::command('aipray:gpu-tick')
+    ->everyMinute()
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Aipray GPU] tick failed');
+    });
+
 // Metal-X: ผลิตวิดีโอจาก Content Plans อัตโนมัติ
 // รันทุก 5 นาที: ตรวจสอบ content plans ที่ถึงเวลาและสร้างโปรเจกต์ใหม่
 Schedule::job(new AutoGenerateVideoJob)

@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AiprayAudioSample;
+use App\Services\AiprayAudioStorage;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AiprayDatasetController extends Controller
 {
+    public function __construct(private AiprayAudioStorage $storage) {}
+
     public function index(Request $request)
     {
         try {
@@ -28,12 +33,13 @@ class AiprayDatasetController extends Controller
             $stats = [
                 'total' => AiprayAudioSample::count(),
                 'unlabeled' => AiprayAudioSample::where('status', 'unlabeled')->count(),
+                'auto_labeled' => AiprayAudioSample::where('status', 'auto_labeled')->count(),
                 'labeled' => AiprayAudioSample::where('status', 'labeled')->count(),
                 'verified' => AiprayAudioSample::where('status', 'verified')->count(),
             ];
         } catch (\Exception $e) {
             $samples = collect();
-            $stats = ['total' => 0, 'unlabeled' => 0, 'labeled' => 0, 'verified' => 0];
+            $stats = ['total' => 0, 'unlabeled' => 0, 'auto_labeled' => 0, 'labeled' => 0, 'verified' => 0];
         }
 
         return view('admin.aipray.dataset.index', compact('samples', 'stats'));
@@ -44,11 +50,26 @@ class AiprayDatasetController extends Controller
         return view('admin.aipray.dataset.show', compact('sample'));
     }
 
+    /**
+     * Voice is personal data, so it is never served from a public URL; this
+     * route sits behind the admin middleware and supports seeking (Range).
+     */
+    public function audio(AiprayAudioSample $sample): BinaryFileResponse
+    {
+        $path = $this->storage->absolutePath($sample->file_path);
+        abort_if($path === null, 404);
+
+        return response()->file($path, [
+            'Content-Type' => AiprayAudioStorage::mimeType($sample->format),
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
     public function update(Request $request, AiprayAudioSample $sample)
     {
         $validated = $request->validate([
             'transcript' => 'nullable|string',
-            'status' => 'required|in:unlabeled,labeled,verified,rejected',
+            'status' => ['required', Rule::in(AiprayAudioSample::STATUSES)],
             'category' => 'nullable|string',
         ]);
 
@@ -60,7 +81,7 @@ class AiprayDatasetController extends Controller
 
     public function destroy(AiprayAudioSample $sample)
     {
-        \Storage::disk('public')->delete($sample->file_path);
+        $this->storage->delete($sample->file_path);
         $sample->delete();
 
         return redirect()->route('admin.aipray.dataset.index')
@@ -81,7 +102,7 @@ class AiprayDatasetController extends Controller
             'verify' => $samples->update(['status' => 'verified']),
             'reject' => $samples->update(['status' => 'rejected']),
             'delete' => $samples->get()->each(function ($s) {
-                \Storage::disk('public')->delete($s->file_path);
+                $this->storage->delete($s->file_path);
                 $s->delete();
             }),
         };

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AiprayAudioSample;
 use App\Models\AiprayChant;
+use App\Services\AiprayAudioStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -21,11 +22,12 @@ class AiprayRecordController extends Controller
         return view('admin.aipray.record.index', compact('chants'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, AiprayAudioStorage $storage)
     {
         $request->validate([
             'audio' => 'required|string',
-            'chant_id' => 'required|string',
+            // Ends up in the stored file name.
+            'chant_id' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9_-]+$/'],
             'line_index' => 'required|integer',
             'transcript' => 'nullable|string',
             'duration' => 'required|numeric',
@@ -39,7 +41,7 @@ class AiprayRecordController extends Controller
         $filename = sprintf('%s_line%d_%s.wav', $request->chant_id, $request->line_index, Str::random(8));
         $path = "aipray_audio/{$filename}";
 
-        \Storage::disk('public')->put($path, $audioBytes);
+        $storage->put($path, $audioBytes);
 
         AiprayAudioSample::create([
             'filename' => $filename,

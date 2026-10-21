@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\AiprayAiModel;
 use App\Models\AiprayAudioSample;
 use App\Models\AiprayChant;
+use App\Models\AiprayContributor;
 use App\Models\AiprayPrayerSession;
 use App\Models\AiprayTrainingJob;
+use App\Services\AiprayAudioStorage;
+use App\Services\AiprayAutoLabeler;
 use Carbon\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -58,17 +62,41 @@ class AiprayApiController extends Controller
     /**
      * POST /api/aipray/audio/upload
      * Receive base64-encoded audio from the Flutter app for AI training.
+     *
+     * Apps from 1.2.5 also send client_sample_id (same on every retry),
+     * contributor_id + contributor_key_hash (lets that phone erase its voice
+     * later) and consent_version. Older apps send none of these.
+     * Contract: docs/audio-upload-contract.md in the Aipray repo.
      */
-    public function uploadAudio(Request $request): JsonResponse
-    {
+    public function uploadAudio(
+        Request $request,
+        AiprayAudioStorage $storage,
+        AiprayAutoLabeler $labeler,
+    ): JsonResponse {
         $validated = $request->validate([
-            'chant_id' => 'required|string|max:100',
+            // Both end up in the stored file name.
+            'chant_id' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'format' => 'nullable|in:m4a,wav',
             'line_index' => 'required|integer|min:0',
             'audio_data' => 'required|string',
             'duration_ms' => 'required|integer|min:0',
-            'format' => 'nullable|string|max:10',
             'device_info' => 'nullable|string|max:255',
+            'client_sample_id' => 'nullable|uuid',
+            'contributor_id' => 'nullable|uuid|required_with:contributor_key_hash',
+            'contributor_key_hash' => ['nullable', 'string', 'regex:/^[0-9a-f]{64}$/', 'required_with:contributor_id'],
+            'consent_version' => 'nullable|string|max:32',
         ]);
+
+        $sampleId = $validated['client_sample_id'] ?? null;
+        if ($sampleId && ($existing = AiprayAudioSample::where('client_sample_id', $sampleId)->first())) {
+            // A retry after a lost response: the phone already has what it needs.
+            return response()->json(['success' => true, 'id' => $existing->id, 'duplicate' => true]);
+        }
+
+        $contributorId = $validated['contributor_id'] ?? null;
+        if ($contributorId && ! $this->bindContributor($contributorId, $validated['contributor_key_hash'])) {
+            return response()->json(['error' => 'Contributor key mismatch'], 409);
+        }
 
         try {
             $audioBytes = base64_decode($validated['audio_data'], true);
@@ -91,26 +119,40 @@ class AiprayApiController extends Controller
             );
 
             $path = "aipray_audio/{$filename}";
-            Storage::disk('local')->put($path, $audioBytes);
+            $storage->put($path, $audioBytes);
 
-            $sample = AiprayAudioSample::create([
-                'filename' => $filename,
-                'original_name' => $filename,
-                'file_path' => $path,
-                'chant_id' => $validated['chant_id'],
-                'line_index' => $validated['line_index'],
-                'duration' => $validated['duration_ms'] / 1000.0,
-                'sample_rate' => 16000,
-                'format' => $format,
-                'file_size' => strlen($audioBytes),
-                'status' => 'unlabeled',
-                'device_info' => $validated['device_info'] ?? 'unknown',
-                'metadata' => [
-                    'uploaded_at' => now()->toIso8601String(),
-                    'ip' => $request->ip(),
-                    'app_version' => $request->header('X-App-Version', 'unknown'),
-                ],
-            ]);
+            $transcript = $labeler->transcriptFor($validated['chant_id'], $validated['line_index']);
+
+            try {
+                $sample = AiprayAudioSample::create([
+                    'filename' => $filename,
+                    'original_name' => $filename,
+                    'file_path' => $path,
+                    'chant_id' => $validated['chant_id'],
+                    'line_index' => $validated['line_index'],
+                    'transcript' => $transcript,
+                    'duration' => $validated['duration_ms'] / 1000.0,
+                    'sample_rate' => 16000,
+                    'format' => $format,
+                    'file_size' => strlen($audioBytes),
+                    'status' => $transcript ? AiprayAutoLabeler::STATUS : 'unlabeled',
+                    'device_info' => $validated['device_info'] ?? 'unknown',
+                    'client_sample_id' => $sampleId,
+                    'contributor_id' => $contributorId,
+                    'consent_version' => $validated['consent_version'] ?? null,
+                    'metadata' => [
+                        'uploaded_at' => now()->toIso8601String(),
+                        'ip' => $request->ip(),
+                        'app_version' => $request->header('X-App-Version', 'unknown'),
+                    ],
+                ]);
+            } catch (UniqueConstraintViolationException $e) {
+                // The same retry raced us between the lookup and the insert.
+                $storage->delete($path);
+                $existing = AiprayAudioSample::where('client_sample_id', $sampleId)->firstOrFail();
+
+                return response()->json(['success' => true, 'id' => $existing->id, 'duplicate' => true]);
+            }
 
             return response()->json(['success' => true, 'id' => $sample->id], 201);
         } catch (\Exception $e) {
@@ -118,6 +160,62 @@ class AiprayApiController extends Controller
 
             return response()->json(['error' => 'Upload failed'], 500);
         }
+    }
+
+    /**
+     * The first upload with a contributor_id binds its key hash; later ones
+     * must match it, or they could erase or impersonate that phone.
+     */
+    private function bindContributor(string $contributorId, string $keyHash): bool
+    {
+        try {
+            $contributor = AiprayContributor::firstOrCreate(
+                ['contributor_id' => $contributorId],
+                ['key_hash' => $keyHash],
+            );
+        } catch (UniqueConstraintViolationException $e) {
+            $contributor = AiprayContributor::where('contributor_id', $contributorId)->firstOrFail();
+        }
+
+        return hash_equals($contributor->key_hash, $keyHash);
+    }
+
+    /**
+     * POST /api/aipray/contributors/erase
+     * Delete every voice sample one phone uploaded ("ลบข้อมูลเสียงของฉัน").
+     *
+     * The phone proves ownership with the secret whose SHA-256 its uploads
+     * carried. Unknown contributors get deleted:0 rather than 404, because
+     * the app retries 404s forever. Repeating the request is harmless.
+     */
+    public function eraseContributor(Request $request, AiprayAudioStorage $storage): JsonResponse
+    {
+        $validated = $request->validate([
+            'contributor_id' => 'required|uuid',
+            'secret' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{32,128}$/'],
+        ]);
+
+        $contributor = AiprayContributor::where('contributor_id', $validated['contributor_id'])->first();
+        if (! $contributor) {
+            return response()->json(['deleted' => 0]);
+        }
+
+        if (! $contributor->ownsSecret($validated['secret'])) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        $deleted = 0;
+        AiprayAudioSample::where('contributor_id', $contributor->contributor_id)
+            ->chunkById(200, function ($samples) use ($storage, &$deleted) {
+                foreach ($samples as $sample) {
+                    $storage->delete($sample->file_path);
+                    $sample->delete();
+                    $deleted++;
+                }
+            });
+        $contributor->delete();
+
+        return response()->json(['deleted' => $deleted]);
     }
 
     /**
@@ -254,6 +352,21 @@ class AiprayApiController extends Controller
             Storage::disk('local')->path($aiModel->onnx_file_path),
             "aipray-model-{$aiModel->version}.onnx"
         );
+    }
+
+    /**
+     * GET /api/aipray/ml/datasets/{job} (signed URL)
+     * The training archive for a rented GPU, only while that run is live.
+     */
+    public function downloadDataset(AiprayTrainingJob $job): BinaryFileResponse|JsonResponse
+    {
+        $disk = Storage::disk(AiprayAudioStorage::DISK);
+        if (! in_array($job->gpu_state, ['booting', 'training'], true)
+            || ! $job->dataset_path || ! $disk->exists($job->dataset_path)) {
+            return response()->json(['error' => 'Dataset no longer available'], 410);
+        }
+
+        return response()->download($disk->path($job->dataset_path), "aipray-dataset-{$job->id}.zip");
     }
 
     /**

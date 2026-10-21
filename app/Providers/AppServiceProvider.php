@@ -148,6 +148,11 @@ class AppServiceProvider extends ServiceProvider
                 });
         });
 
+        // Aipray "delete my voice": cheap to call, destructive when it works.
+        RateLimiter::for('aipray-erase', function ($request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
         RateLimiter::for('comment-moderation', function ($request) {
             return Limit::perMinute(30)
                 ->by($request->user()?->id ?: $request->ip())

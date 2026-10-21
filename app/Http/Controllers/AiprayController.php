@@ -58,6 +58,18 @@ class AiprayController extends Controller
         ));
     }
 
+    /** Privacy policy for voice donated through the app (PDPA). */
+    public function privacy()
+    {
+        $days = (int) config('services.aipray.audio_retention_days');
+
+        return view('aipray.privacy', [
+            'retention' => $days % 365 === 0 ? ($days / 365) . ' ปี' : "{$days} วัน",
+            'dpoEmail' => config('services.aipray.dpo_email'),
+            'reviewed' => (bool) config('services.aipray.privacy_policy_reviewed'),
+        ]);
+    }
+
     public function donate()
     {
         $donationService = app(AiprayDonationService::class);
