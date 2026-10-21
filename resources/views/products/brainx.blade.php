@@ -55,7 +55,7 @@
 
                     <div class="flex flex-wrap gap-3 mb-8">
                         <span class="px-3 py-1 bg-violet-500/20 text-violet-200 rounded-full text-sm border border-violet-500/30">Remote MCP</span>
-                        <span class="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-sm border border-purple-500/30"><x-bi th="พื้นที่ 1 GB" en="1 GB space" /></span>
+                        <span class="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-sm border border-purple-500/30"><x-bi th="พื้นที่ 4 GB" en="4 GB space" /></span>
                         <span class="px-3 py-1 bg-violet-500/20 text-violet-200 rounded-full text-sm border border-violet-500/30"><x-bi th="ใช้ออฟไลน์ได้" en="Works offline" /></span>
                         <span class="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-sm border border-purple-500/30"><x-bi th="คีย์เดียวตลอดไป" en="One key for good" /></span>
                     </div>
@@ -66,6 +66,7 @@
                                 <span class="text-4xl font-black text-white">฿{{ $monthlyPrice }}</span>
                                 <span class="text-gray-300 text-sm"><x-bi th="/ เดือน" en="month" /></span>
                             </div>
+                            <x-tpix-price variant="detail" :thb="$monthlyPrice" />
                             <p class="text-violet-200/80 text-sm mt-1"><x-bi th="ต่ออายุแล้วใช้คีย์เดิม" en="Renewing keeps the same key" /></p>
                         </div>
 
@@ -134,8 +135,8 @@
                      'dth' => 'เลือกเป็นโฟลเดอร์ เฉพาะโน้ต .md ในโฟลเดอร์ที่คุณเลือกเท่านั้นที่ถูกอัปโหลด',
                      'den' => 'Pick folders. Only the .md notes in the folders you choose are uploaded.'],
                     ['th' => 'พื้นที่ของคุณคนเดียว', 'en' => 'A space that is yours alone',
-                     'dth' => 'แต่ละบัญชีมีพื้นที่แยก 1 GB เข้าถึงได้เฉพาะด้วยโทเค็นของคุณ',
-                     'den' => 'Each account gets its own 1 GB space, reachable only with your tokens.'],
+                     'dth' => 'แต่ละบัญชีเริ่มต้นด้วยพื้นที่แยก 4 GB ขยายเพิ่มได้ เข้าถึงได้เฉพาะด้วยโทเค็นของคุณ',
+                     'den' => 'Each account starts with its own 4 GB space, expandable, reachable only with your tokens.'],
                     ['th' => 'ใช้ออฟไลน์ได้', 'en' => 'Keeps working offline',
                      'dth' => 'brainx-mcp โหมดคลาวด์ดึงโน้ตมาเก็บไว้ในเครื่อง เน็ตหลุดก็ใช้ต่อได้ แล้วส่งสิ่งที่เขียนกลับขึ้นไปให้',
                      'den' => 'brainx-mcp in cloud mode caches your notes locally, works through a dropped connection and pushes your writes back.'],

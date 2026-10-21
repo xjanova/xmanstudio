@@ -81,6 +81,7 @@ class DomainRegistration extends Model
         'privacy_protection',
         'auto_renew',
         'nameservers',
+        'own_nameservers',
         'registered_at',
         'expires_at',
         'previous_expires_at',
@@ -99,6 +100,7 @@ class DomainRegistration extends Model
         'privacy_protection' => 'boolean',
         'auto_renew' => 'boolean',
         'nameservers' => 'array',
+        'own_nameservers' => 'array',
         'registered_at' => 'datetime',
         'expires_at' => 'datetime',
         'previous_expires_at' => 'datetime',
@@ -342,6 +344,47 @@ class DomainRegistration extends Model
     public function isUsable(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
+    }
+
+    /**
+     * Is the domain still answered by our DNS — the zone the DNS panel edits?
+     *
+     * Unknown on either side counts as yes: that is every domain sold before
+     * own_nameservers existed, and the panel is what they always had.
+     */
+    public function usesOwnDns(): bool
+    {
+        $own = self::normaliseNameservers($this->own_nameservers);
+        $live = self::normaliseNameservers($this->nameservers);
+
+        return $own === [] || $live === [] || $own === $live;
+    }
+
+    public function usesCloudflare(): bool
+    {
+        $live = self::normaliseNameservers($this->nameservers);
+
+        return $live !== []
+            && collect($live)->every(fn ($ns) => str_ends_with($ns, '.ns.cloudflare.com'));
+    }
+
+    /**
+     * Lower-case, no trailing dot, no duplicates, sorted — so two lists that
+     * name the same servers compare equal whatever order they came in.
+     *
+     * @return array<int,string>
+     */
+    public static function normaliseNameservers(?array $servers): array
+    {
+        $list = collect($servers ?? [])
+            ->filter(fn ($ns) => is_string($ns) && trim($ns) !== '')
+            ->map(fn ($ns) => rtrim(strtolower(trim($ns)), '.'))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        return $list;
     }
 
     /**

@@ -1689,6 +1689,76 @@ a.xu-card:focus-visible::after,
     gap: 14px;
 }
 
+/* The main campaign's link on the first stop (DGX Spark bundle). */
+.xu-campaign {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+    max-width: min(100%, 780px);
+    margin-top: 22px;
+    padding: 10px 16px 10px 10px;
+    border-radius: 18px;
+    border: 1px solid rgba(245, 200, 107, 0.45);
+    background: linear-gradient(100deg, rgba(10, 14, 28, 0.82), rgba(40, 22, 70, 0.82));
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.4;
+    text-decoration: none;
+    text-shadow: none;
+    box-shadow: 0 14px 40px -16px rgba(139, 92, 246, 0.9);
+    transition: border-color 0.3s var(--xu-ease), box-shadow 0.3s var(--xu-ease);
+}
+
+.xu-campaign:hover,
+.xu-campaign:focus-visible {
+    border-color: var(--xu-gold);
+    box-shadow: 0 18px 46px -14px rgba(245, 200, 107, 0.6);
+}
+
+.xu-campaign__tag {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--xu-gold);
+    color: #3a2604;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.xu-campaign__text b {
+    color: var(--xu-gold);
+}
+
+.xu-campaign__meta {
+    color: rgba(255, 255, 255, 0.78);
+    font-family: var(--xu-mono);
+    font-size: 12.5px;
+}
+
+.xu-campaign__go {
+    color: var(--xu-gold);
+    font-weight: 800;
+}
+
+.xu-promo--campaign {
+    border-color: rgba(245, 200, 107, 0.5);
+    background: linear-gradient(100deg, rgba(10, 14, 28, 0.85), rgba(60, 30, 100, 0.85));
+}
+
+.xu-promo--campaign .xu-promo__tag {
+    width: auto;
+    padding: 0 7px;
+    border-radius: 999px;
+    color: #3a2604;
+    font-size: 10.5px;
+}
+
+.xu-promo--campaign .xu-promo__off,
+.xu-promo--campaign .xu-promo__go {
+    color: #3a2604;
+}
+
 .xu-live .xu-core {
     min-height: 0;
     flex-direction: column;

@@ -9,8 +9,9 @@
  *   they scroll with the page while the camera flies through space behind.
  *
  * Talks to the page through window events only: xph:feature (product id),
- * xph:spin (drag px), xph:motion. Missing WebGL → html.no-webgl and the page
- * keeps its CSS fallback.
+ * xph:spin (drag px), xph:motion, xph:catalog (the shop's live data changed
+ * these products). Missing WebGL → html.no-webgl and the page keeps its CSS
+ * fallback.
  */
 import * as THREE from 'three';
 import {
@@ -59,8 +60,16 @@ function seedOf(id) {
 
 const worldOf = (p) => ({ palette: p.palette, style: p.planet, seed: seedOf(p.id) });
 
-/** The pictures a product shows on the screen: its real screenshots, else its key art. */
-const picturesOf = (p) => (p.shots && p.shots.length ? p.shots : [p.art]);
+/** A picture on another origin (the shop's real screenshots on xman4289.com). Drawn into a canvas
+    for WebGL, it must come with CORS or it taints the canvas: ask for it anonymously, and when the
+    server does not allow that the load fails cleanly and the key art stands in. */
+const foreign = (url) => {
+  try {
+    return new URL(url, location.href).origin !== location.origin;
+  } catch {
+    return false;
+  }
+};
 
 class HubEngine {
   constructor(canvas, motion) {
@@ -86,10 +95,14 @@ class HubEngine {
     this.mouseS = new THREE.Vector2();
     this.scrollS = 0;
     this.fovKick = 0;
+    // Frame pacing (see pace()): vsync is the display's measured frame time in ms.
+    this.pacing = { vsync: 1000 / 60, lastRaw: 0, count: 0, active: performance.now(), idle: false };
 
     const small = Math.min(window.innerWidth, window.innerHeight) < 700;
     this.maxDpr = small ? 1.4 : 1.75;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, alpha: false, powerPreference: 'high-performance' });
+    // Near 2x pixels the edges are already smooth: MSAA there only costs bandwidth.
+    const aa = !small && (window.devicePixelRatio || 1) < 1.75;
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: aa, alpha: false, powerPreference: 'high-performance' });
     this.renderer.setClearColor(0x04050c, 1);
     const ext = this.renderer.extensions;
     this.texType = ext.has('EXT_color_buffer_float') || ext.has('EXT_color_buffer_half_float') ? THREE.HalfFloatType : THREE.UnsignedByteType;
@@ -471,6 +484,8 @@ class HubEngine {
     // screen pictures
     this.loader = new THREE.TextureLoader();
     this.texCache = new Map();
+    this.broken = new Set(); // pictures that would not load here: never asked for again this visit
+    this.orphans = new Set();
     this.screenFrom = blank;
     this.screenMix = 1;
     this.slide = { id: null, list: [], i: 0, next: 0 };
@@ -608,8 +623,21 @@ class HubEngine {
 
   /* ---------------------------------------------------------------- pictures */
 
+  /** The pictures a product shows on the screen: its real screenshots, else its key art. */
+  pictures(p) {
+    const shots = (p.shots || []).filter((u) => !this.broken.has(u));
+    return shots.length ? shots : [p.art];
+  }
+
+  /** Tell the page which of the product's shots is on the glass (its LIVE CAPTURE counter);
+      real: false = the key art is standing in, so there is no capture to count. */
+  emitSlide(p, url) {
+    window.dispatchEvent(new CustomEvent('xph:slide', { detail: { id: p.id, i: Math.max(0, p.shots.indexOf(url)), real: url !== p.art } }));
+  }
+
   /** The product's picture framed as an app window (title bar + image), as a texture. */
   windowTexture(p, url) {
+    if (url !== p.art && this.broken.has(url)) return this.windowTexture(p, p.art);
     const key = p.id + '|' + url;
     if (this.texCache.has(key)) {
       const hit = this.texCache.get(key);
@@ -681,7 +709,22 @@ class HubEngine {
     im.onerror = () => {
       this.texCache.delete(key);
       entry.waiters.splice(0).forEach((fn) => fn(null));
+      if (url === p.art) return;
+      // a real screenshot that will not come (gone, or no CORS for the canvas): drop it from the
+      // gallery and put up the next picture, the key art when it was the only one
+      this.broken.add(url);
+      const sl = this.slide;
+      if (sl.id !== p.id) return;
+      const was = sl.list[sl.i];
+      sl.list = this.pictures(p);
+      const at = sl.list.indexOf(was);
+      sl.i = at >= 0 ? at : 0;
+      if (at < 0) {
+        this.showPicture(p, sl.list[0], true);
+        this.emitSlide(p, sl.list[0]);
+      }
     };
+    if (foreign(url)) im.crossOrigin = 'anonymous';
     im.src = url;
     return entry;
   }
@@ -715,6 +758,7 @@ class HubEngine {
         u.uMix.value = 0;
         this.screenMix = 0;
       }
+      if (this.orphans.size) this.freeOrphans();
       this.invalidate();
     };
     if (entry.ready) apply(entry.tex);
@@ -725,7 +769,41 @@ class HubEngine {
   preload(ids) {
     for (const id of ids) {
       const p = cat.byId(id);
-      if (p) this.windowTexture(p, picturesOf(p)[0]);
+      if (p) this.windowTexture(p, this.pictures(p)[0]);
+    }
+  }
+
+  /** The shop's live data changed these products (status, real pictures, version): the window title
+      bars baked with the old version go, and the glass is re-pointed if it shows one of them. */
+  refreshProducts(ids) {
+    const u = this.screenMat.uniforms;
+    for (const [k, e] of this.texCache) {
+      // a picture still loading draws its title bar from the product as it is by then: keep it
+      if (!e.ready || !ids.includes(k.slice(0, k.indexOf('|')))) continue;
+      this.texCache.delete(k);
+      if (e.tex === u.uTex0.value || e.tex === u.uTex1.value) this.orphans.add(e.tex);
+      else e.tex.dispose();
+    }
+    const sl = this.slide;
+    const p = sl.id && ids.includes(sl.id) ? cat.byId(sl.id) : null;
+    if (p) {
+      const list = this.pictures(p);
+      this.slide = { id: p.id, list, i: 0, next: this.time + 5.2 };
+      this.showPicture(p, list[0], this.motion);
+      if (list.length > 1) this.windowTexture(p, list[1]);
+      this.emitSlide(p, list[0]);
+    }
+    this.preload(cat.FEATURED.map((f) => f.id).filter((id) => ids.includes(id)));
+    this.invalidate();
+  }
+
+  /** Textures taken out of the cache while on the glass: freed once the glass has moved off them. */
+  freeOrphans() {
+    const u = this.screenMat.uniforms;
+    for (const t of this.orphans) {
+      if (t === u.uTex0.value || t === u.uTex1.value) continue;
+      t.dispose();
+      this.orphans.delete(t);
     }
   }
 
@@ -773,9 +851,11 @@ class HubEngine {
     ga.needsUpdate = true;
     this.setSky(world.palette, animate);
 
-    const list = picturesOf(p);
+    const list = this.pictures(p);
     this.slide = { id: p.id, list, i: 0, next: this.time + 5.2 };
     this.showPicture(p, list[0], animate);
+    // a gallery already known not to load here: the page's capture counter steps aside for the art
+    if (p.shots.length && list[0] === p.art) this.emitSlide(p, list[0]);
     // the next shot of a gallery, ahead of time
     if (list.length > 1) this.windowTexture(p, list[1]);
     this.needsRender = true;
@@ -806,6 +886,7 @@ class HubEngine {
   }
 
   pointer(x, y) {
+    this.wake();
     this.mouse.set(x, y);
     if (!this.motion) this.mouseS.copy(this.mouse);
   }
@@ -816,7 +897,13 @@ class HubEngine {
     if (on && this.running && !this.raf) this.raf = requestAnimationFrame(this.frame);
   }
 
+  /** Something moved: draw at the full pace for a while. */
+  wake() {
+    this.pacing.active = performance.now();
+  }
+
   invalidate() {
+    this.wake();
     this.needsRender = true;
     if (this.running && !this.raf) this.raf = requestAnimationFrame(this.frame);
   }
@@ -865,8 +952,33 @@ class HubEngine {
 
   /* ------------------------------------------------------------------ frame */
 
+  /**
+   * Pacing. A 120/144 Hz screen would otherwise get every vsync drawn — over
+   * twice the work of 60 Hz for motion nobody can tell apart — so draw on every
+   * nth vsync to land near 60; and once nothing has moved for a few seconds the
+   * slow drift that is left looks the same at ~30. Everything is time-based, so
+   * speeds stay as they are. Returns whether this vsync draws.
+   */
+  pace(ts, transition) {
+    const p = this.pacing;
+    const raw = ts - p.lastRaw;
+    p.lastRaw = ts;
+    if (raw > 2 && raw < 50) p.vsync = p.vsync * 0.95 + raw * 0.05;
+    if (transition || this.needsRender) p.active = ts;
+    p.idle = ts - p.active > 3500;
+    const every = Math.max(1, Math.floor(1000 / p.vsync / (p.idle ? 28 : 55)));
+    if (++p.count < every) return false;
+    p.count = 0;
+    return true;
+  }
+
   frame = (ts) => {
     this.raf = 0;
+    const transition = this.skyT < 1 || this.heroMix < 1 || this.screenMix < 1;
+    if (this.running && this.motion && !this.pace(ts, transition)) {
+      this.raf = requestAnimationFrame(this.frame);
+      return;
+    }
     this.timer.update(ts);
     const dt = Math.min(this.timer.getDelta(), 0.05);
     const animating = this.motion || this.skyT < 1 || this.heroMix < 1 || this.screenMix < 1;
@@ -874,7 +986,9 @@ class HubEngine {
       this.update(animating ? dt : 0);
       this.render();
       this.needsRender = false;
-      if (this.motion) this.adapt(dt, ts);
+      // Idle frames run at half pace on purpose: not a sign of a slow machine.
+      if (this.motion && !this.pacing.idle) this.adapt(dt, ts);
+      else this.perf.last = 0;
     }
     if (this.running && (this.motion || this.skyT < 1 || this.heroMix < 1 || this.screenMix < 1)) {
       this.raf = requestAnimationFrame(this.frame);
@@ -970,16 +1084,20 @@ class HubEngine {
     if (this.screenMix < 1) {
       this.screenMix = Math.min(1, this.screenMix + dt / 0.85);
       su.uMix.value = this.screenMix;
-      if (this.screenMix >= 1) su.uTex0.value = su.uTex1.value;
+      if (this.screenMix >= 1) {
+        su.uTex0.value = su.uTex1.value;
+        if (this.orphans.size) this.freeOrphans();
+      }
     }
     const sl = this.slide;
     if (this.motion && sl.list.length > 1 && this.time > sl.next && this.hero.visible && !document.hidden) {
       const prod = cat.byId(sl.id);
       sl.i = (sl.i + 1) % sl.list.length;
       sl.next = this.time + 4.6;
-      this.showPicture(prod, sl.list[sl.i], true);
+      const url = sl.list[sl.i];
+      this.showPicture(prod, url, true);
       this.windowTexture(prod, sl.list[(sl.i + 1) % sl.list.length]);
-      window.dispatchEvent(new CustomEvent('xph:slide', { detail: { id: sl.id, i: sl.i } }));
+      this.emitSlide(prod, url);
     }
 
     // wide stages (phones, mid widths) hold the device big and centred; the tall
@@ -1062,6 +1180,7 @@ class HubEngine {
   dispose() {
     this.stop();
     for (const e of this.texCache.values()) e.tex?.dispose();
+    for (const t of this.orphans) t.dispose();
     for (const d of this.disposables) d.dispose();
     this.renderer.dispose();
   }
@@ -1104,6 +1223,7 @@ function boot() {
     if (!engine.motion) engine.invalidate();
   }, { passive: true });
   window.addEventListener('xph:spin', (e) => engine.spin(e.detail));
+  window.addEventListener('xph:catalog', (e) => engine.refreshProducts((e.detail && e.detail.changed) || []));
   window.addEventListener('xph:feature', (e) => {
     const p = cat.byId(e.detail);
     if (!p || p.id === shown) return;

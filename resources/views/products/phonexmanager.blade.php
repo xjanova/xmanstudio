@@ -48,6 +48,9 @@
 
                     <!-- CTA Buttons -->
                     <div class="flex flex-wrap gap-4">
+                        @if($product->isComingSoon())
+                            <x-coming-soon-download :product="$product" />
+                        @else
                         @auth
                             @if($hasPurchased)
                                 <a href="{{ route('customer.downloads') }}"
@@ -66,6 +69,7 @@
                                 ดูแพคเกจ
                             </a>
                         @endauth
+                        @endif
                     </div>
                 </div>
 
@@ -419,6 +423,9 @@
             <p class="text-gray-400 mb-8">ดาวน์โหลดฟรี และจัดการอุปกรณ์ Android ของคุณอย่างมืออาชีพ</p>
 
             <div class="flex flex-wrap justify-center gap-4">
+                @if($product->isComingSoon())
+                    <x-coming-soon-download :product="$product" />
+                @else
                 @auth
                     @if($hasPurchased)
                         <a href="{{ route('customer.downloads') }}"
@@ -437,6 +444,7 @@
                         ดูแพคเกจ
                     </a>
                 @endauth
+                @endif
             </div>
         </div>
     </section>

@@ -48,6 +48,9 @@
 
                     <!-- CTA Buttons -->
                     <div class="flex flex-wrap gap-4">
+                        @if($product->isComingSoon())
+                            <x-coming-soon-download :product="$product" />
+                        @else
                         @auth
                             @if($hasPurchased)
                                 <a href="{{ route('customer.downloads') }}"
@@ -66,6 +69,7 @@
                                 ดูแพคเกจ
                             </a>
                         @endauth
+                        @endif
                     </div>
                 </div>
 
@@ -416,6 +420,9 @@
             <p class="text-gray-400 mb-8">ดาวน์โหลดฟรี Open Source สร้างเครือข่ายส่วนตัวของคุณวันนี้</p>
 
             <div class="flex flex-wrap justify-center gap-4">
+                @if($product->isComingSoon())
+                    <x-coming-soon-download :product="$product" />
+                @else
                 @auth
                     @if($hasPurchased)
                         <a href="{{ route('customer.downloads') }}"
@@ -434,6 +441,7 @@
                         ดูแพคเกจ
                     </a>
                 @endauth
+                @endif
             </div>
         </div>
     </section>

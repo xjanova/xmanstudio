@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\AiprayRecordController;
 use App\Http\Controllers\Admin\AiprayTrainingController;
 use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\AntiXPushSettingsController;
 use App\Http\Controllers\Admin\AvatarPackController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BitTorrentController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Admin\ContactSettingsController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
+use App\Http\Controllers\Admin\DgxSparkCampaignController as AdminDgxSparkCampaignController;
 use App\Http\Controllers\Admin\DomainSettingController;
 use App\Http\Controllers\Admin\DonationController;
 use App\Http\Controllers\Admin\EmailSettingController;
@@ -35,6 +37,7 @@ use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
 use App\Http\Controllers\Admin\LineMessagingController;
 use App\Http\Controllers\Admin\LineSettingsController;
 use App\Http\Controllers\Admin\LocalVpnController;
+use App\Http\Controllers\Admin\LocalVpnFleetController;
 use App\Http\Controllers\Admin\LoginSecurityController;
 use App\Http\Controllers\Admin\MetalXAiController;
 use App\Http\Controllers\Admin\MetalXAnalyticsController;
@@ -74,6 +77,8 @@ use App\Http\Controllers\Admin\TeamMemberController;
 use App\Http\Controllers\Admin\TelegramAlertController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\TpingWorkflowController as AdminTpingWorkflowController;
+use App\Http\Controllers\Admin\TpixPaymentController as AdminTpixPaymentController;
+use App\Http\Controllers\Admin\TpixReportController as AdminTpixReportController;
 use App\Http\Controllers\Admin\TurnstileSettingsController;
 use App\Http\Controllers\Admin\TwoFactorController as AdminTwoFactorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -81,21 +86,28 @@ use App\Http\Controllers\Admin\VpsSettingController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
+use App\Http\Controllers\AntiXController;
+use App\Http\Controllers\AntiXMobileController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
 use App\Http\Controllers\BrainXDownloadController;
+use App\Http\Controllers\BrainXUpdateController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\ChanthraStudioWebController;
 use App\Http\Controllers\CluadeXWebController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AffiliateController;
+use App\Http\Controllers\Customer\CloudflareController as CustomerCloudflareController;
 use App\Http\Controllers\Customer\DomainController as CustomerDomainController;
+use App\Http\Controllers\Customer\DomainRegistrantController as CustomerDomainRegistrantController;
 use App\Http\Controllers\Customer\TpingDataProfileController;
 use App\Http\Controllers\Customer\TpingWorkflowController;
 use App\Http\Controllers\Customer\VpsController as CustomerVpsController;
 use App\Http\Controllers\CustomerPortalController;
+use App\Http\Controllers\DecoyController;
+use App\Http\Controllers\DgxSparkCampaignController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainOrderController;
 use App\Http\Controllers\DownloadController;
@@ -106,6 +118,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KycController;
 use App\Http\Controllers\LocalVpnWebController;
+use App\Http\Controllers\MacDockController;
 use App\Http\Controllers\MetalXController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\OrderController;
@@ -124,6 +137,7 @@ use App\Http\Controllers\SmsCheckerController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TpingController;
+use App\Http\Controllers\TpixPayController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
 use App\Http\Controllers\VpsController;
 use App\Http\Controllers\WinXToolsController;
@@ -134,9 +148,15 @@ use App\Models\SeoSetting;
 use App\Models\TeamMember;
 use App\Models\User;
 use App\Support\Auth\LoginLog;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /*
 |--------------------------------------------------------------------------
@@ -224,6 +244,14 @@ Route::get('/', function () {
     return app(HomeController::class)->index();
 })->name('home');
 
+// Main campaign: NVIDIA DGX Spark + lifetime CluadeX + BrainX, 20 sets (config/campaigns.php).
+// The CluadeX desktop app links to https://xman4289.com/dgx-spark — keep this exact path, no aliases.
+// Ordering needs an account (the licenses are issued to it) and takes bank transfer / PromptPay only.
+Route::get('/dgx-spark', [DgxSparkCampaignController::class, 'show'])->name('campaign.dgx-spark');
+Route::post('/dgx-spark/order', [DgxSparkCampaignController::class, 'order'])
+    ->middleware(['auth', 'throttle:10,10,dgx-order', 'turnstile:checkout'])
+    ->name('campaign.dgx-spark.order');
+
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
@@ -246,6 +274,36 @@ Route::post('/api/download/{slug}/{version?}', [DownloadController::class, 'apiD
 Route::get('/brainx/download', [BrainXDownloadController::class, 'download'])
     ->middleware('throttle:6,60,brainx-download')
     ->name('brainx.download');
+
+// BrainX desktop updates — the app's Velopack update source is https://xman4289.com/brainx/download/
+// (trailing slash). The feed and its signature come byte for byte from one GitHub release; a package
+// is streamed only when that feed lists it (see BrainXUpdateController). Each has its own throttle,
+// none of them shares the installer's 6 an hour. {file} needs a segment, so it never matches
+// /brainx/download itself, and the two fixed names are registered before it.
+// Apps, not browsers: no session is started and no cookie set for what every install polls.
+Route::prefix('brainx/download')
+    ->name('brainx.update.')
+    ->withoutMiddleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        // GET only; without a session it has nothing to check, and its XSRF cookie needs one
+        ValidateCsrfToken::class,
+    ])
+    ->group(function () {
+        Route::get('/releases.win.json', [BrainXUpdateController::class, 'feed'])
+            ->middleware('throttle:60,1,brainx-update-feed')
+            ->name('feed');
+        Route::get('/releases.win.json.sig', [BrainXUpdateController::class, 'signature'])
+            ->middleware('throttle:60,1,brainx-update-signature')
+            ->name('signature');
+        // ~150 MB a package (a delta is smaller); one update fetches one full or a few deltas.
+        Route::get('/{file}', [BrainXUpdateController::class, 'package'])
+            ->where('file', '[A-Za-z0-9_][A-Za-z0-9._-]{0,199}')
+            ->middleware('throttle:20,60,brainx-update-package')
+            ->name('package');
+    });
 
 // AutoTradeX - Direct purchase from app
 Route::prefix('autotradex')->name('autotradex.')->group(function () {
@@ -368,6 +426,37 @@ Route::get('/winx-tools/download/{version?}', [WinXToolsController::class, 'down
     ->where('version', '[0-9A-Za-z.\-]+')
     ->middleware('throttle:30,1,winx-download')
     ->name('winx-tools.download');
+
+// Anti X (Windows Server) - zip เดียวทั้ง Free/Pro (Pro ปลดในแอปด้วย license key) · แอปอัปเดตตัวเองผ่าน URL นี้
+// release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ (token ของสินค้าในหน้า admin) ห้าม redirect ไป GitHub
+// ผูกกับ anti-x ตายตัว ห้ามทำเป็น {slug} · {version} = ตัวนั้นเป๊ะ ๆ ที่ update/check ประกาศ sha256 ไว้
+Route::get('/anti-x/download/{version?}', [AntiXController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,anti-x-download')
+    ->name('anti-x.download');
+
+// Anti X Mobile (Android) - แอปคู่หูของ Anti X แจกฟรีทุกคน แม้ไม่ได้ซื้อ Anti X (เจ้าของ 2026-10-21) · ตัวอัปเดตในแอปโหลดผ่าน URL นี้
+// release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ ห้าม redirect ไป GitHub · ผูกกับ anti-x-mobile ตายตัว ห้ามทำเป็น {slug}
+Route::get('/anti-x-mobile/download/{version?}', [AntiXMobileController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,anti-x-mobile-download')
+    ->name('anti-x-mobile.download');
+
+// MacDock (Windows) - แอปฟรี zip เดียว · แอปอัปเดตตัวเองผ่าน URL นี้ (เฉพาะเครื่องที่มีไลเซ่นฟรี)
+// release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ ห้าม redirect ไป GitHub · ผูกกับ macdock ตายตัว ห้ามทำเป็น {slug}
+Route::get('/macdock/download/{version?}', [MacDockController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,macdock-download')
+    ->name('macdock.download');
+
+// ไลเซ่นฟรีของ MacDock: แอปเปิดหน้านี้พร้อม machine_id → ล็อกอิน/สมัคร → กดยืนยัน = คีย์ FREE ผูกกับบัญชี + เครื่อง
+Route::middleware('auth')->group(function () {
+    Route::get('/products/macdock/free-license', [MacDockController::class, 'showFreeLicense'])
+        ->name('macdock.free-license');
+    Route::post('/products/macdock/free-license', [MacDockController::class, 'claimFreeLicense'])
+        ->middleware('throttle:10,10,macdock-free-license')
+        ->name('macdock.free-license.store');
+});
 
 // Services
 Route::get('/services', [ProductController::class, 'services'])->name('services.index');
@@ -634,6 +723,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order}/payment-status', [OrderController::class, 'checkPaymentStatus'])->name('orders.payment-status');
     Route::post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('orders.confirm-payment');
     Route::get('/orders/{order}/download', [OrderController::class, 'download'])->name('orders.download');
+
+    // Pay with TPIX coin: the pay page, its status poll, "I paid with this tx", and a fresh quote
+    // for an order whose last one expired. Only the quote's owner may use them (TpixPayController).
+    Route::get('/pay/tpix/{tpixPayment}', [TpixPayController::class, 'show'])->name('tpix-pay.show');
+    Route::get('/pay/tpix/{tpixPayment}/status', [TpixPayController::class, 'status'])
+        ->middleware('throttle:40,1,tpix-pay-status')->name('tpix-pay.status');
+    Route::post('/pay/tpix/{tpixPayment}/tx', [TpixPayController::class, 'submit'])
+        ->middleware('throttle:10,1,tpix-pay-submit')->name('tpix-pay.submit');
+    Route::post('/orders/{order}/tpix', [TpixPayController::class, 'quoteOrder'])
+        ->middleware('throttle:10,1,tpix-pay-quote')->name('orders.tpix-quote');
     // ใบเสร็จรับเงิน PDF — เรนเดอร์กินซีพียู จำกัดอัตราไว้กันคนกดรัว
     Route::get('/orders/{order}/receipt', [ReceiptController::class, 'download'])
         ->middleware('throttle:20,1,order-receipt')->name('orders.receipt');
@@ -659,6 +758,26 @@ Route::middleware('auth')->group(function () {
                 ->whereNumber('id')->middleware('throttle:30,10,domain-dns')->name('dns');
             Route::post('/{id}/nameservers', [CustomerDomainController::class, 'updateNameservers'])
                 ->whereNumber('id')->middleware('throttle:10,10,domain-nameservers')->name('nameservers');
+            // ชี้ไป Cloudflare ปุ่มเดียว (ตรวจกับ Cloudflare ก่อนสลับ) และปุ่มกลับมาใช้ DNS ของเรา
+            Route::post('/{id}/cloudflare', [CustomerDomainController::class, 'useCloudflare'])
+                ->whereNumber('id')->middleware('throttle:10,10,domain-cloudflare')->name('cloudflare');
+            Route::post('/{id}/own-dns', [CustomerDomainController::class, 'useOwnDns'])
+                ->whereNumber('id')->middleware('throttle:10,10,domain-own-dns')->name('own-dns');
+            // Cloudflare ของลูกค้าเอง ผ่าน API token ที่ลูกค้าสร้าง: เชื่อมครั้งเดียวใช้ได้ทุกโดเมน
+            // ย้ายไป Cloudflare แบบไม่ต้องคัดลอกอะไร และตั้งค่าด่วนตามเทมเพลต
+            // แก้ข้อมูลผู้ถือครอง (WHOIS) ของโดเมนที่จดแล้ว — ฟอร์มและกฎเดียวกับหน้าจด
+            Route::get('/{id}/registrant', [CustomerDomainRegistrantController::class, 'edit'])
+                ->whereNumber('id')->name('registrant');
+            Route::post('/{id}/registrant', [CustomerDomainRegistrantController::class, 'update'])
+                ->whereNumber('id')->middleware('throttle:5,10,domain-registrant')->name('registrant.update');
+            Route::post('/cloudflare/connect', [CustomerCloudflareController::class, 'connect'])
+                ->middleware('throttle:10,10,cloudflare-connect')->name('cloudflare-connect');
+            Route::post('/cloudflare/disconnect', [CustomerCloudflareController::class, 'disconnect'])
+                ->middleware('throttle:10,10,cloudflare-disconnect')->name('cloudflare-disconnect');
+            Route::post('/{id}/cloudflare/move', [CustomerCloudflareController::class, 'move'])
+                ->whereNumber('id')->middleware('throttle:5,10,cloudflare-move')->name('cloudflare-move');
+            Route::post('/{id}/cloudflare/template', [CustomerCloudflareController::class, 'applyTemplate'])
+                ->whereNumber('id')->middleware('throttle:20,10,cloudflare-template')->name('cloudflare-template');
             // รหัสย้ายโดเมนออก — ของลับ ขอถี่ ๆ ไม่ได้
             Route::post('/{id}/auth-code', [CustomerDomainController::class, 'authCode'])
                 ->whereNumber('id')->middleware('throttle:5,10,domain-auth-code')->name('auth-code');
@@ -778,6 +897,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/topup/{topup}/status', [UserWalletController::class, 'topupStatus'])->name('topup-status');
         Route::get('/topup/{topup}/check-status', [UserWalletController::class, 'checkTopupStatus'])->name('check-topup-status');
         Route::post('/topup/{topup}/regenerate', [UserWalletController::class, 'regenerateUniqueAmount'])->name('regenerate-amount');
+        Route::post('/topup/{topup}/tpix', [TpixPayController::class, 'quoteTopup'])
+            ->middleware('throttle:10,1,tpix-pay-quote-topup')->name('tpix-quote');
         Route::get('/transactions', [UserWalletController::class, 'transactions'])->name('transactions');
         Route::delete('/topup/{topup}', [UserWalletController::class, 'cancelTopup'])->name('cancel-topup');
         Route::get('/bonus-preview', [UserWalletController::class, 'bonusPreview'])->name('bonus-preview');
@@ -945,6 +1066,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/licenses/{license}/reactivate', [AdminLicenseController::class, 'reactivate'])->name('licenses.reactivate');
     Route::post('/licenses/{license}/reset-machine', [AdminLicenseController::class, 'resetMachine'])->name('licenses.reset-machine');
     Route::post('/licenses/{license}/extend', [AdminLicenseController::class, 'extend'])->name('licenses.extend');
+    Route::post('/licenses/{license}/storage', [AdminLicenseController::class, 'storage'])->name('licenses.storage');
     Route::delete('/licenses/{license}', [AdminLicenseController::class, 'destroy'])->name('licenses.destroy');
     Route::post('/licenses/bulk-revoke', [AdminLicenseController::class, 'bulkRevoke'])->name('licenses.bulk-revoke');
     Route::post('/licenses/bulk-extend', [AdminLicenseController::class, 'bulkExtend'])->name('licenses.bulk-extend');
@@ -1028,6 +1150,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->name('two-factor.recovery-codes');
         Route::post('/two-factor/reset', [AdminTwoFactorController::class, 'reset'])
             ->middleware('throttle:10,1,admin-2fa-reset')->name('two-factor.reset');
+        Route::delete('/two-factor/devices', [AdminTwoFactorController::class, 'forgetAllDevices'])
+            ->name('two-factor.devices.forget-all');
+        Route::delete('/two-factor/devices/{device}', [AdminTwoFactorController::class, 'forgetDevice'])
+            ->name('two-factor.devices.forget');
     });
 
     // Redis Settings
@@ -1439,6 +1565,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::put('/settings', [AdminWalletController::class, 'updateSettings'])->name('settings.update');
     });
 
+    // TPIX payments: the switch + receive address, every quote, and re-check / accept-late / cancel
+    Route::prefix('tpix-payments')->name('tpix-payments.')->group(function () {
+        Route::get('/', [AdminTpixPaymentController::class, 'index'])->name('index');
+        Route::get('/reports', [AdminTpixReportController::class, 'index'])->name('reports');
+        Route::get('/reports/csv', [AdminTpixReportController::class, 'csv'])
+            ->middleware('throttle:10,1,admin-tpix-report-csv')->name('reports.csv');
+        Route::put('/settings', [AdminTpixPaymentController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/{tpixPayment}/recheck', [AdminTpixPaymentController::class, 'recheck'])
+            ->middleware('throttle:30,1,admin-tpix-recheck')->name('recheck');
+        Route::post('/{tpixPayment}/accept-late', [AdminTpixPaymentController::class, 'acceptLate'])->name('accept-late');
+        Route::post('/{tpixPayment}/approve-held', [AdminTpixPaymentController::class, 'approveHeld'])->name('approve-held');
+        Route::post('/{tpixPayment}/cancel', [AdminTpixPaymentController::class, 'cancel'])->name('cancel');
+    });
+
     // User Management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->name('index')->middleware('permission:users.view');
@@ -1473,6 +1613,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/{role}/add-user', [AdminRoleController::class, 'addUser'])->name('add-user')->middleware('permission:roles.edit');
         Route::post('/{role}/remove-user', [AdminRoleController::class, 'removeUser'])->name('remove-user')->middleware('permission:roles.edit');
     });
+
+    // Anti X phone app: the Firebase key that sends its alerts
+    Route::get('/anti-x-push', [AntiXPushSettingsController::class, 'edit'])->name('anti-x-push.edit');
+    Route::post('/anti-x-push', [AntiXPushSettingsController::class, 'update'])->name('anti-x-push.update');
 
     // SMS Payment Management (Auto-verification via SMS)
     Route::prefix('sms-payment')->name('sms-payment.')->group(function () {
@@ -1579,6 +1723,24 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/traffic', [LocalVpnController::class, 'trafficLogs'])->name('traffic');
         Route::get('/settings', [LocalVpnController::class, 'settings'])->name('settings');
         Route::post('/settings', [LocalVpnController::class, 'updateSettings'])->name('settings.update');
+
+        // ==================== Relay Fleet (nodes, policy, cost) ====================
+        Route::prefix('fleet')->name('fleet.')->group(function () {
+            Route::get('/', [LocalVpnFleetController::class, 'nodes'])->name('nodes');
+            Route::get('/nodes/create', [LocalVpnFleetController::class, 'createNode'])->name('nodes.create');
+            Route::post('/nodes', [LocalVpnFleetController::class, 'storeNode'])->name('nodes.store');
+            Route::get('/nodes/{node}/edit', [LocalVpnFleetController::class, 'editNode'])->name('nodes.edit');
+            Route::put('/nodes/{node}', [LocalVpnFleetController::class, 'updateNode'])->name('nodes.update');
+            Route::post('/nodes/{node}/rotate-secret', [LocalVpnFleetController::class, 'rotateSecret'])->name('nodes.rotate');
+            Route::post('/nodes/{node}/toggle', [LocalVpnFleetController::class, 'toggleNode'])->name('nodes.toggle');
+            Route::delete('/nodes/{node}', [LocalVpnFleetController::class, 'destroyNode'])->name('nodes.delete');
+            Route::get('/policy', [LocalVpnFleetController::class, 'policy'])->name('policy');
+            Route::post('/policy', [LocalVpnFleetController::class, 'updatePolicy'])->name('policy.update');
+            Route::post('/game-profiles', [LocalVpnFleetController::class, 'storeGameProfile'])->name('game-profiles.store');
+            Route::put('/game-profiles/{profile}', [LocalVpnFleetController::class, 'updateGameProfile'])->name('game-profiles.update');
+            Route::delete('/game-profiles/{profile}', [LocalVpnFleetController::class, 'destroyGameProfile'])->name('game-profiles.delete');
+            Route::get('/cost', [LocalVpnFleetController::class, 'cost'])->name('cost');
+        });
 
         // ==================== BitTorrent Management ====================
         Route::prefix('torrent')->name('torrent.')->group(function () {
@@ -1689,6 +1851,18 @@ Route::middleware('auth')->prefix('gpuxmine')->name('gpuxmine.')->group(function
         ->whereNumber('id')->name('forget');
 });
 
+// แคมเปญ DGX Spark — ออเดอร์ทั้งหมด (ตรวจสลิป อนุมัติ/ปฏิเสธ สั่งเครื่อง จัดส่ง), จำนวนชุด (รวมที่ขายนอกเว็บ),
+// ราคาอ้างอิง JIB (ราคาชุด = JIB + ส่วนต่าง)
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/campaigns/dgx-spark', [AdminDgxSparkCampaignController::class, 'index'])->name('campaigns.dgx-spark');
+    Route::put('/campaigns/dgx-spark', [AdminDgxSparkCampaignController::class, 'update'])->name('campaigns.dgx-spark.update');
+    Route::put('/campaigns/dgx-spark/stock', [AdminDgxSparkCampaignController::class, 'stock'])->name('campaigns.dgx-spark.stock');
+    Route::put('/campaigns/dgx-spark/orders/{order}/payment', [AdminDgxSparkCampaignController::class, 'payment'])
+        ->name('campaigns.dgx-spark.payment');
+    Route::put('/campaigns/dgx-spark/orders/{order}/fulfillment', [AdminDgxSparkCampaignController::class, 'fulfillment'])
+        ->name('campaigns.dgx-spark.fulfillment');
+});
+
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     // ระบบขายโดเมน — token ที่ตั้งตรงนี้ใช้เงินได้จริง จึงอยู่หลัง admin เท่านั้น
     Route::get('/domains', [DomainSettingController::class, 'index'])->name('domains.index');
@@ -1737,3 +1911,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/nodes/{id}/resync', [GpuxMineController::class, 'resync'])->whereNumber('id')->name('resync');
     });
 });
+
+// ── Honeypot decoy logins (config/decoy.php) ─────────────────────────────────
+// Paths real visitors never reach — the WordPress / phpMyAdmin / Joomla URLs that
+// only automated scanners probe for. Any hit is a bot looking for a CMS we do not
+// run: it is logged as evidence (Anti X tails it and bans the address everywhere)
+// and blocked here at once. Never add a real route (login / admin) to this list.
+// Disabled in config → the controller returns the normal 404, so these look dead.
+foreach ((array) config('decoy.paths', []) as $decoyPath) {
+    Route::match(['get', 'post'], $decoyPath, [DecoyController::class, 'handle'])
+        ->withoutMiddleware([VerifyCsrfToken::class]);
+}

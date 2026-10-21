@@ -88,6 +88,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $exceptions->dontFlash([
             'telegram_bot_token',
             'hostinger_api_token',
+            // A customer's Cloudflare API token, pasted on the domain page.
+            'cloudflare_token',
             'root_password',
             'root_password_confirmation',
             'recovery_password',

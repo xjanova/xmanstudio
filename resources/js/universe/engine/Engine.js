@@ -23,6 +23,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 // Quality tiers. `dpr` caps the device pixel ratio, `bloomScale` is the bloom
 // buffer's size relative to the screen, `density` scales particle counts.
+// Not lower for looks' sake: the bloom blurs a fixed number of texels, so a
+// smaller buffer spreads the glow wider on screen.
 export const TIERS = {
     high: { dpr: 2, msaa: 4, bloom: true, bloomScale: 0.8, density: 1 },
     mid: { dpr: 1.5, msaa: 0, bloom: true, bloomScale: 0.6, density: 0.7 },
@@ -138,6 +140,9 @@ const FinalShader = {
     `,
 };
 
+/** Milliseconds without input or motion before the frame rate drops to the idle pace. */
+const IDLE_AFTER = 3500;
+
 /** UnrealBloomPass that works at a fraction of the screen's resolution. */
 class ScaledBloomPass extends UnrealBloomPass {
     constructor(scale, ...args) {
@@ -155,6 +160,9 @@ export class Engine {
         this.mount = mount;
         this.tierName = pickTier(gpu);
         this.tier = { ...TIERS[this.tierName] };
+        // Near 2× pixels the extra resolution already smooths the edges; four
+        // samples on top of a half-float buffer only cost memory bandwidth.
+        if (Math.min(window.devicePixelRatio || 1, this.tier.dpr) >= 1.75) this.tier.msaa = 0;
 
         this.renderer = new WebGLRenderer({
             antialias: false,
@@ -187,6 +195,13 @@ export class Engine {
         this.governor = { frames: 0, ema: 1 / 60, lastCheck: 0, step: 0, hold: false };
         this.onDegrade = null;
         this.onGiveUp = null;
+
+        // Frame pacing (see tick): vsync is the display's measured frame time in ms.
+        this.pace = { vsync: 1000 / 60, lastRaw: 0, count: 0, active: performance.now(), idle: false };
+        const wake = () => this.wake();
+        for (const type of ['pointermove', 'pointerdown', 'wheel', 'keydown', 'touchstart', 'scroll']) {
+            window.addEventListener(type, wake, { passive: true });
+        }
 
         this.resizeQueued = false;
         window.addEventListener('resize', () => {
@@ -267,8 +282,30 @@ export class Engine {
         this.renderer.setAnimationLoop(null);
     }
 
+    /** Something is moving: draw at the full pace for a while. */
+    wake() {
+        this.pace.active = performance.now();
+    }
+
     tick(now) {
         if (this.lost) return;
+
+        // Pacing. A 120/144 Hz screen would otherwise get every vsync drawn —
+        // more than twice the work of 60 Hz for motion nobody can tell apart —
+        // so draw on every nth vsync to land near 60. And once nothing has
+        // moved for a few seconds (the visitor is reading), the slow drift
+        // that is left looks the same at ~30, so halve it again until the
+        // next input. Time-based animation keeps every speed unchanged.
+        const p = this.pace;
+        const raw = now - p.lastRaw;
+        p.lastRaw = now;
+        if (raw > 2 && raw < 50) p.vsync = p.vsync * 0.95 + raw * 0.05;
+        p.idle = now - p.active > IDLE_AFTER;
+        const hz = 1000 / p.vsync;
+        const every = Math.max(1, Math.floor(hz / (p.idle ? 28 : 55)));
+        if (++p.count < every) return;
+        p.count = 0;
+
         // Clamp: a tab coming back from the background must not fast-forward the world.
         const dt = Math.min(0.05, Math.max(0.0001, (now - this.last) / 1000));
         this.last = now;
@@ -312,7 +349,8 @@ export class Engine {
     govern(dt, now) {
         const g = this.governor;
         g.frames++;
-        if (g.hold || g.frames < 90 || document.hidden) {
+        // Idle frames run at half pace on purpose: not a sign of a slow GPU.
+        if (g.hold || g.frames < 90 || document.hidden || this.pace.idle) {
             g.lastCheck = now;
             return;
         }

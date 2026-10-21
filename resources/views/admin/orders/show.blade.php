@@ -233,8 +233,32 @@
                         <dd class="font-medium text-blue-600 dark:text-blue-400">{{ $order->user->name }}</dd>
                     </div>
                     @endif
+                    @if($order->customer_address)
+                    <div>
+                        <dt class="text-gray-500 dark:text-gray-400">ที่อยู่จัดส่ง</dt>
+                        <dd class="font-medium text-gray-900 dark:text-white whitespace-pre-line">{{ $order->customer_address }}</dd>
+                    </div>
+                    @endif
                 </dl>
             </div>
+
+            @if(\App\Support\DgxSparkCampaign::isOrder($order))
+                @php
+                    $dgxFulfillment = \App\Support\DgxSparkCampaign::fulfillment($order);
+                    $dgxCompany = \App\Support\DgxSparkCampaign::metadataOf($order)['company'] ?? null;
+                @endphp
+                <div class="bg-amber-50 dark:bg-amber-500/10 rounded-xl shadow border border-amber-200 dark:border-amber-500/30 p-6 text-sm">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">ชุดแคมเปญ DGX Spark</h3>
+                    <p class="text-gray-700 dark:text-gray-200">สถานะเครื่อง: <b>{{ $dgxFulfillment['label'] }}</b></p>
+                    @if($order->payment_status !== 'paid')
+                        <p class="mt-2 text-amber-800 dark:text-amber-200">ยังไม่ยืนยันยอดเงิน — สั่งเครื่องจากผู้จัดจำหน่ายหลังเงินเข้าแล้วเท่านั้น · อนุมัติแล้วระบบออก License CluadeX + BrainX ตลอดชีพให้ทันที</p>
+                    @endif
+                    @if($dgxCompany)
+                        <p class="mt-2 text-gray-700 dark:text-gray-200">ออกเอกสารในนาม: {{ $dgxCompany['name'] ?? '' }} · {{ $dgxCompany['tax_id'] ?? '' }} ({{ $dgxCompany['branch'] ?? 'สำนักงานใหญ่' }})</p>
+                    @endif
+                    <a href="{{ route('admin.campaigns.dgx-spark') }}" class="inline-block mt-3 text-indigo-600 dark:text-indigo-400 underline">อัปเดตสถานะจัดส่ง / เลขพัสดุ</a>
+                </div>
+            @endif
 
             <!-- Payment Info -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">

@@ -45,9 +45,9 @@ class CatalogFacts
         }
 
         if ($product->isComingSoon()) {
-            $parts[] = 'สถานะ: เร็วๆ นี้ — ยังไม่เปิดขาย'
+            $parts[] = 'สถานะ: เร็วๆ นี้ — ยังไม่เปิดขายและยังไม่เปิดให้ดาวน์โหลด'
                 . ($product->coming_soon_until ? ' (กำหนดเปิด ' . $product->coming_soon_until->format('Y-m-d') . ')' : '')
-                . ' ห้ามรับปากว่าซื้อได้แล้ว';
+                . ' ห้ามรับปากว่าซื้อหรือดาวน์โหลดได้แล้ว';
         } elseif (! $product->is_active) {
             $parts[] = 'สถานะ: ปิดการขายอยู่ ยังไม่รับคำสั่งซื้อใหม่';
         } else {

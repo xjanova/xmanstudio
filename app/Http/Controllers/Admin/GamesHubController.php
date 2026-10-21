@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * The XGamesHub back office: everything xgameshub.xman4289.com shows that is not baked
+ * The XGamesHub back office: everything xmangameshub.online shows that is not baked
  * into its static build — supporter items, player reviews, comments, the hero order and
  * announcements. Slip review itself stays in Admin\GameSupportController.
  */

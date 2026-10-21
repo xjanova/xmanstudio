@@ -263,8 +263,8 @@ class PortfolioContent
             [
                 'id' => 'xgameshub',
                 'name' => 'XMAN GAMES HUB',
-                'url' => 'https://xgameshub.xman4289.com',
-                'domain' => 'xgameshub.xman4289.com',
+                'url' => 'https://xmangameshub.online',
+                'domain' => 'xmangameshub.online',
                 'accent' => '#c0ff4b',
                 'type_th' => 'ฮับเกม 3 มิติ',
                 'type_en' => '3D games hub',
@@ -430,9 +430,9 @@ class PortfolioContent
                 'name' => 'LocalVPN',
                 'accent' => '#22d3ee',
                 'accent2' => '#0c4a6e',
-                'type_th' => 'วง LAN เสมือนบนมือถือ',
+                'type_th' => 'วง LAN เสมือน + ลดปิงเกม',
                 'type_en' => 'Virtual LAN',
-                'platforms' => ['Android'],
+                'platforms' => ['Windows', 'Android'],
                 'summary_th' => 'สร้างวง LAN เสมือนข้ามอินเทอร์เน็ต ให้มือถือทุกเครื่องเห็นกันเหมือนอยู่วงเดียว ต่อแบบ P2P ทะลุ NAT และมี VPN WireGuard ให้เลือกประเทศ',
                 'summary_en' => 'A virtual LAN across the internet: P2P through NAT, plus WireGuard VPN by country.',
                 'features' => [
@@ -448,7 +448,7 @@ class PortfolioContent
                     ['file' => 'app-localvpn-2.webp', 'th' => 'แพ็กเกจ', 'en' => 'Plans'],
                     ['file' => 'app-localvpn-3.webp', 'th' => 'VPN เลือกประเทศ', 'en' => 'VPN'],
                 ],
-                'link' => ['href' => 'https://xman4289.com/localvpn', 'th' => 'ดูหน้าแอป', 'en' => 'App page'],
+                'link' => ['href' => 'https://xman4289.com/products/localvpn', 'th' => 'ดูหน้าแอป', 'en' => 'App page'],
             ],
         ];
     }

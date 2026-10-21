@@ -420,7 +420,7 @@ class DomainRegistrarService
             $this->api->setAutoRenewal($registration->remote_subscription_id, false);
         }
 
-        $this->refreshFromUpstream($registration);
+        $this->refreshFromUpstream($registration, justRegistered: true);
 
         return $registration;
     }
@@ -1024,8 +1024,12 @@ class DomainRegistrarService
 
     /**
      * Pull the real expiry and nameservers once the domain exists.
+     *
+     * Right after registration the nameservers are our own DNS, and they are
+     * kept as such — the customer's way back from Cloudflare. Any later read
+     * (a renewal) may see the customer's own servers instead.
      */
-    public function refreshFromUpstream(DomainRegistration $registration): void
+    public function refreshFromUpstream(DomainRegistration $registration, bool $justRegistered = false): void
     {
         $details = $this->api->getDomain($registration->domain);
 
@@ -1049,6 +1053,10 @@ class DomainRegistrarService
 
         if (is_array($nameservers)) {
             $changes['nameservers'] = array_values(array_filter($nameservers, 'is_string'));
+
+            if ($justRegistered && empty($registration->own_nameservers) && count($changes['nameservers']) >= 2) {
+                $changes['own_nameservers'] = $changes['nameservers'];
+            }
         }
 
         if ($changes !== []) {

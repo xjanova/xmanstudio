@@ -48,6 +48,7 @@ class LoginAttempt extends Model
         'api' => 'แอป (API)',
         'device' => 'ลิงก์จากแอป',
         '2fa' => 'รหัสยืนยัน 2 ขั้น',
+        '2fa-device' => '2 ขั้น · เครื่องที่จดจำไว้',
         'sso' => 'XMAN ID',
     ];
 

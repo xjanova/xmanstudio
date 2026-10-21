@@ -16,6 +16,10 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Main Order Info -->
     <div class="lg:col-span-2 space-y-6">
+        @if(\App\Support\DgxSparkCampaign::isOrder($order))
+            @include('orders.partials.dgx-spark-panel', ['order' => $order, 'portal' => true])
+        @endif
+
         <!-- Order Header Card -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
             <div class="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-6">
@@ -73,6 +77,10 @@
                                     @if(is_array($reqs) && isset($reqs['license_type']))
                                         <span class="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
                                             {{ ucfirst($reqs['license_type']) }}
+                                        </span>
+                                    @elseif($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements))
+                                        <span class="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300">
+                                            +{{ $storagePack }} GB <x-bi th="พื้นที่คลาวด์" en="cloud space" />
                                         </span>
                                     @endif
                                 @endif

@@ -8,6 +8,7 @@ use App\Services\AffiliateCommissionService;
 use App\Services\AiCreditDelivery;
 use App\Services\AixmanService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
 use App\Support\PaymentSlips;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -64,10 +65,16 @@ class AiCreditCheckoutController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer',
+            'payment_method' => 'required|in:promptpay,bank_transfer' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
         ]);
 
         $price = (int) $package['price_thb'];
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $price)) {
+            return $refused;
+        }
         $metadata = [
             'source' => 'xdreamer',
             'package_slug' => $package['slug'],
@@ -115,6 +122,12 @@ class AiCreditCheckoutController extends Controller
             );
         }
 
+        // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page,
+        // which (like every paid path) sends the credits to AIXMAN
+        if ($validated['payment_method'] === TpixCheckout::METHOD) {
+            return TpixCheckout::redirectForOrder($order, route('xdreamer.checkout.success', $order->id));
+        }
+
         return redirect()->route('xdreamer.checkout.payment', $order->id);
     }
 
@@ -124,6 +137,11 @@ class AiCreditCheckoutController extends Controller
     public function payment(Order $order)
     {
         $this->authorizeOrder($order);
+
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
+        }
 
         if (! $this->isAiCreditOrder($order)) {
             abort(404);

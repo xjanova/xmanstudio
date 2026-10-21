@@ -410,6 +410,25 @@ async function boot() {
         engine.post.uWarp.value = warpSmooth;
         engine.post.uAberration.value = 0.35 + menuAmt * 0.4;
 
+        // Anything still in motion keeps the full frame rate (engine pacing).
+        if (
+            intro.active ||
+            state.launching ||
+            journey.jump ||
+            Math.abs(journey.target - journey.scroll) > 0.5 ||
+            Math.abs(journey.velocity) > 2 ||
+            warpSmooth > 0.004 ||
+            state.flash > 0.004 ||
+            Math.abs(menuAmt - (state.menuOpen ? 1 : 0)) > 0.004 ||
+            Math.abs(pointer.sx - pointer.x) + Math.abs(pointer.sy - pointer.y) > 0.003 ||
+            guide.flight ||
+            guide.move ||
+            guide.entering ||
+            guide.hop > 0.01
+        ) {
+            engine.wake();
+        }
+
         const s = {
             time,
             dt,

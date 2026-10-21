@@ -397,6 +397,26 @@ class HostingerApiService
         return $this->get('/api/domains/v1/whois');
     }
 
+    /**
+     * Repoint a registered domain's contact roles at another WHOIS profile.
+     *
+     * Processed asynchronously upstream. Changing the owner's name,
+     * organisation or e-mail starts the registry's IRTP confirmation (an
+     * e-mail the registrant must approve) and a 60-day transfer hold. The
+     * roles must all sit on one profile today — ours always do, since every
+     * registration sends the same profile for all four.
+     *
+     * @param  array<int,string>  $roles
+     */
+    public function changeWhoisProfile(string $domain, int $whoisId, array $roles = ['owner', 'admin', 'billing', 'tech']): bool
+    {
+        return $this->put('/api/domains/v1/whois/change', [
+            'new_whois_id' => $whoisId,
+            'domain' => $domain,
+            'change_for' => array_values($roles),
+        ]) !== null;
+    }
+
     public function deleteWhoisProfile(int $whoisId): bool
     {
         return $this->delete("/api/domains/v1/whois/{$whoisId}") !== null;

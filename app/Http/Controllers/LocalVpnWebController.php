@@ -14,6 +14,8 @@ use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
+use App\Services\TpixPay\TpixCheckout;
+use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
 use App\Support\PaymentSlips;
 use Illuminate\Http\Request;
@@ -46,10 +48,10 @@ class LocalVpnWebController extends Controller
             'duration_days' => 30,
             'license_type' => 'monthly',
             'features' => [
-                'สร้างวง LAN เสมือนไม่จำกัด',
+                'ลดปิงเกม (Game Ping Booster)',
                 'สมาชิกในวงสูงสุด 50 คน',
-                'เข้ารหัส WireGuard',
                 'VPN มุดประเทศทุกประเทศ',
+                '1 คีย์ใช้ได้ 2 เครื่อง (PC + มือถือ)',
                 'ซัพพอร์ตมาตรฐาน',
             ],
         ],
@@ -59,12 +61,11 @@ class LocalVpnWebController extends Controller
             'duration_days' => 365,
             'license_type' => 'yearly',
             'features' => [
-                'สร้างวง LAN เสมือนไม่จำกัด',
+                'ลดปิงเกม (Game Ping Booster)',
                 'สมาชิกในวงสูงสุด 50 คน',
-                'เข้ารหัส WireGuard',
                 'VPN มุดประเทศทุกประเทศ',
+                '1 คีย์ใช้ได้ 2 เครื่อง (PC + มือถือ)',
                 'ซัพพอร์ตพรีเมียม',
-                'อัพเดทก่อนใคร',
             ],
         ],
         'lifetime' => [
@@ -73,13 +74,12 @@ class LocalVpnWebController extends Controller
             'duration_days' => null,
             'license_type' => 'lifetime',
             'features' => [
-                'สร้างวง LAN เสมือนไม่จำกัด',
+                'ลดปิงเกม (Game Ping Booster)',
                 'สมาชิกในวงสูงสุด 50 คน',
-                'เข้ารหัส WireGuard',
                 'VPN มุดประเทศทุกประเทศ',
+                '1 คีย์ใช้ได้ 2 เครื่อง (PC + มือถือ)',
                 'ซัพพอร์ตพรีเมียม',
-                'อัพเดทตลอดชีพ',
-                'ใช้ได้หลายเครื่อง',
+                'จ่ายครั้งเดียว ใช้ได้ตลอด',
             ],
         ],
     ];
@@ -91,25 +91,13 @@ class LocalVpnWebController extends Controller
     }
 
     /**
-     * Show LocalVPN detail / landing page
+     * /localvpn — the product page lives at /products/localvpn now (Windows + Android, trial, Free vs
+     * Pro, the three plans through the cart). Old links and the app's "buy" button
+     * (/localvpn#monthly) land there; the browser keeps the #fragment across the redirect.
      */
     public function detail()
     {
-        $product = Product::where('slug', 'localvpn')->first();
-        $version = null;
-
-        if ($product) {
-            $version = ProductVersion::where('product_id', $product->id)
-                ->where('is_active', true)
-                ->orderByDesc('version')
-                ->first();
-        }
-
-        return view('localvpn.detail', [
-            'pricing' => self::pricedPlans(),
-            'product' => $product,
-            'version' => $version,
-        ]);
+        return redirect()->route('products.show', 'localvpn');
     }
 
     /**
@@ -241,6 +229,11 @@ class LocalVpnWebController extends Controller
             abort(404, 'Product not found');
         }
 
+        // Coming Soon = not on sale yet (owner, 2026-10-12)
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
+        }
+
         $planInfo = self::pricedPlans()[$plan];
         $machineId = $request->query('machine_id') ?? session('localvpn_machine_id');
 
@@ -275,18 +268,30 @@ class LocalVpnWebController extends Controller
             abort(404, 'Plan not found');
         }
 
+        $product = Product::where('slug', 'localvpn')->firstOrFail();
+
+        // A hand-made POST must not buy it either — before the wallet is touched or an order made
+        if ($refused = ComingSoonPurchase::refusal($product)) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'required|email|max:255',
             'customer_phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:promptpay,bank_transfer,wallet',
+            'payment_method' => 'required|in:promptpay,bank_transfer,wallet' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
             'machine_id' => 'nullable|string|max:255',
         ]);
 
         $machineId = $validated['machine_id'] ?? session('localvpn_machine_id');
-        $product = Product::where('slug', 'localvpn')->firstOrFail();
         $planInfo = self::pricedPlans()[$plan];
         $isWallet = $validated['payment_method'] === 'wallet';
+
+        // TPIX: refused before anything is written when this amount cannot be quoted now (no price
+        // average yet, or more than the TPIX market behind the price can carry)
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $planInfo['price'])) {
+            return $refused;
+        }
 
         // === Calculate price & discount ===
         $subtotal = $planInfo['price'];
@@ -409,6 +414,11 @@ class LocalVpnWebController extends Controller
                 return redirect()->route('localvpn.payment-success', $result->id);
             }
 
+            // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page
+            if ($validated['payment_method'] === TpixCheckout::METHOD) {
+                return TpixCheckout::redirectForOrder($result, route('localvpn.payment-success', $result->id));
+            }
+
             return redirect()->route('localvpn.payment', ['order' => $result->id]);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'INSUFFICIENT_BALANCE') {
@@ -433,10 +443,11 @@ class LocalVpnWebController extends Controller
     ): ?LicenseKey {
         try {
             $licenseService = app(LicenseService::class);
+            // One key runs on a PC and a phone (config/licenses.php devices_per_key) — every plan alike
             $licenses = $licenseService->generateLicenses(
                 $planInfo['license_type'],
                 1,
-                $planInfo['license_type'] === 'lifetime' ? 3 : 1,
+                LicensePlans::devicesPerKey('localvpn'),
                 $product->id
             );
 
@@ -520,6 +531,11 @@ class LocalVpnWebController extends Controller
     {
         if (auth()->id() !== $order->user_id) {
             abort(403);
+        }
+
+        // A TPIX order is paid on the TPIX pay page; its order page links there (or makes a new quote)
+        if ($order->payment_method === TpixCheckout::METHOD) {
+            return redirect()->route('orders.show', $order);
         }
 
         $metadata = $order->metadata ?? [];

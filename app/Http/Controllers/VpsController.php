@@ -194,6 +194,8 @@ class VpsController extends Controller
 
             $prices[$period] = [
                 'first' => VpsPricing::format($first),
+                // The raw THB number, for the TPIX price beside it (<x-tpix-price>)
+                'first_thb' => $first,
                 'renew' => VpsPricing::format($renew),
                 'first_monthly' => VpsPricing::format(ceil($first / $months)),
                 'renew_monthly' => VpsPricing::format(ceil($renew / $months)),

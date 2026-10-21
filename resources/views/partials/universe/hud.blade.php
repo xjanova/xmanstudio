@@ -14,12 +14,23 @@
         @endif
     </a>
 
-    <a href="{{ route('services.index') }}" class="xu-promo">
-        <span class="xu-promo__tag" aria-hidden="true">%</span>
-        <span class="xu-promo__text">มหกรรมลดราคา <small>Mega Sale</small></span>
-        <b class="xu-promo__off">50-70% OFF</b>
-        <span class="xu-promo__go">ดูบริการทั้งหมด <span aria-hidden="true">→</span></span>
-    </a>
+    {{-- The promo slot carries the main campaign while it runs (DGX Spark bundle), the sale otherwise. --}}
+    @if(\App\Support\DgxSparkCampaign::enabled() && \App\Support\DgxSparkCampaign::product())
+        @php $xuDgx = \App\Support\DgxSparkCampaign::availability(); @endphp
+        <a href="{{ route('campaign.dgx-spark') }}" class="xu-promo xu-promo--campaign">
+            <span class="xu-promo__tag" aria-hidden="true">AI</span>
+            <span class="xu-promo__text">DGX Spark + CluadeX &amp; BrainX ตลอดชีพ <small>Main campaign</small></span>
+            <b class="xu-promo__off">{{ $xuDgx['remaining'] > 0 ? 'เหลือ ' . $xuDgx['remaining'] . '/' . $xuDgx['cap'] . ' ชุด' : 'จองครบแล้ว' }}</b>
+            <span class="xu-promo__go">ดูแคมเปญ <span aria-hidden="true">→</span></span>
+        </a>
+    @else
+        <a href="{{ route('services.index') }}" class="xu-promo">
+            <span class="xu-promo__tag" aria-hidden="true">%</span>
+            <span class="xu-promo__text">มหกรรมลดราคา <small>Mega Sale</small></span>
+            <b class="xu-promo__off">50-70% OFF</b>
+            <span class="xu-promo__go">ดูบริการทั้งหมด <span aria-hidden="true">→</span></span>
+        </a>
+    @endif
 
     <div class="xu-hud__actions">
         <button type="button" id="xu-sound" class="xu-sound" aria-pressed="false">

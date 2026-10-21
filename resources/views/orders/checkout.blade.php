@@ -102,7 +102,13 @@
                         @endauth
 
                         <!-- Other Payment Methods -->
-                        @php $firstActive = true; @endphp
+                        @php
+                            $firstActive = true;
+                            // The amount the order will be: the TPIX option shows it converted live
+                            $checkoutSubtotal = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
+                            $checkoutTotal = max(0, $checkoutSubtotal + round($checkoutSubtotal * config('app.vat_rate', 0.07), 2) - ($couponDiscount ?? 0));
+                            $checkoutFixedTpix = app(\App\Services\TpixPay\TpixPriceService::class)->fixedTotalForLines($cart->items, $checkoutSubtotal, $checkoutTotal);
+                        @endphp
                         @foreach($paymentMethods as $method)
                             @if($method['is_active'])
                                 <label class="flex items-center p-4 border-2 rounded-xl cursor-pointer hover:border-primary-500 transition payment-method-option {{ $firstActive ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-600' }}"
@@ -116,6 +122,8 @@
                                                 @if($method['icon'] === 'promptpay')
                                                     <img src="https://www.bot.or.th/content/dam/bot/icons/icon-promptpay.png" alt="PromptPay" class="w-7 h-7 object-contain" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<svg class=\'w-5 h-5 text-white\' viewBox=\'0 0 24 24\' fill=\'currentColor\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z\'/></svg>')"
                                                     >
+                                                @elseif($method['icon'] === 'tpix')
+                                                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8.5h8M12 8.5v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                                                 @elseif($method['icon'] === 'bank')
                                                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
@@ -131,6 +139,10 @@
                                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ $method['description'] }}</p>
                                                 @if(!empty($method['fee_display']))
                                                 <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5"><x-bi th="ค่าธรรมเนียม" en="Fee" /> {{ $method['fee_display'] }}</p>
+                                                @endif
+                                                @if($method['id'] === 'tpix')
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">ยอดชำระ ฿{{ number_format($checkoutTotal, 2) }} คิดเป็น</p>
+                                                    <x-tpix-price variant="detail" :thb="$checkoutTotal" :tpix="$checkoutFixedTpix" class="!mt-0" />
                                                 @endif
                                             </div>
                                         </div>
@@ -171,7 +183,7 @@
                             <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
                                 <div class="flex-1">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $item->product->name }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">x {{ $item->quantity }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">@if($storagePack = \App\Support\CloudStorage::packOf($item->custom_requirements))+{{ $storagePack }} GB @endif x {{ $item->quantity }}</p>
                                 </div>
                                 <span class="text-sm font-semibold text-gray-900 dark:text-white">฿{{ number_format($item->price * $item->quantity, 2) }}</span>
                             </div>
@@ -252,6 +264,7 @@
                             <span><x-bi k="common.total" /></span>
                             <span class="text-primary-600 dark:text-primary-400" id="totalAmount">฿{{ number_format($total, 2) }}</span>
                         </div>
+                        <div class="text-right"><x-tpix-price variant="detail" :thb="$total" :tpix="$checkoutFixedTpix ?? null" /></div>
                     </div>
 
                     <!-- Wallet Balance Warning -->

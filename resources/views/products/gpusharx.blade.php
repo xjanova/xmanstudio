@@ -48,6 +48,9 @@
 
                     <!-- CTA Buttons -->
                     <div class="flex flex-wrap gap-4">
+                        @if($product->isComingSoon())
+                            <x-coming-soon-download :product="$product" />
+                        @else
                         @auth
                             @if($hasPurchased)
                                 <a href="{{ route('customer.downloads') }}"
@@ -66,6 +69,7 @@
                                 ดูแพคเกจ
                             </a>
                         @endauth
+                        @endif
                     </div>
                 </div>
 
@@ -456,6 +460,9 @@
             <p class="text-gray-400 mb-8">แชร์หรือเช่า GPU ได้ง่ายๆ เริ่มต้นวันนี้</p>
 
             <div class="flex flex-wrap justify-center gap-4">
+                @if($product->isComingSoon())
+                    <x-coming-soon-download :product="$product" />
+                @else
                 @auth
                     @if($hasPurchased)
                         <a href="{{ route('customer.downloads') }}"
@@ -474,6 +481,7 @@
                         ดูแพคเกจ
                     </a>
                 @endauth
+                @endif
             </div>
         </div>
     </section>

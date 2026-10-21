@@ -51,6 +51,8 @@ class VersionController extends Controller
                 'changelog' => $version->changelog,
                 'released_at' => $version->synced_at?->toIso8601String(),
             ],
+            // Coming Soon: บอกเวอร์ชันได้ แต่ไม่มีลิงก์โหลด (กฎเจ้าของ 2026-10-12)
+            'coming_soon' => $product->isComingSoon(),
             'download_url' => $this->downloadUrlFor($product, $version),
         ]);
     }
@@ -80,6 +82,7 @@ class VersionController extends Controller
                 'name' => $product->name,
                 'slug' => $product->slug,
             ],
+            'coming_soon' => $product->isComingSoon(),
             'versions' => $versions->map(function ($v) use ($product) {
                 return [
                     'version' => $v->version,
@@ -125,7 +128,9 @@ class VersionController extends Controller
         }
 
         $currentVersion = $request->input('current_version');
-        $hasUpdate = version_compare($currentVersion, $latestVersion->version, '<');
+        // Coming Soon: ไม่มีอะไรให้อัปเดต — ไฟล์ยังโหลดไม่ได้ (กฎเจ้าของ 2026-10-12)
+        $comingSoon = $product->isComingSoon();
+        $hasUpdate = ! $comingSoon && version_compare($currentVersion, $latestVersion->version, '<');
 
         // Check license if provided
         $licenseValid = false;
@@ -148,6 +153,7 @@ class VersionController extends Controller
             'current_version' => $currentVersion,
             'latest_version' => $latestVersion->version,
             'has_update' => $hasUpdate,
+            'coming_soon' => $comingSoon,
             'update' => $hasUpdate ? [
                 'version' => $latestVersion->version,
                 'filename' => $latestVersion->download_filename,
@@ -161,7 +167,7 @@ class VersionController extends Controller
             'license' => [
                 'valid' => $licenseValid,
                 'status' => $licenseStatus,
-                'can_download' => $licenseValid,
+                'can_download' => $licenseValid && ! $comingSoon,
             ],
         ]);
     }
@@ -181,6 +187,20 @@ class VersionController extends Controller
                 'has_update' => false,
                 'error' => 'Product not found',
             ], 404);
+        }
+
+        // Coming Soon: ตอบ "ไม่มีอัปเดต" ไม่ยื่นลิงก์ และไม่ถาม GitHub (กฎเจ้าของ 2026-10-12)
+        if ($product->isComingSoon()) {
+            return response()->json([
+                'has_update' => false,
+                'latest_version' => '',
+                'download_url' => '',
+                'changelog' => '',
+                'sha256' => null,
+                'file_size' => null,
+                'filename' => null,
+                'coming_soon' => true,
+            ]);
         }
 
         // 2026-07-28 — read-through แบบ NetWix: ถ้า GitHub มี tag ใหม่กว่าที่ DB รู้
@@ -246,10 +266,16 @@ class VersionController extends Controller
      */
     private const PUBLIC_DOWNLOAD_ROUTES = [
         'winx-tools' => 'winx-tools.download',
+        // Anti X: release ใน repo private — ไฟล์ผ่านเซิร์ฟเวอร์ด้วย token ของสินค้า ไม่มีลิงก์ GitHub ถึงแอป
+        'anti-x' => 'anti-x.download',
+        // Anti X Mobile: APK ฟรีทุกคน release ใน repo private เหมือน Anti X
+        'anti-x-mobile' => 'anti-x-mobile.download',
         'autotradex' => 'autotradex.download',
         'chanthra-studio' => 'chanthra-studio.download',
         'aipray' => 'aipray.download',
         'giggok' => 'giggok.download',
+        // MacDock: release ใน repo private เหมือน Anti X — ตัวอัปเดตในแอปโหลด {version} เป๊ะ ๆ จากที่นี่
+        'macdock' => 'macdock.download',
     ];
 
     /**
@@ -257,9 +283,14 @@ class VersionController extends Controller
      *
      * download.product ต้องล็อกอินและซื้อก่อน — แอปที่โหลดฟรี (PUBLIC_DOWNLOAD_ROUTES) ชี้ไปหน้าโหลดสาธารณะของมัน
      * ระบุเวอร์ชันเป๊ะ ๆ ให้ไฟล์ตรงกับ sha256 ที่ส่งไปคู่กัน · ห้ามคืนลิงก์ GitHub (กฎเจ้าของ 2026-09-24)
+     * สินค้ายังเป็น Coming Soon = null: ยังไม่มีลิงก์ให้ใคร (กฎเจ้าของ 2026-10-12)
      */
-    private function downloadUrlFor(Product $product, ProductVersion $version): string
+    private function downloadUrlFor(Product $product, ProductVersion $version): ?string
     {
+        if ($product->isComingSoon()) {
+            return null;
+        }
+
         if ($route = self::PUBLIC_DOWNLOAD_ROUTES[$product->slug] ?? null) {
             return route($route, ['version' => $version->version]);
         }

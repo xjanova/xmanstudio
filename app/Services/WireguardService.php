@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\VpnNode;
 use App\Models\WireguardClient;
 use App\Models\WireguardServer;
+use App\Services\LocalVpnFleet\GameProfiles;
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
@@ -62,9 +64,10 @@ class WireguardService
      * @param  string  $machineId  The device's unique machine identifier
      * @param  string  $clientPublicKey  The client's WireGuard public key
      * @param  int|null  $serverId  Specific server ID, or null for auto-select
+     * @param  (callable(WireguardServer): bool)|null  $allowed  Servers this device may use (auto-select and capacity fallback)
      * @return array{success: bool, client?: WireguardClient, config?: array, server?: array, error?: string}
      */
-    public function registerClient(string $machineId, string $clientPublicKey, ?int $serverId = null): array
+    public function registerClient(string $machineId, string $clientPublicKey, ?int $serverId = null, ?callable $allowed = null): array
     {
         // Find the best server or use the specified one
         if ($serverId) {
@@ -73,7 +76,7 @@ class WireguardService
                 return ['success' => false, 'error' => 'Specified server not found or unavailable'];
             }
         } else {
-            $server = $this->findBestServer();
+            $server = $this->findBestServer(null, false, $allowed);
             if (! $server) {
                 return ['success' => false, 'error' => 'No WireGuard servers available'];
             }
@@ -110,7 +113,7 @@ class WireguardService
         // Check capacity (only count connected clients)
         if ($server->isAtCapacity()) {
             // Try another server
-            $server = $this->findBestServer();
+            $server = $this->findBestServer(null, false, $allowed);
             if (! $server || $server->isAtCapacity()) {
                 return ['success' => false, 'error' => 'All servers are at capacity'];
             }
@@ -171,6 +174,11 @@ class WireguardService
      */
     public function addPeerToServer(WireguardServer $server, string $publicKey, string $assignedIp): bool
     {
+        // A fleet node owns its wg0 and pulls its peer set from the database on every sync.
+        if ($server->isNodeManaged()) {
+            return true;
+        }
+
         $interface = $server->getInterfaceName();
         $command = sprintf(
             'wg set %s peer %s allowed-ips %s/32',
@@ -203,6 +211,11 @@ class WireguardService
      */
     public function removePeerFromServer(WireguardServer $server, string $publicKey): bool
     {
+        // The node drops the peer itself on its next sync, once it is gone from the database.
+        if ($server->isNodeManaged()) {
+            return true;
+        }
+
         $interface = $server->getInterfaceName();
         $command = sprintf(
             'wg set %s peer %s remove',
@@ -238,6 +251,21 @@ class WireguardService
     {
         $interface = $server->getInterfaceName();
 
+        // Not on this machine: "up" means the node synced recently and is not disabled.
+        if ($server->isNodeManaged()) {
+            $node = $server->node;
+            $isUp = $node !== null && $node->status !== VpnNode::STATUS_DISABLED && $node->isFresh();
+
+            return [
+                'interface' => $interface,
+                'is_up' => $isUp,
+                'node_managed' => true,
+                'public_key' => (string) $server->public_key,
+                'listening_port' => (int) $server->listen_port,
+                'peers' => [],
+            ] + ($isUp ? [] : ['error' => 'node has not synced recently']);
+        }
+
         try {
             $result = $this->sudoRun(sprintf('wg show %s', escapeshellarg($interface)));
 
@@ -264,7 +292,10 @@ class WireguardService
     /**
      * Find the best available WireGuard server (least loaded).
      */
-    public function findBestServer(?string $countryCode = null, bool $isPremium = false): ?WireguardServer
+    /**
+     * @param  (callable(WireguardServer): bool)|null  $allowed  Servers the caller may hand out (fleet tier rules)
+     */
+    public function findBestServer(?string $countryCode = null, bool $isPremium = false, ?callable $allowed = null): ?WireguardServer
     {
         $query = WireguardServer::active()->healthy();
 
@@ -273,11 +304,17 @@ class WireguardService
         }
 
         $servers = $query->get();
+        if ($allowed !== null) {
+            $servers = $servers->filter($allowed)->values();
+        }
 
         if ($servers->isEmpty()) {
             // If filtering by country returned nothing, try any server
             if ($countryCode) {
                 $servers = WireguardServer::active()->healthy()->get();
+                if ($allowed !== null) {
+                    $servers = $servers->filter($allowed)->values();
+                }
             }
 
             if ($servers->isEmpty()) {
@@ -387,6 +424,13 @@ class WireguardService
      */
     private function buildClientResponse(WireguardClient $client, WireguardServer $server): array
     {
+        // A game exit forwards only the game ranges (its firewall drops the rest), so the
+        // client must route only those into the tunnel or it would lose the internet.
+        $mode = $server->isNodeManaged() ? $server->node?->exitMode() : null;
+        $allowedIps = $mode === VpnNode::ROLE_GAME
+            ? implode(', ', GameProfiles::allowCidrs())
+            : '0.0.0.0/0, ::/0';
+
         return [
             'success' => true,
             'client' => $client,
@@ -398,7 +442,7 @@ class WireguardService
                 'peer' => [
                     'public_key' => $server->public_key,
                     'endpoint' => $server->endpoint,
-                    'allowed_ips' => '0.0.0.0/0, ::/0',
+                    'allowed_ips' => $allowedIps,
                     'persistent_keepalive' => 25,
                 ],
             ],
@@ -407,6 +451,7 @@ class WireguardService
                 'name' => $server->name,
                 'country_code' => $server->country_code,
                 'country_name' => $server->country_name,
+                'mode' => $mode,
             ],
         ];
     }

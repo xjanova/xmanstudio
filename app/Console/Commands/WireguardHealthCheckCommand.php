@@ -20,6 +20,12 @@ class WireguardHealthCheckCommand extends Command
      */
     private const STALE_MINUTES = 5;
 
+    /**
+     * Fleet node exits: no traffic reported for a client in this long. Looser than
+     * STALE_MINUTES because node usage arrives as sync deltas, not live handshakes.
+     */
+    private const NODE_STALE_MINUTES = 15;
+
     public function handle(WireguardService $wireguardService): int
     {
         $servers = WireguardServer::where('is_active', true)->get();
@@ -37,6 +43,16 @@ class WireguardHealthCheckCommand extends Command
 
         foreach ($servers as $server) {
             $this->info("Checking server: {$server->name} ({$server->endpoint})...");
+
+            // Fleet node exits are not on this machine: `wg show` here would list the local
+            // wg0's peers and disconnect everyone on the node.
+            if ($server->isNodeManaged()) {
+                [$up, $stale] = $this->checkNodeServer($server, $wireguardService);
+                $healthyCount += $up ? 1 : 0;
+                $stalePeers += $stale;
+
+                continue;
+            }
 
             $status = $wireguardService->getServerStatus($server);
             $isUp = $status['is_up'] ?? false;
@@ -108,6 +124,41 @@ class WireguardHealthCheckCommand extends Command
         Log::info("[WireGuard Health Check] {$healthyCount}/{$totalServers} servers healthy, {$totalPeers} live peers, {$stalePeers} marked stale");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * A fleet node's exit: healthy while the node keeps syncing; a client that
+     * moved no traffic (keepalives included) for NODE_STALE_MINUTES is marked
+     * disconnected, which drops it from the node's peer list on the next sync.
+     *
+     * @return array{0: bool, 1: int} [healthy, clients marked stale]
+     */
+    private function checkNodeServer(WireguardServer $server, WireguardService $wireguardService): array
+    {
+        $status = $wireguardService->getServerStatus($server);
+        $isUp = ($status['is_up'] ?? false) && (string) $server->public_key !== '';
+
+        $server->update([
+            'is_healthy' => $isUp,
+            'last_health_check_at' => now(),
+        ]);
+
+        if (! $isUp) {
+            $this->warn("  Node exit {$server->name} has not synced recently");
+        }
+
+        $cutoff = now()->subMinutes(self::NODE_STALE_MINUTES);
+        $stale = WireguardClient::where('server_id', $server->id)
+            ->where('is_connected', true)
+            ->where(fn ($q) => $q->whereNull('connected_at')->orWhere('connected_at', '<', $cutoff))
+            ->where(fn ($q) => $q->whereNull('last_handshake_at')->orWhere('last_handshake_at', '<', $cutoff))
+            ->update(['is_connected' => false]);
+
+        if ($stale > 0) {
+            $this->line("  Marked {$stale} idle node peer(s) disconnected");
+        }
+
+        return [$isUp, $stale];
     }
 
     /**

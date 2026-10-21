@@ -39,14 +39,23 @@ class ProductVersionController extends Controller
      */
     public function saveGithubSettings(Request $request, Product $product)
     {
+        // 2026-10-19: brainx-cloud เงียบไปเพราะเบราว์เซอร์ autofill อีเมลล็อกอินลงช่อง Repository
+        // และรหัสผ่านลงช่อง Token (ช่อง text ที่อยู่ก่อนช่อง password = ช่อง username ในสายตาเบราว์เซอร์)
+        // ได้ repo "xjanova/xjanovax@gmail.com" → 404 + 401 ทุก 10 นาที · ชื่อ GitHub มีได้แค่ตัวอักษร/ตัวเลข/-_.
+        // และ token ของจริงขึ้นต้นด้วย prefix เสมอ ⇒ ค่าที่ไม่ใช่รูปแบบนี้ปฏิเสธตั้งแต่ตอนบันทึก
         $validated = $request->validate([
-            'github_owner' => 'required|string|max:100',
-            'github_repo' => 'required|string|max:100',
+            'github_owner' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9-]+$/'],
+            'github_repo' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/'],
             // 2026-08-31: เดิมเป็น required → **ลบ token ที่หมดอายุทิ้งไม่ได้เลย**
             // cluadex เก็บ PAT ที่ถูก revoke ไว้ GitHub ตอบ 401 ทุกครั้งทั้งที่ repo เป็น public
             // เจ้าของแก้เองผ่านหน้า admin ไม่ได้ ต้องไปแก้ที่ฐานข้อมูล ⇒ เปิดให้เว้นว่างได้
-            'github_token' => 'nullable|string',
+            // '********' = ค่าแทนของเดิม (ดูด้านล่าง) จึงผ่านได้
+            'github_token' => ['nullable', 'string', 'regex:/^(\*{8}|(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+)$/'],
             'asset_pattern' => 'required|string|max:100',
+        ], [
+            'github_owner.regex' => 'Owner ต้องเป็นชื่อบัญชี GitHub (ตัวอักษร ตัวเลข และ - เท่านั้น) — ถ้าเห็นอีเมลในช่องนี้ แปลว่าเบราว์เซอร์กรอกให้เอง',
+            'github_repo.regex' => 'Repository ต้องเป็นชื่อ repo บน GitHub เช่น BrainX — ถ้าเห็นอีเมลในช่องนี้ แปลว่าเบราว์เซอร์กรอกให้เอง',
+            'github_token.regex' => 'Token ต้องเป็น GitHub token (ขึ้นต้นด้วย ghp_ หรือ github_pat_) หรือเว้นว่าง — ถ้าเป็นรหัสผ่านที่เบราว์เซอร์กรอกให้ ให้ล้างช่องนี้',
         ]);
 
         // ⚠️ ห้ามใส่ default true — checkbox ที่ไม่ติ๊กจะ "ไม่ถูกส่งมา" เลย

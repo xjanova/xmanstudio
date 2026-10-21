@@ -84,7 +84,7 @@ class GamesHubControlTest extends TestCase
         $this->assertSame(1, GameEntitlement::count());
 
         $this->actingAs($donor)->get('/games-support/my-items')->assertOk()->assertSee($e->code)->assertSee('ตรา Founder')
-            ->assertSee('https://xgameshub.xman4289.com/#redeem=' . $e->code, false);
+            ->assertSee('https://xmangameshub.online/#redeem=' . $e->code, false);
         $this->get('/games-support/breaker')->assertOk()->assertSee($e->code);
         $this->actingAs(User::factory()->create())->get('/games-support/my-items')->assertOk()->assertDontSee($e->code);
 
@@ -143,6 +143,18 @@ class GamesHubControlTest extends TestCase
             ->assertNotFound()->assertHeader('Access-Control-Allow-Origin');
     }
 
+    public function test_the_hub_json_answers_the_old_home_too_while_players_move_across(): void
+    {
+        // Both domains serve the same hub since the move on 2026-10-10; a browser
+        // accepts one Allow-Origin, so the caller's own origin is named.
+        $this->withHeaders(['Origin' => 'https://xgameshub.xman4289.com'])->getJson('/games-support/hub.json')
+            ->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://xgameshub.xman4289.com')->assertHeader('Vary', 'Origin');
+        $this->withHeaders(['Origin' => 'https://xmangameshub.online'])->getJson('/games-support/summary.json')
+            ->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://xmangameshub.online');
+        $this->withHeaders(['Origin' => 'https://evil.example'])->getJson('/games-support/hub.json')
+            ->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://xmangameshub.online');
+    }
+
     public function test_reviews_need_approval_show_short_names_and_editing_sends_them_back(): void
     {
         $player = User::factory()->create(['name' => 'Somchai Jaidee', 'email' => 'somchai@example.com']);
@@ -152,7 +164,7 @@ class GamesHubControlTest extends TestCase
         $this->assertSame('pending', $review->status);
         $this->assertSame(4, DB::table('game_ratings')->where('user_id', $player->id)->value('stars'));
         $this->getJson('/games-support/breaker/reviews.json')->assertOk()->assertJson(['review_count' => 0, 'rating_count' => 1, 'reviews' => []])
-            ->assertHeader('Access-Control-Allow-Origin', 'https://xgameshub.xman4289.com');
+            ->assertHeader('Access-Control-Allow-Origin', 'https://xmangameshub.online');
 
         $this->post('/admin/gameshub/reviews/' . $review->id, ['status' => 'approved'])->assertForbidden();
         $this->actingAs($admin = $this->admin());
@@ -209,7 +221,7 @@ class GamesHubControlTest extends TestCase
         $this->post('/admin/gameshub/games/breaker/hero', ['hero_rank' => 2])->assertSessionHasNoErrors();
         $this->post('/admin/gameshub/games/snake/hero', ['hero_hidden' => '1'])->assertSessionHasNoErrors();
 
-        $json = $this->getJson('/games-support/hub.json')->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://xgameshub.xman4289.com')->json();
+        $json = $this->getJson('/games-support/hub.json')->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://xmangameshub.online')->json();
         $this->assertSame(['เวลาไทย', 'เปิดเกมใหม่แล้ว'], array_column($json['announcements'], 'message'));
         $this->assertSame(['xnova', 'breaker'], $json['hero']['order']);
         $this->assertSame(['snake'], $json['hero']['hidden']);

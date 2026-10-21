@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('smschecker'); @endphp
 
 @section('title', 'ซื้อ License - SmsChecker')
 
@@ -64,9 +66,13 @@
                             Cloud Sync
                         </li>
                     </ul>
+                    @if($csDownload)
+                        <span class="block text-center text-white text-sm py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl transition-all font-medium" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('smschecker.download') }}" class="block text-center text-white text-sm py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl transition-all font-medium">
                         ดาวน์โหลดแอพ
                     </a>
+                    @endif
                 </div>
 
                 <!-- Monthly Card -->
@@ -74,6 +80,7 @@
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">{{ $pricing['monthly']['name_th'] }}</h3>
                         <div class="text-4xl font-black text-white">฿{{ number_format($pricing['monthly']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['monthly']['price']" /></div>
                         <p class="text-gray-500 text-sm mt-1">{{ $pricing['monthly']['duration_days'] }} วัน</p>
                     </div>
                     <ul class="space-y-3 mb-6 text-sm">
@@ -100,6 +107,7 @@
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">{{ $pricing['yearly']['name_th'] }}</h3>
                         <div class="text-4xl font-black text-violet-400">฿{{ number_format($pricing['yearly']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['yearly']['price']" /></div>
                         <p class="text-gray-500 text-sm mt-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
                         <span class="inline-block mt-2 text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full">ประหยัด {{ \App\Support\LicensePlans::yearlySaving('smschecker') }}%</span>
                     </div>
@@ -122,6 +130,7 @@
                     <div class="text-center mb-6">
                         <h3 class="text-xl font-bold text-white mb-2">{{ $pricing['lifetime']['name_th'] }}</h3>
                         <div class="text-4xl font-black text-emerald-400">฿{{ number_format($pricing['lifetime']['price']) }}</div>
+                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="$pricing['lifetime']['price']" /></div>
                         <p class="text-yellow-400 text-sm mt-1">ไม่มีวันหมดอายุ</p>
                     </div>
                     <ul class="space-y-3 mb-6 text-sm">

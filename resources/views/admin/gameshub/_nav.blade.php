@@ -19,10 +19,10 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <p class="text-xs font-semibold uppercase tracking-wider text-indigo-500">XGamesHub · หลังบ้านเว็บเกม</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">ควบคุม xgameshub.xman4289.com: บริจาค ไอเท็ม รีวิว ความเห็น และหน้าแรกของฮับ</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">ควบคุม xmangameshub.online: บริจาค ไอเท็ม รีวิว ความเห็น และหน้าแรกของฮับ</p>
         </div>
         <div class="flex flex-wrap gap-2 text-sm">
-            <a href="https://xgameshub.xman4289.com/" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">เปิดฮับ ↗</a>
+            <a href="{{ config('app.xgameshub_url') }}/" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">เปิดฮับ ↗</a>
             <a href="{{ route('game-support.index') }}" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">หน้าชุมชนสาธารณะ ↗</a>
         </div>
     </div>

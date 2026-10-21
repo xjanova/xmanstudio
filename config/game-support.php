@@ -2,7 +2,9 @@
 
 return [
     'bank' => ['code' => 'SCB', 'name' => 'ธนาคารไทยพาณิชย์', 'account' => '411-148476-9', 'holder' => 'บริษัท เอ็กซ์แมน เอนเตอร์ไพรส์ จำกัด'],
-    'hub_origin' => env('GAME_SUPPORT_HUB_ORIGIN', 'https://xgameshub.xman4289.com'),
+    'hub_origin' => env('GAME_SUPPORT_HUB_ORIGIN', 'https://xmangameshub.online'),
+    // the hub's old home, still serving the same files while players move across (App\Support\HubOrigin)
+    'legacy_hub_origins' => array_filter(explode(',', (string) env('GAME_SUPPORT_LEGACY_HUB_ORIGINS', 'https://xgameshub.xman4289.com'))),
     // logos on the hub (hub_origin + path); every other game uses /art/logos/<slug>.webp
     'logos' => [
         'hive-breach' => '/art/corewar-logo.webp',

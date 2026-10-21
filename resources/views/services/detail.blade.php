@@ -75,6 +75,7 @@
                             <span class="text-4xl font-bold">{{ number_format($salePrice, 0) }}</span>
                             <span class="text-xl">฿</span>
                         </div>
+                        <x-tpix-price variant="detail" :thb="$salePrice" class="mt-2" />
                     </div>
 
                     <!-- Short Description -->
@@ -241,6 +242,7 @@
                                     <span class="text-2xl font-bold text-red-400">
                                         {{ number_format($relSalePrice, 0) }} ฿
                                     </span>
+                                    <x-tpix-price :thb="$relSalePrice" />
                                 </div>
                                 <span class="text-primary-400 group-hover:translate-x-2 transition-transform">→</span>
                             </div>
