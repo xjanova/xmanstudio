@@ -93,6 +93,9 @@ class GpuxMineStatusApiTest extends TestCase
             'donated_satang_30d' => 80,       // 70 เกินสามสิบวันแล้ว
             'wallet_balance_satang' => 12345,
             'hold_hours' => 12,
+            // C6 รอบสอง: ถอนเป็นเงินสด = ขอถอนจากกระเป๋าบนเว็บ แล้วรอแอดมินอนุมัติ
+            'withdraw_url' => route('user.wallet.withdraw'),
+            'withdrawal_pending_satang' => 0,
         ]);
 
         $jobs = $response->json('data.jobs');
@@ -104,6 +107,8 @@ class GpuxMineStatusApiTest extends TestCase
             'amount_satang' => 150,
             'donated_value_satang' => 0,
             'status' => 'pending',
+            'void_reason' => null,
+            'reversed' => false,
             'completed_at' => $todayJob->completed_at->toIso8601String(),
             'updated_at' => $todayJob->updated_at->toIso8601String(),
         ], $jobs[0]);
@@ -315,6 +320,9 @@ class GpuxMineStatusApiTest extends TestCase
 
     public function test_many_machines_behind_one_router_each_keep_their_own_budget(): void
     {
+        // อย่างบน prod: APP_DEBUG ปิด — ตัวจัดการ error ของ API เคยกลืน 429 ที่ limiter สร้างเอง
+        // แล้วตอบ 500 เฉพาะตอน debug ปิด เทสต์ที่รันบนเครื่อง dev (debug เปิด) จึงไม่เคยเห็น
+        config(['app.debug' => false]);
         $nodes = GpuNode::factory()->paired()->count(16)->create();
 
         // สิบหกเครื่องหลัง IP เดียว ถามสี่รอบในนาทีเดียว (ทุกสิบห้าวินาที) = 64 ครั้ง — เกินทั้ง

@@ -10,6 +10,7 @@ use Throwable;
 
 /**
  * ปล่อยรายได้ GPUxMINE ที่พ้นระยะพักแล้ว และโอนเข้ากระเป๋า XMAN ของเจ้าของเครื่อง
+ * พร้อมค่าแนะนำเข้ากระเป๋าผู้แนะนำ (R2-3 — ไม่รอแอดมินอนุมัติ)
  *
  * ก่อนหน้านี้ไม่มีอะไรพาเงินจาก gpu_job_earnings ไปไหนเลย ทุกแถวจะค้างเป็น
  * "รอเข้ากระเป๋า" ไปตลอด และการจ่ายด้วยมือเสี่ยงทั้งจ่ายซ้ำและยอดคงเหลือเพี้ยน
@@ -36,6 +37,7 @@ class GpuxMineSettleEarningsCommand extends Command
         $rows = 0;
         $satang = 0;
         $commissions = 0;
+        $commissionsPaid = 0;
         $failures = 0;
 
         foreach ($settlement->usersToPay() as $userId) {
@@ -63,16 +65,25 @@ class GpuxMineSettleEarningsCommand extends Command
             $rows += $result['rows'];
             $satang += $result['satang'];
             $commissions += $result['commissions'];
+            $commissionsPaid += $result['commissions_paid'];
         }
 
+        // ค่าแนะนำที่ยังค้าง pending — ของรอบแรกที่เคยรอแอดมิน และของผู้แนะนำที่กระเป๋าเพิ่งเปิดคืน (R2-3)
+        $referrals = $settlement->payPendingReferrals();
+        $failures += $referrals['failed'];
+
         $this->info(sprintf(
-            'พ้นระยะพัก %d งาน · ส่งตรวจ %d · โอนเข้ากระเป๋า %d คน %d งาน ฿%s · ค่าแนะนำ %d รายการ · ข้าม %d · ล้ม %d',
+            'พ้นระยะพัก %d งาน · ส่งตรวจ %d · โอนเข้ากระเป๋า %d คน %d งาน ฿%s · ค่าแนะนำ %d รายการ (เข้ากระเป๋าผู้แนะนำ %d · รายการค้างที่จ่ายรอบนี้ %d · ยังรอ %d · ผู้แนะนำรับเงินไม่ได้ %d) · ข้าม %d · ล้ม %d',
             $clearing['cleared'],
             $clearing['review'],
             $owners,
             $rows,
             GpuxMineEarningSettlementService::baht($satang),
             $commissions,
+            $commissionsPaid,
+            $referrals['paid'],
+            $referrals['waiting'],
+            $referrals['blocked'],
             $skipped,
             $failures,
         ));

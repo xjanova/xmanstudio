@@ -31,7 +31,8 @@ use RuntimeException;
  *     cleared ของเขา บวกเงินแบบ atomic เขียน wallet_transactions หนึ่งแถวต่อชุด
  *     แล้วเปลี่ยนแถวเป็น paid พร้อมเลขรายการ — ขั้นไหนพลาด ย้อนทั้งชุด
  *     ส่วนแบ่งผู้แนะนำ (referral_satang) กลายเป็น AffiliateCommission หนึ่งรายการต่อ
- *     ผู้แนะนำต่อชุด ในทรานแซกชันเดียวกัน รอแอดมินอนุมัติแบบเดียวกับค่าแนะนำจากทุกช่องทาง
+ *     ผู้แนะนำต่อชุด และเข้ากระเป๋าผู้แนะนำทันทีในทรานแซกชันเดียวกัน ไม่รอแอดมิน (R2-3 —
+ *     แอดมินเรียกคืนได้ทีหลังถ้ายังไม่ถูกถอนเป็นเงินสด ดู GpuxMinePayoutReversalService)
  *     ส่วนแบ่งที่ไม่มีผู้แนะนำคนไหนรับได้แล้ว ไม่หายเงียบ: คืนเข้ายอดของเจ้าของเครื่องใน
  *     รายการเดียวกัน หรือแพลตฟอร์มเก็บไว้ตามที่ตั้ง — ดู unpaidReferralPolicy()
  *
@@ -60,6 +61,8 @@ class GpuxMineEarningSettlementService
     public const COMMISSION_SOURCE = 'gpuxmine';
 
     public const REFERENCE_TYPE = 'gpu_job_earnings';
+
+    public function __construct(private readonly GpuxMineReferralPayoutService $referrals) {}
 
     public function holdHours(): int
     {
@@ -188,11 +191,11 @@ class GpuxMineEarningSettlementService
      *
      * บัญชีหรือกระเป๋าที่ถูกปิดใช้งาน: ไม่โอน แถวค้างเป็น cleared จนกว่าจะเปิดคืน
      *
-     * @return array{skipped:bool, rows:int, satang:int, transactions:int, commissions:int}
+     * @return array{skipped:bool, rows:int, satang:int, transactions:int, commissions:int, commissions_paid:int}
      */
     public function payUser(int $userId): array
     {
-        $result = ['skipped' => false, 'rows' => 0, 'satang' => 0, 'transactions' => 0, 'commissions' => 0];
+        $result = ['skipped' => false, 'rows' => 0, 'satang' => 0, 'transactions' => 0, 'commissions' => 0, 'commissions_paid' => 0];
 
         $user = User::find($userId);
         if ($user === null || $user->is_active === false) {
@@ -212,7 +215,7 @@ class GpuxMineEarningSettlementService
                 return ['skipped' => true] + $result;
             }
 
-            foreach (['rows', 'satang', 'transactions', 'commissions'] as $key) {
+            foreach (['rows', 'satang', 'transactions', 'commissions', 'commissions_paid'] as $key) {
                 $result[$key] += $batch[$key];
             }
 
@@ -227,7 +230,7 @@ class GpuxMineEarningSettlementService
     /**
      * หนึ่งชุด ในทรานแซกชันของผู้เรียก — ล็อกกระเป๋าก่อนแถวรายได้เสมอ
      *
-     * @return array{rows:int, satang:int, transactions:int, commissions:int}|null
+     * @return array{rows:int, satang:int, transactions:int, commissions:int, commissions_paid:int}|null
      */
     private function payBatch(int $userId, int $walletId): ?array
     {
@@ -245,7 +248,7 @@ class GpuxMineEarningSettlementService
             ->get();
 
         if ($rows->isEmpty()) {
-            return ['rows' => 0, 'satang' => 0, 'transactions' => 0, 'commissions' => 0];
+            return ['rows' => 0, 'satang' => 0, 'transactions' => 0, 'commissions' => 0, 'commissions_paid' => 0];
         }
 
         $ids = $rows->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -274,13 +277,14 @@ class GpuxMineEarningSettlementService
             throw new RuntimeException("GPUxMINE payout for user {$userId}: expected " . count($ids) . " cleared rows, updated {$paid}");
         }
 
-        $commissions = $this->recordReferrals($owed);
+        [$commissions, $commissionsPaid] = $this->recordReferrals($owed);
 
         return [
             'rows' => count($ids),
             'satang' => $satang,
             'transactions' => $transaction ? 1 : 0,
             'commissions' => $commissions,
+            'commissions_paid' => $commissionsPaid,
         ];
     }
 
@@ -452,8 +456,12 @@ class GpuxMineEarningSettlementService
     }
 
     /**
-     * ส่วนแบ่งผู้แนะนำของชุดที่เพิ่งจ่าย → AffiliateCommission หนึ่งรายการต่อผู้แนะนำ (pending
-     * รอแอดมินอนุมัติเหมือนค่าแนะนำจากทุกช่องทาง)
+     * ส่วนแบ่งผู้แนะนำของชุดที่เพิ่งจ่าย → AffiliateCommission หนึ่งรายการต่อผู้แนะนำ แล้วจ่าย
+     * เข้ากระเป๋าผู้แนะนำทันทีในทรานแซกชันเดียวกัน (R2-3 — ไม่รอแอดมินอนุมัติอีกแล้ว)
+     *
+     * รายการเกิดเป็น pending ก่อนแล้ว GpuxMineReferralPayoutService::pay() claim เป็น paid พร้อม
+     * รายการในกระเป๋า GXA{id} — ทางเดียวกับที่ใช้จ่ายรายการที่ค้าง ถ้าจ่ายไม่ได้ตอนนี้ (บัญชีหรือ
+     * กระเป๋าของผู้แนะนำถูกปิด) รายการค้าง pending และรอบถัดไปลองใหม่เอง ไม่หาย
      *
      * เคยเป็นหนึ่งรายการต่อหนึ่งงาน: เครื่องสามเครื่องที่ทำงานวันละสี่ร้อยชิ้น ทำให้ค่าแนะนำ
      * pending ขึ้นเป็นพันต่อสัปดาห์ และทางอนุมัติรวดเดียวของหน้า affiliate ส่งเมลทีละรายการ
@@ -472,11 +480,12 @@ class GpuxMineEarningSettlementService
      * ครั้งเดียว ไม่ใช่ทุกรายการ — ไม่งั้นตัวเลข "ชวนได้กี่คน" กลายเป็นจำนวนรอบโอน
      *
      * @param  array<int, array{affiliate: Affiliate, rows: Collection<int, GpuJobEarning>}>  $owed
-     * @return int จำนวนค่าแนะนำที่สร้างรอบนี้
+     * @return array{0:int, 1:int} จำนวนค่าแนะนำที่สร้างรอบนี้ และที่เข้ากระเป๋าผู้แนะนำแล้ว
      */
-    private function recordReferrals(array $owed): int
+    private function recordReferrals(array $owed): array
     {
         $created = 0;
+        $paid = 0;
 
         foreach ($owed as ['affiliate' => $affiliate, 'rows' => $group]) {
             $ownerId = (int) $group->first()->user_id;
@@ -513,9 +522,24 @@ class GpuxMineEarningSettlementService
 
             GpuJobEarning::whereKey($group->modelKeys())->update(['affiliate_commission_id' => $commission->id]);
             $created++;
+
+            if ($this->referrals->pay((int) $commission->id)) {
+                $paid++;
+            }
         }
 
-        return $created;
+        return [$created, $paid];
+    }
+
+    /**
+     * ค่าแนะนำ GPUxMINE ที่ยังค้าง pending (ของรอบแรกที่รอแอดมิน และของผู้แนะนำที่กระเป๋าเพิ่งเปิดคืน)
+     * → จ่ายเข้ากระเป๋าตอนนี้ — gpuxmine:settle-earnings เรียกทุกรอบ
+     *
+     * @return array{paid:int, waiting:int, failed:int}
+     */
+    public function payPendingReferrals(): array
+    {
+        return $this->referrals->payPending();
     }
 
     /**

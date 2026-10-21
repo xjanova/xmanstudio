@@ -20,6 +20,7 @@
             <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>รอตรวจสอบ / Pending</option>
             <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>จ่ายแล้ว / Paid</option>
             <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>ปฏิเสธ / Rejected</option>
+            <option value="reversed" {{ request('status') === 'reversed' ? 'selected' : '' }}>เรียกคืนแล้ว / Reversed</option>
         </select>
     </form>
 </div>
@@ -44,17 +45,22 @@
                     @foreach($commissions as $commission)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-3 text-sm text-gray-600">{{ $commission->created_at->format('d/m/Y H:i') }}</td>
-                            <td class="px-6 py-3 text-sm font-mono text-gray-700">{{ $commission->order->order_number ?? '-' }}</td>
+                            <td class="px-6 py-3 text-sm font-mono text-gray-700">{{ $commission->order->order_number ?? ($commission->source_description ?: '-') }}</td>
                             <td class="px-6 py-3 text-sm text-gray-600">{{ $commission->referredUser->name ?? '-' }}</td>
-                            <td class="px-6 py-3 text-sm text-gray-700 text-right">฿{{ number_format($commission->order_amount) }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-700 text-right">฿{{ number_format($commission->order_amount, 2) }}</td>
                             <td class="px-6 py-3 text-sm text-gray-500 text-center">{{ number_format($commission->commission_rate) }}%</td>
-                            <td class="px-6 py-3 text-sm font-semibold text-green-600 text-right">+฿{{ number_format($commission->commission_amount) }}</td>
+                            <td class="px-6 py-3 text-sm font-semibold text-right {{ $commission->status === 'reversed' ? 'text-gray-400 line-through' : 'text-green-600' }}">+฿{{ number_format($commission->commission_amount, 2) }}</td>
                             <td class="px-6 py-3 text-center">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     {{ $commission->status === 'paid' ? 'bg-green-100 text-green-800' : '' }}
                                     {{ $commission->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
                                     {{ $commission->status === 'rejected' ? 'bg-red-100 text-red-800' : '' }}
+                                    {{ $commission->status === 'reversed' ? 'bg-gray-200 text-gray-700' : '' }}
                                 ">{{ $commission->status_label }}</span>
+                                {{-- ค่าแนะนำที่ถูกเรียกคืนจากกระเป๋า — เจ้าของเงินต้องเห็นว่าเพราะอะไร --}}
+                                @if ($commission->status === 'reversed' && $commission->reversal_reason)
+                                    <span class="block mt-1 text-[11px] text-gray-500 max-w-[14rem] break-words">{{ $commission->reversal_reason }}</span>
+                                @endif
                             </td>
                             <td class="px-6 py-3 text-sm text-gray-500">{{ $commission->paid_at?->format('d/m/Y') ?? '-' }}</td>
                         </tr>

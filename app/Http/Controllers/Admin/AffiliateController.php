@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\AffiliateCommission;
+use App\Services\GpuxMineReferralPayoutService;
 use Illuminate\Http\Request;
 
 /**
@@ -107,7 +108,9 @@ class AffiliateController extends Controller
      */
     public function commissions(Request $request)
     {
-        $query = AffiliateCommission::with('affiliate.user', 'order', 'referredUser');
+        $query = AffiliateCommission::with('affiliate.user', 'order', 'referredUser')
+            // ส่วนแบ่งของงาน GPUxMINE ที่ถูกหักคืนจากกระเป๋าผู้แนะนำแยกไปแล้ว — ค่าแนะนำที่จ่ายแล้วเหลือให้เรียกคืนเท่านี้
+            ->withSum(['gpuEarnings as referral_taken_satang' => fn ($q) => $q->whereNotNull('referral_reversal_wallet_transaction_id')], 'referral_reversed_satang');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -129,7 +132,12 @@ class AffiliateController extends Controller
             return back()->with('success', "จ่ายค่าคอมมิชชั่น ฿{$commission->commission_amount} เข้า Wallet แล้ว");
         }
 
-        return back()->with('error', 'ไม่สามารถอนุมัติได้ (อาจจ่ายแล้วหรือถูกปฏิเสธ)');
+        // ค่าแนะนำ GPUxMINE ที่ยังค้าง: บอกสาเหตุจริง (บัญชี/กระเป๋าผู้แนะนำถูกปิด) ไม่ใช่ให้เดา
+        $blocked = $commission->source_type === GpuxMineReferralPayoutService::SOURCE
+            ? app(GpuxMineReferralPayoutService::class)->blockedReason((int) $commission->id)
+            : null;
+
+        return back()->with('error', $blocked ?? 'ไม่สามารถอนุมัติได้ (อาจจ่ายแล้วหรือถูกปฏิเสธ)');
     }
 
     /**
@@ -155,14 +163,20 @@ class AffiliateController extends Controller
         $count = 0;
         $total = 0;
 
+        $blocked = 0;
+
         foreach ($pending as $commission) {
             if ($commission->approveAndPay(auth()->id())) {
                 $count++;
                 $total += $commission->commission_amount;
+            } elseif ($commission->source_type === GpuxMineReferralPayoutService::SOURCE
+                && app(GpuxMineReferralPayoutService::class)->blockedReason((int) $commission->id) !== null) {
+                $blocked++;
             }
         }
 
-        return back()->with('success', "อนุมัติ {$count} รายการ รวม ฿" . number_format($total) . ' เข้า Wallet แล้ว');
+        return back()->with('success', "อนุมัติ {$count} รายการ รวม ฿" . number_format($total) . ' เข้า Wallet แล้ว'
+            . ($blocked > 0 ? " · ค่าแนะนำ GPUxMINE {$blocked} รายการยังจ่ายไม่ได้เพราะบัญชีหรือกระเป๋าของผู้แนะนำถูกปิด — ระบบจ่ายเองเมื่อเปิดคืน" : ''));
     }
 
     /**

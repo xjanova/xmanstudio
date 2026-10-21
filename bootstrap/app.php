@@ -146,6 +146,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            // A response somebody already built — a rate limiter's own 429 (Limit::response(),
+            // e.g. gpuxmine-status), an abort with a response. Caught here it became a bare 500
+            // whenever APP_DEBUG was off, i.e. in production: a machine asking /status too often
+            // was told the server crashed instead of when to try again.
+            if ($e instanceof HttpResponseException) {
+                return null;
+            }
+
             if (! config('app.debug') && ($request->is('api/*') || $request->wantsJson())) {
                 Log::error('API Error', [
                     'message' => $e->getMessage(),

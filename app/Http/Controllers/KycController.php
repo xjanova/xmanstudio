@@ -234,20 +234,6 @@ class KycController extends Controller
     /** @return array<string, string> */
     private function banks(): array
     {
-        return [
-            'KBANK' => 'กสิกรไทย',
-            'SCB' => 'ไทยพาณิชย์',
-            'BBL' => 'กรุงเทพ',
-            'KTB' => 'กรุงไทย',
-            'BAY' => 'กรุงศรีอยุธยา',
-            'TTB' => 'ทหารไทยธนชาต',
-            'GSB' => 'ออมสิน',
-            'BAAC' => 'ธ.ก.ส.',
-            'CIMB' => 'ซีไอเอ็มบี ไทย',
-            'UOB' => 'ยูโอบี',
-            'LHB' => 'แลนด์ แอนด์ เฮ้าส์',
-            'TISCO' => 'ทิสโก้',
-            'KKP' => 'เกียรตินาคินภัทร',
-        ];
+        return KycVerification::BANKS;
     }
 }

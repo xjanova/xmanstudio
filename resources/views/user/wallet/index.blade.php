@@ -27,6 +27,12 @@
                         </svg>
                         <x-bi th="เติมเงิน" en="Top Up" />
                     </a>
+                    <a href="{{ route('user.wallet.withdraw') }}" class="inline-flex items-center px-5 py-2.5 bg-purple-500/30 text-white font-semibold rounded-xl hover:bg-purple-500/40 transition-all duration-200 backdrop-blur-sm">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4m0 0l6-6m-6 6l6 6"/>
+                        </svg>
+                        <x-bi th="ถอนเงิน" en="Withdraw" />
+                    </a>
                     <a href="{{ route('user.wallet.transactions') }}" class="inline-flex items-center px-5 py-2.5 bg-purple-500/30 text-white font-semibold rounded-xl hover:bg-purple-500/40 transition-all duration-200 backdrop-blur-sm">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -78,6 +84,24 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- คำขอถอนที่รออยู่ — ยอดนี้ถูกหักจากยอดคงเหลือแล้ว ต้องบอกว่าไปอยู่ไหน --}}
+                @if($openWithdrawal)
+                <a href="{{ route('user.wallet.withdraw') }}" class="block rounded-2xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-6 py-4 hover:bg-amber-100/60 dark:hover:bg-amber-900/30 transition-colors">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                            @if($openWithdrawal->isProcessing())
+                            <p class="font-semibold text-amber-900 dark:text-amber-100"><x-bi th="แอดมินกำลังโอนเงินถอน" en="We are transferring your withdrawal" /> · {{ $openWithdrawal->withdrawal_id }}</p>
+                            <p class="text-sm text-amber-800/80 dark:text-amber-200/80"><x-bi th="ยอดนี้พักไว้แล้ว ไม่รวมในยอดคงเหลือ — เริ่มโอนแล้ว ยกเลิกไม่ได้" en="Held and not part of the balance above; the transfer has started and cannot be cancelled" /></p>
+                            @else
+                            <p class="font-semibold text-amber-900 dark:text-amber-100"><x-bi th="คำขอถอนรอแอดมินโอน" en="Withdrawal waiting for our transfer" /> · {{ $openWithdrawal->withdrawal_id }}</p>
+                            <p class="text-sm text-amber-800/80 dark:text-amber-200/80"><x-bi th="ยอดนี้พักไว้แล้ว ไม่รวมในยอดคงเหลือ — ยกเลิกได้จนกว่าแอดมินจะเริ่มโอน" en="Held and not part of the balance above; you can cancel until we start the transfer" /></p>
+                            @endif
+                        </div>
+                        <span class="text-lg font-bold text-amber-900 dark:text-amber-100 tabular-nums">{{ \App\Support\Satang::format($openWithdrawal->amountSatang()) }}</span>
+                    </div>
+                </a>
+                @endif
 
                 <!-- Pending Topups -->
                 @if($pendingTopups->count() > 0)
@@ -164,6 +188,9 @@
                                     <div>
                                         <p class="font-semibold text-gray-900 dark:text-white">{{ $transaction->type_label }}</p>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">{{ $transaction->description }}</p>
+                                        @if($state = $transaction->stateLabel())
+                                        <span class="inline-block mt-1 text-xs px-2 py-0.5 rounded-full border {{ $transaction->status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800' : ($transaction->status === 'completed' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600') }}">{{ $state }}</span>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="text-right">
@@ -275,6 +302,18 @@
                                 <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
+                                <span class="text-sm text-purple-800 dark:text-purple-200"><x-bi th="รายได้แชร์การ์ดจอ GPUxMINE และค่าแนะนำเข้ากระเป๋านี้เองหลังพ้นระยะพัก" en="GPUxMINE earnings and referral commissions land here by themselves after their hold" /></span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="text-sm text-purple-800 dark:text-purple-200"><x-bi th="ถอนเป็นเงินสดได้ — ขอถอนแล้วแอดมินอนุมัติและโอนเข้าบัญชีที่ยืนยันตัวตนไว้" en="Cash out: request a withdrawal; our team approves it and transfers to your verified account" /></span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
                                 <span class="text-sm text-purple-800 dark:text-purple-200"><x-bi th="ปลอดภัย ไม่มีค่าธรรมเนียม" en="Secure with no fees" /></span>
                             </li>
                         </ul>
@@ -296,6 +335,17 @@
                             <div>
                                 <p class="font-medium text-gray-900 dark:text-white"><x-bi th="เติมเงิน" en="Top Up" /></p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="เพิ่มยอดเงินในกระเป๋า" en="Add funds to your wallet" /></p>
+                            </div>
+                        </a>
+                        <a href="{{ route('user.wallet.withdraw') }}" class="flex items-center p-3 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200 group">
+                            <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center mr-3 shadow-lg group-hover:scale-110 transition-transform duration-200">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4m0 0l6-6m-6 6l6 6"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900 dark:text-white"><x-bi th="ถอนเงิน" en="Withdraw" /></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400"><x-bi th="โอนเข้าบัญชีที่ยืนยันตัวตนไว้ (แอดมินอนุมัติ)" en="To your verified account, approved by our team" /></p>
                             </div>
                         </a>
                         <a href="{{ route('user.wallet.transactions') }}" class="flex items-center p-3 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200 group">

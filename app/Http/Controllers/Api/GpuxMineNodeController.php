@@ -14,6 +14,7 @@ use App\Services\GpuxMineEarningSettlementService;
 use App\Services\GpuxMineNodeStateService;
 use App\Services\GpuxMineReferrerResolver;
 use App\Services\GpuxMineRelayService;
+use App\Services\WalletWithdrawalService;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -61,7 +62,7 @@ class GpuxMineNodeController extends Controller
     private const STATUS_SETTLE_SECONDS = 120;
 
     /** คอลัมน์ที่ /status อ่านต่องาน */
-    private const JOB_COLUMNS = ['id', 'job_id', 'prompt_id', 'kind', 'amount_satang', 'donated_value_satang', 'status', 'completed_at', 'updated_at'];
+    private const JOB_COLUMNS = ['id', 'job_id', 'prompt_id', 'kind', 'amount_satang', 'donated_value_satang', 'status', 'void_reason', 'reversed_at', 'completed_at', 'updated_at'];
 
     /** "วันนี้" ของเจ้าของเครื่อง — แอปเก็บเวลาเป็น UTC แต่เจ้าของอยู่เมืองไทย */
     private const OWNER_TIMEZONE = 'Asia/Bangkok';
@@ -72,6 +73,7 @@ class GpuxMineNodeController extends Controller
         private readonly GpuxMineNodeStateService $state,
         private readonly GpuxMineReferrerResolver $referrers,
         private readonly GpuxMineEarningSettlementService $settlement,
+        private readonly WalletWithdrawalService $withdrawals,
     ) {}
 
     /**
@@ -464,9 +466,14 @@ class GpuxMineNodeController extends Controller
      * ยอดเงินของเจ้าของทั้งบัญชี เป็นสตางค์จำนวนเต็มทุกช่อง
      *
      * "วันนี้" กับ "เดือนนี้" นับตามเวลาไทย — เจ้าของเครื่องอยู่ที่นี่ ถ้านับตาม UTC
-     * ยอดวันนี้จะรีเซ็ตตอนเจ็ดโมงเช้า งานที่ถูกยกเลิก (void) ไม่นับในยอดไหนเลย
+     * ยอดวันนี้จะรีเซ็ตตอนเจ็ดโมงเช้า งานที่ถูกยกเลิก (void) ไม่นับในยอดไหนเลย —
+     * รวมงานที่จ่ายแล้วถูกแอดมินเรียกคืน (void + reversed) ซึ่งหลุดจาก paid_satang ด้วย
      *
-     * @return array<string, int>
+     * withdraw_url / withdrawal_pending_satang (C6 รอบสอง — โปรแกรมเก่าไม่อ่าน): การถอนเป็นเงินสด
+     * คือการขอถอนจากกระเป๋าบนเว็บแล้วรอแอดมินอนุมัติ (R2-4) — ลิงก์เป็น null เมื่อแอดมินปิดการถอนไว้
+     * ยอดที่รอถอนถูกหักออกจาก wallet_balance_satang แล้วตั้งแต่ตอนขอ
+     *
+     * @return array<string, int|string|null>
      */
     private function earningsSummary(int $userId): array
     {
@@ -493,6 +500,8 @@ class GpuxMineNodeController extends Controller
             'donated_satang_30d' => $since(now()->subDays(30), 'donated_value_satang'),
             'wallet_balance_satang' => GpuxMineEarningSettlementService::satang($balance === null ? null : (string) $balance),
             'hold_hours' => $this->settlement->holdHours(),
+            'withdraw_url' => $this->withdrawals->enabled() ? route('user.wallet.withdraw') : null,
+            'withdrawal_pending_satang' => $this->withdrawals->pendingSatang($userId),
         ];
     }
 
@@ -583,6 +592,9 @@ class GpuxMineNodeController extends Controller
             'amount_satang' => (int) $job->amount_satang,
             'donated_value_satang' => (int) $job->donated_value_satang,
             'status' => $job->status,
+            // งานที่ยกเลิก หรือจ่ายแล้วถูกแอดมินเรียกคืน (reversed) — เหตุผลที่เจ้าของเครื่องควรได้อ่าน
+            'void_reason' => $job->status === GpuJobEarning::STATUS_VOID ? $job->void_reason : null,
+            'reversed' => $job->reversed_at !== null,
             'completed_at' => $job->completed_at?->toIso8601String(),
             // เคอร์เซอร์ของ updated_after — โปรแกรมจำค่ามากสุดที่เห็นแล้วส่งกลับมารอบหน้า
             'updated_at' => $job->updated_at?->toIso8601String(),

@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\DomainSettingController;
 use App\Http\Controllers\Admin\DonationController;
 use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\Admin\GpuxMineController;
+use App\Http\Controllers\Admin\GpuxMineReversalController;
 use App\Http\Controllers\Admin\GuideScreenshotController;
 use App\Http\Controllers\Admin\LicenseAnalyticsController;
 use App\Http\Controllers\Admin\LicenseController as AdminLicenseController;
@@ -84,6 +85,7 @@ use App\Http\Controllers\Admin\TwoFactorController as AdminTwoFactorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VpsSettingController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
+use App\Http\Controllers\Admin\WalletWithdrawalController as AdminWalletWithdrawalController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\AntiXController;
@@ -140,6 +142,7 @@ use App\Http\Controllers\ThaipromptPosController;
 use App\Http\Controllers\TpingController;
 use App\Http\Controllers\TpixPayController;
 use App\Http\Controllers\User\WalletController as UserWalletController;
+use App\Http\Controllers\User\WalletWithdrawalController as UserWalletWithdrawalController;
 use App\Http\Controllers\VpsController;
 use App\Http\Controllers\WinXToolsController;
 use App\Http\Controllers\XdreamerController;
@@ -909,6 +912,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/transactions', [UserWalletController::class, 'transactions'])->name('transactions');
         Route::delete('/topup/{topup}', [UserWalletController::class, 'cancelTopup'])->name('cancel-topup');
         Route::get('/bonus-preview', [UserWalletController::class, 'bonusPreview'])->name('bonus-preview');
+
+        // ถอนเงินสดออกจากกระเป๋า (R2-4) — หน้าเปิดได้ทุกคน (คนยังไม่ยืนยันตัวตนเห็นว่าต้องทำอะไร
+        // และคนที่มีคำขอค้างยกเลิกได้เสมอ) ส่วนการส่งคำขอต้องผ่าน KYC และถูกจำกัดอัตรา
+        Route::get('/withdraw', [UserWalletWithdrawalController::class, 'index'])->name('withdraw');
+        Route::post('/withdraw', [UserWalletWithdrawalController::class, 'store'])
+            ->middleware(['kyc.verified', 'throttle:6,10,wallet-withdraw'])
+            ->name('withdraw.store');
+        Route::post('/withdraw/{id}/cancel', [UserWalletWithdrawalController::class, 'cancel'])
+            ->whereNumber('id')
+            ->middleware('throttle:10,10,wallet-withdraw-cancel')
+            ->name('withdraw.cancel');
+        Route::get('/withdraw/{id}/slip', [UserWalletWithdrawalController::class, 'slip'])
+            ->whereNumber('id')->name('withdraw.slip');
     });
 });
 
@@ -970,6 +986,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::delete('/{affiliate}', [App\Http\Controllers\Admin\AffiliateController::class, 'destroy'])->name('destroy');
         Route::post('/commission/{commission}/approve', [App\Http\Controllers\Admin\AffiliateController::class, 'approveCommission'])->name('commission.approve');
         Route::post('/commission/{commission}/reject', [App\Http\Controllers\Admin\AffiliateController::class, 'rejectCommission'])->name('commission.reject');
+        // เรียกคืนค่าแนะนำ GPUxMINE ที่จ่ายไปแล้ว (R2-3) — ได้ครั้งเดียว และเฉพาะเมื่อยอดยังไม่ถูกถอนออก
+        Route::post('/commission/{id}/reverse', [GpuxMineReversalController::class, 'commission'])
+            ->whereNumber('id')->name('commission.reverse');
     });
 
     // Premium Mockup Dashboard
@@ -1570,6 +1589,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/topups/{topup}/debug', [AdminWalletController::class, 'debugTopup'])->name('topups.debug');
         Route::get('/settings', [AdminWalletController::class, 'settings'])->name('settings');
         Route::put('/settings', [AdminWalletController::class, 'updateSettings'])->name('settings.update');
+
+        // คำขอถอนเงินสด (R2-4) — อนุมัติ = บันทึกว่าโอนแล้ว, ปฏิเสธ = คืนยอดที่พักไว้
+        // เปลี่ยนเงินของคนอื่นทั้งคู่ จึงเป็น POST ที่มี CSRF และหน้าเว็บถามยืนยันก่อนทุกครั้ง
+        Route::get('/withdrawals', [AdminWalletWithdrawalController::class, 'index'])->name('withdrawals');
+        Route::get('/withdrawals/export', [AdminWalletWithdrawalController::class, 'export'])->name('withdrawals.export');
+        Route::get('/withdrawals/{id}', [AdminWalletWithdrawalController::class, 'show'])->whereNumber('id')->name('withdrawals.show');
+        Route::post('/withdrawals/{id}/start', [AdminWalletWithdrawalController::class, 'start'])->whereNumber('id')->name('withdrawals.start');
+        Route::post('/withdrawals/{id}/approve', [AdminWalletWithdrawalController::class, 'approve'])->whereNumber('id')->name('withdrawals.approve');
+        Route::post('/withdrawals/{id}/reject', [AdminWalletWithdrawalController::class, 'reject'])->whereNumber('id')->name('withdrawals.reject');
+        Route::get('/withdrawals/{id}/slip', [AdminWalletWithdrawalController::class, 'slip'])->whereNumber('id')->name('withdrawals.slip');
     });
 
     // TPIX payments: the switch + receive address, every quote, and re-check / accept-late / cancel
@@ -1928,6 +1957,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
             ->whereNumber('id')->name('earnings.approve');
         Route::post('/earnings/{id}/void', [GpuxMineController::class, 'voidEarning'])
             ->whereNumber('id')->name('earnings.void');
+        // เรียกคืนรายได้ที่เข้ากระเป๋าไปแล้ว (R2-3) — ได้ครั้งเดียว และเฉพาะเมื่อยอดยังไม่ถูกถอนออก
+        Route::post('/earnings/{id}/reverse', [GpuxMineReversalController::class, 'earning'])
+            ->whereNumber('id')->name('earnings.reverse');
         Route::get('/nodes/{id}', [GpuxMineController::class, 'show'])->whereNumber('id')->name('show');
         Route::post('/nodes/{id}/suspend', [GpuxMineController::class, 'suspend'])->whereNumber('id')->name('suspend');
         Route::post('/nodes/{id}/resume', [GpuxMineController::class, 'resume'])->whereNumber('id')->name('resume');

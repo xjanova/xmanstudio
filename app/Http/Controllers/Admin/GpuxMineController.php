@@ -94,7 +94,7 @@ class GpuxMineController extends Controller
             ->findOrFail($id);
 
         $earnings = $this->earningsOf($node)
-            ->with(['reviewer:id,name'])
+            ->with(['reviewer:id,name', 'reverser:id,name', 'affiliateCommission:id,status'])
             ->orderByDesc('completed_at')
             ->orderByDesc('id')
             ->paginate(self::EARNINGS_PER_PAGE)
@@ -135,7 +135,7 @@ class GpuxMineController extends Controller
         $search = $this->queryWord($request, 'q');
 
         $earnings = GpuJobEarning::query()
-            ->with(['node' => fn ($q) => $q->withTrashed(), 'user:id,name,email', 'reviewer:id,name'])
+            ->with(['node' => fn ($q) => $q->withTrashed(), 'user:id,name,email', 'reviewer:id,name', 'reverser:id,name', 'affiliateCommission:id,status'])
             ->when($status !== 'all', fn (Builder $q) => $q->where('status', $status))
             ->when($search !== '', function (Builder $q) use ($search) {
                 $like = '%' . addcslashes($search, '%_\\') . '%';
@@ -298,7 +298,7 @@ class GpuxMineController extends Controller
 
         if (! $earning->canBeVoided()) {
             return back()->with('error', $earning->status === GpuJobEarning::STATUS_PAID
-                ? 'งานนี้เข้ากระเป๋าไปแล้ว ยกเลิกไม่ได้ — ถ้าต้องเรียกคืน ให้ปรับยอดกระเป๋าของเจ้าของแยกต่างหาก'
+                ? 'งานนี้เข้ากระเป๋าไปแล้ว ยกเลิกไม่ได้ — ใช้ปุ่ม "เรียกคืน" แทน (หักกระเป๋าเจ้าของคืน ได้ต่อเมื่อยอดยังไม่ถูกถอนออก)'
                 : 'งานนี้ถูกยกเลิกไปแล้ว');
         }
 

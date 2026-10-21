@@ -8,7 +8,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">คอมมิชชั่นรอตรวจสอบ</h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">อนุมัติหรือปฏิเสธค่าคอมมิชชั่น Affiliate (จ่ายเข้า Wallet อัตโนมัติ)</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">อนุมัติหรือปฏิเสธค่าคอมมิชชั่น Affiliate (จ่ายเข้า Wallet อัตโนมัติ) · ค่าแนะนำ GPUxMINE เข้ากระเป๋าเองเมื่อรายได้พ้นระยะพัก — เรียกคืนได้ครั้งเดียวถ้ายอดยังไม่ถูกถอนออก</p>
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('admin.affiliates.index') }}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm transition">
@@ -31,6 +31,7 @@
             <option value="">รอตรวจสอบ</option>
             <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>จ่ายแล้ว</option>
             <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>ปฏิเสธ</option>
+            <option value="reversed" {{ request('status') === 'reversed' ? 'selected' : '' }}>เรียกคืนแล้ว</option>
         </select>
     </form>
 
@@ -77,15 +78,28 @@
                             </td>
                             <td class="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $c->source_description ?: ($c->order->order_number ?? '-') }}</td>
                             <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $c->referredUser->name ?? '-' }}</td>
-                            <td class="px-6 py-3 text-sm text-right text-gray-700 dark:text-gray-300">฿{{ number_format($c->order_amount) }}</td>
+                            <td class="px-6 py-3 text-sm text-right text-gray-700 dark:text-gray-300">฿{{ number_format($c->order_amount, 2) }}</td>
                             <td class="px-6 py-3 text-sm text-center text-gray-500">{{ number_format($c->commission_rate) }}%</td>
-                            <td class="px-6 py-3 text-sm text-right font-semibold text-green-600">+฿{{ number_format($c->commission_amount) }}</td>
+                            @php
+                                $takenSatang = (int) ($c->referral_taken_satang ?? 0);
+                                $leftSatang = max(0, \App\Support\Satang::fromBaht((string) $c->commission_amount) - $takenSatang);
+                            @endphp
+                            <td class="px-6 py-3 text-sm text-right font-semibold {{ $c->status === 'reversed' ? 'text-gray-400 line-through' : 'text-green-600' }}">
+                                +฿{{ number_format($c->commission_amount, 2) }}
+                                @if($c->status === 'paid' && $takenSatang > 0)
+                                    <span class="block text-[11px] font-normal text-gray-500">เรียกคืนบางงานแล้ว {{ \App\Support\Satang::format($takenSatang) }}</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-3 text-center">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                                     {{ $c->status === 'paid' ? 'bg-green-100 text-green-800' : '' }}
                                     {{ $c->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
                                     {{ $c->status === 'rejected' ? 'bg-red-100 text-red-800' : '' }}
+                                    {{ $c->status === 'reversed' ? 'bg-gray-200 text-gray-700' : '' }}
                                 ">{{ $c->status_label }}</span>
+                                @if($c->status === 'reversed' && $c->reversal_reason)
+                                    <span class="block mt-1 text-[11px] text-gray-500 max-w-[12rem] break-words">{{ $c->reversal_reason }}</span>
+                                @endif
                             </td>
                             <td class="px-6 py-3">
                                 @if($c->status === 'pending')
@@ -99,6 +113,16 @@
                                             <button type="submit" class="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg">ปฏิเสธ</button>
                                         </form>
                                     </div>
+                                @elseif($c->canBeReversed())
+                                    {{-- เรียกคืนค่าแนะนำ GPUxMINE ที่จ่ายไปแล้ว (R2-3) — หักกระเป๋าผู้แนะนำ ได้ต่อเมื่อยอดยังไม่ถูกถอนออก --}}
+                                    <span class="block text-xs text-gray-400 mb-1">{{ $c->paid_at?->format('d/m/y') ?? '-' }}</span>
+                                    <form action="{{ route('admin.affiliates.commission.reverse', $c->id) }}" method="POST" class="flex items-center gap-1.5"
+                                          onsubmit="if (! window.confirm(@js('เรียกคืนค่าแนะนำ #' . $c->id . ' (' . \App\Support\Satang::format($leftSatang) . ($takenSatang > 0 ? ' — ส่วนที่ยังไม่ถูกเรียกคืนแยก' : '') . ') จากกระเป๋าผู้แนะนำ?' . "\n\n" . 'ได้ต่อเมื่อยอดยังไม่ถูกถอนออก — ทำได้ครั้งเดียว ย้อนกลับไม่ได้ ผู้แนะนำจะเห็นเหตุผลที่กรอก'))) return false; this.querySelector('button[type=submit]').disabled = true;">
+                                        @csrf
+                                        <input type="text" name="reason" required minlength="{{ \App\Services\GpuxMinePayoutReversalService::MIN_REASON }}" maxlength="255" autocomplete="off"
+                                               placeholder="เหตุผล (≥10 ตัวอักษร)" class="w-36 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <button type="submit" class="text-xs px-3 py-1 bg-rose-700 hover:bg-rose-600 text-white rounded-lg disabled:opacity-50">เรียกคืน</button>
+                                    </form>
                                 @else
                                     <span class="text-xs text-gray-400">{{ $c->paid_at?->format('d/m/y') ?? '-' }}</span>
                                 @endif

@@ -14,8 +14,10 @@ use App\Models\TicketReply;
 use App\Models\User;
 use App\Models\VpsInstance;
 use App\Models\WalletTopup;
+use App\Models\WalletWithdrawal;
 use App\Support\AdminAlerts;
 use App\Support\PaymentSlips;
+use App\Support\Satang;
 use App\Support\Telegram\BotActions;
 use App\Support\UpstreamBilling;
 use Carbon\CarbonInterface;
@@ -329,6 +331,90 @@ final class BusinessAlerts
             urlLabel: 'เปิดรายการเติมเงิน',
             category: 'orders',
             buttons: $open ? BotActions::decisionButtons('t', $topup->id) : [],
+        );
+    }
+
+    // =============================================================================== withdrawals
+
+    /**
+     * A customer asked to take money out of their wallet (R2-4). The amount is already held; nothing
+     * leaves until an admin transfers it and records the reference — so this always buzzes, and there
+     * are no approve buttons: approving without typing the transfer reference is not a thing.
+     */
+    public static function withdrawalRequested(WalletWithdrawal $withdrawal): void
+    {
+        self::later(function () use ($withdrawal) {
+            $withdrawal = $withdrawal->fresh();
+            if (! $withdrawal || $withdrawal->status !== WalletWithdrawal::STATUS_PENDING) {
+                return;
+            }
+            AdminAlerts::send(self::withdrawalCard($withdrawal, 'ขอถอนเงินจากกระเป๋า'), 1440, subject: 'withdrawal:' . $withdrawal->id);
+        });
+    }
+
+    /** Started, approved, rejected or cancelled: the card in the chat shows where it stands, not a stale request. */
+    public static function withdrawalUpdated(WalletWithdrawal $withdrawal): void
+    {
+        self::later(function () use ($withdrawal) {
+            $withdrawal = $withdrawal->fresh();
+            if ($withdrawal) {
+                AdminAlerts::refresh('withdrawal:' . $withdrawal->id, self::withdrawalCard($withdrawal));
+            }
+        });
+    }
+
+    public static function withdrawalCard(WalletWithdrawal $withdrawal, ?string $headline = null): Alert
+    {
+        $withdrawal->loadMissing('user', 'reviewer');
+        $open = $withdrawal->isOpen();
+        $amount = Satang::format($withdrawal->amountSatang());
+
+        // The destination is masked here: the chat is not the place for a full account number —
+        // the admin page shows it to whoever actually makes the transfer.
+        $lines = [
+            'ลูกค้า: ' . self::person($withdrawal->user?->name, $withdrawal->user?->email, null),
+            'โอนเข้า: ' . $withdrawal->maskedDestination() . ($withdrawal->account_name ? ' · ' . Str::limit((string) $withdrawal->account_name, 40) : ''),
+            $withdrawal->account_source === WalletWithdrawal::SOURCE_KYC
+                ? 'บัญชีตรงกับที่ยืนยันตัวตนไว้ (KYC)'
+                : '⚠️ บัญชีกรอกเอง ไม่ได้มาจาก KYC — ตรวจชื่อก่อนโอน',
+        ];
+        if ($withdrawal->status === WalletWithdrawal::STATUS_REJECTED && $withdrawal->reject_reason) {
+            $lines[] = 'เหตุผลที่ไม่อนุมัติ: ' . Str::limit((string) $withdrawal->reject_reason, 120);
+        }
+        if ($withdrawal->status === WalletWithdrawal::STATUS_APPROVED && $withdrawal->payout_reference) {
+            $lines[] = 'อ้างอิงการโอน: ' . Str::limit((string) $withdrawal->payout_reference, 60);
+        }
+        if ($withdrawal->processing_at !== null) {
+            // Whoever pressed "start" owns the transfer — a second admin must not pay it again
+            $withdrawal->loadMissing('processor');
+            $lines[] = 'เริ่มโอนโดย: ' . ($withdrawal->processor?->name ?? 'ผู้ดูแล') . ' · ' . self::time($withdrawal->processing_at);
+        }
+        if (! $open) {
+            $who = $withdrawal->status === WalletWithdrawal::STATUS_CANCELLED
+                ? 'ลูกค้ายกเลิกเอง'
+                : ($withdrawal->reviewer?->name ?? self::resolvedBy() ?? 'ผู้ดูแล');
+            $lines[] = 'ดำเนินการโดย: ' . $who . ' · ' . self::time($withdrawal->reviewed_at ?? $withdrawal->cancelled_at ?? now());
+        }
+
+        return new Alert(
+            key: 'withdrawal:' . $withdrawal->id . ':' . $withdrawal->status,
+            level: match ($withdrawal->status) {
+                WalletWithdrawal::STATUS_PENDING, WalletWithdrawal::STATUS_PROCESSING => Alert::MONEY,
+                WalletWithdrawal::STATUS_APPROVED => Alert::OK,
+                default => Alert::INFO,
+            },
+            title: ($headline ?? match ($withdrawal->status) {
+                WalletWithdrawal::STATUS_PROCESSING => 'กำลังโอนเงินถอน',
+                WalletWithdrawal::STATUS_APPROVED => 'โอนเงินถอนแล้ว',
+                WalletWithdrawal::STATUS_REJECTED => 'ไม่อนุมัติการถอนเงิน',
+                WalletWithdrawal::STATUS_CANCELLED => 'ลูกค้ายกเลิกคำขอถอนเงิน',
+                default => 'ขอถอนเงินจากกระเป๋า',
+            }) . ' ' . $amount,
+            body: implode("\n", $lines),
+            facts: ['ยอดถอน' => $amount, 'เลขที่' => (string) $withdrawal->withdrawal_id, 'สถานะ' => $withdrawal->statusLabel()],
+            url: self::adminUrl('admin.wallets.withdrawals.show', $withdrawal->id),
+            urlLabel: 'เปิดคำขอถอนเงิน',
+            category: 'orders',
         );
     }
 

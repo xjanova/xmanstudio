@@ -27,6 +27,27 @@ class KycVerification extends Model
     /** สถานะที่ผู้ใช้ยังไม่เคยส่งอะไรเข้ามา — เก็บบน users เท่านั้น ไม่มีแถวที่นี่ */
     public const USER_STATUS_NOT_SUBMITTED = 'not_submitted';
 
+    /**
+     * ธนาคารที่รับเป็นบัญชีรับเงิน — ใช้ทั้งฟอร์ม KYC และคำขอถอนเงินจากกระเป๋า
+     *
+     * @var array<string, string>
+     */
+    public const BANKS = [
+        'KBANK' => 'กสิกรไทย',
+        'SCB' => 'ไทยพาณิชย์',
+        'BBL' => 'กรุงเทพ',
+        'KTB' => 'กรุงไทย',
+        'BAY' => 'กรุงศรีอยุธยา',
+        'TTB' => 'ทหารไทยธนชาต',
+        'GSB' => 'ออมสิน',
+        'BAAC' => 'ธ.ก.ส.',
+        'CIMB' => 'ซีไอเอ็มบี ไทย',
+        'UOB' => 'ยูโอบี',
+        'LHB' => 'แลนด์ แอนด์ เฮ้าส์',
+        'TISCO' => 'ทิสโก้',
+        'KKP' => 'เกียรตินาคินภัทร',
+    ];
+
     protected $fillable = [
         'user_id',
         'status',
@@ -96,6 +117,32 @@ class KycVerification extends Model
     public function canResubmit(): bool
     {
         return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_REJECTED], true);
+    }
+
+    /**
+     * บัญชีรับเงินที่ยืนยันชื่อไว้กับ KYC ที่อนุมัติแล้ว — null ถ้ายังไม่อนุมัติหรือไม่มีเลขบัญชี
+     *
+     * การถอนเงินจากกระเป๋าโอนเข้าบัญชีนี้เท่านั้น (หน้า KYC สัญญาไว้แบบนั้น): คนที่ได้ session
+     * ของเจ้าของบัญชีไปเปลี่ยนปลายทางเป็นบัญชีของตัวเองไม่ได้
+     *
+     * @return array{bank_code:string, bank_name:string, account_number:string, account_name:string}|null
+     */
+    public function payoutAccount(): ?array
+    {
+        $number = preg_replace('/\D/', '', (string) $this->bank_account_number) ?? '';
+
+        if (! $this->isApproved() || $number === '' || trim((string) $this->bank_account_name) === '') {
+            return null;
+        }
+
+        $code = (string) $this->bank_code;
+
+        return [
+            'bank_code' => $code,
+            'bank_name' => self::BANKS[$code] ?? $code,
+            'account_number' => $number,
+            'account_name' => trim((string) $this->bank_account_name),
+        ];
     }
 
     public function statusLabel(): string

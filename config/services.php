@@ -175,6 +175,12 @@ return [
         'unpaid_referral' => env('GPUXMINE_UNPAID_REFERRAL', 'owner'),
     ],
 
+    // กระเป๋าเงิน XMAN — ถอนเป็นเงินสด (R2-4): ยอดขั้นต่ำต่อคำขอ เป็นบาท
+    // หลังบ้าน (ตั้งค่า Wallet) ตั้งทับค่านี้ได้ ค่านี้ใช้เมื่อหลังบ้านยังไม่ได้ตั้ง
+    'wallet' => [
+        'withdraw_min_baht' => env('WALLET_WITHDRAW_MIN_BAHT', '100'),
+    ],
+
     'aixman' => [
         'api_base' => env('AIXMAN_API_BASE', 'https://ai.xman4289.com'),
 

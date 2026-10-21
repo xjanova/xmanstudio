@@ -93,6 +93,27 @@
                     </label>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 ml-8">ปิดระบบ Wallet ชั่วคราวเพื่อบำรุงรักษา</p>
                 </div>
+
+                {{-- ถอนเงินสด (R2-4) — ผู้ใช้ขอถอน ยอดถูกพัก แล้วรอแอดมินอนุมัติที่ การเงิน → คำขอถอนเงิน --}}
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        ยอดถอนขั้นต่ำต่อคำขอ <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">฿</span>
+                        <input type="number" name="wallet_withdraw_min_amount" value="{{ $settings['wallet_withdraw_min_amount'] }}" required min="1" max="1000000" step="0.01"
+                               class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ผู้ใช้ต้องยืนยันตัวตนแล้ว และขอได้ครั้งละหนึ่งคำขอ</p>
+                </div>
+                <div>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="wallet_withdraw_enabled" value="1" {{ $settings['wallet_withdraw_enabled'] ? 'checked' : '' }}
+                               class="w-5 h-5 rounded-lg border-gray-300 dark:border-gray-600 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">เปิดรับคำขอถอนเงิน</span>
+                    </label>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 ml-8">ปิดชั่วคราวได้ — คำขอที่ส่งไว้แล้วยังอนุมัติ/ไม่อนุมัติได้ และผู้ใช้ยังยกเลิกได้</p>
+                </div>
             </div>
         </div>
 

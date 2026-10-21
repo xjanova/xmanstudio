@@ -72,10 +72,19 @@
                             <span class="block mt-1 text-[11px] text-orange-700 dark:text-orange-300 max-w-[14rem] break-words">ติดตรวจเพราะ: {{ $row->review_reason }}</span>
                         @endif
                         @if ($row->status === 'void' && $row->void_reason)
-                            <span class="block mt-1 text-[11px] text-gray-500 dark:text-gray-400 max-w-[14rem] break-words">ยกเลิกเพราะ: {{ $row->void_reason }}</span>
+                            <span class="block mt-1 text-[11px] text-gray-500 dark:text-gray-400 max-w-[14rem] break-words">{{ $row->isReversed() ? 'เรียกคืนจากกระเป๋าเพราะ' : 'ยกเลิกเพราะ' }}: {{ $row->void_reason }}</span>
+                        @endif
+                        @if ($row->status === 'paid' && $row->affiliate_commission_id)
+                            <span class="block mt-1 text-[11px] text-gray-400">ส่วนแบ่งผู้แนะนำอยู่ในค่าแนะนำ #{{ $row->affiliate_commission_id }}</span>
+                        @endif
+                        @if ($row->referral_reversed_satang > 0)
+                            <span class="block mt-1 text-[11px] text-gray-500 dark:text-gray-400">ส่วนแบ่งผู้แนะนำ {{ $baht((int) $row->referral_reversed_satang) }} ถูกเอาออกจากค่าแนะนำ #{{ $row->affiliate_commission_id }}</span>
                         @endif
                         @if ($row->reviewed_at)
-                            <span class="block text-[11px] text-gray-400">โดย {{ $row->reviewer?->name ?? 'แอดมินที่ถูกลบ' }} · {{ $bkk($row->reviewed_at, 'd/m H:i') }}</span>
+                            <span class="block text-[11px] text-gray-400">{{ $row->isReversed() ? 'อนุมัติโดย' : 'โดย' }} {{ $row->reviewer?->name ?? 'แอดมินที่ถูกลบ' }} · {{ $bkk($row->reviewed_at, 'd/m H:i') }}</span>
+                        @endif
+                        @if ($row->isReversed())
+                            <span class="block text-[11px] text-gray-400">เรียกคืนโดย {{ $row->reverser?->name ?? 'แอดมินที่ถูกลบ' }} · {{ $bkk($row->reversed_at, 'd/m H:i') }}</span>
                         @endif
                     </td>
                     <td class="px-4 py-3">
