@@ -6,11 +6,9 @@ use App\Models\Order;
 use App\Models\RentalPayment;
 use App\Models\User;
 use App\Services\ImageService;
-use App\Support\Auth\TwoFactor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Throwable;
 
 /**
  * Customer payment slips. A transfer slip shows a name, a bank account and an amount, so it never
@@ -28,15 +26,12 @@ use Throwable;
 final class PaymentSlips
 {
     /** Where slips are kept: storage/app/private, outside the web root. */
-    public const DISK = 'local';
+    public const DISK = PrivateFiles::DISK;
 
     /** Where slips used to be kept, served at /storage/… — read as a fallback, never written. */
-    public const LEGACY_DISK = 'public';
+    public const LEGACY_DISK = PrivateFiles::LEGACY_DISK;
 
     public const DIRECTORY = 'payment-slips';
-
-    /** Shown in the browser. Anything else (an SVG from before uploads were raster-only) is only offered as a download. */
-    private const INLINE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
     /** The largest slip attached to an admin's Telegram card. */
     private const MAX_TELEGRAM_BYTES = 10 * 1024 * 1024;
@@ -79,54 +74,24 @@ final class PaymentSlips
             return true;
         }
 
-        return $user->isAdmin() && TwoFactor::passed(request(), $user);
+        return PrivateFiles::adminMayOpen($user);
     }
 
-    /**
-     * A stored value as a path inside payment-slips/, or null. Rows hold "payment-slips/…"; a value
-     * saved with the public address in front ("/storage/…", "https://host/storage/…") reads as the
-     * same path. Anything else is refused: another folder, "..", a hidden file, odd characters. The
-     * value comes from a row, and the private disk also holds files that no customer may read.
-     */
+    /** A stored value as a path inside payment-slips/, or null (App\Support\PrivateFiles::normalize). */
     public static function normalize(?string $stored): ?string
     {
-        if ($stored === null) {
-            return null;
-        }
-        $path = (string) preg_replace('~^https?://[^/]+~i', '', trim($stored));
-        $path = (string) preg_replace('~^/*(?:storage/)?~', '', $path);
-        $segment = '[A-Za-z0-9_-][A-Za-z0-9._-]*';
-
-        return preg_match('~^' . self::DIRECTORY . '(?:/' . $segment . ')+$~', $path) === 1 ? $path : null;
+        return PrivateFiles::normalize($stored, self::DIRECTORY);
     }
 
     /**
      * Where a slip's file is, as [disk, path]: the private disk first, then the public one for a slip
-     * that has not been moved yet. Null when there is no such file, or when the name resolves (through
-     * a link) to somewhere outside the slips folder.
+     * that has not been moved yet. Null when there is none (App\Support\PrivateFiles::locate).
      *
      * @return array{0: string, 1: string}|null
      */
     public static function locate(?string $stored): ?array
     {
-        $path = self::normalize($stored);
-        if ($path === null) {
-            return null;
-        }
-
-        foreach ([self::DISK, self::LEGACY_DISK] as $disk) {
-            try {
-                $root = realpath(Storage::disk($disk)->path(self::DIRECTORY));
-                $real = realpath(Storage::disk($disk)->path($path));
-            } catch (Throwable) {
-                continue;
-            }
-            if ($root !== false && $real !== false && str_starts_with($real, $root . DIRECTORY_SEPARATOR) && is_file($real)) {
-                return [$disk, $path];
-            }
-        }
-
-        return null;
+        return PrivateFiles::locate($stored, self::DIRECTORY);
     }
 
     /**
@@ -135,25 +100,7 @@ final class PaymentSlips
      */
     public static function response(?string $stored, string $name): ?StreamedResponse
     {
-        $file = self::locate($stored);
-        if ($file === null) {
-            return null;
-        }
-        [$disk, $path] = $file;
-        $storage = Storage::disk($disk);
-
-        $type = $storage->mimeType($path) ?: 'application/octet-stream';
-        $inline = in_array($type, self::INLINE_TYPES, true);
-        $name = trim((string) preg_replace('/[^A-Za-z0-9_-]+/', '-', $name), '-') ?: 'payment-slip';
-        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-
-        return $storage->response($path, $name . ($extension !== '' ? '.' . $extension : ''), [
-            'Content-Type' => $inline ? $type : 'application/octet-stream',
-            'Cache-Control' => 'private, no-store',
-            'X-Content-Type-Options' => 'nosniff',
-            // Opened on its own in a tab, nothing in the file may run as this site.
-            'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
-        ], $inline ? 'inline' : 'attachment');
+        return PrivateFiles::response($stored, self::DIRECTORY, $name);
     }
 
     /**

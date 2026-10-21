@@ -206,6 +206,19 @@
                                 <div>
                                     <h4 class="font-medium text-gray-900">{{ $progress->title }}</h4>
                                     <p class="text-sm text-gray-600 mt-1">{{ $progress->description }}</p>
+                                    @if(is_array($progress->attachments) && count($progress->attachments) > 0)
+                                        <div class="mt-2 flex flex-wrap gap-2">
+                                            @foreach($progress->attachments as $i => $attachment)
+                                                <a href="{{ route('attachments.project-progress', [$progress, $i]) }}" target="_blank" rel="noopener"
+                                                   class="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-xs text-gray-700 hover:bg-gray-200">
+                                                    <svg class="w-3.5 h-3.5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                                    </svg>
+                                                    {{ $attachment['name'] ?? 'ไฟล์แนบ ' . ($i + 1) }}
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                     <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
                                         <span>{{ $progress->type_label }}</span>
                                         @if($progress->feature)

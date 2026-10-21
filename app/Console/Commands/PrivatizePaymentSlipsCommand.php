@@ -2,15 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\MovesFilesOffThePublicDisk;
 use App\Support\PaymentSlips;
 use Illuminate\Console\Command;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Throwable;
 
 /**
  * Moves payment slips off the public disk — storage/app/public/payment-slips, which the web server
@@ -18,20 +16,17 @@ use Throwable;
  * pointing at them stay right. Rows that saved the public address ("/storage/payment-slips/…")
  * instead of the path are rewritten to the path.
  *
- * Safe to stop and to run again. Each file is copied under a temporary name and renamed into place,
- * and its public copy is deleted only after the private one reads back with the same SHA-256. When
- * the private disk already holds a different file under that name, both are left alone and
- * reported. Every file in the folder moves, slips no row points at any more included: they are
- * someone's bank details all the same.
+ * Safe to stop and to run again: a public file is deleted only after its private copy reads back
+ * with the same SHA-256 (Concerns\MovesFilesOffThePublicDisk). Every file in the folder moves, slips
+ * no row points at any more included: they are someone's bank details all the same.
  */
 class PrivatizePaymentSlipsCommand extends Command
 {
+    use MovesFilesOffThePublicDisk;
+
     protected $signature = 'payment-slips:privatize {--dry-run : Report what would change without touching anything}';
 
     protected $description = 'Move payment slips from the public disk to the private one, deleting each public file only after its copy is verified';
-
-    /** @var list<string> */
-    private array $problems = [];
 
     public function handle(): int
     {
@@ -65,74 +60,6 @@ class PrivatizePaymentSlipsCommand extends Command
         }
 
         return $this->problems === [] ? self::SUCCESS : self::FAILURE;
-    }
-
-    /** One public file to the private disk. False when it stays where it is. */
-    private function move(Filesystem $public, Filesystem $private, string $path, bool $dry): bool
-    {
-        $hash = $this->hash($public, $path);
-        if ($hash === null) {
-            return $this->problem("{$path}: the public file cannot be read; left where it is.");
-        }
-
-        if ($private->exists($path)) {
-            // Copied by an earlier run that stopped before deleting the public file — or a different
-            // file under the same name, which a person has to look at.
-            if ($this->hash($private, $path) !== $hash) {
-                return $this->problem("{$path}: the private disk holds a different file under this name; both left alone.");
-            }
-        } elseif (! $dry && ! $this->copy($public, $private, $path, $hash)) {
-            return $this->problem("{$path}: the private copy could not be written and verified; the public file is left where it is.");
-        }
-
-        if (! $dry && ! $public->delete($path)) {
-            return $this->problem("{$path}: copied and verified, but the public file could not be deleted; run again.");
-        }
-
-        return true;
-    }
-
-    /** Copy under a temporary name, rename into place, then read it back. Only this copy is removed on failure. */
-    private function copy(Filesystem $from, Filesystem $to, string $path, string $hash): bool
-    {
-        $temporary = $path . '.' . Str::lower(Str::random(8)) . '.part';
-        $stream = null;
-        $placed = false;
-        try {
-            $stream = $from->readStream($path);
-            if (is_resource($stream) && $to->writeStream($temporary, $stream)) {
-                $placed = $to->move($temporary, $path);
-                if ($placed && $this->hash($to, $path) === $hash) {
-                    return true;
-                }
-            }
-        } catch (Throwable) {
-            // Reported by the caller; the cleanup below runs either way.
-        } finally {
-            if (is_resource($stream)) {
-                fclose($stream);
-            }
-        }
-        $to->delete($placed ? [$temporary, $path] : [$temporary]);
-
-        return false;
-    }
-
-    private function hash(Filesystem $disk, string $path): ?string
-    {
-        try {
-            $stream = $disk->readStream($path);
-        } catch (Throwable) {
-            return null;
-        }
-        if (! is_resource($stream)) {
-            return null;
-        }
-        $context = hash_init('sha256');
-        hash_update_stream($context, $stream);
-        fclose($stream);
-
-        return hash_final($context);
     }
 
     /**
@@ -221,12 +148,5 @@ class PrivatizePaymentSlipsCommand extends Command
         }
 
         return (string) $value;
-    }
-
-    private function problem(string $message): false
-    {
-        $this->problems[] = $message;
-
-        return false;
     }
 }

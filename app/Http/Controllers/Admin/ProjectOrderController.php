@@ -10,6 +10,7 @@ use App\Models\ProjectTimeline;
 use App\Models\Quotation;
 use App\Models\User;
 use App\Services\QuotationAcceptance;
+use App\Support\Attachments;
 use Illuminate\Http\Request;
 
 class ProjectOrderController extends Controller
@@ -251,19 +252,13 @@ class ProjectOrderController extends Controller
             'is_public' => 'boolean',
             'notify_customer' => 'boolean',
             'attachments' => 'nullable|array',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt,mp4|max:10240', // 10MB max; no svg/html: they run script from the public disk
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt,mp4|max:10240', // 10MB max; no svg/html
         ]);
 
-        $attachments = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('project-attachments/' . $project->id, 'public');
-                $attachments[] = [
-                    'path' => $path,
-                    'name' => $file->getClientOriginalName(),
-                    'size' => $file->getSize(),
-                ];
-            }
+        // Kept off the web root, opened through AttachmentController (App\Support\Attachments)
+        $attachments = Attachments::store($request->file('attachments', []), Attachments::PROJECTS . '/' . $project->id);
+        if ($attachments === null) {
+            return back()->withInput()->with('error', 'บันทึกไฟล์แนบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         }
 
         $progress = $project->progress()->create([
