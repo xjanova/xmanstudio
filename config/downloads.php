@@ -37,9 +37,10 @@ return [
     | active version, and no button when it has nothing to download. A route
     | this site does not register is skipped the same way, never a 500 page.
     |
-    | Tping, SMS Checker and LocalVPN go to the APK itself: their /download
-    | pages are product pages, and SMS Checker's answers 404 while it is off
-    | sale — the APK stays open for the licences already sold.
+    | Tping and SMS Checker go to the APK itself: their /download pages are
+    | product pages, and SMS Checker's answers 404 while it is off sale — the
+    | APK stays open for the licences already sold. LocalVPN ships for Android
+    | and Windows, so its card goes to its download page (app_pages below).
     |
     | Not the same list as VersionController::PUBLIC_DOWNLOAD_ROUTES, which
     | holds only the routes an app's own updater can fetch an exact {version}
@@ -63,6 +64,22 @@ return [
         'tping' => 'tping.download.apk',
         'thaiprompt-pos' => 'thaiprompt-pos.download',
         'thaiprompt-pos-windows' => 'thaiprompt-pos-windows.download',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Apps with more than one installer, by product slug
+    |--------------------------------------------------------------------------
+    |
+    | The Download Center button of these goes to this page, which offers each
+    | platform's file, instead of the single file in app_routes: a Windows
+    | customer must not be handed the APK. app_routes still feeds the app
+    | catalogue API's download_url (ProductCatalogController), which an app
+    | fetches as a file.
+    |
+    */
+    'app_pages' => [
+        'localvpn' => 'localvpn.download',
     ],
 
     /*
