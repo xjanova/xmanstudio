@@ -198,7 +198,8 @@ class StripeSdkContractTest extends TestCase
         $this->assertSame('paid', $order->payment_status);
         $this->assertSame('processing', $order->status);
         $this->assertSame('pm_paid', $order->stripe_payment_method_id);
-        $this->assertSame(['amount_received' => 29900, 'payment_method_types' => ['card'], 'latest_charge' => 'ch_paid'], $order->stripe_metadata);
+        // assertEquals, not assertSame: a MySQL JSON column hands the keys back in its own order.
+        $this->assertEquals(['amount_received' => 29900, 'payment_method_types' => ['card'], 'latest_charge' => 'ch_paid'], $order->stripe_metadata);
         $paidAt = $order->paid_at;
 
         // Stripe retries deliveries; a second one changes nothing.
