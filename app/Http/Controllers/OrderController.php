@@ -21,6 +21,7 @@ use App\Services\StripeService;
 use App\Services\ThaiPaymentService;
 use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
+use App\Support\PaymentSlips;
 use App\Support\Satang;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -621,8 +622,13 @@ class OrderController extends Controller
             'payment_slip' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
-        // Store payment slip
-        $path = $request->file('payment_slip')->store('payment-slips', 'public');
+        // Kept off the web root; the order pages show it through PaymentSlipController
+        $path = PaymentSlips::store($request->file('payment_slip'));
+        if ($path === null) {
+            return redirect()
+                ->back()
+                ->with('error', 'บันทึกสลิปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
 
         $order->update([
             'payment_slip' => $path,

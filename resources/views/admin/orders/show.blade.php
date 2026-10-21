@@ -127,13 +127,13 @@
                 </table>
             </div>
 
-            <!-- Payment Slip -->
-            @if($order->payment_slip)
+            <!-- Payment Slip (cart orders keep it on the row, product checkouts in metadata) -->
+            @if(\App\Support\PaymentSlips::forOrder($order))
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">สลิปการโอนเงิน</h3>
                 <div class="flex justify-center">
-                    <a href="{{ asset('storage/' . $order->payment_slip) }}" target="_blank" class="block">
-                        <img src="{{ asset('storage/' . $order->payment_slip) }}" alt="Payment Slip" class="max-w-sm rounded-xl shadow-lg border">
+                    <a href="{{ route('payment-slips.order', $order) }}" target="_blank" rel="noopener" class="block">
+                        <img src="{{ route('payment-slips.order', $order) }}" alt="Payment Slip" class="max-w-sm rounded-xl shadow-lg border">
                     </a>
                 </div>
             </div>

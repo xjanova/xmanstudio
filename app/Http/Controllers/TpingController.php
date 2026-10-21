@@ -12,12 +12,12 @@ use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Models\Wallet;
 use App\Services\AffiliateCommissionService;
-use App\Services\ImageService;
 use App\Services\LicenseService;
 use App\Services\ThaiPaymentService;
 use App\Services\TpixPay\TpixCheckout;
 use App\Support\ComingSoonPurchase;
 use App\Support\LicensePlans;
+use App\Support\PaymentSlips;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -492,9 +492,11 @@ class TpingController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $slipPath = app(ImageService::class)->storeAsWebp(
-            $request->file('payment_slip'), 'payment-slips/tping',
-        );
+        // Kept off the web root, like every payment slip (App\Support\PaymentSlips)
+        $slipPath = PaymentSlips::storeAsWebp($request->file('payment_slip'), 'tping');
+        if ($slipPath === null) {
+            return back()->with('error', 'บันทึกสลิปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
 
         $metadata = json_decode($order->metadata ?? '{}', true);
         $metadata['payment_slip'] = $slipPath;

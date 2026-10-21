@@ -331,8 +331,19 @@ class GithubReleaseService
         // Extract version from tag name (remove 'v' prefix if present)
         $version = ltrim($release['tag_name'], 'v');
 
+        // repo ที่มีหลายผลิตภัณฑ์อ่าน release เดียวกัน (Thai Prompt POS: APK ของ Android กับ zip ของ Windows)
+        // ไฟล์แรกใน release ไม่ใช่ "ตัวสำรอง" แต่เป็นไฟล์ของอีกผลิตภัณฑ์ · CI แต่ละแพลตฟอร์มแนบไฟล์เข้า release
+        // ทีละตัว ช่วงที่ไฟล์ของเรายังไม่ขึ้นจึงห้ามเก็บเวอร์ชันนี้ — เก็บแล้ว read-through เห็น tag ตรงกันจะไม่ sync ซ้ำ
+        // แอปจะได้ไฟล์ของอีกแพลตฟอร์มค้างไว้ · โยนออกไปก่อนเขียน DB เวอร์ชันเดิมยังเปิดอยู่ รอบถัดไปลองใหม่เอง
+        $sharedRepo = $this->sharesRepository($githubSetting);
+
         // Find matching asset
-        $asset = $this->findMatchingAsset($release['assets'] ?? [], $githubSetting->asset_pattern);
+        $asset = $this->findMatchingAsset($release['assets'] ?? [], $githubSetting->asset_pattern, fallbackToFirst: ! $sharedRepo);
+
+        if ($asset === null && $sharedRepo) {
+            throw new \Exception("release {$release['tag_name']} ยังไม่มีไฟล์ที่ตรงกับ {$githubSetting->asset_pattern} "
+                . '— repo นี้มีไฟล์ของหลายผลิตภัณฑ์ จึงไม่หยิบไฟล์อื่นมาแทน (รอบถัดไปจะลองใหม่)');
+        }
 
         $data = [
             'product_id' => $product->id,
@@ -387,8 +398,10 @@ class GithubReleaseService
 
     /**
      * Find an asset matching the pattern
+     *
+     * @param  bool  $fallbackToFirst  ไม่มีไฟล์ไหนตรง pattern = เอาไฟล์แรก (ค่าเดิมของทุกผลิตภัณฑ์) · false = null
      */
-    protected function findMatchingAsset(array $assets, string $pattern): ?array
+    protected function findMatchingAsset(array $assets, string $pattern, bool $fallbackToFirst = true): ?array
     {
         if (empty($assets)) {
             return null;
@@ -404,7 +417,19 @@ class GithubReleaseService
         }
 
         // If no match, return first asset
-        return $assets[0] ?? null;
+        return $fallbackToFirst ? ($assets[0] ?? null) : null;
+    }
+
+    /**
+     * มีผลิตภัณฑ์อื่นอ่าน release จาก repo เดียวกันนี้ด้วยไหม — GitHub ไม่สนตัวพิมพ์เล็ก/ใหญ่ของชื่อ owner/repo
+     */
+    protected function sharesRepository(GithubSetting $githubSetting): bool
+    {
+        return GithubSetting::query()
+            ->when($githubSetting->exists, fn ($query) => $query->whereKeyNot($githubSetting->getKey()))
+            ->whereRaw('LOWER(github_owner) = ?', [strtolower((string) $githubSetting->github_owner)])
+            ->whereRaw('LOWER(github_repo) = ?', [strtolower((string) $githubSetting->github_repo)])
+            ->exists();
     }
 
     /**

@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AiprayAudioSample;
 use App\Models\AiprayTrainingJob;
+use App\Services\AiprayAudioStorage;
+use App\Services\AiprayDatasetReadiness;
+use App\Services\AiprayGpuTrainingRunner;
 use App\Services\AiprayMlServiceClient;
 use Illuminate\Http\Request;
 
@@ -40,7 +43,76 @@ class AiprayTrainingController extends Controller
             ];
         }
 
-        return view('admin.aipray.training.index', compact('jobs', 'mlHealth', 'stats'));
+        $gpu = $this->gpuPanel(app(AiprayGpuTrainingRunner::class));
+
+        return view('admin.aipray.training.index', compact('jobs', 'mlHealth', 'stats', 'gpu'));
+    }
+
+    private function gpuPanel(AiprayGpuTrainingRunner $runner): array
+    {
+        try {
+            $estimate = $runner->estimate('whisper-small', 5);
+        } catch (\Throwable $e) {
+            $estimate = null;
+        }
+
+        try {
+            $readiness = app(AiprayDatasetReadiness::class)->check();
+            $active = AiprayTrainingJob::gpuActive()->latest()->first();
+        } catch (\Throwable $e) {
+            // Usually the 2026_09_12 migrations haven't run yet. Keep the page
+            // up, with renting switched off, instead of a 500.
+            report($e);
+
+            return ['enabled' => false, 'missing' => [], 'estimate' => null, 'readiness' => null, 'active' => null, 'error' => true];
+        }
+
+        return [
+            'enabled' => $runner->enabled(),
+            'missing' => $runner->missingConfig(),
+            'estimate' => $estimate,
+            'readiness' => $readiness,
+            'active' => $active,
+            'error' => false,
+        ];
+    }
+
+    /** Queues a rented-GPU run; the scheduler rents on its next tick. */
+    public function gpuStart(Request $request, AiprayGpuTrainingRunner $runner)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'base_model' => 'required|in:whisper-tiny,whisper-base,whisper-small,whisper-medium',
+            'epochs' => 'required|integer|min:1|max:30',
+            'batch_size' => 'required|integer|min:1|max:64',
+            'learning_rate' => 'required|numeric|min:0.0000001|max:0.01',
+            'max_cost_usd' => 'required|numeric|min:1|max:200',
+            'confirm_cost' => 'accepted',
+            'trial' => 'nullable|boolean',
+        ]);
+
+        try {
+            $job = $runner->queue([
+                'name' => $validated['name'],
+                'base_model' => $validated['base_model'],
+                'epochs' => $validated['epochs'],
+                'batch_size' => $validated['batch_size'],
+                'learning_rate' => $validated['learning_rate'],
+                'optimizer' => 'adamw',
+                'train_split' => 90,
+            ], (float) $validated['max_cost_usd'], $request->boolean('trial'));
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', 'ยังเริ่มไม่ได้: ' . $e->getMessage());
+        }
+
+        return back()->with('success', "เข้าคิวงาน #{$job->id} แล้ว ระบบจะเช่าเครื่องภายใน 1 นาที");
+    }
+
+    public function gpuCancel(AiprayTrainingJob $job, AiprayGpuTrainingRunner $runner)
+    {
+        $runner->cancel($job);
+
+        return back()->with('success', 'สั่งยกเลิกแล้ว ระบบจะคืนเครื่องภายใน 1 นาที');
     }
 
     public function start(Request $request)
@@ -69,15 +141,19 @@ class AiprayTrainingController extends Controller
             'status' => 'pending',
         ]);
 
-        // Prepare samples for ML service
-        $samples = AiprayAudioSample::whereIn('status', ['labeled', 'verified'])
+        // Prepare samples for an ML service that shares this server's disk.
+        $storage = app(AiprayAudioStorage::class);
+        $samples = AiprayAudioSample::trainable()
             ->get()
+            // Keys are the ones ml-service's prepare_dataset_from_db() reads.
             ->map(fn ($s) => [
                 'chant_id' => $s->chant_id,
                 'line_index' => $s->line_index,
-                'audio_path' => storage_path("app/public/{$s->file_path}"),
-                'transcription' => $s->transcript ?? '',
+                'file_path' => $storage->absolutePath($s->file_path),
+                'transcript' => $s->transcript ?? '',
             ])
+            ->filter(fn ($s) => $s['file_path'] !== null)
+            ->values()
             ->toArray();
 
         $ml = new AiprayMlServiceClient;
