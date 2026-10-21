@@ -10,6 +10,7 @@ use App\Models\Wallet;
 use App\Models\WalletTopup;
 use App\Models\WalletTransaction;
 use App\Models\WalletWithdrawal;
+use App\Services\TpixPay\TpixCheckout;
 use App\Support\Alerts\BusinessAlerts;
 use App\Support\Satang;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -261,6 +262,9 @@ class WalletWithdrawalService
      * กระเป๋าที่ติดลบ (ปรับยอดด้วยมือ หรือรายการที่ตัดเงินซ้อนกัน) ไม่ให้เริ่ม — เงินที่พักไว้อาจ
      * ถูกใช้ไปแล้ว แอดมินต้องตรวจก่อน หรือปฏิเสธ
      *
+     * กระเป๋าที่ถูกระงับ หรือบัญชีที่ถูกปิดหลังส่งคำขอ ก็ไม่ให้เริ่ม — การระงับคือการหยุดเงินของบัญชีนั้น
+     * (มักเพราะสงสัยทุจริต) คำขอที่ค้างอยู่ต้องไม่ถูกโอนออกไปเงียบ ๆ เปิดคืนก่อนถ้าจะจ่าย หรือกดไม่อนุมัติ
+     *
      * @throws WithdrawalRefused
      */
     public function startTransfer(WalletWithdrawal $withdrawal, User $admin): WalletWithdrawal
@@ -271,6 +275,13 @@ class WalletWithdrawalService
 
         DB::transaction(function () use ($withdrawal, $admin) {
             $wallet = $withdrawal->wallet_id ? Wallet::whereKey($withdrawal->wallet_id)->lockForUpdate()->first() : null;
+
+            if ($wallet !== null && ! $wallet->is_active) {
+                throw new WithdrawalRefused('กระเป๋าของผู้ใช้ถูกระงับ — เปิดกระเป๋าคืนก่อนถ้าจะโอน หรือกดไม่อนุมัติ (ยอดที่พักคืนเข้ากระเป๋า)');
+            }
+            if ($withdrawal->user_id !== null && User::whereKey($withdrawal->user_id)->first()?->is_active === false) {
+                throw new WithdrawalRefused('บัญชีผู้ใช้ถูกปิดการใช้งาน — เปิดบัญชีคืนก่อนถ้าจะโอน หรือกดไม่อนุมัติ (ยอดที่พักคืนเข้ากระเป๋า)');
+            }
 
             if ($wallet !== null && ($balance = $this->ledger->balanceSatang($wallet->id)) < 0) {
                 throw new WithdrawalRefused('กระเป๋าของผู้ใช้ติดลบ ' . Satang::format($balance)
@@ -540,7 +551,10 @@ class WalletWithdrawalService
      * earned = รายได้ GPUxMINE + ค่าแนะนำ GPUxMINE − ที่ถูกเรียกคืน; over_earned = ยอดที่ถอนแล้ว/รอถอน
      * (รวมคำขอนี้) ที่เกินจาก earned
      *
-     * @return array{balance:int, active:bool, deposits:int, topup_bonus:int, bonus:int, earnings:int, referrals:int, reversed:int, earned:int, withdrawn:int, over_earned:int, last_topup:?WalletTopup, recent_topup:bool}|null
+     * tpix = ส่วนของเงินเติมที่มาจากเหรียญ TPIX (เติมเงินด้วย TPIX หรือเหรียญที่โอนมาเกิน/มาช้าแล้วระบบเติม
+     * มูลค่าเข้ากระเป๋า) — ถอนเป็นเงินบาทได้ แอดมินจึงต้องเห็นว่ากำลังแลกเหรียญเป็นเงินสด
+     *
+     * @return array{balance:int, active:bool, deposits:int, tpix:int, topup_bonus:int, bonus:int, earnings:int, referrals:int, reversed:int, earned:int, withdrawn:int, over_earned:int, last_topup:?WalletTopup, recent_topup:bool}|null
      */
     public function fundsFor(WalletWithdrawal $withdrawal): ?array
     {
@@ -568,6 +582,7 @@ class WalletWithdrawalService
             'balance' => Satang::fromBaht((string) $wallet->balance),
             'active' => (bool) $wallet->is_active,
             'deposits' => $sum(fn ($q) => $completed($q)->where('type', WalletTransaction::TYPE_DEPOSIT)),
+            'tpix' => $sum(fn ($q) => $completed($q)->where('type', WalletTransaction::TYPE_DEPOSIT)->where('payment_method', TpixCheckout::METHOD)),
             'topup_bonus' => Satang::fromBaht((string) ((clone $topups)->sum('bonus_amount') ?? '0')),
             'bonus' => $sum(fn ($q) => $completed($q)->whereIn('type', [WalletTransaction::TYPE_BONUS, WalletTransaction::TYPE_CASHBACK])),
             'earnings' => $earnings,

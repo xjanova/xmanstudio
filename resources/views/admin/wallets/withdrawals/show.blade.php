@@ -98,7 +98,7 @@
                 <div><dt class="text-xs text-gray-500">รายได้ GPUxMINE</dt><dd class="tabular-nums text-gray-900 dark:text-white">{{ $fmt($funds['earnings']) }}</dd></div>
                 <div><dt class="text-xs text-gray-500">ค่าแนะนำ GPUxMINE</dt><dd class="tabular-nums text-gray-900 dark:text-white">{{ $fmt($funds['referrals']) }}</dd></div>
                 <div><dt class="text-xs text-gray-500">ถูกเรียกคืน</dt><dd class="tabular-nums text-gray-900 dark:text-white">{{ $fmt($funds['reversed']) }}</dd></div>
-                <div><dt class="text-xs text-gray-500">เติมเงิน (รวมโบนัสเติมเงิน {{ $fmt($funds['topup_bonus']) }})</dt><dd class="tabular-nums text-gray-900 dark:text-white">{{ $fmt($funds['deposits']) }}</dd></div>
+                <div><dt class="text-xs text-gray-500">เติมเงิน (รวมโบนัสเติมเงิน {{ $fmt($funds['topup_bonus']) }}{{ $funds['tpix'] > 0 ? ' · จากเหรียญ TPIX ' . $fmt($funds['tpix']) : '' }})</dt><dd class="tabular-nums text-gray-900 dark:text-white">{{ $fmt($funds['deposits']) }}</dd></div>
                 <div><dt class="text-xs text-gray-500">โบนัส / เงินคืน / ค่าแนะนำสินค้าอื่น</dt><dd class="tabular-nums text-gray-900 dark:text-white">{{ $fmt($funds['bonus']) }}</dd></div>
                 <div><dt class="text-xs text-gray-500">ถอนแล้วและรอถอน (รวมคำขอนี้)</dt><dd class="tabular-nums text-gray-900 dark:text-white">{{ $fmt($funds['withdrawn']) }}</dd></div>
                 <div><dt class="text-xs text-gray-500">เติมเงินล่าสุด</dt><dd class="text-gray-900 dark:text-white">{{ $funds['last_topup'] ? $bkk($funds['last_topup']->approved_at) . ' · ' . $funds['last_topup']->payment_method : '—' }}</dd></div>
@@ -110,6 +110,11 @@
                 <p class="text-xs rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 px-3 py-2">
                     ยอดถอนรวม {{ $fmt($funds['withdrawn']) }} เกินรายได้และค่าแนะนำ GPUxMINE สุทธิ {{ $fmt(max(0, $funds['earned'])) }} อยู่ {{ $fmt($funds['over_earned']) }} —
                     ส่วนเกินมาจากเงินเติม โบนัส หรือเงินคืน ตรวจที่มาก่อนโอน
+                </p>
+            @endif
+            @if ($funds['tpix'] > 0)
+                <p class="text-xs rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 px-3 py-2">
+                    กระเป๋านี้มีเงิน {{ $fmt($funds['tpix']) }} ที่มาจากเหรียญ TPIX — การโอนคำขอนี้อาจเป็นการแลกเหรียญเป็นเงินบาท ตรวจที่มาก่อนโอน
                 </p>
             @endif
             @if ($funds['recent_topup'])

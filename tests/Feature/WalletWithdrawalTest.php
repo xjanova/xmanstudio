@@ -15,6 +15,8 @@ use App\Services\WalletLedger;
 use App\Services\WalletWithdrawalService;
 use App\Support\AdminAlerts;
 use App\Support\Alerts\BusinessAlerts;
+use App\Support\Auth\Totp;
+use App\Support\Auth\TwoFactor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\UploadedFile;
@@ -518,6 +520,31 @@ class WalletWithdrawalTest extends TestCase
         $this->assertSame(0, WalletTransaction::where('type', 'refund')->count());
     }
 
+    public function test_a_reject_from_a_page_loaded_before_the_user_cancelled_returns_nothing_twice(): void
+    {
+        $this->ask('300')->assertSessionHas('success');
+        $service = app(WalletWithdrawalService::class);
+
+        // แอดมินเปิดหน้าคำขอไว้ตอนยังรอ (สำเนาในหน่วยความจำยังเป็น pending) …
+        $adminCopy = WalletWithdrawal::sole();
+        // … ผู้ใช้ยกเลิกไปก่อน — ยอดที่พักคืนครั้งหนึ่งแล้ว
+        $service->cancel($this->user, WalletWithdrawal::sole());
+        $this->assertSame('500.00', $this->balance());
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $adminCopy->status, 'the admin copy is stale');
+
+        // ปฏิเสธจากสำเนาเก่า: ด่านสถานะใน UPDATE เท่านั้นที่กันได้ — ต้องปฏิเสธเป็นข้อความ ไม่ใช่คืนซ้ำหรือ 500
+        try {
+            $service->reject($adminCopy, $this->admin, 'เอกสารไม่ครบ ไม่อนุมัติ');
+            $this->fail('rejecting a cancelled request must be refused');
+        } catch (WithdrawalRefused $e) {
+            $this->assertStringContainsString('ยกเลิกแล้ว', $e->getMessage());
+        }
+
+        $this->assertSame(WalletWithdrawal::STATUS_CANCELLED, WalletWithdrawal::sole()->status);
+        $this->assertSame('500.00', $this->balance());
+        $this->assertSame(1, WalletTransaction::where('type', 'refund')->count());
+    }
+
     public function test_a_cancel_before_the_transfer_starts_stops_the_admin(): void
     {
         $this->ask('300')->assertSessionHas('success');
@@ -626,6 +653,34 @@ class WalletWithdrawalTest extends TestCase
         $this->actingAs($this->admin)->get("/admin/wallets/withdrawals/{$w->id}")->assertOk()->assertSee('กระเป๋าติดลบ');
     }
 
+    public function test_a_wallet_frozen_or_an_account_closed_after_the_request_cannot_be_started(): void
+    {
+        $this->ask('200')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+
+        // แอดมินระงับกระเป๋า (สงสัยทุจริต) หลังผู้ใช้ส่งคำขอ — คำขอที่ค้างต้องไม่ถูกโอนออกไป
+        Wallet::where('user_id', $this->user->id)->update(['is_active' => false]);
+        $this->start($w)->assertSessionHas('error', fn ($m) => str_contains($m, 'กระเป๋าของผู้ใช้ถูกระงับ'));
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->fresh()->status);
+
+        Wallet::where('user_id', $this->user->id)->update(['is_active' => true]);
+        $this->user->forceFill(['is_active' => false])->save();
+        $this->start($w)->assertSessionHas('error', fn ($m) => str_contains($m, 'บัญชีผู้ใช้ถูกปิดการใช้งาน'));
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->fresh()->status);
+
+        // ไม่อนุมัติได้เสมอ — ยอดที่พักคืนเข้ากระเป๋า
+        $this->actingAs($this->admin)->post("/admin/wallets/withdrawals/{$w->id}/reject", ['reason' => 'บัญชีถูกปิดระหว่างตรวจสอบ'])
+            ->assertSessionHas('success');
+        $this->assertSame('500.00', $this->balance());
+
+        // เปิดคืนแล้วขอใหม่ เริ่มโอนได้ตามปกติ
+        $this->user->forceFill(['is_active' => true])->save();
+        $this->ask('150')->assertSessionHas('success');
+        $again = WalletWithdrawal::where('status', WalletWithdrawal::STATUS_PENDING)->sole();
+        $this->start($again)->assertSessionHas('success');
+        $this->assertSame(WalletWithdrawal::STATUS_PROCESSING, $again->fresh()->status);
+    }
+
     public function test_a_stale_form_does_not_report_a_request_that_is_not_there(): void
     {
         $key = (string) Str::uuid();
@@ -669,23 +724,50 @@ class WalletWithdrawalTest extends TestCase
             'payment_method' => 'stripe',
             'status' => 'pending',
         ])->approve($this->admin->id);
-        $this->assertSame('950.00', $this->balance());
+        // เหรียญ TPIX ที่โอนมาหลังรายการปิดแล้ว ระบบเติมมูลค่าเป็นเงินบาทเข้ากระเป๋า (TpixPaymentService)
+        Wallet::where('user_id', $this->user->id)->first()->deposit(50.00, 'เงินจากการชำระ TPIX #TPX1', 'tpix', 'TPX1');
+        $this->assertSame('1000.00', $this->balance());
 
         $this->ask('400')->assertSessionHas('success');
         $w = $this->onlyRequest();
 
         $funds = app(WalletWithdrawalService::class)->fundsFor($w);
-        $this->assertSame(55000, $funds['balance']);
+        $this->assertSame(60000, $funds['balance']);
         $this->assertSame(12000, $funds['earnings']);
-        $this->assertSame(33000, $funds['deposits']);
+        $this->assertSame(38000, $funds['deposits']);
+        $this->assertSame(5000, $funds['tpix']);
         $this->assertSame(3000, $funds['topup_bonus']);
         $this->assertSame(40000, $funds['withdrawn']);
         $this->assertSame(28000, $funds['over_earned']);
         $this->assertTrue($funds['recent_topup']);
 
         $this->actingAs($this->admin)->get("/admin/wallets/withdrawals/{$w->id}")->assertOk()
-            ->assertSee('กระเป๋าและที่มาของเงิน')->assertSee('฿550.00')->assertSee('฿120.00')
-            ->assertSee('เกินรายได้และค่าแนะนำ GPUxMINE สุทธิ')->assertSee('chargeback');
+            ->assertSee('กระเป๋าและที่มาของเงิน')->assertSee('฿600.00')->assertSee('฿120.00')
+            ->assertSee('เกินรายได้และค่าแนะนำ GPUxMINE สุทธิ')->assertSee('chargeback')
+            ->assertSee('จากเหรียญ TPIX ฿50.00')->assertSee('แลกเหรียญเป็นเงินบาท');
+    }
+
+    public function test_money_routes_sit_behind_the_admin_two_factor_gate(): void
+    {
+        config(['security.two_factor.required_for_admins' => true]);
+        $this->ask('200')->assertSessionHas('success');
+        $w = $this->onlyRequest();
+
+        // แอดมินที่ยังไม่เปิด 2FA ถูกส่งไปตั้งค่าก่อน — ไม่มีอะไรเปลี่ยน
+        $this->start($w)->assertRedirect(route('admin.security.two-factor.show'));
+        $this->actingAs($this->admin)->post("/admin/wallets/withdrawals/{$w->id}/reject", ['reason' => 'ไม่ผ่านการตรวจสอบเอกสาร'])
+            ->assertRedirect(route('admin.security.two-factor.show'));
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->fresh()->status);
+        $this->assertSame('300.00', $this->balance());
+
+        // เปิด 2FA แล้วแต่ session นี้ยังไม่ได้กรอกรหัส — ถูกส่งไปหน้ากรอกรหัส ยังไม่มีอะไรเปลี่ยน
+        $this->admin->forceFill([
+            'two_factor_secret' => Totp::generateSecret(),
+            'two_factor_recovery_codes' => TwoFactor::newRecoveryCodes()[1],
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+        $this->start($w)->assertRedirect(route('two-factor.challenge'));
+        $this->assertSame(WalletWithdrawal::STATUS_PENDING, $w->fresh()->status);
     }
 
     public function test_the_admin_queue_is_for_admins_only(): void
