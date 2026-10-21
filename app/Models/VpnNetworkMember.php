@@ -18,6 +18,7 @@ class VpnNetworkMember extends Model
         'public_port',
         'vpn_gateway_country',
         'vpn_gateway_hostname',
+        'p2p_key',
         'is_online',
         'last_heartbeat_at',
         'joined_at',
@@ -68,13 +69,14 @@ class VpnNetworkMember extends Model
     /**
      * Update heartbeat timestamp and optional connection info.
      */
-    public function updateHeartbeat(?string $publicIp = null, ?int $publicPort = null, ?string $vpnGatewayCountry = null, ?string $vpnGatewayHostname = null): void
+    public function updateHeartbeat(?string $publicIp = null, ?int $publicPort = null, ?string $vpnGatewayCountry = null, ?string $vpnGatewayHostname = null, ?string $p2pKey = null): void
     {
         $data = [
             'is_online' => true,
             'last_heartbeat_at' => now(),
             'vpn_gateway_country' => $vpnGatewayCountry, // null clears VPN gateway status
             'vpn_gateway_hostname' => $vpnGatewayCountry ? $vpnGatewayHostname : null,
+            'p2p_key' => $p2pKey, // null = this app can't encrypt P2P traffic
         ];
 
         if ($publicIp !== null) {
