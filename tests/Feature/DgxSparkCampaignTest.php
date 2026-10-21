@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\ThaiPaymentService;
 use App\Services\ThemeService;
 use App\Support\DgxSparkCampaign;
+use App\Support\PaymentSlips;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -461,7 +462,8 @@ class DgxSparkCampaignTest extends TestCase
 
     public function test_a_late_slip_is_taken_while_a_set_is_free(): void
     {
-        Storage::fake('public');
+        Storage::fake(PaymentSlips::DISK);
+        Storage::fake(PaymentSlips::LEGACY_DISK);
         $buyer = User::factory()->create();
         $order = $this->reservation(buyer: $buyer, createdHoursAgo: 50);
 
@@ -471,11 +473,16 @@ class DgxSparkCampaignTest extends TestCase
 
         $this->assertSame('verifying', $order->fresh()->payment_status);
         $this->assertSame(1, DgxSparkCampaign::availability()['reserved']);
+
+        // A buyer's bank details: kept on the private disk, never under the web root
+        $this->assertStringStartsWith('payment-slips/', $order->fresh()->payment_slip);
+        Storage::disk(PaymentSlips::DISK)->assertExists($order->fresh()->payment_slip);
+        $this->assertSame([], Storage::disk(PaymentSlips::LEGACY_DISK)->allFiles());
     }
 
     public function test_a_late_slip_is_refused_once_the_sets_went_to_others(): void
     {
-        Storage::fake('public');
+        Storage::fake(PaymentSlips::DISK);
         $buyer = User::factory()->create();
         $order = $this->reservation(buyer: $buyer, createdHoursAgo: 50);
         for ($i = 0; $i < 20; $i++) {
@@ -489,11 +496,12 @@ class DgxSparkCampaignTest extends TestCase
         $this->assertSame('expired', $order->fresh()->payment_status);
         $this->assertSame('cancelled', $order->fresh()->status);
         $this->assertNull($order->fresh()->payment_slip);
+        $this->assertSame([], Storage::disk(PaymentSlips::DISK)->allFiles());
     }
 
     public function test_nobody_can_put_a_slip_on_someone_elses_order(): void
     {
-        Storage::fake('public');
+        Storage::fake(PaymentSlips::DISK);
         $order = $this->reservation();
 
         $this->actingAs(User::factory()->create())
@@ -501,6 +509,7 @@ class DgxSparkCampaignTest extends TestCase
             ->assertForbidden();
 
         $this->assertSame('pending', $order->fresh()->payment_status);
+        $this->assertSame([], Storage::disk(PaymentSlips::DISK)->allFiles());
     }
 
     // ── the cart is not a way around any of this ─────────────────────
@@ -630,7 +639,9 @@ class DgxSparkCampaignTest extends TestCase
         $this->actingAs($admin)->get(route('admin.campaigns.dgx-spark'))
             ->assertOk()
             ->assertSee('#' . $order->order_number)
-            ->assertSee('storage/payment-slips/dgx-slip.jpg', false)
+            // The slip opens through the signed-in, owner-or-admin route — never a /storage/ address
+            ->assertSee(route('payment-slips.order', $order), false)
+            ->assertDontSee('storage/payment-slips', false)
             ->assertSee('อนุมัติการชำระเงิน')
             ->assertSee('แคมเปญ DGX Spark · ออเดอร์');
         $this->assertSame(1, DgxSparkCampaign::needsActionCount());
