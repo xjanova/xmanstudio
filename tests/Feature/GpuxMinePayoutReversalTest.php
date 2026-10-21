@@ -468,6 +468,25 @@ class GpuxMinePayoutReversalTest extends TestCase
         $this->assertSame('0.00', $this->balance($referrer));
     }
 
+    public function test_rejecting_a_waiting_commission_after_a_cut_moves_the_pending_total_by_what_is_left(): void
+    {
+        $referrer = User::factory()->create();
+        [$a, , $commission] = $this->twoJobsOneCommission($referrer, referrerWalletOpen: false);
+
+        // หน้าค่าแนะนำของแอดมินโหลดรายการไว้ตอนยัง ฿1.00 ...
+        $stale = AffiliateCommission::findOrFail($commission->id);
+        $this->assertSame('1.00', $stale->commission_amount);
+
+        // ... แล้วอีกแท็บเรียกคืนงานหนึ่ง: ค่าแนะนำเหลือ ฿0.60 และยอดรอจ่ายของ affiliate ถอยไป ฿0.40 แล้ว
+        $this->reverseWithReferral($a)->assertSessionHas('success');
+        $this->assertSame('0.60', Affiliate::where('user_id', $referrer->id)->value('total_pending'));
+
+        // ปฏิเสธจากสำเนาเก่า — ถอยเฉพาะ ฿0.60 ที่เหลือ ไม่ใช่ ฿1.00 (ไม่งั้นยอดรอจ่ายติดลบ ฿0.40)
+        $this->assertTrue($stale->reject('ไม่จ่ายค่าแนะนำรายการนี้'));
+        $this->assertSame('rejected', $commission->fresh()->status);
+        $this->assertSame('0.00', Affiliate::where('user_id', $referrer->id)->value('total_pending'));
+    }
+
     public function test_when_every_job_of_a_waiting_commission_is_reversed_it_is_rejected_and_never_paid(): void
     {
         $referrer = User::factory()->create();

@@ -198,7 +198,11 @@ class AffiliateCommission extends Model
                 return false;
             }
 
-            $this->affiliate->decrement('total_pending', $this->commission_amount);
+            // The amount as stored now, not this copy's: a GPUxMINE commission still waiting can be cut
+            // by a reversed job's share (GpuxMinePayoutReversalService) after the admin's page loaded
+            // it, and total_pending has already moved by that cut. The row is ours under the claim.
+            $amount = (string) static::whereKey($this->id)->value('commission_amount');
+            $this->affiliate->decrement('total_pending', $amount);
 
             return true;
         });
