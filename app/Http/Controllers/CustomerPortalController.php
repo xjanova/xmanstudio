@@ -314,6 +314,12 @@ class CustomerPortalController extends Controller
             ->filter()
             ->unique('id');
 
+        // มี Anti X = เห็นแอปมือถือ (ฟรี) ในศูนย์ดาวน์โหลดด้วย — คีย์ฟรีของแอปผูกกับมือถือ ไม่ใช่กับบัญชี จึงไม่มาทางไลเซนส์
+        if ($licensedProducts->contains('slug', 'anti-x') && ! $licensedProducts->contains('slug', 'anti-x-mobile')
+            && ($mobile = Product::where('slug', 'anti-x-mobile')->where('is_active', true)->first())) {
+            $licensedProducts->push($mobile);
+        }
+
         // Get products from active rentals (if rental includes software)
         $rentalProducts = UserRental::where('user_id', $user->id)
             ->where('status', UserRental::STATUS_ACTIVE)

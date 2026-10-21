@@ -103,8 +103,10 @@ class CustomerDownloadCenterTest extends TestCase
         foreach (self::appDownloads() as $name => [$slug, $path]) {
             $this->assertSame(1, substr_count($section, 'href="' . url($path) . '"'), $name);
         }
-        // ปุ่มโหลดการ์ดละหนึ่ง + คู่มือของ AutoTradeX · การ์ดที่ไม่มีอะไรให้โหลดไม่มีลิงก์เลย
-        $this->assertSame(count(self::appDownloads()) + 1, substr_count($section, '<a '));
+        // ปุ่มโหลดการ์ดละหนึ่ง + คู่มือของ AutoTradeX + การ์ดแอปมือถือ Anti X (ฟรี มากับ Anti X, 2026-10-21)
+        // · การ์ดที่ไม่มีอะไรให้โหลดไม่มีลิงก์เลย
+        $this->assertSame(1, substr_count($section, 'href="' . url('/anti-x-mobile/download') . '"'));
+        $this->assertSame(count(self::appDownloads()) + 2, substr_count($section, '<a '));
         $this->assertStringNotContainsString('<button', $section);
     }
 

@@ -55,7 +55,19 @@
                 @endif
 
                 <!-- Download Section -->
-                @if($product->requires_license)
+                @if(! empty($freeDownloadUrl))
+                    {{-- ฟรีทุกคน ไม่ต้องล็อกอิน ไม่ต้องซื้อ · ไฟล์มาจากเว็บนี้เอง ไม่ใช่ GitHub --}}
+                    <div class="text-center">
+                        <a href="{{ $freeDownloadUrl }}" data-free-download
+                           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            ดาวน์โหลดฟรี
+                        </a>
+                        <p class="text-green-400 text-sm mt-2">ฟรีสำหรับทุกคน — ไลเซนส์ฟรีออกให้อัตโนมัติเมื่อเปิดแอปครั้งแรก</p>
+                    </div>
+                @elseif($product->requires_license)
                     @auth
                         @if($hasValidLicense)
                             <!-- Has valid license - show download button -->
@@ -134,8 +146,39 @@
             </div>
         </div>
 
+        @if(! empty($companion))
+            {{-- แอปมือถือคู่กับ Anti X: ฟรี โหลดจากเว็บนี้ --}}
+            <div class="mt-8 bg-gray-800/50 rounded-2xl border border-emerald-500/40 overflow-hidden backdrop-blur-sm" id="mobile" data-mobile-companion>
+                <div class="p-6 flex flex-col sm:flex-row sm:items-center gap-5">
+                    <div class="w-14 h-14 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-white">{{ $companion['product']->name }} <span class="text-emerald-400 text-sm font-medium">· ฟรี · Android</span></h3>
+                        <p class="text-gray-400 text-sm mt-1">ดูภาพรวม บล็อก/ปลดบล็อก และรับแจ้งเตือนจากเครื่องนี้บนมือถือ — จับคู่ด้วย QR ในแอป Anti X</p>
+                        @if($companion['version'])
+                            <p class="text-gray-500 text-xs mt-1">เวอร์ชัน {{ $companion['version']->version }}@if($companion['version']->file_size) · {{ $companion['version']->file_size_formatted }}@endif · .apk · Android 8 ขึ้นไป</p>
+                        @endif
+                    </div>
+                    @if($companion['url'])
+                        <a href="{{ $companion['url'] }}" data-mobile-download
+                           class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/20">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            ดาวน์โหลดแอปมือถือ
+                        </a>
+                    @else
+                        <span class="px-5 py-3 rounded-xl border border-gray-600 text-gray-400 text-sm">เร็วๆ นี้</span>
+                    @endif
+                </div>
+            </div>
+        @endif
+
         <!-- License Key Download Section -->
-        @if($product->requires_license)
+        @if($product->requires_license && empty($freeDownloadUrl))
             <div class="mt-8 bg-gray-800/50 rounded-2xl border border-gray-700 p-6 backdrop-blur-sm">
                 <h3 class="text-lg font-semibold text-white mb-4">ดาวน์โหลดด้วย License Key</h3>
                 <p class="text-gray-400 text-sm mb-4">หากคุณมี License Key อยู่แล้ว สามารถใช้ดาวน์โหลดได้โดยตรง:</p>

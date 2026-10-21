@@ -132,6 +132,12 @@ class DownloadController extends Controller
     /**
      * Download page (with license check form)
      */
+    /**
+     * Apps anyone may download — no sign-in, no purchase (Anti X Mobile, owner 2026-10-21: "โหลดได้ทุกคน แม้แต่คนที่ไม่ได้ซื้อ").
+     * Their page offers this site's own public download route (config/downloads.php → app_routes).
+     */
+    public const FREE_FOR_EVERYONE = ['anti-x-mobile'];
+
     public function downloadPage(Request $request, string $slug, ?string $version = null)
     {
         $product = Product::where('slug', $slug)->first();
@@ -155,6 +161,18 @@ class DownloadController extends Controller
 
         if (! $productVersion) {
             abort(404, 'Version not found');
+        }
+
+        if (in_array($product->slug, self::FREE_FOR_EVERYONE, true)) {
+            $route = config('downloads.app_routes', [])[$product->slug] ?? null;
+
+            return view('downloads.show', [
+                'product' => $product,
+                'productVersion' => $productVersion,
+                'hasValidLicense' => true,
+                'freeDownloadUrl' => $route ? route($route, $productVersion->version) : null,
+                'companion' => null,
+            ]);
         }
 
         $user = auth()->user();
@@ -193,7 +211,30 @@ class DownloadController extends Controller
             $hasValidLicense = (bool) $license;
         }
 
-        return view('downloads.show', compact('product', 'productVersion', 'hasValidLicense'));
+        // ซื้อ Anti X แล้วต้องเห็นแอปมือถือ (ฟรี) ในหน้าเดียวกัน
+        $companion = $product->slug === 'anti-x' ? $this->mobileCompanion() : null;
+
+        return view('downloads.show', compact('product', 'productVersion', 'hasValidLicense', 'companion'));
+    }
+
+    /**
+     * The phone app shown under Anti X: its latest version and this site's download link, "เร็วๆ นี้" while it is coming
+     * soon, nothing when it has no release yet.
+     *
+     * @return array{product: Product, version: ?ProductVersion, url: ?string}|null
+     */
+    private function mobileCompanion(): ?array
+    {
+        $app = Product::where('slug', 'anti-x-mobile')->where('is_active', true)->first();
+        if (! $app) {
+            return null;
+        }
+        if ($app->isComingSoon()) {
+            return ['product' => $app, 'version' => null, 'url' => null];
+        }
+        $latest = $app->latestVersion();
+
+        return $latest ? ['product' => $app, 'version' => $latest, 'url' => route('anti-x-mobile.download', $latest->version)] : null;
     }
 
     /**
