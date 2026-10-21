@@ -217,6 +217,9 @@
                                         </div>
                                     </div>
                                 </label>
+
+                                {{-- TPIX coin (only while it can be paid) --}}
+                                @include('partials.tpix-checkout-option', ['thb' => $planInfo['price']])
                             </div>
                         </div>
 

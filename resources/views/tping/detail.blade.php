@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('tping'); @endphp
 
 @section('title', 'Tping - ช่วยพิมพ์ สำหรับผู้ที่ใช้นิ้วไม่สะดวก')
 @section('meta_description', 'Tping แอพช่วยพิมพ์บน Android ออโต้กรอกฟอร์ม บันทึก Workflow พิมพ์แทนคุณในทุกแอพ เหมาะสำหรับผู้ที่ใช้นิ้วไม่สะดวก งาน Data Entry กรอกฟอร์มซ้ำๆ')
@@ -42,11 +44,15 @@
 
                 {{-- CTA Buttons --}}
                 <div class="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+                    @if($csDownload)
+                        <span class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('tping.download') }}"
                        class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         ดาวน์โหลด ทดลองฟรี 24 ชม.
                     </a>
+                    @endif
                     <a href="{{ route('tping.pricing') }}"
                        class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
@@ -249,6 +255,7 @@
                     <div class="text-4xl font-black text-white mb-1">
                         <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['monthly']['price']) }}
                     </div>
+                    <x-tpix-price variant="detail" :thb="$pricing['monthly']['price'] ?? null" class="-mt-1 mb-2" />
                     <p class="text-gray-500 text-sm mb-6">{{ $pricing['monthly']['duration_days'] }} วัน</p>
                     <ul class="space-y-2 mb-8 text-sm text-left">
                         @foreach($pricing['monthly']['features'] as $feature)
@@ -272,6 +279,7 @@
                     <div class="text-4xl font-black text-violet-400 mb-1">
                         <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['yearly']['price']) }}
                     </div>
+                    <x-tpix-price variant="detail" :thb="$pricing['yearly']['price'] ?? null" class="-mt-1 mb-2" />
                     <p class="text-gray-500 text-sm mb-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
                     <span class="inline-block text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full mb-6">ประหยัด {{ \App\Support\LicensePlans::yearlySaving('tping') }}%</span>
                     <ul class="space-y-2 mb-8 text-sm text-left">
@@ -293,6 +301,7 @@
                     <div class="text-4xl font-black text-emerald-400 mb-1">
                         <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['lifetime']['price']) }}
                     </div>
+                    <x-tpix-price variant="detail" :thb="$pricing['lifetime']['price'] ?? null" class="-mt-1 mb-2" />
                     <p class="text-yellow-400 text-sm mb-6">ไม่มีวันหมดอายุ</p>
                     <ul class="space-y-2 mb-8 text-sm text-left">
                         @foreach($pricing['lifetime']['features'] as $feature)
@@ -398,11 +407,15 @@
                 <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">พร้อมใช้ Tping แล้วหรือยัง?</h2>
                 <p class="text-gray-300 mb-8 max-w-xl mx-auto">ดาวน์โหลดฟรี ทดลองใช้ 24 ชั่วโมง ไม่ต้องผูกบัตร ไม่ต้อง Root เครื่อง</p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    @if($csDownload)
+                        <span class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('tping.download') }}"
                        class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         ดาวน์โหลดแอพ
                     </a>
+                    @endif
                     <a href="{{ route('tping.pricing') }}"
                        class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
                         ดูราคาแพ็กเกจ

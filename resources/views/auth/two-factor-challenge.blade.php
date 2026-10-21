@@ -21,6 +21,16 @@
             <x-input-error :messages="$errors->get('code')" class="mt-2" />
         </div>
 
+        @if($trustDays > 0)
+            <label for="remember_device" class="inline-flex items-start gap-2 mt-4">
+                <input id="remember_device" type="checkbox" name="remember_device" value="1"
+                       class="mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                <span class="text-sm text-gray-600">
+                    <x-bi th="จดจำเครื่องนี้ {{ $trustDays }} วัน — ไม่ต้องกรอกรหัสอีกบนเบราว์เซอร์นี้ (อย่าติ๊กบนเครื่องสาธารณะ)" en="Remember this device for {{ $trustDays }} days — no code on this browser (don't tick on a shared computer)" />
+                </span>
+            </label>
+        @endif
+
         <div class="flex items-center justify-between mt-4">
             <button type="submit" form="two-factor-logout" class="text-sm text-gray-600 underline hover:text-gray-900">
                 <x-bi th="ออกจากระบบ" en="Log out" />

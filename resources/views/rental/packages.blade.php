@@ -62,6 +62,7 @@
                                 <span class="text-4xl font-extrabold text-gray-900">฿{{ number_format($package->price) }}</span>
                                 <span class="ml-2 text-gray-500">/ {{ $package->duration_text }}</span>
                             </div>
+                            <x-tpix-price variant="detail" :thb="$package->price" />
                         </div>
 
                         <!-- Features -->

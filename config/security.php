@@ -128,11 +128,14 @@ return [
     | Locked out? From the server: php artisan security:2fa-reset {email}
     | ADMIN_2FA_REQUIRED=false stops asking admins who have not enrolled; an
     | account that has enrolled is always asked.
+    | "Remember this device" at the second step skips it on that browser for
+    | trust_days (0 hides the option). The password is still asked as usual.
     |
     */
 
     'two_factor' => [
         'required_for_admins' => (bool) env('ADMIN_2FA_REQUIRED', true),
         'issuer' => env('TWO_FACTOR_ISSUER', 'XMAN Studio'),
+        'trust_days' => (int) env('TWO_FACTOR_TRUST_DAYS', 30),
     ],
 ];

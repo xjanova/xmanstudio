@@ -14,9 +14,14 @@ return new class extends Migration
      * แอปบน Windows ต้องได้ขนาดและ sha256 ของตัวติดตั้งไปตรวจไฟล์ก่อนรัน ไม่ใช่ของ APK
      *
      * null = sync ไว้ก่อนมีคอลัมน์นี้ — read-through ครั้งถัดไปเห็นว่ารายการไฟล์ไม่ตรงแล้ว sync ซ้ำให้เอง
+     * JSON ไม่มีค่า default (MySQL strict ไม่ยอมให้ JSON มี default) · nullable = แถวเดิมทุกแถวได้ null
      */
     public function up(): void
     {
+        if (Schema::hasColumn('product_versions', 'assets')) {
+            return;
+        }
+
         Schema::table('product_versions', function (Blueprint $table) {
             $table->json('assets')->nullable()->after('sha256');
         });
@@ -24,6 +29,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasColumn('product_versions', 'assets')) {
+            return;
+        }
+
         Schema::table('product_versions', function (Blueprint $table) {
             $table->dropColumn('assets');
         });

@@ -181,6 +181,7 @@
                                     </span>
                                 @endif
                             </div>
+                            <x-tpix-price variant="detail" :thb="$product->price" :tpix="$product->price_tpix" class="mt-2" />
                         @endif
                     </div>
 
@@ -505,7 +506,7 @@
     <section class="relative py-20 bg-gray-900/50" id="download">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-4xl font-bold text-white mb-4">ดาวน์โหลด {{ $product->name }}</h2>
-            <p class="text-gray-400 mb-12 max-w-2xl mx-auto">ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นปกป้องซอฟต์แวร์ของคุณ</p>
+            <p class="text-gray-400 mb-12 max-w-2xl mx-auto">{{ $product->isComingSoon() ? 'ผลิตภัณฑ์นี้ยังเป็น Coming Soon — เปิดให้ดาวน์โหลดเมื่อเปิดตัว' : 'ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นปกป้องซอฟต์แวร์ของคุณ' }}</p>
 
             <div class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-3xl p-10 border border-gray-700/50 max-w-2xl mx-auto backdrop-blur-sm">
                 <div class="flex items-center justify-between mb-8">
@@ -526,6 +527,9 @@
                     </div>
                 @endif
 
+                @if($product->isComingSoon())
+                    <x-coming-soon-download :product="$product" />
+                @else
                 <a href="{{ route('download.page', ['slug' => $product->slug, 'version' => $latestVersion->version]) }}"
                    class="inline-flex items-center px-10 py-5 bg-gradient-to-r from-red-600 via-orange-600 to-red-600 hover:from-red-700 hover:via-orange-700 hover:to-red-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-red-500/25 group">
                     <svg class="w-6 h-6 mr-3 transform group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -533,6 +537,7 @@
                     </svg>
                     ดาวน์โหลดตอนนี้
                 </a>
+                @endif
             </div>
 
             <p class="text-gray-500 text-sm mt-6">
@@ -660,8 +665,8 @@
                         <a href="{{ route('products.show', $related->slug) }}"
                            class="group bg-gray-800/50 rounded-2xl overflow-hidden border border-gray-700/50 hover:border-red-500/50 transition-all hover:transform hover:-translate-y-2 backdrop-blur-sm">
                             <div class="aspect-video bg-gray-700 overflow-hidden">
-                                @if($related->image)
-                                    <img src="{{ Storage::url($related->image) }}" alt="{{ $related->name }}"
+                                @if($related->artwork_url)
+                                    <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}"
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-500/20 to-orange-500/20">
@@ -678,6 +683,7 @@
                                 @endif
                                 @if(!$related->is_custom)
                                     <p class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 font-bold text-lg">฿{{ number_format($related->price, 0) }}</p>
+                                    <x-tpix-price :thb="$related->price" :tpix="$related->price_tpix" />
                                 @else
                                     <p class="text-gray-400">สอบถามราคา</p>
                                 @endif

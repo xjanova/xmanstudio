@@ -272,6 +272,8 @@
                     @enderror
                 </div>
 
+                @include('admin.products.partials.tpix-price-field', ['value' => null, 'thb' => null])
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">จำนวนในสต็อก</label>
                     <input type="number" name="stock" value="{{ old('stock', 0) }}" min="0"

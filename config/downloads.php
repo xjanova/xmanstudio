@@ -48,11 +48,13 @@ return [
     */
     'app_routes' => [
         'anti-x' => 'anti-x.download',
+        'anti-x-mobile' => 'anti-x-mobile.download',
         'autotradex' => 'autotradex.download',
         'brainx' => 'brainx.download',
         'chanthra-studio' => 'chanthra-studio.download',
         'cluadex-ai-coding-assistant' => 'cluadex.download',
         'gpuxmine' => 'gpuxmine.download',
+        'macdock' => 'macdock.download',
         'winx-tools' => 'winx-tools.download',
         'aipray' => 'aipray.download',
         'giggok' => 'giggok.download',
@@ -77,11 +79,13 @@ return [
     */
     'app_platforms' => [
         'anti-x' => 'Windows',
+        'anti-x-mobile' => 'Android',
         'autotradex' => 'Windows',
         'brainx' => 'Windows',
         'chanthra-studio' => 'Windows',
         'cluadex-ai-coding-assistant' => 'Windows',
         'gpuxmine' => 'Windows',
+        'macdock' => 'Windows',
         'winx-tools' => 'Windows',
         'aipray' => 'Android',
         'giggok' => 'Android',

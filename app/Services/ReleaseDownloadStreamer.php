@@ -55,10 +55,16 @@ class ReleaseDownloadStreamer
      *
      * @param  ?string  $fallbackName  ชื่อไฟล์เมื่อไม่รู้ชื่อจริง (เวอร์ชันสร้างมือที่มีแค่ลิงก์ API) — นามสกุลกำหนด Content-Type
      *
-     * @throws DownloadUnavailableException ไม่มีไฟล์ / ดึงไม่ได้ / ช่องส่งเต็ม
+     * @throws DownloadUnavailableException ไม่มีไฟล์ / ดึงไม่ได้ / ช่องส่งเต็ม / สินค้ายังเป็น Coming Soon
      */
     public function respond(Request $request, ProductVersion $version, ?GithubSetting $setting, ?string $fallbackName = null): Response
     {
+        // Coming Soon = ไม่มีไฟล์ให้ใคร ไม่ว่าจะมาจากปุ่ม ลิงก์ API หรือตัวอัปเดตในแอป (กฎเจ้าของ 2026-10-12)
+        // ด่านสุดท้ายที่ทุกทางผ่าน — controller แต่ละตัวกันไว้ก่อนแล้ว ที่นี่กันทางที่ลืม
+        if ($version->product?->isComingSoon()) {
+            throw DownloadUnavailableException::comingSoon();
+        }
+
         $sources = $this->sources($version, $setting);
 
         if ($sources === []) {
@@ -72,20 +78,66 @@ class ReleaseDownloadStreamer
         }
 
         $filename = $this->filename($version, $sources, $fallbackName);
+        $size = (int) $version->file_size;
+        $etag = $this->etag($version);
 
         if ($request->isMethod('HEAD')) {
-            return response('', 200, $this->headers($filename, $version->file_size));
+            return response('', 200, $this->headers($filename, $version->file_size, $size > 0, $etag));
+        }
+
+        $range = $this->requestedRange($request, $size, $etag);
+
+        if ($range === false) {
+            // Nothing of the file starts there — the client's partial copy is not of this file, or is complete
+            return response('', 416, [
+                'Content-Range' => "bytes */{$size}",
+                'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'no-store, private',
+            ]);
         }
 
         $context = ['product_id' => $version->product_id, 'version' => $version->version];
         $slot = $this->takeSlot();
 
         try {
-            $upstream = $this->open($sources, $context);
+            $upstream = $this->open($sources, $context, $range);
+
+            $partial = $upstream->status() === 206;
+
+            if ($range !== null && ! ($partial ? $this->rangeMatches($upstream, $range, $size) : $this->contentLength($upstream) === $size)) {
+                // GitHub's file is not the size the database recorded: a resumed piece would be glued onto a
+                // different file. The whole file goes out instead — the client starts over and the sha256 decides.
+                Log::warning('download: the upstream file does not fit the recorded size, sending the whole file', $context + [
+                    'content_range' => $upstream->header('Content-Range'),
+                    'content_length' => $upstream->header('Content-Length'),
+                    'recorded' => $size,
+                ]);
+                $range = null;
+
+                if ($upstream->status() !== 200) {
+                    $upstream->toPsrResponse()->getBody()->close();
+                    $upstream = $this->open($sources, $context);
+                }
+            }
         } catch (\Throwable $e) {
             $slot?->release();
 
             throw $e;
+        }
+
+        if ($range !== null) {
+            [$start, $end] = $range;
+            $length = $end - $start + 1;
+            // GitHub answered 200 to the Range: the bytes before the range are read and dropped here, so the
+            // client still gets only what it is missing over its own (slow, breaking) line
+            $skip = $upstream->status() === 206 ? 0 : $start;
+            $body = $upstream->toPsrResponse()->getBody();
+
+            return new StreamedResponse(
+                fn () => $this->pipe($body, $slot, $length, $context, $skip),
+                206,
+                $this->headers($filename, $length, true, $etag) + ['Content-Range' => "bytes {$start}-{$end}/{$size}"],
+            );
         }
 
         $length = $this->contentLength($upstream);
@@ -102,12 +154,70 @@ class ReleaseDownloadStreamer
         }
 
         $body = $upstream->toPsrResponse()->getBody();
+        // A Range that was ignored (several ranges, a stale If-Range, nonsense) keeps "none": Apache's own
+        // byterange filter would otherwise cut this 200 itself
+        $ranges = $size > 0 && ! $request->headers->has('Range');
 
         return new StreamedResponse(
             fn () => $this->pipe($body, $slot, $length, $context),
             200,
-            $this->headers($filename, $length),
+            $this->headers($filename, $length, $ranges, $etag),
         );
+    }
+
+    /**
+     * The one byte range the client asked for: null = send the whole file, false = 416
+     *
+     * Only "bytes=N-", "bytes=N-M" and "bytes=-S" — anything else, several ranges, or an If-Range that is not
+     * this file's ETag is ignored and the whole file goes out (RFC 9110 §14.2 lets a server ignore Range).
+     * A file whose size is unknown cannot say where a range ends, so it never resumes.
+     *
+     * @return array{0: int, 1: int}|false|null
+     */
+    private function requestedRange(Request $request, int $size, ?string $etag): array|false|null
+    {
+        $header = $request->headers->get('Range');
+
+        if ($header === null || $size <= 0
+            || preg_match('/^\s*bytes\s*=\s*(\d*)\s*-\s*(\d*)\s*$/i', $header, $m) !== 1
+            || ($m[1] === '' && $m[2] === '')) {
+            return null;
+        }
+
+        $ifRange = $request->headers->get('If-Range');
+
+        if ($ifRange !== null && ($etag === null || trim($ifRange) !== $etag)) {
+            return null;
+        }
+
+        if ($m[1] === '') {
+            // the last S bytes
+            $suffix = (int) $m[2];
+
+            return $suffix > 0 ? [max(0, $size - $suffix), $size - 1] : false;
+        }
+
+        $start = (int) $m[1];
+
+        if ($m[2] !== '' && (int) $m[2] < $start) {
+            return null;
+        }
+
+        return $start < $size ? [$start, $m[2] === '' ? $size - 1 : min((int) $m[2], $size - 1)] : false;
+    }
+
+    /** GitHub's 206 covers exactly the asked bytes of a file of the recorded size */
+    private function rangeMatches(ClientResponse $upstream, array $range, int $size): bool
+    {
+        return trim((string) $upstream->header('Content-Range')) === "bytes {$range[0]}-{$range[1]}/{$size}";
+    }
+
+    /** The release's sha256 is its identity: the same bytes always, another file never */
+    private function etag(ProductVersion $version): ?string
+    {
+        $sha = strtolower((string) $version->sha256);
+
+        return preg_match('/^[0-9a-f]{64}$/', $sha) === 1 ? '"' . $sha . '"' : null;
     }
 
     /**
@@ -271,16 +381,17 @@ class ReleaseDownloadStreamer
      *
      * @param  list<array{url: string, token: ?string, via: string}>  $sources
      * @param  array<string, mixed>  $about  what the logs say the file is
+     * @param  ?array{0: int, 1: int}  $range  asked of GitHub too
      *
      * @throws DownloadUnavailableException ทุกทางล้มเหลว
      */
-    private function open(array $sources, array $about): ClientResponse
+    private function open(array $sources, array $about, ?array $range = null): ClientResponse
     {
         foreach ($sources as $source) {
             $context = $about + ['via' => $source['via']];
 
             try {
-                $response = $this->request($source['url'], $source['token']);
+                $response = $this->request($source['url'], $source['token'], $range);
             } catch (\Throwable $e) {
                 // ข้อความของ HTTP client อาจมีลิงก์ที่ GitHub เซ็นไว้ — ตัด query string ออกก่อนลง log
                 Log::warning('download: ต่อไฟล์ต้นทางไม่ได้', $context + [
@@ -293,7 +404,8 @@ class ReleaseDownloadStreamer
             // หน้าเว็บที่ตอบ 200 (หน้า error/login) ไม่ใช่ไฟล์ — ห้ามส่งต่อให้ลูกค้าเหมือนเป็นตัวติดตั้ง
             $isPage = str_starts_with(strtolower((string) $response->header('Content-Type')), 'text/html');
 
-            if ($response->status() === 200 && ! $isPage) {
+            // with a range: 206, 200 (it ignored the range) or 416 (its file is shorter than recorded) — respond() decides
+            if (($response->status() === 200 || ($range !== null && in_array($response->status(), [206, 416], true))) && ! $isPage) {
                 return $response;
             }
 
@@ -308,12 +420,17 @@ class ReleaseDownloadStreamer
         throw DownloadUnavailableException::unreachable();
     }
 
-    private function request(string $url, ?string $token): ClientResponse
+    private function request(string $url, ?string $token, ?array $range = null): ClientResponse
     {
         $headers = [
             'Accept' => 'application/octet-stream',
             'User-Agent' => 'XMAN-Studio-Download',
         ];
+
+        if ($range !== null) {
+            // Guzzle keeps it across the API → CDN redirect (it drops only Authorization and cookies)
+            $headers['Range'] = "bytes={$range[0]}-{$range[1]}";
+        }
 
         if ($token) {
             $headers['Authorization'] = 'Bearer ' . $token;
@@ -352,8 +469,10 @@ class ReleaseDownloadStreamer
 
     /**
      * ส่งเนื้อไฟล์ต่อให้ลูกค้าทีละก้อน — รันใน callback ของ StreamedResponse หลังส่ง header ไปแล้ว
+     *
+     * @param  int  $skip  bytes read from upstream and dropped first (GitHub sent the whole file for a range)
      */
-    private function pipe(StreamInterface $body, ?Lock $slot, ?int $length, array $context): void
+    private function pipe(StreamInterface $body, ?Lock $slot, ?int $length, array $context, int $skip = 0): void
     {
         // ลูกค้าปิดหน้าต่างกลางทาง: ให้ลูปรู้ตัวแล้วเลิกเอง จะได้ปิดต้นทางและคืนช่อง (PHP ตัดจบเองจะข้าม finally)
         ignore_user_abort(true);
@@ -367,6 +486,28 @@ class ReleaseDownloadStreamer
         $emptyReads = 0;
 
         try {
+            while ($skip > 0 && ! $body->eof()) {
+                $chunk = $body->read(min(self::CHUNK_BYTES, $skip));
+
+                if ($chunk === '') {
+                    if ($body->getMetadata('timed_out') || ++$emptyReads > 3) {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                $emptyReads = 0;
+                $skip -= strlen($chunk);
+            }
+
+            if ($skip > 0) {
+                // ต้นทางขาดก่อนถึงจุดเริ่มของช่วง — ส่งต่อจากตรงนี้คือส่ง byte ผิดตำแหน่ง ไม่ส่งอะไรเลยดีกว่า
+                Log::warning('download: upstream ended before the requested range started', $context + ['missing' => $skip]);
+
+                return;
+            }
+
             while (! $body->eof()) {
                 $chunk = $body->read(self::CHUNK_BYTES);
 
@@ -444,7 +585,7 @@ class ReleaseDownloadStreamer
     /**
      * @return array<string, string>
      */
-    private function headers(string $filename, int|string|null $length): array
+    private function headers(string $filename, int|string|null $length, bool $ranges = false, ?string $etag = null): array
     {
         $fallback = (string) preg_replace('/[^A-Za-z0-9._-]+/', '_', Str::ascii($filename));
 
@@ -461,9 +602,14 @@ class ReleaseDownloadStreamer
             ),
             'Cache-Control' => 'no-store, private',
             'X-Content-Type-Options' => 'nosniff',
-            // ยังโหลดต่อจากที่ค้างไม่ได้ — บอกตรง ๆ ให้เริ่มใหม่ ดีกว่าส่ง Range มาแล้วได้ไฟล์ทั้งก้อนต่อท้าย
-            'Accept-Ranges' => 'none',
+            // bytes: a broken download resumes with Range (respond() — a ProductVersion whose size is known)
+            // none: start over — better than sending Range and getting the whole file appended
+            'Accept-Ranges' => $ranges ? 'bytes' : 'none',
         ];
+
+        if ($etag !== null) {
+            $headers['ETag'] = $etag;
+        }
 
         if ((int) $length > 0) {
             $headers['Content-Length'] = (string) (int) $length;

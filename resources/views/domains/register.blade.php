@@ -90,6 +90,7 @@
                         <x-bi th="ราคาปีแรก" en="First year" />
                     </p>
                     <p class="text-3xl font-bold">{{ $priceDisplay }}</p>
+                    <x-tpix-price variant="plain" :thb="$price" class="block text-sm text-amber-300" />
                     <p class="text-sm text-indigo-200/70"><x-bi th="สำหรับ 1 ปี" en="for 1 year" /></p>
                 </div>
             </div>
@@ -277,6 +278,7 @@
                     <div>
                         <p class="text-sm text-slate-500 dark:text-slate-400"><x-bi th="ยอดชำระวันนี้ (ปีแรก)" en="Due today (first year)" /></p>
                         <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ $priceDisplay }}</p>
+                        <x-tpix-price :thb="$price" />
                         <p class="text-xs {{ $renewalIsDearer ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">
                             <x-bi th="ปีต่อไป" en="Following years" /> {{ $renewDisplay }}/<x-bi th="ปี" en="yr" />
                         </p>

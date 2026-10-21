@@ -25,6 +25,7 @@
                 <div style="font-size:42px;font-weight:300;color:#fff;letter-spacing:-0.02em;">฿{{ number_format($package['price_thb']) }}</div>
                 <div style="font-size:14px;color:#94a3b8;">{{ $package['note'] }}</div>
             </div>
+            <div style="font-size:13px;color:#fbbf24;margin-top:6px;"><x-tpix-price variant="plain" :thb="$package['price_thb']" /></div>
 
             <div style="margin-top:24px;padding:14px;border-radius:12px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);">
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(226,232,240,0.85);margin-bottom:8px;">
@@ -100,6 +101,16 @@
                                 <div style="font-size:11px;color:#94a3b8;"><x-bi th="แนบสลิปยืนยัน" en="Attach payment slip" /></div>
                             </div>
                         </label>
+                        {{-- TPIX coin (only while it can be paid — TpixCheckout::available()) --}}
+                        @if(\App\Services\TpixPay\TpixCheckout::available())
+                        <label style="grid-column:1 / -1;cursor:pointer;padding:14px;border-radius:12px;background:rgba(2,6,23,0.4);border:1px solid rgba(251,191,36,0.35);display:flex;align-items:center;gap:10px;">
+                            <input type="radio" name="payment_method" value="tpix" {{ old('payment_method') === 'tpix' ? 'checked' : '' }} style="accent-color:hsl({{ $h }},70%,60%);">
+                            <div>
+                                <div style="font-size:13px;color:#fff;font-weight:500;">เหรียญ TPIX</div>
+                                <div style="font-size:11px;color:#fbbf24;"><x-tpix-price variant="plain" :thb="$package['price_thb']" /> · TPIX Chain · MetaMask</div>
+                            </div>
+                        </label>
+                        @endif
                     </div>
                 </div>
 

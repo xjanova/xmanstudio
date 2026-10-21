@@ -70,6 +70,7 @@
                                     </td>
                                     <td class="px-5 py-4 text-right font-semibold text-slate-900 dark:text-white whitespace-nowrap">
                                         {{ $t['register_display'] }}
+                                        <x-tpix-price variant="plain" :thb="$t['register'] ?? null" class="block text-xs font-normal text-amber-600 dark:text-amber-400" />
                                     </td>
                                     <td class="px-5 py-4 text-right whitespace-nowrap">
                                         <span class="{{ $t['dearer'] ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-slate-600 dark:text-slate-300' }}">

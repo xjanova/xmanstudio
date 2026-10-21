@@ -180,8 +180,8 @@
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                         <td class="px-6 py-4">
                             <div class="flex items-center">
-                                @if($product->image)
-                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}"
+                                @if($product->artwork_url)
+                                    <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}"
                                          class="w-12 h-12 rounded-xl object-cover mr-4 shadow-md">
                                 @else
                                     <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center mr-4 shadow-md">
@@ -196,6 +196,9 @@
                                     @if($product->sku)
                                         <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{{ $product->sku }}</code>
                                     @endif
+                                    @unless($product->hasRealImage())
+                                        <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" title="ยังไม่ได้อัปโหลดรูปจริง ทุกหน้าใช้รูปตั้งต้นจาก product.xman4289.com">รูปตั้งต้น</span>
+                                    @endunless
                                 </div>
                             </div>
                         </td>

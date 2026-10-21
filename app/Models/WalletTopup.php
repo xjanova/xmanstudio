@@ -67,6 +67,9 @@ class WalletTopup extends Model
 
     const METHOD_STRIPE = 'stripe';
 
+    /** Paid on TPIX Chain (App\Services\TpixPay) — approved by the chain check, not by hand */
+    const METHOD_TPIX = 'tpix';
+
     public function wallet()
     {
         return $this->belongsTo(Wallet::class);
@@ -236,6 +239,7 @@ class WalletTopup extends Model
             self::METHOD_TRUEMONEY => 'TrueMoney',
             self::METHOD_CREDIT_CARD => 'บัตรเครดิต',
             self::METHOD_STRIPE => 'Stripe',
+            self::METHOD_TPIX => 'เหรียญ TPIX',
             default => $this->payment_method,
         };
     }

@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductVersion;
 use App\Services\GithubReleaseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -260,6 +261,141 @@ class LocalVpnWindowsDownloadTest extends TestCase
 
         $this->get('/localvpn/download/windows', ['Accept' => '*/*'])->assertStatus(429);
         $this->get('/localvpn/download/apk', ['Accept' => '*/*'])->assertNotFound();
+    }
+
+    public function test_a_broken_installer_download_resumes_with_only_the_missing_bytes(): void
+    {
+        // ตัวอัปเดตบน Windows โหลดต่อจากที่ค้างด้วย Range + If-Range — ETag คือ sha256 ของตัวติดตั้ง ไม่ใช่ของ APK
+        $this->release('1.0.40');
+        $this->fakeGithub();
+        $size = strlen(self::EXE_BYTES);
+        $etag = '"' . hash('sha256', self::EXE_BYTES) . '"';
+
+        $response = $this->get('/localvpn/download/windows/1.0.40', ['Accept' => '*/*', 'Range' => 'bytes=10-', 'If-Range' => $etag]);
+
+        $response->assertStatus(206)
+            ->assertHeader('Content-Range', 'bytes 10-' . ($size - 1) . '/' . $size)
+            ->assertHeader('Content-Length', (string) ($size - 10))
+            ->assertHeader('ETag', $etag)
+            ->assertHeaderMissing('Location');
+        $this->assertSame(substr(self::EXE_BYTES, 10), $response->streamedContent());
+        $this->assertNoTraceOfGithub($response);
+        // โหลดต่อไม่ใช่การโหลดใหม่
+        $this->assertSame(0, DownloadLog::count());
+
+        // ชิ้นที่ค้างอยู่เป็นของ APK (ETag อื่น) — ห้ามต่อท้ายด้วย byte ของตัวติดตั้ง ส่งทั้งไฟล์ใหม่
+        $this->get('/localvpn/download/windows/1.0.40', ['Accept' => '*/*', 'Range' => 'bytes=10-', 'If-Range' => '"' . hash('sha256', self::APK_BYTES) . '"'])
+            ->assertOk()
+            ->assertHeaderMissing('Content-Range')
+            ->assertStreamedContent(self::EXE_BYTES);
+    }
+
+    public function test_when_github_cannot_be_reached_windows_is_answered_from_what_was_recorded(): void
+    {
+        // GitHub ล่ม/timeout ระหว่าง read-through — ไม่ใช่ 500 แต่ตอบจาก DB (ตัวติดตั้งที่บันทึกไว้)
+        $this->release('1.0.40');
+        Http::fake([
+            'api.github.com/*' => fn () => throw new ConnectionException('cURL error 28: Operation timed out'),
+            'github.com/*' => fn () => throw new ConnectionException('cURL error 28: Operation timed out'),
+        ]);
+
+        $this->getJson('/api/v1/product/localvpn/update/check?current_version=1.0.39&platform=windows')
+            ->assertOk()
+            ->assertJsonPath('has_update', true)
+            ->assertJsonPath('download_url', route('localvpn.download.windows', ['version' => '1.0.40']))
+            ->assertJsonPath('sha256', hash('sha256', self::EXE_BYTES));
+
+        // ดึงไฟล์ไม่ได้ — แอปได้ JSON ลองใหม่ได้ เบราว์เซอร์กลับหน้าโหลดพร้อมข้อความ ไม่มีลิงก์ GitHub หลุดออกไป
+        $this->get('/localvpn/download/windows/1.0.40', ['Accept' => '*/*'])
+            ->assertStatus(502)
+            ->assertJsonPath('success', false);
+
+        $this->get('/localvpn/download/windows/1.0.40')
+            ->assertRedirect(route('localvpn.download'))
+            ->assertSessionHas('error');
+
+        $this->assertSame(0, DownloadLog::count());
+    }
+
+    public function test_before_any_release_nothing_is_offered_to_windows(): void
+    {
+        // ยังไม่มีเวอร์ชันใน DB และ GitHub ยังไม่มี release
+        Http::fake(['api.github.com/*' => Http::response(['message' => 'Not Found'], 404)]);
+
+        $this->getJson('/api/v1/product/localvpn/update/check?current_version=1.0.0&platform=windows')
+            ->assertOk()
+            ->assertJsonPath('has_update', false)
+            ->assertJsonPath('download_url', '')
+            ->assertJsonPath('filename', null);
+
+        $this->get('/localvpn/download/windows', ['Accept' => '*/*'])
+            ->assertNotFound()
+            ->assertJsonPath('success', false);
+
+        $this->get('/localvpn/download')
+            ->assertOk()
+            ->assertDontSee('href="' . route('localvpn.download.windows') . '"', false)
+            ->assertDontSee('href="' . route('localvpn.download.apk') . '"', false)
+            ->assertSee('ยังไม่พร้อมดาวน์โหลด');
+    }
+
+    public function test_a_coming_soon_localvpn_offers_no_installer_anywhere(): void
+    {
+        // Coming Soon = ไม่มีไฟล์ให้ใคร ทั้งปุ่ม ลิงก์ตรง และตัวอัปเดตในแอป (กฎเจ้าของ 2026-10-12)
+        $this->release('1.0.40');
+        $this->localvpn()->update(['is_coming_soon' => true, 'coming_soon_until' => null]);
+
+        $this->getJson('/api/v1/product/localvpn/update/check?current_version=1.0.39&platform=windows')
+            ->assertOk()
+            ->assertJsonPath('has_update', false)
+            ->assertJsonPath('download_url', '');
+
+        $this->get('/localvpn/download/windows/1.0.40', ['Accept' => '*/*'])->assertForbidden();
+        $this->call('HEAD', '/localvpn/download/windows/1.0.40', [], [], [], ['HTTP_ACCEPT' => '*/*'])->assertForbidden();
+
+        $this->get('/localvpn/download')
+            ->assertOk()
+            ->assertDontSee('href="' . route('localvpn.download.windows') . '"', false)
+            ->assertSee('data-coming-soon', false);
+
+        $this->assertSame(0, DownloadLog::count());
+    }
+
+    // ── Apache (public_html/.htaccess) ────────────────────────────────
+
+    public function test_apache_keeps_the_length_of_the_installer_and_of_nothing_else(): void
+    {
+        // production gzip ทุก response และไม่เชื่อ Content-Length จาก PHP-FPM — ตัวอัปเดตบน Windows เทียบขนาดไฟล์
+        // กับ file_size ที่ update/check ประกาศ จึงต้องมีกฎ THE_REQUEST ที่ครอบ URL ของตัวติดตั้ง
+        $lines = file(base_path('public_html/.htaccess'), FILE_IGNORE_NEW_LINES);
+        $rules = collect($lines)
+            ->filter(fn ($line) => str_starts_with(trim($line), 'RewriteCond %{THE_REQUEST}'))
+            ->map(function ($line, $at) use ($lines) {
+                [, , $pattern, $flags] = preg_split('/\s+/', trim($line));
+                $this->assertSame('[NC]', $flags);
+                $this->assertSame('RewriteRule ^ - [E=no-gzip:1,E=dont-vary:1,E=ap_trust_cgilike_cl:1]', trim($lines[$at + 1]));
+
+                return $pattern;
+            });
+
+        $matches = fn (string $method, string $url) => $rules->contains(fn ($pattern) => preg_match(
+            '#' . str_replace('#', '\#', $pattern) . '#i',
+            $method . ' ' . parse_url($url, PHP_URL_PATH) . (parse_url($url, PHP_URL_QUERY) ? '?' . parse_url($url, PHP_URL_QUERY) : '') . ' HTTP/1.1'
+        ) === 1);
+
+        foreach ([
+            ['GET', route('localvpn.download.windows')],
+            ['GET', route('localvpn.download.windows', ['version' => '1.0.40'])],
+            ['HEAD', route('localvpn.download.windows', ['version' => '1.0.40'])],
+            ['GET', route('localvpn.download.windows', ['version' => '1.0.40', 'from' => 'app'])],
+            ['GET', route('localvpn.download.apk')],
+        ] as [$method, $url]) {
+            $this->assertTrue($matches($method, $url), "{$method} {$url} ต้องได้ Content-Length");
+        }
+
+        foreach (['/localvpn', '/localvpn/download', '/localvpn/download/windowsx', '/localvpn/install-guide', '/tping/download/windows', '/products/localvpn'] as $url) {
+            $this->assertFalse($matches('GET', $url), "GET {$url} ต้องไม่อยู่ในกฎนี้");
+        }
     }
 
     // ── /localvpn/download ────────────────────────────────────────────

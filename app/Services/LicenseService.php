@@ -6,10 +6,13 @@ use App\Mail\PaymentConfirmedMail;
 use App\Models\LicenseActivity;
 use App\Models\LicenseKey;
 use App\Models\LicenseRenewal;
+use App\Models\LicenseStorageAddon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentSetting;
 use App\Models\Product;
+use App\Support\CloudStorage;
+use App\Support\LicensePlans;
 use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -88,6 +91,13 @@ class LicenseService
             $generated = false;
 
             foreach ($order->items as $item) {
+                // A cloud space pack adds GB to a key the buyer holds — no key of its own
+                if ($item->product && ($forProduct = CloudStorage::productForAddon($item->product->slug))) {
+                    $generated = $this->deliverStorageAddon($order, $item, $forProduct) || $generated;
+
+                    continue;
+                }
+
                 if (! $item->product || ! $item->product->requires_license) {
                     continue;
                 }
@@ -138,7 +148,13 @@ class LicenseService
                 };
 
                 $toGenerate = $item->quantity - $existingCount;
-                $licenses = $this->generateLicenses($licenseType, $toGenerate, 1, $item->product_id);
+                // 1 device per key, unless the product sells more (config/licenses.php devices_per_key — LocalVPN: 2)
+                // An app checkout may sell more seats per key (Tping/SMS Checker lifetime: 3)
+                $devices = LicensePlans::devicesPerKey($item->product->slug);
+                if (isset($requirements['max_activations']) && is_int($requirements['max_activations'])) {
+                    $devices = max($devices, min(10, $requirements['max_activations']));
+                }
+                $licenses = $this->generateLicenses($licenseType, $toGenerate, $devices, $item->product_id);
 
                 foreach ($licenses as $license) {
                     LicenseKey::where('id', $license['id'])->update([
@@ -192,7 +208,9 @@ class LicenseService
             return false;
         }
 
-        if ($order->items->isEmpty() || $order->items->contains(fn ($item) => (bool) $item->product?->requires_license)) {
+        // A cloud space pack is delivered like a key (and mailed with it): not receipt-only
+        if ($order->items->isEmpty() || $order->items->contains(fn ($item) => $item->product?->requires_license
+            || CloudStorage::productForAddon($item->product?->slug) !== null)) {
             return false;
         }
 
@@ -392,6 +410,94 @@ class LicenseService
                         'units' => $units,
                         'previous_expiry' => $previousExpiry?->toISOString(),
                         'new_expiry' => $expiresAt->toISOString(),
+                    ]
+                );
+            });
+        } catch (UniqueConstraintViolationException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Deliver one order item of a cloud space pack: add pack × quantity GB to the key the
+     * customer picked on their license page. The space stays with the key for good (owner,
+     * 2026-10-19). Recorded first in license_storage_addons, whose unique order_item_id stops a
+     * payment confirmed twice from adding it twice.
+     *
+     * The key is checked again here — it must still be the buyer's, of the right product and
+     * not revoked. If it was revoked after the purchase, the space goes to the buyer's other key
+     * of the product that runs longest; with none at all nothing is added and the order is left
+     * for the admin, who sees the warning in the log.
+     *
+     * @return bool whether this call added anything
+     */
+    private function deliverStorageAddon(Order $order, OrderItem $item, string $forProduct): bool
+    {
+        if (LicenseStorageAddon::where('order_item_id', $item->id)->exists()) {
+            return false;
+        }
+
+        $requirements = $this->requirementsOf($item);
+        $packGb = CloudStorage::packOf($item->custom_requirements);
+
+        $keys = fn () => LicenseKey::query()
+            ->where('user_id', $order->user_id)
+            ->whereIn('status', [LicenseKey::STATUS_ACTIVE, LicenseKey::STATUS_EXPIRED])
+            ->whereHas('product', fn ($query) => $query->where('slug', $forProduct))
+            ->lockForUpdate();
+
+        $target = null;
+        if ($order->user_id && $packGb) {
+            $target = is_int($requirements['license_id'] ?? null)
+                ? $keys()->whereKey($requirements['license_id'])->first()
+                : null;
+            // Lifetime keys (no expiry) first, then the one running longest
+            $target ??= $keys()->orderByRaw('expires_at IS NULL DESC')->orderByDesc('expires_at')->orderByDesc('id')->first();
+        }
+
+        if (! $target) {
+            Log::warning('Cloud space pack paid but no key to add it to', [
+                'order_id' => $order->id,
+                'order_item_id' => $item->id,
+                'requirements' => $requirements,
+            ]);
+
+            return false;
+        }
+
+        $units = max(1, (int) $item->quantity);
+        $gbAdded = $packGb * $units;
+
+        try {
+            DB::transaction(function () use ($target, $order, $item, $packGb, $units, $gbAdded) {
+                $before = CloudStorage::totalGb($target);
+
+                LicenseStorageAddon::create([
+                    'license_key_id' => $target->id,
+                    'order_id' => $order->id,
+                    'order_item_id' => $item->id,
+                    'user_id' => $order->user_id,
+                    'pack_gb' => $packGb,
+                    'units' => $units,
+                    'gb_added' => $gbAdded,
+                ]);
+
+                LicenseActivity::log(
+                    $target,
+                    LicenseActivity::ACTION_STORAGE_CHANGED,
+                    LicenseActivity::ACTOR_SYSTEM,
+                    $order->user_id,
+                    null,
+                    "ซื้อพื้นที่คลาวด์เพิ่ม +{$gbAdded} GB จากคำสั่งซื้อ #{$order->order_number}",
+                    [
+                        'order_id' => $order->id,
+                        'pack_gb' => $packGb,
+                        'units' => $units,
+                        'gb_added' => $gbAdded,
+                        'previous_total_gb' => $before,
+                        'total_gb' => $before + $gbAdded,
                     ]
                 );
             });

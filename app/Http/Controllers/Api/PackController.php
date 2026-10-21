@@ -8,6 +8,7 @@ use App\Models\DownloadLog;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use App\Services\TpixPay\TpixPriceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -33,11 +34,17 @@ class PackController extends Controller
      */
     public function index(): JsonResponse
     {
+        $tpix = app(TpixPriceService::class);
+
         $packs = AvatarPack::active()
             ->with(['product.versions'])
             ->get()
             ->filter(fn (AvatarPack $p) => $p->product?->is_active)
-            ->map(fn (AvatarPack $p) => $p->toCatalogueArray())
+            // price_tpix (additive): the price in TPIX at the live TPIX DEX price, or the pack's fixed
+            // TPIX price; null while TPIX prices are off
+            ->map(fn (AvatarPack $p) => $p->toCatalogueArray() + [
+                'price_tpix' => $tpix->apiPrice($p->product?->price, $p->product?->price_tpix),
+            ])
             ->values();
 
         return response()->json(['packs' => $packs]);
@@ -87,6 +94,11 @@ class PackController extends Controller
 
         if (! $avatarPack || ! $avatarPack->product?->is_active) {
             return response()->json(['error' => 'Pack not found'], 404);
+        }
+
+        // Coming Soon: nothing to download yet, bought or not (owner, 2026-10-12)
+        if ($avatarPack->product->isComingSoon()) {
+            return response()->json(['error' => 'Coming soon: this pack is not available for download yet', 'coming_soon' => true], 403);
         }
 
         $free = (float) $avatarPack->product->price <= 0;
@@ -149,6 +161,8 @@ class PackController extends Controller
      */
     public function file(ProductVersion $version)
     {
+        abort_if((bool) $version->product?->isComingSoon(), 403, 'Coming soon');
+
         $disk = Storage::disk(config('packs.disk', 'local'));
 
         if (! $version->storage_path || ! $disk->exists($version->storage_path)) {

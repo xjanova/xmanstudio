@@ -18,8 +18,10 @@ use Illuminate\Support\Facades\Log;
  * which orders are part of it. Configuration lives in config/campaigns.php 'dgx_spark'; the three
  * numbers the owner changes when JIB moves its price are Settings edited at /admin/campaigns/dgx-spark.
  *
- * "Remaining" is counted from real orders, never set by hand:
- *   sold      — paid orders
+ * "Remaining" is counted from real orders, plus the one number the owner types in:
+ *   sold      — paid orders, plus the sets the owner sold outside the website (phone, LINE, at the
+ *               shop), entered at /admin/campaigns/dgx-spark — the page says that part was sold
+ *               through other channels
  *   reserved  — orders waiting for the money: a slip under review, or a fresh reservation still
  *               inside its hold (config hold_hours) — the customer is transferring
  *   remaining — cap − sold − reserved
@@ -39,6 +41,9 @@ class DgxSparkCampaign
     public const SETTING_REFERENCE_DATE = 'dgx_campaign_reference_checked_at';
 
     public const SETTING_MARKUP = 'dgx_campaign_markup';
+
+    /** Sets sold outside the website (phone, LINE, at the shop) — they count as sold. */
+    public const SETTING_OFFLINE_SOLD = 'dgx_campaign_offline_sold';
 
     /** A payment in one of these states holds no set. */
     public const RELEASED_PAYMENT_STATUSES = ['rejected', 'expired', 'failed', 'refunded', 'cancelled'];
@@ -154,6 +159,14 @@ class DgxSparkCampaign
         return max(1, (int) self::config('hold_hours', 48));
     }
 
+    /** Sets the owner sold outside the website, as entered at /admin/campaigns/dgx-spark. */
+    public static function offlineSold(): int
+    {
+        $stored = Setting::getValue(self::SETTING_OFFLINE_SOLD);
+
+        return is_numeric($stored) ? min(self::cap(), max(0, (int) $stored)) : 0;
+    }
+
     /**
      * Orders that hold a set right now (paid, being verified, or reserved inside the hold).
      * $exceptOrderId leaves one order out — the late payer asking whether a set is still free.
@@ -174,15 +187,19 @@ class DgxSparkCampaign
     }
 
     /**
+     * "sold" includes the sets sold outside the website (offlineSold), so every count on the site —
+     * the meter, the 20 cells, the home banner, the 21st-order refusal — already leaves them out.
+     *
      * @return array{cap: int, sold: int, reserved: int, remaining: int}
      */
     public static function availability(?int $exceptOrderId = null): array
     {
         $cap = self::cap();
+        $offline = self::offlineSold();
         $product = self::product();
 
         if (! $product) {
-            return ['cap' => $cap, 'sold' => 0, 'reserved' => 0, 'remaining' => $cap];
+            return ['cap' => $cap, 'sold' => $offline, 'reserved' => 0, 'remaining' => max(0, $cap - $offline)];
         }
 
         $rows = OrderItem::query()
@@ -193,7 +210,7 @@ class DgxSparkCampaign
             ->selectRaw("SUM(CASE WHEN orders.payment_status = 'paid' THEN 0 ELSE order_items.quantity END) AS reserved")
             ->first();
 
-        $sold = (int) ($rows->sold ?? 0);
+        $sold = (int) ($rows->sold ?? 0) + $offline;
         $reserved = (int) ($rows->reserved ?? 0);
 
         return [
@@ -329,6 +346,11 @@ class DgxSparkCampaign
             return 'แคมเปญนี้ปิดรับคำสั่งซื้อแล้ว';
         }
 
+        // The bundle's product set to Coming Soon in the admin: not on sale yet (owner, 2026-10-12)
+        if (self::product()?->isComingSoon()) {
+            return ComingSoonPurchase::MESSAGE;
+        }
+
         if (self::problems() !== []) {
             return 'ขณะนี้ยังไม่เปิดรับคำสั่งซื้อ กรุณาติดต่อเราเพื่อสอบถาม';
         }
@@ -341,6 +363,57 @@ class DgxSparkCampaign
         }
 
         return null;
+    }
+
+    // ── the owner's order desk (/admin/campaigns/dgx-spark) ───────────
+
+    /** The tabs of the admin order list: key => label. */
+    public const ADMIN_TABS = [
+        'action' => 'ต้องดำเนินการ',
+        'pending' => 'รอโอนเงิน',
+        'verifying' => 'รอตรวจสลิป',
+        'to_order' => 'ชำระแล้ว · รอสั่งเครื่อง',
+        'ordered' => 'สั่งเครื่องแล้ว',
+        'shipped' => 'จัดส่งแล้ว',
+        'delivered' => 'ส่งมอบแล้ว',
+        'cancelled' => 'ยกเลิก',
+        'all' => 'ทั้งหมด',
+    ];
+
+    /** The stages that wait for the owner: a slip to check, a paid set to order from the distributor. */
+    public const ACTION_STAGES = ['verifying', 'to_order'];
+
+    /** Every order of the campaign, in any state. */
+    public static function orders(): Builder
+    {
+        $product = self::product();
+
+        return Order::query()->whereIn('id', OrderItem::select('order_id')->where('product_id', $product?->id ?? 0));
+    }
+
+    /** The admin tab one order sits in — one of ADMIN_TABS other than 'action' and 'all'. */
+    public static function adminStage(Order $order): string
+    {
+        $fulfillment = self::fulfillment($order)['status'];
+
+        return match (true) {
+            $fulfillment === 'cancelled' => 'cancelled',
+            $order->payment_status === 'verifying' => 'verifying',
+            $order->payment_status !== 'paid' => 'pending',
+            $fulfillment === 'paid' => 'to_order',
+            default => $fulfillment,
+        };
+    }
+
+    /** How many orders wait for the owner — the badge on the admin menu. */
+    public static function needsActionCount(): int
+    {
+        return self::orders()
+            ->where('status', '!=', 'cancelled')
+            ->whereIn('payment_status', ['verifying', 'paid'])
+            ->get(['id', 'payment_status', 'status', 'metadata'])
+            ->filter(fn (Order $order) => in_array(self::adminStage($order), self::ACTION_STAGES, true))
+            ->count();
     }
 
     // ── one order ─────────────────────────────────────────────────────

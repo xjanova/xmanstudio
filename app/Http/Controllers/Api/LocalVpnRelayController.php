@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LicenseKey;
-use App\Models\Product;
 use App\Models\Setting;
 use App\Models\VpnNetwork;
 use App\Models\VpnNetworkMember;
 use App\Models\VpnRelaySession;
 use App\Models\VpnTrafficLog;
-use App\Support\SqlDialect;
+use App\Services\LocalVpnFleet\RelayTicketIssuer;
+use App\Support\LocalVpnLicenses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +18,9 @@ use Illuminate\Support\Str;
 
 class LocalVpnRelayController extends Controller
 {
+    /** `v<wire version>:<base64 X25519 public key>`; the server only relays it. */
+    private const P2P_KEY_RULE = ['nullable', 'string', 'max:64', 'regex:/^v\d{1,3}:[A-Za-z0-9+\/]{43}=$/'];
+
     /**
      * Create a new VPN network.
      * POST /api/v1/localvpn/networks
@@ -34,6 +37,7 @@ class LocalVpnRelayController extends Controller
             'license_key' => 'nullable|string',
             'machine_id' => 'required|string|max:255',
             'device_id' => 'nullable|string|max:255',
+            'p2p_key' => self::P2P_KEY_RULE,
         ]);
 
         // Validate license + device
@@ -88,7 +92,8 @@ class LocalVpnRelayController extends Controller
             ], 422);
         }
 
-        $maxMembersLimit = (int) Setting::getValue('localvpn_max_members_per_network', '10');
+        // The Pro ceiling (the app offers up to 50); a free owner's network still stops at 5 on join
+        $maxMembersLimit = (int) Setting::getValue('localvpn_max_members_per_network', '50');
         $requestedMax = $request->input('max_members', $maxMembersLimit);
 
         $network = VpnNetwork::create([
@@ -113,6 +118,7 @@ class LocalVpnRelayController extends Controller
             'virtual_ip' => $virtualIp,
             'public_ip' => $request->ip(),
             'public_port' => $request->input('public_port'),
+            'p2p_key' => $request->input('p2p_key'),
             'is_online' => true,
             'last_heartbeat_at' => now(),
             'joined_at' => now(),
@@ -210,6 +216,7 @@ class LocalVpnRelayController extends Controller
             'password' => 'nullable|string',
             'public_ip' => 'nullable|ip',
             'public_port' => 'nullable|integer|min:1|max:65535',
+            'p2p_key' => self::P2P_KEY_RULE,
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -250,6 +257,7 @@ class LocalVpnRelayController extends Controller
                 'device_id' => $request->input('device_id'),
                 'public_ip' => $request->input('public_ip', $request->ip()),
                 'public_port' => $request->input('public_port'),
+                'p2p_key' => $request->input('p2p_key'),
                 'is_online' => true,
                 'last_heartbeat_at' => now(),
             ]);
@@ -278,29 +286,11 @@ class LocalVpnRelayController extends Controller
             ], 409);
         }
 
-        // Freemium: check if network owner has a paid license
-        // Free users are limited to 5 members per network
-        $ownerHasPaidLicense = false;
-        if ($network->owner_user_id) {
-            $ownerHasPaidLicense = LicenseKey::where('user_id', $network->owner_user_id)
-                ->where('status', 'active')
-                ->where('license_type', '!=', 'free')
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
-                ->exists();
-        } else {
-            // Owner has no user_id — check by machine_id via owner_device_id
-            $ownerHasPaidLicense = LicenseKey::where('machine_id', $network->owner_device_id)
-                ->where('status', 'active')
-                ->where('license_type', '!=', 'free')
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
-                ->exists();
-        }
+        // Freemium: a network whose owner runs Pro (a paid LocalVPN key or the running 30-day trial)
+        // takes up to its max_members; a free owner's network stops at 5 members.
+        // Only LocalVPN keys count — it used to accept a paid key of ANY product the owner had.
+        $ownerHasPaidLicense = LocalVpnLicenses::userHasPremium($network->owner_user_id)
+            || LocalVpnLicenses::machineHasPremium($network->owner_device_id);
 
         if (! $ownerHasPaidLicense) {
             $currentMemberCount = VpnNetworkMember::where('network_id', $network->id)->count();
@@ -323,6 +313,7 @@ class LocalVpnRelayController extends Controller
             'virtual_ip' => $virtualIp,
             'public_ip' => $request->input('public_ip', $request->ip()),
             'public_port' => $request->input('public_port'),
+            'p2p_key' => $request->input('p2p_key'),
             'is_online' => true,
             'last_heartbeat_at' => now(),
             'joined_at' => now(),
@@ -423,6 +414,7 @@ class LocalVpnRelayController extends Controller
             'public_port' => 'nullable|integer|min:1|max:65535',
             'vpn_gateway_country' => 'nullable|string|size:2',
             'vpn_gateway_hostname' => 'nullable|string|max:255',
+            'p2p_key' => self::P2P_KEY_RULE,
         ]);
 
         $license = $this->validateDeviceAuth($request);
@@ -453,12 +445,13 @@ class LocalVpnRelayController extends Controller
             return response()->json(['success' => false, 'error' => 'Not a member of this network.'], 404);
         }
 
-        // Update heartbeat + VPN gateway status
+        // Update heartbeat + VPN gateway status + P2P public key
         $member->updateHeartbeat(
             $request->input('public_ip', $request->ip()),
             $request->input('public_port'),
             $request->input('vpn_gateway_country'),
-            $request->input('vpn_gateway_hostname')
+            $request->input('vpn_gateway_hostname'),
+            $request->input('p2p_key')
         );
 
         // Mark stale members as offline
@@ -474,10 +467,15 @@ class LocalVpnRelayController extends Controller
             ->get()
             ->map(fn ($p) => $this->formatMember($p));
 
+        // LVR1 relay ticket for when hole punching fails (docs/RELAY_FLEET.md). Never allowed
+        // to break the heartbeat itself: any fault here just means no relay this round.
+        $relay = rescue(fn () => app(RelayTicketIssuer::class)->forMember($member, $license), null);
+
         return response()->json([
             'success' => true,
             'peers' => $peers,
             'network_active' => $network->is_active,
+            'relay' => $relay,
         ]);
     }
 
@@ -525,102 +523,16 @@ class LocalVpnRelayController extends Controller
     }
 
     /**
-     * Relay data between peers (when P2P fails).
-     * POST /api/v1/localvpn/relay
+     * POST /api/v1/localvpn/relay — retired.
+     *
+     * It only ever logged byte counts and never delivered the data to the
+     * other peer, while writing two rows per packet. Relaying now happens over
+     * UDP on the fleet's LVR1 nodes (ticket in the heartbeat). Old apps still
+     * call this, so it answers 410 straight away: no validation, no database.
      */
-    public function relayData(Request $request): JsonResponse
+    public function relayData(): JsonResponse
     {
-        $request->validate([
-            'slug' => 'required|string',
-            'source_machine_id' => 'required|string|max:255',
-            'license_key' => 'nullable|string',
-            'target_virtual_ip' => 'required|string',
-            'data' => 'required|string|max:65536', // base64 encoded
-        ]);
-
-        // Validate auth using source_machine_id as machine_id
-        $request->merge(['machine_id' => $request->input('source_machine_id')]);
-        $license = $this->validateDeviceAuth($request);
-        if (! $license) {
-            return response()->json(['success' => false, 'error' => 'Invalid license or device.'], 403);
-        }
-
-        $network = VpnNetwork::where('slug', $request->input('slug'))->active()->first();
-
-        if (! $network) {
-            return response()->json(['success' => false, 'error' => 'Network not found or inactive.'], 404);
-        }
-
-        $sourceMember = VpnNetworkMember::where('network_id', $network->id)
-            ->where('machine_id', $request->input('source_machine_id'))
-            ->first();
-
-        if (! $sourceMember) {
-            return response()->json(['success' => false, 'error' => 'Source is not a member.'], 403);
-        }
-
-        $targetMember = VpnNetworkMember::where('network_id', $network->id)
-            ->where('virtual_ip', $request->input('target_virtual_ip'))
-            ->where('is_online', true)
-            ->first();
-
-        if (! $targetMember) {
-            return response()->json(['success' => false, 'error' => 'Target member not found or offline.'], 404);
-        }
-
-        // Check data relay limit
-        $dataLimitMb = (int) Setting::getValue('localvpn_data_relay_limit_mb', '100');
-        $dataBytes = strlen(base64_decode($request->input('data'), true) ?: '');
-
-        // Check daily usage
-        $todayBytes = VpnTrafficLog::where('network_id', $network->id)
-            ->where('action', 'data_relay')
-            ->where('created_at', '>=', now()->startOfDay())
-            ->sum('bytes');
-
-        if (($todayBytes + $dataBytes) > ($dataLimitMb * 1024 * 1024)) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Daily relay data limit exceeded.',
-            ], 429);
-        }
-
-        // Find or create relay session
-        $session = VpnRelaySession::firstOrCreate(
-            [
-                'network_id' => $network->id,
-                'source_member_id' => $sourceMember->id,
-                'target_member_id' => $targetMember->id,
-                'is_active' => true,
-            ],
-            [
-                'started_at' => now(),
-                'bytes_relayed' => 0,
-            ]
-        );
-
-        $session->increment('bytes_relayed', $dataBytes);
-
-        // Log relay
-        VpnTrafficLog::create([
-            'network_id' => $network->id,
-            'member_id' => $sourceMember->id,
-            'action' => 'data_relay',
-            'bytes' => $dataBytes,
-            'ip_address' => $request->ip(),
-            'created_at' => now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'relayed_bytes' => $dataBytes,
-            'target' => [
-                'display_name' => $targetMember->display_name,
-                'virtual_ip' => $targetMember->virtual_ip,
-                'public_ip' => $targetMember->public_ip,
-                'public_port' => $targetMember->public_port,
-            ],
-        ]);
+        return response()->json(['success' => false, 'error' => 'relay moved to UDP'], 410);
     }
 
     /**
@@ -797,66 +709,14 @@ class LocalVpnRelayController extends Controller
 
     // ==================== Private Helpers ====================
 
+    /**
+     * The device's key: the one it sent if this machine holds it (a seat of a two-device key
+     * included), else its best usable key — paid, then a running trial, then FREE — and when it
+     * has none, its FREE key, created here (firstOrCreate: the 30-second heartbeat calls this too).
+     */
     private function validateDeviceAuth(Request $request): ?LicenseKey
     {
-        $licenseKey = $request->input('license_key');
-        $machineId = $request->input('machine_id');
-
-        if (! $machineId) {
-            return null;
-        }
-
-        $product = Product::where('slug', 'localvpn')->where('requires_license', true)->first();
-        if (! $product) {
-            return null;
-        }
-
-        // Try license_key + machine_id first (paid users)
-        if ($licenseKey) {
-            $license = LicenseKey::where('license_key', $licenseKey)
-                ->where('product_id', $product->id)
-                ->where('machine_id', $machineId)
-                ->where('status', 'active')
-                ->first();
-
-            if ($license && ! $license->isExpired()) {
-                return $license;
-            }
-        }
-
-        // Fallback: find any active non-expired license for this machine_id.
-        // Prioritize paid > free > demo to avoid picking expired demo when free exists.
-        $typeOrder = ['lifetime', 'yearly', 'monthly', 'weekly', 'daily', 'free', 'demo'];
-
-        $license = LicenseKey::where('product_id', $product->id)
-            ->where('machine_id', $machineId)
-            ->where('status', 'active')
-            ->orderByRaw(SqlDialect::field('license_type', $typeOrder), $typeOrder)
-            ->get()
-            ->first(fn ($l) => ! $l->isExpired());
-
-        if ($license) {
-            return $license;
-        }
-
-        // Self-healing: auto-create free license ONLY if none exists at all.
-        // Use firstOrCreate to prevent duplicates from concurrent requests
-        // (e.g., heartbeat every 30s calling validateDeviceAuth).
-        return LicenseKey::firstOrCreate(
-            [
-                'product_id' => $product->id,
-                'machine_id' => $machineId,
-                'license_type' => 'free',
-                'status' => 'active',
-            ],
-            [
-                'license_key' => 'FREE-' . strtoupper(Str::random(20)),
-                'machine_fingerprint' => $machineId,
-                'activated_at' => now(),
-                'max_activations' => 1,
-                'activations' => 1,
-            ]
-        );
+        return LocalVpnLicenses::forDevice($request->input('license_key'), $request->input('machine_id'));
     }
 
     private function formatMember(VpnNetworkMember $member): array
@@ -870,6 +730,7 @@ class LocalVpnRelayController extends Controller
             'public_port' => $member->public_port,
             'vpn_gateway_country' => $member->vpn_gateway_country,
             'vpn_gateway_hostname' => $member->vpn_gateway_hostname,
+            'p2p_key' => $member->p2p_key,
             'is_online' => $member->is_online,
             'last_heartbeat_at' => $member->last_heartbeat_at?->toISOString(),
             'joined_at' => $member->joined_at?->toISOString(),

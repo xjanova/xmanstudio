@@ -17,6 +17,10 @@ use Symfony\Component\HttpFoundation\Response;
  *   GET /brainx/download/releases.win.json.sig  the CI's signature over those exact bytes, byte for byte
  *   GET /brainx/download/{file}                 a package the feed lists, streamed through this server
  *
+ * Coming Soon never closes these: only an app that is already installed asks for them, and the owner
+ * wants people who already use BrainX to keep getting updates while it is closed to new people
+ * (2026-10-19 — replaces "no update for anyone" of 2026-10-12). The installer has its own rule.
+ *
  * Every answer here is for the app, not a person, so failures are JSON. GET /brainx/download itself
  * (the installer, BrainXDownloadController) is a different route and keeps its own throttle.
  */

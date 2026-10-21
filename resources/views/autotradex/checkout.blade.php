@@ -185,6 +185,9 @@
                                         </div>
                                     </div>
                                 </label>
+
+                                {{-- TPIX coin (only while it can be paid) --}}
+                                @include('partials.tpix-checkout-option', ['thb' => (isset($planInfo['discount_amount']) && $planInfo['discount_amount'] > 0) ? $planInfo['discounted_price'] : ($planInfo['price'] ?? $planInfo['original_price'])])
                             </div>
                         </div>
 

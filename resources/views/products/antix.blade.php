@@ -1,4 +1,6 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('anti-x'); @endphp
 
 @section('title', 'Anti X — กันการเจาะเซิร์ฟเวอร์ Windows แบบเรียลไทม์ · ฟรีพื้นฐาน · Pro เริ่ม ฿' . number_format(\App\Support\LicensePlans::price('anti-x', 'monthly')) . '/เดือน | XMAN Studio')
 @section('meta_description', 'Anti X บล็อกการเดารหัส RDP/SSH/ฐานข้อมูล สแกนพอร์ต ยิงหาช่องโหว่ และ IP อันตรายแบบเรียลไทม์ พร้อมจับเครื่องที่ถูกเจาะ ไม่ปิดพอร์ต RDP ไม่ล็อกตัวเอง ฟรีพื้นฐาน ทดลอง Pro ฟรี 14 วัน · Real-time intrusion blocking for Windows servers.')
@@ -62,6 +64,11 @@
 
     // เวอร์ชันที่เว็บนี้ส่งให้ (อ่านจาก DB อย่างเดียว — เปิดหน้านี้ต้องไม่ถาม GitHub)
     $latest = $product->latestVersion();
+
+        // แอปมือถือคู่หู: แจกฟรีทุกคน แม้ไม่ได้ซื้อ Anti X (เจ้าของ 2026-10-21) — อ่านเวอร์ชันจาก DB อย่างเดียว ไม่ถาม GitHub
+        $mobileApp = \App\Models\Product::where('slug', 'anti-x-mobile')->where('is_active', true)->first();
+        $mobileLatest = $mobileApp?->latestVersion();
+        $csMobile = \App\Models\Product::slugIsComingSoon('anti-x-mobile');
 
     $plans = [
         'monthly' => ['name' => 'รายเดือน', 'en' => 'Monthly', 'unit' => '/ เดือน', 'note' => 'ซื้อทีละ 30 วัน ไม่ตัดเงินอัตโนมัติ', 'days' => '30 วัน'],
@@ -152,11 +159,15 @@
                     </p>
 
                     <div class="flex flex-wrap items-center gap-3">
+                        @if($csDownload)
+                            <span class="atx-btn-main inline-flex items-center gap-2 px-7 py-4 rounded-xl font-extrabold text-lg transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ route('anti-x.download') }}"
                            class="atx-btn-main inline-flex items-center gap-2 px-7 py-4 rounded-xl font-extrabold text-lg transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                         </a>
+                        @endif
                         <a href="#pricing" class="atx-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">
                             {{ $ownsAntiX ? 'ซื้อ License เพิ่ม' : 'ซื้อ Pro' }} — เริ่ม ฿{{ $monthly }}/เดือน
                         </a>
@@ -312,9 +323,13 @@
                         @endforeach
                     </ul>
                     {{-- ไฟล์เดียวกับ Pro — Pro ปลดล็อกในแอปด้วย license key --}}
+                    @if($csDownload)
+                        <span class="atx-btn-main block w-full py-3.5 text-center rounded-xl font-extrabold transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('anti-x.download') }}" class="atx-btn-main block w-full py-3.5 text-center rounded-xl font-extrabold transition">
                         <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                     </a>
+                    @endif
                 </div>
 
                 @foreach($plans as $term => $plan)
@@ -334,6 +349,7 @@
                                 <span class="text-5xl font-black text-white">฿{{ number_format($prices[$term]) }}</span>
                                 <span class="text-gray-300">{{ $plan['unit'] }}</span>
                             </div>
+                            <x-tpix-price variant="detail" :thb="$prices[$term]" class="-mt-4 mb-6" />
                             <ul class="space-y-2.5 text-gray-100 text-sm mb-8 flex-1">
                                 <li class="flex gap-3"><span class="atx-tick atx-tick-pro">✓</span><span>ทุกอย่างในรุ่นฟรี</span></li>
                                 <li class="flex gap-3"><span class="atx-tick atx-tick-pro">✓</span><span>ตัวจับขั้นสูงทั้งหมด + จับเครื่องที่ถูกเจาะ</span></li>
@@ -361,6 +377,57 @@
                 </p>
             @endif
             <p class="text-center text-xs text-gray-500 mt-6">ซื้อแล้วได้ License key ทางอีเมลและในหน้า บัญชีของฉัน · ใส่คีย์ในโปรแกรมได้เลย ไม่ต้องลงใหม่ · ย้ายเครื่องได้ด้วยการยกเลิกบนเครื่องเดิม</p>
+        </div>
+    </section>
+
+    {{-- ===================== MOBILE APP (ฟรีทุกคน) ===================== --}}
+    <section class="relative py-20 scroll-mt-20" id="mobile">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-12 gap-10 items-center">
+                <div class="lg:col-span-5">
+                    <p class="atx-eyebrow mb-3">Mobile app · Free</p>
+                    <h2 class="text-3xl md:text-4xl font-black text-white mb-4">แอปมือถือ Anti X <span class="atx-badge atx-free align-middle">ฟรีทุกคน</span></h2>
+                    <p class="text-lg text-gray-300 leading-relaxed mb-2">
+                        ดูสถานะการป้องกัน การโจมตี 24 ชั่วโมง รายการ IP ที่ถูกบล็อก และเหตุการณ์ล่าสุดของเซิร์ฟเวอร์ได้จากมือถือ
+                        จับคู่ด้วยการสแกน QR จากหน้า "อุปกรณ์มือถือ" ในโปรแกรม Anti X บนคอม
+                    </p>
+                    <p class="text-sm text-gray-500 leading-relaxed mb-6">Watch your Anti X server from your phone — paired by QR code. Free for everyone.</p>
+                    <ul class="space-y-2.5 text-gray-300 mb-8">
+                        <li class="flex gap-2"><span class="text-emerald-300">✓</span> ดาวน์โหลดได้เลย ไม่ต้องล็อกอิน ไม่ต้องซื้อ Anti X</li>
+                        <li class="flex gap-2"><span class="text-emerald-300">✓</span> เปิดแอปครั้งแรกได้ไลเซนส์ฟรีอัตโนมัติ</li>
+                        <li class="flex gap-2"><span class="text-emerald-300">✓</span> กุญแจอยู่ในชิปของมือถือ ไม่มีรหัสผ่านให้ขโมย · ล็อกแอปด้วยลายนิ้วมือได้</li>
+                        <li class="flex gap-2"><span class="text-emerald-300">✓</span> อัปเดตตัวเองจาก xman4289.com และตรวจไฟล์ก่อนติดตั้งทุกครั้ง</li>
+                    </ul>
+                    <div class="flex flex-wrap items-center gap-3">
+                        @if($csMobile)
+                            <span class="atx-btn-main inline-flex items-center gap-2 px-7 py-4 rounded-xl font-extrabold text-lg transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @elseif($mobileLatest)
+                            <a href="{{ route('anti-x-mobile.download') }}" class="atx-btn-main inline-flex items-center gap-2 px-7 py-4 rounded-xl font-extrabold text-lg transition" data-mobile-download>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                <x-bi th="ดาวน์โหลดแอป Android ฟรี" en="Free Android download" />
+                            </a>
+                        @else
+                            <span class="atx-btn-ghost inline-flex items-center px-7 py-4 rounded-xl font-bold" role="status" data-mobile-pending>กำลังจะเปิดให้ดาวน์โหลดเร็ว ๆ นี้</span>
+                        @endif
+                    </div>
+                    <p class="mt-4 text-sm text-gray-400">
+                        @if($mobileLatest)เวอร์ชันล่าสุด {{ $mobileLatest->version }}@if($mobileLatest->file_size) · {{ $mobileLatest->file_size_formatted }}@endif · @endif
+                        ไฟล์ .apk จาก xman4289.com โดยตรง · Android 8 ขึ้นไป · ใช้คู่กับ Anti X บนคอม (ฟรีหรือ Pro ก็ได้)
+                    </p>
+                </div>
+                <div class="lg:col-span-7">
+                    <div class="grid grid-cols-3 gap-3 sm:gap-5">
+                        @foreach([['dashboard', 'ภาพรวมการป้องกัน'], ['blocks', 'รายการบล็อก'], ['pair', 'จับคู่ด้วยรหัส 6 หลัก']] as [$shot, $caption])
+                            <figure class="text-center">
+                                <img src="{{ asset('images/products/anti-x-mobile/' . $shot . '.webp') }}" alt="หน้าจอแอป Anti X บนมือถือ — {{ $caption }}"
+                                     width="390" height="865" loading="lazy" class="w-full h-auto rounded-[1.4rem] border border-white/10 shadow-2xl shadow-cyan-500/10">
+                                <figcaption class="mt-2 text-xs text-gray-400">{{ $caption }}</figcaption>
+                            </figure>
+                        @endforeach
+                    </div>
+                    <p class="mt-3 text-center text-xs text-gray-500">หน้าจอจริงของแอป · ข้อมูลในภาพเป็นข้อมูลตัวอย่าง</p>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -448,10 +515,14 @@
             <p class="text-lg text-gray-300 mb-1">ดาวน์โหลดรุ่นฟรีได้ทันที หรือปลดตัวจับขั้นสูงทั้งหมดด้วย Pro เริ่มเพียง ฿{{ $monthly }} ต่อเดือน</p>
             <p class="text-sm text-gray-500 mb-9">Shut the door before anyone walks in.</p>
             <div class="flex flex-wrap justify-center gap-3">
+                @if($csDownload)
+                    <span class="atx-btn-main inline-flex items-center gap-2 px-8 py-4 rounded-xl font-extrabold text-lg transition" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ route('anti-x.download') }}" class="atx-btn-main inline-flex items-center gap-2 px-8 py-4 rounded-xl font-extrabold text-lg transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <x-bi th="ดาวน์โหลดฟรี" en="Free download" />
                 </a>
+                @endif
                 <a href="#pricing" class="atx-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">ดูแผน Pro</a>
                 @if($ownsAntiX)
                     <a href="{{ route('customer.licenses') }}" class="atx-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-semibold transition">ดูคีย์ License ของฉัน</a>

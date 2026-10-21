@@ -225,6 +225,12 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['GET', route('anti-x.download')],
             ['GET', route('anti-x.download', ['version' => '1.2.0'])],
             ['HEAD', route('anti-x.download', ['version' => '1.2.0'])],
+            ['GET', route('anti-x-mobile.download')],
+            ['GET', route('anti-x-mobile.download', ['version' => '0.1.0'])],
+            ['HEAD', route('anti-x-mobile.download', ['version' => '0.1.0'])],
+            ['GET', route('macdock.download')],
+            ['GET', route('macdock.download', ['version' => '1.0.0'])],
+            ['HEAD', route('macdock.download', ['version' => '1.0.0'])],
             ['GET', route('cluadex.download')],
             ['GET', route('gpuxmine.download')],
             ['GET', route('brainx.download')],
@@ -240,9 +246,6 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['HEAD', route('tping.download.apk')],
             ['GET', route('smschecker.download.apk')],
             ['GET', route('localvpn.download.apk')],
-            ['GET', route('localvpn.download.windows')],
-            ['GET', route('localvpn.download.windows', ['version' => '1.0.40'])],
-            ['HEAD', route('localvpn.download.windows', ['version' => '1.0.40'])],
             ['GET', route('download.product', ['slug' => 'some-desktop-app', 'version' => '2.0.0'])],
             ['POST', route('download.api', ['slug' => 'some-desktop-app'])],
             ['POST', route('download.api', ['slug' => 'some-desktop-app', 'version' => '2.0.0'])],
@@ -253,10 +256,11 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
         foreach ([
             route('download.page', ['slug' => 'some-desktop-app']), // หน้า HTML
             '/tping/download', '/smschecker/download', '/localvpn/download', '/tping/install-guide', // หน้าของแอป APK
-            '/tping/download/apkx', '/localvpn/download/windowsx', '/tping/download/windows', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
+            '/tping/download/apkx', '/customer/downloads', '/winx-tools/downloads', '/products/winx-tools', '/',
             '/apps/aipray', '/apps/aipray/donate', '/chanthra-studio', '/chanthra-studio/manual', '/autotradex/pricing', // หน้าของแอปที่โหลดฟรี
             '/brainx', '/brainx/downloads',
             '/products/anti-x', '/anti-x', '/anti-x/downloads',
+            '/products/macdock', '/products/macdock/free-license', '/macdock',
         ] as $url) {
             $this->assertFalse($matches('GET', $url), "GET {$url} ต้องไม่อยู่ในกฎนี้");
         }

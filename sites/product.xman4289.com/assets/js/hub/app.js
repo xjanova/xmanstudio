@@ -44,12 +44,25 @@
   var counts = C.counts;
   var FEATURED = C.FEATURED;
 
+  /** A product that can be downloaded right now. Coming Soon never can, whatever its row says. */
+  function canDownload(p) {
+    return !!p && p.status === 'live' && !!p.download;
+  }
+
   /* ------------------------------------------------------------ counts & nav */
 
-  $$('[data-count]').forEach(function (el) {
-    var n = counts[el.getAttribute('data-count')];
-    if (n != null) el.textContent = pad2(n);
-  });
+  // again whenever the shop's live data moves a product between live and Coming Soon
+  function paintCounts() {
+    $$('[data-count]').forEach(function (el) {
+      var n = counts[el.getAttribute('data-count')];
+      if (n != null) el.textContent = pad2(n);
+    });
+    $$('#filters [data-filter] span').forEach(function (sp) {
+      var n = counts[sp.parentNode.getAttribute('data-filter')];
+      if (n != null) sp.textContent = n;
+    });
+  }
+  paintCounts();
   $('#side-cats').innerHTML = C.CATS.map(function (c) {
     return '<a href="#products" class="side-link" data-cat="' + c.id + '" data-nav="cat:' + c.id + '" title="' + esc(c.th) + '">' +
       '<span class="nav-icon ic-cat">▹</span>' + esc(c.dir) + '<span class="nav-count">' + pad2(c.count) + '</span></a>';
@@ -147,13 +160,21 @@
     return '<a class="button primary" href="' + esc(p.download) + '"' + (p.dlPage ? newTab : ' rel="noopener"') + ' data-dl="' + p.id + '"><span aria-hidden="true">⤓</span> ' + esc(p.downloadLabel) + '</a>';
   }
 
-  /** Download first when there is one, then the product page. */
+  /** Where the download / buy button would be, a Coming Soon product shows this label instead (not a link). */
+  function soonTag() {
+    return '<span class="button soon-tag" role="note" title="ยังไม่เปิดให้ดาวน์โหลดหรือสั่งซื้อ"><span aria-hidden="true">◌</span> COMING SOON · เร็ว ๆ นี้</span>';
+  }
+
+  function pageLink(p, cls) {
+    return '<a class="button ' + cls + '" href="' + esc(p.href) + '"' + (p.external ? newTab : '') + '>' +
+      (cls === 'primary' ? '<span aria-hidden="true">⌘</span> ' + esc(p.hrefLabel) : esc(p.hrefLabel) + ' <span aria-hidden="true">↗</span>') + '</a>';
+  }
+
+  /** Download first when there is one, then the product page. Coming Soon: the label, then the page. */
   function actionsHtml(p) {
-    var page = p.external ? newTab : '';
-    if (p.download) {
-      return downloadLink(p) + '<a class="button secondary" href="' + esc(p.href) + '"' + page + '>' + esc(p.hrefLabel) + ' <span aria-hidden="true">↗</span></a>';
-    }
-    return '<a class="button ' + (p.status === 'soon' ? 'gold' : 'primary') + '" href="' + esc(p.href) + '"' + page + '><span aria-hidden="true">' + (p.status === 'soon' ? '✦' : '⌘') + '</span> ' + esc(p.hrefLabel) + '</a>';
+    if (p.status !== 'live') return soonTag() + pageLink(p, 'secondary');
+    if (canDownload(p)) return downloadLink(p) + pageLink(p, 'secondary');
+    return pageLink(p, 'primary');
   }
 
   function renderSpot(byUser) {
@@ -170,27 +191,10 @@
     $('#spot-subtitle').textContent = p.sub;
     $('#spot-pitch').innerHTML = esc(p.pitch[0]) + '<br>' + esc(p.pitch[1]);
     $('#spot-tags').innerHTML = p.platforms.slice(0, 2).concat(p.tags.slice(0, 3)).map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('');
-    var acts = $('#spot-actions');
-    // one call to action + details; the product page rides along with the price
-    acts.innerHTML = (p.download ? downloadLink(p) : actionsHtml(p)) + '<button type="button" class="button secondary" data-open="' + p.id + '">รายละเอียด <span aria-hidden="true">⊕</span></button>';
-    var priceEl = $('.spot-price', spotCopy);
-    if (!priceEl) {
-      priceEl = document.createElement('span');
-      priceEl.className = 'spot-price';
-      spotCopy.insertBefore(priceEl, acts);
-    }
-    priceEl.innerHTML = esc(p.price) + (p.download
-      ? ' <span class="sep">·</span> <a href="' + esc(p.href) + '"' + (p.external ? newTab : '') + '>' + esc(p.hrefLabel) + ' ↗</a>'
-      : '');
-    $('#spot-sector').textContent = f.sector;
+    paintSpotState(p);
     $('#spot-node').textContent = f.node;
-    var st = $('#spot-status');
-    st.textContent = p.status === 'live' ? (p.version ? 'LIVE · v' + p.version : 'LIVE · SHIPPING') : 'IN DEVELOPMENT';
-    st.classList.toggle('soon', p.status !== 'live');
     $('#spotlight-stage').setAttribute('aria-label', 'หน้าจอของ ' + p.name + ' ลากเพื่อหมุน');
     $('#fb-title').textContent = p.name;
-    $('#fb-img').src = (p.shots.length ? p.shots[0] : p.art);
-    setShotTag(p, 0);
     // replay the copy's entrance
     spotCopy.classList.remove('swap');
     void spotCopy.offsetWidth;
@@ -205,6 +209,33 @@
     });
     XPH.state.featured = p.id;
     window.dispatchEvent(new CustomEvent('xph:feature', { detail: p.id }));
+  }
+
+  /** The spotlight's parts that follow the product's live state: call to action, price, status, picture. */
+  function paintSpotState(p) {
+    var acts = $('#spot-actions');
+    // one call to action + details; the product page rides along with the price
+    var lead = canDownload(p) ? downloadLink(p) : p.status !== 'live' ? soonTag() : actionsHtml(p);
+    acts.innerHTML = lead + '<button type="button" class="button secondary" data-open="' + p.id + '">รายละเอียด <span aria-hidden="true">⊕</span></button>';
+    var priceEl = $('.spot-price', spotCopy);
+    if (!priceEl) {
+      priceEl = document.createElement('span');
+      priceEl.className = 'spot-price';
+      spotCopy.insertBefore(priceEl, acts);
+    }
+    priceEl.innerHTML = esc(p.price) + (canDownload(p) || p.status !== 'live'
+      ? ' <span class="sep">·</span> <a href="' + esc(p.href) + '"' + (p.external ? newTab : '') + '>' + esc(p.hrefLabel) + ' ↗</a>'
+      : '');
+    var st = $('#spot-status');
+    st.textContent = p.status === 'live' ? (p.version ? 'LIVE · v' + p.version : 'LIVE · SHIPPING') : 'COMING SOON';
+    st.classList.toggle('soon', p.status !== 'live');
+    // "BUILD · v1.0.2": the version in it is the live one
+    var f = FEATURED[state.feat];
+    if (f && f.id === p.id) $('#spot-sector').textContent = p.version ? f.sector.replace(/v[0-9][^\s]*$/, 'v' + p.version) : f.sector;
+    var fb = $('#fb-img');
+    fb.setAttribute('data-fallback', p.art);
+    fb.src = (p.shots.length ? p.shots[0] : p.art);
+    setShotTag(p, 0);
   }
 
   /** Shrink the spotlight name until its longest word fits the column (names never break mid-word). */
@@ -232,7 +263,9 @@
   }
   window.addEventListener('xph:slide', function (e) {
     var p = C.byId(e.detail.id);
-    if (p && p.id === XPH.state.featured) setShotTag(p, e.detail.i);
+    if (!p || p.id !== XPH.state.featured) return;
+    if (e.detail.real === false) shotTag.hidden = true;
+    else setShotTag(p, e.detail.i);
   });
 
   function chooseFeature(i, byUser) {
@@ -290,13 +323,15 @@
     { id: 'all', label: 'ทั้งหมด' },
     { id: 'live', label: 'ใช้งานได้แล้ว' },
     { id: 'free', label: 'ใช้ฟรีได้' },
-    { id: 'soon', label: 'กำลังพัฒนา' },
+    { id: 'soon', label: 'เร็ว ๆ นี้ (Coming Soon)' },
   ];
-  var FILTER_LINES = {
-    live: { text: 'โปรแกรมที่ใช้งานได้แล้วมี ' + counts.live + ' ตัว ดาวน์โหลดหรือซื้อได้ทันทีเลยค่ะ!', pose: 'cheer' },
-    free: { text: 'สายฟรีต้องชอบ! ' + counts.free + ' ตัวนี้ใช้ฟรี หรือมีรุ่นฟรีให้ลองก่อนนะ ✦', pose: 'cheer' },
-    soon: { text: 'นี่คือของที่ทีมกำลังสร้างอยู่ แอบดูก่อนใครได้เลย~ เปิดขายเมื่อไหร่โนวาจะบอกนะ', pose: 'present' },
-  };
+  // read at the moment she speaks: the counts follow the shop's live data
+  function filterLine(f) {
+    if (f === 'live') return { text: 'โปรแกรมที่ใช้งานได้แล้วมี ' + counts.live + ' ตัว ดาวน์โหลดหรือซื้อได้ทันทีเลยค่ะ!', pose: 'cheer' };
+    if (f === 'free') return { text: 'สายฟรีต้องชอบ! ' + counts.free + ' ตัวนี้ใช้ฟรี หรือมีรุ่นฟรีให้ลองก่อนนะ ✦', pose: 'cheer' };
+    if (f === 'soon') return { text: 'นี่คือของที่ทีมกำลังสร้างอยู่ แอบดูก่อนใครได้เลย~ ยังดาวน์โหลดหรือซื้อไม่ได้นะ เปิดขายเมื่อไหร่โนวาจะบอกค่ะ', pose: 'present' };
+    return null;
+  }
 
   var filtersEl = $('#filters');
   var catFiltersEl = $('#cat-filters');
@@ -322,13 +357,13 @@
   var cardsEl = $('#cards');
   function cardHtml(p) {
     var c = C.cat(p.cat);
-    var badges = '<span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ IN DEV') + '</span>' +
+    var badges = '<span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ COMING SOON') + '</span>' +
       (p.free ? '<span class="badge free">FREE</span>' : '');
     return '<div class="rise card-wrap"><article class="card" data-id="' + p.id + '" style="--accent:' + p.palette[2] + ';--accent2:' + p.palette[0] + '">' +
       '<button type="button" class="card-hit" aria-label="ดูรายละเอียด ' + esc(p.name) + '"></button>' +
       '<div class="card-3d">' +
         '<div class="card-art"><img src="' + p.art + '" alt="" loading="lazy" decoding="async" draggable="false">' +
-          (p.shots.length ? '<img class="card-shot" src="' + p.shots[0] + '" alt="" loading="lazy" decoding="async" draggable="false">' : '') +
+          (p.shots.length ? '<img class="card-shot" src="' + esc(p.shots[0]) + '" alt="" loading="lazy" decoding="async" draggable="false">' : '') +
           '<div class="card-art-fade"></div></div>' +
         '<div class="card-badges">' + badges + '</div>' +
         (p.shots.length ? '<span class="badge capture">◉ LIVE CAPTURE · ' + p.shots.length + '</span>' : '') +
@@ -379,8 +414,8 @@
     if (state.cat) {
       var c = C.cat(state.cat);
       guide.say({ text: 'หมวด ' + c.th + ' มี ' + c.count + ' ตัวค่ะ ' + C.PRODUCTS.filter(function (p) { return p.cat === c.id; }).map(function (p) { return p.name; }).join(', ') + ' ชี้ที่การ์ดแล้วโนวาจะเล่าให้ฟังนะ', pose: 'present', priority: 3 });
-    } else if (FILTER_LINES[f]) {
-      guide.say(Object.assign({}, FILTER_LINES[f], { priority: 3 }));
+    } else if (filterLine(f)) {
+      guide.say(Object.assign(filterLine(f), { priority: 3 }));
     }
   }
 
@@ -520,6 +555,7 @@
 
   /** The live version for the open dialog: once per product per 10 minutes, so browsing never
       eats into the per-IP limit the desktop apps' update checks share. */
+  var verAsking = {};
   function fetchVersion(p) {
     if (!p.api) return;
     var cached = null;
@@ -532,30 +568,35 @@
       box.innerHTML = '<span class="term">$ xman version ' + esc(p.id) + ' → v' + esc(v.version) + '</span>' +
         'เวอร์ชันล่าสุด <b>v' + esc(v.version) + '</b>' + (v.file_size_formatted ? ' · ' + esc(v.file_size_formatted) : '') + esc(date) +
         (items.length ? '<ul>' + items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' : '') +
-        '<small>ข้อมูลสดจาก xman4289.com · ไฟล์ดาวน์โหลดส่งจาก xman4289.com เท่านั้น</small>';
+        '<small>' + (p.status === 'live' ? 'ข้อมูลสดจาก xman4289.com · ไฟล์ดาวน์โหลดส่งจาก xman4289.com เท่านั้น' : 'Coming Soon — ยังไม่เปิดให้ดาวน์โหลด') + '</small>';
     };
     var fallback = function () {
       var note = $('#detail-ver small');
       if (state.detail === p && note) note.textContent = 'ข้อมูล ณ วันที่ปล่อย · ดูเวอร์ชันล่าสุดได้ที่หน้าสินค้า';
     };
     if (cached && cached.v && Date.now() - cached.at < 10 * 60 * 1000) { paint(cached.v); return; }
+    // the dialog re-drawn while its question is still out: that answer paints it
+    if (verAsking[p.api]) return;
+    verAsking[p.api] = true;
     var ctl = window.AbortController ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctl) ctl.abort(); fallback(); }, 7000);
     fetch(C.SHOP + '/api/v1/products/' + encodeURIComponent(p.api) + '/version', { headers: { Accept: 'application/json' }, signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
         clearTimeout(timer);
+        verAsking[p.api] = false;
         if (!j || !j.success || !j.version) return fallback();
         try { sessionStorage.setItem(verKey(p.api), JSON.stringify({ at: Date.now(), v: j.version })); } catch (e) {}
         paint(j.version);
       })
-      .catch(function () { clearTimeout(timer); fallback(); });
+      .catch(function () { clearTimeout(timer); verAsking[p.api] = false; fallback(); });
   }
 
-  function openProduct(p, speak, fromLog) {
+  /** redraw: the dialog is already open and the shop's live data changed it — keep focus where it is. */
+  function openProduct(p, speak, fromLog, redraw) {
     if (!p) return;
     state.detail = p;
-    lastFocus = document.activeElement;
+    if (!redraw) lastFocus = document.activeElement;
     var c = C.cat(p.cat);
     var pics = p.shots.length ? p.shots : [p.art];
     var isShot = p.shots.length > 0;
@@ -567,18 +608,18 @@
     } else if (p.status === 'live') {
       verLine = '<span class="term">$ xman status ' + esc(p.id) + ' → live</span>ใช้งานได้แล้ว · ' + esc(p.price);
     } else {
-      verLine = '<span class="term">$ xman status ' + esc(p.id) + ' → building…</span>กำลังพัฒนา — ติดตามและจองสิทธิ์ได้ที่หน้าสินค้า';
+      verLine = '<span class="term">$ xman status ' + esc(p.id) + ' → coming soon</span>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด ติดตามได้ที่หน้าสินค้า';
     }
     inner.innerHTML =
       '<button type="button" class="detail-close" aria-label="ปิด">×</button>' +
       '<div class="detail-visual">' +
-        '<div class="dv-main' + (isShot ? ' is-shot' : '') + '"><img id="dv-img" src="' + pics[0] + '" alt="ภาพของ ' + esc(p.name) + '">' +
+        '<div class="dv-main' + (isShot ? ' is-shot' : '') + '"><img id="dv-img" src="' + esc(pics[0]) + '" data-fallback="' + esc(p.art) + '" alt="ภาพของ ' + esc(p.name) + '">' +
           '<div class="dv-fade"></div>' +
-          '<div class="detail-state"><span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ IN DEV') + '</span>' + (p.free ? '<span class="badge free">FREE</span>' : '') + '</div>' +
+          '<div class="detail-state"><span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ COMING SOON') + '</span>' + (p.free ? '<span class="badge free">FREE</span>' : '') + '</div>' +
           (isShot ? '<span class="dv-cap" id="dv-cap">◉ LIVE CAPTURE · ภาพหน้าจอจริง 01 / ' + pad2(pics.length) + '</span>' : '') +
         '</div>' +
         (pics.length > 1 ? '<div class="dv-thumbs" role="group" aria-label="ภาพหน้าจอ">' + pics.map(function (s, i) {
-          return '<button type="button" data-shot="' + i + '" aria-current="' + (i === 0) + '" aria-label="ภาพที่ ' + (i + 1) + '"><img src="' + s + '" alt="" loading="lazy"></button>';
+          return '<button type="button" data-shot="' + i + '" aria-current="' + (i === 0) + '" aria-label="ภาพที่ ' + (i + 1) + '"><img src="' + esc(s) + '" data-fallback="' + esc(p.art) + '" alt="" loading="lazy"></button>';
         }).join('') + '</div>' : '') +
       '</div>' +
       '<div class="detail-body">' +
@@ -608,10 +649,10 @@
     if (typeof dialog.showModal === 'function') {
       if (!dialog.open) dialog.showModal();
     } else dialog.setAttribute('open', '');
-    $('.detail-close', inner).focus();
+    if (!redraw) $('.detail-close', inner).focus();
     fetchVersion(p);
     if (speak !== false) {
-      var line = fromLog && p.version ? 'เวอร์ชัน ' + p.version + ' ของ ' + p.name + ' เพิ่งปล่อยไปค่ะ ข้อมูลในหน้าต่างนี้ดึงสดจากร้านเลยนะ' : pick(p.nova);
+      var line = fromLog && p.version && p.status === 'live' ? 'เวอร์ชัน ' + p.version + ' ของ ' + p.name + ' เพิ่งปล่อยไปค่ะ ข้อมูลในหน้าต่างนี้ดึงสดจากร้านเลยนะ' : pick(p.nova);
       guide.say({ text: line, pose: 'present', priority: 3 });
     }
   }
@@ -629,7 +670,7 @@
   });
 
   function downloaded(p) {
-    if (!p) return;
+    if (!canDownload(p)) return;
     guide.say({ text: 'กำลังส่งไฟล์ ' + p.name + ' จาก xman4289.com ให้นะคะ ใช้แล้วชอบ กลับมาเล่าให้โนวาฟังด้วย~', pose: 'cheer', priority: 3 });
   }
 
@@ -637,7 +678,10 @@
 
   var TOUR = [
     { go: 'spotlight', line: { text: 'เริ่มที่ NOW RUNNING! โปรแกรมเด่นอยู่ตรงนี้ หน้าจอโฮโลแกรมโชว์ภาพของโปรแกรมนั้น ลากเพื่อหมุนดูได้เลยค่ะ', pose: 'present' } },
-    { go: 'feature:winx-tools', line: { text: 'อย่าง WinXTools นี่เป็นภาพหน้าจอจริงทั้ง 9 หน้าเลยนะ มันสลับให้ดูเอง ป้าย LIVE CAPTURE บอกว่าภาพไหนของจริง', pose: 'present' } },
+    // counted when she says it: a real picture set in the shop's admin joins the gallery
+    { go: 'feature:winx-tools', line: function () {
+      return { text: 'อย่าง WinXTools นี่เป็นภาพหน้าจอจริงทั้ง ' + C.byId('winx-tools').shots.length + ' ภาพเลยนะ มันสลับให้ดูเอง ป้าย LIVE CAPTURE บอกว่าภาพไหนของจริง', pose: 'present' };
+    } },
     { go: 'filter:free', line: { text: 'อยากลองก่อนจ่าย? กด free/ จะเหลือแต่โปรแกรมที่ใช้ฟรีหรือมีรุ่นฟรีให้ลอง ✦', pose: 'cheer' } },
     { go: 'releases', line: { text: 'ส่วน release.log คือเวอร์ชันที่ปล่อยจริงล่าสุด ทุกไฟล์ส่งจาก xman4289.com โดยตรงค่ะ', pose: 'present' } },
     { go: 'studio', line: { text: 'และนี่คือ XMAN Studio ผู้สร้างทุกโปรแกรมในฮับนี้ จบทัวร์แล้ว! ไปเลือกโปรแกรมกันเลยนะคะ~', pose: 'bye' } },
@@ -665,7 +709,7 @@
     if (kind === 'releases') scrollToId('releases');
     if (kind === 'studio') scrollToId('studio', 'center');
     var last = i === TOUR.length - 1;
-    guide.say(Object.assign({}, step.line, {
+    guide.say(Object.assign({}, typeof step.line === 'function' ? step.line() : step.line, {
       priority: 4,
       hold: 60000,
       chips: last
@@ -689,7 +733,7 @@
       card.classList.add('spot');
     }, 60);
     var chips = [{ label: 'ดูรายละเอียด', action: 'open:' + p.id, primary: true }];
-    if (p.download) chips.push({ label: p.downloadLabel, action: 'download:' + p.id });
+    if (canDownload(p)) chips.push({ label: p.downloadLabel, action: 'download:' + p.id });
     chips.push({ label: 'สุ่มอีก', action: 'random' });
     guide.say({ text: 'โนวาสุ่มได้… ' + p.name + '! ' + p.tagline, pose: 'cheer', react: 'heart', priority: 3, hold: 15000, chips: chips });
   }
@@ -707,7 +751,7 @@
     open: function (id) { openProduct(C.byId(id), false); },
     download: function (id) {
       var p = C.byId(id);
-      if (!p || !p.download) return;
+      if (!canDownload(p)) return;
       if (p.dlPage) window.open(p.download, '_blank', 'noopener');
       else window.location.href = p.download;
       downloaded(p);
@@ -744,7 +788,7 @@
   var crumb = $('#crumb');
   var NAMES = { spotlight: 'discover', products: 'products', releases: 'release.log', studio: 'studio.md' };
   var FIRST = {
-    products: { text: 'นี่คือโปรแกรมทั้ง ' + counts.all + ' ตัวของเราค่ะ ชี้ที่การ์ดใบไหน โนวาจะเล่าให้ฟังเอง~ การ์ดที่มีภาพจริง เอาเมาส์ไปชี้จะเห็นหน้าจอจริงนะ', pose: 'present', priority: 1 },
+    products: function () { return { text: 'นี่คือโปรแกรมทั้ง ' + counts.all + ' ตัวของเราค่ะ ชี้ที่การ์ดใบไหน โนวาจะเล่าให้ฟังเอง~ การ์ดที่มีภาพจริง เอาเมาส์ไปชี้จะเห็นหน้าจอจริงนะ', pose: 'present', priority: 1 }; },
     releases: { text: 'ทุกเวอร์ชันที่ปล่อยจริงอยู่ตรงนี้นะ กดการ์ดเพื่อดูเวอร์ชันล่าสุดสด ๆ จากร้านได้เลย!', pose: 'present', priority: 1 },
     studio: { text: 'XMAN Studio สตูดิโอเล็ก ๆ ที่เขียนทุกบรรทัดเอง ขอบคุณที่แวะมานะคะ ✦', pose: 'bye', priority: 1 },
   };
@@ -758,7 +802,7 @@
       navActive();
       if (FIRST[id] && !state.said[id] && state.tourStep < 0) {
         state.said[id] = true;
-        guide.say(FIRST[id]);
+        guide.say(typeof FIRST[id] === 'function' ? FIRST[id]() : FIRST[id]);
       }
     });
   }, { threshold: 0.3 });
@@ -779,6 +823,27 @@
   $$('.rise').forEach(function (el) { rise.observe(el); });
   // never leave content hidden if the observer is late or missing
   setTimeout(function () { $$('.rise').forEach(function (el) { el.classList.add('in'); }); }, 3500);
+
+  /* ------------------------------------------------------------ live shop data */
+
+  // a picture that does not load (a real screenshot taken down in the shop's admin): the key art stands in
+  document.addEventListener('error', function (e) {
+    var im = e.target;
+    if (!im || im.tagName !== 'IMG') return;
+    if (im.classList.contains('card-shot')) { im.hidden = true; return; }
+    var fb = im.getAttribute('data-fallback');
+    if (fb && im.getAttribute('src') !== fb) im.src = fb;
+  }, true);
+
+  // catalog.js applied the shop's answer after the first paint: redraw what reads it
+  window.addEventListener('xph:catalog', function (e) {
+    var changed = (e.detail && e.detail.changed) || [];
+    paintCounts();
+    renderCards();
+    var p = C.byId(FEATURED[state.feat].id);
+    if (changed.indexOf(p.id) >= 0) paintSpotState(p);
+    if (state.detail && dialog.open && changed.indexOf(state.detail.id) >= 0) openProduct(state.detail, false, false, true);
+  });
 
   /* ------------------------------------------------------------ first paint */
 

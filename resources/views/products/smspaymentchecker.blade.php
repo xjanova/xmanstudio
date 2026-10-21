@@ -327,6 +327,7 @@
                     <div class="mb-6">
                         <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'monthly')) }}</span>
                         <span class="text-gray-400 ml-2">THB/month</span>
+                        <x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price('sms-payment-checker', 'monthly')" />
                     </div>
                     <ul class="space-y-3 mb-8">
                         <li class="flex items-center text-gray-300">
@@ -366,6 +367,7 @@
                     <div class="mb-2">
                         <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'yearly')) }}</span>
                         <span class="text-gray-400 ml-2">THB/year</span>
+                        <x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price('sms-payment-checker', 'yearly')" />
                     </div>
                     <p class="text-emerald-400 text-sm mb-6">Save 17% vs monthly</p>
                     <ul class="space-y-3 mb-8">
@@ -403,6 +405,7 @@
                     <div class="mb-6">
                         <span class="text-4xl font-black text-white">{{ number_format(\App\Support\LicensePlans::price('sms-payment-checker', 'lifetime')) }}</span>
                         <span class="text-gray-400 ml-2">THB</span>
+                        <x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price('sms-payment-checker', 'lifetime')" />
                     </div>
                     <ul class="space-y-3 mb-8">
                         <li class="flex items-center text-gray-300">
@@ -594,8 +597,8 @@
                         <a href="{{ route('products.show', $related->slug) }}"
                            class="group bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700 hover:border-emerald-500/50 transition-all hover:transform hover:scale-[1.02]">
                             <div class="aspect-video bg-gray-700 overflow-hidden">
-                                @if($related->image)
-                                    <img src="{{ Storage::url($related->image) }}" alt="{{ $related->name }}"
+                                @if($related->artwork_url)
+                                    <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}"
                                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-500/20 to-teal-500/20">
@@ -609,6 +612,7 @@
                                 <h3 class="font-bold text-white group-hover:text-emerald-400 transition-colors mb-2">{{ $related->name }}</h3>
                                 @if(!$related->is_custom)
                                     <p class="text-emerald-400 font-bold text-lg">{{ number_format($related->price, 0) }} THB</p>
+                                    <x-tpix-price :thb="$related->price" :tpix="$related->price_tpix" />
                                 @else
                                     <p class="text-gray-400">Contact for pricing</p>
                                 @endif

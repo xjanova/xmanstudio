@@ -236,22 +236,6 @@ class HomeContent
     }
 
     /**
-     * A product card's picture on the universe home: the key art drawn for it
-     * (public_html/artwork/universe/products/{slug}.webp) when there is one, else the product's own.
-     */
-    public static function productArt(object $product): ?string
-    {
-        $slug = (string) ($product->slug ?? '');
-        $file = 'artwork/universe/products/' . $slug . '.webp';
-
-        if (preg_match('/^[a-z0-9-]+$/', $slug) === 1 && is_file(public_path($file))) {
-            return asset($file);
-        }
-
-        return $product->artwork_url ?: null;
-    }
-
-    /**
      * The platforms we run ourselves, one planet each in the universe. Same copy and links as
      * the cards in nova-ecosystem.blade.php.
      *

@@ -5,9 +5,8 @@
 
     RewriteEngine On
 
-    # ไฟล์ที่ ReleaseDownloadStreamer ส่ง (/winx-tools|anti-x|autotradex|chanthra-studio|apps/aipray/download[/{version}],
-    # /cluadex/download, /gpuxmine/download, APK ที่ /tping|smschecker|localvpn/download/apk,
-    # ตัวติดตั้ง Windows /localvpn/download/windows[/{version}], /download/{slug}/{version},
+    # ไฟล์ที่ ReleaseDownloadStreamer ส่ง (/winx-tools|anti-x|anti-x-mobile|macdock|autotradex|chanthra-studio|apps/aipray/download[/{version}],
+    # /cluadex/download, /gpuxmine/download, APK ที่ /tping|smschecker|localvpn/download/apk, /download/{slug}/{version},
     # /api/download/{slug}[/{version}]) และตัวติดตั้ง /brainx/download (BrainXInstaller) ต้องถึงลูกค้าพร้อม
     # Content-Length: เบราว์เซอร์รู้ขนาดและรู้ว่าไฟล์ขาด · ตัวอัปเดต WinXTools/Chanthra/Aipray เทียบขนาดกับที่
     # update/check ประกาศ (Aipray ไม่ยอมโหลดถ้าไม่มี) · แอป Android ใช้แสดงความคืบหน้าตอนอัปเดต
@@ -15,7 +14,13 @@
     # และตั้งแต่ 2.4.59 ไม่เชื่อ Content-Length ที่ PHP-FPM ส่งมา เว้นแต่ตั้ง ap_trust_cgilike_cl
     # เชื่อได้เพราะ streamer ไม่ส่งเกินขนาดที่ประกาศ · route ที่ย้ายมาใช้ streamer ต้องเพิ่มที่นี่ด้วย
     # THE_REQUEST คือบรรทัดคำขอเดิม จึงตรงอีกครั้งตอน redirect ภายในไป index.php ซึ่งเป็นคำขอที่ตอบจริง
-    RewriteCond %{THE_REQUEST} ^\S+\s/(?:(?:winx-tools|anti-x|autotradex|chanthra-studio|apps/aipray|cluadex|gpuxmine|brainx)/download(?:/[^\s?/]+)?|(?:tping|smschecker|localvpn)/download/apk|localvpn/download/windows(?:/[^\s?/]+)?|download/[^\s?/]+/[^\s?/]+|api/download/[^\s?/]+(?:/[^\s?/]+)?)[?\s] [NC]
+    RewriteCond %{THE_REQUEST} ^\S+\s/(?:(?:winx-tools|anti-x|anti-x-mobile|macdock|autotradex|chanthra-studio|apps/aipray|cluadex|gpuxmine|brainx)/download(?:/[^\s?/]+)?|(?:tping|smschecker|localvpn)/download/apk|download/[^\s?/]+/[^\s?/]+|api/download/[^\s?/]+(?:/[^\s?/]+)?)[?\s] [NC]
+    RewriteRule ^ - [E=no-gzip:1,E=dont-vary:1,E=ap_trust_cgilike_cl:1]
+
+    # ตัวติดตั้ง Windows ของ LocalVPN /localvpn/download/windows[/{version}] — ReleaseDownloadStreamer ส่งเหมือนกฎด้านบน
+    # ตัวอัปเดตในแอปบน Windows เทียบ Content-Length กับ file_size ที่ update/check?platform=windows ประกาศ
+    # แยกบรรทัดไว้ไม่ให้ชนกับรายการ URL ด้านบนที่หลาย PR แก้พร้อมกัน (LocalVpnWindowsDownloadTest ตรวจกฎนี้)
+    RewriteCond %{THE_REQUEST} ^\S+\s/localvpn/download/windows(?:/[^\s?/]+)?[?\s] [NC]
     RewriteRule ^ - [E=no-gzip:1,E=dont-vary:1,E=ap_trust_cgilike_cl:1]
 
     # Handle Authorization Header
@@ -35,4 +40,12 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# product.xman4289.com draws product pictures from here into a WebGL canvas (/api/v1/catalog),
+# which a cross-origin image taints unless it is served with CORS. Public pictures only.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(webp|png|jpe?g|gif)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
 </IfModule>

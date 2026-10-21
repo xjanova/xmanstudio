@@ -119,19 +119,32 @@
                 GitHub Settings
             </h3>
         </div>
-        <form action="{{ route('admin.products.versions.github', $product) }}" method="POST" class="p-6">
+        {{-- autocomplete="off" ทั้งฟอร์ม + new-password ที่ช่อง token: ไม่งั้นเบราว์เซอร์มองช่อง Repository เป็น
+             username และช่อง Token เป็น password แล้วกรอกอีเมล/รหัสผ่านล็อกอินแอดมินลงไปเอง (brainx-cloud 2026-10-18) --}}
+        <form action="{{ route('admin.products.versions.github', $product) }}" method="POST" class="p-6" autocomplete="off">
             @csrf
+            @if($errors->any())
+                <div class="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach($errors->all() as $message)
+                            <li>{{ $message }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Owner</label>
-                        <input type="text" name="github_owner" value="{{ $product->githubSetting?->github_owner ?? 'xjanova' }}"
+                        <input type="text" name="github_owner" value="{{ old('github_owner', $product->githubSetting?->github_owner ?? 'xjanova') }}"
+                               autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true"
                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all"
                                placeholder="username or org">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Repository</label>
-                        <input type="text" name="github_repo" value="{{ $product->githubSetting?->github_repo ?? '' }}"
+                        <input type="text" name="github_repo" value="{{ old('github_repo', $product->githubSetting?->github_repo ?? '') }}"
+                               autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true"
                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all"
                                placeholder="repo-name">
                     </div>
@@ -140,6 +153,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Personal Access Token</label>
                     <input type="password" name="github_token" value="{{ $product->githubSetting ? '********' : '' }}"
+                           autocomplete="new-password" data-1p-ignore data-lpignore="true"
                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all"
                            placeholder="ghp_xxxxxxxxxxxx">
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">

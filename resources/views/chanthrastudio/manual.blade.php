@@ -265,7 +265,7 @@
                         <div class="step-num">1</div>
                         <div>
                             <h3 style="margin-top: 0;">ดาวน์โหลด</h3>
-                            <p>กด <a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลดเวอร์ชันล่าสุด</a> จะได้ไฟล์ <code>ChanthraStudio-vX.Y.Z-win-x64.zip</code></p>
+                            <p>กด @if($comingSoon)<span style="color: var(--gold);" data-coming-soon>ดาวน์โหลดเวอร์ชันล่าสุด (Coming Soon — ยังไม่เปิดให้ดาวน์โหลด)</span>@else<a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลดเวอร์ชันล่าสุด</a>@endif จะได้ไฟล์ <code>ChanthraStudio-vX.Y.Z-win-x64.zip</code></p>
                         </div>
                     </div>
 
@@ -343,7 +343,7 @@
                     <p>กด <code>Settings → License &amp; Updates → Check for updates</code> เพื่อตรวจสอบทันที</p>
 
                     <h3>ถ้ายังไม่ได้ activate</h3>
-                    <p>ปุ่ม Install จะ disabled ให้ <a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลด zip เวอร์ชันล่าสุด</a> มาแตกทับโฟลเดอร์เดิมเองแบบ manual</p>
+                    <p>ปุ่ม Install จะ disabled ให้ @if($comingSoon)<span style="color: var(--gold);" data-coming-soon>ดาวน์โหลด zip เวอร์ชันล่าสุด (Coming Soon — ยังไม่เปิดให้ดาวน์โหลด)</span>@else<a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลด zip เวอร์ชันล่าสุด</a>@endif มาแตกทับโฟลเดอร์เดิมเองแบบ manual</p>
 
                     <div class="doc-callout">
                         <strong>เบื้องหลัง</strong> — เมื่อกด Install แอปจะดาวน์โหลด zip ลง <code>%TEMP%</code>, สร้างสคริปต์ <code>chanthra-studio-update.cmd</code> ที่รอให้แอปปิด แล้วแตก zip ทับ install dir แล้วเปิดแอปใหม่
@@ -487,7 +487,7 @@
                         <ul>
                             <li>ตรวจ License — ต้อง valid ก่อนระบบ update ทำงาน</li>
                             <li>กด <code>Settings → Check for updates</code> เพื่อ trigger เอง</li>
-                            <li>ถ้ายังไม่เจอ ให้ <a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลด zip เวอร์ชันล่าสุด</a> มาแตกทับโฟลเดอร์เดิม</li>
+                            <li>ถ้ายังไม่เจอ ให้ @if($comingSoon)<span style="color: var(--gold);" data-coming-soon>ดาวน์โหลด zip เวอร์ชันล่าสุด (Coming Soon — ยังไม่เปิดให้ดาวน์โหลด)</span>@else<a class="gold-link" href="{{ route('chanthra-studio.download') }}">ดาวน์โหลด zip เวอร์ชันล่าสุด</a>@endif มาแตกทับโฟลเดอร์เดิม</li>
                         </ul>
                     </div>
                 </section>
