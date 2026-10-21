@@ -23,6 +23,7 @@ class ProductVersion extends Model
         'storage_path',
         'file_size',
         'sha256',
+        'assets',
         'changelog',
         'is_active',
         'synced_at',
@@ -31,6 +32,7 @@ class ProductVersion extends Model
     protected $casts = [
         'github_release_id' => 'integer',
         'file_size' => 'integer',
+        'assets' => 'array',
         'is_active' => 'boolean',
         'synced_at' => 'datetime',
     ];
@@ -55,6 +57,47 @@ class ProductVersion extends Model
     public function downloadLogs(): HasMany
     {
         return $this->hasMany(DownloadLog::class);
+    }
+
+    /**
+     * ไฟล์หนึ่งใน release ของ GitHub ที่เวอร์ชันนี้มาจาก ตามชื่อ (ไม่สนตัวพิมพ์)
+     *
+     * null = release ไม่มีไฟล์นี้ หรือเวอร์ชันถูก sync ไว้ก่อนเริ่มเก็บรายการไฟล์ (assets = null — read-through เติมให้)
+     *
+     * @return ?array{name: string, size: ?int, sha256: ?string, download_url: ?string, api_url: ?string}
+     */
+    public function releaseAsset(string $name): ?array
+    {
+        foreach ($this->assets ?? [] as $asset) {
+            if (is_array($asset) && strcasecmp((string) ($asset['name'] ?? ''), $name) === 0) {
+                return $asset;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * เวอร์ชันเดียวกันนี้ แต่ไฟล์เป็น $asset แทนไฟล์หลัก — ให้ ReleaseDownloadStreamer ส่งไฟล์อื่นของ release เดียวกัน
+     * (ตัวติดตั้ง Windows ของ LocalVPN คู่กับ APK) ด้วยกฎเดียวกันทุกข้อ: token, ลิงก์สำรอง, HEAD, ขนาด
+     *
+     * ไม่ใช่แถวใน DB — exists = false แต่ใช้ id เดิมเพื่อนับยอดโหลดเข้าเวอร์ชันนี้ save() หลุดมาก็ชน primary key
+     * ไม่มีทางเขียนข้อมูลตัวติดตั้งทับ APK
+     *
+     * @param  array{name: string, size?: ?int, sha256?: ?string, download_url?: ?string, api_url?: ?string}  $asset
+     */
+    public function withReleaseAsset(array $asset): self
+    {
+        return (new static)->forceFill([
+            'id' => $this->id,
+            'product_id' => $this->product_id,
+            'version' => $this->version,
+            'github_release_url' => $asset['api_url'] ?? null,
+            'download_url' => $asset['download_url'] ?? null,
+            'download_filename' => $asset['name'],
+            'file_size' => $asset['size'] ?? null,
+            'sha256' => $asset['sha256'] ?? null,
+        ]);
     }
 
     public function scopeActive($query)

@@ -70,7 +70,8 @@ class CustomerDownloadCenterTest extends TestCase
             'WinXTools' => ['winx-tools', '/winx-tools/download'],
             'Aipray' => ['aipray', '/apps/aipray/download'],
             'GigGok' => ['giggok', '/giggok/download'],
-            'LocalVPN' => ['localvpn', '/localvpn/download/apk'],
+            // Android and Windows: the page with both installers, never the APK alone
+            'LocalVPN' => ['localvpn', '/localvpn/download'],
             'SMS Checker' => ['smschecker', '/smschecker/download/apk'],
             'Tping' => ['tping', '/tping/download/apk'],
         ];
@@ -200,7 +201,7 @@ class CustomerDownloadCenterTest extends TestCase
             'WinXTools' => ['winx-tools', 'Windows'],
             'Aipray' => ['aipray', 'Android'],
             'GigGok' => ['giggok', 'Android'],
-            'LocalVPN' => ['localvpn', 'Android'],
+            'LocalVPN' => ['localvpn', 'Android, Windows'],
             'SMS Checker' => ['smschecker', 'Android'],
             'Tping' => ['tping', 'Android'],
         ];

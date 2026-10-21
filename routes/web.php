@@ -385,6 +385,12 @@ Route::prefix('localvpn')->name('localvpn.')->group(function () {
     Route::get('/download/apk', [LocalVpnWebController::class, 'downloadApk'])
         ->middleware('throttle:30,1,localvpn-apk-download')
         ->name('download.apk');
+    // ตัวติดตั้ง Windows (.exe) ของ release เดียวกัน — ส่งผ่านเซิร์ฟเวอร์เอง ห้าม redirect ไป GitHub
+    // {version} = ตัวนั้นเป๊ะ ๆ ตามที่ update/check?platform=windows ประกาศ sha256 ไว้ · ไม่ใส่ = ตัวที่ active
+    Route::get('/download/windows/{version?}', [LocalVpnWebController::class, 'downloadWindows'])
+        ->where('version', '[0-9A-Za-z.\-]+')
+        ->middleware('throttle:30,1,localvpn-windows-download')
+        ->name('download.windows');
     Route::get('/install-guide', [LocalVpnWebController::class, 'installGuide'])->name('install-guide');
 
     // Require authentication for checkout & payment

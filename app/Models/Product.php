@@ -146,7 +146,10 @@ class Product extends Model
             return null;
         }
 
-        $route = config('downloads.app_routes', [])[$this->slug] ?? null;
+        // An app with installers for more than one platform goes to the page that offers each of them
+        $route = config('downloads.app_pages', [])[$this->slug]
+            ?? config('downloads.app_routes', [])[$this->slug]
+            ?? null;
 
         // A route this site does not register must not take the whole page down with it
         if ($route !== null && Route::has($route)) {

@@ -17,6 +17,12 @@
     RewriteCond %{THE_REQUEST} ^\S+\s/(?:(?:winx-tools|anti-x|anti-x-mobile|macdock|autotradex|chanthra-studio|apps/aipray|apps/thaiprompt-pos(?:-windows)?|cluadex|gpuxmine|brainx)/download(?:/[^\s?/]+)?|(?:tping|smschecker|localvpn)/download/apk|download/[^\s?/]+/[^\s?/]+|api/download/[^\s?/]+(?:/[^\s?/]+)?)[?\s] [NC]
     RewriteRule ^ - [E=no-gzip:1,E=dont-vary:1,E=ap_trust_cgilike_cl:1]
 
+    # ตัวติดตั้ง Windows ของ LocalVPN /localvpn/download/windows[/{version}] — ReleaseDownloadStreamer ส่งเหมือนกฎด้านบน
+    # ตัวอัปเดตในแอปบน Windows เทียบ Content-Length กับ file_size ที่ update/check?platform=windows ประกาศ
+    # แยกบรรทัดไว้ไม่ให้ชนกับรายการ URL ด้านบนที่หลาย PR แก้พร้อมกัน (LocalVpnWindowsDownloadTest ตรวจกฎนี้)
+    RewriteCond %{THE_REQUEST} ^\S+\s/localvpn/download/windows(?:/[^\s?/]+)?[?\s] [NC]
+    RewriteRule ^ - [E=no-gzip:1,E=dont-vary:1,E=ap_trust_cgilike_cl:1]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
