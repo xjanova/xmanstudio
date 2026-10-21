@@ -161,6 +161,10 @@ class ProductController extends Controller
         if ($slug === 'chanthra-studio') {
             return redirect()->route('chanthra-studio.detail');
         }
+        // แอปมือถือของ Anti X อยู่ในหน้า Anti X (ส่วน #mobile ที่มีปุ่มดาวน์โหลดฟรีให้ทุกคน) — ไม่ใช่หน้า ฿0 ทั่วไปที่มีตะกร้า
+        if ($slug === 'anti-x-mobile') {
+            return redirect()->to(route('products.show', 'anti-x') . '#mobile');
+        }
 
         // Custom views, keyed by the product's real slug. Keys that matched no
         // product ('xcluadeagent', 'live-x-shop-pro', 'winxtools', 'postxagent')

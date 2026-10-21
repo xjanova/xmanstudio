@@ -91,6 +91,8 @@ class ProductLicenseController extends Controller
     private const FREEMIUM_PRODUCTS = [
         'localvpn',
         'giggok',
+        // Anti X Mobile (2026-10-21): แอปมือถือคู่หูของ Anti X ฟรีทุกคน — คีย์ FREE คือการลงทะเบียนเครื่องตามระบบ ไม่ได้ปลดอะไร
+        'anti-x-mobile',
     ];
 
     /**
@@ -106,6 +108,10 @@ class ProductLicenseController extends Controller
         ],
         'localvpn' => [
             'demo' => ['all_features', 'trial_mode'],
+        ],
+        // ทั้งแอปฟรี — ไม่มีอะไรกั๊กไว้ให้รุ่นจ่ายเงิน
+        'anti-x-mobile' => [
+            'free' => ['all_features', 'in_app_updates'],
         ],
     ];
 

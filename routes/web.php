@@ -86,6 +86,7 @@ use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\AntiXController;
+use App\Http\Controllers\AntiXMobileController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
@@ -431,6 +432,13 @@ Route::get('/anti-x/download/{version?}', [AntiXController::class, 'download'])
     ->where('version', '[0-9A-Za-z.\-]+')
     ->middleware('throttle:30,1,anti-x-download')
     ->name('anti-x.download');
+
+// Anti X Mobile (Android) - แอปคู่หูของ Anti X แจกฟรีทุกคน แม้ไม่ได้ซื้อ Anti X (เจ้าของ 2026-10-21) · ตัวอัปเดตในแอปโหลดผ่าน URL นี้
+// release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ ห้าม redirect ไป GitHub · ผูกกับ anti-x-mobile ตายตัว ห้ามทำเป็น {slug}
+Route::get('/anti-x-mobile/download/{version?}', [AntiXMobileController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,anti-x-mobile-download')
+    ->name('anti-x-mobile.download');
 
 // MacDock (Windows) - แอปฟรี zip เดียว · แอปอัปเดตตัวเองผ่าน URL นี้ (เฉพาะเครื่องที่มีไลเซ่นฟรี)
 // release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ ห้าม redirect ไป GitHub · ผูกกับ macdock ตายตัว ห้ามทำเป็น {slug}

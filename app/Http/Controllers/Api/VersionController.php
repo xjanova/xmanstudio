@@ -268,6 +268,8 @@ class VersionController extends Controller
         'winx-tools' => 'winx-tools.download',
         // Anti X: release ใน repo private — ไฟล์ผ่านเซิร์ฟเวอร์ด้วย token ของสินค้า ไม่มีลิงก์ GitHub ถึงแอป
         'anti-x' => 'anti-x.download',
+        // Anti X Mobile: APK ฟรีทุกคน release ใน repo private เหมือน Anti X
+        'anti-x-mobile' => 'anti-x-mobile.download',
         'autotradex' => 'autotradex.download',
         'chanthra-studio' => 'chanthra-studio.download',
         'aipray' => 'aipray.download',
