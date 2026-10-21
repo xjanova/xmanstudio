@@ -313,9 +313,33 @@ class AntiXMobileAppTest extends TestCase
         $this->assertStringNotContainsString(route('anti-x-mobile.download', '0.3.0'), $page);
     }
 
+    public function test_the_licence_pages_of_an_anti_x_owner_offer_both_downloads(): void
+    {
+        $this->makeVersion('0.3.0');
+        $antiX = Product::where('slug', 'anti-x')->firstOrFail();
+        $buyer = User::factory()->create();
+        $licence = $this->buyAntiX($buyer, $antiX);
+
+        // ใบอนุญาตของฉัน: แนะนำแอปมือถือฟรี (คีย์ของแอปผูกกับมือถือ ไม่ได้เป็นแถวในตาราง)
+        $list = $this->actingAs($buyer)->get(route('customer.licenses'))->assertOk()->getContent();
+        $this->assertStringContainsString('data-mobile-offer', $list);
+        $this->assertStringContainsString('href="' . route('anti-x-mobile.download', '0.3.0') . '"', $list);
+
+        // รายละเอียดคีย์ Anti X: ปุ่มโหลด Anti X (Windows) และแอปมือถือ — ไฟล์จากเว็บนี้ทั้งคู่
+        $detail = $this->actingAs($buyer)->get(route('customer.licenses.show', $licence))->assertOk()->getContent();
+        $this->assertStringContainsString('data-antix-download', $detail);
+        $this->assertStringContainsString('href="' . route('anti-x.download') . '"', $detail);
+        $this->assertStringContainsString('href="' . route('anti-x-mobile.download', '0.3.0') . '"', $detail);
+        $this->assertStringNotContainsStringIgnoringCase('github.com', $detail);
+
+        // คนที่ไม่มี Anti X ไม่เห็นป้ายนี้
+        $other = User::factory()->create();
+        $this->assertStringNotContainsString('data-mobile-offer', $this->actingAs($other)->get(route('customer.licenses'))->getContent());
+    }
+
     // ── helpers ─────────────────────────────────────────────────────────
 
-    private function buyAntiX(User $user, Product $antiX): void
+    private function buyAntiX(User $user, Product $antiX): LicenseKey
     {
         $order = Order::create([
             'order_number' => 'ORD-' . uniqid(), 'user_id' => $user->id, 'customer_name' => $user->name, 'customer_email' => $user->email,
@@ -325,7 +349,8 @@ class AntiXMobileAppTest extends TestCase
             'order_id' => $order->id, 'product_id' => $antiX->id, 'product_name' => $antiX->name,
             'price' => $antiX->price, 'quantity' => 1, 'subtotal' => $antiX->price,
         ]);
-        LicenseKey::create([
+
+        return LicenseKey::create([
             'product_id' => $antiX->id, 'order_id' => $order->id, 'user_id' => $user->id, 'license_key' => LicenseKey::generateKey(),
             'status' => LicenseKey::STATUS_ACTIVE, 'license_type' => 'yearly', 'expires_at' => now()->addYear(),
         ]);

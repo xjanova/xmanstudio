@@ -140,7 +140,12 @@ class CustomerPortalController extends Controller
                 ->where('status', LicenseKey::STATUS_EXPIRED)->count(),
         ];
 
-        return view('customer.licenses', compact('licenses', 'stats'));
+        // มีคีย์ Anti X = แนะนำแอปมือถือฟรี (คีย์ของแอปออกให้ต่อมือถือตอนเปิดครั้งแรก จึงไม่เป็นแถวในรายการนี้)
+        $mobileOffer = $this->ownedLicenses($user->id)->whereHas('product', fn ($q) => $q->where('slug', 'anti-x'))->exists()
+            ? Product::antiXMobileOffer()
+            : null;
+
+        return view('customer.licenses', compact('licenses', 'stats', 'mobileOffer'));
     }
 
     /**
@@ -188,7 +193,10 @@ class CustomerPortalController extends Controller
             ];
         }
 
-        return view('customer.license-detail', compact('license', 'canRenew', 'cloudStorage'));
+        // คีย์ Anti X: ปุ่มโหลดตัวโปรแกรมบน Windows และแอปมือถือฟรี ในหน้าเดียวกัน
+        $mobileOffer = $license->product?->slug === 'anti-x' ? Product::antiXMobileOffer() : null;
+
+        return view('customer.license-detail', compact('license', 'canRenew', 'cloudStorage', 'mobileOffer'));
     }
 
     /**
