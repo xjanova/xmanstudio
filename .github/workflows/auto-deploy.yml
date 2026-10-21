@@ -96,12 +96,43 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Install/update composer dependencies
-            echo "📦 Installing composer dependencies..."
-            composer update --no-dev --optimize-autoloader --no-interaction 2>&1 || {
-              echo "⚠️ Composer update failed, trying with --no-scripts"
-              composer update --no-dev --optimize-autoloader --no-interaction --no-scripts
-            }
+            # Install composer dependencies exactly as composer.lock pins them:
+            # the lock CI tested, with the same install the pre-check job runs.
+            # This was `composer update`, which re-resolved every package on the
+            # server and ignored the lock: on 2026-10-21 production ran 45 of 126
+            # packages at versions CI never saw (laravel/framework v11.57.0
+            # against a tested v11.55.0). To move a package, change composer.lock
+            # in a PR so CI tests it first — never `composer update` here.
+            # A failure stops the deploy right here, before migrations: nothing
+            # below should run against a vendor/ that does not match the lock.
+            echo "📦 Installing composer dependencies from composer.lock..."
+            COMPOSER_ERROR=""
+            if ! composer install --no-dev --optimize-autoloader --no-interaction 2>&1; then
+              # Retry once without scripts: gets past a flaky download, and tells
+              # a package failure apart from an app that cannot boot. The skipped
+              # post-autoload-dump scripts are then done by hand — drop the
+              # compiled bootstrap caches and rebuild the package manifest — or a
+              # package added or removed in this deploy leaves a stale manifest.
+              echo "⚠️ composer install failed, retrying with --no-scripts"
+              if ! composer install --no-dev --optimize-autoloader --no-interaction --no-scripts 2>&1; then
+                COMPOSER_ERROR="composer install failed, with and without scripts (see the output above)"
+              else
+                rm -f bootstrap/cache/config.php bootstrap/cache/services.php bootstrap/cache/packages.php
+                if ! php artisan package:discover --ansi 2>&1; then
+                  COMPOSER_ERROR="packages installed, but php artisan package:discover failed (see the output above)"
+                fi
+              fi
+            fi
+            if [ -n "$COMPOSER_ERROR" ]; then
+              echo ""
+              echo "::error title=Composer install failed::${COMPOSER_ERROR}. The new code is checked out, but vendor/ may not match composer.lock."
+              echo "❌❌❌ DEPLOY FAILED: ${COMPOSER_ERROR}"
+              echo "The new code is checked out, but vendor/ may not match composer.lock."
+              echo "Migrations, the asset build, caches and restarts did NOT run."
+              echo "A lock that does not fit this server shows up above as a platform requirement"
+              echo "(PHP version or extension). Fix composer.lock in a PR, then re-run this workflow."
+              exit 1
+            fi
 
             # Run migrations (if any)
             # A failed migration FAILS the deploy. It used to be echoed as a
