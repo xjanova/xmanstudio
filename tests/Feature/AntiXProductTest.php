@@ -375,6 +375,176 @@ class AntiXProductTest extends TestCase
         $this->assertSame($version->id, DownloadLog::sole()->product_version_id);
     }
 
+    // ── resuming a broken download (Range) ──────────────────────────────
+    // .250's route to Cloudflare drops connections mid-body: the updater retries with Range from what it has
+
+    public function test_a_whole_download_offers_to_resume_and_names_the_file_by_its_sha256(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->setting()->update(['github_token' => self::TOKEN]);
+        $this->fakeRelease();
+
+        $response = $this->get('/anti-x/download/1.2.0', ['Accept' => '']);
+
+        $response->assertOk()
+            ->assertHeader('Accept-Ranges', 'bytes')
+            ->assertHeader('ETag', '"' . self::SHA256 . '"')
+            ->assertHeader('Content-Length', (string) strlen(self::ZIP_BYTES))
+            ->assertHeaderMissing('Content-Range');
+        $this->assertSame(self::ZIP_BYTES, $response->streamedContent());
+        Http::assertSent(fn ($request) => ! $request->hasHeader('Range'));
+    }
+
+    public function test_a_range_resumes_with_206_and_only_the_missing_bytes(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->setting()->update(['github_token' => self::TOKEN]);
+        $this->fakeRelease();
+        $size = strlen(self::ZIP_BYTES);
+
+        $response = $this->get('/anti-x/download/1.2.0', ['Accept' => '', 'Range' => 'bytes=5-', 'If-Range' => '"' . self::SHA256 . '"']);
+
+        $response->assertStatus(206)
+            ->assertHeader('Content-Type', 'application/octet-stream')
+            ->assertHeader('Content-Range', 'bytes 5-' . ($size - 1) . '/' . $size)
+            ->assertHeader('Content-Length', (string) ($size - 5))
+            ->assertHeader('Accept-Ranges', 'bytes')
+            ->assertHeader('ETag', '"' . self::SHA256 . '"')
+            ->assertHeaderMissing('Location');
+        $this->assertSame(substr(self::ZIP_BYTES, 5), $response->streamedContent());
+        $this->assertNoTraceOfGithub($response);
+
+        // the range reaches the CDN through GitHub's redirect, so the server does not pull the whole file either
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'release-assets.githubusercontent.com')
+            && $request->header('Range') === ['bytes=5-' . ($size - 1)]);
+
+        // a resume is the same download, not another one
+        $this->assertSame(0, DownloadLog::count());
+    }
+
+    public function test_a_closed_range_and_a_suffix_range_get_exactly_their_bytes(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->setting()->update(['github_token' => self::TOKEN]);
+        $this->fakeRelease();
+        $size = strlen(self::ZIP_BYTES);
+
+        $this->get('/anti-x/download/1.2.0', ['Accept' => '', 'Range' => 'bytes=2-6'])
+            ->assertStatus(206)
+            ->assertHeader('Content-Range', "bytes 2-6/{$size}")
+            ->assertHeader('Content-Length', '5')
+            ->assertStreamedContent(substr(self::ZIP_BYTES, 2, 5));
+
+        $this->get('/anti-x/download/1.2.0', ['Accept' => '', 'Range' => 'bytes=-4'])
+            ->assertStatus(206)
+            ->assertHeader('Content-Range', 'bytes ' . ($size - 4) . '-' . ($size - 1) . "/{$size}")
+            ->assertStreamedContent(substr(self::ZIP_BYTES, -4));
+    }
+
+    public function test_when_github_ignores_the_range_the_server_drops_the_bytes_before_it(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->setting()->update(['github_token' => self::TOKEN]);
+        $this->fakeRelease(honoursRange: false);
+        $size = strlen(self::ZIP_BYTES);
+
+        $response = $this->get('/anti-x/download/1.2.0', ['Accept' => '', 'Range' => 'bytes=7-']);
+
+        $response->assertStatus(206)
+            ->assertHeader('Content-Range', 'bytes 7-' . ($size - 1) . '/' . $size)
+            ->assertHeader('Content-Length', (string) ($size - 7));
+        $this->assertSame(substr(self::ZIP_BYTES, 7), $response->streamedContent());
+    }
+
+    public function test_a_range_past_the_end_is_416_and_never_asks_github(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->setting()->update(['github_token' => self::TOKEN]);
+        $size = strlen(self::ZIP_BYTES);
+
+        // no Http::fake — preventStrayRequests fails the test if GitHub is asked
+        foreach (["bytes={$size}-", 'bytes=' . ($size + 100) . '-', 'bytes=-0'] as $range) {
+            $this->get('/anti-x/download/1.2.0', ['Accept' => '', 'Range' => $range])
+                ->assertStatus(416)
+                ->assertHeader('Content-Range', "bytes */{$size}")
+                ->assertHeader('Accept-Ranges', 'bytes');
+        }
+
+        $this->assertSame(0, DownloadLog::count());
+    }
+
+    public function test_a_range_for_another_build_or_one_it_cannot_honour_gets_the_whole_file(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->setting()->update(['github_token' => self::TOKEN]);
+        $this->fakeRelease();
+
+        $headers = [
+            'stale If-Range' => ['Range' => 'bytes=5-', 'If-Range' => '"' . str_repeat('0', 64) . '"'],
+            'several ranges' => ['Range' => 'bytes=0-1,4-5'],
+            'not bytes' => ['Range' => 'items=0-1'],
+            'backwards' => ['Range' => 'bytes=6-2'],
+        ];
+
+        foreach ($headers as $case => $range) {
+            $response = $this->get('/anti-x/download/1.2.0', ['Accept' => ''] + $range);
+
+            $response->assertOk()->assertHeaderMissing('Content-Range');
+            // "none" keeps Apache's own byterange filter off this 200
+            $this->assertSame('none', $response->headers->get('Accept-Ranges'), $case);
+            $this->assertSame(self::ZIP_BYTES, $response->streamedContent(), $case);
+        }
+    }
+
+    public function test_a_github_file_of_another_size_is_never_resumed(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->setting()->update(['github_token' => self::TOKEN]);
+        $other = self::ZIP_BYTES . 'rebuilt';
+
+        Http::fake([
+            'api.github.com/repos/xjanova/antix/releases/assets/802' => Http::response('', 302, ['Location' => self::SIGNED_URL]),
+            'release-assets.githubusercontent.com/*' => fn ($request) => $request->hasHeader('Range')
+                ? Http::response(substr($other, 5), 206, ['Content-Range' => 'bytes 5-' . (strlen($other) - 1) . '/' . strlen($other)])
+                : Http::response($other, 200, ['Content-Length' => (string) strlen($other)]),
+        ]);
+
+        $response = $this->get('/anti-x/download/1.2.0', ['Accept' => '', 'Range' => 'bytes=5-']);
+
+        // the whole real file: the updater starts over and its sha256 check refuses it
+        $response->assertOk()->assertHeaderMissing('Content-Range');
+        $this->assertSame($other, $response->streamedContent());
+    }
+
+    public function test_a_github_file_shorter_than_recorded_sends_the_whole_file_not_an_error(): void
+    {
+        $this->makeVersion('1.2.0');
+        $this->setting()->update(['github_token' => self::TOKEN]);
+        $short = substr(self::ZIP_BYTES, 0, 4);
+
+        Http::fake([
+            'api.github.com/repos/xjanova/antix/releases/assets/802' => Http::response('', 302, ['Location' => self::SIGNED_URL]),
+            'release-assets.githubusercontent.com/*' => fn ($request) => $request->hasHeader('Range')
+                ? Http::response('', 416, ['Content-Range' => 'bytes */4'])
+                : Http::response($short, 200, ['Content-Length' => '4']),
+        ]);
+
+        $response = $this->get('/anti-x/download/1.2.0', ['Accept' => '', 'Range' => 'bytes=5-']);
+
+        $response->assertOk()->assertHeader('Content-Length', '4');
+        $this->assertSame($short, $response->streamedContent());
+    }
+
+    public function test_head_says_the_download_can_resume(): void
+    {
+        $this->makeVersion('1.2.0');
+
+        $this->call('HEAD', '/anti-x/download/1.2.0', [], [], [], ['HTTP_ACCEPT' => '*/*'])
+            ->assertOk()
+            ->assertHeader('Accept-Ranges', 'bytes')
+            ->assertHeader('ETag', '"' . self::SHA256 . '"');
+    }
+
     public function test_without_a_token_the_app_gets_a_clean_error_not_a_github_page(): void
     {
         $this->makeVersion('1.2.0');
@@ -516,6 +686,32 @@ class AntiXProductTest extends TestCase
     private function setting(): GithubSetting
     {
         return GithubSetting::where('product_id', $this->product->id)->sole();
+    }
+
+    /** GitHub's asset API → its CDN, which answers Range like the real one does (or ignores it) */
+    private function fakeRelease(bool $honoursRange = true): void
+    {
+        Http::fake([
+            'api.github.com/repos/xjanova/antix/releases/assets/802' => Http::response('', 302, ['Location' => self::SIGNED_URL]),
+            'release-assets.githubusercontent.com/*' => function ($request) use ($honoursRange) {
+                $size = strlen(self::ZIP_BYTES);
+
+                if ($honoursRange && preg_match('/^bytes=(\d+)-(\d+)$/', (string) ($request->header('Range')[0] ?? ''), $m)) {
+                    $piece = substr(self::ZIP_BYTES, (int) $m[1], (int) $m[2] - (int) $m[1] + 1);
+
+                    return Http::response($piece, 206, [
+                        'Content-Type' => 'application/octet-stream',
+                        'Content-Length' => (string) strlen($piece),
+                        'Content-Range' => "bytes {$m[1]}-{$m[2]}/{$size}",
+                    ]);
+                }
+
+                return Http::response(self::ZIP_BYTES, 200, [
+                    'Content-Type' => 'application/octet-stream',
+                    'Content-Length' => (string) $size,
+                ]);
+            },
+        ]);
     }
 
     private function makeVersion(string $version): ProductVersion

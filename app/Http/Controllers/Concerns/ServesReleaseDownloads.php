@@ -43,7 +43,11 @@ trait ServesReleaseDownloads
         }
 
         // HEAD (curl -I, link preview) ไม่ได้โหลดไฟล์ไปจริง ไม่นับเป็นการดาวน์โหลด
-        if (! $request->isMethod('HEAD')) {
+        // โหลดต่อจากที่ค้าง (206 ที่ไม่ได้เริ่มจาก byte 0) และ 416 ก็ไม่ใช่การโหลดใหม่ — นับครั้งเดียวต่อไฟล์
+        $resumed = $response->getStatusCode() === 416
+            || ($response->getStatusCode() === 206 && ! str_starts_with((string) $response->headers->get('Content-Range'), 'bytes 0-'));
+
+        if (! $request->isMethod('HEAD') && ! $resumed) {
             $this->logReleaseDownload($request, $product, $version);
         }
 
