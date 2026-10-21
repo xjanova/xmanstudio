@@ -8,6 +8,7 @@ use App\Models\AiprayAudioSample;
 use App\Models\AiprayChant;
 use App\Models\AiprayPrayerSession;
 use App\Models\AiprayTrainingJob;
+use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -245,6 +246,11 @@ class AiprayApiController extends Controller
     public function downloadModel(int $model): BinaryFileResponse|JsonResponse
     {
         $aiModel = AiprayAiModel::findOrFail($model);
+
+        // Aipray set to Coming Soon: no file of it for anyone, like its APK (owner, 2026-10-12)
+        if (Product::slugIsComingSoon('aipray')) {
+            return response()->json(['success' => false, 'error' => 'Coming soon: this product is not available for download yet', 'coming_soon' => true], 403);
+        }
 
         if (! $aiModel->onnx_file_path || ! Storage::disk('local')->exists($aiModel->onnx_file_path)) {
             return response()->json(['error' => 'Model file not found'], 404);

@@ -81,6 +81,7 @@ class DomainRegistration extends Model
         'privacy_protection',
         'auto_renew',
         'nameservers',
+        'own_nameservers',
         'registered_at',
         'expires_at',
         'previous_expires_at',
@@ -99,6 +100,7 @@ class DomainRegistration extends Model
         'privacy_protection' => 'boolean',
         'auto_renew' => 'boolean',
         'nameservers' => 'array',
+        'own_nameservers' => 'array',
         'registered_at' => 'datetime',
         'expires_at' => 'datetime',
         'previous_expires_at' => 'datetime',
@@ -345,6 +347,47 @@ class DomainRegistration extends Model
     }
 
     /**
+     * Is the domain still answered by our DNS — the zone the DNS panel edits?
+     *
+     * Unknown on either side counts as yes: that is every domain sold before
+     * own_nameservers existed, and the panel is what they always had.
+     */
+    public function usesOwnDns(): bool
+    {
+        $own = self::normaliseNameservers($this->own_nameservers);
+        $live = self::normaliseNameservers($this->nameservers);
+
+        return $own === [] || $live === [] || $own === $live;
+    }
+
+    public function usesCloudflare(): bool
+    {
+        $live = self::normaliseNameservers($this->nameservers);
+
+        return $live !== []
+            && collect($live)->every(fn ($ns) => str_ends_with($ns, '.ns.cloudflare.com'));
+    }
+
+    /**
+     * Lower-case, no trailing dot, no duplicates, sorted — so two lists that
+     * name the same servers compare equal whatever order they came in.
+     *
+     * @return array<int,string>
+     */
+    public static function normaliseNameservers(?array $servers): array
+    {
+        $list = collect($servers ?? [])
+            ->filter(fn ($ns) => is_string($ns) && trim($ns) !== '')
+            ->map(fn ($ns) => rtrim(strtolower(trim($ns)), '.'))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        return $list;
+    }
+
+    /**
      * Has the money already been given back? Guards a second refund when a
      * failure is retried.
      */
@@ -424,6 +467,31 @@ class DomainRegistration extends Model
                 'label_en' => 'Unknown',
                 'classes' => 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
             ],
+        };
+    }
+
+    /**
+     * Why an order did not go through, in Thai, for the admin's list. Read
+     * from last_error, which is written by the registrar service — so this
+     * follows its wording. Null when there is nothing to explain.
+     */
+    public function failureSummary(): ?string
+    {
+        $error = strtolower((string) $this->last_error);
+
+        if ($error === '') {
+            return null;
+        }
+
+        return match (true) {
+            str_contains($error, 'whois profile') => 'ทะเบียนไม่รับข้อมูลผู้ถือครอง'
+                . (preg_match('/refused: ([a-z_, ]+)/', $error, $m) ? ' (ช่อง: ' . trim($m[1]) . ')' : ''),
+            str_contains($error, 'http 402') || (bool) preg_match('/payment|insufficient|balance|funds|card|billing|declined/', $error) => 'บัตร/ยอดเงินที่ผู้ให้บริการตัดไม่ผ่าน',
+            str_contains($error, 'did not go out') => 'ติดต่อผู้ให้บริการไม่ได้ (คำสั่งไม่ได้ออกไป)',
+            str_contains($error, 'outcome unknown') => 'ไม่ได้รับคำตอบจากผู้ให้บริการ — ระบบกำลังตามผล',
+            str_contains($error, 'not available') || str_contains($error, 'taken') => 'โดเมนถูกจดไปก่อน',
+            str_contains($error, 'rejected') => 'ผู้ให้บริการปฏิเสธคำสั่ง',
+            default => 'ไม่สำเร็จ — ดูรายละเอียด',
         };
     }
 

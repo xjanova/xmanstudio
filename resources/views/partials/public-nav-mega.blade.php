@@ -20,6 +20,7 @@
         // Keep pointing at the external product site, as the old bar did — the
         // internal catalogue is reachable from the Featured zone below.
         ['th' => 'ผลิตภัณฑ์',   'en' => 'Products',  'url' => config('app.product_site_url'),  'art' => 'products',  'desc' => 'ซอฟต์แวร์พร้อมใช้'],
+        ['th' => 'เกม',         'en' => 'XgamesHub', 'url' => config('app.xgameshub_url'),     'art' => 'xgameshub', 'desc' => 'เกม 3 มิติ เล่นบนเว็บได้ทันที'],
         ['th' => 'เช่าใช้งาน',  'en' => 'Rentals',   'url' => route('rental.index'),           'art' => 'rental',    'desc' => 'จ่ายรายเดือน'],
         ['th' => 'จดโดเมน',     'en' => 'Domains',   'url' => route('domains.index'),          'art' => 'domains',   'desc' => 'ชื่อเว็บในนามคุณ'],
         ['th' => 'เช่า VPS',    'en' => 'VPS',       'url' => route('vps.index'),              'art' => 'vps',       'desc' => 'เซิร์ฟเวอร์ส่วนตัว root เต็มสิทธิ์'],
@@ -39,7 +40,7 @@
     // packs take over the nav on EVERY public page. The cache also means a
     // wrong entry sticks around for 10 minutes after the data is fixed.
     $megaProducts = \Illuminate\Support\Facades\Cache::remember('nav_mega_products', 600, function () {
-        return \App\Models\Product::onWebsite()->available()->latest()->take(3)->get(['id', 'name', 'slug', 'image', 'price']);
+        return \App\Models\Product::onWebsite()->available()->latest()->take(3)->get(['id', 'name', 'slug', 'image', 'price', 'price_tpix']);
     });
 @endphp
 
@@ -172,6 +173,7 @@
                             <span class="xm-mega__product-name">{{ $product->name }}</span>
                             @if($product->price > 0)
                                 <span class="xm-mega__product-price">฿{{ number_format($product->price, 0) }}</span>
+                                <x-tpix-price variant="plain" :thb="$product->price" :tpix="$product->price_tpix" class="xm-mega__product-price" style="font-size:11px;opacity:.8;" />
                             @endif
                         </span>
                     </a>

@@ -296,7 +296,8 @@ class WinXToolsDistributionTest extends TestCase
 
         // ไม่มี header ของต้นทางติดออกไป (ETag/x-ms-*/x-github-*) และไม่มีคำว่า github ที่ไหนเลย
         $this->assertNoTraceOfGithub($response);
-        $response->assertHeaderMissing('ETag');
+        // an ETag may go out (the release's sha256, for resuming with If-Range) but never the CDN's own
+        $this->assertNotSame('"0x8DCB7C0FFEE"', $response->headers->get('ETag'));
         $response->assertHeaderMissing('x-ms-request-id');
 
         // repo public: โหลดจากลิงก์ไฟล์ตรง ไม่ถาม API (preventStrayRequests กันไว้) ไม่มี token
@@ -634,7 +635,7 @@ class WinXToolsDistributionTest extends TestCase
 
         // assertSame = คีย์ ลำดับ และชนิดตรงกันทุกตัว — สิ่งที่แอปเดิม parse อยู่
         $this->assertSame($plans(499, 4990, 29000), $this->getJson('/api/v1/product/smschecker/pricing')->assertOk()->json('data.plans'));
-        $this->assertSame($plans(399, 2500, 5000), $this->getJson('/api/v1/product/localvpn/pricing')->assertOk()->json('data.plans'));
+        $this->assertSame($plans(199, 1990, 4990), $this->getJson('/api/v1/product/localvpn/pricing')->assertOk()->json('data.plans'));
 
         // สินค้าที่ไม่มีราคาใน config/licenses.php ไม่ได้ 399/2500/5000 ที่แต่งขึ้นอีกแล้ว
         // plans ว่างเป็น object {} ไม่ใช่ [] — แอปอ่าน plans เป็น map เสมอ

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Support\Auth\TwoFactor;
 use Illuminate\Console\Command;
 
 /**
@@ -47,6 +48,7 @@ class SecurityTwoFactorResetCommand extends Command
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ])->save();
+        TwoFactor::forgetDevices($user);
 
         $this->info("Reset. {$user->email} will be asked to scan a new QR code at the next admin page.");
 

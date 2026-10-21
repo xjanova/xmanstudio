@@ -21,7 +21,9 @@
 @php
     // These values land inside a CSS url()/background-position, so keep them to a
     // known-safe shape rather than trusting the caller.
-    $artSlug = preg_match('/^[a-z0-9-]+$/', $art) ? $art : 'hero-network';
+    // One optional folder level: the product pages pass "product/<slug>" for public_html/artwork/product/
+    // (with the folder rejected they all showed the fallback instead of their own artwork)
+    $artSlug = preg_match('/^(?:[a-z0-9-]+\/)?[a-z0-9-]+$/', $art) ? $art : 'hero-network';
     $artPosition = preg_match('/^[a-z0-9%. ]+$/i', $position) ? $position : 'center';
     $artOpacity = max(0, min(100, (int) $opacity)) / 100;
 

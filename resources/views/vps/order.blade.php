@@ -285,6 +285,7 @@
                                         <x-bi :th="$copy['first_th']" :en="$copy['first_en']" />
                                     </p>
                                     <p class="text-3xl font-bold">{{ $p['first_display'] }}</p>
+                                    <x-tpix-price variant="plain" :thb="$p['first'] ?? null" class="block text-sm text-amber-300" />
                                     <p class="mt-0.5 text-sm {{ $dearer ? 'text-amber-200' : 'text-indigo-200/80' }}">
                                         <x-bi th="ต่อไป" en="then" />
                                         <span class="font-bold text-white whitespace-nowrap">{{ $p['renew_display'] }}</span>/<x-bi :th="$p['unit_th']" :en="\App\Support\VpsPricing::unitLabel($p['key'], 'en')" />
@@ -329,6 +330,7 @@
                                     <x-bi :th="$copy['first_th']" :en="$copy['first_en']" />
                                 </span>
                                 <span class="block text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $p['first_display'] }}</span>
+                                <x-tpix-price :thb="$p['first'] ?? null" />
                                 @if((int) $p['months'] > 1)
                                     <span class="block text-xs text-slate-500 dark:text-slate-400">
                                         <x-bi th="เฉลี่ย" en="avg." /> <span class="whitespace-nowrap">{{ \App\Support\VpsPricing::format(ceil((float) $p['first'] / (int) $p['months'])) }}</span>/<x-bi th="เดือน" en="mo" />

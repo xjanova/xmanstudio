@@ -46,6 +46,16 @@ per period (`hostingerinth-vps-kvm2-thb-1m`) and opaque — copy them from the c
 
 ## Traps (each was a real bug)
 
+- **WHOIS keys are the registrar's, and per country.** The API reference documents `whois_details`
+  as a bare object; until 2026-10-09 we sent `address1` / `zip` / `state` / `phone` / `country`, and
+  every first purchase would have been refused at the profile step, after the debit. The real keys,
+  read back from its 422s: `address` (ONE line ≤ 50 chars, a digit and a letter, no `/` or other
+  symbols), `city`, `country_code`, `phone_cc` + `phone_number` (digits only), `state_<cc>` (one of
+  its region names, e.g. `state_th` = `Bangkok`) and `zip_<cc>` (Hong Kong: `zip_general`). Thai text
+  is accepted. The rules and every country's region list live in `config/domain_whois.php`;
+  `App\Support\WhoisContact` builds the payload and checks it (form, and again before the debit). To
+  re-learn a rule, POST a profile with a deliberately invalid e-mail: a 422 creates nothing.
+
 - **202 is not "done".** A 202 purchase means payment is still clearing and the product was **not**
   set up. A domain then lands in the portfolio as `pending_setup` (paid, registered to nobody) and
   must be finished with `POST /portfolio/{domain}/setup`; a VPS lands in state `initial` and needs
@@ -92,6 +102,18 @@ per period (`hostingerinth-vps-kvm2-thb-1m`) and opaque — copy them from the c
 - **Never show the supplier's name to customers**: templates mentioning it are dropped, the default
   `srvNNN.hstgr.cloud` hostname never replaces the customer's, plan names are ours (`VPS Business`,
   not `KVM 2`), `last_error` is hidden from serialisation.
+- **There is no standard Cloudflare pair, and ours is per account too.** "Point to Cloudflare"
+  (`/my-account/domains/{id}`) asks the pasted `*.ns.cloudflare.com` server itself (`App\Support\DnsProbe`):
+  a site still pending at Cloudflare is answered only on its assigned pair and REFUSED on every other,
+  so a wrong or premature pair changes nothing. The way back uses `own_nameservers`, captured at
+  registration only (`refreshFromUpstream(justRegistered: true)`) — our `*.dns-parking.com` pair differs
+  per account (ns1/ns2 answer NXDOMAIN for our zones), and the daily sync overwrites `nameservers`.
+- **The customer's own Cloudflare, by their token** (`cloudflare_connections`, `Customer\CloudflareController`).
+  The link (`CloudflareApiService::tokenTemplateUrl()`) pre-ticks Account Settings read + Zone/DNS/Zone
+  Settings edit. "Move automatically" creates the zone, copies our records into it ONLY when it is empty
+  (SRV/CAA are listed back, not copied; TTL < 60 becomes auto), then sets the assigned pair. Quick-setup
+  templates (`App\Support\CloudflareTemplates`) replace only clashing records. The token is encrypted,
+  hidden, in `dontFlash`, and never logged.
 - **First period vs renewal.** VPS and many TLDs are much dearer from the second period. Every price
   on the site says which one it is ("ปีแรก / ปีต่อไป", "เดือนแรก / เดือนถัดไป"), and renewals are
   charged at the renewal cost — never the first-period price again.

@@ -472,7 +472,7 @@
 
         {{-- Input --}}
         <div class="ai-chat-input-area">
-            <textarea class="ai-chat-input" id="aiChatInput" placeholder="พิมพ์ข้อความ..." rows="1" maxlength="2000"></textarea>
+            <textarea class="ai-chat-input field-bare" id="aiChatInput" placeholder="พิมพ์ข้อความ..." rows="1" maxlength="2000"></textarea>
             <button class="ai-chat-send" id="aiChatSend" onclick="window.AiChat.send()" aria-label="Send message">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>

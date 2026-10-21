@@ -92,6 +92,7 @@
                                     <span class="font-semibold text-white">.{{ $p['tld'] }}</span>
                                     <span class="text-cyan-300">{{ $p['price'] }}</span>
                                     <span class="text-slate-400 text-xs">→ {{ $p['renew'] }}</span>
+                                    <x-tpix-price variant="plain" :thb="$p['price_thb'] ?? null" class="text-amber-300 text-xs" />
                                 </span>
                             @endforeach
                         </div>
@@ -293,6 +294,7 @@
                                         <span class="text-[11px] text-slate-500 dark:text-slate-400"><x-bi th="ปีแรก" en="1st yr" /></span>
                                         {{ \App\Support\DomainPricing::format($t->registerPriceThb()) }}
                                     </p>
+                                    <x-tpix-price :thb="$t->registerPriceThb()" />
                                     <p class="text-[11px] {{ $t->renewalIsDearer() ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400' }}">
                                         <x-bi th="ปีต่อไป" en="then" /> {{ \App\Support\DomainPricing::format($t->renewPriceThb()) }}/<x-bi th="ปี" en="yr" />
                                     </p>

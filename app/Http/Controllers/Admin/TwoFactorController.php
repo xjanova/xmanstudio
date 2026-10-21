@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\TwoFactorTrustedDevice;
 use App\Support\Auth\Totp;
 use App\Support\Auth\TwoFactor;
 use Illuminate\Http\RedirectResponse;
@@ -28,6 +29,12 @@ class TwoFactorController extends Controller
                 'enabled' => true,
                 'remaining' => TwoFactor::remainingRecoveryCodes($user),
                 'freshCodes' => session('two_factor_fresh_codes'),
+                'devices' => TwoFactorTrustedDevice::where('user_id', $user->id)
+                    ->where('expires_at', '>', now())
+                    ->latest('last_used_at')
+                    ->get(),
+                'currentDeviceId' => TwoFactor::trustedDevice($request, $user)?->id,
+                'trustDays' => TwoFactor::trustDays(),
             ]);
         }
 
@@ -122,9 +129,32 @@ class TwoFactorController extends Controller
         ])->save();
 
         $request->session()->forget(TwoFactor::PENDING_KEY);
+        TwoFactor::forgetDevices($user);
 
         return redirect()
             ->route('admin.security.two-factor.show')
             ->with('success', 'ยกเลิกเครื่องเดิมแล้ว — สแกน QR ใหม่ด้วยเครื่องที่จะใช้ต่อ');
+    }
+
+    /** Stop one remembered browser from skipping the second step. */
+    public function forgetDevice(Request $request, TwoFactorTrustedDevice $device): RedirectResponse
+    {
+        abort_unless((int) $device->user_id === (int) $request->user()->id, 404);
+
+        $device->delete();
+
+        return redirect()
+            ->route('admin.security.two-factor.show')
+            ->with('success', 'ถอนเครื่อง ' . ($device->label ?: '') . ' แล้ว — ครั้งหน้าจะถูกถามรหัสอีก');
+    }
+
+    /** Lost a laptop, or not sure who else is signed in: every browser asks again. */
+    public function forgetAllDevices(Request $request): RedirectResponse
+    {
+        $count = TwoFactor::forgetDevices($request->user());
+
+        return redirect()
+            ->route('admin.security.two-factor.show')
+            ->with('success', "ลืมเครื่องที่จดจำไว้ทั้งหมดแล้ว ({$count} เครื่อง) — ทุกเครื่องจะถูกถามรหัสอีก");
     }
 }

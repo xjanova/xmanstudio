@@ -1,4 +1,6 @@
 @extends('layouts.app')
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+@php $csDownload = \App\Models\Product::slugIsComingSoon('cluadex-ai-coding-assistant'); @endphp
 
 @section('title', 'CluadeX - ผู้ช่วยเขียนโค้ด AI | XMAN Studio')
 
@@ -45,11 +47,15 @@
 
                     {{-- CTA --}}
                     <div class="flex flex-wrap gap-4">
+                        @if($csDownload)
+                            <span class="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25 flex items-center gap-2 text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                        @else
                         <a href="{{ route('cluadex.download') }}"
                            class="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25 flex items-center gap-2 text-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             ดาวน์โหลดฟรี
                         </a>
+                        @endif
                         <a href="{{ route('cluadex.pricing') }}"
                            class="px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all border border-white/20 flex items-center gap-2 text-lg backdrop-blur-sm">
                             ดูแพ็กเกจราคา
@@ -237,7 +243,11 @@
                         <li class="flex items-start gap-2 text-gray-500"><span class="mt-0.5">✗</span> Cloud AI Providers</li>
                         <li class="flex items-start gap-2 text-gray-500"><span class="mt-0.5">✗</span> Git/GitHub Integration</li>
                     </ul>
+                    @if($csDownload)
+                        <span class="block w-full text-center mt-8 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                    @else
                     <a href="{{ route('cluadex.download') }}" class="block w-full text-center mt-8 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all">ดาวน์โหลดฟรี</a>
+                    @endif
                 </div>
 
                 {{-- Pro --}}
@@ -250,6 +260,7 @@
                         {{-- the entry plan and its price, from config/licenses.php --}}
                         @php $proTerm = array_key_first($pricing); @endphp
                         <div class="text-4xl font-black text-indigo-400 mt-2">฿{{ number_format($pricing[$proTerm]['price']) }}<span class="text-base text-gray-400">{{ $proTerm === 'lifetime' ? ' จ่ายครั้งเดียว' : '/' . ($proTerm === 'monthly' ? 'เดือน' : 'ปี') }}</span></div>
+                        <x-tpix-price variant="detail" :thb="$pricing[$proTerm]['price'] ?? null" />
                         @endif
                     </div>
                     <ul class="space-y-2.5 text-gray-300 text-sm">
@@ -349,11 +360,15 @@
             <h2 class="text-4xl md:text-5xl font-black text-white mb-4">พร้อมเขียนโค้ดกับ AI?</h2>
             <p class="text-xl text-gray-400 mb-8">ดาวน์โหลดฟรี ไม่ต้องสมัคร ไม่มีค่าใช้จ่าย</p>
             <div class="flex flex-wrap gap-4 justify-center">
+                @if($csDownload)
+                    <span class="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-black text-lg rounded-2xl transition-all transform hover:scale-105 shadow-2xl shadow-green-500/25 flex items-center gap-3" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
+                @else
                 <a href="{{ route('cluadex.download') }}"
                    class="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-black text-lg rounded-2xl transition-all transform hover:scale-105 shadow-2xl shadow-green-500/25 flex items-center gap-3">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     ดาวน์โหลด CluadeX ฟรี
                 </a>
+                @endif
                 <a href="{{ route('cluadex.pricing') }}"
                    class="px-10 py-5 bg-white/10 hover:bg-white/20 text-white font-bold text-lg rounded-2xl transition-all border border-white/20 backdrop-blur-sm">
                     ดูแพ็กเกจ Pro

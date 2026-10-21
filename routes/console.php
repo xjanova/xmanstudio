@@ -342,3 +342,15 @@ Schedule::command('security:prune')
     ->onFailure(function () {
         Log::error('[Security] login log prune failed');
     });
+
+// TPIX: ราคาจากพูล DEX บนเชน + หาธุรกรรมที่ลูกค้าโอนเข้ามา แล้วปิดบิลให้อัตโนมัติ
+// ทุกนาที — ลูกค้าโอนผ่าน QR หรือแอปกระเป๋าโดยไม่ได้วางเลขธุรกรรม ต้องได้ของภายในนาทีเดียว
+// ล็อกกันรันซ้อนหมดอายุในห้านาที (ค่าเริ่มต้น 24 ชม. = รอบที่ถูกฆ่ากลางทางจะหยุดรับเงินทั้งวัน)
+// การปิดบิลซ้ำไม่ได้อยู่แล้ว (ล็อกแถวรายการ) — ดู App\Services\TpixPay\TpixPaymentService
+Schedule::command('tpix:pay-scan')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[TPIX Pay] scan failed');
+    });

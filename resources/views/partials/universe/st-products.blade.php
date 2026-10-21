@@ -1,9 +1,8 @@
 {{--
-    Stop 4 — the product nebula: real rows from $featuredProducts (active,
-    on the website, newest six). The card track slides sideways as the
+    Stop 4 — the product nebula: real rows from $featuredProducts (on sale
+    now, on the website, newest nine). The card track slides sideways as the
     visitor scrolls on. Only included when there is something to show.
-    Pictures: key art drawn for this page where there is some, else the
-    product's own (HomeContent::productArt).
+    Pictures: Product::artwork_url — the real one set in the admin, else product.xman4289.com's.
 --}}
 <section id="xu-products" class="xu-st" data-station="products" data-len="2.1"
          data-label-th="เนบิวลาผลิตภัณฑ์" data-label-en="Products" aria-labelledby="xu-products-title">
@@ -27,7 +26,7 @@
                 @foreach($featuredProducts as $product)
                     @php
                         $xuAccent = ['#22d3ee', '#8b5cf6', '#e879f9', '#34d399', '#fb7185', '#ffd479'][$loop->index % 6];
-                        $xuArt = \App\Support\HomeContent::productArt($product);
+                        $xuArt = $product->artwork_url;
                     @endphp
                     <a href="{{ route('products.show', $product->slug) }}"
                        class="xu-card xu-prod xu-r"
@@ -38,7 +37,7 @@
                             @else
                                 <span class="xu-prod__initials" aria-hidden="true">{{ mb_strtoupper(mb_substr($product->name, 0, 2)) }}</span>
                             @endif
-                            @if($product->is_coming_soon)
+                            @if($product->isComingSoon())
                                 <span class="xu-badge xu-badge--soon">เร็วๆ นี้ / Soon</span>
                             @endif
                         </span>
@@ -52,10 +51,11 @@
                                 <p class="xu-prod__desc">ดูรายละเอียดผลิตภัณฑ์และแพ็กเกจราคาทั้งหมด</p>
                             @endif
                             <span class="xu-prod__foot">
-                                @if($product->is_coming_soon)
+                                @if($product->isComingSoon())
                                     <span class="xu-price xu-price--soon">กำลังจะเปิดตัว <small>Coming soon</small></span>
                                 @elseif($product->price > 0)
                                     <span class="xu-price">฿{{ number_format($product->price, 0) }} <small>THB</small></span>
+                                    <x-tpix-price variant="plain" :thb="$product->price" :tpix="$product->price_tpix" style="font-size:12px;opacity:.85;" />
                                 @else
                                     <span class="xu-price xu-price--free">ฟรี <small>Free</small></span>
                                 @endif

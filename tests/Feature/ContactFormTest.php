@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\ContactMessageMail;
 use App\Models\Setting;
+use App\Support\ContactLinks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -51,7 +52,7 @@ class ContactFormTest extends TestCase
         });
     }
 
-    public function test_it_falls_back_to_the_app_from_address_when_no_contact_email_is_set(): void
+    public function test_it_falls_back_to_the_support_mailbox_when_no_contact_email_is_set(): void
     {
         Mail::fake();
         Setting::setValue('contact_email', '');
@@ -60,7 +61,8 @@ class ContactFormTest extends TestCase
         $this->post('/contact', $this->validPayload())
             ->assertSessionHas('contact_success');
 
-        Mail::assertSent(ContactMessageMail::class, fn ($mail) => $mail->hasTo('noreply@xman4289.com'));
+        // Not the no-reply sender: it has no mailbox, so the message would bounce.
+        Mail::assertSent(ContactMessageMail::class, fn ($mail) => $mail->hasTo(ContactLinks::DEFAULT_EMAIL));
     }
 
     public function test_it_rejects_a_submission_that_fills_the_honeypot(): void
@@ -94,15 +96,14 @@ class ContactFormTest extends TestCase
         Mail::assertNothingSent();
     }
 
-    public function test_it_keeps_the_lead_when_no_mailbox_can_be_resolved(): void
+    public function test_it_keeps_the_lead_when_the_mail_cannot_be_sent(): void
     {
-        Mail::fake();
-        Setting::setValue('contact_email', '');
-        config(['mail.from.address' => '']);
+        Setting::setValue('contact_email', 'team@xman4289.com');
+        // Partial, so the alert's own e-mail fallback still reaches a real (array) mailer.
+        Mail::partialMock()->shouldReceive('to')->andThrow(new \RuntimeException('mail transport down'));
 
         $this->post('/contact', $this->validPayload())
-            ->assertSessionHas('contact_error');
-
-        Mail::assertNothingSent();
+            ->assertSessionHas('contact_error')
+            ->assertSessionHasInput('email', 'somchai@example.com');
     }
 }

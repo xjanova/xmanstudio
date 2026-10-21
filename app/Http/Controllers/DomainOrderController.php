@@ -11,9 +11,11 @@ use App\Services\DomainRegistrarService;
 use App\Services\DomainSearchService;
 use App\Services\HostingerApiService;
 use App\Support\DomainPricing;
+use App\Support\WhoisContact;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
@@ -62,7 +64,32 @@ class DomainOrderController extends Controller
             ->orderByDesc('updated_at')
             ->get();
 
+        // A saved contact from before the registrar's rules were known (no
+        // province, a 60-character address …) is shown, but flagged, and the
+        // form starts on "enter new" instead of pre-selecting it.
+        $contactProblems = $contacts->mapWithKeys(fn (DomainContact $c) => [
+            $c->id => ($c->isSynced() && $c->remote_whois_id) ? [] : array_values(WhoisContact::problems($c)),
+        ]);
+
+        // "Use my account details": only what the account really holds.
+        // Social sign-ups often have a display name, so the split is a guess
+        // the customer sees and can correct before paying.
+        $nameParts = preg_split('/\s+/u', trim((string) $user->name), 2) ?: [];
+
         return view('domains.register', [
+            'whoisCountries' => WhoisContact::countries(),
+            'thPostcodes' => [
+                'prefixes' => config('domain_whois.th_postcode_prefixes', []),
+                'exceptions' => config('domain_whois.th_postcode_exceptions', []),
+            ],
+            'accountPrefill' => [
+                'first_name' => $nameParts[0] ?? '',
+                'last_name' => $nameParts[1] ?? '',
+                'email' => (string) $user->email,
+                'phone' => (string) ($user->phone ?? ''),
+            ],
+            'contactProblems' => $contactProblems,
+            'addressMax' => WhoisContact::ADDRESS_MAX,
             'domain' => $domain,
             'label' => $label,
             'tld' => $record,
@@ -100,7 +127,7 @@ class DomainOrderController extends Controller
             'address1' => ['required_without:contact_id', 'nullable', 'string', 'max:180'],
             'address2' => ['nullable', 'string', 'max:180'],
             'city' => ['required_without:contact_id', 'nullable', 'string', 'max:80'],
-            'state' => ['nullable', 'string', 'max:80'],
+            'state' => ['required_without:contact_id', 'nullable', 'string', 'max:80'],
             'zip' => ['required_without:contact_id', 'nullable', 'string', 'max:32'],
             'country' => ['required_without:contact_id', 'nullable', 'string', 'size:2'],
             'save_contact' => ['nullable', 'boolean'],
@@ -109,7 +136,19 @@ class DomainOrderController extends Controller
             'accept_terms' => ['accepted'],
         ], [
             'accept_terms.accepted' => 'กรุณายอมรับเงื่อนไขการจดทะเบียนโดเมนก่อนดำเนินการต่อ',
+            'state.required_without' => 'กรุณาเลือกจังหวัด',
         ]);
+
+        // The registrar's own rules (one 50-character address line, its list
+        // of provinces, digits-only phone …), field by field, before any
+        // money moves. Without this the customer finds out from a refund.
+        if (empty($validated['contact_id'])) {
+            $problems = WhoisContact::problems($validated);
+
+            if ($problems !== []) {
+                throw ValidationException::withMessages($problems);
+            }
+        }
 
         try {
             $contact = $this->resolveContact($user->id, $validated);
@@ -135,8 +174,13 @@ class DomainOrderController extends Controller
             return back()->withInput()->with('error', 'เกิดข้อผิดพลาดที่ไม่คาดคิด ทีมงานได้รับแจ้งแล้ว กรุณาลองใหม่อีกครั้ง');
         }
 
-        return redirect()->route('customer.domains.show', $registration->id)
-            ->with('success', $this->outcomeMessage($registration));
+        $redirect = redirect()->route('customer.domains.show', $registration->id);
+
+        // A refused order is not a success: the domain page shows it in orange,
+        // with the refund and a "try again" button, so no green flash on top.
+        return $registration->status === DomainRegistration::STATUS_REFUNDED
+            ? $redirect
+            : $redirect->with('success', $this->outcomeMessage($registration));
     }
 
     /**
@@ -173,22 +217,9 @@ class DomainOrderController extends Controller
         $keepVisible = (bool) ($data['save_contact'] ?? false);
         $first = DomainContact::where('user_id', $userId)->doesntExist();
 
-        return DomainContact::create([
+        return DomainContact::create(DomainContact::formAttributes($data) + [
             'hidden_from_picker' => ! $keepVisible,
             'user_id' => $userId,
-            'label' => $data['organization'] ?? null,
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'organization' => $data['organization'] ?? null,
-            'email' => $data['email'],
-            'phone_country_code' => $data['phone_country_code'],
-            'phone' => $data['phone'],
-            'address1' => $data['address1'],
-            'address2' => $data['address2'] ?? null,
-            'city' => $data['city'],
-            'state' => $data['state'] ?? null,
-            'zip' => $data['zip'],
-            'country' => strtoupper($data['country']),
             'is_default' => $first,
         ]);
     }

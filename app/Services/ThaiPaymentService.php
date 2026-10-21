@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BankAccount;
 use App\Models\PaymentSetting;
+use App\Services\TpixPay\TpixCheckout;
 
 class ThaiPaymentService
 {
@@ -93,6 +94,17 @@ class ThaiPaymentService
                 'description' => 'ชำระด้วย Visa, Mastercard, JCB ผ่าน Stripe',
                 'is_active' => StripeService::isEnabled(),
                 'fee_display' => $feeService->hasFee('stripe') ? $feeService->formatFeeDisplay($feeService->getFeeType('stripe'), $feeService->getFeeAmount('stripe')) : null,
+            ],
+            [
+                // Paid on TPIX Chain at the live TPIX DEX price (App\Services\TpixPay). Offered only
+                // while it is switched on, has an address to receive at, and has a price right now.
+                'id' => TpixCheckout::METHOD,
+                'name' => 'เหรียญ TPIX',
+                'name_en' => 'TPIX coin',
+                'icon' => 'tpix',
+                'description' => 'โอนเหรียญ TPIX บน TPIX Chain ตามราคาตลาดปัจจุบัน (จ่ายผ่าน MetaMask ได้)',
+                'is_active' => TpixCheckout::available(),
+                'fee_display' => null,
             ],
         ];
     }

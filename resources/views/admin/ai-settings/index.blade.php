@@ -820,7 +820,132 @@
             </button>
         </div>
     </form>
+
+    {{-- GigGok AI: ฟอร์มแยกของตัวเอง · บันทึกราคาไม่ต้องส่งคีย์ของทุกผู้ให้บริการซ้ำ --}}
+    <form action="{{ route('admin.ai-settings.app') }}" method="POST" id="appai-form">
+        @csrf
+        @method('PUT')
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-pink-600 flex items-center justify-center mr-3 shadow-lg">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                GigGok · AI ในแอป (หักเครดิตจากกระเป๋าเงิน)
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                ทุกข้อความหักจากกระเป๋าเงินของบัญชีที่ผูกกับเครื่อง (บาท) · ไม่มีโควต้าฟรี ·
+                แอปเห็นและใช้ได้เฉพาะรุ่นที่ <b>เปิด</b> ไว้ที่นี่ · รุ่นต้องเป็นของผู้ให้บริการที่เลือกอยู่ด้านบน
+                (ตอนนี้: <b>{{ $settings['ai_provider'] }}</b>) · ตอบไม่สำเร็จ = คืนเครดิตอัตโนมัติ
+            </p>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <div class="text-xs text-gray-500 dark:text-gray-400">ข้อความวันนี้</div>
+                    <div class="text-xl font-bold text-gray-900 dark:text-white">{{ number_format($appAi['today']['messages']) }}</div>
+                </div>
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <div class="text-xs text-gray-500 dark:text-gray-400">ตอบไม่สำเร็จ (คืนเงินแล้ว)</div>
+                    <div class="text-xl font-bold text-gray-900 dark:text-white">{{ number_format($appAi['today']['failed']) }}</div>
+                </div>
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <div class="text-xs text-gray-500 dark:text-gray-400">ผู้ใช้วันนี้</div>
+                    <div class="text-xl font-bold text-gray-900 dark:text-white">{{ number_format($appAi['today']['users']) }}</div>
+                </div>
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <div class="text-xs text-gray-500 dark:text-gray-400">รายรับวันนี้</div>
+                    <div class="text-xl font-bold text-emerald-600">฿{{ number_format($appAi['today']['revenue'], 2) }}</div>
+                </div>
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <div class="text-xs text-gray-500 dark:text-gray-400">รายรับ 7 วัน</div>
+                    <div class="text-xl font-bold text-emerald-600">฿{{ number_format($appAi['week_revenue'], 2) }}</div>
+                </div>
+            </div>
+
+            @if(! $appAi['master'])
+                <div class="mb-4 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-sm">
+                    ปิดอยู่ที่ระดับเซิร์ฟเวอร์ (APP_AI_ENABLED=false) · สวิตช์ข้างล่างจะไม่มีผลจนกว่าจะเปิดที่นั่น
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div>
+                        <label class="font-medium text-gray-900 dark:text-white">เปิดให้แอปใช้</label>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">ปิด = แอปขึ้นว่าบริการปิดชั่วคราว ไม่หักเงินใคร</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="appai_enabled" value="1" {{ $appAi['enabled'] ? 'checked' : '' }} class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-fuchsia-500 peer-checked:to-pink-600"></div>
+                    </label>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <label for="appai_daily_cap" class="font-medium text-gray-900 dark:text-white">เพดานใช้จ่ายต่อคนต่อวัน (บาท)</label>
+                    <input type="number" step="0.01" min="0" id="appai_daily_cap" name="appai_daily_cap"
+                           value="{{ old('appai_daily_cap', $appAi['daily_cap']) }}"
+                           class="mt-2 w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-fuchsia-500">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">0 = ไม่จำกัด · กันคีย์หลุดแล้วถูกยิงจนกระเป๋าหมด</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm" id="appai-models">
+                    <thead>
+                        <tr class="text-left text-gray-500 dark:text-gray-400">
+                            <th class="py-2 pr-2">รหัสรุ่น (ตามผู้ให้บริการ)</th>
+                            <th class="py-2 pr-2">ชื่อที่แอปโชว์</th>
+                            <th class="py-2 pr-2 w-36">ราคา/ข้อความ (฿)</th>
+                            <th class="py-2 pr-2 w-20 text-center">เปิด</th>
+                            <th class="py-2 w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($appAi['models'] as $i => $m)
+                            <tr class="border-t border-gray-100 dark:border-gray-700">
+                                <td class="py-2 pr-2"><input type="text" name="models[{{ $i }}][id]" value="{{ $m['id'] }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono"></td>
+                                <td class="py-2 pr-2"><input type="text" name="models[{{ $i }}][label]" value="{{ $m['label'] }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"></td>
+                                <td class="py-2 pr-2"><input type="number" step="0.01" min="0" name="models[{{ $i }}][price]" value="{{ number_format($m['price'], 2, '.', '') }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"></td>
+                                <td class="py-2 pr-2 text-center"><input type="checkbox" name="models[{{ $i }}][enabled]" value="1" {{ $m['enabled'] ? 'checked' : '' }} class="w-5 h-5 rounded"></td>
+                                <td class="py-2 text-right"><button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700" title="ลบรุ่นนี้">✕</button></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex items-center justify-between mt-4">
+                <button type="button" onclick="addAppAiModel()" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200">
+                    + เพิ่มรุ่น
+                </button>
+                <button type="submit" class="px-6 py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white rounded-xl hover:from-fuchsia-700 hover:to-pink-700 font-medium shadow-lg">
+                    บันทึกราคาและรุ่นของแอป
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
+
+<script>
+// แถวใหม่ใช้เลขต่อจากแถวที่มีสูงสุด · ใช้จำนวนแถวไม่ได้ เพราะลบแถวกลางแล้วเลขจะชนกัน
+function addAppAiModel() {
+    const body = document.querySelector('#appai-models tbody');
+    const used = [...body.querySelectorAll('input[name^="models["]')]
+        .map(el => parseInt(el.name.match(/^models\[(\d+)\]/)[1], 10));
+    const i = used.length ? Math.max(...used) + 1 : 0;
+    const cls = 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg';
+    const tr = document.createElement('tr');
+    tr.className = 'border-t border-gray-100 dark:border-gray-700';
+    tr.innerHTML =
+        `<td class="py-2 pr-2"><input type="text" name="models[${i}][id]" placeholder="เช่น gpt-6-luna" class="${cls} font-mono"></td>` +
+        `<td class="py-2 pr-2"><input type="text" name="models[${i}][label]" placeholder="ชื่อที่ลูกค้าเห็น" class="${cls}"></td>` +
+        `<td class="py-2 pr-2"><input type="number" step="0.01" min="0" name="models[${i}][price]" value="0.50" class="${cls}"></td>` +
+        `<td class="py-2 pr-2 text-center"><input type="checkbox" name="models[${i}][enabled]" value="1" checked class="w-5 h-5 rounded"></td>` +
+        `<td class="py-2 text-right"><button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700">✕</button></td>`;
+    body.appendChild(tr);
+}
+</script>
 
 <script>
 function updateProviderSelection(input) {

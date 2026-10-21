@@ -29,11 +29,13 @@ class TwoFactorChallengeController extends Controller
             return redirect()->route('home');
         }
 
-        if (! TwoFactor::enabled($user) || TwoFactor::verified($request, $user)) {
+        if (! TwoFactor::enabled($user)
+            || TwoFactor::verified($request, $user)
+            || TwoFactor::passedOnTrustedDevice($request, $user)) {
             return redirect()->intended(route('admin.dashboard'));
         }
 
-        return view('auth.two-factor-challenge');
+        return view('auth.two-factor-challenge', ['trustDays' => TwoFactor::trustDays()]);
     }
 
     public function verify(Request $request): RedirectResponse
@@ -66,6 +68,12 @@ class TwoFactorChallengeController extends Controller
         TwoFactor::markVerified($request, $user);
         LoginLog::success($user, '2fa');
 
-        return redirect()->intended(route('admin.dashboard'));
+        $response = redirect()->intended(route('admin.dashboard'));
+
+        if ($request->boolean('remember_device') && TwoFactor::trustDays() > 0) {
+            $response->withCookie(TwoFactor::trustDevice($request, $user));
+        }
+
+        return $response;
     }
 }

@@ -136,8 +136,8 @@
                 @foreach($category->products->take(5) as $product)
                 <div class="flex items-center justify-between py-3 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <div class="flex items-center">
-                        @if($product->image)
-                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="w-10 h-10 rounded-lg object-cover mr-3">
+                        @if($product->artwork_url)
+                            <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}" class="w-10 h-10 rounded-lg object-cover mr-3">
                         @else
                             <div class="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center mr-3">
                                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

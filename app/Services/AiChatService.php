@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\AIServiceException;
 use App\Models\Setting;
+use App\Support\ContactLinks;
 use App\Support\OpenAiCompat;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -475,10 +476,7 @@ class AiChatService
         if ($phone) {
             $contactParts[] = 'โทรศัพท์: ' . $phone . ($phoneName ? " ({$phoneName})" : '');
         }
-        $email = Setting::get('contact_email', '');
-        if ($email) {
-            $contactParts[] = 'อีเมล: ' . $email;
-        }
+        $contactParts[] = 'อีเมล: ' . ContactLinks::email();
         $fbName = Setting::get('contact_facebook_name', '');
         $fbUrl = Setting::get('contact_facebook_url', '');
         if ($fbName) {

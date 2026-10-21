@@ -9,6 +9,7 @@ use App\Models\Wallet;
 use App\Support\Alerts\BusinessAlerts;
 use App\Support\DomainPricing;
 use App\Support\UpstreamBilling;
+use App\Support\WhoisContact;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
@@ -98,6 +99,18 @@ class DomainRegistrarService
         // the same way — say so before taking the money, not after.
         if (UpstreamBilling::isPaused()) {
             throw new DomainPurchaseException(UpstreamBilling::customerMessage());
+        }
+
+        // A registrant the registrar would refuse fails at the profile step,
+        // after the debit: a refund and an apology for an order that could
+        // never have gone through. Ask for the missing details first. A
+        // contact already on file upstream was accepted once; leave it be.
+        if (! ($contact->isSynced() && $contact->remote_whois_id)) {
+            $problems = WhoisContact::problems($contact);
+
+            if ($problems !== []) {
+                throw new DomainPurchaseException('ข้อมูลผู้ถือครองยังไม่ครบตามที่ทะเบียนโดเมนต้องการ: ' . reset($problems));
+            }
         }
 
         // Re-check availability against the registrar, not the cache. The
@@ -252,7 +265,7 @@ class DomainRegistrarService
             $whoisId = $this->ensureWhoisProfile($contact, $registration->tld);
 
             if (! $whoisId) {
-                return $this->failAndRefund($registration, 'whois profile could not be created upstream');
+                return $this->failAndRefund($registration, 'whois profile could not be created upstream' . $this->whoisRejection());
             }
 
             $purchaseSent = true;
@@ -407,7 +420,7 @@ class DomainRegistrarService
             $this->api->setAutoRenewal($registration->remote_subscription_id, false);
         }
 
-        $this->refreshFromUpstream($registration);
+        $this->refreshFromUpstream($registration, justRegistered: true);
 
         return $registration;
     }
@@ -588,7 +601,7 @@ class DomainRegistrarService
         $whoisId = $this->ensureWhoisProfile($contact, $registration->tld);
 
         if (! $whoisId) {
-            $registration->update(['last_error' => 'setup impossible: whois profile could not be created upstream']);
+            $registration->update(['last_error' => 'setup impossible: whois profile could not be created upstream' . $this->whoisRejection()]);
 
             return false;
         }
@@ -1011,8 +1024,12 @@ class DomainRegistrarService
 
     /**
      * Pull the real expiry and nameservers once the domain exists.
+     *
+     * Right after registration the nameservers are our own DNS, and they are
+     * kept as such — the customer's way back from Cloudflare. Any later read
+     * (a renewal) may see the customer's own servers instead.
      */
-    public function refreshFromUpstream(DomainRegistration $registration): void
+    public function refreshFromUpstream(DomainRegistration $registration, bool $justRegistered = false): void
     {
         $details = $this->api->getDomain($registration->domain);
 
@@ -1036,6 +1053,10 @@ class DomainRegistrarService
 
         if (is_array($nameservers)) {
             $changes['nameservers'] = array_values(array_filter($nameservers, 'is_string'));
+
+            if ($justRegistered && empty($registration->own_nameservers) && count($changes['nameservers']) >= 2) {
+                $changes['own_nameservers'] = $changes['nameservers'];
+            }
         }
 
         if ($changes !== []) {
@@ -1125,20 +1146,12 @@ class DomainRegistrarService
             return (int) $contact->remote_whois_id;
         }
 
+        // The registrar's keys, not ours: `address`, `state_th`, `zip_th`,
+        // `phone_cc` … (WhoisContact, config/domain_whois.php).
         $whoisId = $this->api->createWhoisProfile(
             $tld,
             $contact->country,
-            [
-                'first_name' => $contact->first_name,
-                'last_name' => $contact->last_name,
-                'email' => $contact->email,
-                'phone' => $contact->phoneE164(),
-                'city' => $contact->city,
-                'state' => $contact->state ?: $contact->city,
-                'country' => strtoupper($contact->country),
-                'address1' => $contact->address1,
-                'zip' => $contact->zip,
-            ],
+            WhoisContact::details($contact),
             $this->extraDetailsFor($contact, $tld),
         );
 
@@ -1150,6 +1163,17 @@ class DomainRegistrarService
         }
 
         return $whoisId;
+    }
+
+    /**
+     * Which WHOIS fields the registrar refused last time, for last_error and
+     * the admin alert. Field names only: the values are personal data.
+     */
+    protected function whoisRejection(): string
+    {
+        $fields = $this->api->lastWhoisRejectedFields();
+
+        return $fields === [] ? '' : ' (refused: ' . implode(', ', $fields) . ')';
     }
 
     /**

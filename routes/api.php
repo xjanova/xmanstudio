@@ -1,17 +1,23 @@
 <?php
 
 use App\Http\Controllers\Api\AiprayApiController;
+use App\Http\Controllers\Api\AntiXPushController;
 use App\Http\Controllers\Api\AppAiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\GameItemRedeemController;
 use App\Http\Controllers\Api\GlobalTorrentController;
 use App\Http\Controllers\Api\GpuxMineNodeController;
 use App\Http\Controllers\Api\LicenseApiController;
 use App\Http\Controllers\Api\LocalVpnFileController;
+use App\Http\Controllers\Api\LocalVpnGameProfileController;
+use App\Http\Controllers\Api\LocalVpnNodeController;
 use App\Http\Controllers\Api\LocalVpnRelayController;
 use App\Http\Controllers\Api\PackController;
+use App\Http\Controllers\Api\ProductCatalogController;
 use App\Http\Controllers\Api\ProductLicenseController;
 use App\Http\Controllers\Api\StripeController;
+use App\Http\Controllers\Api\TpixPriceController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BugReportController;
 use App\Http\Controllers\Api\V1\DataProfileController;
@@ -20,6 +26,7 @@ use App\Http\Controllers\Api\V1\SmsPaymentController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Controllers\Api\VersionController;
 use App\Http\Controllers\Api\VpnProxyController;
+use App\Http\Controllers\Api\WinxDiskBenchmarkController;
 use App\Http\Controllers\Api\WireguardController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\TelegramWebhookController;
@@ -248,6 +255,24 @@ Route::post('v1/product/gpuxmine/status', [GpuxMineNodeController::class, 'statu
     ->middleware(['throttle:gpuxmine-status'])
     ->name('api.gpuxmine.status');
 
+// ==================== WinXTools — disk speed-test results ====================
+// The app uploads each finished disk speed test anonymously, and asks what other PCs measured
+// on the same drive model. No login and nothing personal: a random per-installation id, no IP
+// kept. Uploads: 20 an hour per IP (named limiter in AppServiceProvider) and 30 a day per
+// installation (counted from stored rows in the controller). Stats are cached ten minutes.
+Route::post('v1/product/winx-tools/disk-benchmarks', [WinxDiskBenchmarkController::class, 'store'])
+    ->middleware(['throttle:winx-disk-benchmarks'])
+    ->name('api.winx-tools.disk-benchmarks.store');
+
+Route::get('v1/product/winx-tools/disk-benchmarks/stats', [WinxDiskBenchmarkController::class, 'stats'])
+    ->middleware(['throttle:60,1,api-winx-disk-stats'])
+    ->name('api.winx-tools.disk-benchmarks.stats');
+
+// Anti X PC → wake its paired phones (fixed, content-free message; 30 per hour per machine in the controller)
+Route::post('v1/product/anti-x/push', [AntiXPushController::class, 'send'])
+    ->middleware(['throttle:60,1,api-anti-x-push'])
+    ->name('api.anti-x.push');
+
 Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1,api-product'])->group(function () {
     // Register device when app starts
     Route::post('/register-device', [ProductLicenseController::class, 'registerDevice']);
@@ -336,6 +361,14 @@ Route::prefix('v1/products')->middleware(['throttle:60,1,api-products'])->group(
     // Validate license key
     Route::post('/validate-license', [VersionController::class, 'validateLicense']);
 });
+
+// What product.xman4289.com shows of each product: on sale or not, picture, version (public, CORS *).
+Route::get('/v1/catalog', [ProductCatalogController::class, 'index'])
+    ->middleware('throttle:60,1,api-catalog');
+
+// The TPIX price the shop charges by (TPIX DEX pool × live USD→THB), for the apps (public)
+Route::get('/v1/tpix/price', [TpixPriceController::class, 'show'])
+    ->middleware('throttle:60,1,api-tpix-price');
 
 // ==================== Coupon API Routes ====================
 // These routes are used during checkout to validate and apply coupons
@@ -483,57 +516,74 @@ Route::prefix('aipray')->middleware(['throttle:60,1,api-aipray'])->group(functio
 });
 
 // ==================== LocalVPN Relay API ====================
-Route::prefix('v1/localvpn')->middleware(['throttle:120,1,api-localvpn'])->group(function () {
-    Route::post('/networks', [LocalVpnRelayController::class, 'createNetwork']);
-    Route::get('/networks', [LocalVpnRelayController::class, 'listNetworks']);
-    Route::post('/networks/join', [LocalVpnRelayController::class, 'joinNetwork']);
-    Route::post('/networks/leave', [LocalVpnRelayController::class, 'leaveNetwork']);
-    Route::post('/heartbeat', [LocalVpnRelayController::class, 'heartbeat']);
-    Route::get('/networks/{slug}/members', [LocalVpnRelayController::class, 'getMembers']);
-    Route::post('/relay', [LocalVpnRelayController::class, 'relayData']);
-    Route::delete('/networks/{slug}', [LocalVpnRelayController::class, 'deleteNetwork']);
+// Quota per device, not per address: players behind one café router or a Thai ISP's CGNAT
+// share an IP, and the old 120/min per IP (plus throttle:api's 60/min per IP) answered their
+// heartbeats and signal polls with 429. See the 'localvpn' limiter in AppServiceProvider.
+Route::prefix('v1/localvpn')
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:localvpn'])
+    ->group(function () {
+        Route::post('/networks', [LocalVpnRelayController::class, 'createNetwork']);
+        Route::get('/networks', [LocalVpnRelayController::class, 'listNetworks']);
+        Route::post('/networks/join', [LocalVpnRelayController::class, 'joinNetwork']);
+        Route::post('/networks/leave', [LocalVpnRelayController::class, 'leaveNetwork']);
+        Route::post('/heartbeat', [LocalVpnRelayController::class, 'heartbeat']);
+        Route::get('/networks/{slug}/members', [LocalVpnRelayController::class, 'getMembers']);
+        Route::post('/relay', [LocalVpnRelayController::class, 'relayData']);
+        Route::delete('/networks/{slug}', [LocalVpnRelayController::class, 'deleteNetwork']);
 
-    // P2P signaling
-    Route::get('/stun', [LocalVpnRelayController::class, 'stun']);
-    Route::post('/signal', [LocalVpnRelayController::class, 'signal']);
-    Route::post('/signal/poll', [LocalVpnRelayController::class, 'pollSignals']);
+        // P2P signaling
+        Route::get('/stun', [LocalVpnRelayController::class, 'stun']);
+        Route::post('/signal', [LocalVpnRelayController::class, 'signal']);
+        Route::post('/signal/poll', [LocalVpnRelayController::class, 'pollSignals']);
 
-    // File sharing (network-wide registry)
-    Route::post('/files/share', [LocalVpnFileController::class, 'share']);
-    Route::get('/files/{slug}', [LocalVpnFileController::class, 'index']);
-    Route::delete('/files/{fileId}', [LocalVpnFileController::class, 'destroy']);
-    Route::post('/files/seed', [LocalVpnFileController::class, 'registerSeeder']);
-    Route::get('/files/{fileId}/seeders', [LocalVpnFileController::class, 'seeders']);
+        // File sharing (network-wide registry)
+        Route::post('/files/share', [LocalVpnFileController::class, 'share']);
+        Route::get('/files/{slug}', [LocalVpnFileController::class, 'index']);
+        Route::delete('/files/{fileId}', [LocalVpnFileController::class, 'destroy']);
+        Route::post('/files/seed', [LocalVpnFileController::class, 'registerSeeder']);
+        Route::get('/files/{fileId}/seeders', [LocalVpnFileController::class, 'seeders']);
 
-    // Global Torrent
-    Route::get('/torrent/categories', [GlobalTorrentController::class, 'categories']);
-    Route::get('/torrent/files/{categorySlug}', [GlobalTorrentController::class, 'listFiles']);
-    Route::get('/torrent/file/{fileId}', [GlobalTorrentController::class, 'fileDetail']);
-    Route::post('/torrent/upload', [GlobalTorrentController::class, 'uploadFile']);
-    Route::post('/torrent/seed', [GlobalTorrentController::class, 'registerSeeder']);
-    Route::post('/torrent/heartbeat', [GlobalTorrentController::class, 'heartbeat']);
-    Route::get('/torrent/file/{fileId}/seeders', [GlobalTorrentController::class, 'getSeeders']);
-    Route::get('/torrent/leaderboard', [GlobalTorrentController::class, 'leaderboard']);
-    Route::match(['get', 'post'], '/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
-    Route::get('/torrent/trophies', [GlobalTorrentController::class, 'trophies']);
-    Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
-    Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
-    Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
+        // Global Torrent
+        Route::get('/torrent/categories', [GlobalTorrentController::class, 'categories']);
+        Route::get('/torrent/files/{categorySlug}', [GlobalTorrentController::class, 'listFiles']);
+        Route::get('/torrent/file/{fileId}', [GlobalTorrentController::class, 'fileDetail']);
+        Route::post('/torrent/upload', [GlobalTorrentController::class, 'uploadFile']);
+        Route::post('/torrent/seed', [GlobalTorrentController::class, 'registerSeeder']);
+        Route::post('/torrent/heartbeat', [GlobalTorrentController::class, 'heartbeat']);
+        Route::get('/torrent/file/{fileId}/seeders', [GlobalTorrentController::class, 'getSeeders']);
+        Route::get('/torrent/leaderboard', [GlobalTorrentController::class, 'leaderboard']);
+        Route::match(['get', 'post'], '/torrent/profile', [GlobalTorrentController::class, 'userProfile']);
+        Route::get('/torrent/trophies', [GlobalTorrentController::class, 'trophies']);
+        Route::get('/torrent/user-trophies', [GlobalTorrentController::class, 'userTrophies']);
+        Route::post('/torrent/kyc/submit', [GlobalTorrentController::class, 'submitKyc']);
+        Route::get('/torrent/kyc/status', [GlobalTorrentController::class, 'kycStatus']);
 
-    // Torrent relay (server-mediated P2P download)
-    Route::post('/torrent/relay/request', [GlobalTorrentController::class, 'relayRequest']);
-    Route::post('/torrent/relay/poll', [GlobalTorrentController::class, 'relayPoll']);
-    Route::post('/torrent/relay/chunk', [GlobalTorrentController::class, 'relayChunk']);
-    Route::post('/torrent/relay/fetch', [GlobalTorrentController::class, 'relayFetch']);
+        // Torrent relay (server-mediated P2P download)
+        Route::post('/torrent/relay/request', [GlobalTorrentController::class, 'relayRequest']);
+        Route::post('/torrent/relay/poll', [GlobalTorrentController::class, 'relayPoll']);
+        Route::post('/torrent/relay/chunk', [GlobalTorrentController::class, 'relayChunk']);
+        Route::post('/torrent/relay/fetch', [GlobalTorrentController::class, 'relayFetch']);
 
-    // VPN Proxy (country bypass)
-    Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
+        // VPN Proxy (country bypass)
+        Route::get('/proxy-servers', [VpnProxyController::class, 'servers']);
 
-    // WireGuard VPN
-    Route::post('/wireguard/register', [WireguardController::class, 'register']);
-    Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
-    Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
-});
+        // WireGuard VPN
+        Route::post('/wireguard/register', [WireguardController::class, 'register']);
+        Route::get('/wireguard/servers', [WireguardController::class, 'servers']);
+        Route::post('/wireguard/disconnect', [WireguardController::class, 'disconnect']);
+
+        // Game server ranges for the ping-booster split tunnel (cached 5 min)
+        Route::get('/game-profiles', [LocalVpnGameProfileController::class, 'index'])->name('api.localvpn.game-profiles');
+    });
+
+// Relay-fleet nodes report usage and pull their config every 10 s, authenticated by an HMAC
+// over their own secret (docs/RELAY_FLEET.md). Own limiter keyed by node id + address, so app
+// traffic sharing the per-IP ceilings can never starve it, and nobody else can burn its quota.
+Route::post('v1/localvpn/node/sync', [LocalVpnNodeController::class, 'sync'])
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:localvpn-node'])
+    ->name('api.localvpn.node.sync');
 
 // WireGuard admin status (requires authentication)
 Route::prefix('v1/localvpn')->middleware(['auth:sanctum', 'throttle:30,1,api-localvpn-auth'])->group(function () {
@@ -578,4 +628,16 @@ Route::prefix('packs')->middleware(['throttle:60,1,api-packs'])->group(function 
 // cap in AppAiUsage, which survives restarts and cache clears.
 Route::prefix('ai/v1')->middleware(['throttle:30,1,api-ai'])->group(function () {
     Route::post('/chat/completions', [AppAiController::class, 'chatCompletions']);
+    // Credit, today's spend and the models we offer (with prices) for the app's settings screen
+    Route::get('/account', [AppAiController::class, 'account']);
+    // Sign the linked account's phone in to BrainX Cloud (token only - the key stays here):
+    // the app's Mind shares the PC Mind's brain. Each call is a cloud sign-in, and the cloud
+    // drops the account's oldest device token past 20 - so far fewer than the group allows,
+    // or a spammer could sign the owner's PC out
+    Route::post('/brainx', [AppAiController::class, 'brainx'])->middleware('throttle:6,1,api-ai-brainx');
 });
+
+// ==================== XGamesHub supporter items ====================
+// Browser games on xmangameshub.online redeem a supporter's item code here.
+// 80-bit codes cannot be guessed; the limit only keeps a broken game from hammering it.
+Route::post('/gameshub/redeem', GameItemRedeemController::class)->middleware('throttle:20,1,api-gameshub-redeem')->name('api.gameshub.redeem');
