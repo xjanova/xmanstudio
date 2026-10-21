@@ -129,7 +129,8 @@
                 </p>
             @elseif(! $gpu['enabled'])
                 <p class="mb-4 rounded-lg bg-gray-50 dark:bg-gray-900 p-3 text-xs text-gray-600 dark:text-gray-300">
-                    ปิดอยู่ — ต้องตั้ง <code>SIMPLEPOD_ENABLED=true</code> และ <code>SIMPLEPOD_API_KEY</code> ใน .env ก่อน
+                    ปิดอยู่ — ยังไม่ได้ตั้ง <code>{{ implode(', ', $gpu['missing']) }}</code> ใน .env
+                    (<code>AIPRAY_TRAINER_REF</code> = branch หรือ commit ของ repo Aipray ที่มีตัวเทรนใน training/ml-service — ไม่ใช่ main เพราะ push ขึ้น main ของ Aipray คือการออก APK)
                 </p>
             @endif
 

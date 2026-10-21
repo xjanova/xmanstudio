@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AiprayAiModel;
 use App\Models\AiprayTrainingJob;
 use App\Services\Gpu\SimplePodClient;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
@@ -40,9 +41,67 @@ class AiprayGpuTrainingRunner
         private AiprayDatasetReadiness $readiness,
     ) {}
 
+    /**
+     * What still has to be set before a GPU may be rented; empty when renting
+     * is allowed. Off by default: every item must be set on purpose.
+     *
+     * @return string[] env names
+     */
+    public function missingConfig(): array
+    {
+        $missing = [];
+        if (! config('services.simplepod.enabled')) {
+            $missing[] = 'SIMPLEPOD_ENABLED';
+        }
+        if (! config('services.simplepod.api_key')) {
+            $missing[] = 'SIMPLEPOD_API_KEY';
+        }
+        // No default: Aipray's main branch is what releases the APK, so the
+        // trainer is pinned to a branch or commit the owner chose.
+        if (! self::validTrainerRef(config('services.aipray_gpu.trainer_ref'))) {
+            $missing[] = 'AIPRAY_TRAINER_REF';
+        }
+
+        return $missing;
+    }
+
     public function enabled(): bool
     {
-        return config('services.simplepod.enabled') && config('services.simplepod.api_key');
+        return $this->missingConfig() === [];
+    }
+
+    /** It ends up in the boot script's download URL. */
+    public static function validTrainerRef(mixed $ref): bool
+    {
+        return is_string($ref) && preg_match('#^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$#', $ref) === 1;
+    }
+
+    /**
+     * A run that may still own a machine: active, or finished with a
+     * termination the vendor has not confirmed yet.
+     */
+    public function hasUnfinishedWork(): bool
+    {
+        try {
+            return AiprayTrainingJob::where('runner', 'gpu')
+                ->where(fn ($query) => $query->whereIn('gpu_state', AiprayTrainingJob::GPU_ACTIVE_STATES)
+                    ->orWhere(fn ($query) => $query->whereNotNull('gpu_instance_id')->whereNull('gpu_terminated_at')))
+                ->exists();
+        } catch (QueryException $e) {
+            // The 2026_09_12 migration has not run, so no run can exist.
+            return false;
+        }
+    }
+
+    /**
+     * Whether aipray:gpu-tick has anything to do. Off with nothing left over
+     * (the normal state) costs one small query and no call to SimplePod. A
+     * machine rented before rental was switched off is still driven to the
+     * end and returned.
+     */
+    public function shouldTick(): bool
+    {
+        return $this->enabled() || $this->hasUnfinishedWork();
     }
 
     public function cheapestOffer(string $baseModel): ?array
@@ -87,7 +146,7 @@ class AiprayGpuTrainingRunner
     public function queue(array $params, float $maxCostUsd, bool $trial = false): AiprayTrainingJob
     {
         if (! $this->enabled()) {
-            throw new RuntimeException('GPU rental is off (SIMPLEPOD_ENABLED / SIMPLEPOD_API_KEY).');
+            throw new RuntimeException('GPU rental is off; set ' . implode(', ', $this->missingConfig()) . '.');
         }
         if (AiprayTrainingJob::gpuActive()->exists()) {
             throw new RuntimeException('Another GPU training run is still active.');
@@ -326,8 +385,18 @@ class AiprayGpuTrainingRunner
                 }
                 fclose($out);
             }
-        } catch (ConnectionException $e) {
+        } catch (\Throwable $e) {
+            // Includes a stream cut half way: never keep a truncated model,
+            // and try again next minute; the trained model is still on the
+            // machine. A warning, not report(): this can repeat every minute.
+            if (! $e instanceof ConnectionException) {
+                Log::warning("[Aipray GPU] job {$job->id} model download failed: " . $e->getMessage());
+            }
             $response = null;
+        } finally {
+            if (isset($out) && is_resource($out)) {
+                fclose($out);
+            }
         }
         if (! $response?->successful() || ! $disk->exists($target) || $disk->size($target) === 0) {
             $disk->delete($target);

@@ -185,7 +185,24 @@ class AiprayVoicePrivacyTest extends TestCase
             $this->postJson('/api/aipray/contributors/erase', $body)->assertOk();
         }
 
-        $this->postJson('/api/aipray/contributors/erase', $body)->assertStatus(429);
+        $this->postJson('/api/aipray/contributors/erase', $body)
+            ->assertStatus(429)
+            ->assertJsonPath('code', 'RATE_LIMIT_EXCEEDED');
+
+        // Another phone behind the same address (CGNAT) can still erase.
+        $this->postJson('/api/aipray/contributors/erase', ['contributor_id' => (string) Str::uuid(), 'secret' => self::SECRET])
+            ->assertOk();
+    }
+
+    public function test_erase_still_works_after_the_address_used_up_the_general_api_limit(): void
+    {
+        for ($i = 0; $i < 60; $i++) {
+            $this->getJson('/api/aipray/stats');
+        }
+        $this->getJson('/api/aipray/stats')->assertStatus(429);
+
+        $this->postJson('/api/aipray/contributors/erase', ['contributor_id' => (string) Str::uuid(), 'secret' => self::SECRET])
+            ->assertOk();
     }
 
     // --- admin ----------------------------------------------------------
@@ -255,6 +272,36 @@ class AiprayVoicePrivacyTest extends TestCase
         Storage::disk('local')->assertMissing($old->file_path);
         $this->assertSame(1, AiprayAudioSample::count());
         $this->assertSame(0, AiprayContributor::count());
+    }
+
+    public function test_retention_keeps_samples_inside_the_period_on_either_disk(): void
+    {
+        config(['services.aipray.audio_retention_days' => 1095]);
+        $this->upload()->assertCreated();
+        $recent = AiprayAudioSample::sole();
+        $recent->forceFill(['created_at' => now()->subDays(1094)])->save();
+        // An admin recording from before 2026-09, still on the public disk.
+        Storage::disk('public')->put('aipray_audio/old_admin.wav', 'x');
+        AiprayAudioSample::create([
+            'filename' => 'old_admin.wav', 'file_path' => 'aipray_audio/old_admin.wav',
+            'format' => 'wav', 'status' => 'labeled',
+        ]);
+
+        $this->artisan('aipray:prune-audio')->assertSuccessful();
+
+        $this->assertSame(2, AiprayAudioSample::count());
+        Storage::disk('local')->assertExists($recent->file_path);
+        Storage::disk('public')->assertExists('aipray_audio/old_admin.wav');
+    }
+
+    public function test_retention_refuses_to_run_with_a_broken_setting(): void
+    {
+        config(['services.aipray.audio_retention_days' => 0]); // e.g. AIPRAY_AUDIO_RETENTION_DAYS= left empty
+        $this->upload()->assertCreated();
+
+        $this->artisan('aipray:prune-audio')->assertFailed();
+
+        $this->assertSame(1, AiprayAudioSample::count());
     }
 
     public function test_chants_import_and_backfill_label_earlier_uploads(): void

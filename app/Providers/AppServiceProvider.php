@@ -223,9 +223,23 @@ class AppServiceProvider extends ServiceProvider
                 });
         });
 
-        // Aipray "delete my voice": cheap to call, destructive when it works.
-        RateLimiter::for('aipray-erase', function ($request) {
-            return Limit::perMinute(5)->by($request->ip());
+        // POST /api/aipray/contributors/erase — Aipray "delete my voice": cheap to call, destructive
+        // when it works. Counted per phone (contributor_id) and address, so phones behind one CGNAT
+        // address do not lock each other out of a PDPA erase; the per-address ceiling stops anyone
+        // minting contributor_ids to dodge it. The route skips throttle:api, whose per-address
+        // bucket also counts the app's uploads.
+        RateLimiter::for('aipray-erase', function (Request $request) {
+            $contributor = $request->input('contributor_id');
+            $contributor = is_string($contributor) ? mb_substr($contributor, 0, 64) : '';
+            $tooMany = fn (Request $request, array $headers) => response()->json([
+                'error' => 'Too many erase requests. Please wait before trying again.',
+                'code' => 'RATE_LIMIT_EXCEEDED',
+            ], 429, $headers);
+
+            return [
+                Limit::perMinute(5)->by('aipray-erase:' . sha1($contributor) . '|' . $request->ip())->response($tooMany),
+                Limit::perMinute(30)->by('aipray-erase-ip:' . $request->ip())->response($tooMany),
+            ];
         });
 
         // /api/v1/product/gpuxmine/status — โปรแกรม GPUxMINE ถามทุกสามนาที (เร็วสุดทุกสิบห้าวินาที

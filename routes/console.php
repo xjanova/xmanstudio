@@ -7,6 +7,7 @@ use App\Jobs\UploadVideoJob;
 use App\Models\MetalXAutomationLog;
 use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideoProject;
+use App\Services\AiprayGpuTrainingRunner;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -101,8 +102,10 @@ Schedule::command('aipray:prune-audio')
     });
 
 // Aipray: ขับงานเทรนบน GPU เช่าทีละนาที และคืนเครื่องทุกกรณี (สำเร็จ ล้มเหลว หมดเวลา เกินงบ)
+// ปิดอยู่ (ค่าเริ่มต้น) และไม่มีงานค้าง = ไม่เปิด process ใหม่ ไม่เรียก SimplePod เลย
 Schedule::command('aipray:gpu-tick')
     ->everyMinute()
+    ->when(fn () => app(AiprayGpuTrainingRunner::class)->shouldTick())
     ->withoutOverlapping(30)
     ->runInBackground()
     ->onFailure(function () {

@@ -104,10 +104,12 @@ return [
         'min_cuda' => '12.4',
         'disk_gb' => 60,
         'port' => 8100,
-        // The trainer is fetched from GitHub at boot. Pin a commit for
-        // reproducible runs.
+        // The trainer (training/ml-service) is fetched from GitHub at boot.
+        // No default, and nothing is rented until it is set: point it at the
+        // branch or commit that carries remote.py. Not Aipray's main, where
+        // a push releases the APK. A commit SHA gives reproducible runs.
         'trainer_repo' => 'xjanova/Aipray',
-        'trainer_ref' => env('AIPRAY_TRAINER_REF', 'main'),
+        'trainer_ref' => env('AIPRAY_TRAINER_REF'),
         // "Enough voice" before an admin may rent a GPU for a real run. The
         // chants are fixed text, so what matters is every line heard in many
         // voices, not raw hours. Starting points; tune after the first runs.

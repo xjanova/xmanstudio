@@ -115,7 +115,7 @@ class AiprayApiController extends Controller
                 '%s_line%d_%s.%s',
                 $validated['chant_id'],
                 $validated['line_index'],
-                now()->format('YmdHis') . '_' . Str::random(4),
+                now()->format('YmdHis') . '_' . Str::random(8),
                 $format
             );
 

@@ -64,11 +64,12 @@ class AiprayTrainingController extends Controller
             // up, with renting switched off, instead of a 500.
             report($e);
 
-            return ['enabled' => false, 'estimate' => null, 'readiness' => null, 'active' => null, 'error' => true];
+            return ['enabled' => false, 'missing' => [], 'estimate' => null, 'readiness' => null, 'active' => null, 'error' => true];
         }
 
         return [
             'enabled' => $runner->enabled(),
+            'missing' => $runner->missingConfig(),
             'estimate' => $estimate,
             'readiness' => $readiness,
             'active' => $active,
