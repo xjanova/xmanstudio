@@ -276,6 +276,8 @@ class VersionController extends Controller
         'giggok' => 'giggok.download',
         // MacDock: release ใน repo private เหมือน Anti X — ตัวอัปเดตในแอปโหลด {version} เป๊ะ ๆ จากที่นี่
         'macdock' => 'macdock.download',
+        'thaiprompt-pos' => 'thaiprompt-pos.download',
+        'thaiprompt-pos-windows' => 'thaiprompt-pos-windows.download',
     ];
 
     /**
