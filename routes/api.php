@@ -515,6 +515,18 @@ Route::prefix('aipray')->middleware(['throttle:60,1,api-aipray'])->group(functio
     Route::post('/ml/training-callback', [AiprayApiController::class, 'mlCallback']);
 });
 
+// Outside the group above, and off throttle:api: both are IP-keyed limiters
+// that also count uploads, which would lock a phone out of erasing right
+// after it chanted. aipray-erase (AppServiceProvider) is its own limit.
+Route::post('/aipray/contributors/erase', [AiprayApiController::class, 'eraseContributor'])
+    ->withoutMiddleware('throttle:api')
+    ->middleware('throttle:aipray-erase');
+
+// Training dataset for a rented GPU; the signed URL expires with the run.
+Route::get('/aipray/ml/datasets/{job}', [AiprayApiController::class, 'downloadDataset'])
+    ->name('aipray.ml.dataset')
+    ->middleware('signed');
+
 // ==================== LocalVPN Relay API ====================
 // Quota per device, not per address: players behind one café router or a Thai ISP's CGNAT
 // share an IP, and the old 120/min per IP (plus throttle:api's 60/min per IP) answered their

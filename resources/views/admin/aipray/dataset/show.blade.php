@@ -33,7 +33,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Audio Player</h3>
             <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
                 <audio controls class="w-full" preload="metadata">
-                    <source src="{{ asset('storage/' . $sample->file_path) }}" type="audio/wav">
+                    <source src="{{ route('admin.aipray.dataset.audio', $sample) }}" type="{{ \App\Services\AiprayAudioStorage::mimeType($sample->format) }}">
                     Your browser does not support the audio element.
                 </audio>
             </div>
@@ -74,10 +74,10 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         Verified
                     </span>
-                @elseif($sample->status === 'pending')
-                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                @elseif($sample->status === 'auto_labeled')
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Pending Review
+                        Auto Labeled — ควรฟังตรวจ
                     </span>
                 @elseif($sample->status === 'rejected')
                     <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
@@ -119,9 +119,9 @@
                         <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                         <select id="status" name="status"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-yellow-500 focus:border-yellow-500 text-sm">
-                            <option value="pending" {{ old('status', $sample->status) === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="verified" {{ old('status', $sample->status) === 'verified' ? 'selected' : '' }}>Verified</option>
-                            <option value="rejected" {{ old('status', $sample->status) === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            @foreach(\App\Models\AiprayAudioSample::STATUSES as $status)
+                                <option value="{{ $status }}" {{ old('status', $sample->status) === $status ? 'selected' : '' }}>{{ \Illuminate\Support\Str::headline($status) }}</option>
+                            @endforeach
                         </select>
                         @error('status')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

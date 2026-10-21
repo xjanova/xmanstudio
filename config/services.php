@@ -69,6 +69,76 @@ return [
     ],
 
     // Aipray ML inference service (Python microservice for chant AI)
+    'aipray' => [
+        // The app's consent notice promises this (lib/config/privacy.dart,
+        // PrivacyConfig.retention). Change both together.
+        'audio_retention_days' => (int) env('AIPRAY_AUDIO_RETENTION_DAYS', 1095),
+        // /apps/aipray/privacy shows a "draft" banner until the owner has
+        // reviewed the text (and the app's PrivacyConfig placeholders).
+        'privacy_policy_reviewed' => (bool) env('AIPRAY_PRIVACY_REVIEWED', false),
+        'dpo_email' => env('AIPRAY_DPO_EMAIL', 'privacy@xman4289.com'),
+    ],
+
+    'simplepod' => [
+        // Renting costs money: nothing is rented unless this is explicitly on.
+        'enabled' => (bool) env('SIMPLEPOD_ENABLED', false),
+        // Prefer a SimplePod account separate from aixman's: the orphan sweep
+        // only ever touches instances named `aipray-train-*`, but a shared
+        // balance means one project can starve the other.
+        'api_key' => env('SIMPLEPOD_API_KEY'),
+        'base_url' => env('SIMPLEPOD_BASE_URL', 'https://api.simplepod.ai'),
+    ],
+
+    // Whisper fine-tuning on a rented GPU (App\Services\AiprayGpuTrainingRunner).
+    'aipray_gpu' => [
+        'max_price_per_hour' => (float) env('AIPRAY_GPU_MAX_PRICE', 1.0),
+        // Used for estimates when the market cannot be read.
+        'expected_price_per_hour' => (float) env('AIPRAY_GPU_EXPECTED_PRICE', 0.5),
+        'gpu_models' => ['A100', 'H100', 'L40', 'RTX 4090', 'RTX 5090', 'RTX PRO 6000'],
+        'min_vram_mb' => ['whisper-medium' => 40960, 'default' => 24576],
+        // The image ships torch 2.5.1, the version ml-service pins; hosts must
+        // run a driver for CUDA 12.4 or newer (checked client-side, see
+        // SimplePodClient::offers()).
+        'image' => 'pytorch/pytorch',
+        'image_tag' => '2.5.1-cuda12.4-cudnn9-runtime',
+        'min_cuda' => '12.4',
+        'disk_gb' => 60,
+        'port' => 8100,
+        // The trainer (training/ml-service) is fetched from GitHub at boot.
+        // No default, and nothing is rented until it is set: point it at the
+        // branch or commit that carries remote.py. Not Aipray's main, where
+        // a push releases the APK. A commit SHA gives reproducible runs.
+        'trainer_repo' => 'xjanova/Aipray',
+        'trainer_ref' => env('AIPRAY_TRAINER_REF'),
+        // "Enough voice" before an admin may rent a GPU for a real run. The
+        // chants are fixed text, so what matters is every line heard in many
+        // voices, not raw hours. Starting points; tune after the first runs.
+        'readiness' => [
+            'min_samples' => (int) env('AIPRAY_TRAIN_MIN_SAMPLES', 3000),
+            'min_contributors' => (int) env('AIPRAY_TRAIN_MIN_CONTRIBUTORS', 20),
+            'min_samples_per_line' => 5,
+            'min_line_coverage' => 0.8,
+        ],
+        // Floor even for a trial run (a small run that checks the pipeline).
+        'min_samples' => 50,
+        'queue_timeout_minutes' => 60,
+        'boot_timeout_minutes' => 45,
+        'unreachable_minutes' => 15,
+        'max_lifetime_minutes' => 480,
+        // Estimates only. Whisper pads every clip to 30 s, so cost follows the
+        // number of samples, not their length. Samples per second of training
+        // on an A100-class GPU in fp32, batch 16; replace with measured values
+        // after the first real run.
+        'throughput' => [
+            'whisper-tiny' => 120,
+            'whisper-base' => 70,
+            'whisper-small' => 30,
+            'whisper-medium' => 10,
+        ],
+        // Boot, apt/pip install, model download and packaging.
+        'overhead_minutes' => 20,
+    ],
+
     'aipray_ml' => [
         'url' => env('AIPRAY_ML_SERVICE_URL', 'http://localhost:8100'),
         // No default. The old one was published with the code, which made it a

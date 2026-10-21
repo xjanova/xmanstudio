@@ -1685,6 +1685,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/', [AiprayDashboardController::class, 'index'])->name('dashboard');
         Route::get('/dataset', [AiprayDatasetController::class, 'index'])->name('dataset.index');
         Route::get('/dataset/{sample}', [AiprayDatasetController::class, 'show'])->name('dataset.show');
+        Route::get('/dataset/{sample}/audio', [AiprayDatasetController::class, 'audio'])->name('dataset.audio');
         Route::put('/dataset/{sample}', [AiprayDatasetController::class, 'update'])->name('dataset.update');
         Route::delete('/dataset/{sample}', [AiprayDatasetController::class, 'destroy'])->name('dataset.destroy');
         Route::post('/dataset/bulk-action', [AiprayDatasetController::class, 'bulkAction'])->name('dataset.bulk');
@@ -1692,6 +1693,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/record/store', [AiprayRecordController::class, 'store'])->name('record.store');
         Route::get('/training', [AiprayTrainingController::class, 'index'])->name('training.index');
         Route::post('/training/start', [AiprayTrainingController::class, 'start'])->name('training.start');
+        Route::post('/training/gpu/start', [AiprayTrainingController::class, 'gpuStart'])->name('training.gpu.start');
+        Route::post('/training/{job}/gpu/cancel', [AiprayTrainingController::class, 'gpuCancel'])->name('training.gpu.cancel');
         Route::get('/training/{job}/progress', [AiprayTrainingController::class, 'progress'])->name('training.progress');
         Route::post('/training/{job}/stop', [AiprayTrainingController::class, 'stop'])->name('training.stop');
         Route::post('/training/{job}/resume', [AiprayTrainingController::class, 'resume'])->name('training.resume');
@@ -1786,6 +1789,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 // ==================== Aipray Public Pages ====================
 Route::prefix('apps/aipray')->name('aipray.')->group(function () {
     Route::get('/', [AiprayController::class, 'show'])->name('show');
+    // Linked from the app's consent notice (Aipray lib/config/privacy.dart).
+    Route::get('/privacy', [AiprayController::class, 'privacy'])->name('privacy');
     // APK ส่งผ่านเซิร์ฟเวอร์เอง (ห้ามยื่นลิงก์ GitHub) — จำกัดอัตราไว้ไม่ให้ใครกดรัวจนกินเครื่อง
     // {version} = ตัวนั้นเป๊ะ ๆ ที่ตัวอัปเดตในแอปได้จาก update/check · ไม่ใส่ = ตัวล่าสุด
     Route::get('/download/{version?}', [AiprayController::class, 'download'])

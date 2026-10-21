@@ -89,9 +89,9 @@
         <div>
             <select name="status" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-yellow-500 focus:border-yellow-500">
                 <option value="">All Statuses</option>
-                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                <option value="verified" {{ request('status') === 'verified' ? 'selected' : '' }}>Verified</option>
-                <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                @foreach(\App\Models\AiprayAudioSample::STATUSES as $status)
+                    <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>{{ \Illuminate\Support\Str::headline($status) }}</option>
+                @endforeach
             </select>
         </div>
         <div>
@@ -139,8 +139,8 @@
                         <td class="px-4 py-3 text-sm">
                             @if($sample->status === 'verified')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Verified</span>
-                            @elseif($sample->status === 'pending')
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Pending</span>
+                            @elseif($sample->status === 'auto_labeled')
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Auto Labeled</span>
                             @elseif($sample->status === 'rejected')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Rejected</span>
                             @else

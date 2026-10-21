@@ -8,10 +8,16 @@ class AiprayAudioSample extends Model
 {
     protected $table = 'aipray_audio_samples';
 
+    /** Statuses whose transcript is good enough to train on. */
+    public const TRAINABLE_STATUSES = ['labeled', 'verified', 'auto_labeled'];
+
+    public const STATUSES = ['unlabeled', 'auto_labeled', 'labeled', 'verified', 'rejected'];
+
     protected $fillable = [
         'filename', 'original_name', 'file_path', 'chant_id', 'line_index',
         'category', 'label', 'transcript', 'duration', 'sample_rate',
         'format', 'file_size', 'status', 'device_info', 'metadata',
+        'client_sample_id', 'contributor_id', 'consent_version',
     ];
 
     protected $casts = [
@@ -27,6 +33,12 @@ class AiprayAudioSample extends Model
     public function scopeVerified($query)
     {
         return $query->where('status', 'verified');
+    }
+
+    public function scopeTrainable($query)
+    {
+        return $query->whereIn('status', self::TRAINABLE_STATUSES)
+            ->whereNotNull('transcript');
     }
 
     public function scopeCategory($query, string $category)

@@ -7,6 +7,7 @@ use App\Jobs\UploadVideoJob;
 use App\Models\MetalXAutomationLog;
 use App\Models\MetalXPromoComment;
 use App\Models\MetalXVideoProject;
+use App\Services\AiprayGpuTrainingRunner;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -89,6 +90,26 @@ Schedule::command('bugreports:cleanup')
     })
     ->onFailure(function () {
         Log::error('[Bug Reports] Cleanup failed');
+    });
+
+// Aipray: ลบเสียงสวดที่เก็บเกินระยะที่สัญญาไว้ในหน้าขอความยินยอมของแอป (PDPA)
+Schedule::command('aipray:prune-audio')
+    ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Aipray] Audio retention cleanup failed');
+    });
+
+// Aipray: ขับงานเทรนบน GPU เช่าทีละนาที และคืนเครื่องทุกกรณี (สำเร็จ ล้มเหลว หมดเวลา เกินงบ)
+// ปิดอยู่ (ค่าเริ่มต้น) และไม่มีงานค้าง = ไม่เปิด process ใหม่ ไม่เรียก SimplePod เลย
+Schedule::command('aipray:gpu-tick')
+    ->everyMinute()
+    ->when(fn () => app(AiprayGpuTrainingRunner::class)->shouldTick())
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Aipray GPU] tick failed');
     });
 
 // Metal-X: ผลิตวิดีโอจาก Content Plans อัตโนมัติ
