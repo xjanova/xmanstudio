@@ -212,29 +212,9 @@ class DownloadController extends Controller
         }
 
         // ซื้อ Anti X แล้วต้องเห็นแอปมือถือ (ฟรี) ในหน้าเดียวกัน
-        $companion = $product->slug === 'anti-x' ? $this->mobileCompanion() : null;
+        $companion = $product->slug === 'anti-x' ? Product::antiXMobileOffer() : null;
 
         return view('downloads.show', compact('product', 'productVersion', 'hasValidLicense', 'companion'));
-    }
-
-    /**
-     * The phone app shown under Anti X: its latest version and this site's download link, "เร็วๆ นี้" while it is coming
-     * soon, nothing when it has no release yet.
-     *
-     * @return array{product: Product, version: ?ProductVersion, url: ?string}|null
-     */
-    private function mobileCompanion(): ?array
-    {
-        $app = Product::where('slug', 'anti-x-mobile')->where('is_active', true)->first();
-        if (! $app) {
-            return null;
-        }
-        if ($app->isComingSoon()) {
-            return ['product' => $app, 'version' => null, 'url' => null];
-        }
-        $latest = $app->latestVersion();
-
-        return $latest ? ['product' => $app, 'version' => $latest, 'url' => route('anti-x-mobile.download', $latest->version)] : null;
     }
 
     /**

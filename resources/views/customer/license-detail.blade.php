@@ -319,6 +319,41 @@
                 </a>
                 @endif
 
+                @if($license->product && $license->product->slug === 'anti-x')
+                {{-- ไฟล์ส่งจาก xman4289.com เอง ห้ามลิงก์ไป GitHub (กฎเจ้าของ 2026-09-24) · Coming Soon = ไม่มีลิงก์ --}}
+                @if($antiXDownload = $license->product->downloadUrl())
+                <a href="{{ $antiXDownload }}" data-antix-download
+                   class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl hover:from-cyan-700 hover:to-blue-700 font-semibold shadow-lg transition-all">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <x-bi th="ดาวน์โหลด Anti X (Windows)" en="Download Anti X (Windows)" class="text-white" />
+                </a>
+                @endif
+                @if(! empty($mobileOffer))
+                <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-4" data-mobile-offer>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                        <x-bi th="แอปมือถือ Anti X (Android) — ฟรี" en="Anti X mobile app (Android) — free" />
+                    </p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <x-bi th="ดูภาพรวม บล็อก/ปลดบล็อก และรับแจ้งเตือนบนมือถือ — ไลเซนส์ฟรีออกให้มือถือเองตอนเปิดครั้งแรก" en="Overview, block/unblock and alerts on your phone — its free licence is issued on first start" />
+                        @if($mobileOffer['version']) · v{{ $mobileOffer['version']->version }}@if($mobileOffer['version']->file_size) · {{ $mobileOffer['version']->file_size_formatted }}@endif @endif
+                    </p>
+                    @if($mobileOffer['url'])
+                    <a href="{{ $mobileOffer['url'] }}" data-mobile-download
+                       class="mt-3 w-full flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 font-semibold transition-all">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        <x-bi th="ดาวน์โหลดแอปมือถือ" en="Download the mobile app" class="text-white" />
+                    </a>
+                    @else
+                    <span class="mt-3 block text-center text-sm text-gray-500 dark:text-gray-400" data-coming-soon>เร็วๆ นี้</span>
+                    @endif
+                </div>
+                @endif
+                @endif
+
                 <a href="{{ route('customer.downloads') }}"
                    class="w-full flex items-center justify-center px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-all">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

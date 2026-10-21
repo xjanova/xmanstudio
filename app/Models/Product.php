@@ -120,6 +120,26 @@ class Product extends Model
      * active version to hand out: that page answers 404 without one. A product still "coming soon"
      * has nothing to download at all (owner, 2026-10-12) — the card shows the Coming Soon label.
      */
+    /**
+     * The free Anti X phone app as offered next to Anti X (download pages, licences): its latest version and this site's
+     * link for it, a null link while it is coming soon, nothing at all before its first release or when it is switched off.
+     *
+     * @return array{product: Product, version: ?ProductVersion, url: ?string}|null
+     */
+    public static function antiXMobileOffer(): ?array
+    {
+        $app = static::where('slug', 'anti-x-mobile')->where('is_active', true)->first();
+        if (! $app) {
+            return null;
+        }
+        if ($app->isComingSoon()) {
+            return ['product' => $app, 'version' => null, 'url' => null];
+        }
+        $latest = $app->latestVersion();
+
+        return $latest ? ['product' => $app, 'version' => $latest, 'url' => route('anti-x-mobile.download', $latest->version)] : null;
+    }
+
     public function downloadUrl(): ?string
     {
         if ($this->isComingSoon()) {
