@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\AiprayRecordController;
 use App\Http\Controllers\Admin\AiprayTrainingController;
 use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\AntiXPushSettingsController;
 use App\Http\Controllers\Admin\AvatarPackController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BitTorrentController;
@@ -1604,6 +1605,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/{role}/add-user', [AdminRoleController::class, 'addUser'])->name('add-user')->middleware('permission:roles.edit');
         Route::post('/{role}/remove-user', [AdminRoleController::class, 'removeUser'])->name('remove-user')->middleware('permission:roles.edit');
     });
+
+    // Anti X phone app: the Firebase key that sends its alerts
+    Route::get('/anti-x-push', [AntiXPushSettingsController::class, 'edit'])->name('anti-x-push.edit');
+    Route::post('/anti-x-push', [AntiXPushSettingsController::class, 'update'])->name('anti-x-push.update');
 
     // SMS Payment Management (Auto-verification via SMS)
     Route::prefix('sms-payment')->name('sms-payment.')->group(function () {

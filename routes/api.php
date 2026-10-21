@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AiprayApiController;
+use App\Http\Controllers\Api\AntiXPushController;
 use App\Http\Controllers\Api\AppAiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
@@ -266,6 +267,11 @@ Route::post('v1/product/winx-tools/disk-benchmarks', [WinxDiskBenchmarkControlle
 Route::get('v1/product/winx-tools/disk-benchmarks/stats', [WinxDiskBenchmarkController::class, 'stats'])
     ->middleware(['throttle:60,1,api-winx-disk-stats'])
     ->name('api.winx-tools.disk-benchmarks.stats');
+
+// Anti X PC → wake its paired phones (fixed, content-free message; 30 per hour per machine in the controller)
+Route::post('v1/product/anti-x/push', [AntiXPushController::class, 'send'])
+    ->middleware(['throttle:60,1,api-anti-x-push'])
+    ->name('api.anti-x.push');
 
 Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1,api-product'])->group(function () {
     // Register device when app starts
