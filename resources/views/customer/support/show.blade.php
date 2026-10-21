@@ -109,13 +109,13 @@
                         {{-- Attachments --}}
                         @if($ticket->attachments && count($ticket->attachments) > 0)
                         <div class="mt-4 flex flex-wrap gap-2">
-                            @foreach($ticket->attachments as $attachment)
-                            <a href="{{ Storage::url($attachment['path']) }}" target="_blank"
+                            @foreach($ticket->attachments as $i => $attachment)
+                            <a href="{{ route('attachments.ticket', [$ticket, $i]) }}" target="_blank" rel="noopener"
                                class="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                                 <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                                 </svg>
-                                {{ $attachment['name'] }}
+                                {{ $attachment['name'] ?? 'ไฟล์แนบ ' . ($i + 1) }}
                             </a>
                             @endforeach
                         </div>
@@ -158,13 +158,13 @@
                         {{-- Attachments --}}
                         @if($reply->attachments && count($reply->attachments) > 0)
                         <div class="mt-4 flex flex-wrap gap-2">
-                            @foreach($reply->attachments as $attachment)
-                            <a href="{{ Storage::url($attachment['path']) }}" target="_blank"
+                            @foreach($reply->attachments as $i => $attachment)
+                            <a href="{{ route('attachments.ticket-reply', [$reply, $i]) }}" target="_blank" rel="noopener"
                                class="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                                 <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                                 </svg>
-                                {{ $attachment['name'] }}
+                                {{ $attachment['name'] ?? 'ไฟล์แนบ ' . ($i + 1) }}
                             </a>
                             @endforeach
                         </div>

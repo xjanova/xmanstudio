@@ -90,6 +90,7 @@ use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\AntiXController;
 use App\Http\Controllers\AntiXMobileController;
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
@@ -692,6 +693,18 @@ Route::post('/banners/{banner}/track-click', [BannerController::class, 'trackCli
 Route::middleware('throttle:60,1,payment-slips')->prefix('payment-slips')->name('payment-slips.')->group(function () {
     Route::get('/orders/{order}', [PaymentSlipController::class, 'order'])->whereNumber('order')->name('order');
     Route::get('/rentals/{payment}', [PaymentSlipController::class, 'rental'])->whereNumber('payment')->name('rental');
+});
+
+// Files on support tickets and project updates: private like the slips, opened only by the customer
+// they belong to or by an admin, with the same 404 for a guest. {index} is the file's place in the
+// row's list, so no stored path ever reaches a URL.
+Route::middleware('throttle:60,1,attachments')->prefix('attachments')->name('attachments.')->group(function () {
+    Route::get('/tickets/{ticket}/{index}', [AttachmentController::class, 'ticket'])
+        ->whereNumber('ticket')->where('index', '[0-9]{1,3}')->name('ticket');
+    Route::get('/ticket-replies/{reply}/{index}', [AttachmentController::class, 'ticketReply'])
+        ->whereNumber('reply')->where('index', '[0-9]{1,3}')->name('ticket-reply');
+    Route::get('/project-progress/{progress}/{index}', [AttachmentController::class, 'projectProgress'])
+        ->whereNumber('progress')->where('index', '[0-9]{1,3}')->name('project-progress');
 });
 
 /*

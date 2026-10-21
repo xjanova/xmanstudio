@@ -12,16 +12,20 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\PaymentSetting;
 use App\Models\Product;
+use App\Models\ProjectProgress;
 use App\Models\QuotationCategory;
 use App\Models\QuotationOption;
 use App\Models\RentalPackage;
 use App\Models\RentalPayment;
 use App\Models\Service;
+use App\Models\SupportTicket;
+use App\Models\TicketReply;
 use App\Models\User;
 use App\Observers\AiCreditOrderObserver;
 use App\Services\AiChat\KnowledgeVersion;
 use App\Services\TpixPay\TpixPaySettings;
 use App\Services\TpixPay\TpixPriceService;
+use App\Support\Attachments;
 use App\Support\ContactLinks;
 use App\Support\PaymentSlips;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -67,6 +71,10 @@ class AppServiceProvider extends ServiceProvider
 
         // A payment slip opens for the customer who sent it, or for an admin (PaymentSlipController).
         Gate::define('view-payment-slip', fn (User $user, Order|RentalPayment $owner) => PaymentSlips::canView($user, $owner));
+
+        // So do the files on a support ticket and a project update (AttachmentController).
+        Gate::define('view-ticket-attachment', fn (User $user, SupportTicket|TicketReply $owner) => Attachments::canViewTicket($user, $owner));
+        Gate::define('view-project-attachment', fn (User $user, ProjectProgress $progress) => Attachments::canViewProgress($user, $progress));
 
         $this->refreshAiChatKnowledgeOnCatalogueChanges();
     }

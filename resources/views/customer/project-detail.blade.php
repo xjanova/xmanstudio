@@ -291,6 +291,19 @@
                                     <h4 class="font-medium text-gray-900 dark:text-white">{{ $progress->title }}</h4>
                                 </div>
                                 <p class="text-gray-600 dark:text-gray-400 text-sm">{{ $progress->description }}</p>
+                                @if(is_array($progress->attachments) && count($progress->attachments) > 0)
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        @foreach($progress->attachments as $i => $attachment)
+                                            <a href="{{ route('attachments.project-progress', [$progress, $i]) }}" target="_blank" rel="noopener"
+                                               class="inline-flex items-center px-3 py-1.5 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors">
+                                                <svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                                </svg>
+                                                {{ $attachment['name'] ?? 'ไฟล์แนบ ' . ($i + 1) }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @endif
                                 <div class="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500 dark:text-gray-400">
                                     <span class="px-2 py-0.5 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500">{{ $progress->type_label }}</span>
                                     @if($progress->feature)
