@@ -582,6 +582,43 @@ class GpuxMineEarningSettlementTest extends TestCase
         $this->assertSame('0.00', $affiliate->total_pending);
     }
 
+    public function test_a_payer_that_saw_the_commission_pending_but_lost_the_race_pays_nothing(): void
+    {
+        // สองตัวจ่าย (รอบกวาดรายชั่วโมง กับปุ่มอนุมัติของแอดมิน) เห็นรายการเป็น pending พร้อมกัน — ตัวที่ล็อก
+        // ทีหลังต้องเห็นว่าจ่ายไปแล้ว ไม่ใช่บวกเงินรอบสอง (หรือพังด้วยเลขรายการ GXA ซ้ำ)
+        $referrer = User::factory()->create();
+        $affiliate = $this->affiliateFor($referrer);
+        $affiliate->update(['total_earned' => '0.40', 'total_pending' => '0.40']);
+        $commission = AffiliateCommission::create([
+            'affiliate_id' => $affiliate->id,
+            'referred_user_id' => $this->owner->id,
+            'order_amount' => '4.00',
+            'commission_rate' => '10.00',
+            'commission_amount' => '0.40',
+            'status' => 'pending',
+            'source_type' => 'gpuxmine',
+        ]);
+        $payouts = app(GpuxMineReferralPayoutService::class);
+
+        // ตัวจ่ายตัวแรกผ่านการตรวจเบื้องต้นแล้ว (อ่าน affiliate ต่อจากนั้น) — ตรงนั้นอีกตัวจ่ายจบไปก่อน
+        $raced = false;
+        Affiliate::retrieved(function () use (&$raced, $payouts, $commission) {
+            if (! $raced) {
+                $raced = true;
+                $this->assertTrue($payouts->pay((int) $commission->id));
+            }
+        });
+
+        $this->assertFalse($payouts->pay((int) $commission->id));
+        $this->assertTrue($raced);
+
+        $this->assertSame('0.40', $this->wallet($referrer)->balance);
+        $this->assertSame(1, WalletTransaction::where('user_id', $referrer->id)->count());
+        $affiliate->refresh();
+        $this->assertSame('0.40', $affiliate->total_paid);
+        $this->assertSame('0.00', $affiliate->total_pending);
+    }
+
     public function test_a_share_no_referrer_can_take_any_more_goes_back_to_the_owner_in_the_same_entry(): void
     {
         // aixman หักส่วนแบ่งตอนงานเสร็จ (ผู้แนะนำยัง active ตอนนั้น) — ถึงวันโอนผู้แนะนำถูกระงับ

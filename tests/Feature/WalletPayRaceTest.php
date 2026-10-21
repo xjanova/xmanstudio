@@ -12,12 +12,15 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\WalletLedger;
 use App\Services\WalletWithdrawalService;
 use App\Support\AdminAlerts;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Tests\TestCase;
 
 /**
@@ -174,5 +177,55 @@ class WalletPayRaceTest extends TestCase
         $order = Order::where('user_id', $this->buyer->id)->sole();
         $this->assertSame('failed', $order->payment_status);
         $this->assertSame(0, LicenseKey::where('order_id', $order->id)->count());
+    }
+
+    /**
+     * The ledger's own guard, not the callers' checks in front of it: a debit is one conditional
+     * UPDATE. A withdrawal or a take-back reads the balance under the wallet lock first, but aixman
+     * spends the same wallet with its own conditional UPDATE and never takes our lock.
+     */
+    public function test_a_ledger_debit_larger_than_the_balance_takes_nothing(): void
+    {
+        $ledger = app(WalletLedger::class);
+        $wallet = Wallet::where('user_id', $this->buyer->id)->first();
+
+        DB::transaction(function () use ($ledger, $wallet) {
+            // aixman spent ฿970 after this request read the wallet
+            Wallet::whereKey($wallet->id)->update(['balance' => '30.00']);
+
+            $this->assertNull($ledger->debit($wallet, 5000, ['transaction_id' => 'LEDGER-OVER', 'type' => WalletTransaction::TYPE_ADJUSTMENT, 'status' => WalletTransaction::STATUS_COMPLETED]));
+            $this->assertSame('30.00', $this->balance());
+
+            $taken = $ledger->debit($wallet, 3000, ['transaction_id' => 'LEDGER-EXACT', 'type' => WalletTransaction::TYPE_ADJUSTMENT, 'status' => WalletTransaction::STATUS_COMPLETED]);
+            $this->assertNotNull($taken);
+            $this->assertSame('-30.00', $taken->amount);
+            $this->assertSame('30.00', $taken->balance_before);
+            $this->assertSame('0.00', $taken->balance_after);
+        });
+
+        $this->assertSame('0.00', $this->balance());
+        $this->assertFalse(WalletTransaction::where('transaction_id', 'LEDGER-OVER')->exists());
+    }
+
+    public function test_the_ledger_credits_a_frozen_wallet_only_with_money_that_was_already_its_own(): void
+    {
+        $ledger = app(WalletLedger::class);
+        $wallet = Wallet::where('user_id', $this->buyer->id)->first();
+
+        $wallet->update(['is_active' => false]);
+        DB::transaction(function () use ($ledger, $wallet) {
+            try {
+                $ledger->credit($wallet, 100, ['transaction_id' => 'LEDGER-FROZEN', 'type' => WalletTransaction::TYPE_EARNING]);
+                $this->fail('earnings must not land in a frozen wallet');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('refused the credit', $e->getMessage());
+            }
+
+            // money that was already the owner's (a withdrawal hold coming back) is returned anyway
+            $ledger->credit($wallet, 100, ['transaction_id' => 'LEDGER-RETURN', 'type' => WalletTransaction::TYPE_REFUND, 'status' => WalletTransaction::STATUS_COMPLETED], onlyActive: false);
+        });
+
+        $this->assertSame('1001.00', $this->balance());
+        $this->assertFalse(WalletTransaction::where('transaction_id', 'LEDGER-FROZEN')->exists());
     }
 }
