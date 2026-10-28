@@ -120,7 +120,9 @@ class ProductLicenseController extends Controller
      */
     private function getProduct(string $productSlug): ?Product
     {
-        return Product::where('slug', $productSlug)
+        // The apps ask by the code's name (`brainx`) even where the shop row was renamed
+        // (`brainx-cloud`) — Product::SLUG_ALIASES
+        return Product::bySlugOrAlias($productSlug)
             ->where('requires_license', true)
             ->first();
     }
@@ -324,7 +326,7 @@ class ProductLicenseController extends Controller
         }
 
         // Start trial — 24 ชม. เว้นแต่ผลิตภัณฑ์กำหนดไว้เองใน TRIAL_DAYS
-        $trialDays = self::TRIAL_DAYS[$product->slug] ?? 1;
+        $trialDays = self::TRIAL_DAYS[$product->licenseSlug()] ?? 1;
         if (! $device->startTrial($trialDays)) {
             return response()->json([
                 'success' => false,
@@ -386,7 +388,7 @@ class ProductLicenseController extends Controller
                 'days_remaining' => $trialDays,
                 'hours_remaining' => $trialDays * 24,
                 'seconds_remaining' => $trialDays * 24 * 3600,
-                'features' => $this->getTrialFeatures($productSlug),
+                'features' => $this->getTrialFeatures(Product::canonicalSlug($productSlug)),
                 'early_bird' => [
                     'eligible' => true,
                     'discount_percent' => 20,
@@ -483,7 +485,7 @@ class ProductLicenseController extends Controller
 
     private function isFreeTierTrial(Product $product): bool
     {
-        return in_array($product->slug, self::FREE_TIER_AFTER_TRIAL, true);
+        return in_array($product->licenseSlug(), self::FREE_TIER_AFTER_TRIAL, true);
     }
 
     /**
@@ -604,7 +606,7 @@ class ProductLicenseController extends Controller
             }
         }
 
-        $trialDays = self::TRIAL_DAYS[$product->slug] ?? 1;
+        $trialDays = self::TRIAL_DAYS[$product->licenseSlug()] ?? 1;
 
         // One device row at a time: a double tap must not hand out two DEMO keys
         $started = DB::transaction(function () use ($device, $product, $machineId, $trialDays, $request) {
@@ -666,7 +668,7 @@ class ProductLicenseController extends Controller
                 'days_remaining' => $trialDays,
                 'hours_remaining' => $trialDays * 24,
                 'seconds_remaining' => $trialDays * 24 * 3600,
-                'features' => $this->getFeaturesByType($product->slug, LicenseKey::TYPE_DEMO),
+                'features' => $this->getFeaturesByType($product->licenseSlug(), LicenseKey::TYPE_DEMO),
                 'early_bird' => ['eligible' => false],
             ],
         ]);
@@ -707,7 +709,7 @@ class ProductLicenseController extends Controller
      */
     private function trialUsedOnThisHardware(Product $product, ?ProductDevice $device, mixed $hardwareHash, mixed $drmId = null, mixed $androidId = null): bool
     {
-        if (! in_array($product->slug, self::HARDWARE_BOUND_TRIAL_PRODUCTS, true)) {
+        if (! in_array($product->licenseSlug(), self::HARDWARE_BOUND_TRIAL_PRODUCTS, true)) {
             return false;
         }
 
@@ -952,7 +954,7 @@ class ProductLicenseController extends Controller
                 'license_type' => $license->license_type,
                 'expires_at' => $license->expires_at?->toISOString(),
                 'days_remaining' => $license->daysRemaining(),
-                'features' => $this->getFeaturesByType($productSlug, $license->license_type),
+                'features' => $this->getFeaturesByType(Product::canonicalSlug($productSlug), $license->license_type),
             ],
         ]);
     }
@@ -1075,7 +1077,7 @@ class ProductLicenseController extends Controller
                 'license_type' => $license->license_type,
                 'expires_at' => $license->expires_at?->toISOString(),
                 'days_remaining' => $license->daysRemaining(),
-                'features' => $this->getFeaturesByType($product->slug, $license->license_type),
+                'features' => $this->getFeaturesByType($product->licenseSlug(), $license->license_type),
                 'devices_used' => (int) $license->activations,
                 'max_devices' => $maxDevices,
             ],
@@ -1277,7 +1279,7 @@ class ProductLicenseController extends Controller
                         'expires_at' => $better->expires_at?->toISOString(),
                         'days_remaining' => $better->daysRemaining(),
                         'is_expired' => false,
-                        'features' => $this->getFeaturesByType($productSlug, $better->license_type),
+                        'features' => $this->getFeaturesByType(Product::canonicalSlug($productSlug), $better->license_type),
                     ],
                 ]);
             }
@@ -1293,7 +1295,7 @@ class ProductLicenseController extends Controller
                 'expires_at' => $license->expires_at?->toISOString(),
                 'days_remaining' => $license->daysRemaining(),
                 'is_expired' => $license->isExpired(),
-                'features' => $this->getFeaturesByType($productSlug, $license->license_type),
+                'features' => $this->getFeaturesByType(Product::canonicalSlug($productSlug), $license->license_type),
             ] + CloudStorage::apiFields($license->setRelation('product', $product)),
         ]);
     }
@@ -1444,7 +1446,7 @@ class ProductLicenseController extends Controller
         if (! $license) {
             // Freemium (LocalVPN, GigGok): auto-create a free license for new devices.
             // Use firstOrCreate to prevent duplicates from concurrent requests.
-            if (in_array($productSlug, self::FREEMIUM_PRODUCTS, true)) {
+            if (in_array(Product::canonicalSlug($productSlug), self::FREEMIUM_PRODUCTS, true)) {
                 $license = LicenseKey::freeFor($product, $validated['machine_id'], $drmId, $androidId);
 
                 return response()->json([
@@ -1456,7 +1458,7 @@ class ProductLicenseController extends Controller
                         'status' => $license->status,
                         'expires_at' => null,
                         'days_remaining' => null,
-                        'features' => $this->getFeaturesByType($productSlug, 'free'),
+                        'features' => $this->getFeaturesByType(Product::canonicalSlug($productSlug), 'free'),
                     ],
                 ]);
             }
@@ -1506,7 +1508,7 @@ class ProductLicenseController extends Controller
                 'status' => $license->status,
                 'expires_at' => $license->expires_at?->toISOString(),
                 'days_remaining' => $license->daysRemaining(),
-                'features' => $this->getFeaturesByType($productSlug, $license->license_type),
+                'features' => $this->getFeaturesByType(Product::canonicalSlug($productSlug), $license->license_type),
             ],
         ]);
     }
@@ -1686,7 +1688,7 @@ class ProductLicenseController extends Controller
                 'price' => $price,
                 'currency' => LicensePlans::CURRENCY,
                 'duration_days' => self::PLAN_DURATION_DAYS[$type],
-                'features' => $this->getFeaturesByType($productSlug, $type),
+                'features' => $this->getFeaturesByType(Product::canonicalSlug($productSlug), $type),
             ] + ($tpixRate !== null ? ['price_tpix' => $tpix->apiPrice($price)] : []);
         }
 

@@ -80,6 +80,7 @@ class ProductController extends Controller
             'is_active' => 'boolean',
             'is_coming_soon' => 'boolean',
             'coming_soon_until' => 'nullable|date',
+            'renew_while_coming_soon' => 'boolean',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
@@ -88,6 +89,7 @@ class ProductController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
         $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
+        $validated['renew_while_coming_soon'] = $request->boolean('renew_while_coming_soon');
         $validated['price_tpix'] = is_numeric($validated['price_tpix'] ?? null) && (float) $validated['price_tpix'] > 0 ? $validated['price_tpix'] : null;
 
         // Clean features - remove empty strings
@@ -170,6 +172,7 @@ class ProductController extends Controller
             'is_active' => 'boolean',
             'is_coming_soon' => 'boolean',
             'coming_soon_until' => 'nullable|date',
+            'renew_while_coming_soon' => 'boolean',
         ]);
 
         // The slug is the product's identity, not a copy of its name: download routes, the apps'
@@ -181,6 +184,7 @@ class ProductController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
         $validated['is_coming_soon'] = $request->boolean('is_coming_soon');
         $validated['coming_soon_until'] = $request->input('coming_soon_until') ?: null;
+        $validated['renew_while_coming_soon'] = $request->boolean('renew_while_coming_soon');
         $validated['price_tpix'] = is_numeric($validated['price_tpix'] ?? null) && (float) $validated['price_tpix'] > 0 ? $validated['price_tpix'] : null;
 
         // Clean features - remove empty strings

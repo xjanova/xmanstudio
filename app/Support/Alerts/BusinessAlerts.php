@@ -870,14 +870,22 @@ final class BusinessAlerts
             return new Alert(
                 key: 'renewal-short:' . $product . ':' . now()->toDateString(),
                 level: Alert::WARNING,
-                title: sprintf('ลูกค้า %d รายยอดเงินไม่พอต่ออายุ%s', count($items), $product === 'vps' ? ' VPS' : 'โดเมน'),
+                title: sprintf('ลูกค้า %d รายยอดเงินไม่พอต่ออายุ%s', count($items), match ($product) {
+                    'vps' => ' VPS',
+                    'license' => 'ไลเซนส์',
+                    default => 'โดเมน',
+                }),
                 body: "ถึงกำหนดตัดเงินต่ออายุอัตโนมัติแล้ว แต่กระเป๋าเงินลูกค้าไม่พอ — ระบบแจ้งลูกค้าทางอีเมลแล้ว และจะลองตัดใหม่ทุกวันจนหมดอายุ\n"
                     . implode("\n", $lines),
                 facts: [
                     'จำนวน' => (string) count($items),
                     'ยอดที่ขาดรวม' => self::baht(array_sum(array_map(fn ($i) => max(0, $i['need'] - $i['have']), $items))),
                 ],
-                url: self::adminUrl($product === 'vps' ? 'admin.vps.index' : 'admin.domains.index'),
+                url: self::adminUrl(match ($product) {
+                    'vps' => 'admin.vps.index',
+                    'license' => 'admin.licenses.index',
+                    default => 'admin.domains.index',
+                }),
                 urlLabel: 'เปิดหลังบ้าน',
                 category: 'orders',
             );

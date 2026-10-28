@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\CloudStorage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -54,6 +55,7 @@ class Product extends Model
         'is_active',
         'is_coming_soon',
         'coming_soon_until',
+        'renew_while_coming_soon',
     ];
 
     protected $casts = [
@@ -64,6 +66,7 @@ class Product extends Model
         'is_active' => 'boolean',
         'is_coming_soon' => 'boolean',
         'coming_soon_until' => 'datetime',
+        'renew_while_coming_soon' => 'boolean',
         'price' => 'decimal:2',
         'price_tpix' => 'decimal:8',
     ];
@@ -183,11 +186,11 @@ class Product extends Model
      */
     public function defaultLicenseType(): string
     {
-        if (in_array($this->slug, self::LIFETIME_LICENSE_SLUGS, true) || $this->avatarPack()->exists()) {
+        if (in_array($this->licenseSlug(), self::LIFETIME_LICENSE_SLUGS, true) || $this->avatarPack()->exists()) {
             return LicenseKey::TYPE_LIFETIME;
         }
 
-        if (in_array($this->slug, self::MONTHLY_LICENSE_SLUGS, true)) {
+        if (in_array($this->licenseSlug(), self::MONTHLY_LICENSE_SLUGS, true)) {
             return LicenseKey::TYPE_MONTHLY;
         }
 
@@ -199,7 +202,54 @@ class Product extends Model
      */
     public function isRenewable(): bool
     {
-        return in_array($this->slug, (array) config('licenses.renewable_products', []), true);
+        return in_array($this->licenseSlug(), (array) config('licenses.renewable_products', []), true);
+    }
+
+    /**
+     * Shop slugs that are another name for a product the code knows by a different slug.
+     *
+     * Production renamed BrainX Cloud's row to `brainx-cloud`, while its prices, renewals, page
+     * and the BrainX apps (purchase link, /api/v1/product/brainx/status/{key}) all say `brainx`.
+     * Every lookup by the code's name found nothing: /products/brainx answered 404, the pricing
+     * API sold no plan, and the cloud server's key check answered PRODUCT_NOT_FOUND.
+     */
+    public const SLUG_ALIASES = ['brainx-cloud' => 'brainx'];
+
+    /** The slug the code (config/licenses.php, the license API, custom pages) knows this slug by. */
+    public static function canonicalSlug(string $slug): string
+    {
+        return self::SLUG_ALIASES[$slug] ?? $slug;
+    }
+
+    /** Every shop slug that names the same product as $slug — itself first. */
+    public static function slugsFor(string $slug): array
+    {
+        $canonical = self::canonicalSlug($slug);
+
+        return array_values(array_unique([
+            $slug,
+            $canonical,
+            ...array_keys(self::SLUG_ALIASES, $canonical, true),
+        ]));
+    }
+
+    /** This product's slug as the code knows it — see SLUG_ALIASES. */
+    public function licenseSlug(): string
+    {
+        return self::canonicalSlug((string) $this->slug);
+    }
+
+    /**
+     * The row a slug names, trying its exact slug first and then the other names of the same
+     * product, so a row renamed in the admin is still found by the name the code uses.
+     */
+    public static function bySlugOrAlias(string $slug): Builder
+    {
+        $slugs = self::slugsFor($slug);
+
+        return static::query()
+            ->whereIn('slug', $slugs)
+            ->orderByRaw('CASE WHEN slug = ? THEN 0 ELSE 1 END', [$slug]);
     }
 
     /**
@@ -272,6 +322,15 @@ class Product extends Model
     public function isAvailable(): bool
     {
         return $this->is_active && ! $this->isComingSoon();
+    }
+
+    /**
+     * Whether a customer may renew a key of this product they already hold: on sale, or Coming
+     * Soon with the admin's "ต่ออายุได้ระหว่าง Coming Soon" switched on.
+     */
+    public function acceptsRenewals(): bool
+    {
+        return $this->is_active && (! $this->isComingSoon() || $this->renew_while_coming_soon);
     }
 
     /**

@@ -22,6 +22,8 @@ class LicenseKey extends Model
         'license_type',
         'activated_at',
         'expires_at',
+        'auto_renew',
+        'renewal_mails',
         'last_validated_at',
         'device_id',
         'machine_id',
@@ -37,6 +39,8 @@ class LicenseKey extends Model
     protected $casts = [
         'activated_at' => 'datetime',
         'expires_at' => 'datetime',
+        'auto_renew' => 'boolean',
+        'renewal_mails' => 'array',
         'last_validated_at' => 'datetime',
         'extra_storage_gb' => 'integer',
         'metadata' => 'array',

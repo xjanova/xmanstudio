@@ -112,7 +112,9 @@ class ProductController extends Controller
             return redirect()->route('customer.licenses');
         }
 
-        $product = Product::where('slug', $slug)
+        // By its name in the code too: production renamed BrainX Cloud's row to `brainx-cloud`,
+        // and the BrainX apps still send buyers to /products/brainx (Product::SLUG_ALIASES)
+        $product = Product::bySlugOrAlias($slug)
             ->where('is_active', true)
             ->firstOrFail();
 
@@ -191,8 +193,10 @@ class ProductController extends Controller
             'macdock' => 'products.macdock',
         ];
 
-        if (isset($customViews[$slug])) {
-            return view($customViews[$slug], compact('product', 'relatedProducts', 'userLicense', 'hasPurchased', 'renewalKey'));
+        $viewKey = $product->licenseSlug();
+
+        if (isset($customViews[$viewKey])) {
+            return view($customViews[$viewKey], compact('product', 'relatedProducts', 'userLicense', 'hasPurchased', 'renewalKey'));
         }
 
         return view('products.show', compact('product', 'relatedProducts', 'userLicense', 'hasPurchased', 'renewalKey'));

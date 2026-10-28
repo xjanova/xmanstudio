@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Services\LicenseService;
 use App\Support\CloudStorage;
 use App\Support\LicenseSeats;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class LicenseController extends Controller
@@ -322,9 +323,7 @@ class LicenseController extends Controller
 
         $previousExpiry = $license->expires_at?->format('Y-m-d H:i:s');
         $days = (int) $request->days;
-        $newExpiry = $license->expires_at
-            ? $license->expires_at->addDays($days)
-            : now()->addDays($days);
+        $newExpiry = $this->extendedExpiry($license, $days);
 
         $license->update([
             'expires_at' => $newExpiry,
@@ -343,7 +342,21 @@ class LicenseController extends Controller
 
         return redirect()
             ->back()
-            ->with('success', "ขยายเวลา License '{$license->license_key}' ไปถึง {$newExpiry->format('d/m/Y')}");
+            ->with('success', "ขยายเวลา License '{$license->license_key}' ไปถึง {$newExpiry->format('d/m/Y')} — สถานะ: ใช้งานได้");
+    }
+
+    /**
+     * The expiry after adding $days: on top of the current expiry while the key is still running,
+     * from now once it has lapsed. Adding to a date long past left the key expired — the admin
+     * pressed "extend", saw a success message, and the page still said Expired.
+     */
+    private function extendedExpiry(LicenseKey $license, int $days): Carbon
+    {
+        $from = $license->expires_at !== null && $license->expires_at->isFuture()
+            ? $license->expires_at->copy()
+            : now();
+
+        return $from->addDays($days);
     }
 
     /**
@@ -484,9 +497,7 @@ class LicenseController extends Controller
         foreach ($licenses as $license) {
             if ($license->license_type !== 'lifetime') {
                 $previousExpiry = $license->expires_at?->format('Y-m-d H:i:s');
-                $newExpiry = $license->expires_at
-                    ? $license->expires_at->addDays($request->days)
-                    : now()->addDays($request->days);
+                $newExpiry = $this->extendedExpiry($license, (int) $request->days);
 
                 $license->update([
                     'expires_at' => $newExpiry,

@@ -752,6 +752,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [CustomerPortalController::class, 'dashboard'])->name('dashboard');
         Route::get('/licenses', [CustomerPortalController::class, 'licenses'])->name('licenses');
         Route::get('/licenses/{license}', [CustomerPortalController::class, 'licenseShow'])->name('licenses.show');
+        // ต่ออายุคีย์เดิมจาก Wallet ปุ่มเดียว และสวิตช์ต่ออายุอัตโนมัติ (คำสั่ง licenses:renew ตัดเงินให้)
+        Route::post('/licenses/{license}/renew', [CustomerPortalController::class, 'renewLicense'])
+            ->middleware('throttle:10,1,license-renew')->name('licenses.renew');
+        Route::post('/licenses/{license}/auto-renew', [CustomerPortalController::class, 'toggleAutoRenew'])
+            ->middleware('throttle:20,1,license-auto-renew')->name('licenses.auto-renew');
         Route::get('/subscriptions', [CustomerPortalController::class, 'subscriptions'])->name('subscriptions');
         Route::get('/subscriptions/{rental}', [CustomerPortalController::class, 'subscriptionShow'])->name('subscriptions.show');
         Route::get('/orders', [CustomerPortalController::class, 'orders'])->name('orders');

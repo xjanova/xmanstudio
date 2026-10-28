@@ -197,12 +197,12 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-3 py-1.5 text-xs font-semibold rounded-full shadow-sm
-                            {{ $license->status === 'active' ? 'bg-gradient-to-r from-emerald-400 to-green-500 text-white' : '' }}
-                            {{ $license->status === 'expired' ? 'bg-gradient-to-r from-red-400 to-rose-500 text-white' : '' }}
+                            {{ $license->status === 'active' && ! $license->isExpired() ? 'bg-gradient-to-r from-emerald-400 to-green-500 text-white' : '' }}
+                            {{ $license->status === 'expired' || ($license->status === 'active' && $license->isExpired()) ? 'bg-gradient-to-r from-red-400 to-rose-500 text-white' : '' }}
                             {{ $license->status === 'revoked' ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : '' }}
                         ">
-                            {{ $license->status === 'active' ? 'ใช้งานอยู่ / Active' : '' }}
-                            {{ $license->status === 'expired' ? 'หมดอายุ / Expired' : '' }}
+                            {{ $license->status === 'active' && ! $license->isExpired() ? 'ใช้งานอยู่ / Active' : '' }}
+                            {{ $license->status === 'expired' || ($license->status === 'active' && $license->isExpired()) ? 'หมดอายุ / Expired' : '' }}
                             {{ $license->status === 'revoked' ? 'ถูกยกเลิก / Revoked' : '' }}
                         </span>
                     </td>
@@ -217,6 +217,9 @@
                         @else
                             <span class="text-emerald-600 dark:text-emerald-400 font-medium"><x-bi th="ไม่มีวันหมดอายุ" en="No expiry" /></span>
                         @endif
+                        @if($license->auto_renew && ($renewable[$license->id] ?? false))
+                            <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"><x-bi th="ต่ออายุอัตโนมัติ" en="Auto-renew" /></span>
+                        @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <div class="flex items-center">
@@ -225,7 +228,15 @@
                             <span class="text-gray-500 dark:text-gray-400">{{ $license->max_activations ?? '∞' }}</span>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                        @if($renewable[$license->id] ?? false)
+                        <a href="{{ route('customer.licenses.show', $license) }}#renew" class="inline-flex items-center px-4 py-2 border border-violet-300 dark:border-violet-600 text-violet-700 dark:text-violet-300 rounded-xl hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all font-medium">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <x-bi th="ต่ออายุ" en="Renew" />
+                        </a>
+                        @endif
                         <a href="{{ route('customer.licenses.show', $license) }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
                             <x-bi k="common.view_details" />
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,12 +277,12 @@
                     <div class="flex items-center gap-2">
                         <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $license->product?->name ?? 'Software License' }}</h3>
                         <span class="px-2 py-0.5 text-xs font-semibold rounded-full shadow-sm
-                            {{ $license->status === 'active' ? 'bg-gradient-to-r from-emerald-400 to-green-500 text-white' : '' }}
-                            {{ $license->status === 'expired' ? 'bg-gradient-to-r from-red-400 to-rose-500 text-white' : '' }}
+                            {{ $license->status === 'active' && ! $license->isExpired() ? 'bg-gradient-to-r from-emerald-400 to-green-500 text-white' : '' }}
+                            {{ $license->status === 'expired' || ($license->status === 'active' && $license->isExpired()) ? 'bg-gradient-to-r from-red-400 to-rose-500 text-white' : '' }}
                             {{ $license->status === 'revoked' ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : '' }}
                         ">
-                            {{ $license->status === 'active' ? 'ใช้งาน / Active' : '' }}
-                            {{ $license->status === 'expired' ? 'หมดอายุ / Expired' : '' }}
+                            {{ $license->status === 'active' && ! $license->isExpired() ? 'ใช้งาน / Active' : '' }}
+                            {{ $license->status === 'expired' || ($license->status === 'active' && $license->isExpired()) ? 'หมดอายุ / Expired' : '' }}
                             {{ $license->status === 'revoked' ? 'ยกเลิก / Revoked' : '' }}
                         </span>
                     </div>
@@ -302,6 +313,11 @@
                             </span>
                         @else
                             <span class="text-emerald-600 dark:text-emerald-400"><x-bi th="ไม่มีวันหมดอายุ" en="No expiry" /></span>
+                        @endif
+                        @if($renewable[$license->id] ?? false)
+                            <span class="px-2 py-0.5 rounded-full font-medium {{ $license->auto_renew ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300' }}">
+                                @if($license->auto_renew) <x-bi th="ต่ออายุอัตโนมัติ" en="Auto-renew" /> @else <x-bi th="แตะเพื่อต่ออายุ" en="Tap to renew" /> @endif
+                            </span>
                         @endif
                     </div>
                 </div>
