@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Mail;
 class LicenseService
 {
     /** License types that run for a fixed term — the ones a renewal can add to a key. */
-    private const TERM_TYPES = [
+    public const TERM_TYPES = [
         LicenseKey::TYPE_DAILY,
         LicenseKey::TYPE_WEEKLY,
         LicenseKey::TYPE_MONTHLY,

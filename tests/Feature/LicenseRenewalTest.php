@@ -198,6 +198,46 @@ class LicenseRenewalTest extends TestCase
             ->assertSessionHas('error');
     }
 
+    public function test_naming_an_own_key_does_not_let_a_lifetime_plan_past_its_own_checkout_or_coming_soon(): void
+    {
+        $user = User::factory()->create();
+        $key = $this->key($user, 'monthly', now()->addDays(5));
+
+        // Lifetime is a new key, not a renewal: Tping still sells it only through its own checkout
+        $this->actingAs($user)->post(route('cart.add', $this->tping), ['license_type' => 'lifetime', 'renew_license' => $key->id])
+            ->assertSessionHas('error');
+
+        $this->tping->update(['is_coming_soon' => true, 'renew_while_coming_soon' => true]);
+
+        $this->actingAs($user)->post(route('cart.add', $this->tping), ['license_type' => 'lifetime', 'renew_license' => $key->id])
+            ->assertSessionHas('error', ComingSoonPurchase::MESSAGE);
+
+        $this->assertSame(0, CartItem::count());
+    }
+
+    public function test_a_renewal_keeps_a_cart_line_of_its_own_beside_a_purchase_of_the_same_product(): void
+    {
+        config(['licenses.cart_products' => array_merge(config('licenses.cart_products'), ['tping'])]);
+        $user = User::factory()->create();
+        $key = $this->key($user, 'monthly', now()->addDays(5));
+
+        $this->actingAs($user)->post(route('cart.add', $this->tping), ['license_type' => 'yearly']);
+        $this->actingAs($user)->post(route('cart.add', $this->tping), ['license_type' => 'monthly', 'renew_license' => $key->id]);
+        // "ต่ออายุ" pressed again is still one term
+        $this->actingAs($user)->post(route('cart.add', $this->tping), ['license_type' => 'monthly', 'renew_license' => $key->id]);
+        // ...and another purchase joins the purchase line, not the renewal
+        $this->actingAs($user)->post(route('cart.add', $this->tping), ['license_type' => 'yearly']);
+
+        $lines = CartItem::orderBy('id')->get()->map(fn (CartItem $item) => [
+            json_decode($item->custom_requirements, true), $item->quantity, (float) $item->price,
+        ])->all();
+
+        $this->assertSame([
+            [['license_type' => 'yearly'], 2, 2500.0],
+            [['license_type' => 'monthly', 'renew_license_id' => $key->id], 1, 399.0],
+        ], $lines);
+    }
+
     // ── auto-renew ────────────────────────────────────────────────────
 
     public function test_auto_renew_switches_on_and_off_but_not_for_a_lifetime_key(): void
