@@ -43,6 +43,10 @@ class ProductLicenseController extends Controller
         'anti-x' => 14,
         // LocalVPN ทดลอง Pro เต็มตัว 30 วัน ครั้งเดียวต่อเครื่อง — เจ้าของกำหนด 2026-10-11 (ดู FREE_TIER_AFTER_TRIAL)
         'localvpn' => 30,
+        // Reverse X (สตูดิโอแกะโปรแกรมด้วย AI) ทดลอง Pro (ผู้ช่วย AI) ได้ 14 วัน แบบเดียวกับ Anti X
+        // ไม่ใช่ freemium: แอปให้ส่วนฟรี (ทุกหน้าวิเคราะห์) เองเมื่อไม่มีคีย์ — ถ้า check-machine แจกคีย์ FREE
+        // แอปจะถือว่ามีไลเซนส์แล้วและไม่ขอทดลองเลย (LicenseService.RefreshAsync ของ Reverse X)
+        'reverse-x' => 14,
     ];
 
     /**
@@ -64,6 +68,20 @@ class ProductLicenseController extends Controller
         // LocalVPN ส่ง hash รายเครื่องจริง (Windows: SMBIOS UUID · Android: ANDROID_ID + MediaDrm) ไม่ใช่ hash ระดับรุ่น
         // + drm_id / android_id บน Android — ลบแอปลงใหม่ / ลง Windows ใหม่ก็ไม่ได้ทดลองรอบสอง
         'localvpn',
+        // Reverse X บน Windows: machine_id มาจาก MachineGuid + SMBIOS UUID, hardware_hash จาก UUID + serial บอร์ด/เครื่อง
+        'reverse-x',
+    ];
+
+    /**
+     * ทดลองได้ครั้งเดียวต่อเครื่อง (machine_id) — ทดลองหมดแล้วขอใหม่บนเครื่องเดิมไม่ได้อีก
+     *
+     * ทางทั่วไปของ /demo ให้เครื่องเดิมเริ่มทดลองรอบใหม่ได้เมื่อรอบก่อนหมด (canStartTrial() นับถึง 3 ครั้ง
+     * แล้วพึ่ง checkTrialAbuse() ซึ่งติดธง suspicious ให้เครื่องที่เพิ่งหมดไม่ถึง 14 วัน แต่ปล่อยรอบสองเมื่อเกินนั้น)
+     * แอป Reverse X ขอทดลองครั้งเดียวต่อการติดตั้ง แล้วให้ร้านตัดสิน — ลบไฟล์ไลเซนส์ในเครื่อง/ลงแอปใหม่
+     * จึงต้องได้คำตอบ "ใช้สิทธิ์ไปแล้ว" ตรง ๆ ไม่ใช่ทดลองรอบสองหรือโดนติดธงเครื่องต้องสงสัย
+     */
+    private const ONE_TRIAL_PER_DEVICE_PRODUCTS = [
+        'reverse-x',
     ];
 
     /**
@@ -283,6 +301,16 @@ class ProductLicenseController extends Controller
             ], 403);
         }
 
+        // เครื่องนี้เองทดลองไปแล้วและหมดแล้ว (ONE_TRIAL_PER_DEVICE_PRODUCTS) — ตอบก่อน abuse check เหตุผลเดียวกับข้างบน
+        if ($this->trialUsedOnThisDevice($product, $device)) {
+            return response()->json([
+                'success' => false,
+                'server_time' => now()->toISOString(),
+                'error_code' => 'TRIAL_ALREADY_USED',
+                'message' => 'เครื่องนี้เคยใช้สิทธิ์ทดลองใช้ไปแล้ว',
+            ], 403);
+        }
+
         // Check for abuse
         $abuseCheck = $device->checkTrialAbuse();
         if ($abuseCheck['is_abuse']) {
@@ -465,7 +493,7 @@ class ProductLicenseController extends Controller
                     || in_array($freeTierRefusal, ['TRIAL_ALREADY_USED', 'TRIAL_ACTIVE'], true),
                 'can_start_demo' => $this->isFreeTierTrial($product)
                     ? $freeTierRefusal === null
-                    : $device->canStartTrial() && ! $usedOnThisHardware,
+                    : $device->canStartTrial() && ! $usedOnThisHardware && ! $this->trialUsedOnThisDevice($product, $device),
                 'is_trial_active' => $isTrialActive,
                 'trial_info' => $device->trial_expires_at ? [
                     'expires_at' => $device->trial_expires_at->toISOString(),
@@ -486,6 +514,17 @@ class ProductLicenseController extends Controller
     private function isFreeTierTrial(Product $product): bool
     {
         return in_array($product->licenseSlug(), self::FREE_TIER_AFTER_TRIAL, true);
+    }
+
+    /**
+     * ONE_TRIAL_PER_DEVICE_PRODUCTS: this PC has had its trial and it is over. A trial still running is
+     * left to the TRIAL_ACTIVE answer, which tells the app how long it has left.
+     */
+    private function trialUsedOnThisDevice(Product $product, ProductDevice $device): bool
+    {
+        return in_array($product->licenseSlug(), self::ONE_TRIAL_PER_DEVICE_PRODUCTS, true)
+            && ($device->trial_attempts > 0 || $device->first_trial_at !== null)
+            && ! ($device->status === ProductDevice::STATUS_TRIAL && ! $device->isTrialExpired());
     }
 
     /**

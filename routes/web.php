@@ -132,6 +132,7 @@ use App\Http\Controllers\PublicChatController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RentalController;
+use App\Http\Controllers\ReverseXController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SharedWorkflowController;
@@ -451,6 +452,14 @@ Route::get('/anti-x-mobile/download/{version?}', [AntiXMobileController::class, 
     ->where('version', '[0-9A-Za-z.\-]+')
     ->middleware('throttle:30,1,anti-x-mobile-download')
     ->name('anti-x-mobile.download');
+
+// Reverse X (Windows) - zip เดียวทั้ง Free/Pro (Pro ปลดในแอปด้วย license key) · แอปอัปเดตตัวเองผ่าน URL นี้ทุก tier
+// ไฟล์ส่งผ่านเซิร์ฟเวอร์ (ReleaseDownloadStreamer) ห้าม redirect ไป GitHub แม้ repo เป็น public
+// ผูกกับ reverse-x ตายตัว ห้ามทำเป็น {slug} · {version} = ตัวนั้นเป๊ะ ๆ ที่ update/check ประกาศ sha256 ไว้
+Route::get('/reverse-x/download/{version?}', [ReverseXController::class, 'download'])
+    ->where('version', '[0-9A-Za-z.\-]+')
+    ->middleware('throttle:30,1,reverse-x-download')
+    ->name('reverse-x.download');
 
 // MacDock (Windows) - แอปฟรี zip เดียว · แอปอัปเดตตัวเองผ่าน URL นี้ (เฉพาะเครื่องที่มีไลเซ่นฟรี)
 // release อยู่ใน repo private: ไฟล์ส่งผ่านเซิร์ฟเวอร์ ห้าม redirect ไป GitHub · ผูกกับ macdock ตายตัว ห้ามทำเป็น {slug}

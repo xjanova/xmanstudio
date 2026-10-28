@@ -918,7 +918,9 @@ class WinXToolsDistributionTest extends TestCase
      */
     private function listingCard(): array
     {
-        $html = $this->get(route('products.index'))->assertOk()->getContent();
+        // searched by name: the list is 12 a page, products on sale before Coming Soon — every product the
+        // migrations add pushes a Coming Soon WinXTools further back, off the first page
+        $html = $this->get(route('products.index', ['search' => 'WinXTools']))->assertOk()->getContent();
 
         $start = strpos($html, 'href="' . route('products.show', 'winx-tools') . '"');
         $this->assertNotFalse($start, 'WinXTools is missing from the product list');

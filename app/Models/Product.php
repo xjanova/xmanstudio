@@ -23,10 +23,10 @@ class Product extends Model
     /**
      * สินค้าที่ราคาในแถว (products.price) คือราคารายเดือน — ปุ่มซื้อที่ไม่ส่ง license_type มา
      * (เช่น POST ที่ทำขึ้นเอง) จ่ายราคานั้น จึงต้องได้คีย์รายเดือน ไม่ใช่รายปีที่เป็นค่าตั้งต้น
-     * BrainX Cloud ขายรายเดือนอย่างเดียว ฿399 · Anti X และ LocalVPN ขายสามแบบแต่ราคาในแถวคือราคารายเดือน
-     * (฿199 ทั้งคู่ — คีย์รายปีในราคารายเดือน = ส่วนลดที่ไม่มีใครตั้งใจให้)
+     * BrainX Cloud ขายรายเดือนอย่างเดียว ฿399 · Anti X, LocalVPN และ Reverse X ขายสามแบบแต่ราคาในแถวคือราคารายเดือน
+     * (฿199 ทุกตัว — คีย์รายปีในราคารายเดือน = ส่วนลดที่ไม่มีใครตั้งใจให้)
      */
-    public const MONTHLY_LICENSE_SLUGS = ['brainx', 'anti-x', 'localvpn'];
+    public const MONTHLY_LICENSE_SLUGS = ['brainx', 'anti-x', 'localvpn', 'reverse-x'];
 
     /**
      * สินค้าที่ตั้งเป็น Coming Soon ห้ามโหลดได้จากทุกจุด (กฎเจ้าของ 2026-10-12): ปุ่มทุกหน้า, /download/{slug},

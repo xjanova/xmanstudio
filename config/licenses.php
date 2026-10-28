@@ -44,6 +44,8 @@ return [
         'chanthra-studio' => ['monthly' => 399, 'yearly' => 2500, 'lifetime' => 7500],
         // LocalVPN Pro — owner 2026-10-11 (was 399 / 2,500 / 5,000)
         'localvpn' => ['monthly' => 199, 'yearly' => 1990, 'lifetime' => 4990],
+        // Reverse X Pro (ผู้ช่วย AI) — ราคาเริ่มต้นเท่า Anti X ไปก่อน (2026-10-28) เจ้าของแก้ตัวเลขที่นี่ได้ที่เดียว
+        'reverse-x' => ['monthly' => 199, 'yearly' => 1990, 'lifetime' => 9900],
         'sms-payment-checker' => ['monthly' => 990, 'yearly' => 9900, 'lifetime' => 29900],
         'smschecker' => ['monthly' => 499, 'yearly' => 4990, 'lifetime' => 29000],
         'tping' => ['monthly' => 399, 'yearly' => 2500, 'lifetime' => 5000],
@@ -62,7 +64,7 @@ return [
     | into the app), /localvpn/checkout for the app's own machine-bound flow.
     |
     */
-    'cart_products' => ['anti-x', 'brainx', 'cluadex-ai-coding-assistant', 'localvpn', 'sms-payment-checker', 'winx-tools'],
+    'cart_products' => ['anti-x', 'brainx', 'cluadex-ai-coding-assistant', 'localvpn', 'reverse-x', 'sms-payment-checker', 'winx-tools'],
 
     /*
     |--------------------------------------------------------------------------

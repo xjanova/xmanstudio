@@ -225,6 +225,9 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             ['GET', route('anti-x.download')],
             ['GET', route('anti-x.download', ['version' => '1.2.0'])],
             ['HEAD', route('anti-x.download', ['version' => '1.2.0'])],
+            ['GET', route('reverse-x.download')],
+            ['GET', route('reverse-x.download', ['version' => '1.2.0'])],
+            ['HEAD', route('reverse-x.download', ['version' => '1.2.0'])],
             ['GET', route('anti-x-mobile.download')],
             ['GET', route('anti-x-mobile.download', ['version' => '0.1.0'])],
             ['HEAD', route('anti-x-mobile.download', ['version' => '0.1.0'])],
@@ -265,6 +268,7 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
             '/apps/aipray', '/apps/aipray/donate', '/chanthra-studio', '/chanthra-studio/manual', '/autotradex/pricing', // หน้าของแอปที่โหลดฟรี
             '/brainx', '/brainx/downloads',
             '/products/anti-x', '/anti-x', '/anti-x/downloads',
+            '/products/reverse-x', '/reverse-x', '/reverse-x/downloads',
             '/products/macdock', '/products/macdock/free-license', '/macdock',
             '/apps/thaiprompt-pos', '/apps/thaiprompt-pos-windows', '/apps/thaiprompt-pos/downloads', '/apps/thaiprompt-pos-mac/download',
         ] as $url) {
