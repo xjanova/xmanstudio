@@ -18,6 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -284,7 +285,7 @@ class ComingSoonDownloadsTest extends TestCase
         ];
     }
 
-    /** @dataProvider appPages */
+    #[DataProvider('appPages')]
     public function test_an_apps_own_pages_show_the_label_instead_of_its_download(string $slug, array $pages, array $files): void
     {
         $this->product($slug, comingSoon: true);

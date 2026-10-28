@@ -3,6 +3,7 @@
 namespace Tests\Unit\Rules;
 
 use App\Rules\NoScriptTags;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class NoScriptTagsTest extends TestCase
@@ -15,7 +16,7 @@ class NoScriptTagsTest extends TestCase
         $this->rule = new NoScriptTags;
     }
 
-    /** @test */
+    #[Test]
     public function it_passes_for_clean_text()
     {
         $cleanInputs = [
@@ -36,7 +37,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_script_tags()
     {
         $maliciousInputs = [
@@ -57,7 +58,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_inline_event_handlers()
     {
         $maliciousInputs = [
@@ -78,7 +79,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_javascript_protocol()
     {
         $maliciousInputs = [
@@ -98,7 +99,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_data_protocol()
     {
         $maliciousInputs = [
@@ -117,7 +118,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_vbscript_protocol()
     {
         $maliciousInputs = [
@@ -136,7 +137,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_iframe_tags()
     {
         $maliciousInputs = [
@@ -155,7 +156,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_object_and_embed_tags()
     {
         $maliciousInputs = [
@@ -175,7 +176,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_meta_refresh_redirects()
     {
         $maliciousInputs = [
@@ -193,7 +194,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_base_tag()
     {
         $maliciousInputs = [
@@ -211,7 +212,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_form_tags()
     {
         $maliciousInputs = [
@@ -230,7 +231,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_link_tags_with_stylesheet()
     {
         $maliciousInputs = [
@@ -248,7 +249,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_style_tags()
     {
         $maliciousInputs = [
@@ -267,7 +268,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_svg_with_script()
     {
         $maliciousInputs = [
@@ -286,7 +287,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_expression_in_css()
     {
         $maliciousInputs = [
@@ -304,7 +305,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_safe_html_tags()
     {
         $safeInputs = [
@@ -328,7 +329,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_null_and_empty_values()
     {
         $values = [null, '', '   '];
@@ -343,7 +344,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_non_string_values()
     {
         $values = [123, 45.67, true, false];
@@ -358,7 +359,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_obfuscated_script_tags()
     {
         $maliciousInputs = [
@@ -377,7 +378,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_html_entities_in_script_context()
     {
         $maliciousInputs = [
@@ -395,7 +396,7 @@ class NoScriptTagsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_proper_error_message()
     {
         $message = $this->rule->message();
@@ -405,7 +406,7 @@ class NoScriptTagsTest extends TestCase
         $this->assertStringContainsString(':attribute', $message);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_contextual_error_in_fail_callback()
     {
         $capturedMessage = null;

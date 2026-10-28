@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Support\OpenAiCompat;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -32,9 +33,7 @@ class OpenAiCompatTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider reasoningModels
-     */
+    #[DataProvider('reasoningModels')]
     public function test_reasoning_models_get_only_the_completion_token_budget(string $model): void
     {
         $params = OpenAiCompat::tuningParams($model, 1000, 0.7);
@@ -44,9 +43,7 @@ class OpenAiCompatTest extends TestCase
         $this->assertArrayHasKey('max_completion_tokens', $params);
     }
 
-    /**
-     * @dataProvider classicModels
-     */
+    #[DataProvider('classicModels')]
     public function test_classic_models_keep_the_original_pair(string $model): void
     {
         $this->assertSame(
