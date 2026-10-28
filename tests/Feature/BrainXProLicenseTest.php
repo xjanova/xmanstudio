@@ -226,6 +226,38 @@ class BrainXProLicenseTest extends TestCase
             ->assertJsonPath('data.license_type', LicenseKey::TYPE_MONTHLY);
     }
 
+    public function test_entering_the_key_again_on_its_own_pc_does_not_use_up_the_move(): void
+    {
+        $key = $this->paidKey();
+
+        // a reinstall or two: the same PC each time
+        foreach (range(1, 3) as $ignored) {
+            $this->activate('a', $key->license_key)->assertOk();
+        }
+        $this->assertSame(1, (int) $key->fresh()->getAttributes()['activations']);
+
+        $this->deactivate('a', $key->license_key)
+            ->assertOk()
+            ->assertJsonPath('data.can_reactivate', true);
+        $this->assertSame(0, (int) $key->fresh()->getAttributes()['activations']);
+
+        $this->activate('b', $key->license_key)->assertOk();
+        $this->assertSame(1, (int) $key->fresh()->getAttributes()['activations']);
+    }
+
+    public function test_the_recount_migration_sets_single_machine_keys_back_to_their_machine(): void
+    {
+        $bound = $this->paidKey(['machine_id' => $this->machineId('a'), 'activations' => 19]);
+        $loose = $this->paidKey(['activations' => 5]);
+        $shared = $this->paidKey(['max_activations' => 2, 'activations' => 2]);
+
+        (require database_path('migrations/2026_10_28_120000_recount_activations_of_single_machine_license_keys.php'))->up();
+
+        $this->assertSame(1, (int) $bound->fresh()->getAttributes()['activations']);
+        $this->assertSame(0, (int) $loose->fresh()->getAttributes()['activations']);
+        $this->assertSame(2, (int) $shared->fresh()->getAttributes()['activations']);
+    }
+
     public function test_a_lapsed_paid_key_does_not_activate(): void
     {
         $key = $this->paidKey(['expires_at' => now()->subDay()]);
