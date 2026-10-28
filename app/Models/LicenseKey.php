@@ -256,13 +256,19 @@ class LicenseKey extends Model
             default => null,
         };
 
+        // Entering the key again on its own machine (a reinstall) is not another machine: counting it
+        // pushed `activations` past max_activations, and deactivate then answered can_reactivate false
+        $activations = $this->machine_id === $machineId
+            ? max(1, (int) $this->activations)
+            : $this->activations + 1;
+
         $this->update([
             'machine_id' => $machineId,
             'machine_fingerprint' => bcrypt($fingerprint),
             'activated_at' => now(),
             'expires_at' => $expiresAt,
             'last_validated_at' => now(),
-            'activations' => $this->activations + 1,
+            'activations' => $activations,
         ]);
 
         return true;
