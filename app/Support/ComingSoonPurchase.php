@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,6 +44,19 @@ class ComingSoonPurchase
     }
 
     /**
+     * A cart line renewing one of the customer's own keys (renew_license_id, checked when it was
+     * added) of a Coming Soon product whose admin lets current customers renew meanwhile.
+     */
+    private static function isAllowedRenewal(CartItem $item): bool
+    {
+        $requirements = json_decode((string) $item->custom_requirements, true);
+
+        return is_array($requirements)
+            && ! empty($requirements['renew_license_id'])
+            && $item->product->acceptsRenewals();
+    }
+
+    /**
      * Checkout of the cart: a product can turn Coming Soon, or be switched off in the admin, after
      * it went in — CartController::add refuses both. The customer is sent back to the cart with the
      * names, to take them out themselves — nothing is removed for them.
@@ -50,7 +64,7 @@ class ComingSoonPurchase
     public static function refusalForCart(Cart $cart): ?Response
     {
         $names = $cart->items
-            ->filter(fn ($item) => $item->product && ! $item->product->isAvailable())
+            ->filter(fn ($item) => $item->product && ! $item->product->isAvailable() && ! self::isAllowedRenewal($item))
             ->map(fn ($item) => $item->product->name)
             ->unique()
             ->implode(', ');

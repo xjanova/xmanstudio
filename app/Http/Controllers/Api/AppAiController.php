@@ -164,7 +164,8 @@ class AppAiController extends Controller
     /** The account's paid BrainX key that is active now - lifetime first, then the longest-lasting. */
     protected function brainxKeyFor(int $userId): ?LicenseKey
     {
-        $product = Product::where('slug', 'brainx')->first();
+        // Production's row is `brainx-cloud` (Product::SLUG_ALIASES)
+        $product = Product::bySlugOrAlias('brainx')->first();
 
         return $product ? LicenseKey::where('product_id', $product->id)
             ->where('user_id', $userId)

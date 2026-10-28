@@ -330,6 +330,16 @@ Schedule::command('vps:renew')
         Log::error('[VPS] renewal run failed');
     });
 
+// ไลเซนส์: แจ้งล่วงหน้า ตัดเงินต่ออายุอัตโนมัติจาก Wallet (คีย์ที่ลูกค้าเปิดไว้) และเตือนคีย์ที่ไม่ได้ต่ออัตโนมัติ
+Schedule::command('licenses:renew')
+    ->dailyAt('09:50')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[License] renewal run failed');
+    });
+
 // VPS: ดึงแพ็กเกจและราคาต้นทุนจริงจากผู้ให้บริการ — ตีสี่สิบนาที หลังแคตตาล็อกโดเมน
 Schedule::command('vps:sync-catalogue')
     ->dailyAt('04:10')

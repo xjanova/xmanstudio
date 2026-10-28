@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Product;
+
 /**
  * The price of every license term a product sells, from config('licenses.plans').
  *
@@ -25,7 +27,7 @@ class LicensePlans
      */
     public static function for(string $slug): array
     {
-        return array_map('intval', config('licenses.plans')[$slug] ?? []);
+        return array_map('intval', config('licenses.plans')[Product::canonicalSlug($slug)] ?? []);
     }
 
     /** What one term costs, or null when the product does not sell it. */
@@ -76,7 +78,7 @@ class LicensePlans
     /** Whether the site cart sells this product's terms (config('licenses.cart_products')). */
     public static function soldInCart(string $slug): bool
     {
-        return in_array($slug, config('licenses.cart_products', []), true);
+        return in_array(Product::canonicalSlug($slug), config('licenses.cart_products', []), true);
     }
 
     /**
@@ -85,6 +87,6 @@ class LicensePlans
      */
     public static function devicesPerKey(string $slug): int
     {
-        return max(1, (int) (config('licenses.devices_per_key', [])[$slug] ?? 1));
+        return max(1, (int) (config('licenses.devices_per_key', [])[Product::canonicalSlug($slug)] ?? 1));
     }
 }

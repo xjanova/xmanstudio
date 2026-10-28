@@ -465,6 +465,15 @@
                                value="{{ old('coming_soon_until', $product->coming_soon_until?->format('Y-m-d\TH:i')) }}"
                                class="w-full max-w-xs px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white transition-all">
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ระบบจะเปิดขายอัตโนมัติเมื่อถึงวันที่กำหนด</p>
+
+                        <label class="mt-4 flex items-start p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800 cursor-pointer">
+                            <input type="checkbox" name="renew_while_coming_soon" value="1" {{ old('renew_while_coming_soon', $product->renew_while_coming_soon) ? 'checked' : '' }}
+                                   class="mt-1 rounded border-gray-300 dark:border-gray-600 text-orange-600 focus:ring-orange-500">
+                            <div class="ml-3">
+                                <span class="text-gray-900 dark:text-white font-medium text-sm">ลูกค้าเดิมต่ออายุได้ระหว่าง Coming Soon</span>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">คนที่มีคีย์อยู่แล้วกดต่ออายุ จ่ายผ่านตะกร้า และต่ออายุอัตโนมัติได้ตามปกติ — คนใหม่ยังซื้อไม่ได้</p>
+                            </div>
+                        </label>
                     </div>
                 </div>
             </div>

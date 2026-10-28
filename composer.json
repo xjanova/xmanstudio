@@ -98,7 +98,8 @@
                 "PKSA-3r5d-mb8f-1qw9": "Laravel CRLF injection in default email validation rule (GHSA-5vg9-5847-vvmq), high, disclosed 2026-06-17. Fixed only in Laravel 12.60.0+ — no backport to the 11.x branch we use (latest is 11.54.0). Temporary ignore to unblock deploys; tracked for the Laravel 11 -> 12 upgrade.",
                 "PKSA-mdq4-51ck-6kdq": "Same root issue as PKSA-3r5d-mb8f-1qw9 — Laravel CRLF injection in default email rule (CVE-2026-48019). Fixed only in Laravel 12.60.0+, no 11.x backport. Temporary ignore; remove after Laravel 12 upgrade.",
                 "PKSA-m5cs-t1y6-qpcs": "Laravel temporary signed URL path confusion, medium, disclosed 2026-06-17. Fixed only in Laravel 12.61.1+ — no backport to 11.x. Temporary ignore; remove after Laravel 12 upgrade.",
-                "PKSA-d5tc-s1qs-h781": "Laravel XSS in the debug error page (GHSA-jh5r-qr3c-85q8, CVE-2026-102279), low, disclosed 2026-09-29. Only reachable with APP_DEBUG=true, which production does not run. Fixed only in Laravel 12.69.0+ — no backport to 11.x. Temporary ignore; remove after Laravel 12 upgrade."
+                "PKSA-d5tc-s1qs-h781": "Laravel XSS in the debug error page (GHSA-jh5r-qr3c-85q8, CVE-2026-102279), low, disclosed 2026-09-29. Only reachable with APP_DEBUG=true, which production does not run. Fixed only in Laravel 12.69.0+ — no backport to 11.x. Temporary ignore; remove after Laravel 12 upgrade.",
+                "PKSA-b41t-wbzk-9q51": "Laravel TokenGuard authentication bypass through non-string API credentials (GHSA-f9x3-7vq9-cph6, CVE-2026-114509), critical, disclosed 2026-10-23. Not reachable here: config/auth.php defines only the session guard, and the API authenticates with Sanctum (its own guard, not the framework TokenGuard). Fixed only in Laravel 12.68.0+ — no backport to 11.x. Temporary ignore; remove after Laravel 12 upgrade, and never add a 'token' driver guard before then."
             }
         }
     },

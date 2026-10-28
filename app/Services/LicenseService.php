@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Mail;
 class LicenseService
 {
     /** License types that run for a fixed term — the ones a renewal can add to a key. */
-    private const TERM_TYPES = [
+    public const TERM_TYPES = [
         LicenseKey::TYPE_DAILY,
         LicenseKey::TYPE_WEEKLY,
         LicenseKey::TYPE_MONTHLY,
@@ -115,6 +115,18 @@ class LicenseService
                     $generated = $this->deliverRenewable($order, $item, $licenseType) || $generated;
 
                     continue;
+                }
+
+                // "ต่ออายุ" pressed on one key of any other product (the license page, a wallet
+                // renewal, auto-renew): that key gets the time, so the app keeps running on it
+                if (in_array($licenseType, self::TERM_TYPES, true)) {
+                    $renewed = $this->deliverNamedRenewal($order, $item, $licenseType);
+
+                    if ($renewed !== null) {
+                        $generated = $renewed || $generated;
+
+                        continue;
+                    }
                 }
 
                 // Lifetime of a renewable product (BrainX Cloud in the DGX Spark bundle): the key the
@@ -234,7 +246,8 @@ class LicenseService
      * or no key of it that can still be renewed (revoked keys stay revoked).
      *
      * $preferredLicenseId is the key the customer pressed "renew" on; it wins when it is theirs
-     * and renewable, otherwise the key with the latest expiry is the one extended.
+     * and renewable, otherwise the key with the latest expiry is the one extended. A product that
+     * is not renewable by default renews only the key named here — null without one.
      */
     public function renewalTargetFor(?int $userId, Product $product, mixed $preferredLicenseId = null): ?LicenseKey
     {
@@ -287,6 +300,35 @@ class LicenseService
         ]);
 
         return true;
+    }
+
+    /**
+     * Deliver an order item that names the key it renews (renew_license_id) for a product that
+     * is not renewable by default: extend that key when it is still the buyer's own term key.
+     *
+     * @return bool|null true: extended now · false: this item already extended it (a payment
+     *                   confirmed twice) · null: nothing named, or the key is gone, revoked or not
+     *                   theirs — the caller issues a new key, as for any purchase
+     */
+    private function deliverNamedRenewal(Order $order, OrderItem $item, string $licenseType): ?bool
+    {
+        $keyId = $this->requirementsOf($item)['renew_license_id'] ?? null;
+
+        if (! is_numeric($keyId)) {
+            return null;
+        }
+
+        if (LicenseRenewal::where('order_item_id', $item->id)->exists()) {
+            return false;
+        }
+
+        $target = $this->findRenewalTarget($order->user_id, $item->product, $keyId, true);
+
+        if (! $target || $target->id !== (int) $keyId) {
+            return null;
+        }
+
+        return $this->extendLicense($target, $order, $item, $licenseType, max(1, (int) $item->quantity));
     }
 
     /**
@@ -445,7 +487,7 @@ class LicenseService
         $keys = fn () => LicenseKey::query()
             ->where('user_id', $order->user_id)
             ->whereIn('status', [LicenseKey::STATUS_ACTIVE, LicenseKey::STATUS_EXPIRED])
-            ->whereHas('product', fn ($query) => $query->where('slug', $forProduct))
+            ->whereHas('product', fn ($query) => $query->whereIn('slug', Product::slugsFor($forProduct)))
             ->lockForUpdate();
 
         $target = null;
@@ -510,7 +552,11 @@ class LicenseService
 
     private function findRenewalTarget(?int $userId, Product $product, mixed $preferredLicenseId, bool $lock): ?LicenseKey
     {
-        if (! $userId || ! $product->isRenewable()) {
+        // Any product's key can be renewed by name ("ต่ออายุ" on that key); only a renewable
+        // product (BrainX Cloud) also renews the latest key when none is named
+        $renewable = $product->isRenewable();
+
+        if (! $userId || (! $renewable && ! is_numeric($preferredLicenseId))) {
             return null;
         }
 
@@ -529,7 +575,9 @@ class LicenseService
             }
         }
 
-        return $keys()->orderByDesc('expires_at')->orderByDesc('id')->first();
+        return $renewable
+            ? $keys()->orderByDesc('expires_at')->orderByDesc('id')->first()
+            : null;
     }
 
     private function addTerm(CarbonInterface $from, string $licenseType, int $units): CarbonInterface

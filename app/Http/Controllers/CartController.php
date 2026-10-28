@@ -37,7 +37,12 @@ class CartController extends Controller
 
         // Coming Soon is not on sale yet: its page shows the label instead of a buy button, and a
         // hand-made POST must not buy it either (owner, 2026-10-12).
-        if ($refused = ComingSoonPurchase::refusal($product)) {
+        // ...except renewing a key the customer already holds, where the admin allows it meanwhile
+        // (the product's renew_while_coming_soon switch)
+        $renewKeyId = $this->renewedKeyId($request, $product);
+        $renewsOwnKey = $renewKeyId !== null && $product->acceptsRenewals();
+
+        if (! $renewsOwnKey && ($refused = ComingSoonPurchase::refusal($product))) {
             return $refused;
         }
 
@@ -57,7 +62,7 @@ class CartController extends Controller
 
         $request->validate([
             'quantity' => 'integer|min:1|max:99',
-            'license_type' => 'nullable|in:monthly,yearly,lifetime',
+            'license_type' => 'nullable|in:daily,weekly,monthly,yearly,lifetime',
             'price' => 'nullable|numeric|min:0',
             'renew_license' => 'nullable|integer',
         ]);
@@ -70,7 +75,11 @@ class CartController extends Controller
         $customRequirements = null;
         if ($request->filled('license_type') && $product->requires_license) {
             $licenseType = $request->license_type;
-            $termPrice = LicensePlans::soldInCart($product->slug)
+
+            // A product with a checkout of its own (Tping, AutoTradeX …) is not sold here — that
+            // checkout binds the new key to the app's machine. Renewing a key the customer already
+            // holds binds nothing new, so the cart takes it.
+            $termPrice = LicensePlans::soldInCart($product->slug) || $renewKeyId !== null
                 ? LicensePlans::price($product->slug, $licenseType)
                 : null;
 
@@ -88,25 +97,24 @@ class CartController extends Controller
             $price = $termPrice;
             $requirements = ['license_type' => $licenseType];
 
-            // "ต่ออายุ" on one of the customer's own keys names that key, so the payment extends
-            // it even when they hold more than one. Anyone else's key, or one that can no longer
-            // be renewed, is ignored here — and checked again when the order is paid.
-            if ($request->filled('renew_license')) {
-                $keyId = $request->integer('renew_license');
-                $target = app(LicenseService::class)->renewalTargetFor(auth()->id(), $product, $keyId);
-
-                if ($target && $target->id === $keyId) {
-                    $requirements['renew_license_id'] = $keyId;
-                }
+            if ($renewKeyId !== null) {
+                $requirements['renew_license_id'] = $renewKeyId;
             }
 
             $customRequirements = json_encode($requirements);
         }
 
-        // Check if product already in cart (replace if different license_type)
-        $cartItem = $cart->items()->where('product_id', $product->id)->first();
+        // A renewal has a line of its own per key: merged into a purchase of the same product, the
+        // purchase would be paid as more time on that key and never issue its own key
+        $cartItem = $cart->items()
+            ->where('product_id', $product->id)
+            ->get()
+            ->first(fn (CartItem $item) => $this->renewedKeyOf($item) === $renewKeyId);
 
-        if ($cartItem) {
+        if ($cartItem && $renewKeyId !== null) {
+            // Pressing "ต่ออายุ" again is not a second term — the quantity is set in the cart
+            $cartItem->update(['quantity' => $quantity, 'custom_requirements' => $customRequirements, 'price' => $price]);
+        } elseif ($cartItem) {
             $update = ['quantity' => $cartItem->quantity + $quantity];
             if ($customRequirements) {
                 $update['custom_requirements'] = $customRequirements;
@@ -123,6 +131,33 @@ class CartController extends Controller
         }
 
         return $this->added($request, $product, $cart);
+    }
+
+    /**
+     * The key a "ต่ออายุ" names (renew_license), when it is one of the customer's own keys this
+     * product still renews, so the payment extends it even when they hold more than one.
+     *
+     * Only for one more term: lifetime is delivered as a new key, so it never takes a renewal's
+     * way past Coming Soon or a product's own checkout. Anyone else's key, or one that can no
+     * longer be renewed, is ignored here — and checked again when the order is paid.
+     */
+    private function renewedKeyId(Request $request, Product $product): ?int
+    {
+        if (! $request->filled('renew_license') || ! $product->requires_license
+            || ! in_array($request->input('license_type'), LicenseService::TERM_TYPES, true)) {
+            return null;
+        }
+
+        $keyId = $request->integer('renew_license');
+
+        return app(LicenseService::class)->renewalTargetFor(auth()->id(), $product, $keyId)?->id === $keyId ? $keyId : null;
+    }
+
+    private function renewedKeyOf(CartItem $item): ?int
+    {
+        $keyId = json_decode((string) $item->custom_requirements, true)['renew_license_id'] ?? null;
+
+        return is_numeric($keyId) ? (int) $keyId : null;
     }
 
     /**
@@ -162,7 +197,7 @@ class CartController extends Controller
             ->whereKey($request->integer('license'))
             ->where('user_id', auth()->id())
             ->whereIn('status', [LicenseKey::STATUS_ACTIVE, LicenseKey::STATUS_EXPIRED])
-            ->whereHas('product', fn ($query) => $query->where('slug', $forProduct))
+            ->whereHas('product', fn ($query) => $query->whereIn('slug', Product::slugsFor($forProduct)))
             ->first();
 
         if (! $license) {

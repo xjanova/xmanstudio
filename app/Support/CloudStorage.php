@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\LicenseKey;
+use App\Models\Product;
 
 /**
  * How much cloud space a key of a cloud product carries: the plan's base
@@ -22,19 +23,19 @@ class CloudStorage
     /** Whether keys of this product carry cloud space at all. */
     public static function offers(?string $slug): bool
     {
-        return $slug !== null && isset(config('licenses.cloud_storage')[$slug]);
+        return $slug !== null && isset(config('licenses.cloud_storage')[Product::canonicalSlug($slug)]);
     }
 
     /** The space every key of the product starts with, in GB (0 when it offers none). */
     public static function baseGb(?string $slug): int
     {
-        return self::offers($slug) ? max(0, (int) (config('licenses.cloud_storage')[$slug]['base_gb'] ?? 0)) : 0;
+        return self::offers($slug) ? max(0, (int) (config('licenses.cloud_storage')[Product::canonicalSlug($slug)]['base_gb'] ?? 0)) : 0;
     }
 
     /** The most one key may carry on top of its base — bought and admin-added together, in GB. */
     public static function maxExtraGb(?string $slug): int
     {
-        return self::offers($slug) ? max(0, (int) (config('licenses.cloud_storage')[$slug]['max_extra_gb'] ?? 0)) : 0;
+        return self::offers($slug) ? max(0, (int) (config('licenses.cloud_storage')[Product::canonicalSlug($slug)]['max_extra_gb'] ?? 0)) : 0;
     }
 
     /**
@@ -50,7 +51,7 @@ class CloudStorage
         }
 
         $packs = [];
-        foreach ((array) (config('licenses.cloud_storage')[$slug]['addons'] ?? []) as $gb => $price) {
+        foreach ((array) (config('licenses.cloud_storage')[Product::canonicalSlug($slug)]['addons'] ?? []) as $gb => $price) {
             if ((int) $gb > 0 && (int) $price > 0) {
                 $packs[(int) $gb] = (int) $price;
             }
@@ -69,7 +70,7 @@ class CloudStorage
     /** The slug of the cart product that sells space for this product, or null. */
     public static function addonProductSlug(?string $slug): ?string
     {
-        return self::offers($slug) ? (config('licenses.cloud_storage')[$slug]['addon_product'] ?? null) : null;
+        return self::offers($slug) ? (config('licenses.cloud_storage')[Product::canonicalSlug($slug)]['addon_product'] ?? null) : null;
     }
 
     /** The product whose keys an add-on product gives space to (brainx-cloud-storage → brainx), or null. */

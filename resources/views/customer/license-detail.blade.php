@@ -57,8 +57,10 @@
                             'revoked' => 'bg-white/20 text-white',
                         ];
                     @endphp
-                    <span class="px-3 py-1 text-sm font-semibold rounded-full shadow {{ $statusGradients[$license->status] ?? 'bg-white/20 text-white' }}">
-                        {{ ucfirst($license->status) }}
+                    {{-- What the key can do now: an "active" row past its expiry is expired to the app --}}
+                    @php $shownStatus = $license->status === 'active' && $license->isExpired() ? 'expired' : $license->status; @endphp
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full shadow {{ $statusGradients[$shownStatus] ?? 'bg-white/20 text-white' }}">
+                        {{ ucfirst($shownStatus) }}
                     </span>
                 </div>
             </div>
@@ -214,6 +216,116 @@
 
     <!-- Sidebar -->
     <div class="space-y-6">
+        @if($renewal)
+        {{-- Renew this key: one more term on the SAME key, so nothing is re-entered in the app.
+             Wallet = one click; other methods go through the cart; auto-renew charges the wallet
+             before expiry (licenses:renew). --}}
+        @php
+            $termLabels = ['daily' => '1 วัน', 'weekly' => '1 สัปดาห์', 'monthly' => '1 เดือน', 'yearly' => '1 ปี'];
+            $walletShort = $walletBalance < $renewal['total'];
+            $renewConfirm = 'ยืนยันต่ออายุ ' . ($termLabels[$renewal['term']] ?? '') . ' — ตัดเงินจาก Wallet ฿' . number_format($renewal['total'], 2) . ' ?';
+        @endphp
+        <div id="renew" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-2 border-violet-200 dark:border-violet-700/60 scroll-mt-24">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                </div>
+                <x-bi th="ต่ออายุคีย์นี้" en="Renew this key" />
+            </h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                <x-bi th="ใช้คีย์เดิม เวลาบวกต่อจากวันหมดอายุ ไม่ต้องกรอกคีย์ใหม่ในโปรแกรม" en="Same key, time adds on from its expiry — nothing to re-enter in the app" />
+            </p>
+
+            <div class="rounded-xl bg-gray-50 dark:bg-gray-700/50 p-4 space-y-2 text-sm mb-4">
+                <div class="flex justify-between">
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi th="ระยะเวลา" en="Term" /></span>
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ $termLabels[$renewal['term']] ?? $renewal['term'] }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi th="ราคา (รวม VAT)" en="Price (VAT incl.)" /></span>
+                    <span class="font-bold text-violet-600 dark:text-violet-400">฿{{ number_format($renewal['total'], 2) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi th="หมดอายุใหม่" en="New expiry" /></span>
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ $renewal['new_expires_at']->format('d/m/Y') }}</span>
+                </div>
+                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <span class="text-gray-500 dark:text-gray-400"><x-bi th="ยอดใน Wallet" en="Wallet balance" /></span>
+                    <span class="font-semibold {{ $walletShort ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }}">฿{{ number_format($walletBalance, 2) }}</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                @if($walletShort)
+                    <a href="{{ route('user.wallet.topup') }}"
+                       class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-700 hover:to-purple-700 font-semibold shadow-lg transition-all">
+                        <x-bi th="เติมเงินเข้า Wallet" en="Top up wallet" class="text-white" />
+                    </a>
+                    <p class="text-xs text-center text-red-600 dark:text-red-400">
+                        ขาดอีก ฿{{ number_format($renewal['total'] - $walletBalance, 2) }}
+                    </p>
+                @else
+                    <form action="{{ route('customer.licenses.renew', $license) }}" method="POST"
+                          x-data="{ busy: false }"
+                          x-on:submit="if (busy || !confirm({{ \Illuminate\Support\Js::from($renewConfirm) }})) { $event.preventDefault(); return; } busy = true">
+                        @csrf
+                        <input type="hidden" name="expected_expiry" value="{{ $expiryStamp }}">
+                        <button type="submit" x-bind:disabled="busy"
+                                class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-700 hover:to-purple-700 font-semibold shadow-lg transition-all disabled:opacity-60 disabled:cursor-wait">
+                            <span x-show="!busy"><x-bi th="ต่ออายุด้วย Wallet" en="Renew with wallet" class="text-white" /></span>
+                            <span x-show="busy" x-cloak><x-bi th="กำลังต่ออายุ…" en="Renewing…" class="text-white" /></span>
+                        </button>
+                    </form>
+                @endif
+
+                {{-- Any other payment method (transfer, PromptPay, card): the cart, naming this key --}}
+                <form action="{{ route('cart.add', $license->product) }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="quantity" value="1">
+                    <input type="hidden" name="license_type" value="{{ $renewal['term'] }}">
+                    <input type="hidden" name="renew_license" value="{{ $license->id }}">
+                    <input type="hidden" name="buy_now" value="1">
+                    <button type="submit"
+                            class="w-full flex items-center justify-center px-4 py-2.5 border border-violet-300 dark:border-violet-600 text-violet-700 dark:text-violet-300 rounded-xl hover:bg-violet-50 dark:hover:bg-violet-900/20 font-medium transition-all text-sm">
+                        <x-bi th="ชำระช่องทางอื่น (โอน / พร้อมเพย์ / บัตร)" en="Other payment (transfer / PromptPay / card)" />
+                    </button>
+                </form>
+            </div>
+
+            {{-- Auto-renew switch --}}
+            <form action="{{ route('customer.licenses.auto-renew', $license) }}" method="POST"
+                  class="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
+                @csrf
+                <input type="hidden" name="auto_renew" value="{{ $license->auto_renew ? 0 : 1 }}">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-900 dark:text-white text-sm"><x-bi th="ต่ออายุอัตโนมัติ" en="Auto-renew" /></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            ตัดเงินจาก Wallet เมื่อเหลือ {{ \App\Services\LicenseRenewalService::CHARGE_DAYS }} วันก่อนหมดอายุ
+                            · แจ้งทางอีเมลล่วงหน้า {{ \App\Services\LicenseRenewalService::NOTICE_DAYS }} วัน · ปิดได้ทุกเมื่อ
+                        </p>
+                    </div>
+                    <button type="submit" role="switch" aria-checked="{{ $license->auto_renew ? 'true' : 'false' }}"
+                            aria-label="{{ $license->auto_renew ? 'ปิดต่ออายุอัตโนมัติ' : 'เปิดต่ออายุอัตโนมัติ' }}"
+                            class="relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors {{ $license->auto_renew ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600' }}">
+                        <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform {{ $license->auto_renew ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                    </button>
+                </div>
+                @if($license->auto_renew)
+                    <p class="mt-2 text-xs font-medium text-green-600 dark:text-green-400">
+                        <x-bi th="เปิดอยู่ — ไม่ต้องทำอะไรเพิ่ม" en="On — nothing else to do" />
+                    </p>
+                @endif
+            </form>
+        </div>
+        @elseif(in_array($license->license_type, ['daily', 'weekly', 'monthly', 'yearly'], true) && $license->status !== 'revoked')
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-5 border border-gray-100 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300">
+            <x-bi th="คีย์นี้ยังต่ออายุออนไลน์ไม่ได้ (สินค้าปิดขายหรือไม่มีแพ็กเกจต่ออายุ) — ติดต่อทีมงานเพื่อต่ออายุ" en="This key cannot be renewed online yet — contact support to renew it" />
+        </div>
+        @endif
+
         <!-- QR Code for App Scan -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 text-center">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center justify-center">
@@ -242,27 +354,6 @@
                 Quick Actions
             </h3>
             <div class="space-y-3">
-                @if($canRenew ?? false)
-                {{-- Renewable product (BrainX Cloud): pays for more time on THIS key — the same key,
-                     so nothing has to be re-entered anywhere. The price comes from the cart. --}}
-                <form action="{{ route('cart.add', $license->product) }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="quantity" value="1">
-                    <input type="hidden" name="license_type" value="{{ $license->product->defaultLicenseType() }}">
-                    <input type="hidden" name="renew_license" value="{{ $license->id }}">
-                    <input type="hidden" name="buy_now" value="1">
-                    <button type="submit"
-                            class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-700 hover:to-purple-700 font-semibold shadow-lg transition-all">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                        <x-bi th="ต่ออายุคีย์นี้" en="Renew this key" class="text-white" />
-                    </button>
-                </form>
-                <p class="text-xs text-center text-gray-500 dark:text-gray-400">
-                    <x-bi th="ใช้คีย์เดิม เวลาบวกต่อจากวันหมดอายุ" en="Same key, time adds on from its expiry" />
-                </p>
-                @endif
 
                 @if(! empty($cloudStorage['packs']))
                 {{-- Cloud space packs for THIS key (config/licenses.php → cloud_storage). Paid once, the

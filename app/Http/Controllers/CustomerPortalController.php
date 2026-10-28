@@ -10,8 +10,11 @@ use App\Models\RentalInvoice;
 use App\Models\RentalPayment;
 use App\Models\SupportTicket;
 use App\Models\UserRental;
-use App\Services\LicenseService;
+use App\Models\Wallet;
+use App\Services\LicenseRenewalException;
+use App\Services\LicenseRenewalService;
 use App\Support\CloudStorage;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -132,6 +135,12 @@ class CustomerPortalController extends Controller
 
         $licenses = $query->orderBy('created_at', 'desc')->paginate(10);
 
+        // Which rows get a "ต่ออายุ" button — the same test the license page and the payment use
+        $renewals = app(LicenseRenewalService::class);
+        $renewable = $licenses->getCollection()
+            ->mapWithKeys(fn (LicenseKey $license) => [$license->id => $renewals->offerFor($license, $user->id) !== null])
+            ->all();
+
         $stats = [
             'total' => $this->ownedLicenses($user->id)->count(),
             'active' => $this->ownedLicenses($user->id)
@@ -145,7 +154,7 @@ class CustomerPortalController extends Controller
             ? Product::antiXMobileOffer()
             : null;
 
-        return view('customer.licenses', compact('licenses', 'stats', 'mobileOffer'));
+        return view('customer.licenses', compact('licenses', 'stats', 'mobileOffer', 'renewable'));
     }
 
     /**
@@ -160,14 +169,12 @@ class CustomerPortalController extends Controller
 
         $license->load('product', 'activations');
 
-        // A renewable product (BrainX Cloud): offer "renew" on this key when paying for it would
-        // extend this very key — the same test the payment applies, so the button never
-        // promises a renewal that turns into a new key
-        $canRenew = $license->product
-            && $license->product->is_active
-            && app(LicenseService::class)
-                ->renewalTargetFor(Auth::id(), $license->product, $license->id)
-                ?->is($license);
+        // "ต่ออายุ" on this key: what one more term costs and when it would end — null when the
+        // key cannot be renewed online (lifetime, revoked, off sale, a term not sold). The same
+        // test the payment applies, so the page never promises a renewal that becomes a new key.
+        $renewal = app(LicenseRenewalService::class)->offerFor($license, Auth::id());
+        $walletBalance = $renewal ? (float) Wallet::getOrCreateForUser(Auth::id())->balance : 0.0;
+        $expiryStamp = LicenseRenewalService::expiryStamp($license);
 
         // A cloud product (BrainX Cloud): the space this key carries, part by part, and the packs
         // the customer can buy for it — only those that still fit under max_extra_gb, and none
@@ -196,7 +203,65 @@ class CustomerPortalController extends Controller
         // คีย์ Anti X: ปุ่มโหลดตัวโปรแกรมบน Windows และแอปมือถือฟรี ในหน้าเดียวกัน
         $mobileOffer = $license->product?->slug === 'anti-x' ? Product::antiXMobileOffer() : null;
 
-        return view('customer.license-detail', compact('license', 'canRenew', 'cloudStorage', 'mobileOffer'));
+        return view('customer.license-detail', compact('license', 'renewal', 'walletBalance', 'expiryStamp', 'cloudStorage', 'mobileOffer'));
+    }
+
+    /**
+     * Renew a license from the wallet, one click
+     * POST /my-account/licenses/{license}/renew
+     */
+    public function renewLicense(Request $request, LicenseKey $license): RedirectResponse
+    {
+        if ($license->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'expected_expiry' => 'required|string|max:20',
+        ]);
+
+        try {
+            $order = app(LicenseRenewalService::class)
+                ->renewFromWallet($license, $request->user(), false, $validated['expected_expiry']);
+        } catch (LicenseRenewalException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'ต่ออายุไม่สำเร็จ ยังไม่มีการตัดเงิน กรุณาลองใหม่อีกครั้ง หรือติดต่อทีมงาน');
+        }
+
+        $license->refresh();
+
+        return redirect()
+            ->route('customer.licenses.show', $license)
+            ->with('success', 'ต่ออายุแล้ว — คีย์เดิมใช้ได้ถึง ' . $license->expires_at?->format('d/m/Y')
+                . ' (คำสั่งซื้อ #' . $order->order_number . ')');
+    }
+
+    /**
+     * Switch automatic renewal from the wallet on or off
+     * POST /my-account/licenses/{license}/auto-renew
+     */
+    public function toggleAutoRenew(Request $request, LicenseKey $license): RedirectResponse
+    {
+        if ($license->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $enabled = $request->boolean('auto_renew');
+
+        // Switching it off always works; on only for a key the run could actually renew
+        if ($enabled && ! app(LicenseRenewalService::class)->offerFor($license, Auth::id())) {
+            return back()->with('error', 'คีย์นี้ต่ออายุอัตโนมัติไม่ได้ (ตลอดชีพ ถูกยกเลิก หรือสินค้าไม่เปิดขายแบบต่ออายุ)');
+        }
+
+        $license->update(['auto_renew' => $enabled]);
+
+        return back()->with('success', $enabled
+            ? 'เปิดต่ออายุอัตโนมัติแล้ว — เราจะแจ้งทางอีเมลล่วงหน้า ' . LicenseRenewalService::NOTICE_DAYS
+                . ' วัน และตัดเงินจาก Wallet เมื่อเหลือ ' . LicenseRenewalService::CHARGE_DAYS . ' วันก่อนหมดอายุ'
+            : 'ปิดต่ออายุอัตโนมัติแล้ว — เราจะส่งอีเมลเตือนก่อนคีย์หมดอายุ ให้กดต่ออายุเองได้ทุกเมื่อ');
     }
 
     /**
