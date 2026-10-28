@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\LicenseKey;
 use App\Models\Product;
 use App\Models\ProductDevice;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -178,6 +179,51 @@ class BrainXProLicenseTest extends TestCase
         $this->activate('b', $key->license_key)->assertOk()->assertJsonPath('data.days_remaining', 30);
         $this->assertSame($this->machineId('b'), $key->fresh()->machine_id);
         $this->validateKey('b', $key->license_key)->assertOk()->assertJsonPath('is_valid', true);
+    }
+
+    public function test_a_key_the_admin_makes_lifetime_is_still_found_after_its_old_end_date(): void
+    {
+        $key = $this->paidKey(['expires_at' => now()->addDay()]);
+        $this->activate('a', $key->license_key)->assertOk();
+
+        // the edit form posts the monthly end date back along with the new type
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)->put(route('admin.licenses.update', $key), [
+            'license_key' => $key->license_key,
+            'license_type' => LicenseKey::TYPE_LIFETIME,
+            'status' => LicenseKey::STATUS_ACTIVE,
+            'max_activations' => 1,
+            'expires_at' => $key->expires_at->format('Y-m-d H:i:s'),
+            'product_id' => $this->brainx->id,
+        ])->assertSessionHas('success');
+
+        $this->assertNull($key->fresh()->expires_at);
+
+        $this->travel(3)->days();
+
+        $this->checkMachine('a')
+            ->assertOk()
+            ->assertJsonPath('has_license', true)
+            ->assertJsonPath('data.license_type', LicenseKey::TYPE_LIFETIME)
+            ->assertJsonPath('data.expires_at', null);
+        $this->validateKey('a', $key->license_key)->assertOk()->assertJsonPath('is_valid', true);
+    }
+
+    public function test_check_machine_finds_the_bought_key_over_the_trial_it_followed(): void
+    {
+        $trial = $this->demo('a', self::HARDWARE)->assertOk()->json('data.license_key');
+
+        // a month bought: the 7-day trial ends sooner, and by end date alone it came first
+        $key = $this->paidKey();
+        $this->activate('a', $key->license_key)->assertOk();
+
+        // the trial key stays active on the machine beside the bought one
+        $this->assertSame(LicenseKey::STATUS_ACTIVE, LicenseKey::where('license_key', $trial)->value('status'));
+
+        $this->checkMachine('a')
+            ->assertOk()
+            ->assertJsonPath('data.license_key', $key->license_key)
+            ->assertJsonPath('data.license_type', LicenseKey::TYPE_MONTHLY);
     }
 
     public function test_a_lapsed_paid_key_does_not_activate(): void
