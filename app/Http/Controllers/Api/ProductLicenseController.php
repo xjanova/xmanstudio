@@ -515,12 +515,17 @@ class ProductLicenseController extends Controller
         return $this->isFreeTierTrial($product) || LicenseSeats::perKey($product) > 1;
     }
 
-    /** First match of a check-machine query — the best of them where a machine can hold several keys. */
+    /**
+     * First match of a check-machine query — the best of them where a machine can hold several keys.
+     *
+     * Elsewhere the trial a machine started before buying is still active beside the bought key,
+     * so a paid key comes first, then the newest.
+     */
     private function firstKey($query, Product $product): ?LicenseKey
     {
         return $this->picksBestKey($product)
             ? LicenseSeats::sortBest($query->get()->reject(fn (LicenseKey $key) => $key->isExpired()))->first()
-            : $query->first();
+            : $query->orderByRaw('license_type = ?', [LicenseKey::TYPE_DEMO])->orderByDesc('id')->first();
     }
 
     /**
@@ -1331,13 +1336,12 @@ class ProductLicenseController extends Controller
         // LocalVPN: the best of the machine's keys (paid, then a running trial, then FREE), seats of a shared key included
         $license = $this->picksBestKey($product)
             ? LicenseSeats::best($product, $validated['machine_id'])
-            : LicenseKey::where('product_id', $product->id)
+            : $this->firstKey(LicenseKey::where('product_id', $product->id)
                 ->where('machine_id', $validated['machine_id'])
                 ->where('status', LicenseKey::STATUS_ACTIVE)
                 ->where(function ($q) {
                     $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-                })
-                ->first();
+                }), $product);
 
         // ── Fallback 1: search by drm_id (MediaDrm/Widevine) ───────────────
         // Handles HWID migration (e.g. hardware hash formula change after update)

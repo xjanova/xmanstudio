@@ -72,6 +72,19 @@ class LicenseKey extends Model
 
     const STATUS_REVOKED = 'revoked';
 
+    protected static function booted(): void
+    {
+        // A lifetime key has no end date. One left over from an earlier term (the admin edit form
+        // sends the old date back when a monthly key becomes lifetime) made every
+        // `expires_at > now()` lookup drop the key once that date passed: BrainX's check-machine
+        // stopped finding it and the app fell back to Free.
+        static::saving(function (LicenseKey $key) {
+            if ($key->license_type === self::TYPE_LIFETIME) {
+                $key->expires_at = null;
+            }
+        });
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
