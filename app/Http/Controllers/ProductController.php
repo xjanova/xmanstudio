@@ -191,6 +191,8 @@ class ProductController extends Controller
             'localvpn' => 'products.localvpn',
             // MacDock — a free Windows app: the zip download + how the free licence turns on updates
             'macdock' => 'products.macdock',
+            // Reverse X — the app's "ซื้อ Pro" opens this page: three terms through the cart + the public download
+            'reverse-x' => 'products.reversex',
         ];
 
         $viewKey = $product->licenseSlug();

@@ -284,6 +284,8 @@ class VersionController extends Controller
         'anti-x' => 'anti-x.download',
         // Anti X Mobile: APK ฟรีทุกคน release ใน repo private เหมือน Anti X
         'anti-x-mobile' => 'anti-x-mobile.download',
+        // Reverse X: zip เดียวทั้ง Free/Pro อัปเดตได้ทุก tier — ไฟล์ผ่านเซิร์ฟเวอร์ ไม่มีลิงก์ GitHub ถึงแอป
+        'reverse-x' => 'reverse-x.download',
         'autotradex' => 'autotradex.download',
         'chanthra-studio' => 'chanthra-studio.download',
         'aipray' => 'aipray.download',

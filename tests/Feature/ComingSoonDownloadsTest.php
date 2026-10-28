@@ -276,6 +276,7 @@ class ComingSoonDownloadsTest extends TestCase
             'SMS Checker' => ['smschecker', ['/smschecker', '/smschecker/pricing', '/smschecker/download'], ['/smschecker/download/apk']],
             'LocalVPN' => ['localvpn', ['/products/localvpn', '/localvpn/pricing', '/localvpn/download', '/localvpn/install-guide'], ['/localvpn/download/apk', '/localvpn/download/windows']],
             'Anti X' => ['anti-x', ['/products/anti-x'], ['/anti-x/download']],
+            'Reverse X' => ['reverse-x', ['/products/reverse-x'], ['/reverse-x/download']],
             'WinXTools' => ['winx-tools', ['/products/winx-tools'], ['/winx-tools/download']],
             'GigGok' => ['giggok', ['/products/giggok'], ['/giggok/download']],
             'AutoTradeX' => ['autotradex', ['/products/autotradex'], ['/autotradex/download']],
