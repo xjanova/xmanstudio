@@ -41,6 +41,11 @@ return [
     'confirmations' => 3,
     'quote_ttl_minutes' => 30,
 
+    // AI credit packages (ai.xman4289.com) paid in TPIX are this many percent cheaper — on the
+    // normal AI credit checkout and on aixman's own /tpix page alike (App\Services\AiCreditOrders).
+    // The admin page sets 0–50; 0 turns the discount off.
+    'ai_credit_discount_percent' => 20,
+
     // A transfer that lands after its quote expired is still found for this long (and parked as
     // `late` for the admin); the quote's exact amount stays reserved until then.
     'late_grace_minutes' => 120,

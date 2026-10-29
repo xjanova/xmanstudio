@@ -2,7 +2,17 @@
 @section('title', 'ชำระเงิน · '.$package['name'].' · X-DREAMER')
 @section('meta_description', 'ซื้อ AI Credits แพ็กเกจ '.$package['name'])
 
-@php $hueShift = 70; $h = ($package['hue'] ?? 220) + $hueShift; @endphp
+@php
+    $hueShift = 70; $h = ($package['hue'] ?? 220) + $hueShift;
+    // Paid in TPIX the package is cheaper (AiCreditOrders::pricing); only offered while TPIX can be paid
+    $tpixOffered = \App\Services\TpixPay\TpixCheckout::available();
+    $tpixDiscount = $tpixOffered ? (int) ($tpixPricing['discount_percent'] ?? 0) : 0;
+    $thbLabel = function ($value) {
+        $formatted = \App\Services\TpixPay\TpixMath::format((string) $value, 2);
+
+        return str_ends_with($formatted, '.00') ? substr($formatted, 0, -3) : $formatted;
+    };
+@endphp
 
 @section('content')
 <div style="padding:110px 24px 80px;max-width:1100px;margin:0 auto;">
@@ -25,7 +35,13 @@
                 <div style="font-size:42px;font-weight:300;color:#fff;letter-spacing:-0.02em;">฿{{ number_format($package['price_thb']) }}</div>
                 <div style="font-size:14px;color:#94a3b8;">{{ $package['note'] }}</div>
             </div>
+            @if($tpixDiscount > 0)
+            <div style="font-size:13px;color:#fbbf24;margin-top:6px;" data-tpix-discount-summary>
+                <x-bi th="ชำระด้วย TPIX ลด" en="Pay with TPIX: save" /> {{ $tpixDiscount }}% · ฿{{ $thbLabel($tpixPricing['total_thb']) }} <x-tpix-price variant="plain" :thb="$tpixPricing['total_thb']" />
+            </div>
+            @else
             <div style="font-size:13px;color:#fbbf24;margin-top:6px;"><x-tpix-price variant="plain" :thb="$package['price_thb']" /></div>
+            @endif
 
             <div style="margin-top:24px;padding:14px;border-radius:12px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);">
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(226,232,240,0.85);margin-bottom:8px;">
@@ -102,12 +118,23 @@
                             </div>
                         </label>
                         {{-- TPIX coin (only while it can be paid — TpixCheckout::available()) --}}
-                        @if(\App\Services\TpixPay\TpixCheckout::available())
+                        @if($tpixOffered)
                         <label style="grid-column:1 / -1;cursor:pointer;padding:14px;border-radius:12px;background:rgba(2,6,23,0.4);border:1px solid rgba(251,191,36,0.35);display:flex;align-items:center;gap:10px;">
                             <input type="radio" name="payment_method" value="tpix" {{ old('payment_method') === 'tpix' ? 'checked' : '' }} style="accent-color:hsl({{ $h }},70%,60%);">
                             <div>
-                                <div style="font-size:13px;color:#fff;font-weight:500;">เหรียญ TPIX</div>
-                                <div style="font-size:11px;color:#fbbf24;"><x-tpix-price variant="plain" :thb="$package['price_thb']" /> · TPIX Chain · MetaMask</div>
+                                <div style="font-size:13px;color:#fff;font-weight:500;">
+                                    เหรียญ TPIX
+                                    @if($tpixDiscount > 0)
+                                    <span style="margin-left:6px;padding:2px 8px;border-radius:999px;background:rgba(251,191,36,0.18);color:#fbbf24;font-size:11px;font-weight:600;">ลด {{ $tpixDiscount }}%</span>
+                                    @endif
+                                </div>
+                                <div style="font-size:11px;color:#fbbf24;">
+                                    @if($tpixDiscount > 0)
+                                    <span style="color:#94a3b8;text-decoration:line-through;">฿{{ $thbLabel($tpixPricing['price_thb']) }}</span>
+                                    <span>ชำระเพียง ฿{{ $thbLabel($tpixPricing['total_thb']) }}</span> ·
+                                    @endif
+                                    <x-tpix-price variant="plain" :thb="$tpixPricing['total_thb']" /> · TPIX Chain · MetaMask
+                                </div>
                             </div>
                         </label>
                         @endif
@@ -119,7 +146,7 @@
                     background:linear-gradient(135deg, hsl({{ $h }},70%,50%), hsl({{ $h+40 }},70%,60%));
                     color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;
                     box-shadow:0 12px 30px -10px hsla({{ $h }},80%,50%,0.7);">
-                    <x-bi th="ดำเนินการชำระเงิน" en="Proceed to Payment" /> · ฿{{ number_format($package['price_thb']) }} →
+                    <x-bi th="ดำเนินการชำระเงิน" en="Proceed to Payment" /> · ฿<span data-checkout-amount data-full="{{ $thbLabel($tpixPricing['price_thb']) }}" data-tpix="{{ $thbLabel($tpixPricing['total_thb']) }}">{{ old('payment_method') === 'tpix' && $tpixOffered ? $thbLabel($tpixPricing['total_thb']) : number_format($package['price_thb']) }}</span> →
                 </button>
 
                 <div style="font-size:11px;color:#64748b;text-align:center;margin-top:8px;">
@@ -127,6 +154,20 @@
                     · <x-bi th="เครดิตจะถูกเพิ่มในบัญชี AIXMAN ของคุณภายใน 5 นาทีหลังยืนยันการชำระเงิน" en="Credits will be added to your AIXMAN account within 5 minutes after payment is confirmed" />
                 </div>
             </form>
+            @if($tpixDiscount > 0)
+            <script>
+                // The button shows what the chosen method costs: TPIX is the discounted total
+                (function () {
+                    var amount = document.querySelector('[data-checkout-amount]');
+                    if (!amount) return;
+                    document.querySelectorAll('input[name="payment_method"]').forEach(function (radio) {
+                        radio.addEventListener('change', function () {
+                            amount.textContent = radio.value === 'tpix' ? amount.dataset.tpix : amount.dataset.full;
+                        });
+                    });
+                })();
+            </script>
+            @endif
         </div>
     </div>
 </div>

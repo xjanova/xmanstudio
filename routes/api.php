@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AiprayApiController;
+use App\Http\Controllers\Api\AixmanTpixController;
 use App\Http\Controllers\Api\AntiXPushController;
 use App\Http\Controllers\Api\AppAiController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\Api\WinxDiskBenchmarkController;
 use App\Http\Controllers\Api\WireguardController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\TelegramWebhookController;
+use App\Http\Middleware\VerifyAixmanSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -369,6 +371,20 @@ Route::get('/v1/catalog', [ProductCatalogController::class, 'index'])
 // The TPIX price the shop charges by (TPIX DEX pool × live USD→THB), for the apps (public)
 Route::get('/v1/tpix/price', [TpixPriceController::class, 'show'])
     ->middleware('throttle:60,1,api-tpix-price');
+
+// ai.xman4289.com sells AI credit packages for TPIX on its own /tpix page and calls these
+// server-to-server, signed with the shared AIXMAN_WEBHOOK_SECRET (VerifyAixmanSignature).
+// No per-IP throttle: every call comes from aixman's one server, so one address would throttle
+// every customer at once. The controller limits per user instead, after the signature is checked.
+Route::prefix('aixman/tpix')
+    ->withoutMiddleware('throttle:api')
+    ->middleware(VerifyAixmanSignature::class)
+    ->name('api.aixman.tpix.')
+    ->group(function () {
+        Route::post('/orders', [AixmanTpixController::class, 'createOrder'])->name('orders');
+        Route::post('/payments/status', [AixmanTpixController::class, 'status'])->name('status');
+        Route::post('/payments/tx', [AixmanTpixController::class, 'submitTx'])->name('tx');
+    });
 
 // ==================== Coupon API Routes ====================
 // These routes are used during checkout to validate and apply coupons

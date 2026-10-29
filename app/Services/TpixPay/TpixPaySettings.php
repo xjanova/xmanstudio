@@ -14,6 +14,9 @@ class TpixPaySettings
 {
     public const ADDRESS_PATTERN = '/^0x[0-9a-fA-F]{40}$/';
 
+    /** The most the AI-credit TPIX discount may be set to (percent). */
+    public const MAX_AI_CREDIT_DISCOUNT = 50;
+
     /** @var array<string, mixed>|null */
     private ?array $values = null;
 
@@ -62,15 +65,25 @@ class TpixPaySettings
         return (bool) $this->values()['show_prices'];
     }
 
+    /**
+     * How many percent cheaper an AI credit package is when paid in TPIX (owner, 2026-10-29: the
+     * TPIX campaign on ai.xman4289.com). A whole number 0–50; whatever is stored is clamped into it.
+     */
+    public function aiCreditDiscountPercent(): int
+    {
+        return max(0, min(self::MAX_AI_CREDIT_DISCOUNT, (int) $this->values()['ai_credit_discount_percent']));
+    }
+
     public function forget(): void
     {
         $this->values = null;
     }
 
     /**
-     * Save what the admin page sent (already validated).
+     * Save what the admin page sent (already validated). The AI-credit discount is only written when
+     * it is given — a caller that does not know about it leaves the stored value alone.
      *
-     * @param  array{enabled:bool, address:?string, confirmations:int, ttl:int, max_pool_ratio?:float, show_prices?:bool}  $values
+     * @param  array{enabled:bool, address:?string, confirmations:int, ttl:int, max_pool_ratio?:float, show_prices?:bool, ai_credit_discount_percent?:int|null}  $values
      */
     public function save(array $values): void
     {
@@ -93,6 +106,11 @@ class TpixPaySettings
         PaymentSetting::set('tpix_max_pool_ratio', (float) ($values['max_pool_ratio'] ?? config('tpix_pay.max_pool_ratio', 5)), [
             'group' => 'tpix', 'type' => 'float', 'label' => 'ยอดต่อรายการสูงสุด (เท่าของ USDT ในพูล)',
         ]);
+        if (isset($values['ai_credit_discount_percent'])) {
+            PaymentSetting::set('tpix_ai_credit_discount_percent', max(0, min(self::MAX_AI_CREDIT_DISCOUNT, (int) $values['ai_credit_discount_percent'])), [
+                'group' => 'tpix', 'type' => 'integer', 'label' => 'ส่วนลดแพ็กเกจ AI Credits เมื่อชำระด้วย TPIX (%)',
+            ]);
+        }
 
         $this->forget();
     }
@@ -112,6 +130,7 @@ class TpixPaySettings
             'confirmations' => (int) config('tpix_pay.confirmations', 3),
             'ttl' => (int) config('tpix_pay.quote_ttl_minutes', 30),
             'max_pool_ratio' => (float) config('tpix_pay.max_pool_ratio', 5),
+            'ai_credit_discount_percent' => (int) config('tpix_pay.ai_credit_discount_percent', 20),
         ];
 
         try {
@@ -122,6 +141,7 @@ class TpixPaySettings
             $values['confirmations'] = (int) ($rows['tpix_confirmations'] ?? $values['confirmations']);
             $values['ttl'] = (int) ($rows['tpix_quote_ttl_minutes'] ?? $values['ttl']);
             $values['max_pool_ratio'] = (float) ($rows['tpix_max_pool_ratio'] ?? $values['max_pool_ratio']);
+            $values['ai_credit_discount_percent'] = (int) ($rows['tpix_ai_credit_discount_percent'] ?? $values['ai_credit_discount_percent']);
         } catch (Throwable) {
             // No table yet (a fresh install mid-migration): TPIX simply stays off
         }

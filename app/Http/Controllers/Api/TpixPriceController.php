@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * minute like the web pages. `quote_rate_thb` is what a payment quote would use right now (the lower
  * of the live price and the half-hour average). `receive_address` is only given while payments are
  * switched on. Amounts are decimal strings: an app must not round money through a float.
+ * `ai_credit_discount_percent` (int) is the TPIX discount on AI credit packages (AiCreditOrders).
  */
 class TpixPriceController extends Controller
 {
@@ -31,6 +32,9 @@ class TpixPriceController extends Controller
             'prices_shown' => $settings->showsPrices() && ($spot['quote_rate_thb'] ?? null) !== null,
             'receive_address' => $accepts ? $settings->receiveAddress() : null,
             'explorer_url' => config('tpix_pay.explorer_url'),
+            // How many percent cheaper an AI credit package is when paid in TPIX. In both answers:
+            // aixman takes its presence as "this xmanstudio has the signed /api/aixman/tpix API".
+            'ai_credit_discount_percent' => $settings->aiCreditDiscountPercent(),
         ];
 
         if ($spot === null) {

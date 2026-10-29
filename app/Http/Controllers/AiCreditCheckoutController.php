@@ -6,12 +6,12 @@ use App\Models\BankAccount;
 use App\Models\Order;
 use App\Services\AffiliateCommissionService;
 use App\Services\AiCreditDelivery;
+use App\Services\AiCreditOrders;
 use App\Services\AixmanService;
 use App\Services\ThaiPaymentService;
 use App\Services\TpixPay\TpixCheckout;
 use App\Support\PaymentSlips;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 /**
  * AiCreditCheckoutController
@@ -47,6 +47,8 @@ class AiCreditCheckoutController extends Controller
 
         return view('xdreamer.checkout', [
             'package' => $package,
+            // What the TPIX option costs (the package price less the TPIX discount)
+            'tpixPricing' => app(AiCreditOrders::class)->pricing($package, TpixCheckout::METHOD),
             'page' => '',
         ]);
     }
@@ -68,59 +70,29 @@ class AiCreditCheckoutController extends Controller
             'payment_method' => 'required|in:promptpay,bank_transfer' . (TpixCheckout::available() ? ',' . TpixCheckout::METHOD : ''),
         ]);
 
-        $price = (int) $package['price_thb'];
+        // Paid in TPIX, the package is cheaper (TpixPaySettings::aiCreditDiscountPercent()); every
+        // other method pays the package price. Priced and written in one place (AiCreditOrders).
+        $orders = app(AiCreditOrders::class);
+        $pricing = $orders->pricing($package, $validated['payment_method']);
 
         // TPIX: refused before anything is written when this amount cannot be quoted now (no price
         // average yet, or more than the TPIX market behind the price can carry)
-        if ($refused = TpixCheckout::refuse($validated['payment_method'], $price)) {
+        if ($refused = TpixCheckout::refuse($validated['payment_method'], $pricing['total_thb'])) {
             return $refused;
         }
-        $metadata = [
-            'source' => 'xdreamer',
-            'package_slug' => $package['slug'],
-            'package_name' => $package['name'],
-            'credits' => (int) ($package['credits'] ?? 0),
-            'bonus_credits' => (int) ($package['bonus_credits'] ?? 0),
-            'ref' => session('ai_credit_ref'),
-        ];
 
-        $order = Order::create([
-            'user_id' => auth()->id(),
-            'order_number' => $this->generateOrderNumber(),
-            'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'],
-            'customer_phone' => $validated['customer_phone'],
-            'subtotal' => $price,
-            'discount' => 0,
-            'total' => $price,
-            'status' => 'pending',
-            'payment_method' => $validated['payment_method'],
-            'notes' => "AI Credits · {$package['name']} · {$metadata['credits']} credits"
-                . ($metadata['bonus_credits'] ? " +{$metadata['bonus_credits']} bonus" : ''),
-            'metadata' => json_encode($metadata),
-        ]);
-
-        $order->items()->create([
-            'product_id' => null, // virtual product — no row in products table
-            'product_name' => 'AI Credits · ' . $package['name'],
-            'quantity' => 1,
-            'price' => $price,
-            'subtotal' => $price,
-        ]);
-
-        // Affiliate commission (standard pipeline, per CLAUDE.md)
-        $affiliateService = app(AffiliateCommissionService::class);
-        $affiliate = $affiliateService->resolveAffiliate(auth()->id());
-        if ($affiliate) {
-            $order->update([
-                'affiliate_id' => $affiliate->id,
-                'referral_code' => $affiliate->referral_code,
-            ]);
-            $affiliateService->recordCommission(
-                $affiliate, $price, $order->id, auth()->id(),
-                'ai_credits', $order->id, "AI Credits {$package['name']}"
-            );
-        }
+        $order = $orders->create(
+            $request->user(),
+            $package,
+            $validated['payment_method'],
+            [
+                'name' => $validated['customer_name'],
+                'email' => $validated['customer_email'],
+                'phone' => $validated['customer_phone'],
+            ],
+            session('ai_credit_ref'),
+            app(AffiliateCommissionService::class)->resolveAffiliate(auth()->id()),
+        );
 
         // TPIX: quote and pay on the TPIX pay page; once paid it comes back to the success page,
         // which (like every paid path) sends the credits to AIXMAN
@@ -247,10 +219,5 @@ class AiCreditCheckoutController extends Controller
             : (json_decode($order->metadata ?? '{}', true) ?: []);
 
         return ($metadata['source'] ?? null) === 'xdreamer';
-    }
-
-    private function generateOrderNumber(): string
-    {
-        return 'AIC-' . now()->format('ymd') . '-' . strtoupper(Str::random(5));
     }
 }
