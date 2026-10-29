@@ -1,631 +1,346 @@
 @extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'บริการของเรา - XMAN Studio')
+@section('meta_description', 'บริการ IT ครบวงจร ตั้งแต่ Blockchain, AI, Web & Mobile ไปจนถึงระบบ IoT และความปลอดภัย · ดูราคาแต่ละบริการ แล้วสั่งงานรับใบเสนอราคาได้ทันที')
 
 @section('content')
 @php
-    // Category specific styling - unique colors and images
-    $categoryStyles = [
-        'blockchain' => [
-            'gradient' => 'from-purple-600 via-violet-600 to-fuchsia-600',
-            'bg' => 'bg-purple-50',
-            'border' => 'border-purple-200',
-            'text' => 'text-purple-600',
-            'hover' => 'hover:border-purple-400',
-            'badge_bg' => 'bg-purple-100',
-            'badge_text' => 'text-purple-700',
-            'button' => 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700',
-            'image' => asset('artwork/card-blockchain.webp'),
+    // ทุกหมวด ทุกบริการ และทุกราคามาจาก QuotationCategory / QuotationOption ที่แอดมินตั้ง —
+    // ส่วนลดมาจาก Pricing::saleDiscount() ตัวเดียวกับที่ตัวคิดราคาใช้ ห้ามพิมพ์ราคาลงหน้านี้
+    $optionCount = $categories->sum(fn ($category) => $category->activeOptions->count());
+    $maxSale = $categories->map(fn ($category) => (int) round(\App\Support\Quotation\Pricing::saleDiscount($category->key) * 100))->max();
+    $art = asset('artwork/hero-services.webp');
+
+    $chatbotPoints = [
+        ['icon' => 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z', 'title' => 'เข้าใจภาษาธรรมชาติ', 'body' => 'รองรับภาษาไทยและอังกฤษ เข้าใจบริบท คำสแลง และ Typo ได้อย่างแม่นยำ'],
+        ['icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'title' => 'ให้บริการ 24/7', 'body' => 'ตอบคำถามลูกค้าได้ตลอด 24 ชั่วโมง ไม่มีวันหยุด ไม่ต้องรอคิว'],
+        ['icon' => 'M13 10V3L4 14h7v7l9-11h-7z', 'title' => 'ตอบกลับทันทีใน 3 วินาที', 'body' => 'ลด Bounce Rate เพิ่ม Conversion ลูกค้าได้รับคำตอบโดยไม่ต้องรอ'],
+        ['icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', 'title' => 'ลดต้นทุน CS สูงถึง 60%', 'body' => 'รับมือคำถามซ้ำๆ ได้เอง ทีมโฟกัสกับเคสที่ซับซ้อนจริงๆ'],
+    ];
+    $tradePoints = [
+        ['icon' => 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z', 'title' => 'AI วิเคราะห์ตลาด', 'body' => 'Deep Learning วิเคราะห์ Pattern ตลาดจากข้อมูลนับล้าน ไม่ใช่แค่ Indicator ธรรมดา'],
+        ['icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'title' => 'ทองคำ น้ำมัน หุ้น', 'body' => 'รองรับหลายตลาดพร้อมกัน — Gold XAU/USD, Crude Oil WTI/Brent, SET, NASDAQ, Forex'],
+        ['icon' => 'M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z', 'title' => 'Risk Management อัจฉริยะ', 'body' => 'Dynamic Stop Loss / Take Profit ปรับตามสภาวะตลาดอัตโนมัติ Monitor 24/7'],
+    ];
+    $featured = [
+        [
+            'art' => asset('artwork/card-ai.webp'), 'eyebrow' => 'แนะนำบริการ · Featured', 'title' => 'AI Chatbot อัจฉริยะ',
+            'lead' => 'ยกระดับธุรกิจด้วย Chatbot ที่ขับเคลื่อนโดย AI เข้าใจภาษาไทย ตอบได้ทันที พร้อมให้บริการ 24/7',
+            'cta' => 'พร้อมทดลองใช้งาน Chatbot', 'ctaBody' => 'ดูตัวอย่างการทำงานจริงของ AI Chatbot ที่พัฒนาให้ลูกค้าของเรา พร้อมฟีเจอร์ครบครัน',
+            'points' => $chatbotPoints,
+            'primary' => ['href' => 'https://cus008.xman4289.com', 'label' => 'ดูรายละเอียด', 'external' => true],
+            'secondary' => ['href' => route('quote.index'), 'label' => 'ติดต่อสอบถาม'],
         ],
-        'web' => [
-            'gradient' => 'from-blue-600 via-sky-600 to-cyan-600',
-            'bg' => 'bg-blue-50',
-            'border' => 'border-blue-200',
-            'text' => 'text-blue-600',
-            'hover' => 'hover:border-blue-400',
-            'badge_bg' => 'bg-blue-100',
-            'badge_text' => 'text-blue-700',
-            'button' => 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700',
-            'image' => asset('artwork/card-web.webp'),
-        ],
-        'mobile' => [
-            'gradient' => 'from-green-600 via-emerald-600 to-teal-600',
-            'bg' => 'bg-green-50',
-            'border' => 'border-green-200',
-            'text' => 'text-green-600',
-            'hover' => 'hover:border-green-400',
-            'badge_bg' => 'bg-green-100',
-            'badge_text' => 'text-green-700',
-            'button' => 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700',
-            'image' => asset('artwork/card-mobile.webp'),
-        ],
-        'ai' => [
-            'gradient' => 'from-indigo-600 via-purple-600 to-pink-600',
-            'bg' => 'bg-indigo-50',
-            'border' => 'border-indigo-200',
-            'text' => 'text-indigo-600',
-            'hover' => 'hover:border-indigo-400',
-            'badge_bg' => 'bg-indigo-100',
-            'badge_text' => 'text-indigo-700',
-            'button' => 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700',
-            'image' => asset('artwork/card-ai.webp'),
-        ],
-        'iot' => [
-            'gradient' => 'from-orange-600 via-amber-600 to-yellow-600',
-            'bg' => 'bg-orange-50',
-            'border' => 'border-orange-200',
-            'text' => 'text-orange-600',
-            'hover' => 'hover:border-orange-400',
-            'badge_bg' => 'bg-orange-100',
-            'badge_text' => 'text-orange-700',
-            'button' => 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700',
-            'image' => asset('artwork/card-iot.webp'),
-        ],
-        'security' => [
-            'gradient' => 'from-red-600 via-rose-600 to-pink-600',
-            'bg' => 'bg-red-50',
-            'border' => 'border-red-200',
-            'text' => 'text-red-600',
-            'hover' => 'hover:border-red-400',
-            'badge_bg' => 'bg-red-100',
-            'badge_text' => 'text-red-700',
-            'button' => 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700',
-            'image' => asset('artwork/card-security.webp'),
-        ],
-        'software' => [
-            'gradient' => 'from-teal-600 via-cyan-600 to-sky-600',
-            'bg' => 'bg-teal-50',
-            'border' => 'border-teal-200',
-            'text' => 'text-teal-600',
-            'hover' => 'hover:border-teal-400',
-            'badge_bg' => 'bg-teal-100',
-            'badge_text' => 'text-teal-700',
-            'button' => 'bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700',
-            'image' => asset('artwork/card-software.webp'),
-        ],
-        'flutter' => [
-            'gradient' => 'from-cyan-600 via-blue-600 to-indigo-600',
-            'bg' => 'bg-cyan-50',
-            'border' => 'border-cyan-200',
-            'text' => 'text-cyan-600',
-            'hover' => 'hover:border-cyan-400',
-            'badge_bg' => 'bg-cyan-100',
-            'badge_text' => 'text-cyan-700',
-            'button' => 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700',
-            'image' => asset('artwork/card-flutter.webp'),
+        [
+            'art' => asset('artwork/card-autotradex.webp'), 'eyebrow' => 'AI-Powered Trading', 'title' => 'AI AutoTrade ระบบเทรดอัตโนมัติ',
+            'lead' => 'พัฒนาโปรแกรมเทรดอัตโนมัติด้วย AI ล้ำกว่าระบบ AutoTrade ทั่วไปในตลาด',
+            'points' => $tradePoints,
+            'primary' => ['href' => route('ai-autotrade'), 'label' => 'ดูรายละเอียด'],
+            'secondary' => ['href' => route('quote.index'), 'label' => 'ปรึกษาฟรี'],
         ],
     ];
 
-    // Default style for unknown categories
-    $defaultStyle = [
-        'gradient' => 'from-gray-600 via-slate-600 to-zinc-600',
-        'bg' => 'bg-gray-50',
-        'border' => 'border-gray-200',
-        'text' => 'text-gray-600',
-        'hover' => 'hover:border-gray-400',
-        'badge_bg' => 'bg-gray-100',
-        'badge_text' => 'text-gray-700',
-        'button' => 'bg-gradient-to-r from-gray-600 to-slate-600 hover:from-gray-700 hover:to-slate-700',
-        'image' => asset('artwork/hero-network.webp'),
+    // ข้อมูลโครงสร้างสำหรับ Google: รายการบริการพร้อมราคาขายจริง (หลังหักส่วนลด) จาก DB
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'ItemList',
+        'name' => 'บริการของ XMAN Studio',
+        'url' => route('services.index'),
+        'itemListElement' => $categories->flatMap(fn ($category) => $category->activeOptions->map(fn ($option) => [
+            'name' => $option->display_name,
+            'url' => route('service.detail', [$category->key, $option->key]),
+            'price' => (string) round($option->price * (1 - \App\Support\Quotation\Pricing::saleDiscount($category->key))),
+        ]))->values()->map(fn ($item, $i) => [
+            '@type' => 'ListItem',
+            'position' => $i + 1,
+            'item' => [
+                '@type' => 'Service',
+                'name' => $item['name'],
+                'url' => $item['url'],
+                'provider' => ['@type' => 'Organization', 'name' => 'XMAN Studio'],
+                'offers' => ['@type' => 'Offer', 'price' => $item['price'], 'priceCurrency' => 'THB'],
+            ],
+        ])->all(),
     ];
 @endphp
+<x-xp.page a="#67e8f9" b="#a78bfa" c="#7dd3fc" glow="103 232 249" g1="#a78bfa" g2="#67e8f9" g3="#f0abfc">
 
-<!-- Hero Section -->
-<section class="relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white py-20 md:py-24">
-    <x-page-art art="hero-services" :opacity="50" />
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <span class="inline-flex items-center px-4 py-2 bg-primary-600/20 text-primary-300 text-sm font-semibold rounded-full mb-6 backdrop-blur-sm border border-primary-500/20">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-            </svg>
-            Our Services
-        </span>
-        <h1 class="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight">
-            บริการ<span class="bg-gradient-to-r from-primary-400 to-purple-400 bg-clip-text text-transparent">ของเรา</span>
-        </h1>
-        <p class="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-            บริการ IT ครบวงจร ตั้งแต่ Blockchain, AI, Web &amp; Mobile ไปจนถึงระบบ IoT และความปลอดภัย
-        </p>
-    </div>
-</section>
-
-<!-- Featured: AI Chatbot Section -->
-<section class="py-16 bg-white dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-violet-100 to-purple-100 text-purple-700 dark:from-violet-900/30 dark:to-purple-900/30 dark:text-purple-300 mb-4">
-                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
-                แนะนำบริการ
-            </span>
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">AI Chatbot อัจฉริยะ</h2>
-            <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">ยกระดับธุรกิจด้วย Chatbot ที่ขับเคลื่อนโดย AI เข้าใจภาษาไทย ตอบได้ทันที พร้อมให้บริการ 24/7</p>
-        </div>
-
-        <div class="relative bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 rounded-3xl overflow-hidden shadow-2xl">
-            <!-- Background Pattern -->
-            <div class="absolute inset-0 opacity-10">
-                <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="chatbot-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#chatbot-grid)"/></svg>
-            </div>
-
-            <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 md:p-12">
-                <!-- Left: Feature Cards -->
-                <div class="space-y-4">
-                    <!-- Card 1 -->
-                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
-                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-lg">เข้าใจภาษาธรรมชาติ</h4>
-                            <p class="text-purple-100 text-sm mt-1">รองรับภาษาไทยและอังกฤษ เข้าใจบริบท คำสแลง และ Typo ได้อย่างแม่นยำ</p>
-                        </div>
-                    </div>
-
-                    <!-- Card 2 -->
-                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
-                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-lg">ให้บริการ 24/7</h4>
-                            <p class="text-purple-100 text-sm mt-1">ตอบคำถามลูกค้าได้ตลอด 24 ชั่วโมง ไม่มีวันหยุด ไม่ต้องรอคิว</p>
-                        </div>
-                    </div>
-
-                    <!-- Card 3 -->
-                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
-                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-lg">ตอบกลับทันทีใน 3 วินาที</h4>
-                            <p class="text-purple-100 text-sm mt-1">ลด Bounce Rate เพิ่ม Conversion ลูกค้าได้รับคำตอบโดยไม่ต้องรอ</p>
-                        </div>
-                    </div>
-
-                    <!-- Card 4 -->
-                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
-                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-lg">ลดต้นทุน CS สูงถึง 60%</h4>
-                            <p class="text-purple-100 text-sm mt-1">รับมือคำถามซ้ำๆ ได้เอง ทีมโฟกัสกับเคสที่ซับซ้อนจริงๆ</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: CTA Area -->
-                <div class="flex flex-col items-center justify-center text-center lg:text-left lg:items-start space-y-6">
-                    <div class="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-white/30 shadow-lg">
-                        <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-2xl md:text-3xl font-bold text-white mb-3">พร้อมทดลองใช้งาน Chatbot</h3>
-                        <p class="text-purple-100 text-lg max-w-md">ดูตัวอย่างการทำงานจริงของ AI Chatbot ที่พัฒนาให้ลูกค้าของเรา พร้อมฟีเจอร์ครบครัน</p>
-                    </div>
-                    <div class="flex flex-wrap gap-4">
-                        <a href="https://cus008.xman4289.com"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           class="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-700 rounded-xl font-bold text-lg hover:bg-purple-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            ดูรายละเอียด
-                        </a>
-                        <a href="{{ route('quote.index') }}"
-                           class="inline-flex items-center gap-2 px-8 py-4 border-2 border-white/40 text-white rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            ติดต่อสอบถาม
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Featured: AI AutoTrade Section -->
-<section class="py-16 bg-gray-50 dark:bg-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 rounded-3xl overflow-hidden shadow-2xl">
-            <!-- Background Pattern -->
-            <div class="absolute inset-0 opacity-10">
-                <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="trade-grid" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="white"/></pattern></defs><rect width="100%" height="100%" fill="url(#trade-grid)"/></svg>
-            </div>
-
-            <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 md:p-12">
-                <!-- Left: Feature Cards -->
-                <div class="space-y-4">
-                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
-                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-lg">AI วิเคราะห์ตลาด</h4>
-                            <p class="text-emerald-100 text-sm mt-1">Deep Learning วิเคราะห์ Pattern ตลาดจากข้อมูลนับล้าน ไม่ใช่แค่ Indicator ธรรมดา</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
-                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-lg">ทองคำ น้ำมัน หุ้น</h4>
-                            <p class="text-emerald-100 text-sm mt-1">รองรับหลายตลาดพร้อมกัน — Gold XAU/USD, Crude Oil WTI/Brent, SET, NASDAQ, Forex</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-300">
-                        <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z"/></svg>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold text-lg">Risk Management อัจฉริยะ</h4>
-                            <p class="text-emerald-100 text-sm mt-1">Dynamic Stop Loss / Take Profit ปรับตามสภาวะตลาดอัตโนมัติ Monitor 24/7</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: CTA Area -->
-                <div class="flex flex-col items-center justify-center text-center lg:text-left lg:items-start space-y-6">
-                    <div class="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-white/30 shadow-lg">
-                        <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white mb-3">
-                            <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
-                            AI-Powered Trading
-                        </span>
-                        <h3 class="text-2xl md:text-3xl font-bold text-white mb-3">AI AutoTrade ระบบเทรดอัตโนมัติ</h3>
-                        <p class="text-emerald-100 text-lg max-w-md">พัฒนาโปรแกรมเทรดอัตโนมัติด้วย AI ล้ำกว่าระบบ AutoTrade ทั่วไปในตลาด</p>
-                    </div>
-                    <div class="flex flex-wrap gap-4">
-                        <a href="/ai-autotrade"
-                           class="inline-flex items-center gap-2 px-8 py-4 bg-white text-emerald-700 rounded-xl font-bold text-lg hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            ดูรายละเอียด
-                        </a>
-                        <a href="/support"
-                           class="inline-flex items-center gap-2 px-8 py-4 border-2 border-white/40 text-white rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                            </svg>
-                            ปรึกษาฟรี
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Services Categories Grid -->
-<section class="py-16 bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        @if($categories->isEmpty())
-            <div class="text-center py-16">
-                <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                </svg>
-                <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">ยังไม่มีบริการ</h2>
-                <p class="text-gray-500 dark:text-gray-400 mt-2">กรุณากลับมาใหม่ภายหลัง</p>
-            </div>
-        @else
-            <!-- Categories Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-                @foreach($categories as $category)
-                    @php
-                        $style = $categoryStyles[$category->key] ?? $defaultStyle;
-                        $categoryImage = $category->image ?? $style['image'];
-                    @endphp
-
-                    <!-- Category Card -->
-                    <div class="category-card group cursor-pointer" data-category="{{ $category->key }}">
-                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl border-2 {{ $style['border'] }} dark:border-gray-700 {{ $style['hover'] }}">
-                            <!-- Category Image -->
-                            <div class="relative h-48 overflow-hidden">
-                                <img src="{{ $categoryImage }}"
-                                     alt="{{ $category->display_name }}"
-                                     loading="lazy" decoding="async"
-                                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                                <div class="absolute inset-0 bg-gradient-to-br {{ $style['gradient'] }} opacity-70 group-hover:opacity-60 transition-opacity"></div>
-
-                                <!-- Icon Badge -->
-                                <div class="absolute top-4 right-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl p-3 shadow-lg">
-                                    <span class="text-4xl">{{ $category->icon }}</span>
-                                </div>
-
-                                            <!-- Sale Badge -->
-                                <div class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg animate-pulse">
-                                    SALE {{ (int) round(\App\Support\Quotation\Pricing::saleDiscount($category->key) * 100) }}%
-                                </div>
-
-                                <!-- Options Count Badge -->
-                                <div class="absolute bottom-4 left-4 {{ $style['badge_bg'] }} {{ $style['badge_text'] }} px-3 py-1 rounded-full text-sm font-semibold">
-                                    {{ $category->activeOptions->count() }} บริการ
-                                </div>
+    {{-- ============================ HERO ============================ --}}
+    <x-svc.hero :art="$art"
+                tagline="บริการ IT ครบวงจร"
+                tagline-en="End-to-end IT services, built by XMAN Studio."
+                lead="ตั้งแต่ Blockchain, AI, Web & Mobile ไปจนถึงระบบ IoT และความปลอดภัย"
+                lead-en="From blockchain, AI, web and mobile to IoT and security.">
+        <x-slot:chips>
+            <span class="xp-chip"><i></i>Our Services</span>
+            @if($categories->isNotEmpty())
+                <span class="xp-chip">{{ $categories->count() }} หมวด · {{ $optionCount }} บริการ</span>
+            @endif
+        </x-slot:chips>
+        <x-slot:title>บริการ<span class="xp-text-glow">ของเรา</span></x-slot:title>
+        <x-slot:actions>
+            @if($categories->isNotEmpty())
+                <a href="#catalog" class="xp-btn-main inline-flex items-center gap-2 px-6 py-4 rounded-xl font-extrabold transition">
+                    ดูบริการทั้งหมด
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                </a>
+            @endif
+            <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-bold transition">สั่งซื้อบริการ</a>
+        </x-slot:actions>
+        @if($maxSale)
+            <x-slot:notes>
+                <p class="mt-4 text-sm text-gray-400"><span class="xp-badge svc-sale mr-2">SALE</span>ราคาทุกบริการลดแล้วสูงสุด {{ $maxSale }}% · กดดูรายละเอียดเพื่อเห็นราคาจริงของแต่ละบริการ</p>
+            </x-slot:notes>
+        @endif
+        <x-slot:visual>
+            @if($categories->isNotEmpty())
+                <div class="xp-tilt grid grid-cols-2 gap-3 sm:gap-4">
+                    @foreach($categories->take(4) as $category)
+                        <a href="#category-{{ $category->key }}" class="svc-box svc-cat {{ $loop->index % 2 === 1 ? 'translate-y-6' : '' }}">
+                            <div class="svc-in h-40 sm:h-48 p-4 flex flex-col justify-end">
+                                <x-svc.cover :category="$category" />
+                                <div class="svc-fade"></div>
+                                <span class="svc-icon absolute top-3 right-3 !w-11 !h-11 !text-2xl">{{ $category->icon }}</span>
+                                <p class="text-white font-extrabold leading-tight">{{ $category->display_name }}</p>
+                                <p class="text-xs text-gray-300 mt-0.5">{{ $category->activeOptions->count() }} บริการ</p>
                             </div>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </x-slot:visual>
+    </x-svc.hero>
 
-                            <!-- Category Info -->
-                            <div class="p-6">
-                                <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:{{ $style['text'] }} transition-colors">
-                                    {{ $category->display_name }}
-                                </h3>
-                                @if($category->display_description)
-                                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">
-                                        {{ $category->display_description }}
-                                    </p>
+    {{-- ========================== FEATURED ========================== --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[34rem] h-[34rem] -left-40 top-10" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Featured services" title="บริการ" title2="ที่แนะนำ"
+                       sub="ระบบ AI ที่เราพัฒนาให้ลูกค้าใช้งานจริง"
+                       en="AI systems we build for clients and run in production." />
+            <div class="grid lg:grid-cols-2 gap-6">
+                @foreach($featured as $item)
+                    <article class="svc-box">
+                        <div class="svc-in flex flex-col">
+                            <div class="relative isolate h-48 sm:h-56">
+                                <img src="{{ $item['art'] }}" alt="" aria-hidden="true" loading="lazy" decoding="async" class="svc-cover">
+                                <div class="svc-fade"></div>
+                            </div>
+                            <div class="relative -mt-16 p-6 sm:p-8 pt-0 flex flex-col flex-1">
+                                <p class="xp-eyebrow mb-3">{{ $item['eyebrow'] }}</p>
+                                <h3 class="text-2xl md:text-3xl font-black text-white mb-3">{{ $item['title'] }}</h3>
+                                <p class="text-gray-300 leading-relaxed mb-6">{{ $item['lead'] }}</p>
+
+                                <ul class="grid sm:grid-cols-2 gap-3 mb-6">
+                                    @foreach($item['points'] as $point)
+                                        <li class="xp-card p-4">
+                                            <div class="flex items-center gap-2.5 mb-1.5">
+                                                <span class="w-9 h-9 rounded-lg flex flex-none items-center justify-center" style="background: color-mix(in srgb, var(--xp-a) 10%, transparent); border: 1px solid color-mix(in srgb, var(--xp-a) 25%, transparent);">
+                                                    <svg class="w-5 h-5" style="color: var(--xp-a)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $point['icon'] }}"/></svg>
+                                                </span>
+                                                <h4 class="text-white font-bold leading-snug">{{ $point['title'] }}</h4>
+                                            </div>
+                                            <p class="text-sm text-gray-400 leading-relaxed">{{ $point['body'] }}</p>
+                                        </li>
+                                    @endforeach
+                                </ul>
+
+                                @if(! empty($item['cta']))
+                                    <p class="text-white font-bold">{{ $item['cta'] }}</p>
+                                    <p class="text-sm text-gray-400 mb-6">{{ $item['ctaBody'] }}</p>
                                 @endif
 
-                                <div class="flex items-center {{ $style['text'] }} font-semibold text-sm group-hover:gap-2 transition-all">
-                                    <span>ดูบริการทั้งหมด</span>
-                                    <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
+                                <div class="mt-auto flex flex-wrap gap-3">
+                                    <a href="{{ $item['primary']['href'] }}" @if(! empty($item['primary']['external'])) target="_blank" rel="noopener noreferrer" @endif
+                                       class="xp-btn-main inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-extrabold transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        {{ $item['primary']['label'] }}
+                                    </a>
+                                    <a href="{{ $item['secondary']['href'] }}" class="xp-btn-ghost inline-flex items-center px-6 py-3.5 rounded-xl font-bold transition">{{ $item['secondary']['label'] }}</a>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </article>
                 @endforeach
             </div>
+        </div>
+    </section>
 
-            <!-- Expanded Category Options -->
-            @foreach($categories as $category)
-                @php
-                    $style = $categoryStyles[$category->key] ?? $defaultStyle;
-                @endphp
+    {{-- ========================== CATALOGUE ========================== --}}
+    <section class="relative py-20 scroll-mt-20" id="catalog" data-svc-catalog>
+        <div class="xp-glow w-[40rem] h-[26rem] left-1/2 -translate-x-1/2 top-32" style="background: color-mix(in srgb, var(--xp-b) 10%, transparent)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            @if($categories->isEmpty())
+                <div class="xp-card text-center py-16 px-6 max-w-xl mx-auto">
+                    <svg class="w-20 h-20 mx-auto text-gray-600 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                    <h2 class="text-xl font-bold text-white">ยังไม่มีบริการ</h2>
+                    <p class="text-gray-400 mt-2">กรุณากลับมาใหม่ภายหลัง</p>
+                </div>
+            @else
+                <x-xp.head class="mb-12" eyebrow="All services" title="เลือกหมวด" title2="แล้วดูบริการทั้งหมด"
+                           sub="กดที่หมวดเพื่อดูบริการ ราคา และรายละเอียดของแต่ละบริการ"
+                           en="Pick a category to see its services, prices and details." />
 
-                <div id="category-{{ $category->key }}" class="category-options hidden mb-12">
-                    <!-- Category Header -->
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border-2 {{ $style['border'] }} dark:border-gray-700">
-                        <div class="flex items-center justify-between flex-wrap gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="text-6xl">{{ $category->icon }}</div>
-                                <div>
-                                    <h2 class="text-3xl font-bold {{ $style['text'] }}">{{ $category->display_name }}</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-12">
+                    @foreach($categories as $category)
+                        <a href="#category-{{ $category->key }}" class="svc-box svc-cat group" data-svc-cat="{{ $category->key }}"
+                           aria-controls="category-{{ $category->key }}" aria-expanded="false">
+                            <div class="svc-in flex flex-col">
+                                <div class="relative isolate h-44">
+                                    <x-svc.cover :category="$category" />
+                                    <div class="svc-fade"></div>
+                                    <span class="absolute top-4 left-4 xp-badge svc-sale shadow-lg">SALE {{ (int) round(\App\Support\Quotation\Pricing::saleDiscount($category->key) * 100) }}%</span>
+                                    <span class="svc-icon absolute top-3 right-3">{{ $category->icon }}</span>
+                                    <span class="absolute bottom-3 left-4 xp-chip !py-1 !px-3 !text-xs">{{ $category->activeOptions->count() }} บริการ</span>
+                                </div>
+                                <div class="p-5 pt-3 flex flex-col flex-1">
+                                    <h3 class="text-lg font-bold text-white mb-1.5">{{ $category->display_name }}</h3>
                                     @if($category->display_description)
-                                        <p class="text-gray-600 dark:text-gray-400 mt-1">{{ $category->display_description }}</p>
+                                        <p class="text-sm text-gray-400 mb-4 line-clamp-2">{{ $category->display_description }}</p>
                                     @endif
+                                    <span class="xp-link mt-auto inline-flex items-center gap-1 text-sm font-semibold">
+                                        ดูบริการทั้งหมด
+                                        <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    </span>
                                 </div>
                             </div>
-                            <button class="close-category px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-colors">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
+                        </a>
+                    @endforeach
+                </div>
+
+                {{-- หนึ่งหมวดต่อครั้ง: กดการ์ดหมวดเพื่อเปิด/ปิด · ลิงก์ #category-<key> เปิดหมวดนั้นตรง ๆ --}}
+                @foreach($categories as $category)
+                    @php $discount = \App\Support\Quotation\Pricing::saleDiscount($category->key); @endphp
+                    <div id="category-{{ $category->key }}" class="svc-panel scroll-mt-24 mb-12" data-svc-panel="{{ $category->key }}" hidden>
+                        <div class="svc-box mb-6">
+                            <div class="svc-in p-6 sm:p-8 flex flex-wrap items-center justify-between gap-5">
+                                <x-svc.cover :category="$category" class="opacity-30" />
+                                <div class="svc-fade" style="background: linear-gradient(90deg, #070b17 30%, rgba(7,11,23,.6))"></div>
+                                <div class="flex items-center gap-4 min-w-0">
+                                    <span class="svc-icon !w-16 !h-16 !text-4xl flex-none">{{ $category->icon }}</span>
+                                    <div class="min-w-0">
+                                        <h2 class="text-2xl sm:text-3xl font-black text-white">{{ $category->display_name }}</h2>
+                                        @if($category->display_description)
+                                            <p class="text-gray-400 mt-1">{{ $category->display_description }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                                <button type="button" data-svc-close class="xp-btn-ghost inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     ปิด
-                                </span>
-                            </button>
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Options Grid -->
-                    @if($category->activeOptions->count() > 0)
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            @foreach($category->activeOptions as $option)
-                                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group border-2 {{ $style['border'] }} dark:border-gray-700 {{ $style['hover'] }}">
-                                    <div class="p-6">
-                                        <!-- Option Image -->
+                        @if($category->activeOptions->count() > 0)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                @foreach($category->activeOptions as $option)
+                                    @php
+                                        $features = $option->features_th ?? $option->features;
+                                        $featuresList = is_array($features) ? $features : [];
+                                    @endphp
+                                    <article class="xp-card overflow-hidden flex flex-col transition group">
                                         @if($option->image)
-                                            <div class="w-full h-40 mb-4 rounded-lg overflow-hidden {{ $style['bg'] }}">
-                                                <img src="{{ asset('storage/' . $option->image) }}"
-                                                     alt="{{ $option->display_name }}"
-                                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
-                                            </div>
-                                        @else
-                                            <div class="w-16 h-16 mb-4 bg-gradient-to-br {{ $style['gradient'] }} rounded-xl flex items-center justify-center text-3xl shadow-lg">
-                                                {{ $category->icon }}
+                                            <div class="h-40 overflow-hidden">
+                                                <img src="{{ asset('storage/' . $option->image) }}" alt="{{ $option->display_name }}" loading="lazy" decoding="async"
+                                                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                                             </div>
                                         @endif
-
-                                        <!-- Title -->
-                                        <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:{{ $style['text'] }} transition-colors">
-                                            {{ $option->display_name }}
-                                        </h3>
-
-                                        <!-- Description -->
-                                        @if($option->display_description)
-                                            <p class="text-sm text-gray-600 mb-4 line-clamp-2">
-                                                {{ $option->display_description }}
-                                            </p>
-                                        @endif
-
-                                        <!-- Features Preview -->
-                                        @if($option->features_th || $option->features)
-                                            @php
-                                                $features = $option->features_th ?? $option->features;
-                                                $featuresList = is_array($features) ? $features : [];
-                                            @endphp
+                                        <div class="p-6 flex flex-col flex-1">
+                                            @unless($option->image)
+                                                <span class="svc-icon mb-4">{{ $category->icon }}</span>
+                                            @endunless
+                                            <h3 class="text-lg font-bold text-white mb-2">{{ $option->display_name }}</h3>
+                                            @if($option->display_description)
+                                                <p class="text-sm text-gray-400 mb-4 line-clamp-2">{{ $option->display_description }}</p>
+                                            @endif
                                             @if(count($featuresList) > 0)
-                                                <ul class="text-xs text-gray-500 mb-4 space-y-1">
+                                                <ul class="text-xs text-gray-400 mb-4 space-y-1.5">
                                                     @foreach(array_slice($featuresList, 0, 2) as $feature)
-                                                        <li class="flex items-center">
-                                                            <svg class="w-3 h-3 {{ $style['text'] }} mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                                            </svg>
-                                                            <span class="line-clamp-1">{{ $feature }}</span>
-                                                        </li>
+                                                        <li class="flex items-center gap-2"><span class="xp-dot !w-1.5 !h-1.5"></span><span class="line-clamp-1">{{ $feature }}</span></li>
                                                     @endforeach
                                                 </ul>
                                             @endif
-                                        @endif
-
-                                        <!-- Price and Action -->
-                                        @php
-                                            $discount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
-                                            $salePrice = $option->price * (1 - $discount);
-                                        @endphp
-                                        <div class="flex items-center justify-between mt-auto pt-4 border-t {{ $style['border'] }}">
-                                            <div>
-                                                <div class="flex items-center gap-1 mb-0.5">
-                                                    <span class="text-xs text-gray-400 line-through">{{ number_format($option->price, 0) }} ฿</span>
-                                                    <span class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">-{{ intval($discount * 100) }}%</span>
-                                                </div>
-                                                <span class="text-2xl font-bold text-red-500">
-                                                    {{ number_format($salePrice, 0) }}
-                                                </span>
-                                                <span class="text-sm text-gray-500 ml-1">฿</span>
-                                                <div><x-tpix-price :thb="$salePrice" /></div>
+                                            <div class="mt-auto pt-4 border-t border-white/10 flex items-end justify-between gap-3">
+                                                <x-svc.price :price="$option->price" :discount="$discount" />
+                                                <a href="{{ route('service.detail', [$category->key, $option->key]) }}"
+                                                   class="xp-btn-main flex-none px-4 py-2.5 rounded-lg text-sm font-extrabold transition">รายละเอียด</a>
                                             </div>
-
-                                            <a href="{{ route('service.detail', [$category->key, $option->key]) }}"
-                                               class="px-4 py-2 {{ $style['button'] }} text-white rounded-lg transition-all text-sm font-semibold shadow-md hover:shadow-lg">
-                                                รายละเอียด
-                                            </a>
                                         </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-                            <p class="text-gray-500 dark:text-gray-400">ไม่มีตัวเลือกบริการในหมวดนี้ในขณะนี้</p>
-                        </div>
-                    @endif
-                </div>
-            @endforeach
-        @endif
-    </div>
-</section>
-
-<!-- CTA Section -->
-<section class="py-16 bg-gradient-to-r from-primary-600 to-primary-800 text-white">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-bold mb-4">พร้อมเริ่มโปรเจคของคุณแล้วหรือยัง?</h2>
-        <p class="text-lg text-primary-100 mb-8">
-            ทีมผู้เชี่ยวชาญของเราพร้อมให้คำปรึกษาและวางแผนโซลูชันที่เหมาะสมกับธุรกิจของคุณ
-        </p>
-        <div class="flex flex-wrap gap-4 justify-center">
-            <a href="{{ route('quote.index') }}"
-               class="inline-block px-8 py-4 bg-white text-primary-600 rounded-lg hover:bg-gray-100 font-semibold text-lg transition-all shadow-lg">
-                สั่งซื้อบริการ
-            </a>
-            <a href="{{ route('quote.index') }}#contact"
-               class="inline-block px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 font-semibold text-lg transition-all">
-                ติดต่อเรา
-            </a>
+                                    </article>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="xp-card text-center py-12">
+                                <p class="text-gray-400">ไม่มีตัวเลือกบริการในหมวดนี้ในขณะนี้</p>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            @endif
         </div>
-    </div>
-</section>
+    </section>
 
-@push('styles')
-<style>
-    .line-clamp-1 {
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+    {{-- ============================= CTA ============================= --}}
+    <x-svc.cta :art="$art" title="พร้อมเริ่มโปรเจค" glow="ของคุณแล้วหรือยัง?"
+               sub="ทีมผู้เชี่ยวชาญของเราพร้อมให้คำปรึกษาและวางแผนโซลูชันที่เหมาะสมกับธุรกิจของคุณ"
+               en="Tell us what you need — we plan the solution that fits your business.">
+        <a href="{{ route('quote.index') }}" class="xp-btn-main inline-flex items-center px-8 py-4 rounded-xl font-extrabold transition">สั่งซื้อบริการ</a>
+        <a href="{{ route('contact.show') }}" class="xp-btn-ghost inline-flex items-center px-8 py-4 rounded-xl font-bold transition">ติดต่อเรา</a>
+    </x-svc.cta>
+</x-xp.page>
 
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .category-options {
-        animation: slideDown 0.4s ease-out;
-    }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
-@endpush
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const categoryCards = document.querySelectorAll('.category-card');
-        const categoryOptions = document.querySelectorAll('.category-options');
-        const closeButtons = document.querySelectorAll('.close-category');
+(function () {
+    // หมวดบริการ: เปิดทีละหมวด · กดการ์ดซ้ำ ปุ่ม "ปิด" หรือกดนอกรายการ = ปิด · #category-<key> ในลิงก์เปิดหมวดนั้น
+    var root = document.querySelector('[data-svc-catalog]');
+    if (!root) { return; }
+    var cards = Array.prototype.slice.call(root.querySelectorAll('[data-svc-cat]'));
+    var panels = Array.prototype.slice.call(root.querySelectorAll('[data-svc-panel]'));
+    var motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 
-        // Function to close all categories
-        function closeAllCategories() {
-            categoryOptions.forEach(option => {
-                option.classList.add('hidden');
-            });
-            // Scroll back to top of categories
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+    function panelFor(key) { return panels.filter(function (p) { return p.dataset.svcPanel === key; })[0] || null; }
+    function mark(key) { cards.forEach(function (c) { c.setAttribute('aria-expanded', c.dataset.svcCat === key ? 'true' : 'false'); }); }
+    function setHash(key) { history.replaceState(null, '', key ? '#category-' + key : location.pathname + location.search); }
+
+    function open(key) {
+        var target = panelFor(key);
+        if (!target) { return; }
+        panels.forEach(function (p) { p.hidden = p !== target; });
+        mark(key);
+        setHash(key);
+        setTimeout(function () { target.scrollIntoView({ behavior: motion, block: 'start' }); }, 60);
+    }
+    function closeAll(scroll) {
+        if (panels.every(function (p) { return p.hidden; })) { return; }
+        panels.forEach(function (p) { p.hidden = true; });
+        mark(null);
+        setHash(null);
+        if (scroll) { root.scrollIntoView({ behavior: motion, block: 'start' }); }
+    }
+
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest('a[href^="#category-"]');
+        if (link) {
+            var key = link.getAttribute('href').slice('#category-'.length);
+            var target = panelFor(key);
+            if (!target) { return; }
+            e.preventDefault();
+            // the category cards toggle; any other link to a category only opens it
+            if (link.hasAttribute('data-svc-cat') && !target.hidden) { closeAll(false); } else { open(key); }
+            return;
         }
-
-        // Category card click handler
-        categoryCards.forEach(card => {
-            card.addEventListener('click', function() {
-                const categoryKey = this.dataset.category;
-                const targetOptions = document.getElementById(`category-${categoryKey}`);
-
-                // Close all other categories first
-                categoryOptions.forEach(option => {
-                    if (option.id !== `category-${categoryKey}`) {
-                        option.classList.add('hidden');
-                    }
-                });
-
-                // Toggle the clicked category
-                if (targetOptions.classList.contains('hidden')) {
-                    targetOptions.classList.remove('hidden');
-
-                    // Smooth scroll to the expanded section
-                    setTimeout(() => {
-                        targetOptions.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }, 100);
-                } else {
-                    targetOptions.classList.add('hidden');
-                }
-            });
-        });
-
-        // Close button handler
-        closeButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.stopPropagation();
-                closeAllCategories();
-            });
-        });
-
-        // Close when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.category-card') && !e.target.closest('.category-options')) {
-                closeAllCategories();
-            }
-        });
+        if (e.target.closest('[data-svc-close]')) { closeAll(true); return; }
+        if (!e.target.closest('[data-svc-panel]')) { closeAll(false); }
     });
+
+    if (location.hash.indexOf('#category-') === 0) { open(decodeURIComponent(location.hash.slice('#category-'.length))); }
+})();
 </script>
 @endpush
 @endsection

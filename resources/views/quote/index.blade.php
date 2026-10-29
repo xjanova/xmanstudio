@@ -8,6 +8,9 @@
     $cat = $catalogue;
 @endphp
 
+{{-- กรอบเดียวกับหน้าผลิตภัณฑ์/บริการ · class dark เปิดทุก dark: ข้างในให้หน้านี้มืดเสมอ
+     · overflow-clip ไม่ใช่ hidden — hidden ทำให้กล่องสรุปยอดด้านขวาเลิก sticky --}}
+<x-xp.page class="dark !overflow-clip" a="#67e8f9" b="#a78bfa" c="#7dd3fc" glow="103 232 249" g1="#a78bfa" g2="#67e8f9" g3="#f0abfc">
 <div
     x-data="quoteBuilder(@js([
         'catalogue' => $cat,
@@ -23,50 +26,41 @@
 >
 
     {{-- ══════════════════ HERO ══════════════════ --}}
-    <div class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-        <x-page-art art="hero-quote" :opacity="55" :scrim="false" fade="bottom" />
-        <div class="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/45 to-slate-950/80 pointer-events-none" aria-hidden="true"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-transparent to-transparent pointer-events-none" aria-hidden="true"></div>
-
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
-            <div class="max-w-2xl">
-                <div class="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3.5 py-1.5 backdrop-blur mb-5">
-                    <span class="relative flex h-2 w-2">
-                        <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-                    </span>
-                    <span class="text-xs font-semibold text-sky-100">ตอบราคาทันที ไม่ต้องรอทีมงานติดต่อกลับ</span>
-                </div>
-
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight mb-5">
-                    สั่งงาน
-                    <span class="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">&amp;</span>
-                    รับใบเสนอราคา
-                </h1>
-
-                <p class="text-base sm:text-lg text-slate-300 leading-relaxed mb-8">
-                    บอกเราว่าอยากได้ผลลัพธ์แบบไหน ระบบจะเลือกรายการที่เข้ากับงานของคุณมาให้
-                    พร้อมเหตุผลว่าทำไมต้องมี ราคา และกรอบเวลาที่ประเมินจากงานจริง
-                </p>
-
-                <div class="flex flex-wrap gap-2.5">
-                    @foreach ([
-                        ['เห็นราคาระหว่างเลือก', 'M13 2 3 14h9l-1 8 10-12h-9z'],
-                        ['ใบเสนอราคา PDF เข้าอีเมล', 'M2 4h20v16H2z M22 7l-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'],
-                        ['ยืนราคา 30 วัน', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M12 6v6l4 2'],
-                    ] as [$label, $path])
-                        <div class="inline-flex items-center gap-2 rounded-xl bg-white/8 border border-white/15 px-4 py-2.5 backdrop-blur">
-                            <svg class="w-4 h-4 text-sky-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="{{ $path }}"/></svg>
-                            <span class="text-sm font-medium text-slate-200">{{ $label }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    </div>
+    {{-- ภาพนี้มีโครงลายเส้นอยู่ซ้าย: ดันไปขวาให้พ้นตัวหนังสือ --}}
+    <x-svc.hero :art="asset('artwork/hero-quote.webp')" art-class="top-0 right-[-40%] w-[160%] opacity-40 sm:right-[-25%] sm:w-[120%] lg:right-[-16%] lg:w-[74%] lg:opacity-75" compact :crumbs="[
+        ['หน้าแรก', route('home')],
+        ['บริการ', route('services.index')],
+        ['สั่งงาน & รับใบเสนอราคา', null],
+    ]"
+                lead="บอกเราว่าอยากได้ผลลัพธ์แบบไหน ระบบจะเลือกรายการที่เข้ากับงานของคุณมาให้ พร้อมเหตุผลว่าทำไมต้องมี ราคา และกรอบเวลาที่ประเมินจากงานจริง"
+                lead-en="Tell us the result you want — we pick the work it takes, with the reason, the price and the time for each line.">
+        <x-slot:chips>
+            <span class="xp-chip"><i></i>ตอบราคาทันที ไม่ต้องรอทีมงานติดต่อกลับ</span>
+        </x-slot:chips>
+        <x-slot:title><span class="inline-block">สั่งงาน <span class="xp-text-glow">&amp;</span></span> <span class="inline-block">รับใบเสนอราคา</span></x-slot:title>
+        <x-slot:actions>
+            <a href="#quote-builder" class="xp-btn-main inline-flex items-center gap-2 px-6 py-4 rounded-xl font-extrabold transition">
+                เริ่มเลือกงาน
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+            </a>
+            <a href="{{ route('quote.track') }}" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-bold transition">ติดตามสถานะงาน</a>
+        </x-slot:actions>
+        <x-slot:badges>
+            @foreach ([
+                ['เห็นราคาระหว่างเลือก', 'M13 2 3 14h9l-1 8 10-12h-9z'],
+                ['ใบเสนอราคา PDF เข้าอีเมล', 'M2 4h20v16H2z M22 7l-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'],
+                ['ยืนราคา 30 วัน', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M12 6v6l4 2'],
+            ] as [$label, $path])
+                <li class="flex items-center gap-2 text-gray-300">
+                    <svg class="w-4 h-4 shrink-0" style="color: var(--xp-a)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ $path }}"/></svg>
+                    {{ $label }}
+                </li>
+            @endforeach
+        </x-slot:badges>
+    </x-svc.hero>
 
     {{-- ══════════════════ BODY ══════════════════ --}}
-    <div class="bg-gray-50 dark:bg-gray-900 py-10 sm:py-14">
+    <div id="quote-builder" class="relative pb-20 scroll-mt-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {{-- ส่งสำเร็จ — แทนที่ตัวสร้างทั้งหมด ไม่ให้กดซ้ำ --}}
@@ -78,7 +72,7 @@
                 <p class="text-gray-600 dark:text-gray-300 mb-2" x-text="doneMessage"></p>
                 <p class="font-mono text-sm text-gray-500 dark:text-gray-400 mb-8" x-text="doneNumber"></p>
                 <template x-if="doneUrl">
-                    <a :href="doneUrl" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 transition-all">
+                    <a :href="doneUrl" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl xp-btn-main font-extrabold transition">
                         เปิดใบเสนอราคา
                     </a>
                 </template>
@@ -92,7 +86,7 @@
                     {{-- ══ ขั้น 1 · ผลลัพธ์ ══ --}}
                     <section>
                         <div class="flex items-center gap-3.5 mb-1.5">
-                            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">1</span>
+                            <span class="svc-step !w-9 !h-9 !text-base !rounded-xl shrink-0">1</span>
                             <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">คุณอยากได้อะไร</h2>
                         </div>
                         <p class="ml-[3.1rem] text-sm text-gray-600 dark:text-gray-400 mb-5">
@@ -105,7 +99,7 @@
                                         :class="outcome === o.key
                                             ? 'border-blue-600 ring-2 ring-blue-500/25 shadow-xl -translate-y-0.5'
                                             : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:-translate-y-0.5'"
-                                        class="group relative text-left bg-white dark:bg-gray-800 border-2 rounded-2xl p-5 shadow-lg transition-all duration-300">
+                                        class="group relative text-left svc-surface border-2 rounded-2xl p-5 shadow-lg transition-all duration-300">
                                     <span x-show="outcome === o.key"
                                           class="absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
                                         <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
@@ -127,7 +121,7 @@
                     {{-- ══ ขั้น 2 · รายการ ══ --}}
                     <section x-show="outcome" x-cloak>
                         <div class="flex items-center gap-3.5 mb-1.5">
-                            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">2</span>
+                            <span class="svc-step !w-9 !h-9 !text-base !rounded-xl shrink-0">2</span>
                             <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">งานนี้ต้องมีอะไรบ้าง</h2>
                         </div>
                         <p class="ml-[3.1rem] text-sm text-gray-600 dark:text-gray-400 mb-5">
@@ -135,7 +129,7 @@
                         </p>
 
                         {{-- ชั้นที่ 1: บริการหลัก --}}
-                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-4">
+                        <div class="svc-surface rounded-2xl shadow-lg overflow-hidden mb-4">
                             <div class="px-5 sm:px-6 py-3.5 bg-blue-50 dark:bg-blue-500/10 border-b border-blue-100 dark:border-blue-500/20 flex items-center justify-between gap-3 flex-wrap">
                                 <div class="flex items-center gap-2.5">
                                     <svg class="w-4.5 h-4.5 text-blue-700 dark:text-blue-300" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
@@ -168,7 +162,7 @@
 
                         {{-- ชั้นที่ 2: แนะนำตามผลลัพธ์ --}}
                         <template x-for="group in suggestedAddonGroups" :key="'s-' + group.key">
-                            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-4">
+                            <div class="svc-surface rounded-2xl shadow-lg overflow-hidden mb-4">
                                 <div class="px-5 sm:px-6 py-3.5 bg-emerald-50 dark:bg-emerald-500/10 border-b border-emerald-100 dark:border-emerald-500/20 flex items-center justify-between gap-3 flex-wrap">
                                     <div class="flex items-center gap-2.5">
                                         <svg class="w-4.5 h-4.5 text-emerald-700 dark:text-emerald-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 2 9.2 8.6 2 9.2l5.5 4.7L5.8 21 12 17.3 18.2 21l-1.7-7.1L22 9.2l-7.2-.6z"/></svg>
@@ -193,7 +187,7 @@
                         </template>
 
                         {{-- ชั้นที่ 3: ที่เหลือ พับไว้ --}}
-                        <div x-show="otherAddonGroups.length" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                        <div x-show="otherAddonGroups.length" class="svc-surface rounded-2xl shadow-lg overflow-hidden">
                             <button type="button" @click="showAll = ! showAll"
                                     class="w-full flex items-center justify-between gap-3 px-5 sm:px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition">
                                 <span class="flex items-center gap-2.5">
@@ -229,7 +223,7 @@
                     {{-- ══ ขั้น 3 · ผู้รับใบ ══ --}}
                     <section x-show="outcome" x-cloak>
                         <div class="flex items-center gap-3.5 mb-1.5">
-                            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">3</span>
+                            <span class="svc-step !w-9 !h-9 !text-base !rounded-xl shrink-0">3</span>
                             <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">ส่งใบเสนอราคาไปที่ไหน</h2>
                         </div>
                         <p class="ml-[3.1rem] text-sm text-gray-600 dark:text-gray-400 mb-5">
@@ -238,7 +232,7 @@
                             ที่เหลือใส่ได้ทีหลัง
                         </p>
 
-                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 sm:p-7 space-y-6">
+                        <div class="svc-surface rounded-2xl shadow-lg p-5 sm:p-7 space-y-6">
 
                             {{-- ── ติดต่อกลับ ── --}}
                             <div>
@@ -368,7 +362,7 @@
 
                 {{-- ─────────── สรุปยอด ─────────── --}}
                 <div class="lg:sticky lg:top-24 space-y-4">
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="svc-surface rounded-2xl shadow-xl overflow-hidden">
                         <div class="px-5 py-4 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-between">
                             <span class="flex items-center gap-2.5 text-white font-bold">
                                 <svg class="w-4.5 h-4.5 text-sky-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
@@ -455,7 +449,7 @@
                                 </button>
 
                                 <button type="button" @click="submit()" :disabled="sending || ! canSubmit"
-                                        class="w-full mt-1 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0">
+                                        class="w-full mt-1 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl xp-btn-main font-extrabold transition disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0">
                                     <svg x-show="! sending" class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                                     <svg x-show="sending" x-cloak class="w-4.5 h-4.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                                     <span x-text="sending ? 'กำลังออกใบ…' : 'ส่งใบเสนอราคาเข้าอีเมล'"></span>
@@ -505,6 +499,7 @@
         </div>
     </div>
 </div>
+</x-xp.page>
 
 @push('scripts')
 <script>
@@ -882,7 +877,8 @@ function quoteBuilder(config) {
                 this.doneMessage = data.message;
                 this.doneNumber = data.quote_number;
                 this.doneUrl = data.document_url || null;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // ไปที่ข้อความว่าส่งแล้ว ไม่ใช่บนสุดของหน้า — หัวหน้าสูงจนข้อความตกขอบจอ
+                this.$nextTick(() => document.getElementById('quote-builder').scrollIntoView({ behavior: 'smooth', block: 'start' }));
             } catch (e) {
                 this.error = 'ติดต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจอินเทอร์เน็ตแล้วลองใหม่';
             } finally {
