@@ -1408,6 +1408,11 @@ html.webgl-ready .spot-fallback {
   border-color: rgba(94, 234, 212, 0.45);
   transform: translateZ(40px);
 }
+/* a gallery of mock-ups: not a live capture, and the badge looks it */
+.badge.capture.mock {
+  color: var(--gold);
+  border-color: rgba(245, 197, 107, 0.45);
+}
 .card-num {
   position: absolute;
   top: 14px;

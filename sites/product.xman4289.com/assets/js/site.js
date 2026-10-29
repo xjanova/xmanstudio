@@ -312,10 +312,10 @@ const CODEX = [
     <p>The index and embeddings live in a local SQLite database. Embeddings can be computed on-machine through Ollama, so nothing needs to leave the computer.</p>
     <p>Outbound bridges to other software are restricted to local use only — remote callers can never reach them.</p>`],
   ['ต้องใช้เครื่องแรงแค่ไหน', 'What it needs to run',
-   `<p>Windows 10 หรือ 11 พร้อม .NET runtime การแสดงผลสามมิติใช้ WebGL ผ่าน WebView2 ซึ่งการ์ดจอออนบอร์ดทั่วไปก็เอาอยู่</p>
+   `<p>Windows 10 หรือ 11 แบบ 64-bit ไม่ต้องติดตั้ง .NET เพราะทุกอย่างมากับตัวติดตั้งแล้ว การแสดงผลสามมิติใช้ WebGL ผ่าน WebView2 ซึ่งการ์ดจอออนบอร์ดทั่วไปก็เอาอยู่</p>
     <p>ขนาดกราฟที่ทดสอบจริง: <b>1,204 โน้ต · 8,458 เส้นเชื่อม · 1.5 ล้านคำ</b> ทำงานลื่นบนเครื่องเดสก์ท็อปทั่วไป ฐานข้อมูลหลังปรับปรุงเหลือระดับไม่กี่เมกะไบต์</p>
     <p>ถ้าจะใช้ embedding ในเครื่อง แนะนำให้มี Ollama ติดตั้งไว้ แต่ไม่บังคับ — ระบบจะถอยไปใช้การค้นด้วยคำสำคัญได้เอง</p>`,
-   `<p>Windows 10 or 11 with the .NET runtime. The 3D view is WebGL through WebView2, which ordinary integrated graphics handle comfortably.</p>
+   `<p>Windows 10 or 11, 64-bit. No .NET install is needed: everything comes with the installer. The 3D view is WebGL through WebView2, which ordinary integrated graphics handle comfortably.</p>
     <p>Measured on a real vault: <b>1,204 notes · 8,458 links · 1.5 million words</b>, running smoothly on a normal desktop, with the database trimmed to single-digit megabytes.</p>
     <p>Local embeddings want Ollama installed, but it is optional — the system falls back to keyword retrieval on its own.</p>`],
 ];
@@ -326,19 +326,19 @@ const CODEX = [
 const PRODUCTS = [
   ['BrainX','Neural Knowledge Engine','AI & Automation',399,1,'สมองที่สองที่มองเห็นได้ กราฟความรู้ 3 มิติ + MCP hub สำหรับเอเจนต์ทุกตัว[[ · BrainX Cloud {terms}]]','A second brain you can see: a 3D knowledge graph and an MCP hub for every agent you use[[; BrainX Cloud is {terms}]].','#6cf0ff',1,'brainx'],
   ['AutoTradeX','Crypto Arbitrage Bot','Software',19900,0,'บอทเทรด Crypto Arbitrage อัตโนมัติ รองรับ 6 Exchange ชั้นนำ พร้อมโหมดทดลองและระบบจัดการความเสี่ยง','Automated crypto arbitrage across 6 major exchanges, with simulation mode and risk controls.','#57e08a',0,'autotradex'],
-  ['PostXAgent','AI Brand Promotion','AI & Automation',7990,1,'โพสต์อัตโนมัติ 9 แพลตฟอร์ม พร้อม Web Automation ที่เรียนรู้เองและซ่อมตัวเองได้','Auto-posting across 9 platforms with self-learning, self-repairing web automation.','#8b7cf6',0,'postx-agent'],
-  ['Live x Shop Pro','Live Commerce Platform','E-Commerce',5990,1,'รวมแชท Facebook/TikTok/LINE อ่านสลิปด้วย AI OCR ตรวจสลิปปลอม เชื่อมขนส่งครบ','Unified Facebook/TikTok/LINE chat, AI OCR slip reading, fraud detection and courier integration.','#e8825a',0,'livexshop-pro'],
-  ['XcluadeAgent','GitHub Sync + AI Auto-Fix','AI & Automation',3490,1,'ซิงก์ release อัตโนมัติ พร้อม AI 6 โหมด ย้อนกลับเองเมื่อพัง แจ้งเตือน 5 ช่องทาง','Automated release sync with six AI modes, auto-rollback on failure and five notification channels.','#7dd3fc',0,'xcluade-agent'],
-  ['SpiderX','P2P Mesh Network','Network & Security',2990,1,'เครือข่ายกระจายศูนย์ เข้ารหัส End-to-End ไม่มีเซิร์ฟเวอร์กลาง ไม่ต้องลงทะเบียน','Decentralised end-to-end encrypted mesh — no central server, no registration.','#57e08a',0,'spiderx'],
-  ['PhoneX Manager','Android Service Suite','Mobile Tools',1990,1,'Flash ROM, Backup, FRP Bypass, IMEI Tools รองรับ Qualcomm, MTK, Samsung, Xiaomi','Flashing, backup, FRP bypass and IMEI tools for Qualcomm, MediaTek, Samsung and Xiaomi.','#8b7cf6',0,'phonex-manager'],
+  ['PostXAgent','AI Brand Promotion','AI & Automation',7990,1,'AI เขียนโพสต์ ตั้งเวลา แล้วโพสต์ลง Facebook Page และ Instagram ให้เอง อีก 7 แพลตฟอร์มเร็ว ๆ นี้','AI writes, schedules and publishes your posts to a Facebook Page and Instagram; 7 more networks are coming.','#8b7cf6',0,'postx-agent'],
+  ['Live x Shop Pro','Live-Selling Back Office','E-Commerce',5990,1,'ระบบหลังบ้านสำหรับไลฟ์ขายของ ดึงแชท จับ CF ทำออเดอร์ กำลังพัฒนา ทุกฟีเจอร์เร็ว ๆ นี้','A back office for selling on live streams: chat, CF and orders. In development; every feature is coming soon.','#e8825a',0,'livexshop-pro'],
+  ['XcluadeAgent','GitHub Release Sync','AI & Automation',3490,1,'ซิงก์ release อัตโนมัติ สำรองก่อนทุกครั้ง ย้อนกลับเองเมื่อ health check ไม่ผ่าน AI วิเคราะห์ error แจ้งเตือน 5 ช่องทาง','Automated release sync with backups, auto-rollback when a health check fails, AI error analysis and five notification channels.','#7dd3fc',0,'xcluade-agent'],
+  ['SpiderX','P2P Mesh Network','Network & Security',2990,1,'แชท แชร์ไฟล์ และ virtual LAN ตรงถึงกัน ไม่มีเซิร์ฟเวอร์กลาง ไม่ต้องลงทะเบียน','Chat, file sharing and a virtual LAN machine to machine: no central server, no registration.','#57e08a',0,'spiderx'],
+  ['PhoneX Manager','Android Service Suite','Mobile Tools',1990,1,'แฟลชรอม สำรองพาร์ทิชัน ไดรเวอร์ครบ รองรับ Qualcomm, MTK, Samsung, Xiaomi','Flashing, partition backup and one-click drivers for Qualcomm, MediaTek, Samsung and Xiaomi.','#8b7cf6',0,'phonex-manager'],
   ['WinXTools','Network & System Control','System Utilities',199,0,'ดู bandwidth แยกโปรเซส คุมระดับ kernel ด้วย WFP ถอนโปรแกรมลึกถึง registry มีรุ่นฟรี[[ · Pro {terms}]]','Per-process bandwidth, kernel-level WFP control and a deep uninstaller that reaches the registry. Free edition[[; Pro is {terms}]].','#6cf0ff',0,'winx-tools'],
-  ['SMS Payment Checker','WooCommerce Plugin','WordPress Plugins',990,1,'ตรวจเงินเข้าจาก SMS ธนาคาร 15+ แห่ง จับคู่ออเดอร์อัตโนมัติ เข้ารหัส AES-256-GCM','Reads bank SMS from 15+ Thai banks, matches orders automatically, AES-256-GCM encrypted.','#57e08a',0],
-  ['SmsChecker','Bank SMS Automation','Mobile Tools',499,1,'ตรวจ SMS ธนาคาร 14+ แห่ง อนุมัติออเดอร์เรียลไทม์ ต่อหลายเซิร์ฟเวอร์พร้อมกัน','Detects bank SMS from 14+ banks, approves orders in real time, multi-server capable.','#e8825a',0],
+  ['SMS Payment Checker','WooCommerce Plugin','WordPress Plugins',990,1,'ตรวจเงินเข้าจาก SMS ธนาคาร 14 แห่ง + พร้อมเพย์ จับคู่ออเดอร์อัตโนมัติ เข้ารหัส AES-256-GCM','Reads bank SMS from 14 Thai banks + PromptPay, matches orders automatically, AES-256-GCM encrypted.','#57e08a',0],
+  ['SmsChecker','Bank SMS Automation','Mobile Tools',499,1,'ตรวจ SMS ธนาคาร 14 แห่ง อนุมัติออเดอร์เรียลไทม์ ต่อหลายเว็บพร้อมกัน','Detects bank SMS from 14 Thai banks, approves orders in real time, one phone for several shops.','#e8825a',0],
   ['Tping','Android Auto-Typer','Mobile Tools',399,0,'บันทึกขั้นตอนแล้วเล่นซ้ำได้ถึง 999 รอบ มีโหมดเกมพร้อม crosshair overlay ทดลองฟรี 24 ชม.[[ · {terms}]]','Record a sequence and replay it up to 999 times, with a game mode and crosshair overlay. Free 24-hour trial[[; then {terms}]].','#7dd3fc',0,'tping'],
-  ['Skidrow Killer','Malware Scanner','Security Software',299,1,'สแกนมัลแวร์เรียลไทม์ วิเคราะห์พฤติกรรมด้วย AI เฝ้า registry และบล็อกเซิร์ฟเวอร์ C2','Real-time malware scanning with AI behavioural analysis, registry watch and C2 blocking.','#e8825a',0,'skidrow-killer'],
-  ['CluadeX','AI Coding Assistant','AI & Automation',199,0,'ผู้ช่วยเขียนโค้ดที่รันบนเครื่องคุณ 5 ผู้ให้บริการ AI, 28 เครื่องมือ, 22+ โมเดลในเครื่อง มีรุ่นฟรี[[ · License {terms}]]','A coding assistant that runs on your machine: 5 AI providers, 28 agent tools, 22+ local models. Free edition[[; a licence is {terms}]].','#8b7cf6',0,'cluadex'],
-  ['GPUsharX','Decentralised GPU Sharing','Cloud & Computing',0,1,'แชร์การ์ดจอสร้างรายได้ ผู้แชร์ได้ 90% พร้อมระบบกันโกงหลายชั้น','Rent out your GPU and keep 90% of the revenue, with multi-layer anti-cheat.','#6cf0ff',0,'gpusharx'],
-  ['LocalVPN','Virtual LAN over Internet','Network Tools',0,0,'สร้างวง LAN เสมือนข้ามอินเทอร์เน็ต เข้ารหัสด้วย WireGuard ทะลุ NAT ได้ ใช้ฟรีสูงสุด 5 คน · ทดลอง Pro ฟรี 30 วัน[[ · Pro {from}]]','A virtual LAN across the internet, WireGuard-encrypted, with NAT traversal. Free for up to 5 members, with a 30-day Pro trial[[; Pro {from}]].','#57e08a',0,'localvpn'],
+  ['Skidrow Killer','Malware Scanner','Security Software',299,1,'สแกนและกำจัดมัลแวร์ ป้องกันเรียลไทม์ บล็อกเว็บแครกและเซิร์ฟเวอร์ C2','Finds and removes malware with real-time protection, blocking crack sites and C2 servers.','#e8825a',0,'skidrow-killer'],
+  ['CluadeX','AI Coding Assistant','AI & Automation',199,0,'ผู้ช่วยเขียนโค้ด AI ที่ลงมือทำในโปรเจกต์ของคุณ รุ่นฟรีใช้โมเดลในเครื่อง[[ · License {terms}]]','An AI coding agent that works inside your project; the free edition runs local models[[; a licence is {terms}]].','#8b7cf6',0,'cluadex'],
+  ['GPUsharX','GPU Sharing Platform','Cloud & Computing',null,1,'แพลตฟอร์มแชร์พลังการ์ดจอสำหรับงาน AI กำลังพัฒนา เงื่อนไขประกาศพร้อมเปิดตัว','A GPU-sharing platform for AI jobs, in development; terms are announced at launch.','#6cf0ff',0,'gpusharx'],
+  ['LocalVPN','Virtual LAN over Internet','Network Tools',0,0,'สร้างวง LAN เสมือนข้ามอินเทอร์เน็ต เข้ารหัสระหว่างเครื่อง ทะลุ NAT ได้ ใช้ฟรีสูงสุด 5 คน · ทดลอง Pro ฟรี 30 วัน[[ · Pro {from}]]','A virtual LAN across the internet, encrypted between members, with NAT traversal. Free for up to 5 members, with a 30-day Pro trial[[; Pro {from}]].','#57e08a',0,'localvpn'],
   ['Aipray','Buddhist Chanting Companion','Software',0,0,'บทสวด 20+ บท AI ฟังเสียงจับตำแหน่งอัตโนมัติ นับรอบให้ ใช้ออฟไลน์ได้ ฟรีตลอดไป','20+ chants with AI listening that tracks your place and counts repetitions. Offline. Free forever.','#e8825a',0,'aipray'],
 ];
 
@@ -398,7 +398,7 @@ function render() {
         <p data-th="${esc(dTh)}" data-en="${esc(dEn)}">${esc(dTh)}</p>
         <div class="prod-foot">
           <span class="prod-cat">${esc(cat)}</span>
-          <span class="prod-price${!price ? ' free' : ''}" data-th="${esc(chip(price, id, 'th'))}" data-en="${esc(chip(price, id, 'en'))}">${esc(chip(price, id, 'th'))}</span>
+          <span class="prod-price${price === 0 ? ' free' : ''}" data-th="${esc(chip(price, id, 'th'))}" data-en="${esc(chip(price, id, 'en'))}">${esc(chip(price, id, 'th'))}</span>
         </div>
       </article>`;
     }).join('');
